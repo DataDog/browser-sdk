@@ -15,42 +15,50 @@ import {
 import Strategy from '../strategy/strategy';
 import { EppoStrategy } from '../strategy/eppo_strategy';
 
-class DatadogProvider implements Provider {
+export class DatadogProvider implements Provider {
     // Adds runtime validation that the provider is used with the expected SDK
     public readonly runsOn = 'client';
     readonly metadata = {
         name: 'datadog-provider',
     } as const;
 
-    private strategy: Strategy = new EppoStrategy();
+    private strategy: Strategy | null;
+    private datadogClientToken: string;
 
     // Optional provider managed hooks
     hooks?: Hook[];
 
+    constructor({ clientToken }: { clientToken: string }) {
+        this.datadogClientToken = clientToken;
+
+        // todo: map datadog client token to eppo
+        this.strategy = new EppoStrategy();
+    }
+
     resolveBooleanEvaluation(flagKey: string, defaultValue: boolean, context: EvaluationContext, logger: Logger): ResolutionDetails<boolean> {
         return {
-            value: this.strategy.getBooleanAssignment(flagKey, defaultValue),
+            value: this.strategy?.getBooleanAssignment(flagKey, defaultValue) ?? defaultValue,
             reason: StandardResolutionReasons.DEFAULT,
         }
     }
 
     resolveStringEvaluation(flagKey: string, defaultValue: string, context: EvaluationContext, logger: Logger): ResolutionDetails<string> {
         return {
-            value: this.strategy.getStringAssignment(flagKey, defaultValue),
+            value: this.strategy?.getStringAssignment(flagKey, defaultValue) ?? defaultValue,
             reason: StandardResolutionReasons.DEFAULT,
         }
     }
 
     resolveNumberEvaluation(flagKey: string, defaultValue: number, context: EvaluationContext, logger: Logger): ResolutionDetails<number> {
         return {
-            value: this.strategy.getNumericAssignment(flagKey, defaultValue),
+            value: this.strategy?.getNumericAssignment(flagKey, defaultValue) ?? defaultValue,
             reason: StandardResolutionReasons.DEFAULT,
         }
     }
 
     resolveObjectEvaluation<T extends JsonValue>(flagKey: string, defaultValue: T, context: EvaluationContext, logger: Logger): ResolutionDetails<T> {
         return {
-            value: this.strategy.getObjectAssignment(flagKey, defaultValue as Record<string, unknown>) as T,
+            value: this.strategy?.getObjectAssignment(flagKey, defaultValue as Record<string, unknown>) as T ?? defaultValue,
             reason: StandardResolutionReasons.DEFAULT,
         }
     }

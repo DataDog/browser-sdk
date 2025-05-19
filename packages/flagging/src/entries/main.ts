@@ -1,8 +1,4 @@
-import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { DatadogProvider } from '../open_feature/datadog_provider'
 
-const datadogFlagging = {}
-
-interface BrowserWindow extends Window {
-  DD_FLAGGING?: {}
-}
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_FLAGGING', datadogFlagging)
+// Public exports
+export { DatadogProvider }

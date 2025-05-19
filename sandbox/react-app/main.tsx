@@ -2,8 +2,11 @@ import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
+import { DatadogProvider } from '@datadog/browser-flagging'
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
 import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
+import { OpenFeature } from '@openfeature/web-sdk';
+
 
 datadogRum.init({
   applicationId: 'xxx',
@@ -11,42 +14,65 @@ datadogRum.init({
   plugins: [reactPlugin({ router: true })],
 })
 
-const router = createBrowserRouter(
-  [
-    {
-      path: '/',
-      Component: Layout,
-      children: [
-        {
-          index: true,
-          Component: HomePage,
-        },
-        {
-          path: 'user/:id',
-          Component: UserPage,
-        },
-        {
-          path: 'test-error-boundary',
-          Component: TestErrorBoundaryPage,
-        },
-        {
-          path: '*',
-          Component: WildCardPage,
-        },
-      ],
-    },
-  ],
-  { basename: '/react-app/' }
-)
+const subject = {
+  key: 'subject-key-1'
+}
 
-const rootElement = document.createElement('div')
-document.body.appendChild(rootElement)
-const root = ReactDOM.createRoot(rootElement)
-root.render(
-  <React.StrictMode>
-    <RouterProvider router={router} />
-  </React.StrictMode>
-)
+async function initializeOpenFeature() {
+  const datadogFlaggingProvider = new DatadogProvider({ clientToken: 'xxx' })
+  // Set the context before the provider is set to ensure the Datadog SDK is initialized with a user context.
+  await OpenFeature.setContext(subject)
+
+  try {
+    await OpenFeature.setProviderAndWait(datadogFlaggingProvider);
+  } catch (error) {
+    console.error('Failed to initialize Datadog provider:', error);
+  }
+
+  const client = OpenFeature.getClient();
+  const flagEval = client.getBooleanValue('flagName.my-boolean', false);
+  console.log({ flagEval })
+}
+
+// Initialize OpenFeature before rendering the app
+initializeOpenFeature().then(() => {
+  const router = createBrowserRouter(
+    [
+      {
+        path: '/',
+        Component: Layout,
+        children: [
+          {
+            index: true,
+            Component: HomePage,
+          },
+          {
+            path: 'user/:id',
+            Component: UserPage,
+          },
+          {
+            path: 'test-error-boundary',
+            Component: TestErrorBoundaryPage,
+          },
+          {
+            path: '*',
+            Component: WildCardPage,
+          },
+        ],
+      },
+    ],
+    { basename: '/react-app/' }
+  )
+
+  const rootElement = document.createElement('div')
+  document.body.appendChild(rootElement)
+  const root = ReactDOM.createRoot(rootElement)
+  root.render(
+    <React.StrictMode>
+      <RouterProvider router={router} />
+    </React.StrictMode>
+  )
+})
 
 function Layout() {
   return (
