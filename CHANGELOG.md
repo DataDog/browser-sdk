@@ -18,6 +18,34 @@
 
 ---
 
+## v6.7.0
+
+**Public Changes:**
+
+- ✨ Allow overriding service and version for views events in beforeSend ([#3530](https://github.com/DataDog/browser-sdk/pull/3530)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ Add developer extension support for replay sandbox local development ([#3511](https://github.com/DataDog/browser-sdk/pull/3511))
+- 🐛 [RUM-9738] quickfix switchToAbsoluteUrl ([#3518](https://github.com/DataDog/browser-sdk/pull/3518)) [RUM]
+- 📝 mention missing `compressIntakeRequests` support in rum-slim readme ([#3531](https://github.com/DataDog/browser-sdk/pull/3531)) [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷️[RUM-9996] Support deployment for ap2 datacenter ([#3538](https://github.com/DataDog/browser-sdk/pull/3538))
+- 👷 Lock file maintenance ([#3526](https://github.com/DataDog/browser-sdk/pull/3526))
+- 👷️enable renovate `lockFileMaintenance` ([#3525](https://github.com/DataDog/browser-sdk/pull/3525))
+- 👷️Bump nx resolution ([#3523](https://github.com/DataDog/browser-sdk/pull/3523))
+- 👷 Update mantine monorepo to v8 ([#3521](https://github.com/DataDog/browser-sdk/pull/3521))
+- 👷 Update all non-major dependencies ([#3520](https://github.com/DataDog/browser-sdk/pull/3520)) [RUM-REACT] [WORKER]
+- 👷 Update all non-major dependencies ([#3515](https://github.com/DataDog/browser-sdk/pull/3515)) [RUM-REACT]
+- 👷 Update dependency eslint-plugin-unicorn to v59 ([#3504](https://github.com/DataDog/browser-sdk/pull/3504))
+- 👷 Update all non-major dependencies ([#3503](https://github.com/DataDog/browser-sdk/pull/3503)) [RUM-REACT] [WORKER]
+- 🔧 [RUM-9766] include bundle chunks in NPM packages ([#3513](https://github.com/DataDog/browser-sdk/pull/3513)) [LOGS] [RUM-SLIM] [RUM] [WORKER]
+- Add dd trusted to extension visibilityChange events ([#3536](https://github.com/DataDog/browser-sdk/pull/3536))
+- ♻️ [RUM-9614] Decouple default context from assembly using hooks ([#3498](https://github.com/DataDog/browser-sdk/pull/3498)) [RUM] [RUM-REACT] [RUM-SLIM]
+- [RUM Profiler] Use clocks for start/end time ([#3510](https://github.com/DataDog/browser-sdk/pull/3510)) [RUM]
+- ⚗ Add experimental feature flag to enable intake request tracking ([#3509](https://github.com/DataDog/browser-sdk/pull/3509)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump replay sandbox to 0.119.0 ([#3508](https://github.com/DataDog/browser-sdk/pull/3508))
+- ♻️ [RUM-9667] refactor stack trace computation ([#3499](https://github.com/DataDog/browser-sdk/pull/3499)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.6.4
 
 **Public Changes:**

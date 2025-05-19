@@ -53,7 +53,12 @@ async function uploadSourceMaps(packageName, service, version, uploadPathTypes) 
       uploadPath = buildRootUploadPath(packageName, version)
       await renameFilesWithVersionSuffix(bundleFolder, version)
     } else {
-      sites = [siteByDatacenter[uploadPathType]]
+      const site = siteByDatacenter[uploadPathType]
+      if (!site) {
+        printLog(`No source maps upload configured for datacenter ${uploadPathType}`)
+        continue
+      }
+      sites = [site]
       uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
     }
     const prefix = path.dirname(`/${uploadPath}`)
