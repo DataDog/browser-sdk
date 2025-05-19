@@ -6,17 +6,18 @@ import {
   createEventRateLimiter,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  HookNames,
+  DISCARDED,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
-import type { Hooks } from '../hooks'
-import { DISCARDED, HookNames } from '../hooks'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
+import type { Hooks } from './hooks'
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -46,6 +47,7 @@ export function startRumAssembly(
       'view.performance.lcp.resource_url': 'string',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
     [RumEventType.ERROR]: {
       'error.message': 'string',

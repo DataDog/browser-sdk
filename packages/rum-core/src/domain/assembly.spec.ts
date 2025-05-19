@@ -1,5 +1,5 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
+import { ErrorSource, ExperimentalFeature, HookNames, ONE_MINUTE, display } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockExperimentalFeatures, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
@@ -12,8 +12,7 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
-import { HookNames, createHooks } from '../hooks'
+import type { RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -22,6 +21,7 @@ import type { ViewHistory } from './contexts/viewHistory'
 import type { RumSessionManager } from './rumSessionManager'
 import { startGlobalContext } from './contexts/globalContext'
 import { startSessionContext } from './contexts/sessionContext'
+import { createHooks } from './hooks'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
@@ -402,11 +402,16 @@ describe('rum assembly', () => {
         })
 
         notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
+          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
         })
-
         expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
+
+        notifyRawRumEvent(lifeCycle, {
+          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+        })
+        expect((serverRumEvents[1] as RumViewEvent).service).toBe('bar')
+        expect((serverRumEvents[1] as RumViewEvent).version).toBe('0.2.0')
       })
     })
   })

@@ -157,18 +157,32 @@ describe('switchToAbsoluteUrl', () => {
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
     })
+
     it('should not replace url if data uri: lower case', () => {
       const cssText =
         '{ font-family: FontAwesome; src: url(data:image/png;base64,iVBORNSUhEUgAAVR42mP8z/C/HgwJ/lK3Q6wAkJggg==); }'
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
     })
+
+    it('should not replace url if data uri contains escaped quotes', () => {
+      const cssText = '{ src: url("data:image/svg+xml;utf8,<svg xmlns=\\"http://www.w3.org/2000/svg\\"></svg>"); }'
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
+    })
+
+    it('should not replace url if data uri contains closing paren', () => {
+      const cssText =
+        '{ src: url("data:image/svg+xml;utf8,<svg xmlns=\\"http://www.w3.org/2000/svg\\" style=\\"color: rgb(0, 0, 0)\\"></svg>"); }'
+      expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
+    })
+
     it('should not replace url if data uri: not lower case', () => {
       const cssText =
         '{ font-family: FontAwesome; src: url(DaTa:image/png;base64,iVBORNSUhEUgAAVR42mP8z/C/HgwJ/lK3Q6wAkJggg==); }'
 
       expect(switchToAbsoluteUrl(cssText, cssHref)).toEqual(cssText)
     })
+
     it('should not replace url if error is thrown when building absolute url', () => {
       const cssText =
         '{ font-family: FontAwesome; src: url(https://site.web/app-name/static/assets/fonts/fontawesome-webfont.eot); }'

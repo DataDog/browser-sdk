@@ -1,11 +1,12 @@
-import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksNow, relativeToClocks } from '@datadog/browser-core'
+import { clocksNow, DISCARDED, HookNames, relativeToClocks } from '@datadog/browser-core'
 import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
-import type { Hooks } from '../../hooks'
-import { DISCARDED, HookNames, createHooks } from '../../hooks'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startUrlContexts, type UrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {
