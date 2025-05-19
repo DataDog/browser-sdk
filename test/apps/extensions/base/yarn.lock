@@ -14,10 +14,10 @@ __metadata:
 
 "@datadog/browser-rum-core@file:../../../../packages/rum-core/package.tgz::locator=rum-testing-extension%40workspace%3A.":
   version: 6.6.4
-  resolution: "@datadog/browser-rum-core@file:../../../../packages/rum-core/package.tgz#../../../../packages/rum-core/package.tgz::hash=c83223&locator=rum-testing-extension%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@file:../../../../packages/rum-core/package.tgz#../../../../packages/rum-core/package.tgz::hash=3340be&locator=rum-testing-extension%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.6.4"
-  checksum: 10c0/e966e06b02c75edef5a33819345fdbaef586a495829df6578bea7c68c9552c2962693a538e64dcf171687cfed95ffdc23d333296f14039522cc6b0cf92e3e59e
+  checksum: 10c0/dbe7fe934919b8ae8ef715d99356fb39fc43272d599afa974dcd432e232b4d069d9e9da71964b5260304704125d6229c2e41da51ba64aa424a268439f9d0802c
   languageName: node
   linkType: hard
 
