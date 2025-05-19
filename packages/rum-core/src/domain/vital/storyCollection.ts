@@ -2,8 +2,8 @@ import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import { clocksNow, elapsed, generateUUID, combine, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { RawRumUserStoryEvent } from '../../rawRumEvent.types'
-import { RumEventType, VitalType, UserStoryStatus } from '../../rawRumEvent.types'
+import type { RawRumVitalEvent } from '../../rawRumEvent.types'
+import { RumEventType, VitalType } from '../../rawRumEvent.types'
 
 export interface StoryOptions {
   context?: Context
@@ -36,21 +36,18 @@ export function createStoriesState(): StoriesState {
 
 function buildUserStoryEvent(
   storyStart: StoryStart,
-  status: UserStoryStatus,
   stopOptions: StoryOptions,
   duration: Duration
-): RawRumUserStoryEvent {
+): RawRumVitalEvent {
   return {
     date: storyStart.startClocks.timeStamp,
     type: RumEventType.VITAL,
     vital: {
       id: generateUUID(),
       name: storyStart.name,
-      type: VitalType.USER_STORY,
+      type: VitalType.DURATION,
       description: stopOptions.description ?? storyStart.description,
       duration: toServerDuration(duration),
-      story_instance_id: storyStart.storyInstanceId,
-      status,
     },
     _dd: {
       vital: {
@@ -59,6 +56,8 @@ function buildUserStoryEvent(
     },
   }
 }
+
+type UserStoryStatus = 'IN_PROGRESS' | 'SUCCESS' | 'FAILURE'
 
 export function startStoryCollection(lifeCycle: LifeCycle, storiesState: StoriesState) {
   function startStory(name: string, options: StoryOptions = {}) {
@@ -74,12 +73,15 @@ export function startStoryCollection(lifeCycle: LifeCycle, storiesState: Stories
     storiesState.storiesByName.set(name, storyStart)
     storiesState.storiesByReference.set(reference, storyStart)
     // Emit IN_PROGRESS event with duration 0
-    const event = buildUserStoryEvent(storyStart, UserStoryStatus.IN_PROGRESS, options, 0 as Duration)
+    const event = buildUserStoryEvent(storyStart, options, 0 as Duration)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       rawRumEvent: event,
       startTime: storyStart.startClocks.relative,
       duration: 0 as Duration,
-      customerContext: storyStart.context,
+      customerContext: combine(storyStart.context, options.context, {
+        story_instance_id: storyInstanceId,
+        status: 'IN_PROGRESS' as UserStoryStatus,
+      }),
       domainContext: {},
     })
     return reference
@@ -94,12 +96,15 @@ export function startStoryCollection(lifeCycle: LifeCycle, storiesState: Stories
     }
     const stopClocks = clocksNow()
     const duration = elapsed(storyStart.startClocks.timeStamp, stopClocks.timeStamp)
-    const event = buildUserStoryEvent(storyStart, UserStoryStatus.SUCCESS, options, duration)
+    const event = buildUserStoryEvent(storyStart, options, duration)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       rawRumEvent: event,
       startTime: storyStart.startClocks.relative,
       duration,
-      customerContext: combine(storyStart.context, options.context),
+      customerContext: combine(storyStart.context, options.context, {
+        story_instance_id: storyStart.storyInstanceId,
+        status: 'SUCCESS' as UserStoryStatus,
+      }),
       domainContext: {},
     })
     if (typeof nameOrRef === 'string') {
@@ -118,12 +123,15 @@ export function startStoryCollection(lifeCycle: LifeCycle, storiesState: Stories
     }
     const stopClocks = clocksNow()
     const duration = elapsed(storyStart.startClocks.timeStamp, stopClocks.timeStamp)
-    const event = buildUserStoryEvent(storyStart, UserStoryStatus.FAILURE, options, duration)
+    const event = buildUserStoryEvent(storyStart, options, duration)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       rawRumEvent: event,
       startTime: storyStart.startClocks.relative,
       duration,
-      customerContext: combine(storyStart.context, options.context),
+      customerContext: combine(storyStart.context, options.context, {
+        story_instance_id: storyStart.storyInstanceId,
+        status: 'FAILURE' as UserStoryStatus,
+      }),
       domainContext: {},
     })
     if (typeof nameOrRef === 'string') {
