@@ -46,7 +46,7 @@ export type PrecomputedFlagsRequestParameters = {
   skipInitialPoll?: boolean;
 };
 
-interface EppoPrecomputedClientOptions {
+export interface EppoPrecomputedClientOptions {
   precomputedFlagStore: IConfigurationStore<PrecomputedFlag>;
   subject: Subject;
   requestParameters?: PrecomputedFlagsRequestParameters;
