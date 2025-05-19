@@ -1,6 +1,7 @@
 import { INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type test from '@playwright/test'
 import type { Servers } from './httpServers'
 
 export interface SetupOptions {
@@ -18,6 +19,7 @@ export interface SetupOptions {
     run_id: string
     test_name: string
   }
+  testFixture: typeof test
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
