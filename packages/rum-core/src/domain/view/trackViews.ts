@@ -39,7 +39,7 @@ import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { onBFCacheRestore } from './bfCacheSupport'
-import { measureRestoredFCP, measureRestoredLCP, measureRestoredFID } from './viewMetrics/cwvPolyfill'
+import { trackBfcacheMetrics } from './viewMetrics/trackBfcacheMetrics'
 
 export interface ViewEvent {
   id: string
@@ -124,20 +124,7 @@ export function trackViews(
       currentView.end()
       currentView = startNewView(ViewLoadingType.BF_CACHE)
 
-      measureRestoredFCP(pageshowEvent, (fcp) => {
-        currentView.initialViewMetrics.firstContentfulPaint = fcp
-        measureRestoredLCP(pageshowEvent, (lcp) => {
-          currentView.initialViewMetrics.largestContentfulPaint = { value: lcp as RelativeTime }
-          measureRestoredFID(pageshowEvent, (fid) => {
-            currentView.initialViewMetrics.firstInput = {
-              delay: fid.delay,
-              time: fid.time as RelativeTime,
-              targetSelector: undefined,
-            }
-            currentView.scheduleViewUpdate()
-          })
-        })
-      })
+      trackBfcacheMetrics(pageshowEvent, currentView.initialViewMetrics, currentView.scheduleViewUpdate)
     })
   }
 
