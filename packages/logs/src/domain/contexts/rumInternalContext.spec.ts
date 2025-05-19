@@ -1,32 +1,52 @@
-import type { TelemetryEvent } from '@datadog/browser-core'
-import { startTelemetry, TelemetryService } from '@datadog/browser-core'
+import type { RelativeTime, TelemetryEvent } from '@datadog/browser-core'
+import { HookNames, startTelemetry, TelemetryService } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import { validateAndBuildLogsConfiguration } from '../configuration'
-import { resetRUMInternalContext, getRUMInternalContext } from './rumInternalContext'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
+import { startRUMInternalContext } from './rumInternalContext'
 
 const initConfiguration = { clientToken: 'xxx', service: 'service' }
 
 describe('getRUMInternalContext', () => {
+  let hooks: Hooks
+  let stopRUMInternalContext: () => void
+
+  beforeEach(() => {
+    hooks = createHooks()
+    stopRUMInternalContext = startRUMInternalContext(hooks).stop
+  })
+
   afterEach(() => {
     delete window.DD_RUM
     delete window.DD_RUM_SYNTHETICS
-    resetRUMInternalContext()
+    stopRUMInternalContext()
   })
 
   it('returns undefined if no RUM instance is present', () => {
-    expect(getRUMInternalContext()).toBeUndefined()
+    const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      startTime: 0 as RelativeTime,
+    })
+
+    expect(defaultLogsEventAttributes).toBeUndefined()
   })
 
   it('returns undefined if the global variable does not have a `getInternalContext` method', () => {
     window.DD_RUM = {} as any
-    expect(getRUMInternalContext()).toBeUndefined()
+    const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      startTime: 0 as RelativeTime,
+    })
+    expect(defaultLogsEventAttributes).toBeUndefined()
   })
 
   it('returns the internal context from the `getInternalContext` method', () => {
     window.DD_RUM = {
       getInternalContext: () => ({ foo: 'bar' }),
     }
-    expect(getRUMInternalContext()).toEqual({ foo: 'bar' })
+    const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      startTime: 0 as RelativeTime,
+    })
+    expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
   })
 
   describe('when RUM is injected by Synthetics', () => {
@@ -46,11 +66,16 @@ describe('getRUMInternalContext', () => {
       window.DD_RUM_SYNTHETICS = {
         getInternalContext: () => ({ foo: 'bar' }),
       }
-      expect(getRUMInternalContext()).toEqual({ foo: 'bar' })
+      const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        startTime: 0 as RelativeTime,
+      })
+      expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
     })
 
     it('adds a telemetry debug event when RUM has not been injected yet', () => {
-      getRUMInternalContext()
+      hooks.triggerHook(HookNames.Assemble, {
+        startTime: 0 as RelativeTime,
+      })
       expect(telemetrySpy.calls.mostRecent().args[0].telemetry).toEqual(
         jasmine.objectContaining({
           message: 'Logs sent before RUM is injected by the synthetics worker',
@@ -63,8 +88,12 @@ describe('getRUMInternalContext', () => {
     })
 
     it('adds the telemetry debug event only once', () => {
-      getRUMInternalContext()
-      getRUMInternalContext()
+      hooks.triggerHook(HookNames.Assemble, {
+        startTime: 0 as RelativeTime,
+      })
+      hooks.triggerHook(HookNames.Assemble, {
+        startTime: 0 as RelativeTime,
+      })
       expect(telemetrySpy).toHaveBeenCalledTimes(1)
     })
   })

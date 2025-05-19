@@ -44,8 +44,6 @@ import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
-import type { Hooks } from '../hooks'
-import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import { startGlobalContext } from '../domain/contexts/globalContext'
 import { startUserContext } from '../domain/contexts/userContext'
@@ -54,6 +52,8 @@ import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
+import type { Hooks } from '../domain/hooks'
+import { createHooks } from '../domain/hooks'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
