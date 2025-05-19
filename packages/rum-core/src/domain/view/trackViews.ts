@@ -120,11 +120,17 @@ export function trackViews(
   }
 
   if (configuration.trackBfcacheViews) {
-    onBFCacheRestore((pageshowEvent) => {
+    onBFCacheRestore(configuration, (pageshowEvent) => {
       currentView.end()
       currentView = startNewView(ViewLoadingType.BF_CACHE)
 
-      trackBfcacheMetrics(pageshowEvent, currentView.initialViewMetrics, currentView.scheduleViewUpdate)
+      const { stop: stopBfcacheMetricsTracking } = trackBfcacheMetrics(
+        configuration,
+        pageshowEvent,
+        currentView.initialViewMetrics,
+        currentView.scheduleViewUpdate
+      )
+      currentView.setStopBfcacheMetricsTracking(stopBfcacheMetricsTracking)
     })
   }
 
@@ -218,6 +224,7 @@ function newView(
   let endClocks: ClocksState | undefined
   const location = shallowClone(initialLocation)
   const contextManager = createContextManager()
+  let stopBfcacheMetricsTracking: (() => void) | undefined
 
   let sessionIsActive = true
   let name = viewOptions?.name
@@ -355,6 +362,9 @@ function newView(
       stopInitialViewMetricsTracking()
       stopEventCountsTracking()
       stopINPTracking()
+      if (stopBfcacheMetricsTracking) {
+        stopBfcacheMetricsTracking()
+      }
       stopObservable.notify()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
@@ -375,6 +385,9 @@ function newView(
      * with the restored cwv from the polyfill.
      */
     initialViewMetrics,
+    setStopBfcacheMetricsTracking: (stop: () => void) => {
+      stopBfcacheMetricsTracking = stop
+    },
   }
 }
 

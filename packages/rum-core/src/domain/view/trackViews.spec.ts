@@ -9,7 +9,7 @@ import {
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -1052,10 +1052,10 @@ describe('BFCache views', () => {
     expect(getViewCreateCount()).toBe(1)
     expect(getViewEndCount()).toBe(0)
 
-    const pageshowEvent = new Event('pageshow') as PageTransitionEvent
-    Object.defineProperty(pageshowEvent, 'persisted', { value: true })
+    const event = createNewEvent('pageshow', { __ddIsTrusted: true }) as PageTransitionEvent
+    Object.defineProperty(event, 'persisted', { value: true })
 
-    window.dispatchEvent(pageshowEvent)
+    window.dispatchEvent(event)
 
     expect(getViewEndCount()).toBe(1)
     expect(getViewCreateCount()).toBe(2)
