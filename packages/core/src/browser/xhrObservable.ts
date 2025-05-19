@@ -6,6 +6,7 @@ import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import { shallowClone } from '../tools/utils/objectUtils'
 import type { Configuration } from '../domain/configuration'
+import { addTelemetryDebug } from '../domain/telemetry'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
@@ -41,6 +42,16 @@ export function initXhrObservable(configuration: Configuration) {
 }
 
 function createXhrObservable(configuration: Configuration) {
+  addTelemetryDebug('checkForOverload - before instrumentation', {
+    xhr_overload: {
+      constructor: checkForOverload(XMLHttpRequest),
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      open: checkForOverload(XMLHttpRequest.prototype.open),
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      send: checkForOverload(XMLHttpRequest.prototype.send),
+    },
+  })
+
   return new Observable<XhrContext>((observable) => {
     const { stop: stopInstrumentingStart } = instrumentMethod(XMLHttpRequest.prototype, 'open', openXhr)
 
@@ -63,6 +74,21 @@ function createXhrObservable(configuration: Configuration) {
   })
 }
 
+function checkForOverload(candidateFunction: unknown) {
+  if (typeof candidateFunction === 'undefined') {
+    return typeof candidateFunction
+  }
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  const sourceCode = (candidateFunction as object).toString()
+  if (sourceCode.indexOf('[native code]') > -1) {
+    return 'native'
+  }
+  if (sourceCode.indexOf('handlingStack') > -1) {
+    return 'dd'
+  }
+  return 'other'
+}
+
 function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodCall<XMLHttpRequest, 'open'>) {
   xhrContexts.set(xhr, {
     state: 'open',
@@ -76,6 +102,16 @@ function sendXhr(
   configuration: Configuration,
   observable: Observable<XhrContext>
 ) {
+  addTelemetryDebug('checkForOverload - before send', {
+    xhr_overload: {
+      constructor: checkForOverload(XMLHttpRequest),
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      open: checkForOverload(XMLHttpRequest.prototype.open),
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      send: checkForOverload(XMLHttpRequest.prototype.send),
+    },
+  })
+
   const context = xhrContexts.get(xhr)
   if (!context) {
     return
