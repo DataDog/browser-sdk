@@ -39,6 +39,8 @@ import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import { onBFCacheRestore } from './bfCacheSupport'
+import { trackBfcacheMetrics } from './viewMetrics/trackBfcacheMetrics'
 
 export interface ViewEvent {
   id: string
@@ -116,6 +118,21 @@ export function trackViews(
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
+  }
+
+  if (configuration.trackBfcacheViews) {
+    onBFCacheRestore(configuration, (pageshowEvent) => {
+      currentView.end()
+      currentView = startNewView(ViewLoadingType.BF_CACHE)
+
+      const { stop: stopBfcacheMetricsTracking } = trackBfcacheMetrics(
+        configuration,
+        pageshowEvent,
+        currentView.initialViewMetrics,
+        currentView.scheduleViewUpdate
+      )
+      currentView.setStopBfcacheMetricsTracking(stopBfcacheMetricsTracking)
+    })
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
@@ -208,6 +225,7 @@ function newView(
   let endClocks: ClocksState | undefined
   const location = shallowClone(initialLocation)
   const contextManager = createContextManager()
+  let stopBfcacheMetricsTracking: (() => void) | undefined
 
   let sessionIsActive = true
   let name = viewOptions?.name
@@ -345,6 +363,9 @@ function newView(
       stopInitialViewMetricsTracking()
       stopEventCountsTracking()
       stopINPTracking()
+      if (stopBfcacheMetricsTracking) {
+        stopBfcacheMetricsTracking()
+      }
       stopObservable.notify()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
@@ -358,6 +379,15 @@ function newView(
     setViewName(updatedName: string) {
       name = updatedName
       triggerViewUpdate()
+    },
+    scheduleViewUpdate,
+    /**
+     * we need InitialViewMetrics object so that bfCache logic can update it
+     * with the restored cwv from the polyfill.
+     */
+    initialViewMetrics,
+    setStopBfcacheMetricsTracking: (stop: () => void) => {
+      stopBfcacheMetricsTracking = stop
     },
   }
 }
