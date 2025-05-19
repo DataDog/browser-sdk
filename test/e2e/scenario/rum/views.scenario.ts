@@ -19,8 +19,6 @@ test.describe('rum views', () => {
     // Simple spinner to test dom mutations.
     const SPINNER = html`
       <script type="module">
-        document.body.setAttribute('data-dd-excluded-activity-mutations', 'true')
-
         const spinner = document.createElement('div')
         document.body.append(spinner)
 
