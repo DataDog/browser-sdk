@@ -10,6 +10,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startViewCollection } from './viewCollection'
@@ -76,7 +77,7 @@ describe('viewCollection', () => {
     hooks = createHooks()
     const viewHistory = mockViewHistory(viewHistoryEntry)
     getReplayStatsSpy = jasmine.createSpy()
-    const domMutationObservable = new Observable<void>()
+    const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const locationChangeObservable = new Observable<LocationChange>()
     const clock = mockClock()
