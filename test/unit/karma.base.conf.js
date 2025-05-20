@@ -36,6 +36,8 @@ module.exports = {
   },
   preprocessors: {
     '**/*.+(ts|tsx)': ['webpack', 'sourcemap'],
+    // Apply sourcemaps to webpack common chunk
+    '/**/*.js': ['sourcemap'],
   },
   reporters,
   specReporter: {
