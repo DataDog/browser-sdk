@@ -5,7 +5,6 @@ export {
   addTelemetryError,
   resetTelemetry,
   startTelemetry,
-  isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,

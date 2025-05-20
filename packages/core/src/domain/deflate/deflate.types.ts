@@ -54,5 +54,4 @@ export const enum DeflateEncoderStreamId {
   RUM = 2,
   RUM_REPLICA = 3,
   TELEMETRY = 4,
-  TELEMETRY_REPLICA = 5,
 }

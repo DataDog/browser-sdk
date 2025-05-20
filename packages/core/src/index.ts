@@ -47,7 +47,6 @@ export {
   addTelemetryError,
   resetTelemetry,
   TelemetryService,
-  isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
