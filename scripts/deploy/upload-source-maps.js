@@ -53,12 +53,7 @@ async function uploadSourceMaps(packageName, service, version, uploadPathTypes) 
       uploadPath = buildRootUploadPath(packageName, version)
       await renameFilesWithVersionSuffix(bundleFolder, version)
     } else {
-      const site = siteByDatacenter[uploadPathType]
-      if (!site) {
-        printLog(`No source maps upload configured for datacenter ${uploadPathType}`)
-        continue
-      }
-      sites = [site]
+      sites = [siteByDatacenter[uploadPathType]]
       uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
     }
     const prefix = path.dirname(`/${uploadPath}`)
@@ -84,16 +79,20 @@ async function renameFilesWithVersionSuffix(bundleFolder, version) {
 
 function uploadToDatadog(packageName, service, prefix, bundleFolder, sites) {
   for (const site of sites) {
+    if (!site) {
+      printLog(`No source maps upload configured for ${site}, skipping...`)
+      continue
+    }
     printLog(`Uploading ${packageName} source maps with prefix ${prefix} for ${site}...`)
 
     command`
-    datadog-ci sourcemaps upload ${bundleFolder}
-      --service ${service}
-      --release-version ${getBuildEnvValue('SDK_VERSION')}
-      --minified-path-prefix ${prefix}
-      --project-path @datadog/browser-${packageName}/
-      --repository-url https://www.github.com/datadog/browser-sdk
-  `
+      datadog-ci sourcemaps upload ${bundleFolder}
+        --service ${service}
+        --release-version ${getBuildEnvValue('SDK_VERSION')}
+        --minified-path-prefix ${prefix}
+        --project-path @datadog/browser-${packageName}/
+        --repository-url https://www.github.com/datadog/browser-sdk
+    `
       .withEnvironment({
         DATADOG_API_KEY: getTelemetryOrgApiKey(site),
         DATADOG_SITE: site,
