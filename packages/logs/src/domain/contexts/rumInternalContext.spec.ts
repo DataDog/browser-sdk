@@ -1,10 +1,7 @@
-import type { TelemetryEvent } from '@datadog/browser-core'
-import { startTelemetry, TelemetryService } from '@datadog/browser-core'
+import type { RawTelemetryEvent } from '@datadog/browser-core'
+import { startFakeTelemetry } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
-import { validateAndBuildLogsConfiguration } from '../configuration'
 import { resetRUMInternalContext, getRUMInternalContext } from './rumInternalContext'
-
-const initConfiguration = { clientToken: 'xxx', service: 'service' }
 
 describe('getRUMInternalContext', () => {
   afterEach(() => {
@@ -30,16 +27,11 @@ describe('getRUMInternalContext', () => {
   })
 
   describe('when RUM is injected by Synthetics', () => {
-    let telemetrySpy: jasmine.Spy<(event: TelemetryEvent) => void>
+    let telemetryEvents: RawTelemetryEvent[]
 
     beforeEach(() => {
       mockSyntheticsWorkerValues({ injectsRum: true, publicId: 'test-id', resultId: 'result-id' })
-      const telemetry = startTelemetry(
-        TelemetryService.LOGS,
-        validateAndBuildLogsConfiguration({ ...initConfiguration, telemetrySampleRate: 100 })!
-      )
-      telemetrySpy = jasmine.createSpy()
-      telemetry.observable.subscribe(telemetrySpy)
+      telemetryEvents = startFakeTelemetry()
     })
 
     it('uses the global variable created when the synthetics worker is injecting RUM', () => {
@@ -51,7 +43,7 @@ describe('getRUMInternalContext', () => {
 
     it('adds a telemetry debug event when RUM has not been injected yet', () => {
       getRUMInternalContext()
-      expect(telemetrySpy.calls.mostRecent().args[0].telemetry).toEqual(
+      expect(telemetryEvents[0]).toEqual(
         jasmine.objectContaining({
           message: 'Logs sent before RUM is injected by the synthetics worker',
           status: 'debug',
@@ -65,7 +57,7 @@ describe('getRUMInternalContext', () => {
     it('adds the telemetry debug event only once', () => {
       getRUMInternalContext()
       getRUMInternalContext()
-      expect(telemetrySpy).toHaveBeenCalledTimes(1)
+      expect(telemetryEvents.length).toEqual(1)
     })
   })
 })
