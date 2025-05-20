@@ -8,9 +8,8 @@ import { trackFirstHidden } from './trackFirstHidden'
 
 /**
  * For non-initial views (such as route changes or BFCache restores), the regular load event does not fire
- * because the document is already in memory. In these cases, trackLoadingTime can only emit a loadingTime
- * if waitPageActivityEnd detects some post-restore activity. If nothing happens after the view starts,
- * no candidate is recorded and loadingTime stays undefined.
+ * In these cases, trackLoadingTime can only emit a loadingTime  if waitPageActivityEnd detects some post-restore activity.
+ * If nothing happens after the view starts,no candidate is recorded and loadingTime stays undefined.
  */
 
 export function trackLoadingTime(
