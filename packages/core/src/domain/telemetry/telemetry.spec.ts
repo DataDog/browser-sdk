@@ -1,4 +1,3 @@
-import type { Context, StackTrace } from '@datadog/browser-core'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
@@ -6,17 +5,20 @@ import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
 import { setNavigatorOnLine, setNavigatorConnection } from '../../../test'
+import type { Context } from '../../tools/serialisation/context'
+import { Observable } from '../../tools/observable'
+import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import {
   addTelemetryError,
   resetTelemetry,
-  startTelemetry,
   scrubCustomerFrames,
   formatError,
   addTelemetryConfiguration,
   addTelemetryUsage,
   TelemetryService,
-  drainPreStartTelemetry,
+  startTelemetryCollection,
 } from './telemetry'
+import type { TelemetryEvent } from './telemetryEvent.types'
 
 function startAndSpyTelemetry({
   configuration,
@@ -25,7 +27,12 @@ function startAndSpyTelemetry({
   configuration?: Partial<Configuration>
   getContext?: () => Context
 } = {}) {
-  const telemetry = startTelemetry(
+  const observable = new Observable<TelemetryEvent & Context>()
+
+  const notifySpy = jasmine.createSpy('notified')
+  observable.subscribe(notifySpy)
+
+  startTelemetryCollection(
     TelemetryService.RUM,
     {
       maxTelemetryEventsPerPage: 7,
@@ -33,10 +40,10 @@ function startAndSpyTelemetry({
       telemetryUsageSampleRate: 100,
       ...configuration,
     } as Configuration,
-    getContext
+    getContext,
+    observable
   )
-  const notifySpy = jasmine.createSpy('notified')
-  telemetry.observable.subscribe(notifySpy)
+
   return {
     notifySpy,
   }
@@ -167,9 +174,6 @@ describe('telemetry', () => {
     const { notifySpy } = startAndSpyTelemetry({
       configuration: { telemetrySampleRate: 100, telemetryUsageSampleRate: 100 },
     })
-    expect(notifySpy).not.toHaveBeenCalled()
-
-    drainPreStartTelemetry()
     expect(notifySpy).toHaveBeenCalled()
   })
 

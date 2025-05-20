@@ -6,16 +6,16 @@ import {
   startTelemetry,
   canUseEventBridge,
   addTelemetryDebug,
-  drainPreStartTelemetry,
-  startTelemetryTransport,
 } from '@datadog/browser-core'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
+import type { ViewHistory } from '../domain/contexts/viewHistory'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
+import type { ActionContexts } from '../domain/action/actionCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
@@ -72,21 +72,6 @@ export function startRum(
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
-  const telemetry = startTelemetry(TelemetryService.RUM, configuration, () => ({
-    application: {
-      id: configuration.applicationId,
-    },
-    session: {
-      id: session.findTrackedSession()?.id,
-    },
-    view: {
-      id: viewHistory.findView()?.id,
-    },
-    action: {
-      id: actionContexts.findActionId(),
-    },
-  }))
-
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
@@ -101,6 +86,37 @@ export function startRum(
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
+
+  // Those variables need to be declared before `startTelemetry` as they might be used in the
+  // telemetry context before they are actually defined.
+  // eslint-disable-next-line prefer-const
+  let viewHistory: ViewHistory | undefined
+  // eslint-disable-next-line prefer-const
+  let actionContexts: ActionContexts | undefined
+
+  const telemetry = startTelemetry(
+    TelemetryService.RUM,
+    configuration,
+    () => ({
+      application: {
+        id: configuration.applicationId,
+      },
+      session: {
+        id: session.findTrackedSession()?.id,
+      },
+      view: {
+        id: viewHistory?.findView()?.id,
+      },
+      action: {
+        id: actionContexts?.findActionId(),
+      },
+    }),
+    reportError,
+    pageMayExitObservable,
+    session.expireObservable,
+    createEncoder
+  )
+  cleanupTasks.push(() => telemetry.stop())
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
@@ -124,7 +140,7 @@ export function startRum(
 
   startDefaultContext(hooks, configuration)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
-  const viewHistory = startViewHistory(lifeCycle)
+  viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
   cleanupTasks.push(() => urlContexts.stop())
@@ -135,11 +151,7 @@ export function startRum(
   const userContext = startUserContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration)
 
-  const {
-    actionContexts,
-    addAction,
-    stop: stopRumEventCollection,
-  } = startRumEventCollection(
+  const eventCollection = startRumEventCollection(
     lifeCycle,
     hooks,
     configuration,
@@ -148,18 +160,8 @@ export function startRum(
     windowOpenObservable,
     reportError
   )
-  cleanupTasks.push(stopRumEventCollection)
-
-  const { stop: stopTelemetryTransport } = startTelemetryTransport(
-    configuration,
-    reportError,
-    pageMayExitObservable,
-    session.expireObservable,
-    createEncoder,
-    telemetry.observable
-  )
-  cleanupTasks.push(stopTelemetryTransport)
-  drainPreStartTelemetry()
+  cleanupTasks.push(eventCollection.stop)
+  actionContexts = eventCollection.actionContexts
 
   const {
     addTiming,
@@ -213,7 +215,7 @@ export function startRum(
   cleanupTasks.push(() => profilerApi.stop())
 
   return {
-    addAction,
+    addAction: eventCollection.addAction,
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,

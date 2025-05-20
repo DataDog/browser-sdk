@@ -6,11 +6,9 @@ export {
   startFakeTelemetry,
   resetTelemetry,
   startTelemetry,
-  startTelemetryTransport,
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
-  drainPreStartTelemetry,
 } from './telemetry'
 
 export * from './rawTelemetryEvent.types'

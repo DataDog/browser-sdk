@@ -3,8 +3,6 @@ import {
   startTelemetry,
   TelemetryService,
   addTelemetryConfiguration,
-  startTelemetryTransport,
-  drainPreStartTelemetry,
   createIdentityEncoder,
 } from '@datadog/browser-core'
 import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
@@ -19,32 +17,30 @@ export function startLogsTelemetry(
   pageMayExitObservable: Observable<PageMayExitEvent>,
   session: LogsSessionManager
 ) {
-  const telemetry = startTelemetry(TelemetryService.LOGS, configuration, () => ({
-    application: {
-      id: getRUMInternalContext()?.application_id,
-    },
-    session: {
-      id: session.findTrackedSession()?.id,
-    },
-    view: {
-      id: (getRUMInternalContext()?.view as Context)?.id,
-    },
-    action: {
-      id: (getRUMInternalContext()?.user_action as Context)?.id,
-    },
-  }))
-
-  const { stop } = startTelemetryTransport(
+  const telemetry = startTelemetry(
+    TelemetryService.LOGS,
     configuration,
+    () => ({
+      application: {
+        id: getRUMInternalContext()?.application_id,
+      },
+      session: {
+        id: session.findTrackedSession()?.id,
+      },
+      view: {
+        id: (getRUMInternalContext()?.view as Context)?.id,
+      },
+      action: {
+        id: (getRUMInternalContext()?.user_action as Context)?.id,
+      },
+    }),
     reportError,
     pageMayExitObservable,
     session.expireObservable,
-    createIdentityEncoder,
-    telemetry.observable
+    createIdentityEncoder
   )
-  drainPreStartTelemetry()
   addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
   return {
-    stop,
+    stop: telemetry.stop,
   }
 }
