@@ -50,6 +50,20 @@ describe('transportConfiguration', () => {
     })
   })
 
+  it('adds the replica application id to the rum replica endpoint', () => {
+    const replicaApplicationId = 'replica-application-id'
+    const configuration = computeTransportConfiguration({
+      clientToken,
+      replica: {
+        clientToken: 'replica-client-token',
+        applicationId: replicaApplicationId,
+      },
+    })
+    expect(configuration.replica!.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).toContain(
+      `application.id=${replicaApplicationId}`
+    )
+  })
+
   describe('isIntakeUrl', () => {
     const v1IntakePath = `/v1/input/${clientToken}`
     ;[
