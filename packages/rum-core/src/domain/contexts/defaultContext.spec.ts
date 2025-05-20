@@ -1,9 +1,10 @@
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, mockEventBridge } from '@datadog/browser-core/test'
-import { timeStampNow, type RelativeTime } from '@datadog/browser-core'
+import { HookNames, timeStampNow } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { createHooks, HookNames } from '../../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startDefaultContext } from './defaultContext'
 
 describe('startDefaultContext', () => {

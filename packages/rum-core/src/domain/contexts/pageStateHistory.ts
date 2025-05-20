@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
+  SKIPPED,
   elapsed,
   createValueHistory,
   SESSION_TIME_OUT_DELAY,
@@ -7,12 +8,12 @@ import {
   addEventListeners,
   relativeNow,
   DOM_EVENT,
+  HookNames,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { RumEventType, type PageStateServerEntry } from '../../rawRumEvent.types'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { HookNames, SKIPPED } from '../../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 // Arbitrary value to cap number of element for memory consumption in the browser
 export const MAX_PAGE_STATE_ENTRIES = 4000

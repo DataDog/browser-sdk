@@ -54,6 +54,10 @@ export interface LogsEvent {
      * UUID of the view
      */
     id?: string
+    /**
+     * User defined name of the view
+     */
+    name?: string
 
     [k: string]: unknown
   }
@@ -119,6 +123,8 @@ export interface LogsEvent {
 
     [k: string]: unknown
   }
-
+  user_action?: {
+    id: string | string[]
+  }
   [k: string]: unknown
 }
