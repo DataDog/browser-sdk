@@ -5,6 +5,7 @@ import {
   addTelemetryConfiguration,
   startTelemetryTransport,
   drainPreStartTelemetry,
+  createIdentityEncoder,
 } from '@datadog/browser-core'
 import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
 import { getRUMInternalContext } from './contexts/rumInternalContext'
@@ -39,6 +40,7 @@ export function startLogsTelemetry(
     reportError,
     pageMayExitObservable,
     session.expireObservable,
+    createIdentityEncoder,
     telemetry.observable
   )
   drainPreStartTelemetry()

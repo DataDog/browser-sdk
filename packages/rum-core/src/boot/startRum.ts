@@ -1,20 +1,13 @@
-import type {
-  Observable,
-  TelemetryEvent,
-  RawError,
-  DeflateEncoderStreamId,
-  Encoder,
-  TrackingConsentState,
-} from '@datadog/browser-core'
+import type { Observable, RawError, DeflateEncoderStreamId, Encoder, TrackingConsentState } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
   TelemetryService,
   startTelemetry,
   canUseEventBridge,
-  getEventBridge,
   addTelemetryDebug,
   drainPreStartTelemetry,
+  startTelemetryTransport,
 } from '@datadog/browser-core'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -79,7 +72,7 @@ export function startRum(
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
-  const telemetry = startRumTelemetry(configuration)
+  const telemetry = startTelemetry(TelemetryService.RUM, configuration)
   telemetry.setContextProvider(() => ({
     application: {
       id: configuration.applicationId,
@@ -114,7 +107,6 @@ export function startRum(
     const batch = startRumBatch(
       configuration,
       lifeCycle,
-      telemetry.observable,
       reportError,
       pageMayExitObservable,
       session.expireObservable,
@@ -159,6 +151,15 @@ export function startRum(
   )
   cleanupTasks.push(stopRumEventCollection)
 
+  const { stop: stopTelemetryTransport } = startTelemetryTransport(
+    configuration,
+    reportError,
+    pageMayExitObservable,
+    session.expireObservable,
+    createEncoder,
+    telemetry.observable
+  )
+  cleanupTasks.push(stopTelemetryTransport)
   drainPreStartTelemetry()
 
   const {
@@ -237,15 +238,6 @@ export function startRum(
       cleanupTasks.forEach((task) => task())
     },
   }
-}
-
-function startRumTelemetry(configuration: RumConfiguration) {
-  const telemetry = startTelemetry(TelemetryService.RUM, configuration)
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
-    telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
-  }
-  return telemetry
 }
 
 export function startRumEventCollection(
