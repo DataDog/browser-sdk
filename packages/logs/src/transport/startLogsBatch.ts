@@ -1,5 +1,5 @@
 import type { Context, Observable, PageMayExitEvent, RawError } from '@datadog/browser-core'
-import { createIdentityEncoder, startBatchWithReplica } from '@datadog/browser-core'
+import { createBatch, createFlushController, createHttpRequest, createIdentityEncoder } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
@@ -13,20 +13,23 @@ export function startLogsBatch(
   pageMayExitObservable: Observable<PageMayExitEvent>,
   session: LogsSessionManager
 ) {
-  const batch = startBatchWithReplica(
-    configuration,
-    {
-      endpoint: configuration.logsEndpointBuilder,
-      encoder: createIdentityEncoder(),
-    },
-    configuration.replica && {
-      endpoint: configuration.replica.logsEndpointBuilder,
-      encoder: createIdentityEncoder(),
-    },
-    reportError,
-    pageMayExitObservable,
-    session.expireObservable
-  )
+  const endpoints = [configuration.logsEndpointBuilder]
+  if (configuration.replica) {
+    endpoints.push(configuration.replica.logsEndpointBuilder)
+  }
+
+  const batch = createBatch({
+    encoder: createIdentityEncoder(),
+    request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
+    flushController: createFlushController({
+      messagesLimit: configuration.batchMessagesLimit,
+      bytesLimit: configuration.batchBytesLimit,
+      durationLimit: configuration.flushTimeout,
+      pageMayExitObservable,
+      sessionExpireObservable: session.expireObservable,
+    }),
+    messageBytesLimit: configuration.messageBytesLimit,
+  })
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverLogsEvent: LogsEvent & Context) => {
     batch.add(serverLogsEvent)
