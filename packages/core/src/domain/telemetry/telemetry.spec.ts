@@ -154,15 +154,14 @@ describe('telemetry', () => {
     it('should be added to telemetry events', () => {
       const { telemetry, notifySpy } = startAndSpyTelemetry()
 
-      telemetry.setContextProvider(() => ({
-        foo: 'bar',
-      }))
+      telemetry.setContextProvider('foo', () => 'bar')
+
       callMonitored(() => {
         throw new Error('foo')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
 
-      telemetry.setContextProvider(() => ({}))
+      telemetry.setContextProvider('foo', () => undefined)
       callMonitored(() => {
         throw new Error('bar')
       })

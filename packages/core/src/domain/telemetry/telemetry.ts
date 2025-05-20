@@ -1,4 +1,4 @@
-import type { Context } from '../../tools/serialisation/context'
+import type { Context, ContextValue } from '../../tools/serialisation/context'
 import { ConsoleApiName } from '../../tools/display'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
@@ -49,7 +49,7 @@ export const enum TelemetryService {
 }
 
 export interface Telemetry {
-  setContextProvider: (provider: () => Context) => void
+  setContextProvider: (key: string, contextProvider: () => ContextValue | undefined) => void
   observable: Observable<TelemetryEvent & Context>
   enabled: boolean
 }
@@ -63,9 +63,9 @@ let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
 }
 
 export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
-  let contextProvider: () => Context
   const observable = new Observable<TelemetryEvent & Context>()
   const alreadySentEvents = new Set<string>()
+  const contextProviders = new Map<string, () => ContextValue | undefined>()
 
   const telemetryEnabled =
     !TELEMETRY_EXCLUDED_SITES.includes(configuration.site) && performDraw(configuration.telemetrySampleRate)
@@ -94,34 +94,35 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
 
   function toTelemetryEvent(
     telemetryService: TelemetryService,
-    event: RawTelemetryEvent,
+    rawEvent: RawTelemetryEvent,
     runtimeEnvInfo: RuntimeEnvInfo
   ): TelemetryEvent & Context {
-    return combine(
-      {
-        type: 'telemetry' as const,
-        date: timeStampNow(),
-        service: telemetryService,
-        version: __BUILD_ENV__SDK_VERSION__,
-        source: 'browser' as const,
-        _dd: {
-          format_version: 2 as const,
-        },
-        telemetry: combine(event, {
-          runtime_env: runtimeEnvInfo,
-          connectivity: getConnectivity(),
-          sdk_setup: __BUILD_ENV__SDK_SETUP__,
-        }),
-        experimental_features: Array.from(getExperimentalFeatures()),
+    const event = {
+      type: 'telemetry' as const,
+      date: timeStampNow(),
+      service: telemetryService,
+      version: __BUILD_ENV__SDK_VERSION__,
+      source: 'browser' as const,
+      _dd: {
+        format_version: 2 as const,
       },
-      contextProvider !== undefined ? contextProvider() : {}
-    ) as TelemetryEvent & Context
+      telemetry: combine(rawEvent, {
+        runtime_env: runtimeEnvInfo,
+        connectivity: getConnectivity(),
+        sdk_setup: __BUILD_ENV__SDK_SETUP__,
+      }) as TelemetryEvent['telemetry'],
+      experimental_features: Array.from(getExperimentalFeatures()),
+    } as TelemetryEvent & Context
+
+    for (const [key, contextProvider] of contextProviders) {
+      event[key] = contextProvider()
+    }
+
+    return event
   }
 
   return {
-    setContextProvider: (provider: () => Context) => {
-      contextProvider = provider
-    },
+    setContextProvider: (key, contextProvider) => contextProviders.set(key, contextProvider),
     observable,
     enabled: telemetryEnabled,
   }

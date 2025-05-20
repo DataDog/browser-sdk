@@ -80,20 +80,7 @@ export function startRum(
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
   const telemetry = startRumTelemetry(configuration)
-  telemetry.setContextProvider(() => ({
-    application: {
-      id: configuration.applicationId,
-    },
-    session: {
-      id: session.findTrackedSession()?.id,
-    },
-    view: {
-      id: viewHistory.findView()?.id,
-    },
-    action: {
-      id: actionContexts.findActionId(),
-    },
-  }))
+  telemetry.setContextProvider('application.id', () => configuration.applicationId)
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
@@ -109,6 +96,8 @@ export function startRum(
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
+
+  telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
@@ -135,6 +124,7 @@ export function startRum(
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
+  telemetry.setContextProvider('view.id', () => viewHistory.findView()?.id)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
@@ -158,6 +148,7 @@ export function startRum(
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
+  telemetry.setContextProvider('action.id', () => actionContexts.findActionId())
 
   drainPreStartTelemetry()
 
