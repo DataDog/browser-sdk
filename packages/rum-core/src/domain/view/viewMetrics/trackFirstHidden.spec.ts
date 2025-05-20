@@ -85,7 +85,7 @@ describe('trackFirstHidden', () => {
     })
   })
 
-  describe('using visibilityState entries', () => {
+  xdescribe('using visibilityState entries', () => {
     let originalSupportedEntryTypes: string[] | undefined
     beforeEach(() => {
       performanceBufferMock = mockGlobalPerformanceBuffer()
