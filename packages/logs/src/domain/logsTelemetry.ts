@@ -19,8 +19,7 @@ export function startLogsTelemetry(
   pageMayExitObservable: Observable<PageMayExitEvent>,
   session: LogsSessionManager
 ) {
-  const telemetry = startTelemetry(TelemetryService.LOGS, configuration)
-  telemetry.setContextProvider(() => ({
+  const telemetry = startTelemetry(TelemetryService.LOGS, configuration, () => ({
     application: {
       id: getRUMInternalContext()?.application_id,
     },

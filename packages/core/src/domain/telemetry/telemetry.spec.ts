@@ -1,4 +1,4 @@
-import type { StackTrace } from '@datadog/browser-core'
+import type { Context, StackTrace } from '@datadog/browser-core'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
@@ -18,18 +18,27 @@ import {
   drainPreStartTelemetry,
 } from './telemetry'
 
-function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
-  const telemetry = startTelemetry(TelemetryService.RUM, {
-    maxTelemetryEventsPerPage: 7,
-    telemetrySampleRate: 100,
-    telemetryUsageSampleRate: 100,
-    ...configuration,
-  } as Configuration)
+function startAndSpyTelemetry({
+  configuration,
+  getContext = () => ({}),
+}: {
+  configuration?: Partial<Configuration>
+  getContext?: () => Context
+} = {}) {
+  const telemetry = startTelemetry(
+    TelemetryService.RUM,
+    {
+      maxTelemetryEventsPerPage: 7,
+      telemetrySampleRate: 100,
+      telemetryUsageSampleRate: 100,
+      ...configuration,
+    } as Configuration,
+    getContext
+  )
   const notifySpy = jasmine.createSpy('notified')
   telemetry.observable.subscribe(notifySpy)
   return {
     notifySpy,
-    telemetry,
   }
 }
 
@@ -52,7 +61,9 @@ describe('telemetry', () => {
     })
 
     it('should collects configuration when sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 100 })
+      const { notifySpy } = startAndSpyTelemetry({
+        configuration: { telemetrySampleRate: 100, telemetryConfigurationSampleRate: 100 },
+      })
 
       addTelemetryConfiguration({})
 
@@ -60,7 +71,9 @@ describe('telemetry', () => {
     })
 
     it('should not notify configuration when not sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 0 })
+      const { notifySpy } = startAndSpyTelemetry({
+        configuration: { telemetrySampleRate: 100, telemetryConfigurationSampleRate: 0 },
+      })
 
       addTelemetryConfiguration({})
 
@@ -68,7 +81,9 @@ describe('telemetry', () => {
     })
 
     it('should not notify configuration when telemetrySampleRate is 0', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryConfigurationSampleRate: 100 })
+      const { notifySpy } = startAndSpyTelemetry({
+        configuration: { telemetrySampleRate: 0, telemetryConfigurationSampleRate: 100 },
+      })
 
       addTelemetryConfiguration({})
 
@@ -78,7 +93,9 @@ describe('telemetry', () => {
 
   describe('addTelemetryUsage', () => {
     it('should collects usage when sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
+      const { notifySpy } = startAndSpyTelemetry({
+        configuration: { telemetrySampleRate: 100, telemetryUsageSampleRate: 100 },
+      })
 
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
@@ -86,7 +103,9 @@ describe('telemetry', () => {
     })
 
     it('should not notify usage when not sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 0 })
+      const { notifySpy } = startAndSpyTelemetry({
+        configuration: { telemetrySampleRate: 100, telemetryUsageSampleRate: 0 },
+      })
 
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
@@ -94,7 +113,9 @@ describe('telemetry', () => {
     })
 
     it('should not notify usage when telemetrySampleRate is 0', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryUsageSampleRate: 100 })
+      const { notifySpy } = startAndSpyTelemetry({
+        configuration: { telemetrySampleRate: 0, telemetryUsageSampleRate: 100 },
+      })
 
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
@@ -143,7 +164,9 @@ describe('telemetry', () => {
   it('should collect pre start events', () => {
     addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
-    const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
+    const { notifySpy } = startAndSpyTelemetry({
+      configuration: { telemetrySampleRate: 100, telemetryUsageSampleRate: 100 },
+    })
     expect(notifySpy).not.toHaveBeenCalled()
 
     drainPreStartTelemetry()
@@ -152,28 +175,21 @@ describe('telemetry', () => {
 
   describe('telemetry context', () => {
     it('should be added to telemetry events', () => {
-      const { telemetry, notifySpy } = startAndSpyTelemetry()
+      const { notifySpy } = startAndSpyTelemetry({
+        getContext: () => ({ foo: 'bar' }),
+      })
 
-      telemetry.setContextProvider(() => ({
-        foo: 'bar',
-      }))
       callMonitored(() => {
         throw new Error('foo')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
-
-      telemetry.setContextProvider(() => ({}))
-      callMonitored(() => {
-        throw new Error('bar')
-      })
-      expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
     })
   })
 
   describe('sampling', () => {
     it('should notify when sampled', () => {
       spyOn(Math, 'random').and.callFake(() => 0)
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
+      const { notifySpy } = startAndSpyTelemetry({ configuration: { telemetrySampleRate: 50 } })
 
       callMonitored(() => {
         throw new Error('message')
@@ -184,7 +200,7 @@ describe('telemetry', () => {
 
     it('should not notify when not sampled', () => {
       spyOn(Math, 'random').and.callFake(() => 1)
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
+      const { notifySpy } = startAndSpyTelemetry({ configuration: { telemetrySampleRate: 50 } })
 
       callMonitored(() => {
         throw new Error('message')
@@ -210,7 +226,7 @@ describe('telemetry', () => {
     })
 
     it('should not consider a discarded event for the maxTelemetryEventsPerPage', () => {
-      const { notifySpy } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+      const { notifySpy } = startAndSpyTelemetry({ configuration: { maxTelemetryEventsPerPage: 2 } })
 
       addTelemetryUsage({ feature: 'stop-session' })
       addTelemetryUsage({ feature: 'stop-session' })
@@ -228,7 +244,7 @@ describe('telemetry', () => {
       { site: INTAKE_SITE_US1, enabled: true },
     ].forEach(({ site, enabled }) => {
       it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
-        const { notifySpy } = startAndSpyTelemetry({ site })
+        const { notifySpy } = startAndSpyTelemetry({ configuration: { site } })
 
         callMonitored(() => {
           throw new Error('message')

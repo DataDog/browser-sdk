@@ -72,8 +72,7 @@ export function startRum(
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
-  const telemetry = startTelemetry(TelemetryService.RUM, configuration)
-  telemetry.setContextProvider(() => ({
+  const telemetry = startTelemetry(TelemetryService.RUM, configuration, () => ({
     application: {
       id: configuration.applicationId,
     },

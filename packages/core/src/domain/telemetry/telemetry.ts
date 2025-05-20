@@ -50,7 +50,6 @@ export const enum TelemetryService {
 }
 
 export interface Telemetry {
-  setContextProvider: (provider: () => Context) => void
   observable: Observable<TelemetryEvent & Context>
   enabled: boolean
 }
@@ -63,8 +62,11 @@ let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
   preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
 }
 
-export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
-  let contextProvider: () => Context
+export function startTelemetry(
+  telemetryService: TelemetryService,
+  configuration: Configuration,
+  getContext: () => Context
+): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
   const alreadySentEvents = new Set<string>()
 
@@ -115,14 +117,11 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
         }),
         experimental_features: Array.from(getExperimentalFeatures()),
       },
-      contextProvider !== undefined ? contextProvider() : {}
+      getContext()
     ) as TelemetryEvent & Context
   }
 
   return {
-    setContextProvider: (provider: () => Context) => {
-      contextProvider = provider
-    },
     observable,
     enabled: telemetryEnabled,
   }
