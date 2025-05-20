@@ -10,7 +10,6 @@ describe('trackBfcacheMetrics', () => {
   let originalRAF: typeof requestAnimationFrame
   let originalPerformanceNow: () => number
   let clock: Clock
-  const configuration = mockRumConfiguration()
   let stopTrackBfcacheMetrics: () => void
 
   beforeEach(() => {
@@ -45,11 +44,34 @@ describe('trackBfcacheMetrics', () => {
 
     performance.now = () => 150
 
-    const { stop } = trackBfcacheMetrics(configuration, pageshow, metrics, scheduleSpy)
+    const { stop } = trackBfcacheMetrics(mockRumConfiguration(), pageshow, metrics, scheduleSpy)
     stopTrackBfcacheMetrics = stop
 
     expect(metrics.firstContentfulPaint).toEqual(50 as Duration)
     expect(metrics.largestContentfulPaint?.value).toEqual(50 as RelativeTime)
     expect(scheduleSpy).toHaveBeenCalled()
+  })
+
+  it('should update firstInput metric and call scheduleViewUpdate', () => {
+    const metrics: InitialViewMetrics = {}
+    const scheduleViewUpdate = jasmine.createSpy('scheduleViewUpdate')
+
+    const pageshowEvent = createNewEvent('pageshow') as PageTransitionEvent
+    Object.defineProperty(pageshowEvent, 'persisted', { value: true })
+    Object.defineProperty(pageshowEvent, 'timeStamp', { value: 0 })
+
+    trackBfcacheMetrics(mockRumConfiguration(), pageshowEvent, metrics, scheduleViewUpdate)
+
+    clock.tick(50)
+
+    const firstInputEvent = createNewEvent('pointerdown', {
+      cancelable: true,
+    } as Partial<PointerEvent>)
+
+    window.dispatchEvent(firstInputEvent)
+    window.dispatchEvent(createNewEvent('pointerup'))
+
+    expect(metrics.firstInput).toBeDefined()
+    expect(scheduleViewUpdate).toHaveBeenCalled()
   })
 })

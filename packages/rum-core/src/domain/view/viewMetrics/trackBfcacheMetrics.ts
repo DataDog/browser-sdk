@@ -32,6 +32,10 @@ export function trackBfcacheMetrics(
   }
 }
 
+// BFCache keeps a full in-memory snapshot of the DOM. When the page is restored, nothing needs to be fetched, so the whole
+// viewport repaints in a single frame. Consequently, LCP almost always equals FCP.
+// (See: https://github.com/GoogleChrome/web-vitals/pull/87)
+
 function measureRestoredPaintTime(pageshowEvent: PageTransitionEvent, callback: (paintTime: Duration) => void): void {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
