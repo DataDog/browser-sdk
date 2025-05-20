@@ -18,7 +18,13 @@ import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import { createBoundedBuffer } from '../../tools/boundedBuffer'
-import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../transport'
+import {
+  canUseEventBridge,
+  createFlushController,
+  createHttpRequest,
+  getEventBridge,
+  createBatch,
+} from '../../transport'
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
@@ -168,24 +174,24 @@ function startTelemetryTransport(
     const telemetrySubscription = telemetryObservable.subscribe((event) => bridge.send('internal_telemetry', event))
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   } else {
-    const telemetryBatch = startBatchWithReplica(
-      configuration,
-      {
-        endpoint: configuration.rumEndpointBuilder,
-        encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
-      },
-      configuration.replica && {
-        endpoint: configuration.replica.rumEndpointBuilder,
-        encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY_REPLICA),
-      },
-      reportError,
-      pageMayExitObservable,
-      expireObservable
-    )
+    const endpoints = [configuration.rumEndpointBuilder]
+    if (configuration.replica && isTelemetryReplicationAllowed(configuration)) {
+      endpoints.push(configuration.replica.rumEndpointBuilder)
+    }
+    const telemetryBatch = createBatch({
+      encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
+      request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
+      flushController: createFlushController({
+        messagesLimit: configuration.batchMessagesLimit,
+        bytesLimit: configuration.batchBytesLimit,
+        durationLimit: configuration.flushTimeout,
+        pageMayExitObservable,
+        sessionExpireObservable: expireObservable,
+      }),
+      messageBytesLimit: configuration.messageBytesLimit,
+    })
     cleanupTasks.push(() => telemetryBatch.stop())
-    const telemetrySubscription = telemetryObservable.subscribe((event) =>
-      telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
-    )
+    const telemetrySubscription = telemetryObservable.subscribe((event) => telemetryBatch.add(event))
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
 
