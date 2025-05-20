@@ -9,7 +9,7 @@ import {
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -1027,38 +1027,5 @@ describe('service and version', () => {
 
     expect(getViewUpdate(0).service).toEqual('view service')
     expect(getViewUpdate(0).version).toEqual('view version')
-  })
-})
-
-describe('BFCache views', () => {
-  const lifeCycle = new LifeCycle()
-  let clock: Clock
-  let viewTest: ViewTest
-
-  beforeEach(() => {
-    clock = mockClock()
-
-    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackBfcacheViews: true } })
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-      clock.cleanup()
-    })
-  })
-
-  it('should create a new "bf_cache" view when restoring from the BFCache', () => {
-    const { getViewCreateCount, getViewEndCount, getViewUpdate, getViewUpdateCount } = viewTest
-
-    expect(getViewCreateCount()).toBe(1)
-    expect(getViewEndCount()).toBe(0)
-
-    const event = createNewEvent('pageshow', { __ddIsTrusted: true }) as PageTransitionEvent
-    Object.defineProperty(event, 'persisted', { value: true })
-
-    window.dispatchEvent(event)
-
-    expect(getViewEndCount()).toBe(1)
-    expect(getViewCreateCount()).toBe(2)
-    expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.BF_CACHE)
   })
 })

@@ -36,18 +36,17 @@ export function startRUMInternalContext(hooks: Hooks) {
     const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
     const rumContext = getInternalContextFromRumGlobal(startTime, rumSource)
 
-    if (!rumContext) {
-      if (willSyntheticsInjectRumResult && !logsSentBeforeRumInjectionTelemetryAdded) {
-        logsSentBeforeRumInjectionTelemetryAdded = true
-        addTelemetryDebug('Logs sent before RUM is injected by the synthetics worker', {
-          testId: getSyntheticsTestId(),
-          resultId: getSyntheticsResultId(),
-        })
-      }
-      return
+    if (rumContext) {
+      return rumContext
     }
 
-    return rumContext
+    if (willSyntheticsInjectRumResult && !logsSentBeforeRumInjectionTelemetryAdded) {
+      logsSentBeforeRumInjectionTelemetryAdded = true
+      addTelemetryDebug('Logs sent before RUM is injected by the synthetics worker', {
+        testId: getSyntheticsTestId(),
+        resultId: getSyntheticsResultId(),
+      })
+    }
   }
 
   function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): Context | undefined {

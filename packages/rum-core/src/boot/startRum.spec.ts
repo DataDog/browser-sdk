@@ -1,14 +1,14 @@
-import type { Duration, RawError, RelativeTime } from '@datadog/browser-core'
+import type { RawError, Duration, RelativeTime } from '@datadog/browser-core'
 import {
-  createIdentityEncoder,
-  createTrackingConsentState,
-  findLast,
-  noop,
   Observable,
-  ONE_SECOND,
-  relativeNow,
   stopSessionManager,
   toServerDuration,
+  ONE_SECOND,
+  findLast,
+  noop,
+  relativeNow,
+  createIdentityEncoder,
+  createTrackingConsentState,
   TrackingConsent,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'

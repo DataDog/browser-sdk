@@ -188,7 +188,6 @@ export type PageStateServerEntry = { state: PageState; start: ServerDuration }
 export const enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
-  BF_CACHE = 'bf_cache',
 }
 
 export interface ViewCustomTimings {
