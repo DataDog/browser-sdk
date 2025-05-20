@@ -1,5 +1,5 @@
-import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
+import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
