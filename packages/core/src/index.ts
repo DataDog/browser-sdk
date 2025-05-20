@@ -44,7 +44,6 @@ export type {
 } from './domain/telemetry'
 export {
   startTelemetry,
-  startTelemetryTransport,
   addTelemetryDebug,
   addTelemetryError,
   startFakeTelemetry,
@@ -53,7 +52,6 @@ export {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
-  drainPreStartTelemetry,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'

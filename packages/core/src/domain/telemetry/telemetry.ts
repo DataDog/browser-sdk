@@ -51,7 +51,7 @@ export const enum TelemetryService {
 
 export interface Telemetry {
   setContextProvider: (key: string, contextProvider: () => ContextValue | undefined) => void
-  observable: Observable<TelemetryEvent & Context>
+  stop: () => void
   enabled: boolean
 }
 
@@ -63,8 +63,31 @@ let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
   preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
 }
 
-export function startTelemetry(telemetryService: TelemetryService, configuration: Configuration): Telemetry {
+export function startTelemetry(
+  telemetryService: TelemetryService,
+  configuration: Configuration,
+  reportError: (error: RawError) => void,
+  pageMayExitObservable: Observable<PageMayExitEvent>,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
+
+  const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
+
+  const { enabled, setContextProvider } = startTelemetryCollection(telemetryService, configuration, observable)
+
+  return {
+    setContextProvider,
+    stop,
+    enabled,
+  }
+}
+
+export function startTelemetryCollection(
+  telemetryService: TelemetryService,
+  configuration: Configuration,
+  observable: Observable<TelemetryEvent & Context>
+) {
   const alreadySentEvents = new Set<string>()
   const contextProviders = new Map<string, () => ContextValue | undefined>()
 
@@ -91,7 +114,15 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
       alreadySentEvents.add(stringifiedEvent)
     }
   }
+  // need to be called after telemetry context is provided and observers are registered
+  preStartTelemetryBuffer.drain()
   startMonitorErrorCollection(addTelemetryError)
+
+  return {
+    setContextProvider: (key: string, contextProvider: () => ContextValue | undefined) =>
+      contextProviders.set(key, contextProvider),
+    enabled: telemetryEnabled,
+  }
 
   function toTelemetryEvent(
     telemetryService: TelemetryService,
@@ -121,15 +152,9 @@ export function startTelemetry(telemetryService: TelemetryService, configuration
 
     return event
   }
-
-  return {
-    setContextProvider: (key, contextProvider) => contextProviders.set(key, contextProvider),
-    observable,
-    enabled: telemetryEnabled,
-  }
 }
 
-export function startTelemetryTransport(
+function startTelemetryTransport(
   configuration: Configuration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
@@ -186,11 +211,6 @@ export function startFakeTelemetry() {
   }
 
   return events
-}
-
-// need to be called after telemetry context is provided and observers are registered
-export function drainPreStartTelemetry() {
-  preStartTelemetryBuffer.drain()
 }
 
 export function resetTelemetry() {
