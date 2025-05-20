@@ -19,7 +19,7 @@ const subject = {
 }
 
 async function initializeOpenFeature() {
-  const datadogFlaggingProvider = new DatadogProvider({ clientToken: 'xxx' })
+  const datadogFlaggingProvider = new DatadogProvider({ subjectKey: 'subject-key-1', clientToken: 'xxx' })
   // Set the context before the provider is set to ensure the Datadog SDK is initialized with a user context.
   await OpenFeature.setContext(subject)
 

@@ -4,7 +4,7 @@ import {
   ensureContextualSubjectAttributes,
   ensureNonContextualSubjectAttributes,
 } from './internal/attributes';
-import { AssignmentCache } from './internal/cache/abstract-assignment-cache';
+import { AbstractAssignmentCache, AssignmentCache, AssignmentCacheEntry } from './internal/cache/abstract-assignment-cache';
 import { NonExpiringInMemoryAssignmentCache } from './internal/cache/non-expiring-in-memory-cache-assignment';
 import { IConfigurationStore, ISyncStore } from './internal/configuration-store/configuration-store';
 import {
@@ -25,6 +25,10 @@ import PrecomputedRequestor from './internal/precomputed-requestor';
 import SdkTokenDecoder from './internal/sdk-token-decoder';
 import { Attributes, ContextAttributes, FlagEvaluationWithoutDetails, FlagKey } from './internal/types';
 import { validateNotBlank } from './internal/validation';
+import { IConfigurationWire } from './internal/configuration-wire/configuration-wire-types';
+import { MemoryOnlyConfigurationStore } from './internal/configuration-store/memory.store';
+import { IObfuscatedPrecomputedConfigurationResponse } from './internal/configuration-wire/configuration-wire-types';
+import { precomputedFlagsStorageFactory } from './internal/configuration-factory';
 
 export interface Subject {
   subjectKey: string;
@@ -62,6 +66,15 @@ export default class EppoPrecomputedClient {
     subjectAttributes: ContextAttributes;
   };
   private precomputedFlagStore: IConfigurationStore<PrecomputedFlag>;
+  public static initialized = false;
+
+  public static instance = new EppoPrecomputedClient({
+    precomputedFlagStore: new MemoryOnlyConfigurationStore(),
+    subject: {
+      subjectKey: '',
+      subjectAttributes: {},
+    },
+  });
 
   public constructor(options: EppoPrecomputedClientOptions) {
     this.precomputedFlagStore = options.precomputedFlagStore;
@@ -349,5 +362,143 @@ export default class EppoPrecomputedClient {
       sdkLanguage: 'javascript',
       sdkLibVersion: '1.0.0',
     };
+  }
+}
+
+/**
+ * Configuration parameters for initializing the Eppo precomputed client.
+ *
+ * This interface is used for cases where precomputed assignments are available
+ * from an external process that can bootstrap the SDK client.
+ *
+ * @param precomputedConfiguration - The configuration as a string to bootstrap the client.
+ * @param assignmentLogger - Optional logger for assignment events.
+ * @param banditLogger - Optional logger for bandit events.
+ * @param throwOnFailedInitialization - Optional flag to throw an error if initialization fails.
+ * @public
+ */
+export interface IPrecomputedClientConfigSync {
+  precomputedConfiguration: string;
+  assignmentLogger?: IAssignmentLogger;
+  throwOnFailedInitialization?: boolean;
+}
+
+/**
+ * Initializes the Eppo precomputed client with configuration parameters.
+ *
+ * The purpose is for use-cases where the precomputed assignments are available from an external process
+ * that can bootstrap the SDK.
+ *
+ * This method should be called once on application startup.
+ *
+ * @param config - precomputed client configuration
+ * @returns a singleton precomputed client instance
+ * @public
+ */
+export function offlinePrecomputedInit(
+  config: IPrecomputedClientConfigSync,
+): EppoPrecomputedClient {
+  const throwOnFailedInitialization = config.throwOnFailedInitialization ?? true;
+
+  let configurationWire: IConfigurationWire;
+  try {
+    configurationWire = JSON.parse(config.precomputedConfiguration);
+    if (!configurationWire.precomputed) throw new Error();
+  } catch (error) {
+    const errorMessage = 'Invalid precomputed configuration wire';
+    if (throwOnFailedInitialization) {
+      throw new Error(errorMessage);
+    }
+    console.error(`[Eppo SDK] ${errorMessage}`);
+    return EppoPrecomputedClient.instance;
+  }
+  const { subjectKey, subjectAttributes, response } = configurationWire.precomputed;
+  const parsedResponse: IObfuscatedPrecomputedConfigurationResponse = JSON.parse(response);
+
+  try {
+    const memoryOnlyPrecomputedStore = precomputedFlagsStorageFactory();
+    memoryOnlyPrecomputedStore
+      .setEntries(parsedResponse.flags)
+      .catch((err) =>
+        console.warn('Error setting precomputed assignments for memory-only store', err),
+      );
+    memoryOnlyPrecomputedStore.salt = parsedResponse.salt;
+
+    const subject: Subject = {
+      subjectKey,
+      subjectAttributes: subjectAttributes ?? {},
+    };
+
+    // shutdownEppoPrecomputedClient();
+
+    // Add memory-only assignment cache for offline mode
+    const assignmentCache = assignmentCacheFactory();
+
+    EppoPrecomputedClient.instance = new EppoPrecomputedClient({
+      precomputedFlagStore: memoryOnlyPrecomputedStore,
+      subject,
+    });
+
+    if (config.assignmentLogger) {
+      EppoPrecomputedClient.instance.setAssignmentLogger(config.assignmentLogger);
+    }
+
+    //EppoPrecomputedClient.instance.useCustomAssignmentCache(assignmentCache);
+  } catch (error) {
+    console.warn(
+      '[Eppo SDK] Encountered an error initializing precomputed client, assignment calls will return the default value and not be logged',
+    );
+    if (throwOnFailedInitialization) {
+      throw error;
+    }
+  }
+
+  EppoPrecomputedClient.initialized = true;
+  return EppoPrecomputedClient.instance;
+}
+
+export function assignmentCacheFactory(): AssignmentCache {
+  return new SimpleAssignmentCache();
+}
+
+/** An {@link AssignmentCache} that can write (set) multiple entries at once (in bulk). */
+export type BulkWriteAssignmentCache = AssignmentCache & {
+  /** Sets all entries in the cache to the provided array of [key, value] pairs. */
+  setEntries(entries: [string, string][]): void;
+};
+
+/** An {@link AssignmentCache} that can read (get) all entries at once. */
+export type BulkReadAssignmentCache = AssignmentCache & {
+  /** Returns all entries in the cache as an array of [key, value] pairs. */
+  getEntries(): Promise<[string, string][]>;
+};
+
+export class SimpleAssignmentCache
+  implements BulkWriteAssignmentCache, BulkReadAssignmentCache {
+  private readonly store: Map<string, string>;
+  private readonly cache: AbstractAssignmentCache<Map<string, string>>;
+
+  constructor() {
+    this.store = new Map<string, string>();
+    this.cache = new NonExpiringInMemoryAssignmentCache(this.store);
+  }
+
+  set(key: AssignmentCacheEntry): void {
+    this.cache.set(key);
+  }
+
+  has(key: AssignmentCacheEntry): boolean {
+    return this.cache.has(key);
+  }
+
+  setEntries(entries: [string, string][]): void {
+    const { store } = this;
+    // it's important to call store.set() directly here because we want to set the raw entries into the cache, bypassing
+    // the AbstractAssignmentCache logic, which takes an AssignmentCacheKey instead.
+    entries.forEach(([key, value]) => store.set(key, value));
+  }
+
+  getEntries(): Promise<[string, string][]> {
+    return Promise.resolve(Array.from(this.cache.entries()));
   }
 }

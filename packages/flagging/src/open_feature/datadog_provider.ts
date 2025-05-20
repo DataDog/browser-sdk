@@ -14,6 +14,8 @@ import {
 import Strategy from '../strategy/strategy';
 import { EppoStrategy } from '../strategy/eppo_strategy';
 import { MemoryOnlyConfigurationStore } from '../strategy/eppo/internal/configuration-store/memory.store';
+import { ConfigurationWireV1, PrecomputedConfiguration } from '../strategy/eppo/internal/configuration-wire/configuration-wire-types';
+import { VariationType } from '../strategy/eppo/internal/interfaces';
 
 export class DatadogProvider implements Provider {
     // Adds runtime validation that the provider is used with the expected SDK
@@ -28,24 +30,25 @@ export class DatadogProvider implements Provider {
     // Optional provider managed hooks
     hooks?: Hook[];
 
-    constructor({ clientToken }: { clientToken: string }) {
+    constructor({ subjectKey, clientToken }: { subjectKey: string, clientToken: string }) {
         this.datadogClientToken = clientToken;
 
         // todo: map datadog client token to eppo
-        this.strategy = new EppoStrategy({
-            precomputedFlagStore: new MemoryOnlyConfigurationStore(),
-            requestParameters: {
-                apiKey: this.datadogClientToken,
-                sdkVersion: '1.0.0',
-                sdkName: 'datadog-provider',
-            },
-            subject: {
-                subjectKey: 'datadog-provider',
-                subjectAttributes: {
-                    environment: 'datadog-provider',
-                }
-            }
-        });
+        const config = ConfigurationWireV1.precomputed(
+            PrecomputedConfiguration.obfuscated(
+                subjectKey,
+                {
+                    'flagName.my-boolean': {
+                        variationType: VariationType.BOOLEAN,
+                        variationValue: 'true',
+                        doLog: false
+                    }
+                },
+                'salt'
+            )
+        );
+
+        this.strategy = new EppoStrategy(config.toString());
     }
 
     resolveBooleanEvaluation(flagKey: string, defaultValue: boolean, context: EvaluationContext, logger: Logger): ResolutionDetails<boolean> {

@@ -1,11 +1,13 @@
-import EppoPrecomputedClient, { EppoPrecomputedClientOptions } from "./eppo/eppo-precomputed-client";
+import EppoPrecomputedClient, { EppoPrecomputedClientOptions, offlinePrecomputedInit } from "./eppo/eppo-precomputed-client";
 import Strategy from "./strategy";
 
 export class EppoStrategy implements Strategy {
     private eppoClient: EppoPrecomputedClient | null;
 
-    constructor(clientOptions: EppoPrecomputedClientOptions) {
-        this.eppoClient = new EppoPrecomputedClient(clientOptions)
+    constructor(precomputedConfiguration: string) {
+        this.eppoClient = offlinePrecomputedInit({
+            precomputedConfiguration: precomputedConfiguration
+        })
     }
 
     async initialize(): Promise<void> {
