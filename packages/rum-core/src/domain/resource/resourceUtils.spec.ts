@@ -3,7 +3,7 @@ import { ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import {
-  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
+  MAX_RESOURCE_VALUE_CHAR_LENGTH,
   computeResourceEntryDetails,
   computeResourceEntryDuration,
   computeResourceEntryType,
@@ -311,7 +311,7 @@ describe('shouldTrackResource', () => {
 })
 
 describe('isLongDataUrl and sanitizeDataUrl', () => {
-  const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH).join('a')
+  const longString = new Array(MAX_RESOURCE_VALUE_CHAR_LENGTH).join('a')
   it('returns truncated url when detects data url of json', () => {
     const longDataUrl = `data:text/json; charset=utf-8,${longString}`
     expect(isLongDataUrl(longDataUrl)).toEqual(true)

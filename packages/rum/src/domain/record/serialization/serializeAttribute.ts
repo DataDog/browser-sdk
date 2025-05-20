@@ -10,6 +10,8 @@ import {
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { censoredImageForSize } from './serializationUtils'
 
+export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 1_000_000
+
 export function serializeAttribute(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
@@ -79,7 +81,7 @@ export function serializeAttribute(
   }
 
   // Minimum Fix for customer.
-  if (isLongDataUrl(attributeValue)) {
+  if (isLongDataUrl(attributeValue, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH)) {
     return sanitizeDataUrl(attributeValue)
   }
 
