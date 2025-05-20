@@ -4,11 +4,12 @@ import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
+import type { RumMutationRecord } from '../../../browser/domMutationObservable'
 import { trackFirstHidden } from './trackFirstHidden'
 
 export function trackLoadingTime(
   lifeCycle: LifeCycle,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   loadType: ViewLoadingType,
