@@ -13,7 +13,8 @@ test.describe('browser extensions', () => {
   console.log('test')
   createTest('popup page should load extension popup and display expected content')
     .withExtension(pathToDefaultExtension)
-    .run(async ({ page, extensionId }) => {
+    .run(async ({ page, getExtensionId }) => {
+      const extensionId = await getExtensionId()
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
       await expect(page.locator('body')).toHaveText(/Extension Popup/)
     })
@@ -23,7 +24,8 @@ test.describe('browser extensions', () => {
   )
     .withExtension(pathToDefaultExtension)
     .withRum()
-    .run(async ({ page, extensionId, baseUrl }) => {
+    .run(async ({ page, baseUrl, getExtensionId }) => {
+      const extensionId = await getExtensionId()
       const consoleMessages: string[] = []
       page.on('console', (msg) => consoleMessages.push(msg.text()))
 
@@ -57,7 +59,8 @@ test.describe('browser extensions', () => {
 
   createTest('SDK with correct allowedTrackingOrigins parameter works correctly')
     .withExtension(pathToChromeExtension)
-    .run(async ({ page, extensionId }) => {
+    .run(async ({ page, getExtensionId }) => {
+      const extensionId = await getExtensionId()
       const consoleMessages: string[] = []
       page.on('console', (msg) => consoleMessages.push(msg.text()))
 
@@ -82,7 +85,8 @@ test.describe('browser extensions', () => {
   createTest('SDK with app.example.com allowedTrackingOrigins throws a warning')
     .withExtension(pathToExampleExtension)
     .withRum()
-    .run(async ({ page, extensionId, baseUrl }) => {
+    .run(async ({ page, baseUrl, getExtensionId }) => {
+      const extensionId = await getExtensionId()
       const consoleMessages: string[] = []
       page.on('console', (msg) => consoleMessages.push(msg.text()))
 
