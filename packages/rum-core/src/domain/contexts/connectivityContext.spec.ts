@@ -7,7 +7,9 @@ import { startConnectivityContext } from './connectivityContext'
 
 describe('startConnectivityContext', () => {
   describe('assemble hook', () => {
-    let hooks: Hooks
+    type NewType = Hooks
+
+    let hooks: NewType
 
     beforeEach(() => {
       hooks = createHooks()
