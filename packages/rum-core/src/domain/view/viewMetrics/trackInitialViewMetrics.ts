@@ -1,4 +1,6 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '../../configuration'
 import { trackFirstContentfulPaint } from './trackFirstContentfulPaint'
 import type { FirstInput } from './trackFirstInput'
@@ -16,6 +18,26 @@ export interface InitialViewMetrics {
   firstInput?: FirstInput
 }
 
+function trackInitialFirstHidden(configuration: RumConfiguration, eventTarget: Window = window) {
+  const firstHidden = trackFirstHidden(configuration, eventTarget)
+
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+    const firstHiddenEntry = performance
+      .getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE)
+      .find((entry) => entry.name === 'hidden')
+    if (firstHiddenEntry) {
+      return {
+        timeStamp: (firstHidden.timeStamp > firstHiddenEntry.startTime
+          ? firstHiddenEntry.startTime
+          : firstHidden.timeStamp) as RelativeTime,
+        stop: noop,
+      }
+    }
+  }
+
+  return firstHidden
+}
+
 export function trackInitialViewMetrics(
   configuration: RumConfiguration,
   setLoadEvent: (loadEnd: Duration) => void,
@@ -29,7 +51,7 @@ export function trackInitialViewMetrics(
     scheduleViewUpdate()
   })
 
-  const firstHidden = trackFirstHidden(configuration)
+  const firstHidden = trackInitialFirstHidden(configuration)
   const { stop: stopFCPTracking } = trackFirstContentfulPaint(configuration, firstHidden, (firstContentfulPaint) => {
     initialViewMetrics.firstContentfulPaint = firstContentfulPaint
     scheduleViewUpdate()
