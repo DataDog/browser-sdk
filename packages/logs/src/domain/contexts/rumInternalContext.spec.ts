@@ -1,4 +1,4 @@
-import type { RelativeTime, TelemetryEvent } from '@datadog/browser-core'
+import type { Context, RelativeTime, TelemetryEvent } from '@datadog/browser-core'
 import { HookNames, startTelemetry, TelemetryService } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import { validateAndBuildLogsConfiguration } from '../configuration'
@@ -8,13 +8,14 @@ import { startRUMInternalContext } from './rumInternalContext'
 
 const initConfiguration = { clientToken: 'xxx', service: 'service' }
 
-describe('getRUMInternalContext', () => {
+describe('startRUMInternalContext', () => {
   let hooks: Hooks
   let stopRUMInternalContext: () => void
+  let getRUMInternalContext: (startTime?: RelativeTime) => Context | undefined
 
   beforeEach(() => {
     hooks = createHooks()
-    stopRUMInternalContext = startRUMInternalContext(hooks).stop
+    ;({ stop: stopRUMInternalContext, getRUMInternalContext } = startRUMInternalContext(hooks))
   })
 
   afterEach(() => {
@@ -95,6 +96,16 @@ describe('getRUMInternalContext', () => {
         startTime: 0 as RelativeTime,
       })
       expect(telemetrySpy).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('getRUMInternalContext', () => {
+    it('should get the RUM internal context', () => {
+      window.DD_RUM = {
+        getInternalContext: () => ({ foo: 'bar' }),
+      }
+      const rumInternalContext = getRUMInternalContext()
+      expect(rumInternalContext).toEqual({ foo: 'bar' })
     })
   })
 })
