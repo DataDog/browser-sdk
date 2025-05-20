@@ -3,6 +3,7 @@ import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
+import { createExtensionTest } from '../helpers/extensionFixture'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
@@ -18,7 +19,6 @@ import type { SetupFactory, SetupOptions } from './pageSetups'
 import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
-import { createExtensionTest } from 'lib/helpers/extensionFixture'
 
 export const DEFAULT_RUM_CONFIGURATION = {
   applicationId: APPLICATION_ID,
@@ -179,7 +179,7 @@ function declareTestsForSetups(
   title: string,
   setups: Array<{ factory: SetupFactory; name?: string }>,
   setupOptions: SetupOptions,
-  runner: TestRunner,
+  runner: TestRunner
 ) {
   if (setups.length > 1) {
     setupOptions.testFixture.describe(title, () => {
@@ -258,7 +258,7 @@ function createTestContext(
 
       const extensionId = background.url().split('/')[2]
       return extensionId || ''
-    }
+    },
   }
 }
 
