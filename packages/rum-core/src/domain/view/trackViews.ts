@@ -122,19 +122,16 @@ export function trackViews(
   if (configuration.trackBfcacheViews) {
     onBFCacheRestore(configuration, (pageshowEvent) => {
       currentView.end()
-      currentView = startNewView(ViewLoadingType.BF_CACHE)
-
-      const { stop: stopBfcacheMetricsTracking } = trackBfcacheMetrics(
-        configuration,
-        pageshowEvent,
-        currentView.initialViewMetrics,
-        currentView.scheduleViewUpdate
-      )
-      currentView.setStopBfcacheMetricsTracking(stopBfcacheMetricsTracking)
+      currentView = startNewView(ViewLoadingType.BF_CACHE, undefined, undefined, pageshowEvent)
     })
   }
 
-  function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
+  function startNewView(
+    loadingType: ViewLoadingType,
+    startClocks?: ClocksState,
+    viewOptions?: ViewOptions,
+    pageshowEvent?: PageTransitionEvent
+  ) {
     const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
@@ -143,7 +140,8 @@ export function trackViews(
       location,
       loadingType,
       startClocks,
-      viewOptions
+      viewOptions,
+      pageshowEvent
     )
     activeViews.add(newlyCreatedView)
     newlyCreatedView.stopObservable.subscribe(() => {
@@ -214,7 +212,8 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   startClocks: ClocksState = clocksNow(),
-  viewOptions?: ViewOptions
+  viewOptions?: ViewOptions,
+  pageshowEvent?: PageTransitionEvent
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -272,6 +271,17 @@ function newView(
     loadingType === ViewLoadingType.INITIAL_LOAD
       ? trackInitialViewMetrics(configuration, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
+
+  // Start BFCache-specific metrics when restoring from BFCache
+  if (loadingType === ViewLoadingType.BF_CACHE && pageshowEvent) {
+    const { stop: stopBfCache } = trackBfcacheMetrics(
+      configuration,
+      pageshowEvent,
+      initialViewMetrics,
+      scheduleViewUpdate
+    )
+    stopBfcacheMetricsTracking = stopBfCache
+  }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
 
@@ -380,14 +390,6 @@ function newView(
       triggerViewUpdate()
     },
     scheduleViewUpdate,
-    /**
-     * we need InitialViewMetrics object so that bfCache logic can update it
-     * with the restored cwv from the polyfill.
-     */
-    initialViewMetrics,
-    setStopBfcacheMetricsTracking: (stop: () => void) => {
-      stopBfcacheMetricsTracking = stop
-    },
   }
 }
 

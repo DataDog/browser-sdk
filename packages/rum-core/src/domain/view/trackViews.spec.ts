@@ -1052,8 +1052,7 @@ describe('BFCache views', () => {
     expect(getViewCreateCount()).toBe(1)
     expect(getViewEndCount()).toBe(0)
 
-    const event = createNewEvent('pageshow', { __ddIsTrusted: true }) as PageTransitionEvent
-    Object.defineProperty(event, 'persisted', { value: true })
+    const event = createNewEvent('pageshow', { persisted: true })
 
     window.dispatchEvent(event)
 

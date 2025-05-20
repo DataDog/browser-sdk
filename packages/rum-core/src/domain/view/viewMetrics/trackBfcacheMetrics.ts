@@ -1,4 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { elapsed, relativeNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { retrieveFirstInputTiming } from '../../../browser/firstInputPolyfill'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
@@ -21,7 +22,7 @@ export function trackBfcacheMetrics(
   const { stop: stopMeasureRestoredFID } = measureRestoredFID(configuration, pageshowEvent, ({ delay, time }) => {
     metrics.firstInput = {
       delay,
-      time: time as RelativeTime,
+      time,
       targetSelector: undefined,
     }
     scheduleViewUpdate()
@@ -32,15 +33,17 @@ export function trackBfcacheMetrics(
   }
 }
 
-// BFCache keeps a full in-memory snapshot of the DOM. When the page is restored, nothing needs to be fetched, so the whole
-// viewport repaints in a single frame. Consequently, LCP almost always equals FCP.
-// (See: https://github.com/GoogleChrome/web-vitals/pull/87)
-
+/**
+ * BFCache keeps a full in-memory snapshot of the DOM. When the page is restored, nothing needs to be fetched, so the whole
+ * viewport repaints in a single frame. Consequently, LCP almost always equals FCP.
+ * (See: https://github.com/GoogleChrome/web-vitals/pull/87)
+ */
 function measureRestoredPaintTime(pageshowEvent: PageTransitionEvent, callback: (paintTime: Duration) => void): void {
+  // Uses two requestAnimationFrame calls to measure FCP after a bfcache restore,
+  // as this gives a more accurate timestamp for the frame following the pageshow event.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      const paintTime = performance.now() - pageshowEvent.timeStamp
-      callback(paintTime as Duration)
+      callback(elapsed(pageshowEvent.timeStamp as RelativeTime, relativeNow()))
     })
   })
 }
@@ -48,12 +51,12 @@ function measureRestoredPaintTime(pageshowEvent: PageTransitionEvent, callback: 
 function measureRestoredFID(
   configuration: RumConfiguration,
   pageshowEvent: PageTransitionEvent,
-  callback: (fid: { delay: Duration; time: Duration }) => void
+  callback: (fid: { delay: Duration; time: RelativeTime }) => void
 ): { stop: () => void } {
   const { stop } = retrieveFirstInputTiming(configuration, (entry) => {
     callback({
-      delay: (entry.processingStart - entry.startTime) as Duration,
-      time: (entry.startTime - pageshowEvent.timeStamp) as Duration,
+      delay: elapsed(entry.startTime as RelativeTime, entry.processingStart as RelativeTime),
+      time: (pageshowEvent.timeStamp - entry.startTime) as RelativeTime,
     })
   })
   return { stop }

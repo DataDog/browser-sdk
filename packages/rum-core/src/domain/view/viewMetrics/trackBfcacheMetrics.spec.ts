@@ -1,43 +1,35 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../../test'
 import { trackBfcacheMetrics } from './trackBfcacheMetrics'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackBfcacheMetrics', () => {
-  let originalRAF: typeof requestAnimationFrame
-  let originalPerformanceNow: () => number
   let clock: Clock
   let stopTrackBfcacheMetrics: () => void
 
   beforeEach(() => {
-    originalRAF = window.requestAnimationFrame
-    window.requestAnimationFrame = (cb: FrameRequestCallback): number => {
+    clock = mockClock()
+    spyOn(window, 'requestAnimationFrame').and.callFake((cb: FrameRequestCallback): number => {
       cb(performance.now())
       return 0
-    }
-    clock = mockClock()
-    originalPerformanceNow = performance.now.bind(performance)
+    })
     stopTrackBfcacheMetrics = noop
   })
 
   afterEach(() => {
     stopTrackBfcacheMetrics()
-    window.requestAnimationFrame = originalRAF
-    performance.now = originalPerformanceNow
     clock.cleanup()
   })
 
-  function createPageshowEvent(timeStamp: number): PageTransitionEvent {
-    const event = createNewEvent('pageshow', { __ddIsTrusted: true }) as PageTransitionEvent
-    Object.defineProperty(event, 'timeStamp', { value: timeStamp })
-    return event
+  function createPageshowEvent(timeStamp: number) {
+    return createNewEvent('pageshow', { timeStamp })
   }
 
   it('should compute FCP and LCP from the next frame after BFCache restore', () => {
-    const pageshow = createPageshowEvent(100)
+    const pageshow = createPageshowEvent(100) as PageTransitionEvent
 
     const metrics: InitialViewMetrics = {}
     const scheduleSpy = jasmine.createSpy('schedule')
@@ -45,7 +37,7 @@ describe('trackBfcacheMetrics', () => {
     performance.now = () => 150
 
     const { stop } = trackBfcacheMetrics(mockRumConfiguration(), pageshow, metrics, scheduleSpy)
-    stopTrackBfcacheMetrics = stop
+    registerCleanupTask(stop)
 
     expect(metrics.firstContentfulPaint).toEqual(50 as Duration)
     expect(metrics.largestContentfulPaint?.value).toEqual(50 as RelativeTime)
@@ -56,13 +48,11 @@ describe('trackBfcacheMetrics', () => {
     const metrics: InitialViewMetrics = {}
     const scheduleViewUpdate = jasmine.createSpy('scheduleViewUpdate')
 
-    const pageshowEvent = createNewEvent('pageshow') as PageTransitionEvent
-    Object.defineProperty(pageshowEvent, 'persisted', { value: true })
-    Object.defineProperty(pageshowEvent, 'timeStamp', { value: 0 })
+    const pageshow = createPageshowEvent(0) as PageTransitionEvent
 
-    trackBfcacheMetrics(mockRumConfiguration(), pageshowEvent, metrics, scheduleViewUpdate)
+    trackBfcacheMetrics(mockRumConfiguration(), pageshow, metrics, scheduleViewUpdate)
 
-    clock.tick(50)
+    clock.tick(100)
 
     const firstInputEvent = createNewEvent('pointerdown', {
       cancelable: true,
