@@ -38,15 +38,16 @@ import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { startViewHistory } from '..'
-import type { RumSessionManager } from '..'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
-import { createHooks } from '../hooks'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { startSessionContext } from '../domain/contexts/sessionContext'
+import { createHooks } from '../domain/hooks'
+import type { RumSessionManager } from '../domain/rumSessionManager'
+import type { RumMutationRecord } from '../browser/domMutationObservable'
+import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -62,7 +63,7 @@ function startRumStub(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   location: Location,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   pageStateHistory: PageStateHistory,
@@ -113,7 +114,7 @@ describe('rum session', () => {
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
-    const domMutationObservable = new Observable<void>()
+    const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const { locationChangeObservable } = setupLocationObserver()
 
@@ -163,7 +164,7 @@ describe('rum session keep alive', () => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('1234')
-    const domMutationObservable = new Observable<void>()
+    const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const { locationChangeObservable } = setupLocationObserver()
 
@@ -229,7 +230,7 @@ describe('rum events url', () => {
 
   function setupViewUrlTest() {
     const sessionManager = createRumSessionManagerMock().setId('1234')
-    const domMutationObservable = new Observable<void>()
+    const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const locationSetupResult = setupLocationObserver('http://foo.com/')
     changeLocation = locationSetupResult.changeLocation

@@ -1,5 +1,5 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import { noop, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import { noop, combine, toServerDuration, generateUUID, SKIPPED, HookNames } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -7,8 +7,8 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
-import type { DefaultRumEventAttributes, Hooks } from '../../hooks'
-import { HookNames, SKIPPED } from '../../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
@@ -27,7 +27,7 @@ export type AutoAction = ClickAction
 export function startActionCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {

@@ -1,7 +1,12 @@
-import { getSyntheticsResultId, getSyntheticsTestId, willSyntheticsInjectRum } from '@datadog/browser-core'
-import { HookNames, SKIPPED } from '../../hooks'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
+import {
+  SKIPPED,
+  getSyntheticsResultId,
+  getSyntheticsTestId,
+  HookNames,
+  willSyntheticsInjectRum,
+} from '@datadog/browser-core'
 import { SessionType } from '../rumSessionManager'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export function startSyntheticsContext(hooks: Hooks) {
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes | SKIPPED => {

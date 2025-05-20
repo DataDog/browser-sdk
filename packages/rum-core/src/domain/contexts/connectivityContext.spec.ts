@@ -1,7 +1,8 @@
 import { setNavigatorOnLine, setNavigatorConnection } from '@datadog/browser-core/test'
+import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
-import type { Hooks } from '../../hooks'
-import { createHooks, HookNames } from '../../hooks'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startConnectivityContext } from './connectivityContext'
 
 describe('startConnectivityContext', () => {

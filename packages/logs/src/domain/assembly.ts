@@ -1,17 +1,25 @@
 import type { EventRateLimiter, RawError } from '@datadog/browser-core'
-import { ErrorSource, combine, createEventRateLimiter, getRelativeTime, isEmptyObject } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  HookNames,
+  combine,
+  createEventRateLimiter,
+  getRelativeTime,
+  isEmptyObject,
+} from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { STATUSES } from './logger'
 import type { LogsSessionManager } from './logsSessionManager'
-import { getRUMInternalContext } from './contexts/rumInternalContext'
+import type { DefaultLogsEventAttributes, Hooks } from './hooks'
 
 export function startLogsAssembly(
   sessionManager: LogsSessionManager,
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
+  hooks: Hooks,
   getCommonContext: () => CommonContext,
   reportError: (error: RawError) => void
 ) {
@@ -43,6 +51,11 @@ export function startLogsAssembly(
       if (session && session.anonymousId && !commonContext.user.anonymous_id) {
         commonContext.user.anonymous_id = session.anonymousId
       }
+
+      const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        startTime,
+      }) as DefaultLogsEventAttributes
+
       const log = combine(
         {
           service: configuration.service,
@@ -54,7 +67,7 @@ export function startLogsAssembly(
           view: commonContext.view,
         },
         commonContext.context,
-        getRUMInternalContext(startTime),
+        defaultLogsEventAttributes,
         rawLogsEvent,
         messageContext
       )

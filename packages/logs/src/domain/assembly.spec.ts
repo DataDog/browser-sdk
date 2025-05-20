@@ -11,6 +11,9 @@ import { Logger } from './logger'
 import { StatusType } from './logger/isAuthorized'
 import type { LogsSessionManager } from './logsSessionManager'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import type { Hooks } from './hooks'
+import { createHooks } from './hooks'
+import { startRUMInternalContext } from './contexts/rumInternalContext'
 
 const initConfiguration = { clientToken: 'xxx', service: 'service' }
 const SESSION_ID = 'session-id'
@@ -70,7 +73,9 @@ describe('startLogsAssembly', () => {
     }
     beforeSend = noop
     mainLogger = new Logger(() => noop)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
+    const hooks = createHooks()
+    startRUMInternalContext(hooks)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -322,6 +327,7 @@ describe('user and account management', () => {
 
   let sessionIsTracked: boolean
   let lifeCycle: LifeCycle
+  let hooks: Hooks
   let serverLogs: Array<LogsEvent & Context> = []
 
   const beforeSend: (event: LogsEvent) => void | boolean = noop
@@ -333,6 +339,7 @@ describe('user and account management', () => {
   beforeEach(() => {
     sessionIsTracked = true
     lifeCycle = new LifeCycle()
+    hooks = createHooks()
     lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
   })
 
@@ -342,7 +349,7 @@ describe('user and account management', () => {
   })
 
   it('should not output usr/account key if user/account is not set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toBeUndefined()
@@ -350,7 +357,7 @@ describe('user and account management', () => {
   })
 
   it('should include user/account data when user/account has been set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER_AND_ACCOUNT, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT_WITH_USER_AND_ACCOUNT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -380,7 +387,7 @@ describe('user and account management', () => {
         },
       },
     }
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => globalContextWithUser, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toEqual({
@@ -396,7 +403,14 @@ describe('user and account management', () => {
   })
 
   it('should not include account if `id` is missing and display a warn', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID, noop)
+    startLogsAssembly(
+      sessionManager,
+      configuration,
+      lifeCycle,
+      hooks,
+      () => COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID,
+      noop
+    )
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
@@ -413,11 +427,13 @@ describe('logs limitation', () => {
 
   let beforeSend: (event: LogsEvent) => void | boolean
   let lifeCycle: LifeCycle
+  let hooks: Hooks
   let serverLogs: Array<LogsEvent & Context> = []
   let reportErrorSpy: jasmine.Spy<jasmine.Func>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
+    hooks = createHooks()
     lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
     const configuration = {
       ...validateAndBuildLogsConfiguration(initConfiguration)!,
@@ -427,7 +443,7 @@ describe('logs limitation', () => {
     }
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, reportErrorSpy)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
     clock = mockClock()
   })
 
@@ -435,6 +451,7 @@ describe('logs limitation', () => {
     clock.cleanup()
     serverLogs = []
   })
+
   it('should not apply to agent logs', () => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'foo' },

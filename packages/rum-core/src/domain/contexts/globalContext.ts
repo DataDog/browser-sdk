@@ -1,7 +1,6 @@
-import { createContextManager, CustomerDataType, storeContextManager } from '@datadog/browser-core'
+import { createContextManager, CustomerDataType, HookNames, storeContextManager } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { HookNames } from '../../hooks'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export function startGlobalContext(hooks: Hooks, configuration: RumConfiguration) {
   const globalContextManager = buildGlobalContextManager()

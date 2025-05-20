@@ -16,6 +16,7 @@ import {
   addTelemetryDebug,
   drainPreStartTelemetry,
 } from '@datadog/browser-core'
+import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
@@ -44,8 +45,6 @@ import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
-import type { Hooks } from '../hooks'
-import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import { startGlobalContext } from '../domain/contexts/globalContext'
 import { startUserContext } from '../domain/contexts/userContext'
@@ -54,6 +53,8 @@ import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
+import type { Hooks } from '../domain/hooks'
+import { createHooks } from '../domain/hooks'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -252,7 +253,7 @@ export function startRumEventCollection(
   hooks: Hooks,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   reportError: (error: RawError) => void
 ) {
