@@ -22,9 +22,15 @@ export function trackLoadingTime(
   const firstHidden = trackFirstHidden(configuration)
 
   function invokeCallbackIfAllCandidatesAreReceived() {
-    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
+    const isWaitingForActivity = isWaitingForActivityLoadingTime || isWaitingForLoadEvent
+    const hasCompletedCandidates = loadingTimeCandidates.length > 0
+
+    if (!isWaitingForActivity && hasCompletedCandidates) {
+      // Be aware that Math.max(...[]) results in -Infinity
       const loadingTime = Math.max(...loadingTimeCandidates)
-      if (loadingTime < firstHidden.timeStamp) {
+      const hasBeenHidden = firstHidden.timeStamp > viewStart.timeStamp
+
+      if (hasBeenHidden && loadingTime < firstHidden.timeStamp) {
         callback(loadingTime as Duration)
       }
     }
