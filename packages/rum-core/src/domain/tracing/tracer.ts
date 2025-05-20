@@ -6,8 +6,6 @@ import {
   isMatchOption,
   matchList,
   TraceContextInjection,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
@@ -223,10 +221,7 @@ function makeTracingHeaders(
     }
   })
 
-  if (
-    isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER) &&
-    configuration.propagateTraceBaggage
-  ) {
+  if (configuration.propagateTraceBaggage) {
     const baggageItems: Record<string, string> = {
       'session.id': sessionId,
     }
