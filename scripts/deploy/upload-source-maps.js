@@ -15,9 +15,6 @@ const { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packa
  * BUILD_MODE=canary|release node upload-source-maps.js staging|canary|vXXX root,us1,eu1,...
  */
 
-// To use when the telemetry is not yet configured on a DC
-const DCS_WITHOUT_SOURCE_MAPS_UPLOAD = [siteByDatacenter['ap2']]
-
 function getSitesByVersion(version) {
   switch (version) {
     case 'staging':
@@ -82,7 +79,7 @@ async function renameFilesWithVersionSuffix(bundleFolder, version) {
 
 function uploadToDatadog(packageName, service, prefix, bundleFolder, sites) {
   for (const site of sites) {
-    if (DCS_WITHOUT_SOURCE_MAPS_UPLOAD.includes(site)) {
+    if (!site) {
       printLog(`No source maps upload configured for ${site}, skipping...`)
       continue
     }
