@@ -17,9 +17,3 @@ datadogRum.init({
 })
 
 // The above tag is to find and replace on build.
-
-if (window.DD_RUM) {
-  console.log('Extension context DD_RUM.version:', window.DD_RUM.version)
-} else {
-  console.log('Extension context DD_RUM is not defined')
-}
