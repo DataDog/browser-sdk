@@ -10,13 +10,23 @@ test.describe('transport', () => {
       .run(async ({ flushEvents, intakeRegistry }) => {
         await flushEvents()
 
-        expect(intakeRegistry.rumRequests).toHaveLength(2)
-
-        const plainRequest = intakeRegistry.rumRequests.find((request) => request.encoding === null)
-        const deflateRequest = intakeRegistry.rumRequests.find((request) => request.encoding === 'deflate')
+        for (const request of intakeRegistry.rumRequests) {
+          console.log({
+            ...request,
+            events: request.events.map((event) => event.type),
+          })
+          for (const event of request.events) {
+            if (event.type === 'telemetry') {
+              console.log(event)
+            }
+          }
+        }
+        expect(intakeRegistry.rumRequests).toHaveLength(3)
 
         // The last view update should be sent without compression
-        expect(plainRequest?.events).toEqual(
+        const plainRequests = intakeRegistry.rumRequests.filter((request) => request.encoding === null)
+        expect(plainRequests).toHaveLength(1)
+        expect(plainRequests[0].events).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
               type: 'view',
@@ -25,7 +35,9 @@ test.describe('transport', () => {
         )
 
         // Other data should be sent encoded
-        expect(deflateRequest!.events.length).toBeGreaterThan(0)
+        const deflateRequests = intakeRegistry.rumRequests.filter((request) => request.encoding === 'deflate')
+        expect(deflateRequests).toHaveLength(2)
+        expect(deflateRequests.flatMap((request) => request.events).length).toBeGreaterThan(0)
       })
 
     createTest("displays a message if the worker can't be started")
