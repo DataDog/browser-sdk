@@ -1,5 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { noop } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../../test'
@@ -8,35 +7,34 @@ import type { InitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackBfcacheMetrics', () => {
   let clock: Clock
-  let stopTrackBfcacheMetrics: () => void
 
   beforeEach(() => {
     clock = mockClock()
+    registerCleanupTask(clock.cleanup)
+
     spyOn(window, 'requestAnimationFrame').and.callFake((cb: FrameRequestCallback): number => {
       cb(performance.now())
       return 0
     })
-    stopTrackBfcacheMetrics = noop
   })
 
-  afterEach(() => {
-    stopTrackBfcacheMetrics()
-    clock.cleanup()
-  })
-
-  function createPageshowEvent(timeStamp: number) {
-    return createNewEvent('pageshow', { timeStamp })
+  function createPageshowEvent() {
+    return createNewEvent('pageshow', { timeStamp: performance.now() })
   }
 
   it('should compute FCP and LCP from the next frame after BFCache restore', () => {
-    const pageshow = createPageshowEvent(100) as PageTransitionEvent
+    const pageshow = createPageshowEvent() as PageTransitionEvent
 
     const metrics: InitialViewMetrics = {}
     const scheduleSpy = jasmine.createSpy('schedule')
 
-    performance.now = () => 150
+    clock.tick(50)
 
-    const { stop } = trackBfcacheMetrics(mockRumConfiguration(), pageshow, metrics, scheduleSpy)
+    const startClocks = {
+      relative: pageshow.timeStamp as RelativeTime,
+      timeStamp: 0 as TimeStamp,
+    }
+    const { stop } = trackBfcacheMetrics(mockRumConfiguration(), startClocks, metrics, scheduleSpy)
     registerCleanupTask(stop)
 
     expect(metrics.firstContentfulPaint).toEqual(50 as Duration)
@@ -48,9 +46,14 @@ describe('trackBfcacheMetrics', () => {
     const metrics: InitialViewMetrics = {}
     const scheduleViewUpdate = jasmine.createSpy('scheduleViewUpdate')
 
-    const pageshow = createPageshowEvent(0) as PageTransitionEvent
+    createPageshowEvent() as PageTransitionEvent
 
-    trackBfcacheMetrics(mockRumConfiguration(), pageshow, metrics, scheduleViewUpdate)
+    const startClocks = {
+      relative: 0 as RelativeTime,
+      timeStamp: 0 as TimeStamp,
+    }
+    const { stop } = trackBfcacheMetrics(mockRumConfiguration(), startClocks, metrics, scheduleViewUpdate)
+    registerCleanupTask(stop)
 
     clock.tick(100)
 

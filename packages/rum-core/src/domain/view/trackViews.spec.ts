@@ -1032,17 +1032,13 @@ describe('service and version', () => {
 
 describe('BFCache views', () => {
   const lifeCycle = new LifeCycle()
-  let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
-    clock = mockClock()
-
     viewTest = setupViewTest({ lifeCycle, partialConfig: { trackBfcacheViews: true } })
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 

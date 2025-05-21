@@ -17,6 +17,7 @@ import {
   throttle,
   clocksNow,
   clocksOrigin,
+  relativeToClocks,
   timeStampNow,
   display,
   looksLikeRelativeTime,
@@ -111,27 +112,23 @@ export function trackViews(
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
+  let stopOnBFCacheRestore: (() => void) | undefined
 
   startViewLifeCycle()
 
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
+    if (configuration.trackBfcacheViews) {
+      stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
+        currentView.end()
+        const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
+        currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
+      })
+    }
   }
 
-  if (configuration.trackBfcacheViews) {
-    onBFCacheRestore(configuration, (pageshowEvent) => {
-      currentView.end()
-      currentView = startNewView(ViewLoadingType.BF_CACHE, undefined, undefined, pageshowEvent)
-    })
-  }
-
-  function startNewView(
-    loadingType: ViewLoadingType,
-    startClocks?: ClocksState,
-    viewOptions?: ViewOptions,
-    pageshowEvent?: PageTransitionEvent
-  ) {
+  function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
     const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
@@ -140,8 +137,7 @@ export function trackViews(
       location,
       loadingType,
       startClocks,
-      viewOptions,
-      pageshowEvent
+      viewOptions
     )
     activeViews.add(newlyCreatedView)
     newlyCreatedView.stopObservable.subscribe(() => {
@@ -198,6 +194,9 @@ export function trackViews(
       if (locationChangeSubscription) {
         locationChangeSubscription.unsubscribe()
       }
+      if (stopOnBFCacheRestore) {
+        stopOnBFCacheRestore()
+      }
       currentView.end()
       activeViews.forEach((view) => view.stop())
     },
@@ -212,8 +211,7 @@ function newView(
   initialLocation: Location,
   loadingType: ViewLoadingType,
   startClocks: ClocksState = clocksNow(),
-  viewOptions?: ViewOptions,
-  pageshowEvent?: PageTransitionEvent
+  viewOptions?: ViewOptions
 ) {
   // Setup initial values
   const id = generateUUID()
@@ -273,10 +271,10 @@ function newView(
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   // Start BFCache-specific metrics when restoring from BFCache
-  if (loadingType === ViewLoadingType.BF_CACHE && pageshowEvent) {
+  if (loadingType === ViewLoadingType.BF_CACHE) {
     const { stop: stopBfCache } = trackBfcacheMetrics(
       configuration,
-      pageshowEvent,
+      startClocks,
       initialViewMetrics,
       scheduleViewUpdate
     )
@@ -369,12 +367,12 @@ function newView(
       }, KEEP_TRACKING_AFTER_VIEW_DELAY)
     },
     stop() {
-      stopInitialViewMetricsTracking()
-      stopEventCountsTracking()
-      stopINPTracking()
       if (stopBfcacheMetricsTracking) {
         stopBfcacheMetricsTracking()
       }
+      stopInitialViewMetricsTracking()
+      stopEventCountsTracking()
+      stopINPTracking()
       stopObservable.notify()
     },
     addTiming(name: string, time: RelativeTime | TimeStamp) {
@@ -389,7 +387,6 @@ function newView(
       name = updatedName
       triggerViewUpdate()
     },
-    scheduleViewUpdate,
   }
 }
 

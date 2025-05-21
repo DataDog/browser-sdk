@@ -8,13 +8,12 @@ describe('onBFCacheRestore', () => {
     const callback = jasmine.createSpy('callback')
 
     const stop = onBFCacheRestore(configuration, callback)
+    registerCleanupTask(stop)
 
-    window.dispatchEvent(createNewEvent('pageshow', { persisted: false } as Partial<PageTransitionEvent>))
+    window.dispatchEvent(createNewEvent('pageshow', { persisted: false }))
     expect(callback).not.toHaveBeenCalled()
 
-    window.dispatchEvent(createNewEvent('pageshow', { persisted: true } as Partial<PageTransitionEvent>))
+    window.dispatchEvent(createNewEvent('pageshow', { persisted: true }))
     expect(callback).toHaveBeenCalledTimes(1)
-
-    registerCleanupTask(stop)
   })
 })

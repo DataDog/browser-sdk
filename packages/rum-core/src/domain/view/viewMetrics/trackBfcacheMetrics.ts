@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime, ClocksState } from '@datadog/browser-core'
 import { elapsed, relativeNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { retrieveFirstInputTiming } from '../../../browser/firstInputPolyfill'
@@ -9,17 +9,17 @@ import type { InitialViewMetrics } from './trackInitialViewMetrics'
 
 export function trackBfcacheMetrics(
   configuration: RumConfiguration,
-  pageshowEvent: PageTransitionEvent,
+  viewStart: ClocksState,
   metrics: InitialViewMetrics,
   scheduleViewUpdate: () => void
 ): { stop: () => void } {
-  measureRestoredPaintTime(pageshowEvent, (paintTime) => {
+  measureRestoredPaintTime(viewStart.relative, (paintTime) => {
     metrics.firstContentfulPaint = paintTime
     metrics.largestContentfulPaint = { value: paintTime as RelativeTime }
     scheduleViewUpdate()
   })
 
-  const { stop: stopMeasureRestoredFID } = measureRestoredFID(configuration, pageshowEvent, ({ delay, time }) => {
+  const { stop: stopMeasureRestoredFID } = measureRestoredFID(configuration, viewStart.relative, ({ delay, time }) => {
     metrics.firstInput = {
       delay,
       time,
@@ -38,25 +38,25 @@ export function trackBfcacheMetrics(
  * viewport repaints in a single frame. Consequently, LCP almost always equals FCP.
  * (See: https://github.com/GoogleChrome/web-vitals/pull/87)
  */
-function measureRestoredPaintTime(pageshowEvent: PageTransitionEvent, callback: (paintTime: Duration) => void): void {
+function measureRestoredPaintTime(viewStartRelative: RelativeTime, callback: (paintTime: Duration) => void): void {
   // Uses two requestAnimationFrame calls to measure FCP after a bfcache restore,
   // as this gives a more accurate timestamp for the frame following the pageshow event.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      callback(elapsed(pageshowEvent.timeStamp as RelativeTime, relativeNow()))
+      callback(elapsed(viewStartRelative, relativeNow()))
     })
   })
 }
 
 function measureRestoredFID(
   configuration: RumConfiguration,
-  pageshowEvent: PageTransitionEvent,
+  viewStartRelative: RelativeTime,
   callback: (fid: { delay: Duration; time: RelativeTime }) => void
 ): { stop: () => void } {
   const { stop } = retrieveFirstInputTiming(configuration, (entry) => {
     callback({
       delay: elapsed(entry.startTime as RelativeTime, entry.processingStart as RelativeTime),
-      time: (pageshowEvent.timeStamp - entry.startTime) as RelativeTime,
+      time: elapsed(viewStartRelative, entry.startTime as RelativeTime) as RelativeTime,
     })
   })
   return { stop }
