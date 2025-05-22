@@ -80,7 +80,6 @@ export function serializeAttribute(
     return attributeValue
   }
 
-  // Minimum Fix for customer.
   if (isLongDataUrl(attributeValue, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH)) {
     return sanitizeDataUrl(attributeValue)
   }

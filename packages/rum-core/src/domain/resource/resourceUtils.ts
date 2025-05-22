@@ -230,17 +230,15 @@ const DATA_URL_REGEX = /data:(.+)?(;base64)?,/g
 export const MAX_RESOURCE_VALUE_CHAR_LENGTH = 24_000
 
 export function isLongDataUrl(url: string, maxAttributeLength?: number): boolean {
-  const longUrlLimit = maxAttributeLength || MAX_RESOURCE_VALUE_CHAR_LENGTH
-  if (url.length <= longUrlLimit) {
-    return false
-  } else if (url.substring(0, 5) === 'data:') {
-    // Avoid String.match RangeError: Maximum call stack size exceeded
-    url = url.substring(0, longUrlLimit)
-    return true
-  }
-  return false
+  const longUrlLimit = maxAttributeLength ?? MAX_RESOURCE_VALUE_CHAR_LENGTH
+  return url.length > longUrlLimit && url.startsWith('data:')
 }
 
 export function sanitizeDataUrl(url: string): string {
-  return `${url.match(DATA_URL_REGEX)![0]}[...]`
+  // Avoid String.match RangeError: Maximum call stack size exceeded
+  const truncatedUrl = url.substring(0, 100).match(DATA_URL_REGEX)
+  if (!truncatedUrl) {
+    return url
+  }
+  return `${truncatedUrl[0]}[...]`
 }
