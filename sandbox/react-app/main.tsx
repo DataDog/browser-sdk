@@ -1,10 +1,11 @@
-import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
+import { createDatadogProvider } from '@datadog/browser-flagging'
+import { datadogRum } from '@datadog/browser-rum'
+import { ErrorBoundary, reactPlugin, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
+import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
+import { OpenFeature } from '@openfeature/web-sdk'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { datadogRum } from '@datadog/browser-rum'
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
-import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
-import { datadogFlagging } from '@datadog/browser-flagging'
+import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
 
 datadogRum.init({
   applicationId: 'xxx',
@@ -12,7 +13,20 @@ datadogRum.init({
   plugins: [reactPlugin({ router: true })],
 })
 
-datadogFlagging.init()
+const subject = {
+  key: 'subject-key-1',
+}
+
+async function initializeOpenFeature() {
+  const datadogFlaggingProvider = createDatadogProvider()
+  await OpenFeature.setContext(subject)
+
+  try {
+    await OpenFeature.setProviderAndWait(datadogFlaggingProvider)
+  } catch (error) {
+    console.error('Failed to initialize Datadog provider:', error)
+  }
+}
 
 const router = createBrowserRouter(
   [
@@ -64,7 +78,33 @@ function Layout() {
 }
 
 function HomePage() {
-  return <h1>Home</h1>
+  const [flagValue, setFlagValue] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    initializeOpenFeature().then(() => {
+      const client = OpenFeature.getClient()
+      const flagEval = client.getBooleanValue('flagName.my-boolean', false)
+      setFlagValue(flagEval)
+    })
+  }, [])
+
+  return (
+    <div>
+      <h1>Home</h1>
+      <h2>Flagging Evaluation</h2>
+      <ul>
+        <li>
+          Subject Key: <i>{subject.key}</i>
+        </li>
+        <li>
+          Flag Key: <i>flagName.my-boolean</i>
+        </li>
+        <li>
+          Variant: <i>{flagValue === null ? 'Loading...' : String(flagValue)}</i>
+        </li>
+      </ul>
+    </div>
+  )
 }
 
 function UserPage() {

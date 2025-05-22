@@ -6,12 +6,16 @@ file,tracekit,MIT,Copyright 2013 Onur Can Cakmak and all TraceKit contributors
 file,web-vitals,Apache-2.0,Copyright 2020 Google LLC
 prod,@mantine/core,MIT,Copyright (c) 2021 Vitaly Rtishchev
 prod,@mantine/hooks,MIT,Copyright (c) 2021 Vitaly Rtishchev
+prod,@openfeature/core,Apache-2.0,Copyright Linux Foundation
+prod,@openfeature/web-sdk,Apache-2.0,Copyright Linux Foundation
 prod,@tabler/icons-react,MIT,Copyright (c) 2020-2023 Paweł Kuna
 prod,clsx,MIT,Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
+dev,@openfeature/core,Apache-2.0,Copyright Linux Foundation
+dev,@openfeature/web-sdk,Apache-2.0,Copyright Linux Foundation
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
