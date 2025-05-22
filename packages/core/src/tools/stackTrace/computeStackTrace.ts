@@ -48,12 +48,15 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
-  if (stack.length > 0 && WRONGLY_REPORTING_CUSTOM_ERRORS) { // if we are wrongly reporting custom errors
-    if (ex instanceof Error && isErrorCustomError(ex)) { // if the element is a custom error
-      const firstStackFrame = stack[0];
-      const errorConstructorName = Object.getPrototypeOf(ex)?.constructor?.name;
-      if (firstStackFrame?.func === errorConstructorName) { // if the first stack frame is the custom error constructor
-        stack.shift(); // remove it
+  if (stack.length > 0 && WRONGLY_REPORTING_CUSTOM_ERRORS) {
+    // if we are wrongly reporting custom errors
+    if (ex instanceof Error && isErrorCustomError(ex)) {
+      // if the element is a custom error
+      const firstStackFrame = stack[0]
+      const errorConstructorName = Object.getPrototypeOf(ex)?.constructor?.name
+      if (firstStackFrame?.func === errorConstructorName) {
+        // if the first stack frame is the custom error constructor
+        stack.shift() // remove it
       }
     }
   }
@@ -201,33 +204,33 @@ function tryToParseMessage(messageObj: unknown) {
   return { name, message }
 }
 
-// Custom error stacktrace fix 
+// Custom error stacktrace fix
 // Some browsers (safari/firefox) add the error constructor as a frame in the stacktrace
 // In order to normalize the stacktrace, we need to remove it
 
 function isErrorCustomError(error: Error) {
-  let errorProto = Object.getPrototypeOf(error);
-  return errorProto?.constructor?.toString().startsWith('class ');
+  let errorProto = Object.getPrototypeOf(error)
+  return errorProto?.constructor?.toString().startsWith('class ')
 }
 
 function isWronglyReportingCustomErrors() {
   // Should not be minified during compilation.
   class _DatadogTestCustomError extends Error {
-      constructor() {
-          super();
-          this.name = 'TestError';// different name than the constructor name
-      }
+    constructor() {
+      super()
+      this.name = 'TestError' // different name than the constructor name
+    }
   }
 
-  let customError = new _DatadogTestCustomError();
-  let customErrorStack = customError.stack?.toString() ?? "";
+  let customError = new _DatadogTestCustomError()
+  let customErrorStack = customError.stack?.toString() ?? ''
 
   // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
-  return customErrorStack.includes('_DatadogTestCustomError');
+  return customErrorStack.includes('_DatadogTestCustomError')
 }
 
-let WRONGLY_REPORTING_CUSTOM_ERRORS = isWronglyReportingCustomErrors();
+let WRONGLY_REPORTING_CUSTOM_ERRORS = isWronglyReportingCustomErrors()
 
 export function _setWRONGLY_REPORTING_CUSTOM_ERRORS(value: boolean) {
-  WRONGLY_REPORTING_CUSTOM_ERRORS = value;
+  WRONGLY_REPORTING_CUSTOM_ERRORS = value
 }

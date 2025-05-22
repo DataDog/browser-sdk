@@ -963,22 +963,22 @@ Error: foo
     // fake firefox reporting of a custom error
     class _DatadogTestCustomError extends Error {
       constructor() {
-        super();
-        this.name = 'TestError';
+        super()
+        this.name = 'TestError'
         this.stack = `_DatadogTestCustomError@http://localhost:8080/:35:13
 throwCustomError@http://localhost:8080/:39:26
-`;
+`
       }
     }
 
-    _setWRONGLY_REPORTING_CUSTOM_ERRORS(true);
-    
-    const customError = new _DatadogTestCustomError();
-    const stackFrames = computeStackTrace(customError);
+    _setWRONGLY_REPORTING_CUSTOM_ERRORS(true)
 
-    _setWRONGLY_REPORTING_CUSTOM_ERRORS(false); // reset the flag
+    const customError = new _DatadogTestCustomError()
+    const stackFrames = computeStackTrace(customError)
 
-    expect(stackFrames.stack.length).toBe(1);
+    _setWRONGLY_REPORTING_CUSTOM_ERRORS(false) // reset the flag
+
+    expect(stackFrames.stack.length).toBe(1)
     expect(stackFrames.stack[0]).toEqual({
       args: [],
       func: 'throwCustomError',
@@ -987,5 +987,4 @@ throwCustomError@http://localhost:8080/:39:26
       column: 26,
     })
   })
-  
 })
