@@ -1,9 +1,9 @@
-import { display } from '@datadog/browser-core'
+import { display } from '../../tools/display'
 import {
-  checkForAllowedTrackingOrigins,
   containsExtensionUrl,
   EXTENSION_PREFIXES,
   isUnsupportedExtensionEnvironment,
+  isAllowedTrackingOrigins,
   WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
   WARN_NOT_ALLOWED_TRACKING_ORIGIN,
 } from './extensionUtils'
@@ -67,11 +67,6 @@ describe('testIsUnsupportedExtensionEnvironment', () => {
     expect(isUnsupportedExtensionEnvironment('https://example.com')).toBe(false)
   })
 
-  it('should handle undefined parameters correctly', () => {
-    const result = isUnsupportedExtensionEnvironment()
-    expect(result).toBe(false)
-  })
-
   it('should handle extension stack trace', () => {
     const mockError = new Error()
     mockError.stack = 'Error: at chrome-extension://abcdefg/content.js:10:15'
@@ -88,18 +83,14 @@ describe('checkForAllowedTrackingOrigins', () => {
     displayWarnSpy = spyOn(display, 'warn')
   })
 
-  afterEach(() => {
-    displayWarnSpy.calls.reset()
-  })
-
   it('should not warn if not in extension environment', () => {
-    checkForAllowedTrackingOrigins(DEFAULT_CONFIG, 'https://app.example.com')
+    isAllowedTrackingOrigins(DEFAULT_CONFIG, 'https://app.example.com')
     expect(displayWarnSpy).not.toHaveBeenCalled()
   })
 
   describe('when configuration has allowedTrackingOrigins and domain is allowed', () => {
     it('should not warn if extension origin matches exactly', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: ['chrome-extension://abcdefghijklmno'],
@@ -110,7 +101,7 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
 
     it('should not warn if extension origin matches regex pattern', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [/^chrome-extension:\/\/[a-f0-9-]+$/],
@@ -121,7 +112,7 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
 
     it('should not warn if extension origin matches predicate function', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [(origin: string) => origin.startsWith('chrome-extension://')],
@@ -132,7 +123,7 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
 
     it('should handle multiple patterns', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [
@@ -149,7 +140,7 @@ describe('checkForAllowedTrackingOrigins', () => {
 
   describe('when configuration has allowedTrackingOrigins but domain is not allowed', () => {
     it('should warn when extension origin does not match any allowed pattern', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: ['chrome-extension://differentid'],
@@ -161,7 +152,7 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
 
     it('should warn when extension origin does not match regex pattern', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [/^chrome-extension:\/\/specific-[a-z]+$/],
@@ -173,7 +164,7 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
 
     it('should warn when extension origin does not match predicate function', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [(origin: string) => origin.includes('specific-id')],
@@ -185,7 +176,7 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
 
     it('should warn when extension origin does not match any of multiple patterns', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [
@@ -203,7 +194,7 @@ describe('checkForAllowedTrackingOrigins', () => {
 
   describe('when configuration does not have allowedTrackingOrigins', () => {
     it('should warn when in extension environment and allowedTrackingOrigins is undefined', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: undefined,
@@ -215,7 +206,7 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
 
     it('should warn when in extension environment and allowedTrackingOrigins is an empty array', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [],
@@ -227,7 +218,7 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
 
     it('should not warn when not in extension environment and allowedTrackingOrigins is undefined', () => {
-      checkForAllowedTrackingOrigins(
+      isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: undefined,

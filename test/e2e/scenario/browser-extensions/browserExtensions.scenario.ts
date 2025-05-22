@@ -3,16 +3,21 @@ import { test, expect } from '@playwright/test'
 import { DEFAULT_RUM_CONFIGURATION, createTest } from '../../lib/framework'
 
 // Different extension build paths for different configurations
-const pathToDefaultExtension = path.join(__dirname, '../../../../test/apps/extensions/base')
+const pathToBaseExtension = path.join(__dirname, '../../../../test/apps/extensions/base')
 // Contains allowedTrackingOrigins parameter with chrome-extension origin
-const pathToChromeExtension = path.join(__dirname, '../../../../test/apps/extensions/allowed-tracking-origin')
+const pathToAllowedTrackingOriginExtension = path.join(
+  __dirname,
+  '../../../../test/apps/extensions/allowed-tracking-origin'
+)
 // Contains allowedTrackingOrigins parameter with app.example.com origin
-const pathToExampleExtension = path.join(__dirname, '../../../../test/apps/extensions/invalid-tracking-origin')
+const pathToInvalidTrackingOriginExtension = path.join(
+  __dirname,
+  '../../../../test/apps/extensions/invalid-tracking-origin'
+)
 
 test.describe('browser extensions', () => {
-  console.log('test')
   createTest('popup page should load extension popup and display expected content')
-    .withExtension(pathToDefaultExtension)
+    .withExtension(pathToBaseExtension)
     .run(async ({ page, getExtensionId }) => {
       const extensionId = await getExtensionId()
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
@@ -22,7 +27,7 @@ test.describe('browser extensions', () => {
   createTest(
     'SDK is initialized in an unsupported environment without allowedTrackingOrigins and warns when used in content script'
   )
-    .withExtension(pathToDefaultExtension)
+    .withExtension(pathToBaseExtension)
     .withRum()
     .run(async ({ page, baseUrl, getExtensionId }) => {
       const extensionId = await getExtensionId()
@@ -58,7 +63,7 @@ test.describe('browser extensions', () => {
     })
 
   createTest('SDK with correct allowedTrackingOrigins parameter works correctly')
-    .withExtension(pathToChromeExtension)
+    .withExtension(pathToAllowedTrackingOriginExtension)
     .run(async ({ page, getExtensionId }) => {
       const extensionId = await getExtensionId()
       const consoleMessages: string[] = []
@@ -76,14 +81,11 @@ test.describe('browser extensions', () => {
 
       expect(extensionResult.applicationId).toBe('1234')
       expect(extensionResult.allowedTrackingOrigins).toEqual(['chrome-extension://abcdefghijklmno'])
-      expect(consoleMessages).not.toContain(
-        'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
-      )
-      expect(consoleMessages).not.toContain('SDK is being initialized from an extension on a non-allowed domain.')
+      expect(consoleMessages).toEqual([])
     })
 
   createTest('SDK with app.example.com allowedTrackingOrigins throws a warning')
-    .withExtension(pathToExampleExtension)
+    .withExtension(pathToInvalidTrackingOriginExtension)
     .withRum()
     .run(async ({ page, baseUrl, getExtensionId }) => {
       const extensionId = await getExtensionId()

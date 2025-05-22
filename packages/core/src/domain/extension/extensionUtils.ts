@@ -1,5 +1,6 @@
-import { display, matchList } from '@datadog/browser-core'
-import type { RumInitConfiguration } from '../configuration'
+import { display } from '../../tools/display'
+import { matchList } from '../../tools/matchOption'
+import type { InitConfiguration } from '../configuration'
 
 export const EXTENSION_PREFIXES = ['chrome-extension://', 'moz-extension://']
 
@@ -17,26 +18,23 @@ export function containsExtensionUrl(str: string): boolean {
  * @param stack The error stack to check for extension URLs
  * @returns {boolean} true if running in an unsupported browser extension environment
  */
-export function isUnsupportedExtensionEnvironment(
-  windowLocation = typeof location !== 'undefined' ? location.href : '',
-  stack = new Error().stack
-) {
+export function isUnsupportedExtensionEnvironment(windowLocation: string, stack = new Error().stack) {
   // If we're on a regular web page but the error stack shows extension URLs,
   // then an extension is injecting RUM.
   return !containsExtensionUrl(windowLocation) && containsExtensionUrl(stack || '')
 }
 
-export function checkForAllowedTrackingOrigins(
-  configuration: RumInitConfiguration,
+export function isAllowedTrackingOrigins(
+  configuration: InitConfiguration,
   windowLocation = typeof location !== 'undefined' ? location.href : '',
   errorStack?: string
-) {
+): boolean {
   if (isUnsupportedExtensionEnvironment(windowLocation, errorStack)) {
     const allowedTrackingOrigins = configuration.allowedTrackingOrigins
 
     if (!allowedTrackingOrigins) {
       display.warn(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
-      return
+      return false
     }
 
     const isAllowed = matchList(allowedTrackingOrigins, windowLocation, true)
@@ -44,6 +42,8 @@ export function checkForAllowedTrackingOrigins(
     if (!isAllowed) {
       display.warn(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     }
-    return
+    return isAllowed
   }
+
+  return true
 }

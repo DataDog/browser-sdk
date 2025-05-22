@@ -10,6 +10,8 @@ import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
+import type { MatchOption } from '../../tools/matchOption'
+import { isAllowedTrackingOrigins } from '../extension/extensionUtils'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 import type { Site } from './intakeSites'
@@ -87,6 +89,13 @@ export interface InitConfiguration {
    * @default granted
    */
   trackingConsent?: TrackingConsent | undefined
+
+  /**
+   * List of origins where the SDK is allowed to run when used in a browser extension context.
+   * Matches urls against the extensions origin.
+   * If not provided and the SDK is running in a browser extension, a warning will be displayed.
+   */
+  allowedTrackingOrigins?: MatchOption[] | undefined
 
   // transport options
   /**
@@ -200,7 +209,7 @@ export interface Configuration extends TransportConfiguration {
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
-
+  allowedTrackingOrigins?: MatchOption[] | undefined
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
   maxTelemetryEventsPerPage: number
@@ -243,6 +252,14 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   }
 
   if (
+    initConfiguration.allowedTrackingOrigins !== undefined &&
+    !Array.isArray(initConfiguration.allowedTrackingOrigins)
+  ) {
+    display.error('Allowed Tracking Origins must be an array')
+    return
+  }
+
+  if (
     !isDatadogSite(initConfiguration.site) ||
     !isSampleRate(initConfiguration.sessionSampleRate, 'Session') ||
     !isSampleRate(initConfiguration.telemetrySampleRate, 'Telemetry') ||
@@ -250,7 +267,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isSampleRate(initConfiguration.telemetryUsageSampleRate, 'Telemetry Usage') ||
     !isString(initConfiguration.version, 'Version') ||
     !isString(initConfiguration.env, 'Env') ||
-    !isString(initConfiguration.service, 'Service')
+    !isString(initConfiguration.service, 'Service') ||
+    !isAllowedTrackingOrigins(initConfiguration)
   ) {
     return
   }
@@ -277,6 +295,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
+    allowedTrackingOrigins: initConfiguration.allowedTrackingOrigins,
     /**
      * beacon payload max queue size implementation is 64kb
      * ensure that we leave room for logs, rum and potential other users
@@ -319,5 +338,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
+    use_allowed_tracking_origins:
+      Array.isArray(initConfiguration.allowedTrackingOrigins) && initConfiguration.allowedTrackingOrigins.length > 0,
   } satisfies RawTelemetryConfiguration
 }

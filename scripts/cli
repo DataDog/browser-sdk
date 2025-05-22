@@ -61,50 +61,7 @@ cmd_build_json2type () {
 }
 
 cmd_build_extensions () {
-  echo "Building extensions with different configurations..."
-  
-  # Base extension directory
-  local base_ext_dir="test/apps/extensions/base"
-  
-  # Extension configurations
-  local extension_names="allowed-tracking-origin invalid-tracking-origin"
-  
-  # 1. Create and build default extension (no parameter replacement)
-  echo "Building default extension..."
-  cd "$base_ext_dir" && yarn install --no-immutable && yarn build && cd - > /dev/null
-  
-  # 2. Create and build extensions with different configurations
-  for ext_name in $extension_names; do
-    local target_dir="test/apps/extensions/$ext_name"
-    local tracking_origin=""
-    
-    case "$ext_name" in
-      "allowed-tracking-origin")
-        tracking_origin="chrome-extension://abcdefghijklmno"
-        ;;
-      "invalid-tracking-origin")
-        tracking_origin="https://app.example.com"
-        ;;
-    esac
-    
-    echo "Creating $ext_name extension..."
-    rm -rf "$target_dir"
-    cp -r "$base_ext_dir" "$target_dir"
-    
-    # Add the configuration parameter
-    sed -i.bak "s|/\* EXTENSION_INIT_PARAMETER \*/|allowedTrackingOrigins: [\"$tracking_origin\"],|" "$target_dir/src/contentScript.js"
-    rm -f "$target_dir/src/contentScript.js.bak"
-    
-    echo "Building $ext_name extension..."
-    cd "$target_dir" && yarn install --no-immutable && yarn build && cd - > /dev/null
-  done
-  
-  echo "Extension builds completed successfully."
-  echo "Available extensions:"
-  echo "  - Default: $base_ext_dir"
-  for ext_name in $extension_names; do
-    echo "  - ${ext_name}: test/apps/extensions/${ext_name}"
-  done
+  node ./scripts/extensions/build-extensions.js
 }
 
 cmd_release () {

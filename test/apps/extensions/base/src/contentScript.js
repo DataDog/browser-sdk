@@ -2,17 +2,14 @@ import { datadogRum } from '@datadog/browser-rum'
 
 datadogRum.init({
   applicationId: '1234',
-  clientToken: 'pubf2099de38f9c85797d20d64c7d632a69',
+  clientToken: 'abcd',
+  // `site` refers to the Datadog site parameter of your organization
+  // see https://docs.datadoghq.com/getting_started/site/
+  site: 'datad0g.com',
   defaultPrivacyLevel: 'allow',
   trackResources: true,
   trackLongTasks: true,
-  enableExperimentalFeatures: ['self_regulate_extension'],
   allowUntrustedEvents: true,
-  // Only enable session replay for non-extension contexts
-  // sessionReplaySampleRate: isExtensionContext ? 0 : 100,
-  telemetrySampleRate: 100,
-  telemetryUsageSampleRate: 100,
-  telemetryConfigurationSampleRate: 100,
   /* EXTENSION_INIT_PARAMETER */
 })
 
