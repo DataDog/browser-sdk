@@ -14,7 +14,6 @@ export interface SetupOptions {
   head?: string
   body?: string
   basePath: string
-  extensionPath?: string
   context: {
     run_id: string
     test_name: string
