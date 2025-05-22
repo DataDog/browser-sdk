@@ -136,6 +136,10 @@ describe('trackLoadingTime', () => {
     setPageVisibility('hidden')
     startLoadingTimeTracking()
 
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    domMutationObservable.notify([createMutationRecord()])
+    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
 })
