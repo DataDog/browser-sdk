@@ -209,7 +209,7 @@ function tryToParseMessage(messageObj: unknown) {
 // In order to normalize the stacktrace, we need to remove it
 
 function isErrorCustomError(error: Error) {
-  const errorProto = Object.getPrototypeOf(error) as { constructor?: ()=>Error } | undefined
+  const errorProto = Object.getPrototypeOf(error) as { constructor?: () => Error } | undefined
   return errorProto?.constructor?.toString?.().startsWith('class ')
 }
 
