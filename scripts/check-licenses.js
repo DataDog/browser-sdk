@@ -17,22 +17,24 @@ runMain(async () => {
     '\n'
   )
   const declaredDependencies = withoutDuplicates(packageJsonFiles.flatMap(retrievePackageDependencies)).sort()
-
   const declaredLicenses = (await retrieveLicenses()).sort()
 
-  if (JSON.stringify(declaredDependencies) !== JSON.stringify(declaredLicenses)) {
-    printError(`Package.json dependencies and ${LICENSE_FILE} mismatch`)
-    printError(
-      `In package.json but not in ${LICENSE_FILE}:\n`,
-      declaredDependencies.filter((d) => !declaredLicenses.includes(d))
-    )
-    printError(
-      `In ${LICENSE_FILE} but not in package.json:\n`,
-      declaredLicenses.filter((d) => !declaredDependencies.includes(d))
-    )
-    throw new Error('Dependencies mismatch')
+  const missingInLicense = declaredDependencies.filter((d) => !declaredLicenses.includes(d))
+  const missingInPackageJson = declaredLicenses.filter((d) => !declaredDependencies.includes(d))
+
+  if (missingInLicense.length === 0 && missingInPackageJson.length === 0) {
+    printLog('No missing dependencies found. Dependencies check done.')
+    return
   }
-  printLog('Dependencies check done.')
+
+  printError(`Package.json dependencies and ${LICENSE_FILE} mismatch`)
+  if (missingInLicense.length > 0) {
+    printError(`In package.json but not in ${LICENSE_FILE}:\n`, missingInLicense)
+  }
+  if (missingInPackageJson.length > 0) {
+    printError(`In ${LICENSE_FILE} but not in package.json:\n`, missingInPackageJson)
+  }
+  throw new Error('Dependencies mismatch')
 })
 
 function retrievePackageDependencies(packageJsonFile) {

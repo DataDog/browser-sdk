@@ -229,8 +229,12 @@ __metadata:
   resolution: "@datadog/browser-flagging@workspace:packages/flagging"
   dependencies:
     "@datadog/browser-core": "npm:6.8.0"
+    "@openfeature/core": "npm:1.8.0"
+    "@openfeature/web-sdk": "npm:1.5.0"
   peerDependencies:
     "@datadog/browser-rum": 6.8.0
+    "@openfeature/core": 1.8.0
+    "@openfeature/web-sdk": 1.5.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
@@ -1346,6 +1350,22 @@ __metadata:
   dependencies:
     "@octokit/openapi-types": "npm:^24.2.0"
   checksum: 10c0/f66a401b89d653ec28e5c1529abdb7965752db4d9d40fa54c80e900af4c6bf944af6bd0a83f5b4f1eecb72e3d646899dfb27ffcf272ac243552de7e3b97a038d
+  languageName: node
+  linkType: hard
+
+"@openfeature/core@npm:1.8.0":
+  version: 1.8.0
+  resolution: "@openfeature/core@npm:1.8.0"
+  checksum: 10c0/f58ce6436a8ce505156201efe980144f63a5c8fd9f8c427050ee5b99d04956cc287133ca687798e2404826a24edfc7d6936ac17ecef57cec574adc456e50d2d1
+  languageName: node
+  linkType: hard
+
+"@openfeature/web-sdk@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@openfeature/web-sdk@npm:1.5.0"
+  peerDependencies:
+    "@openfeature/core": ^1.8.0
+  checksum: 10c0/5617747561cd06c78967402beafde608d8814e28eaf72f053d06f2ddc276a768c12338a243d4aa4766561d2aded3ac93dfce76f598620d67978249ca73ba9844
   languageName: node
   linkType: hard
 
