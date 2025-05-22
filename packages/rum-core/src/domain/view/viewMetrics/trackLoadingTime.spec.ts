@@ -142,4 +142,19 @@ describe('trackLoadingTime', () => {
 
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
+
+  it('should discard loading time if page is hidden before activity when changing routes', () => {
+    startLoadingTimeTracking(ViewLoadingType.INITIAL_LOAD)
+
+    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+
+    expect(loadingTimeCallback).not.toHaveBeenCalled()
+
+    setPageVisibility('hidden')
+    startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE)
+
+    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+
+    expect(loadingTimeCallback).toHaveBeenCalled()
+  })
 })
