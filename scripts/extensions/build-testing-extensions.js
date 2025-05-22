@@ -63,7 +63,7 @@ function buildExtensions() {
     const contentScriptPath = path.join(targetDir, 'src/contentScript.js')
     let contentScript = fs.readFileSync(contentScriptPath, 'utf8')
     contentScript = contentScript.replace(
-      '/* EXTENSION_INIT_PARAMETER */',
+      /\/\* EXTENSION_INIT_PARAMETER \*\//g,
       `allowedTrackingOrigins: ["${trackingOrigin}"],`
     )
     fs.writeFileSync(contentScriptPath, contentScript)

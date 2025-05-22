@@ -35,7 +35,7 @@ export const DEFAULT_RUM_CONFIGURATION = {
   telemetryConfigurationSampleRate: 100,
 }
 
-const DEFAULT_LOGS_CONFIGURATION = {
+export const DEFAULT_LOGS_CONFIGURATION = {
   clientToken: CLIENT_TOKEN,
   // Force All sample rates to 100% to avoid flakiness
   telemetrySampleRate: 100,
