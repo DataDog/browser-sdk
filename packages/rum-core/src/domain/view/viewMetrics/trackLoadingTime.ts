@@ -24,7 +24,12 @@ export function trackLoadingTime(
   function invokeCallbackIfAllCandidatesAreReceived() {
     if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
       const loadingTime = Math.max(...loadingTimeCandidates)
-      if (loadingTime < firstHidden.timeStamp) {
+      // Beware, Date.now() at time origin could differ from performance.timeOrigin by a few ms
+      // @see https://developer.mozilla.org/en-US/docs/Web/API/Performance/timeOrigin
+      const viewStartRelativeTime = viewStart.timeStamp - performance.timeOrigin
+      const isVisibleDuringLoading = loadingTime < firstHidden.timeStamp - viewStartRelativeTime
+
+      if (isVisibleDuringLoading) {
         callback(loadingTime as Duration)
       }
     }
