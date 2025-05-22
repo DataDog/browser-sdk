@@ -216,6 +216,10 @@ function isErrorCustomError(error: Error) {
 let WRONGLY_REPORTING_CUSTOM_ERRORS: boolean | undefined
 
 function isWronglyReportingCustomErrors() {
+  if (WRONGLY_REPORTING_CUSTOM_ERRORS !== undefined) {
+    return WRONGLY_REPORTING_CUSTOM_ERRORS
+  }
+
   // This class name should be unique and not minified during compilation (so that it remains unique in the stacktrace).
   /* eslint-disable no-restricted-syntax */
   class _DatadogTestCustomError extends Error {
@@ -223,10 +227,6 @@ function isWronglyReportingCustomErrors() {
       super()
       this.name = 'TestError' // different name than the constructor name
     }
-  }
-  
-  if (WRONGLY_REPORTING_CUSTOM_ERRORS !== undefined) {
-    return WRONGLY_REPORTING_CUSTOM_ERRORS
   }
 
   const customError = new _DatadogTestCustomError()
