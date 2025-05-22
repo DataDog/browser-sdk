@@ -48,10 +48,10 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
-  if (stack.length > 0 && BADLY_REPORTING_CUSTOM_ERRORS) { // if we are wrongly reporting custom errors
+  if (stack.length > 0 && WRONGLY_REPORTING_CUSTOM_ERRORS) { // if we are wrongly reporting custom errors
     if (ex instanceof Error && isErrorCustomError(ex)) { // if the element is a custom error
       const firstStackFrame = stack[0];
-      const errorConstructorName = Object.getPrototypeOf(ex).constructor?.name;
+      const errorConstructorName = Object.getPrototypeOf(ex)?.constructor?.name;
       if (firstStackFrame?.func === errorConstructorName) { // if the first stack frame is the custom error constructor
         stack.shift(); // remove it
       }
@@ -207,10 +207,10 @@ function tryToParseMessage(messageObj: unknown) {
 
 function isErrorCustomError(error: Error) {
   let errorProto = Object.getPrototypeOf(error);
-  return errorProto.constructor?.toString().startsWith('class ');
+  return errorProto?.constructor?.toString().startsWith('class ');
 }
 
-function isBadlyReportingCustomErrors() {
+function isWronglyReportingCustomErrors() {
   // Should not be minified during compilation.
   class _DatadogTestCustomError extends Error {
       constructor() {
@@ -226,4 +226,4 @@ function isBadlyReportingCustomErrors() {
   return customErrorStack.includes('_DatadogTestCustomError');
 }
 
-const BADLY_REPORTING_CUSTOM_ERRORS = isBadlyReportingCustomErrors();
+const WRONGLY_REPORTING_CUSTOM_ERRORS = isWronglyReportingCustomErrors();
