@@ -48,11 +48,10 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
-  if (stack.length > 0 && BADLY_REPORTING_CUSTOM_ERRORS) { // if we are badly reporting custom errors
+  if (stack.length > 0 && BADLY_REPORTING_CUSTOM_ERRORS) { // if we are wrongly reporting custom errors
     if (ex instanceof Error && isErrorCustomError(ex)) { // if the element is a custom error
       const firstStackFrame = stack[0];
       const errorConstructorName = Object.getPrototypeOf(ex).constructor?.name;
-      console.log("custom error", firstStackFrame?.func, errorConstructorName, firstStackFrame)
       if (firstStackFrame?.func === errorConstructorName) { // if the first stack frame is the custom error constructor
         stack.shift(); // remove it
       }
