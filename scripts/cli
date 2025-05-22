@@ -60,8 +60,8 @@ cmd_build_json2type () {
   set -e
 }
 
-cmd_build_extensions () {
-  node ./scripts/extensions/build-extensions.js
+cmd_build_testing_extensions () {
+  node ./scripts/extensions/build-testing-extensions.js
 }
 
 cmd_release () {
