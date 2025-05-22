@@ -48,7 +48,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
-  if (stack.length > 0 && WRONGLY_REPORTING_CUSTOM_ERRORS) {
+  if (stack.length > 0 && isWronglyReportingCustomErrors()) {
     // if we are wrongly reporting custom errors
     if (ex instanceof Error && isErrorCustomError(ex)) {
       // if the element is a custom error
@@ -209,28 +209,33 @@ function tryToParseMessage(messageObj: unknown) {
 // In order to normalize the stacktrace, we need to remove it
 
 function isErrorCustomError(error: Error) {
-  let errorProto = Object.getPrototypeOf(error)
-  return errorProto?.constructor?.toString().startsWith('class ')
+  const errorProto = Object.getPrototypeOf(error) as { constructor?: ()=>Error } | undefined
+  return errorProto?.constructor?.toString?.().startsWith('class ')
 }
 
+let WRONGLY_REPORTING_CUSTOM_ERRORS: boolean | undefined
+
 function isWronglyReportingCustomErrors() {
-  // Should not be minified during compilation.
+  // This class name should be unique and not minified during compilation (so that it remains unique in the stacktrace).
+  /* eslint-disable no-restricted-syntax */
   class _DatadogTestCustomError extends Error {
     constructor() {
       super()
       this.name = 'TestError' // different name than the constructor name
     }
   }
+  
+  if (WRONGLY_REPORTING_CUSTOM_ERRORS !== undefined) {
+    return WRONGLY_REPORTING_CUSTOM_ERRORS
+  }
 
-  let customError = new _DatadogTestCustomError()
-  let customErrorStack = customError.stack?.toString() ?? ''
+  const customError = new _DatadogTestCustomError()
+  const customErrorStack = customError.stack?.toString() ?? ''
 
   // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
   return customErrorStack.includes('_DatadogTestCustomError')
 }
 
-let WRONGLY_REPORTING_CUSTOM_ERRORS = isWronglyReportingCustomErrors()
-
-export function _setWRONGLY_REPORTING_CUSTOM_ERRORS(value: boolean) {
+export function _setWronglyReportingCustomErrors(value: boolean | undefined) {
   WRONGLY_REPORTING_CUSTOM_ERRORS = value
 }

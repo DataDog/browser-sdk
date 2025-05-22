@@ -1,6 +1,6 @@
 import { isSafari } from '../utils/browserDetection'
 import * as CapturedExceptions from './capturedExceptions.specHelper'
-import { _setWRONGLY_REPORTING_CUSTOM_ERRORS, computeStackTrace } from './computeStackTrace'
+import { _setWronglyReportingCustomErrors, computeStackTrace } from './computeStackTrace'
 
 describe('computeStackTrace', () => {
   it('should not remove anonymous functions from the stack', () => {
@@ -971,12 +971,12 @@ throwCustomError@http://localhost:8080/:39:26
       }
     }
 
-    _setWRONGLY_REPORTING_CUSTOM_ERRORS(true)
+    _setWronglyReportingCustomErrors(true)
 
     const customError = new _DatadogTestCustomError()
     const stackFrames = computeStackTrace(customError)
 
-    _setWRONGLY_REPORTING_CUSTOM_ERRORS(false) // reset the flag
+    _setWronglyReportingCustomErrors(undefined) // reset the flag
 
     expect(stackFrames.stack.length).toBe(1)
     expect(stackFrames.stack[0]).toEqual({
