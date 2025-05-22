@@ -960,6 +960,7 @@ Error: foo
   })
 
   it('should parse Firefox custom errors', () => {
+    // fake firefox reporting of a custom error
     class _DatadogTestCustomError extends Error {
       constructor() {
         super();
@@ -974,6 +975,8 @@ throwCustomError@http://localhost:8080/:39:26
     
     const customError = new _DatadogTestCustomError();
     const stackFrames = computeStackTrace(customError);
+
+    _setWRONGLY_REPORTING_CUSTOM_ERRORS(false); // reset the flag
 
     expect(stackFrames.stack.length).toBe(1);
     expect(stackFrames.stack[0]).toEqual({
