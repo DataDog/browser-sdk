@@ -19,18 +19,12 @@ export function trackLoadingTime(
   let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
   let isWaitingForActivityLoadingTime = true
   const loadingTimeCandidates: Duration[] = []
-  const firstHidden = trackFirstHidden(configuration)
+  const firstHidden = trackFirstHidden(configuration, window, { initialView: isWaitingForLoadEvent })
 
   function invokeCallbackIfAllCandidatesAreReceived() {
-    const isWaitingForActivity = isWaitingForActivityLoadingTime || isWaitingForLoadEvent
-    const hasCompletedCandidates = loadingTimeCandidates.length > 0
-
-    if (!isWaitingForActivity && hasCompletedCandidates) {
-      // Be aware that Math.max(...[]) results in -Infinity
+    if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
       const loadingTime = Math.max(...loadingTimeCandidates)
-      const hasBeenHidden = firstHidden.timeStamp > viewStart.timeStamp
-
-      if (hasBeenHidden && loadingTime < firstHidden.timeStamp) {
+      if (loadingTime < firstHidden.timeStamp) {
         callback(loadingTime as Duration)
       }
     }

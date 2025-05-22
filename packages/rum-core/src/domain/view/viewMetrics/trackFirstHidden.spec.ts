@@ -85,7 +85,7 @@ describe('trackFirstHidden', () => {
     })
   })
 
-  xdescribe('using visibilityState entries', () => {
+  describe('using visibilityState entries', () => {
     let originalSupportedEntryTypes: string[] | undefined
     beforeEach(() => {
       performanceBufferMock = mockGlobalPerformanceBuffer()
@@ -113,6 +113,38 @@ describe('trackFirstHidden', () => {
       } as PerformanceEntry)
 
       firstHidden = trackFirstHidden(configuration)
+      expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
+    })
+  })
+
+  describe('using visibilityState entries only on initial view', () => {
+    let originalSupportedEntryTypes: string[] | undefined
+    beforeEach(() => {
+      performanceBufferMock = mockGlobalPerformanceBuffer()
+      if (typeof PerformanceObserver !== 'undefined') {
+        originalSupportedEntryTypes = PerformanceObserver.supportedEntryTypes as string[]
+        Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
+          get: () => [...(originalSupportedEntryTypes || []), 'visibility-state'],
+          configurable: true,
+        })
+      }
+    })
+    it('should set timestamp to earliest hidden event from performance entries', () => {
+      setPageVisibility('visible')
+
+      performanceBufferMock.addPerformanceEntry({
+        entryType: 'visibility-state',
+        name: 'hidden',
+        startTime: 23,
+      } as PerformanceEntry)
+
+      performanceBufferMock.addPerformanceEntry({
+        entryType: 'visibility-state',
+        name: 'hidden',
+        startTime: 23219031,
+      } as PerformanceEntry)
+
+      firstHidden = trackFirstHidden(configuration, window, { initialView: true })
       expect(firstHidden.timeStamp).toBe(23 as RelativeTime)
     })
   })
