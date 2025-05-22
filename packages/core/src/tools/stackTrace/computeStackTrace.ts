@@ -226,4 +226,8 @@ function isWronglyReportingCustomErrors() {
   return customErrorStack.includes('_DatadogTestCustomError');
 }
 
-const WRONGLY_REPORTING_CUSTOM_ERRORS = isWronglyReportingCustomErrors();
+let WRONGLY_REPORTING_CUSTOM_ERRORS = isWronglyReportingCustomErrors();
+
+export function _setWRONGLY_REPORTING_CUSTOM_ERRORS(value: boolean) {
+  WRONGLY_REPORTING_CUSTOM_ERRORS = value;
+}

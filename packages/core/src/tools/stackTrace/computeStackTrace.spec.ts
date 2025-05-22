@@ -1,6 +1,6 @@
 import { isSafari } from '../utils/browserDetection'
 import * as CapturedExceptions from './capturedExceptions.specHelper'
-import { computeStackTrace } from './computeStackTrace'
+import { _setWRONGLY_REPORTING_CUSTOM_ERRORS, computeStackTrace } from './computeStackTrace'
 
 describe('computeStackTrace', () => {
   it('should not remove anonymous functions from the stack', () => {
@@ -958,4 +958,31 @@ Error: foo
       column: undefined,
     })
   })
+
+  it('should parse Firefox custom errors', () => {
+    class _DatadogTestCustomError extends Error {
+      constructor() {
+        super();
+        this.name = 'TestError';
+        this.stack = `_DatadogTestCustomError@http://localhost:8080/:35:13
+throwCustomError@http://localhost:8080/:39:26
+`;
+      }
+    }
+
+    _setWRONGLY_REPORTING_CUSTOM_ERRORS(true);
+    
+    const customError = new _DatadogTestCustomError();
+    const stackFrames = computeStackTrace(customError);
+
+    expect(stackFrames.stack.length).toBe(1);
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      func: 'throwCustomError',
+      url: 'http://localhost:8080/',
+      line: 39,
+      column: 26,
+    })
+  })
+  
 })
