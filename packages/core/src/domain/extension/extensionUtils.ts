@@ -34,7 +34,8 @@ export function isAllowedTrackingOrigins(
 
     if (!allowedTrackingOrigins) {
       display.warn(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
-      return false
+      // For now allowedTrackingOrigins is not required, so we return true to avoid breaking changes
+      return true
     }
 
     const isAllowed = matchList(allowedTrackingOrigins, windowLocation, true)
