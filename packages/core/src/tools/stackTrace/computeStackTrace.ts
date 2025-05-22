@@ -48,6 +48,17 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
+  if (stack.length > 0 && BADLY_REPORTING_CUSTOM_ERRORS) { // if we are badly reporting custom errors
+    if (ex instanceof Error && isErrorCustomError(ex)) { // if the element is a custom error
+      const firstStackFrame = stack[0];
+      const errorConstructorName = Object.getPrototypeOf(ex).constructor?.name;
+      console.log("custom error", firstStackFrame?.func, errorConstructorName, firstStackFrame)
+      if (firstStackFrame?.func === errorConstructorName) { // if the first stack frame is the custom error constructor
+        stack.shift(); // remove it
+      }
+    }
+  }
+
   return {
     message: tryToGetString(ex, 'message'),
     name: tryToGetString(ex, 'name'),
@@ -190,3 +201,30 @@ function tryToParseMessage(messageObj: unknown) {
   }
   return { name, message }
 }
+
+// Custom error stacktrace fix 
+// Some browsers (safari/firefox) add the error constructor as a frame in the stacktrace
+// In order to normalize the stacktrace, we need to remove it
+
+function isErrorCustomError(error: Error) {
+  let errorProto = Object.getPrototypeOf(error);
+  return errorProto.constructor?.toString().startsWith('class ');
+}
+
+function isBadlyReportingCustomErrors() {
+  // Should not be minified during compilation.
+  class _DatadogTestCustomError extends Error {
+      constructor() {
+          super();
+          this.name = 'TestError';// different name than the constructor name
+      }
+  }
+
+  let customError = new _DatadogTestCustomError();
+  let customErrorStack = customError.stack?.toString() ?? "";
+
+  // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
+  return customErrorStack.includes('_DatadogTestCustomError');
+}
+
+const BADLY_REPORTING_CUSTOM_ERRORS = isBadlyReportingCustomErrors();
