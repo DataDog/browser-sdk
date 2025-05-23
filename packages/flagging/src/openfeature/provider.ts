@@ -5,6 +5,7 @@
 import type { EvaluationContext, JsonValue, Logger, Paradigm, ResolutionDetails } from '@openfeature/core'
 import { StandardResolutionReasons } from '@openfeature/core'
 import type { Provider } from '@openfeature/web-sdk'
+import { offlinePrecomputedInit, PrecomputeClient } from '../precompute-client'
 
 export class DatadogProvider implements Provider {
   runsOn: Paradigm = 'client'
@@ -12,50 +13,63 @@ export class DatadogProvider implements Provider {
     name: 'datadog',
   } as const
 
+  private precomputeClient: PrecomputeClient
+
+  constructor(precomputedConfiguration: string) {
+    this.precomputeClient = offlinePrecomputedInit({
+      precomputedConfiguration,
+      throwOnFailedInitialization: false,
+    })
+  }
+
   resolveBooleanEvaluation(
-    _flagKey: string,
+    flagKey: string,
     defaultValue: boolean,
     _context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<boolean> {
     return {
-      value: defaultValue,
+      value: this.precomputeClient.getBooleanAssignment(flagKey, defaultValue),
       reason: StandardResolutionReasons.DEFAULT,
     }
   }
 
   resolveStringEvaluation(
-    _flagKey: string,
+    flagKey: string,
     defaultValue: string,
     _context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<string> {
     return {
-      value: defaultValue,
+      value: this.precomputeClient.getStringAssignment(flagKey, defaultValue),
       reason: StandardResolutionReasons.DEFAULT,
     }
   }
 
   resolveNumberEvaluation(
-    _flagKey: string,
+    flagKey: string,
     defaultValue: number,
     _context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<number> {
     return {
-      value: defaultValue,
+      value: this.precomputeClient.getNumericAssignment(flagKey, defaultValue),
       reason: StandardResolutionReasons.DEFAULT,
     }
   }
 
   resolveObjectEvaluation<T extends JsonValue>(
-    _flagKey: string,
+    flagKey: string,
     defaultValue: T,
     _context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<T> {
+    const value =
+      typeof defaultValue === 'object' && defaultValue !== null
+        ? (this.precomputeClient.getJSONAssignment(flagKey, defaultValue as object) as T)
+        : defaultValue
     return {
-      value: defaultValue,
+      value,
       reason: StandardResolutionReasons.DEFAULT,
     }
   }
