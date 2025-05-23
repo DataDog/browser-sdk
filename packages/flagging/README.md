@@ -4,8 +4,10 @@ This package supports flagging and experimentation by performing evaluation in t
 
 ## Initialize
 
-```
-const datadogFlaggingProvider = createDatadogProvider()
+```typescript
+import { DatadogProvider } from '@datadog/browser-flagging'
+
+const datadogFlaggingProvider = new DatadogProvider()
 
 // provide the subject
 const subject = {
@@ -19,7 +21,7 @@ await OpenFeature.setProviderAndWait(datadogFlaggingProvider)
 
 ## Evaluation
 
-```
+```typescript
 const client = OpenFeature.getClient()
 
 // provide the flag key and a default value which is returned for exceptional conditions.
