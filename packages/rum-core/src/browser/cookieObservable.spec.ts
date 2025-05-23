@@ -3,6 +3,7 @@ import { ONE_MINUTE, deleteCookie, setCookie } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
+import type { CookieStoreWindow } from './cookieObservable'
 import { WATCH_COOKIE_INTERVAL_DELAY, createCookieObservable } from './cookieObservable'
 
 const COOKIE_NAME = 'cookie_name'
@@ -32,6 +33,17 @@ describe('cookieObservable', () => {
     const cookieChangePromise = new Promise((resolve) => {
       subscription = observable.subscribe(resolve)
     })
+
+    // When writing a cookie just after subscribing to the cookieStore 'change' event, the 'change'
+    // event is sometimes not triggered, making this test case flaky.
+    // To work around this, we get some random cookie from the cookieStore. This adds enough delay
+    // to ensure that the 'change' event is triggered when we write our cookie.
+    // This was reported here: https://issues.chromium.org/issues/420405275
+    const cookieStore = (window as CookieStoreWindow).cookieStore
+    if (cookieStore) {
+      // Wait for the cookieStore to be ready
+      await cookieStore.get('some_cookie_name')
+    }
 
     setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
     clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
