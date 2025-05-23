@@ -26,16 +26,18 @@ describe('cookieObservable', () => {
     clock.cleanup()
   })
 
-  it('should notify observers on cookie change', (done) => {
+  it('should notify observers on cookie change', async () => {
     const observable = createCookieObservable(mockRumConfiguration(), COOKIE_NAME)
 
-    subscription = observable.subscribe((cookieChange) => {
-      expect(cookieChange).toEqual('foo')
-
-      done()
+    const cookieChangePromise = new Promise((resolve) => {
+      subscription = observable.subscribe(resolve)
     })
+
     setCookie(COOKIE_NAME, 'foo', COOKIE_DURATION)
     clock.tick(WATCH_COOKIE_INTERVAL_DELAY)
+
+    const cookieChange = await cookieChangePromise
+    expect(cookieChange).toEqual('foo')
   })
 
   it('should notify observers on cookie change when cookieStore is not supported', () => {
