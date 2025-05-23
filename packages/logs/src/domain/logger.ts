@@ -73,6 +73,7 @@ export class Logger {
         {
           error: createErrorFieldFromRawError(rawError, { includeMessage: true }),
         },
+        rawError.context,
         sanitizedMessageContext
       )
     } else {

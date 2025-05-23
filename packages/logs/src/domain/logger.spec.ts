@@ -122,6 +122,14 @@ describe('Logger', () => {
       })
     })
 
+    it('uses the error dd_context property as context', () => {
+      const error = new TypeError('My Error')
+      ;(error as any).dd_context = { foo: 'bar' }
+      logger.log('message', {}, StatusType.error, error)
+
+      expect(getLoggedMessage(0).context!.foo).toBe('bar')
+    })
+
     describe('when using logger.error', () => {
       it("'logger.error' should have an empty context if no Error object is provided", () => {
         logger.error('message')
