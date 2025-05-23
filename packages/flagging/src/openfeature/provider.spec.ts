@@ -1,13 +1,13 @@
 import { StandardResolutionReasons, type EvaluationContext, type Logger } from '@openfeature/core'
-import { createDatadogProvider } from './provider'
+import { DatadogProvider } from './provider'
 
 describe('DatadogProvider', () => {
-  let provider: ReturnType<typeof createDatadogProvider>
+  let provider: DatadogProvider
   let mockLogger: Logger
   let mockContext: EvaluationContext
 
   beforeEach(() => {
-    provider = createDatadogProvider()
+    provider = new DatadogProvider()
     mockLogger = {
       debug: jasmine.createSpy('debug'),
       info: jasmine.createSpy('info'),

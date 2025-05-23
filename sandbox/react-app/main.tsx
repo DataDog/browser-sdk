@@ -1,4 +1,4 @@
-import { createDatadogProvider } from '@datadog/browser-flagging'
+import { DatadogProvider } from '@datadog/browser-flagging'
 import { datadogRum } from '@datadog/browser-rum'
 import { ErrorBoundary, reactPlugin, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
@@ -18,7 +18,7 @@ const subject = {
 }
 
 async function initializeOpenFeature() {
-  const datadogFlaggingProvider = createDatadogProvider()
+  const datadogFlaggingProvider = new DatadogProvider()
   await OpenFeature.setContext(subject)
 
   try {
