@@ -1,7 +1,7 @@
 import mockPrecomputedConfig from '../test/data/configuration-wire/precomputed-v1-deobfuscated.json'
-import { precomputedFlagsStorageFactory } from './configuration-factory'
+import { precomputedFlagsStorageFactory } from './configurationFactory'
 import { VariationType } from './interfaces'
-import { offlinePrecomputedInit, PrecomputeClient } from './precompute-client'
+import { offlinePrecomputedInit, PrecomputeClient } from './precomputeClient'
 
 type TestCase<T = unknown> = {
   name: string
@@ -64,7 +64,7 @@ describe('PrecomputeClient', () => {
           name: 'JSON flag',
           flagKey: 'json-flag',
           defaultValue: {},
-          expectedValue: { key: 'value', number: 123 },
+          expectedValue: { key: 'value', prop: 123 },
           variationType: VariationType.JSON,
         },
       ]
@@ -74,19 +74,19 @@ describe('PrecomputeClient', () => {
           const client = offlinePrecomputedInit({ precomputedConfiguration: JSON.stringify(mockPrecomputedConfig) })
           switch (variationType) {
             case VariationType.STRING:
-              expect(client.getStringAssignment(flagKey, defaultValue as string)).toEqual(expectedValue as string)
+              expect(client!.getStringAssignment(flagKey, defaultValue as string)).toEqual(expectedValue as string)
               break
             case VariationType.BOOLEAN:
-              expect(client.getBooleanAssignment(flagKey, defaultValue as boolean)).toEqual(expectedValue as boolean)
+              expect(client!.getBooleanAssignment(flagKey, defaultValue as boolean)).toEqual(expectedValue as boolean)
               break
             case VariationType.INTEGER:
-              expect(client.getIntegerAssignment(flagKey, defaultValue as number)).toEqual(expectedValue as number)
+              expect(client!.getIntegerAssignment(flagKey, defaultValue as number)).toEqual(expectedValue as number)
               break
             case VariationType.NUMERIC:
-              expect(client.getNumericAssignment(flagKey, defaultValue as number)).toEqual(expectedValue as number)
+              expect(client!.getNumericAssignment(flagKey, defaultValue as number)).toEqual(expectedValue as number)
               break
             case VariationType.JSON:
-              expect(client.getJSONAssignment(flagKey, defaultValue as object)).toEqual(expectedValue as object)
+              expect(client!.getJSONAssignment(flagKey, defaultValue as object)).toEqual(expectedValue as object)
               break
           }
         })
@@ -132,27 +132,27 @@ describe('PrecomputeClient', () => {
           const client = offlinePrecomputedInit({ precomputedConfiguration: JSON.stringify(mockPrecomputedConfig) })
           switch (variationType) {
             case VariationType.STRING:
-              expect(client.getStringAssignment('non-existent-flag', defaultValue as string)).toEqual(
+              expect(client!.getStringAssignment('non-existent-flag', defaultValue as string)).toEqual(
                 expectedValue as string
               )
               break
             case VariationType.BOOLEAN:
-              expect(client.getBooleanAssignment('non-existent-flag', defaultValue as boolean)).toEqual(
+              expect(client!.getBooleanAssignment('non-existent-flag', defaultValue as boolean)).toEqual(
                 expectedValue as boolean
               )
               break
             case VariationType.INTEGER:
-              expect(client.getIntegerAssignment('non-existent-flag', defaultValue as number)).toEqual(
+              expect(client!.getIntegerAssignment('non-existent-flag', defaultValue as number)).toEqual(
                 expectedValue as number
               )
               break
             case VariationType.NUMERIC:
-              expect(client.getNumericAssignment('non-existent-flag', defaultValue as number)).toEqual(
+              expect(client!.getNumericAssignment('non-existent-flag', defaultValue as number)).toEqual(
                 expectedValue as number
               )
               break
             case VariationType.JSON:
-              expect(client.getJSONAssignment('non-existent-flag', defaultValue as object)).toEqual(
+              expect(client!.getJSONAssignment('non-existent-flag', defaultValue as object)).toEqual(
                 expectedValue as object
               )
           }

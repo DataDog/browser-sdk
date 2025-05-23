@@ -3,7 +3,7 @@ export interface Environment {
 }
 export const UNKNOWN_ENVIRONMENT_NAME = 'UNKNOWN'
 
-export enum FormatEnum {
+export const enum FormatEnum {
   PRECOMPUTED = 'PRECOMPUTED',
 }
 
@@ -45,7 +45,7 @@ export interface Variation {
   value: string | number | boolean
 }
 
-export enum VariationType {
+export const enum VariationType {
   STRING = 'STRING',
   INTEGER = 'INTEGER',
   NUMERIC = 'NUMERIC',

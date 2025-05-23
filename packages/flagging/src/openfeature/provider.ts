@@ -5,7 +5,7 @@
 import type { EvaluationContext, JsonValue, Logger, Paradigm, ResolutionDetails } from '@openfeature/core'
 import { StandardResolutionReasons } from '@openfeature/core'
 import type { Provider } from '@openfeature/web-sdk'
-import { offlinePrecomputedInit, PrecomputeClient } from '../precompute-client'
+import type { PrecomputeClient } from '../precomputeClient'
 
 export class DatadogProvider implements Provider {
   runsOn: Paradigm = 'client'
@@ -13,13 +13,10 @@ export class DatadogProvider implements Provider {
     name: 'datadog',
   } as const
 
-  private precomputeClient: PrecomputeClient
+  private precomputeClient: PrecomputeClient | undefined
 
-  constructor(precomputedConfiguration: string) {
-    this.precomputeClient = offlinePrecomputedInit({
-      precomputedConfiguration,
-      throwOnFailedInitialization: false,
-    })
+  constructor(precomputeClient?: PrecomputeClient) {
+    this.precomputeClient = precomputeClient
   }
 
   resolveBooleanEvaluation(
@@ -29,7 +26,7 @@ export class DatadogProvider implements Provider {
     _logger: Logger
   ): ResolutionDetails<boolean> {
     return {
-      value: this.precomputeClient.getBooleanAssignment(flagKey, defaultValue),
+      value: this.precomputeClient?.getBooleanAssignment(flagKey, defaultValue) ?? defaultValue,
       reason: StandardResolutionReasons.DEFAULT,
     }
   }
@@ -41,7 +38,7 @@ export class DatadogProvider implements Provider {
     _logger: Logger
   ): ResolutionDetails<string> {
     return {
-      value: this.precomputeClient.getStringAssignment(flagKey, defaultValue),
+      value: this.precomputeClient?.getStringAssignment(flagKey, defaultValue) ?? defaultValue,
       reason: StandardResolutionReasons.DEFAULT,
     }
   }
@@ -53,7 +50,7 @@ export class DatadogProvider implements Provider {
     _logger: Logger
   ): ResolutionDetails<number> {
     return {
-      value: this.precomputeClient.getNumericAssignment(flagKey, defaultValue),
+      value: this.precomputeClient?.getNumericAssignment(flagKey, defaultValue) ?? defaultValue,
       reason: StandardResolutionReasons.DEFAULT,
     }
   }
@@ -65,7 +62,7 @@ export class DatadogProvider implements Provider {
     _logger: Logger
   ): ResolutionDetails<T> {
     const value =
-      typeof defaultValue === 'object' && defaultValue !== null
+      typeof defaultValue === 'object' && defaultValue !== null && this.precomputeClient
         ? (this.precomputeClient.getJSONAssignment(flagKey, defaultValue as object) as T)
         : defaultValue
     return {

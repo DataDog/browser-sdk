@@ -1,7 +1,11 @@
-import { precomputedFlagsStorageFactory } from './configuration-factory'
-import { IConfigurationStore } from './configuration-store/configuration-store'
-import { IConfigurationWire, IPrecomputedConfigurationResponse } from './configuration-wire/configuration-wire-types'
-import { FlagEvaluationWithoutDetails, PrecomputedFlag, Subject, VariationType } from './interfaces'
+/* eslint-disable local-rules/disallow-side-effects */
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+import type { ISyncStore } from './configuration-store/configurationStore'
+import type { IConfigurationWire, IPrecomputedConfigurationResponse } from './configuration-wire/configurationWireTypes'
+import { precomputedFlagsStorageFactory } from './configurationFactory'
+import type { FlagEvaluationWithoutDetails, PrecomputedFlag, Subject } from './interfaces'
+import { VariationType } from './interfaces'
 
 // Instantiate the precomputed flags and bandits stores with memory-only implementation.
 const memoryOnlyPrecomputedFlagsStore = precomputedFlagsStorageFactory()
@@ -35,14 +39,14 @@ export class PrecomputeClient {
   public static initialized = false
 
   private subject: Subject
-  private precomputedFlagStore: IConfigurationStore<PrecomputedFlag>
+  private precomputedFlagStore: ISyncStore<PrecomputedFlag>
 
   public constructor({
     subject,
     precomputedFlagStore,
   }: {
     subject: Subject
-    precomputedFlagStore: IConfigurationStore<PrecomputedFlag>
+    precomputedFlagStore: ISyncStore<PrecomputedFlag>
   }) {
     this.subject = subject
     this.precomputedFlagStore = precomputedFlagStore
@@ -65,36 +69,36 @@ export class PrecomputeClient {
   }
 
   public getJSONAssignment(flagKey: string, defaultValue: object): object {
-    return this.getPrecomputedAssignment(flagKey, defaultValue, VariationType.JSON, (value) =>
-      typeof value === 'string' ? JSON.parse(value) : defaultValue
-    )
+    return this.getPrecomputedAssignment(flagKey, defaultValue, VariationType.JSON, (value) => {
+      if (typeof value === 'string') {
+        try {
+          const parsed = JSON.parse(value)
+          return typeof parsed === 'object' && parsed !== null ? parsed : defaultValue
+        } catch {
+          return defaultValue
+        }
+      }
+      return typeof value === 'object' && value !== null ? value : defaultValue
+    })
   }
 
   private getPrecomputedAssignment<T>(
     flagKey: string,
     defaultValue: T,
-    expectedType: VariationType,
+    _expectedType: VariationType,
     valueTransformer: (value: unknown) => T = (v) => v as T
   ): T {
-    //validateNotBlank(flagKey, 'Invalid argument: flagKey cannot be blank')
+    // validateNotBlank(flagKey, 'Invalid argument: flagKey cannot be blank')
 
     const precomputedFlag = this.getPrecomputedFlag(flagKey)
 
-    if (precomputedFlag == null) {
-      console.warn(`No assigned variation. Flag not found: ${flagKey}`)
+    if (precomputedFlag === null) {
       return defaultValue
     }
 
-    // Add type checking before proceeding
-    // if (!checkTypeMatch(expectedType, precomputedFlag.variationType)) {
-    //   const errorMessage = `${loggerPrefix} Type mismatch: expected ${expectedType} but flag ${flagKey} has type ${precomputedFlag.variationType}`
-    //   logger.error(errorMessage)
-    //   return defaultValue
-    // }
-
     const result: FlagEvaluationWithoutDetails = {
       flagKey,
-      format: this.precomputedFlagStore.getFormat() ?? '',
+      format: 'PRECOMPUTED',
       subjectKey: this.subject.key ?? '',
       subjectAttributes: {
         ...this.subject.attributes?.numericAttributes,
@@ -110,18 +114,15 @@ export class PrecomputeClient {
       entityId: null,
     }
 
-    // try {
-    //   if (result?.doLog) {
-    //     this.logAssignment(result)
-    //   }
-    // } catch (error) {
-    //   logger.error(`${loggerPrefix} Error logging assignment event: ${error}`)
-    // }
-
     try {
-      return result.variation?.value !== undefined ? valueTransformer(result.variation.value) : defaultValue
-    } catch (error) {
-      console.error(`Error transforming value: ${error}`)
+      const transformedValue =
+        result.variation?.value !== undefined ? valueTransformer(result.variation.value) : defaultValue
+      // TODO: add logging or open feature hook
+      // if (result?.doLog) {
+      //   this.logAssignment(result)
+      // }
+      return transformedValue
+    } catch {
       return defaultValue
     }
   }
@@ -143,18 +144,19 @@ export class PrecomputeClient {
  * @returns a singleton precomputed client instance
  * @public
  */
-export function offlinePrecomputedInit(config: IPrecomputedClientConfigSync): PrecomputeClient {
+export function offlinePrecomputedInit(config: IPrecomputedClientConfigSync): PrecomputeClient | null {
   let configurationWire: IConfigurationWire
   try {
     configurationWire = JSON.parse(config.precomputedConfiguration)
-    if (!configurationWire.precomputed) throw new Error()
-  } catch (error) {
+    if (!configurationWire.precomputed) {
+      throw new Error('Invalid precomputed configuration wire: missing precomputed field')
+    }
+  } catch {
     const errorMessage = 'Invalid precomputed configuration wire'
     if (config.throwOnFailedInitialization) {
       throw new Error(errorMessage)
     }
-
-    return PrecomputeClient.instance
+    return null
   }
 
   const { subjectKey, subjectAttributes, response } = configurationWire.precomputed
@@ -162,9 +164,7 @@ export function offlinePrecomputedInit(config: IPrecomputedClientConfigSync): Pr
 
   // populate the caches
   const memoryOnlyPrecomputedStore = precomputedFlagsStorageFactory()
-  memoryOnlyPrecomputedStore
-    .setEntries(parsedResponse.flags)
-    .catch((err: any) => console.warn('Error setting precomputed assignments for memory-only store', err))
+  memoryOnlyPrecomputedStore.setEntries(parsedResponse.flags)
 
   const subject: Subject = {
     key: subjectKey,
