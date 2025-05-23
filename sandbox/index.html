@@ -27,6 +27,27 @@
       })
       DD_FLAGGING.init()
     </script>
+    <script>
+      const RealXMLHttpRequest = window.XMLHttpRequest
+      window.XMLHttpRequest = function () {
+        const xhr = new RealXMLHttpRequest()
+        const realOpen = xhr.open
+        xhr.open = function () {
+          realOpen.apply(xhr, arguments)
+        }
+        return xhr
+      }
+    </script>
+    <script>
+      const xhr = new XMLHttpRequest()
+      xhr.open('GET', '/')
+      xhr.send()
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          console.log('request sent')
+        }
+      }
+    </script>
   </head>
 
   <body></body>
