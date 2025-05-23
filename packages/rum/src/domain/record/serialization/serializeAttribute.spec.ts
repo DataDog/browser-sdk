@@ -2,11 +2,10 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   STABLE_ATTRIBUTES,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
-  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
   NodePrivacyLevel,
   PRIVACY_ATTR_NAME,
 } from '@datadog/browser-rum-core'
-import { serializeAttribute } from './serializeAttribute'
+import { serializeAttribute, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './serializeAttribute'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
