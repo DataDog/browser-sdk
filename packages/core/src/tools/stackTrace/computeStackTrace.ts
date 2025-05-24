@@ -48,6 +48,19 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
+  if (stack.length > 0 && isWronglyReportingCustomErrors()) {
+    // if we are wrongly reporting custom errors
+    if (ex instanceof Error && isErrorCustomError(ex)) {
+      // if the element is a custom error
+      const firstStackFrame = stack[0]
+      const errorConstructorName = Object.getPrototypeOf(ex)?.constructor?.name
+      if (firstStackFrame?.func === errorConstructorName) {
+        // if the first stack frame is the custom error constructor
+        stack.shift() // remove it
+      }
+    }
+  }
+
   return {
     message: tryToGetString(ex, 'message'),
     name: tryToGetString(ex, 'name'),
@@ -189,4 +202,40 @@ function tryToParseMessage(messageObj: unknown) {
     ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
   }
   return { name, message }
+}
+
+// Custom error stacktrace fix
+// Some browsers (safari/firefox) add the error constructor as a frame in the stacktrace
+// In order to normalize the stacktrace, we need to remove it
+
+function isErrorCustomError(error: Error) {
+  const errorProto = Object.getPrototypeOf(error) as { constructor?: () => Error } | undefined
+  return errorProto?.constructor?.toString?.().startsWith('class ')
+}
+
+let WRONGLY_REPORTING_CUSTOM_ERRORS: boolean | undefined
+
+function isWronglyReportingCustomErrors() {
+  if (WRONGLY_REPORTING_CUSTOM_ERRORS !== undefined) {
+    return WRONGLY_REPORTING_CUSTOM_ERRORS
+  }
+
+  // This class name should be unique and not minified during compilation (so that it remains unique in the stacktrace).
+  /* eslint-disable no-restricted-syntax */
+  class _DatadogTestCustomError extends Error {
+    constructor() {
+      super()
+      this.name = 'TestError' // different name than the constructor name
+    }
+  }
+
+  const customError = new _DatadogTestCustomError()
+  const customErrorStack = customError.stack?.toString() ?? ''
+
+  // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
+  return customErrorStack.includes('_DatadogTestCustomError')
+}
+
+export function _setWronglyReportingCustomErrors(value: boolean | undefined) {
+  WRONGLY_REPORTING_CUSTOM_ERRORS = value
 }
