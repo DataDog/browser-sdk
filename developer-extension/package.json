@@ -8,14 +8,14 @@
   },
   "devDependencies": {
     "@types/chrome": "0.0.323",
-    "@types/react": "19.1.4",
+    "@types/react": "19.1.5",
     "@types/react-dom": "19.1.5",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
     "copy-webpack-plugin": "13.0.0",
     "css-loader": "7.1.2",
     "html-webpack-plugin": "5.6.3",
     "style-loader": "4.0.0",
-    "webpack": "5.99.8"
+    "webpack": "5.99.9"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
