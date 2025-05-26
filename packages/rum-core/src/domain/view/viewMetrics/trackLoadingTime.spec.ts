@@ -144,15 +144,14 @@ describe('trackLoadingTime', () => {
   })
 
   it('should discard loading time if page is hidden before activity when changing routes', () => {
-    startLoadingTimeTracking(ViewLoadingType.INITIAL_LOAD)
+    // Set some time before triggering the route change to test that the visibility change was captured
+    // with a timer higher than the loading time validation delay
+    clock.tick(300)
 
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-
-    expect(loadingTimeCallback).not.toHaveBeenCalled()
-    stopLoadingTimeTracking()
+    startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE)
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
 
     setPageVisibility('hidden')
-    startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE)
 
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
