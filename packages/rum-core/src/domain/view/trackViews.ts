@@ -221,7 +221,6 @@ function newView(
   let endClocks: ClocksState | undefined
   const location = shallowClone(initialLocation)
   const contextManager = createContextManager()
-  let stopBfcacheMetricsTracking: (() => void) | undefined
 
   let sessionIsActive = true
   let name = viewOptions?.name
@@ -361,9 +360,6 @@ function newView(
       }, KEEP_TRACKING_AFTER_VIEW_DELAY)
     },
     stop() {
-      if (stopBfcacheMetricsTracking) {
-        stopBfcacheMetricsTracking()
-      }
       stopInitialViewMetricsTracking()
       stopEventCountsTracking()
       stopINPTracking()
