@@ -1,16 +1,23 @@
 /* eslint-disable local-rules/disallow-side-effects */
-/* eslint-disable no-restricted-syntax */
-// We need to use a class here to properly implement the OpenFeature Provider interface
-// which requires class methods and properties. This is a valid exception to the no-classes rule.
-import type { EvaluationContext, JsonValue, Logger, Paradigm, ResolutionDetails } from '@openfeature/core'
+import type {
+  EvaluationContext,
+  JsonValue,
+  Logger,
+  Paradigm,
+  ProviderMetadata,
+  ResolutionDetails,
+} from '@openfeature/core'
 import type { Provider } from '@openfeature/web-sdk'
 import type { PrecomputeClient } from '../precomputeClient'
 
+// We need to use a class here to properly implement the OpenFeature Provider interface
+// which requires class methods and properties. This is a valid exception to the no-classes rule.
+/* eslint-disable-next-line no-restricted-syntax */
 export class DatadogProvider implements Provider {
-  runsOn: Paradigm = 'client'
-  metadata = {
+  readonly metadata: ProviderMetadata = {
     name: 'datadog',
-  } as const
+  }
+  readonly runsOn: Paradigm = 'client'
 
   private precomputeClient: PrecomputeClient | undefined
 
