@@ -1,5 +1,7 @@
 import React, { act } from 'react'
 
+import { toStackTraceString, computeStackTrace } from '@datadog/browser-core'
+import { RumEventType } from '@datadog/browser-rum-core'
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
@@ -82,11 +84,9 @@ describe('ErrorBoundary', () => {
   })
 
   it('reports the error to the SDK', () => {
-    const addErrorSpy = jasmine.createSpy()
+    const addEventSpy = jasmine.createSpy()
     initializeReactPlugin({
-      strategy: {
-        addError: addErrorSpy,
-      },
+      addEvent: addEventSpy,
     })
     const originalError = new Error('error')
     const ComponentSpy = jasmine.createSpy().and.throwError(originalError)
@@ -98,16 +98,29 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     )
 
-    expect(addErrorSpy).toHaveBeenCalledOnceWith({
-      error: jasmine.any(Error),
-      handlingStack: jasmine.any(String),
-      componentStack: jasmine.stringContaining('ComponentSpy'),
-      context: { framework: 'react' },
-      startClocks: jasmine.anything(),
-    })
-    const { error } = addErrorSpy.calls.first().args[0]
-    expect(error.message).toBe(originalError.message)
-    expect(error.name).toBe(originalError.name)
-    expect(error.cause).toBe(undefined)
+    expect(addEventSpy).toHaveBeenCalledOnceWith(
+      jasmine.any(Number),
+      {
+        type: RumEventType.ERROR,
+        date: jasmine.any(Number),
+        error: jasmine.objectContaining({
+          id: jasmine.any(String),
+          type: originalError.name,
+          message: originalError.message,
+          stack: toStackTraceString(computeStackTrace(originalError)),
+          handling_stack: jasmine.any(String),
+          component_stack: jasmine.stringContaining('at ComponentSpy'),
+          source_type: 'browser',
+          handling: 'handled',
+        }),
+        context: {
+          framework: 'react',
+        },
+      },
+      {
+        error: originalError,
+        handlingStack: jasmine.any(String),
+      }
+    )
   })
 })

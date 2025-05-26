@@ -1,4 +1,5 @@
 import type { RumInitConfiguration, RumPublicApi, Strategy } from '@datadog/browser-rum-core'
+import { noop } from '@datadog/browser-core'
 import type { ReactPluginConfiguration } from '../src/domain/reactPlugin'
 import { reactPlugin, resetReactPlugin } from '../src/domain/reactPlugin'
 import { registerCleanupTask } from '../../core/test'
@@ -7,12 +8,12 @@ export function initializeReactPlugin({
   configuration = {},
   initConfiguration = {},
   publicApi = {},
-  strategy = {},
+  addEvent = noop,
 }: {
   configuration?: ReactPluginConfiguration
   initConfiguration?: Partial<RumInitConfiguration>
   publicApi?: Partial<RumPublicApi>
-  strategy?: Partial<Strategy>
+  addEvent?: Strategy['addEvent']
 } = {}) {
   resetReactPlugin()
   const plugin = reactPlugin(configuration)
@@ -22,7 +23,7 @@ export function initializeReactPlugin({
     initConfiguration: initConfiguration as RumInitConfiguration,
   })
   plugin.onRumStart({
-    strategy: strategy as Strategy,
+    addEvent,
   })
 
   registerCleanupTask(() => {

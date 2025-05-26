@@ -2,9 +2,9 @@ import type { RumPlugin, RumPublicApi, Strategy } from '@datadog/browser-rum-cor
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined
-let globalStrategy: Strategy | undefined
+let globalAddEvent: Strategy['addEvent'] | undefined
 type InitSubscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (strategy: Strategy) => void
+type StartSubscriber = (addEvent: Strategy['addEvent']) => void
 
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
@@ -29,10 +29,10 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
         initConfiguration.trackViewsManually = true
       }
     },
-    onRumStart({ strategy }) {
-      globalStrategy = strategy
+    onRumStart({ addEvent }) {
+      globalAddEvent = addEvent
       for (const subscriber of onRumStartSubscribers) {
-        subscriber(strategy)
+        subscriber(addEvent)
       }
     },
     getConfigurationTelemetry() {
@@ -50,8 +50,8 @@ export function onRumInit(callback: InitSubscriber) {
 }
 
 export function onRumStart(callback: StartSubscriber) {
-  if (globalStrategy) {
-    callback(globalStrategy)
+  if (globalAddEvent) {
+    callback(globalAddEvent)
   } else {
     onRumStartSubscribers.push(callback)
   }
@@ -60,7 +60,7 @@ export function onRumStart(callback: StartSubscriber) {
 export function resetReactPlugin() {
   globalPublicApi = undefined
   globalConfiguration = undefined
-  globalStrategy = undefined
+  globalAddEvent = undefined
   onRumInitSubscribers.length = 0
   onRumStartSubscribers.length = 0
 }

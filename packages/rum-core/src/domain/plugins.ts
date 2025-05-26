@@ -5,7 +5,7 @@ export interface RumPlugin {
   name: string
   getConfigurationTelemetry?(): Record<string, unknown>
   onInit?(options: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }): void
-  onRumStart?(options: { strategy: Strategy }): void
+  onRumStart?(options: { addEvent: Strategy['addEvent'] }): void
 }
 
 type MethodNames = 'onInit' | 'onRumStart'

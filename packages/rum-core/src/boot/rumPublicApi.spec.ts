@@ -12,6 +12,7 @@ import type { StartRum } from './startRum'
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
   addError: () => undefined,
+  addEvent: () => undefined,
   addTiming: () => undefined,
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
