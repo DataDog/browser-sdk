@@ -10,6 +10,8 @@ import { PageState } from '../contexts/pageStateHistory'
 export interface DurationVitalOptions {
   context?: Context
   description?: string
+  // EXPERIMENTAL: This option is used to mark a vital as a user story.
+  userStory?: boolean
 }
 
 export interface DurationVitalReference {
@@ -59,18 +61,10 @@ export function startVitalCollection(
   }
 
   function sendDurationVitalStartEvent(vital: DurationVitalStart) {
-    if(vital) {
+    if (vital) {
       // temporary hack to send an event when the vital is started
-      vital.context = combine(vital.context, { status: 'in-progress' })
-      if (vital) {
-        const durationVitalStart = buildDurationVital(
-          vital,
-          vital.startClocks,
-          {},
-          clocksNow()
-        )
-        addDurationVital(durationVitalStart)
-      }
+      const durationVitalStart = buildDurationVital(vital, vital.startClocks, {}, clocksNow())
+      addDurationVital(durationVitalStart)
     }
   }
 
@@ -97,18 +91,22 @@ export function startDurationVital(
     description: options.description,
   }
 
+  // EXPERIMENTAL: If the user story option is set, we send a start event immediately.
+  if (sendDurationVitalStart && options.userStory) {
+    sendDurationVitalStart(vital)
+    vital.context = combine(vital.context, {
+      userStory: options.userStory,
+      id: generateUUID(),
+      status: 'in-progress',
+    })
+  }
+
   // To avoid leaking implementation details of the vital, we return a reference to it.
   const reference: DurationVitalReference = { __dd_vital_reference: true }
-
-  vital.context = combine(vital.context, { id: generateUUID() })
   vitalsByName.set(name, vital)
 
   // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
   vitalsByReference.set(reference, vital)
-
-  if(sendDurationVitalStart) {
-    sendDurationVitalStart(vital)
-  }
 
   return reference
 }
