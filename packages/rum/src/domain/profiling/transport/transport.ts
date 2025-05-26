@@ -1,6 +1,5 @@
 import { addTelemetryDebug, currentDrift, type EndpointBuilder, type Payload } from '@datadog/browser-core'
 import type { RumProfilerTrace } from '../types'
-import { getLongTaskId } from '../utils/longTaskRegistry'
 
 interface ProfileEventAttributes {
   application: { id: string }
@@ -134,9 +133,7 @@ function buildProfileEventAttributes(
       id: viewIds,
     }
   }
-  const longTaskIds: string[] = profilerTrace.longTasks
-    .map((longTask) => getLongTaskId(longTask.startClocks.relative))
-    .filter((id) => id !== undefined)
+  const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
 
   if (longTaskIds.length) {
     attributes.long_task = { id: longTaskIds }

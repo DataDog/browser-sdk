@@ -24,12 +24,7 @@ import type {
   RumViewEntry,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
-import {
-  disableLongTaskRegistry,
-  enableLongTaskRegistry,
-  deleteLongTaskIdsBefore,
-  getLongTaskId,
-} from './utils/longTaskRegistry'
+import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
 
@@ -80,11 +75,11 @@ export function createRumProfiler(
     // Stop current profiler instance
     await stopProfilerInstance('stopped')
 
-    // Disable Long Task Registry as we no longer need to correlate them with RUM
-    disableLongTaskRegistry()
-
     // Cleanup global listeners
     globalCleanupTasks.forEach((task) => task())
+
+    // Cleanup Long Task Registry as we no longer need to correlate them with RUM
+    cleanupLongTaskRegistryAfterCollection(clocksNow())
   }
 
   /**
@@ -116,9 +111,6 @@ export function createRumProfiler(
       const rawEventCollectedSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
         mayStoreLongTaskIdForProfilerCorrelation(data)
       })
-
-      // Enable Long Task registry so we can correlate them with RUM
-      enableLongTaskRegistry()
 
       cleanupTasks.push(() => observer?.disconnect())
       cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
@@ -236,7 +228,7 @@ export function createRumProfiler(
         )
 
         // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
-        deleteLongTaskIdsBefore(collectClocks)
+        cleanupLongTaskRegistryAfterCollection(collectClocks)
       })
       .catch(monitorError)
   }
