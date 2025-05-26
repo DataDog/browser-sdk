@@ -314,6 +314,8 @@ export default tseslint.config(
       'no-restricted-syntax': [
         'error',
         {
+          // Using classes seems to increase bundle size. See
+          // https://github.com/DataDog/browser-sdk/pull/2885
           selector: 'ClassDeclaration',
           message: 'Classes are not allowed. Use functions instead.',
         },
