@@ -53,7 +53,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
     if (ex instanceof Error && isErrorCustomError(ex)) {
       // if the element is a custom error
       const firstStackFrame = stack[0]
-      const errorConstructorName = Object.getPrototypeOf(ex)?.constructor?.name
+      const errorConstructorName = Object.getPrototypeOf(ex)?.constructor?.name || UNKNOWN_FUNCTION
       if (firstStackFrame?.func === errorConstructorName) {
         // if the first stack frame is the custom error constructor
         stack.shift() // remove it
