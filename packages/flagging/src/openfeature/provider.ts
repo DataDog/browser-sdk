@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/disallow-side-effects */
 import type {
   EvaluationContext,
   JsonValue,
