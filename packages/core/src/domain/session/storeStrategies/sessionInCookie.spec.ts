@@ -103,7 +103,7 @@ describe('session in cookie strategy', () => {
   })
 })
 
-describe('session cookie expire in one year when opt-in anonymous user tracking', () => {
+describe('session in cookie strategy when opt-in anonymous user tracking', () => {
   const anonymousId = 'device-123'
   const sessionState: SessionState = { id: '123', created: '0' }
   let cookieStorageStrategy: SessionStoreStrategy
