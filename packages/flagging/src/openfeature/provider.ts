@@ -1,12 +1,12 @@
 import type {
+  Provider,
   EvaluationContext,
   JsonValue,
   Logger,
   Paradigm,
   ProviderMetadata,
   ResolutionDetails,
-} from '@openfeature/core'
-import type { Provider } from '@openfeature/web-sdk'
+} from '@openfeature/web-sdk'
 import type { PrecomputeClient } from '../precomputeClient'
 
 // We need to use a class here to properly implement the OpenFeature Provider interface
