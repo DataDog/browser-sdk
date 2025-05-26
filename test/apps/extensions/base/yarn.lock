@@ -7,8 +7,8 @@ __metadata:
 
 "@datadog/browser-core@file:../../../../packages/core/package.tgz::locator=rum-testing-extension%40workspace%3A.":
   version: 6.7.0
-  resolution: "@datadog/browser-core@file:../../../../packages/core/package.tgz#../../../../packages/core/package.tgz::hash=878f9d&locator=rum-testing-extension%40workspace%3A."
-  checksum: 10c0/f2ae7625d9acc32235d05b8ab6ebcb4902c41a3a5098bef95e421d821e9ba15f1d13c831f80d849226581a287205356b63bd29025832b5ee8144f5a355be8911
+  resolution: "@datadog/browser-core@file:../../../../packages/core/package.tgz#../../../../packages/core/package.tgz::hash=c4f4d7&locator=rum-testing-extension%40workspace%3A."
+  checksum: 10c0/7498b9868a08e19404c20b13e4f36ca4ba98ca76efd18315352f9fa016a038e82fc2b59c400ce819a5173b02b7a82101bfef66930d6e421a2badfead736178e3
   languageName: node
   linkType: hard
 
