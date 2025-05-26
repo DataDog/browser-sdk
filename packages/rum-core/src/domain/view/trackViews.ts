@@ -272,13 +272,7 @@ function newView(
 
   // Start BFCache-specific metrics when restoring from BFCache
   if (loadingType === ViewLoadingType.BF_CACHE) {
-    const { stop: stopBfCache } = trackBfcacheMetrics(
-      configuration,
-      startClocks,
-      initialViewMetrics,
-      scheduleViewUpdate
-    )
-    stopBfcacheMetricsTracking = stopBfCache
+    trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
   }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)

@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { ONE_MINUTE } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { ONE_MINUTE, elapsed, relativeNow } from '@datadog/browser-core'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
@@ -31,4 +31,17 @@ export function trackFirstContentfulPaint(
   return {
     stop: performanceSubscription.unsubscribe,
   }
+}
+
+/**
+ * Measure the First Contentful Paint after a BFCache restoration.
+ * The DOM is restored synchronously, so we approximate the FCP with the first frame
+ * rendered just after the pageshow event, using two nested requestAnimationFrame calls.
+ */
+export function trackRestoredFirstContentfulPaint(viewStartRelative: RelativeTime, callback: (fcp: Duration) => void) {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      callback(elapsed(viewStartRelative, relativeNow()))
+    })
+  })
 }
