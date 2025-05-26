@@ -37,6 +37,15 @@ Description
 </td></tr>
 <tr><td>
 
+[@datadog/browser-rum-core](./browser-rum-core.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
 [@datadog/browser-rum-react](./browser-rum-react.md)
 
 

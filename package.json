@@ -40,7 +40,8 @@
     "docs:api:logs": "api-extractor run --local --config packages/logs/api-extractor.json",
     "docs:api:rum-slim": "api-extractor run --local --config packages/rum-slim/api-extractor.json",
     "docs:api:rum-react": "api-extractor run --local --config packages/rum-react/api-extractor.json",
-    "docs:api": "yarn build:types && yarn docs:api:rum && yarn docs:api:logs && yarn docs:api:rum-slim && yarn docs:api:rum-react"
+    "docs:api:rum-core": "api-extractor run --local --config packages/rum-core/api-extractor.json",
+    "docs:api": "yarn build:types && yarn docs:api:rum && yarn docs:api:logs && yarn docs:api:rum-slim && yarn docs:api:rum-react && yarn docs:api:rum-core"
   },
   "devDependencies": {
     "@eslint/js": "9.26.0",
