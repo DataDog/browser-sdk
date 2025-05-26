@@ -149,12 +149,13 @@ describe('trackLoadingTime', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
     expect(loadingTimeCallback).not.toHaveBeenCalled()
+    stopLoadingTimeTracking()
 
     setPageVisibility('hidden')
     startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE)
 
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
-    expect(loadingTimeCallback).toHaveBeenCalled()
+    expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
 })
