@@ -1,13 +1,14 @@
 import { display } from '../tools/display'
-import { isAllowedTrackingOrigins } from './allowedTrackingOrigins'
 import {
+  isAllowedTrackingOrigins,
   WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
   WARN_NOT_ALLOWED_TRACKING_ORIGIN,
-} from './extension/extensionUtils'
+} from './allowedTrackingOrigins'
 
 const DEFAULT_CONFIG = {
   applicationId: 'xxx',
   clientToken: 'xxx',
+  allowedTrackingOrigins: undefined as any,
 }
 
 describe('checkForAllowedTrackingOrigins', () => {
@@ -72,14 +73,15 @@ describe('checkForAllowedTrackingOrigins', () => {
     })
   })
 
-  describe('when configuration has allowedTrackingOrigins but domain is not allowed', () => {
+  describe('when configuration has allowedTrackingOrigins but domain is not allowed in extension context', () => {
     it('should warn when window location does not match any allowed pattern', () => {
       isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: ['https://different.com'],
         },
-        'https://example.com'
+        'https://example.com',
+        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
       expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })
@@ -90,7 +92,8 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [/^https:\/\/specific-[a-z]+\.com$/],
         },
-        'https://example.com'
+        'https://example.com',
+        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
       expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })
@@ -101,7 +104,8 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [(origin: string) => origin.includes('specific-id')],
         },
-        'https://example.com'
+        'https://example.com',
+        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
       expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })
@@ -116,7 +120,8 @@ describe('checkForAllowedTrackingOrigins', () => {
             (origin: string) => origin.includes('specific-id'),
           ],
         },
-        'https://example.com'
+        'https://example.com',
+        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
       expect(displayWarnSpy).toHaveBeenCalledWith(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
     })

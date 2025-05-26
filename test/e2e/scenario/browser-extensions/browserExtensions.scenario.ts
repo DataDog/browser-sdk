@@ -111,13 +111,10 @@ test.describe('browser extensions', () => {
       expect(logsResult.clientToken).toBe('abcd')
       expect(logsResult.allowedTrackingOrigins).toEqual(['chrome-extension://abcdefghijklmno'])
 
-      // No warnings should be present when using correct allowedTrackingOrigins
-      expect(
-        consoleMessages.filter((msg) => msg.includes('discouraged') || msg.includes('non-allowed domain')).length
-      ).toBe(0)
+      expect(consoleMessages).toEqual([])
     })
 
-  createTest('SDK with app.example.com allowedTrackingOrigins throws a warning for both RUM and Logs')
+  createTest('SDK with incorrect allowedTrackingOrigins shows warning for both RUM and Logs')
     .withExtension(pathToInvalidTrackingOriginExtension)
     .withRum()
     .withLogs()
@@ -168,6 +165,7 @@ test.describe('browser extensions', () => {
 
       expect(pageRumResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
       expect(pageLogsResult.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
+
       // Check warning messages - should have one from RUM and one from Logs
       const warningMessage = 'SDK is being initialized from an extension on a non-allowed domain.'
       const warningCount = consoleMessages.filter((msg) => msg.includes(warningMessage)).length
