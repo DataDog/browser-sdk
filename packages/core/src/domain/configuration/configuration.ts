@@ -11,7 +11,7 @@ import type { SessionStoreStrategyType } from '../session/storeStrategies/sessio
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
-import { isAllowedTrackingOrigins } from '../extension/extensionUtils'
+import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 import type { Site } from './intakeSites'
@@ -209,7 +209,6 @@ export interface Configuration extends TransportConfiguration {
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
-  allowedTrackingOrigins?: MatchOption[] | undefined
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
   maxTelemetryEventsPerPage: number
@@ -295,7 +294,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
-    allowedTrackingOrigins: initConfiguration.allowedTrackingOrigins,
     /**
      * beacon payload max queue size implementation is 64kb
      * ensure that we leave room for logs, rum and potential other users

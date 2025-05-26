@@ -1,7 +1,3 @@
-import { display } from '../../tools/display'
-import { matchList } from '../../tools/matchOption'
-import type { InitConfiguration } from '../configuration'
-
 export const EXTENSION_PREFIXES = ['chrome-extension://', 'moz-extension://']
 
 export const WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN =
@@ -22,29 +18,4 @@ export function isUnsupportedExtensionEnvironment(windowLocation: string, stack 
   // If we're on a regular web page but the error stack shows extension URLs,
   // then an extension is injecting RUM.
   return !containsExtensionUrl(windowLocation) && containsExtensionUrl(stack || '')
-}
-
-export function isAllowedTrackingOrigins(
-  configuration: InitConfiguration,
-  windowLocation = typeof location !== 'undefined' ? location.href : '',
-  errorStack?: string
-): boolean {
-  if (isUnsupportedExtensionEnvironment(windowLocation, errorStack)) {
-    const allowedTrackingOrigins = configuration.allowedTrackingOrigins
-
-    if (!allowedTrackingOrigins) {
-      display.warn(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
-      // For now allowedTrackingOrigins is not required, so we return true to avoid breaking changes
-      return true
-    }
-
-    const isAllowed = matchList(allowedTrackingOrigins, windowLocation, true)
-
-    if (!isAllowed) {
-      display.warn(WARN_NOT_ALLOWED_TRACKING_ORIGIN)
-    }
-    return isAllowed
-  }
-
-  return true
 }
