@@ -1,9 +1,15 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
-import { clocksOrigin, Observable } from '@datadog/browser-core'
+import { dateNow, relativeToClocks, clocksNow, clocksOrigin, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
-import { createMutationRecord, createPerformanceEntry, mockRumConfiguration } from '../../../../test'
+import {
+  createMutationRecord,
+  createPerformanceEntry,
+  type GlobalPerformanceBufferMock,
+  mockGlobalPerformanceBuffer,
+  mockRumConfiguration,
+} from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { LifeCycle } from '../../lifeCycle'
@@ -18,6 +24,8 @@ const LOAD_EVENT_BEFORE_ACTIVITY_TIMING = (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY
 
 const LOAD_EVENT_AFTER_ACTIVITY_TIMING = (BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY * 1.2) as RelativeTime
 
+const RANDOM_VIEW_START = 50 as RelativeTime
+
 describe('trackLoadingTime', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock
@@ -26,15 +34,31 @@ describe('trackLoadingTime', () => {
   let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void
   let stopLoadingTimeTracking: () => void
+  let originalSupportedEntryTypes: string[] | undefined
+  let performanceBufferMock: GlobalPerformanceBufferMock
 
-  function startLoadingTimeTracking(loadType: ViewLoadingType = ViewLoadingType.ROUTE_CHANGE) {
+  beforeEach(() => {
+    performanceBufferMock = mockGlobalPerformanceBuffer()
+    if (typeof PerformanceObserver !== 'undefined') {
+      originalSupportedEntryTypes = PerformanceObserver.supportedEntryTypes as string[]
+      Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
+        get: () => [...(originalSupportedEntryTypes || []), 'visibility-state'],
+        configurable: true,
+      })
+    }
+  })
+
+  function startLoadingTimeTracking(
+    loadType: ViewLoadingType = ViewLoadingType.ROUTE_CHANGE,
+    viewStart = clocksOrigin()
+  ) {
     const loadingTimeTracking = trackLoadingTime(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
       mockRumConfiguration(),
       loadType,
-      clocksOrigin(),
+      viewStart,
       loadingTimeCallback
     )
     setLoadEvent = loadingTimeTracking.setLoadEvent
@@ -134,6 +158,46 @@ describe('trackLoadingTime', () => {
   it('should discard loading time if page is hidden before activity', () => {
     setPageVisibility('hidden')
     startLoadingTimeTracking()
+
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    domMutationObservable.notify([createMutationRecord()])
+    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+
+    expect(loadingTimeCallback).not.toHaveBeenCalled()
+  })
+
+  it('should not discard loading time if page was hidden before the view start', () => {
+    clock.tick(clock.relative(RANDOM_VIEW_START))
+
+    performanceBufferMock.addPerformanceEntry({
+      entryType: 'visibility-state',
+      name: 'hidden',
+      startTime: clock.relative(RANDOM_VIEW_START - 3000) as number,
+    } as PerformanceEntry)
+
+    startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE, clocksNow())
+
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    domMutationObservable.notify([createMutationRecord()])
+    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+
+    expect(loadingTimeCallback).toHaveBeenCalled()
+  })
+
+  it('should discard loading time if page was hidden during the loading time', () => {
+    clock.tick(RANDOM_VIEW_START)
+
+    performanceBufferMock.addPerformanceEntry({
+      entryType: 'visibility-state',
+      name: 'hidden',
+      startTime: clock.relative(RANDOM_VIEW_START + 10) as number,
+    } as PerformanceEntry)
+
+    startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE, clocksNow())
+
+    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
+    domMutationObservable.notify([createMutationRecord()])
+    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
