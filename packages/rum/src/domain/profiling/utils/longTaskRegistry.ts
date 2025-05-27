@@ -1,4 +1,4 @@
-import type { ClocksState, RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 
 type PerformanceEntryStartTime = RelativeTime
 
@@ -25,11 +25,11 @@ export function getLongTaskId(startTime: PerformanceEntryStartTime): string | un
 /**
  * Delete the Long Task from the registry once we have collected it.
  *
- * @param collectionClocks The clocks of the current collection
+ * @param collectionRelativeTime The relative time of the collection
  */
-export function cleanupLongTaskRegistryAfterCollection(collectionClocks: ClocksState) {
+export function cleanupLongTaskRegistryAfterCollection(collectionRelativeTime: RelativeTime) {
   for (const performanceStartTime of registry.keys()) {
-    if (performanceStartTime < collectionClocks.relative) {
+    if (performanceStartTime < collectionRelativeTime) {
       // We collected this Long Task already, no need to keep it in the registry.
       registry.delete(performanceStartTime)
     }
