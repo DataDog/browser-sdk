@@ -36,7 +36,7 @@ import { buildGlobalContextManager } from '../domain/contexts/globalContext'
 import { buildUserContextManager } from '../domain/contexts/userContext'
 import { buildAccountContextManager } from '../domain/contexts/accountContext'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { RumEvent, CommonProperties } from '../rumEvent.types'
+import type { PartialRumEvent } from '../domain/event/eventCollection'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
@@ -254,7 +254,7 @@ export function createPreStartStrategy(
 
     addEvent(
       startTime: RelativeTime,
-      event: Omit<RumEvent, keyof CommonProperties>,
+      event: PartialRumEvent,
       domainContext: RumEventDomainContext,
       duration?: Duration
     ) {

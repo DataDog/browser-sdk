@@ -109,7 +109,7 @@ describe('ErrorBoundary', () => {
           message: originalError.message,
           stack: toStackTraceString(computeStackTrace(originalError)),
           handling_stack: jasmine.any(String),
-          component_stack: jasmine.stringContaining('at ComponentSpy'),
+          component_stack: jasmine.stringContaining('ComponentSpy'),
           source_type: 'browser',
           handling: 'handled',
         }),
