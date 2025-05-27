@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
-import { dateNow, relativeToClocks, clocksNow, clocksOrigin, Observable } from '@datadog/browser-core'
+import { clocksNow, clocksOrigin, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
