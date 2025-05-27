@@ -152,9 +152,8 @@ export function offlinePrecomputedInit(config: IPrecomputedClientConfigSync): Pr
       throw new Error('Invalid precomputed configuration wire: missing precomputed field')
     }
   } catch {
-    const errorMessage = 'Invalid precomputed configuration wire'
     if (config.throwOnFailedInitialization) {
-      throw new Error(errorMessage)
+      throw new Error('Invalid precomputed configuration wire')
     }
     return null
   }
