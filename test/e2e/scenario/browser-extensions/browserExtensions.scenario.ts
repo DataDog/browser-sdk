@@ -85,7 +85,7 @@ test.describe('browser extensions', () => {
     .withExtension(pathToAllowedTrackingOriginExtension)
     .run(async ({ page, getExtensionId }) => {
       const extensionId = await getExtensionId()
-      const expectedOrigin = `chrome-extension://`
+      const expectedOrigin = 'chrome-extension://'
       const consoleMessages: string[] = []
       page.on('console', (msg) => consoleMessages.push(msg.text()))
 
