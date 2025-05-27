@@ -158,25 +158,32 @@ export function offlinePrecomputedInit(config: IPrecomputedClientConfigSync): Pr
     return null
   }
 
-  const { subjectKey, subjectAttributes, response } = configurationWire.precomputed
-  const parsedResponse: IPrecomputedConfigurationResponse = JSON.parse(response)
+  try {
+    const { subjectKey, subjectAttributes, response } = configurationWire.precomputed
+    const parsedResponse: IPrecomputedConfigurationResponse = JSON.parse(response)
 
-  // populate the caches
-  const memoryOnlyPrecomputedStore = precomputedFlagsStorageFactory()
-  memoryOnlyPrecomputedStore.setEntries(parsedResponse.flags)
+    // populate the caches
+    const memoryOnlyPrecomputedStore = precomputedFlagsStorageFactory()
+    memoryOnlyPrecomputedStore.setEntries(parsedResponse.flags)
 
-  const subject: Subject = {
-    key: subjectKey,
-    attributes: subjectAttributes ?? {
-      numericAttributes: {},
-      categoricalAttributes: {},
-    },
+    const subject: Subject = {
+      key: subjectKey,
+      attributes: subjectAttributes ?? {
+        numericAttributes: {},
+        categoricalAttributes: {},
+      },
+    }
+
+    PrecomputeClient.instance = new PrecomputeClient({
+      subject,
+      precomputedFlagStore: memoryOnlyPrecomputedStore,
+    })
+    PrecomputeClient.initialized = true
+    return PrecomputeClient.instance
+  } catch {
+    if (config.throwOnFailedInitialization) {
+      throw new Error('unable to parse precomputed configuration wire')
+    }
+    return null
   }
-
-  PrecomputeClient.instance = new PrecomputeClient({
-    subject,
-    precomputedFlagStore: memoryOnlyPrecomputedStore,
-  })
-  PrecomputeClient.initialized = true
-  return PrecomputeClient.instance
 }
