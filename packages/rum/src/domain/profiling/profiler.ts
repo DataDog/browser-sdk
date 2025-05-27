@@ -286,9 +286,11 @@ export function createRumProfiler(
 
       const startClocks = relativeToClocks(entry.startTime as RelativeTime)
 
+      const longTaskId = getLongTaskId(startClocks.relative)
+
       // Store Long Task entry, which is a lightweight version of the PerformanceEntry
       instance.longTasks.push({
-        id: getLongTaskId(startClocks.relative),
+        id: longTaskId,
         duration: entry.duration as Duration,
         entryType: entry.entryType,
         startClocks,
