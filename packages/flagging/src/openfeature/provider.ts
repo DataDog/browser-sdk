@@ -7,7 +7,9 @@ import type {
   ProviderMetadata,
   ResolutionDetails,
 } from '@openfeature/web-sdk'
-import type { PrecomputeClient } from '../precomputeClient'
+
+import type { Configuration } from '../configuration'
+import { evaluate } from '../evaluation'
 
 // We need to use a class here to properly implement the OpenFeature Provider interface
 // which requires class methods and properties. This is a valid exception to the no-classes rule.
@@ -18,62 +20,47 @@ export class DatadogProvider implements Provider {
   }
   readonly runsOn: Paradigm = 'client'
 
-  private precomputeClient: PrecomputeClient | undefined
-
-  constructor(precomputeClient?: PrecomputeClient) {
-    this.precomputeClient = precomputeClient
-  }
+  private configuration: Configuration = {}
 
   resolveBooleanEvaluation(
     flagKey: string,
     defaultValue: boolean,
-    _context: EvaluationContext,
+    context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<boolean> {
-    return {
-      value: this.precomputeClient?.getBooleanAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: 'DEFAULT',
-    }
+    return evaluate(this.configuration, 'boolean', flagKey, defaultValue, context)
   }
 
   resolveStringEvaluation(
     flagKey: string,
     defaultValue: string,
-    _context: EvaluationContext,
+    context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<string> {
-    return {
-      value: this.precomputeClient?.getStringAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: 'DEFAULT',
-    }
+    return evaluate(this.configuration, 'string', flagKey, defaultValue, context)
   }
 
   resolveNumberEvaluation(
     flagKey: string,
     defaultValue: number,
-    _context: EvaluationContext,
+    context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<number> {
-    return {
-      value: this.precomputeClient?.getNumericAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: 'DEFAULT',
-    }
+    return evaluate(this.configuration, 'number', flagKey, defaultValue, context)
   }
 
   resolveObjectEvaluation<T extends JsonValue>(
     flagKey: string,
     defaultValue: T,
-    _context: EvaluationContext,
+    context: EvaluationContext,
     _logger: Logger
   ): ResolutionDetails<T> {
-    const value =
-      typeof defaultValue === 'object' && defaultValue !== null && this.precomputeClient
-        ? (this.precomputeClient.getJSONAssignment(flagKey, defaultValue as object) as T)
-        : defaultValue
-
-    return {
-      value,
-      reason: 'DEFAULT',
-    }
+    // type safety: OpenFeature interface requires us to return a
+    // specific T for *any* value of T (which could be any subtype of
+    // JsonValue). We can't even theoretically implement it in a
+    // type-sound way because there's no runtime information passed to
+    // learn what type the user expects. So it's up to the user to
+    // makesure they pass the appropriate type.
+    return evaluate(this.configuration, 'object', flagKey, defaultValue, context) as ResolutionDetails<T>
   }
 }
