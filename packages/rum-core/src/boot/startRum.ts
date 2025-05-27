@@ -266,7 +266,7 @@ export function startRumEventCollection(
   )
 
   const displayContext = startDisplayContext(hooks, configuration)
-  const ciVisibilityContext = startCiVisibilityContext(hooks)
+  const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
   startSyntheticsContext(hooks)
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
