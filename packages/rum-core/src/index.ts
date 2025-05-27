@@ -45,7 +45,7 @@ export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/getA
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'
 export { getSessionReplayUrl } from './domain/getSessionReplayUrl'
-export { isLongDataUrl, sanitizeDataUrl } from './domain/resource/resourceUtils'
+export { sanitizeIfLongDataUrl } from './domain/resource/resourceUtils'
 export * from './domain/privacy'
 export { SessionReplayState } from './domain/rumSessionManager'
 export type { RumPlugin } from './domain/plugins'

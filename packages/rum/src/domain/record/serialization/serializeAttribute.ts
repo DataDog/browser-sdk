@@ -4,12 +4,13 @@ import {
   CENSORED_STRING_MARK,
   CENSORED_IMG_MARK,
   STABLE_ATTRIBUTES,
-  isLongDataUrl,
-  sanitizeDataUrl,
+  sanitizeIfLongDataUrl,
 } from '@datadog/browser-rum-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { censoredImageForSize } from './serializationUtils'
 
+// TODO: temporarily bump the Session Replay limit to 1Mb for dataUrls
+// This limit should be removed after [PANA-2843] is implemented
 export const MAX_ATTRIBUTE_VALUE_CHAR_LENGTH = 1_000_000
 
 export function serializeAttribute(
@@ -80,9 +81,5 @@ export function serializeAttribute(
     return attributeValue
   }
 
-  if (isLongDataUrl(attributeValue, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH)) {
-    return sanitizeDataUrl(attributeValue)
-  }
-
-  return attributeValue
+  return sanitizeIfLongDataUrl(attributeValue, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH)
 }

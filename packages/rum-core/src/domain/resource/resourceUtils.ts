@@ -229,16 +229,14 @@ export function isAllowedRequestUrl(url: string) {
 const DATA_URL_REGEX = /data:(.+)?(;base64)?,/g
 export const MAX_RESOURCE_VALUE_CHAR_LENGTH = 24_000
 
-export function isLongDataUrl(url: string, maxAttributeLength?: number): boolean {
-  const longUrlLimit = maxAttributeLength ?? MAX_RESOURCE_VALUE_CHAR_LENGTH
-  return url.length > longUrlLimit && url.startsWith('data:')
-}
-
-export function sanitizeDataUrl(url: string): string {
-  // Avoid String.match RangeError: Maximum call stack size exceeded
-  const truncatedUrl = url.substring(0, 100).match(DATA_URL_REGEX)
-  if (!truncatedUrl) {
+export function sanitizeIfLongDataUrl(url: string, lengthLimit: number = MAX_RESOURCE_VALUE_CHAR_LENGTH): string {
+  if (url.length <= lengthLimit || !url.startsWith('data:')) {
     return url
   }
-  return `${truncatedUrl[0]}[...]`
+  // truncate url first to a random length to prevent match error when the url is too long
+  const dataUrlMatchArray = url.substring(0, 100).match(DATA_URL_REGEX)
+  if (!dataUrlMatchArray) {
+    return url
+  }
+  return `${dataUrlMatchArray[0]}[...]`
 }
