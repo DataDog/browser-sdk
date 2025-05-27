@@ -137,4 +137,11 @@ describe('trackLoadingTime', () => {
 
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
+
+  it('should NOT discard loading time if page is hidden before a new view start happened', () => {
+    setPageVisibility('hidden')
+    startLoadingTimeTracking()
+
+    expect(loadingTimeCallback).not.toHaveBeenCalled()
+  })
 })
