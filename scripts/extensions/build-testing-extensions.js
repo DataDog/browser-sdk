@@ -20,7 +20,7 @@ async function buildExtensions() {
   // Extension configurations
   const extensionNames = ['allowed-tracking-origin', 'invalid-tracking-origin']
   const trackingOrigins = {
-    'allowed-tracking-origin': 'chrome-extension://abcdefghijklmno',
+    'allowed-tracking-origin': 'chrome-extension://',
     'invalid-tracking-origin': 'https://app.example.com',
   }
 
