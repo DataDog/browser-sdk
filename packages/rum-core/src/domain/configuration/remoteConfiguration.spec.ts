@@ -3,13 +3,12 @@ import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
 
-const DEFAULT_INIT_CONFIGURATION = {
+const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',
   applicationId: 'xxx',
-  samplingRate: 100,
-  sessionReplaySamplingRate: 100,
+  sessionReplaySampleRate: 100,
   defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
-} as RumInitConfiguration
+}
 
 describe('remoteConfiguration', () => {
   let displayErrorSpy: jasmine.Spy<typeof display.error>
@@ -55,10 +54,10 @@ describe('remoteConfiguration', () => {
   })
 
   describe('applyRemoteConfiguration', () => {
-    it('should override the iniConfiguration options with the ones from the remote configuration', () => {
-      const remoteConfiguration = {
-        samplingRate: 1,
-        sessionReplaySamplingRate: 1,
+    it('should override the initConfiguration options with the ones from the remote configuration', () => {
+      const remoteConfiguration: Partial<RumInitConfiguration> = {
+        sessionSampleRate: 1,
+        sessionReplaySampleRate: 1,
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
       expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, remoteConfiguration)).toEqual(
