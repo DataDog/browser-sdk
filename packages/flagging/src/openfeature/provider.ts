@@ -3,7 +3,6 @@
 // We need to use a class here to properly implement the OpenFeature Provider interface
 // which requires class methods and properties. This is a valid exception to the no-classes rule.
 import type { EvaluationContext, JsonValue, Logger, Paradigm, ResolutionDetails } from '@openfeature/core'
-import { StandardResolutionReasons } from '@openfeature/core'
 import type { Provider } from '@openfeature/web-sdk'
 import type { PrecomputeClient } from '../precomputeClient'
 
@@ -27,7 +26,7 @@ export class DatadogProvider implements Provider {
   ): ResolutionDetails<boolean> {
     return {
       value: this.precomputeClient?.getBooleanAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: StandardResolutionReasons.DEFAULT,
+      reason: 'DEFAULT',
     }
   }
 
@@ -39,7 +38,7 @@ export class DatadogProvider implements Provider {
   ): ResolutionDetails<string> {
     return {
       value: this.precomputeClient?.getStringAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: StandardResolutionReasons.DEFAULT,
+      reason: 'DEFAULT',
     }
   }
 
@@ -51,7 +50,7 @@ export class DatadogProvider implements Provider {
   ): ResolutionDetails<number> {
     return {
       value: this.precomputeClient?.getNumericAssignment(flagKey, defaultValue) ?? defaultValue,
-      reason: StandardResolutionReasons.DEFAULT,
+      reason: 'DEFAULT',
     }
   }
 
@@ -68,7 +67,7 @@ export class DatadogProvider implements Provider {
 
     return {
       value,
-      reason: StandardResolutionReasons.DEFAULT,
+      reason: 'DEFAULT',
     }
   }
 }
