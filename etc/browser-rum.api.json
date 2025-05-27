@@ -173,6 +173,581 @@
       "preserveMemberOrder": false,
       "members": [
         {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!CommonProperties:interface",
+          "docComment": "/**\n * Schema of common properties of RUM events\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface CommonProperties "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "CommonProperties",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#_dd:member",
+              "docComment": "/**\n * Internal properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly _dd: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly format_version: 2;\n        session?: {\n            plan?: 1 | 2;\n            readonly session_precondition?: 'user_app_launch' | 'inactivity_timeout' | 'max_duration' | 'background_launch' | 'prewarm' | 'from_non_interactive_session' | 'explicit_stop';\n            [k: string]: unknown;\n        };\n        readonly configuration?: {\n            readonly session_sample_rate: number;\n            readonly session_replay_sample_rate?: number;\n            [k: string]: unknown;\n        };\n        readonly browser_sdk_version?: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "_dd",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "IndexSignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties:index(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "[k: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": "]: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "unknown"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "k",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ]
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#account:member",
+              "docComment": "/**\n * Account properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly account?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly id: string;\n        readonly name?: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "account",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#application:member",
+              "docComment": "/**\n * Application properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly application: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly id: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "application",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#build_id:member",
+              "docComment": "/**\n * Generated unique ID of the application build. Unlike version or build_version this field is not meant to be coming from the user, but rather generated by the tooling for each build.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly build_id?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "build_id",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#build_version:member",
+              "docComment": "/**\n * The build version for this application\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly build_version?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "build_version",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#ci_test:member",
+              "docComment": "/**\n * CI Visibility properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly ci_test?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly test_execution_id: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "ci_test",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#connectivity:member",
+              "docComment": "/**\n * Device connectivity properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "connectivity?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly status: 'connected' | 'not_connected' | 'maybe';\n        readonly interfaces?: ('bluetooth' | 'cellular' | 'ethernet' | 'wifi' | 'wimax' | 'mixed' | 'other' | 'unknown' | 'none')[];\n        readonly effective_type?: 'slow-2g' | '2g' | '3g' | '4g';\n        readonly cellular?: {\n            readonly technology?: string;\n            readonly carrier_name?: string;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "connectivity",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#context:member",
+              "docComment": "/**\n * User provided context\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "context?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "context",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#date:member",
+              "docComment": "/**\n * Start of the event in ms from epoch\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly date: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "date",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#device:member",
+              "docComment": "/**\n * Device properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "device?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly type: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other';\n        readonly name?: string;\n        readonly model?: string;\n        readonly brand?: string;\n        readonly architecture?: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "device",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#display:member",
+              "docComment": "/**\n * Display properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "display?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly viewport?: {\n            readonly width: number;\n            readonly height: number;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "display",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#os:member",
+              "docComment": "/**\n * Operating system properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "os?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly name: string;\n        readonly version: string;\n        readonly build?: string;\n        readonly version_major: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "os",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#service:member",
+              "docComment": "/**\n * The service name for this application\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "service?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "service",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#session:member",
+              "docComment": "/**\n * Session properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly session: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly id: string;\n        readonly type: 'user' | 'synthetics' | 'ci_test';\n        readonly has_replay?: boolean;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "session",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#source:member",
+              "docComment": "/**\n * The source of this event\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly source?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'roku' | 'unity' | 'kotlin-multiplatform'"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "source",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#synthetics:member",
+              "docComment": "/**\n * Synthetics properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly synthetics?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly test_id: string;\n        readonly result_id: string;\n        readonly injected?: boolean;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "synthetics",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#usr:member",
+              "docComment": "/**\n * User properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly usr?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly id?: string;\n        readonly name?: string;\n        readonly email?: string;\n        readonly anonymous_id?: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "usr",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#version:member",
+              "docComment": "/**\n * The version for this application\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "version?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "version",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties#view:member",
+              "docComment": "/**\n * View properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "readonly view: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        readonly id: string;\n        referrer?: string;\n        url: string;\n        name?: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": true,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "view",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
           "kind": "Variable",
           "canonicalReference": "@datadog/browser-rum!datadogRum:var",
           "docComment": "",
@@ -184,7 +759,7 @@
             {
               "kind": "Reference",
               "text": "RumPublicApi",
-              "canonicalReference": "@datadog/browser-rum-core!RumPublicApi:interface"
+              "canonicalReference": "@datadog/browser-rum!RumGlobal:interface"
             }
           ],
           "fileUrlPath": "packages/rum/esm/entries/main.d.ts",
@@ -195,6 +770,3101 @@
             "startIndex": 1,
             "endIndex": 2
           }
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-rum!RumActionEvent:type",
+          "docComment": "/**\n * Schema of all properties of an Action event\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type RumActionEvent = "
+            },
+            {
+              "kind": "Reference",
+              "text": "CommonProperties",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ViewContainerSchema",
+              "canonicalReference": "@datadog/browser-rum!ViewContainerSchema:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & {\n    readonly type: 'action';\n    readonly action: {\n        readonly type: 'custom' | 'click' | 'tap' | 'scroll' | 'swipe' | 'application_start' | 'back';\n        readonly id?: string;\n        readonly loading_time?: number;\n        readonly target?: {\n            name: string;\n            [k: string]: unknown;\n        };\n        readonly frustration?: {\n            readonly type: ('rage_click' | 'dead_click' | 'error_click' | 'rage_tap' | 'error_tap')[];\n            [k: string]: unknown;\n        };\n        readonly error?: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly crash?: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly long_task?: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly resource?: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    readonly view?: {\n        readonly in_foreground?: boolean;\n        [k: string]: unknown;\n    };\n    _dd?: {\n        readonly action?: {\n            readonly position?: {\n                readonly x: number;\n                readonly y: number;\n                [k: string]: unknown;\n            };\n            target?: {\n                readonly selector?: string;\n                readonly width?: number;\n                readonly height?: number;\n                [k: string]: unknown;\n            };\n            name_source?: 'custom_attribute' | 'mask_placeholder' | 'standard_attribute' | 'text_content' | 'mask_disallowed' | 'blank';\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumActionEvent",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 5
+          }
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumActionEventDomainContext:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumActionEventDomainContext "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumActionEventDomainContext",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumActionEventDomainContext#events:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "events?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Event",
+                  "canonicalReference": "!Event:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "events",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumActionEventDomainContext#handlingStack:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "handlingStack?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "handlingStack",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-rum!RumErrorEvent:type",
+          "docComment": "/**\n * Schema of all properties of an Error event\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type RumErrorEvent = "
+            },
+            {
+              "kind": "Reference",
+              "text": "CommonProperties",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ActionChildProperties",
+              "canonicalReference": "@datadog/browser-rum!ActionChildProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ViewContainerSchema",
+              "canonicalReference": "@datadog/browser-rum!ViewContainerSchema:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & {\n    readonly type: 'error';\n    readonly error: {\n        readonly id?: string;\n        message: string;\n        readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report';\n        stack?: string;\n        causes?: {\n            message: string;\n            readonly type?: string;\n            stack?: string;\n            readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report';\n            [k: string]: unknown;\n        }[];\n        readonly is_crash?: boolean;\n        fingerprint?: string;\n        readonly type?: string;\n        readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning';\n        readonly handling?: 'handled' | 'unhandled';\n        readonly handling_stack?: string;\n        readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku' | 'ndk' | 'ios+il2cpp' | 'ndk+il2cpp';\n        readonly resource?: {\n            readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT';\n            readonly status_code: number;\n            url: string;\n            readonly provider?: {\n                readonly domain?: string;\n                readonly name?: string;\n                readonly type?: 'ad' | 'advertising' | 'analytics' | 'cdn' | 'content' | 'customer-success' | 'first party' | 'hosting' | 'marketing' | 'other' | 'social' | 'tag-manager' | 'utility' | 'video';\n                [k: string]: unknown;\n            };\n            [k: string]: unknown;\n        };\n        threads?: {\n            readonly name: string;\n            readonly crashed: boolean;\n            readonly stack: string;\n            readonly state?: string;\n            [k: string]: unknown;\n        }[];\n        readonly binary_images?: {\n            readonly uuid: string;\n            readonly name: string;\n            readonly is_system: boolean;\n            readonly load_address?: string;\n            readonly max_address?: string;\n            readonly arch?: string;\n            [k: string]: unknown;\n        }[];\n        readonly was_truncated?: boolean;\n        readonly meta?: {\n            readonly code_type?: string;\n            readonly parent_process?: string;\n            readonly incident_identifier?: string;\n            readonly process?: string;\n            readonly exception_type?: string;\n            readonly exception_codes?: string;\n            readonly path?: string;\n            [k: string]: unknown;\n        };\n        readonly csp?: {\n            readonly disposition?: 'enforce' | 'report';\n            [k: string]: unknown;\n        };\n        readonly time_since_app_start?: number;\n        [k: string]: unknown;\n    };\n    readonly freeze?: {\n        readonly duration: number;\n        [k: string]: unknown;\n    };\n    readonly view?: {\n        readonly in_foreground?: boolean;\n        [k: string]: unknown;\n    };\n    readonly feature_flags?: {\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumErrorEvent",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 7
+          }
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumErrorEventDomainContext:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumErrorEventDomainContext "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumErrorEventDomainContext",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumErrorEventDomainContext#error:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "error: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "unknown"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "error",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumErrorEventDomainContext#handlingStack:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "handlingStack?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "handlingStack",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-rum!RumEvent:type",
+          "docComment": "/**\n * Schema of all properties of a RUM event\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type RumEvent = "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumActionEvent",
+              "canonicalReference": "@datadog/browser-rum!RumActionEvent:type"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumErrorEvent",
+              "canonicalReference": "@datadog/browser-rum!RumErrorEvent:type"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumLongTaskEvent",
+              "canonicalReference": "@datadog/browser-rum!RumLongTaskEvent:type"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumResourceEvent",
+              "canonicalReference": "@datadog/browser-rum!RumResourceEvent:type"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumViewEvent",
+              "canonicalReference": "@datadog/browser-rum!RumViewEvent:type"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumVitalEvent",
+              "canonicalReference": "@datadog/browser-rum!RumVitalEvent:type"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumEvent",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 12
+          }
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-rum!RumEventDomainContext:type",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type RumEventDomainContext<T extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumEventType",
+              "canonicalReference": "@datadog/browser-rum!RumEventType:enum"
+            },
+            {
+              "kind": "Content",
+              "text": " = "
+            },
+            {
+              "kind": "Content",
+              "text": "any"
+            },
+            {
+              "kind": "Content",
+              "text": "> = "
+            },
+            {
+              "kind": "Content",
+              "text": "T extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumEventType.VIEW",
+              "canonicalReference": "@datadog/browser-rum!RumEventType.VIEW:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumViewEventDomainContext",
+              "canonicalReference": "@datadog/browser-rum!RumViewEventDomainContext:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " : T extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumEventType.ACTION",
+              "canonicalReference": "@datadog/browser-rum!RumEventType.ACTION:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumActionEventDomainContext",
+              "canonicalReference": "@datadog/browser-rum!RumActionEventDomainContext:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " : T extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumEventType.RESOURCE",
+              "canonicalReference": "@datadog/browser-rum!RumEventType.RESOURCE:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumFetchResourceEventDomainContext",
+              "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumXhrResourceEventDomainContext",
+              "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " | "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumOtherResourceEventDomainContext",
+              "canonicalReference": "@datadog/browser-rum!RumOtherResourceEventDomainContext:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " : T extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumEventType.ERROR",
+              "canonicalReference": "@datadog/browser-rum!RumEventType.ERROR:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumErrorEventDomainContext",
+              "canonicalReference": "@datadog/browser-rum!RumErrorEventDomainContext:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " : T extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumEventType.LONG_TASK",
+              "canonicalReference": "@datadog/browser-rum!RumEventType.LONG_TASK:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumLongTaskEventDomainContext",
+              "canonicalReference": "@datadog/browser-rum!RumLongTaskEventDomainContext:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " : T extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumEventType.VITAL",
+              "canonicalReference": "@datadog/browser-rum!RumEventType.VITAL:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumVitalEventDomainContext",
+              "canonicalReference": "@datadog/browser-rum!RumVitalEventDomainContext:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " : never"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumEventDomainContext",
+          "typeParameters": [
+            {
+              "typeParameterName": "T",
+              "constraintTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              }
+            }
+          ],
+          "typeTokenRange": {
+            "startIndex": 5,
+            "endIndex": 34
+          }
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumFetchResourceEventDomainContext "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumFetchResourceEventDomainContext",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#error:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "error",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#handlingStack:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "handlingStack?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "handlingStack",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#isAborted:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "isAborted: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "isAborted",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#performanceEntry:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "performanceEntry?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "PerformanceEntry",
+                  "canonicalReference": "!PerformanceEntry:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "performanceEntry",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#requestInit:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "requestInit?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInit",
+                  "canonicalReference": "!RequestInit:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "requestInit",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#requestInput:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "requestInput: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RequestInfo",
+                  "canonicalReference": "!RequestInfo:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "requestInput",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#response:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "response?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Response",
+                  "canonicalReference": "!Response:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "response",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumGlobal:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumPublicApi extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "PublicApi",
+              "canonicalReference": "@datadog/browser-core!PublicApi:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/boot/rumPublicApi.d.ts",
+          "releaseTag": "Public",
+          "name": "RumGlobal",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#addAction:member",
+              "docComment": "/**\n * Add a custom action, stored in `@action`\n *\n * @param name - Name of the action\n *\n * @param context - Context of the action\n *\n * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "addAction: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(name: string, context?: object) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "addAction",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#addDurationVital:member",
+              "docComment": "/**\n * Add a custom duration vital\n *\n * @param name - name of the custom vital\n *\n * @param  - options.startTime epoch timestamp of the start of the custom vital\n *\n * @param  - options.duration duration of the custom vital in millisecond\n *\n * @param  - options.context custom context attached to the vital\n *\n * @param  - options.description Description of the vital\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "addDurationVital: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(name: string, options: {\n        startTime: number;\n        duration: number;\n        context?: object;\n        description?: string;\n    }) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "addDurationVital",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#addError:member",
+              "docComment": "/**\n * Add a custom error, stored in `@error`.\n *\n * @param error - Error. Favor sending a [Javascript Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) to have a stack trace attached to the error event.\n *\n * @param context - Context of the error\n *\n * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "addError: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(error: unknown, context?: object) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "addError",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#addFeatureFlagEvaluation:member",
+              "docComment": "/**\n * Add a feature flag evaluation, stored in `@feature_flags.<feature_flag_key>`\n *\n * @param key - The key of the feature flag.\n *\n * @param value - The value of the feature flag.\n *\n * We recommend enabling the intake request compression when using feature flags `compressIntakeRequests: true`.\n *\n * See [Feature Flag Tracking](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "addFeatureFlagEvaluation: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: string, value: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "addFeatureFlagEvaluation",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#addTiming:member",
+              "docComment": "/**\n * Add a custom timing relative to the start of the current view, stored in `@view.custom_timings.<timing_name>`\n *\n * @param name - Name of the custom timing\n *\n * @param time - Epoch timestamp of the custom timing (if not set, will use current time)\n *\n * Note: passing a relative time is discouraged since it is actually used as-is but displayed relative to the view start. We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start. see https://github.com/DataDog/browser-sdk/issues/2552\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "addTiming: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(name: string, time?: number) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "addTiming",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#clearAccount:member",
+              "docComment": "/**\n * Clear all account information\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clearAccount: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "clearAccount",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#clearGlobalContext:member",
+              "docComment": "/**\n * Clear the global context\n *\n * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clearGlobalContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "clearGlobalContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#clearUser:member",
+              "docComment": "/**\n * Clear all user information\n *\n * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clearUser: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "clearUser",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#getAccount:member",
+              "docComment": "/**\n * Get account information\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getAccount: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getAccount",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#getGlobalContext:member",
+              "docComment": "/**\n * Get the global Context\n *\n * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getGlobalContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getGlobalContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#getInitConfiguration:member",
+              "docComment": "/**\n * Get the init configuration\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getInitConfiguration: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RumInitConfiguration",
+                  "canonicalReference": "@datadog/browser-rum!RumInitConfiguration:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getInitConfiguration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#getInternalContext:member",
+              "docComment": "/**\n * [Internal API] Get the internal SDK context\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getInternalContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(startTime?: number) => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "InternalContext",
+                  "canonicalReference": "@datadog/browser-rum!InternalContext:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getInternalContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#getSessionReplayLink:member",
+              "docComment": "/**\n * Get the Session Replay Link.\n *\n * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getSessionReplayLink: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => string | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getSessionReplayLink",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#getUser:member",
+              "docComment": "/**\n * Get user information\n *\n * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getUser: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getUser",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#getViewContext:member",
+              "docComment": "/**\n * Get View Context.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getViewContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getViewContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#init:member",
+              "docComment": "/**\n * Init the RUM browser SDK.\n *\n * @param initConfiguration - Configuration options of the SDK\n *\n * See [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "init: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(initConfiguration: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RumInitConfiguration",
+                  "canonicalReference": "@datadog/browser-rum!RumInitConfiguration:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "init",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#removeAccountProperty:member",
+              "docComment": "/**\n * Remove an account property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "removeAccountProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: string) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "removeAccountProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#removeGlobalContextProperty:member",
+              "docComment": "/**\n * Remove a global context property\n *\n * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "removeGlobalContextProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "removeGlobalContextProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#removeUserProperty:member",
+              "docComment": "/**\n * Remove a user property\n *\n * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "removeUserProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "removeUserProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setAccount:member",
+              "docComment": "/**\n * Set account information to all events, stored in `@account`\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setAccount: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(newAccount: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Account",
+                  "canonicalReference": "@datadog/browser-core!Account:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setAccount",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setAccountProperty:member",
+              "docComment": "/**\n * Set or update the account property, stored in `@account.<key>`\n *\n * @param key - Key of the property\n *\n * @param property - Value of the property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setAccountProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: string, property: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setAccountProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setGlobalContext:member",
+              "docComment": "/**\n * Set the global context information to all events, stored in `@context`\n *\n * @param context - Global context\n *\n * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setGlobalContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(context: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setGlobalContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setGlobalContextProperty:member",
+              "docComment": "/**\n * Set or update a global context property, stored in `@context.<key>`\n *\n * @param key - Key of the property\n *\n * @param property - Value of the property\n *\n * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setGlobalContextProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: any, value: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setGlobalContextProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setTrackingConsent:member",
+              "docComment": "/**\n * Set the tracking consent of the current user.\n *\n * @param trackingConsent - The user tracking consent\n *\n * Data will be sent only if it is set to \"granted\". This value won't be stored by the library across page loads: you will need to call this method or set the appropriate `trackingConsent` field in the init() method at each page load.\n *\n * If this method is called before the init() method, the provided value will take precedence over the one provided as initialization parameter.\n *\n * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-tracking-consent) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setTrackingConsent: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(trackingConsent: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TrackingConsent",
+                  "canonicalReference": "@datadog/browser-core!TrackingConsent:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setTrackingConsent",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setUser:member(1)",
+              "docComment": "/**\n * Set user information to all events, stored in `@usr`\n *\n * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setUser(newUser: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "User",
+                  "canonicalReference": "@datadog/browser-core!User:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " & {\n        id: string;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 4,
+                "endIndex": 5
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "newUser",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  },
+                  "isOptional": false
+                }
+              ],
+              "name": "setUser"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setUser:member(2)",
+              "docComment": "/**\n * Set user information to all events, stored in `@usr`\n *\n * @deprecated\n *\n * You must specify a user id\n *\n * @see\n *\n * {@link setUser}\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setUser(newUser: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "User",
+                  "canonicalReference": "@datadog/browser-core!User:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 2,
+              "parameters": [
+                {
+                  "parameterName": "newUser",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "name": "setUser"
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setUserProperty:member",
+              "docComment": "/**\n * Set or update the user property, stored in `@usr.<key>`\n *\n * @param key - Key of the property\n *\n * @param property - Value of the property\n *\n * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setUserProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: any, property: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setUserProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setViewContext:member",
+              "docComment": "/**\n * Set View Context.\n *\n * Enable to manually set the context of the current view.\n *\n * @param context - context of the view\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setViewContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(context: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setViewContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setViewContextProperty:member",
+              "docComment": "/**\n * Set View Context Property.\n *\n * Enable to manually set a property of the context of the current view.\n *\n * @param key - key of the property\n *\n * @param value - value of the property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setViewContextProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: string, value: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setViewContextProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#setViewName:member",
+              "docComment": "/**\n * Set View Name.\n *\n * Enable to manually change the name of the current view.\n *\n * @param name - name of the view See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setViewName: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(name: string) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setViewName",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#startDurationVital:member",
+              "docComment": "/**\n * Start a custom duration vital.\n *\n * If you plan to have multiple durations for the same vital, you should use the reference returned by this method.\n *\n * @param name - name of the custom vital\n *\n * @param  - options.context custom context attached to the vital\n *\n * @param  - options.description Description of the vital\n *\n * @returns reference to the custom vital\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "startDurationVital: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(name: string, options?: {\n        context?: object;\n        description?: string;\n    }) => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DurationVitalReference",
+                  "canonicalReference": "@datadog/browser-rum!DurationVitalReference:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "startDurationVital",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#startSessionReplayRecording:member",
+              "docComment": "/**\n * Start Session Replay recording. Enable to conditionally start the recording, use the `startSessionReplayRecordingManually:true` init parameter and call `startSessionReplayRecording()`\n *\n * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "startSessionReplayRecording: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(options?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StartRecordingOptions",
+                  "canonicalReference": "@datadog/browser-rum!StartRecordingOptions:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "startSessionReplayRecording",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#startView:member",
+              "docComment": "/**\n * Start a view manually. Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.\n *\n * @param  - options.name name of the view\n *\n * @param  - options.service service of the view\n *\n * @param  - options.version version of the view\n *\n * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "startView: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        (name?: string): void;\n        (options: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ViewOptions",
+                  "canonicalReference": "@datadog/browser-rum!ViewOptions:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): void;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "startView",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#stopDurationVital:member",
+              "docComment": "/**\n * Stop a custom duration vital\n *\n * @param nameOrRef - name of the custom vital or the reference to it\n *\n * @param  - options.context custom context attached to the vital\n *\n * @param  - options.description Description of the vital\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "stopDurationVital: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(nameOrRef: string | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DurationVitalReference",
+                  "canonicalReference": "@datadog/browser-rum!DurationVitalReference:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", options?: {\n        context?: object;\n        description?: string;\n    }) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "stopDurationVital",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#stopSession:member",
+              "docComment": "/**\n * Stop the session. A new session will start at the next user interaction with the page.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "stopSession: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "stopSession",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumGlobal#stopSessionReplayRecording:member",
+              "docComment": "/**\n * Stop Session Replay recording.\n *\n * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "stopSessionReplayRecording: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "stopSessionReplayRecording",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": [
+            {
+              "startIndex": 1,
+              "endIndex": 2
+            }
+          ]
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumInitConfiguration:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumInitConfiguration extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "InitConfiguration",
+              "canonicalReference": "@datadog/browser-core!InitConfiguration:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domain/configuration/configuration.d.ts",
+          "releaseTag": "Public",
+          "name": "RumInitConfiguration",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#actionNameAttribute:member",
+              "docComment": "/**\n * Specify your own attribute to use to name actions. See [Declare a name for click actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "actionNameAttribute?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "actionNameAttribute",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#allowedTracingUrls:member",
+              "docComment": "/**\n * A list of request URLs used to inject tracing headers. See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "allowedTracingUrls?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Array",
+                  "canonicalReference": "!Array:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MatchOption",
+                  "canonicalReference": "@datadog/browser-core!MatchOption:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TracingOption",
+                  "canonicalReference": "@datadog/browser-rum!TracingOption:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "> | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "allowedTracingUrls",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 7
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#applicationId:member",
+              "docComment": "/**\n * The RUM application ID.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "applicationId: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "applicationId",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#beforeSend:member",
+              "docComment": "/**\n * Access to every event collected by the RUM SDK before they are sent to Datadog. It allows: - Enrich your RUM events with additional context attributes - Modify your RUM events to modify their content, or redact sensitive sequences (see the list of editable properties) - Discard selected RUM events\n *\n * See [Enrich And Control Browser RUM Data With beforeSend](https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "beforeSend?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "((event: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RumEvent",
+                  "canonicalReference": "@datadog/browser-rum!RumEvent:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", context: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RumEventDomainContext",
+                  "canonicalReference": "@datadog/browser-rum!RumEventDomainContext:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => boolean) | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "beforeSend",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 6
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#compressIntakeRequests:member",
+              "docComment": "/**\n * Compress requests sent to the Datadog intake to reduce bandwidth usage when sending large amounts of data. The compression is done in a Worker thread. See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "compressIntakeRequests?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "compressIntakeRequests",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#defaultPrivacyLevel:member",
+              "docComment": "/**\n * Allow to protect end user privacy and prevent sensitive organizational information from being collected.  @default mask See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "defaultPrivacyLevel?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "DefaultPrivacyLevel",
+                  "canonicalReference": "@datadog/browser-core!DefaultPrivacyLevel:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "defaultPrivacyLevel",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#enablePrivacyForActionName:member",
+              "docComment": "/**\n * Enables privacy control for action names.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "enablePrivacyForActionName?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "enablePrivacyForActionName",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#excludedActivityUrls:member",
+              "docComment": "/**\n * A list of request origins ignored when computing the page activity. See [How page activity is calculated](https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "excludedActivityUrls?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "MatchOption",
+                  "canonicalReference": "@datadog/browser-core!MatchOption:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[] | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "excludedActivityUrls",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#plugins:member",
+              "docComment": "/**\n * List of plugins to enable. The plugins API is unstable and experimental, and may change without notice. Please use only plugins provided by Datadog matching the version of the SDK you are using.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "plugins?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RumPlugin",
+                  "canonicalReference": "@datadog/browser-rum!RumPlugin:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[] | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "plugins",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#profilingSampleRate:member",
+              "docComment": "/**\n * Not ready for production. The percentage of users profiled. A value between 0 and 100.  @default 0\n *\n * @experimental\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "profilingSampleRate?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "profilingSampleRate",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#propagateTraceBaggage:member",
+              "docComment": "/**\n * Whether to propagate user and account IDs in the baggage header of trace requests.  @default false\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "propagateTraceBaggage?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "propagateTraceBaggage",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#remoteConfigurationId:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "remoteConfigurationId?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "remoteConfigurationId",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#sessionReplaySampleRate:member",
+              "docComment": "/**\n * The percentage of tracked sessions with [Browser RUM & Session Replay pricing](https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay) features: 100 for all, 0 for none. See [Configure Your Setup For Browser RUM and Browser RUM & Session Replay Sampling](https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "sessionReplaySampleRate?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "sessionReplaySampleRate",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#startSessionReplayRecordingManually:member",
+              "docComment": "/**\n * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false. See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "startSessionReplayRecordingManually?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "startSessionReplayRecordingManually",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#subdomain:member",
+              "docComment": "/**\n * If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL . See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "subdomain?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "subdomain",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#traceContextInjection:member",
+              "docComment": "/**\n * If you set a `traceSampleRate`, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled.  @default sampled See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "traceContextInjection?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TraceContextInjection",
+                  "canonicalReference": "@datadog/browser-core!TraceContextInjection:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "traceContextInjection",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#traceSampleRate:member",
+              "docComment": "/**\n * The percentage of requests to trace: 100 for all, 0 for none. See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "traceSampleRate?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "traceSampleRate",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#trackBfcacheViews:member",
+              "docComment": "/**\n * Enable the creation of dedicated views for pages restored from the Back-Forward cache.  @default false\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "trackBfcacheViews?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "trackBfcacheViews",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#trackFeatureFlagsForEvents:member",
+              "docComment": "/**\n * Enables collection of features flags in chosen events.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "trackFeatureFlagsForEvents?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "FeatureFlagsForEvents",
+                  "canonicalReference": "@datadog/browser-rum!FeatureFlagsForEvents:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "trackFeatureFlagsForEvents",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#trackLongTasks:member",
+              "docComment": "/**\n * Enables collection of long task events.  @default true\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "trackLongTasks?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "trackLongTasks",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#trackResources:member",
+              "docComment": "/**\n * Enables collection of resource events.  @default true\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "trackResources?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "trackResources",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#trackUserInteractions:member",
+              "docComment": "/**\n * Enables automatic collection of users actions. See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.  @default true\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "trackUserInteractions?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "trackUserInteractions",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#trackViewsManually:member",
+              "docComment": "/**\n * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "trackViewsManually?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "trackViewsManually",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#workerUrl:member",
+              "docComment": "/**\n * URL pointing to the Datadog Browser SDK Worker JavaScript file. The URL can be relative or absolute, but is required to have the same origin as the web application. See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "workerUrl?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "workerUrl",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": [
+            {
+              "startIndex": 1,
+              "endIndex": 2
+            }
+          ]
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-rum!RumLongTaskEvent:type",
+          "docComment": "/**\n * Schema of all properties of a Long Task event\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type RumLongTaskEvent = "
+            },
+            {
+              "kind": "Reference",
+              "text": "CommonProperties",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ActionChildProperties",
+              "canonicalReference": "@datadog/browser-rum!ActionChildProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ViewContainerSchema",
+              "canonicalReference": "@datadog/browser-rum!ViewContainerSchema:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & {\n    readonly type: 'long_task';\n    readonly long_task: {\n        readonly id?: string;\n        readonly start_time?: number;\n        readonly entry_type?: 'long-task' | 'long-animation-frame';\n        readonly duration: number;\n        readonly blocking_duration?: number;\n        readonly render_start?: number;\n        readonly style_and_layout_start?: number;\n        readonly first_ui_event_timestamp?: number;\n        readonly is_frozen_frame?: boolean;\n        readonly scripts?: {\n            readonly duration?: number;\n            readonly pause_duration?: number;\n            readonly forced_style_and_layout_duration?: number;\n            readonly start_time?: number;\n            readonly execution_start?: number;\n            source_url?: string;\n            readonly source_function_name?: string;\n            readonly source_char_position?: number;\n            invoker?: string;\n            readonly invoker_type?: 'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script';\n            readonly window_attribution?: string;\n            [k: string]: unknown;\n        }[];\n        [k: string]: unknown;\n    };\n    readonly _dd?: {\n        readonly discarded?: boolean;\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumLongTaskEvent",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 7
+          }
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumLongTaskEventDomainContext:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumLongTaskEventDomainContext "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumLongTaskEventDomainContext",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumLongTaskEventDomainContext#performanceEntry:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "performanceEntry: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "PerformanceEntry",
+                  "canonicalReference": "!PerformanceEntry:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "performanceEntry",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumOtherResourceEventDomainContext:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumOtherResourceEventDomainContext "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumOtherResourceEventDomainContext",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumOtherResourceEventDomainContext#performanceEntry:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "performanceEntry: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "PerformanceEntry",
+                  "canonicalReference": "!PerformanceEntry:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "performanceEntry",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-rum!RumResourceEvent:type",
+          "docComment": "/**\n * Schema of all properties of a Resource event\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type RumResourceEvent = "
+            },
+            {
+              "kind": "Reference",
+              "text": "CommonProperties",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ActionChildProperties",
+              "canonicalReference": "@datadog/browser-rum!ActionChildProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ViewContainerSchema",
+              "canonicalReference": "@datadog/browser-rum!ViewContainerSchema:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & {\n    readonly type: 'resource';\n    readonly resource: {\n        readonly id?: string;\n        readonly type: 'document' | 'xhr' | 'beacon' | 'fetch' | 'css' | 'js' | 'image' | 'font' | 'media' | 'other' | 'native';\n        readonly method?: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT';\n        url: string;\n        readonly status_code?: number;\n        readonly duration?: number;\n        readonly size?: number;\n        readonly encoded_body_size?: number;\n        readonly decoded_body_size?: number;\n        readonly transfer_size?: number;\n        readonly render_blocking_status?: 'blocking' | 'non-blocking';\n        readonly worker?: {\n            readonly duration: number;\n            readonly start: number;\n            [k: string]: unknown;\n        };\n        readonly redirect?: {\n            readonly duration: number;\n            readonly start: number;\n            [k: string]: unknown;\n        };\n        readonly dns?: {\n            readonly duration: number;\n            readonly start: number;\n            [k: string]: unknown;\n        };\n        readonly connect?: {\n            readonly duration: number;\n            readonly start: number;\n            [k: string]: unknown;\n        };\n        readonly ssl?: {\n            readonly duration: number;\n            readonly start: number;\n            [k: string]: unknown;\n        };\n        readonly first_byte?: {\n            readonly duration: number;\n            readonly start: number;\n            [k: string]: unknown;\n        };\n        readonly download?: {\n            readonly duration: number;\n            readonly start: number;\n            [k: string]: unknown;\n        };\n        readonly protocol?: string;\n        readonly delivery_type?: 'cache' | 'navigational-prefetch' | 'other';\n        readonly provider?: {\n            readonly domain?: string;\n            readonly name?: string;\n            readonly type?: 'ad' | 'advertising' | 'analytics' | 'cdn' | 'content' | 'customer-success' | 'first party' | 'hosting' | 'marketing' | 'other' | 'social' | 'tag-manager' | 'utility' | 'video';\n            [k: string]: unknown;\n        };\n        readonly graphql?: {\n            readonly operationType: 'query' | 'mutation' | 'subscription';\n            readonly operationName?: string;\n            payload?: string;\n            variables?: string;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    readonly _dd?: {\n        readonly span_id?: string;\n        readonly trace_id?: string;\n        readonly rule_psr?: number;\n        readonly discarded?: boolean;\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumResourceEvent",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 7
+          }
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-rum!RumViewEvent:type",
+          "docComment": "/**\n * Schema of all properties of a View event\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type RumViewEvent = "
+            },
+            {
+              "kind": "Reference",
+              "text": "CommonProperties",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ViewContainerSchema",
+              "canonicalReference": "@datadog/browser-rum!ViewContainerSchema:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & {\n    readonly type: 'view';\n    readonly view: {\n        readonly loading_time?: number;\n        readonly network_settled_time?: number;\n        readonly interaction_to_next_view_time?: number;\n        readonly loading_type?: 'initial_load' | 'route_change' | 'activity_display' | 'activity_redisplay' | 'fragment_display' | 'fragment_redisplay' | 'view_controller_display' | 'view_controller_redisplay';\n        readonly time_spent: number;\n        readonly first_contentful_paint?: number;\n        readonly largest_contentful_paint?: number;\n        readonly largest_contentful_paint_target_selector?: string;\n        readonly first_input_delay?: number;\n        readonly first_input_time?: number;\n        readonly first_input_target_selector?: string;\n        readonly interaction_to_next_paint?: number;\n        readonly interaction_to_next_paint_time?: number;\n        readonly interaction_to_next_paint_target_selector?: string;\n        readonly cumulative_layout_shift?: number;\n        readonly cumulative_layout_shift_time?: number;\n        readonly cumulative_layout_shift_target_selector?: string;\n        readonly dom_complete?: number;\n        readonly dom_content_loaded?: number;\n        readonly dom_interactive?: number;\n        readonly load_event?: number;\n        readonly first_byte?: number;\n        readonly custom_timings?: {\n            [k: string]: number;\n        };\n        readonly is_active?: boolean;\n        readonly is_slow_rendered?: boolean;\n        readonly action: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly error: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly crash?: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly long_task?: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly frozen_frame?: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly slow_frames?: {\n            readonly start: number;\n            readonly duration: number;\n            [k: string]: unknown;\n        }[];\n        readonly resource: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly frustration?: {\n            readonly count: number;\n            [k: string]: unknown;\n        };\n        readonly in_foreground_periods?: {\n            readonly start: number;\n            readonly duration: number;\n            [k: string]: unknown;\n        }[];\n        readonly memory_average?: number;\n        readonly memory_max?: number;\n        readonly cpu_ticks_count?: number;\n        readonly cpu_ticks_per_second?: number;\n        readonly refresh_rate_average?: number;\n        readonly refresh_rate_min?: number;\n        readonly slow_frames_rate?: number;\n        readonly freeze_rate?: number;\n        flutter_build_time?: "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumPerfMetric",
+              "canonicalReference": "@datadog/browser-rum!RumPerfMetric:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ";\n        flutter_raster_time?: "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumPerfMetric",
+              "canonicalReference": "@datadog/browser-rum!RumPerfMetric:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ";\n        js_refresh_rate?: "
+            },
+            {
+              "kind": "Reference",
+              "text": "RumPerfMetric",
+              "canonicalReference": "@datadog/browser-rum!RumPerfMetric:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ";\n        performance?: "
+            },
+            {
+              "kind": "Reference",
+              "text": "ViewPerformanceData",
+              "canonicalReference": "@datadog/browser-rum!ViewPerformanceData:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ";\n        [k: string]: unknown;\n    };\n    readonly session?: {\n        readonly is_active?: boolean;\n        readonly sampled_for_replay?: boolean;\n        [k: string]: unknown;\n    };\n    readonly feature_flags?: {\n        [k: string]: unknown;\n    };\n    readonly privacy?: {\n        readonly replay_level: 'allow' | 'mask' | 'mask-user-input';\n        [k: string]: unknown;\n    };\n    readonly _dd: {\n        readonly document_version: number;\n        readonly page_states?: {\n            readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated';\n            readonly start: number;\n            [k: string]: unknown;\n        }[];\n        replay_stats?: {\n            records_count?: number;\n            segments_count?: number;\n            segments_total_raw_size?: number;\n            [k: string]: unknown;\n        };\n        readonly cls?: {\n            readonly device_pixel_ratio?: number;\n            [k: string]: unknown;\n        };\n        readonly configuration?: {\n            readonly start_session_replay_recording_manually?: boolean;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    readonly display?: {\n        readonly scroll?: {\n            readonly max_depth: number;\n            readonly max_depth_scroll_top: number;\n            readonly max_scroll_height: number;\n            readonly max_scroll_height_time: number;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumViewEvent",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 13
+          }
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumViewEventDomainContext:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumViewEventDomainContext "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumViewEventDomainContext",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumViewEventDomainContext#location:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "location: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Readonly",
+                  "canonicalReference": "!Readonly:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<"
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Location",
+                  "canonicalReference": "!Location:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ">"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "location",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 5
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-rum!RumVitalEvent:type",
+          "docComment": "/**\n * Schema of all properties of a Vital event\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type RumVitalEvent = "
+            },
+            {
+              "kind": "Reference",
+              "text": "CommonProperties",
+              "canonicalReference": "@datadog/browser-rum!CommonProperties:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & "
+            },
+            {
+              "kind": "Reference",
+              "text": "ViewContainerSchema",
+              "canonicalReference": "@datadog/browser-rum!ViewContainerSchema:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " & {\n    readonly type: 'vital';\n    readonly vital: {\n        readonly type: 'duration';\n        readonly id: string;\n        readonly name?: string;\n        readonly description?: string;\n        readonly duration?: number;\n        readonly custom?: {\n            [k: string]: number;\n        };\n        [k: string]: unknown;\n    };\n    readonly _dd?: {\n        readonly vital?: {\n            readonly computed_value?: boolean;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumVitalEvent",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 5
+          }
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext:interface",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface RumXhrResourceEventDomainContext "
+            }
+          ],
+          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "RumXhrResourceEventDomainContext",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext#handlingStack:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "handlingStack?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "handlingStack",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext#isAborted:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "isAborted: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "isAborted",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext#performanceEntry:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "performanceEntry?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "PerformanceEntry",
+                  "canonicalReference": "!PerformanceEntry:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "performanceEntry",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext#xhr:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "xhr: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "XMLHttpRequest",
+                  "canonicalReference": "!XMLHttpRequest:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "xhr",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
         }
       ]
     }

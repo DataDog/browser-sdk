@@ -36,12 +36,7 @@
     "size": "node scripts/show-bundle-size.js",
     "woke": "scripts/cli woke",
     "build:types": "lerna run build:esm --stream",
-    "docs:api:rum": "api-extractor run --local --config packages/rum/api-extractor.json",
-    "docs:api:logs": "api-extractor run --local --config packages/logs/api-extractor.json",
-    "docs:api:rum-slim": "api-extractor run --local --config packages/rum-slim/api-extractor.json",
-    "docs:api:rum-react": "api-extractor run --local --config packages/rum-react/api-extractor.json",
-    "docs:api:rum-core": "api-extractor run --local --config packages/rum-core/api-extractor.json",
-    "docs:api": "yarn build:types && yarn docs:api:rum && yarn docs:api:logs && yarn docs:api:rum-slim && yarn docs:api:rum-react && yarn docs:api:rum-core"
+    "docs:api": "yarn build:types && api-extractor run --local -c packages/rum/api-extractor.json && api-extractor run --local -c packages/logs/api-extractor.json && api-extractor run --local -c packages/rum-slim/api-extractor.json && api-extractor run --local -c packages/rum-react/api-extractor.json && api-documenter markdown -i etc -o docs/api-reference/rum"
   },
   "devDependencies": {
     "@eslint/js": "9.26.0",

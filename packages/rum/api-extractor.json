@@ -10,6 +10,7 @@
   "apiReport": {
     "enabled": false
   },
+  "bundledPackages": ["@datadog/browser-rum-core"],
   "docModel": {
     "enabled": true,
     "apiJsonFilePath": "<projectFolder>/etc/<unscopedPackageName>.api.json"

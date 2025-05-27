@@ -4,6 +4,113 @@
 
 ## browser-rum package
 
+## Interfaces
+
+<table><thead><tr><th>
+
+Interface
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[CommonProperties](./browser-rum.commonproperties.md)
+
+
+</td><td>
+
+Schema of common properties of RUM events
+
+
+</td></tr>
+<tr><td>
+
+[RumActionEventDomainContext](./browser-rum.rumactioneventdomaincontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumErrorEventDomainContext](./browser-rum.rumerroreventdomaincontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumFetchResourceEventDomainContext](./browser-rum.rumfetchresourceeventdomaincontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumGlobal](./browser-rum.rumglobal.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumInitConfiguration](./browser-rum.ruminitconfiguration.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumLongTaskEventDomainContext](./browser-rum.rumlongtaskeventdomaincontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumOtherResourceEventDomainContext](./browser-rum.rumotherresourceeventdomaincontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumViewEventDomainContext](./browser-rum.rumvieweventdomaincontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumXhrResourceEventDomainContext](./browser-rum.rumxhrresourceeventdomaincontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+</tbody></table>
+
 ## Variables
 
 <table><thead><tr><th>
@@ -23,6 +130,107 @@ Description
 
 
 </td><td>
+
+
+</td></tr>
+</tbody></table>
+
+## Type Aliases
+
+<table><thead><tr><th>
+
+Type Alias
+
+
+</th><th>
+
+Description
+
+
+</th></tr></thead>
+<tbody><tr><td>
+
+[RumActionEvent](./browser-rum.rumactionevent.md)
+
+
+</td><td>
+
+Schema of all properties of an Action event
+
+
+</td></tr>
+<tr><td>
+
+[RumErrorEvent](./browser-rum.rumerrorevent.md)
+
+
+</td><td>
+
+Schema of all properties of an Error event
+
+
+</td></tr>
+<tr><td>
+
+[RumEvent](./browser-rum.rumevent.md)
+
+
+</td><td>
+
+Schema of all properties of a RUM event
+
+
+</td></tr>
+<tr><td>
+
+[RumEventDomainContext](./browser-rum.rumeventdomaincontext.md)
+
+
+</td><td>
+
+
+</td></tr>
+<tr><td>
+
+[RumLongTaskEvent](./browser-rum.rumlongtaskevent.md)
+
+
+</td><td>
+
+Schema of all properties of a Long Task event
+
+
+</td></tr>
+<tr><td>
+
+[RumResourceEvent](./browser-rum.rumresourceevent.md)
+
+
+</td><td>
+
+Schema of all properties of a Resource event
+
+
+</td></tr>
+<tr><td>
+
+[RumViewEvent](./browser-rum.rumviewevent.md)
+
+
+</td><td>
+
+Schema of all properties of a View event
+
+
+</td></tr>
+<tr><td>
+
+[RumVitalEvent](./browser-rum.rumvitalevent.md)
+
+
+</td><td>
+
+Schema of all properties of a Vital event
 
 
 </td></tr>

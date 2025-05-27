@@ -10,6 +10,7 @@
   "apiReport": {
     "enabled": false
   },
+  "bundledPackages": ["@datadog/browser-logs"],
   "docModel": {
     "enabled": true,
     "apiJsonFilePath": "<projectFolder>/etc/<unscopedPackageName>.api.json"
