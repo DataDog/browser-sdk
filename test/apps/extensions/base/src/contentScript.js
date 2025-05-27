@@ -5,9 +5,6 @@ datadogRum.init({
   applicationId: '1234',
   clientToken: 'abcd',
   defaultPrivacyLevel: 'allow',
-  trackResources: true,
-  trackLongTasks: true,
-  allowUntrustedEvents: true,
   /* EXTENSION_INIT_PARAMETER */
 })
 

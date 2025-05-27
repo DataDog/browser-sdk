@@ -313,20 +313,21 @@ test.describe('allowedTrackingOrigins', () => {
         allowedTrackingOrigins: ['https://different-domain.com'],
       })
     })
-    .run(async ({ withBrowserLogs, intakeRegistry, flushEvents }) => {
+    .run(async ({ withBrowserLogs, intakeRegistry, flushEvents, flushBrowserLogs }) => {
       await flushEvents()
 
       withBrowserLogs((logs) => {
-        // Current implementation shows warning when domain doesn't match allowedTrackingOrigins
-        const warningLogs = logs.filter(
-          (log) => log.message.includes('SDK is being initialized on a non-allowed domain') && log.level === 'warning'
+        const errorLogs = logs.filter(
+          (log) => log.message.includes('SDK initialized on a non-allowed domain') && log.level === 'error'
         )
-        expect(warningLogs).toHaveLength(1)
+        expect(errorLogs).toHaveLength(1)
       })
 
       // When allowedTrackingOrigins doesn't match, the SDK doesn't initialize,
       // so we shouldn't expect any RUM events
       expect(intakeRegistry.rumViewEvents.length).toBe(0)
+
+      flushBrowserLogs()
     })
 })
 

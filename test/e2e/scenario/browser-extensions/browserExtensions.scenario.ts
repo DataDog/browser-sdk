@@ -83,7 +83,7 @@ test.describe('browser extensions', () => {
 
   createTest('SDK with correct allowedTrackingOrigins parameter works correctly for both RUM and Logs')
     .withExtension(pathToAllowedTrackingOriginExtension)
-    .run(async ({ page, getExtensionId }) => {
+    .run(async ({ page, getExtensionId, flushBrowserLogs }) => {
       const extensionId = await getExtensionId()
       const expectedOrigin = 'chrome-extension://'
       const consoleMessages: string[] = []
@@ -113,13 +113,15 @@ test.describe('browser extensions', () => {
       expect(logsResult.allowedTrackingOrigins).toEqual([expectedOrigin])
 
       expect(consoleMessages).toEqual([])
+
+      flushBrowserLogs()
     })
 
   createTest('SDK with incorrect allowedTrackingOrigins shows warning for both RUM and Logs')
     .withExtension(pathToInvalidTrackingOriginExtension)
     .withRum()
     .withLogs()
-    .run(async ({ page, baseUrl, getExtensionId }) => {
+    .run(async ({ page, baseUrl, getExtensionId, flushBrowserLogs }) => {
       const extensionId = await getExtensionId()
       const consoleMessages: string[] = []
       page.on('console', (msg) => consoleMessages.push(msg.text()))
@@ -167,9 +169,11 @@ test.describe('browser extensions', () => {
       expect(pageRumResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
       expect(pageLogsResult.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
 
-      // Check warning messages - should have one from RUM and one from Logs
-      const warningMessage = 'SDK is being initialized on a non-allowed domain.'
-      const warningCount = consoleMessages.filter((msg) => msg.includes(warningMessage)).length
-      expect(warningCount).toBeGreaterThanOrEqual(2)
+      // Check error messages - should have one from RUM and one from Logs
+      const errorMessage = 'SDK initialized on a non-allowed domain.'
+      const errorCount = consoleMessages.filter((msg) => msg.includes(errorMessage)).length
+      expect(errorCount).toBeGreaterThanOrEqual(2)
+
+      flushBrowserLogs()
     })
 })

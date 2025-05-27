@@ -7,6 +7,11 @@ const { printLog, runMain } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
 const { modifyFile } = require('../lib/filesUtils')
 
+const EXTENSIONS_INIT_PARAMETERS = {
+  'allowed-tracking-origin': 'allowedTrackingOrigins: ["chrome-extension://"],',
+  'invalid-tracking-origin': 'allowedTrackingOrigins: ["https://app.example.com"],',
+}
+
 runMain(async () => {
   await buildExtensions()
 })
@@ -18,11 +23,7 @@ async function buildExtensions() {
   const baseExtDir = path.join(process.cwd(), 'test/apps/extensions/base')
 
   // Extension configurations
-  const extensionNames = ['allowed-tracking-origin', 'invalid-tracking-origin']
-  const trackingOrigins = {
-    'allowed-tracking-origin': 'chrome-extension://',
-    'invalid-tracking-origin': 'https://app.example.com',
-  }
+  const extensionNames = Object.keys(EXTENSIONS_INIT_PARAMETERS)
 
   // 1. Create and build default extension (no parameter replacement)
   printLog('Building default extension...')
@@ -32,7 +33,7 @@ async function buildExtensions() {
   // 2. Create and build extensions with different configurations
   for (const extName of extensionNames) {
     const targetDir = path.join(process.cwd(), `test/apps/extensions/${extName}`)
-    const trackingOrigin = trackingOrigins[extName]
+    const initParameter = EXTENSIONS_INIT_PARAMETERS[extName]
 
     printLog(`Creating ${extName} extension...`)
 
@@ -47,7 +48,7 @@ async function buildExtensions() {
     // Add the configuration parameter
     const contentScriptPath = path.join(targetDir, 'src/contentScript.js')
     await modifyFile(contentScriptPath, (content) =>
-      content.replace(/\/\* EXTENSION_INIT_PARAMETER \*\//g, `allowedTrackingOrigins: ["${trackingOrigin}"],`)
+      content.replace(/\/\* EXTENSION_INIT_PARAMETER \*\//g, initParameter)
     )
 
     // Build the extension
