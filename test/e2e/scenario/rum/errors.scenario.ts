@@ -15,6 +15,9 @@ function createBody(errorGenerator: string) {
       function foo() {
         return new Error('oh snap')
       }
+      function customError() {
+        return new class CustomTestError extends Error { constructor(e) { super(e) } }("oh snap")
+      }
     </script>
   `
 }
@@ -101,7 +104,7 @@ test.describe('rum errors', () => {
       })
     })
 
-  createTest('send custom errors')
+  createTest('send errors from custom source')
     .withRum()
     .withBody(createBody('DD_RUM.addError(foo())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
@@ -114,6 +117,31 @@ test.describe('rum errors', () => {
         message: 'oh snap',
         source: 'custom',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        handling: 'handled',
+      })
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(0)
+      })
+    })
+
+  createTest('send custom errors')
+    .withRum()
+    .withBody(
+      createBody(
+        'DD_RUM.addError(customError())'
+      )
+    )
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
+      await button.click()
+
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: 'oh snap',
+        source: 'custom',
+        stack: ['CustomTestError: oh snap', `at customError @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
