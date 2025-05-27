@@ -1,11 +1,12 @@
-import type { RumPublicApi, Strategy } from '../boot/rumPublicApi'
+import type { RumPublicApi } from '../boot/rumPublicApi'
+import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
 
 export interface RumPlugin {
   name: string
   getConfigurationTelemetry?(): Record<string, unknown>
   onInit?(options: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }): void
-  onRumStart?(options: { addEvent: Strategy['addEvent'] }): void
+  onRumStart?(options: { addEvent: StartRumResult['addEvent'] }): void
 }
 
 type MethodNames = 'onInit' | 'onRumStart'

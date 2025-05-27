@@ -1,4 +1,4 @@
-import type { RumInitConfiguration, RumPublicApi, Strategy } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 import { noop } from '@datadog/browser-core'
 import type { ReactPluginConfiguration } from '../src/domain/reactPlugin'
 import { reactPlugin, resetReactPlugin } from '../src/domain/reactPlugin'
@@ -13,7 +13,7 @@ export function initializeReactPlugin({
   configuration?: ReactPluginConfiguration
   initConfiguration?: Partial<RumInitConfiguration>
   publicApi?: Partial<RumPublicApi>
-  addEvent?: Strategy['addEvent']
+  addEvent?: StartRumResult['addEvent']
 } = {}) {
   resetReactPlugin()
   const plugin = reactPlugin(configuration)

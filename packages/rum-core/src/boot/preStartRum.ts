@@ -1,12 +1,4 @@
-import type {
-  TrackingConsentState,
-  DeflateWorker,
-  Context,
-  ContextManager,
-  BoundedBuffer,
-  Duration,
-  RelativeTime,
-} from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   display,
@@ -35,8 +27,6 @@ import { callPluginsMethod } from '../domain/plugins'
 import { buildGlobalContextManager } from '../domain/contexts/globalContext'
 import { buildUserContextManager } from '../domain/contexts/userContext'
 import { buildAccountContextManager } from '../domain/contexts/accountContext'
-import type { RumEventDomainContext } from '../domainContext.types'
-import type { PartialRumEvent } from '../domain/event/eventCollection'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
@@ -251,15 +241,6 @@ export function createPreStartStrategy(
     },
 
     addDurationVital,
-
-    addEvent(
-      startTime: RelativeTime,
-      event: PartialRumEvent,
-      domainContext: RumEventDomainContext,
-      duration?: Duration
-    ) {
-      bufferApiCalls.add((startRumResult) => startRumResult.addEvent(startTime, event, domainContext, duration))
-    },
   }
 
   return strategy

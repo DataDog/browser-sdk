@@ -413,8 +413,6 @@ export interface Strategy {
   startDurationVital: StartRumResult['startDurationVital']
   stopDurationVital: StartRumResult['stopDurationVital']
   addDurationVital: StartRumResult['addDurationVital']
-
-  addEvent: StartRumResult['addEvent']
 }
 
 export function makeRumPublicApi(
@@ -461,7 +459,7 @@ export function makeRumPublicApi(
       strategy = createPostStartStrategy(strategy, startRumResult)
 
       callPluginsMethod(configuration.plugins, 'onRumStart', {
-        addEvent: strategy.addEvent,
+        addEvent: startRumResult.addEvent,
       })
 
       return startRumResult

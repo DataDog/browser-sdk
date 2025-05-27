@@ -1,10 +1,10 @@
-import type { RumPlugin, RumPublicApi, Strategy } from '@datadog/browser-rum-core'
+import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ReactPluginConfiguration | undefined
-let globalAddEvent: Strategy['addEvent'] | undefined
+let globalAddEvent: StartRumResult['addEvent'] | undefined
 type InitSubscriber = (configuration: ReactPluginConfiguration, rumPublicApi: RumPublicApi) => void
-type StartSubscriber = (addEvent: Strategy['addEvent']) => void
+type StartSubscriber = (addEvent: StartRumResult['addEvent']) => void
 
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
