@@ -18,6 +18,26 @@
 
 ---
 
+## v6.7.1
+
+**Public Changes:**
+
+- 🐛 [RUM-10101] Persist session cookie to one year when opt-in anonymous user tracking ([#3559](https://github.com/DataDog/browser-sdk/pull/3559)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [devext] synchronize network rules on extension start ([#3560](https://github.com/DataDog/browser-sdk/pull/3560))
+- ⚡️ [RUM-10104] avoid polling the cookie for `ciVisibilityContext` ([#3561](https://github.com/DataDog/browser-sdk/pull/3561)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 [FFL-23] Create datadog-flagging package ([#3553](https://github.com/DataDog/browser-sdk/pull/3553)) [FLAGGING]
+- 👷️ [RUM-9996] fix internal source maps upload for root upload type ([#3544](https://github.com/DataDog/browser-sdk/pull/3544))
+- 👷 Update all non-major dependencies ([#3539](https://github.com/DataDog/browser-sdk/pull/3539)) [RUM-REACT]
+- 🔧 add flagging path to tsconfig ([#3566](https://github.com/DataDog/browser-sdk/pull/3566))
+- 🔧 apply sourcemaps to unit tests common chunk ([#3545](https://github.com/DataDog/browser-sdk/pull/3545))
+- Add Workflow: Changelog To Confluence ([#3546](https://github.com/DataDog/browser-sdk/pull/3546))
+- ♻️ [RUM-9990] Use hooks for Logs SDK to decouple rumInternalContext ([#3537](https://github.com/DataDog/browser-sdk/pull/3537)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Remove FF for adding user account baggage header ([#3547](https://github.com/DataDog/browser-sdk/pull/3547)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗ [RUM-7213] DOM mutation ignoring ([#3276](https://github.com/DataDog/browser-sdk/pull/3276)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.7.0
 
 **Public Changes:**
