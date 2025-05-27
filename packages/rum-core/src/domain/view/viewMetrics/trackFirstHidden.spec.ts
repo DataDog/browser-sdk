@@ -1,4 +1,4 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockGlobalPerformanceBuffer } from '../../../../test'
@@ -114,6 +114,21 @@ describe('trackFirstHidden', () => {
 
       firstHidden = trackFirstHidden(configuration)
       expect(firstHidden.timeStamp).toBe(23 as RelativeTime)
+    })
+
+    it('should ignore entries before view start', () => {
+      setPageVisibility('visible')
+
+      performanceBufferMock.addPerformanceEntry({
+        entryType: 'visibility-state',
+        name: 'hidden',
+        startTime: 23,
+      } as PerformanceEntry)
+
+      firstHidden = trackFirstHidden(configuration, createWindowEventTarget(), {
+        viewStart: { relative: 100 as RelativeTime, timeStamp: 100 as TimeStamp },
+      })
+      expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
     })
   })
 
