@@ -174,7 +174,7 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
-        stack: ['CustomTestError: oh snap', `at customError @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        stack: ['CustomTestError: oh snap', `at customErrorWithName @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
