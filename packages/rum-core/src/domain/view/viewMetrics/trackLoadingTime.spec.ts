@@ -34,7 +34,6 @@ describe('trackLoadingTime', () => {
   let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void
   let stopLoadingTimeTracking: () => void
-  let originalSupportedEntryTypes: string[] | undefined
   let performanceBufferMock: GlobalPerformanceBufferMock
 
   function emulatePageActivityDuringViewLoading() {
@@ -45,13 +44,6 @@ describe('trackLoadingTime', () => {
 
   beforeEach(() => {
     performanceBufferMock = mockGlobalPerformanceBuffer()
-    if (typeof PerformanceObserver !== 'undefined') {
-      originalSupportedEntryTypes = PerformanceObserver.supportedEntryTypes as string[]
-      Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
-        get: () => [...(originalSupportedEntryTypes || []), 'visibility-state'],
-        configurable: true,
-      })
-    }
   })
 
   function startLoadingTimeTracking(
