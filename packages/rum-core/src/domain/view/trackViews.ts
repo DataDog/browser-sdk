@@ -17,6 +17,7 @@ import {
   throttle,
   clocksNow,
   clocksOrigin,
+  relativeToClocks,
   timeStampNow,
   display,
   looksLikeRelativeTime,
@@ -39,6 +40,8 @@ import { trackInitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
+import { onBFCacheRestore } from './bfCacheSupport'
+import { trackBfcacheMetrics } from './viewMetrics/trackBfcacheMetrics'
 
 export interface ViewEvent {
   id: string
@@ -110,12 +113,20 @@ export function trackViews(
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
   let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
+  let stopOnBFCacheRestore: (() => void) | undefined
 
   startViewLifeCycle()
 
   let locationChangeSubscription: Subscription
   if (areViewsTrackedAutomatically) {
     locationChangeSubscription = renewViewOnLocationChange(locationChangeObservable)
+    if (configuration.trackBfcacheViews) {
+      stopOnBFCacheRestore = onBFCacheRestore(configuration, (pageshowEvent) => {
+        currentView.end()
+        const startClocks = relativeToClocks(pageshowEvent.timeStamp as RelativeTime)
+        currentView = startNewView(ViewLoadingType.BF_CACHE, startClocks, undefined)
+      })
+    }
   }
 
   function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
@@ -183,6 +194,9 @@ export function trackViews(
     stop: () => {
       if (locationChangeSubscription) {
         locationChangeSubscription.unsubscribe()
+      }
+      if (stopOnBFCacheRestore) {
+        stopOnBFCacheRestore()
       }
       currentView.end()
       activeViews.forEach((view) => view.stop())
@@ -255,6 +269,11 @@ function newView(
     loadingType === ViewLoadingType.INITIAL_LOAD
       ? trackInitialViewMetrics(configuration, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
+
+  // Start BFCache-specific metrics when restoring from BFCache
+  if (loadingType === ViewLoadingType.BF_CACHE) {
+    trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
+  }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
 
