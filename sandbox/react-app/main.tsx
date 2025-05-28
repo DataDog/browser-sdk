@@ -1,7 +1,7 @@
-import { DatadogProvider } from '@datadog/browser-flagging'
 import { datadogRum } from '@datadog/browser-rum'
 import { ErrorBoundary, reactPlugin, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
+import { DatadogProvider } from '@datadog/openfeature-provider'
 import { OpenFeature } from '@openfeature/web-sdk'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
