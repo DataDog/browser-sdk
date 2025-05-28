@@ -3,13 +3,12 @@ import { ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import {
-  MAX_ATTRIBUTE_VALUE_CHAR_LENGTH,
+  MAX_RESOURCE_VALUE_CHAR_LENGTH,
   computeResourceEntryDetails,
   computeResourceEntryDuration,
   computeResourceEntryType,
   isAllowedRequestUrl,
-  isLongDataUrl,
-  sanitizeDataUrl,
+  sanitizeIfLongDataUrl,
 } from './resourceUtils'
 
 function generateResourceWith(overrides: Partial<RumPerformanceResourceTiming>) {
@@ -310,44 +309,54 @@ describe('shouldTrackResource', () => {
   })
 })
 
-describe('isLongDataUrl and sanitizeDataUrl', () => {
-  const longString = new Array(MAX_ATTRIBUTE_VALUE_CHAR_LENGTH).join('a')
+describe('sanitizeIfLongDataUrl', () => {
+  const longString = new Array(MAX_RESOURCE_VALUE_CHAR_LENGTH).join('a')
   it('returns truncated url when detects data url of json', () => {
-    const longDataUrl = `data:text/json; charset=utf-8,${longString}`
-    expect(isLongDataUrl(longDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/json; charset=utf-8,[...]')
+    expect(sanitizeIfLongDataUrl(`data:text/json; charset=utf-8,${longString}`)).toEqual(
+      'data:text/json; charset=utf-8,[...]'
+    )
   })
 
   it('returns truncated url when detects data url of html', () => {
     const longDataUrl = `data:text/html,${longString}`
-    expect(isLongDataUrl(longDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:text/html,[...]')
+    expect(sanitizeIfLongDataUrl(longDataUrl)).toEqual('data:text/html,[...]')
   })
 
   it('returns truncated url when detects data url of image', () => {
     const longDataUrl = `data:image/svg+xml;base64,${longString}`
-    expect(isLongDataUrl(longDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(longDataUrl)).toEqual('data:image/svg+xml;base64,[...]')
+    expect(sanitizeIfLongDataUrl(longDataUrl)).toEqual('data:image/svg+xml;base64,[...]')
   })
+
   it('returns truncated url when detects plain data url', () => {
     const plainDataUrl = `data:,${longString}`
-    expect(isLongDataUrl(plainDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(plainDataUrl)).toEqual('data:,[...]')
+    expect(sanitizeIfLongDataUrl(plainDataUrl)).toEqual('data:,[...]')
+  })
+
+  it('allows customized length limit', () => {
+    const customLength = MAX_RESOURCE_VALUE_CHAR_LENGTH + 100
+    const longDataUrl = `data:text/plain,${longString}`
+    expect(sanitizeIfLongDataUrl(longDataUrl, customLength)).toEqual(longDataUrl)
   })
 
   it('returns truncated url when detects data url with exotic mime type', () => {
     const exoticTypeDataUrl = `data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,${longString}`
-    expect(isLongDataUrl(exoticTypeDataUrl)).toEqual(true)
-    expect(sanitizeDataUrl(exoticTypeDataUrl)).toEqual(
+    expect(sanitizeIfLongDataUrl(exoticTypeDataUrl)).toEqual(
       'data:application/vnd.openxmlformats;fileName=officedocument.presentationxml;base64,[...]'
     )
   })
 
   it('returns the original url when the data url is within limit', () => {
-    expect(isLongDataUrl(`data:,${longString.substring(5)}`)).toEqual(false)
+    const shortDataUrl = `data:text/plain,${new Array(MAX_RESOURCE_VALUE_CHAR_LENGTH - 15).join('a')}`
+    expect(sanitizeIfLongDataUrl(shortDataUrl)).toEqual(shortDataUrl)
   })
 
-  it('returns false when no data url found', () => {
-    expect(isLongDataUrl('https://static.datad0g.com/static/c/70086/chunk.min.js')).toEqual(false)
+  it('returns original string when no data url found', () => {
+    const normalUrl = 'https://example.com/resource.js'
+    expect(sanitizeIfLongDataUrl(normalUrl)).toEqual(normalUrl)
+  })
+
+  it('returns original string when data type match not found', () => {
+    const dataTypeTooLongUrl = `data:${new Array(100).join('a')},${longString}`
+    expect(sanitizeIfLongDataUrl(dataTypeTooLongUrl)).toEqual(dataTypeTooLongUrl)
   })
 })
