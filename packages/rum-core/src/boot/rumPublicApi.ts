@@ -336,7 +336,10 @@ export interface RumPublicApi extends PublicApi {
    * @param options.description Description of the vital
    * @returns reference to the custom vital
    */
-  startDurationVital: (name: string, options?: { context?: object; description?: string }) => DurationVitalReference
+  startDurationVital: (
+    name: string,
+    options?: { context?: object; description?: string; userStory?: boolean }
+  ) => DurationVitalReference
 
   /**
    * Stop a custom duration vital
@@ -647,6 +650,7 @@ export function makeRumPublicApi(
       return strategy.startDurationVital(sanitize(name)!, {
         context: sanitize(options && options.context) as Context,
         description: sanitize(options && options.description) as string | undefined,
+        userStory: options && options.userStory,
       })
     }),
 

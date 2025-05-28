@@ -10,7 +10,6 @@ import { PageState } from '../contexts/pageStateHistory'
 export interface DurationVitalOptions {
   context?: Context
   description?: string
-  // EXPERIMENTAL: This option is used to mark a vital as a user story.
   userStory?: boolean
 }
 
