@@ -161,7 +161,7 @@ describe('trackLoadingTime', () => {
   })
 
   it('should not discard loading time if page was hidden before the view start', () => {
-    clock.tick(clock.relative(RANDOM_VIEW_START))
+    clock.tick(RANDOM_VIEW_START)
 
     performanceBufferMock.addPerformanceEntry({
       entryType: 'visibility-state',
