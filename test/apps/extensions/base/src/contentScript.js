@@ -8,8 +8,6 @@ datadogRum.init({
   /* EXTENSION_INIT_PARAMETER */
 })
 
-// The above tag is to find and replace on build.
-
 datadogLogs.init({
   clientToken: 'abcd',
   defaultPrivacyLevel: 'allow',
