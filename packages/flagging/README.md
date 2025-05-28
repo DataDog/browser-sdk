@@ -11,7 +11,7 @@ const datadogFlaggingProvider = new DatadogProvider()
 
 // provide the subject
 const subject = {
-  key: 'subject-key-1',
+  targetingKey: 'subject-key-1',
 }
 await OpenFeature.setContext(subject)
 
