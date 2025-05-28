@@ -16,7 +16,19 @@ function createBody(errorGenerator: string) {
         return new Error('oh snap')
       }
       function customError() {
-        return new class CustomTestError extends Error { constructor(e) { super(e) } }("oh snap")
+        return new (class CustomTestError extends Error {
+          constructor(e) {
+            super(e)
+          }
+        })('oh snap')
+      }
+      function customErrorWithName() {
+        return new (class CustomTestError extends Error {
+          constructor(e) {
+            super(e)
+            this.name = 'CustomTestError'
+          }
+        })('oh snap')
       }
     </script>
   `
@@ -125,13 +137,34 @@ test.describe('rum errors', () => {
       })
     })
 
-  createTest('send custom errors')
+  // custom errors should have the same stack trace as regular errors on ALL BROWSERS
+  // this should work for custom errors without a custom name
+  createTest('send custom errors without a custom name')
     .withRum()
-    .withBody(
-      createBody(
-        'DD_RUM.addError(customError())'
-      )
-    )
+    .withBody(createBody('DD_RUM.addError(customError())'))
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
+      await button.click()
+
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: 'oh snap',
+        source: 'custom',
+        stack: ['Error: oh snap', `at customError @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        handling: 'handled',
+      })
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(0)
+      })
+    })
+
+  // custom errors should have the same stack trace as regular errors on ALL BROWSERS
+  // this should work for custom errors with a custom name
+  createTest('send custom errors with a custom name')
+    .withRum()
+    .withBody(createBody('DD_RUM.addError(customErrorWithName())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
       const button = page.locator('button')
       await button.click()
