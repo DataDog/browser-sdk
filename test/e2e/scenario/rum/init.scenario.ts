@@ -313,7 +313,7 @@ test.describe('allowedTrackingOrigins', () => {
         allowedTrackingOrigins: ['https://different-domain.com'],
       })
     })
-    .run(async ({ withBrowserLogs, intakeRegistry, flushEvents, flushBrowserLogs }) => {
+    .run(async ({ withBrowserLogs, intakeRegistry, flushEvents }) => {
       await flushEvents()
 
       withBrowserLogs((logs) => {
@@ -326,8 +326,6 @@ test.describe('allowedTrackingOrigins', () => {
       // When allowedTrackingOrigins doesn't match, the SDK doesn't initialize,
       // so we shouldn't expect any RUM events
       expect(intakeRegistry.rumViewEvents.length).toBe(0)
-
-      flushBrowserLogs()
     })
 })
 

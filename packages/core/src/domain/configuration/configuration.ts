@@ -336,6 +336,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
-    allowed_tracking_origins: initConfiguration.allowedTrackingOrigins,
+    use_allowed_tracking_origins:
+      Array.isArray(initConfiguration.allowedTrackingOrigins) && initConfiguration.allowedTrackingOrigins.length > 0,
   } satisfies RawTelemetryConfiguration
 }
