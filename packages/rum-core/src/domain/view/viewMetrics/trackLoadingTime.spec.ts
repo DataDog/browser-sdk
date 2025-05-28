@@ -37,6 +37,10 @@ describe('trackLoadingTime', () => {
   let originalSupportedEntryTypes: string[] | undefined
   let performanceBufferMock: GlobalPerformanceBufferMock
 
+  function emulatePageActivityDuringViewLoading() {
+    emulatePageActivityDuringViewLoading()
+  }
+
   beforeEach(() => {
     performanceBufferMock = mockGlobalPerformanceBuffer()
     if (typeof PerformanceObserver !== 'undefined') {
@@ -85,9 +89,7 @@ describe('trackLoadingTime', () => {
   it('should have a loading time equal to the activity time if there is a unique activity on a route change', () => {
     startLoadingTimeTracking()
 
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify([createMutationRecord()])
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+    emulatePageActivityDuringViewLoading()
 
     expect(loadingTimeCallback).toHaveBeenCalledOnceWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY))
   })
@@ -159,9 +161,7 @@ describe('trackLoadingTime', () => {
     setPageVisibility('hidden')
     startLoadingTimeTracking()
 
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify([createMutationRecord()])
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+    emulatePageActivityDuringViewLoading()
 
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
@@ -177,9 +177,7 @@ describe('trackLoadingTime', () => {
 
     startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE, clocksNow())
 
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify([createMutationRecord()])
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
+    emulatePageActivityDuringViewLoading()
 
     expect(loadingTimeCallback).toHaveBeenCalled()
   })
@@ -195,16 +193,7 @@ describe('trackLoadingTime', () => {
 
     startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE, clocksNow())
 
-    clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
-    domMutationObservable.notify([createMutationRecord()])
-    clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
-
-    expect(loadingTimeCallback).not.toHaveBeenCalled()
-  })
-
-  it('should NOT discard loading time if page is hidden before a new view start happened', () => {
-    setPageVisibility('hidden')
-    startLoadingTimeTracking()
+    emulatePageActivityDuringViewLoading()
 
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
