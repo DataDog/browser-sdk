@@ -1,5 +1,13 @@
-import type { CookieStore } from '@datadog/browser-core'
-import { setInterval, clearInterval, Observable, ONE_SECOND, findCommaSeparatedValue } from '@datadog/browser-core'
+import type { Configuration, CookieStore } from '@datadog/browser-core'
+import {
+  setInterval,
+  clearInterval,
+  Observable,
+  addEventListener,
+  ONE_SECOND,
+  findCommaSeparatedValue,
+  DOM_EVENT,
+} from '@datadog/browser-core'
 
 export interface CookieStoreWindow extends Window {
   cookieStore?: CookieStore
@@ -7,17 +15,40 @@ export interface CookieStoreWindow extends Window {
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
-export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
+export function createCookieObservable(configuration: Configuration, cookieName: string) {
+  const detectCookieChangeStrategy = (window as CookieStoreWindow).cookieStore
+    ? listenToCookieStoreChange(configuration)
+    : watchCookieFallback
 
-export function createCookieObservable(cookieName: string) {
   return new Observable<string | undefined>((observable) =>
-    // NOTE: we don't use cookiestore.addEventListner('change', handler) as it seems to me more prone to bugs
-    // and cause our tests to be flaky (and probably in production as well)
-    watchCookieStrategy(cookieName, (event) => observable.notify(event))
+    detectCookieChangeStrategy(cookieName, (event) => observable.notify(event))
   )
 }
 
-function watchCookieStrategy(cookieName: string, callback: (event: string | undefined) => void) {
+function listenToCookieStoreChange(configuration: Configuration) {
+  return (cookieName: string, callback: (event: string | undefined) => void) => {
+    const listener = addEventListener(
+      configuration,
+      (window as CookieStoreWindow).cookieStore!,
+      DOM_EVENT.CHANGE,
+      (event) => {
+        // Based on our experimentation, we're assuming that entries for the same cookie cannot be in both the 'changed' and 'deleted' arrays.
+        // However, due to ambiguity in the specification, we asked for clarification: https://github.com/WICG/cookie-store/issues/226
+        const changeEvent =
+          event.changed.find((event) => event.name === cookieName) ||
+          event.deleted.find((event) => event.name === cookieName)
+        if (changeEvent) {
+          callback(changeEvent.value)
+        }
+      }
+    )
+    return listener.stop
+  }
+}
+
+export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
+
+function watchCookieFallback(cookieName: string, callback: (event: string | undefined) => void) {
   const previousCookieValue = findCommaSeparatedValue(document.cookie, cookieName)
   const watchCookieIntervalId = setInterval(() => {
     const cookieValue = findCommaSeparatedValue(document.cookie, cookieName)
@@ -26,5 +57,7 @@ function watchCookieStrategy(cookieName: string, callback: (event: string | unde
     }
   }, WATCH_COOKIE_INTERVAL_DELAY)
 
-  return () => clearInterval(watchCookieIntervalId)
+  return () => {
+    clearInterval(watchCookieIntervalId)
+  }
 }

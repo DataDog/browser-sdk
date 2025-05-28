@@ -26,9 +26,16 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
      * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
      */
     isLockEnabled: isChromium(),
-    persistSession: persistSessionCookie(cookieOptions),
+    persistSession: (sessionState: SessionState) =>
+      storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
     retrieveSession: retrieveSessionCookie,
-    expireSession: (sessionState: SessionState) => expireSessionCookie(cookieOptions, sessionState, configuration),
+    expireSession: (sessionState: SessionState) =>
+      storeSessionCookie(
+        cookieOptions,
+        configuration,
+        getExpiredSessionState(sessionState, configuration),
+        SESSION_TIME_OUT_DELAY
+      ),
   }
 
   tryOldCookiesMigration(cookieStore)
@@ -36,19 +43,16 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
   return cookieStore
 }
 
-function persistSessionCookie(options: CookieOptions) {
-  return (session: SessionState) => {
-    setCookie(SESSION_STORE_KEY, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
-  }
-}
-
-function expireSessionCookie(options: CookieOptions, sessionState: SessionState, configuration: Configuration) {
-  const expiredSessionState = getExpiredSessionState(sessionState, configuration)
-  // we do not extend cookie expiration date
+function storeSessionCookie(
+  options: CookieOptions,
+  configuration: Configuration,
+  sessionState: SessionState,
+  defaultTimeout: number
+) {
   setCookie(
     SESSION_STORE_KEY,
-    toSessionString(expiredSessionState),
-    configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_TIME_OUT_DELAY,
+    toSessionString(sessionState),
+    configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : defaultTimeout,
     options
   )
 }

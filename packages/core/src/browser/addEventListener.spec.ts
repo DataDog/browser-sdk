@@ -76,7 +76,7 @@ describe('addEventListener', () => {
     const customEventTarget = {
       addEventListener: jasmine.createSpy(),
       removeEventListener: jasmine.createSpy(),
-    } as unknown as EventTarget
+    } as unknown as HTMLElement
 
     const { stop } = addEventListener({ allowUntrustedEvents: false }, customEventTarget, 'change', listener)
     stop()

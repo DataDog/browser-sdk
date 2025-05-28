@@ -4,12 +4,15 @@ import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
 import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
+import { datadogFlagging } from '@datadog/browser-flagging'
 
 datadogRum.init({
   applicationId: 'xxx',
   clientToken: 'xxx',
   plugins: [reactPlugin({ router: true })],
 })
+
+datadogFlagging.init()
 
 const router = createBrowserRouter(
   [

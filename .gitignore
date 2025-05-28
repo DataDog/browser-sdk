@@ -22,3 +22,4 @@ package.tgz
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+.vscode
