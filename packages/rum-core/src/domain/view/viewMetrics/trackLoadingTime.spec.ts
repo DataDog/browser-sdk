@@ -11,7 +11,7 @@ import {
   mockRumConfiguration,
 } from '../../../../test'
 import { PAGE_ACTIVITY_END_DELAY, PAGE_ACTIVITY_VALIDATION_DELAY } from '../../waitPageActivityEnd'
-import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../../browser/performanceObservable'
 import { LifeCycle } from '../../lifeCycle'
 import type { RumMutationRecord } from '../../../browser/domMutationObservable'
 import { trackLoadingTime } from './trackLoadingTime'
@@ -161,6 +161,10 @@ describe('trackLoadingTime', () => {
   })
 
   it('should not discard loading time if page was hidden before the view start', () => {
+    if (!supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+      pending('Performance Timing Event is not supported')
+    }
+
     clock.tick(RANDOM_VIEW_START)
 
     performanceBufferMock.addPerformanceEntry({
@@ -177,6 +181,10 @@ describe('trackLoadingTime', () => {
   })
 
   it('should discard loading time if page was hidden during the loading time', () => {
+    if (!supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
+      pending('Performance Timing Event is not supported')
+    }
+
     clock.tick(RANDOM_VIEW_START)
 
     performanceBufferMock.addPerformanceEntry({
