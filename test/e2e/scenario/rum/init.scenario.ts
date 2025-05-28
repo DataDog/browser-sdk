@@ -230,7 +230,6 @@ test.describe('allowedTrackingOrigins', () => {
   createTest('should not warn when allowedTrackingOrigins matches current domain')
     .withRum()
     .withRumInit((configuration) => {
-      // Use the current page's full URL as an allowed tracking origin
       const currentUrl = window.location.href
       window.DD_RUM!.init({
         ...configuration,
@@ -239,7 +238,6 @@ test.describe('allowedTrackingOrigins', () => {
     })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        // Should not have any warnings when domain matches
         const warningLogs = logs.filter(
           (log) => log.message.includes('SDK is being initialized') && log.level === 'warning'
         )
@@ -250,7 +248,6 @@ test.describe('allowedTrackingOrigins', () => {
   createTest('should not warn when allowedTrackingOrigins matches current domain with regex')
     .withRum()
     .withRumInit((configuration) => {
-      // Use a regex pattern that matches the current full URL (location.href)
       const currentUrl = window.location.href
       const escapedUrl = currentUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       window.DD_RUM!.init({
@@ -260,7 +257,6 @@ test.describe('allowedTrackingOrigins', () => {
     })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        // Should not have any warnings when domain matches regex pattern
         const warningLogs = logs.filter(
           (log) => log.message.includes('SDK is being initialized') && log.level === 'warning'
         )
@@ -271,7 +267,6 @@ test.describe('allowedTrackingOrigins', () => {
   createTest('should not warn when allowedTrackingOrigins matches current domain with function')
     .withRum()
     .withRumInit((configuration) => {
-      // Use a function that matches the current full URL (location.href)
       const currentUrl = window.location.href
       window.DD_RUM!.init({
         ...configuration,
@@ -280,7 +275,6 @@ test.describe('allowedTrackingOrigins', () => {
     })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        // Should not have any warnings when domain matches function predicate
         const warningLogs = logs.filter(
           (log) => log.message.includes('SDK is being initialized') && log.level === 'warning'
         )
@@ -295,8 +289,6 @@ test.describe('allowedTrackingOrigins', () => {
     })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        // Should not have any warnings when allowedTrackingOrigins is not provided
-        // (current implementation only warns in extension environments)
         const warningLogs = logs.filter(
           (log) => log.message.includes('SDK is being initialized') && log.level === 'warning'
         )
@@ -307,7 +299,6 @@ test.describe('allowedTrackingOrigins', () => {
   createTest('should warn when allowedTrackingOrigins does not match current domain')
     .withRum()
     .withRumInit((configuration) => {
-      // Use a completely different domain that won't match the test server
       window.DD_RUM!.init({
         ...configuration,
         allowedTrackingOrigins: ['https://different-domain.com'],
@@ -323,8 +314,6 @@ test.describe('allowedTrackingOrigins', () => {
         expect(errorLogs).toHaveLength(1)
       })
 
-      // When allowedTrackingOrigins doesn't match, the SDK doesn't initialize,
-      // so we shouldn't expect any RUM events
       expect(intakeRegistry.rumViewEvents.length).toBe(0)
     })
 })
