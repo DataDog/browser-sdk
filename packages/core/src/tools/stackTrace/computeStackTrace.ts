@@ -233,9 +233,6 @@ function isWronglyReportingCustomErrors() {
   const customErrorStack = customError.stack?.toString() ?? ''
 
   // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
-  return customErrorStack.includes('_DatadogTestCustomError')
-}
-
-export function _setWronglyReportingCustomErrors(value: boolean | undefined) {
-  WRONGLY_REPORTING_CUSTOM_ERRORS = value
+  WRONGLY_REPORTING_CUSTOM_ERRORS = customErrorStack.includes('_DatadogTestCustomError')
+  return WRONGLY_REPORTING_CUSTOM_ERRORS
 }

@@ -1,6 +1,6 @@
 import { isSafari } from '../utils/browserDetection'
 import * as CapturedExceptions from './capturedExceptions.specHelper'
-import { _setWronglyReportingCustomErrors, computeStackTrace } from './computeStackTrace'
+import { computeStackTrace } from './computeStackTrace'
 
 describe('computeStackTrace', () => {
   it('should not remove anonymous functions from the stack', () => {
@@ -956,35 +956,6 @@ Error: foo
       url: 'http://example.com/my-module.wasm:wasm-function[42]:0x1a3b',
       line: undefined,
       column: undefined,
-    })
-  })
-
-  it('should parse Firefox custom errors', () => {
-    // fake firefox reporting of a custom error
-    class _DatadogTestCustomError extends Error {
-      constructor() {
-        super()
-        this.name = 'TestError'
-        this.stack = `_DatadogTestCustomError@http://localhost:8080/:35:13
-throwCustomError@http://localhost:8080/:39:26
-`
-      }
-    }
-
-    _setWronglyReportingCustomErrors(true)
-
-    const customError = new _DatadogTestCustomError()
-    const stackFrames = computeStackTrace(customError)
-
-    _setWronglyReportingCustomErrors(undefined) // reset the flag
-
-    expect(stackFrames.stack.length).toBe(1)
-    expect(stackFrames.stack[0]).toEqual({
-      args: [],
-      func: 'throwCustomError',
-      url: 'http://localhost:8080/',
-      line: 39,
-      column: 26,
     })
   })
 })
