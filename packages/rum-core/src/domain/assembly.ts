@@ -6,13 +6,14 @@ import {
   createEventRateLimiter,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  BufferedObservable,
   HookNames,
   DISCARDED,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
-import type { LifeCycle } from './lifeCycle'
+import type { LifeCycle, RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
@@ -33,6 +34,10 @@ const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   service: 'string',
   version: 'string',
 }
+
+// The size of the buffer for events that are collected just after starting the assembly. This is a
+// bit arbitrary, but should be large enough to avoid dropping events in most cases.
+const BUFFERED_EVENT_SIZE = 100
 
 let modifiableFieldPathsByEvent: { [key in RumEventType]: ModifiableFieldPaths }
 
@@ -102,30 +107,32 @@ export function startRumAssembly(
     ),
   }
 
-  lifeCycle.subscribe(
-    LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({ startTime, duration, rawRumEvent, domainContext, customerContext }) => {
-      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-        eventType: rawRumEvent.type,
-        startTime,
-        duration,
-      })!
+  const observable = new BufferedObservable<RawRumEventCollectedData>(BUFFERED_EVENT_SIZE)
 
-      if (defaultRumEventAttributes === DISCARDED) {
-        return
-      }
+  lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => observable.notify(data))
 
-      const serverRumEvent = combine(defaultRumEventAttributes, { context: customerContext }, rawRumEvent) as RumEvent &
-        Context
+  observable.subscribe(({ startTime, duration, rawRumEvent, domainContext, customerContext }) => {
+    const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      eventType: rawRumEvent.type,
+      startTime,
+      duration,
+    })!
 
-      if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
-        if (isEmptyObject(serverRumEvent.context!)) {
-          delete serverRumEvent.context
-        }
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
-      }
+    if (defaultRumEventAttributes === DISCARDED) {
+      return
     }
-  )
+
+    const serverRumEvent = combine(defaultRumEventAttributes, { context: customerContext }, rawRumEvent) as RumEvent &
+      Context
+
+    if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
+      if (isEmptyObject(serverRumEvent.context!)) {
+        delete serverRumEvent.context
+      }
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+    }
+  })
+  observable.unbuffer()
 }
 
 function shouldSend(

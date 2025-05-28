@@ -478,6 +478,34 @@ describe('rum assembly', () => {
     })
   })
 
+  describe('global context', () => {
+    it('applies global context to events', async () => {
+      const { lifeCycle, globalContext, getRumEvents } = setupAssemblyTestWithDefaults()
+
+      globalContext.setContext({ foo: 'bar' })
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+      })
+
+      const rumEvents = await getRumEvents()
+      expect(rumEvents[0].context).toEqual({ foo: 'bar' })
+    })
+
+    it('applies global context to events generated before the global context is set', async () => {
+      const { lifeCycle, globalContext, getRumEvents } = setupAssemblyTestWithDefaults()
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
+      })
+
+      globalContext.setContext({ foo: 'bar' })
+
+      const rumEvents = await getRumEvents()
+      expect(rumEvents[0].context).toEqual({ foo: 'bar' })
+    })
+  })
+
   describe('event generation condition', () => {
     it('when tracked, it should generate event', async () => {
       const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults()
