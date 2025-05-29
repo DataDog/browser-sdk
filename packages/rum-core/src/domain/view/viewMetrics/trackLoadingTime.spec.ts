@@ -165,13 +165,13 @@ describe('trackLoadingTime', () => {
       pending('Performance Timing Event is not supported')
     }
 
-    clock.tick(RANDOM_VIEW_START)
-
     performanceBufferMock.addPerformanceEntry({
       entryType: 'visibility-state',
       name: 'hidden',
-      startTime: clock.relative(RANDOM_VIEW_START - 3000) as number,
+      startTime: performance.now(),
     } as PerformanceEntry)
+
+    clock.tick(RANDOM_VIEW_START)
 
     startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE, clocksNow())
 
@@ -187,13 +187,17 @@ describe('trackLoadingTime', () => {
 
     clock.tick(RANDOM_VIEW_START)
 
+    const viewStart = clocksNow()
+
+    clock.tick(10)
+
     performanceBufferMock.addPerformanceEntry({
       entryType: 'visibility-state',
       name: 'hidden',
-      startTime: clock.relative(RANDOM_VIEW_START + 10) as number,
+      startTime: performance.now(),
     } as PerformanceEntry)
 
-    startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE, clocksNow())
+    startLoadingTimeTracking(ViewLoadingType.ROUTE_CHANGE, viewStart)
 
     emulatePageActivityDuringViewLoading()
 
