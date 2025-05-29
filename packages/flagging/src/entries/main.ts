@@ -6,7 +6,9 @@ export { DatadogProvider }
 export { configurationFromString, configurationToString } from '../configuration'
 
 interface BrowserWindow extends Window {
-  DD_FLAGGING?: DatadogProvider
+  DD_FLAGGING?: {
+    Provider: typeof DatadogProvider
+  }
 }
 
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_FLAGGING', new DatadogProvider())
+defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_FLAGGING', { Provider: DatadogProvider })

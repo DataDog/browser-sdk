@@ -7,7 +7,11 @@ describe('DatadogProvider', () => {
   let mockContext: EvaluationContext
 
   beforeEach(() => {
-    provider = new DatadogProvider()
+    provider = new DatadogProvider({
+      applicationId: 'xxx',
+      clientToken: 'xxx',
+      baseUrl: 'http://localhost:8000',
+    })
     mockLogger = {
       debug: jasmine.createSpy('debug'),
       info: jasmine.createSpy('info'),

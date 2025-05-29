@@ -11,18 +11,30 @@ datadogRum.init({
   applicationId: 'xxx',
   clientToken: 'xxx',
   plugins: [reactPlugin({ router: true })],
+  enableExperimentalFeatures: ['feature_flags'],
 })
 
 const subject = {
-  key: 'subject-key-1',
+  targetingKey: 'subject-key-1',
 }
 
 async function initializeOpenFeature() {
-  const datadogFlaggingProvider = new DatadogProvider()
+  const datadogFlaggingProvider = new DatadogProvider({
+    applicationId: 'xxx',
+    clientToken: 'xxx',
+    baseUrl: 'http://localhost:8000',
+  })
   await OpenFeature.setContext(subject)
+
+  OpenFeature.addHooks({
+    after(_hookContext, details) {
+      datadogRum.addFeatureFlagEvaluation(details.flagKey, details.value)
+    },
+  })
 
   try {
     await OpenFeature.setProviderAndWait(datadogFlaggingProvider)
+    console.log('Successfully initialized Datadog provider')
   } catch (error) {
     console.error('Failed to initialize Datadog provider:', error)
   }
@@ -78,12 +90,13 @@ function Layout() {
 }
 
 function HomePage() {
+  const flagKey = 'boolean-flag'
   const [flagValue, setFlagValue] = useState<boolean | null>(null)
 
   useEffect(() => {
-    initializeOpenFeature().then(() => {
+    initializeOpenFeature().finally(() => {
       const client = OpenFeature.getClient()
-      const flagEval = client.getBooleanValue('flagName.my-boolean', false)
+      const flagEval = client.getBooleanValue(flagKey, false)
       setFlagValue(flagEval)
     })
   }, [])
@@ -94,10 +107,10 @@ function HomePage() {
       <h2>Flagging Evaluation</h2>
       <ul>
         <li>
-          Subject Key: <i>{subject.key}</i>
+          Subject Key: <i>{subject.targetingKey}</i>
         </li>
         <li>
-          Flag Key: <i>flagName.my-boolean</i>
+          Flag Key: <i>{flagKey}</i>
         </li>
         <li>
           Variant: <i>{flagValue === null ? 'Loading...' : String(flagValue)}</i>
