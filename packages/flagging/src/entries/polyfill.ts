@@ -1,3 +1,4 @@
+/* eslint-disable local-rules/disallow-side-effects */
 /**
  * Polyfill for globalThis that runs before any other code
  * Based on https://mathiasbynens.be/notes/globalthis
