@@ -72,6 +72,12 @@ void describe('deploy', () => {
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/datadog-rum-slim-v6.js',
         env,
       },
+      // Flagging bundle
+      {
+        command:
+          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/flagging/bundle/datadog-flagging.js s3://browser-agent-artifacts-prod/datadog-flagging-v6.js',
+        env,
+      },
     ])
 
     assert.deepEqual(getCloudfrontCommands(), [
@@ -110,6 +116,11 @@ void describe('deploy', () => {
           'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-prod/us1/v6/datadog-rum-slim.js',
         env,
       },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=14400, s-maxage=60 packages/flagging/bundle/datadog-flagging.js s3://browser-agent-artifacts-prod/us1/v6/datadog-flagging.js',
+        env,
+      },
     ])
     assert.deepEqual(getCloudfrontCommands(), [
       {
@@ -145,6 +156,11 @@ void describe('deploy', () => {
       {
         command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-staging/datadog-rum-slim-staging.js',
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/flagging/bundle/datadog-flagging.js s3://browser-agent-artifacts-staging/datadog-flagging-staging.js',
         env,
       },
     ])
@@ -186,6 +202,11 @@ void describe('deploy', () => {
       {
         command:
           'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/rum-slim/bundle/datadog-rum-slim.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-rum-slim.js',
+        env,
+      },
+      {
+        command:
+          'aws s3 cp --cache-control max-age=900, s-maxage=60 packages/flagging/bundle/datadog-flagging.js s3://browser-agent-artifacts-staging/pull-request/123/datadog-flagging.js',
         env,
       },
     ])
