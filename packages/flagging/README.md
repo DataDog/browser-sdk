@@ -5,7 +5,7 @@ This package supports flagging and experimentation by performing evaluation in t
 ## Initialize
 
 ```typescript
-import { DatadogProvider } from '@datadog/browser-flagging'
+import { DatadogProvider } from '@datadog/openfeature-provider'
 
 const datadogFlaggingProvider = new DatadogProvider()
 
