@@ -26,7 +26,7 @@ function evaluatePrecomputed<T extends FlagValueType>(
   defaultValue: FlagTypeToValue<T>,
   _context: EvaluationContext
 ): ResolutionDetails<FlagTypeToValue<T>> {
-  const flag = precomputed.response.flags[flagKey]
+  const flag = precomputed.response.data.attributes.flags[flagKey]
   if (!flag) {
     return {
       value: defaultValue,

@@ -30,9 +30,13 @@ export type UnixTimestamp = number
 
 /** @internal */
 export type PrecomputedConfigurationResponse = {
-  /** When configuration was generated. */
-  createdAt: number
-  flags: Record<string, PrecomputedFlag>
+  data: {
+    attributes: {
+      /** When configuration was generated. */
+      createdAt: number
+      flags: Record<string, PrecomputedFlag>
+    }
+  }
 }
 
 /** @internal */
