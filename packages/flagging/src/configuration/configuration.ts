@@ -1,7 +1,9 @@
 import type { EvaluationContext, FlagValueType, JsonValue, ResolutionDetails } from '@openfeature/web-sdk'
-
-/** @internal */
+/**
+ * Internal configuration for DatadogProvider.
+ */
 export type Configuration = {
+  /** @internal */
   precomputed?: PrecomputedConfiguration
 }
 

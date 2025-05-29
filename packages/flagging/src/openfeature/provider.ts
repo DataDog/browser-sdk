@@ -11,6 +11,10 @@ import type {
 import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
 
+export type DatadogProviderOptions = {
+  initialConfiguration?: Configuration
+}
+
 // We need to use a class here to properly implement the OpenFeature Provider interface
 // which requires class methods and properties. This is a valid exception to the no-classes rule.
 /* eslint-disable-next-line no-restricted-syntax */
@@ -21,6 +25,14 @@ export class DatadogProvider implements Provider {
   readonly runsOn: Paradigm = 'client'
 
   private configuration: Configuration = {}
+
+  constructor(options: DatadogProviderOptions = {}) {
+    if (options.initialConfiguration) {
+      this.configuration = options.initialConfiguration
+    } else {
+      this.configuration = {}
+    }
+  }
 
   resolveBooleanEvaluation(
     flagKey: string,

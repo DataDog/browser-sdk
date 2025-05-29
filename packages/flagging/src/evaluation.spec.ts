@@ -1,0 +1,52 @@
+import { configurationFromString } from './configuration'
+
+import configurationWire from '../test/data/precomputed-v2-wire.json'
+import { evaluate } from './evaluation'
+
+const configuration = configurationFromString(
+  // Adding stringify because import has parsed JSON
+  JSON.stringify(configurationWire)
+)
+
+describe('evaluate', () => {
+  it('returns default for missing configuration', () => {
+    const result = evaluate({}, 'boolean', 'boolean-flag', true, {})
+    expect(result).toEqual({
+      value: true,
+      reason: 'DEFAULT',
+    })
+  })
+
+  it('returns default for unknown flag', () => {
+    const result = evaluate(configuration, 'string', 'unknown-flag', 'default', {})
+    expect(result).toEqual({
+      value: 'default',
+      reason: 'ERROR',
+      errorCode: 'FLAG_NOT_FOUND' as any,
+    })
+  })
+
+  it('resolves string flag', () => {
+    const result = evaluate(configuration, 'string', 'string-flag', 'default', {})
+    expect(result).toEqual({
+      value: 'red',
+      variant: 'variation-123',
+      flagMetadata: {
+        allocationKey: 'allocation-123',
+        experiment: true,
+      },
+    })
+  })
+
+  it('resolves object flag', () => {
+    const result = evaluate<any>(configuration, 'object', 'json-flag', { hello: 'world' }, {})
+    expect(result).toEqual({
+      value: { key: 'value', prop: 123 },
+      variant: 'variation-127',
+      flagMetadata: {
+        allocationKey: 'allocation-127',
+        experiment: true,
+      },
+    })
+  })
+})

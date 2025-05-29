@@ -3,7 +3,7 @@ import type { EvaluationContext } from '@openfeature/web-sdk'
 import type { Configuration, UnixTimestamp } from './configuration'
 
 type ConfigurationWire = {
-  version: 1
+  version: 2
   precomputed?: {
     context?: EvaluationContext
     response: string
@@ -18,7 +18,7 @@ export function configurationFromString(s: string): Configuration {
   try {
     const wire: ConfigurationWire = JSON.parse(s)
 
-    if (wire.version !== 1) {
+    if (wire.version !== 2) {
       // Unknown version
       return {}
     }
@@ -44,7 +44,7 @@ export function configurationFromString(s: string): Configuration {
  */
 export function configurationToString(configuration: Configuration): string {
   const wire: ConfigurationWire = {
-    version: 1,
+    version: 2,
   }
 
   if (configuration.precomputed) {
