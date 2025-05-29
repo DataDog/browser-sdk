@@ -82,7 +82,7 @@ void describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v6.js,/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-v6.js,/datadog-rum-slim-v6.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /datadog-logs-v6.js,/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-v6.js,/datadog-rum-slim-v6.js,/datadog-flagging-v6.js`,
         env,
       },
     ])
@@ -124,7 +124,7 @@ void describe('deploy', () => {
     ])
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /us1/v6/datadog-logs.js,/us1/v6/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/datadog-rum.js,/us1/v6/datadog-rum-slim.js`,
+        command: `aws cloudfront create-invalidation --distribution-id EGB08BYCT1DD9 --paths /us1/v6/datadog-logs.js,/us1/v6/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/us1/v6/datadog-rum.js,/us1/v6/datadog-rum-slim.js,/us1/v6/datadog-flagging.js`,
         env,
       },
     ])
@@ -167,7 +167,7 @@ void describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /datadog-logs-staging.js,/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-staging.js,/datadog-rum-slim-staging.js`,
+        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /datadog-logs-staging.js,/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/datadog-rum-staging.js,/datadog-rum-slim-staging.js,/datadog-flagging-staging.js`,
         env,
       },
     ])
@@ -213,7 +213,7 @@ void describe('deploy', () => {
 
     assert.deepEqual(getCloudfrontCommands(), [
       {
-        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /pull-request/123/datadog-logs.js,/pull-request/123/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/datadog-rum.js,/pull-request/123/datadog-rum-slim.js`,
+        command: `aws cloudfront create-invalidation --distribution-id E2FP11ZSCFD3EU --paths /pull-request/123/datadog-logs.js,/pull-request/123/chunks/profiler-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/chunks/recorder-${FAKE_CHUNK_HASH}-datadog-rum.js,/pull-request/123/datadog-rum.js,/pull-request/123/datadog-rum-slim.js,/pull-request/123/datadog-flagging.js`,
         env,
       },
     ])
