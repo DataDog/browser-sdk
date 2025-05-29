@@ -22,7 +22,7 @@ export type DatadogProviderOptions = {
    */
   clientToken: string
 
-  baseUrl: string
+  baseUrl?: string
 
   initialConfiguration?: Configuration
 }
@@ -108,13 +108,15 @@ export class DatadogProvider implements Provider {
 }
 
 async function fetchConfiguration(options: DatadogProviderOptions, context: EvaluationContext): Promise<Configuration> {
+  const baseUrl = options.baseUrl || 'https://dd.datad0g.com'
+
   const parameters = [
     `application_id=${options.applicationId}`,
     `client_token=${options.clientToken}`,
     `dd_api_key=${options.clientToken}`,
   ]
 
-  const response = await fetch(options.baseUrl + '/api/unstable/feature-flags/assignments?' + parameters.join('&'), {
+  const response = await fetch(baseUrl + '/api/unstable/feature-flags/assignments?' + parameters.join('&'), {
     method: 'POST',
     body: JSON.stringify({
       context,
