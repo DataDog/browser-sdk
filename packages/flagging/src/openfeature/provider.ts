@@ -7,11 +7,23 @@ import type {
   ProviderMetadata,
   ResolutionDetails,
 } from '@openfeature/web-sdk'
+import { ProviderStatus } from '@openfeature/web-sdk'
 
 import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
 
 export type DatadogProviderOptions = {
+  /**
+   * The RUM application ID.
+   */
+  applicationId: string
+  /**
+   * The client token for Datadog. Required for authenticating your application with Datadog.
+   */
+  clientToken: string
+
+  baseUrl: string
+
   initialConfiguration?: Configuration
 }
 
@@ -24,14 +36,32 @@ export class DatadogProvider implements Provider {
   }
   readonly runsOn: Paradigm = 'client'
 
+  status: ProviderStatus
   private configuration: Configuration = {}
 
-  constructor(options: DatadogProviderOptions = {}) {
+  private options: DatadogProviderOptions
+
+  constructor(options: DatadogProviderOptions) {
+    this.options = options
+
     if (options.initialConfiguration) {
       this.configuration = options.initialConfiguration
+      this.status = ProviderStatus.READY
     } else {
       this.configuration = {}
+      this.status = ProviderStatus.NOT_READY
     }
+  }
+
+  async initialize(context: EvaluationContext = {}): Promise<void> {
+    this.configuration = await fetchConfiguration(this.options, context)
+    this.status = ProviderStatus.READY
+  }
+
+  async onContextChange(_oldContext: EvaluationContext, context: EvaluationContext): Promise<void> {
+    this.status = ProviderStatus.RECONCILING
+    this.configuration = await fetchConfiguration(this.options, context)
+    this.status = ProviderStatus.READY
   }
 
   resolveBooleanEvaluation(
@@ -75,4 +105,21 @@ export class DatadogProvider implements Provider {
     // makesure they pass the appropriate type.
     return evaluate(this.configuration, 'object', flagKey, defaultValue, context) as ResolutionDetails<T>
   }
+}
+
+async function fetchConfiguration(options: DatadogProviderOptions, context: EvaluationContext): Promise<Configuration> {
+  const parameters = [
+    `application_id=${options.applicationId}`,
+    `client_token=${options.clientToken}`,
+    `dd_api_key=${options.clientToken}`,
+  ]
+
+  const response = await fetch(options.baseUrl + '/api/unstable/feature-flags/assignments?' + parameters.join('&'), {
+    method: 'POST',
+    body: JSON.stringify({
+      context,
+    }),
+  })
+  const precomputed = await response.json()
+  return { precomputed }
 }
