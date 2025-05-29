@@ -1,6 +1,6 @@
-import { configurationFromString } from './configuration'
-
 import configurationWire from '../test/data/precomputed-v2-wire.json'
+
+import { configurationFromString } from './configuration'
 import { evaluate } from './evaluation'
 
 const configuration = configurationFromString(

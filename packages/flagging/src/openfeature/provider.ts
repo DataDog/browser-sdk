@@ -7,6 +7,7 @@ import type {
   ProviderMetadata,
   ResolutionDetails,
 } from '@openfeature/web-sdk'
+/* eslint-disable-next-line local-rules/disallow-side-effects */
 import { ProviderStatus } from '@openfeature/web-sdk'
 
 import type { Configuration } from '../configuration'
@@ -116,7 +117,7 @@ async function fetchConfiguration(options: DatadogProviderOptions, context: Eval
     `dd_api_key=${options.clientToken}`,
   ]
 
-  const response = await fetch(baseUrl + '/api/unstable/feature-flags/assignments?' + parameters.join('&'), {
+  const response = await fetch(`${baseUrl}/api/unstable/feature-flags/assignments?${parameters.join('&')}`, {
     method: 'POST',
     body: JSON.stringify({
       context,
