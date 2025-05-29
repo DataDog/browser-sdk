@@ -1,11 +1,9 @@
 /**
- * inspired by https://mathiasbynens.be/notes/globalthis
+ * Polyfill for globalThis that runs before any other code
+ * Based on https://mathiasbynens.be/notes/globalthis
  */
 
-export function getGlobalObject<T = typeof globalThis>(): T {
-  if (typeof globalThis === 'object') {
-    return globalThis as unknown as T
-  }
+if (typeof globalThis === 'undefined') {
   Object.defineProperty(Object.prototype, '_dd_temp_', {
     get() {
       return this as object
@@ -27,5 +25,12 @@ export function getGlobalObject<T = typeof globalThis>(): T {
       globalObject = {}
     }
   }
-  return globalObject as T
+
+  // Define globalThis if it doesn't exist
+  Object.defineProperty(globalObject as object, 'globalThis', {
+    value: globalObject,
+    writable: true,
+    enumerable: false,
+    configurable: true,
+  })
 }
