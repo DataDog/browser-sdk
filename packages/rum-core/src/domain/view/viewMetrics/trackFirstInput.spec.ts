@@ -1,4 +1,4 @@
-import { type Duration, type RelativeTime } from '@datadog/browser-core'
+import { clocksOrigin, type Duration, type RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import {
   appendElement,
@@ -23,7 +23,7 @@ describe('firstInputTimings', () => {
     const configuration = mockRumConfiguration()
     fitCallback = jasmine.createSpy()
 
-    const firstHidden = trackFirstHidden(configuration)
+    const firstHidden = trackFirstHidden(configuration, clocksOrigin())
     const firstInputTimings = trackFirstInput(configuration, firstHidden, fitCallback)
 
     registerCleanupTask(() => {

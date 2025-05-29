@@ -1,5 +1,5 @@
 import type { ClocksState, RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, addEventListeners, DOM_EVENT, noop } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 
@@ -11,8 +11,8 @@ export type Options = {
 
 export function trackFirstHidden(
   configuration: RumConfiguration,
-  eventTarget: Window = window,
-  { viewStart = clocksOrigin() }: Partial<Options> = {}
+  viewStart: ClocksState,
+  eventTarget: Window = window
 ) {
   if (document.visibilityState === 'hidden') {
     return { timeStamp: 0 as RelativeTime, stop: noop }
