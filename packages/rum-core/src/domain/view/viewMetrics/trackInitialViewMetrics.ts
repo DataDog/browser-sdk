@@ -19,9 +19,9 @@ export interface InitialViewMetrics {
 
 export function trackInitialViewMetrics(
   configuration: RumConfiguration,
+  viewStart: ClocksState,
   setLoadEvent: (loadEnd: Duration) => void,
-  scheduleViewUpdate: () => void,
-  viewStart: ClocksState = clocksOrigin()
+  scheduleViewUpdate: () => void
 ) {
   const initialViewMetrics: InitialViewMetrics = {}
 
