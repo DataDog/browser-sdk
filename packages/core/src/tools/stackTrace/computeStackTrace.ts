@@ -48,6 +48,27 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
+  if (stack.length > 0 && isWronglyReportingCustomErrors()) {
+    // if we are wrongly reporting custom errors
+    if (ex instanceof Error && isErrorCustomError(ex)) {
+      // if the element is a custom error
+
+      // go through each inherited constructor
+      let cstr = ex
+      while (cstr !== Object.getPrototypeOf(new Error()) && cstr) {
+        const errorConstructorName = cstr.constructor?.name || UNKNOWN_FUNCTION
+        if (stack[0]?.func === errorConstructorName) {
+          // if the first stack frame is the custom error constructor
+          stack.shift() // remove it
+        } else {
+          // even in case of a very weird environment, the loop will break at some point, because the stacktrace length is finite
+          break
+        }
+        cstr = Object.getPrototypeOf(cstr)
+      }
+    }
+  }
+
   return {
     message: tryToGetString(ex, 'message'),
     name: tryToGetString(ex, 'name'),
@@ -189,4 +210,46 @@ function tryToParseMessage(messageObj: unknown) {
     ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
   }
   return { name, message }
+}
+
+// Custom error stacktrace fix
+// Some browsers (safari/firefox) add the error constructor as a frame in the stacktrace
+// In order to normalize the stacktrace, we need to remove it
+
+function isErrorCustomError(error: Error) {
+  const errorProto = Object.getPrototypeOf(error) as { constructor?: () => Error } | undefined
+  return String(errorProto?.constructor).startsWith('class ')
+}
+
+let isWronglyReportingCustomErrorsCache: boolean | undefined
+
+function isWronglyReportingCustomErrors() {
+  if (isWronglyReportingCustomErrorsCache !== undefined) {
+    return isWronglyReportingCustomErrorsCache
+  }
+
+  // This class name should be unique and not minified during compilation (so that it remains unique in the stacktrace).
+  /* eslint-disable no-restricted-syntax */
+  class DatadogTestCustomError extends Error {
+    constructor() {
+      super()
+      this.name = 'Error' // set name to Error so that no browser would default to the constructor name
+    }
+  }
+
+  const [customError, normalError] = [DatadogTestCustomError, Error].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
+
+  if (!isErrorCustomError(customError)) {
+    // This was built with ES5 as target, converting the class to a normal object.
+    isWronglyReportingCustomErrorsCache = false
+    return isWronglyReportingCustomErrorsCache
+  }
+
+  const customErrorStack = customError.stack
+
+  // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
+  // If the browser is correctly reporting the stacktrace, the normal error stacktrace should be the same as the custom error stacktrace
+  isWronglyReportingCustomErrorsCache =
+    String(customErrorStack).includes(DatadogTestCustomError.name) && normalError.stack !== customErrorStack
+  return isWronglyReportingCustomErrorsCache
 }

@@ -15,6 +15,28 @@ function createBody(errorGenerator: string) {
       function foo() {
         return new Error('oh snap')
       }
+      function customError() {
+        class CustomTestError extends Error {
+          constructor(e) {
+            super(e)
+          }
+        }
+        return new CustomTestError('oh snap')
+      }
+      function customErrorWithInheritance() {
+        class CustomTestError extends Error {
+          constructor(e) {
+            super(e)
+          }
+        }
+        class CustomTestError2 extends CustomTestError {
+          constructor(e) {
+            super(e)
+            this.name = 'CustomTestError2'
+          }
+        }
+        return new CustomTestError2('oh snap')
+      }
     </script>
   `
 }
@@ -114,6 +136,51 @@ test.describe('rum errors', () => {
         message: 'oh snap',
         source: 'custom',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        handling: 'handled',
+      })
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(0)
+      })
+    })
+
+  // custom errors should have the same stack trace as regular errors on ALL BROWSERS
+  createTest('send custom class errors')
+    .withRum()
+    .withBody(createBody('DD_RUM.addError(customError())'))
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
+      await button.click()
+
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: 'oh snap',
+        source: 'custom',
+        stack: ['Error: oh snap', `at customError @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        handling: 'handled',
+      })
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(0)
+      })
+    })
+
+  // custom errors should have the same stack trace as regular errors on ALL BROWSERS
+  // this should also work for custom error classes that inherit from other custom error classes
+  createTest('send custom class errors with inheritance')
+    .withRum()
+    .withBody(createBody('DD_RUM.addError(customErrorWithInheritance())'))
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
+      await button.click()
+
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: 'oh snap',
+        source: 'custom',
+        stack: ['CustomTestError2: oh snap', `at customErrorWithInheritance @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
