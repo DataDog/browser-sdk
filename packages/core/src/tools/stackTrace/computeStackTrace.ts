@@ -210,7 +210,7 @@ function tryToParseMessage(messageObj: unknown) {
 
 function isErrorCustomError(error: Error) {
   const errorProto = Object.getPrototypeOf(error) as { constructor?: () => Error } | undefined
-  return errorProto?.constructor?.toString?.().startsWith('class ')
+  return String(errorProto?.constructor).startsWith('class ')
 }
 
 let isWronglyReportingCustomErrorsCache: boolean | undefined
