@@ -1,6 +1,6 @@
 export type { RumPublicApi, RecorderApi, ProfilerApi, StartRecordingOptions, Strategy } from './boot/rumPublicApi'
 export { makeRumPublicApi } from './boot/rumPublicApi'
-export type { StartRum } from './boot/startRum'
+export type { StartRum, StartRumResult } from './boot/startRum'
 export type {
   RumEvent,
   RumActionEvent,
