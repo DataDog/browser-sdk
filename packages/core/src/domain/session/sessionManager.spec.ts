@@ -93,7 +93,6 @@ describe('startSessionManager', () => {
       stopSessionManager()
       // flush pending callbacks to avoid random failures
       clock.tick(ONE_HOUR)
-      clock.cleanup()
     })
   })
 

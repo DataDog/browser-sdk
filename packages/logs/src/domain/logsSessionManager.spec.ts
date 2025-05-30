@@ -35,7 +35,6 @@ describe('logs session manager', () => {
     stopSessionManager()
     // flush pending callbacks to avoid random failures
     clock.tick(new Date().getTime())
-    clock.cleanup()
   })
 
   it('when tracked should store tracking type and session id', () => {

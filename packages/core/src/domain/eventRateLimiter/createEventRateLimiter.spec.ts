@@ -14,10 +14,6 @@ describe('createEventRateLimiter', () => {
     clock = mockClock()
   })
 
-  afterEach(() => {
-    clock.cleanup()
-  })
-
   it('returns false if the limit is not reached', () => {
     eventLimiter = createEventRateLimiter('error', limit, noop)
 
