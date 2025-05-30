@@ -213,26 +213,35 @@ function isErrorCustomError(error: Error) {
   return errorProto?.constructor?.toString?.().startsWith('class ')
 }
 
-let WRONGLY_REPORTING_CUSTOM_ERRORS: boolean | undefined
+let isWronglyReportingCustomErrorsCache: boolean | undefined
 
 function isWronglyReportingCustomErrors() {
-  if (WRONGLY_REPORTING_CUSTOM_ERRORS !== undefined) {
-    return WRONGLY_REPORTING_CUSTOM_ERRORS
+  if (isWronglyReportingCustomErrorsCache !== undefined) {
+    return isWronglyReportingCustomErrorsCache
   }
 
   // This class name should be unique and not minified during compilation (so that it remains unique in the stacktrace).
   /* eslint-disable no-restricted-syntax */
-  class _DatadogTestCustomError extends Error {
+  class DatadogTestCustomError extends Error {
     constructor() {
       super()
-      this.name = 'TestError' // different name than the constructor name
+      this.name = 'Error' // set name to Error so that no browser would default to the constructor name
     }
   }
 
-  const customError = new _DatadogTestCustomError()
-  const customErrorStack = customError.stack?.toString() ?? ''
+  const [customError, normalError] = [DatadogTestCustomError, Error].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
+
+  if (!isErrorCustomError(customError)) {
+    // This was built with ES5 as target, converting the class to a normal object.
+    isWronglyReportingCustomErrorsCache = false
+    return isWronglyReportingCustomErrorsCache
+  }
+
+  const customErrorStack = customError.stack
 
   // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
-  WRONGLY_REPORTING_CUSTOM_ERRORS = customErrorStack.includes('_DatadogTestCustomError')
-  return WRONGLY_REPORTING_CUSTOM_ERRORS
+  // If the browser is correctly reporting the stacktrace, the normal error stacktrace should be the same as the custom error stacktrace
+  isWronglyReportingCustomErrorsCache =
+    String(customErrorStack).includes(DatadogTestCustomError.name) && normalError.stack !== customErrorStack
+  return isWronglyReportingCustomErrorsCache
 }

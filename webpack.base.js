@@ -63,7 +63,6 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
             unsafe: true,
             unsafe_methods: true,
           },
-          keep_classnames: /^_/,
         },
       }),
     ],
