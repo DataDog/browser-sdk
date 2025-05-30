@@ -1,4 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
+import { clocksOrigin } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
@@ -21,9 +22,18 @@ describe('trackInitialViewMetrics', () => {
     setLoadEventSpy = jasmine.createSpy()
     clock = mockClock()
 
-    trackInitialViewMetricsResult = trackInitialViewMetrics(configuration, setLoadEventSpy, scheduleViewUpdateSpy)
+    trackInitialViewMetricsResult = trackInitialViewMetrics(
+      configuration,
+      clocksOrigin(),
+      setLoadEventSpy,
+      scheduleViewUpdateSpy
+    )
 
     registerCleanupTask(trackInitialViewMetricsResult.stop)
+  })
+
+  afterEach(() => {
+    clock.cleanup()
   })
 
   it('should merge metrics from various sources', () => {

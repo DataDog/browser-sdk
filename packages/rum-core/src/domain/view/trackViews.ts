@@ -267,7 +267,7 @@ function newView(
 
   const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
     loadingType === ViewLoadingType.INITIAL_LOAD
-      ? trackInitialViewMetrics(configuration, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   // Start BFCache-specific metrics when restoring from BFCache
