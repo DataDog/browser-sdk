@@ -3,6 +3,7 @@ import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
+import { createExtensionTest } from '../helpers/extensionFixture'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
@@ -19,7 +20,7 @@ import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
-const DEFAULT_RUM_CONFIGURATION = {
+export const DEFAULT_RUM_CONFIGURATION = {
   applicationId: APPLICATION_ID,
   clientToken: CLIENT_TOKEN,
   defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
@@ -34,7 +35,7 @@ const DEFAULT_RUM_CONFIGURATION = {
   telemetryConfigurationSampleRate: 100,
 }
 
-const DEFAULT_LOGS_CONFIGURATION = {
+export const DEFAULT_LOGS_CONFIGURATION = {
   clientToken: CLIENT_TOKEN,
   // Force All sample rates to 100% to avoid flakiness
   telemetrySampleRate: 100,
@@ -54,6 +55,7 @@ interface TestContext {
   page: Page
   browserContext: BrowserContext
   browserName: 'chromium' | 'firefox' | 'webkit' | 'msedge'
+  getExtensionId: () => Promise<string>
   withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
   flushBrowserLogs: () => void
   flushEvents: () => Promise<void>
@@ -72,6 +74,7 @@ class TestBuilder {
   private basePath = ''
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
+  private testFixture: typeof test = test
 
   constructor(private title: string) {}
 
@@ -125,6 +128,11 @@ class TestBuilder {
     return this
   }
 
+  withExtension(extensionPath: string) {
+    this.testFixture = createExtensionTest(extensionPath)
+    return this
+  }
+
   run(runner: TestRunner) {
     const setupOptions: SetupOptions = {
       body: this.body,
@@ -140,10 +148,11 @@ class TestBuilder {
         run_id: getRunId(),
         test_name: '<PLACEHOLDER>',
       },
+      testFixture: this.testFixture,
     }
 
     if (this.alsoRunWithRumSlim) {
-      test.describe(this.title, () => {
+      this.testFixture.describe(this.title, () => {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
@@ -173,7 +182,7 @@ function declareTestsForSetups(
   runner: TestRunner
 ) {
   if (setups.length > 1) {
-    test.describe(title, () => {
+    setupOptions.testFixture.describe(title, () => {
       for (const { name, factory } of setups) {
         declareTest(name!, setupOptions, factory, runner)
       }
@@ -184,7 +193,8 @@ function declareTestsForSetups(
 }
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  test(title, async ({ page, context }) => {
+  const testFixture = setupOptions.testFixture
+  testFixture(title, async ({ page, context }) => {
     const browserName = getBrowserName(test.info().project.name)
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
@@ -240,6 +250,15 @@ function createTestContext(
     flushEvents: () => flushEvents(page),
     deleteAllCookies: () => deleteAllCookies(browserContext),
     sendXhr: (url: string, headers?: string[][]) => sendXhr(page, url, headers),
+    getExtensionId: async () => {
+      let [background] = browserContext.serviceWorkers()
+      if (!background) {
+        background = await browserContext.waitForEvent('serviceworker')
+      }
+
+      const extensionId = background.url().split('/')[2]
+      return extensionId || ''
+    },
   }
 }
 
