@@ -1,9 +1,14 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import { flagging as importedFlagging } from '../hello'
 
-export const datadogFlagging = importedFlagging
+import { DatadogProvider } from '../openfeature/provider'
+
+export { DatadogProvider }
+export { configurationFromString, configurationToString } from '../configuration'
 
 interface BrowserWindow extends Window {
-  DD_FLAGGING?: typeof datadogFlagging
+  DD_FLAGGING?: {
+    Provider: typeof DatadogProvider
+  }
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_FLAGGING', datadogFlagging)
+
+defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_FLAGGING', { Provider: DatadogProvider })
