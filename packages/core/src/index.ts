@@ -61,6 +61,7 @@ export type { SessionManager } from './domain/session/sessionManager'
 export { startSessionManager, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
+  SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
 export type { HttpRequest, Payload, FlushEvent, FlushReason } from './transport'
