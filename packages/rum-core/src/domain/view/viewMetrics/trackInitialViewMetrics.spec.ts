@@ -32,6 +32,10 @@ describe('trackInitialViewMetrics', () => {
     registerCleanupTask(trackInitialViewMetricsResult.stop)
   })
 
+  afterEach(() => {
+    clock.cleanup()
+  })
+
   it('should merge metrics from various sources', () => {
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
