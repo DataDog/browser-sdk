@@ -1,10 +1,9 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import './polyfill'
 
 import { DatadogProvider } from '../openfeature/provider'
 
-export { configurationFromString, configurationToString } from '../configuration'
 export { DatadogProvider }
+export { configurationFromString, configurationToString } from '../configuration'
 
 interface BrowserWindow extends Window {
   DD_FLAGGING?: {
