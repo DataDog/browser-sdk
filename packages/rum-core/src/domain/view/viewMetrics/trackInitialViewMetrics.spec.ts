@@ -20,7 +20,6 @@ describe('trackInitialViewMetrics', () => {
     scheduleViewUpdateSpy = jasmine.createSpy()
     setLoadEventSpy = jasmine.createSpy()
     clock = mockClock()
-    registerCleanupTask(clock.cleanup)
 
     trackInitialViewMetricsResult = trackInitialViewMetrics(configuration, setLoadEventSpy, scheduleViewUpdateSpy)
 

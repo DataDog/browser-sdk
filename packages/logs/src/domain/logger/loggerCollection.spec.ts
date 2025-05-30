@@ -32,10 +32,6 @@ describe('logger collection', () => {
     clock = mockClock()
   })
 
-  afterEach(() => {
-    clock.cleanup()
-  })
-
   describe('when handle type is set to "console"', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.console)

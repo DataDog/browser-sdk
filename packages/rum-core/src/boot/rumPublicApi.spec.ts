@@ -135,10 +135,6 @@ describe('rum public api', () => {
         noopProfilerApi
       )
       clock = mockClock()
-
-      registerCleanupTask(() => {
-        clock.cleanup()
-      })
     })
 
     it('allows sending actions before init', () => {
@@ -190,10 +186,6 @@ describe('rum public api', () => {
         noopProfilerApi
       )
       clock = mockClock()
-
-      registerCleanupTask(() => {
-        clock.cleanup()
-      })
     })
 
     it('allows capturing an error before init', () => {

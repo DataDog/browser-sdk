@@ -203,7 +203,6 @@ describe('session store', () => {
 
     afterEach(() => {
       resetSessionInStore()
-      clock.cleanup()
       sessionStoreManager.stop()
     })
 
@@ -577,7 +576,6 @@ describe('session store', () => {
 
     afterEach(() => {
       resetSessionInStore()
-      clock.cleanup()
       sessionStoreManager.stop()
       otherSessionStoreManager.stop()
     })

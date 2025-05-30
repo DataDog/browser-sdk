@@ -102,7 +102,6 @@ describe('viewCollection', () => {
     registerCleanupTask(() => {
       collectionResult.stop()
       viewHistory.stop()
-      clock.cleanup()
     })
     return collectionResult
   }

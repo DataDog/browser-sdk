@@ -35,7 +35,6 @@ describe('record', () => {
     emitSpy = jasmine.createSpy()
 
     registerCleanupTask(() => {
-      clock?.cleanup()
       recordApi?.stop()
     })
   })

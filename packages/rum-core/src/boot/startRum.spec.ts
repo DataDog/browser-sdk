@@ -183,7 +183,6 @@ describe('rum session keep alive', () => {
 
     registerCleanupTask(() => {
       stop()
-      clock.cleanup()
     })
   })
 
@@ -255,7 +254,6 @@ describe('rum events url', () => {
     serverRumEvents = collectServerEvents(lifeCycle)
 
     registerCleanupTask(() => {
-      clock?.cleanup()
       stop()
     })
   })
@@ -343,7 +341,6 @@ describe('view events', () => {
     registerCleanupTask(() => {
       stop()
       stopSessionManager()
-      clock.cleanup()
     })
   })
 

@@ -9,7 +9,6 @@ describe('trackBfcacheMetrics', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    registerCleanupTask(clock.cleanup)
 
     spyOn(window, 'requestAnimationFrame').and.callFake((cb: FrameRequestCallback): number => {
       cb(performance.now())

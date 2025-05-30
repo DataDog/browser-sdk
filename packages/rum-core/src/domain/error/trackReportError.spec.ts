@@ -34,7 +34,6 @@ describe('trackReportError', () => {
     clock = mockClock()
     registerCleanupTask(() => {
       subscription.unsubscribe()
-      clock.cleanup()
     })
     cspEventListener = mockCspEventListener()
   })

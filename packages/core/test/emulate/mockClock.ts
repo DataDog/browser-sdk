@@ -28,8 +28,5 @@ export function mockClock() {
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
     tick: (ms: number) => jasmine.clock().tick(ms),
     setDate: (date: Date) => jasmine.clock().mockDate(date),
-    cleanup: () => {
-      jasmine.clock().uninstall()
-    },
   }
 }

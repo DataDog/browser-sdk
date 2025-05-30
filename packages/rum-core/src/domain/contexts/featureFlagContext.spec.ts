@@ -25,10 +25,6 @@ describe('featureFlagContexts', () => {
     featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, {
       trackFeatureFlagsForEvents,
     } as unknown as RumConfiguration)
-
-    registerCleanupTask(() => {
-      clock.cleanup()
-    })
   })
 
   describe('assemble hook', () => {

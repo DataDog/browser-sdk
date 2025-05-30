@@ -22,7 +22,6 @@ describe('UNSTABLE_ReactComponentTracker', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    registerCleanupTask(() => clock.cleanup())
   })
 
   it('should call addDurationVital after the component rendering', () => {

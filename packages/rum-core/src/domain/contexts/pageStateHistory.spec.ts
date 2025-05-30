@@ -22,10 +22,6 @@ describe('pageStateHistory', () => {
     getEntriesByTypeSpy = spyOn(performance, 'getEntriesByType').and.returnValue([])
   })
 
-  afterEach(() => {
-    clock.cleanup()
-  })
-
   describe('wasInPageStateDuringPeriod', () => {
     let pageStateHistory: PageStateHistory
 

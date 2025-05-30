@@ -22,7 +22,6 @@ describe('trackConsoleError', () => {
   afterEach(() => {
     resetConsoleObservable()
     subscription.unsubscribe()
-    clock.cleanup()
   })
 
   it('should track console error', () => {

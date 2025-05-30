@@ -14,10 +14,6 @@ describe('interactionSelectorCache', () => {
     clock = mockClock()
   })
 
-  afterEach(() => {
-    clock.cleanup()
-  })
-
   it('should delete the selector after getting it', () => {
     const timestamp = relativeNow()
     updateInteractionSelector(timestamp, 'selector')

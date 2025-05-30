@@ -25,10 +25,6 @@ describe('vitalCollection', () => {
     vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, vitalsState)
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
-
-    registerCleanupTask(() => {
-      clock.cleanup()
-    })
   })
 
   describe('custom duration', () => {

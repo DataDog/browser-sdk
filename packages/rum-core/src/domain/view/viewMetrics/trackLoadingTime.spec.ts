@@ -51,7 +51,6 @@ describe('trackLoadingTime', () => {
   afterEach(() => {
     stopLoadingTimeTracking()
     restorePageVisibility()
-    clock.cleanup()
   })
 
   it('should have an undefined loading time if there is no activity on a route change', () => {

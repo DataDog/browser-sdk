@@ -204,9 +204,6 @@ describe('instrumentSetter', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    registerCleanupTask(() => {
-      clock.cleanup()
-    })
     zoneJs = mockZoneJs()
   })
 

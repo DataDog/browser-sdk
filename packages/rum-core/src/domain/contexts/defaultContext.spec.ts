@@ -15,7 +15,6 @@ describe('startDefaultContext', () => {
     beforeEach(() => {
       clock = mockClock()
       hooks = createHooks()
-      registerCleanupTask(() => clock.cleanup())
     })
 
     it('should set the rum default context', () => {

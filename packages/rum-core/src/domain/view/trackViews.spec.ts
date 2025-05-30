@@ -122,7 +122,6 @@ describe('view lifecycle', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -363,7 +362,6 @@ describe('view loading type', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -396,7 +394,6 @@ describe('view metrics', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -606,7 +603,6 @@ describe('view custom timings', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -743,7 +739,6 @@ describe('start view', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -840,7 +835,6 @@ describe('view event count', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
       resetExperimentalFeatures()
     })
   })
@@ -1000,7 +994,6 @@ describe('service and version', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
       resetExperimentalFeatures()
     })
   })

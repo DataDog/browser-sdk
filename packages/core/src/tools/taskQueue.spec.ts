@@ -16,7 +16,6 @@ describe('createTaskQueue', () => {
 
   it('runs as many tasks as possible in a single idle callback', () => {
     const clock = mockClock()
-    registerCleanupTask(clock.cleanup)
     const requestIdleCallbackMock = mockRequestIdleCallback()
 
     // Each task takes 10ms to run
@@ -41,7 +40,6 @@ describe('createTaskQueue', () => {
 
   it('runs some tasks in case of timeout', () => {
     const clock = mockClock()
-    registerCleanupTask(clock.cleanup)
     const requestIdleCallbackMock = mockRequestIdleCallback()
 
     const task1 = jasmine.createSpy().and.callFake(() => clock.tick(MAX_EXECUTION_TIME_ON_TIMEOUT - 10))
