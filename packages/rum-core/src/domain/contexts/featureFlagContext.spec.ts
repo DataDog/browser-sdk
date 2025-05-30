@@ -1,7 +1,7 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames, relativeToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { RumConfiguration } from '../configuration'

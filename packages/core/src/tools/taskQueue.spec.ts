@@ -1,4 +1,4 @@
-import { mockClock, mockRequestIdleCallback, registerCleanupTask } from '../../test'
+import { mockClock, mockRequestIdleCallback } from '../../test'
 import { createTaskQueue, MAX_EXECUTION_TIME_ON_TIMEOUT } from './taskQueue'
 
 describe('createTaskQueue', () => {

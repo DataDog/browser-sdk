@@ -352,11 +352,10 @@ describe('view lifecycle', () => {
 
 describe('view loading type', () => {
   const lifeCycle = new LifeCycle()
-  let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     viewTest = setupViewTest({ lifeCycle })
 
@@ -986,11 +985,10 @@ describe('view event count', () => {
 
 describe('service and version', () => {
   const lifeCycle = new LifeCycle()
-  let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     registerCleanupTask(() => {
       viewTest.stop()

@@ -1,5 +1,5 @@
 import type { Duration } from '@datadog/browser-core'
-import { mockClock, registerCleanupTask, type Clock } from '@datadog/browser-core/test'
+import { mockClock, type Clock } from '@datadog/browser-core/test'
 import { clocksNow } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'

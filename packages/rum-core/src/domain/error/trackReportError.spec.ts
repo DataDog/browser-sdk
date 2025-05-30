@@ -1,6 +1,6 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
-import type { Clock, MockCspEventListener, MockReportingObserver } from '@datadog/browser-core/test'
+import type { MockCspEventListener, MockReportingObserver } from '@datadog/browser-core/test'
 import {
   FAKE_CSP_VIOLATION_EVENT,
   FAKE_REPORT,
@@ -17,7 +17,6 @@ describe('trackReportError', () => {
   let errorObservable: Observable<RawError>
   let subscription: Subscription
   let notifyLog: jasmine.Spy
-  let clock: Clock
   let reportingObserver: MockReportingObserver
   let cspEventListener: MockCspEventListener
   let configuration: RumConfiguration
@@ -31,7 +30,7 @@ describe('trackReportError', () => {
     notifyLog = jasmine.createSpy('notifyLog')
     reportingObserver = mockReportingObserver()
     subscription = errorObservable.subscribe(notifyLog)
-    clock = mockClock()
+    mockClock()
     registerCleanupTask(() => {
       subscription.unsubscribe()
     })

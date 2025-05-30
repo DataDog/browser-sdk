@@ -2,7 +2,7 @@ import React, { useEffect, useLayoutEffect, act } from 'react'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import type { Clock } from '../../../../core/test'
-import { mockClock, registerCleanupTask } from '../../../../core/test'
+import { mockClock } from '../../../../core/test'
 import { UNSTABLE_ReactComponentTracker as ReactComponentTracker } from './reactComponentTracker'
 
 const RENDER_DURATION = 100

@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock } from '@datadog/browser-core/test'
 import { trackBfcacheMetrics } from './trackBfcacheMetrics'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
 
