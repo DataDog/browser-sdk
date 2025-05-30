@@ -16,19 +16,26 @@ function createBody(errorGenerator: string) {
         return new Error('oh snap')
       }
       function customError() {
-        return new (class CustomTestError extends Error {
+        class CustomTestError extends Error {
           constructor(e) {
             super(e)
           }
-        })('oh snap')
+        }
+        return new CustomTestError('oh snap')
       }
-      function customErrorWithName() {
-        return new (class CustomTestError extends Error {
+      function customErrorWithInheritance() {
+        class CustomTestError extends Error {
           constructor(e) {
             super(e)
-            this.name = 'CustomTestError'
           }
-        })('oh snap')
+        }
+        class CustomTestError2 extends CustomTestError {
+          constructor(e) {
+            super(e)
+            this.name = 'CustomTestError2'
+          }
+        }
+        return new CustomTestError2('oh snap')
       }
     </script>
   `
@@ -116,7 +123,7 @@ test.describe('rum errors', () => {
       })
     })
 
-  createTest('send errors from custom source')
+  createTest('send custom errors')
     .withRum()
     .withBody(createBody('DD_RUM.addError(foo())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
@@ -138,8 +145,7 @@ test.describe('rum errors', () => {
     })
 
   // custom errors should have the same stack trace as regular errors on ALL BROWSERS
-  // this should work for custom errors without a custom name
-  createTest('send custom errors without a custom name')
+  createTest('send custom class errors')
     .withRum()
     .withBody(createBody('DD_RUM.addError(customError())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
@@ -161,10 +167,10 @@ test.describe('rum errors', () => {
     })
 
   // custom errors should have the same stack trace as regular errors on ALL BROWSERS
-  // this should work for custom errors with a custom name
-  createTest('send custom errors with a custom name')
+  // this should also work for custom error classes that inherit from other custom error classes
+  createTest('send custom class errors with inheritance')
     .withRum()
-    .withBody(createBody('DD_RUM.addError(customErrorWithName())'))
+    .withBody(createBody('DD_RUM.addError(customErrorWithInheritance())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
       const button = page.locator('button')
       await button.click()
@@ -174,7 +180,7 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
-        stack: ['CustomTestError: oh snap', `at customErrorWithName @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        stack: ['CustomTestError2: oh snap', `at customErrorWithInheritance @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
