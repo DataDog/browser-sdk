@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-flagging",
+  "name": "@datadog/openfeature-provider",
   "version": "6.8.0",
   "license": "Apache-2.0",
   "private": true,
@@ -18,12 +18,17 @@
     "@datadog/browser-core": "6.8.0"
   },
   "peerDependencies": {
-    "@datadog/browser-rum": "6.8.0"
+    "@datadog/browser-rum": "6.8.0",
+    "@openfeature/web-sdk": "^1.5.0"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-rum": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "@openfeature/core": "1.8.0",
+    "@openfeature/web-sdk": "1.5.0"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,65 @@
+{
+  "id": "1",
+  "data": {
+    "attributes": {
+      "createdAt": 1731939805123,
+      "flags": {
+        "string-flag": {
+          "type": "string",
+          "resolution": {
+            "value": "red",
+            "variant": "variation-123",
+            "flagMetadata": {
+              "allocationKey": "allocation-123",
+              "experiment": true
+            }
+          }
+        },
+        "boolean-flag": {
+          "type": "boolean",
+          "resolution": {
+            "value": true,
+            "variant": "variation-124",
+            "flagMetadata": {
+              "allocationKey": "allocation-124",
+              "experiment": true
+            }
+          }
+        },
+        "integer-flag": {
+          "type": "number",
+          "resolution": {
+            "value": 42,
+            "variant": "variation-125",
+            "flagMetadata": {
+              "allocationKey": "allocation-125",
+              "experiment": true
+            }
+          }
+        },
+        "numeric-flag": {
+          "type": "number",
+          "resolution": {
+            "value": 3.14,
+            "variant": "variation-126",
+            "flagMetadata": {
+              "allocationKey": "allocation-126",
+              "experiment": true
+            }
+          }
+        },
+        "json-flag": {
+          "type": "object",
+          "resolution": {
+            "value": { "key": "value", "prop": 123 },
+            "variant": "variation-127",
+            "flagMetadata": {
+              "allocationKey": "allocation-127",
+              "experiment": true
+            }
+          }
+        }
+      }
+    }
+  }
+}
