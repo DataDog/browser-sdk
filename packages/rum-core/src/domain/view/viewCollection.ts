@@ -1,7 +1,7 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
 import { DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
-import type { RecorderApi } from '../../boot/rumPublicApi'
+import type { ProfilerApi, RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -26,10 +26,14 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory,
+  profilerApi: ProfilerApi,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
+    lifeCycle.notify(
+      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+      processViewUpdate(view, configuration, recorderApi, profilerApi)
+    )
   )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
@@ -66,7 +70,8 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   configuration: RumConfiguration,
-  recorderApi: RecorderApi
+  recorderApi: RecorderApi,
+  profilerApi: ProfilerApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
   const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
@@ -124,6 +129,7 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
+      profiling_status: profilerApi.getProfilingStatus(),
     },
     display: view.commonViewMetrics.scroll
       ? {

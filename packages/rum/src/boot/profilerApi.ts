@@ -1,21 +1,19 @@
-import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
+import type {
+  LifeCycle,
+  ViewHistory,
+  RumSessionManager,
+  RumConfiguration,
+  ProfilerApi,
+} from '@datadog/browser-rum-core'
 import { addTelemetryDebug, monitorError, performDraw } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
+import { createProfilingStatusManager } from '../domain/profiling/profilingStatusManager'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
-
-interface ProfilerApi {
-  onRumStart: (
-    lifeCycle: LifeCycle,
-    configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
-    viewHistory: ViewHistory
-  ) => void
-  stop: () => void
-}
 
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
+  const profilingStatusManager = createProfilingStatusManager()
 
   function onRumStart(
     lifeCycle: LifeCycle,
@@ -23,7 +21,10 @@ export function makeProfilerApi(): ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) {
-    if (!isProfilingSupported() || !performDraw(configuration.profilingSampleRate)) {
+    const hasSupportForProfiler = isProfilingSupported()
+    if (!hasSupportForProfiler || !performDraw(configuration.profilingSampleRate)) {
+      // Update Profiling status to indicate that the Profiler was not started with the reason.
+      profilingStatusManager.setProfilingStatus(hasSupportForProfiler ? 'not-sampled' : 'not-supported-by-browser')
       return
     }
 
@@ -31,10 +32,11 @@ export function makeProfilerApi(): ProfilerApi {
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
           addTelemetryDebug('[DD_RUM] Failed to lazy load the RUM Profiler')
+          profilingStatusManager.setProfilingStatus('failed-to-lazy-load')
           return
         }
 
-        profiler = createRumProfiler(configuration, lifeCycle, sessionManager)
+        profiler = createRumProfiler(configuration, lifeCycle, sessionManager, profilingStatusManager)
         profiler.start(viewHistory.findView())
       })
       .catch(monitorError)
@@ -45,5 +47,6 @@ export function makeProfilerApi(): ProfilerApi {
     stop: () => {
       profiler?.stop().catch(monitorError)
     },
+    getProfilingStatus: profilingStatusManager.getProfilingStatus,
   }
 }

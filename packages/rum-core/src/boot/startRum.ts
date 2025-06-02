@@ -179,6 +179,7 @@ export function startRum(
     locationChangeObservable,
     recorderApi,
     viewHistory,
+    profilerApi,
     initialViewOptions
   )
 
