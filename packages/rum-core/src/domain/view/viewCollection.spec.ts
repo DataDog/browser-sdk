@@ -1,8 +1,14 @@
-import { DISCARDED, HookNames, noop, Observable } from '@datadog/browser-core'
+import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi, ProfilerApi } from '../../boot/rumPublicApi'
-import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
+import {
+  collectAndValidateRawRumEvents,
+  mockRumConfiguration,
+  mockViewHistory,
+  noopProfilerApi,
+  noopRecorderApi,
+} from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
@@ -82,12 +88,7 @@ describe('viewCollection', () => {
     const locationChangeObservable = new Observable<LocationChange>()
     mockClock()
 
-    const profilerApi: ProfilerApi = {
-      onRumStart: () => noop,
-      stop: () => noop,
-      getProfilingStatus: () => 'running',
-    }
-
+    const profilerApi: ProfilerApi = noopProfilerApi
     const collectionResult = startViewCollection(
       lifeCycle,
       hooks,
@@ -208,6 +209,7 @@ describe('viewCollection', () => {
         },
       },
       privacy: { replay_level: 'mask' },
+      profiling_status: jasmine.any(String),
     })
   })
 

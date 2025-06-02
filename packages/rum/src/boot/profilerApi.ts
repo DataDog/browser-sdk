@@ -5,7 +5,13 @@ import type {
   RumConfiguration,
   ProfilerApi,
 } from '@datadog/browser-rum-core'
-import { addTelemetryDebug, monitorError, performDraw } from '@datadog/browser-core'
+import {
+  addTelemetryDebug,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+  monitorError,
+  performDraw,
+} from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { createProfilingStatusManager } from '../domain/profiling/profilingStatusManager'
@@ -13,7 +19,7 @@ import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
-  const profilingStatusManager = createProfilingStatusManager()
+  const profilingStatusManager = createProfilingStatusManager('initializing')
 
   function onRumStart(
     lifeCycle: LifeCycle,
@@ -21,6 +27,11 @@ export function makeProfilerApi(): ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) {
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING)) {
+      profilingStatusManager.setProfilingStatus('not-in-init-options')
+      return
+    }
+
     const hasSupportForProfiler = isProfilingSupported()
     if (!hasSupportForProfiler || !performDraw(configuration.profilingSampleRate)) {
       // Update Profiling status to indicate that the Profiler was not started with the reason.
