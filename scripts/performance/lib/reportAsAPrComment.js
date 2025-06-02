@@ -31,8 +31,7 @@ ${memoryBasePerformance}
 🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=${pr.number})
 `
 
-  const commentId = await retrieveExistingCommentId(pr.number)
-  await updateOrAddComment(message, pr.number, commentId)
+  await updateOrAddComment(message, pr.number)
 }
 
 async function formatBundleSizes(localBundleSizes, lastCommonCommit) {
@@ -150,24 +149,7 @@ function compare(baseResults, localResults) {
   })
 }
 
-async function retrieveExistingCommentId(prNumber) {
-  const response = await fetchHandlingError(
-    `https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `token ${getGithubAccessToken()}`,
-      },
-    }
-  )
-  const comments = await response.json()
-  const targetComment = comments.find((comment) => comment.body.startsWith(`## ${PR_COMMENT_HEADER}`))
-  if (targetComment !== undefined) {
-    return targetComment.id
-  }
-}
-async function updateOrAddComment(message, prNumber, commentId) {
-  const method = commentId ? 'PATCH' : 'POST'
+async function updateOrAddComment(message, prNumber) {
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
     message,
@@ -175,8 +157,9 @@ async function updateOrAddComment(message, prNumber, commentId) {
     org: 'DataDog',
     repo: 'browser-sdk',
   }
+
   await fetchHandlingError('https://pr-commenter.us1.ddbuild.io/internal/cit/pr-comment', {
-    method,
+    method: 'PATCH',
     headers: {
       Authorization: `Bearer ${PR_COMMENTER_AUTH_TOKEN}`,
     },
