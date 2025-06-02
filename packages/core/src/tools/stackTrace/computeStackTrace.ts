@@ -234,7 +234,6 @@ function isWronglyReportingCustomErrors() {
     return isWronglyReportingCustomErrorsCache
   }
 
-  // This class name should be unique and not minified during compilation (so that it remains unique in the stacktrace).
   /* eslint-disable no-restricted-syntax */
   class DatadogTestCustomError extends Error {
     constructor() {
@@ -247,6 +246,7 @@ function isWronglyReportingCustomErrors() {
 
   if (!isErrorCustomError(customError)) {
     // This was built with ES5 as target, converting the class to a normal object.
+    // Thus, error constructors will be reported on all browsers, which is the expected behavior.
     isWronglyReportingCustomErrorsCache = false
     return isWronglyReportingCustomErrorsCache
   }
