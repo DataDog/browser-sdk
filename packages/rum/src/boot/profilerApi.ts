@@ -27,8 +27,8 @@ export function makeProfilerApi(): ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) {
-    if (isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING)) {
-      profilingStatusManager.setProfilingStatus('not-in-init-options')
+    if (!isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING)) {
+      profilingStatusManager.setProfilingStatus('missing-profiling-experimental-feature')
       return
     }
 

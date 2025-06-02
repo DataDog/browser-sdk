@@ -5,6 +5,7 @@ import {
   createPerformanceEntry,
   mockPerformanceObserver,
   mockRumConfiguration,
+  noopProfilerApi,
 } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
@@ -47,6 +48,7 @@ describe('long animation frames collection', () => {
         ],
       },
       type: RumEventType.LONG_TASK,
+      profiling_status: jasmine.any(String),
       _dd: {
         discarded: false,
       },
@@ -64,7 +66,8 @@ function setupLongAnimationFrameCollection() {
   const rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(
     lifeCycle,
-    mockRumConfiguration()
+    mockRumConfiguration(),
+    noopProfilerApi
   )
 
   registerCleanupTask(() => {
