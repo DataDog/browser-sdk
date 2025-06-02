@@ -19,20 +19,12 @@ Since this package is not published to NPM, you'll need to follow these steps to
    mv datadog-browser-flagging-v*.tgz path/to/your/project/
    ```
 
-3. In your target project, install the package:
-   ```bash
-   yarn add ./datadog-browser-flagging-v*.tgz
-   ```
+3. In your target project, install the package and commit the file to your source control
 
-4. Commit the `.tgz` file to your project's source control:
-   ```bash
-   git add datadog-browser-flagging-v*.tgz
-   git commit -m "Add browser-flagging package"
-   ```
 
 ### Automation Script
 
-We provide a helper script `INTEGRATE-FLAGGING-PACKAGE.sh` that automates these steps. Usage:
+We provide a helper script `INTEGRATE-FLAGGING-PACKAGE.sh` that automates these steps assuming the target project uses `yarn`. Usage:
 
 ```bash
 ./INTEGRATE-FLAGGING-PACKAGE.sh /path/to/browser-sdk/packages/flagging /path/to/target/project
