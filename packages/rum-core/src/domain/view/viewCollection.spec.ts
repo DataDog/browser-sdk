@@ -1,7 +1,7 @@
-import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
+import { DISCARDED, HookNames, noop, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RecorderApi } from '../../boot/rumPublicApi'
+import type { RecorderApi, ProfilerApi } from '../../boot/rumPublicApi'
 import { collectAndValidateRawRumEvents, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../../test'
 import type { RawRumEvent, RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
@@ -82,6 +82,12 @@ describe('viewCollection', () => {
     const locationChangeObservable = new Observable<LocationChange>()
     mockClock()
 
+    const profilerApi: ProfilerApi = {
+      onRumStart: () => noop,
+      stop: () => noop,
+      getProfilingStatus: () => 'running',
+    }
+
     const collectionResult = startViewCollection(
       lifeCycle,
       hooks,
@@ -94,7 +100,8 @@ describe('viewCollection', () => {
         ...noopRecorderApi,
         getReplayStats: getReplayStatsSpy,
       },
-      viewHistory
+      viewHistory,
+      profilerApi
     )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
