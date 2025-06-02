@@ -32,10 +32,14 @@ function createBody(errorGenerator: string) {
         class CustomTestError2 extends CustomTestError {
           constructor(e) {
             super(e)
-            this.name = 'CustomTestError2'
           }
         }
-        return new CustomTestError2('oh snap')
+        return new (class extends CustomTestError2 {
+          constructor(e) {
+            super(e)
+            this.name = 'CustomTestError3'
+          }
+        })('oh snap')
       }
     </script>
   `
@@ -180,7 +184,7 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
-        stack: ['CustomTestError2: oh snap', `at customErrorWithInheritance @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        stack: ['CustomTestError3: oh snap', `at customErrorWithInheritance @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
