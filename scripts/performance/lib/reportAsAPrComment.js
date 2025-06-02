@@ -18,20 +18,20 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     return
   }
   const lastCommonCommit = getLastCommonCommit(pr.base.ref, LOCAL_BRANCH)
-  const testNames = memoryLocalPerformance.map((obj) => obj.testProperty)
-  const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
-  const commentId = await retrieveExistingCommentId(pr.number)
 
   const bundleSizesMessage = await formatBundleSizes(localBundleSizes, lastCommonCommit)
   const cpuPerformanceMessage = await formatCpuPerformance(lastCommonCommit)
+  const memoryBasePerformance = await formatMemoryPerformance(memoryLocalPerformance, lastCommonCommit)
 
   const message = `
 ${bundleSizesMessage}
 ${cpuPerformanceMessage}
+${memoryBasePerformance}
 
-${createMessage(memoryBasePerformance, memoryLocalPerformance, pr.number)}
+🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=${pr.number})
 `
 
+  const commentId = await retrieveExistingCommentId(pr.number)
   await updateOrAddComment(message, pr.number, commentId)
 }
 
@@ -86,6 +86,34 @@ async function formatCpuPerformance(lastCommonCommit) {
   message += markdownArray({
     headers: ['Action Name', 'Base Average Cpu Time (ms)', 'Local Average Cpu Time (ms)', '𝚫'],
     rows: cpuRows,
+  })
+  message += '\n</details>\n\n'
+
+  return message
+}
+
+async function formatMemoryPerformance(memoryLocalPerformance, lastCommonCommit) {
+  const testProperties = TESTS_CONFIG.map((test) => test.property)
+  const memoryBasePerformance = await fetchPerformanceMetrics('memory', testProperties, lastCommonCommit)
+  const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
+    const memoryTestPerformance = memoryLocalPerformance[index]
+    const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
+    const localMemoryTestValue =
+      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
+        ? memoryTestPerformance.sdkMemoryBytes
+        : 'N/A'
+    return [
+      memoryTestPerformance.testProperty,
+      formatSize(baseMemoryTestValue),
+      formatSize(localMemoryTestValue),
+      formatSize(localMemoryTestValue - baseMemoryTestValue),
+    ]
+  })
+
+  let message = '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
+  message += markdownArray({
+    headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫 (bytes)'],
+    rows: memoryRows,
   })
   message += '\n</details>\n\n'
 
@@ -154,34 +182,6 @@ async function updateOrAddComment(message, prNumber, commentId) {
     },
     body: JSON.stringify(payload),
   })
-}
-
-function createMessage(memoryBasePerformance, memoryLocalPerformance, prNumber) {
-  const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
-    const memoryTestPerformance = memoryLocalPerformance[index]
-    const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
-    const localMemoryTestValue =
-      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
-        ? memoryTestPerformance.sdkMemoryBytes
-        : 'N/A'
-    return [
-      memoryTestPerformance.testProperty,
-      formatSize(baseMemoryTestValue),
-      formatSize(localMemoryTestValue),
-      formatSize(localMemoryTestValue - baseMemoryTestValue),
-    ]
-  })
-
-  let message = '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
-  message += markdownArray({
-    headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫 (bytes)'],
-    rows: memoryRows,
-  })
-  message += '\n</details>\n\n'
-
-  message += `🔗 [RealWorld](https://datadoghq.dev/browser-sdk-test-playground/realworld-scenario/?prNumber=${prNumber})\n\n`
-
-  return message
 }
 
 function formatBundleName(bundleName) {
