@@ -26,7 +26,6 @@ describe('urlContexts', () => {
 
     registerCleanupTask(() => {
       urlContexts.stop()
-      clock.cleanup()
     })
   })
 

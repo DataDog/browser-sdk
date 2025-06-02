@@ -244,8 +244,6 @@ const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
         expect(processSpy).not.toHaveBeenCalled()
         expect(afterSpy).not.toHaveBeenCalled()
         expect(storage.setSpy).not.toHaveBeenCalled()
-
-        clock.cleanup()
       })
 
       it('should execute cookie accesses in order', (done) => {

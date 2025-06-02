@@ -2,6 +2,7 @@ import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
 import {
   BridgeCapability,
   Observable,
+  SESSION_NOT_TRACKED,
   bridgeSupports,
   noop,
   performDraw,
@@ -33,7 +34,7 @@ export type RumSession = {
 }
 
 export const enum RumTrackingType {
-  NOT_TRACKED = '0',
+  NOT_TRACKED = SESSION_NOT_TRACKED,
   TRACKED_WITH_SESSION_REPLAY = '1',
   TRACKED_WITHOUT_SESSION_REPLAY = '2',
 }
@@ -52,7 +53,7 @@ export function startRumSessionManager(
   const sessionManager = startSessionManager(
     configuration,
     RUM_SESSION_KEY,
-    (rawTrackingType) => computeSessionState(configuration, rawTrackingType),
+    (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
     trackingConsentState
   )
 
@@ -75,7 +76,7 @@ export function startRumSessionManager(
   return {
     findTrackedSession: (startTime) => {
       const session = sessionManager.findSession(startTime)
-      if (!session || !isTypeTracked(session.trackingType)) {
+      if (!session || session.trackingType === RumTrackingType.NOT_TRACKED) {
         return
       }
       return {
@@ -111,21 +112,17 @@ export function startRumSessionManagerStub(): RumSessionManager {
   }
 }
 
-function computeSessionState(configuration: RumConfiguration, rawTrackingType?: string) {
-  let trackingType: RumTrackingType
+function computeTrackingType(configuration: RumConfiguration, rawTrackingType?: string) {
   if (hasValidRumSession(rawTrackingType)) {
-    trackingType = rawTrackingType
-  } else if (!performDraw(configuration.sessionSampleRate)) {
-    trackingType = RumTrackingType.NOT_TRACKED
-  } else if (!performDraw(configuration.sessionReplaySampleRate)) {
-    trackingType = RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
-  } else {
-    trackingType = RumTrackingType.TRACKED_WITH_SESSION_REPLAY
+    return rawTrackingType
   }
-  return {
-    trackingType,
-    isTracked: isTypeTracked(trackingType),
+  if (!performDraw(configuration.sessionSampleRate)) {
+    return RumTrackingType.NOT_TRACKED
   }
+  if (!performDraw(configuration.sessionReplaySampleRate)) {
+    return RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
+  }
+  return RumTrackingType.TRACKED_WITH_SESSION_REPLAY
 }
 
 function hasValidRumSession(trackingType?: string): trackingType is RumTrackingType {
@@ -133,12 +130,5 @@ function hasValidRumSession(trackingType?: string): trackingType is RumTrackingT
     trackingType === RumTrackingType.NOT_TRACKED ||
     trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY ||
     trackingType === RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
-  )
-}
-
-function isTypeTracked(rumSessionType: RumTrackingType | undefined) {
-  return (
-    rumSessionType === RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY ||
-    rumSessionType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
   )
 }

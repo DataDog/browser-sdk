@@ -1,4 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
+import { clocksOrigin } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
@@ -14,7 +15,7 @@ describe('trackFirstContentfulPaint', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     fcpCallback = jasmine.createSpy()
-    const firstHidden = trackFirstHidden(mockRumConfiguration())
+    const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
     const firstContentfulPaint = trackFirstContentfulPaint(mockRumConfiguration(), firstHidden, fcpCallback)
 
     registerCleanupTask(() => {

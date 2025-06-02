@@ -1,7 +1,7 @@
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
 import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
@@ -122,7 +122,6 @@ describe('rum public api', () => {
   describe('addAction', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let rumPublicApi: RumPublicApi
-    let clock: Clock
 
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
@@ -134,11 +133,7 @@ describe('rum public api', () => {
         noopRecorderApi,
         noopProfilerApi
       )
-      clock = mockClock()
-
-      registerCleanupTask(() => {
-        clock.cleanup()
-      })
+      mockClock()
     })
 
     it('allows sending actions before init', () => {
@@ -190,10 +185,6 @@ describe('rum public api', () => {
         noopProfilerApi
       )
       clock = mockClock()
-
-      registerCleanupTask(() => {
-        clock.cleanup()
-      })
     })
 
     it('allows capturing an error before init', () => {

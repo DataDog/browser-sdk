@@ -1,4 +1,5 @@
 import type { RelativeTime, TimeStamp } from '../../src/tools/utils/timeUtils'
+import { registerCleanupTask } from '../registerCleanupTask'
 
 export type Clock = ReturnType<typeof mockClock>
 
@@ -11,6 +12,8 @@ export function mockClock() {
   const relativeStart = timeStampStart - timeOrigin
 
   spyOn(performance, 'now').and.callFake(() => Date.now() - timeOrigin)
+
+  registerCleanupTask(() => jasmine.clock().uninstall())
 
   return {
     /**
@@ -25,8 +28,5 @@ export function mockClock() {
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
     tick: (ms: number) => jasmine.clock().tick(ms),
     setDate: (date: Date) => jasmine.clock().mockDate(date),
-    cleanup: () => {
-      jasmine.clock().uninstall()
-    },
   }
 }

@@ -122,7 +122,6 @@ describe('view lifecycle', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -353,17 +352,15 @@ describe('view lifecycle', () => {
 
 describe('view loading type', () => {
   const lifeCycle = new LifeCycle()
-  let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -396,7 +393,6 @@ describe('view metrics', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -606,7 +602,6 @@ describe('view custom timings', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -743,7 +738,6 @@ describe('start view', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -840,7 +834,6 @@ describe('view event count', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
       resetExperimentalFeatures()
     })
   })
@@ -992,15 +985,13 @@ describe('view event count', () => {
 
 describe('service and version', () => {
   const lifeCycle = new LifeCycle()
-  let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
       resetExperimentalFeatures()
     })
   })

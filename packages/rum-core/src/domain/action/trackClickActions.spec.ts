@@ -95,7 +95,6 @@ describe('trackClickActions', () => {
 
   afterEach(() => {
     stopClickActionsTracking()
-    clock.cleanup()
     button.parentNode!.removeChild(button)
     emptyElement.parentNode!.removeChild(emptyElement)
     input.parentNode!.removeChild(input)
