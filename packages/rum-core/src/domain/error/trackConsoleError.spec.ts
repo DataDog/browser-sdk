@@ -1,6 +1,5 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, Observable, clocksNow, resetConsoleObservable } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
 import { ignoreConsoleLogs, mockClock } from '@datadog/browser-core/test'
 import { trackConsoleError } from './trackConsoleError'
 
@@ -8,7 +7,6 @@ describe('trackConsoleError', () => {
   let errorObservable: Observable<RawError>
   let subscription: Subscription
   let notifyLog: jasmine.Spy
-  let clock: Clock
 
   beforeEach(() => {
     ignoreConsoleLogs('error', 'Error: foo')
@@ -16,13 +14,12 @@ describe('trackConsoleError', () => {
     notifyLog = jasmine.createSpy('notifyLog')
     trackConsoleError(errorObservable)
     subscription = errorObservable.subscribe(notifyLog)
-    clock = mockClock()
+    mockClock()
   })
 
   afterEach(() => {
     resetConsoleObservable()
     subscription.unsubscribe()
-    clock.cleanup()
   })
 
   it('should track console error', () => {

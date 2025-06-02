@@ -74,7 +74,6 @@ describe('startSegmentCollection', () => {
     ))
 
     registerCleanupTask(() => {
-      clock?.cleanup()
       stopSegmentCollection()
     })
   })

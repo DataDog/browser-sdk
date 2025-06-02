@@ -556,7 +556,6 @@ describe('rum assembly', () => {
         let clock: Clock
         beforeEach(() => {
           clock = mockClock()
-          registerCleanupTask(() => clock.cleanup())
         })
 
         it(`allows to send new ${eventType} events after a minute`, () => {

@@ -31,7 +31,6 @@ describe('trackNavigationTimings', () => {
     clock = mockClock()
 
     registerCleanupTask(() => {
-      clock.cleanup()
       stop()
     })
   })

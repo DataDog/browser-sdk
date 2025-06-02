@@ -51,7 +51,6 @@ describe('rum session manager', () => {
       stopSessionManager()
       // flush pending callbacks to avoid random failures
       clock.tick(new Date().getTime())
-      clock.cleanup()
     })
   })
 
