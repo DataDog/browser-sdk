@@ -373,7 +373,7 @@ export interface ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) => void
-  getProfilingStatus: () => ProfilingStatus | undefined
+  getProfilingStatus: () => ProfilingStatus
 }
 
 export interface RumPublicApiOptions {

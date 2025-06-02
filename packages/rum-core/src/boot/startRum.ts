@@ -180,7 +180,7 @@ export function startRum(
       const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
-      startLongTaskCollection(lifeCycle, configuration)
+      startLongTaskCollection(lifeCycle, configuration, profilerApi)
     }
   }
 

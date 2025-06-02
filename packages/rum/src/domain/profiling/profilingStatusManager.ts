@@ -2,17 +2,17 @@ import type { ProfilingStatus } from '@datadog/browser-rum-core'
 
 export interface ProfilingStatusManager {
   setProfilingStatus: (next: ProfilingStatus) => void
-  getProfilingStatus: () => ProfilingStatus | undefined
+  getProfilingStatus: () => ProfilingStatus
 }
 
-export const createProfilingStatusManager = (): ProfilingStatusManager => {
-  let profilingStatus: ProfilingStatus | undefined
+export const createProfilingStatusManager = (initialStatus: ProfilingStatus): ProfilingStatusManager => {
+  let currentStatus: ProfilingStatus = initialStatus
 
   const setProfilingStatus = (next: ProfilingStatus) => {
-    profilingStatus = next
+    currentStatus = next
   }
 
-  const getProfilingStatus = () => profilingStatus
+  const getProfilingStatus = () => currentStatus
 
   return {
     setProfilingStatus,

@@ -129,7 +129,6 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
-      profiling_status: profilerApi.getProfilingStatus(),
     },
     display: view.commonViewMetrics.scroll
       ? {
@@ -144,6 +143,7 @@ function processViewUpdate(
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,
     },
+    profiling_status: profilerApi.getProfilingStatus(),
   }
 
   if (!isEmptyObject(view.customTimings)) {
