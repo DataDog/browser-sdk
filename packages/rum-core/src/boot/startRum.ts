@@ -177,7 +177,11 @@ export function startRum(
 
   if (configuration.trackLongTasks) {
     if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
-      const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
+      const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(
+        lifeCycle,
+        configuration,
+        profilerApi
+      )
       cleanupTasks.push(stopLongAnimationFrameCollection)
     } else {
       startLongTaskCollection(lifeCycle, configuration, profilerApi)

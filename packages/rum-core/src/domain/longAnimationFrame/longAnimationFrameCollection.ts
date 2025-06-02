@@ -5,8 +5,12 @@ import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
-
-export function startLongAnimationFrameCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
+import type { ProfilerApi } from '../../boot/rumPublicApi'
+export function startLongAnimationFrameCollection(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  profilerApi: ProfilerApi
+) {
   const performanceResourceSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
     buffered: true,
@@ -40,6 +44,7 @@ export function startLongAnimationFrameCollection(lifeCycle: LifeCycle, configur
           })),
         },
         type: RumEventType.LONG_TASK,
+        profiling_status: profilerApi.getProfilingStatus(),
         _dd: {
           discarded: false,
         },
