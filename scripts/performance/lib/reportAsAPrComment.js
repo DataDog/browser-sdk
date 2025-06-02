@@ -4,6 +4,7 @@ const { fetchHandlingError } = require('../../lib/executionUtils')
 const { LOCAL_BRANCH, getLastCommonCommit, fetchPR } = require('../../lib/gitUtils')
 const { getGithubAccessToken } = require('../../lib/secrets')
 const { fetchPerformanceMetrics } = require('./fetchPerformanceMetrics')
+const { TESTS_CONFIG } = require('./constants')
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere --raw`.run()
 // The value is set to 5% as it's around 10 times the average value for small PRs.
@@ -18,25 +19,17 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
   }
   const lastCommonCommit = getLastCommonCommit(pr.base.ref, LOCAL_BRANCH)
   const testNames = memoryLocalPerformance.map((obj) => obj.testProperty)
-  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testNames, lastCommonCommit)
-  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA)
   const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
-  const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
 
   const bundleSizesMessage = await formatBundleSizes(localBundleSizes, lastCommonCommit)
+  const cpuPerformanceMessage = await formatCpuPerformance(lastCommonCommit)
 
   const message = `
 ${bundleSizesMessage}
+${cpuPerformanceMessage}
 
-${createMessage(
-  differenceCpu,
-  memoryBasePerformance,
-  memoryLocalPerformance,
-  cpuBasePerformance,
-  cpuLocalPerformance,
-  pr.number
-)}
+${createMessage(memoryBasePerformance, memoryLocalPerformance, pr.number)}
 `
 
   await updateOrAddComment(message, pr.number, commentId)
@@ -71,6 +64,30 @@ async function formatBundleSizes(localBundleSizes, lastCommonCommit) {
   if (highIncreaseDetected) {
     message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
   }
+
+  return message
+}
+
+async function formatCpuPerformance(lastCommonCommit) {
+  const testProperties = TESTS_CONFIG.map((test) => test.property)
+  const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testProperties, lastCommonCommit)
+  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testProperties, LOCAL_COMMIT_SHA)
+  const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
+  const cpuRows = cpuBasePerformance.map((cpuTestPerformance, index) => {
+    const localCpuPerf = cpuLocalPerformance[index]
+    const diffCpuPerf = differenceCpu[index]
+    const baseCpuTestValue = cpuTestPerformance.value !== null ? cpuTestPerformance.value.toFixed(3) : 'N/A'
+    const localCpuTestValue = localCpuPerf.value !== null ? localCpuPerf.value.toFixed(3) : 'N/A'
+    const diffCpuTestValue = diffCpuPerf.change !== null ? diffCpuPerf.change.toFixed(3) : 'N/A'
+    return [cpuTestPerformance.name, baseCpuTestValue, localCpuTestValue, diffCpuTestValue]
+  })
+
+  let message = '<details>\n<summary>🚀 CPU Performance</summary>\n\n'
+  message += markdownArray({
+    headers: ['Action Name', 'Base Average Cpu Time (ms)', 'Local Average Cpu Time (ms)', '𝚫'],
+    rows: cpuRows,
+  })
+  message += '\n</details>\n\n'
 
   return message
 }
@@ -139,30 +156,7 @@ async function updateOrAddComment(message, prNumber, commentId) {
   })
 }
 
-function createMessage(
-  differenceCpu,
-  memoryBasePerformance,
-  memoryLocalPerformance,
-  cpuBasePerformance,
-  cpuLocalPerformance,
-  prNumber
-) {
-  const cpuRows = cpuBasePerformance.map((cpuTestPerformance, index) => {
-    const localCpuPerf = cpuLocalPerformance[index]
-    const diffCpuPerf = differenceCpu[index]
-    const baseCpuTestValue = cpuTestPerformance.value !== null ? cpuTestPerformance.value.toFixed(3) : 'N/A'
-    const localCpuTestValue = localCpuPerf.value !== null ? localCpuPerf.value.toFixed(3) : 'N/A'
-    const diffCpuTestValue = diffCpuPerf.change !== null ? diffCpuPerf.change.toFixed(3) : 'N/A'
-    return [cpuTestPerformance.name, baseCpuTestValue, localCpuTestValue, diffCpuTestValue]
-  })
-
-  let message = '<details>\n<summary>🚀 CPU Performance</summary>\n\n'
-  message += markdownArray({
-    headers: ['Action Name', 'Base Average Cpu Time (ms)', 'Local Average Cpu Time (ms)', '𝚫'],
-    rows: cpuRows,
-  })
-  message += '\n</details>\n\n'
-
+function createMessage(memoryBasePerformance, memoryLocalPerformance, prNumber) {
   const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
     const memoryTestPerformance = memoryLocalPerformance[index]
     const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
@@ -178,7 +172,7 @@ function createMessage(
     ]
   })
 
-  message += '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
+  let message = '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
   message += markdownArray({
     headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫 (bytes)'],
     rows: memoryRows,
