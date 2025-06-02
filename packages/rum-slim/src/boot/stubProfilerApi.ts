@@ -5,5 +5,6 @@ export function makeProfilerApiStub(): ProfilerApi {
   return {
     onRumStart: noop,
     stop: noop,
+    getProfilingStatus: () => 'not-available-in-slim-bundle',
   }
 }
