@@ -41,6 +41,56 @@ describe('checkForAllowedTrackingOrigins', () => {
       expect(result).toBe(true)
     })
 
+    it('should match origin even with full URL path and query parameters', () => {
+      const result = isAllowedTrackingOrigins(
+        {
+          ...DEFAULT_CONFIG,
+          allowedTrackingOrigins: ['https://app.example.com'],
+        },
+        'https://app.example.com/path/to/page?query=value&other=param#fragment'
+      )
+      expect(displayWarnSpy).not.toHaveBeenCalled()
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    it('should handle URLs with ports correctly', () => {
+      const result = isAllowedTrackingOrigins(
+        {
+          ...DEFAULT_CONFIG,
+          allowedTrackingOrigins: ['https://app.example.com:8080'],
+        },
+        'https://app.example.com:8080/api/data'
+      )
+      expect(displayWarnSpy).not.toHaveBeenCalled()
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    it('should not match when port differs', () => {
+      const result = isAllowedTrackingOrigins(
+        {
+          ...DEFAULT_CONFIG,
+          allowedTrackingOrigins: ['https://app.example.com:8080'],
+        },
+        'https://app.example.com:3000/api/data'
+      )
+      expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
+      expect(result).toBe(false)
+    })
+
+    it('should prevent subdomain', () => {
+      const result = isAllowedTrackingOrigins(
+        {
+          ...DEFAULT_CONFIG,
+          allowedTrackingOrigins: ['https://app.example.com'],
+        },
+        'https://app.example.com.something.com/path'
+      )
+      expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
+      expect(result).toBe(false)
+    })
+
     it('should not warn if window location matches regex pattern', () => {
       const result = isAllowedTrackingOrigins(
         {
@@ -54,6 +104,19 @@ describe('checkForAllowedTrackingOrigins', () => {
       expect(result).toBe(true)
     })
 
+    it('should match regex pattern with full URL paths', () => {
+      const result = isAllowedTrackingOrigins(
+        {
+          ...DEFAULT_CONFIG,
+          allowedTrackingOrigins: [/^https:\/\/.*\.example\.com$/],
+        },
+        'https://api.example.com/v1/data?key=value'
+      )
+      expect(displayWarnSpy).not.toHaveBeenCalled()
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
     it('should not warn if window location matches predicate function', () => {
       const result = isAllowedTrackingOrigins(
         {
@@ -61,6 +124,19 @@ describe('checkForAllowedTrackingOrigins', () => {
           allowedTrackingOrigins: [(origin: string) => origin.includes('example.com')],
         },
         'https://app.example.com'
+      )
+      expect(displayWarnSpy).not.toHaveBeenCalled()
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
+
+    it('should match predicate function with full URL paths', () => {
+      const result = isAllowedTrackingOrigins(
+        {
+          ...DEFAULT_CONFIG,
+          allowedTrackingOrigins: [(origin: string) => origin.includes('example.com')],
+        },
+        'https://app.example.com/dashboard/analytics?view=detailed'
       )
       expect(displayWarnSpy).not.toHaveBeenCalled()
       expect(displayErrorSpy).not.toHaveBeenCalled()

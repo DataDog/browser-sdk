@@ -230,69 +230,54 @@ test.describe('allowedTrackingOrigins', () => {
   createTest('should not warn when allowedTrackingOrigins matches current domain')
     .withRum()
     .withRumInit((configuration) => {
-      const currentUrl = window.location.href
+      const currentOrigin = window.location.origin
       window.DD_RUM!.init({
         ...configuration,
-        allowedTrackingOrigins: [currentUrl],
+        allowedTrackingOrigins: [currentOrigin],
       })
     })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        const warningLogs = logs.filter(
-          (log) => log.message.includes('SDK is being initialized') && log.level === 'warning'
-        )
-        expect(warningLogs).toHaveLength(0)
+        expect(logs).toHaveLength(0)
       })
     })
 
   createTest('should not warn when allowedTrackingOrigins matches current domain with regex')
     .withRum()
     .withRumInit((configuration) => {
-      const currentUrl = window.location.href
-      const escapedUrl = currentUrl.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const currentOrigin = window.location.origin
+      const escapedOrigin = currentOrigin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
       window.DD_RUM!.init({
         ...configuration,
-        allowedTrackingOrigins: [new RegExp(`^${escapedUrl}`)],
+        allowedTrackingOrigins: [new RegExp(`^${escapedOrigin}$`)],
       })
     })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        const warningLogs = logs.filter(
-          (log) => log.message.includes('SDK is being initialized') && log.level === 'warning'
-        )
-        expect(warningLogs).toHaveLength(0)
+        expect(logs).toHaveLength(0)
       })
     })
 
   createTest('should not warn when allowedTrackingOrigins matches current domain with function')
     .withRum()
     .withRumInit((configuration) => {
-      const currentUrl = window.location.href
+      const currentOrigin = window.location.origin
       window.DD_RUM!.init({
         ...configuration,
-        allowedTrackingOrigins: [(url: string) => url.startsWith(currentUrl)],
+        allowedTrackingOrigins: [(origin: string) => origin === currentOrigin],
       })
     })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        const warningLogs = logs.filter(
-          (log) => log.message.includes('SDK is being initialized') && log.level === 'warning'
-        )
-        expect(warningLogs).toHaveLength(0)
+        expect(logs).toHaveLength(0)
       })
     })
 
-  createTest('should not warn when no allowedTrackingOrigins is provided')
+  createTest('initializing RUM should not produce logs')
     .withRum()
-    .withRumInit((configuration) => {
-      window.DD_RUM!.init(configuration)
-    })
     .run(({ withBrowserLogs }) => {
       withBrowserLogs((logs) => {
-        const warningLogs = logs.filter(
-          (log) => log.message.includes('SDK is being initialized') && log.level === 'warning'
-        )
-        expect(warningLogs).toHaveLength(0)
+        expect(logs).toHaveLength(0)
       })
     })
 

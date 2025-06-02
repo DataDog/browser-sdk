@@ -25,7 +25,7 @@ test.describe('browser extensions', () => {
     .run(async ({ page, getExtensionId }) => {
       const extensionId = await getExtensionId()
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-      await expect(page.locator('body')).toHaveText(/Extension Popup/)
+      await expect(page).toHaveTitle(/Extension Popup/)
     })
 
   createTest(
@@ -39,41 +39,19 @@ test.describe('browser extensions', () => {
 
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
 
-      const rumResult = await page.evaluate(
-        () =>
-          window.DD_RUM?.getInitConfiguration() ?? {
-            applicationId: '',
-          }
-      )
-
-      const logsResult = await page.evaluate(
-        () =>
-          window.DD_LOGS?.getInitConfiguration() ?? {
-            clientToken: '',
-          }
-      )
-      expect(rumResult.applicationId).toBe('1234')
-      expect(logsResult.clientToken).toBe('abcd')
+      const rumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
+      const logsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
+      expect(rumResult?.applicationId).toBe('1234')
+      expect(logsResult?.clientToken).toBe('abcd')
 
       await page.goto(baseUrl)
 
       // Check that RUM and Logs SDKs do not get overwritten by extension
-      const pageRumResult = await page.evaluate(
-        () =>
-          window.DD_RUM?.getInitConfiguration() ?? {
-            applicationId: '',
-          }
-      )
+      const pageRumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
+      const pageLogsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
 
-      const pageLogsResult = await page.evaluate(
-        () =>
-          window.DD_LOGS?.getInitConfiguration() ?? {
-            clientToken: '',
-          }
-      )
-
-      expect(pageRumResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
-      expect(pageLogsResult.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
+      expect(pageRumResult?.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
+      expect(pageLogsResult?.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
 
       // Check for warnings in console messages - should have one from RUM and one from Logs
       // But since we also go to the base url, we can have more than 2 logs
@@ -92,7 +70,7 @@ test.describe('browser extensions', () => {
     .withExtension(pathToAllowedTrackingOriginExtension)
     .run(async ({ page, getExtensionId, flushBrowserLogs }) => {
       const extensionId = await getExtensionId()
-      const expectedOrigin = 'chrome-extension://'
+      const expectedOriginPattern = /^chrome-extension:\/\/[a-z]+$/
       const extensionLogs: any[] = []
 
       // Listen for console events and filter for extension page only
@@ -111,25 +89,13 @@ test.describe('browser extensions', () => {
 
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
 
-      const rumResult = await page.evaluate(
-        () =>
-          window.DD_RUM?.getInitConfiguration() ?? {
-            applicationId: '',
-            allowedTrackingOrigins: [],
-          }
-      )
+      const rumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
+      const logsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
 
-      const logsResult = await page.evaluate(
-        () =>
-          window.DD_LOGS?.getInitConfiguration() ?? {
-            clientToken: '',
-          }
-      )
-
-      expect(rumResult.applicationId).toBe('1234')
-      expect(rumResult.allowedTrackingOrigins).toEqual([expectedOrigin])
-      expect(logsResult.clientToken).toBe('abcd')
-      expect(logsResult.allowedTrackingOrigins).toEqual([expectedOrigin])
+      expect(rumResult?.applicationId).toBe('1234')
+      expect(rumResult?.allowedTrackingOrigins).toEqual([expectedOriginPattern])
+      expect(logsResult?.clientToken).toBe('abcd')
+      expect(logsResult?.allowedTrackingOrigins).toEqual([expectedOriginPattern])
 
       // In the extension popup with correct allowedTrackingOrigins, there should be no error logs
       expect(extensionLogs).toEqual([])
@@ -148,45 +114,22 @@ test.describe('browser extensions', () => {
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
 
       // Check RUM initialization
-      const rumResult = await page.evaluate(
-        () =>
-          window.DD_RUM?.getInitConfiguration() ?? {
-            applicationId: '',
-            allowedTrackingOrigins: [],
-          }
-      )
+      const rumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
+      const logsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
 
-      const logsResult = await page.evaluate(
-        () =>
-          window.DD_LOGS?.getInitConfiguration() ?? {
-            clientToken: '',
-          }
-      )
-
-      expect(rumResult.applicationId).toBe('1234')
-      expect(rumResult.allowedTrackingOrigins).toEqual(['https://app.example.com'])
-      expect(logsResult.clientToken).toBe('abcd')
-      expect(logsResult.allowedTrackingOrigins).toEqual(['https://app.example.com'])
+      expect(rumResult?.applicationId).toBe('1234')
+      expect(rumResult?.allowedTrackingOrigins).toEqual(['https://app.example.com'])
+      expect(logsResult?.clientToken).toBe('abcd')
+      expect(logsResult?.allowedTrackingOrigins).toEqual(['https://app.example.com'])
 
       await page.goto(baseUrl)
 
       // Check that SDK does not get overwritten by extension
-      const pageRumResult = await page.evaluate(
-        () =>
-          window.DD_RUM?.getInitConfiguration() ?? {
-            applicationId: '',
-          }
-      )
+      const pageRumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
+      const pageLogsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
 
-      const pageLogsResult = await page.evaluate(
-        () =>
-          window.DD_LOGS?.getInitConfiguration() ?? {
-            clientToken: '',
-          }
-      )
-
-      expect(pageRumResult.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
-      expect(pageLogsResult.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
+      expect(pageRumResult?.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
+      expect(pageLogsResult?.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
 
       withBrowserLogs((logs) => {
         expect(logs.length).toBeGreaterThanOrEqual(2)
