@@ -1,44 +1,8 @@
 const puppeteer = require('puppeteer')
 const { fetchPR, LOCAL_BRANCH } = require('../../lib/gitUtils')
+const { TESTS_CONFIG } = require('./constants')
 const NUMBER_OF_RUNS = 30 // Rule of thumb: this should be enough to get a good average
 const BATCH_SIZE = 2
-const TESTS = [
-  {
-    name: 'RUM - add global context',
-    button: '#rum-add-global-context',
-    property: 'addglobalcontext',
-  },
-  {
-    name: 'RUM - add action',
-    button: '#rum-add-action',
-    property: 'addaction',
-  },
-  {
-    name: 'RUM - add error',
-    button: '#rum-add-error',
-    property: 'adderror',
-  },
-  {
-    name: 'RUM - add timing',
-    button: '#rum-add-timing',
-    property: 'addtiming',
-  },
-  {
-    name: 'RUM - start view',
-    button: '#rum-start-view',
-    property: 'startview',
-  },
-  {
-    name: 'RUM - start/stop session replay recording',
-    button: '#rum-start-stop-session-replay-recording',
-    property: 'startstopsessionreplayrecording',
-  },
-  {
-    name: 'Logs - log message',
-    button: '#logs-log-message',
-    property: 'logmessage',
-  },
-]
 
 async function computeMemoryPerformance() {
   const results = []
@@ -47,8 +11,8 @@ async function computeMemoryPerformance() {
     ? `https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${pr.number}`
     : 'https://datadoghq.dev/browser-sdk-test-playground/performance/memory'
 
-  for (let i = 0; i < TESTS.length; i += BATCH_SIZE) {
-    await runTests(TESTS.slice(i, i + BATCH_SIZE), benchmarkUrl, (result) => results.push(result))
+  for (let i = 0; i < TESTS_CONFIG.length; i += BATCH_SIZE) {
+    await runTests(TESTS_CONFIG.slice(i, i + BATCH_SIZE), benchmarkUrl, (result) => results.push(result))
   }
 
   return results
