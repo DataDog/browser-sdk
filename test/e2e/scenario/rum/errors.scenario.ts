@@ -148,8 +148,8 @@ test.describe('rum errors', () => {
       })
     })
 
-  // custom errors should have the same stack trace as regular errors on ALL BROWSERS
-  createTest('send custom class errors')
+  // non-native errors should have the same stack trace as regular errors on ALL BROWSERS
+  createTest('send non-native errors')
     .withRum()
     .withBody(createBody('DD_RUM.addError(customError())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
@@ -170,9 +170,9 @@ test.describe('rum errors', () => {
       })
     })
 
-  // custom errors should have the same stack trace as regular errors on ALL BROWSERS
+  // non-native should have the same stack trace as regular errors on ALL BROWSERS
   // this should also work for custom error classes that inherit from other custom error classes
-  createTest('send custom class errors with inheritance')
+  createTest('send non-native errors with inheritance')
     .withRum()
     .withBody(createBody('DD_RUM.addError(customErrorWithInheritance())'))
     .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
