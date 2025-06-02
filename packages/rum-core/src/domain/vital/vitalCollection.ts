@@ -10,6 +10,7 @@ import { PageState } from '../contexts/pageStateHistory'
 export interface DurationVitalOptions {
   context?: Context
   description?: string
+  userStory?: boolean
 }
 
 export interface DurationVitalReference {
@@ -58,10 +59,18 @@ export function startVitalCollection(
     }
   }
 
+  function sendDurationVitalStartEvent(vital: DurationVitalStart) {
+    if (vital) {
+      // temporary hack to send an event when the vital is started
+      const durationVitalStart = buildDurationVital(vital, vital.startClocks, {}, clocksNow())
+      addDurationVital(durationVitalStart)
+    }
+  }
+
   return {
     addDurationVital,
     startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
-      startDurationVital(customVitalsState, name, options),
+      startDurationVital(customVitalsState, name, options, sendDurationVitalStartEvent),
     stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
       stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
     },
@@ -71,7 +80,8 @@ export function startVitalCollection(
 export function startDurationVital(
   { vitalsByName, vitalsByReference }: CustomVitalsState,
   name: string,
-  options: DurationVitalOptions = {}
+  options: DurationVitalOptions = {},
+  sendDurationVitalStart?: (vital: DurationVitalStart) => void
 ) {
   const vital = {
     name,
@@ -80,9 +90,18 @@ export function startDurationVital(
     description: options.description,
   }
 
+  // EXPERIMENTAL: If the user story option is set, we send a start event immediately.
+  if (sendDurationVitalStart && options.userStory) {
+    sendDurationVitalStart(vital)
+    vital.context = combine(vital.context, {
+      userStory: options.userStory,
+      id: generateUUID(),
+      status: 'in-progress',
+    })
+  }
+
   // To avoid leaking implementation details of the vital, we return a reference to it.
   const reference: DurationVitalReference = { __dd_vital_reference: true }
-
   vitalsByName.set(name, vital)
 
   // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
