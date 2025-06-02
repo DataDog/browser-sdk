@@ -121,12 +121,12 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     performance?: ViewPerformanceData
-    profiling_status?: ProfilingStatus
   }
   display?: ViewDisplay
   privacy?: {
     replay_level: DefaultPrivacyLevel
   }
+  profiling_status?: ProfilingStatus
   _dd: {
     document_version: number
     replay_stats?: ReplayStats
@@ -214,6 +214,7 @@ export interface RawRumLongTaskEvent {
     entry_type: RumLongTaskEntryType.LONG_TASK
     duration: ServerDuration
   }
+  profiling_status?: ProfilingStatus
   _dd: {
     discarded: boolean
   }
@@ -333,6 +334,7 @@ export const enum VitalType {
  * Used to track the status of the the RUM Profiler.
  * They are defined in order of when they can happen, from the moment the SDK is initialized to the moment the Profiler is actually running.
  *
+ * - initializing: The Profiler is initializing. (ie. when the SDK just started) This is the initial status.
  * - not-in-init-options: The user has not set the profiling sample rate or `profiling` is missing from the `enableExperimentalFeatures` options.
  * - not-sampled: The view was not sampled (ie. when the sample rate is lower than 100%, there is a chance the view won't be profiled).
  * - not-supported-by-browser: The browser does not support the Profiler. (ie. window.Profiler is not available)
@@ -342,6 +344,7 @@ export const enum VitalType {
  * - stopped: The Profiler is stopped.
  */
 export type ProfilingStatus =
+  | 'initializing'
   | 'not-in-init-options'
   | 'not-sampled'
   | 'not-supported-by-browser'

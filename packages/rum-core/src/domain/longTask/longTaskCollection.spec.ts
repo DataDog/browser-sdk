@@ -4,6 +4,7 @@ import {
   createPerformanceEntry,
   mockPerformanceObserver,
   mockRumConfiguration,
+  noopProfilerApi,
 } from '../../../test'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -22,7 +23,7 @@ describe('long task collection', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     lifeCycle = new LifeCycle()
-    startLongTaskCollection(lifeCycle, mockRumConfiguration({ trackLongTasks }))
+    startLongTaskCollection(lifeCycle, mockRumConfiguration({ trackLongTasks }), noopProfilerApi)
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   }
@@ -67,6 +68,7 @@ describe('long task collection', () => {
         duration: (100 * 1e6) as ServerDuration,
       },
       type: RumEventType.LONG_TASK,
+      profiling_status: jasmine.any(String),
       _dd: {
         discarded: false,
       },
