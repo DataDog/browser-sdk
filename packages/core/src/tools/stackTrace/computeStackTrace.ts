@@ -60,7 +60,7 @@ export function computeStackTrace(ex: unknown): StackTrace {
       while (cstr !== Error.prototype && cstr) {
         const errorConstructorName = cstr.constructor?.name || UNKNOWN_FUNCTION
         constructors.push(errorConstructorName)
-        
+
         cstr = Object.getPrototypeOf(cstr)
       }
 
@@ -71,7 +71,6 @@ export function computeStackTrace(ex: unknown): StackTrace {
           // if the first stack frame is the custom error constructor
           stack.shift() // remove it
         } else {
-          // even in case of a very weird environment, the loop will break at some point, because the stacktrace length is finite
           break
         }
       }
