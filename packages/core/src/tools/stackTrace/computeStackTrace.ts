@@ -56,18 +56,14 @@ export function computeStackTrace(ex: unknown): StackTrace {
       const constructors: string[] = []
 
       // go through each inherited constructor
-      let cstr: object | undefined = Object.getPrototypeOf(ex)
-      while (cstr !== Error.prototype && cstr) {
+      let cstr: object | undefined = ex
+      while ((cstr = Object.getPrototypeOf(cstr)) !== Error.prototype && cstr) {
         const errorConstructorName = cstr.constructor?.name || UNKNOWN_FUNCTION
         constructors.push(errorConstructorName)
-
-        cstr = Object.getPrototypeOf(cstr)
       }
 
-      constructors.reverse()
-
-      for (const constructor of constructors) {
-        if (stack[0]?.func === constructor) {
+      for (let i = constructors.length - 1; i >= 0; i--) {
+        if (stack[0]?.func === constructors[i]) {
           // if the first stack frame is the custom error constructor
           stack.shift() // remove it
         } else {
