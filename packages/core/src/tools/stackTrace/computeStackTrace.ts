@@ -53,18 +53,27 @@ export function computeStackTrace(ex: unknown): StackTrace {
     if (ex instanceof Error && isErrorCustomError(ex)) {
       // if the element is a custom error
 
+      const constructors: string[] = []
+
       // go through each inherited constructor
       let cstr: object | undefined = Object.getPrototypeOf(ex)
       while (cstr !== Error.prototype && cstr) {
         const errorConstructorName = cstr.constructor?.name || UNKNOWN_FUNCTION
-        if (stack[0]?.func === errorConstructorName) {
+        constructors.push(errorConstructorName)
+        
+        cstr = Object.getPrototypeOf(cstr)
+      }
+
+      constructors.reverse()
+
+      for (const constructor of constructors) {
+        if (stack[0]?.func === constructor) {
           // if the first stack frame is the custom error constructor
           stack.shift() // remove it
         } else {
           // even in case of a very weird environment, the loop will break at some point, because the stacktrace length is finite
           break
         }
-        cstr = Object.getPrototypeOf(cstr)
       }
     }
   }
