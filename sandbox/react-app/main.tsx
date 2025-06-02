@@ -64,8 +64,6 @@ function Layout() {
 }
 
 function HomePage() {
-  fetch('https://jsonplaceholder.typicode.com/posts/1')
-
   return <h1>Home</h1>
 }
 
