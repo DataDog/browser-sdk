@@ -17,27 +17,62 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
     return
   }
   const lastCommonCommit = getLastCommonCommit(pr.base.ref, LOCAL_BRANCH)
-  const packageNames = Object.keys(localBundleSizes)
   const testNames = memoryLocalPerformance.map((obj) => obj.testProperty)
-  const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testNames, lastCommonCommit)
   const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA)
   const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
-  const differenceBundle = compare(baseBundleSizes, localBundleSizes)
   const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
-  const message = createMessage(
-    differenceBundle,
-    differenceCpu,
-    baseBundleSizes,
-    localBundleSizes,
-    memoryBasePerformance,
-    memoryLocalPerformance,
-    cpuBasePerformance,
-    cpuLocalPerformance,
-    pr.number
-  )
+
+  const bundleSizesMessage = await formatBundleSizes(localBundleSizes, lastCommonCommit)
+
+  const message = `
+${bundleSizesMessage}
+
+${createMessage(
+  differenceCpu,
+  memoryBasePerformance,
+  memoryLocalPerformance,
+  cpuBasePerformance,
+  cpuLocalPerformance,
+  pr.number
+)}
+`
+
   await updateOrAddComment(message, pr.number, commentId)
+}
+
+async function formatBundleSizes(localBundleSizes, lastCommonCommit) {
+  const packageNames = Object.keys(localBundleSizes)
+  const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
+  const differenceBundle = compare(baseBundleSizes, localBundleSizes)
+
+  let highIncreaseDetected = false
+  const bundleRows = differenceBundle.map((diff, index) => {
+    const baseSize = formatSize(baseBundleSizes[index].value)
+    const localSize = formatSize(localBundleSizes[diff.name])
+    const diffSize = formatSize(diff.change)
+    const sign = diff.percentageChange > 0 ? '+' : ''
+    let status = '✅'
+    if (diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
+      status = '⚠️'
+      highIncreaseDetected = true
+    }
+    return [formatBundleName(diff.name), baseSize, localSize, diffSize, `${sign}${diff.percentageChange}%`, status]
+  })
+
+  let message = markdownArray({
+    headers: ['📦 Bundle Name', 'Base Size', 'Local Size', '𝚫', '𝚫%', 'Status'],
+    rows: bundleRows,
+  })
+
+  message += '</details>\n\n'
+
+  if (highIncreaseDetected) {
+    message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
+  }
+
+  return message
 }
 
 function compare(baseResults, localResults) {
@@ -105,41 +140,13 @@ async function updateOrAddComment(message, prNumber, commentId) {
 }
 
 function createMessage(
-  differenceBundle,
   differenceCpu,
-  baseBundleSizes,
-  localBundleSizes,
   memoryBasePerformance,
   memoryLocalPerformance,
   cpuBasePerformance,
   cpuLocalPerformance,
   prNumber
 ) {
-  let highIncreaseDetected = false
-  const bundleRows = differenceBundle.map((diff, index) => {
-    const baseSize = formatSize(baseBundleSizes[index].value)
-    const localSize = formatSize(localBundleSizes[diff.name])
-    const diffSize = formatSize(diff.change)
-    const sign = diff.percentageChange > 0 ? '+' : ''
-    let status = '✅'
-    if (diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
-      status = '⚠️'
-      highIncreaseDetected = true
-    }
-    return [formatBundleName(diff.name), baseSize, localSize, diffSize, `${sign}${diff.percentageChange}%`, status]
-  })
-
-  let message = markdownArray({
-    headers: ['📦 Bundle Name', 'Base Size', 'Local Size', '𝚫', '𝚫%', 'Status'],
-    rows: bundleRows,
-  })
-
-  message += '</details>\n\n'
-
-  if (highIncreaseDetected) {
-    message += `\n⚠️ The increase is particularly high and exceeds ${SIZE_INCREASE_THRESHOLD}%. Please check the changes.`
-  }
-
   const cpuRows = cpuBasePerformance.map((cpuTestPerformance, index) => {
     const localCpuPerf = cpuLocalPerformance[index]
     const diffCpuPerf = differenceCpu[index]
@@ -149,7 +156,7 @@ function createMessage(
     return [cpuTestPerformance.name, baseCpuTestValue, localCpuTestValue, diffCpuTestValue]
   })
 
-  message += '<details>\n<summary>🚀 CPU Performance</summary>\n\n'
+  let message = '<details>\n<summary>🚀 CPU Performance</summary>\n\n'
   message += markdownArray({
     headers: ['Action Name', 'Base Average Cpu Time (ms)', 'Local Average Cpu Time (ms)', '𝚫'],
     rows: cpuRows,
