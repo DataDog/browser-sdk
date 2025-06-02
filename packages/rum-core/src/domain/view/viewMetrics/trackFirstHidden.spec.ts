@@ -140,6 +140,19 @@ describe('trackFirstHidden', () => {
       })
       expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
     })
+
+    it('should return 0 when the page was loaded hidden', () => {
+      setPageVisibility('visible')
+
+      performanceBufferMock.addPerformanceEntry({
+        entryType: 'visibility-state',
+        name: 'hidden',
+        startTime: 0,
+      } as PerformanceEntry)
+
+      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+      expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
+    })
   })
 
   function createWindowEventTarget() {
