@@ -27,7 +27,7 @@ export function matchList(
   value: string,
   useStartsWithOrMatchMode: boolean | MatchMode = false
 ): boolean {
-  // Handle backward compatibility
+  // Handles backward compatibility
   let matchMode: MatchMode
   if (typeof useStartsWithOrMatchMode === 'boolean') {
     matchMode = useStartsWithOrMatchMode ? 'url-start' : 'url'
@@ -35,13 +35,11 @@ export function matchList(
     matchMode = useStartsWithOrMatchMode
   }
 
-  // Extract the appropriate part of the URL based on matchMode
   let valueToMatch = value
   if (matchMode === 'origin') {
     try {
       valueToMatch = buildUrl(value).origin
     } catch {
-      // If URL parsing fails, fall back to original value
       valueToMatch = value
     }
   }
