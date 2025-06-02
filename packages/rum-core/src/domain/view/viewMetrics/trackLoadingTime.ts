@@ -30,7 +30,6 @@ export function trackLoadingTime(
   function invokeCallbackIfAllCandidatesAreReceived() {
     if (!isWaitingForActivityLoadingTime && !isWaitingForLoadEvent && loadingTimeCandidates.length > 0) {
       const loadingTime = Math.max(...loadingTimeCandidates)
-      console.log(loadingTime, firstHidden.timeStamp, viewStart.relative)
       // firstHidden is a relative time from time origin, so we use the relative start time of the view to compare with the loading time
       if (loadingTime < firstHidden.timeStamp - viewStart.relative) {
         callback(loadingTime as Duration)
