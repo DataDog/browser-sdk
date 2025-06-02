@@ -8,7 +8,7 @@ const { command } = require('../lib/command')
 const { modifyFile } = require('../lib/filesUtils')
 
 const EXTENSIONS_INIT_PARAMETERS = {
-  'allowed-tracking-origin': 'allowedTrackingOrigins: [/^chrome-extension:\\/\\/[a-z]+$/],',
+  'allowed-tracking-origin': 'allowedTrackingOrigins: ["chrome-extension://"],',
   'invalid-tracking-origin': 'allowedTrackingOrigins: ["https://app.example.com"],',
 }
 

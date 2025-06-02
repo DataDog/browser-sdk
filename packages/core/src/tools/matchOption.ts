@@ -1,9 +1,7 @@
 import { display } from './display'
 import { getType } from './utils/typeUtils'
-import { buildUrl } from './utils/urlPolyfill'
 
 export type MatchOption = string | RegExp | ((value: string) => boolean)
-export type MatchMode = 'origin' | 'url-start' | 'url'
 
 export function isMatchOption(item: unknown): item is MatchOption {
   const itemType = getType(item)
@@ -12,55 +10,18 @@ export function isMatchOption(item: unknown): item is MatchOption {
 
 /**
  * Returns true if value can be matched by at least one of the provided MatchOptions.
- * @param list - Array of MatchOptions to test against
- * @param value - The URL string to test
- * @param matchMode - Controls what part of the URL to match:
- * - 'origin': Extract origin from URL and match exactly
- * - 'url-start': Match if URL starts with the option
- * - 'url': Match the entire URL exactly
- * @deprecated useStartsWith parameter is deprecated, use matchMode instead
+ * When comparing strings, setting useStartsWith to true will compare the value with the start of
+ * the option, instead of requiring an exact match.
  */
-export function matchList(list: MatchOption[], value: string, useStartsWith?: boolean): boolean
-export function matchList(list: MatchOption[], value: string, matchMode: MatchMode): boolean
-export function matchList(
-  list: MatchOption[],
-  value: string,
-  useStartsWithOrMatchMode: boolean | MatchMode = false
-): boolean {
-  // Handles backward compatibility
-  let matchMode: MatchMode
-  if (typeof useStartsWithOrMatchMode === 'boolean') {
-    matchMode = useStartsWithOrMatchMode ? 'url-start' : 'url'
-  } else {
-    matchMode = useStartsWithOrMatchMode
-  }
-
-  let valueToMatch = value
-  if (matchMode === 'origin') {
-    try {
-      valueToMatch = buildUrl(value).origin
-    } catch {
-      valueToMatch = value
-    }
-  }
-
+export function matchList(list: MatchOption[], value: string, useStartsWith = false): boolean {
   return list.some((item) => {
     try {
       if (typeof item === 'function') {
-        return item(valueToMatch)
+        return item(value)
       } else if (item instanceof RegExp) {
-        return item.test(valueToMatch)
+        return item.test(value)
       } else if (typeof item === 'string') {
-        switch (matchMode) {
-          case 'origin':
-            return item === valueToMatch
-          case 'url-start':
-            return value.startsWith(item)
-          case 'url':
-            return item === value
-          default:
-            return item === valueToMatch
-        }
+        return useStartsWith ? value.startsWith(item) : item === value
       }
     } catch (e) {
       display.error(e)

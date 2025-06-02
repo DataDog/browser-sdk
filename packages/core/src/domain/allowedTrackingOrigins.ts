@@ -9,19 +9,19 @@ export const ERROR_NOT_ALLOWED_TRACKING_ORIGIN = 'SDK initialized on a non-allow
 
 export function isAllowedTrackingOrigins(
   configuration: InitConfiguration,
-  windowLocation = typeof location !== 'undefined' ? location.href : '',
+  windowOrigin = typeof location !== 'undefined' ? location.origin : '',
   errorStack?: string
 ): boolean {
   const allowedTrackingOrigins = configuration.allowedTrackingOrigins
   if (!allowedTrackingOrigins) {
-    if (isUnsupportedExtensionEnvironment(windowLocation, errorStack)) {
+    if (isUnsupportedExtensionEnvironment(windowOrigin, errorStack)) {
       display.warn(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
       // TODO(next major): make `allowedTrackingOrigins` required in unsupported extension environments
     }
     return true
   }
 
-  const isAllowed = matchList(allowedTrackingOrigins, windowLocation, 'origin')
+  const isAllowed = matchList(allowedTrackingOrigins, windowOrigin, true)
   if (!isAllowed) {
     display.error(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
   }
