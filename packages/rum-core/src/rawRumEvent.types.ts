@@ -121,6 +121,7 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     performance?: ViewPerformanceData
+    profiling_status?: ProfilingStatus
   }
   display?: ViewDisplay
   privacy?: {
@@ -327,6 +328,27 @@ export interface RawRumVitalEvent {
 export const enum VitalType {
   DURATION = 'duration',
 }
+
+/**
+ * Used to track the status of the the RUM Profiler.
+ * They are defined in order of when they can happen, from the moment the SDK is initialized to the moment the Profiler is actually running.
+ *
+ * - not-in-init-options: The user has not set the profiling sample rate or `profiling` is missing from the `enableExperimentalFeatures` options.
+ * - not-sampled: The view was not sampled (ie. when the sample rate is lower than 100%, there is a chance the view won't be profiled).
+ * - not-supported-by-browser: The browser does not support the Profiler. (ie. window.Profiler is not available)
+ * - failed-to-lazy-load: The Profiler script failed to be loaded by the Browser. (may be connection issue or the chunk was not found)
+ * - failed-to-start: The Profiler failed to start. (most probable cause if when the web server did not return the `Document-Policy: js-profiling` HTTP Response header)
+ * - running: The Profiler is running.
+ * - stopped: The Profiler is stopped.
+ */
+export type ProfilingStatus =
+  | 'not-in-init-options'
+  | 'not-sampled'
+  | 'not-supported-by-browser'
+  | 'failed-to-lazy-load'
+  | 'failed-to-start'
+  | 'running'
+  | 'stopped'
 
 export type RawRumEvent =
   | RawRumErrorEvent

@@ -27,6 +27,7 @@ import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
+import type { ProfilingStatusManager } from './profilingStatusManager'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -39,6 +40,7 @@ export function createRumProfiler(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   session: RumSessionManager,
+  profilingStatusManager: ProfilingStatusManager,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
@@ -80,6 +82,9 @@ export function createRumProfiler(
 
     // Cleanup Long Task Registry as we no longer need to correlate them with RUM
     cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
+
+    // Update Profiling status once the Profiler has been stopped.
+    profilingStatusManager.setProfilingStatus('stopped')
   }
 
   /**
@@ -134,6 +139,7 @@ export function createRumProfiler(
     const globalThisProfiler: Profiler | undefined = getGlobalObject<any>().Profiler
 
     if (!globalThisProfiler) {
+      profilingStatusManager.setProfilingStatus('not-supported-by-browser')
       throw new Error('RUM Profiler is not supported in this browser.')
     }
 
@@ -159,8 +165,12 @@ export function createRumProfiler(
         '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
         e
       )
+      // Update Profiling status to indicate that the Profiler failed to start.
+      profilingStatusManager.setProfilingStatus('failed-to-start')
       return
     }
+
+    profilingStatusManager.setProfilingStatus('running')
 
     // Kick-off the new instance
     instance = {

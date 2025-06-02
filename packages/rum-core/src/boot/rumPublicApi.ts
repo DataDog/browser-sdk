@@ -33,7 +33,7 @@ import {
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
-import type { ReplayStats } from '../rawRumEvent.types'
+import type { ProfilingStatus, ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -373,6 +373,7 @@ export interface ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) => void
+  getProfilingStatus: () => ProfilingStatus | undefined
 }
 
 export interface RumPublicApiOptions {
