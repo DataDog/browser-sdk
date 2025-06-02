@@ -1,20 +1,25 @@
 const { runMain } = require('../lib/executionUtils')
-const { calculateBundleSizes } = require('../lib/computeBundleSize')
+const { LOCAL_BRANCH, fetchPR, getLastCommonCommit } = require('../lib/gitUtils')
 const { reportAsPrComment } = require('./lib/reportAsAPrComment')
-const { reportToDatadog } = require('./lib/reportToDatadog')
-const { computeCpuPerformance } = require('./lib/computeCpuPerformance')
-const { computeMemoryPerformance } = require('./lib/computeMemoryPerformance')
+const { runCpuPerformance } = require('./lib/cpuPerformance')
+const { runBundleSizes } = require('./lib/bundleSizes')
+const { runMemoryPerformance } = require('./lib/memoryPerformance')
 
 runMain(async () => {
-  const localBundleSizes = extractUncompressedBundleSizes(calculateBundleSizes())
-  const localMemoryPerformance = await computeMemoryPerformance()
-  await computeCpuPerformance()
-  await reportToDatadog(localMemoryPerformance, 'memoryPerformance')
-  await reportToDatadog(localBundleSizes, 'bundleSizes')
-  await reportAsPrComment(localBundleSizes, localMemoryPerformance)
-})
+  const pr = await fetchPR(LOCAL_BRANCH)
+  if (!pr) {
+    console.log('No pull requests found for the branch')
+    return
+  }
 
-// keep compatibility with the logs and PR comment format
-function extractUncompressedBundleSizes(bundleSizes) {
-  return Object.fromEntries(Object.entries(bundleSizes).map(([key, size]) => [key, size.uncompressed]))
-}
+  const prComment = reportAsPrComment(pr)
+  const lastCommonCommit = getLastCommonCommit(pr.base.ref, LOCAL_BRANCH)
+
+  const options = {
+    pr,
+    prComment,
+    lastCommonCommit,
+  }
+
+  await Promise.all([runCpuPerformance(options), runBundleSizes(options), runMemoryPerformance(options)])
+})

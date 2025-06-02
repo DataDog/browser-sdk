@@ -1,15 +1,28 @@
 const puppeteer = require('puppeteer')
-const { fetchPR, LOCAL_BRANCH } = require('../../lib/gitUtils')
+const { formatSize } = require('../../lib/computeBundleSize')
+const { printError } = require('../../lib/executionUtils')
 const { TESTS_CONFIG } = require('./constants')
+const { fetchPerformanceMetrics } = require('./fetchPerformanceMetrics')
+const { markdownArray } = require('./formatUtils')
+
 const NUMBER_OF_RUNS = 30 // Rule of thumb: this should be enough to get a good average
 const BATCH_SIZE = 2
 
-async function computeMemoryPerformance() {
+exports.runMemoryPerformance = async function ({ pr, lastCommonCommit, prComment }) {
+  try {
+    const localMemoryPerformance = await computeMemoryPerformance(pr)
+    const memoryPerformanceMessage = await formatMemoryPerformance(localMemoryPerformance, lastCommonCommit)
+    prComment.setMemoryPerformanceMessage(memoryPerformanceMessage)
+  } catch (error) {
+    printError('Error while computing memory performance:', error)
+    prComment.setMemoryPerformanceMessage('❌ Failed to compute memory performance.')
+    process.exitCode = 1
+  }
+}
+
+async function computeMemoryPerformance(pr) {
   const results = []
-  const pr = await fetchPR(LOCAL_BRANCH)
-  const benchmarkUrl = pr
-    ? `https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${pr.number}`
-    : 'https://datadoghq.dev/browser-sdk-test-playground/performance/memory'
+  const benchmarkUrl = `https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${pr.number}`
 
   for (let i = 0; i < TESTS_CONFIG.length; i += BATCH_SIZE) {
     await runTests(TESTS_CONFIG.slice(i, i + BATCH_SIZE), benchmarkUrl, (result) => results.push(result))
@@ -113,4 +126,30 @@ function median(values) {
   return values[Math.floor(values.length / 2)]
 }
 
-module.exports = { computeMemoryPerformance }
+async function formatMemoryPerformance(memoryLocalPerformance, lastCommonCommit) {
+  const testProperties = TESTS_CONFIG.map((test) => test.property)
+  const memoryBasePerformance = await fetchPerformanceMetrics('memory', testProperties, lastCommonCommit)
+  const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
+    const memoryTestPerformance = memoryLocalPerformance[index]
+    const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
+    const localMemoryTestValue =
+      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
+        ? memoryTestPerformance.sdkMemoryBytes
+        : 'N/A'
+    return [
+      memoryTestPerformance.testProperty,
+      formatSize(baseMemoryTestValue),
+      formatSize(localMemoryTestValue),
+      formatSize(localMemoryTestValue - baseMemoryTestValue),
+    ]
+  })
+
+  let message = '<details>\n<summary>🧠 Memory Performance</summary>\n\n'
+  message += markdownArray({
+    headers: ['Action Name', 'Base Consumption Memory (bytes)', 'Local Consumption Memory (bytes)', '𝚫 (bytes)'],
+    rows: memoryRows,
+  })
+  message += '\n</details>\n\n'
+
+  return message
+}
