@@ -1,11 +1,19 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime } from '@datadog/browser-core'
 import { addEventListeners, DOM_EVENT, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 
 export type FirstHidden = ReturnType<typeof trackFirstHidden>
 
-export function trackFirstHidden(configuration: RumConfiguration, eventTarget: Window = window) {
+export type Options = {
+  viewStart: ClocksState
+}
+
+export function trackFirstHidden(
+  configuration: RumConfiguration,
+  viewStart: ClocksState,
+  eventTarget: Window = window
+) {
   if (document.visibilityState === 'hidden') {
     return { timeStamp: 0 as RelativeTime, stop: noop }
   }
@@ -13,7 +21,9 @@ export function trackFirstHidden(configuration: RumConfiguration, eventTarget: W
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
     const firstHiddenEntry = performance
       .getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE)
-      .find((entry) => entry.name === 'hidden')
+      .filter((entry) => entry.name === 'hidden')
+      .find((entry) => entry.startTime > viewStart.relative)
+
     if (firstHiddenEntry) {
       return { timeStamp: firstHiddenEntry.startTime as RelativeTime, stop: noop }
     }

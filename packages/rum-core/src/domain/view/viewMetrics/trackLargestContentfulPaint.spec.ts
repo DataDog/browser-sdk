@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT } from '@datadog/browser-core'
+import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
 import {
   setPageVisibility,
   createNewEvent,
@@ -21,7 +21,7 @@ describe('trackLargestContentfulPaint', () => {
   function startLCPTracking() {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
-    const firstHidden = trackFirstHidden(mockRumConfiguration())
+    const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
     const largestContentfulPaint = trackLargestContentfulPaint(
       mockRumConfiguration(),
       firstHidden,
