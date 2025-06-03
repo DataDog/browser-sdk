@@ -16,24 +16,12 @@ function createBody(errorGenerator: string) {
         return new Error('oh snap')
       }
       function customError() {
-        class CustomTestError extends Error {
-          constructor(e) {
-            super(e)
-          }
-        }
+        class CustomTestError extends Error {}
         return new CustomTestError('oh snap')
       }
       function customErrorWithInheritance() {
-        class CustomTestError extends Error {
-          constructor(e) {
-            super(e)
-          }
-        }
-        class CustomTestError2 extends CustomTestError {
-          constructor(e) {
-            super(e)
-          }
-        }
+        class CustomTestError extends Error {}
+        class CustomTestError2 extends CustomTestError {}
         return new (class extends CustomTestError2 {
           constructor(e) {
             super(e)
