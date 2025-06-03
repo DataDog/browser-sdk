@@ -462,6 +462,7 @@ export function makeRumPublicApi(
       return startRumResult
     }
   )
+  const getStrategy = () => strategy
 
   const startView: {
     (name?: string): void
@@ -540,83 +541,93 @@ export function makeRumPublicApi(
     }),
 
     setGlobalContext: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.setContext,
       'set-global-context'
     ),
     getGlobalContext: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.getContext,
       'get-global-context'
     ),
     setGlobalContextProperty: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.setContextProperty,
       'set-global-context-property'
     ),
     removeGlobalContextProperty: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.removeContextProperty,
       'remove-global-context-property'
     ),
     clearGlobalContext: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.clearContext,
       'clear-global-context'
     ),
 
-    setUser: defineContextMethod(strategy, CustomerContextKey.userContext, ContextManagerMethod.setContext, 'set-user'),
-    getUser: defineContextMethod(strategy, CustomerContextKey.userContext, ContextManagerMethod.getContext, 'get-user'),
+    setUser: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.userContext,
+      ContextManagerMethod.setContext,
+      'set-user'
+    ),
+    getUser: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.userContext,
+      ContextManagerMethod.getContext,
+      'get-user'
+    ),
     setUserProperty: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.userContext,
       ContextManagerMethod.setContextProperty,
       'set-user-property'
     ),
     removeUserProperty: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.userContext,
       ContextManagerMethod.removeContextProperty,
       'remove-user-property'
     ),
     clearUser: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.userContext,
       ContextManagerMethod.clearContext,
       'clear-user'
     ),
 
     setAccount: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.accountContext,
       ContextManagerMethod.setContext,
       'set-account'
     ),
     getAccount: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.accountContext,
       ContextManagerMethod.getContext,
       'get-account'
     ),
     setAccountProperty: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.accountContext,
       ContextManagerMethod.setContextProperty,
       'set-account-property'
     ),
     removeAccountProperty: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.accountContext,
       ContextManagerMethod.removeContextProperty,
       'remove-account-property'
     ),
     clearAccount: defineContextMethod(
-      strategy,
+      getStrategy,
       CustomerContextKey.accountContext,
       ContextManagerMethod.clearContext,
       'clear-account'

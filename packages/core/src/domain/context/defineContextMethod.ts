@@ -6,7 +6,7 @@ import type { ContextManager } from './contextManager'
 import type { ContextManagerMethod, CustomerContextKey } from './contextConstants'
 
 export function defineContextMethod<MethodName extends ContextManagerMethod, Key extends CustomerContextKey>(
-  strategy: Record<Key, ContextManager>,
+  getStrategy: () => Record<Key, ContextManager>,
   contextName: Key,
   methodName: MethodName,
   usage?: RawTelemetryUsageFeature
@@ -15,7 +15,7 @@ export function defineContextMethod<MethodName extends ContextManagerMethod, Key
     if (usage) {
       addTelemetryUsage({ feature: usage } as RawTelemetryUsage)
     }
-    return (strategy[contextName][methodName] as (...args: unknown[]) => unknown)(...args)
+    return (getStrategy()[contextName][methodName] as (...args: unknown[]) => unknown)(...args)
   }) as ContextManager[MethodName]
 }
 

@@ -3,8 +3,7 @@ import type { CommonContext } from '../../rawLogsEvent.types'
 
 export function buildCommonContext(
   globalContextManager: ContextManager,
-  userContextManager: ContextManager,
-  accountContextManager: ContextManager
+  userContextManager: ContextManager
 ): CommonContext {
   return {
     view: {
@@ -13,6 +12,5 @@ export function buildCommonContext(
     },
     context: globalContextManager.getContext(),
     user: userContextManager.getContext(),
-    account: accountContextManager.getContext(),
   }
 }
