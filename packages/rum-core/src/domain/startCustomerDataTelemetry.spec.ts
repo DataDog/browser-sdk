@@ -65,7 +65,6 @@ describe('customerDataTelemetry', () => {
 
   afterEach(() => {
     resetExperimentalFeatures()
-    clock.cleanup()
   })
 
   it('should collect customer data telemetry', () => {

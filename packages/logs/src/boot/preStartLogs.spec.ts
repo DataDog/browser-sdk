@@ -44,7 +44,6 @@ describe('preStartLogs', () => {
 
   afterEach(() => {
     resetFetchObservable()
-    clock.cleanup()
   })
 
   describe('configuration validation', () => {

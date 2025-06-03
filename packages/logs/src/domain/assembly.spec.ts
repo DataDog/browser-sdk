@@ -448,7 +448,6 @@ describe('logs limitation', () => {
   })
 
   afterEach(() => {
-    clock.cleanup()
     serverLogs = []
   })
 

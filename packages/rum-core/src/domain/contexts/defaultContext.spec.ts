@@ -1,5 +1,4 @@
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, mockEventBridge } from '@datadog/browser-core/test'
+import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import { HookNames, timeStampNow } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
@@ -10,12 +9,10 @@ import { startDefaultContext } from './defaultContext'
 describe('startDefaultContext', () => {
   describe('assemble hook', () => {
     let hooks: Hooks
-    let clock: Clock
 
     beforeEach(() => {
-      clock = mockClock()
+      mockClock()
       hooks = createHooks()
-      registerCleanupTask(() => clock.cleanup())
     })
 
     it('should set the rum default context', () => {

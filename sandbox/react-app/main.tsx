@@ -1,44 +1,18 @@
-import { DatadogProvider } from '@datadog/openfeature-provider'
-import { datadogRum } from '@datadog/browser-rum'
-import { ErrorBoundary, reactPlugin, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
-import { OpenFeature } from '@openfeature/web-sdk'
+import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
+import { datadogRum } from '@datadog/browser-rum'
+import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
+import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
+import { datadogFlagging } from '@datadog/browser-flagging'
 
 datadogRum.init({
   applicationId: 'xxx',
   clientToken: 'xxx',
   plugins: [reactPlugin({ router: true })],
-  enableExperimentalFeatures: ['feature_flags'],
 })
 
-const subject = {
-  targetingKey: 'subject-key-1',
-}
-
-async function initializeOpenFeature() {
-  const datadogFlaggingProvider = new DatadogProvider({
-    applicationId: 'xxx',
-    clientToken: 'xxx',
-    baseUrl: 'http://localhost:8000',
-  })
-  await OpenFeature.setContext(subject)
-
-  OpenFeature.addHooks({
-    after(_hookContext, details) {
-      datadogRum.addFeatureFlagEvaluation(details.flagKey, details.value)
-    },
-  })
-
-  try {
-    await OpenFeature.setProviderAndWait(datadogFlaggingProvider)
-    console.log('Successfully initialized Datadog provider')
-  } catch (error) {
-    console.error('Failed to initialize Datadog provider:', error)
-  }
-}
+datadogFlagging.init()
 
 const router = createBrowserRouter(
   [
@@ -90,34 +64,7 @@ function Layout() {
 }
 
 function HomePage() {
-  const flagKey = 'boolean-flag'
-  const [flagValue, setFlagValue] = useState<boolean | null>(null)
-
-  useEffect(() => {
-    initializeOpenFeature().finally(() => {
-      const client = OpenFeature.getClient()
-      const flagEval = client.getBooleanValue(flagKey, false)
-      setFlagValue(flagEval)
-    })
-  }, [])
-
-  return (
-    <div>
-      <h1>Home</h1>
-      <h2>Flagging Evaluation</h2>
-      <ul>
-        <li>
-          Subject Key: <i>{subject.targetingKey}</i>
-        </li>
-        <li>
-          Flag Key: <i>{flagKey}</i>
-        </li>
-        <li>
-          Variant: <i>{flagValue === null ? 'Loading...' : String(flagValue)}</i>
-        </li>
-      </ul>
-    </div>
-  )
+  return <h1>Home</h1>
 }
 
 function UserPage() {

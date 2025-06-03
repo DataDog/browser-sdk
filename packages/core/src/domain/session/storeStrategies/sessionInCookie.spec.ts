@@ -138,7 +138,6 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
       new Date(clock.timeStamp(SESSION_COOKIE_EXPIRATION_DELAY)).toUTCString()
     )
-    clock.cleanup()
   })
 
   it('should expire in one year when opt-in', () => {
@@ -148,7 +147,6 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
       new Date(clock.timeStamp(SESSION_COOKIE_EXPIRATION_DELAY)).toUTCString()
     )
-    clock.cleanup()
   })
 })
 
@@ -170,7 +168,6 @@ describe('session in cookie strategy when opt-out anonymous user tracking', () =
     const clock = mockClock()
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(new Date(clock.timeStamp(SESSION_TIME_OUT_DELAY)).toUTCString())
-    clock.cleanup()
   })
 
   it('should not persist with one year when opt-out', () => {

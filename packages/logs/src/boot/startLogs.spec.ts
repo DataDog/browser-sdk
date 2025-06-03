@@ -257,9 +257,6 @@ describe('logs', () => {
     beforeEach(() => {
       clock = mockClock()
     })
-    afterEach(() => {
-      clock.cleanup()
-    })
 
     it('sends logs without session id when the session expires ', async () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
