@@ -1,26 +1,26 @@
-import { containsExtensionUrl, EXTENSION_PREFIXES, isUnsupportedExtensionEnvironment } from './extensionUtils'
+import { startsWithExtensionUrl, EXTENSION_PREFIXES, isUnsupportedExtensionEnvironment } from './extensionUtils'
 
 describe('containsExtensionUrl', () => {
-  it('should return true if string contains an extension URL', () => {
+  it('should return true if string starts with an extension URL', () => {
     EXTENSION_PREFIXES.forEach((prefix) => {
-      expect(containsExtensionUrl(`${prefix}some/path`)).toBe(true)
+      expect(startsWithExtensionUrl(`${prefix}some/path`)).toBe(true)
     })
   })
 
-  it('should return false if string does not contain extension URL', () => {
-    expect(containsExtensionUrl('https://example.com')).toBe(false)
-    expect(containsExtensionUrl('')).toBe(false)
+  it('should return false if string does not start with extension URL', () => {
+    expect(startsWithExtensionUrl('https://example.com//chrome-extension://')).toBe(false)
+    expect(startsWithExtensionUrl('')).toBe(false)
   })
 })
 
 describe('testIsUnsupportedExtensionEnvironment', () => {
-  it('should return true when window location is a regular URL and error stack contains extension URL', () => {
+  it('should return true when window location is a regular URL and error stack starts with extension URL', () => {
     expect(
       isUnsupportedExtensionEnvironment('https://example.com', 'Error: at chrome-extension://abcdefg/content.js:10:15')
     ).toBe(true)
   })
 
-  it('should return false when both window location and error stack are regular URLs', () => {
+  it('should return false when both window location and error stack are regular URLs and does not start with extension URL', () => {
     expect(
       isUnsupportedExtensionEnvironment('https://example.com', 'Error: at https://example.com/script.js:10:15')
     ).toBe(false)
