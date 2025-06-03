@@ -22,7 +22,7 @@ export function trackFirstHidden(
     const firstHiddenEntry = performance
       .getEntriesByType(RumPerformanceEntryType.VISIBILITY_STATE)
       .filter((entry) => entry.name === 'hidden')
-      .find((entry) => entry.startTime > viewStart.relative)
+      .find((entry) => entry.startTime >= viewStart.relative)
 
     if (firstHiddenEntry) {
       return { timeStamp: firstHiddenEntry.startTime as RelativeTime, stop: noop }
