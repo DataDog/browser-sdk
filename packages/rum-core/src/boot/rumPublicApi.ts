@@ -33,7 +33,7 @@ import {
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
-import type { ProfilingStatus, ReplayStats } from '../rawRumEvent.types'
+import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -43,6 +43,7 @@ import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
+import { ProfilingSchema } from '../rumEvent.types'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -373,7 +374,7 @@ export interface ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) => void
-  getProfilingStatus: () => ProfilingStatus
+  getProfilingContext: () => ProfilingSchema
 }
 
 export interface RumPublicApiOptions {

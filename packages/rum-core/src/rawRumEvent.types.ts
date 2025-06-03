@@ -126,7 +126,6 @@ export interface RawRumViewEvent {
   privacy?: {
     replay_level: DefaultPrivacyLevel
   }
-  profiling_status?: ProfilingStatus
   _dd: {
     document_version: number
     replay_stats?: ReplayStats
@@ -214,7 +213,6 @@ export interface RawRumLongTaskEvent {
     entry_type: RumLongTaskEntryType.LONG_TASK
     duration: ServerDuration
   }
-  profiling_status?: ProfilingStatus
   _dd: {
     discarded: boolean
   }
@@ -256,7 +254,6 @@ export interface RawRumLongAnimationFrameEvent {
       window_attribution: string
     }>
   }
-  profiling_status?: ProfilingStatus
   _dd: {
     discarded: boolean
   }
@@ -330,31 +327,6 @@ export interface RawRumVitalEvent {
 export const enum VitalType {
   DURATION = 'duration',
 }
-
-/**
- * Used to track the status of the the RUM Profiler.
- * They are defined in order of when they can happen, from the moment the SDK is initialized to the moment the Profiler is actually running.
- *
- * - not-available-in-slim-bundle: The Profiler is not available in the slim bundle. Use the normal bundle to use the Profiler.
- * - initializing: The Profiler is initializing. (ie. when the SDK just started) This is the initial status.
- * - missing-profiling-experimental-feature: The user has not set the `profiling` value in the `enableExperimentalFeatures` options.
- * - not-sampled: The view was not sampled (ie. when the sample rate is lower than 100%, there is a chance the view won't be profiled).
- * - not-supported-by-browser: The browser does not support the Profiler. (ie. window.Profiler is not available)
- * - failed-to-lazy-load: The Profiler script failed to be loaded by the Browser. (may be connection issue or the chunk was not found)
- * - failed-to-start: The Profiler failed to start. (most probable cause if when the web server did not return the `Document-Policy: js-profiling` HTTP Response header)
- * - running: The Profiler is running.
- * - stopped: The Profiler is stopped.
- */
-export type ProfilingStatus =
-  | 'not-available-in-slim-bundle'
-  | 'initializing'
-  | 'missing-profiling-experimental-feature'
-  | 'not-sampled'
-  | 'not-supported-by-browser'
-  | 'failed-to-lazy-load'
-  | 'failed-to-start'
-  | 'running'
-  | 'stopped'
 
 export type RawRumEvent =
   | RawRumErrorEvent

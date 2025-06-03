@@ -21,7 +21,7 @@ export type {
   RumViewEventDomainContext,
   RumEventDomainContext,
 } from './domainContext.types'
-export type { ReplayStats, RawRumActionEvent, RawRumEvent, ProfilingStatus } from './rawRumEvent.types'
+export type { ReplayStats, RawRumActionEvent, RawRumEvent } from './rawRumEvent.types'
 export { ActionType, RumEventType, FrustrationType } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
 export type { RawRumEventCollectedData } from './domain/lifeCycle'
@@ -30,6 +30,7 @@ export type { ViewCreatedEvent } from './domain/view/trackViews'
 export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistory'
 export { startViewHistory } from './domain/contexts/viewHistory'
 export type { RumSessionManager, RumSession } from './domain/rumSessionManager'
+export { createProfilingContextManager, type ProfilingContextManager } from './domain/contexts/profilingContext'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
 export type {
   RumMutationRecord,
