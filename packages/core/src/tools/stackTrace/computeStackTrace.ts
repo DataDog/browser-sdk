@@ -237,7 +237,7 @@ function isWronglyReportingCustomErrors() {
     }
   }
 
-  const [customError, normalError] = [DatadogTestCustomError, Error].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
+  const [customError, nativeError] = [DatadogTestCustomError, Error].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
 
   if (!isNonNativeClassPrototype(Object.getPrototypeOf(customError))) {
     // This was built with ES5 as target, converting the class to a normal object.
@@ -251,6 +251,6 @@ function isWronglyReportingCustomErrors() {
   // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
   // If the browser is correctly reporting the stacktrace, the normal error stacktrace should be the same as the custom error stacktrace
   isWronglyReportingCustomErrorsCache =
-    String(customErrorStack).includes(DatadogTestCustomError.name) && normalError.stack !== customErrorStack
+    String(customErrorStack).includes(DatadogTestCustomError.name) && nativeError.stack !== customErrorStack
   return isWronglyReportingCustomErrorsCache
 }

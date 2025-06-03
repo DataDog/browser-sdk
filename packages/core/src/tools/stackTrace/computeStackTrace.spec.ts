@@ -958,4 +958,40 @@ Error: foo
       column: undefined,
     })
   })
+
+
+  it('should parse Firefox WebAssembly stack frames', () => {
+    const wasmStack = `
+  Error: Wasm Error
+    myModule.foo@http://example.com/my-module.wasm:wasm-function[42]:0x1a3b
+    bar@http://example.com/script.js:10:5
+    `
+    const mockErr = { message: 'Wasm Error', name: 'Error', stack: wasmStack }
+    const stackFrames = computeStackTrace(mockErr)
+
+    expect(stackFrames.stack.length).toBe(2)
+
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      func: 'myModule.foo',
+      url: 'http://example.com/my-module.wasm:wasm-function[42]:0x1a3b',
+      line: undefined,
+      column: undefined,
+    })
+  })
+
+  it('should normalize non native errors stacktraces across browsers', () => {
+
+    /* eslint-disable no-restricted-syntax */
+    class DatadogTestCustomError extends Error {
+      constructor() {
+        super()
+        this.name = 'Error' // set name to Error so that no browser would default to the constructor name
+      }
+    }
+
+    const [customError, nativeError] = [DatadogTestCustomError, Error].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
+
+    expect(computeStackTrace(customError)).toEqual(computeStackTrace(nativeError))
+  })
 })
