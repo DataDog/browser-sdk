@@ -21,7 +21,7 @@ export function isAllowedTrackingOrigins(
     return true
   }
 
-  const isAllowed = matchList(allowedTrackingOrigins, windowOrigin, true)
+  const isAllowed = matchList(allowedTrackingOrigins, windowOrigin)
   if (!isAllowed) {
     display.error(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
   }

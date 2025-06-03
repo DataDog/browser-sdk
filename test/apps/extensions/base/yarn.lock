@@ -7,8 +7,8 @@ __metadata:
 
 "@datadog/browser-core@file:../../../../packages/core/package.tgz::locator=rum-testing-extension%40workspace%3A.":
   version: 6.8.0
-  resolution: "@datadog/browser-core@file:../../../../packages/core/package.tgz#../../../../packages/core/package.tgz::hash=d4e50b&locator=rum-testing-extension%40workspace%3A."
-  checksum: 10c0/30f99d2654800291573b561c80406502337fd8070e99d8b0730426d67e6c59624a97dad3d5af67c0a736d33de54e4e66185cf3384dba1bd2862d8f9aa8a1d82a
+  resolution: "@datadog/browser-core@file:../../../../packages/core/package.tgz#../../../../packages/core/package.tgz::hash=e566ff&locator=rum-testing-extension%40workspace%3A."
+  checksum: 10c0/cfc86436d016b45a2960bd7ea989ca78997ac073875e64bce35165e7634d5af2e9c5d3b1caa7151c14945060d7ddbc12ad71d514b97993fe0ed2cd78bbbd8706
   languageName: node
   linkType: hard
 
@@ -23,7 +23,7 @@ __metadata:
 
 "@datadog/browser-rum@file:../../../../packages/rum/package.tgz::locator=rum-testing-extension%40workspace%3A.":
   version: 6.8.0
-  resolution: "@datadog/browser-rum@file:../../../../packages/rum/package.tgz#../../../../packages/rum/package.tgz::hash=d69977&locator=rum-testing-extension%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../../packages/rum/package.tgz#../../../../packages/rum/package.tgz::hash=b297f6&locator=rum-testing-extension%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.8.0"
     "@datadog/browser-rum-core": "npm:6.8.0"
@@ -32,7 +32,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/9177d4f8840a4834633df0e8758ee16725732fb07e478288526bbb57c2a3cc44573c9c00260b44d402ce9eabd4f04ea09b2cd4dc289880ff6002768122f47c56
+  checksum: 10c0/53ec2575f7013cc8aeb0362391d3d885e7efc10078dbf1d6687f0ba2c1e7899fc7c82b046645d24551f470d9455e74901692993ea14eca7995a8b5e0da78f1a6
   languageName: node
   linkType: hard
 
