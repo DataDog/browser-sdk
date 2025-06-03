@@ -41,9 +41,9 @@ import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
+import type { ProfilingSchema } from '../rumEvent.types'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
-import { ProfilingSchema } from '../rumEvent.types'
 
 export interface StartRecordingOptions {
   force: boolean
