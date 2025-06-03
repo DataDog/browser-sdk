@@ -64,6 +64,8 @@ export function computeStackTrace(ex: unknown): StackTrace {
 
     // traverse the stacktrace in reverse order because the stacktrace starts with the last inherited constructor
     // we check constructor names to ensure we remove the correct frame (and there isn't a weird unsupported environment behavior)
+    // eslint-disable-next-line no-console
+    console.log(constructors, stack)
     for (let i = constructors.length - 1; i >= 0; i--) {
       if (stack[0]?.func === constructors[i]) {
         // if the first stack frame is the custom error constructor
