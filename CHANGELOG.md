@@ -18,6 +18,24 @@
 
 ---
 
+## v6.9.0
+
+**Public Changes:**
+
+- ✨ use error.dd_context when logging an error ([#3562](https://github.com/DataDog/browser-sdk/pull/3562)) [LOGS]
+- ✨[RUM-260] Support bfcache restore for web vitals ([#3527](https://github.com/DataDog/browser-sdk/pull/3527)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-10002] Verify the document was not hidden while loading ([#3573](https://github.com/DataDog/browser-sdk/pull/3573)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM-9987] Bump attribute data url limit to 1Mb ([#3551](https://github.com/DataDog/browser-sdk/pull/3551)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔥 🐛 fix Next.js 12 + swcMinify compatibility ([#3577](https://github.com/DataDog/browser-sdk/pull/3577)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 📝 update bundle list ([#3572](https://github.com/DataDog/browser-sdk/pull/3572))
+
+**Internal Changes:**
+
+- 👷 Bump chrome to 137.0.7151.55-1 ([#3578](https://github.com/DataDog/browser-sdk/pull/3578))
+- ✅ Automatic mock clock cleanup ([#3581](https://github.com/DataDog/browser-sdk/pull/3581)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ Fix usage of non-existent configuration options in remoteConfiguration.spec.ts ([#3576](https://github.com/DataDog/browser-sdk/pull/3576)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM Profiler] Simplify & fix logic for Long Task registry ([#3569](https://github.com/DataDog/browser-sdk/pull/3569)) [RUM]
+
 ## v6.8.0
 
 **Public Changes:**
