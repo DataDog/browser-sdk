@@ -27,7 +27,7 @@ export interface StackTrace {
 const UNKNOWN_FUNCTION = '?'
 
 export function computeStackTrace(ex: unknown): StackTrace {
-  const stack: StackFrame[] = []
+  const stack: Array<StackFrame | null> = []
 
   let stackProperty = tryToGetString(ex, 'stack')
   const exString = String(ex)
@@ -44,6 +44,9 @@ export function computeStackTrace(ex: unknown): StackTrace {
         }
 
         stack.push(stackFrame)
+      } else if (line.includes('@')) {
+        // keep track of frames that failed to be parsed
+        stack.push(null)
       }
     })
   }
@@ -64,11 +67,10 @@ export function computeStackTrace(ex: unknown): StackTrace {
 
     // traverse the stacktrace in reverse order because the stacktrace starts with the last inherited constructor
     // we check constructor names to ensure we remove the correct frame (and there isn't a weird unsupported environment behavior)
-    // eslint-disable-next-line no-console
-    console.log(constructors, stack)
     for (let i = constructors.length - 1; i >= 0; i--) {
-      if (stack[0]?.func === constructors[i]) {
+      if (stack[0] === null || stack[0]?.func === constructors[i]) {
         // if the first stack frame is the custom error constructor
+        // null stack frames may represent frames that failed to be parsed because the error class did not have a constructor
         stack.shift() // remove it
       } else {
         break
@@ -79,7 +81,8 @@ export function computeStackTrace(ex: unknown): StackTrace {
   return {
     message: tryToGetString(ex, 'message'),
     name: tryToGetString(ex, 'name'),
-    stack,
+    // remove remaining null frames
+    stack: stack.filter(Boolean) as StackFrame[],
   }
 }
 const fileUrl =

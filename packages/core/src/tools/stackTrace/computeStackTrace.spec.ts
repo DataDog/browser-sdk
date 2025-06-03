@@ -967,9 +967,15 @@ Error: foo
         this.name = 'Error' // set name to Error so that no browser would default to the constructor name
       }
     }
+    class DatadogTestCustomError2 extends DatadogTestCustomError {}
 
-    const [customError, nativeError] = [DatadogTestCustomError, Error].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
+    const [customError, customErrorWithInheritance, nativeError] = [
+      DatadogTestCustomError,
+      DatadogTestCustomError2,
+      Error,
+    ].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
 
-    expect(computeStackTrace(customError)).toEqual(computeStackTrace(nativeError))
+    expect(computeStackTrace(customError.stack)).toEqual(computeStackTrace(nativeError.stack))
+    expect(computeStackTrace(customErrorWithInheritance.stack)).toEqual(computeStackTrace(nativeError.stack))
   })
 })
