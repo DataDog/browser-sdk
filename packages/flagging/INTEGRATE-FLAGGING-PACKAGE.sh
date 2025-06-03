@@ -38,12 +38,13 @@ yarn pack --out "$TGZ_FILE" || { echo "Pack failed"; exit 1; }
 echo "Moving $TGZ_FILE to target project..."
 cp "$TGZ_FILE" "$TARGET_PROJECT/" || { echo "Failed to copy package file"; exit 1; }
 
-# Navigate to target project
-cd "$TARGET_PROJECT" || exit 1
-
-# Install the package
-echo "Installing the package in target project..."
-yarn add "./$TGZ_FILE" || { echo "Package installation failed"; exit 1; }
-
-echo "Successfully integrated the flagging package!"
+# Output installation instructions
+echo
+echo "Package successfully built and copied to target project."
+echo
+echo "If you are using yarn, run the following commands to complete the installation:"
+echo
+echo "  cd $(realpath "$TARGET_PROJECT")"
+echo "  yarn add ./$TGZ_FILE"
+echo
 echo "Don't forget to commit the $TGZ_FILE to your project's source control." 

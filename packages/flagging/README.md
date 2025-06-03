@@ -24,7 +24,7 @@ Since this package is not published to NPM, you'll need to follow these steps to
 
 ### Automation Script
 
-We provide a helper script `INTEGRATE-FLAGGING-PACKAGE.sh` that automates these steps assuming the target project uses `yarn`. Usage:
+We provide a helper script `INTEGRATE-FLAGGING-PACKAGE.sh` that automates these steps. Usage:
 
 ```bash
 ./INTEGRATE-FLAGGING-PACKAGE.sh /path/to/browser-sdk/packages/flagging /path/to/target/project
