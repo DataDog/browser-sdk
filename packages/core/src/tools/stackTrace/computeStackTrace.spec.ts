@@ -959,7 +959,6 @@ Error: foo
     })
   })
 
-
   it('should parse Firefox WebAssembly stack frames', () => {
     const wasmStack = `
   Error: Wasm Error
@@ -981,7 +980,6 @@ Error: foo
   })
 
   it('should normalize non native errors stacktraces across browsers', () => {
-
     /* eslint-disable no-restricted-syntax */
     class DatadogTestCustomError extends Error {
       constructor() {

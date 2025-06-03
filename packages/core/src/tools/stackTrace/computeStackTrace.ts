@@ -54,7 +54,10 @@ export function computeStackTrace(ex: unknown): StackTrace {
 
     // go through each inherited constructor
     let currentPrototype: object | undefined = ex
-    while ((currentPrototype = Object.getPrototypeOf(currentPrototype)) !== Error.prototype && currentPrototype && isNonNativeClassPrototype(currentPrototype)) {
+    while (
+      (currentPrototype = Object.getPrototypeOf(currentPrototype)) &&
+      isNonNativeClassPrototype(currentPrototype)
+    ) {
       const constructorName = currentPrototype.constructor?.name || UNKNOWN_FUNCTION
       constructors.push(constructorName)
     }
