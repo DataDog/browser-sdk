@@ -5,13 +5,8 @@ import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
-import type { ProfilerApi } from '../../boot/rumPublicApi'
 
-export function startLongTaskCollection(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration,
-  profilerApi: ProfilerApi
-) {
+export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const performanceLongTaskSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.LONG_TASK,
     buffered: true,
@@ -32,7 +27,6 @@ export function startLongTaskCollection(
           duration: toServerDuration(entry.duration),
         },
         type: RumEventType.LONG_TASK,
-        profiling_status: profilerApi.getProfilingStatus(),
         _dd: {
           discarded: false,
         },
