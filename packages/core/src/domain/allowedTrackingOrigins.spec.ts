@@ -141,6 +141,32 @@ describe('checkForAllowedTrackingOrigins', () => {
       expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
       expect(result).toBe(false)
     })
+
+    it('should error when origin is a partial match', () => {
+      const result = isAllowedTrackingOrigins(
+        {
+          ...DEFAULT_CONFIG,
+          allowedTrackingOrigins: ['https://example.com'],
+        },
+        'https://example.com.extra.com',
+        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
+      )
+      expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
+      expect(result).toBe(false)
+    })
+
+    it('should not error when in extension and origin matches', () => {
+      const result = isAllowedTrackingOrigins(
+        {
+          ...DEFAULT_CONFIG,
+          allowedTrackingOrigins: [/^chrome-extension:\/\//],
+        },
+        'chrome-extension://abcdefghijklmno',
+        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
+      )
+      expect(displayErrorSpy).not.toHaveBeenCalled()
+      expect(result).toBe(true)
+    })
   })
 
   describe('when configuration does not have allowedTrackingOrigins', () => {

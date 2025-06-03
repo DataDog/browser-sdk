@@ -69,7 +69,7 @@ test.describe('browser extensions', () => {
     .withExtension(pathToAllowedTrackingOriginExtension)
     .run(async ({ page, getExtensionId, flushBrowserLogs }) => {
       const extensionId = await getExtensionId()
-      const expectedOriginPattern = 'chrome-extension://'
+      const expectedOriginPattern = /^chrome-extension:\/\//
       const extensionLogs: any[] = []
 
       // Listen for console events and filter for extension page only
