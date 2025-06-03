@@ -229,6 +229,8 @@ __metadata:
   resolution: "@datadog/browser-flagging@workspace:packages/flagging"
   dependencies:
     "@datadog/browser-core": "npm:6.9.0"
+    npm-run-all: "npm:4.1.5"
+    webpack: "npm:5.99.9"
   peerDependencies:
     "@datadog/browser-rum": 6.9.0
   peerDependenciesMeta:
