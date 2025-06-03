@@ -48,29 +48,25 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
-  if (stack.length > 0 && isWronglyReportingCustomErrors()) {
+  if (stack.length > 0 && isWronglyReportingCustomErrors() && ex instanceof Error) {
     // if we are wrongly reporting custom errors
-    if (ex instanceof Error && isErrorCustomError(ex)) {
-      // if the element is a custom error
+    const constructors: string[] = []
 
-      const constructors: string[] = []
+    // go through each inherited constructor
+    let cstr: object | undefined = ex
+    while ((cstr = Object.getPrototypeOf(cstr)) !== Error.prototype && cstr && isNonNativeClassPrototype(cstr)) {
+      const constructorName = cstr.constructor?.name || UNKNOWN_FUNCTION
+      constructors.push(constructorName)
+    }
 
-      // go through each inherited constructor
-      let cstr: object | undefined = ex
-      while ((cstr = Object.getPrototypeOf(cstr)) !== Error.prototype && cstr) {
-        const errorConstructorName = cstr.constructor?.name || UNKNOWN_FUNCTION
-        constructors.push(errorConstructorName)
-      }
-
-      // traverse the stacktrace in reverse order because the stacktrace starts with the last inherited constructor
-      // we check constructor names to ensure we remove the correct frame (and there isn't a weird unsupported environment behavior)
-      for (let i = constructors.length - 1; i >= 0; i--) {
-        if (stack[0]?.func === constructors[i]) {
-          // if the first stack frame is the custom error constructor
-          stack.shift() // remove it
-        } else {
-          break
-        }
+    // traverse the stacktrace in reverse order because the stacktrace starts with the last inherited constructor
+    // we check constructor names to ensure we remove the correct frame (and there isn't a weird unsupported environment behavior)
+    for (let i = constructors.length - 1; i >= 0; i--) {
+      if (stack[0]?.func === constructors[i]) {
+        // if the first stack frame is the custom error constructor
+        stack.shift() // remove it
+      } else {
+        break
       }
     }
   }
@@ -222,9 +218,8 @@ function tryToParseMessage(messageObj: unknown) {
 // Some browsers (safari/firefox) add the error constructor as a frame in the stacktrace
 // In order to normalize the stacktrace, we need to remove it
 
-function isErrorCustomError(error: Error) {
-  const errorProto = Object.getPrototypeOf(error) as { constructor?: () => Error } | undefined
-  return String(errorProto?.constructor).startsWith('class ')
+function isNonNativeClassPrototype(prototype: object) {
+  return String(prototype.constructor).startsWith('class ')
 }
 
 let isWronglyReportingCustomErrorsCache: boolean | undefined
@@ -244,7 +239,7 @@ function isWronglyReportingCustomErrors() {
 
   const [customError, normalError] = [DatadogTestCustomError, Error].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
 
-  if (!isErrorCustomError(customError)) {
+  if (!isNonNativeClassPrototype(Object.getPrototypeOf(customError))) {
     // This was built with ES5 as target, converting the class to a normal object.
     // Thus, error constructors will be reported on all browsers, which is the expected behavior.
     isWronglyReportingCustomErrorsCache = false
