@@ -95,7 +95,7 @@
   },
   "volta": {
     "node": "23.11.1",
-    "yarn": "1.22.22"
+    "yarn": "4.9.1"
   },
   "packageManager": "yarn@4.9.1"
 }
