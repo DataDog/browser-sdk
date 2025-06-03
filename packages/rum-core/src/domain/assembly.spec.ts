@@ -27,8 +27,8 @@ describe('rum assembly', () => {
   describe('beforeSend', () => {
     describe('fields modification', () => {
       describe('modifiable fields', () => {
-        it('should allow modification', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should allow modification', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => (event.view.url = 'modified'),
             },
@@ -38,11 +38,12 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
           })
 
-          expect(serverRumEvents[0].view.url).toBe('modified')
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].view.url).toBe('modified')
         })
 
-        it('should allow addition', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should allow addition', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => (event.view.name = 'added'),
             },
@@ -52,11 +53,12 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
           })
 
-          expect(serverRumEvents[0].view.name).toBe('added')
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].view.name).toBe('added')
         })
 
-        it('should allow modification of view.performance.lcp.resource_url', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should allow modification of view.performance.lcp.resource_url', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => (event.view.performance.lcp.resource_url = 'modified_url'),
             },
@@ -68,12 +70,13 @@ describe('rum assembly', () => {
             }),
           })
 
-          expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
+          const rumEvents = await getRumEvents()
+          expect((rumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
         })
 
         describe('field resource.graphql on Resource events', () => {
-          it('by default, it should not be modifiable', () => {
-            const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+          it('by default, it should not be modifiable', async () => {
+            const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
               partialConfiguration: {
                 beforeSend: (event) => (event.resource!.graphql = { operationType: 'query' }),
               },
@@ -83,13 +86,14 @@ describe('rum assembly', () => {
               rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
             })
 
-            expect((serverRumEvents[0] as RumResourceEvent).resource.graphql).toBeUndefined()
+            const rumEvents = await getRumEvents()
+            expect((rumEvents[0] as RumResourceEvent).resource.graphql).toBeUndefined()
           })
 
-          it('with the writable_resource_graphql experimental flag is set, it should be modifiable', () => {
+          it('with the writable_resource_graphql experimental flag is set, it should be modifiable', async () => {
             mockExperimentalFeatures([ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL])
 
-            const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
               partialConfiguration: {
                 beforeSend: (event) => (event.resource!.graphql = { operationType: 'query' }),
               },
@@ -99,14 +103,15 @@ describe('rum assembly', () => {
               rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
             })
 
-            expect((serverRumEvents[0] as RumResourceEvent).resource.graphql).toEqual({ operationType: 'query' })
+            const rumEvents = await getRumEvents()
+            expect((rumEvents[0] as RumResourceEvent).resource.graphql).toEqual({ operationType: 'query' })
           })
         })
       })
 
       describe('context field', () => {
-        it('should allow modification on context field for events other than views', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should allow modification on context field for events other than views', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
                 event.context.foo = 'bar'
@@ -118,11 +123,12 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
           })
 
-          expect(serverRumEvents[0].context!.foo).toBe('bar')
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].context!.foo).toBe('bar')
         })
 
-        it('should allow replacing the context field for events other than views', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should allow replacing the context field for events other than views', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
                 event.context.foo = 'bar'
@@ -134,11 +140,12 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
           })
 
-          expect(serverRumEvents[0].context!.foo).toBe('bar')
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].context!.foo).toBe('bar')
         })
 
-        it('should empty the context field if set to null', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should empty the context field if set to null', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
                 event.context = null
@@ -151,11 +158,12 @@ describe('rum assembly', () => {
             customerContext: { foo: 'bar' },
           })
 
-          expect(serverRumEvents[0].context).toBeUndefined()
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].context).toBeUndefined()
         })
 
-        it('should empty the context field if set to undefined', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should empty the context field if set to undefined', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
                 event.context = undefined
@@ -168,11 +176,12 @@ describe('rum assembly', () => {
             customerContext: { foo: 'bar' },
           })
 
-          expect(serverRumEvents[0].context).toBeUndefined()
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].context).toBeUndefined()
         })
 
-        it('should empty the context field if deleted', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should empty the context field if deleted', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
                 delete event.context
@@ -185,11 +194,12 @@ describe('rum assembly', () => {
             customerContext: { foo: 'bar' },
           })
 
-          expect(serverRumEvents[0].context).toBeUndefined()
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].context).toBeUndefined()
         })
 
-        it('should define the context field even if the global context is empty', () => {
-          const { lifeCycle } = setupAssemblyTestWithDefaults({
+        it('should define the context field even if the global context is empty', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
                 expect(event.context).toEqual({})
@@ -200,10 +210,12 @@ describe('rum assembly', () => {
           notifyRawRumEvent(lifeCycle, {
             rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
           })
+
+          await getRumEvents()
         })
 
-        it('should accept modification on context field for view events', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should accept modification on context field for view events', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
                 event.context.foo = 'bar'
@@ -215,11 +227,12 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.VIEW),
           })
 
-          expect(serverRumEvents[0].context).toEqual({ foo: 'bar' })
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].context).toEqual({ foo: 'bar' })
         })
 
-        it('should reject replacing the context field to non-object', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should reject replacing the context field to non-object', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => {
                 event.context = 1
@@ -232,13 +245,14 @@ describe('rum assembly', () => {
             customerContext: { foo: 'bar' },
           })
 
-          expect(serverRumEvents[0].context!.foo).toBe('bar')
+          const rumEvents = await getRumEvents()
+          expect(rumEvents[0].context!.foo).toBe('bar')
         })
       })
 
       describe('allowed customer provided field', () => {
-        it('should allow modification of the error fingerprint', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it('should allow modification of the error fingerprint', async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
               beforeSend: (event) => (event.error.fingerprint = 'my_fingerprint'),
             },
@@ -248,12 +262,13 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.ERROR),
           })
 
-          expect((serverRumEvents[0] as RumErrorEvent).error.fingerprint).toBe('my_fingerprint')
+          const rumEvents = await getRumEvents()
+          expect((rumEvents[0] as RumErrorEvent).error.fingerprint).toBe('my_fingerprint')
         })
       })
 
-      it('should reject modification of field not sensitive, context or customer provided', () => {
-        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+      it('should reject modification of field not sensitive, context or customer provided', async () => {
+        const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             beforeSend: (event: RumEvent) => ((event.view as any).id = 'modified'),
           },
@@ -265,11 +280,12 @@ describe('rum assembly', () => {
           }),
         })
 
-        expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+        const rumEvents = await getRumEvents()
+        expect(rumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
       })
 
-      it('should not allow to add a sensitive field on the wrong event type', () => {
-        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+      it('should not allow to add a sensitive field on the wrong event type', async () => {
+        const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             beforeSend: (event) => {
               event.error = { message: 'added' }
@@ -281,13 +297,14 @@ describe('rum assembly', () => {
           rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         })
 
-        expect((serverRumEvents[0] as any).error?.message).toBeUndefined()
+        const rumEvents = await getRumEvents()
+        expect((rumEvents[0] as any).error?.message).toBeUndefined()
       })
     })
 
     describe('events dismission', () => {
-      it('should allow dismissing events other than views', () => {
-        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+      it('should allow dismissing events other than views', async () => {
+        const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             beforeSend: () => false,
           },
@@ -317,11 +334,12 @@ describe('rum assembly', () => {
           }),
         })
 
-        expect(serverRumEvents.length).toBe(0)
+        const rumEvents = await getRumEvents()
+        expect(rumEvents.length).toBe(0)
       })
 
-      it('should not allow dismissing view events', () => {
-        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+      it('should not allow dismissing view events', async () => {
+        const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             beforeSend: () => false,
           },
@@ -334,13 +352,14 @@ describe('rum assembly', () => {
           }),
         })
 
-        expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+        const rumEvents = await getRumEvents()
+        expect(rumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
         expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view events using beforeSend!")
       })
     })
 
-    it('should not dismiss when true is returned', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+    it('should not dismiss when true is returned', async () => {
+      const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
         partialConfiguration: {
           beforeSend: () => true,
         },
@@ -352,11 +371,12 @@ describe('rum assembly', () => {
         }),
       })
 
-      expect(serverRumEvents.length).toBe(1)
+      const rumEvents = await getRumEvents()
+      expect(rumEvents.length).toBe(1)
     })
 
-    it('should not dismiss when undefined is returned', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+    it('should not dismiss when undefined is returned', async () => {
+      const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
         partialConfiguration: {
           beforeSend: () => undefined,
         },
@@ -368,19 +388,21 @@ describe('rum assembly', () => {
         }),
       })
 
-      expect(serverRumEvents.length).toBe(1)
+      const rumEvents = await getRumEvents()
+      expect(rumEvents.length).toBe(1)
     })
   })
 
   describe('customer context', () => {
-    it('should be merged with event attributes', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
+    it('should be merged with event attributes', async () => {
+      const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults()
       notifyRawRumEvent(lifeCycle, {
         customerContext: { foo: 'bar' },
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect((serverRumEvents[0].context as any).foo).toEqual('bar')
+      const rumEvents = await getRumEvents()
+      expect((rumEvents[0].context as any).foo).toEqual('bar')
     })
   })
 
@@ -388,8 +410,8 @@ describe('rum assembly', () => {
     const extraConfigurationOptions = { service: 'default service', version: 'default version' }
 
     describe('fields service and version', () => {
-      it('it should be modifiable', () => {
-        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+      it('it should be modifiable', async () => {
+        const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             ...extraConfigurationOptions,
             beforeSend: (event) => {
@@ -404,21 +426,22 @@ describe('rum assembly', () => {
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
         })
-        expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
-        expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
+        const rumEvents = await getRumEvents()
+        expect((rumEvents[0] as RumResourceEvent).service).toBe('bar')
+        expect((rumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
 
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(RumEventType.VIEW),
         })
-        expect((serverRumEvents[1] as RumViewEvent).service).toBe('bar')
-        expect((serverRumEvents[1] as RumViewEvent).version).toBe('0.2.0')
+        expect((rumEvents[1] as RumViewEvent).service).toBe('bar')
+        expect((rumEvents[1] as RumViewEvent).version).toBe('0.2.0')
       })
     })
   })
 
   describe('assemble hook', () => {
-    it('should add and override common properties', () => {
-      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults({
+    it('should add and override common properties', async () => {
+      const { lifeCycle, hooks, getRumEvents } = setupAssemblyTestWithDefaults({
         partialConfiguration: { service: 'default service', version: 'default version' },
       })
 
@@ -432,13 +455,14 @@ describe('rum assembly', () => {
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
       })
-      expect(serverRumEvents[0].service).toEqual('new service')
-      expect(serverRumEvents[0].version).toEqual('new version')
-      expect(serverRumEvents[0].view.id).toEqual('new view id')
+      const rumEvents = await getRumEvents()
+      expect(rumEvents[0].service).toEqual('new service')
+      expect(rumEvents[0].version).toEqual('new version')
+      expect(rumEvents[0].view.id).toEqual('new view id')
     })
 
-    it('should not override customer context', () => {
-      const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults()
+    it('should not override customer context', async () => {
+      const { lifeCycle, hooks, getRumEvents } = setupAssemblyTestWithDefaults()
 
       hooks.register(HookNames.Assemble, ({ eventType }) => ({
         type: eventType,
@@ -449,38 +473,43 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         customerContext: { foo: 'customer context' },
       })
-      expect(serverRumEvents[0].context).toEqual({ foo: 'customer context' })
+      const rumEvents = await getRumEvents()
+      expect(rumEvents[0].context).toEqual({ foo: 'customer context' })
     })
   })
 
   describe('event generation condition', () => {
-    it('when tracked, it should generate event', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
+    it('when tracked, it should generate event', async () => {
+      const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults()
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
-      expect(serverRumEvents.length).toBe(1)
+      const rumEvents = await getRumEvents()
+      expect(rumEvents.length).toBe(1)
     })
 
-    it('when not tracked, it should not generate event', () => {
+    it('when not tracked, it should not generate event', async () => {
       const sessionManager = createRumSessionManagerMock().setNotTracked()
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ sessionManager })
+      const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({ sessionManager })
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
-      expect(serverRumEvents.length).toBe(0)
+      const rumEvents = await getRumEvents()
+      expect(rumEvents.length).toBe(0)
     })
 
-    it('should get session state from event start', () => {
+    it('should get session state from event start', async () => {
       const sessionManager = createRumSessionManagerMock()
       spyOn(sessionManager, 'findTrackedSession').and.callThrough()
-      const { lifeCycle } = setupAssemblyTestWithDefaults({ sessionManager })
+      const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({ sessionManager })
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
         startTime: 123 as RelativeTime,
       })
+
+      await getRumEvents()
 
       expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
     })
@@ -500,8 +529,8 @@ describe('rum assembly', () => {
     },
   ].forEach(({ eventType, message }) => {
     describe(`${eventType} events limitation`, () => {
-      it(`stops sending ${eventType} events when reaching the limit`, () => {
-        const { lifeCycle, serverRumEvents, reportErrorSpy } = setupAssemblyTestWithDefaults({
+      it(`stops sending ${eventType} events when reaching the limit`, async () => {
+        const { lifeCycle, getRumEvents, reportErrorSpy } = setupAssemblyTestWithDefaults({
           partialConfiguration: { eventRateLimiterThreshold: 1 },
         })
 
@@ -512,8 +541,9 @@ describe('rum assembly', () => {
           rawRumEvent: createRawRumEvent(eventType, { date: 200 as TimeStamp }),
         })
 
-        expect(serverRumEvents.length).toBe(1)
-        expect(serverRumEvents[0].date).toBe(100)
+        const rumEvents = await getRumEvents()
+        expect(rumEvents.length).toBe(1)
+        expect(rumEvents[0].date).toBe(100)
         expect(reportErrorSpy).toHaveBeenCalledTimes(1)
         expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
           jasmine.objectContaining({
@@ -523,8 +553,8 @@ describe('rum assembly', () => {
         )
       })
 
-      it(`does not take discarded ${eventType} events into account`, () => {
-        const { lifeCycle, serverRumEvents, reportErrorSpy } = setupAssemblyTestWithDefaults({
+      it(`does not take discarded ${eventType} events into account`, async () => {
+        const { lifeCycle, getRumEvents, reportErrorSpy } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             eventRateLimiterThreshold: 1,
             beforeSend: (event) => {
@@ -547,8 +577,9 @@ describe('rum assembly', () => {
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(eventType, { date: 200 as TimeStamp }),
         })
-        expect(serverRumEvents.length).toBe(1)
-        expect(serverRumEvents[0].date).toBe(200)
+        const rumEvents = await getRumEvents()
+        expect(rumEvents.length).toBe(1)
+        expect(rumEvents[0].date).toBe(200)
         expect(reportErrorSpy).not.toHaveBeenCalled()
       })
 
@@ -558,10 +589,12 @@ describe('rum assembly', () => {
           clock = mockClock()
         })
 
-        it(`allows to send new ${eventType} events after a minute`, () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        it(`allows to send new ${eventType} events after a minute`, async () => {
+          const { lifeCycle, getRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: { eventRateLimiterThreshold: 1 },
           })
+
+          const rumEvents = await getRumEvents()
 
           notifyRawRumEvent(lifeCycle, {
             rawRumEvent: createRawRumEvent(eventType, { date: 100 as TimeStamp }),
@@ -574,9 +607,9 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(eventType, { date: 300 as TimeStamp }),
           })
 
-          expect(serverRumEvents.length).toBe(2)
-          expect(serverRumEvents[0].date).toBe(100)
-          expect(serverRumEvents[1].date).toBe(300)
+          expect(rumEvents.length).toBe(2)
+          expect(rumEvents[0].date).toBe(100)
+          expect(rumEvents[1].date).toBe(300)
         })
       })
     })
@@ -618,7 +651,7 @@ function setupAssemblyTestWithDefaults({
   })
   const recorderApi = noopRecorderApi
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
-  startGlobalContext(hooks, mockRumConfiguration())
+  const globalContext = startGlobalContext(hooks, mockRumConfiguration())
   startSessionContext(hooks, rumSessionManager, recorderApi, viewHistory)
   startRumAssembly(mockRumConfiguration(partialConfiguration), lifeCycle, hooks, reportErrorSpy)
 
@@ -626,5 +659,16 @@ function setupAssemblyTestWithDefaults({
     subscription.unsubscribe()
   })
 
-  return { lifeCycle, hooks, reportErrorSpy, serverRumEvents, recorderApi }
+  return {
+    lifeCycle,
+    hooks,
+    reportErrorSpy,
+    getRumEvents: async () => {
+      // Wait for assembly to start producing events
+      await Promise.resolve()
+      return serverRumEvents
+    },
+    recorderApi,
+    globalContext,
+  }
 }

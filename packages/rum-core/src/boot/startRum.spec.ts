@@ -58,7 +58,7 @@ function collectServerEvents(lifeCycle: LifeCycle) {
   return serverRumEvents
 }
 
-function startRumStub(
+async function startRumStub(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
@@ -96,6 +96,10 @@ function startRumStub(
   )
 
   startLongAnimationFrameCollection(lifeCycle, configuration)
+
+  // Wait for assembly to start producing events
+  await Promise.resolve()
+
   return {
     stop: () => {
       viewHistory.stop()
@@ -111,7 +115,7 @@ describe('rum session', () => {
   let lifeCycle: LifeCycle
   let sessionManager: RumSessionManagerMock
 
-  beforeEach(() => {
+  beforeEach(async () => {
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
     const domMutationObservable = new Observable<RumMutationRecord[]>()
@@ -119,7 +123,7 @@ describe('rum session', () => {
     const { locationChangeObservable } = setupLocationObserver()
 
     serverRumEvents = collectServerEvents(lifeCycle)
-    const { stop } = startRumStub(
+    const { stop } = await startRumStub(
       lifeCycle,
       mockRumConfiguration(),
       sessionManager,
@@ -160,7 +164,7 @@ describe('rum session keep alive', () => {
   let sessionManager: RumSessionManagerMock
   let serverRumEvents: RumEvent[]
 
-  beforeEach(() => {
+  beforeEach(async () => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('1234')
@@ -169,7 +173,7 @@ describe('rum session keep alive', () => {
     const { locationChangeObservable } = setupLocationObserver()
 
     serverRumEvents = collectServerEvents(lifeCycle)
-    const { stop } = startRumStub(
+    const { stop } = await startRumStub(
       lifeCycle,
       mockRumConfiguration(),
       sessionManager,
@@ -227,14 +231,14 @@ describe('rum events url', () => {
   let serverRumEvents: RumEvent[]
   let stop: () => void
 
-  function setupViewUrlTest() {
+  async function setupViewUrlTest() {
     const sessionManager = createRumSessionManagerMock().setId('1234')
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const locationSetupResult = setupLocationObserver('http://foo.com/')
     changeLocation = locationSetupResult.changeLocation
 
-    const startResult = startRumStub(
+    const startResult = await startRumStub(
       lifeCycle,
       mockRumConfiguration(),
       sessionManager,
@@ -258,8 +262,8 @@ describe('rum events url', () => {
     })
   })
 
-  it('should keep the same URL when updating a view ended by a URL change', () => {
-    setupViewUrlTest()
+  it('should keep the same URL when updating a view ended by a URL change', async () => {
+    await setupViewUrlTest()
     serverRumEvents.length = 0
 
     changeLocation('/bar')
@@ -269,11 +273,11 @@ describe('rum events url', () => {
     expect(serverRumEvents[1].view.url).toEqual('http://foo.com/bar')
   })
 
-  it('should attach the url corresponding to the start of the event', () => {
+  it('should attach the url corresponding to the start of the event', async () => {
     clock = mockClock()
     const { notifyPerformanceEntries } = mockPerformanceObserver()
 
-    setupViewUrlTest()
+    await setupViewUrlTest()
     clock.tick(10)
     changeLocation('http://foo.com/?bar=bar')
     clock.tick(10)
@@ -296,10 +300,10 @@ describe('rum events url', () => {
     expect(longTaskEvent.view.url).toBe('http://foo.com/?bar=bar')
   })
 
-  it('should keep the same URL when updating an ended view', () => {
+  it('should keep the same URL when updating an ended view', async () => {
     clock = mockClock()
     const { triggerOnLoad } = mockDocumentReadyState()
-    setupViewUrlTest()
+    await setupViewUrlTest()
 
     clock.tick(VIEW_DURATION)
 
@@ -320,7 +324,7 @@ describe('view events', () => {
   let interceptor: ReturnType<typeof interceptRequests>
   let stop: () => void
 
-  function setupViewCollectionTest() {
+  async function setupViewCollectionTest() {
     const startResult = startRum(
       mockRumConfiguration(),
       noopRecorderApi,
@@ -330,6 +334,9 @@ describe('view events', () => {
       createTrackingConsentState(TrackingConsent.GRANTED),
       createCustomVitalsState()
     )
+
+    // Wait for assembly to start producing events
+    await Promise.resolve()
 
     stop = startResult.stop
     interceptor = interceptRequests()
@@ -344,14 +351,14 @@ describe('view events', () => {
     })
   })
 
-  it('sends a view update on page unload when bridge is absent', () => {
+  it('sends a view update on page unload when bridge is absent', async () => {
     // Note: this test is intentionally very high level to make sure the view update is correctly
     // made right before flushing the Batch.
 
     // Arbitrary duration to simulate a non-zero view duration
     const VIEW_DURATION = ONE_SECOND as Duration
 
-    setupViewCollectionTest()
+    await setupViewCollectionTest()
 
     clock.tick(VIEW_DURATION - relativeNow())
     window.dispatchEvent(createNewEvent('beforeunload'))
@@ -367,13 +374,13 @@ describe('view events', () => {
     expect(lastRumViewEvent.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })
 
-  it('sends a view update on page unload when bridge is present', () => {
+  it('sends a view update on page unload when bridge is present', async () => {
     const eventBridge = mockEventBridge()
     const sendSpy = spyOn(eventBridge, 'send')
 
     const VIEW_DURATION = ONE_SECOND as Duration
 
-    setupViewCollectionTest()
+    await setupViewCollectionTest()
 
     clock.tick(VIEW_DURATION - relativeNow())
     window.dispatchEvent(createNewEvent('beforeunload'))
