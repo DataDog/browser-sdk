@@ -246,11 +246,7 @@ function isWronglyReportingCustomErrors() {
     return isWronglyReportingCustomErrorsCache
   }
 
-  const customErrorStack = customError.stack
-
-  // If the stack trace includes the custom error class name, it means that the constructor is added to the stacktrace
   // If the browser is correctly reporting the stacktrace, the normal error stacktrace should be the same as the custom error stacktrace
-  isWronglyReportingCustomErrorsCache =
-    String(customErrorStack).includes(DatadogTestCustomError.name) && nativeError.stack !== customErrorStack
+  isWronglyReportingCustomErrorsCache = nativeError.stack !== customError.stack
   return isWronglyReportingCustomErrorsCache
 }
