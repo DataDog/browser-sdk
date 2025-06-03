@@ -46,7 +46,6 @@ test.describe('browser extensions', () => {
 
       await page.goto(baseUrl)
 
-      // Check that RUM and Logs SDKs do not get overwritten by extension
       const pageRumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
       const pageLogsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
 
@@ -74,7 +73,7 @@ test.describe('browser extensions', () => {
       const extensionLogs: any[] = []
 
       // Listen for console events and filter for extension page only
-      // Becuase the test also goes to the base url, we need to filter for the extension page only
+      // Because the test also goes to the base url, we need to filter for the extension page only
       page.on('console', (msg) => {
         const url = msg.location().url
         if (url && url.startsWith(`chrome-extension://${extensionId}`)) {
@@ -97,10 +96,8 @@ test.describe('browser extensions', () => {
       expect(logsResult?.clientToken).toBe('abcd')
       expect(logsResult?.allowedTrackingOrigins).toEqual([expectedOriginPattern])
 
-      // In the extension popup with correct allowedTrackingOrigins, there should be no error logs
       expect(extensionLogs).toEqual([])
 
-      // Clear browser logs to prevent framework teardown from failing due to content script errors
       flushBrowserLogs()
     })
 
@@ -113,7 +110,6 @@ test.describe('browser extensions', () => {
 
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
 
-      // Check RUM initialization
       const rumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
       const logsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
 
@@ -124,7 +120,6 @@ test.describe('browser extensions', () => {
 
       await page.goto(baseUrl)
 
-      // Check that SDK does not get overwritten by extension
       const pageRumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
       const pageLogsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
 
