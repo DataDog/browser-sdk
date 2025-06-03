@@ -4,7 +4,6 @@ import { MAX_TASK_TIME, requestIdleCallbackShim, requestIdleCallback } from './r
 describe('requestIdleCallback', () => {
   it('fallbacks to the shim when requestIdleCallback is not available', () => {
     const clock = mockClock()
-    registerCleanupTask(clock.cleanup)
     removeGlobalRequestIdleCallback()
 
     const spy = jasmine.createSpy<(deadline: IdleDeadline) => void>()
@@ -22,9 +21,6 @@ describe('requestIdleCallbackShim', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    registerCleanupTask(() => {
-      clock.cleanup()
-    })
   })
 
   it('calls the callback asynchronously', () => {

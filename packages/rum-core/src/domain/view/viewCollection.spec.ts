@@ -80,7 +80,7 @@ describe('viewCollection', () => {
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const locationChangeObservable = new Observable<LocationChange>()
-    const clock = mockClock()
+    mockClock()
 
     const collectionResult = startViewCollection(
       lifeCycle,
@@ -102,7 +102,6 @@ describe('viewCollection', () => {
     registerCleanupTask(() => {
       collectionResult.stop()
       viewHistory.stop()
-      clock.cleanup()
     })
     return collectionResult
   }

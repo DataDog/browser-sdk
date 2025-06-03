@@ -37,7 +37,7 @@ let stopCallbacks: Array<() => void> = []
 export function startSessionManager<TrackingType extends string>(
   configuration: Configuration,
   productKey: string,
-  computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean },
+  computeTrackingType: (rawTrackingType?: string) => TrackingType,
   trackingConsentState: TrackingConsentState
 ): SessionManager<TrackingType> {
   const renewObservable = new Observable<void>()
@@ -48,7 +48,7 @@ export function startSessionManager<TrackingType extends string>(
     configuration.sessionStoreStrategyType!,
     configuration,
     productKey,
-    computeSessionState
+    computeTrackingType
   )
   stopCallbacks.push(() => sessionStore.stop())
 

@@ -5,12 +5,17 @@ import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
-import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
+import {
+  SESSION_EXPIRATION_DELAY,
+  SESSION_NOT_TRACKED,
+  SESSION_TIME_OUT_DELAY,
+  SessionPersistence,
+} from './sessionConstants'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',
-  NOT_TRACKED = 'not-tracked',
+  NOT_TRACKED = SESSION_NOT_TRACKED,
 }
 
 const DURATION = 123456
@@ -173,13 +178,7 @@ describe('session store', () => {
     let clock: Clock
 
     function setupSessionStore(
-      computeSessionState: (rawTrackingType?: string) => {
-        trackingType: FakeTrackingType
-        isTracked: boolean
-      } = () => ({
-        isTracked: true,
-        trackingType: FakeTrackingType.TRACKED,
-      })
+      computeTrackingType: (rawTrackingType?: string) => FakeTrackingType = () => FakeTrackingType.TRACKED
     ) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
       if (sessionStoreStrategyType?.type !== SessionPersistence.COOKIE) {
@@ -190,7 +189,7 @@ describe('session store', () => {
         sessionStoreStrategyType,
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
-        computeSessionState
+        computeTrackingType
       )
       sessionStoreManager.expireObservable.subscribe(expireSpy)
       sessionStoreManager.renewObservable.subscribe(renewSpy)
@@ -204,7 +203,6 @@ describe('session store', () => {
 
     afterEach(() => {
       resetSessionInStore()
-      clock.cleanup()
       sessionStoreManager.stop()
     })
 
@@ -254,7 +252,7 @@ describe('session store', () => {
         'when session not in cache, session not in store and new session not tracked, ' +
           'should store not tracked session and trigger renew session',
         () => {
-          setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
+          setupSessionStore(() => FakeTrackingType.NOT_TRACKED)
 
           sessionStoreManager.expandOrRenewSession()
 
@@ -301,7 +299,7 @@ describe('session store', () => {
           'should expire session, store not tracked session and trigger renew session',
         () => {
           setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-          setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
+          setupSessionStore(() => FakeTrackingType.NOT_TRACKED)
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -319,7 +317,7 @@ describe('session store', () => {
           'should expire session, store not tracked session and trigger renew session',
         () => {
           setSessionInStore(FakeTrackingType.NOT_TRACKED)
-          setupSessionStore(() => ({ isTracked: false, trackingType: FakeTrackingType.NOT_TRACKED }))
+          setupSessionStore(() => FakeTrackingType.NOT_TRACKED)
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -368,10 +366,9 @@ describe('session store', () => {
           'should expire session, store not tracked session and trigger renew',
         () => {
           setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-          setupSessionStore((rawTrackingType) => ({
-            isTracked: rawTrackingType === FakeTrackingType.TRACKED,
-            trackingType: rawTrackingType as FakeTrackingType,
-          }))
+          setupSessionStore((rawTrackingType) =>
+            rawTrackingType === FakeTrackingType.TRACKED ? FakeTrackingType.TRACKED : FakeTrackingType.NOT_TRACKED
+          )
           setSessionInStore(FakeTrackingType.NOT_TRACKED, '')
 
           sessionStoreManager.expandOrRenewSession()
@@ -554,20 +551,14 @@ describe('session store', () => {
     let clock: Clock
 
     function setupSessionStore(updateSpy: () => void) {
-      const computeSessionState: (rawTrackingType?: string) => {
-        trackingType: FakeTrackingType
-        isTracked: boolean
-      } = () => ({
-        isTracked: true,
-        trackingType: FakeTrackingType.TRACKED,
-      })
+      const computeTrackingType: (rawTrackingType?: string) => FakeTrackingType = () => FakeTrackingType.TRACKED
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
 
       const sessionStoreManager = startSessionStore(
         sessionStoreStrategyType!,
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
-        computeSessionState
+        computeTrackingType
       )
       sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpy)
 
@@ -585,7 +576,6 @@ describe('session store', () => {
 
     afterEach(() => {
       resetSessionInStore()
-      clock.cleanup()
       sessionStoreManager.stop()
       otherSessionStoreManager.stop()
     })
