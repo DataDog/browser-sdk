@@ -183,6 +183,23 @@ test.describe('API calls and events around init', () => {
       const viewContext = await page.evaluate(() => window.DD_RUM?.getViewContext())
       expect(viewContext).toEqual({ foo: 'bar' })
     })
+
+  createTest('context set right after init should be applied to events generated during init')
+    .withRum()
+    .withRumSlim()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+      window.DD_RUM!.setViewContext({ viewContext: true })
+      window.DD_RUM!.setGlobalContext({ globalContext: true })
+      window.DD_RUM!.setUser({ id: 'user-id' })
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const initialView = intakeRegistry.rumViewEvents[0]
+      expect(initialView.context).toEqual({ viewContext: true, globalContext: true })
+      expect(initialView.usr).toEqual({ id: 'user-id' })
+    })
 })
 
 test.describe('beforeSend', () => {
