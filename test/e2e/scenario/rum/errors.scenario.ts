@@ -169,6 +169,8 @@ test.describe('rum errors', () => {
 
       await flushEvents()
       expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+
+      console.log(intakeRegistry.rumErrorEvents[0].error)
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
