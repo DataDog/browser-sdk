@@ -8,7 +8,9 @@ export interface ProfilingContextManager {
   getProfilingContext: () => ProfilingInternalContextSchema
 }
 
-export const createProfilingContextManager = (initialStatus: NonNullable<ProfilingInternalContextSchema['status']>): ProfilingContextManager => {
+export const createProfilingContextManager = (
+  initialStatus: NonNullable<ProfilingInternalContextSchema['status']>
+): ProfilingContextManager => {
   let currentContext: ProfilingInternalContextSchema = {
     status: initialStatus,
   }
