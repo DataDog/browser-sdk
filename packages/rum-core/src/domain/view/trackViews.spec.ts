@@ -798,9 +798,9 @@ describe('view event count', () => {
 
   it('should be updated when notified with a RUM_EVENT_COLLECTED event', () => {
     viewTest = setupViewTest({ lifeCycle })
-    const { getViewUpdate, getViewUpdateCount } = viewTest
+    const { getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
 
-    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
+    lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent(getViewCreate(0).id))
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -809,10 +809,10 @@ describe('view event count', () => {
 
   it('should take child events occurring on view end into account', () => {
     viewTest = setupViewTest({ lifeCycle, initialLocation: 'http://foo.com' })
-    const { getViewUpdate, getViewUpdateCount } = viewTest
+    const { getViewCreate, getViewUpdate, getViewUpdateCount } = viewTest
 
     lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent())
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, createFakeActionEvent(getViewCreate(0).id))
     })
 
     viewTest.changeLocation('/bar')
@@ -861,11 +861,11 @@ describe('view event count', () => {
     expect(latestUpdate.id).not.toEqual(firstView.id)
   })
 
-  function createFakeActionEvent() {
+  function createFakeActionEvent(viewId: string) {
     return {
       type: RumEventType.ACTION,
       action: {},
-      view: viewTest.getLatestViewContext(),
+      view: { id: viewId },
     } as RumEvent & Context
   }
 
