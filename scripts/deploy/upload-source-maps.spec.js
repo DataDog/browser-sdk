@@ -75,12 +75,6 @@ void describe('upload-source-maps', () => {
         },
       ])
 
-      // no telemetry org yet
-      if (site === siteByDatacenter['ap2']) {
-        assert.deepEqual(commandsByDatacenter, [])
-        return
-      }
-
       // upload the source maps
       assert.deepEqual(commandsByDatacenter, [
         {
