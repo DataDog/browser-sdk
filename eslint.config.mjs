@@ -28,7 +28,6 @@ export default tseslint.config(
       'developer-extension/dist',
       'test/**/dist',
       'test/apps/base-extension/**',
-      'test/apps/react/**',
       'test/apps/allowed-tracking-origin/**',
       'test/apps/invalid-tracking-origin/**',
       'sandbox',
