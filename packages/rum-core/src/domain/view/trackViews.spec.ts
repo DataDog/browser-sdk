@@ -107,6 +107,15 @@ describe('view lifecycle', () => {
     changeLocation = viewTest.changeLocation
   })
 
+  it('notifies a View update asynchronously', () => {
+    const { getViewUpdateCount } = viewTest
+
+    expect(getViewUpdateCount()).toBe(0)
+    clock.tick(0)
+
+    expect(getViewUpdateCount()).toBe(1)
+  })
+
   describe('expire session', () => {
     it('should end the view when the session expires', () => {
       const { lifeCycle, getViewEndCount } = viewTest
