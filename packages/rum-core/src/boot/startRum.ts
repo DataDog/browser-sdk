@@ -15,6 +15,7 @@ import {
   getEventBridge,
   addTelemetryDebug,
   drainPreStartTelemetry,
+  startAccountContext,
 } from '@datadog/browser-core'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -48,7 +49,6 @@ import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import { startGlobalContext } from '../domain/contexts/globalContext'
 import { startUserContext } from '../domain/contexts/userContext'
-import { startAccountContext } from '../domain/contexts/accountContext'
 import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
@@ -142,7 +142,7 @@ export function startRum(
   startConnectivityContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration)
   const userContext = startUserContext(hooks, configuration, session)
-  const accountContext = startAccountContext(hooks, configuration)
+  const accountContext = startAccountContext(hooks, configuration, 'rum')
 
   const {
     actionContexts,

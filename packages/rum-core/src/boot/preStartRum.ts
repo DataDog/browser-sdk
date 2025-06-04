@@ -13,6 +13,7 @@ import {
   addTelemetryConfiguration,
   initFetchObservable,
   CustomerContextKey,
+  buildAccountContextManager,
 } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
@@ -26,7 +27,6 @@ import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../
 import { callPluginsMethod } from '../domain/plugins'
 import { buildGlobalContextManager } from '../domain/contexts/globalContext'
 import { buildUserContextManager } from '../domain/contexts/userContext'
-import { buildAccountContextManager } from '../domain/contexts/accountContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
