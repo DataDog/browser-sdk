@@ -15,6 +15,19 @@ export function mockClock() {
 
   registerCleanupTask(() => jasmine.clock().uninstall())
 
+  const pendingMicroTasks: Array<() => void> = []
+
+  const originalPromiseResolve = Promise.resolve.bind(Promise)
+  spyOn(Promise, 'resolve').and.callFake(
+    () =>
+      ({
+        then: (callback: () => void) => {
+          pendingMicroTasks.push(callback)
+          return originalPromiseResolve()
+        },
+      }) as Promise<void>
+  )
+
   return {
     /**
      * Returns a RelativeTime representing the time it was X milliseconds after the `mockClock()`
@@ -26,7 +39,10 @@ export function mockClock() {
      * invokation (the start of the test).
      */
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
-    tick: (ms: number) => jasmine.clock().tick(ms),
+    tick: (ms: number) => {
+      pendingMicroTasks.splice(0).forEach((task) => task())
+      jasmine.clock().tick(ms)
+    },
     setDate: (date: Date) => jasmine.clock().mockDate(date),
   }
 }
