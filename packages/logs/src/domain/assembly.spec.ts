@@ -30,18 +30,15 @@ const COMMON_CONTEXT: CommonContext = {
   },
   context: { common_context_key: 'common_context_value' },
   user: {},
-  account: {},
 }
 
 const COMMON_CONTEXT_WITH_USER_AND_ACCOUNT: CommonContext = {
   ...COMMON_CONTEXT,
   user: { id: 'id', name: 'name', email: 'test@test.com' },
-  account: { id: 'id', name: 'name' },
 }
 
 const COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID: CommonContext = {
   ...COMMON_CONTEXT,
-  account: { name: 'name' },
 }
 
 describe('startLogsAssembly', () => {
@@ -348,15 +345,14 @@ describe('user and account management', () => {
     serverLogs = []
   })
 
-  it('should not output usr/account key if user/account is not set', () => {
+  it('should not output usr key if user is not set', () => {
     startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toBeUndefined()
-    expect(serverLogs[0].account).toBeUndefined()
   })
 
-  it('should include user/account data when user/account has been set', () => {
+  it('should include user data when user has been set', () => {
     startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT_WITH_USER_AND_ACCOUNT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
@@ -365,14 +361,9 @@ describe('user and account management', () => {
       name: 'name',
       email: 'test@test.com',
     })
-
-    expect(serverLogs[0].account).toEqual({
-      id: 'id',
-      name: 'name',
-    })
   })
 
-  it('should prioritize global context over user/account context', () => {
+  it('should prioritize global context over user context', () => {
     const globalContextWithUser = {
       ...COMMON_CONTEXT_WITH_USER_AND_ACCOUNT,
       context: {

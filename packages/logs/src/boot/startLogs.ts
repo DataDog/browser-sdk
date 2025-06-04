@@ -4,6 +4,7 @@ import {
   createPageMayExitObservable,
   willSyntheticsInjectRum,
   canUseEventBridge,
+  startAccountContext,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -66,6 +67,7 @@ export function startLogs(
   startRuntimeErrorCollection(configuration, lifeCycle)
   startConsoleCollection(configuration, lifeCycle)
   startReportCollection(configuration, lifeCycle)
+  const accountContext = startAccountContext(hooks, configuration, 'logs')
   const { handleLog } = startLoggerCollection(lifeCycle)
 
   startLogsAssembly(session, configuration, lifeCycle, hooks, getCommonContext, reportError)
@@ -88,6 +90,7 @@ export function startLogs(
   return {
     handleLog,
     getInternalContext: internalContext.get,
+    accountContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
       stop()

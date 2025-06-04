@@ -8,6 +8,9 @@ import {
   initFetchObservable,
   noop,
   timeStampNow,
+  buildAccountContextManager,
+  CustomerContextKey,
+  bufferContextCalls,
 } from '@datadog/browser-core'
 import {
   validateAndBuildLogsConfiguration,
@@ -24,6 +27,11 @@ export function createPreStartStrategy(
   doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
+
+  // TODO next major: remove the  accountContextManager from preStartStrategy and use an empty context instead
+  const accountContext = buildAccountContextManager()
+  bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
+
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
@@ -79,6 +87,8 @@ export function createPreStartStrategy(
     get initConfiguration() {
       return cachedInitConfiguration
     },
+
+    accountContext,
 
     getInternalContext: noop as () => undefined,
 
