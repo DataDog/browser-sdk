@@ -66,6 +66,5 @@ export interface CommonContext {
     referrer: string
     url: string
   }
-  context: Context
   user: User
 }

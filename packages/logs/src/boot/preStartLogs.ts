@@ -18,6 +18,7 @@ import {
   type LogsInitConfiguration,
 } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
+import { buildGlobalContextManager } from '../domain/contexts/globalContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
@@ -28,7 +29,10 @@ export function createPreStartStrategy(
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
-  // TODO next major: remove the  accountContextManager from preStartStrategy and use an empty context instead
+  // TODO next major: remove the globalContext, accountContextManager from preStartStrategy and use an empty context instead
+  const globalContext = buildGlobalContextManager()
+  bufferContextCalls(globalContext, CustomerContextKey.globalContext, bufferApiCalls)
+
   const accountContext = buildAccountContextManager()
   bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
 
@@ -88,6 +92,7 @@ export function createPreStartStrategy(
       return cachedInitConfiguration
     },
 
+    globalContext,
     accountContext,
 
     getInternalContext: noop as () => undefined,

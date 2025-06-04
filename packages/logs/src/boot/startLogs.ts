@@ -23,6 +23,7 @@ import { startLogsTelemetry } from '../domain/logsTelemetry'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
+import { startGlobalContext } from '../domain/contexts/globalContext'
 
 export type StartLogs = typeof startLogs
 export type StartLogsResult = ReturnType<StartLogs>
@@ -51,6 +52,8 @@ export function startLogs(
       ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
+  const accountContext = startAccountContext(hooks, configuration, 'logs')
+  const globalContext = startGlobalContext(hooks, configuration)
   const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
 
   const { stop: stopLogsTelemetry } = startLogsTelemetry(
@@ -67,7 +70,6 @@ export function startLogs(
   startRuntimeErrorCollection(configuration, lifeCycle)
   startConsoleCollection(configuration, lifeCycle)
   startReportCollection(configuration, lifeCycle)
-  const accountContext = startAccountContext(hooks, configuration, 'logs')
   const { handleLog } = startLoggerCollection(lifeCycle)
 
   startLogsAssembly(session, configuration, lifeCycle, hooks, getCommonContext, reportError)
@@ -91,6 +93,7 @@ export function startLogs(
     handleLog,
     getInternalContext: internalContext.get,
     accountContext,
+    globalContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
       stop()
