@@ -183,6 +183,24 @@ test.describe('API calls and events around init', () => {
       const viewContext = await page.evaluate(() => window.DD_RUM?.getViewContext())
       expect(viewContext).toEqual({ foo: 'bar' })
     })
+
+  createTest('context set right after init should be applied to events generated during init')
+    .withRum()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+      window.DD_RUM!.setViewContext({ viewContext: true })
+      window.DD_RUM!.setGlobalContext({ globalContext: true })
+      window.DD_RUM!.setUser({ id: 'user-id' })
+      window.DD_RUM!.addFeatureFlagEvaluation('foo', true)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const initialView = intakeRegistry.rumViewEvents[0]
+      expect(initialView.context).toEqual({ viewContext: true, globalContext: true })
+      expect(initialView.usr).toEqual(expect.objectContaining({ id: 'user-id' }))
+      expect(initialView.feature_flags).toEqual({ foo: true })
+    })
 })
 
 test.describe('beforeSend', () => {
@@ -223,6 +241,83 @@ test.describe('beforeSend', () => {
       expect(initialView.context).toEqual(expect.objectContaining({ foo: 'bar' }))
       const initialDocument = intakeRegistry.rumResourceEvents[0]
       expect(initialDocument.context).toEqual(expect.objectContaining({ foo: 'bar' }))
+    })
+})
+
+test.describe('allowedTrackingOrigins', () => {
+  createTest('should not warn when allowedTrackingOrigins matches current domain')
+    .withRum()
+    .withRumInit((configuration) => {
+      const currentOrigin = window.location.origin
+      window.DD_RUM!.init({
+        ...configuration,
+        allowedTrackingOrigins: [currentOrigin],
+      })
+    })
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(0)
+      })
+    })
+
+  createTest('should not warn when allowedTrackingOrigins matches current domain with regex')
+    .withRum()
+    .withRumInit((configuration) => {
+      const currentOrigin = window.location.origin
+      const escapedOrigin = currentOrigin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      window.DD_RUM!.init({
+        ...configuration,
+        allowedTrackingOrigins: [new RegExp(`^${escapedOrigin}$`)],
+      })
+    })
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(0)
+      })
+    })
+
+  createTest('should not warn when allowedTrackingOrigins matches current domain with function')
+    .withRum()
+    .withRumInit((configuration) => {
+      const currentOrigin = window.location.origin
+      window.DD_RUM!.init({
+        ...configuration,
+        allowedTrackingOrigins: [(origin: string) => origin === currentOrigin],
+      })
+    })
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(0)
+      })
+    })
+
+  createTest('initializing RUM should not produce logs')
+    .withRum()
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(0)
+      })
+    })
+
+  createTest('should warn when allowedTrackingOrigins does not match current domain')
+    .withRum()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init({
+        ...configuration,
+        allowedTrackingOrigins: ['https://different-domain.com'],
+      })
+    })
+    .run(async ({ withBrowserLogs, intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      withBrowserLogs((logs) => {
+        const errorLogs = logs.filter(
+          (log) => log.message.includes('SDK initialized on a non-allowed domain') && log.level === 'error'
+        )
+        expect(errorLogs).toHaveLength(1)
+      })
+
+      expect(intakeRegistry.rumViewEvents.length).toBe(0)
     })
 })
 

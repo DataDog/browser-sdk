@@ -1,3 +1,4 @@
+import { monitorError } from '../monitor'
 import type { TimeoutId } from '../timer'
 import { setTimeout, clearTimeout } from '../timer'
 
@@ -43,3 +44,7 @@ export function throttle<T extends (...args: any[]) => void>(
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 export function noop() {}
+
+export function enqueueMicroTask(callback: () => void) {
+  Promise.resolve().then(callback).catch(monitorError)
+}
