@@ -1,8 +1,2 @@
-*
-!.gitignore
-!base-extension/
-!base-extension/**
-!react/
-!react/**
-!vanilla/
-!vanilla/**
+allowed-tracking-origin/
+invalid-tracking-origin/
