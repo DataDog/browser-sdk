@@ -9,15 +9,13 @@ import { trackViews } from './trackViews'
 
 export type ViewTest = ReturnType<typeof setupViewTest>
 
-interface ViewTrackingContext {
+interface ViewTestOptions {
   initialLocation?: string
   partialConfig?: Partial<RumConfiguration>
+  initialViewOptions?: ViewOptions
 }
 
-export function setupViewTest(
-  { initialLocation, partialConfig }: ViewTrackingContext = {},
-  initialViewOptions?: ViewOptions
-) {
+export function setupViewTest({ initialLocation, partialConfig, initialViewOptions }: ViewTestOptions = {}) {
   const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<RumMutationRecord[]>()
   const windowOpenObservable = new Observable<void>()
