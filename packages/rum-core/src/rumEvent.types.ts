@@ -444,8 +444,7 @@ export type RumErrorEvent = CommonProperties &
  */
 export type RumLongTaskEvent = CommonProperties &
   ActionChildProperties &
-  ViewContainerSchema &
-  ProfilingSchema & {
+  ViewContainerSchema & {
     /**
      * RUM event type
      */
@@ -556,6 +555,10 @@ export type RumLongTaskEvent = CommonProperties &
        * Whether the long task should be discarded or indexed
        */
       readonly discarded?: boolean
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -819,8 +822,7 @@ export type RumResourceEvent = CommonProperties &
  * Schema of all properties of a View event
  */
 export type RumViewEvent = CommonProperties &
-  ViewContainerSchema &
-  ProfilingSchema & {
+  ViewContainerSchema & {
     /**
      * RUM event type
      */
@@ -1177,6 +1179,10 @@ export type RumViewEvent = CommonProperties &
         readonly start_session_replay_recording_manually?: boolean
         [k: string]: unknown
       }
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     /**
@@ -1645,9 +1651,9 @@ export interface ActionChildProperties {
   [k: string]: unknown
 }
 /**
- * Profiling schema for the RUM Profiler
+ * RUM Profiler Internal Context schema
  */
-export interface ProfilingSchema {
+export interface ProfilingInternalContextSchema {
   /**
    * Used to track the status of the RUM Profiler.
    *
@@ -1655,7 +1661,7 @@ export interface ProfilingSchema {
    *
    * - `not-available-in-slim-bundle`: The Profiler is not available in the slim bundle. Use the normal bundle to use the Profiler.
    * - `initializing`: The Profiler is initializing (i.e., when the SDK just started). This is the initial status.
-   * - `missing-feature`: The user has not set the `profiling` value in the `enableExperimentalFeatures` options.
+   * - `missing-feature`: Missing `profiling` value in the `enableExperimentalFeatures` options.
    * - `not-sampled`: The view was not sampled (i.e., when the sample rate is lower than 100%, there is a chance the view won't be profiled).
    * - `not-supported-by-browser`: The browser does not support the Profiler (i.e., `window.Profiler` is not available).
    * - `failed-to-lazy-load`: The Profiler script failed to be loaded by the browser (may be a connection issue or the chunk was not found).
