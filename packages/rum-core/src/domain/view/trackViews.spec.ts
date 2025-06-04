@@ -1,15 +1,8 @@
 import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  PageExitReason,
-  timeStampNow,
-  display,
-  relativeToClocks,
-  relativeNow,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { PageExitReason, timeStampNow, display, relativeToClocks, relativeNow } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
+import { mockClock, createNewEvent } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -31,10 +24,6 @@ describe('track views automatically', () => {
   beforeEach(() => {
     viewTest = setupViewTest({ lifeCycle, initialLocation: '/foo' }, { name: 'initial view name' })
     changeLocation = viewTest.changeLocation
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
   })
 
   describe('initial view', () => {
@@ -119,10 +108,6 @@ describe('view lifecycle', () => {
     )
 
     changeLocation = viewTest.changeLocation
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
   })
 
   describe('expire session', () => {
@@ -343,7 +328,7 @@ describe('view lifecycle', () => {
   it('should notify AFTER_VIEW_ENDED after VIEW_ENDED', () => {
     const callsCount = notifySpy.calls.count()
 
-    viewTest.stop()
+    viewTest.changeLocation('/bar')
 
     expect(notifySpy.calls.argsFor(callsCount)[0]).toEqual(LifeCycleEventType.VIEW_ENDED)
     expect(notifySpy.calls.argsFor(callsCount + 1)[0]).toEqual(LifeCycleEventType.AFTER_VIEW_ENDED)
@@ -355,13 +340,7 @@ describe('view loading type', () => {
   let viewTest: ViewTest
 
   beforeEach(() => {
-    mockClock()
-
     viewTest = setupViewTest({ lifeCycle })
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
   })
 
   it('should collect initial view type as "initial_load"', () => {
@@ -390,10 +369,6 @@ describe('view metrics', () => {
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     viewTest = setupViewTest({ lifeCycle })
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
   })
 
   describe('common view metrics', () => {
@@ -569,10 +544,6 @@ describe('view is active', () => {
 
   beforeEach(() => {
     viewTest = setupViewTest({ lifeCycle })
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
   })
 
   it('should set initial view as active', () => {
@@ -599,10 +570,6 @@ describe('view custom timings', () => {
   beforeEach(() => {
     clock = mockClock()
     viewTest = setupViewTest({ lifeCycle, initialLocation: '/foo' })
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
   })
 
   it('should add custom timing to current view', () => {
@@ -735,10 +702,6 @@ describe('start view', () => {
   beforeEach(() => {
     clock = mockClock()
     viewTest = setupViewTest({ lifeCycle })
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
   })
 
   it('should start a new view', () => {
@@ -831,11 +794,6 @@ describe('view event count', () => {
 
   beforeEach(() => {
     clock = mockClock()
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-      resetExperimentalFeatures()
-    })
   })
 
   it('should be updated when notified with a RUM_EVENT_COLLECTED event', () => {
@@ -987,15 +945,6 @@ describe('service and version', () => {
   const lifeCycle = new LifeCycle()
   let viewTest: ViewTest
 
-  beforeEach(() => {
-    mockClock()
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-      resetExperimentalFeatures()
-    })
-  })
-
   it('should come from the init configuration by default', () => {
     viewTest = setupViewTest({ lifeCycle, partialConfig: { service: 'service', version: 'version' } })
 
@@ -1027,10 +976,6 @@ describe('BFCache views', () => {
 
   beforeEach(() => {
     viewTest = setupViewTest({ lifeCycle, partialConfig: { trackBfcacheViews: true } })
-
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
   })
 
   it('should create a new "bf_cache" view when restoring from the BFCache', () => {
