@@ -226,6 +226,83 @@ test.describe('beforeSend', () => {
     })
 })
 
+test.describe('allowedTrackingOrigins', () => {
+  createTest('should not warn when allowedTrackingOrigins matches current domain')
+    .withRum()
+    .withRumInit((configuration) => {
+      const currentOrigin = window.location.origin
+      window.DD_RUM!.init({
+        ...configuration,
+        allowedTrackingOrigins: [currentOrigin],
+      })
+    })
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(0)
+      })
+    })
+
+  createTest('should not warn when allowedTrackingOrigins matches current domain with regex')
+    .withRum()
+    .withRumInit((configuration) => {
+      const currentOrigin = window.location.origin
+      const escapedOrigin = currentOrigin.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      window.DD_RUM!.init({
+        ...configuration,
+        allowedTrackingOrigins: [new RegExp(`^${escapedOrigin}$`)],
+      })
+    })
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(0)
+      })
+    })
+
+  createTest('should not warn when allowedTrackingOrigins matches current domain with function')
+    .withRum()
+    .withRumInit((configuration) => {
+      const currentOrigin = window.location.origin
+      window.DD_RUM!.init({
+        ...configuration,
+        allowedTrackingOrigins: [(origin: string) => origin === currentOrigin],
+      })
+    })
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(0)
+      })
+    })
+
+  createTest('initializing RUM should not produce logs')
+    .withRum()
+    .run(({ withBrowserLogs }) => {
+      withBrowserLogs((logs) => {
+        expect(logs).toHaveLength(0)
+      })
+    })
+
+  createTest('should warn when allowedTrackingOrigins does not match current domain')
+    .withRum()
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init({
+        ...configuration,
+        allowedTrackingOrigins: ['https://different-domain.com'],
+      })
+    })
+    .run(async ({ withBrowserLogs, intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      withBrowserLogs((logs) => {
+        const errorLogs = logs.filter(
+          (log) => log.message.includes('SDK initialized on a non-allowed domain') && log.level === 'error'
+        )
+        expect(errorLogs).toHaveLength(1)
+      })
+
+      expect(intakeRegistry.rumViewEvents.length).toBe(0)
+    })
+})
+
 function expectToHaveErrors(
   events: IntakeRegistry,
   ...errors: Array<{ message: string; viewId: string; context?: Context }>

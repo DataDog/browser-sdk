@@ -84,7 +84,6 @@ describe('logs entry', () => {
         },
         context: { foo: 'bar' },
         user: {},
-        account: {},
       })
     })
   })
@@ -321,44 +320,44 @@ describe('logs entry', () => {
     })
 
     describe('setAccount', () => {
-      let logsPublicApi: LogsPublicApi
       let displaySpy: jasmine.Spy<() => void>
+      let logsPublicApi: LogsPublicApi
 
       beforeEach(() => {
         displaySpy = spyOn(display, 'error')
         logsPublicApi = makeLogsPublicApi(startLogs)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
-      it('should store account in common context', () => {
+      it('should attach valid objects', () => {
         const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
         logsPublicApi.setAccount(account)
 
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
-        expect(getCommonContext().account).toEqual({
+        expect(logsPublicApi.getAccount()).toEqual({
           foo: { bar: 'qux' },
           id: 'foo',
           name: 'bar',
         })
+        expect(displaySpy).not.toHaveBeenCalled()
       })
 
       it('should sanitize predefined properties', () => {
         const account = { id: false, name: 2 }
         logsPublicApi.setAccount(account as any)
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
-        expect(getCommonContext().account).toEqual({
+
+        expect(logsPublicApi.getAccount()).toEqual({
           id: 'false',
           name: '2',
         })
+        expect(displaySpy).not.toHaveBeenCalled()
       })
 
-      it('should clear a previously set account', () => {
-        const account = { id: 'foo', name: 'bar', foo: 'qux' }
+      it('should remove the account', () => {
+        const account = { id: 'foo', name: 'bar' }
         logsPublicApi.setAccount(account)
         logsPublicApi.clearAccount()
 
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
-        expect(getCommonContext().account).toEqual({})
+        expect(logsPublicApi.getAccount()).toEqual({})
+        expect(displaySpy).not.toHaveBeenCalled()
       })
 
       it('should reject non object input', () => {
@@ -374,7 +373,6 @@ describe('logs entry', () => {
 
       beforeEach(() => {
         logsPublicApi = makeLogsPublicApi(startLogs)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
       it('should return empty object if no account has been set', () => {
@@ -401,7 +399,6 @@ describe('logs entry', () => {
 
       beforeEach(() => {
         logsPublicApi = makeLogsPublicApi(startLogs)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
       it('should add attribute', () => {
@@ -444,9 +441,7 @@ describe('logs entry', () => {
 
       beforeEach(() => {
         logsPublicApi = makeLogsPublicApi(startLogs)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
-
       it('should remove property', () => {
         const account = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
 
