@@ -108,11 +108,13 @@ function startRumStub(
 
 describe('rum session', () => {
   let serverRumEvents: RumEvent[]
+  let clock: Clock
   let lifeCycle: LifeCycle
   let sessionManager: RumSessionManagerMock
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
+    clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('42')
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
@@ -135,6 +137,7 @@ describe('rum session', () => {
   })
 
   it('when the session is renewed, a new view event should be sent', () => {
+    clock.tick(0)
     expect(serverRumEvents.length).toEqual(1)
     expect(serverRumEvents[0].type).toEqual('view')
     expect(serverRumEvents[0].session.id).toEqual('42')
@@ -144,6 +147,7 @@ describe('rum session', () => {
 
     sessionManager.setId('43')
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+    clock.tick(0)
 
     expect(serverRumEvents.length).toEqual(3)
 
@@ -223,7 +227,6 @@ describe('rum events url', () => {
 
   let changeLocation: (to: string) => void
   let lifeCycle: LifeCycle
-  let clock: Clock
   let serverRumEvents: RumEvent[]
   let stop: () => void
 
@@ -259,10 +262,12 @@ describe('rum events url', () => {
   })
 
   it('should keep the same URL when updating a view ended by a URL change', () => {
+    const clock = mockClock()
     setupViewUrlTest()
     serverRumEvents.length = 0
 
     changeLocation('/bar')
+    clock.tick(0)
 
     expect(serverRumEvents.length).toEqual(2)
     expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
@@ -270,7 +275,7 @@ describe('rum events url', () => {
   })
 
   it('should attach the url corresponding to the start of the event', () => {
-    clock = mockClock()
+    const clock = mockClock()
     const { notifyPerformanceEntries } = mockPerformanceObserver()
 
     setupViewUrlTest()
@@ -297,13 +302,14 @@ describe('rum events url', () => {
   })
 
   it('should keep the same URL when updating an ended view', () => {
-    clock = mockClock()
+    const clock = mockClock()
     const { triggerOnLoad } = mockDocumentReadyState()
     setupViewUrlTest()
 
     clock.tick(VIEW_DURATION)
 
     changeLocation('/bar')
+    clock.tick(0)
 
     serverRumEvents.length = 0
 
