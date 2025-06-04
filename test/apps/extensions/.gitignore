@@ -1,9 +1,0 @@
-*
-!.gitignore
-!base/
-!base/**
-
-extension-default/
-extension-chrome/
-extension-example/
-
