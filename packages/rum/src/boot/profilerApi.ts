@@ -3,7 +3,8 @@ import type {
   ViewHistory,
   RumSessionManager,
   RumConfiguration,
-  ProfilerApi,ProfilingContextManager
+  ProfilerApi,
+  ProfilingContextManager,
 } from '@datadog/browser-rum-core'
 import { createProfilingContextManager } from '@datadog/browser-rum-core'
 import {
