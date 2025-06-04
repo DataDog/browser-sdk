@@ -3,7 +3,7 @@ import type {
   ViewHistory,
   RumSessionManager,
   RumConfiguration,
-  ProfilerApi,
+  ProfilerApi,ProfilingContextManager
 } from '@datadog/browser-rum-core'
 import { createProfilingContextManager } from '@datadog/browser-rum-core'
 import {
@@ -19,7 +19,7 @@ import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
-  const profilingContextManager = createProfilingContextManager('initializing')
+  const profilingContextManager: ProfilingContextManager = createProfilingContextManager('initializing')
 
   function onRumStart(
     lifeCycle: LifeCycle,
