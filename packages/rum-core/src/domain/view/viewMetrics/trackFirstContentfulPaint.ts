@@ -29,9 +29,7 @@ export function trackFirstContentfulPaint(
         entry.startTime < FCP_MAXIMUM_DELAY
     )
     if (fcpEntry) {
-      const adjustedFcp = activationStart > 0
-        ? Math.max(0, fcpEntry.startTime - activationStart)
-        : fcpEntry.startTime
+      const adjustedFcp = activationStart > 0 ? Math.max(0, fcpEntry.startTime - activationStart) : fcpEntry.startTime
       callback(adjustedFcp as RelativeTime)
     }
   })

@@ -30,8 +30,6 @@ export function trackLargestContentfulPaint(
   callback: (largestContentfulPaint: LargestContentfulPaint) => void,
   getActivationStartImpl = getActivationStart
 ) {
-  const activationStart = getActivationStartImpl()
-
   // Ignore entries that come after the first user interaction. According to the documentation, the
   // browser should not send largest-contentful-paint entries after a user interact with the page,
   // but the web-vitals reference implementation uses this as a safeguard.
@@ -63,16 +61,21 @@ export function trackLargestContentfulPaint(
         entry.size > biggestLcpSize
     )
     if (lcpEntry) {
+      const activationStart = getActivationStartImpl()
+      const adjustedStartTime = activationStart > 0
+        ? Math.max(0, lcpEntry.startTime - activationStart)
+        : lcpEntry.startTime
+
       let lcpTargetSelector
       if (lcpEntry.element) {
         lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
       }
 
-      callback({
-        value: lcpEntry.startTime,
-        targetSelector: lcpTargetSelector,
-        resourceUrl: computeLcpEntryUrl(lcpEntry),
-      })
+    callback({
+      value: adjustedStartTime as RelativeTime,
+      targetSelector: lcpTargetSelector,
+      resourceUrl: computeLcpEntryUrl(lcpEntry),
+  })
       biggestLcpSize = lcpEntry.size
     }
   })

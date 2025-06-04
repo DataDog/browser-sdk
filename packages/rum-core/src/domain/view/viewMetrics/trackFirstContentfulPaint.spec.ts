@@ -16,7 +16,12 @@ describe('trackFirstContentfulPaint', () => {
 
     fcpCallback = jasmine.createSpy()
     const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-    const firstContentfulPaint = trackFirstContentfulPaint(mockRumConfiguration(), firstHidden, fcpCallback, () => activationStart as RelativeTime)
+    const firstContentfulPaint = trackFirstContentfulPaint(
+      mockRumConfiguration(),
+      firstHidden,
+      fcpCallback,
+      () => activationStart as RelativeTime
+    )
 
     registerCleanupTask(() => {
       firstHidden.stop()
