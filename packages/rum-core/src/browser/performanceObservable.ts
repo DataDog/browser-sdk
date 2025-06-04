@@ -46,6 +46,7 @@ export interface RumPerformanceResourceTiming {
   name: string
   startTime: RelativeTime
   duration: Duration
+  activationStart?: RelativeTime
   fetchStart: RelativeTime
   workerStart: RelativeTime
   domainLookupStart: RelativeTime

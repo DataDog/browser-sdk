@@ -4,6 +4,7 @@ import type { RumPerformancePaintTiming } from '../../../browser/performanceObse
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
 import type { FirstHidden } from './trackFirstHidden'
+import { getActivationStart } from 'packages/rum-core/src/browser/performanceUtils'
 
 // Discard FCP timings above a certain delay to avoid incorrect data
 // It happens in some cases like sleep mode or some browser implementations
@@ -12,8 +13,11 @@ export const FCP_MAXIMUM_DELAY = 10 * ONE_MINUTE
 export function trackFirstContentfulPaint(
   configuration: RumConfiguration,
   firstHidden: FirstHidden,
-  callback: (fcpTiming: RelativeTime) => void
+  callback: (fcpTiming: RelativeTime) => void,
+  getActivationStartImpl = getActivationStart
 ) {
+  const activationStart = getActivationStartImpl()
+
   const performanceSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.PAINT,
     buffered: true,
@@ -25,7 +29,10 @@ export function trackFirstContentfulPaint(
         entry.startTime < FCP_MAXIMUM_DELAY
     )
     if (fcpEntry) {
-      callback(fcpEntry.startTime)
+      const adjustedFcp = activationStart > 0
+        ? Math.max(0, fcpEntry.startTime - activationStart)
+        : fcpEntry.startTime
+      callback(adjustedFcp as RelativeTime)
     }
   })
   return {

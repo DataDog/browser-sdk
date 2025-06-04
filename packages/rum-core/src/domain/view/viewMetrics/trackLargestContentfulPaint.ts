@@ -5,6 +5,7 @@ import { createPerformanceObservable, RumPerformanceEntryType } from '../../../b
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
+import { getActivationStart } from 'packages/rum-core/src/browser/performanceUtils'
 
 // Discard LCP timings above a certain delay to avoid incorrect data
 // It happens in some cases like sleep mode or some browser implementations
@@ -26,8 +27,11 @@ export function trackLargestContentfulPaint(
   configuration: RumConfiguration,
   firstHidden: FirstHidden,
   eventTarget: Window,
-  callback: (largestContentfulPaint: LargestContentfulPaint) => void
+  callback: (largestContentfulPaint: LargestContentfulPaint) => void,
+  getActivationStartImpl = getActivationStart
 ) {
+  const activationStart = getActivationStartImpl()
+
   // Ignore entries that come after the first user interaction. According to the documentation, the
   // browser should not send largest-contentful-paint entries after a user interact with the page,
   // but the web-vitals reference implementation uses this as a safeguard.
