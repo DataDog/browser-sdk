@@ -799,7 +799,7 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly span_id?: string
       /**
-       * trace identifier, either a 64 bit decimal number or a 128 bit hexadecimal number padded with 0s
+       * trace identifier in decimal format
        */
       readonly trace_id?: string
       /**
@@ -1508,7 +1508,7 @@ export interface CommonProperties {
     /**
      * Device type info
      */
-    readonly type: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other'
+    readonly type?: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other'
     /**
      * Device marketing name, e.g. Xiaomi Redmi Note 8 Pro, Pixel 5, etc.
      */
@@ -1525,6 +1525,18 @@ export interface CommonProperties {
      * The CPU architecture of the device that is reporting the error
      */
     readonly architecture?: string
+    /**
+     * The user’s current locale as a language tag combining language and region, e.g. 'en-US'.
+     */
+    readonly current_locale?: string
+    /**
+     * Ordered list of the user’s preferred system languages as IETF language tags.
+     */
+    readonly locales?: unknown[]
+    /**
+     * The device’s current time zone identifier, e.g. 'Europe/Berlin'.
+     */
+    readonly time_zone?: string
     [k: string]: unknown
   }
   /**
