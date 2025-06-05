@@ -5,6 +5,7 @@ import {
   willSyntheticsInjectRum,
   canUseEventBridge,
   startAccountContext,
+  startGlobalContext,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -23,7 +24,6 @@ import { startLogsTelemetry } from '../domain/logsTelemetry'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
-import { startGlobalContext } from '../domain/contexts/globalContext'
 
 export type StartLogs = typeof startLogs
 export type StartLogsResult = ReturnType<StartLogs>
@@ -53,7 +53,7 @@ export function startLogs(
       : startLogsSessionManagerStub(configuration)
 
   const accountContext = startAccountContext(hooks, configuration, 'logs')
-  const globalContext = startGlobalContext(hooks, configuration)
+  const globalContext = startGlobalContext(hooks, configuration, 'logs', false)
   const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
 
   const { stop: stopLogsTelemetry } = startLogsTelemetry(

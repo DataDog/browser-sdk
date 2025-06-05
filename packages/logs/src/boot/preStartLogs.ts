@@ -11,6 +11,7 @@ import {
   buildAccountContextManager,
   CustomerContextKey,
   bufferContextCalls,
+  buildGlobalContextManager,
 } from '@datadog/browser-core'
 import {
   validateAndBuildLogsConfiguration,
@@ -18,7 +19,6 @@ import {
   type LogsInitConfiguration,
 } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
-import { buildGlobalContextManager } from '../domain/contexts/globalContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
