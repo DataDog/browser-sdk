@@ -144,7 +144,7 @@ export interface RawRumViewEvent {
       start_session_replay_recording_manually: boolean
     }
   }
-  device: {
+  device?: {
     current_locale?: string
     locales?: string[] | readonly string[]
     time_zone?: string
