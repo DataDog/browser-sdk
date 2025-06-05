@@ -114,11 +114,14 @@ async function fetchConfiguration(options: DatadogProviderOptions, context: Eval
   const parameters = [
     `application_id=${options.applicationId}`,
     `client_token=${options.clientToken}`,
-    `dd_api_key=${options.clientToken}`,
   ]
 
-  const response = await fetch(`${baseUrl}/api/unstable/feature-flags/assignments?${parameters.join('&')}`, {
+  const response = await fetch(`${baseUrl}/api/unstable/precompute-assignments?${parameters.join('&')}`, {
     method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'DD-API-KEY': options.clientToken,
+    },
     body: JSON.stringify({
       context,
     }),
