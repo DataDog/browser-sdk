@@ -3,17 +3,11 @@ import { test, expect } from '@playwright/test'
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION, createTest } from '../../lib/framework'
 
 // Different extension build paths for different configurations
-const pathToBaseExtension = path.join(__dirname, '../../../../test/apps/extensions/base')
+const pathToBaseExtension = path.join(__dirname, '../../../../test/apps/base-extension')
 // Contains allowedTrackingOrigins parameter with chrome-extension origin
-const pathToAllowedTrackingOriginExtension = path.join(
-  __dirname,
-  '../../../../test/apps/extensions/allowed-tracking-origin'
-)
+const pathToAllowedTrackingOriginExtension = path.join(__dirname, '../../../../test/apps/allowed-tracking-origin')
 // Contains allowedTrackingOrigins parameter with app.example.com origin
-const pathToInvalidTrackingOriginExtension = path.join(
-  __dirname,
-  '../../../../test/apps/extensions/invalid-tracking-origin'
-)
+const pathToInvalidTrackingOriginExtension = path.join(__dirname, '../../../../test/apps/invalid-tracking-origin')
 
 const warningMessage =
   'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
