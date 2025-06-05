@@ -1,10 +1,13 @@
-import type { TrackingConsentState } from '@datadog/browser-core'
+import type { Context, TrackingConsentState } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
   willSyntheticsInjectRum,
   canUseEventBridge,
   startAccountContext,
+  startTelemetry,
+  TelemetryService,
+  createIdentityEncoder,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -19,7 +22,6 @@ import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
-import { startLogsTelemetry } from '../domain/logsTelemetry'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
@@ -45,21 +47,25 @@ export function startLogs(
   const reportError = startReportError(lifeCycle)
   const pageMayExitObservable = createPageMayExitObservable(configuration)
 
+  const telemetry = startTelemetry(
+    TelemetryService.LOGS,
+    configuration,
+    reportError,
+    pageMayExitObservable,
+    createIdentityEncoder
+  )
+  cleanupTasks.push(telemetry.stop)
+
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
       ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
+  telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
   const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
-
-  const { stop: stopLogsTelemetry } = startLogsTelemetry(
-    configuration,
-    reportError,
-    pageMayExitObservable,
-    session,
-    getRUMInternalContext
-  )
-  cleanupTasks.push(() => stopLogsTelemetry())
+  telemetry.setContextProvider('application.id', () => getRUMInternalContext()?.application_id)
+  telemetry.setContextProvider('view.id', () => (getRUMInternalContext()?.view as Context)?.id)
+  telemetry.setContextProvider('action.id', () => (getRUMInternalContext()?.user_action as Context)?.id)
 
   startNetworkErrorCollection(configuration, lifeCycle)
   startRuntimeErrorCollection(configuration, lifeCycle)
