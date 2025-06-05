@@ -8,8 +8,11 @@ describe('DatadogProvider', () => {
 
   beforeEach(() => {
     provider = new DatadogProvider({
+      apiKey: 'xxx',
+      applicationKey: 'xxx',
       applicationId: 'xxx',
       clientToken: 'xxx',
+      env: 'test',
       baseUrl: 'http://localhost:8000',
     })
     mockLogger = {
