@@ -19,8 +19,9 @@ import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
 import { createBoundedBuffer } from '../../tools/boundedBuffer'
 import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../transport'
-import { createIdentityEncoder } from '../../tools/encoder'
+import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
+import { DeflateEncoderStreamId } from '../deflate'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -132,6 +133,7 @@ export function startTelemetryTransport(
   configuration: Configuration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   telemetryObservable: Observable<TelemetryEvent & Context>
 ) {
   const cleanupTasks: Array<() => void> = []
@@ -144,11 +146,11 @@ export function startTelemetryTransport(
       configuration,
       {
         endpoint: configuration.rumEndpointBuilder,
-        encoder: createIdentityEncoder(),
+        encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
       },
       configuration.replica && {
         endpoint: configuration.replica.rumEndpointBuilder,
-        encoder: createIdentityEncoder(),
+        encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY_REPLICA),
       },
       reportError,
       pageMayExitObservable,
