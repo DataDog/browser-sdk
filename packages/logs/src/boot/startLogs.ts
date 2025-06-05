@@ -7,7 +7,7 @@ import {
   startAccountContext,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
-import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'
 import { startReportCollection } from '../domain/report/reportCollection'
@@ -28,7 +28,6 @@ export type StartLogs = typeof startLogs
 export type StartLogsResult = ReturnType<StartLogs>
 
 export function startLogs(
-  initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
   getCommonContext: () => CommonContext,
 
@@ -54,7 +53,6 @@ export function startLogs(
   const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
 
   const { stop: stopLogsTelemetry } = startLogsTelemetry(
-    initConfiguration,
     configuration,
     reportError,
     pageMayExitObservable,

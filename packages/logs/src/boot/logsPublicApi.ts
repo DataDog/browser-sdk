@@ -226,7 +226,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
       storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
     }
 
-    const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext, trackingConsentState)
+    const startLogsResult = startLogsImpl(configuration, getCommonContext, trackingConsentState)
 
     strategy = createPostStartStrategy(initConfiguration, startLogsResult)
     return startLogsResult

@@ -11,8 +11,10 @@ import {
   buildAccountContextManager,
   CustomerContextKey,
   bufferContextCalls,
+  addTelemetryConfiguration,
 } from '@datadog/browser-core'
 import {
+  serializeLogsConfiguration,
   validateAndBuildLogsConfiguration,
   type LogsConfiguration,
   type LogsInitConfiguration,
@@ -62,6 +64,7 @@ export function createPreStartStrategy(
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration
+      addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
 
       if (cachedConfiguration) {
         displayAlreadyInitializedError('DD_LOGS', initConfiguration)

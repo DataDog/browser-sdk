@@ -7,15 +7,12 @@ import {
   startBatchWithReplica,
   createIdentityEncoder,
   isTelemetryReplicationAllowed,
-  addTelemetryConfiguration,
   drainPreStartTelemetry,
 } from '@datadog/browser-core'
-import type { LogsConfiguration, LogsInitConfiguration } from './configuration'
+import type { LogsConfiguration } from './configuration'
 import type { LogsSessionManager } from './logsSessionManager'
-import { serializeLogsConfiguration } from './configuration'
 
 export function startLogsTelemetry(
-  initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
@@ -64,7 +61,6 @@ export function startLogsTelemetry(
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
   drainPreStartTelemetry()
-  addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
   return {
     telemetry,
     stop: () => {
