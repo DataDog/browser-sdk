@@ -20,19 +20,19 @@ async function buildExtensions() {
   printLog('Building extensions with different configurations...')
 
   // Base extension directory
-  const baseExtDir = path.join(process.cwd(), 'test/apps/extensions/base')
+  const baseExtDir = path.join(process.cwd(), 'test/apps/base-extension')
 
   // Extension configurations
   const extensionNames = Object.keys(EXTENSIONS_INIT_PARAMETERS)
 
-  // 1. Create and build default extension (no parameter replacement)
-  printLog('Building default extension...')
+  // 1. Build the base extension first
+  printLog('Building base extension...')
   command`yarn install --no-immutable`.withCurrentWorkingDirectory(baseExtDir).withLogs().run()
   command`yarn build`.withCurrentWorkingDirectory(baseExtDir).withLogs().run()
 
   // 2. Create and build extensions with different configurations
   for (const extName of extensionNames) {
-    const targetDir = path.join(process.cwd(), `test/apps/extensions/${extName}`)
+    const targetDir = path.join(process.cwd(), 'test/apps', extName)
     const initParameter = EXTENSIONS_INIT_PARAMETERS[extName]
 
     printLog(`Creating ${extName} extension...`)
@@ -59,9 +59,9 @@ async function buildExtensions() {
 
   printLog('Extension builds completed successfully.')
   printLog('Available extensions:')
-  printLog(`  - Default: ${baseExtDir}`)
+  printLog(`  - Base: ${baseExtDir}`)
 
   for (const extName of extensionNames) {
-    printLog(`  - ${extName}: test/apps/extensions/${extName}`)
+    printLog(`  - ${extName}: test/apps/${extName}`)
   }
 }
