@@ -77,10 +77,8 @@ cmd_version () {
   node ./scripts/release/update-peer-dependency-versions.js
   lerna run pack --stream
   # keep test apps lockfiles up to date
-  cd test/apps
-  for app_dir in *; do
-    # unless the app is ignored
-    cat .gitignore | grep -q "$app_dir" && continue
+  for app_package_path in $(git ls-files test/apps/*/package.json); do
+    app_dir=$(dirname "$app_package_path");
     cd "$app_dir"
     yarn up
     git add yarn.lock
