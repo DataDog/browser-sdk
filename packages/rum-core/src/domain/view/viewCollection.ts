@@ -95,7 +95,6 @@ function processViewUpdate(
       cumulative_layout_shift: view.commonViewMetrics.cumulativeLayoutShift?.value,
       cumulative_layout_shift_time: toServerDuration(view.commonViewMetrics.cumulativeLayoutShift?.time),
       cumulative_layout_shift_target_selector: view.commonViewMetrics.cumulativeLayoutShift?.targetSelector,
-      current_locale: navigator.language,
       first_byte: toServerDuration(view.initialViewMetrics.navigationTimings?.firstByte),
       dom_complete: toServerDuration(view.initialViewMetrics.navigationTimings?.domComplete),
       dom_content_loaded: toServerDuration(view.initialViewMetrics.navigationTimings?.domContentLoaded),
@@ -117,7 +116,6 @@ function processViewUpdate(
       load_event: toServerDuration(view.initialViewMetrics.navigationTimings?.loadEvent),
       loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
       loading_type: view.loadingType,
-      locales: navigator?.languages ?? [],
       long_task: {
         count: view.eventCounts.longTaskCount,
       },
@@ -126,7 +124,6 @@ function processViewUpdate(
         count: view.eventCounts.resourceCount,
       },
       time_spent: toServerDuration(view.duration),
-      timezone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
     display: view.commonViewMetrics.scroll
       ? {
@@ -140,6 +137,11 @@ function processViewUpdate(
       : undefined,
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,
+    },
+    device: {
+      current_locale: navigator.language,
+      locales: navigator?.languages ?? [],
+      time_zone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
   }
 
