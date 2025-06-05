@@ -31,13 +31,7 @@ export function startLogsTelemetry(
     },
   }))
 
-  const { stop } = startTelemetryTransport(
-    configuration,
-    reportError,
-    pageMayExitObservable,
-    session.expireObservable,
-    telemetry.observable
-  )
+  const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, telemetry.observable)
   drainPreStartTelemetry()
   return {
     stop,

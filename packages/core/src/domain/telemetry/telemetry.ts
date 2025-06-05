@@ -131,7 +131,6 @@ export function startTelemetryTransport(
   configuration: Configuration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  expireObservable: Observable<void>,
   telemetryObservable: Observable<TelemetryEvent & Context>
 ) {
   const cleanupTasks: Array<() => void> = []
@@ -152,7 +151,10 @@ export function startTelemetryTransport(
       },
       reportError,
       pageMayExitObservable,
-      expireObservable
+
+      // We don't use an actual session expire observable here, to make telemetry collection
+      // independent of the session. This allows to start and send telemetry events ealier.
+      new Observable()
     )
     cleanupTasks.push(() => telemetryBatch.stop())
     const telemetrySubscription = telemetryObservable.subscribe((event) =>
