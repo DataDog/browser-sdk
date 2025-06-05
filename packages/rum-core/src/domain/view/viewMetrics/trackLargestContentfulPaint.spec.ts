@@ -165,22 +165,21 @@ describe('trackLargestContentfulPaint', () => {
       resourceUrl: undefined,
     })
   })
-  
+
   it('should adjust LCP based on activationStart when prerendered', () => {
     startLCPTracking(100 as RelativeTime)
-  
+
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
         startTime: 250 as RelativeTime,
         size: 100,
       }),
     ])
-  
+
     expect(lcpCallback).toHaveBeenCalledOnceWith({
       value: 150 as RelativeTime,
       targetSelector: undefined,
       resourceUrl: undefined,
     })
   })
-  
 })

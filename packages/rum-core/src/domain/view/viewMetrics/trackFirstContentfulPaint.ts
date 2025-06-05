@@ -2,9 +2,9 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { ONE_MINUTE, elapsed, relativeNow } from '@datadog/browser-core'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import { getActivationStart } from '../../../browser/performanceUtils'
 import type { RumConfiguration } from '../../configuration'
 import type { FirstHidden } from './trackFirstHidden'
-import { getActivationStart } from 'packages/rum-core/src/browser/performanceUtils'
 
 // Discard FCP timings above a certain delay to avoid incorrect data
 // It happens in some cases like sleep mode or some browser implementations

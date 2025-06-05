@@ -32,6 +32,7 @@ export default tseslint.config(
       'coverage',
       'rum-events-format',
       '.yarn',
+      'playwright-report',
     ],
   },
 

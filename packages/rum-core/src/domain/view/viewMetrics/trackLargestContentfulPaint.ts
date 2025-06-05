@@ -3,9 +3,9 @@ import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/bro
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
+import { getActivationStart } from '../../../browser/performanceUtils'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
-import { getActivationStart } from 'packages/rum-core/src/browser/performanceUtils'
 
 // Discard LCP timings above a certain delay to avoid incorrect data
 // It happens in some cases like sleep mode or some browser implementations
@@ -62,20 +62,19 @@ export function trackLargestContentfulPaint(
     )
     if (lcpEntry) {
       const activationStart = getActivationStartImpl()
-      const adjustedStartTime = activationStart > 0
-        ? Math.max(0, lcpEntry.startTime - activationStart)
-        : lcpEntry.startTime
+      const adjustedStartTime =
+        activationStart > 0 ? Math.max(0, lcpEntry.startTime - activationStart) : lcpEntry.startTime
 
       let lcpTargetSelector
       if (lcpEntry.element) {
         lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
       }
 
-    callback({
-      value: adjustedStartTime as RelativeTime,
-      targetSelector: lcpTargetSelector,
-      resourceUrl: computeLcpEntryUrl(lcpEntry),
-  })
+      callback({
+        value: adjustedStartTime as RelativeTime,
+        targetSelector: lcpTargetSelector,
+        resourceUrl: computeLcpEntryUrl(lcpEntry),
+      })
       biggestLcpSize = lcpEntry.size
     }
   })
