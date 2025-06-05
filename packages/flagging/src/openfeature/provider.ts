@@ -111,10 +111,7 @@ export class DatadogProvider implements Provider {
 async function fetchConfiguration(options: DatadogProviderOptions, context: EvaluationContext): Promise<Configuration> {
   const baseUrl = options.baseUrl || 'https://dd.datad0g.com'
 
-  const parameters = [
-    `application_id=${options.applicationId}`,
-    `client_token=${options.clientToken}`,
-  ]
+  const parameters = [`application_id=${options.applicationId}`, `client_token=${options.clientToken}`]
 
   const response = await fetch(`${baseUrl}/api/unstable/precompute-assignments?${parameters.join('&')}`, {
     method: 'POST',
