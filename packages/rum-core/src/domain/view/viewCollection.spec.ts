@@ -201,6 +201,11 @@ describe('viewCollection', () => {
         },
       },
       privacy: { replay_level: 'mask' },
+      device: {
+        current_locale: jasmine.any(String),
+        locales: jasmine.any(Array),
+        time_zone: jasmine.any(String),
+      },
     })
   })
 
