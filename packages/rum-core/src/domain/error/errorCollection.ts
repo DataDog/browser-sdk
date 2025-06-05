@@ -4,7 +4,6 @@ import {
   generateUUID,
   computeRawError,
   ErrorHandling,
-  Observable,
   trackRuntimeError,
   NonErrorPrefix,
   combine,
@@ -27,10 +26,9 @@ export interface ProvidedError {
 }
 
 export function startErrorCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
-  const errorObservable = new Observable<RawError>()
+  const errorObservable = trackRuntimeError()
 
   trackConsoleError(errorObservable)
-  trackRuntimeError(errorObservable)
   trackReportError(configuration, errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
