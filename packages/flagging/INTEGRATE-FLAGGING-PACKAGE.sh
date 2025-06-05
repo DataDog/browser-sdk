@@ -27,7 +27,7 @@ pushd "$FLAGGING_PATH" || exit 1
 # Generate UUID and update package.json version
 echo "Updating package version with prerelease tag and UUID..."
 UUID=$(uuidgen)
-PACKAGE_JSON_PATH="packages/flagging/package.json"
+PACKAGE_JSON_PATH="package.json"
 if [ ! -f "$PACKAGE_JSON_PATH" ]; then
     echo "Error: package.json not found at $PACKAGE_JSON_PATH"
     popd
