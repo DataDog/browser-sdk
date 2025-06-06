@@ -12,6 +12,8 @@ prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
+dev,@openfeature/core,Apache-2.0,Copyright Linux Foundation
+dev,@openfeature/web-sdk,Apache-2.0,Copyright Linux Foundation
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
 dev,@types/chrome,MIT,Copyright Microsoft Corporation
 dev,@types/connect-busboy,MIT,Copyright Microsoft Corporation
