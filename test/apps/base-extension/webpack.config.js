@@ -3,9 +3,12 @@ const path = require('path')
 module.exports = {
   mode: 'production',
   target: ['web', 'es2018'],
-  entry: './src/contentScript.js',
+  entry: {
+    'content-script': './src/contentScript.ts',
+    'background': './src/background.ts'
+  },
   output: {
-    filename: 'content-script.js',
+    filename: '[name].js',
     path: path.resolve(__dirname, 'dist'),
     publicPath: '',
   },
