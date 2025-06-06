@@ -5,6 +5,6 @@ export function makeProfilerApiStub(): ProfilerApi {
   return {
     onRumStart: noop,
     stop: noop,
-    getProfilingContext: () => ({ status: 'not-available-in-slim-bundle' }),
+    getProfilingContext: () => undefined, // no context in slim bundle
   }
 }
