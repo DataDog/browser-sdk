@@ -969,13 +969,20 @@ Error: foo
     }
     class DatadogTestCustomError2 extends DatadogTestCustomError {}
 
-    const [customError, customErrorWithInheritance, nativeError] = [
+    const [customError, customErrorWithInheritance, customErrorWithAnonymousInheritance, nativeError] = [
       DatadogTestCustomError,
       DatadogTestCustomError2,
+      class extends DatadogTestCustomError2 {
+        constructor() {
+          super()
+          this.name = 'Error'
+        }
+      },
       Error,
     ].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
 
     expect(computeStackTrace(customError.stack)).toEqual(computeStackTrace(nativeError.stack))
     expect(computeStackTrace(customErrorWithInheritance.stack)).toEqual(computeStackTrace(nativeError.stack))
+    expect(computeStackTrace(customErrorWithAnonymousInheritance.stack)).toEqual(computeStackTrace(nativeError.stack))
   })
 })
