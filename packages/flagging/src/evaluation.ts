@@ -35,7 +35,7 @@ function evaluatePrecomputed<T extends FlagValueType>(
     }
   }
 
-  if (flag.variationType.toLowerCase() !== type.toLowerCase()) {
+  if (flag.variationType && flag.variationType.toLowerCase() !== type.toLowerCase()) {
     return {
       value: defaultValue,
       reason: 'ERROR',

@@ -1,4 +1,4 @@
-import configurationWire from '../test/data/precomputed-v2-wire.json'
+import configurationWire from '../test/data/precomputed-v1-wire.json'
 
 import { configurationFromString } from './configuration'
 import { evaluate } from './evaluation'
@@ -26,15 +26,21 @@ describe('evaluate', () => {
     })
   })
 
+  it('resolves boolean flag', () => {
+    const result = evaluate(configuration, 'boolean', 'boolean-flag', true, {})
+    expect(result).toEqual({
+      value: true,
+      variant: 'variation-124',
+      reason: 'TARGETING_MATCH',
+    })
+  })
+
   it('resolves string flag', () => {
     const result = evaluate(configuration, 'string', 'string-flag', 'default', {})
     expect(result).toEqual({
       value: 'red',
       variant: 'variation-123',
-      flagMetadata: {
-        allocationKey: 'allocation-123',
-        experiment: true,
-      },
+      reason: 'TARGETING_MATCH',
     })
   })
 
@@ -43,10 +49,7 @@ describe('evaluate', () => {
     expect(result).toEqual({
       value: { key: 'value', prop: 123 },
       variant: 'variation-127',
-      flagMetadata: {
-        allocationKey: 'allocation-127',
-        experiment: true,
-      },
+      reason: 'TARGETING_MATCH',
     })
   })
 })
