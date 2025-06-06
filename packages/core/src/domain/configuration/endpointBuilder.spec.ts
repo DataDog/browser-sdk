@@ -84,20 +84,11 @@ describe('endpointBuilder', () => {
     })
   })
 
-  describe('tags', () => {
+  describe('_dd attributes', () => {
     it('should contain api', () => {
       expect(createEndpointBuilder(initConfiguration, 'rum', []).build('fetch', DEFAULT_PAYLOAD)).toContain(
-        'api%3Afetch'
+        '_dd.api=fetch'
       )
-    })
-
-    it('should be encoded', () => {
-      expect(
-        createEndpointBuilder(initConfiguration, 'rum', ['service:bar:foo', 'datacenter:us1.prod.dog']).build(
-          'fetch',
-          DEFAULT_PAYLOAD
-        )
-      ).toContain('service%3Abar%3Afoo%2Cdatacenter%3Aus1.prod.dog')
     })
 
     it('should contain retry infos', () => {
@@ -109,7 +100,19 @@ describe('endpointBuilder', () => {
             lastFailureStatus: 408,
           },
         })
-      ).toContain('retry_count%3A5%2Cretry_after%3A408')
+      ).toContain('_dd.retry_count=5&_dd.retry_after=408')
+    })
+
+    it('should not contain any _dd attributes for non rum endpoints', () => {
+      expect(
+        createEndpointBuilder(initConfiguration, 'logs', []).build('fetch', {
+          ...DEFAULT_PAYLOAD,
+          retry: {
+            count: 5,
+            lastFailureStatus: 408,
+          },
+        })
+      ).not.toContain('_dd.api=fetch&_dd.retry_count=5&_dd.retry_after=408')
     })
   })
 

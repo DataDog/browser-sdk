@@ -93,14 +93,9 @@ function buildEndpointParameters(
   api: ApiType,
   { retry, encoding }: Payload
 ) {
-  const tags = [`api:${api}`].concat(configurationTags)
-  if (retry) {
-    tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
-  }
-
   const parameters = [
     'ddsource=browser',
-    `ddtags=${encodeURIComponent(tags.join(','))}`,
+    `ddtags=${encodeURIComponent(configurationTags.join(','))}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
@@ -113,6 +108,12 @@ function buildEndpointParameters(
 
   if (trackType === 'rum') {
     parameters.push(`batch_time=${timeStampNow()}`)
+    parameters.push(`_dd.api=${api}`)
+
+    if (retry) {
+      parameters.push(`_dd.retry_count=${retry.count}`)
+      parameters.push(`_dd.retry_after=${retry.lastFailureStatus}`)
+    }
   }
 
   if (internalAnalyticsSubdomain) {
