@@ -22,6 +22,9 @@ function createBody(errorGenerator: string) {
       function customErrorWithInheritance() {
         class CustomTestError extends Error {}
         class CustomTestError2 extends CustomTestError {}
+
+        // this is an anonymous class, which has no name
+        // we're checking if the stacktrace is correctly reported for this specific case (with the class name missing)
         return new (class extends CustomTestError2 {
           constructor(e) {
             super(e)

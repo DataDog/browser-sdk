@@ -972,6 +972,8 @@ Error: foo
     const [customError, customErrorWithInheritance, customErrorWithAnonymousInheritance, nativeError] = [
       DatadogTestCustomError,
       DatadogTestCustomError2,
+      // this is an anonymous class, which has no name
+      // we're checking if the stacktrace is correctly reported for this specific case (with the class name missing)
       class extends DatadogTestCustomError2 {
         constructor() {
           super()
