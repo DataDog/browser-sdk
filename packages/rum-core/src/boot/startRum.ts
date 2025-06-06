@@ -55,6 +55,7 @@ import { startConnectivityContext } from '../domain/contexts/connectivityContext
 import { startDefaultContext } from '../domain/contexts/defaultContext'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
+import { startProfilingContext } from '../domain/contexts/profilingContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -143,6 +144,7 @@ export function startRum(
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration, 'rum')
+  startProfilingContext(hooks, profilerApi)
 
   const {
     actionContexts,

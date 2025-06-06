@@ -41,6 +41,7 @@ import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
+import type { ProfilingInternalContextSchema } from '../rumEvent.types'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -373,6 +374,7 @@ export interface ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) => void
+  getProfilingContext: () => ProfilingInternalContextSchema | undefined
 }
 
 export interface RumPublicApiOptions {
