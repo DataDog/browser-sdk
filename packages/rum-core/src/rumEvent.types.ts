@@ -1659,26 +1659,26 @@ export interface ProfilingInternalContextSchema {
    *
    * They are defined in order of when they can happen, from the moment the SDK is initialized to the moment the Profiler is actually running.
    *
-   * - `not-available-in-slim-bundle`: The Profiler is not available in the slim bundle. Use the normal bundle to use the Profiler.
-   * - `initializing`: The Profiler is initializing (i.e., when the SDK just started). This is the initial status.
-   * - `missing-feature`: Missing `profiling` value in the `enableExperimentalFeatures` options.
-   * - `not-sampled`: The view was not sampled (i.e., when the sample rate is lower than 100%, there is a chance the view won't be profiled).
-   * - `not-supported-by-browser`: The browser does not support the Profiler (i.e., `window.Profiler` is not available).
-   * - `failed-to-lazy-load`: The Profiler script failed to be loaded by the browser (may be a connection issue or the chunk was not found).
-   * - `failed-to-start`: The Profiler failed to start (most probable cause is when the web server did not return the `Document-Policy: js-profiling` HTTP response header).
+   * - `starting`: The Profiler is starting (i.e., when the SDK just started). This is the initial status.
    * - `running`: The Profiler is running.
    * - `stopped`: The Profiler is stopped.
+   * - `error`: The Profiler encountered an error. See `error_reason` for more details.
    */
-  readonly status?:
-    | 'not-available-in-slim-bundle'
-    | 'initializing'
-    | 'missing-feature'
-    | 'not-sampled'
+  readonly status?: 'starting' | 'running' | 'stopped' | 'error'
+  /**
+   * The reason the Profiler encountered an error. This attribute is only present if the status is `error`.
+   *
+   * Possible values:
+   * - `not-supported-by-browser`: The browser does not support the Profiler (i.e., `window.Profiler` is not available).
+   * - `failed-to-lazy-load`: The Profiler script failed to be loaded by the browser (may be a connection issue or the chunk was not found).
+   * - `missing-document-policy-header`: The Profiler failed to start because its missing `Document-Policy: js-profiling` HTTP response header.
+   * - `unexpected-exception`: An exception occurred when starting the Profiler.
+   */
+  readonly error_reason?:
     | 'not-supported-by-browser'
     | 'failed-to-lazy-load'
-    | 'failed-to-start'
-    | 'running'
-    | 'stopped'
+    | 'missing-document-policy-header'
+    | 'unexpected-exception'
   [k: string]: unknown
 }
 /**

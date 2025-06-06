@@ -89,7 +89,7 @@ export function createRumProfiler(
     cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
 
     // Update Profiling status once the Profiler has been stopped.
-    profilingContextManager.setProfilingContext({ status: 'stopped' })
+    profilingContextManager.setProfilingContext({ status: 'stopped', error_reason: undefined })
   }
 
   /**
@@ -144,7 +144,7 @@ export function createRumProfiler(
     const globalThisProfiler: Profiler | undefined = getGlobalObject<any>().Profiler
 
     if (!globalThisProfiler) {
-      profilingContextManager.setProfilingContext({ status: 'not-supported-by-browser' })
+      profilingContextManager.setProfilingContext({ status: 'error', error_reason: 'not-supported-by-browser' })
       throw new Error('RUM Profiler is not supported in this browser.')
     }
 
@@ -164,18 +164,21 @@ export function createRumProfiler(
         ),
       })
     } catch (e) {
-      // If we fail to create a profiler, it's likely due to the missing Response Header (`js-profiling`) that is required to enable the profiler.
-      // We should suggest the user to enable the Response Header in their server configuration.
-      display.warn(
-        '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
-        e
-      )
-      // Update Profiling status to indicate that the Profiler failed to start.
-      profilingContextManager.setProfilingContext({ status: 'failed-to-start' })
+      if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
+        // Missing Response Header (`js-profiling`) that is required to enable the profiler.
+        // We should suggest the user to enable the Response Header in their server configuration.
+        display.warn(
+          '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
+          e
+        )
+        profilingContextManager.setProfilingContext({ status: 'error', error_reason: 'missing-document-policy-header' })
+      } else {
+        profilingContextManager.setProfilingContext({ status: 'error', error_reason: 'unexpected-exception' })
+      }
       return
     }
 
-    profilingContextManager.setProfilingContext({ status: 'running' })
+    profilingContextManager.setProfilingContext({ status: 'running', error_reason: undefined })
 
     // Kick-off the new instance
     instance = {
