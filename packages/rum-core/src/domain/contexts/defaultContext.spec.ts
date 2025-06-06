@@ -16,7 +16,7 @@ describe('startDefaultContext', () => {
     })
 
     it('should set the rum default context', () => {
-      startDefaultContext(hooks, mockRumConfiguration({ applicationId: '1' }))
+      startDefaultContext(hooks, mockRumConfiguration({ applicationId: '1' }), 'rum')
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
@@ -37,7 +37,7 @@ describe('startDefaultContext', () => {
     })
 
     it('should set the browser sdk version if event bridge detected', () => {
-      startDefaultContext(hooks, mockRumConfiguration())
+      startDefaultContext(hooks, mockRumConfiguration(), 'rum')
       const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
@@ -55,7 +55,7 @@ describe('startDefaultContext', () => {
     })
 
     it('should set the configured sample rates', () => {
-      startDefaultContext(hooks, mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20 }))
+      startDefaultContext(hooks, mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20 }), 'rum')
 
       const event = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
@@ -64,6 +64,7 @@ describe('startDefaultContext', () => {
 
       expect(event._dd!.configuration!.session_sample_rate).toBe(10)
       expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)
+      expect(event._dd!.sdk_name).toBe('rum')
     })
   })
 })

@@ -5,7 +5,11 @@ import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export function startDefaultContext(hooks: Hooks, configuration: RumConfiguration, sdkName: 'rum' | 'rum-slim') {
+export function startDefaultContext(
+  hooks: Hooks,
+  configuration: RumConfiguration,
+  sdkName: 'rum' | 'rum-slim' | undefined
+) {
   hooks.register(
     HookNames.Assemble,
     ({ eventType }): DefaultRumEventAttributes => ({
