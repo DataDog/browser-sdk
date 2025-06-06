@@ -40,8 +40,10 @@ To run the project, use:
 yarn dev
 ```
 
-Then, go to [http://localhost:8080/react-app/](http://localhost:8080/react-app/).
-Open the developer tools and navigate to the `Browser SDK` tab to see all the information sent by the SDK.
+Then, go to [http://localhost:8080/react-app/](http://localhost:8080/react-app/). Open the developer
+tools and navigate to the `Browser SDK` tab to view all the information sent by the SDK.
+
+Alternatively, you can debug your application by using the option to override the SDK within your application.
 
 ## Submitting issues
 
