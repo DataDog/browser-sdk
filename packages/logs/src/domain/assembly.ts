@@ -1,4 +1,4 @@
-import type { EventRateLimiter, RawError } from '@datadog/browser-core'
+import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
 import {
   ErrorSource,
   HookNames,
@@ -8,6 +8,7 @@ import {
   isEmptyObject,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
+import type { LogsEvent } from '../logsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -59,11 +60,10 @@ export function startLogsAssembly(
           usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
           view: commonContext.view,
         },
-        commonContext.context,
         defaultLogsEventAttributes,
         rawLogsEvent,
         messageContext
-      )
+      ) as LogsEvent & Context
 
       if (
         configuration.beforeSend?.(log, domainContext) === false ||

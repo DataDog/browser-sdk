@@ -5,6 +5,7 @@ import {
   willSyntheticsInjectRum,
   canUseEventBridge,
   startAccountContext,
+  startGlobalContext,
   startTelemetry,
   TelemetryService,
   createIdentityEncoder,
@@ -62,6 +63,8 @@ export function startLogs(
       : startLogsSessionManagerStub(configuration)
   telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
+  const accountContext = startAccountContext(hooks, configuration, 'logs')
+  const globalContext = startGlobalContext(hooks, configuration, 'logs', false)
   const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
   telemetry.setContextProvider('application.id', () => getRUMInternalContext()?.application_id)
   telemetry.setContextProvider('view.id', () => (getRUMInternalContext()?.view as Context)?.id)
@@ -71,7 +74,6 @@ export function startLogs(
   startRuntimeErrorCollection(configuration, lifeCycle)
   startConsoleCollection(configuration, lifeCycle)
   startReportCollection(configuration, lifeCycle)
-  const accountContext = startAccountContext(hooks, configuration, 'logs')
   const { handleLog } = startLoggerCollection(lifeCycle)
 
   startLogsAssembly(session, configuration, lifeCycle, hooks, getCommonContext, reportError)
@@ -95,6 +97,7 @@ export function startLogs(
     handleLog,
     getInternalContext: internalContext.get,
     accountContext,
+    globalContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
       stop()
