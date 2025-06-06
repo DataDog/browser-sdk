@@ -19,6 +19,7 @@ describe('getNavigationEntry', () => {
 
       startTime: 0 as RelativeTime,
       duration: jasmine.any(Number),
+      activationStart: 0 as RelativeTime,
 
       fetchStart: jasmine.any(Number),
       workerStart: jasmine.any(Number),

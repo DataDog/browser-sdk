@@ -91,4 +91,36 @@ describe('trackNavigationTimings', () => {
 
     expect(navigationTimingsCallback).not.toHaveBeenCalled()
   })
+
+  it('adjusts firstByte for prerendered pages', () => {
+    ;({ stop } = trackNavigationTimings(
+      mockRumConfiguration(),
+      navigationTimingsCallback,
+      () => ({
+        ...FAKE_NAVIGATION_ENTRY,
+        responseStart: 100 as RelativeTime,
+      }),
+      () => 50 as RelativeTime
+    ))
+
+    clock.tick(0)
+
+    expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBe(50 as Duration)
+  })
+
+  it('clamps negative firstByte to 0 for prerendered pages', () => {
+    ;({ stop } = trackNavigationTimings(
+      mockRumConfiguration(),
+      navigationTimingsCallback,
+      () => ({
+        ...FAKE_NAVIGATION_ENTRY,
+        responseStart: 100 as RelativeTime,
+      }),
+      () => 150 as RelativeTime
+    ))
+
+    clock.tick(0)
+
+    expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBe(0 as Duration)
+  })
 })
