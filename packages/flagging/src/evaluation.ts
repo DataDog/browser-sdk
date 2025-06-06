@@ -1,6 +1,6 @@
 import type { ErrorCode, EvaluationContext, FlagValueType, ResolutionDetails } from '@openfeature/web-sdk'
 
-import type { Configuration, PrecomputedConfiguration, FlagTypeToValue } from './configuration'
+import type { Configuration, FlagTypeToValue, PrecomputedConfiguration } from './configuration'
 
 export function evaluate<T extends FlagValueType>(
   configuration: Configuration,
@@ -35,7 +35,7 @@ function evaluatePrecomputed<T extends FlagValueType>(
     }
   }
 
-  if (flag.type !== type) {
+  if (flag.variationType.toLowerCase() !== type.toLowerCase()) {
     return {
       value: defaultValue,
       reason: 'ERROR',
@@ -43,5 +43,9 @@ function evaluatePrecomputed<T extends FlagValueType>(
     }
   }
 
-  return flag.resolution as ResolutionDetails<FlagTypeToValue<T>>
+  return {
+    value: flag.variationValue as FlagTypeToValue<T>,
+    variant: flag.variationKey,
+    reason: flag.reason,
+  } as ResolutionDetails<FlagTypeToValue<T>>
 }
