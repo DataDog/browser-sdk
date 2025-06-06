@@ -5,7 +5,7 @@ module.exports = {
   target: ['web', 'es2018'],
   entry: {
     'content-script': './src/contentScript.ts',
-    'background': './src/background.ts'
+    background: './src/background.ts',
   },
   output: {
     filename: '[name].js',
