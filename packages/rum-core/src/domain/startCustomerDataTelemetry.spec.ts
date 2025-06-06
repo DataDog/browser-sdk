@@ -46,7 +46,7 @@ describe('customerDataTelemetry', () => {
     })
   }
 
-  function setupCustomerTelemertyCollection(partialConfig: Partial<RumConfiguration> = config) {
+  function setupCustomerTelemetryCollection(partialConfig: Partial<RumConfiguration> = config) {
     const configuration = mockRumConfiguration(partialConfig)
     batchFlushObservable = new Observable()
     lifeCycle = new LifeCycle()
@@ -66,7 +66,7 @@ describe('customerDataTelemetry', () => {
   })
 
   it('should collect customer data telemetry', () => {
-    setupCustomerTelemertyCollection()
+    setupCustomerTelemetryCollection()
 
     generateBatch({ eventNumber: 10, contextBytesCount: 10, batchBytesCount: 10 })
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
@@ -85,7 +85,7 @@ describe('customerDataTelemetry', () => {
   })
 
   it('should collect customer data only if batches contains rum events, no just telemetry', () => {
-    setupCustomerTelemertyCollection()
+    setupCustomerTelemetryCollection()
 
     batchFlushObservable.notify({ reason: 'duration_limit', bytesCount: 1, messagesCount: 1 })
 
@@ -95,7 +95,7 @@ describe('customerDataTelemetry', () => {
   })
 
   it('should not collect contexts telemetry of a unfinished batches', () => {
-    setupCustomerTelemertyCollection()
+    setupCustomerTelemetryCollection()
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
     batchFlushObservable.notify({ reason: 'duration_limit', bytesCount: 1, messagesCount: 1 })
@@ -106,7 +106,7 @@ describe('customerDataTelemetry', () => {
   })
 
   it('should not collect customer data telemetry when telemetry disabled', () => {
-    setupCustomerTelemertyCollection({
+    setupCustomerTelemetryCollection({
       telemetrySampleRate: 100,
       customerDataTelemetrySampleRate: 0,
     })
