@@ -1,9 +1,9 @@
 import type {
-  Provider,
   EvaluationContext,
   JsonValue,
   Logger,
   Paradigm,
+  Provider,
   ProviderMetadata,
   ResolutionDetails,
 } from '@openfeature/web-sdk'
@@ -15,13 +15,28 @@ import { evaluate } from '../evaluation'
 
 export type DatadogProviderOptions = {
   /**
-   * The RUM application ID.
+   * The API key for Datadog. Required for authenticating your application with Datadog.
+   */
+  apiKey: string
+  /**
+   * The application key for Datadog. Required for authenticating your application with Datadog.
+   */
+  applicationKey: string
+
+  /**
+   * The application key for Datadog. Required for initializing the Datadog RUM client.
    */
   applicationId: string
+
   /**
-   * The client token for Datadog. Required for authenticating your application with Datadog.
+   * The client token for Datadog. Required for initializing the Datadog RUM client.
    */
   clientToken: string
+
+  /**
+   * The environment for Datadog.
+   */
+  env: string
 
   baseUrl?: string
 
@@ -111,16 +126,28 @@ export class DatadogProvider implements Provider {
 async function fetchConfiguration(options: DatadogProviderOptions, context: EvaluationContext): Promise<Configuration> {
   const baseUrl = options.baseUrl || 'https://dd.datad0g.com'
 
-  const parameters = [`application_id=${options.applicationId}`, `client_token=${options.clientToken}`]
-
-  const response = await fetch(`${baseUrl}/api/unstable/precompute-assignments?${parameters.join('&')}`, {
+  const response = await fetch(`${baseUrl}/api/unstable/precompute-assignments`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'DD-API-KEY': options.clientToken,
+      'Content-Type': 'application/vnd.api+json',
+      'dd-api-key': options.apiKey,
+      'dd-application-key': options.applicationKey,
     },
     body: JSON.stringify({
-      context,
+      data: {
+        type: 'precompute-assignments-request',
+        attributes: {
+          env: {
+            name: options.env,
+          },
+          subject: {
+            targeting_key: context.targetingKey || '',
+            targeting_attributes: {
+              ...context,
+            },
+          },
+        },
+      },
     }),
   })
   const precomputed = await response.json()
