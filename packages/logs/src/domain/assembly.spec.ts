@@ -345,12 +345,13 @@ describe('user and account management', () => {
   let serverLogs: Array<LogsEvent & Context> = []
 
   const beforeSend: (event: LogsEvent) => void | boolean = noop
-  const configuration = {
-    ...validateAndBuildLogsConfiguration(initConfiguration)!,
-    beforeSend: (x: LogsEvent) => beforeSend(x),
-  }
+  let configuration: LogsConfiguration
 
   beforeEach(() => {
+    configuration = {
+      ...validateAndBuildLogsConfiguration(initConfiguration)!,
+      beforeSend: (x: LogsEvent) => beforeSend(x),
+    }
     sessionIsTracked = true
     lifeCycle = new LifeCycle()
     hooks = createHooks()

@@ -49,7 +49,7 @@ function eventsCollector<T>() {
   }
 }
 
-const RUM_CONFIGURATION = mockRumConfiguration()
+let rumConfiguration: RumConfiguration
 
 describe('createPageActivityObservable', () => {
   const { events, pushEvent } = eventsCollector<PageActivityEvent>()
@@ -68,7 +68,7 @@ describe('createPageActivityObservable', () => {
       domMutationObservable,
       windowOpenObservable,
       {
-        ...RUM_CONFIGURATION,
+        ...rumConfiguration,
         ...extraConfiguration,
       }
     )
@@ -76,6 +76,7 @@ describe('createPageActivityObservable', () => {
   }
 
   beforeEach(() => {
+    rumConfiguration = mockRumConfiguration()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
   })
 

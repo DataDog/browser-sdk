@@ -93,7 +93,7 @@ function buildEndpointParameters(
   api: ApiType,
   { retry, encoding }: Payload
 ) {
-  const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
+  const tags = [`api:${api}`].concat(configurationTags)
   if (retry) {
     tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
   }

@@ -1,4 +1,3 @@
-import type { BuildEnvWindow } from '../../../test'
 import type { Payload } from '../../transport'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
@@ -11,7 +10,6 @@ describe('endpointBuilder', () => {
 
   beforeEach(() => {
     initConfiguration = { clientToken }
-    ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'some_version'
   })
 
   describe('query parameters', () => {
@@ -87,12 +85,6 @@ describe('endpointBuilder', () => {
   })
 
   describe('tags', () => {
-    it('should contain sdk version', () => {
-      expect(createEndpointBuilder(initConfiguration, 'rum', []).build('fetch', DEFAULT_PAYLOAD)).toContain(
-        'sdk_version%3Asome_version'
-      )
-    })
-
     it('should contain api', () => {
       expect(createEndpointBuilder(initConfiguration, 'rum', []).build('fetch', DEFAULT_PAYLOAD)).toContain(
         'api%3Afetch'
@@ -122,10 +114,6 @@ describe('endpointBuilder', () => {
   })
 
   describe('PCI compliance intake with option', () => {
-    beforeEach(() => {
-      ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'some_version'
-    })
-
     it('should return PCI compliance intake endpoint if site is us1', () => {
       const config: InitConfiguration & { usePciIntake?: boolean } = {
         clientToken,

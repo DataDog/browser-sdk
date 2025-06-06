@@ -90,6 +90,5 @@ export function getIntakeUrlForEvent(sdkInfos: SdkInfos, event: SdkEvent) {
 
   return builder
     .build('manual', { data: 'a', bytesCount: 1 })
-    .replace(/sdk_version%3A[^%&]+/g, `sdk_version%3A${encodeURIComponent(version)}`)
     .replace(/dd-evp-origin-version=[^&]+/g, `dd-evp-origin-version=${encodeURIComponent(version)}`)
 }

@@ -50,7 +50,7 @@ describe('transportConfiguration', () => {
     })
   })
 
-  describe('sdk_version, env, version and service', () => {
+  describe('env, version and service', () => {
     it('should not modify the logs and rum endpoints tags when not defined', () => {
       const configuration = computeTransportConfiguration({ clientToken })
       const rumEndpoint = decodeURIComponent(configuration.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))

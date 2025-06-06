@@ -7,7 +7,7 @@ import type { ScrollMetrics, ScrollValues } from './trackScrollMetrics'
 import { createScrollValuesObservable, trackScrollMetrics } from './trackScrollMetrics'
 
 describe('createScrollValuesObserver', () => {
-  const scrollObservable = createScrollValuesObservable(mockRumConfiguration(), 0)
+  let scrollObservable: Observable<ScrollValues>
   let subscription: Subscription
 
   const newScroll = () => {
@@ -22,6 +22,7 @@ describe('createScrollValuesObserver', () => {
   }
 
   beforeEach(() => {
+    scrollObservable = createScrollValuesObservable(mockRumConfiguration(), 0)
     registerCleanupTask(() => {
       subscription.unsubscribe()
       document.body.innerHTML = ''
