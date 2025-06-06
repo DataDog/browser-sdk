@@ -1,4 +1,3 @@
-import type { StackTrace } from '@datadog/browser-core'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
@@ -6,27 +5,38 @@ import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1, INTAKE_SITE_US1_FED } from '../configuration'
 import { setNavigatorOnLine, setNavigatorConnection } from '../../../test'
+import type { Context } from '../../tools/serialisation/context'
+import { Observable } from '../../tools/observable'
+import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import {
   addTelemetryError,
   resetTelemetry,
-  startTelemetry,
   scrubCustomerFrames,
   formatError,
   addTelemetryConfiguration,
   addTelemetryUsage,
   TelemetryService,
-  drainPreStartTelemetry,
+  startTelemetryCollection,
 } from './telemetry'
+import type { TelemetryEvent } from './telemetryEvent.types'
 
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
-  const telemetry = startTelemetry(TelemetryService.RUM, {
-    maxTelemetryEventsPerPage: 7,
-    telemetrySampleRate: 100,
-    telemetryUsageSampleRate: 100,
-    ...configuration,
-  } as Configuration)
+  const observable = new Observable<TelemetryEvent & Context>()
+
   const notifySpy = jasmine.createSpy('notified')
-  telemetry.observable.subscribe(notifySpy)
+  observable.subscribe(notifySpy)
+
+  const telemetry = startTelemetryCollection(
+    TelemetryService.RUM,
+    {
+      maxTelemetryEventsPerPage: 7,
+      telemetrySampleRate: 100,
+      telemetryUsageSampleRate: 100,
+      ...configuration,
+    } as Configuration,
+    observable
+  )
+
   return {
     notifySpy,
     telemetry,
@@ -144,9 +154,7 @@ describe('telemetry', () => {
     addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
     const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
-    expect(notifySpy).not.toHaveBeenCalled()
 
-    drainPreStartTelemetry()
     expect(notifySpy).toHaveBeenCalled()
   })
 
@@ -154,19 +162,38 @@ describe('telemetry', () => {
     it('should be added to telemetry events', () => {
       const { telemetry, notifySpy } = startAndSpyTelemetry()
 
-      telemetry.setContextProvider(() => ({
-        foo: 'bar',
-      }))
+      telemetry.setContextProvider('foo', () => 'bar')
+
       callMonitored(() => {
         throw new Error('foo')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
 
-      telemetry.setContextProvider(() => ({}))
+      telemetry.setContextProvider('foo', () => undefined)
       callMonitored(() => {
         throw new Error('bar')
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
+    })
+
+    it('allows adding context progressively', () => {
+      const { telemetry, notifySpy } = startAndSpyTelemetry()
+      telemetry.setContextProvider('application.id', () => 'bar')
+      callMonitored(() => {
+        throw new Error('foo')
+      })
+      telemetry.setContextProvider('session.id', () => '123')
+      callMonitored(() => {
+        throw new Error('bar')
+      })
+
+      expect(notifySpy.calls.argsFor(0)[0]['application.id']).toEqual('bar')
+      expect(notifySpy.calls.argsFor(1)[0]).toEqual(
+        jasmine.objectContaining({
+          'application.id': 'bar',
+          'session.id': '123',
+        })
+      )
     })
   })
 
