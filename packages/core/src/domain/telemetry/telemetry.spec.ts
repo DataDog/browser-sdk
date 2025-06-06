@@ -175,6 +175,26 @@ describe('telemetry', () => {
       })
       expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
     })
+
+    it('allows adding context progressively', () => {
+      const { telemetry, notifySpy } = startAndSpyTelemetry()
+      telemetry.setContextProvider('application.id', () => 'bar')
+      callMonitored(() => {
+        throw new Error('foo')
+      })
+      telemetry.setContextProvider('session.id', () => '123')
+      callMonitored(() => {
+        throw new Error('bar')
+      })
+
+      expect(notifySpy.calls.argsFor(0)[0]['application.id']).toEqual('bar')
+      expect(notifySpy.calls.argsFor(1)[0]).toEqual(
+        jasmine.objectContaining({
+          'application.id': 'bar',
+          'session.id': '123',
+        })
+      )
+    })
   })
 
   describe('sampling', () => {
