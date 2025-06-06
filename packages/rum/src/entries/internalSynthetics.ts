@@ -19,5 +19,6 @@ const recorderApi = makeRecorderApi(lazyLoadRecorder)
 const profilerApi = makeProfilerApi()
 export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
   ignoreInitIfSyntheticsWillInjectRum: false,
+  sdkName: 'rum',
 })
 /* eslint-enable local-rules/disallow-side-effects */
