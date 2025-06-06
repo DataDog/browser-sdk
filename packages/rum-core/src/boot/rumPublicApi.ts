@@ -374,7 +374,7 @@ export interface ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) => void
-  getProfilingContext: () => ProfilingInternalContextSchema
+  getProfilingContext: () => ProfilingInternalContextSchema | undefined
 }
 
 export interface RumPublicApiOptions {

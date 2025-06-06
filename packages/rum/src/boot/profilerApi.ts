@@ -7,20 +7,14 @@ import type {
   ProfilingContextManager,
 } from '@datadog/browser-rum-core'
 import { createProfilingContextManager } from '@datadog/browser-rum-core'
-import {
-  addTelemetryDebug,
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-  monitorError,
-  performDraw,
-} from '@datadog/browser-core'
+import { addTelemetryDebug, monitorError, performDraw } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
-  const profilingContextManager: ProfilingContextManager = createProfilingContextManager('initializing')
+  const profilingContextManager: ProfilingContextManager = createProfilingContextManager('starting')
 
   function onRumStart(
     lifeCycle: LifeCycle,
@@ -28,16 +22,18 @@ export function makeProfilerApi(): ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) {
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING)) {
-      profilingContextManager.setProfilingContext({ status: 'missing-feature' })
+    // Sampling.
+    if (!performDraw(configuration.profilingSampleRate)) {
+      // No sampling, no profiling, no context.
+      profilingContextManager.setProfilingContext(undefined)
       return
     }
 
-    const hasSupportForProfiler = isProfilingSupported()
-    if (!hasSupportForProfiler || !performDraw(configuration.profilingSampleRate)) {
-      // Update Profiling status to indicate that the Profiler was not started with the reason.
+    // Browser support check
+    if (!isProfilingSupported()) {
       profilingContextManager.setProfilingContext({
-        status: hasSupportForProfiler ? 'not-sampled' : 'not-supported-by-browser',
+        status: 'error',
+        error_reason: 'not-supported-by-browser',
       })
       return
     }
@@ -46,7 +42,7 @@ export function makeProfilerApi(): ProfilerApi {
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
           addTelemetryDebug('[DD_RUM] Failed to lazy load the RUM Profiler')
-          profilingContextManager.setProfilingContext({ status: 'failed-to-lazy-load' })
+          profilingContextManager.setProfilingContext({ status: 'error', error_reason: 'failed-to-lazy-load' })
           return
         }
 
