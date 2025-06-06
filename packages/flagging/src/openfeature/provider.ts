@@ -129,12 +129,25 @@ async function fetchConfiguration(options: DatadogProviderOptions, context: Eval
   const response = await fetch(`${baseUrl}/api/unstable/precompute-assignments`, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/vnd.api+json',
       'dd-api-key': options.apiKey,
       'dd-application-key': options.applicationKey,
     },
     body: JSON.stringify({
-      context,
+      data: {
+        type: 'precompute-assignments-request',
+        attributes: {
+          env: {
+            name: options.env,
+          },
+          subject: {
+            targeting_key: context.targetingKey || '',
+            targeting_attributes: {
+              ...context,
+            },
+          },
+        },
+      },
     }),
   })
   const precomputed = await response.json()
