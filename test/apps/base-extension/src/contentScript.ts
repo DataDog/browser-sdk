@@ -10,7 +10,6 @@ datadogRum.init({
 
 datadogLogs.init({
   clientToken: 'abcd',
-  defaultPrivacyLevel: 'allow',
   // Force All sample rates to 100% to avoid flakiness
   telemetrySampleRate: 100,
   telemetryUsageSampleRate: 100,
