@@ -37,6 +37,7 @@ const profilerApi = makeProfilerApi()
 export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
   startDeflateWorker,
   createDeflateEncoder,
+  sdkName: 'rum',
 })
 
 interface BrowserWindow extends Window {
