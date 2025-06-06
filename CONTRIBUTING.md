@@ -7,9 +7,6 @@ improvements, feel free to submit a pull request.
 
 ## Getting Started
 
-After downloading the repository, you need to download the Chrome extension. This will allow 
-you to easily verify all the actions taken by the SDK.
-
 ### Download the Repository
 
 You can use either Git or GitHub CLI:
