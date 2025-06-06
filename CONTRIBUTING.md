@@ -29,7 +29,7 @@ yarn
 
 ## Install Browser Extension
 
-Follow [this link][3] to download the browser extension. This extension will help you track 
+Follow [this link][3] to download the browser extension. This extension will help you track
 all the information collected by the SDK.
 
 ## Running the Project
@@ -40,9 +40,8 @@ To run the project, use:
 yarn dev
 ```
 
-Then, go to [http://localhost:8080/react-app/](http://localhost:8080/react-app/). 
+Then, go to [http://localhost:8080/react-app/](http://localhost:8080/react-app/).
 Open the developer tools and navigate to the `Browser SDK` tab to see all the information sent by the SDK.
-
 
 ## Submitting issues
 
