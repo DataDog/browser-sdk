@@ -1,4 +1,4 @@
-import type { EventRateLimiter, RawError } from '@datadog/browser-core'
+import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
 import {
   ErrorSource,
   HookNames,
@@ -8,6 +8,7 @@ import {
   isEmptyObject,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
+import type { LogsEvent } from '../logsEvent.types'
 import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -42,12 +43,6 @@ export function startLogsAssembly(
 
       const commonContext = savedCommonContext || getCommonContext()
 
-      let account
-
-      if (!isEmptyObject(commonContext.account) && commonContext.account.id) {
-        account = commonContext.account
-      }
-
       if (session && session.anonymousId && !commonContext.user.anonymous_id) {
         commonContext.user.anonymous_id = session.anonymousId
       }
@@ -63,14 +58,12 @@ export function startLogsAssembly(
           session: session ? { id: session.id } : undefined,
           // Insert user and account first to allow overrides from global context
           usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
-          account,
           view: commonContext.view,
         },
-        commonContext.context,
         defaultLogsEventAttributes,
         rawLogsEvent,
         messageContext
-      )
+      ) as LogsEvent & Context
 
       if (
         configuration.beforeSend?.(log, domainContext) === false ||

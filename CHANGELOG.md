@@ -18,6 +18,32 @@
 
 ---
 
+## v6.10.1
+
+**Public Changes:**
+
+- Revert "🐛 [RUM-10101] Persist session cookie to one year when opt-in anonymous user tracking ([#3559](https://github.com/DataDog/browser-sdk/pull/3559))" ([#3608](https://github.com/DataDog/browser-sdk/pull/3608)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷release: do not try to update lockfiles of ignore app ([#3600](https://github.com/DataDog/browser-sdk/pull/3600))
+- ♻️ [RUM-10256] Use hooks for Logs SDK to decouple global context ([#3594](https://github.com/DataDog/browser-sdk/pull/3594)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.10.0
+
+**Public Changes:**
+
+- ✨[RUM-9915] add `allowedTrackingOrigins` for Extensions ([#3517](https://github.com/DataDog/browser-sdk/pull/3517)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 move testing extensions folder ([#3595](https://github.com/DataDog/browser-sdk/pull/3595))
+- 👷 [RUM-9996] configure ap2 monitor check + sourcemap upload
+- 👷 Update all non-major dependencies ([#3589](https://github.com/DataDog/browser-sdk/pull/3589)) [RUM-REACT] [WORKER]
+- 🔧 update yarn version to 4.9.1 in package.json ([#3591](https://github.com/DataDog/browser-sdk/pull/3591))
+- ♻️ [RUM-10238] Use hooks for Logs SDK to decouple account ([#3590](https://github.com/DataDog/browser-sdk/pull/3590)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗ Interim integration instructions/script for unpublished flagging npm package. ([#3585](https://github.com/DataDog/browser-sdk/pull/3585)) [FLAGGING]
+
 ## v6.9.0
 
 **Public Changes:**

@@ -1,4 +1,5 @@
 dist
+node_modules
 
 # https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 .pnp.*

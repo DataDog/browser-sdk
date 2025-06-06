@@ -1,5 +1,7 @@
-import type { Account, Context, TrackingConsent, User, PublicApi } from '@datadog/browser-core'
+import type { Account, Context, TrackingConsent, User, PublicApi, ContextManager } from '@datadog/browser-core'
 import {
+  ContextManagerMethod,
+  CustomerContextKey,
   addTelemetryUsage,
   CustomerDataType,
   createContextManager,
@@ -10,6 +12,7 @@ import {
   displayAlreadyInitializedError,
   deepClone,
   createTrackingConsentState,
+  defineContextMethod,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -197,12 +200,13 @@ const LOGS_STORAGE_KEY = 'logs'
 export interface Strategy {
   init: (initConfiguration: LogsInitConfiguration) => void
   initConfiguration: LogsInitConfiguration | undefined
+  globalContext: ContextManager
+  accountContext: ContextManager
   getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
-  const globalContextManager = createContextManager('global context')
   const userContextManager = createContextManager('user', {
     propertiesConfig: {
       id: { type: 'string' },
@@ -210,23 +214,15 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
       email: { type: 'string' },
     },
   })
-  const accountContextManager = createContextManager('account', {
-    propertiesConfig: {
-      id: { type: 'string', required: true },
-      name: { type: 'string' },
-    },
-  })
   const trackingConsentState = createTrackingConsentState()
 
   function getCommonContext() {
-    return buildCommonContext(globalContextManager, userContextManager, accountContextManager)
+    return buildCommonContext(userContextManager)
   }
 
   let strategy = createPreStartStrategy(getCommonContext, trackingConsentState, (initConfiguration, configuration) => {
     if (initConfiguration.storeContextsAcrossPages) {
-      storeContextManager(configuration, globalContextManager, LOGS_STORAGE_KEY, CustomerDataType.GlobalContext)
       storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
-      storeContextManager(configuration, accountContextManager, LOGS_STORAGE_KEY, CustomerDataType.Account)
     }
 
     const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext, trackingConsentState)
@@ -234,6 +230,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     strategy = createPostStartStrategy(initConfiguration, startLogsResult)
     return startLogsResult
   })
+
+  const getStrategy = () => strategy
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
@@ -249,15 +247,34 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
     }),
 
-    getGlobalContext: monitor(() => globalContextManager.getContext()),
+    getGlobalContext: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.getContext
+    ),
+    setGlobalContext: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.setContext
+    ),
 
-    setGlobalContext: monitor((context) => globalContextManager.setContext(context)),
+    setGlobalContextProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.setContextProperty
+    ),
 
-    setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
+    removeGlobalContextProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.removeContextProperty
+    ),
 
-    removeGlobalContextProperty: monitor((key) => globalContextManager.removeContextProperty(key)),
-
-    clearGlobalContext: monitor(() => globalContextManager.clearContext()),
+    clearGlobalContext: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.clearContext
+    ),
 
     createLogger: monitor((name, conf = {}) => {
       customLoggers[name] = new Logger(
@@ -287,15 +304,27 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     clearUser: monitor(userContextManager.clearContext),
 
-    setAccount: monitor(accountContextManager.setContext),
+    setAccount: defineContextMethod(getStrategy, CustomerContextKey.accountContext, ContextManagerMethod.setContext),
 
-    getAccount: monitor(accountContextManager.getContext),
+    getAccount: defineContextMethod(getStrategy, CustomerContextKey.accountContext, ContextManagerMethod.getContext),
 
-    setAccountProperty: monitor(accountContextManager.setContextProperty),
+    setAccountProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.accountContext,
+      ContextManagerMethod.setContextProperty
+    ),
 
-    removeAccountProperty: monitor(accountContextManager.removeContextProperty),
+    removeAccountProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.accountContext,
+      ContextManagerMethod.removeContextProperty
+    ),
 
-    clearAccount: monitor(accountContextManager.clearContext),
+    clearAccount: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.accountContext,
+      ContextManagerMethod.clearContext
+    ),
   })
 }
 
