@@ -121,6 +121,9 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     performance?: ViewPerformanceData
+    locales?: string[] | readonly string[]
+    current_locale?: string
+    timezone?: string
   }
   display?: ViewDisplay
   privacy?: {
@@ -136,6 +139,11 @@ export interface RawRumViewEvent {
     configuration: {
       start_session_replay_recording_manually: boolean
     }
+  }
+  device?: {
+    current_locale?: string
+    locales?: string[] | readonly string[]
+    time_zone?: string
   }
 }
 
