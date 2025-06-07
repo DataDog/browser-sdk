@@ -268,10 +268,10 @@ __metadata:
     "@datadog/browser-core": "npm:6.10.1"
     "@datadog/browser-rum-core": "npm:6.10.1"
     "@types/react": "npm:19.1.6"
-    "@types/react-dom": "npm:19.1.5"
+    "@types/react-dom": "npm:19.1.6"
     react: "npm:19.1.0"
     react-dom: "npm:19.1.0"
-    react-router-dom: "npm:7.6.1"
+    react-router-dom: "npm:7.6.2"
     react-router-dom-6: "npm:react-router-dom@6.30.1"
   peerDependencies:
     react: 18 || 19
@@ -330,7 +330,7 @@ __metadata:
     "@tabler/icons-react": "npm:3.34.0"
     "@types/chrome": "npm:0.0.326"
     "@types/react": "npm:19.1.6"
-    "@types/react-dom": "npm:19.1.5"
+    "@types/react-dom": "npm:19.1.6"
     "@webextension-toolbox/webpack-webextension-plugin": "npm:3.3.1"
     clsx: "npm:2.1.1"
     copy-webpack-plugin: "npm:13.0.0"
@@ -1472,90 +1472,90 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-arm64@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-darwin-arm64@npm:1.11.29"
+"@swc/core-darwin-arm64@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-darwin-arm64@npm:1.11.31"
   conditions: os=darwin & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-darwin-x64@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-darwin-x64@npm:1.11.29"
+"@swc/core-darwin-x64@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-darwin-x64@npm:1.11.31"
   conditions: os=darwin & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm-gnueabihf@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.11.29"
+"@swc/core-linux-arm-gnueabihf@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-linux-arm-gnueabihf@npm:1.11.31"
   conditions: os=linux & cpu=arm
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-gnu@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-linux-arm64-gnu@npm:1.11.29"
+"@swc/core-linux-arm64-gnu@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-linux-arm64-gnu@npm:1.11.31"
   conditions: os=linux & cpu=arm64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-arm64-musl@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-linux-arm64-musl@npm:1.11.29"
+"@swc/core-linux-arm64-musl@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-linux-arm64-musl@npm:1.11.31"
   conditions: os=linux & cpu=arm64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-gnu@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-linux-x64-gnu@npm:1.11.29"
+"@swc/core-linux-x64-gnu@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-linux-x64-gnu@npm:1.11.31"
   conditions: os=linux & cpu=x64 & libc=glibc
   languageName: node
   linkType: hard
 
-"@swc/core-linux-x64-musl@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-linux-x64-musl@npm:1.11.29"
+"@swc/core-linux-x64-musl@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-linux-x64-musl@npm:1.11.31"
   conditions: os=linux & cpu=x64 & libc=musl
   languageName: node
   linkType: hard
 
-"@swc/core-win32-arm64-msvc@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-win32-arm64-msvc@npm:1.11.29"
+"@swc/core-win32-arm64-msvc@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-win32-arm64-msvc@npm:1.11.31"
   conditions: os=win32 & cpu=arm64
   languageName: node
   linkType: hard
 
-"@swc/core-win32-ia32-msvc@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-win32-ia32-msvc@npm:1.11.29"
+"@swc/core-win32-ia32-msvc@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-win32-ia32-msvc@npm:1.11.31"
   conditions: os=win32 & cpu=ia32
   languageName: node
   linkType: hard
 
-"@swc/core-win32-x64-msvc@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core-win32-x64-msvc@npm:1.11.29"
+"@swc/core-win32-x64-msvc@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core-win32-x64-msvc@npm:1.11.31"
   conditions: os=win32 & cpu=x64
   languageName: node
   linkType: hard
 
-"@swc/core@npm:1.11.29":
-  version: 1.11.29
-  resolution: "@swc/core@npm:1.11.29"
+"@swc/core@npm:1.11.31":
+  version: 1.11.31
+  resolution: "@swc/core@npm:1.11.31"
   dependencies:
-    "@swc/core-darwin-arm64": "npm:1.11.29"
-    "@swc/core-darwin-x64": "npm:1.11.29"
-    "@swc/core-linux-arm-gnueabihf": "npm:1.11.29"
-    "@swc/core-linux-arm64-gnu": "npm:1.11.29"
-    "@swc/core-linux-arm64-musl": "npm:1.11.29"
-    "@swc/core-linux-x64-gnu": "npm:1.11.29"
-    "@swc/core-linux-x64-musl": "npm:1.11.29"
-    "@swc/core-win32-arm64-msvc": "npm:1.11.29"
-    "@swc/core-win32-ia32-msvc": "npm:1.11.29"
-    "@swc/core-win32-x64-msvc": "npm:1.11.29"
+    "@swc/core-darwin-arm64": "npm:1.11.31"
+    "@swc/core-darwin-x64": "npm:1.11.31"
+    "@swc/core-linux-arm-gnueabihf": "npm:1.11.31"
+    "@swc/core-linux-arm64-gnu": "npm:1.11.31"
+    "@swc/core-linux-arm64-musl": "npm:1.11.31"
+    "@swc/core-linux-x64-gnu": "npm:1.11.31"
+    "@swc/core-linux-x64-musl": "npm:1.11.31"
+    "@swc/core-win32-arm64-msvc": "npm:1.11.31"
+    "@swc/core-win32-ia32-msvc": "npm:1.11.31"
+    "@swc/core-win32-x64-msvc": "npm:1.11.31"
     "@swc/counter": "npm:^0.1.3"
     "@swc/types": "npm:^0.1.21"
   peerDependencies:
@@ -1584,7 +1584,7 @@ __metadata:
   peerDependenciesMeta:
     "@swc/helpers":
       optional: true
-  checksum: 10c0/d2df8f09fb0246d1794d09d5192d43efcfd061f3a59956ee1b26c4a031852bb0afaa1b12f915773a807272a3ff6f88870d90970dfd75bca379e0d206a2663643
+  checksum: 10c0/3a1c39af6b90baecaf4f78f378e5e2a62e2a468706ec3a1df577bf904941736918d3ec3df1c4a5178a3c39e6c2f131d1a4e7c9f7bbb8c4f31a778a68e7ccff7f
   languageName: node
   linkType: hard
 
@@ -1742,12 +1742,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/cors@npm:2.8.18, @types/cors@npm:^2.8.12":
-  version: 2.8.18
-  resolution: "@types/cors@npm:2.8.18"
+"@types/cors@npm:2.8.19, @types/cors@npm:^2.8.12":
+  version: 2.8.19
+  resolution: "@types/cors@npm:2.8.19"
   dependencies:
     "@types/node": "npm:*"
-  checksum: 10c0/9dd1075de0e3a40c304826668960c797e67e597a734fb8e8ab404561f31ef2bd553ef5500eb86da7e91a344bee038a59931d2fbf182fbce09f13816f51fdd80e
+  checksum: 10c0/b5dd407040db7d8aa1bd36e79e5f3f32292f6b075abc287529e9f48df1a25fda3e3799ba30b4656667ffb931d3b75690c1d6ca71e39f7337ea6dfda8581916d0
   languageName: node
   linkType: hard
 
@@ -1790,14 +1790,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/express@npm:*, @types/express@npm:5.0.2":
-  version: 5.0.2
-  resolution: "@types/express@npm:5.0.2"
+"@types/express@npm:*, @types/express@npm:5.0.3":
+  version: 5.0.3
+  resolution: "@types/express@npm:5.0.3"
   dependencies:
     "@types/body-parser": "npm:*"
     "@types/express-serve-static-core": "npm:^5.0.0"
     "@types/serve-static": "npm:*"
-  checksum: 10c0/300575201753e0f0e0a3fa113b60f58a78d88a237639a44fdb2834e48350f9d1bf017c2dd6c6411c0e89e470a813535e4dda7b753438b362260a25b91c79f582
+  checksum: 10c0/f0fbc8daa7f40070b103cf4d020ff1dd08503477d866d1134b87c0390bba71d5d7949cb8b4e719a81ccba89294d8e1573414e6dcbb5bb1d097a7b820928ebdef
   languageName: node
   linkType: hard
 
@@ -1920,12 +1920,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node@npm:*, @types/node@npm:22.15.29, @types/node@npm:>=10.0.0":
-  version: 22.15.29
-  resolution: "@types/node@npm:22.15.29"
+"@types/node@npm:*, @types/node@npm:22.15.30, @types/node@npm:>=10.0.0":
+  version: 22.15.30
+  resolution: "@types/node@npm:22.15.30"
   dependencies:
     undici-types: "npm:~6.21.0"
-  checksum: 10c0/602cc88c6150780cd9b5b44604754e0ce13983ae876a538861d6ecfb1511dff289e5576fffd26c841cde2142418d4bb76e2a72a382b81c04557ccb17cff29e1d
+  checksum: 10c0/ca330ac0e7fd502686d6df115fcc606aba46fd334220f749bbba2f639accdadcb23f7900603ceccdc8240be736739cad5c0b87c0fa92c9255a4dff245f07d664
   languageName: node
   linkType: hard
 
@@ -1964,12 +1964,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:19.1.5":
-  version: 19.1.5
-  resolution: "@types/react-dom@npm:19.1.5"
+"@types/react-dom@npm:19.1.6":
+  version: 19.1.6
+  resolution: "@types/react-dom@npm:19.1.6"
   peerDependencies:
     "@types/react": ^19.0.0
-  checksum: 10c0/2a29e77cf6bb6e9f57bcfa54509c216cad2e16e244f0bd56369966ec88c072b9c91f6011d14f9e18fbfe2b801b18b86f616de75e5c8aef0be73c1f74abb33b49
+  checksum: 10c0/7ba74eee2919e3f225e898b65fdaa16e54952aaf9e3472a080ddc82ca54585e46e60b3c52018d21d4b7053f09d27b8293e9f468b85f9932ff452cd290cc131e8
   languageName: node
   linkType: hard
 
@@ -3054,13 +3054,13 @@ __metadata:
     "@eslint/js": "npm:9.28.0"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@playwright/test": "npm:1.52.0"
-    "@swc/core": "npm:1.11.29"
+    "@swc/core": "npm:1.11.31"
     "@types/chrome": "npm:0.0.326"
     "@types/connect-busboy": "npm:1.0.3"
-    "@types/cors": "npm:2.8.18"
-    "@types/express": "npm:5.0.2"
+    "@types/cors": "npm:2.8.19"
+    "@types/express": "npm:5.0.3"
     "@types/jasmine": "npm:3.10.18"
-    "@types/node": "npm:22.15.29"
+    "@types/node": "npm:22.15.30"
     ajv: "npm:8.17.1"
     browserstack-local: "npm:1.5.6"
     chrome-webstore-upload: "npm:3.1.4"
@@ -9299,7 +9299,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "performances@workspace:performances"
   dependencies:
-    "@types/node": "npm:22.15.29"
+    "@types/node": "npm:22.15.30"
     "@types/node-forge": "npm:1.3.11"
     node-forge: "npm:1.3.1"
     puppeteer: "npm:24.10.0"
@@ -9882,15 +9882,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:7.6.1":
-  version: 7.6.1
-  resolution: "react-router-dom@npm:7.6.1"
+"react-router-dom@npm:7.6.2":
+  version: 7.6.2
+  resolution: "react-router-dom@npm:7.6.2"
   dependencies:
-    react-router: "npm:7.6.1"
+    react-router: "npm:7.6.2"
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/9d448d82d73c18475c8e3e2f93cf9dd16ca0488379e295f5a949aa849aaf770eb6257d48f2aef2c62ac1635e8ccddd0fa53173c2479525305eb656936f330812
+  checksum: 10c0/9a8370333b5c1ada5ed76a2c30a90ca5a5a8e6c8565165f147fb42b150f2b258b9e73935fe4945c459d770841abdfaf99c28f7e13da93b1f49b28e6a8e87aadb
   languageName: node
   linkType: hard
 
@@ -9905,9 +9905,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router@npm:7.6.1":
-  version: 7.6.1
-  resolution: "react-router@npm:7.6.1"
+"react-router@npm:7.6.2":
+  version: 7.6.2
+  resolution: "react-router@npm:7.6.2"
   dependencies:
     cookie: "npm:^1.0.1"
     set-cookie-parser: "npm:^2.6.0"
@@ -9917,7 +9917,7 @@ __metadata:
   peerDependenciesMeta:
     react-dom:
       optional: true
-  checksum: 10c0/9968dcccc6695671cb216a74a756d717f47d5b8613869be72764966c2dc252ce12aa91a5f74838776b78d65a2297d7d5455c26a3ed78a380897905383b30c7d8
+  checksum: 10c0/c8ef65f2a378f38e3cba900d67fa2b80a41c1c3925102875ee07c12faa01ea40991cb3fbefaf3ff6914e724c755732e3d7dec2b1bdef09e0fddd00fccc85a06a
   languageName: node
   linkType: hard
 
