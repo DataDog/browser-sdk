@@ -19,6 +19,9 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
         : // Include a content hash in chunk names in production.
           `chunks/[name]-[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
+    trustedTypes: {
+      policyName: 'datadog-chunks',
+    },
   },
   target: ['web', 'es2018'],
   devtool: false,
