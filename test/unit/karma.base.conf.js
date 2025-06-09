@@ -1,3 +1,4 @@
+const webpack = require('webpack')
 const webpackConfig = require('../../webpack.base')({
   mode: 'development',
   types: ['jasmine', 'chrome'],
@@ -57,7 +58,22 @@ module.exports = {
     target: webpackConfig.target,
     devtool: false,
     mode: 'development',
-    plugins: webpackConfig.plugins,
+    plugins: [
+      ...webpackConfig.plugins,
+
+      // Openfeature Web SDK uses `globalThis` without fallback to `window` in its code, so it's not
+      // compatible with the version of Chrome we test against (v63). To work around this, we define
+      // `globalThis` to `window` in the Openfeature Web SDK code.
+      // TODO: Remove this when we stop testing against Chrome v63.
+      new webpack.DefinePlugin({
+        globalThis: webpack.DefinePlugin.runtimeValue(({ module }) => {
+          if (module.resource.includes('@openfeature/web-sdk')) {
+            return 'window'
+          }
+          return 'globalThis'
+        }),
+      }),
+    ],
     optimization: {
       // By default, karma-webpack creates a bundle with one entry point for each spec file, but
       // with all dependencies shared.  Our test suite does not support sharing dependencies, each

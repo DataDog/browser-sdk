@@ -36,6 +36,10 @@ const pathsWithSideEffect = new Set([
 const packagesWithoutSideEffect = new Set([
   '@datadog/browser-core',
   '@datadog/browser-rum-core',
+  // @openfeature/core is mostly type definitions and enums. I have
+  // reviewed the whole library source code as of 2025-05-26 and it
+  // has no side effects.
+  '@openfeature/core',
   'react',
   'react-router-dom',
 ])

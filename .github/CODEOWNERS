@@ -1,8 +1,8 @@
 # Order is important, the last matching pattern takes the most precedence.
 
 # Global
-packages/flagging  @Datadog/feature-flagging-experimentation
 *                  @Datadog/rum-browser
+packages/flagging  @Datadog/feature-flagging-experimentation
 
 # Docs
 *README.md    @Datadog/rum-browser @DataDog/documentation
