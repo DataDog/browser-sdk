@@ -122,7 +122,7 @@ export interface RawRumViewEvent {
     frustration: Count
     performance?: ViewPerformanceData
     locales?: string[] | readonly string[]
-    current_locale?: string
+    locale?: string
     timezone?: string
   }
   display?: ViewDisplay
@@ -141,7 +141,7 @@ export interface RawRumViewEvent {
     }
   }
   device?: {
-    current_locale?: string
+    locale?: string
     locales?: string[] | readonly string[]
     time_zone?: string
   }
