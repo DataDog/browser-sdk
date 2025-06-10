@@ -12,7 +12,7 @@ update_automatically: false # update_automatically is updating the integration b
 reset_pattern: '' # use `staging-reset.js` instead so that a new staging branch is created weekly
 contacts:
   - type: slack
-    contact: rum-browser-sdk-ops
+    contact: browser-sdk-deploy
 ---
 schema-version: v1
 kind: buildimpactanalysis
