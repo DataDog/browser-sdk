@@ -9,7 +9,7 @@ const { modifyFile } = require('../lib/filesUtils')
 
 const EXTENSIONS_INIT_PARAMETERS = {
   'allowed-tracking-origin': 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],',
-  'invalid-tracking-origin': 'allowedTrackingOrigins: ["https://app.example.com"],',
+  'invalid-tracking-origin': "allowedTrackingOrigins: ['https://app.example.com'],",
 }
 
 runMain(async () => {
@@ -46,7 +46,7 @@ async function buildExtensions() {
     fs.cpSync(baseExtDir, targetDir, { recursive: true })
 
     // Add the configuration parameter
-    const contentScriptPath = path.join(targetDir, 'src/contentScript.js')
+    const contentScriptPath = path.join(targetDir, 'src/contentScript.ts')
     await modifyFile(contentScriptPath, (content) =>
       content.replace(/\/\* EXTENSION_INIT_PARAMETER \*\//g, initParameter)
     )

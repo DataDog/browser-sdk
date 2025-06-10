@@ -6,6 +6,7 @@
     "build": "webpack"
   },
   "dependencies": {
+    "@datadog/browser-logs": "file:../../../packages/logs/package.tgz",
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
   },
   "resolutions": {
