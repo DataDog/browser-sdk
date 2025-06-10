@@ -139,7 +139,7 @@ function processViewUpdate(
       replay_level: configuration.defaultPrivacyLevel,
     },
     device: {
-      current_locale: navigator.language,
+      locale: navigator.language,
       locales: navigator?.languages ?? [],
       time_zone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
