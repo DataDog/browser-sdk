@@ -1,4 +1,4 @@
-import type { ClocksState, RelativeTime } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime, DocumentWithPrerendering } from '@datadog/browser-core'
 import { addEventListeners, DOM_EVENT, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../../browser/performanceObservable'
@@ -14,7 +14,7 @@ export function trackFirstHidden(
   viewStart: ClocksState,
   eventTarget: Window = window
 ) {
-  if (document.visibilityState === 'hidden' && !(document as Document & { prerendering?: boolean })?.prerendering) {
+  if (document.visibilityState === 'hidden' && !(document as DocumentWithPrerendering)?.prerendering) {
     return { timeStamp: 0 as RelativeTime, stop: noop }
   }
 

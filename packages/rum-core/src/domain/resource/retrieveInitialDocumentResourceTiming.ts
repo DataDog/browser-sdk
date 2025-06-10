@@ -1,4 +1,5 @@
 import { runOnReadyState } from '@datadog/browser-core'
+import type { DocumentWithPrerendering } from '@datadog/browser-core'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
@@ -15,7 +16,7 @@ export function retrieveInitialDocumentResourceTiming(
   runOnReadyState(configuration, 'interactive', () => {
     const navigationEntry = getNavigationEntryImpl()
     const activationStart = getActivationStartImpl()
-    const isPrerendered = (document as Document & { prerendering?: boolean })?.prerendering || activationStart > 0
+    const isPrerendered = (document as DocumentWithPrerendering)?.prerendering || activationStart > 0
 
     const adjustTiming = (value: number) => {
       if (isPrerendered && activationStart > 0 && value > 0) {

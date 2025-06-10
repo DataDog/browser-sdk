@@ -1,4 +1,5 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, DocumentWithPrerendering } from '@datadog/browser-core'
+import { isPrerenderingSupported } from '@datadog/browser-core'
 import { createPerformanceEntry, mockDocumentReadyState, mockRumConfiguration } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
@@ -6,8 +7,8 @@ import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocument
 
 describe('rum initial document resource', () => {
   afterEach(() => {
-    if ((document as Document & { prerendering?: boolean })?.prerendering !== undefined) {
-      delete (document as Document & { prerendering?: boolean })?.prerendering
+    if ((document as DocumentWithPrerendering)?.prerendering !== undefined) {
+      delete (document as DocumentWithPrerendering).prerendering
     }
   })
 
@@ -49,83 +50,92 @@ describe('rum initial document resource', () => {
         })
     )
   })
-  describe('prerendering behavior', () => {
-    it('adjusts timing values for prerendered pages with activationStart', (done) => {
-      spyOnProperty(document as Document & { prerendering?: boolean }, 'prerendering', 'get').and.returnValue(false)
 
-      retrieveInitialDocumentResourceTiming(
-        mockRumConfiguration(),
-        (timing) => {
-          expect(timing.fetchStart).toBe(50 as RelativeTime)
-          expect(timing.duration).toBe(50 as RelativeTime)
-          done()
-        },
-        () =>
-          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-            fetchStart: 100 as RelativeTime,
-            responseEnd: 100 as RelativeTime,
-          }),
-        () => 50 as RelativeTime
-      )
+  if (isPrerenderingSupported()) {
+    describe('prerendering behavior', () => {
+      it('adjusts timing values for prerendered pages with activationStart', (done) => {
+        spyOnProperty(document as DocumentWithPrerendering, 'prerendering', 'get').and.returnValue(false)
+
+        retrieveInitialDocumentResourceTiming(
+          mockRumConfiguration(),
+          (timing) => {
+            expect(timing.fetchStart).toBe(50 as RelativeTime)
+            expect(timing.duration).toBe(50 as RelativeTime)
+            done()
+          },
+          () =>
+            createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+              fetchStart: 100 as RelativeTime,
+              responseEnd: 100 as RelativeTime,
+            }),
+          () => 50 as RelativeTime
+        )
+      })
+
+      it('sets deliveryType for pages that are currently prerendering', (done) => {
+        spyOnProperty(document as DocumentWithPrerendering, 'prerendering', 'get').and.returnValue(true)
+
+        retrieveInitialDocumentResourceTiming(
+          mockRumConfiguration(),
+          (timing) => {
+            expect(timing.deliveryType).toBe('navigational-prefetch')
+            done()
+          },
+          () =>
+            createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+              fetchStart: 100 as RelativeTime,
+              responseEnd: 200 as RelativeTime,
+              activationStart: 0 as RelativeTime,
+            })
+        )
+      })
+
+      it('does not adjust timing values for non-prerendered pages', (done) => {
+        spyOnProperty(document as DocumentWithPrerendering, 'prerendering', 'get').and.returnValue(false)
+
+        retrieveInitialDocumentResourceTiming(
+          mockRumConfiguration(),
+          (timing) => {
+            expect(timing.fetchStart).toBe(100 as RelativeTime)
+            expect(timing.duration).toBe(200 as RelativeTime)
+            done()
+          },
+          () =>
+            createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+              fetchStart: 100 as RelativeTime,
+              responseEnd: 200 as RelativeTime,
+              activationStart: 0 as RelativeTime,
+            })
+        )
+      })
+
+      it('handles timing values that would become negative by clamping to 0', (done) => {
+        spyOnProperty(document as DocumentWithPrerendering, 'prerendering', 'get').and.returnValue(true)
+
+        retrieveInitialDocumentResourceTiming(
+          mockRumConfiguration(),
+          (timing) => {
+            expect(timing.fetchStart).toBe(0 as RelativeTime)
+            expect(timing.responseStart).toBe(0 as RelativeTime)
+            expect(timing.duration).toBe(0 as RelativeTime)
+            done()
+          },
+          () =>
+            createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+              fetchStart: 20 as RelativeTime,
+              responseStart: 10 as RelativeTime,
+              responseEnd: 40 as RelativeTime,
+              activationStart: 50 as RelativeTime,
+            }),
+          () => 50 as RelativeTime
+        )
+      })
     })
-
-    it('sets deliveryType for pages that are currently prerendering', (done) => {
-      spyOnProperty(document as Document & { prerendering?: boolean }, 'prerendering', 'get').and.returnValue(true)
-
-      retrieveInitialDocumentResourceTiming(
-        mockRumConfiguration(),
-        (timing) => {
-          expect(timing.deliveryType).toBe('navigational-prefetch')
-          done()
-        },
-        () =>
-          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-            fetchStart: 100 as RelativeTime,
-            responseEnd: 200 as RelativeTime,
-            activationStart: 0 as RelativeTime,
-          })
-      )
+  } else {
+    describe('prerendering behavior (skipped - API not supported)', () => {
+      it('should skip prerendering tests on unsupported browsers', () => {
+        expect(isPrerenderingSupported()).toBe(false)
+      })
     })
-
-    it('does not adjust timing values for non-prerendered pages', (done) => {
-      spyOnProperty(document as Document & { prerendering?: boolean }, 'prerendering', 'get').and.returnValue(false)
-
-      retrieveInitialDocumentResourceTiming(
-        mockRumConfiguration(),
-        (timing) => {
-          expect(timing.fetchStart).toBe(100 as RelativeTime)
-          expect(timing.duration).toBe(200 as RelativeTime)
-          done()
-        },
-        () =>
-          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-            fetchStart: 100 as RelativeTime,
-            responseEnd: 200 as RelativeTime,
-            activationStart: 0 as RelativeTime,
-          })
-      )
-    })
-
-    it('handles timing values that would become negative by clamping to 0', (done) => {
-      spyOnProperty(document as Document & { prerendering?: boolean }, 'prerendering', 'get').and.returnValue(true)
-
-      retrieveInitialDocumentResourceTiming(
-        mockRumConfiguration(),
-        (timing) => {
-          expect(timing.fetchStart).toBe(0 as RelativeTime)
-          expect(timing.responseStart).toBe(0 as RelativeTime)
-          expect(timing.duration).toBe(0 as RelativeTime)
-          done()
-        },
-        () =>
-          createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-            fetchStart: 20 as RelativeTime,
-            responseStart: 10 as RelativeTime,
-            responseEnd: 40 as RelativeTime,
-            activationStart: 50 as RelativeTime,
-          }),
-        () => 50 as RelativeTime
-      )
-    })
-  })
+  }
 })

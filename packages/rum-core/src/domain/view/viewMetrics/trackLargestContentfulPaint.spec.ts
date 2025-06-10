@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
+import { clocksOrigin, DOM_EVENT, isPrerenderingSupported } from '@datadog/browser-core'
 import {
   setPageVisibility,
   createNewEvent,
@@ -166,20 +166,26 @@ describe('trackLargestContentfulPaint', () => {
     })
   })
 
-  it('should adjust LCP based on activationStart when prerendered', () => {
-    startLCPTracking(100 as RelativeTime)
+  if (isPrerenderingSupported()) {
+    it('should adjust LCP based on activationStart when prerendered', () => {
+      startLCPTracking(100 as RelativeTime)
 
-    notifyPerformanceEntries([
-      createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-        startTime: 250 as RelativeTime,
-        size: 100,
-      }),
-    ])
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+          startTime: 250 as RelativeTime,
+          size: 100,
+        }),
+      ])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith({
-      value: 150 as RelativeTime,
-      targetSelector: undefined,
-      resourceUrl: undefined,
+      expect(lcpCallback).toHaveBeenCalledOnceWith({
+        value: 150 as RelativeTime,
+        targetSelector: undefined,
+        resourceUrl: undefined,
+      })
     })
-  })
+  } else {
+    it('should skip prerendering tests on unsupported browsers', () => {
+      expect(isPrerenderingSupported()).toBe(false)
+    })
+  }
 })

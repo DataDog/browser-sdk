@@ -67,3 +67,18 @@ export type CookieChangeEvent = Event & {
   changed: CookieChangeItem[]
   deleted: CookieChangeItem[]
 }
+
+// Document interface extension for the prerendering API
+// https://developer.mozilla.org/en-US/docs/Web/API/Document/prerendering
+export interface DocumentWithPrerendering extends Document {
+  prerendering?: boolean
+}
+
+/**
+ * Check whether the Prerender API is supported by the browser.
+ * The prerendering property is only available in Chrome 108+ and Edge 108+.
+ * https://developer.mozilla.org/en-US/docs/Web/API/Document/prerendering
+ */
+export function isPrerenderingSupported(): boolean {
+  return 'prerendering' in document
+}

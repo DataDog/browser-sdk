@@ -1,4 +1,4 @@
-import { relativeNow, type Duration, type RelativeTime } from '@datadog/browser-core'
+import { isPrerenderingSupported, relativeNow, type Duration, type RelativeTime } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { mockDocumentReadyState, mockRumConfiguration } from '../../../../test'
@@ -92,35 +92,41 @@ describe('trackNavigationTimings', () => {
     expect(navigationTimingsCallback).not.toHaveBeenCalled()
   })
 
-  it('adjusts firstByte for prerendered pages', () => {
-    ;({ stop } = trackNavigationTimings(
-      mockRumConfiguration(),
-      navigationTimingsCallback,
-      () => ({
-        ...FAKE_NAVIGATION_ENTRY,
-        responseStart: 100 as RelativeTime,
-      }),
-      () => 50 as RelativeTime
-    ))
+  if (isPrerenderingSupported()) {
+    it('adjusts firstByte for prerendered pages', () => {
+      ;({ stop } = trackNavigationTimings(
+        mockRumConfiguration(),
+        navigationTimingsCallback,
+        () => ({
+          ...FAKE_NAVIGATION_ENTRY,
+          responseStart: 100 as RelativeTime,
+        }),
+        () => 50 as RelativeTime
+      ))
 
-    clock.tick(0)
+      clock.tick(0)
 
-    expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBe(50 as Duration)
-  })
+      expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBe(50 as Duration)
+    })
 
-  it('clamps negative firstByte to 0 for prerendered pages', () => {
-    ;({ stop } = trackNavigationTimings(
-      mockRumConfiguration(),
-      navigationTimingsCallback,
-      () => ({
-        ...FAKE_NAVIGATION_ENTRY,
-        responseStart: 100 as RelativeTime,
-      }),
-      () => 150 as RelativeTime
-    ))
+    it('clamps negative firstByte to 0 for prerendered pages', () => {
+      ;({ stop } = trackNavigationTimings(
+        mockRumConfiguration(),
+        navigationTimingsCallback,
+        () => ({
+          ...FAKE_NAVIGATION_ENTRY,
+          responseStart: 100 as RelativeTime,
+        }),
+        () => 150 as RelativeTime
+      ))
 
-    clock.tick(0)
+      clock.tick(0)
 
-    expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBe(0 as Duration)
-  })
+      expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBe(0 as Duration)
+    })
+  } else {
+    it('should skip prerendering tests on unsupported browsers', () => {
+      expect(isPrerenderingSupported()).toBe(false)
+    })
+  }
 })

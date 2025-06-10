@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin } from '@datadog/browser-core'
+import { clocksOrigin, isPrerenderingSupported } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
@@ -54,14 +54,20 @@ describe('trackFirstContentfulPaint', () => {
     expect(fcpCallback).not.toHaveBeenCalled()
   })
 
-  it('should adjust FCP based on activationStart when prerendered', () => {
-    const activationStart = 100 as RelativeTime
-    startTrackingFCP(activationStart)
+  if (isPrerenderingSupported()) {
+    it('should adjust FCP based on activationStart when prerendered', () => {
+      const activationStart = 100 as RelativeTime
+      startTrackingFCP(activationStart)
 
-    notifyPerformanceEntries([
-      createPerformanceEntry(RumPerformanceEntryType.PAINT, { startTime: 250 as RelativeTime }),
-    ])
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.PAINT, { startTime: 250 as RelativeTime }),
+      ])
 
-    expect(fcpCallback).toHaveBeenCalledWith(150 as RelativeTime)
-  })
+      expect(fcpCallback).toHaveBeenCalledWith(150 as RelativeTime)
+    })
+  } else {
+    it('should skip prerendering tests on unsupported browsers', () => {
+      expect(isPrerenderingSupported()).toBe(false)
+    })
+  }
 })

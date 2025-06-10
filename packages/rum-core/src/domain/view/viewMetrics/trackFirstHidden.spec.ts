@@ -1,5 +1,5 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
+import type { RelativeTime, TimeStamp, DocumentWithPrerendering } from '@datadog/browser-core'
+import { clocksOrigin, DOM_EVENT, isPrerenderingSupported } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockGlobalPerformanceBuffer } from '../../../../test'
 import type { GlobalPerformanceBufferMock } from '../../../../test'
@@ -42,23 +42,29 @@ describe('trackFirstHidden', () => {
       expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
     })
 
-    it('should return Infinity if the page is hidden but prerendering', () => {
-      setPageVisibility('hidden')
-      spyOnProperty(document as Document & { prerendering?: boolean }, 'prerendering', 'get').and.returnValue(true)
+    if (isPrerenderingSupported()) {
+      it('should return Infinity if the page is hidden but prerendering', () => {
+        setPageVisibility('hidden')
+        spyOnProperty(document as DocumentWithPrerendering, 'prerendering', 'get').and.returnValue(true)
 
-      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+        firstHidden = trackFirstHiddenWithDefaults({ configuration })
 
-      expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
-    })
+        expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
+      })
 
-    it('should return 0 if the page is hidden and prerendering is false', () => {
-      setPageVisibility('hidden')
-      spyOnProperty(document as Document & { prerendering?: boolean }, 'prerendering', 'get').and.returnValue(false)
+      it('should return 0 if the page is hidden and prerendering is false', () => {
+        setPageVisibility('hidden')
+        spyOnProperty(document as DocumentWithPrerendering, 'prerendering', 'get').and.returnValue(false)
 
-      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+        firstHidden = trackFirstHiddenWithDefaults({ configuration })
 
-      expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
-    })
+        expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
+      })
+    } else {
+      it('should skip prerendering tests on unsupported browsers', () => {
+        expect(isPrerenderingSupported()).toBe(false)
+      })
+    }
   })
 
   describe('the page is initially visible', () => {
