@@ -1,5 +1,5 @@
 import type { RelativeTime, Duration } from '@datadog/browser-core'
-import { clocksNow, clocksOrigin, Observable } from '@datadog/browser-core'
+import { clocksNow, clocksOrigin, noop, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, setPageVisibility, restorePageVisibility } from '@datadog/browser-core/test'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
@@ -33,7 +33,7 @@ describe('trackLoadingTime', () => {
   let windowOpenObservable: Observable<void>
   let loadingTimeCallback: jasmine.Spy<(loadingTime: Duration) => void>
   let setLoadEvent: (loadEvent: Duration) => void
-  let stopLoadingTimeTracking: () => void
+  let stopLoadingTimeTracking = noop
   let performanceBufferMock: GlobalPerformanceBufferMock
 
   function emulatePageActivityDuringViewLoading() {

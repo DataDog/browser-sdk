@@ -1,21 +1,31 @@
-import type { ContextManager, RelativeTime } from '@datadog/browser-core'
-import { HookNames, removeStorageListeners } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration } from '../../../test'
-import type { Hooks } from '../hooks'
-import { createHooks } from '../hooks'
+import type { Hooks } from '../../../test'
+import { createHooks, registerCleanupTask } from '../../../test'
+import { mockRumConfiguration } from '../../../../rum-core/test'
+import type { ContextManager } from '../context/contextManager'
+import type { RelativeTime } from '../../tools/utils/timeUtils'
+import { HookNames } from '../../tools/abstractHooks'
+import { removeStorageListeners } from '../context/storeContextManager'
+import type { Configuration } from '../configuration'
+import type { SessionContext } from '../session/sessionManager'
 import { startUserContext } from './userContext'
 
 describe('user context', () => {
   let userContext: ContextManager
   let hooks: Hooks
+  const mockSessionManager = {
+    findTrackedSession: () =>
+      ({
+        anonymousId: 'device-123',
+      }) as SessionContext<string>,
+  }
 
   beforeEach(() => {
     hooks = createHooks()
     userContext = startUserContext(
       hooks,
       mockRumConfiguration({ trackAnonymousUser: false }),
-      createRumSessionManagerMock()
+      mockSessionManager,
+      'some_product_key'
     )
   })
 
@@ -49,8 +59,9 @@ describe('user context', () => {
     it('should set anonymous_id when trackAnonymousUser is true', () => {
       userContext = startUserContext(
         hooks,
-        mockRumConfiguration({ trackAnonymousUser: true }),
-        createRumSessionManagerMock()
+        { trackAnonymousUser: true } as Configuration,
+        mockSessionManager,
+        'some_product_key'
       )
       userContext.setContext({ id: '123' })
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
@@ -70,8 +81,9 @@ describe('user context', () => {
     it('should not override customer provided anonymous_id when trackAnonymousUser is true', () => {
       userContext = startUserContext(
         hooks,
-        mockRumConfiguration({ trackAnonymousUser: true }),
-        createRumSessionManagerMock()
+        { trackAnonymousUser: true } as Configuration,
+        mockSessionManager,
+        'some_product_key'
       )
       userContext.setContext({ id: '123', anonymous_id: 'foo' })
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
@@ -93,6 +105,7 @@ describe('user context', () => {
 describe('user context across pages', () => {
   let userContext: ContextManager
   let hooks: Hooks
+  const mockSessionManager = { findTrackedSession: () => undefined }
 
   beforeEach(() => {
     hooks = createHooks()
@@ -106,24 +119,26 @@ describe('user context across pages', () => {
   it('when disabled, should store contexts only in memory', () => {
     userContext = startUserContext(
       hooks,
-      mockRumConfiguration({ storeContextsAcrossPages: false }),
-      createRumSessionManagerMock()
+      { storeContextsAcrossPages: false } as Configuration,
+      mockSessionManager,
+      'some_product_key'
     )
     userContext.setContext({ id: '123' })
 
     expect(userContext.getContext()).toEqual({ id: '123' })
-    expect(localStorage.getItem('_dd_c_rum_1')).toBeNull()
+    expect(localStorage.getItem('_dd_c_some_product_key_1')).toBeNull()
   })
 
   it('when enabled, should maintain the user in local storage', () => {
     userContext = startUserContext(
       hooks,
-      mockRumConfiguration({ storeContextsAcrossPages: true }),
-      createRumSessionManagerMock()
+      { storeContextsAcrossPages: true } as Configuration,
+      mockSessionManager,
+      'some_product_key'
     )
 
     userContext.setContext({ id: 'foo', qux: 'qix' })
     expect(userContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
-    expect(localStorage.getItem('_dd_c_rum_1')).toBe('{"id":"foo","qux":"qix"}')
+    expect(localStorage.getItem('_dd_c_some_product_key_1')).toBe('{"id":"foo","qux":"qix"}')
   })
 })

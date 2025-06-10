@@ -3,12 +3,9 @@ import {
   ContextManagerMethod,
   CustomerContextKey,
   addTelemetryUsage,
-  CustomerDataType,
-  createContextManager,
   makePublicApi,
   monitor,
   sanitize,
-  storeContextManager,
   displayAlreadyInitializedError,
   deepClone,
   createTrackingConsentState,
@@ -195,41 +192,29 @@ export interface LogsPublicApi extends PublicApi {
   clearAccount: () => void
 }
 
-const LOGS_STORAGE_KEY = 'logs'
-
 export interface Strategy {
   init: (initConfiguration: LogsInitConfiguration) => void
   initConfiguration: LogsInitConfiguration | undefined
   globalContext: ContextManager
   accountContext: ContextManager
+  userContext: ContextManager
   getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
-  const userContextManager = createContextManager('user', {
-    propertiesConfig: {
-      id: { type: 'string' },
-      name: { type: 'string' },
-      email: { type: 'string' },
-    },
-  })
   const trackingConsentState = createTrackingConsentState()
 
-  function getCommonContext() {
-    return buildCommonContext(userContextManager)
-  }
+  let strategy = createPreStartStrategy(
+    buildCommonContext,
+    trackingConsentState,
+    (initConfiguration, configuration) => {
+      const startLogsResult = startLogsImpl(initConfiguration, configuration, buildCommonContext, trackingConsentState)
 
-  let strategy = createPreStartStrategy(getCommonContext, trackingConsentState, (initConfiguration, configuration) => {
-    if (initConfiguration.storeContextsAcrossPages) {
-      storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
+      strategy = createPostStartStrategy(initConfiguration, startLogsResult)
+      return startLogsResult
     }
-
-    const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext, trackingConsentState)
-
-    strategy = createPostStartStrategy(initConfiguration, startLogsResult)
-    return startLogsResult
-  })
+  )
 
   const getStrategy = () => strategy
 
@@ -294,15 +279,23 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
-    setUser: monitor(userContextManager.setContext),
+    setUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.setContext),
 
-    getUser: monitor(userContextManager.getContext),
+    getUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.getContext),
 
-    setUserProperty: monitor(userContextManager.setContextProperty),
+    setUserProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.userContext,
+      ContextManagerMethod.setContextProperty
+    ),
 
-    removeUserProperty: monitor(userContextManager.removeContextProperty),
+    removeUserProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.userContext,
+      ContextManagerMethod.removeContextProperty
+    ),
 
-    clearUser: monitor(userContextManager.clearContext),
+    clearUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.clearContext),
 
     setAccount: defineContextMethod(getStrategy, CustomerContextKey.accountContext, ContextManagerMethod.setContext),
 

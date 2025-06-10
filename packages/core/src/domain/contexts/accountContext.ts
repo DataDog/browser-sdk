@@ -3,9 +3,14 @@ import { CustomerDataType } from '../context/contextConstants'
 import { storeContextManager } from '../context/storeContextManager'
 import { HookNames, SKIPPED } from '../../tools/abstractHooks'
 import type { AbstractHooks } from '../../tools/abstractHooks'
-import type { Account } from '../account.types'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { createContextManager } from '../context/contextManager'
+
+export interface Account {
+  id: string
+  name?: string | undefined
+  [key: string]: unknown
+}
 
 export function startAccountContext(hooks: AbstractHooks, configuration: Configuration, productKey: string) {
   const accountContextManager = buildAccountContextManager()

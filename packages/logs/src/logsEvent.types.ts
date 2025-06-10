@@ -126,5 +126,36 @@ export interface LogsEvent {
   user_action?: {
     id: string | string[]
   }
+  usr?: {
+    /**
+     * Identifier of the user
+     */
+    id?: string
+    /**
+     * Name of the user
+     */
+    name?: string
+    /**
+     * Email of the user
+     */
+    email?: string
+    /**
+     * Identifier of the user across sessions
+     */
+    anonymous_id?: string
+    [k: string]: unknown
+  }
+  account?: {
+    /**
+     * Identifier of the account
+     */
+    id: string
+    /**
+     * Name of the account
+     */
+    name?: string
+    [k: string]: unknown
+  }
+
   [k: string]: unknown
 }
