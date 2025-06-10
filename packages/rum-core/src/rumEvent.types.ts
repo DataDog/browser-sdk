@@ -1526,9 +1526,9 @@ export interface CommonProperties {
      */
     readonly architecture?: string
     /**
-     * The user’s current locale as a language tag combining language and region, e.g. 'en-US'.
+     * The user’s locale as a language tag combining language and region, e.g. 'en-US'.
      */
-    readonly current_locale?: string
+    readonly locale?: string
     /**
      * Ordered list of the user’s preferred system languages as IETF language tags.
      */
