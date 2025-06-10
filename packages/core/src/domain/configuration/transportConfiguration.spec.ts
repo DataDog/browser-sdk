@@ -7,7 +7,7 @@ const DEFAULT_PAYLOAD = {} as Payload
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
   const internalAnalyticsSubdomain = 'ia-rum-intake'
-  const intakeParameters = 'ddsource=browser&ddtags=sdk_version'
+  const intakeParameters = 'ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
 
   describe('site', () => {
     it('should use US site by default', () => {

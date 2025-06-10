@@ -290,7 +290,7 @@ describe('computeResourceEntryDuration', () => {
 })
 
 describe('shouldTrackResource', () => {
-  const intakeParameters = 'ddsource=browser&ddtags=sdk_version'
+  const intakeParameters = 'ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
   it('should exclude requests on intakes endpoints', () => {
     expect(isAllowedRequestUrl(`https://rum-intake.com/v1/input/abcde?${intakeParameters}`)).toBe(false)
   })
