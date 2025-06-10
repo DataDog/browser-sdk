@@ -41,6 +41,24 @@ describe('trackFirstHidden', () => {
 
       expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
     })
+
+    it('should return Infinity if the page is hidden but prerendering', () => {
+      setPageVisibility('hidden')
+      spyOnProperty(document as Document & { prerendering?: boolean }, 'prerendering', 'get').and.returnValue(true)
+
+      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+
+      expect(firstHidden.timeStamp).toBe(Infinity as RelativeTime)
+    })
+
+    it('should return 0 if the page is hidden and prerendering is false', () => {
+      setPageVisibility('hidden')
+      spyOnProperty(document as Document & { prerendering?: boolean }, 'prerendering', 'get').and.returnValue(false)
+
+      firstHidden = trackFirstHiddenWithDefaults({ configuration })
+
+      expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
+    })
   })
 
   describe('the page is initially visible', () => {

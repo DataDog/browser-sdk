@@ -3,6 +3,7 @@ import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/bro
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
+import { getActivationStart } from '../../../browser/performanceUtils'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
 
@@ -26,7 +27,8 @@ export function trackLargestContentfulPaint(
   configuration: RumConfiguration,
   firstHidden: FirstHidden,
   eventTarget: Window,
-  callback: (largestContentfulPaint: LargestContentfulPaint) => void
+  callback: (largestContentfulPaint: LargestContentfulPaint) => void,
+  getActivationStartImpl = getActivationStart
 ) {
   // Ignore entries that come after the first user interaction. According to the documentation, the
   // browser should not send largest-contentful-paint entries after a user interact with the page,
@@ -59,13 +61,17 @@ export function trackLargestContentfulPaint(
         entry.size > biggestLcpSize
     )
     if (lcpEntry) {
+      const activationStart = getActivationStartImpl()
+      const adjustedStartTime =
+        activationStart > 0 ? Math.max(0, lcpEntry.startTime - activationStart) : lcpEntry.startTime
+
       let lcpTargetSelector
       if (lcpEntry.element) {
         lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
       }
 
       callback({
-        value: lcpEntry.startTime,
+        value: adjustedStartTime as RelativeTime,
         targetSelector: lcpTargetSelector,
         resourceUrl: computeLcpEntryUrl(lcpEntry),
       })

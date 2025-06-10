@@ -1,8 +1,8 @@
-import type { Duration, TimeoutId } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
 import { setTimeout, relativeNow, runOnReadyState, clearTimeout } from '@datadog/browser-core'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
-import { getNavigationEntry } from '../../../browser/performanceUtils'
+import { getActivationStart, getNavigationEntry } from '../../../browser/performanceUtils'
 
 export interface NavigationTimings {
   domComplete: Duration
@@ -22,18 +22,28 @@ export type RelevantNavigationTiming = Pick<
 export function trackNavigationTimings(
   configuration: RumConfiguration,
   callback: (timings: NavigationTimings) => void,
-  getNavigationEntryImpl: () => RelevantNavigationTiming = getNavigationEntry
+  getNavigationEntryImpl: () => RelevantNavigationTiming = getNavigationEntry,
+  getActivationStartImpl = getActivationStart
 ) {
   return waitAfterLoadEvent(configuration, () => {
     const entry = getNavigationEntryImpl()
 
     if (!isIncompleteNavigation(entry)) {
-      callback(processNavigationEntry(entry))
+      callback(processNavigationEntry(entry, getActivationStartImpl))
     }
   })
 }
 
-function processNavigationEntry(entry: RelevantNavigationTiming): NavigationTimings {
+function processNavigationEntry(
+  entry: RelevantNavigationTiming,
+  getActivationStartImpl: () => RelativeTime
+): NavigationTimings {
+  const activationStart = getActivationStartImpl()
+
+  // Calculate TTFB (firstByte) relative to activation start for prerendered pages
+  const adjustedResponseStart =
+    activationStart > 0 ? Math.max(0, entry.responseStart - activationStart) : entry.responseStart
+
   return {
     domComplete: entry.domComplete,
     domContentLoaded: entry.domContentLoadedEventEnd,
@@ -43,7 +53,10 @@ function processNavigationEntry(entry: RelevantNavigationTiming): NavigationTimi
     // than the current page time. Ignore these cases:
     // https://github.com/GoogleChrome/web-vitals/issues/137
     // https://github.com/GoogleChrome/web-vitals/issues/162
-    firstByte: entry.responseStart >= 0 && entry.responseStart <= relativeNow() ? entry.responseStart : undefined,
+    firstByte:
+      adjustedResponseStart >= 0 && adjustedResponseStart <= relativeNow()
+        ? (adjustedResponseStart as Duration)
+        : undefined,
   }
 }
 

@@ -20,6 +20,7 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
   const entry: RumPerformanceNavigationTiming = {
     entryType: RumPerformanceEntryType.NAVIGATION as const,
     initiatorType: 'navigation' as const,
+    activationStart: 0 as RelativeTime,
     name: window.location.href,
     startTime: 0 as RelativeTime,
     duration: timings.loadEventEnd,
@@ -50,4 +51,9 @@ export function computeTimingsFromDeprecatedPerformanceTiming() {
     }
   }
   return result as TimingsFromDeprecatedPerformanceTiming
+}
+
+export function getActivationStart(): RelativeTime {
+  const navEntry = getNavigationEntry()
+  return (navEntry && navEntry.activationStart) || (0 as RelativeTime)
 }
