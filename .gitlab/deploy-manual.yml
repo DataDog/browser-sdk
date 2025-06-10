@@ -23,15 +23,7 @@ step-1_deploy-prod-minor-dcs:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: us3,us5,ap1
-
-step-1bis_deploy-wip-dc:
-  extends:
-    - .base-configuration
-    - .deploy-prod
-  allow_failure: true
-  variables:
-    UPLOAD_PATH: ap2
+    UPLOAD_PATH: us3,us5,ap1,ap2
 
 step-2_deploy-prod-eu1:
   extends:
