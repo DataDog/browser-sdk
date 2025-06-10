@@ -15,6 +15,7 @@ import {
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
+  buildUserContextManager,
 } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
@@ -26,7 +27,6 @@ import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalColl
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
-import { buildUserContextManager } from '../domain/contexts/userContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 

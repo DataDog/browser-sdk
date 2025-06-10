@@ -1,12 +1,5 @@
 import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  HookNames,
-  combine,
-  createEventRateLimiter,
-  getRelativeTime,
-  isEmptyObject,
-} from '@datadog/browser-core'
+import { ErrorSource, HookNames, combine, createEventRateLimiter, getRelativeTime } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsConfiguration } from './configuration'
@@ -42,11 +35,6 @@ export function startLogsAssembly(
       }
 
       const commonContext = savedCommonContext || getCommonContext()
-
-      if (session && session.anonymousId && !commonContext.user.anonymous_id) {
-        commonContext.user.anonymous_id = session.anonymousId
-      }
-
       const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         startTime,
       }) as DefaultLogsEventAttributes
@@ -56,8 +44,6 @@ export function startLogsAssembly(
           service: configuration.service,
           session_id: session ? session.id : undefined,
           session: session ? { id: session.id } : undefined,
-          // Insert user and account first to allow overrides from global context
-          usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
           view: commonContext.view,
         },
         defaultLogsEventAttributes,

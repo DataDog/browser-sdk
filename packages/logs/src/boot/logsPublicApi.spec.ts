@@ -1,5 +1,5 @@
-import type { TimeStamp } from '@datadog/browser-core'
-import { monitor, display, removeStorageListeners } from '@datadog/browser-core'
+import type { ContextManager, TimeStamp } from '@datadog/browser-core'
+import { monitor, display, createContextManager } from '@datadog/browser-core'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
@@ -82,7 +82,6 @@ describe('logs entry', () => {
           referrer: document.referrer,
           url: window.location.href,
         },
-        user: {},
       })
     })
   })
@@ -176,331 +175,84 @@ describe('logs entry', () => {
       })
     })
 
-    describe('setUser', () => {
+    describe('user', () => {
       let logsPublicApi: LogsPublicApi
-      let displaySpy: jasmine.Spy<() => void>
-
+      let userContext: ContextManager
       beforeEach(() => {
-        displaySpy = spyOn(display, 'error')
+        userContext = createContextManager('mock')
+        startLogs = jasmine
+          .createSpy()
+          .and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext, userContext }))
+
         logsPublicApi = makeLogsPublicApi(startLogs)
+
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
-      it('should store user in common context', () => {
-        const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
-        logsPublicApi.setUser(user)
-
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
-        expect(getCommonContext().user).toEqual({
-          email: 'qux',
-          foo: { bar: 'qux' },
-          id: 'foo',
-          name: 'bar',
-        })
-      })
-
-      it('should sanitize predefined properties', () => {
-        const user = { id: false, name: 2, email: { bar: 'qux' } }
-        logsPublicApi.setUser(user as any)
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
-        expect(getCommonContext().user).toEqual({
-          email: '[object Object]',
-          id: 'false',
-          name: '2',
-        })
-      })
-
-      it('should clear a previously set user', () => {
-        const user = { id: 'foo', name: 'bar', email: 'qux' }
-        logsPublicApi.setUser(user)
-        logsPublicApi.clearUser()
-
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
-        expect(getCommonContext().user).toEqual({})
-      })
-
-      it('should reject non object input', () => {
+      it('should call setContext', () => {
+        spyOn(userContext, 'setContext')
         logsPublicApi.setUser(2 as any)
-        logsPublicApi.setUser(null as any)
-        logsPublicApi.setUser(undefined as any)
-        expect(displaySpy).toHaveBeenCalledTimes(3)
-      })
-    })
-
-    describe('getUser', () => {
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        expect(userContext.setContext).toHaveBeenCalledTimes(1)
       })
 
-      it('should return empty object if no user has been set', () => {
-        const userClone = logsPublicApi.getUser()
-        expect(userClone).toEqual({})
+      it('should call setContextProperty', () => {
+        spyOn(userContext, 'setContextProperty')
+        logsPublicApi.setUserProperty('foo', 'bar')
+        expect(userContext.setContextProperty).toHaveBeenCalledTimes(1)
       })
 
-      it('should return a clone of the original object if set', () => {
-        const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
-        logsPublicApi.setUser(user)
-        const userClone = logsPublicApi.getUser()
-        const userClone2 = logsPublicApi.getUser()
-
-        expect(userClone).not.toBe(user)
-        expect(userClone).not.toBe(userClone2)
-        expect(userClone).toEqual(user)
-      })
-    })
-
-    describe('setUserProperty', () => {
-      const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
-      const addressAttribute = { city: 'Paris' }
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      })
-
-      it('should add attribute', () => {
-        logsPublicApi.setUser(user)
-        logsPublicApi.setUserProperty('address', addressAttribute)
-        const userClone = logsPublicApi.getUser()
-
-        expect(userClone.address).toEqual(addressAttribute)
-      })
-
-      it('should not contain original reference to object', () => {
-        const userDetails: { [key: string]: any } = { name: 'john' }
-        logsPublicApi.setUser(user)
-        logsPublicApi.setUserProperty('userDetails', userDetails)
-        userDetails.DOB = '11/11/1999'
-        const userClone = logsPublicApi.getUser()
-
-        expect(userClone.userDetails).not.toBe(userDetails)
-      })
-
-      it('should override attribute', () => {
-        logsPublicApi.setUser(user)
-        logsPublicApi.setUserProperty('foo', addressAttribute)
-        const userClone = logsPublicApi.getUser()
-
-        expect(userClone).toEqual({ ...user, foo: addressAttribute })
-      })
-
-      it('should sanitize properties', () => {
-        logsPublicApi.setUserProperty('id', 123)
-        logsPublicApi.setUserProperty('name', ['Adam', 'Smith'])
-        logsPublicApi.setUserProperty('email', { foo: 'bar' })
-        const userClone = logsPublicApi.getUser()
-
-        expect(userClone.id).toEqual('123')
-        expect(userClone.name).toEqual('Adam,Smith')
-        expect(userClone.email).toEqual('[object Object]')
-      })
-    })
-
-    describe('removeUserProperty', () => {
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      })
-
-      it('should remove property', () => {
-        const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
-
-        logsPublicApi.setUser(user)
+      it('should call removeContextProperty', () => {
+        spyOn(userContext, 'removeContextProperty')
         logsPublicApi.removeUserProperty('foo')
-        const userClone = logsPublicApi.getUser()
-        expect(userClone.foo).toBeUndefined()
+        expect(userContext.removeContextProperty).toHaveBeenCalledTimes(1)
+      })
+
+      it('should call clearContext', () => {
+        spyOn(userContext, 'clearContext')
+        logsPublicApi.clearUser()
+        expect(userContext.clearContext).toHaveBeenCalledTimes(1)
       })
     })
 
-    describe('setAccount', () => {
-      let displaySpy: jasmine.Spy<() => void>
+    describe('account', () => {
       let logsPublicApi: LogsPublicApi
-
+      let accountContext: ContextManager
       beforeEach(() => {
-        displaySpy = spyOn(display, 'error')
+        accountContext = createContextManager('mock')
+        startLogs = jasmine.createSpy().and.callFake(() => ({
+          handleLog: handleLogSpy,
+          getInternalContext,
+          accountContext,
+        }))
+
         logsPublicApi = makeLogsPublicApi(startLogs)
+
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
-      it('should attach valid objects', () => {
-        const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
-        logsPublicApi.setAccount(account)
-
-        expect(logsPublicApi.getAccount()).toEqual({
-          foo: { bar: 'qux' },
-          id: 'foo',
-          name: 'bar',
-        })
-        expect(displaySpy).not.toHaveBeenCalled()
-      })
-
-      it('should sanitize predefined properties', () => {
-        const account = { id: false, name: 2 }
-        logsPublicApi.setAccount(account as any)
-
-        expect(logsPublicApi.getAccount()).toEqual({
-          id: 'false',
-          name: '2',
-        })
-        expect(displaySpy).not.toHaveBeenCalled()
-      })
-
-      it('should remove the account', () => {
-        const account = { id: 'foo', name: 'bar' }
-        logsPublicApi.setAccount(account)
-        logsPublicApi.clearAccount()
-
-        expect(logsPublicApi.getAccount()).toEqual({})
-        expect(displaySpy).not.toHaveBeenCalled()
-      })
-
-      it('should reject non object input', () => {
+      it('should call setContext', () => {
+        spyOn(accountContext, 'setContext')
         logsPublicApi.setAccount(2 as any)
-        logsPublicApi.setAccount(null as any)
-        logsPublicApi.setAccount(undefined as any)
-        expect(displaySpy).toHaveBeenCalledTimes(3)
-      })
-    })
-
-    describe('getAccount', () => {
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
+        expect(accountContext.setContext).toHaveBeenCalledTimes(1)
       })
 
-      it('should return empty object if no account has been set', () => {
-        const accountClone = logsPublicApi.getAccount()
-        expect(accountClone).toEqual({})
+      it('should call setContextProperty', () => {
+        spyOn(accountContext, 'setContextProperty')
+        logsPublicApi.setAccountProperty('foo', 'bar')
+        expect(accountContext.setContextProperty).toHaveBeenCalledTimes(1)
       })
 
-      it('should return a clone of the original object if set', () => {
-        const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
-        logsPublicApi.setAccount(account)
-        const accountClone = logsPublicApi.getAccount()
-        const accountClone2 = logsPublicApi.getAccount()
-
-        expect(accountClone).not.toBe(account)
-        expect(accountClone).not.toBe(accountClone2)
-        expect(accountClone).toEqual(account)
-      })
-    })
-
-    describe('setAccountProperty', () => {
-      const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
-      const addressAttribute = { city: 'Paris' }
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
-      })
-
-      it('should add attribute', () => {
-        logsPublicApi.setAccount(account)
-        logsPublicApi.setAccountProperty('address', addressAttribute)
-        const accountClone = logsPublicApi.getAccount()
-
-        expect(accountClone.address).toEqual(addressAttribute)
-      })
-
-      it('should not contain original reference to object', () => {
-        const accountDetails: { [key: string]: any } = { name: 'company' }
-        logsPublicApi.setAccount(account)
-        logsPublicApi.setAccountProperty('accountDetails', accountDetails)
-        const accountClone = logsPublicApi.getAccount()
-
-        expect(accountClone.accountDetails).not.toBe(accountDetails)
-      })
-
-      it('should override attribute', () => {
-        logsPublicApi.setAccount(account)
-        logsPublicApi.setAccountProperty('foo', addressAttribute)
-        const accountClone = logsPublicApi.getAccount()
-
-        expect(accountClone).toEqual({ ...account, foo: addressAttribute })
-      })
-
-      it('should sanitize properties', () => {
-        logsPublicApi.setAccountProperty('id', 123)
-        logsPublicApi.setAccountProperty('name', ['My', 'Company'])
-        const accountClone = logsPublicApi.getAccount()
-
-        expect(accountClone.id).toEqual('123')
-        expect(accountClone.name).toEqual('My,Company')
-      })
-    })
-
-    describe('removeAccountProperty', () => {
-      let logsPublicApi: LogsPublicApi
-
-      beforeEach(() => {
-        logsPublicApi = makeLogsPublicApi(startLogs)
-      })
-      it('should remove property', () => {
-        const account = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
-
-        logsPublicApi.setAccount(account)
+      it('should call removeContextProperty', () => {
+        spyOn(accountContext, 'removeContextProperty')
         logsPublicApi.removeAccountProperty('foo')
-        const accountClone = logsPublicApi.getAccount()
-        expect(accountClone.foo).toBeUndefined()
+        expect(accountContext.removeContextProperty).toHaveBeenCalledTimes(1)
       })
-    })
-  })
 
-  describe('storeContextsAcrossPages', () => {
-    let logsPublicApi: LogsPublicApi
-
-    beforeEach(() => {
-      logsPublicApi = makeLogsPublicApi(startLogs)
-    })
-
-    afterEach(() => {
-      localStorage.clear()
-      removeStorageListeners()
-    })
-
-    it('when disabled, should store contexts only in memory', () => {
-      logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-
-      logsPublicApi.setUser({ id: 'foo', qux: 'qix' })
-      expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_logs_1')).toBeNull()
-    })
-
-    it('when enabled, should maintain user context in local storage', () => {
-      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      logsPublicApi.setUser({ id: 'foo', qux: 'qix' })
-      expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"id":"foo","qux":"qix"}')
-
-      logsPublicApi.setUserProperty('foo', 'bar')
-      expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix', foo: 'bar' })
-      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"id":"foo","qux":"qix","foo":"bar"}')
-
-      logsPublicApi.removeUserProperty('foo')
-      expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"id":"foo","qux":"qix"}')
-
-      logsPublicApi.clearUser()
-      expect(logsPublicApi.getUser()).toEqual({})
-      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{}')
-    })
-
-    // TODO in next major, buffer context calls to correctly apply before init set/remove/clear
-    it('when enabled, before init context values should override local storage values', () => {
-      localStorage.setItem('_dd_c_logs_1', '{"foo":"bar","qux":"qix"}')
-      logsPublicApi.setUserProperty('foo', 'user')
-
-      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
-
-      expect(logsPublicApi.getUser()).toEqual({ foo: 'user', qux: 'qix' })
-      expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"foo":"user","qux":"qix"}')
+      it('should call clearContext', () => {
+        spyOn(accountContext, 'clearContext')
+        logsPublicApi.clearAccount()
+        expect(accountContext.clearContext).toHaveBeenCalledTimes(1)
+      })
     })
   })
 })

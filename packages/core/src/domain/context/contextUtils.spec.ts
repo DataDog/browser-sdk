@@ -1,7 +1,7 @@
 import { display } from '../../tools/display'
 import type { Context } from '../../tools/serialisation/context'
-import type { Account } from '../account.types'
-import type { User } from '../user.types'
+import type { Account } from '../contexts/accountContext'
+import type { User } from '../contexts/userContext'
 import { checkContext } from './contextUtils'
 
 describe('checkContext function', () => {

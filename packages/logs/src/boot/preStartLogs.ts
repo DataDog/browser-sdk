@@ -12,6 +12,7 @@ import {
   CustomerContextKey,
   bufferContextCalls,
   buildGlobalContextManager,
+  buildUserContextManager,
 } from '@datadog/browser-core'
 import {
   validateAndBuildLogsConfiguration,
@@ -29,12 +30,15 @@ export function createPreStartStrategy(
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
-  // TODO next major: remove the globalContext, accountContextManager from preStartStrategy and use an empty context instead
+  // TODO next major: remove the globalContext, accountContextManager, userContext from preStartStrategy and use an empty context instead
   const globalContext = buildGlobalContextManager()
   bufferContextCalls(globalContext, CustomerContextKey.globalContext, bufferApiCalls)
 
   const accountContext = buildAccountContextManager()
   bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
+
+  const userContext = buildUserContextManager()
+  bufferContextCalls(userContext, CustomerContextKey.userContext, bufferApiCalls)
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
@@ -94,6 +98,7 @@ export function createPreStartStrategy(
 
     globalContext,
     accountContext,
+    userContext,
 
     getInternalContext: noop as () => undefined,
 
