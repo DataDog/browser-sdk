@@ -884,10 +884,11 @@ describe('rum public api', () => {
     })
 
     it('should return the sdk name', () => {
-      makeRumPublicApi(startRumSpy, noopRecorderApi, noopProfilerApi, {
+      const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, noopProfilerApi, {
         sdkName: 'rum-slim',
       })
 
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const sdkName = startRumSpy.calls.argsFor(0)[7]
       expect(sdkName).toBe('rum-slim')
     })
