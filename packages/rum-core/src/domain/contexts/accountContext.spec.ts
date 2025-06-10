@@ -1,11 +1,9 @@
-import type { Hooks } from '../../../test'
-import { createHooks, registerCleanupTask } from '../../../test'
-import { mockRumConfiguration } from '../../../../rum-core/test'
-import type { ContextManager } from '../context/contextManager'
-import { display } from '../../tools/display'
-import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { HookNames } from '../../tools/abstractHooks'
-import { removeStorageListeners } from '../context/storeContextManager'
+import type { ContextManager, RelativeTime } from '@datadog/browser-core'
+import { display, HookNames, removeStorageListeners } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+import { mockRumConfiguration } from '../../../test'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startAccountContext } from './accountContext'
 
 describe('account context', () => {
@@ -15,9 +13,10 @@ describe('account context', () => {
 
   beforeEach(() => {
     hooks = createHooks()
+
     displaySpy = spyOn(display, 'warn')
 
-    accountContext = startAccountContext(hooks, mockRumConfiguration(), 'some_product_key')
+    accountContext = startAccountContext(hooks, mockRumConfiguration())
   })
 
   it('should warn when the account.id is missing', () => {
@@ -38,10 +37,12 @@ describe('account context', () => {
       accountContext.setContext({ id: '123', foo: 'bar' })
 
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
         startTime: 0 as RelativeTime,
       })
 
       expect(defaultRumEventAttributes).toEqual({
+        type: 'view',
         account: {
           id: '123',
           foo: 'bar',
@@ -74,11 +75,7 @@ describe('account context across pages', () => {
   })
 
   it('when disabled, should store contexts only in memory', () => {
-    accountContext = startAccountContext(
-      hooks,
-      mockRumConfiguration({ storeContextsAcrossPages: false }),
-      'some_product_key'
-    )
+    accountContext = startAccountContext(hooks, mockRumConfiguration({ storeContextsAcrossPages: false }))
     accountContext.setContext({ id: '123' })
 
     expect(accountContext.getContext()).toEqual({ id: '123' })
@@ -86,14 +83,10 @@ describe('account context across pages', () => {
   })
 
   it('when enabled, should maintain the account in local storage', () => {
-    accountContext = startAccountContext(
-      hooks,
-      mockRumConfiguration({ storeContextsAcrossPages: true }),
-      'some_product_key'
-    )
+    accountContext = startAccountContext(hooks, mockRumConfiguration({ storeContextsAcrossPages: true }))
 
     accountContext.setContext({ id: 'foo', qux: 'qix' })
     expect(accountContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
-    expect(localStorage.getItem('_dd_c_some_product_key_4')).toBe('{"id":"foo","qux":"qix"}')
+    expect(localStorage.getItem('_dd_c_rum_4')).toBe('{"id":"foo","qux":"qix"}')
   })
 })

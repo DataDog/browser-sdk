@@ -82,7 +82,9 @@ describe('logs entry', () => {
           referrer: document.referrer,
           url: window.location.href,
         },
+        context: { foo: 'bar' },
         user: {},
+        account: {},
       })
     })
   })
@@ -319,44 +321,44 @@ describe('logs entry', () => {
     })
 
     describe('setAccount', () => {
-      let displaySpy: jasmine.Spy<() => void>
       let logsPublicApi: LogsPublicApi
+      let displaySpy: jasmine.Spy<() => void>
 
       beforeEach(() => {
         displaySpy = spyOn(display, 'error')
         logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
-      it('should attach valid objects', () => {
+      it('should store account in common context', () => {
         const account = { id: 'foo', name: 'bar', foo: { bar: 'qux' } }
         logsPublicApi.setAccount(account)
 
-        expect(logsPublicApi.getAccount()).toEqual({
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().account).toEqual({
           foo: { bar: 'qux' },
           id: 'foo',
           name: 'bar',
         })
-        expect(displaySpy).not.toHaveBeenCalled()
       })
 
       it('should sanitize predefined properties', () => {
         const account = { id: false, name: 2 }
         logsPublicApi.setAccount(account as any)
-
-        expect(logsPublicApi.getAccount()).toEqual({
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().account).toEqual({
           id: 'false',
           name: '2',
         })
-        expect(displaySpy).not.toHaveBeenCalled()
       })
 
-      it('should remove the account', () => {
-        const account = { id: 'foo', name: 'bar' }
+      it('should clear a previously set account', () => {
+        const account = { id: 'foo', name: 'bar', foo: 'qux' }
         logsPublicApi.setAccount(account)
         logsPublicApi.clearAccount()
 
-        expect(logsPublicApi.getAccount()).toEqual({})
-        expect(displaySpy).not.toHaveBeenCalled()
+        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        expect(getCommonContext().account).toEqual({})
       })
 
       it('should reject non object input', () => {
@@ -372,6 +374,7 @@ describe('logs entry', () => {
 
       beforeEach(() => {
         logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
       it('should return empty object if no account has been set', () => {
@@ -398,6 +401,7 @@ describe('logs entry', () => {
 
       beforeEach(() => {
         logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
 
       it('should add attribute', () => {
@@ -440,7 +444,9 @@ describe('logs entry', () => {
 
       beforeEach(() => {
         logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
+
       it('should remove property', () => {
         const account = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
 
@@ -467,6 +473,10 @@ describe('logs entry', () => {
     it('when disabled, should store contexts only in memory', () => {
       logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
 
+      logsPublicApi.setGlobalContext({ foo: 'bar' })
+      expect(logsPublicApi.getGlobalContext()).toEqual({ foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBeNull()
+
       logsPublicApi.setUser({ id: 'foo', qux: 'qix' })
       expect(logsPublicApi.getUser()).toEqual({ id: 'foo', qux: 'qix' })
       expect(localStorage.getItem('_dd_c_logs_1')).toBeNull()
@@ -492,15 +502,39 @@ describe('logs entry', () => {
       expect(localStorage.getItem('_dd_c_logs_1')).toBe('{}')
     })
 
+    it('when enabled, should maintain global context in local storage', () => {
+      logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
+
+      logsPublicApi.setGlobalContext({ qux: 'qix' })
+      expect(logsPublicApi.getGlobalContext()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix"}')
+
+      logsPublicApi.setGlobalContextProperty('foo', 'bar')
+      expect(logsPublicApi.getGlobalContext()).toEqual({ qux: 'qix', foo: 'bar' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix","foo":"bar"}')
+
+      logsPublicApi.removeGlobalContextProperty('foo')
+      expect(logsPublicApi.getGlobalContext()).toEqual({ qux: 'qix' })
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"qux":"qix"}')
+
+      logsPublicApi.clearGlobalContext()
+      expect(logsPublicApi.getGlobalContext()).toEqual({})
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{}')
+    })
+
     // TODO in next major, buffer context calls to correctly apply before init set/remove/clear
     it('when enabled, before init context values should override local storage values', () => {
       localStorage.setItem('_dd_c_logs_1', '{"foo":"bar","qux":"qix"}')
+      localStorage.setItem('_dd_c_logs_2', '{"foo":"bar","qux":"qix"}')
       logsPublicApi.setUserProperty('foo', 'user')
+      logsPublicApi.setGlobalContextProperty('foo', 'global')
 
       logsPublicApi.init({ ...DEFAULT_INIT_CONFIGURATION, storeContextsAcrossPages: true })
 
       expect(logsPublicApi.getUser()).toEqual({ foo: 'user', qux: 'qix' })
+      expect(logsPublicApi.getGlobalContext()).toEqual({ foo: 'global', qux: 'qix' })
       expect(localStorage.getItem('_dd_c_logs_1')).toBe('{"foo":"user","qux":"qix"}')
+      expect(localStorage.getItem('_dd_c_logs_2')).toBe('{"foo":"global","qux":"qix"}')
     })
   })
 })

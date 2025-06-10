@@ -26,8 +26,6 @@ export const SKIPPED = 'SKIPPED'
 export type DISCARDED = typeof DISCARDED
 export type SKIPPED = typeof SKIPPED
 
-export type AbstractHooks = ReturnType<typeof abstractHooks>
-
 export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => any }, E>() {
   const callbacks: { [K in HookNames]?: Array<T[K]> } = {}
 

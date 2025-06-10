@@ -1,5 +1,5 @@
 import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { Observable, ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
+import { Observable, ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -28,12 +28,20 @@ const COMMON_CONTEXT: CommonContext = {
     referrer: 'referrer_from_common_context',
     url: 'url_from_common_context',
   },
+  context: { common_context_key: 'common_context_value' },
   user: {},
+  account: {},
 }
 
 const COMMON_CONTEXT_WITH_USER_AND_ACCOUNT: CommonContext = {
   ...COMMON_CONTEXT,
   user: { id: 'id', name: 'name', email: 'test@test.com' },
+  account: { id: 'id', name: 'name' },
+}
+
+const COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID: CommonContext = {
+  ...COMMON_CONTEXT,
+  account: { name: 'name' },
 }
 
 describe('startLogsAssembly', () => {
@@ -53,7 +61,6 @@ describe('startLogsAssembly', () => {
   let configuration: LogsConfiguration
   let serverLogs: Array<LogsEvent & Context> = []
   let mainLogger: Logger
-  let hooks: Hooks
 
   beforeEach(() => {
     sessionIsTracked = true
@@ -66,7 +73,7 @@ describe('startLogsAssembly', () => {
     }
     beforeSend = noop
     mainLogger = new Logger(() => noop)
-    hooks = createHooks()
+    const hooks = createHooks()
     startRUMInternalContext(hooks)
     startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
@@ -173,6 +180,7 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0]).toEqual(
         jasmine.objectContaining({
           view: COMMON_CONTEXT.view,
+          ...COMMON_CONTEXT.context,
         })
       )
     })
@@ -183,6 +191,7 @@ describe('startLogsAssembly', () => {
           referrer: 'referrer_from_saved_common_context',
           url: 'url_from_saved_common_context',
         },
+        context: { foo: 'bar' },
         user: { email: 'test@test.com' },
         account: { id: '123' },
       }
@@ -191,6 +200,7 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0]).toEqual(
         jasmine.objectContaining({
           view: savedCommonContext.view,
+          ...savedCommonContext.context,
         })
       )
       expect(serverLogs[0].common_context_key).toBeUndefined()
@@ -240,54 +250,30 @@ describe('startLogsAssembly', () => {
     })
   })
 
-  describe('assembly precedence', () => {
-    it('defaultLogsEventAttributes should take precedence over service, session_id', () => {
-      hooks.register(HookNames.Assemble, () => ({
-        service: 'foo',
-        session_id: 'bar',
-      }))
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+  describe('contexts precedence', () => {
+    it('common context should take precedence over service and session_id', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+        savedCommonContext: {
+          ...COMMON_CONTEXT,
+          context: { service: 'foo', session_id: 'bar' },
+        },
+      })
 
       expect(serverLogs[0].service).toBe('foo')
       expect(serverLogs[0].session_id).toBe('bar')
     })
 
-    it('defaultLogsEventAttributes should take precedence over common context', () => {
-      hooks.register(HookNames.Assemble, () => ({
-        view: {
-          referrer: 'referrer_from_defaultLogsEventAttributes',
-          url: 'url_from_defaultLogsEventAttributes',
-        },
-        user: { name: 'name_from_defaultLogsEventAttributes' },
-      }))
+    it('RUM context should take precedence over common context', () => {
+      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ view: { url: 'from-rum-context' } })
 
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-        savedCommonContext: {
-          view: {
-            referrer: 'referrer_from_common_context',
-            url: 'url_from_common_context',
-          },
-          user: { name: 'name_from_common_context' },
-        },
-      })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
-      expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
-          view: {
-            referrer: 'referrer_from_defaultLogsEventAttributes',
-            url: 'url_from_defaultLogsEventAttributes',
-          },
-          user: { name: 'name_from_defaultLogsEventAttributes' },
-        })
-      )
+      expect(serverLogs[0].view.url).toEqual('from-rum-context')
     })
 
-    it('raw log should take precedence over defaultLogsEventAttributes', () => {
-      hooks.register(HookNames.Assemble, () => ({
-        message: 'from-defaultLogsEventAttributes',
-      }))
+    it('raw log should take precedence over RUM context', () => {
+      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ message: 'from-rum-context' })
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
@@ -362,14 +348,15 @@ describe('user and account management', () => {
     serverLogs = []
   })
 
-  it('should not output usr key if user is not set', () => {
+  it('should not output usr/account key if user/account is not set', () => {
     startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
     expect(serverLogs[0].usr).toBeUndefined()
+    expect(serverLogs[0].account).toBeUndefined()
   })
 
-  it('should include user data when user has been set', () => {
+  it('should include user/account data when user/account has been set', () => {
     startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT_WITH_USER_AND_ACCOUNT, noop)
 
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
@@ -378,6 +365,56 @@ describe('user and account management', () => {
       name: 'name',
       email: 'test@test.com',
     })
+
+    expect(serverLogs[0].account).toEqual({
+      id: 'id',
+      name: 'name',
+    })
+  })
+
+  it('should prioritize global context over user/account context', () => {
+    const globalContextWithUser = {
+      ...COMMON_CONTEXT_WITH_USER_AND_ACCOUNT,
+      context: {
+        ...COMMON_CONTEXT.context,
+        usr: {
+          id: 4242,
+          name: 'solution',
+        },
+        account: {
+          id: 4242,
+          name: 'account',
+        },
+      },
+    }
+    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => globalContextWithUser, noop)
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+    expect(serverLogs[0].usr).toEqual({
+      id: 4242,
+      name: 'solution',
+      email: 'test@test.com',
+    })
+
+    expect(serverLogs[0].account).toEqual({
+      id: 4242,
+      name: 'account',
+    })
+  })
+
+  it('should not include account if `id` is missing and display a warn', () => {
+    startLogsAssembly(
+      sessionManager,
+      configuration,
+      lifeCycle,
+      hooks,
+      () => COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID,
+      noop
+    )
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+
+    expect(serverLogs[0].account).toBe(undefined)
   })
 })
 

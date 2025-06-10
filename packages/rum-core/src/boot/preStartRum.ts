@@ -13,8 +13,6 @@ import {
   addTelemetryConfiguration,
   initFetchObservable,
   CustomerContextKey,
-  buildAccountContextManager,
-  buildGlobalContextManager,
 } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
@@ -26,7 +24,9 @@ import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalColl
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
+import { buildGlobalContextManager } from '../domain/contexts/globalContext'
 import { buildUserContextManager } from '../domain/contexts/userContext'
+import { buildAccountContextManager } from '../domain/contexts/accountContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 

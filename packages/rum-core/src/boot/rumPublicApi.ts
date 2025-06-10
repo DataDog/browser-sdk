@@ -11,6 +11,8 @@ import type {
   PublicApi,
   Duration,
   ContextManager,
+  RawTelemetryUsage,
+  RawTelemetryUsageFeature,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -27,7 +29,6 @@ import {
   createTrackingConsentState,
   timeStampToClocks,
   CustomerContextKey,
-  defineContextMethod,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -462,7 +463,6 @@ export function makeRumPublicApi(
       return startRumResult
     }
   )
-  const getStrategy = () => strategy
 
   const startView: {
     (name?: string): void
@@ -472,6 +472,17 @@ export function makeRumPublicApi(
     strategy.startView(sanitizedOptions)
     addTelemetryUsage({ feature: 'start-view' })
   })
+
+  function defineContextMethod<MethodName extends ContextManagerMethod>(
+    contextName: CustomerContextKey,
+    methodName: MethodName,
+    usage: RawTelemetryUsageFeature
+  ) {
+    return monitor((...args: any[]) => {
+      addTelemetryUsage({ feature: usage } as RawTelemetryUsage)
+      return (strategy[contextName][methodName] as (...args: unknown[]) => unknown)(...args)
+    }) as ContextManager[MethodName]
+  }
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: monitor((initConfiguration) => {
@@ -541,93 +552,58 @@ export function makeRumPublicApi(
     }),
 
     setGlobalContext: defineContextMethod(
-      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.setContext,
       'set-global-context'
     ),
     getGlobalContext: defineContextMethod(
-      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.getContext,
       'get-global-context'
     ),
     setGlobalContextProperty: defineContextMethod(
-      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.setContextProperty,
       'set-global-context-property'
     ),
     removeGlobalContextProperty: defineContextMethod(
-      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.removeContextProperty,
       'remove-global-context-property'
     ),
     clearGlobalContext: defineContextMethod(
-      getStrategy,
       CustomerContextKey.globalContext,
       ContextManagerMethod.clearContext,
       'clear-global-context'
     ),
 
-    setUser: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.userContext,
-      ContextManagerMethod.setContext,
-      'set-user'
-    ),
-    getUser: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.userContext,
-      ContextManagerMethod.getContext,
-      'get-user'
-    ),
+    setUser: defineContextMethod(CustomerContextKey.userContext, ContextManagerMethod.setContext, 'set-user'),
+    getUser: defineContextMethod(CustomerContextKey.userContext, ContextManagerMethod.getContext, 'get-user'),
     setUserProperty: defineContextMethod(
-      getStrategy,
       CustomerContextKey.userContext,
       ContextManagerMethod.setContextProperty,
       'set-user-property'
     ),
     removeUserProperty: defineContextMethod(
-      getStrategy,
       CustomerContextKey.userContext,
       ContextManagerMethod.removeContextProperty,
       'remove-user-property'
     ),
-    clearUser: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.userContext,
-      ContextManagerMethod.clearContext,
-      'clear-user'
-    ),
+    clearUser: defineContextMethod(CustomerContextKey.userContext, ContextManagerMethod.clearContext, 'clear-user'),
 
-    setAccount: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.accountContext,
-      ContextManagerMethod.setContext,
-      'set-account'
-    ),
-    getAccount: defineContextMethod(
-      getStrategy,
-      CustomerContextKey.accountContext,
-      ContextManagerMethod.getContext,
-      'get-account'
-    ),
+    setAccount: defineContextMethod(CustomerContextKey.accountContext, ContextManagerMethod.setContext, 'set-account'),
+    getAccount: defineContextMethod(CustomerContextKey.accountContext, ContextManagerMethod.getContext, 'get-account'),
     setAccountProperty: defineContextMethod(
-      getStrategy,
       CustomerContextKey.accountContext,
       ContextManagerMethod.setContextProperty,
       'set-account-property'
     ),
     removeAccountProperty: defineContextMethod(
-      getStrategy,
       CustomerContextKey.accountContext,
       ContextManagerMethod.removeContextProperty,
       'remove-account-property'
     ),
     clearAccount: defineContextMethod(
-      getStrategy,
       CustomerContextKey.accountContext,
       ContextManagerMethod.clearContext,
       'clear-account'

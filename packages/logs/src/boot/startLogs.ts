@@ -4,8 +4,6 @@ import {
   createPageMayExitObservable,
   willSyntheticsInjectRum,
   canUseEventBridge,
-  startAccountContext,
-  startGlobalContext,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
@@ -52,8 +50,6 @@ export function startLogs(
       ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
-  const accountContext = startAccountContext(hooks, configuration, 'logs')
-  const globalContext = startGlobalContext(hooks, configuration, 'logs', false)
   const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
 
   const { stop: stopLogsTelemetry } = startLogsTelemetry(
@@ -92,8 +88,6 @@ export function startLogs(
   return {
     handleLog,
     getInternalContext: internalContext.get,
-    accountContext,
-    globalContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
       stop()

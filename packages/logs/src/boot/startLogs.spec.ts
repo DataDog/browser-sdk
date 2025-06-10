@@ -1,4 +1,4 @@
-import type { ContextManager, Payload } from '@datadog/browser-core'
+import type { Payload } from '@datadog/browser-core'
 import {
   ErrorSource,
   display,
@@ -64,8 +64,6 @@ describe('logs', () => {
   let logger: Logger
   let consoleLogSpy: jasmine.Spy
   let displayLogSpy: jasmine.Spy
-  let globalContext: ContextManager
-  let accountContext: ContextManager
 
   beforeEach(() => {
     baseConfiguration = {
@@ -290,45 +288,6 @@ describe('logs', () => {
 
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()
-    })
-  })
-
-  describe('contexts precedence', () => {
-    beforeEach(() => {
-      ;({
-        handleLog,
-        stop: stopLogs,
-        globalContext,
-        accountContext,
-      } = startLogs(
-        initConfiguration,
-        baseConfiguration,
-        () => COMMON_CONTEXT,
-        createTrackingConsentState(TrackingConsent.GRANTED)
-      ))
-      registerCleanupTask(stopLogs)
-    })
-
-    it('global context should take precedence over account', () => {
-      globalContext.setContext({ account: 'from-global-context' })
-      accountContext.setContext({ id: 'from-account-context' })
-
-      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
-
-      const firstRequest = getLoggedMessage(requests, 0)
-      expect(firstRequest.account).toEqual('from-global-context')
-    })
-
-    it('RUM context should take precedence over global context', () => {
-      window.DD_RUM = {
-        getInternalContext: () => ({ view: { url: 'from-rum-context' } }),
-      }
-      globalContext.setContext({ view: { url: 'from-global-context' } })
-
-      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
-
-      const firstRequest = getLoggedMessage(requests, 0)
-      expect(firstRequest.view.url).toEqual('from-rum-context')
     })
   })
 })
