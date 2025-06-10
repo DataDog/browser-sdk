@@ -3,8 +3,8 @@ import { getRelativeTime, isNumber } from '@datadog/browser-core'
 import {
   RumPerformanceEntryType,
   supportPerformanceTimingEvent,
-  type RumPerformanceNavigationTiming,
 } from './performanceObservable'
+import type { RumPerformanceNavigationTiming } from './performanceObservable'
 
 export function getNavigationEntry(): RumPerformanceNavigationTiming {
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
