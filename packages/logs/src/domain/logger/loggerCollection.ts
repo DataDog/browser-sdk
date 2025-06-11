@@ -6,6 +6,7 @@ import {
   originalConsoleMethods,
   globalConsole,
   ConsoleApiName,
+  combineTags,
 } from '@datadog/browser-core'
 import type { CommonContext, RawLogsEvent } from '../../rawLogsEvent.types'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
@@ -22,7 +23,8 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     savedCommonContext?: CommonContext,
     savedDate?: TimeStamp
   ) {
-    const messageContext = combine(logger.getContext(), logsMessage.context)
+    const ddtags = combineTags(logger.getContext(), logsMessage.context)
+    const messageContext = combine(logger.getContext(), logsMessage.context, ddtags ? { ddtags } : undefined)
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
       displayInConsole(logsMessage, messageContext)

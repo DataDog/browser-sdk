@@ -15,6 +15,7 @@ import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 import type { Site } from './intakeSites'
+import { buildTags } from './tags'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -156,11 +157,11 @@ export interface InitConfiguration {
    */
   enableExperimentalFeatures?: string[] | undefined
   /**
-   * [Internal option] Configure the dual chipping to another datacenter
+   * [Internal option] Configure the dual shipping to another datacenter
    */
   replica?: ReplicaUserConfiguration | undefined
   /**
-   * [Internal option] Set the datacenter from where the data is dual chipped
+   * [Internal option] Set the datacenter from where the data is dual shipped
    */
   datacenter?: string
   /**
@@ -218,6 +219,7 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
+  tags: string[]
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -314,6 +316,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
      */
     batchMessagesLimit: 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
+    tags: buildTags(initConfiguration),
     ...computeTransportConfiguration(initConfiguration),
   }
 }

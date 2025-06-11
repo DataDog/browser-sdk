@@ -50,33 +50,6 @@ describe('transportConfiguration', () => {
     })
   })
 
-  describe('env, version and service', () => {
-    it('should not modify the logs and rum endpoints tags when not defined', () => {
-      const configuration = computeTransportConfiguration({ clientToken })
-      const rumEndpoint = decodeURIComponent(configuration.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
-      expect(rumEndpoint).not.toContain(',env:')
-      expect(rumEndpoint).not.toContain(',service:')
-      expect(rumEndpoint).not.toContain(',version:')
-      expect(rumEndpoint).not.toContain(',datacenter:')
-
-      const logsEndpoint = decodeURIComponent(configuration.logsEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
-      expect(logsEndpoint).not.toContain(',env:')
-      expect(logsEndpoint).not.toContain(',service:')
-      expect(logsEndpoint).not.toContain(',version:')
-      expect(logsEndpoint).not.toContain(',datacenter:')
-    })
-
-    it('should be set as tags in the logs and rum endpoints', () => {
-      const configuration = computeTransportConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' })
-      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))).toContain(
-        'env:foo,service:bar,version:baz'
-      )
-      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))).toContain(
-        'env:foo,service:bar,version:baz'
-      )
-    })
-  })
-
   describe('isIntakeUrl', () => {
     const v1IntakePath = `/v1/input/${clientToken}`
     ;[

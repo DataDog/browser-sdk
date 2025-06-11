@@ -3,6 +3,7 @@ import {
   ErrorSource,
   HookNames,
   combine,
+  combineTags,
   createEventRateLimiter,
   getRelativeTime,
   isEmptyObject,
@@ -51,6 +52,7 @@ export function startLogsAssembly(
         startTime,
       }) as DefaultLogsEventAttributes
 
+      const ddtags = combineTags(defaultLogsEventAttributes, messageContext)
       const log = combine(
         {
           service: configuration.service,
@@ -62,7 +64,8 @@ export function startLogsAssembly(
         },
         defaultLogsEventAttributes,
         rawLogsEvent,
-        messageContext
+        messageContext,
+        ddtags ? { ddtags } : undefined
       ) as LogsEvent & Context
 
       if (

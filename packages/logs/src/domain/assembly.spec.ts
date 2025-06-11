@@ -1,5 +1,13 @@
 import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { Observable, ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
+import {
+  Observable,
+  ErrorSource,
+  ONE_MINUTE,
+  getTimeStamp,
+  noop,
+  startTagContext,
+  HookNames,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -15,7 +23,7 @@ import type { Hooks } from './hooks'
 import { createHooks } from './hooks'
 import { startRUMInternalContext } from './contexts/rumInternalContext'
 
-const initConfiguration = { clientToken: 'xxx', service: 'service' }
+const initConfiguration = { clientToken: 'xxx', service: 'service', env: 'test', version: '1.0.0' }
 const SESSION_ID = 'session-id'
 const DEFAULT_MESSAGE = {
   status: StatusType.info,
@@ -68,6 +76,7 @@ describe('startLogsAssembly', () => {
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
     startRUMInternalContext(hooks)
+    startTagContext(hooks, configuration)
     startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
@@ -301,6 +310,26 @@ describe('startLogsAssembly', () => {
       })
 
       expect(serverLogs[0].message).toEqual('from-message-context')
+    })
+  })
+
+  describe('ddtags', () => {
+    it('should contain the ddtags of the configuration', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+      })
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0')
+    })
+
+    it('should contain the ddtags of the configuration and the message context', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+        messageContext: { ddtags: 'tag1:value1,tag2:value2' },
+      })
+
+      expect(serverLogs[0].ddtags).toEqual(
+        'sdk_version:test,env:test,service:service,version:1.0.0,tag1:value1,tag2:value2'
+      )
     })
   })
 

@@ -12,6 +12,7 @@ export {
   INTAKE_SITE_EU1,
   INTAKE_URL_PARAMETERS,
   isIntakeUrl,
+  buildTags,
 } from './domain/configuration'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
@@ -126,6 +127,7 @@ export { createContextManager } from './domain/context/contextManager'
 export { defineContextMethod, bufferContextCalls } from './domain/context/defineContextMethod'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
+export { startTagContext, combineTags } from './domain/contexts/tagContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'

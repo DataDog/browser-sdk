@@ -109,6 +109,7 @@ describe('logs', () => {
         foo: 'bar',
         message: 'message',
         service: 'service',
+        ddtags: 'sdk_version:test,service:service',
         session_id: jasmine.any(String),
         session: {
           id: jasmine.any(String),

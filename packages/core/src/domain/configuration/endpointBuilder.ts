@@ -28,7 +28,7 @@ export function createEndpointBuilder(
 
   return {
     build(api: ApiType, payload: Payload) {
-      const parameters = buildEndpointParameters(initConfiguration, trackType, configurationTags, api, payload)
+      const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload)
       return buildUrlWithParameters(parameters)
     },
     tags: configurationTags,
@@ -89,13 +89,11 @@ export function buildEndpointHost(
 function buildEndpointParameters(
   { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
   trackType: TrackType,
-  configurationTags: string[],
   api: ApiType,
   { retry, encoding }: Payload
 ) {
   const parameters = [
     'ddsource=browser',
-    `ddtags=${encodeURIComponent(configurationTags.join(','))}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',

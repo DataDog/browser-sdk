@@ -7,6 +7,7 @@ import {
   canUseEventBridge,
   addTelemetryDebug,
   startAccountContext,
+  startTagContext,
   startGlobalContext,
 } from '@datadog/browser-core'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
@@ -128,6 +129,7 @@ export function startRum(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, session, recorderApi, viewHistory)
   startConnectivityContext(hooks)
+  startTagContext(hooks, configuration)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration, 'rum')
