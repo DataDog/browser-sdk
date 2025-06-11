@@ -78,7 +78,12 @@ export interface DocumentWithPrerendering extends Document {
  * Check whether the Prerender API is supported by the browser.
  * The prerendering property is only available in Chrome 108+ and Edge 108+.
  * https://developer.mozilla.org/en-US/docs/Web/API/Document/prerendering
+ * Fully typed to prevent runtime errors when the property is not available.
  */
 export function isPrerenderingSupported(): boolean {
-  return typeof document !== 'undefined' && 'prerendering' in document
+  try {
+    return typeof document !== 'undefined' && typeof (document as DocumentWithPrerendering).prerendering !== 'undefined'
+  } catch {
+    return false
+  }
 }
