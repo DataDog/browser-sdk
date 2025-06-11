@@ -19,11 +19,7 @@ export type ApiType =
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
-export function createEndpointBuilder(
-  initConfiguration: InitConfiguration,
-  trackType: TrackType,
-  configurationTags: string[]
-) {
+export function createEndpointBuilder(initConfiguration: InitConfiguration, trackType: TrackType) {
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
 
   return {
@@ -31,7 +27,6 @@ export function createEndpointBuilder(
       const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload)
       return buildUrlWithParameters(parameters)
     },
-    tags: configurationTags,
     urlPrefix: buildUrlWithParameters(''),
     trackType,
   }

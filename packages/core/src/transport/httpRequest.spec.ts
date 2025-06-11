@@ -243,7 +243,7 @@ describe('httpRequest intake parameters', () => {
   beforeEach(() => {
     interceptor = interceptRequests()
     requests = interceptor.requests
-    endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
+    endpointBuilder = createEndpointBuilder({ clientToken }, 'logs')
     request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
   })
 

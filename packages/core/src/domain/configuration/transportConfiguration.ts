@@ -1,7 +1,6 @@
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
-import { buildTags } from './tags'
 import type { Site } from './intakeSites'
 import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from './intakeSites'
 
@@ -23,10 +22,8 @@ export interface ReplicaConfiguration {
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
   const site = initConfiguration.site || INTAKE_SITE_US1
 
-  const tags = buildTags(initConfiguration)
-
-  const endpointBuilders = computeEndpointBuilders(initConfiguration, tags)
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration, tags)
+  const endpointBuilders = computeEndpointBuilders(initConfiguration)
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration)
 
   return {
     replica: replicaConfiguration,
@@ -35,19 +32,16 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   }
 }
 
-function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: string[]) {
+function computeEndpointBuilders(initConfiguration: InitConfiguration) {
   return {
-    logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs', tags),
-    rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum', tags),
-    profilingEndpointBuilder: createEndpointBuilder(initConfiguration, 'profile', tags),
-    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'replay', tags),
+    logsEndpointBuilder: createEndpointBuilder(initConfiguration, 'logs'),
+    rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum'),
+    profilingEndpointBuilder: createEndpointBuilder(initConfiguration, 'profile'),
+    sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'replay'),
   }
 }
 
-function computeReplicaConfiguration(
-  initConfiguration: InitConfiguration,
-  tags: string[]
-): ReplicaConfiguration | undefined {
+function computeReplicaConfiguration(initConfiguration: InitConfiguration): ReplicaConfiguration | undefined {
   if (!initConfiguration.replica) {
     return
   }
@@ -59,8 +53,8 @@ function computeReplicaConfiguration(
   }
 
   const replicaEndpointBuilders = {
-    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs', tags),
-    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
+    logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs'),
+    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum'),
   }
 
   return { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }
