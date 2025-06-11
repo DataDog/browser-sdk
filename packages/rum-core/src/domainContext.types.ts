@@ -18,15 +18,24 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends RumE
             ? RumVitalEventDomainContext
             : never
 
+/**
+ * Additional information available when the SDK dispatches a RUM **View** event.
+ */
 export interface RumViewEventDomainContext {
   location: Readonly<Location>
 }
 
+/**
+ * Additional information available when the SDK dispatches a RUM **Action** event.
+ */
 export interface RumActionEventDomainContext {
   events?: Event[]
   handlingStack?: string
 }
 
+/**
+ * Additional information available when the SDK dispatches a **Fetch** resource event.
+ */
 export interface RumFetchResourceEventDomainContext {
   requestInit?: RequestInit
   requestInput: RequestInfo
@@ -37,6 +46,9 @@ export interface RumFetchResourceEventDomainContext {
   handlingStack?: string
 }
 
+/**
+ * Additional information available when the SDK dispatches an **XHR** resource event.
+ */
 export interface RumXhrResourceEventDomainContext {
   xhr: XMLHttpRequest
   performanceEntry?: PerformanceEntry
@@ -44,18 +56,29 @@ export interface RumXhrResourceEventDomainContext {
   handlingStack?: string
 }
 
+/**
+ * Additional information available when the SDK dispatches a **Resource** event that is neither fetch nor XHR.
+ */
 export interface RumOtherResourceEventDomainContext {
   performanceEntry: PerformanceEntry
 }
 
+/**
+ * Additional information available when the SDK dispatches an **Error** event.
+ */
 export interface RumErrorEventDomainContext {
   error: unknown
   handlingStack?: string
 }
 
+/**
+ * Additional information available when the SDK dispatches a **Long Task** event.
+ */
 export interface RumLongTaskEventDomainContext {
   performanceEntry: PerformanceEntry
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface RumVitalEventDomainContext {}
+/**
+ * Additional information available when the SDK dispatches a **Vital** event.
+ */
+export type RumVitalEventDomainContext = Record<string, never>
