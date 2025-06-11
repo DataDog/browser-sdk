@@ -141,6 +141,7 @@ export {
 } from './domain/synthetics/syntheticsWorkerValues'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
+export * from './domain/bufferedData'
 export * from './tools/utils/polyfills'
 export * from './tools/utils/numberUtils'
 export * from './tools/utils/byteUtils'

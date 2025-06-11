@@ -3,6 +3,7 @@ import { Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/utils/timeUtils'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTraceFromOnErrorMessage } from '../../tools/stackTrace/computeStackTrace'
+import { getGlobalObject } from '../../tools/getGlobalObject'
 import { computeRawError, isError } from './error'
 import type { RawError } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
@@ -33,7 +34,7 @@ export function trackRuntimeError() {
 }
 
 export function instrumentOnError(callback: UnhandledErrorCallback) {
-  return instrumentMethod(window, 'onerror', ({ parameters: [messageObj, url, line, column, errorObj] }) => {
+  return instrumentMethod(getGlobalObject(), 'onerror', ({ parameters: [messageObj, url, line, column, errorObj] }) => {
     let stackTrace
     if (!isError(errorObj)) {
       stackTrace = computeStackTraceFromOnErrorMessage(messageObj, url, line, column)
@@ -43,7 +44,7 @@ export function instrumentOnError(callback: UnhandledErrorCallback) {
 }
 
 export function instrumentUnhandledRejection(callback: UnhandledErrorCallback) {
-  return instrumentMethod(window, 'onunhandledrejection', ({ parameters: [e] }) => {
+  return instrumentMethod(getGlobalObject(), 'onunhandledrejection', ({ parameters: [e] }) => {
     callback(e.reason || 'Empty reason')
   })
 }
