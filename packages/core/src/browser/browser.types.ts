@@ -80,5 +80,5 @@ export interface DocumentWithPrerendering extends Document {
  * https://developer.mozilla.org/en-US/docs/Web/API/Document/prerendering
  */
 export function isPrerenderingSupported(): boolean {
-  return 'prerendering' in document
+  return typeof document !== 'undefined' && 'prerendering' in document
 }
