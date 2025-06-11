@@ -6,51 +6,29 @@
 
 ## Packages
 
-<table><thead><tr><th>
-
-Package
-
-
-</th><th>
-
-Description
-
-
-</th></tr></thead>
-<tbody><tr><td>
-
-[@datadog/browser-logs](./browser-logs.md)
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
-[@datadog/browser-rum](./browser-rum.md)
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
-[@datadog/browser-rum-react](./browser-rum-react.md)
-
-
-</td><td>
-
-
-</td></tr>
-<tr><td>
-
-[@datadog/browser-rum-slim](./browser-rum-slim.md)
-
-
-</td><td>
-
-
-</td></tr>
-</tbody></table>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="./browser-logs.md">@datadog/browser-logs</a></td>
+<td>Logs collection package for browser applications</td>
+</tr>
+<tr>
+<td><a href="./browser-rum.md">@datadog/browser-rum</a></td>
+<td>Main RUM package for collecting user monitoring data</td>
+</tr>
+<tr>
+<td><a href="./browser-rum-react.md">@datadog/browser-rum-react</a></td>
+<td>React-specific extensions for RUM</td>
+</tr>
+<tr>
+<td><a href="./browser-rum-slim.md">@datadog/browser-rum-slim</a></td>
+<td>Lightweight version of the RUM package</td>
+</tr>
+</tbody>
+</table>
