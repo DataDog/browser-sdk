@@ -3,8 +3,6 @@ description: 'API documentation for Datadog Browser SDK packages'
 
 # Build settings
 markdown: kramdown
-highlighter: rouge
-theme: minima
 
 # GitHub Pages settings
 baseurl: '/browser-sdk'
@@ -14,25 +12,12 @@ url: 'https://datadoghq.dev'
 plugins:
   - jekyll-feed
 
-# Include markdown files
-include:
-  - '*.md'
-
-# Exclude files from processing
-exclude:
-  - README.md
-  - LICENSE
-  - CHANGELOG.md
-  - node_modules/
-  - package.json
-  - yarn.lock
-  - Gemfile
-  - Gemfile.lock
-
 # Kramdown settings
 kramdown:
   input: GFM
-  syntax_highlighter: rouge
-  syntax_highlighter_opts:
-    block:
-      line_numbers: false
+  hard_wrap: false
+  parse_block_html: true
+  parse_span_html: true
+  html_to_native: true
+  enable_coderay: false
+  math_engine: null

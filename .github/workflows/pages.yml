@@ -23,6 +23,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Fix API documentation links
+        run: |
+          node scripts/fix-api-docs.js
+
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
