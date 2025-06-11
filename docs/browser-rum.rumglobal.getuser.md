@@ -11,5 +11,5 @@ See \[User session\](https://docs.datadoghq.com/real\_user\_monitoring/browser/a
 **Signature:**
 
 ```typescript
-getUser: () => Context;
+getUser: () => Context
 ```

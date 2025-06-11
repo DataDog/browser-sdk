@@ -9,5 +9,5 @@ Origin of the log
 **Signature:**
 
 ```typescript
-origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'report';
+origin: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'report'
 ```

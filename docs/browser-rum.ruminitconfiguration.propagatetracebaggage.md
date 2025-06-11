@@ -4,7 +4,7 @@
 
 ## RumInitConfiguration.propagateTraceBaggage property
 
-Whether to propagate user and account IDs in the baggage header of trace requests.  false
+Whether to propagate user and account IDs in the baggage header of trace requests. false
 
 **Signature:**
 

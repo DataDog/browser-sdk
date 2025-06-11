@@ -9,7 +9,7 @@
 ```typescript
 clearContext(): void;
 ```
+
 **Returns:**
 
 void
-

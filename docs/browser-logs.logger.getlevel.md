@@ -9,7 +9,7 @@
 ```typescript
 getLevel(): StatusType;
 ```
+
 **Returns:**
 
 [StatusType](./browser-logs.statustype.md)
-

@@ -7,8 +7,9 @@
 **Signature:**
 
 ```typescript
-export interface LogsInitConfiguration extends InitConfiguration 
+export interface LogsInitConfiguration extends InitConfiguration
 ```
+
 **Extends:** InitConfiguration
 
 ## Properties
@@ -17,91 +18,72 @@ export interface LogsInitConfiguration extends InitConfiguration
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-logs.logsinitconfiguration.beforesend.html">beforeSend?</a></td><td>
-
 
 </td><td>
 
 ((event: <a href="browser-logs.logsevent.html">LogsEvent</a><!-- -->, context: <a href="browser-logs.logseventdomaincontext.html">LogsEventDomainContext</a><!-- -->) =&gt; boolean) \| undefined
 
-
 </td><td>
 
 _(Optional)_ Access to every logs collected by the Logs SDK before they are sent to Datadog. It allows: - Enrich your logs with additional context attributes - Modify your logs to modify their content, or redact sensitive sequences (see the list of editable properties) - Discard selected logs
 
-
 </td></tr>
 <tr><td><a href="browser-logs.logsinitconfiguration.forwardconsolelogs.html">forwardConsoleLogs?</a></td><td>
-
 
 </td><td>
 
 ConsoleApiName\[\] \| 'all' \| undefined
 
-
 </td><td>
 
 _(Optional)_ Forward logs from console.\* to Datadog. Use "all" to forward everything or an array of console API names to forward only a subset.
 
-
 </td></tr>
 <tr><td><a href="browser-logs.logsinitconfiguration.forwarderrorstologs.html">forwardErrorsToLogs?</a></td><td>
-
 
 </td><td>
 
 boolean \| undefined
 
-
 </td><td>
 
-_(Optional)_ Forward console.error logs, uncaught exceptions and network errors to Datadog.  true
-
+_(Optional)_ Forward console.error logs, uncaught exceptions and network errors to Datadog. true
 
 </td></tr>
 <tr><td><a href="browser-logs.logsinitconfiguration.forwardreports.html">forwardReports?</a></td><td>
-
 
 </td><td>
 
 RawReportType\[\] \| 'all' \| undefined
 
-
 </td><td>
 
 _(Optional)_ Forward reports from the \<a href="https://developer.mozilla.org/en-US/docs/Web/API/Reporting\_API">Reporting API\</a> to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
 
-
 </td></tr>
 <tr><td><a href="browser-logs.logsinitconfiguration.usepciintake.html">usePciIntake?</a></td><td>
-
 
 </td><td>
 
 boolean
 
-
 </td><td>
 
-_(Optional)_ Use PCI-compliant intake. See \<a href="https://docs.datadoghq.com/data\_security/pci\_compliance/?tab=logmanagement">PCI DSS Compliance\</a> for further information.  false
-
+_(Optional)_ Use PCI-compliant intake. See \<a href="https://docs.datadoghq.com/data\_security/pci\_compliance/?tab=logmanagement">PCI DSS Compliance\</a> for further information. false
 
 </td></tr>
 </tbody></table>

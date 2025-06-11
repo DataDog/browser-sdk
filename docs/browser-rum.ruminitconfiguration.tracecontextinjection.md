@@ -4,7 +4,7 @@
 
 ## RumInitConfiguration.traceContextInjection property
 
-If you set a `traceSampleRate`<!-- -->, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled.  sampled See \[Connect RUM and Traces\](https://docs.datadoghq.com/real\_user\_monitoring/platform/connect\_rum\_and\_traces/?tab=browserrum) for further information.
+If you set a `traceSampleRate`<!-- -->, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled. sampled See \[Connect RUM and Traces\](https://docs.datadoghq.com/real\_user\_monitoring/platform/connect\_rum\_and\_traces/?tab=browserrum) for further information.
 
 **Signature:**
 

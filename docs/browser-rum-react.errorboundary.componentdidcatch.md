@@ -16,48 +16,38 @@ componentDidCatch(error: Error, errorInfo: ErrorInfo): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 error
 
-
 </td><td>
 
 Error
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 errorInfo
 
-
 </td><td>
 
 ErrorInfo
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

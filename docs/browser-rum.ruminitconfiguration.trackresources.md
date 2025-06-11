@@ -4,7 +4,7 @@
 
 ## RumInitConfiguration.trackResources property
 
-Enables collection of resource events.  true
+Enables collection of resource events. true
 
 **Signature:**
 

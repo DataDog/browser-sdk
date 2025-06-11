@@ -10,15 +10,12 @@
 
 Class
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum-react.errorboundary.html">ErrorBoundary</a></td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -29,19 +26,15 @@ Description
 
 Function
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum-react.addreacterror.html">addReactError(error, info)</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-rum-react.reactplugin.html">reactPlugin(configuration)</a></td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -52,15 +45,12 @@ Description
 
 Variable
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum-react.unstable_reactcomponenttracker.html">UNSTABLE\_ReactComponentTracker</a></td><td>
-
 
 </td></tr>
 </tbody></table>

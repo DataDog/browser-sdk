@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-xhr: XMLHttpRequest;
+xhr: XMLHttpRequest
 ```

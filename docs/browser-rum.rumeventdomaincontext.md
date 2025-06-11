@@ -7,7 +7,19 @@
 **Signature:**
 
 ```typescript
-export type RumEventDomainContext<T extends RumEventType = any> = T extends RumEventType.VIEW ? RumViewEventDomainContext : T extends RumEventType.ACTION ? RumActionEventDomainContext : T extends RumEventType.RESOURCE ? RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext : T extends RumEventType.ERROR ? RumErrorEventDomainContext : T extends RumEventType.LONG_TASK ? RumLongTaskEventDomainContext : T extends RumEventType.VITAL ? RumVitalEventDomainContext : never;
+export type RumEventDomainContext<T extends RumEventType = any> = T extends RumEventType.VIEW
+  ? RumViewEventDomainContext
+  : T extends RumEventType.ACTION
+    ? RumActionEventDomainContext
+    : T extends RumEventType.RESOURCE
+      ? RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext
+      : T extends RumEventType.ERROR
+        ? RumErrorEventDomainContext
+        : T extends RumEventType.LONG_TASK
+          ? RumLongTaskEventDomainContext
+          : T extends RumEventType.VITAL
+            ? RumVitalEventDomainContext
+            : never
 ```
-**References:** [RumViewEventDomainContext](./browser-rum.rumvieweventdomaincontext.md)<!-- -->, [RumActionEventDomainContext](./browser-rum.rumactioneventdomaincontext.md)<!-- -->, [RumFetchResourceEventDomainContext](./browser-rum.rumfetchresourceeventdomaincontext.md)<!-- -->, [RumXhrResourceEventDomainContext](./browser-rum.rumxhrresourceeventdomaincontext.md)<!-- -->, [RumOtherResourceEventDomainContext](./browser-rum.rumotherresourceeventdomaincontext.md)<!-- -->, [RumErrorEventDomainContext](./browser-rum.rumerroreventdomaincontext.md)<!-- -->, [RumLongTaskEventDomainContext](./browser-rum.rumlongtaskeventdomaincontext.md)
 
+**References:** [RumViewEventDomainContext](./browser-rum.rumvieweventdomaincontext.md)<!-- -->, [RumActionEventDomainContext](./browser-rum.rumactioneventdomaincontext.md)<!-- -->, [RumFetchResourceEventDomainContext](./browser-rum.rumfetchresourceeventdomaincontext.md)<!-- -->, [RumXhrResourceEventDomainContext](./browser-rum.rumxhrresourceeventdomaincontext.md)<!-- -->, [RumOtherResourceEventDomainContext](./browser-rum.rumotherresourceeventdomaincontext.md)<!-- -->, [RumErrorEventDomainContext](./browser-rum.rumerroreventdomaincontext.md)<!-- -->, [RumLongTaskEventDomainContext](./browser-rum.rumlongtaskeventdomaincontext.md)

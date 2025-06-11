@@ -10,53 +10,41 @@
 
 Interface
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.commonproperties.html">CommonProperties</a></td><td>
 
 Schema of common properties of RUM events
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumactioneventdomaincontext.html">RumActionEventDomainContext</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumerroreventdomaincontext.html">RumErrorEventDomainContext</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumfetchresourceeventdomaincontext.html">RumFetchResourceEventDomainContext</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.html">RumGlobal</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-rum.ruminitconfiguration.html">RumInitConfiguration</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumlongtaskeventdomaincontext.html">RumLongTaskEventDomainContext</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumotherresourceeventdomaincontext.html">RumOtherResourceEventDomainContext</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumvieweventdomaincontext.html">RumViewEventDomainContext</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumxhrresourceeventdomaincontext.html">RumXhrResourceEventDomainContext</a></td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -67,15 +55,12 @@ Schema of common properties of RUM events
 
 Variable
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.datadogrum.html">datadogRum</a></td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -86,57 +71,47 @@ Description
 
 Type Alias
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumactionevent.html">RumActionEvent</a></td><td>
 
 Schema of all properties of an Action event
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumerrorevent.html">RumErrorEvent</a></td><td>
 
 Schema of all properties of an Error event
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumevent.html">RumEvent</a></td><td>
 
 Schema of all properties of a RUM event
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumeventdomaincontext.html">RumEventDomainContext</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumlongtaskevent.html">RumLongTaskEvent</a></td><td>
 
 Schema of all properties of a Long Task event
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumresourceevent.html">RumResourceEvent</a></td><td>
 
 Schema of all properties of a Resource event
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumviewevent.html">RumViewEvent</a></td><td>
 
 Schema of all properties of a View event
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumvitalevent.html">RumVitalEvent</a></td><td>
 
 Schema of all properties of a Vital event
-
 
 </td></tr>
 </tbody></table>

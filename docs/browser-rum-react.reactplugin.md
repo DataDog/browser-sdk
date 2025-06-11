@@ -8,18 +8,19 @@
 
 ```typescript
 export declare function reactPlugin(configuration?: ReactPluginConfiguration): {
-    name: string;
-    onInit({ publicApi, initConfiguration }: {
-        initConfiguration: import("@datadog/browser-rum-core").RumInitConfiguration;
-        publicApi: RumPublicApi;
-    }): void;
-    onRumStart({ strategy }: {
-        strategy: Strategy;
-    }): void;
-    getConfigurationTelemetry(): {
-        router: boolean;
-    };
-};
+  name: string
+  onInit({
+    publicApi,
+    initConfiguration,
+  }: {
+    initConfiguration: import('@datadog/browser-rum-core').RumInitConfiguration
+    publicApi: RumPublicApi
+  }): void
+  onRumStart({ strategy }: { strategy: Strategy }): void
+  getConfigurationTelemetry(): {
+    router: boolean
+  }
+}
 ```
 
 ## Parameters
@@ -28,36 +29,29 @@ export declare function reactPlugin(configuration?: ReactPluginConfiguration): {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 configuration
 
-
 </td><td>
 
 ReactPluginConfiguration
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 { name: string; onInit({ publicApi, initConfiguration }: { initConfiguration: import("@datadog/browser-rum-core").RumInitConfiguration; publicApi: RumPublicApi; }): void; onRumStart({ strategy }: { strategy: Strategy; }): void; getConfigurationTelemetry(): { router: boolean; }; }
-

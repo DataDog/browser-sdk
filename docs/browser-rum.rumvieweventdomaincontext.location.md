@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-location: Readonly<Location>;
+location: Readonly<Location>
 ```

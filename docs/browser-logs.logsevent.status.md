@@ -9,5 +9,5 @@ The log status
 **Signature:**
 
 ```typescript
-status: 'ok' | 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'critical' | 'alert' | 'emerg';
+status: 'ok' | 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'critical' | 'alert' | 'emerg'
 ```

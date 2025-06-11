@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface RumLongTaskEventDomainContext 
+export interface RumLongTaskEventDomainContext
 ```
 
 ## Properties
@@ -16,33 +16,26 @@ export interface RumLongTaskEventDomainContext
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumlongtaskeventdomaincontext.performanceentry.html">performanceEntry</a></td><td>
-
 
 </td><td>
 
 PerformanceEntry
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>

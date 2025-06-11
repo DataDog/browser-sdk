@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface LogsMessage 
+export interface LogsMessage
 ```
 
 ## Properties
@@ -16,54 +16,42 @@ export interface LogsMessage
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-logs.logsmessage.context.html">context?</a></td><td>
-
 
 </td><td>
 
 Context
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-logs.logsmessage.message.html">message</a></td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-logs.logsmessage.status.html">status</a></td><td>
 
-
 </td><td><a href="browser-logs.statustype.html">StatusType</a></td><td>
-
 
 </td></tr>
 </tbody></table>

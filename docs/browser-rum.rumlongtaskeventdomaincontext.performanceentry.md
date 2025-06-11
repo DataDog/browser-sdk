@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-performanceEntry: PerformanceEntry;
+performanceEntry: PerformanceEntry
 ```

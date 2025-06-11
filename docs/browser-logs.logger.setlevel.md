@@ -16,29 +16,23 @@ setLevel(level: StatusType): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 level
 
-
 </td><td><a href="browser-logs.statustype.html">StatusType</a></td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

@@ -9,5 +9,5 @@
 **Signature:**
 
 ```typescript
-getInternalContext: (startTime?: number) => InternalContext | undefined;
+getInternalContext: (startTime?: number) => InternalContext | undefined
 ```

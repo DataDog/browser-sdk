@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-logger: Logger;
+logger: Logger
 ```

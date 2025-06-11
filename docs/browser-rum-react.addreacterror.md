@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export declare function addReactError(error: Error, info: ErrorInfo): void;
+export declare function addReactError(error: Error, info: ErrorInfo): void
 ```
 
 ## Parameters
@@ -16,48 +16,38 @@ export declare function addReactError(error: Error, info: ErrorInfo): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 error
 
-
 </td><td>
 
 Error
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 info
 
-
 </td><td>
 
 ErrorInfo
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

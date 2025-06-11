@@ -10,15 +10,12 @@
 
 Class
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-logs.logger.html">Logger</a></td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -29,35 +26,27 @@ Description
 
 Interface
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-logs.logger.html">Logger</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-logs.loggerconfiguration.html">LoggerConfiguration</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-logs.logsevent.html">LogsEvent</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-logs.logsglobal.html">LogsGlobal</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-logs.logsinitconfiguration.html">LogsInitConfiguration</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-logs.logsmessage.html">LogsMessage</a></td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -68,23 +57,18 @@ Description
 
 Variable
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-logs.datadoglogs.html">datadogLogs</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-logs.handlertype.html">HandlerType</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-logs.statustype.html">StatusType</a></td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -95,23 +79,18 @@ Description
 
 Type Alias
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-logs.handlertype.html">HandlerType</a></td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-logs.logseventdomaincontext.html">LogsEventDomainContext</a></td><td>
 
-
 </td></tr>
 <tr><td><a href="browser-logs.statustype.html">StatusType</a></td><td>
-
 
 </td></tr>
 </tbody></table>

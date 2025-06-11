@@ -11,5 +11,5 @@ See \[Access internal context\](https://docs.datadoghq.com/logs/log\_collection/
 **Signature:**
 
 ```typescript
-getInternalContext: (startTime?: number) => InternalContext | undefined;
+getInternalContext: (startTime?: number) => InternalContext | undefined
 ```

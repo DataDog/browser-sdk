@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface RumFetchResourceEventDomainContext 
+export interface RumFetchResourceEventDomainContext
 ```
 
 ## Properties
@@ -16,115 +16,90 @@ export interface RumFetchResourceEventDomainContext
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumfetchresourceeventdomaincontext.error.html">error?</a></td><td>
-
 
 </td><td>
 
 Error
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumfetchresourceeventdomaincontext.handlingstack.html">handlingStack?</a></td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumfetchresourceeventdomaincontext.isaborted.html">isAborted</a></td><td>
-
 
 </td><td>
 
 boolean
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumfetchresourceeventdomaincontext.performanceentry.html">performanceEntry?</a></td><td>
-
 
 </td><td>
 
 PerformanceEntry
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumfetchresourceeventdomaincontext.requestinit.html">requestInit?</a></td><td>
-
 
 </td><td>
 
 RequestInit
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumfetchresourceeventdomaincontext.requestinput.html">requestInput</a></td><td>
-
 
 </td><td>
 
 RequestInfo
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumfetchresourceeventdomaincontext.response.html">response?</a></td><td>
-
 
 </td><td>
 
 Response
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>

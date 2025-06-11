@@ -5,9 +5,8 @@
 ## LogsGlobal.setUser() method
 
 > Warning: This API is now obsolete.
-> 
+>
 > You must specified a user id
-> 
 
 Set user information to all events, stored in `@usr`
 
@@ -23,34 +22,27 @@ setUser(newUser: User): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 newUser
 
-
 </td><td>
 
 User
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

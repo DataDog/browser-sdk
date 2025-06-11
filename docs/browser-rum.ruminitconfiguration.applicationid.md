@@ -9,5 +9,5 @@ The RUM application ID.
 **Signature:**
 
 ```typescript
-applicationId: string;
+applicationId: string
 ```

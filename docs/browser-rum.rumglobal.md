@@ -7,8 +7,9 @@
 **Signature:**
 
 ```typescript
-export interface RumPublicApi extends PublicApi 
+export interface RumPublicApi extends PublicApi
 ```
+
 **Extends:** PublicApi
 
 ## Properties
@@ -17,114 +18,90 @@ export interface RumPublicApi extends PublicApi
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumglobal.addaction.html">addAction</a></td><td>
-
 
 </td><td>
 
 (name: string, context?: object) =&gt; void
 
-
 </td><td>
 
 Add a custom action, stored in `@action`
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.adddurationvital.html">addDurationVital</a></td><td>
-
 
 </td><td>
 
 (name: string, options: { startTime: number; duration: number; context?: object; description?: string; }) =&gt; void
 
-
 </td><td>
 
 Add a custom duration vital
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.adderror.html">addError</a></td><td>
-
 
 </td><td>
 
 (error: unknown, context?: object) =&gt; void
 
-
 </td><td>
 
 Add a custom error, stored in `@error`<!-- -->.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.addfeatureflagevaluation.html">addFeatureFlagEvaluation</a></td><td>
-
 
 </td><td>
 
 (key: string, value: any) =&gt; void
 
-
 </td><td>
 
 Add a feature flag evaluation, stored in `@feature_flags.<feature_flag_key>`
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.addtiming.html">addTiming</a></td><td>
-
 
 </td><td>
 
 (name: string, time?: number) =&gt; void
 
-
 </td><td>
 
 Add a custom timing relative to the start of the current view, stored in `@view.custom_timings.<timing_name>`
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.clearaccount.html">clearAccount</a></td><td>
-
 
 </td><td>
 
 () =&gt; void
-
 
 </td><td>
 
 Clear all account information
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.clearglobalcontext.html">clearGlobalContext</a></td><td>
-
 
 </td><td>
 
 () =&gt; void
-
 
 </td><td>
 
@@ -132,15 +109,12 @@ Clear the global context
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/browser/advanced\_configuration/\#global-context">Global context\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.clearuser.html">clearUser</a></td><td>
-
 
 </td><td>
 
 () =&gt; void
-
 
 </td><td>
 
@@ -148,29 +122,23 @@ Clear all user information
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/browser/advanced\_configuration/\#user-session">User session\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.getaccount.html">getAccount</a></td><td>
-
 
 </td><td>
 
 () =&gt; Context
-
 
 </td><td>
 
 Get account information
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.getglobalcontext.html">getGlobalContext</a></td><td>
-
 
 </td><td>
 
 () =&gt; Context
-
 
 </td><td>
 
@@ -178,43 +146,34 @@ Get the global Context
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/browser/advanced\_configuration/\#global-context">Global context\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.getinitconfiguration.html">getInitConfiguration</a></td><td>
-
 
 </td><td>
 
 () =&gt; <a href="browser-rum.ruminitconfiguration.html">RumInitConfiguration</a> \| undefined
 
-
 </td><td>
 
 Get the init configuration
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.getinternalcontext.html">getInternalContext</a></td><td>
-
 
 </td><td>
 
 (startTime?: number) =&gt; InternalContext \| undefined
 
-
 </td><td>
 
 \[Internal API\] Get the internal SDK context
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.getsessionreplaylink.html">getSessionReplayLink</a></td><td>
-
 
 </td><td>
 
 () =&gt; string \| undefined
-
 
 </td><td>
 
@@ -222,15 +181,12 @@ Get the Session Replay Link.
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/guide/connect-session-replay-to-your-third-party-tools">Connect Session Replay To Your Third-Party Tools\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.getuser.html">getUser</a></td><td>
-
 
 </td><td>
 
 () =&gt; Context
-
 
 </td><td>
 
@@ -238,57 +194,45 @@ Get user information
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/browser/advanced\_configuration/\#user-session">User session\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.getviewcontext.html">getViewContext</a></td><td>
-
 
 </td><td>
 
 () =&gt; Context
 
-
 </td><td>
 
 Get View Context.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.init.html">init</a></td><td>
-
 
 </td><td>
 
 (initConfiguration: <a href="browser-rum.ruminitconfiguration.html">RumInitConfiguration</a><!-- -->) =&gt; void
 
-
 </td><td>
 
 Init the RUM browser SDK.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.removeaccountproperty.html">removeAccountProperty</a></td><td>
-
 
 </td><td>
 
 (key: string) =&gt; void
 
-
 </td><td>
 
 Remove an account property
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.removeglobalcontextproperty.html">removeGlobalContextProperty</a></td><td>
-
 
 </td><td>
 
 (key: any) =&gt; void
-
 
 </td><td>
 
@@ -296,15 +240,12 @@ Remove a global context property
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/browser/advanced\_configuration/\#global-context">Global context\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.removeuserproperty.html">removeUserProperty</a></td><td>
-
 
 </td><td>
 
 (key: any) =&gt; void
-
 
 </td><td>
 
@@ -312,99 +253,78 @@ Remove a user property
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/browser/advanced\_configuration/\#user-session">User session\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setaccount.html">setAccount</a></td><td>
-
 
 </td><td>
 
 (newAccount: Account) =&gt; void
 
-
 </td><td>
 
 Set account information to all events, stored in `@account`
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setaccountproperty.html">setAccountProperty</a></td><td>
-
 
 </td><td>
 
 (key: string, property: any) =&gt; void
 
-
 </td><td>
 
 Set or update the account property, stored in `@account.<key>`
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setglobalcontext.html">setGlobalContext</a></td><td>
-
 
 </td><td>
 
 (context: any) =&gt; void
 
-
 </td><td>
 
 Set the global context information to all events, stored in `@context`
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setglobalcontextproperty.html">setGlobalContextProperty</a></td><td>
-
 
 </td><td>
 
 (key: any, value: any) =&gt; void
 
-
 </td><td>
 
 Set or update a global context property, stored in `@context.<key>`
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.settrackingconsent.html">setTrackingConsent</a></td><td>
-
 
 </td><td>
 
 (trackingConsent: TrackingConsent) =&gt; void
 
-
 </td><td>
 
 Set the tracking consent of the current user.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setuserproperty.html">setUserProperty</a></td><td>
-
 
 </td><td>
 
 (key: any, property: any) =&gt; void
 
-
 </td><td>
 
 Set or update the user property, stored in `@usr.<key>`
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setviewcontext.html">setViewContext</a></td><td>
-
 
 </td><td>
 
 (context: Context) =&gt; void
-
 
 </td><td>
 
@@ -412,15 +332,12 @@ Set View Context.
 
 Enable to manually set the context of the current view.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setviewcontextproperty.html">setViewContextProperty</a></td><td>
-
 
 </td><td>
 
 (key: string, value: any) =&gt; void
-
 
 </td><td>
 
@@ -428,15 +345,12 @@ Set View Context Property.
 
 Enable to manually set a property of the context of the current view.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setviewname.html">setViewName</a></td><td>
-
 
 </td><td>
 
 (name: string) =&gt; void
-
 
 </td><td>
 
@@ -444,15 +358,12 @@ Set View Name.
 
 Enable to manually change the name of the current view.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.startdurationvital.html">startDurationVital</a></td><td>
-
 
 </td><td>
 
 (name: string, options?: { context?: object; description?: string; }) =&gt; DurationVitalReference
-
 
 </td><td>
 
@@ -460,15 +371,12 @@ Start a custom duration vital.
 
 If you plan to have multiple durations for the same vital, you should use the reference returned by this method.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.startsessionreplayrecording.html">startSessionReplayRecording</a></td><td>
-
 
 </td><td>
 
 (options?: StartRecordingOptions) =&gt; void
-
 
 </td><td>
 
@@ -476,64 +384,51 @@ Start Session Replay recording. Enable to conditionally start the recording, use
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/session\_replay/browser">Browser Session Replay\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.startview.html">startView</a></td><td>
-
 
 </td><td>
 
 { (name?: string): void; (options: ViewOptions): void; }
 
-
 </td><td>
 
 Start a view manually. Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.stopdurationvital.html">stopDurationVital</a></td><td>
-
 
 </td><td>
 
 (nameOrRef: string \| DurationVitalReference, options?: { context?: object; description?: string; }) =&gt; void
 
-
 </td><td>
 
 Stop a custom duration vital
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.stopsession.html">stopSession</a></td><td>
-
 
 </td><td>
 
 () =&gt; void
-
 
 </td><td>
 
 Stop the session. A new session will start at the next user interaction with the page.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.stopsessionreplayrecording.html">stopSessionReplayRecording</a></td><td>
-
 
 </td><td>
 
 () =&gt; void
-
 
 </td><td>
 
 Stop Session Replay recording.
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/session\_replay/browser">Browser Session Replay\</a> for further information.
-
 
 </td></tr>
 </tbody></table>
@@ -544,11 +439,9 @@ See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/session\_replay/
 
 Method
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumglobal.setuser.html">setUser(newUser)</a></td><td>
@@ -557,12 +450,10 @@ Set user information to all events, stored in `@usr`
 
 See \<a href="https://docs.datadoghq.com/real\_user\_monitoring/browser/advanced\_configuration/\#user-session">User session\</a> for further information.
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumglobal.setuser_1.html">setUser(newUser)</a></td><td>
 
 Set user information to all events, stored in `@usr`
-
 
 </td></tr>
 </tbody></table>

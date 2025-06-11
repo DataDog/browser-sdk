@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface LoggerConfiguration 
+export interface LoggerConfiguration
 ```
 
 ## Properties
@@ -16,58 +16,46 @@ export interface LoggerConfiguration
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-logs.loggerconfiguration.context.html">context?</a></td><td>
-
 
 </td><td>
 
 object
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-logs.loggerconfiguration.handler.html">handler?</a></td><td>
-
 
 </td><td>
 
 <a href="browser-logs.handlertype.html">HandlerType</a> \| <a href="browser-logs.handlertype.html">HandlerType</a><!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-logs.loggerconfiguration.level.html">level?</a></td><td>
-
 
 </td><td><a href="browser-logs.statustype.html">StatusType</a></td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>

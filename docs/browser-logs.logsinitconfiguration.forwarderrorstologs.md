@@ -4,7 +4,7 @@
 
 ## LogsInitConfiguration.forwardErrorsToLogs property
 
-Forward console.error logs, uncaught exceptions and network errors to Datadog.  true
+Forward console.error logs, uncaught exceptions and network errors to Datadog. true
 
 **Signature:**
 

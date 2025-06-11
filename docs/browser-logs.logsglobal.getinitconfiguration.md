@@ -9,5 +9,5 @@ Get the init configuration
 **Signature:**
 
 ```typescript
-getInitConfiguration: () => LogsInitConfiguration | undefined;
+getInitConfiguration: () => LogsInitConfiguration | undefined
 ```

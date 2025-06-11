@@ -9,7 +9,13 @@ Schema of all properties of a RUM event
 **Signature:**
 
 ```typescript
-export type RumEvent = RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent | RumViewEvent | RumVitalEvent;
+export type RumEvent =
+  | RumActionEvent
+  | RumErrorEvent
+  | RumLongTaskEvent
+  | RumResourceEvent
+  | RumViewEvent
+  | RumVitalEvent
 ```
-**References:** [RumActionEvent](./browser-rum.rumactionevent.md)<!-- -->, [RumErrorEvent](./browser-rum.rumerrorevent.md)<!-- -->, [RumLongTaskEvent](./browser-rum.rumlongtaskevent.md)<!-- -->, [RumResourceEvent](./browser-rum.rumresourceevent.md)<!-- -->, [RumViewEvent](./browser-rum.rumviewevent.md)<!-- -->, [RumVitalEvent](./browser-rum.rumvitalevent.md)
 
+**References:** [RumActionEvent](./browser-rum.rumactionevent.md)<!-- -->, [RumErrorEvent](./browser-rum.rumerrorevent.md)<!-- -->, [RumLongTaskEvent](./browser-rum.rumlongtaskevent.md)<!-- -->, [RumResourceEvent](./browser-rum.rumresourceevent.md)<!-- -->, [RumViewEvent](./browser-rum.rumviewevent.md)<!-- -->, [RumVitalEvent](./browser-rum.rumvitalevent.md)

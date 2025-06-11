@@ -9,28 +9,29 @@ Schema of all properties of a Vital event
 **Signature:**
 
 ```typescript
-export type RumVitalEvent = CommonProperties & ViewContainerSchema & {
-    readonly type: 'vital';
+export type RumVitalEvent = CommonProperties &
+  ViewContainerSchema & {
+    readonly type: 'vital'
     readonly vital: {
-        readonly type: 'duration';
-        readonly id: string;
-        readonly name?: string;
-        readonly description?: string;
-        readonly duration?: number;
-        readonly custom?: {
-            [k: string]: number;
-        };
-        [k: string]: unknown;
-    };
+      readonly type: 'duration'
+      readonly id: string
+      readonly name?: string
+      readonly description?: string
+      readonly duration?: number
+      readonly custom?: {
+        [k: string]: number
+      }
+      [k: string]: unknown
+    }
     readonly _dd?: {
-        readonly vital?: {
-            readonly computed_value?: boolean;
-            [k: string]: unknown;
-        };
-        [k: string]: unknown;
-    };
-    [k: string]: unknown;
-};
+      readonly vital?: {
+        readonly computed_value?: boolean
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
 ```
-**References:** [CommonProperties](./browser-rum.commonproperties.md)
 
+**References:** [CommonProperties](./browser-rum.commonproperties.md)

@@ -4,7 +4,7 @@
 
 ## RumInitConfiguration.trackUserInteractions property
 
-Enables automatic collection of users actions. See \[Tracking User Actions\](https://docs.datadoghq.com/real\_user\_monitoring/browser/tracking\_user\_actions) for further information.  true
+Enables automatic collection of users actions. See \[Tracking User Actions\](https://docs.datadoghq.com/real\_user\_monitoring/browser/tracking\_user\_actions) for further information. true
 
 **Signature:**
 

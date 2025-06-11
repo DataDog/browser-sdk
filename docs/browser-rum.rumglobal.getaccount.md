@@ -9,5 +9,5 @@ Get account information
 **Signature:**
 
 ```typescript
-getAccount: () => Context;
+getAccount: () => Context
 ```

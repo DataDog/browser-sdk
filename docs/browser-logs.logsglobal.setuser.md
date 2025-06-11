@@ -22,34 +22,27 @@ setUser(newUser: User & {
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 newUser
 
-
 </td><td>
 
 User &amp; { id: string; }
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

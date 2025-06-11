@@ -10,15 +10,12 @@
 
 Variable
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum-slim.datadogrum.html">datadogRum</a></td><td>
-
 
 </td></tr>
 </tbody></table>

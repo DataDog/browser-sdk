@@ -7,8 +7,9 @@
 **Signature:**
 
 ```typescript
-export declare class ErrorBoundary extends React.Component<Props, State> 
+export declare class ErrorBoundary extends React.Component<Props, State>
 ```
+
 **Extends:** React.Component&lt;Props, State&gt;
 
 ## Constructors
@@ -17,25 +18,20 @@ export declare class ErrorBoundary extends React.Component<Props, State>
 
 Constructor
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum-react.errorboundary._constructor_.html">(constructor)(props)</a></td><td>
-
 
 </td><td>
 
 Constructs a new instance of the `ErrorBoundary` class
-
 
 </td></tr>
 </tbody></table>
@@ -46,33 +42,26 @@ Constructs a new instance of the `ErrorBoundary` class
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum-react.errorboundary.reseterror.html">resetError</a></td><td>
-
 
 </td><td>
 
 () =&gt; void
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
@@ -83,39 +72,30 @@ Description
 
 Method
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum-react.errorboundary.componentdidcatch.html">componentDidCatch(error, errorInfo)</a></td><td>
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum-react.errorboundary.getderivedstatefromerror.html">getDerivedStateFromError(error)</a></td><td>
 
 `static`
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum-react.errorboundary.render.html">render()</a></td><td>
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>

@@ -9,7 +9,7 @@
 ```typescript
 getContext(): Context;
 ```
+
 **Returns:**
 
 Context
-

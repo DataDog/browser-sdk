@@ -16,34 +16,27 @@ setHandler(handler: HandlerType | HandlerType[]): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 handler
 
-
 </td><td>
 
 <a href="browser-logs.handlertype.html">HandlerType</a> \| <a href="browser-logs.handlertype.html">HandlerType</a><!-- -->\[\]
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

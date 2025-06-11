@@ -11,5 +11,5 @@ See \[Define multiple loggers\](https://docs.datadoghq.com/logs/log\_collection/
 **Signature:**
 
 ```typescript
-createLogger: (name: string, conf?: LoggerConfiguration) => Logger;
+createLogger: (name: string, conf?: LoggerConfiguration) => Logger
 ```

@@ -4,7 +4,7 @@
 
 ## RumInitConfiguration.profilingSampleRate property
 
-Not ready for production. The percentage of users profiled. A value between 0 and 100.  0
+Not ready for production. The percentage of users profiled. A value between 0 and 100. 0
 
 **Signature:**
 

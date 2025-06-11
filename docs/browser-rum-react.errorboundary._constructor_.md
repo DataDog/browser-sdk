@@ -18,30 +18,24 @@ constructor(props: Props);
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 props
 
-
 </td><td>
 
 Props
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>

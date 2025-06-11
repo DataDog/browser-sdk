@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-isAborted: boolean;
+isAborted: boolean
 ```

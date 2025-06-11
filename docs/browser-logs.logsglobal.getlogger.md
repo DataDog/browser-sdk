@@ -11,5 +11,5 @@ See \[Define multiple loggers\](https://docs.datadoghq.com/logs/log\_collection/
 **Signature:**
 
 ```typescript
-getLogger: (name: string) => Logger | undefined;
+getLogger: (name: string) => Logger | undefined
 ```

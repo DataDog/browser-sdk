@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-error: unknown;
+error: unknown
 ```

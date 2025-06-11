@@ -11,5 +11,5 @@ See \[Global context\](https://docs.datadoghq.com/real\_user\_monitoring/browser
 **Signature:**
 
 ```typescript
-getGlobalContext: () => Context;
+getGlobalContext: () => Context
 ```

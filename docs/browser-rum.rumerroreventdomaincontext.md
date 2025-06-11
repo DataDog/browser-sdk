@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface RumErrorEventDomainContext 
+export interface RumErrorEventDomainContext
 ```
 
 ## Properties
@@ -16,47 +16,37 @@ export interface RumErrorEventDomainContext
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumerroreventdomaincontext.error.html">error</a></td><td>
-
 
 </td><td>
 
 unknown
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumerroreventdomaincontext.handlingstack.html">handlingStack?</a></td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>

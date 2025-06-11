@@ -4,7 +4,7 @@
 
 ## LogsInitConfiguration.usePciIntake property
 
-Use PCI-compliant intake. See \[PCI DSS Compliance\](https://docs.datadoghq.com/data\_security/pci\_compliance/?tab=logmanagement) for further information.  false
+Use PCI-compliant intake. See \[PCI DSS Compliance\](https://docs.datadoghq.com/data\_security/pci\_compliance/?tab=logmanagement) for further information. false
 
 **Signature:**
 

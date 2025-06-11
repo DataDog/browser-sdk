@@ -9,5 +9,5 @@ Start of the log in ms from epoch
 **Signature:**
 
 ```typescript
-date: number;
+date: number
 ```

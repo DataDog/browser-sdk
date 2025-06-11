@@ -16,34 +16,27 @@ static getDerivedStateFromError(error: Error): State;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 error
 
-
 </td><td>
 
 Error
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 State
-

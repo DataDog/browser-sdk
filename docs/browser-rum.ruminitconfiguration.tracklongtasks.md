@@ -4,7 +4,7 @@
 
 ## RumInitConfiguration.trackLongTasks property
 
-Enables collection of long task events.  true
+Enables collection of long task events. true
 
 **Signature:**
 

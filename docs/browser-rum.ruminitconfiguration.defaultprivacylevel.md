@@ -4,7 +4,7 @@
 
 ## RumInitConfiguration.defaultPrivacyLevel property
 
-Allow to protect end user privacy and prevent sensitive organizational information from being collected.  mask See \[Replay Privacy Options\](https://docs.datadoghq.com/real\_user\_monitoring/session\_replay/browser/privacy\_options) for further information.
+Allow to protect end user privacy and prevent sensitive organizational information from being collected. mask See \[Replay Privacy Options\](https://docs.datadoghq.com/real\_user\_monitoring/session\_replay/browser/privacy\_options) for further information.
 
 **Signature:**
 

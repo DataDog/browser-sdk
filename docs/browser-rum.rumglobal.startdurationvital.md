@@ -11,8 +11,11 @@ If you plan to have multiple durations for the same vital, you should use the re
 **Signature:**
 
 ```typescript
-startDurationVital: (name: string, options?: {
-        context?: object;
-        description?: string;
-    }) => DurationVitalReference;
+startDurationVital: (
+  name: string,
+  options?: {
+    context?: object
+    description?: string
+  }
+) => DurationVitalReference
 ```

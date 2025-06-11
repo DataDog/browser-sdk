@@ -11,5 +11,5 @@ See \[Overwrite context\](https://docs.datadoghq.com/logs/log\_collection/javasc
 **Signature:**
 
 ```typescript
-getGlobalContext: () => Context;
+getGlobalContext: () => Context
 ```

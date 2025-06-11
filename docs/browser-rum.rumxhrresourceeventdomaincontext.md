@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface RumXhrResourceEventDomainContext 
+export interface RumXhrResourceEventDomainContext
 ```
 
 ## Properties
@@ -16,73 +16,57 @@ export interface RumXhrResourceEventDomainContext
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumxhrresourceeventdomaincontext.handlingstack.html">handlingStack?</a></td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumxhrresourceeventdomaincontext.isaborted.html">isAborted</a></td><td>
-
 
 </td><td>
 
 boolean
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td><a href="browser-rum.rumxhrresourceeventdomaincontext.performanceentry.html">performanceEntry?</a></td><td>
-
 
 </td><td>
 
 PerformanceEntry
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumxhrresourceeventdomaincontext.xhr.html">xhr</a></td><td>
-
 
 </td><td>
 
 XMLHttpRequest
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>

@@ -16,48 +16,38 @@ setContextProperty(key: string, value: any): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 key
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 value
 
-
 </td><td>
 
 any
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

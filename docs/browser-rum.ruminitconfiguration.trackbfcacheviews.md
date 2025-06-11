@@ -4,7 +4,7 @@
 
 ## RumInitConfiguration.trackBfcacheViews property
 
-Enable the creation of dedicated views for pages restored from the Back-Forward cache.  false
+Enable the creation of dedicated views for pages restored from the Back-Forward cache. false
 
 **Signature:**
 

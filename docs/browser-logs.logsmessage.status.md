@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-status: StatusType;
+status: StatusType
 ```

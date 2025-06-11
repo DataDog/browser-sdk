@@ -11,5 +11,5 @@ See \[Connect Session Replay To Your Third-Party Tools\](https://docs.datadoghq.
 **Signature:**
 
 ```typescript
-getSessionReplayLink: () => string | undefined;
+getSessionReplayLink: () => string | undefined
 ```

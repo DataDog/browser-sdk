@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface RumActionEventDomainContext 
+export interface RumActionEventDomainContext
 ```
 
 ## Properties
@@ -16,49 +16,39 @@ export interface RumActionEventDomainContext
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumactioneventdomaincontext.events.html">events?</a></td><td>
-
 
 </td><td>
 
 Event\[\]
 
-
 </td><td>
 
 _(Optional)_
 
-
 </td></tr>
 <tr><td><a href="browser-rum.rumactioneventdomaincontext.handlingstack.html">handlingStack?</a></td><td>
-
 
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>

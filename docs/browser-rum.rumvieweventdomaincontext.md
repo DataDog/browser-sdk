@@ -7,7 +7,7 @@
 **Signature:**
 
 ```typescript
-export interface RumViewEventDomainContext 
+export interface RumViewEventDomainContext
 ```
 
 ## Properties
@@ -16,33 +16,26 @@ export interface RumViewEventDomainContext
 
 Property
 
-
 </th><th>
 
 Modifiers
-
 
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
 
-
 </th></tr></thead>
 <tbody><tr><td><a href="browser-rum.rumvieweventdomaincontext.location.html">location</a></td><td>
-
 
 </td><td>
 
 Readonly&lt;Location&gt;
 
-
 </td><td>
-
 
 </td></tr>
 </tbody></table>

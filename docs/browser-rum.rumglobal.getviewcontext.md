@@ -9,5 +9,5 @@ Get View Context.
 **Signature:**
 
 ```typescript
-getViewContext: () => Context;
+getViewContext: () => Context
 ```

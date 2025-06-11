@@ -11,5 +11,5 @@ See \[User context\](https://docs.datadoghq.com/logs/log\_collection/javascript/
 **Signature:**
 
 ```typescript
-getUser: () => Context;
+getUser: () => Context
 ```

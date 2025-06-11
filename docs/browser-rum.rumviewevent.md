@@ -9,135 +9,144 @@ Schema of all properties of a View event
 **Signature:**
 
 ```typescript
-export type RumViewEvent = CommonProperties & ViewContainerSchema & {
-    readonly type: 'view';
+export type RumViewEvent = CommonProperties &
+  ViewContainerSchema & {
+    readonly type: 'view'
     readonly view: {
-        readonly loading_time?: number;
-        readonly network_settled_time?: number;
-        readonly interaction_to_next_view_time?: number;
-        readonly loading_type?: 'initial_load' | 'route_change' | 'activity_display' | 'activity_redisplay' | 'fragment_display' | 'fragment_redisplay' | 'view_controller_display' | 'view_controller_redisplay';
-        readonly time_spent: number;
-        readonly first_contentful_paint?: number;
-        readonly largest_contentful_paint?: number;
-        readonly largest_contentful_paint_target_selector?: string;
-        readonly first_input_delay?: number;
-        readonly first_input_time?: number;
-        readonly first_input_target_selector?: string;
-        readonly interaction_to_next_paint?: number;
-        readonly interaction_to_next_paint_time?: number;
-        readonly interaction_to_next_paint_target_selector?: string;
-        readonly cumulative_layout_shift?: number;
-        readonly cumulative_layout_shift_time?: number;
-        readonly cumulative_layout_shift_target_selector?: string;
-        readonly dom_complete?: number;
-        readonly dom_content_loaded?: number;
-        readonly dom_interactive?: number;
-        readonly load_event?: number;
-        readonly first_byte?: number;
-        readonly custom_timings?: {
-            [k: string]: number;
-        };
-        readonly is_active?: boolean;
-        readonly is_slow_rendered?: boolean;
-        readonly action: {
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        readonly error: {
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        readonly crash?: {
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        readonly long_task?: {
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        readonly frozen_frame?: {
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        readonly slow_frames?: {
-            readonly start: number;
-            readonly duration: number;
-            [k: string]: unknown;
-        }[];
-        readonly resource: {
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        readonly frustration?: {
-            readonly count: number;
-            [k: string]: unknown;
-        };
-        readonly in_foreground_periods?: {
-            readonly start: number;
-            readonly duration: number;
-            [k: string]: unknown;
-        }[];
-        readonly memory_average?: number;
-        readonly memory_max?: number;
-        readonly cpu_ticks_count?: number;
-        readonly cpu_ticks_per_second?: number;
-        readonly refresh_rate_average?: number;
-        readonly refresh_rate_min?: number;
-        readonly slow_frames_rate?: number;
-        readonly freeze_rate?: number;
-        flutter_build_time?: RumPerfMetric;
-        flutter_raster_time?: RumPerfMetric;
-        js_refresh_rate?: RumPerfMetric;
-        performance?: ViewPerformanceData;
-        [k: string]: unknown;
-    };
+      readonly loading_time?: number
+      readonly network_settled_time?: number
+      readonly interaction_to_next_view_time?: number
+      readonly loading_type?:
+        | 'initial_load'
+        | 'route_change'
+        | 'activity_display'
+        | 'activity_redisplay'
+        | 'fragment_display'
+        | 'fragment_redisplay'
+        | 'view_controller_display'
+        | 'view_controller_redisplay'
+      readonly time_spent: number
+      readonly first_contentful_paint?: number
+      readonly largest_contentful_paint?: number
+      readonly largest_contentful_paint_target_selector?: string
+      readonly first_input_delay?: number
+      readonly first_input_time?: number
+      readonly first_input_target_selector?: string
+      readonly interaction_to_next_paint?: number
+      readonly interaction_to_next_paint_time?: number
+      readonly interaction_to_next_paint_target_selector?: string
+      readonly cumulative_layout_shift?: number
+      readonly cumulative_layout_shift_time?: number
+      readonly cumulative_layout_shift_target_selector?: string
+      readonly dom_complete?: number
+      readonly dom_content_loaded?: number
+      readonly dom_interactive?: number
+      readonly load_event?: number
+      readonly first_byte?: number
+      readonly custom_timings?: {
+        [k: string]: number
+      }
+      readonly is_active?: boolean
+      readonly is_slow_rendered?: boolean
+      readonly action: {
+        readonly count: number
+        [k: string]: unknown
+      }
+      readonly error: {
+        readonly count: number
+        [k: string]: unknown
+      }
+      readonly crash?: {
+        readonly count: number
+        [k: string]: unknown
+      }
+      readonly long_task?: {
+        readonly count: number
+        [k: string]: unknown
+      }
+      readonly frozen_frame?: {
+        readonly count: number
+        [k: string]: unknown
+      }
+      readonly slow_frames?: {
+        readonly start: number
+        readonly duration: number
+        [k: string]: unknown
+      }[]
+      readonly resource: {
+        readonly count: number
+        [k: string]: unknown
+      }
+      readonly frustration?: {
+        readonly count: number
+        [k: string]: unknown
+      }
+      readonly in_foreground_periods?: {
+        readonly start: number
+        readonly duration: number
+        [k: string]: unknown
+      }[]
+      readonly memory_average?: number
+      readonly memory_max?: number
+      readonly cpu_ticks_count?: number
+      readonly cpu_ticks_per_second?: number
+      readonly refresh_rate_average?: number
+      readonly refresh_rate_min?: number
+      readonly slow_frames_rate?: number
+      readonly freeze_rate?: number
+      flutter_build_time?: RumPerfMetric
+      flutter_raster_time?: RumPerfMetric
+      js_refresh_rate?: RumPerfMetric
+      performance?: ViewPerformanceData
+      [k: string]: unknown
+    }
     readonly session?: {
-        readonly is_active?: boolean;
-        readonly sampled_for_replay?: boolean;
-        [k: string]: unknown;
-    };
+      readonly is_active?: boolean
+      readonly sampled_for_replay?: boolean
+      [k: string]: unknown
+    }
     readonly feature_flags?: {
-        [k: string]: unknown;
-    };
+      [k: string]: unknown
+    }
     readonly privacy?: {
-        readonly replay_level: 'allow' | 'mask' | 'mask-user-input';
-        [k: string]: unknown;
-    };
+      readonly replay_level: 'allow' | 'mask' | 'mask-user-input'
+      [k: string]: unknown
+    }
     readonly _dd: {
-        readonly document_version: number;
-        readonly page_states?: {
-            readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated';
-            readonly start: number;
-            [k: string]: unknown;
-        }[];
-        replay_stats?: {
-            records_count?: number;
-            segments_count?: number;
-            segments_total_raw_size?: number;
-            [k: string]: unknown;
-        };
-        readonly cls?: {
-            readonly device_pixel_ratio?: number;
-            [k: string]: unknown;
-        };
-        readonly configuration?: {
-            readonly start_session_replay_recording_manually?: boolean;
-            [k: string]: unknown;
-        };
-        [k: string]: unknown;
-    };
+      readonly document_version: number
+      readonly page_states?: {
+        readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
+        readonly start: number
+        [k: string]: unknown
+      }[]
+      replay_stats?: {
+        records_count?: number
+        segments_count?: number
+        segments_total_raw_size?: number
+        [k: string]: unknown
+      }
+      readonly cls?: {
+        readonly device_pixel_ratio?: number
+        [k: string]: unknown
+      }
+      readonly configuration?: {
+        readonly start_session_replay_recording_manually?: boolean
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
     readonly display?: {
-        readonly scroll?: {
-            readonly max_depth: number;
-            readonly max_depth_scroll_top: number;
-            readonly max_scroll_height: number;
-            readonly max_scroll_height_time: number;
-            [k: string]: unknown;
-        };
-        [k: string]: unknown;
-    };
-    [k: string]: unknown;
-};
+      readonly scroll?: {
+        readonly max_depth: number
+        readonly max_depth_scroll_top: number
+        readonly max_scroll_height: number
+        readonly max_scroll_height_time: number
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
 ```
-**References:** [CommonProperties](./browser-rum.commonproperties.md)
 
+**References:** [CommonProperties](./browser-rum.commonproperties.md)

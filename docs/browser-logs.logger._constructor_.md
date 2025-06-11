@@ -18,89 +18,72 @@ constructor(handleLogStrategy: (logsMessage: LogsMessage, logger: Logger, handli
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 handleLogStrategy
 
-
 </td><td>
 
 (logsMessage: <a href="browser-logs.logsmessage.html">LogsMessage</a><!-- -->, logger: <a href="browser-logs.logger.html">Logger</a><!-- -->, handlingStack?: string) =&gt; void
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 name
 
-
 </td><td>
 
 string
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 handlerType
 
-
 </td><td>
 
 <a href="browser-logs.handlertype.html">HandlerType</a> \| <a href="browser-logs.handlertype.html">HandlerType</a><!-- -->\[\]
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 level
 
-
 </td><td><a href="browser-logs.statustype.html">StatusType</a></td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 loggerContext
 
-
 </td><td>
 
 object
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>

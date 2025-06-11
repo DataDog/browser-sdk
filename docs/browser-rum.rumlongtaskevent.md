@@ -9,40 +9,48 @@ Schema of all properties of a Long Task event
 **Signature:**
 
 ```typescript
-export type RumLongTaskEvent = CommonProperties & ActionChildProperties & ViewContainerSchema & {
-    readonly type: 'long_task';
+export type RumLongTaskEvent = CommonProperties &
+  ActionChildProperties &
+  ViewContainerSchema & {
+    readonly type: 'long_task'
     readonly long_task: {
-        readonly id?: string;
-        readonly start_time?: number;
-        readonly entry_type?: 'long-task' | 'long-animation-frame';
-        readonly duration: number;
-        readonly blocking_duration?: number;
-        readonly render_start?: number;
-        readonly style_and_layout_start?: number;
-        readonly first_ui_event_timestamp?: number;
-        readonly is_frozen_frame?: boolean;
-        readonly scripts?: {
-            readonly duration?: number;
-            readonly pause_duration?: number;
-            readonly forced_style_and_layout_duration?: number;
-            readonly start_time?: number;
-            readonly execution_start?: number;
-            source_url?: string;
-            readonly source_function_name?: string;
-            readonly source_char_position?: number;
-            invoker?: string;
-            readonly invoker_type?: 'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script';
-            readonly window_attribution?: string;
-            [k: string]: unknown;
-        }[];
-        [k: string]: unknown;
-    };
+      readonly id?: string
+      readonly start_time?: number
+      readonly entry_type?: 'long-task' | 'long-animation-frame'
+      readonly duration: number
+      readonly blocking_duration?: number
+      readonly render_start?: number
+      readonly style_and_layout_start?: number
+      readonly first_ui_event_timestamp?: number
+      readonly is_frozen_frame?: boolean
+      readonly scripts?: {
+        readonly duration?: number
+        readonly pause_duration?: number
+        readonly forced_style_and_layout_duration?: number
+        readonly start_time?: number
+        readonly execution_start?: number
+        source_url?: string
+        readonly source_function_name?: string
+        readonly source_char_position?: number
+        invoker?: string
+        readonly invoker_type?:
+          | 'user-callback'
+          | 'event-listener'
+          | 'resolve-promise'
+          | 'reject-promise'
+          | 'classic-script'
+          | 'module-script'
+        readonly window_attribution?: string
+        [k: string]: unknown
+      }[]
+      [k: string]: unknown
+    }
     readonly _dd?: {
-        readonly discarded?: boolean;
-        [k: string]: unknown;
-    };
-    [k: string]: unknown;
-};
+      readonly discarded?: boolean
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
 ```
-**References:** [CommonProperties](./browser-rum.commonproperties.md)
 
+**References:** [CommonProperties](./browser-rum.commonproperties.md)

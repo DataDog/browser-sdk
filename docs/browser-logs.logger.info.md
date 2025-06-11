@@ -16,66 +16,53 @@ info(message: string, messageContext?: object, error?: Error): void;
 
 Parameter
 
-
 </th><th>
 
 Type
 
-
 </th><th>
 
 Description
-
 
 </th></tr></thead>
 <tbody><tr><td>
 
 message
 
-
 </td><td>
 
 string
 
-
 </td><td>
-
 
 </td></tr>
 <tr><td>
 
 messageContext
 
-
 </td><td>
 
 object
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 <tr><td>
 
 error
 
-
 </td><td>
 
 Error
 
-
 </td><td>
 
 _(Optional)_
-
 
 </td></tr>
 </tbody></table>
 **Returns:**
 
 void
-

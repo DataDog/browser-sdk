@@ -9,7 +9,7 @@
 ```typescript
 getHandler(): HandlerType | HandlerType[];
 ```
+
 **Returns:**
 
 [HandlerType](./browser-logs.handlertype.md) \| [HandlerType](./browser-logs.handlertype.md)<!-- -->\[\]
-

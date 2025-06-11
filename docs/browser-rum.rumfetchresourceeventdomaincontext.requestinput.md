@@ -7,5 +7,5 @@
 **Signature:**
 
 ```typescript
-requestInput: RequestInfo;
+requestInput: RequestInfo
 ```

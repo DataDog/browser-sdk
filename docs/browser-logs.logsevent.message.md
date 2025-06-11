@@ -9,5 +9,5 @@ The log message
 **Signature:**
 
 ```typescript
-message: string;
+message: string
 ```
