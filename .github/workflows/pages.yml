@@ -37,9 +37,6 @@ jobs:
       - name: Install dependencies
         run: |
           cd docs
-          gem install bundler jekyll
-          bundle init --force
-          bundle add jekyll minima
           bundle install
 
       - name: Build with Jekyll
