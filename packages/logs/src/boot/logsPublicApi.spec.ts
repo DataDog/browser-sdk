@@ -76,7 +76,7 @@ describe('logs entry', () => {
     it('should have the current date, view and global context', () => {
       LOGS.setGlobalContextProperty('foo', 'bar')
 
-      const getCommonContext = startLogs.calls.mostRecent().args[2]
+      const getCommonContext = startLogs.calls.mostRecent().args[1]
       expect(getCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
@@ -190,7 +190,7 @@ describe('logs entry', () => {
         const user = { id: 'foo', name: 'bar', email: 'qux', foo: { bar: 'qux' } }
         logsPublicApi.setUser(user)
 
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        const getCommonContext = startLogs.calls.mostRecent().args[1]
         expect(getCommonContext().user).toEqual({
           email: 'qux',
           foo: { bar: 'qux' },
@@ -202,7 +202,7 @@ describe('logs entry', () => {
       it('should sanitize predefined properties', () => {
         const user = { id: false, name: 2, email: { bar: 'qux' } }
         logsPublicApi.setUser(user as any)
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        const getCommonContext = startLogs.calls.mostRecent().args[1]
         expect(getCommonContext().user).toEqual({
           email: '[object Object]',
           id: 'false',
@@ -215,7 +215,7 @@ describe('logs entry', () => {
         logsPublicApi.setUser(user)
         logsPublicApi.clearUser()
 
-        const getCommonContext = startLogs.calls.mostRecent().args[2]
+        const getCommonContext = startLogs.calls.mostRecent().args[1]
         expect(getCommonContext().user).toEqual({})
       })
 

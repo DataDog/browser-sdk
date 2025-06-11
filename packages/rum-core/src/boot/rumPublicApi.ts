@@ -387,6 +387,7 @@ export interface RumPublicApiOptions {
     worker: DeflateWorker,
     streamId: DeflateEncoderStreamId
   ) => DeflateEncoder
+  sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
 }
 
 export interface Strategy {
@@ -437,7 +438,8 @@ export function makeRumPublicApi(
           ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
           : createIdentityEncoder,
         trackingConsentState,
-        customVitalsState
+        customVitalsState,
+        options.sdkName
       )
 
       recorderApi.onRumStart(
