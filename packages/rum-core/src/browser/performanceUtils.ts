@@ -9,6 +9,10 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
       RumPerformanceEntryType.NAVIGATION
     )[0] as unknown as RumPerformanceNavigationTiming
     if (navigationEntry) {
+      // Ensure activationStart is always present for compatibility with older browsers
+      if (navigationEntry.activationStart === undefined) {
+        ;(navigationEntry as any).activationStart = 0 as RelativeTime
+      }
       return navigationEntry
     }
   }
