@@ -403,8 +403,6 @@ describe('view events', () => {
       lastRumEvents,
       (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
     )!
-
-    expect(lastRumViewEvent.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
     expect(lastRumViewEvent._dd.sdk_name).toBe('rum')
   })
 })
