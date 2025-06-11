@@ -56,7 +56,7 @@ string
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -72,7 +72,7 @@ handlerType
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -88,7 +88,7 @@ level
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -104,7 +104,7 @@ object
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>

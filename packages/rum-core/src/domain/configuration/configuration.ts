@@ -21,6 +21,9 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
+/**
+ * Configuration options to pass to the `init()` method when initializing the RUM SDK.
+ */
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
   /**

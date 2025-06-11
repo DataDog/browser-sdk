@@ -162,7 +162,7 @@
   },
   "kind": "Package",
   "canonicalReference": "@datadog/browser-rum-react!",
-  "docComment": "",
+  "docComment": "/**\n * Datadog Browser RUM React Integration - Additional components and hooks for React applications. Provides React-specific features like Error Boundaries and component performance tracking.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#react | RUM React Integration}\n *\n * @packageDocumentation\n */\n",
   "name": "@datadog/browser-rum-react",
   "preserveMemberOrder": false,
   "members": [

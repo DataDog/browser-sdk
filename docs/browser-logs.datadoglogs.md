@@ -4,6 +4,8 @@
 
 ## datadogLogs variable
 
+The global Logs instance. Use this to call Logs methods.
+
 **Signature:**
 
 ```typescript

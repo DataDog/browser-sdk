@@ -4,6 +4,8 @@
 
 ## browser-rum package
 
+Datadog Browser RUM SDK - Full version with Session Replay and Real User Profiling capabilities. Use this package to monitor your web application's performance and user experience.
+
 ## Interfaces
 
 <table><thead><tr><th>
@@ -130,6 +132,8 @@ Description
 
 
 </td><td>
+
+The global RUM instance. Use this to call RUM methods.
 
 
 </td></tr>

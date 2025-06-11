@@ -4,6 +4,8 @@
 
 ## browser-logs package
 
+Datadog Browser Logs SDK for collecting and forwarding browser logs to Datadog. Provides comprehensive logging capabilities with automatic error tracking and custom log collection.
+
 ## Classes
 
 <table><thead><tr><th>
@@ -116,6 +118,8 @@ Description
 
 
 </td><td>
+
+The global Logs instance. Use this to call Logs methods.
 
 
 </td></tr>

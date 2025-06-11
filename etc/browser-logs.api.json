@@ -162,7 +162,7 @@
   },
   "kind": "Package",
   "canonicalReference": "@datadog/browser-logs!",
-  "docComment": "",
+  "docComment": "/**\n * Datadog Browser Logs SDK for collecting and forwarding browser logs to Datadog. Provides comprehensive logging capabilities with automatic error tracking and custom log collection.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/logs/log_collection/javascript/ | Browser Log Collection}\n *\n * @packageDocumentation\n */\n",
   "name": "@datadog/browser-logs",
   "preserveMemberOrder": false,
   "members": [
@@ -175,7 +175,7 @@
         {
           "kind": "Variable",
           "canonicalReference": "@datadog/browser-logs!datadogLogs:var",
-          "docComment": "",
+          "docComment": "/**\n * The global Logs instance. Use this to call Logs methods.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/logs/log_collection/javascript/ | Browser Log Collection}\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",

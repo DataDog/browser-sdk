@@ -4,6 +4,8 @@
 
 ## datadogRum variable
 
+The global RUM instance. Use this to call RUM methods.
+
 **Signature:**
 
 ```typescript

@@ -48,7 +48,7 @@ string
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -84,7 +84,7 @@ PerformanceEntry
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>

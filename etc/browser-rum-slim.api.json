@@ -162,7 +162,7 @@
   },
   "kind": "Package",
   "canonicalReference": "@datadog/browser-rum-slim!",
-  "docComment": "",
+  "docComment": "/**\n * Datadog Browser RUM SDK - Slim version without Session Replay and Real User Profiling. Lightweight alternative for basic RUM monitoring with reduced bundle size.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/real_user_monitoring/browser/ | RUM Browser Monitoring Setup}\n *\n * @packageDocumentation\n */\n",
   "name": "@datadog/browser-rum-slim",
   "preserveMemberOrder": false,
   "members": [
@@ -175,7 +175,7 @@
         {
           "kind": "Variable",
           "canonicalReference": "@datadog/browser-rum-slim!datadogRum:var",
-          "docComment": "",
+          "docComment": "/**\n * The global RUM instance (slim version without Session Replay and Profiling). Use this to call RUM methods.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/real_user_monitoring/browser/ | RUM Browser Monitoring Setup}\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",

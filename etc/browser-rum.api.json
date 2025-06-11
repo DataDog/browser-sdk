@@ -162,7 +162,7 @@
   },
   "kind": "Package",
   "canonicalReference": "@datadog/browser-rum!",
-  "docComment": "",
+  "docComment": "/**\n * Datadog Browser RUM SDK - Full version with Session Replay and Real User Profiling capabilities. Use this package to monitor your web application's performance and user experience.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/real_user_monitoring/browser/ | RUM Browser Monitoring Setup}\n *\n * @packageDocumentation\n */\n",
   "name": "@datadog/browser-rum",
   "preserveMemberOrder": false,
   "members": [
@@ -750,7 +750,7 @@
         {
           "kind": "Variable",
           "canonicalReference": "@datadog/browser-rum!datadogRum:var",
-          "docComment": "",
+          "docComment": "/**\n * The global RUM instance. Use this to call RUM methods.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/real_user_monitoring/browser/ | RUM Browser Monitoring Setup}\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",

@@ -48,7 +48,7 @@ Error
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -67,7 +67,7 @@ string
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -103,7 +103,7 @@ PerformanceEntry
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -122,7 +122,7 @@ RequestInit
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -158,7 +158,7 @@ Response
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>

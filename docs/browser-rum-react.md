@@ -4,6 +4,8 @@
 
 ## browser-rum-react package
 
+Datadog Browser RUM React Integration - Additional components and hooks for React applications. Provides React-specific features like Error Boundaries and component performance tracking.
+
 ## Classes
 
 <table><thead><tr><th>

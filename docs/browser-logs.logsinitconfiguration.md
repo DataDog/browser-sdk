@@ -49,7 +49,7 @@ Description
 
 </td><td>
 
-_(Optional)_ Access to every logs collected by the Logs SDK before they are sent to Datadog. It allows: - Enrich your logs with additional context attributes - Modify your logs to modify their content, or redact sensitive sequences (see the list of editable properties) - Discard selected logs
+(Optional) Access to every logs collected by the Logs SDK before they are sent to Datadog. It allows: - Enrich your logs with additional context attributes - Modify your logs to modify their content, or redact sensitive sequences (see the list of editable properties) - Discard selected logs
 
 
 </td></tr>
@@ -68,7 +68,7 @@ ConsoleApiName\[\] \| 'all' \| undefined
 
 </td><td>
 
-_(Optional)_ Forward logs from console.\* to Datadog. Use "all" to forward everything or an array of console API names to forward only a subset.
+(Optional) Forward logs from console.\* to Datadog. Use "all" to forward everything or an array of console API names to forward only a subset.
 
 
 </td></tr>
@@ -87,7 +87,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Forward console.error logs, uncaught exceptions and network errors to Datadog.  true
+(Optional) Forward console.error logs, uncaught exceptions and network errors to Datadog.  true
 
 
 </td></tr>
@@ -106,7 +106,7 @@ RawReportType\[\] \| 'all' \| undefined
 
 </td><td>
 
-_(Optional)_ Forward reports from the \<a href="https://developer.mozilla.org/en-US/docs/Web/API/Reporting\_API">Reporting API\</a> to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
+(Optional) Forward reports from the \<a href="https://developer.mozilla.org/en-US/docs/Web/API/Reporting\_API">Reporting API\</a> to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
 
 
 </td></tr>
@@ -125,7 +125,7 @@ boolean
 
 </td><td>
 
-_(Optional)_ Use PCI-compliant intake. See \<a href="https://docs.datadoghq.com/data\_security/pci\_compliance/?tab=logmanagement">PCI DSS Compliance\</a> for further information.  false
+(Optional) Use PCI-compliant intake. See \<a href="https://docs.datadoghq.com/data\_security/pci\_compliance/?tab=logmanagement">PCI DSS Compliance\</a> for further information.  false
 
 
 </td></tr>

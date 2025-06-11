@@ -4,6 +4,8 @@
 
 ## browser-rum-slim package
 
+Datadog Browser RUM SDK - Slim version without Session Replay and Real User Profiling. Lightweight alternative for basic RUM monitoring with reduced bundle size.
+
 ## Variables
 
 <table><thead><tr><th>
@@ -23,6 +25,8 @@ Description
 
 
 </td><td>
+
+The global RUM instance (slim version without Session Replay and Profiling). Use this to call RUM methods.
 
 
 </td></tr>

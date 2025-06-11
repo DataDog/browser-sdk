@@ -48,7 +48,7 @@ string
 
 </td><td>
 
-_(Optional)_ UUID of the application
+(Optional) UUID of the application
 
 
 </td></tr>
@@ -86,7 +86,7 @@ Start of the log in ms from epoch
 
 </td><td>
 
-_(Optional)_ Error properties
+(Optional) Error properties
 
 
 </td></tr>
@@ -105,7 +105,7 @@ _(Optional)_ Error properties
 
 </td><td>
 
-_(Optional)_ Resource properties of the error
+(Optional) Resource properties of the error
 
 
 </td></tr>
@@ -124,7 +124,7 @@ _(Optional)_ Resource properties of the error
 
 </td><td>
 
-_(Optional)_ Logger properties
+(Optional) Logger properties
 
 
 </td></tr>
@@ -181,7 +181,7 @@ string
 
 </td><td>
 
-_(Optional)_ The service name
+(Optional) The service name
 
 
 </td></tr>
@@ -200,7 +200,7 @@ string
 
 </td><td>
 
-_(Optional)_ UUID of the session (deprecated in favor of session.id)
+(Optional) UUID of the session (deprecated in favor of session.id)
 
 
 </td></tr>
@@ -219,7 +219,7 @@ _(Optional)_ UUID of the session (deprecated in favor of session.id)
 
 </td><td>
 
-_(Optional)_ Session properties
+(Optional) Session properties
 
 
 </td></tr>

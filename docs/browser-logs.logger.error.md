@@ -54,7 +54,7 @@ object
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>
@@ -70,7 +70,7 @@ Error
 
 </td><td>
 
-_(Optional)_
+(Optional)
 
 
 </td></tr>

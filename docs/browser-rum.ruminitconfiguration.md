@@ -49,7 +49,7 @@ string \| undefined
 
 </td><td>
 
-_(Optional)_ Specify your own attribute to use to name actions. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions">Declare a name for click actions</a> for further information.
+(Optional) Specify your own attribute to use to name actions. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions">Declare a name for click actions</a> for further information.
 
 
 </td></tr>
@@ -68,7 +68,7 @@ Array&lt;MatchOption \| TracingOption&gt; \| undefined
 
 </td><td>
 
-_(Optional)_ A list of request URLs used to inject tracing headers. See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
+(Optional) A list of request URLs used to inject tracing headers. See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
 
 
 </td></tr>
@@ -106,7 +106,7 @@ The RUM application ID.
 
 </td><td>
 
-_(Optional)_ Access to every event collected by the RUM SDK before they are sent to Datadog. It allows: - Enrich your RUM events with additional context attributes - Modify your RUM events to modify their content, or redact sensitive sequences (see the list of editable properties) - Discard selected RUM events
+(Optional) Access to every event collected by the RUM SDK before they are sent to Datadog. It allows: - Enrich your RUM events with additional context attributes - Modify your RUM events to modify their content, or redact sensitive sequences (see the list of editable properties) - Discard selected RUM events
 
 See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data">Enrich And Control Browser RUM Data With beforeSend</a> for further information.
 
@@ -127,7 +127,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Compress requests sent to the Datadog intake to reduce bandwidth usage when sending large amounts of data. The compression is done in a Worker thread. See <a href="https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay">Content Security Policy guidelines</a> for further information.
+(Optional) Compress requests sent to the Datadog intake to reduce bandwidth usage when sending large amounts of data. The compression is done in a Worker thread. See <a href="https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay">Content Security Policy guidelines</a> for further information.
 
 
 </td></tr>
@@ -146,7 +146,7 @@ DefaultPrivacyLevel \| undefined
 
 </td><td>
 
-_(Optional)_ Allow to protect end user privacy and prevent sensitive organizational information from being collected.  mask See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options">Replay Privacy Options</a> for further information.
+(Optional) Allow to protect end user privacy and prevent sensitive organizational information from being collected.  mask See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options">Replay Privacy Options</a> for further information.
 
 
 </td></tr>
@@ -165,7 +165,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Enables privacy control for action names.
+(Optional) Enables privacy control for action names.
 
 
 </td></tr>
@@ -184,7 +184,7 @@ MatchOption\[\] \| undefined
 
 </td><td>
 
-_(Optional)_ A list of request origins ignored when computing the page activity. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated">How page activity is calculated</a> for further information.
+(Optional) A list of request origins ignored when computing the page activity. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated">How page activity is calculated</a> for further information.
 
 
 </td></tr>
@@ -203,7 +203,7 @@ RumPlugin\[\] \| undefined
 
 </td><td>
 
-_(Optional)_ List of plugins to enable. The plugins API is unstable and experimental, and may change without notice. Please use only plugins provided by Datadog matching the version of the SDK you are using.
+(Optional) List of plugins to enable. The plugins API is unstable and experimental, and may change without notice. Please use only plugins provided by Datadog matching the version of the SDK you are using.
 
 
 </td></tr>
@@ -222,7 +222,7 @@ number \| undefined
 
 </td><td>
 
-_(Optional)_ Not ready for production. The percentage of users profiled. A value between 0 and 100.  0
+(Optional) Not ready for production. The percentage of users profiled. A value between 0 and 100.  0
 
 
 </td></tr>
@@ -241,7 +241,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Whether to propagate user and account IDs in the baggage header of trace requests.  false
+(Optional) Whether to propagate user and account IDs in the baggage header of trace requests.  false
 
 
 </td></tr>
@@ -260,7 +260,7 @@ string \| undefined
 
 </td><td>
 
-_(Optional)_ Identifier of the remote configuration to fetch dynamic settings for your application at runtime. Unless you have been instructed by Datadog support to use this feature, you should leave this parameter undefined.
+(Optional) Identifier of the remote configuration to fetch dynamic settings for your application at runtime. Unless you have been instructed by Datadog support to use this feature, you should leave this parameter undefined.
 
 
 </td></tr>
@@ -279,7 +279,7 @@ number \| undefined
 
 </td><td>
 
-_(Optional)_ The percentage of tracked sessions with \<a href="https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay\#real-user-monitoring--session-replay">Browser RUM &amp; Session Replay pricing\</a> features: 100 for all, 0 for none. See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans">Configure Your Setup For Browser RUM and Browser RUM &amp; Session Replay Sampling</a> for further information.
+(Optional) The percentage of tracked sessions with \<a href="https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay\#real-user-monitoring--session-replay">Browser RUM &amp; Session Replay pricing\</a> features: 100 for all, 0 for none. See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans">Configure Your Setup For Browser RUM and Browser RUM &amp; Session Replay Sampling</a> for further information.
 
 
 </td></tr>
@@ -298,7 +298,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false. See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage">Session Replay Usage</a> for further information.
+(Optional) If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false. See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage">Session Replay Usage</a> for further information.
 
 
 </td></tr>
@@ -317,7 +317,7 @@ string
 
 </td><td>
 
-_(Optional)_ If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL . See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools">Connect Session Replay To Your Third-Party Tools</a> for further information.
+(Optional) If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL . See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools">Connect Session Replay To Your Third-Party Tools</a> for further information.
 
 
 </td></tr>
@@ -336,7 +336,7 @@ TraceContextInjection \| undefined
 
 </td><td>
 
-_(Optional)_ If you set a `traceSampleRate`<!-- -->, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled.  sampled See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
+(Optional) If you set a `traceSampleRate`<!-- -->, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled.  sampled See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
 
 
 </td></tr>
@@ -355,7 +355,7 @@ number \| undefined
 
 </td><td>
 
-_(Optional)_ The percentage of requests to trace: 100 for all, 0 for none. See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
+(Optional) The percentage of requests to trace: 100 for all, 0 for none. See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
 
 
 </td></tr>
@@ -374,7 +374,7 @@ FeatureFlagsForEvents\[\]
 
 </td><td>
 
-_(Optional)_ Enables collection of features flags in chosen events.
+(Optional) Enables collection of features flags in chosen events.
 
 
 </td></tr>
@@ -393,7 +393,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Enables collection of long task events.  true
+(Optional) Enables collection of long task events.  true
 
 
 </td></tr>
@@ -412,7 +412,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Enables collection of resource events.  true
+(Optional) Enables collection of resource events.  true
 
 
 </td></tr>
@@ -431,7 +431,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Enables automatic collection of users actions. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions">Tracking User Actions</a> for further information.  true
+(Optional) Enables automatic collection of users actions. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions">Tracking User Actions</a> for further information.  true
 
 
 </td></tr>
@@ -450,7 +450,7 @@ boolean \| undefined
 
 </td><td>
 
-_(Optional)_ Allows you to control RUM views creation. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names">Override default RUM view names</a> for further information.
+(Optional) Allows you to control RUM views creation. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names">Override default RUM view names</a> for further information.
 
 
 </td></tr>
@@ -469,7 +469,7 @@ string
 
 </td><td>
 
-_(Optional)_ URL pointing to the Datadog Browser SDK Worker JavaScript file. The URL can be relative or absolute, but is required to have the same origin as the web application. See <a href="https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay">Content Security Policy guidelines</a> for further information.
+(Optional) URL pointing to the Datadog Browser SDK Worker JavaScript file. The URL can be relative or absolute, but is required to have the same origin as the web application. See <a href="https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay">Content Security Policy guidelines</a> for further information.
 
 
 </td></tr>

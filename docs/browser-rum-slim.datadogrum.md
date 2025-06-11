@@ -4,6 +4,8 @@
 
 ## datadogRum variable
 
+The global RUM instance (slim version without Session Replay and Profiling). Use this to call RUM methods.
+
 **Signature:**
 
 ```typescript

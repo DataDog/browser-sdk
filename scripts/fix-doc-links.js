@@ -13,12 +13,19 @@ function convertLinks(markdown) {
   })
 }
 
+// Fix markdown formatting issues
+function fixFormatting(markdown) {
+  // Remove underscores around (Optional)
+  return markdown.replace(/_\(Optional\)_/g, '(Optional)')
+}
+
 function runMain() {
   const docsDir = path.join(__dirname, '..', 'docs')
   const files = globSync(`${docsDir}/**/*.md`, { nodir: true })
   files.forEach((file) => {
     const content = fs.readFileSync(file, 'utf8')
-    const transformed = convertLinks(content)
+    let transformed = convertLinks(content)
+    transformed = fixFormatting(transformed)
     if (content !== transformed) {
       fs.writeFileSync(file, transformed, 'utf8')
     }
