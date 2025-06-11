@@ -4,5 +4,5 @@ import { noop } from '@datadog/browser-core'
 export const noopProfilerApi: ProfilerApi = {
   stop: noop,
   onRumStart: noop,
-  getProfilingContext: () => ({ status: 'initializing' }),
+  getProfilingContext: () => undefined,
 }
