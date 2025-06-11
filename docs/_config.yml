@@ -1,0 +1,34 @@
+title: 'Datadog Browser SDK API Reference'
+description: 'API documentation for Datadog Browser SDK packages'
+
+markdown: kramdown
+highlighter: rouge
+theme: minima
+
+baseurl: '/browser-sdk'
+url: 'https://datadoghq.dev'
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+include:
+  - '*.md'
+
+exclude:
+  - README.md
+  - LICENSE
+  - CHANGELOG.md
+  - node_modules/
+  - package.json
+  - yarn.lock
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
