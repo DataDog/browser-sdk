@@ -1,3 +1,5 @@
+import type {
+  ProfilingContextManager} from '@datadog/browser-rum-core';
 import {
   createProfilingContextManager,
   LifeCycle,
@@ -19,7 +21,8 @@ import { mockProfiler } from '../../../test'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { transport } from './transport/transport'
 import { createRumProfiler } from './profiler'
-import type { RumProfilerTrace } from './types'
+import type { RUMProfiler, RumProfilerTrace } from './types'
+import { RumPerformanceEntry } from 'packages/rum-core/src/browser/performanceObservable';
 
 describe('profiler', () => {
   let sendProfileSpy: jasmine.Spy
@@ -35,10 +38,14 @@ describe('profiler', () => {
 
   let lifeCycle = new LifeCycle()
 
-  function setupProfiler() {
+  function setupProfiler(): {
+    profiler: RUMProfiler,
+    notifyPerformanceEntries:(entries: RumPerformanceEntry[]) => void,
+    profilingContextManager: ProfilingContextManager
+  } {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
-    const profilingContextManager = createProfilingContextManager('initializing')
+    const profilingContextManager: ProfilingContextManager = createProfilingContextManager('starting')
     const { notifyPerformanceEntries } = mockPerformanceObserver()
 
     // Replace Browser's Profiler with a mock for testing purpose.
@@ -64,6 +71,8 @@ describe('profiler', () => {
   it('should start profiling collection and collect data on stop', async () => {
     const { profiler, profilingContextManager } = setupProfiler()
 
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('starting')
+
     profiler.start({
       id: 'view-id-1',
       name: 'view-name-1',
@@ -76,7 +85,7 @@ describe('profiler', () => {
     // Wait for start of collection.
     await waitForBoolean(() => profiler.isRunning())
 
-    expect(profilingContextManager.getProfilingContext().status).toBe('running')
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('running')
 
     // Stop collection of profile.
     await profiler.stop()
@@ -84,7 +93,7 @@ describe('profiler', () => {
     // Wait for stop of collection.
     await waitForBoolean(() => profiler.isStopped())
 
-    expect(profilingContextManager.getProfilingContext().status).toBe('stopped')
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('stopped')
 
     expect(sendProfileSpy).toHaveBeenCalledTimes(1)
 
@@ -106,7 +115,7 @@ describe('profiler', () => {
 
     // Wait for start of collection.
     await waitForBoolean(() => profiler.isRunning())
-    expect(profilingContextManager.getProfilingContext().status).toBe('running')
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('running')
 
     // Emulate visibility change to `hidden` state
     setVisibilityState('hidden')
@@ -115,7 +124,7 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isPaused())
 
     // From an external point of view, the profiler is still running, but it's not collecting data.
-    expect(profilingContextManager.getProfilingContext().status).toBe('running')
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('running')
 
     // Assert that the profiler has collected data on pause.
     expect(sendProfileSpy).toHaveBeenCalledTimes(1)
@@ -126,14 +135,14 @@ describe('profiler', () => {
 
     // Wait for profiler to restart
     await waitForBoolean(() => profiler.isRunning())
-    expect(profilingContextManager.getProfilingContext().status).toBe('running')
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('running')
 
     // Stop collection of profile.
     await profiler.stop()
 
     // Wait for stop of collection.
     await waitForBoolean(() => profiler.isStopped())
-    expect(profilingContextManager.getProfilingContext().status).toBe('stopped')
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('stopped')
 
     expect(sendProfileSpy).toHaveBeenCalledTimes(2)
 
@@ -155,7 +164,7 @@ describe('profiler', () => {
 
     await waitForBoolean(() => profiler.isRunning())
 
-    expect(profilingContextManager.getProfilingContext().status).toBe('running')
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('running')
 
     // Generate a Long Task RUM event
     const longTaskRumEvent = createRawRumEvent(RumEventType.LONG_TASK, {
@@ -187,7 +196,7 @@ describe('profiler', () => {
     // Wait for stop of collection.
     await waitForBoolean(() => profiler.isStopped())
 
-    expect(profilingContextManager.getProfilingContext().status).toBe('stopped')
+    expect(profilingContextManager.getProfilingContext()?.status).toBe('stopped')
 
     const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0] as unknown as RumProfilerTrace
 
