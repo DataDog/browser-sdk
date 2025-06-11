@@ -1,5 +1,4 @@
-import type {
-  ProfilingContextManager} from '@datadog/browser-rum-core';
+import type { ProfilingContextManager } from '@datadog/browser-rum-core'
 import {
   createProfilingContextManager,
   LifeCycle,
@@ -10,6 +9,7 @@ import {
 import type { RelativeTime } from '@datadog/browser-core'
 import { relativeNow, timeStampNow } from '@datadog/browser-core'
 import { setPageVisibility, restorePageVisibility, createNewEvent } from '@datadog/browser-core/test'
+import type { RumPerformanceEntry } from 'packages/rum-core/src/browser/performanceObservable'
 import {
   createPerformanceEntry,
   createRawRumEvent,
@@ -22,7 +22,6 @@ import { mockedTrace } from './test-utils/mockedTrace'
 import { transport } from './transport/transport'
 import { createRumProfiler } from './profiler'
 import type { RUMProfiler, RumProfilerTrace } from './types'
-import { RumPerformanceEntry } from 'packages/rum-core/src/browser/performanceObservable';
 
 describe('profiler', () => {
   let sendProfileSpy: jasmine.Spy
@@ -39,8 +38,8 @@ describe('profiler', () => {
   let lifeCycle = new LifeCycle()
 
   function setupProfiler(): {
-    profiler: RUMProfiler,
-    notifyPerformanceEntries:(entries: RumPerformanceEntry[]) => void,
+    profiler: RUMProfiler
+    notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
     profilingContextManager: ProfilingContextManager
   } {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
