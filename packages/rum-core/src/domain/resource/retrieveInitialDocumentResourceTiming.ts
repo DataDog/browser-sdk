@@ -16,7 +16,8 @@ export function retrieveInitialDocumentResourceTiming(
   runOnReadyState(configuration, 'interactive', () => {
     const navigationEntry = getNavigationEntryImpl()
     const activationStart = getActivationStartImpl()
-    const isPrerendered = isPrerenderingSupported() && (document as DocumentWithPrerendering)?.prerendering || activationStart > 0
+    const isPrerendered =
+      (isPrerenderingSupported() && (document as DocumentWithPrerendering)?.prerendering) || activationStart > 0
 
     const adjustTiming = (value: number) => {
       if (isPrerendered && activationStart > 0 && value > 0) {

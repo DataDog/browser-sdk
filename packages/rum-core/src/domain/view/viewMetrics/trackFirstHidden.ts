@@ -14,7 +14,11 @@ export function trackFirstHidden(
   viewStart: ClocksState,
   eventTarget: Window = window
 ) {
-  if (document.visibilityState === 'hidden' && isPrerenderingSupported() && !(document as DocumentWithPrerendering)?.prerendering) {
+  if (
+    document.visibilityState === 'hidden' &&
+    isPrerenderingSupported() &&
+    !(document as DocumentWithPrerendering)?.prerendering
+  ) {
     return { timeStamp: 0 as RelativeTime, stop: noop }
   }
 
