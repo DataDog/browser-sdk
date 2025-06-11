@@ -1,4 +1,4 @@
-import type { Payload } from '@datadog/browser-core'
+import type { BufferedData, Payload } from '@datadog/browser-core'
 import {
   ErrorSource,
   display,
@@ -10,6 +10,7 @@ import {
   setCookie,
   STORAGE_POLL_DELAY,
   ONE_MINUTE,
+  BufferedObservable,
 } from '@datadog/browser-core'
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
@@ -60,7 +61,8 @@ function startLogsWithDefaults({ configuration }: { configuration?: Partial<Logs
       ...configuration,
     },
     () => COMMON_CONTEXT,
-    createTrackingConsentState(TrackingConsent.GRANTED)
+    createTrackingConsentState(TrackingConsent.GRANTED),
+    new BufferedObservable<BufferedData>(100)
   )
 
   registerCleanupTask(stop)
