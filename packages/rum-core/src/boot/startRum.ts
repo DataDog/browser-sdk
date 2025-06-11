@@ -62,7 +62,8 @@ export function startRum(
   // collecting logs unconditionally. As such, `startRum` should be called with a
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
-  customVitalsState: CustomVitalsState
+  customVitalsState: CustomVitalsState,
+  sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -117,7 +118,7 @@ export function startRum(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  startDefaultContext(hooks, configuration)
+  startDefaultContext(hooks, configuration, sdkName)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
