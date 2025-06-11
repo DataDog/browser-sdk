@@ -4,7 +4,13 @@ const { globSync } = require('glob')
 
 // Replace markdown links [text](url) with HTML <a href="url">text</a>
 function convertLinks(markdown) {
-  return markdown.replace(/\[([^\]]+)]\(([^)]+)\)/g, (_match, text, url) => `<a href="${url}">${text}</a>`)
+  return markdown.replace(/\[([^\]]+)]\(([^)]+)\)/g, (_match, text, url) => {
+    let newUrl = url
+    if (url.endsWith('.md')) {
+      newUrl = url.replace(/\.md$/, '.html')
+    }
+    return `<a href="${newUrl}">${text}</a>`
+  })
 }
 
 function runMain() {
