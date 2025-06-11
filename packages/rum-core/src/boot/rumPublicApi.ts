@@ -387,7 +387,7 @@ export interface RumPublicApiOptions {
     worker: DeflateWorker,
     streamId: DeflateEncoderStreamId
   ) => DeflateEncoder
-  sdkName?: 'rum' | 'rum-slim'
+  sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
 }
 
 export interface Strategy {

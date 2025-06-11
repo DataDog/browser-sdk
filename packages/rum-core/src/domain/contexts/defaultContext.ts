@@ -8,7 +8,7 @@ declare const __BUILD_ENV__SDK_VERSION__: string
 export function startDefaultContext(
   hooks: Hooks,
   configuration: RumConfiguration,
-  sdkName: 'rum' | 'rum-slim' | undefined
+  sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   hooks.register(
     HookNames.Assemble,

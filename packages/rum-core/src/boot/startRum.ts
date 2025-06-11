@@ -72,7 +72,7 @@ export function startRum(
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
-  sdkName: 'rum' | 'rum-slim' | undefined
+  sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
