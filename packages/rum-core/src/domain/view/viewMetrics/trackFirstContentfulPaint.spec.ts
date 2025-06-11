@@ -65,9 +65,5 @@ describe('trackFirstContentfulPaint', () => {
 
       expect(fcpCallback).toHaveBeenCalledWith(150 as RelativeTime)
     })
-  } else {
-    it('should skip prerendering tests on unsupported browsers', () => {
-      expect(isPrerenderingSupported()).toBe(false)
-    })
   }
 })

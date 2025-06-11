@@ -131,11 +131,5 @@ describe('rum initial document resource', () => {
         )
       })
     })
-  } else {
-    describe('prerendering behavior (skipped - API not supported)', () => {
-      it('should skip prerendering tests on unsupported browsers', () => {
-        expect(isPrerenderingSupported()).toBe(false)
-      })
-    })
   }
 })

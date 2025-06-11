@@ -183,9 +183,5 @@ describe('trackLargestContentfulPaint', () => {
         resourceUrl: undefined,
       })
     })
-  } else {
-    it('should skip prerendering tests on unsupported browsers', () => {
-      expect(isPrerenderingSupported()).toBe(false)
-    })
   }
 })

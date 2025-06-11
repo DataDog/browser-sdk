@@ -60,10 +60,6 @@ describe('trackFirstHidden', () => {
 
         expect(firstHidden.timeStamp).toBe(0 as RelativeTime)
       })
-    } else {
-      it('should skip prerendering tests on unsupported browsers', () => {
-        expect(isPrerenderingSupported()).toBe(false)
-      })
     }
   })
 

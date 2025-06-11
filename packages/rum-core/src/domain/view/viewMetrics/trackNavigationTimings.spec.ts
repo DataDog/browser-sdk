@@ -124,9 +124,5 @@ describe('trackNavigationTimings', () => {
 
       expect(navigationTimingsCallback.calls.mostRecent().args[0].firstByte).toBe(0 as Duration)
     })
-  } else {
-    it('should skip prerendering tests on unsupported browsers', () => {
-      expect(isPrerenderingSupported()).toBe(false)
-    })
   }
 })
