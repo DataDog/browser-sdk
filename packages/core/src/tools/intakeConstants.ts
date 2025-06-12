@@ -1,6 +1,3 @@
-// Intake site constants used by telemetry
-// These are defined here to avoid circular dependencies between telemetry and configuration modules
-
 export type Site =
   | 'datadoghq.com'
   | 'us3.datadoghq.com'
