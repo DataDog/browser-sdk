@@ -182,7 +182,7 @@
               "text": "export interface CommonProperties "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/rumEvent.types.d.ts",
           "releaseTag": "Public",
           "name": "CommonProperties",
           "preserveMemberOrder": false,
@@ -803,7 +803,7 @@
               "text": ";"
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/rumEvent.types.d.ts",
           "releaseTag": "Public",
           "name": "RumActionEvent",
           "typeTokenRange": {
@@ -814,14 +814,14 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumActionEventDomainContext:interface",
-          "docComment": "",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a RUM **Action** event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
               "text": "export interface RumActionEventDomainContext "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domainContext.types.d.ts",
           "releaseTag": "Public",
           "name": "RumActionEventDomainContext",
           "preserveMemberOrder": false,
@@ -829,7 +829,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumActionEventDomainContext#events:member",
-              "docComment": "",
+              "docComment": "/**\n * DOM events that triggered this action.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -861,7 +861,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumActionEventDomainContext#handlingStack:member",
-              "docComment": "",
+              "docComment": "/**\n * Stack trace of where the action was handled by the SDK.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -929,7 +929,7 @@
               "text": ";"
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/rumEvent.types.d.ts",
           "releaseTag": "Public",
           "name": "RumErrorEvent",
           "typeTokenRange": {
@@ -940,14 +940,14 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumErrorEventDomainContext:interface",
-          "docComment": "",
+          "docComment": "/**\n * Additional information available when the SDK dispatches an **Error** event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
               "text": "export interface RumErrorEventDomainContext "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domainContext.types.d.ts",
           "releaseTag": "Public",
           "name": "RumErrorEventDomainContext",
           "preserveMemberOrder": false,
@@ -955,7 +955,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumErrorEventDomainContext#error:member",
-              "docComment": "",
+              "docComment": "/**\n * The original error object that was captured.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -982,7 +982,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumErrorEventDomainContext#handlingStack:member",
-              "docComment": "",
+              "docComment": "/**\n * Stack trace of where the error was handled by the SDK.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1073,7 +1073,7 @@
               "text": ";"
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/rumEvent.types.d.ts",
           "releaseTag": "Public",
           "name": "RumEvent",
           "typeTokenRange": {
@@ -1084,7 +1084,7 @@
         {
           "kind": "TypeAlias",
           "canonicalReference": "@datadog/browser-rum!RumEventDomainContext:type",
-          "docComment": "",
+          "docComment": "/**\n * Additional context data that varies based on the type of RUM event being dispatched.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1231,7 +1231,7 @@
             {
               "kind": "Reference",
               "text": "RumVitalEventDomainContext",
-              "canonicalReference": "@datadog/browser-rum!RumVitalEventDomainContext:interface"
+              "canonicalReference": "@datadog/browser-rum!RumVitalEventDomainContext:type"
             },
             {
               "kind": "Content",
@@ -1242,7 +1242,7 @@
               "text": ";"
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domainContext.types.d.ts",
           "releaseTag": "Public",
           "name": "RumEventDomainContext",
           "typeParameters": [
@@ -1266,14 +1266,14 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext:interface",
-          "docComment": "",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a **Fetch** resource event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
               "text": "export interface RumFetchResourceEventDomainContext "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domainContext.types.d.ts",
           "releaseTag": "Public",
           "name": "RumFetchResourceEventDomainContext",
           "preserveMemberOrder": false,
@@ -1281,7 +1281,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#error:member",
-              "docComment": "",
+              "docComment": "/**\n * Error that occurred during the fetch call.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1309,7 +1309,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#handlingStack:member",
-              "docComment": "",
+              "docComment": "/**\n * Stack trace of where the resource was handled by the SDK.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1336,7 +1336,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#isAborted:member",
-              "docComment": "",
+              "docComment": "/**\n * Whether the fetch call was aborted.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1363,7 +1363,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#performanceEntry:member",
-              "docComment": "",
+              "docComment": "/**\n * Browser performance entry for this resource.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1391,7 +1391,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#requestInit:member",
-              "docComment": "",
+              "docComment": "/**\n * Init object passed to the fetch call.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1419,7 +1419,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#requestInput:member",
-              "docComment": "",
+              "docComment": "/**\n * Input parameter passed to the fetch call.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1447,7 +1447,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext#response:member",
-              "docComment": "",
+              "docComment": "/**\n * Response object returned by the fetch call.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1478,7 +1478,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumGlobal:interface",
-          "docComment": "",
+          "docComment": "/**\n * The RUM Browser SDK global object that provides all the public methods.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1494,7 +1494,7 @@
               "text": " "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/boot/rumPublicApi.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/boot/rumPublicApi.d.ts",
           "releaseTag": "Public",
           "name": "RumGlobal",
           "preserveMemberOrder": false,
@@ -2496,7 +2496,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumGlobal#startView:member",
-              "docComment": "/**\n * Start a view manually. Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.\n *\n * @param  - options.name name of the view\n *\n * @param  - options.service service of the view\n *\n * @param  - options.version version of the view\n *\n * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.\n */\n",
+              "docComment": "/**\n * Start a view manually. Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you've defined them in your SPA application routing.\n *\n * @param  - options.name name of the view\n *\n * @param  - options.service service of the view\n *\n * @param  - options.version version of the view\n *\n * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -2630,7 +2630,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumInitConfiguration:interface",
-          "docComment": "",
+          "docComment": "/**\n * Configuration options to pass to the `init()` method when initializing the RUM SDK.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -2646,7 +2646,7 @@
               "text": " "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domain/configuration/configuration.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domain/configuration/configuration.d.ts",
           "releaseTag": "Public",
           "name": "RumInitConfiguration",
           "preserveMemberOrder": false,
@@ -3387,7 +3387,7 @@
               "text": ";"
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/rumEvent.types.d.ts",
           "releaseTag": "Public",
           "name": "RumLongTaskEvent",
           "typeTokenRange": {
@@ -3398,14 +3398,14 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumLongTaskEventDomainContext:interface",
-          "docComment": "",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a **Long Task** event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
               "text": "export interface RumLongTaskEventDomainContext "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domainContext.types.d.ts",
           "releaseTag": "Public",
           "name": "RumLongTaskEventDomainContext",
           "preserveMemberOrder": false,
@@ -3413,7 +3413,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumLongTaskEventDomainContext#performanceEntry:member",
-              "docComment": "",
+              "docComment": "/**\n * Browser performance entry for this long task.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3444,14 +3444,14 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumOtherResourceEventDomainContext:interface",
-          "docComment": "",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a **Resource** event that is neither fetch nor XHR.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
               "text": "export interface RumOtherResourceEventDomainContext "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domainContext.types.d.ts",
           "releaseTag": "Public",
           "name": "RumOtherResourceEventDomainContext",
           "preserveMemberOrder": false,
@@ -3459,7 +3459,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumOtherResourceEventDomainContext#performanceEntry:member",
-              "docComment": "",
+              "docComment": "/**\n * Browser performance entry for this resource.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3528,7 +3528,7 @@
               "text": ";"
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/rumEvent.types.d.ts",
           "releaseTag": "Public",
           "name": "RumResourceEvent",
           "typeTokenRange": {
@@ -3604,7 +3604,7 @@
               "text": ";"
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/rumEvent.types.d.ts",
           "releaseTag": "Public",
           "name": "RumViewEvent",
           "typeTokenRange": {
@@ -3615,14 +3615,14 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumViewEventDomainContext:interface",
-          "docComment": "",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a RUM **View** event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
               "text": "export interface RumViewEventDomainContext "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domainContext.types.d.ts",
           "releaseTag": "Public",
           "name": "RumViewEventDomainContext",
           "preserveMemberOrder": false,
@@ -3630,7 +3630,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumViewEventDomainContext#location:member",
-              "docComment": "",
+              "docComment": "/**\n * The browser location object at the time the view was created.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3703,7 +3703,7 @@
               "text": ";"
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/rumEvent.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/rumEvent.types.d.ts",
           "releaseTag": "Public",
           "name": "RumVitalEvent",
           "typeTokenRange": {
@@ -3714,14 +3714,14 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext:interface",
-          "docComment": "",
+          "docComment": "/**\n * Additional information available when the SDK dispatches an **XHR** resource event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
               "text": "export interface RumXhrResourceEventDomainContext "
             }
           ],
-          "fileUrlPath": "packages/rum-core/cjs/domainContext.types.d.ts",
+          "fileUrlPath": "packages/rum-core/esm/domainContext.types.d.ts",
           "releaseTag": "Public",
           "name": "RumXhrResourceEventDomainContext",
           "preserveMemberOrder": false,
@@ -3729,7 +3729,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext#handlingStack:member",
-              "docComment": "",
+              "docComment": "/**\n * Stack trace of where the resource was handled by the SDK.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3756,7 +3756,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext#isAborted:member",
-              "docComment": "",
+              "docComment": "/**\n * Whether the XHR request was aborted.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3783,7 +3783,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext#performanceEntry:member",
-              "docComment": "",
+              "docComment": "/**\n * Browser performance entry for this resource.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3811,7 +3811,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext#xhr:member",
-              "docComment": "",
+              "docComment": "/**\n * The XMLHttpRequest object that made the request.\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
