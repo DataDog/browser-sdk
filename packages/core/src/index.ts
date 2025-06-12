@@ -6,13 +6,9 @@ export {
   serializeConfiguration,
   isSampleRate,
   buildEndpointHost,
-  INTAKE_SITE_STAGING,
-  INTAKE_SITE_US1,
-  INTAKE_SITE_US1_FED,
-  INTAKE_SITE_EU1,
-  INTAKE_URL_PARAMETERS,
   isIntakeUrl,
 } from './domain/configuration'
+export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
 export {
