@@ -88,11 +88,15 @@ export function startSessionManager<TrackingType extends string>(
   trackResume(configuration, () => sessionStore.restartSession())
 
   function buildSessionContext() {
+    const session = sessionStore.getSession()
+    if (!session) {
+      throw new Error('Unexpected session state')
+    }
     return {
-      id: sessionStore.getSession().id!,
-      trackingType: sessionStore.getSession()[productKey] as TrackingType,
-      isReplayForced: !!sessionStore.getSession().forcedReplay,
-      anonymousId: sessionStore.getSession().anonymousId,
+      id: session.id!,
+      trackingType: session[productKey] as TrackingType,
+      isReplayForced: !!session.forcedReplay,
+      anonymousId: session.anonymousId,
     }
   }
 

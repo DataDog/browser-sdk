@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-cycle
 export type { Telemetry } from './telemetry'
 export {
   TelemetryService,
