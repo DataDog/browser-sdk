@@ -1,47 +1,24 @@
 import path from 'path'
-import { test as base, chromium, expect } from '@playwright/test'
-import type { Page, BrowserContext } from '@playwright/test'
+import { expect } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { createTest } from '../../lib/framework'
 
-const test = base.extend<{
-  context: BrowserContext
-  extensionId: string
-  developerExtension: DeveloperExtensionPage
-}>({
-  // eslint-disable-next-line no-empty-pattern
-  context: async ({}, use) => {
-    const pathToExtension = path.join(process.cwd(), 'developer-extension', 'dist')
+createTest('should switch between tabs')
+  .withExtension(path.join(process.cwd(), 'developer-extension', 'dist'))
+  .run(async ({ page, getExtensionId, flushBrowserLogs }) => {
+    const extensionId = await getExtensionId()
 
-    const context = await chromium.launchPersistentContext('', {
-      channel: 'chromium',
-      args: [`--disable-extensions-except=${pathToExtension}`, `--load-extension=${pathToExtension}`],
-    })
-    await use(context)
-    await context.close()
-  },
-  extensionId: async ({ context }, use) => {
-    let [background] = context.serviceWorkers()
-    if (!background) {
-      background = await context.waitForEvent('serviceworker')
-    }
-
-    const extensionId = background.url().split('/')[2]
-    await use(extensionId)
-  },
-  developerExtension: async ({ page, extensionId }, use) => {
     await page.goto(`chrome-extension://${extensionId}/panel.html`)
 
-    await use(new DeveloperExtensionPage(page))
-  },
-})
+    flushBrowserLogs()
 
-test.describe('developer-extension', () => {
-  test('should switch between tabs', async ({ developerExtension: page }) => {
-    expect(await page.getSelectedTab().innerText()).toEqual('Events')
+    const developerExtension = new DeveloperExtensionPage(page)
 
-    await page.getTab('Infos').click()
-    expect(await page.getSelectedTab().innerText()).toEqual('Infos')
+    expect(await developerExtension.getSelectedTab().innerText()).toEqual('Events')
+
+    await developerExtension.getTab('Infos').click()
+    expect(await developerExtension.getSelectedTab().innerText()).toEqual('Infos')
   })
-})
 
 class DeveloperExtensionPage {
   constructor(public readonly page: Page) {}
