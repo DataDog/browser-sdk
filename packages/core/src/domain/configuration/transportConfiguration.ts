@@ -1,9 +1,9 @@
+import type { Site } from '../../tools/intakeConstants'
+import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from '../../tools/intakeConstants'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
 import { buildTags } from './tags'
-import type { Site } from './intakeSites'
-import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from './intakeSites'
 
 export interface TransportConfiguration {
   logsEndpointBuilder: EndpointBuilder
