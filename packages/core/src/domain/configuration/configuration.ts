@@ -6,7 +6,6 @@ import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
-// eslint-disable-next-line import/no-cycle
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { TrackingConsent } from '../trackingConsent'

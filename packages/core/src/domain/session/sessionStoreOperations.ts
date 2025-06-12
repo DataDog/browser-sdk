@@ -1,6 +1,5 @@
 import { setTimeout } from '../../tools/timer'
 import { generateUUID } from '../../tools/utils/stringUtils'
-// eslint-disable-next-line import/no-cycle
 import { addTelemetryDebug } from '../telemetry'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'

@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-cycle
 export type { Configuration, InitConfiguration } from './configuration'
 export {
   DefaultPrivacyLevel,
