@@ -35,6 +35,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumglobal.addaction.html">addAction</a>
@@ -53,6 +54,7 @@ Description
 Add a custom action, stored in `@action`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.adddurationvital.html">addDurationVital</a>
@@ -71,6 +73,7 @@ Add a custom action, stored in `@action`
 Add a custom duration vital
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.adderror.html">addError</a>
@@ -89,6 +92,7 @@ Add a custom duration vital
 Add a custom error, stored in `@error`.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.addfeatureflagevaluation.html">addFeatureFlagEvaluation</a>
@@ -107,6 +111,7 @@ Add a custom error, stored in `@error`.
 Add a feature flag evaluation, stored in `@feature_flags.<feature_flag_key>`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.addtiming.html">addTiming</a>
@@ -125,6 +130,7 @@ Add a feature flag evaluation, stored in `@feature_flags.<feature_flag_key>`
 Add a custom timing relative to the start of the current view, stored in `@view.custom_timings.<timing_name>`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.clearaccount.html">clearAccount</a>
@@ -143,6 +149,7 @@ Add a custom timing relative to the start of the current view, stored in `@view.
 Clear all account information
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.clearglobalcontext.html">clearGlobalContext</a>
@@ -163,6 +170,7 @@ Clear the global context
 See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context">Global context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.clearuser.html">clearUser</a>
@@ -183,6 +191,7 @@ Clear all user information
 See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session">User session</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.getaccount.html">getAccount</a>
@@ -201,6 +210,7 @@ See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_co
 Get account information
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.getglobalcontext.html">getGlobalContext</a>
@@ -221,6 +231,7 @@ Get the global Context
 See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context">Global context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.getinitconfiguration.html">getInitConfiguration</a>
@@ -239,6 +250,7 @@ See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_co
 Get the init configuration
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.getinternalcontext.html">getInternalContext</a>
@@ -257,6 +269,7 @@ Get the init configuration
 [Internal API] Get the internal SDK context
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.getsessionreplaylink.html">getSessionReplayLink</a>
@@ -277,6 +290,7 @@ Get the Session Replay Link.
 See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools">Connect Session Replay To Your Third-Party Tools</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.getuser.html">getUser</a>
@@ -297,6 +311,7 @@ Get user information
 See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session">User session</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.getviewcontext.html">getViewContext</a>
@@ -315,6 +330,7 @@ See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_co
 Get View Context.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.init.html">init</a>
@@ -333,6 +349,7 @@ Get View Context.
 Init the RUM browser SDK.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.removeaccountproperty.html">removeAccountProperty</a>
@@ -351,6 +368,7 @@ Init the RUM browser SDK.
 Remove an account property
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.removeglobalcontextproperty.html">removeGlobalContextProperty</a>
@@ -371,6 +389,7 @@ Remove a global context property
 See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context">Global context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.removeuserproperty.html">removeUserProperty</a>
@@ -391,6 +410,7 @@ Remove a user property
 See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session">User session</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setaccount.html">setAccount</a>
@@ -409,6 +429,7 @@ See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_co
 Set account information to all events, stored in `@account`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setaccountproperty.html">setAccountProperty</a>
@@ -427,6 +448,7 @@ Set account information to all events, stored in `@account`
 Set or update the account property, stored in `@account.<key>`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setglobalcontext.html">setGlobalContext</a>
@@ -445,6 +467,7 @@ Set or update the account property, stored in `@account.<key>`
 Set the global context information to all events, stored in `@context`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setglobalcontextproperty.html">setGlobalContextProperty</a>
@@ -463,6 +486,7 @@ Set the global context information to all events, stored in `@context`
 Set or update a global context property, stored in `@context.<key>`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.settrackingconsent.html">setTrackingConsent</a>
@@ -481,6 +505,7 @@ Set or update a global context property, stored in `@context.<key>`
 Set the tracking consent of the current user.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setuserproperty.html">setUserProperty</a>
@@ -499,6 +524,7 @@ Set the tracking consent of the current user.
 Set or update the user property, stored in `@usr.<key>`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setviewcontext.html">setViewContext</a>
@@ -519,6 +545,7 @@ Set View Context.
 Enable to manually set the context of the current view.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setviewcontextproperty.html">setViewContextProperty</a>
@@ -539,6 +566,7 @@ Set View Context Property.
 Enable to manually set a property of the context of the current view.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setviewname.html">setViewName</a>
@@ -559,6 +587,7 @@ Set View Name.
 Enable to manually change the name of the current view.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.startdurationvital.html">startDurationVital</a>
@@ -579,6 +608,7 @@ Start a custom duration vital.
 If you plan to have multiple durations for the same vital, you should use the reference returned by this method.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.startsessionreplayrecording.html">startSessionReplayRecording</a>
@@ -599,6 +629,7 @@ Start Session Replay recording. Enable to conditionally start the recording, use
 See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/browser">Browser Session Replay</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.startview.html">startView</a>
@@ -617,6 +648,7 @@ See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/brow
 Start a view manually. Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you've defined them in your SPA application routing.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.stopdurationvital.html">stopDurationVital</a>
@@ -635,6 +667,7 @@ Start a view manually. Enable to manual start a view, use `trackViewsManually: t
 Stop a custom duration vital
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.stopsession.html">stopSession</a>
@@ -653,6 +686,7 @@ Stop a custom duration vital
 Stop the session. A new session will start at the next user interaction with the page.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.stopsessionreplayrecording.html">stopSessionReplayRecording</a>
@@ -673,6 +707,7 @@ Stop Session Replay recording.
 See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/browser">Browser Session Replay</a> for further information.
 
 
+</td></tr>
 </tbody></table>
 
 ## Methods
@@ -687,6 +722,7 @@ Method
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumglobal.setuser.html">setUser(newUser)</a>
@@ -699,6 +735,7 @@ Set user information to all events, stored in `@usr`
 See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session">User session</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.setuser_1.html">setUser(newUser)</a>
@@ -709,4 +746,5 @@ See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_co
 Set user information to all events, stored in `@usr`
 
 
+</td></tr>
 </tbody></table>

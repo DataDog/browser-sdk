@@ -27,6 +27,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 handler
@@ -40,6 +41,7 @@ handler
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

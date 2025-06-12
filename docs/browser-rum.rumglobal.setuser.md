@@ -33,6 +33,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 newUser
@@ -46,6 +47,7 @@ User & { id: string; }
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

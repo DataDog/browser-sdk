@@ -33,6 +33,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.logsglobal.clearaccount.html">clearAccount</a>
@@ -51,6 +52,7 @@ Description
 Clear all account information
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.clearglobalcontext.html">clearGlobalContext</a>
@@ -71,6 +73,7 @@ Clear the global context
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context">Overwrite context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.clearuser.html">clearUser</a>
@@ -91,6 +94,7 @@ Clear all user information
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#user-context">User context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.createlogger.html">createLogger</a>
@@ -111,6 +115,7 @@ The Datadog browser logs SDK contains a default logger `DD_LOGS.logger`, but thi
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers">Define multiple loggers</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.getaccount.html">getAccount</a>
@@ -129,6 +134,7 @@ See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#define-m
 Get account information
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.getglobalcontext.html">getGlobalContext</a>
@@ -149,6 +155,7 @@ Get the global Context
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context">Overwrite context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.getinitconfiguration.html">getInitConfiguration</a>
@@ -167,6 +174,7 @@ See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#overwrit
 Get the init configuration
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.getinternalcontext.html">getInternalContext</a>
@@ -187,6 +195,7 @@ Get the init configuration
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#access-internal-context">Access internal context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.getlogger.html">getLogger</a>
@@ -207,6 +216,7 @@ Get a logger
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers">Define multiple loggers</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.getuser.html">getUser</a>
@@ -227,6 +237,7 @@ Get user information
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#user-context">User context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.init.html">init</a>
@@ -245,6 +256,7 @@ See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#user-con
 Init the Logs browser SDK.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.logger.html">logger</a>
@@ -261,6 +273,7 @@ Init the Logs browser SDK.
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.removeaccountproperty.html">removeAccountProperty</a>
@@ -279,6 +292,7 @@ Init the Logs browser SDK.
 Remove an account property
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.removeglobalcontextproperty.html">removeGlobalContextProperty</a>
@@ -299,6 +313,7 @@ Remove a global context property
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context">Overwrite context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.removeuserproperty.html">removeUserProperty</a>
@@ -319,6 +334,7 @@ Remove a user property
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#user-context">User context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.setaccount.html">setAccount</a>
@@ -337,6 +353,7 @@ See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#user-con
 Set account information to all events, stored in `@account`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.setaccountproperty.html">setAccountProperty</a>
@@ -355,6 +372,7 @@ Set account information to all events, stored in `@account`
 Set or update the account property, stored in `@account.<key>`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.setglobalcontext.html">setGlobalContext</a>
@@ -373,6 +391,7 @@ Set or update the account property, stored in `@account.<key>`
 Set the global context information to all logs, stored in `@context`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.setglobalcontextproperty.html">setGlobalContextProperty</a>
@@ -391,6 +410,7 @@ Set the global context information to all logs, stored in `@context`
 Set or update a global context property, stored in `@context.<key>`
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.settrackingconsent.html">setTrackingConsent</a>
@@ -409,6 +429,7 @@ Set or update a global context property, stored in `@context.<key>`
 Set the tracking consent of the current user.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.setuserproperty.html">setUserProperty</a>
@@ -427,6 +448,7 @@ Set the tracking consent of the current user.
 Set or update the user property, stored in `@usr.<key>`
 
 
+</td></tr>
 </tbody></table>
 
 ## Methods
@@ -441,6 +463,7 @@ Method
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.logsglobal.setuser.html">setUser(newUser)</a>
@@ -453,6 +476,7 @@ Set user information to all events, stored in `@usr`
 See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#user-context">User context</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.setuser_1.html">setUser(newUser)</a>
@@ -463,4 +487,5 @@ See <a href="https://docs.datadoghq.com/logs/log_collection/javascript/#user-con
 Set user information to all events, stored in `@usr`
 
 
+</td></tr>
 </tbody></table>

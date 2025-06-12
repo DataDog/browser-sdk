@@ -27,6 +27,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 error
@@ -40,6 +41,7 @@ Error
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 errorInfo
@@ -53,6 +55,7 @@ ErrorInfo
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

@@ -32,6 +32,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.logsevent.application_id.html">application_id?</a>
@@ -50,6 +51,7 @@ string
 (Optional) UUID of the application
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.date.html">date</a>
@@ -68,6 +70,7 @@ number
 Start of the log in ms from epoch
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.error.html">error?</a>
@@ -86,6 +89,7 @@ Start of the log in ms from epoch
 (Optional) Error properties
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.http.html">http?</a>
@@ -104,6 +108,7 @@ Start of the log in ms from epoch
 (Optional) Resource properties of the error
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.logger.html">logger?</a>
@@ -122,6 +127,7 @@ Start of the log in ms from epoch
 (Optional) Logger properties
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.message.html">message</a>
@@ -140,6 +146,7 @@ string
 The log message
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.origin.html">origin</a>
@@ -158,6 +165,7 @@ The log message
 Origin of the log
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.service.html">service?</a>
@@ -176,6 +184,7 @@ string
 (Optional) The service name
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.session_id.html">session_id?</a>
@@ -194,6 +203,7 @@ string
 (Optional) UUID of the session (deprecated in favor of session.id)
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.session.html">session?</a>
@@ -212,6 +222,7 @@ string
 (Optional) Session properties
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.status.html">status</a>
@@ -230,6 +241,7 @@ string
 The log status
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.view.html">view</a>
@@ -248,4 +260,5 @@ The log status
 View properties
 
 
+</td></tr>
 </tbody></table>

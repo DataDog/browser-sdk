@@ -34,6 +34,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumfetchresourceeventdomaincontext.error.html">error?</a>
@@ -52,6 +53,7 @@ Error
 (Optional) Error that occurred during the fetch call.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumfetchresourceeventdomaincontext.handlingstack.html">handlingStack?</a>
@@ -70,6 +72,7 @@ string
 (Optional) Stack trace of where the resource was handled by the SDK.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumfetchresourceeventdomaincontext.isaborted.html">isAborted</a>
@@ -88,6 +91,7 @@ boolean
 Whether the fetch call was aborted.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumfetchresourceeventdomaincontext.performanceentry.html">performanceEntry?</a>
@@ -106,6 +110,7 @@ PerformanceEntry
 (Optional) Browser performance entry for this resource.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumfetchresourceeventdomaincontext.requestinit.html">requestInit?</a>
@@ -124,6 +129,7 @@ RequestInit
 (Optional) Init object passed to the fetch call.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumfetchresourceeventdomaincontext.requestinput.html">requestInput</a>
@@ -142,6 +148,7 @@ RequestInfo
 Input parameter passed to the fetch call.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumfetchresourceeventdomaincontext.response.html">response?</a>
@@ -160,4 +167,5 @@ Response
 (Optional) Response object returned by the fetch call.
 
 
+</td></tr>
 </tbody></table>

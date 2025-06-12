@@ -32,6 +32,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.loggerconfiguration.context.html">context?</a>
@@ -50,6 +51,7 @@ object
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.loggerconfiguration.handler.html">handler?</a>
@@ -68,6 +70,7 @@ object
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.loggerconfiguration.level.html">level?</a>
@@ -86,4 +89,5 @@ object
 (Optional)
 
 
+</td></tr>
 </tbody></table>

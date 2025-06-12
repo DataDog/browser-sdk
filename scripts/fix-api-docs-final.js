@@ -40,64 +40,7 @@ function removeEmptyHtmlComments(content) {
 }
 
 function fixHtmlTables(content) {
-  const lines = content.split('\n')
-  const fixedLines = []
-  let inTable = false
-  let currentRow = []
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim()
-
-    if (line.includes('<table>')) {
-      inTable = true
-      fixedLines.push(lines[i])
-      continue
-    }
-
-    if (line === '</tbody></table>' || line === '</table>') {
-      if (currentRow.length > 0) {
-        fixedLines.push(`${currentRow.join(' ')}</td></tr>`)
-        currentRow = []
-      }
-      fixedLines.push(lines[i])
-      inTable = false
-      continue
-    }
-
-    if (inTable) {
-      if (
-        line === '</td></tr>' ||
-        line === '</tbody>' ||
-        line === '</th></tr></thead>' ||
-        line === '</thead>' ||
-        line === '</tr>'
-      ) {
-        continue
-      }
-
-      if (line.startsWith('<tr>') || line.includes('<tbody><tr>') || line.includes('<thead><tr>')) {
-        if (currentRow.length > 0) {
-          fixedLines.push(`${currentRow.join(' ')}</td></tr>`)
-          currentRow = []
-        }
-        fixedLines.push(lines[i])
-      } else if (line.startsWith('<td>') || line.startsWith('<th>')) {
-        currentRow.push(lines[i])
-      } else if (currentRow.length > 0) {
-        currentRow[currentRow.length - 1] += ` ${lines[i]}`
-      } else {
-        fixedLines.push(lines[i])
-      }
-    } else {
-      fixedLines.push(lines[i])
-    }
-  }
-
-  if (currentRow.length > 0) {
-    fixedLines.push(`${currentRow.join(' ')}</td></tr>`)
-  }
-
-  return fixedLines.join('\n')
+  return content
 }
 
 function cleanupSpacing(content) {

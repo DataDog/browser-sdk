@@ -35,6 +35,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.actionnameattribute.html">actionNameAttribute?</a>
@@ -53,6 +54,7 @@ string | undefined
 (Optional) Specify your own attribute to use to name actions. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions">Declare a name for click actions</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.allowedtracingurls.html">allowedTracingUrls?</a>
@@ -71,6 +73,7 @@ Array<MatchOption | TracingOption> | undefined
 (Optional) A list of request URLs used to inject tracing headers. See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.applicationid.html">applicationId</a>
@@ -89,6 +92,7 @@ string
 The RUM application ID.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.beforesend.html">beforeSend?</a>
@@ -109,6 +113,7 @@ The RUM application ID.
 See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data">Enrich And Control Browser RUM Data With beforeSend</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.compressintakerequests.html">compressIntakeRequests?</a>
@@ -127,6 +132,7 @@ boolean | undefined
 (Optional) Compress requests sent to the Datadog intake to reduce bandwidth usage when sending large amounts of data. The compression is done in a Worker thread. See <a href="https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay">Content Security Policy guidelines</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.defaultprivacylevel.html">defaultPrivacyLevel?</a>
@@ -145,6 +151,7 @@ DefaultPrivacyLevel | undefined
 (Optional) Allow to protect end user privacy and prevent sensitive organizational information from being collected. mask See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options">Replay Privacy Options</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.enableprivacyforactionname.html">enablePrivacyForActionName?</a>
@@ -163,6 +170,7 @@ boolean | undefined
 (Optional) Enables privacy control for action names.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.excludedactivityurls.html">excludedActivityUrls?</a>
@@ -181,6 +189,7 @@ MatchOption[] | undefined
 (Optional) A list of request origins ignored when computing the page activity. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated">How page activity is calculated</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.plugins.html">plugins?</a>
@@ -199,6 +208,7 @@ RumPlugin[] | undefined
 (Optional) List of plugins to enable. The plugins API is unstable and experimental, and may change without notice. Please use only plugins provided by Datadog matching the version of the SDK you are using.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.profilingsamplerate.html">profilingSampleRate?</a>
@@ -217,6 +227,7 @@ number | undefined
 (Optional) Not ready for production. The percentage of users profiled. A value between 0 and 100. 0
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.propagatetracebaggage.html">propagateTraceBaggage?</a>
@@ -235,6 +246,7 @@ boolean | undefined
 (Optional) Whether to propagate user and account IDs in the baggage header of trace requests. false
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.remoteconfigurationid.html">remoteConfigurationId?</a>
@@ -253,6 +265,7 @@ string | undefined
 (Optional) Identifier of the remote configuration to fetch dynamic settings for your application at runtime. Unless you have been instructed by Datadog support to use this feature, you should leave this parameter undefined.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.sessionreplaysamplerate.html">sessionReplaySampleRate?</a>
@@ -271,6 +284,7 @@ number | undefined
 (Optional) The percentage of tracked sessions with <a href="https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay">Browser RUM & Session Replay pricing</a> features: 100 for all, 0 for none. See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans">Configure Your Setup For Browser RUM and Browser RUM & Session Replay Sampling</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.startsessionreplayrecordingmanually.html">startSessionReplayRecordingManually?</a>
@@ -289,6 +303,7 @@ boolean | undefined
 (Optional) If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false. See <a href="https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage">Session Replay Usage</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.subdomain.html">subdomain?</a>
@@ -307,6 +322,7 @@ string
 (Optional) If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL . See <a href="https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools">Connect Session Replay To Your Third-Party Tools</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.tracecontextinjection.html">traceContextInjection?</a>
@@ -325,6 +341,7 @@ TraceContextInjection | undefined
 (Optional) If you set a `traceSampleRate`, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled. sampled See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.tracesamplerate.html">traceSampleRate?</a>
@@ -343,6 +360,7 @@ number | undefined
 (Optional) The percentage of requests to trace: 100 for all, 0 for none. See <a href="https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum">Connect RUM and Traces</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.trackfeatureflagsforevents.html">trackFeatureFlagsForEvents?</a>
@@ -361,6 +379,7 @@ FeatureFlagsForEvents[]
 (Optional) Enables collection of features flags in chosen events.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.tracklongtasks.html">trackLongTasks?</a>
@@ -379,6 +398,7 @@ boolean | undefined
 (Optional) Enables collection of long task events. true
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.trackresources.html">trackResources?</a>
@@ -397,6 +417,7 @@ boolean | undefined
 (Optional) Enables collection of resource events. true
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.trackuserinteractions.html">trackUserInteractions?</a>
@@ -415,6 +436,7 @@ boolean | undefined
 (Optional) Enables automatic collection of users actions. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions">Tracking User Actions</a> for further information. true
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.trackviewsmanually.html">trackViewsManually?</a>
@@ -433,6 +455,7 @@ boolean | undefined
 (Optional) Allows you to control RUM views creation. See <a href="https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names">Override default RUM view names</a> for further information.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.workerurl.html">workerUrl?</a>
@@ -451,4 +474,5 @@ string
 (Optional) URL pointing to the Datadog Browser SDK Worker JavaScript file. The URL can be relative or absolute, but is required to have the same origin as the web application. See <a href="https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay">Content Security Policy guidelines</a> for further information.
 
 
+</td></tr>
 </tbody></table>

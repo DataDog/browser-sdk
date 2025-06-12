@@ -34,6 +34,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 newUser
@@ -47,6 +48,7 @@ User
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

@@ -34,6 +34,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumactioneventdomaincontext.events.html">events?</a>
@@ -52,6 +53,7 @@ Event[]
 (Optional) DOM events that triggered this action.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumactioneventdomaincontext.handlingstack.html">handlingStack?</a>
@@ -70,4 +72,5 @@ string
 (Optional) Stack trace of where the action was handled by the SDK.
 
 
+</td></tr>
 </tbody></table>

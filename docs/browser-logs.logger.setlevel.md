@@ -27,6 +27,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 level
@@ -40,6 +41,7 @@ level
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

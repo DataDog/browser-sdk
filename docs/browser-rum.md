@@ -18,6 +18,7 @@ Interface
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.commonproperties.html">CommonProperties</a>
@@ -28,6 +29,7 @@ Description
 Schema of common properties of RUM events
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumactioneventdomaincontext.html">RumActionEventDomainContext</a>
@@ -38,6 +40,7 @@ Schema of common properties of RUM events
 Additional information available when the SDK dispatches a RUM \*\*Action\*\* event.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumerroreventdomaincontext.html">RumErrorEventDomainContext</a>
@@ -48,6 +51,7 @@ Additional information available when the SDK dispatches a RUM \*\*Action\*\* ev
 Additional information available when the SDK dispatches an \*\*Error\*\* event.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumfetchresourceeventdomaincontext.html">RumFetchResourceEventDomainContext</a>
@@ -58,6 +62,7 @@ Additional information available when the SDK dispatches an \*\*Error\*\* event.
 Additional information available when the SDK dispatches a \*\*Fetch\*\* resource event.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumglobal.html">RumGlobal</a>
@@ -68,6 +73,7 @@ Additional information available when the SDK dispatches a \*\*Fetch\*\* resourc
 The RUM Browser SDK global object that provides all the public methods.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.ruminitconfiguration.html">RumInitConfiguration</a>
@@ -78,6 +84,7 @@ The RUM Browser SDK global object that provides all the public methods.
 Configuration options to pass to the `init()` method when initializing the RUM SDK.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumlongtaskeventdomaincontext.html">RumLongTaskEventDomainContext</a>
@@ -88,6 +95,7 @@ Configuration options to pass to the `init()` method when initializing the RUM S
 Additional information available when the SDK dispatches a \*\*Long Task\*\* event.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumotherresourceeventdomaincontext.html">RumOtherResourceEventDomainContext</a>
@@ -98,6 +106,7 @@ Additional information available when the SDK dispatches a \*\*Long Task\*\* eve
 Additional information available when the SDK dispatches a \*\*Resource\*\* event that is neither fetch nor XHR.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumvieweventdomaincontext.html">RumViewEventDomainContext</a>
@@ -108,6 +117,7 @@ Additional information available when the SDK dispatches a \*\*Resource\*\* even
 Additional information available when the SDK dispatches a RUM \*\*View\*\* event.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumxhrresourceeventdomaincontext.html">RumXhrResourceEventDomainContext</a>
@@ -118,6 +128,7 @@ Additional information available when the SDK dispatches a RUM \*\*View\*\* even
 Additional information available when the SDK dispatches an \*\*XHR\*\* resource event.
 
 
+</td></tr>
 </tbody></table>
 
 ## Variables
@@ -132,6 +143,7 @@ Variable
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.datadogrum.html">datadogRum</a>
@@ -142,6 +154,7 @@ Description
 The global RUM instance. Use this to call RUM methods.
 
 
+</td></tr>
 </tbody></table>
 
 ## Type Aliases
@@ -156,6 +169,7 @@ Type Alias
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumactionevent.html">RumActionEvent</a>
@@ -166,6 +180,7 @@ Description
 Schema of all properties of an Action event
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumerrorevent.html">RumErrorEvent</a>
@@ -176,6 +191,7 @@ Schema of all properties of an Action event
 Schema of all properties of an Error event
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumevent.html">RumEvent</a>
@@ -186,6 +202,7 @@ Schema of all properties of an Error event
 Schema of all properties of a RUM event
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumeventdomaincontext.html">RumEventDomainContext</a>
@@ -196,6 +213,7 @@ Schema of all properties of a RUM event
 Additional context data that varies based on the type of RUM event being dispatched.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumlongtaskevent.html">RumLongTaskEvent</a>
@@ -206,6 +224,7 @@ Additional context data that varies based on the type of RUM event being dispatc
 Schema of all properties of a Long Task event
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumresourceevent.html">RumResourceEvent</a>
@@ -216,6 +235,7 @@ Schema of all properties of a Long Task event
 Schema of all properties of a Resource event
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumviewevent.html">RumViewEvent</a>
@@ -226,6 +246,7 @@ Schema of all properties of a Resource event
 Schema of all properties of a View event
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumvitalevent.html">RumVitalEvent</a>
@@ -236,4 +257,5 @@ Schema of all properties of a View event
 Schema of all properties of a Vital event
 
 
+</td></tr>
 </tbody></table>

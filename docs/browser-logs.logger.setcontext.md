@@ -27,6 +27,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 context
@@ -40,6 +41,7 @@ object
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

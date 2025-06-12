@@ -39,6 +39,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 configuration
@@ -54,6 +55,7 @@ ReactPluginConfiguration
 (Optional)
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

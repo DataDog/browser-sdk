@@ -32,6 +32,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.logsmessage.context.html">context?</a>
@@ -50,6 +51,7 @@ Context
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsmessage.message.html">message</a>
@@ -66,6 +68,7 @@ string
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsmessage.status.html">status</a>
@@ -82,4 +85,5 @@ string
 </td><td>
 
 
+</td></tr>
 </tbody></table>

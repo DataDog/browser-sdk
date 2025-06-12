@@ -27,6 +27,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 key
@@ -40,6 +41,7 @@ string
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

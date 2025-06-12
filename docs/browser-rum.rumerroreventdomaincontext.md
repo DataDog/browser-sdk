@@ -34,6 +34,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumerroreventdomaincontext.error.html">error</a>
@@ -52,6 +53,7 @@ unknown
 The original error object that was captured.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumerroreventdomaincontext.handlingstack.html">handlingStack?</a>
@@ -70,4 +72,5 @@ string
 (Optional) Stack trace of where the error was handled by the SDK.
 
 
+</td></tr>
 </tbody></table>

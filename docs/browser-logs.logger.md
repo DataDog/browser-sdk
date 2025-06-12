@@ -22,6 +22,7 @@ Method
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.logger.alert.html">alert(message, messageContext, error)</a>
@@ -30,6 +31,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logger.critical.html">critical(message, messageContext, error)</a>
@@ -38,6 +40,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logger.debug.html">debug(message, messageContext, error)</a>
@@ -46,6 +49,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logger.emerg.html">emerg(message, messageContext, error)</a>
@@ -54,6 +58,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logger.error.html">error(message, messageContext, error)</a>
@@ -62,6 +67,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logger.info.html">info(message, messageContext, error)</a>
@@ -70,6 +76,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logger.notice.html">notice(message, messageContext, error)</a>
@@ -78,6 +85,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logger.ok.html">ok(message, messageContext, error)</a>
@@ -86,6 +94,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logger.warn.html">warn(message, messageContext, error)</a>
@@ -94,4 +103,5 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>

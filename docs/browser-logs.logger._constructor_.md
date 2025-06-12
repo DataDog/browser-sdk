@@ -29,6 +29,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 handleLogStrategy
@@ -42,6 +43,7 @@ handleLogStrategy
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 name
@@ -57,6 +59,7 @@ string
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 handlerType
@@ -72,6 +75,7 @@ handlerType
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 level
@@ -87,6 +91,7 @@ level
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 loggerContext
@@ -102,4 +107,5 @@ object
 (Optional)
 
 
+</td></tr>
 </tbody></table>

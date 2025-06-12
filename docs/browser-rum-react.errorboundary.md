@@ -28,6 +28,7 @@ Modifiers
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum-react.errorboundary._constructor_.html">(constructor)(props)</a>
@@ -41,6 +42,7 @@ Description
 Constructs a new instance of the `ErrorBoundary` class
 
 
+</td></tr>
 </tbody></table>
 
 ## Properties
@@ -65,6 +67,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum-react.errorboundary.reseterror.html">resetError</a>
@@ -81,6 +84,7 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 
 ## Methods
@@ -100,6 +104,7 @@ Modifiers
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum-react.errorboundary.componentdidcatch.html">componentDidCatch(error, errorInfo)</a>
@@ -111,6 +116,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum-react.errorboundary.getderivedstatefromerror.html">getDerivedStateFromError(error)</a>
@@ -124,6 +130,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum-react.errorboundary.render.html">render()</a>
@@ -135,4 +142,5 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>

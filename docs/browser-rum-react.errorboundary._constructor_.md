@@ -29,6 +29,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 props
@@ -42,4 +43,5 @@ Props
 </td><td>
 
 
+</td></tr>
 </tbody></table>

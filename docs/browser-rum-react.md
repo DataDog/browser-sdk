@@ -18,6 +18,7 @@ Class
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum-react.errorboundary.html">ErrorBoundary</a>
@@ -26,6 +27,7 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 
 ## Functions
@@ -40,6 +42,7 @@ Function
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum-react.addreacterror.html">addReactError(error, info)</a>
@@ -48,6 +51,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum-react.reactplugin.html">reactPlugin(configuration)</a>
@@ -56,6 +60,7 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 
 ## Variables
@@ -70,6 +75,7 @@ Variable
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum-react.unstable_reactcomponenttracker.html">UNSTABLE_ReactComponentTracker</a>
@@ -78,4 +84,5 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>

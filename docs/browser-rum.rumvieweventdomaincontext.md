@@ -34,6 +34,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumvieweventdomaincontext.location.html">location</a>
@@ -52,4 +53,5 @@ Readonly<Location>
 The browser location object at the time the view was created.
 
 
+</td></tr>
 </tbody></table>

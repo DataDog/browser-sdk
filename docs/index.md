@@ -16,6 +16,7 @@ Package
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.html">@datadog/browser-logs</a>
@@ -26,6 +27,7 @@ Description
 Datadog Browser Logs SDK for collecting and forwarding browser logs to Datadog. Provides comprehensive logging capabilities with automatic error tracking and custom log collection.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.html">@datadog/browser-rum</a>
@@ -36,6 +38,7 @@ Datadog Browser Logs SDK for collecting and forwarding browser logs to Datadog. 
 Datadog Browser RUM SDK - Full version with Session Replay and Real User Profiling capabilities. Use this package to monitor your web application's performance and user experience.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum-react.html">@datadog/browser-rum-react</a>
@@ -46,6 +49,7 @@ Datadog Browser RUM SDK - Full version with Session Replay and Real User Profili
 Datadog Browser RUM React Integration - Additional components and hooks for React applications. Provides React-specific features like Error Boundaries and component performance tracking.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum-slim.html">@datadog/browser-rum-slim</a>
@@ -56,4 +60,5 @@ Datadog Browser RUM React Integration - Additional components and hooks for Reac
 Datadog Browser RUM SDK - Slim version without Session Replay and Real User Profiling. Lightweight alternative for basic RUM monitoring with reduced bundle size.
 
 
+</td></tr>
 </tbody></table>

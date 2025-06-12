@@ -18,6 +18,7 @@ Class
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.logger.html">Logger</a>
@@ -26,6 +27,7 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 
 ## Interfaces
@@ -40,6 +42,7 @@ Interface
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.logger.html">Logger</a>
@@ -48,6 +51,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.loggerconfiguration.html">LoggerConfiguration</a>
@@ -56,6 +60,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsevent.html">LogsEvent</a>
@@ -64,6 +69,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsglobal.html">LogsGlobal</a>
@@ -72,6 +78,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsinitconfiguration.html">LogsInitConfiguration</a>
@@ -80,6 +87,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsmessage.html">LogsMessage</a>
@@ -88,6 +96,7 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 
 ## Variables
@@ -102,6 +111,7 @@ Variable
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.datadoglogs.html">datadogLogs</a>
@@ -112,6 +122,7 @@ Description
 The global Logs instance. Use this to call Logs methods.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.handlertype.html">HandlerType</a>
@@ -120,6 +131,7 @@ The global Logs instance. Use this to call Logs methods.
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.statustype.html">StatusType</a>
@@ -128,6 +140,7 @@ The global Logs instance. Use this to call Logs methods.
 </td><td>
 
 
+</td></tr>
 </tbody></table>
 
 ## Type Aliases
@@ -142,6 +155,7 @@ Type Alias
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.handlertype.html">HandlerType</a>
@@ -150,6 +164,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logseventdomaincontext.html">LogsEventDomainContext</a>
@@ -158,6 +173,7 @@ Description
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.statustype.html">StatusType</a>
@@ -166,4 +182,5 @@ Description
 </td><td>
 
 
+</td></tr>
 </tbody></table>

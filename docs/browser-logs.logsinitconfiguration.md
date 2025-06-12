@@ -33,6 +33,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-logs.logsinitconfiguration.beforesend.html">beforeSend?</a>
@@ -51,6 +52,7 @@ Description
 (Optional) Access to every logs collected by the Logs SDK before they are sent to Datadog. It allows: - Enrich your logs with additional context attributes - Modify your logs to modify their content, or redact sensitive sequences (see the list of editable properties) - Discard selected logs
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsinitconfiguration.forwardconsolelogs.html">forwardConsoleLogs?</a>
@@ -69,6 +71,7 @@ ConsoleApiName[] | 'all' | undefined
 (Optional) Forward logs from console.\* to Datadog. Use "all" to forward everything or an array of console API names to forward only a subset.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsinitconfiguration.forwarderrorstologs.html">forwardErrorsToLogs?</a>
@@ -87,6 +90,7 @@ boolean | undefined
 (Optional) Forward console.error logs, uncaught exceptions and network errors to Datadog. true
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsinitconfiguration.forwardreports.html">forwardReports?</a>
@@ -105,6 +109,7 @@ RawReportType[] | 'all' | undefined
 (Optional) Forward reports from the <a href="https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API">Reporting API</a> to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-logs.logsinitconfiguration.usepciintake.html">usePciIntake?</a>
@@ -123,4 +128,5 @@ boolean
 (Optional) Use PCI-compliant intake. See <a href="https://docs.datadoghq.com/data_security/pci_compliance/?tab=logmanagement">PCI DSS Compliance</a> for further information. false
 
 
+</td></tr>
 </tbody></table>

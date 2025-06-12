@@ -18,6 +18,7 @@ Variable
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum-slim.datadogrum.html">datadogRum</a>
@@ -28,4 +29,5 @@ Description
 The global RUM instance (slim version without Session Replay and Profiling). Use this to call RUM methods.
 
 
+</td></tr>
 </tbody></table>

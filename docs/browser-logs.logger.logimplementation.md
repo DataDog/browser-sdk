@@ -27,6 +27,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 message
@@ -40,6 +41,7 @@ string
 </td><td>
 
 
+</td></tr>
 <tr><td>
 
 messageContext
@@ -55,6 +57,7 @@ object
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 status
@@ -70,6 +73,7 @@ status
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 error
@@ -85,6 +89,7 @@ Error
 (Optional)
 
 
+</td></tr>
 <tr><td>
 
 handlingStack
@@ -100,6 +105,7 @@ string
 (Optional)
 
 
+</td></tr>
 </tbody></table>
 **Returns:**
 

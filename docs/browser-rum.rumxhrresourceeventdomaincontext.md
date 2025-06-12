@@ -34,6 +34,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumxhrresourceeventdomaincontext.handlingstack.html">handlingStack?</a>
@@ -52,6 +53,7 @@ string
 (Optional) Stack trace of where the resource was handled by the SDK.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumxhrresourceeventdomaincontext.isaborted.html">isAborted</a>
@@ -70,6 +72,7 @@ boolean
 Whether the XHR request was aborted.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumxhrresourceeventdomaincontext.performanceentry.html">performanceEntry?</a>
@@ -88,6 +91,7 @@ PerformanceEntry
 (Optional) Browser performance entry for this resource.
 
 
+</td></tr>
 <tr><td>
 
 <a href="./browser-rum.rumxhrresourceeventdomaincontext.xhr.html">xhr</a>
@@ -106,4 +110,5 @@ XMLHttpRequest
 The XMLHttpRequest object that made the request.
 
 
+</td></tr>
 </tbody></table>

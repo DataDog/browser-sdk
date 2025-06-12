@@ -34,6 +34,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumotherresourceeventdomaincontext.performanceentry.html">performanceEntry</a>
@@ -52,4 +53,5 @@ PerformanceEntry
 Browser performance entry for this resource.
 
 
+</td></tr>
 </tbody></table>

@@ -34,6 +34,7 @@ Type
 Description
 
 
+</th></tr></thead>
 <tbody><tr><td>
 
 <a href="./browser-rum.rumlongtaskeventdomaincontext.performanceentry.html">performanceEntry</a>
@@ -52,4 +53,5 @@ PerformanceEntry
 Browser performance entry for this long task.
 
 
+</td></tr>
 </tbody></table>
