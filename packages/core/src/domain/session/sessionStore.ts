@@ -16,7 +16,7 @@ import {
 import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
-import { SessionPersistence } from './sessionConstants'
+import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -75,7 +75,7 @@ export function startSessionStore<TrackingType extends string>(
   sessionStoreStrategyType: SessionStoreStrategyType,
   configuration: Configuration,
   productKey: string,
-  computeSessionState: (rawTrackingType?: string) => { trackingType: TrackingType; isTracked: boolean }
+  computeTrackingType: (rawTrackingType?: string) => TrackingType
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
@@ -176,10 +176,10 @@ export function startSessionStore<TrackingType extends string>(
       return false
     }
 
-    const { trackingType, isTracked } = computeSessionState(sessionState[productKey])
+    const trackingType = computeTrackingType(sessionState[productKey])
     sessionState[productKey] = trackingType
     delete sessionState.isExpired
-    if (isTracked && !sessionState.id) {
+    if (trackingType !== SESSION_NOT_TRACKED && !sessionState.id) {
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
     }

@@ -32,7 +32,6 @@ describe('trackInput', () => {
 
     registerCleanupTask(() => {
       inputTracker.stop()
-      clock?.cleanup()
     })
   })
 

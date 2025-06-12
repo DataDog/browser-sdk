@@ -18,6 +18,66 @@
 
 ---
 
+## v6.11.0
+
+**Public Changes:**
+
+- ✨ [RUM-7213] DOM mutation ignoring ([#3606](https://github.com/DataDog/browser-sdk/pull/3606)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3615](https://github.com/DataDog/browser-sdk/pull/3615)) [RUM-REACT]
+- 👷 Configure devflow integration branch ([#3619](https://github.com/DataDog/browser-sdk/pull/3619))
+- 👷[RUM-9996] move ap2 deployment to minor dcs ([#3601](https://github.com/DataDog/browser-sdk/pull/3601))
+- 👷 fix update-branch script success condition ([#3612](https://github.com/DataDog/browser-sdk/pull/3612))
+- 👌 [RUM-10290] Remove built extensions from ignored in eslint.config ([#3609](https://github.com/DataDog/browser-sdk/pull/3609))
+- 👷 [Events] Add `_dd.sdk_name` to common context ([#3611](https://github.com/DataDog/browser-sdk/pull/3611)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🔈 [RUM-10284] collect telemetry before starting the session manager ([#3602](https://github.com/DataDog/browser-sdk/pull/3602)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.10.1
+
+**Public Changes:**
+
+- Revert "🐛 [RUM-10101] Persist session cookie to one year when opt-in anonymous user tracking ([#3559](https://github.com/DataDog/browser-sdk/pull/3559))" ([#3608](https://github.com/DataDog/browser-sdk/pull/3608)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷release: do not try to update lockfiles of ignore app ([#3600](https://github.com/DataDog/browser-sdk/pull/3600))
+- ♻️ [RUM-10256] Use hooks for Logs SDK to decouple global context ([#3594](https://github.com/DataDog/browser-sdk/pull/3594)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.10.0
+
+**Public Changes:**
+
+- ✨[RUM-9915] add `allowedTrackingOrigins` for Extensions ([#3517](https://github.com/DataDog/browser-sdk/pull/3517)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 move testing extensions folder ([#3595](https://github.com/DataDog/browser-sdk/pull/3595))
+- 👷 [RUM-9996] configure ap2 monitor check + sourcemap upload
+- 👷 Update all non-major dependencies ([#3589](https://github.com/DataDog/browser-sdk/pull/3589)) [RUM-REACT] [WORKER]
+- 🔧 update yarn version to 4.9.1 in package.json ([#3591](https://github.com/DataDog/browser-sdk/pull/3591))
+- ♻️ [RUM-10238] Use hooks for Logs SDK to decouple account ([#3590](https://github.com/DataDog/browser-sdk/pull/3590)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗ Interim integration instructions/script for unpublished flagging npm package. ([#3585](https://github.com/DataDog/browser-sdk/pull/3585)) [FLAGGING]
+
+## v6.9.0
+
+**Public Changes:**
+
+- ✨ use error.dd_context when logging an error ([#3562](https://github.com/DataDog/browser-sdk/pull/3562)) [LOGS]
+- ✨[RUM-260] Support bfcache restore for web vitals ([#3527](https://github.com/DataDog/browser-sdk/pull/3527)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-10002] Verify the document was not hidden while loading ([#3573](https://github.com/DataDog/browser-sdk/pull/3573)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM-9987] Bump attribute data url limit to 1Mb ([#3551](https://github.com/DataDog/browser-sdk/pull/3551)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔥 🐛 fix Next.js 12 + swcMinify compatibility ([#3577](https://github.com/DataDog/browser-sdk/pull/3577)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 📝 update bundle list ([#3572](https://github.com/DataDog/browser-sdk/pull/3572))
+
+**Internal Changes:**
+
+- 👷 Bump chrome to 137.0.7151.55-1 ([#3578](https://github.com/DataDog/browser-sdk/pull/3578))
+- ✅ Automatic mock clock cleanup ([#3581](https://github.com/DataDog/browser-sdk/pull/3581)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ Fix usage of non-existent configuration options in remoteConfiguration.spec.ts ([#3576](https://github.com/DataDog/browser-sdk/pull/3576)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM Profiler] Simplify & fix logic for Long Task registry ([#3569](https://github.com/DataDog/browser-sdk/pull/3569)) [RUM]
+
 ## v6.8.0
 
 **Public Changes:**

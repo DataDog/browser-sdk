@@ -1,4 +1,4 @@
-import type { Payload } from '@datadog/browser-core'
+import type { ContextManager, Payload } from '@datadog/browser-core'
 import {
   ErrorSource,
   display,
@@ -55,7 +55,6 @@ const COMMON_CONTEXT = {
 const DEFAULT_PAYLOAD = {} as Payload
 
 describe('logs', () => {
-  const initConfiguration = { clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 }
   let baseConfiguration: LogsConfiguration
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
@@ -64,10 +63,12 @@ describe('logs', () => {
   let logger: Logger
   let consoleLogSpy: jasmine.Spy
   let displayLogSpy: jasmine.Spy
+  let globalContext: ContextManager
+  let accountContext: ContextManager
 
   beforeEach(() => {
     baseConfiguration = {
-      ...validateAndBuildLogsConfiguration(initConfiguration)!,
+      ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
       logsEndpointBuilder: mockEndpointBuilder('https://localhost/v1/input/log'),
       batchMessagesLimit: 1,
     }
@@ -86,7 +87,6 @@ describe('logs', () => {
   describe('request', () => {
     it('should send the needed data', async () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -127,7 +127,6 @@ describe('logs', () => {
 
     it('should all use the same batch', async () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         { ...baseConfiguration, batchMessagesLimit: 3 },
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -146,7 +145,6 @@ describe('logs', () => {
     it('should send bridge event when bridge is present', () => {
       const sendSpy = spyOn(mockEventBridge(), 'send')
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -171,7 +169,6 @@ describe('logs', () => {
 
       let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         configuration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -183,7 +180,6 @@ describe('logs', () => {
 
       configuration = { ...baseConfiguration, sessionSampleRate: 100 }
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         configuration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -198,7 +194,6 @@ describe('logs', () => {
   it('should not print the log twice when console handler is enabled', () => {
     logger.setHandler([HandlerType.console])
     ;({ handleLog, stop: stopLogs } = startLogs(
-      initConfiguration,
       { ...baseConfiguration, forwardConsoleLogs: ['log'] },
       () => COMMON_CONTEXT,
       createTrackingConsentState(TrackingConsent.GRANTED)
@@ -215,7 +210,6 @@ describe('logs', () => {
   describe('logs session creation', () => {
     it('creates a session on normal conditions', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -228,7 +222,6 @@ describe('logs', () => {
     it('does not create a session if event bridge is present', () => {
       mockEventBridge()
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -241,7 +234,6 @@ describe('logs', () => {
     it('does not create a session if synthetics worker will inject RUM', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -257,14 +249,10 @@ describe('logs', () => {
     beforeEach(() => {
       clock = mockClock()
     })
-    afterEach(() => {
-      clock.cleanup()
-    })
 
     it('sends logs without session id when the session expires ', async () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       ;({ handleLog, stop: stopLogs } = startLogs(
-        initConfiguration,
         baseConfiguration,
         () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
@@ -291,6 +279,40 @@ describe('logs', () => {
 
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()
+    })
+  })
+
+  describe('contexts precedence', () => {
+    beforeEach(() => {
+      ;({
+        handleLog,
+        stop: stopLogs,
+        globalContext,
+        accountContext,
+      } = startLogs(baseConfiguration, () => COMMON_CONTEXT, createTrackingConsentState(TrackingConsent.GRANTED)))
+      registerCleanupTask(stopLogs)
+    })
+
+    it('global context should take precedence over account', () => {
+      globalContext.setContext({ account: 'from-global-context' })
+      accountContext.setContext({ id: 'from-account-context' })
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+      expect(firstRequest.account).toEqual('from-global-context')
+    })
+
+    it('RUM context should take precedence over global context', () => {
+      window.DD_RUM = {
+        getInternalContext: () => ({ view: { url: 'from-rum-context' } }),
+      }
+      globalContext.setContext({ view: { url: 'from-global-context' } })
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+      expect(firstRequest.view.url).toEqual('from-rum-context')
     })
   })
 })

@@ -52,7 +52,6 @@ export {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
-  drainPreStartTelemetry,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
@@ -61,6 +60,7 @@ export type { SessionManager } from './domain/session/sessionManager'
 export { startSessionManager, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
+  SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
 export type { HttpRequest, Payload, FlushEvent, FlushReason } from './transport'
@@ -123,7 +123,10 @@ export { createBoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export type { ContextManager } from './domain/context/contextManager'
 export { createContextManager } from './domain/context/contextManager'
+export { defineContextMethod, bufferContextCalls } from './domain/context/defineContextMethod'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
+export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
+export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'

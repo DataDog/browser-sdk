@@ -60,6 +60,10 @@ cmd_build_json2type () {
   set -e
 }
 
+cmd_build_testing_extensions () {
+  node ./scripts/extensions/build-testing-extensions.js
+}
+
 cmd_release () {
   [[ `git branch --show-current` != "main" ]] || fail 'please do not release from `main` branch'
   # We should publish all packages regardless of if there are changes in each.
@@ -73,7 +77,8 @@ cmd_version () {
   node ./scripts/release/update-peer-dependency-versions.js
   lerna run pack --stream
   # keep test apps lockfiles up to date
-  for app_dir in test/apps/*; do
+  for app_package_path in $(git ls-files test/apps/*/package.json); do
+    app_dir=$(dirname "$app_package_path");
     cd "$app_dir"
     yarn up
     git add yarn.lock

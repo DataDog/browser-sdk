@@ -1,7 +1,7 @@
 import type { Subscription } from '@datadog/browser-core'
-import { ExperimentalFeature, Observable, ONE_SECOND } from '@datadog/browser-core'
+import { Observable, ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import {
   appendElement,
   createMutationRecord,
@@ -90,11 +90,7 @@ describe('createPageActivityObservable', () => {
       expect(events).toEqual([{ isBusy: false }])
     })
 
-    describe('with DOM_MUTATION_IGNORING enabled', () => {
-      beforeEach(() => {
-        mockExperimentalFeatures([ExperimentalFeature.DOM_MUTATION_IGNORING])
-      })
-
+    describe('dom mutation ignoring', () => {
       it('does not collect DOM mutation when an element is added and the parent is ignored', () => {
         startListeningToPageActivities()
         const target = appendElement(`<div ${EXCLUDED_MUTATIONS_ATTRIBUTE}><button /></div>`)
@@ -247,10 +243,6 @@ describe('doWaitPageActivityEnd', () => {
   beforeEach(() => {
     idlPageActivityCallbackSpy = jasmine.createSpy()
     clock = mockClock()
-  })
-
-  afterEach(() => {
-    clock.cleanup()
   })
 
   it('should notify the callback after `EXPIRE_DELAY` when there is no activity', () => {

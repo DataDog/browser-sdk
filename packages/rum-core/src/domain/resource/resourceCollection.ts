@@ -32,8 +32,7 @@ import {
   computeResourceEntryProtocol,
   computeResourceEntryDeliveryType,
   isResourceEntryRequestType,
-  isLongDataUrl,
-  sanitizeDataUrl,
+  sanitizeIfLongDataUrl,
 } from './resourceUtils'
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
@@ -109,7 +108,7 @@ function processRequest(
         method: request.method,
         status_code: request.status,
         protocol: matchingTiming && computeResourceEntryProtocol(matchingTiming),
-        url: isLongDataUrl(request.url) ? sanitizeDataUrl(request.url) : request.url,
+        url: sanitizeIfLongDataUrl(request.url),
         delivery_type: matchingTiming && computeResourceEntryDeliveryType(matchingTiming),
       },
       type: RumEventType.RESOURCE as const,

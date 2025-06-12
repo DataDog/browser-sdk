@@ -1,14 +1,5 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import {
-  matchList,
-  monitor,
-  Observable,
-  timeStampNow,
-  setTimeout,
-  clearTimeout,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout } from '@datadog/browser-core'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { isElementNode } from '../browser/htmlDomUtils'
@@ -139,10 +130,7 @@ export function createPageActivityObservable(
 
     subscriptions.push(
       domMutationObservable.subscribe((mutations) => {
-        if (
-          !isExperimentalFeatureEnabled(ExperimentalFeature.DOM_MUTATION_IGNORING) ||
-          !mutations.every(isExcludedMutation)
-        ) {
+        if (!mutations.every(isExcludedMutation)) {
           notifyPageActivity()
         }
       }),

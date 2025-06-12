@@ -216,6 +216,13 @@ describe('validateAndBuildConfiguration', () => {
     })
   })
 
+  describe('allowedTrackingOrigins parameter validation', () => {
+    it('should validate the allowedTrackingOrigins parameter', () => {
+      validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: 'foo' as any })
+      expect(displaySpy).toHaveBeenCalledOnceWith('Allowed Tracking Origins must be an array')
+    })
+  })
+
   describe('serializeConfiguration', () => {
     it('should serialize the configuration', () => {
       // By specifying the type here, we can ensure that serializeConfiguration is returning an

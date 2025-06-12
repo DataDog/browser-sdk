@@ -1,5 +1,12 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ExperimentalFeature, HookNames, ONE_MINUTE, display } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  ExperimentalFeature,
+  HookNames,
+  ONE_MINUTE,
+  display,
+  startGlobalContext,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockExperimentalFeatures, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
@@ -19,7 +26,6 @@ import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import type { RumSessionManager } from './rumSessionManager'
-import { startGlobalContext } from './contexts/globalContext'
 import { startSessionContext } from './contexts/sessionContext'
 import { createHooks } from './hooks'
 
@@ -556,7 +562,6 @@ describe('rum assembly', () => {
         let clock: Clock
         beforeEach(() => {
           clock = mockClock()
-          registerCleanupTask(() => clock.cleanup())
         })
 
         it(`allows to send new ${eventType} events after a minute`, () => {
@@ -619,7 +624,7 @@ function setupAssemblyTestWithDefaults({
   })
   const recorderApi = noopRecorderApi
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
-  startGlobalContext(hooks, mockRumConfiguration())
+  startGlobalContext(hooks, mockRumConfiguration(), 'rum', true)
   startSessionContext(hooks, rumSessionManager, recorderApi, viewHistory)
   startRumAssembly(mockRumConfiguration(partialConfiguration), lifeCycle, hooks, reportErrorSpy)
 

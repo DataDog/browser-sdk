@@ -24,7 +24,6 @@ describe('cookieObservable', () => {
     if (originalSupportedEntryTypes) {
       Object.defineProperty(window, 'cookieStore', originalSupportedEntryTypes)
     }
-    clock.cleanup()
   })
 
   it('should notify observers on cookie change', async () => {
