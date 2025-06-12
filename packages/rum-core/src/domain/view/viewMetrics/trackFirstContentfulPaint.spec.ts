@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin } from '@datadog/browser-core'
+import { clocksOrigin, isPrerenderingSupported } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
@@ -11,12 +11,17 @@ describe('trackFirstContentfulPaint', () => {
   let fcpCallback: jasmine.Spy<(value: RelativeTime) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
-  function startTrackingFCP() {
+  function startTrackingFCP(activationStart?: RelativeTime) {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     fcpCallback = jasmine.createSpy()
     const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-    const firstContentfulPaint = trackFirstContentfulPaint(mockRumConfiguration(), firstHidden, fcpCallback)
+    const firstContentfulPaint = trackFirstContentfulPaint(
+      mockRumConfiguration(),
+      firstHidden,
+      fcpCallback,
+      () => activationStart as RelativeTime
+    )
 
     registerCleanupTask(() => {
       firstHidden.stop()
@@ -48,4 +53,17 @@ describe('trackFirstContentfulPaint', () => {
     ])
     expect(fcpCallback).not.toHaveBeenCalled()
   })
+
+  if (isPrerenderingSupported()) {
+    it('should adjust FCP based on activationStart when prerendered', () => {
+      const activationStart = 100 as RelativeTime
+      startTrackingFCP(activationStart)
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.PAINT, { startTime: 250 as RelativeTime }),
+      ])
+
+      expect(fcpCallback).toHaveBeenCalledWith(150 as RelativeTime)
+    })
+  }
 })
