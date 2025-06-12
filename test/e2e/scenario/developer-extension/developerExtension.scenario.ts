@@ -10,14 +10,14 @@ createTest('should switch between tabs')
 
     await page.goto(`chrome-extension://${extensionId}/panel.html`)
 
-    flushBrowserLogs()
-
     const developerExtension = new DeveloperExtensionPage(page)
 
     expect(await developerExtension.getSelectedTab().innerText()).toEqual('Events')
 
     await developerExtension.getTab('Infos').click()
     expect(await developerExtension.getSelectedTab().innerText()).toEqual('Infos')
+
+    flushBrowserLogs()
   })
 
 class DeveloperExtensionPage {
