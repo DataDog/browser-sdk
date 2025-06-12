@@ -8,7 +8,7 @@ export {
   buildEndpointHost,
   isIntakeUrl,
 } from './domain/configuration'
-export * from './tools/intakeConstants'
+export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
 export {

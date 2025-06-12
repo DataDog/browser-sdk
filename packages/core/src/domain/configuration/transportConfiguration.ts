@@ -1,5 +1,5 @@
-import type { Site } from '../../tools/intakeConstants'
-import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from '../../tools/intakeConstants'
+import type { Site } from '../intakeSites'
+import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from '../intakeSites'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
