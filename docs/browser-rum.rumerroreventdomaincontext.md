@@ -4,7 +4,7 @@
 
 ## RumErrorEventDomainContext interface
 
-Additional information available when the SDK dispatches an \*\*Error\*\* event.
+Additional information available when the SDK dispatches an Error event.
 
 **Signature:**
 

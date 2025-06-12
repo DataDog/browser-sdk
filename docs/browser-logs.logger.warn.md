@@ -4,6 +4,8 @@
 
 ## Logger.warn() method
 
+Add a WARN log (unexpected behaviour).
+
 **Signature:**
 
 ```typescript

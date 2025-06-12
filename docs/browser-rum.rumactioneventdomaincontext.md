@@ -4,7 +4,7 @@
 
 ## RumActionEventDomainContext interface
 
-Additional information available when the SDK dispatches a RUM \*\*Action\*\* event.
+Additional information available when the SDK dispatches a RUM Action event.
 
 **Signature:**
 

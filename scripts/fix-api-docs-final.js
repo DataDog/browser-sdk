@@ -68,6 +68,14 @@ function fixBackslashes(content) {
   return content
 }
 
+function dedupClosingTableTags(content) {
+  // Keep a single occurrence of closing tags to prevent malformed tables while
+  // avoiding duplicated tags sometimes produced by api-documenter.
+  content = content.replace(/(<\/tbody><\/table>\s*){2,}/g, '</tbody></table>\n')
+  content = content.replace(/(<\/td><\/tr>\s*){2,}/g, '</td></tr>\n')
+  return content
+}
+
 function processDocFile(file) {
   let content = fs.readFileSync(file, 'utf8')
 
@@ -80,6 +88,7 @@ function processDocFile(file) {
   content = fixEscapedTags(content)
   content = fixBackslashes(content)
   content = fixHtmlTables(content)
+  content = dedupClosingTableTags(content)
   content = cleanupSpacing(content)
 
   fs.writeFileSync(file, content, 'utf8')

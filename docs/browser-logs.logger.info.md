@@ -4,6 +4,8 @@
 
 ## Logger.info() method
 
+Add an INFO log (notable but expected).
+
 **Signature:**
 
 ```typescript

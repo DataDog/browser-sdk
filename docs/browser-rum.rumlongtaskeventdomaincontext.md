@@ -4,7 +4,7 @@
 
 ## RumLongTaskEventDomainContext interface
 
-Additional information available when the SDK dispatches a \*\*Long Task\*\* event.
+Additional information available when the SDK dispatches a Long Task event.
 
 **Signature:**
 

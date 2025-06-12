@@ -4,6 +4,8 @@
 
 ## LogsMessage.message property
 
+Raw message provided by the customer
+
 **Signature:**
 
 ```typescript

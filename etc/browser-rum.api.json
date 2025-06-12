@@ -814,7 +814,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumActionEventDomainContext:interface",
-          "docComment": "/**\n * Additional information available when the SDK dispatches a RUM **Action** event.\n */\n",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a RUM Action event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -940,7 +940,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumErrorEventDomainContext:interface",
-          "docComment": "/**\n * Additional information available when the SDK dispatches an **Error** event.\n */\n",
+          "docComment": "/**\n * Additional information available when the SDK dispatches an Error event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1266,7 +1266,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumFetchResourceEventDomainContext:interface",
-          "docComment": "/**\n * Additional information available when the SDK dispatches a **Fetch** resource event.\n */\n",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a Fetch resource event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -3398,7 +3398,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumLongTaskEventDomainContext:interface",
-          "docComment": "/**\n * Additional information available when the SDK dispatches a **Long Task** event.\n */\n",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a Long Task event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -3444,7 +3444,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumOtherResourceEventDomainContext:interface",
-          "docComment": "/**\n * Additional information available when the SDK dispatches a **Resource** event that is neither fetch nor XHR.\n */\n",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a Resource event that is neither fetch nor XHR.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -3615,7 +3615,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumViewEventDomainContext:interface",
-          "docComment": "/**\n * Additional information available when the SDK dispatches a RUM **View** event.\n */\n",
+          "docComment": "/**\n * Additional information available when the SDK dispatches a RUM View event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -3714,7 +3714,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-rum!RumXhrResourceEventDomainContext:interface",
-          "docComment": "/**\n * Additional information available when the SDK dispatches an **XHR** resource event.\n */\n",
+          "docComment": "/**\n * Additional information available when the SDK dispatches an XHR resource event.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",

@@ -4,6 +4,8 @@
 
 ## LogsMessage.status property
 
+Severity of the log
+
 **Signature:**
 
 ```typescript

@@ -4,7 +4,7 @@
 
 ## RumFetchResourceEventDomainContext interface
 
-Additional information available when the SDK dispatches a \*\*Fetch\*\* resource event.
+Additional information available when the SDK dispatches a Fetch resource event.
 
 **Signature:**
 

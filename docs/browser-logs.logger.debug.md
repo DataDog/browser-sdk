@@ -4,6 +4,8 @@
 
 ## Logger.debug() method
 
+Add a DEBUG log (developer usage).
+
 **Signature:**
 
 ```typescript

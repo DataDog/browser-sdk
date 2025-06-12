@@ -37,7 +37,7 @@ Schema of common properties of RUM events
 
 </td><td>
 
-Additional information available when the SDK dispatches a RUM \*\*Action\*\* event.
+Additional information available when the SDK dispatches a RUM Action event.
 
 
 </td></tr>
@@ -48,7 +48,7 @@ Additional information available when the SDK dispatches a RUM \*\*Action\*\* ev
 
 </td><td>
 
-Additional information available when the SDK dispatches an \*\*Error\*\* event.
+Additional information available when the SDK dispatches an Error event.
 
 
 </td></tr>
@@ -59,7 +59,7 @@ Additional information available when the SDK dispatches an \*\*Error\*\* event.
 
 </td><td>
 
-Additional information available when the SDK dispatches a \*\*Fetch\*\* resource event.
+Additional information available when the SDK dispatches a Fetch resource event.
 
 
 </td></tr>
@@ -92,7 +92,7 @@ Configuration options to pass to the `init()` method when initializing the RUM S
 
 </td><td>
 
-Additional information available when the SDK dispatches a \*\*Long Task\*\* event.
+Additional information available when the SDK dispatches a Long Task event.
 
 
 </td></tr>
@@ -103,7 +103,7 @@ Additional information available when the SDK dispatches a \*\*Long Task\*\* eve
 
 </td><td>
 
-Additional information available when the SDK dispatches a \*\*Resource\*\* event that is neither fetch nor XHR.
+Additional information available when the SDK dispatches a Resource event that is neither fetch nor XHR.
 
 
 </td></tr>
@@ -114,7 +114,7 @@ Additional information available when the SDK dispatches a \*\*Resource\*\* even
 
 </td><td>
 
-Additional information available when the SDK dispatches a RUM \*\*View\*\* event.
+Additional information available when the SDK dispatches a RUM View event.
 
 
 </td></tr>
@@ -125,7 +125,7 @@ Additional information available when the SDK dispatches a RUM \*\*View\*\* even
 
 </td><td>
 
-Additional information available when the SDK dispatches an \*\*XHR\*\* resource event.
+Additional information available when the SDK dispatches an XHR resource event.
 
 
 </td></tr>

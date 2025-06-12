@@ -4,6 +4,10 @@
 
 ## Logger interface
 
+Set of convenience methods for each supported log level.
+
+All methods accept the same parameters: `message`: human-readable log text. `messageContext`: optional JSON-serialisable object merged with the log context. `error`: optional `Error` instance captured with the log.
+
 **Signature:**
 
 ```typescript
@@ -30,6 +34,8 @@ Description
 
 </td><td>
 
+Add an ALERT log (action must be taken immediately).
+
 
 </td></tr>
 <tr><td>
@@ -38,6 +44,8 @@ Description
 
 
 </td><td>
+
+Add a CRITICAL log (serious failure).
 
 
 </td></tr>
@@ -48,6 +56,8 @@ Description
 
 </td><td>
 
+Add a DEBUG log (developer usage).
+
 
 </td></tr>
 <tr><td>
@@ -56,6 +66,8 @@ Description
 
 
 </td><td>
+
+Add an EMERGENCY log (system is unusable).
 
 
 </td></tr>
@@ -66,6 +78,8 @@ Description
 
 </td><td>
 
+Add an ERROR log (runtime error).
+
 
 </td></tr>
 <tr><td>
@@ -74,6 +88,8 @@ Description
 
 
 </td><td>
+
+Add an INFO log (notable but expected).
 
 
 </td></tr>
@@ -84,6 +100,8 @@ Description
 
 </td><td>
 
+Add a NOTICE log (normal but significant).
+
 
 </td></tr>
 <tr><td>
@@ -93,6 +111,8 @@ Description
 
 </td><td>
 
+Add an OK log (success).
+
 
 </td></tr>
 <tr><td>
@@ -101,6 +121,8 @@ Description
 
 
 </td><td>
+
+Add a WARN log (unexpected behaviour).
 
 
 </td></tr>

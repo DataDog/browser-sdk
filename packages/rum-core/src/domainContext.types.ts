@@ -22,7 +22,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends RumE
             : never
 
 /**
- * Additional information available when the SDK dispatches a RUM **View** event.
+ * Additional information available when the SDK dispatches a RUM View event.
  */
 export interface RumViewEventDomainContext {
   /**
@@ -32,7 +32,7 @@ export interface RumViewEventDomainContext {
 }
 
 /**
- * Additional information available when the SDK dispatches a RUM **Action** event.
+ * Additional information available when the SDK dispatches a RUM Action event.
  */
 export interface RumActionEventDomainContext {
   /**
@@ -46,7 +46,7 @@ export interface RumActionEventDomainContext {
 }
 
 /**
- * Additional information available when the SDK dispatches a **Fetch** resource event.
+ * Additional information available when the SDK dispatches a Fetch resource event.
  */
 export interface RumFetchResourceEventDomainContext {
   /**
@@ -80,7 +80,7 @@ export interface RumFetchResourceEventDomainContext {
 }
 
 /**
- * Additional information available when the SDK dispatches an **XHR** resource event.
+ * Additional information available when the SDK dispatches an XHR resource event.
  */
 export interface RumXhrResourceEventDomainContext {
   /**
@@ -102,7 +102,7 @@ export interface RumXhrResourceEventDomainContext {
 }
 
 /**
- * Additional information available when the SDK dispatches a **Resource** event that is neither fetch nor XHR.
+ * Additional information available when the SDK dispatches a Resource event that is neither fetch nor XHR.
  */
 export interface RumOtherResourceEventDomainContext {
   /**
@@ -112,7 +112,7 @@ export interface RumOtherResourceEventDomainContext {
 }
 
 /**
- * Additional information available when the SDK dispatches an **Error** event.
+ * Additional information available when the SDK dispatches an Error event.
  */
 export interface RumErrorEventDomainContext {
   /**
@@ -126,7 +126,7 @@ export interface RumErrorEventDomainContext {
 }
 
 /**
- * Additional information available when the SDK dispatches a **Long Task** event.
+ * Additional information available when the SDK dispatches a Long Task event.
  */
 export interface RumLongTaskEventDomainContext {
   /**
@@ -136,6 +136,6 @@ export interface RumLongTaskEventDomainContext {
 }
 
 /**
- * Additional information available when the SDK dispatches a **Vital** event.
+ * Additional information available when the SDK dispatches a Vital event.
  */
 export type RumVitalEventDomainContext = Record<string, never>

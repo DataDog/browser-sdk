@@ -4,6 +4,8 @@
 
 ## UNSTABLE_ReactComponentTracker variable
 
+Experimental component that measures the render lifecycle of its children and reports a duration vital named `reactComponentRender`.
+
 **Signature:**
 
 ```typescript

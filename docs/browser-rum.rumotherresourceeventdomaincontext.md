@@ -4,7 +4,7 @@
 
 ## RumOtherResourceEventDomainContext interface
 
-Additional information available when the SDK dispatches a \*\*Resource\*\* event that is neither fetch nor XHR.
+Additional information available when the SDK dispatches a Resource event that is neither fetch nor XHR.
 
 **Signature:**
 

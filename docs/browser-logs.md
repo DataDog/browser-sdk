@@ -50,6 +50,10 @@ Description
 
 </td><td>
 
+Set of convenience methods for each supported log level.
+
+All methods accept the same parameters: `message`: human-readable log text. `messageContext`: optional JSON-serialisable object merged with the log context. `error`: optional `Error` instance captured with the log.
+
 
 </td></tr>
 <tr><td>
@@ -94,6 +98,8 @@ Description
 
 
 </td><td>
+
+Structure passed to the internal log handling strategy.
 
 
 </td></tr>

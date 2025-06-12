@@ -175,7 +175,7 @@
         {
           "kind": "Function",
           "canonicalReference": "@datadog/browser-rum-react!addReactError:function(1)",
-          "docComment": "",
+          "docComment": "/**\n * Report an error originating from React (Error Boundary or `componentDidCatch`) to Datadog RUM. This helper should not be called directly; prefer to use the {@link ErrorBoundary} component or React's error lifecycle.\n *\n * @param error - The JavaScript `Error` instance thrown by React.\n *\n * @param info - Additional React error information, including the component stack.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -238,7 +238,7 @@
         {
           "kind": "Class",
           "canonicalReference": "@datadog/browser-rum-react!ErrorBoundary:class",
-          "docComment": "",
+          "docComment": "/**\n * Error Boundary component used to capture runtime errors in the React tree below and report them to Datadog RUM. It renders the `fallback` component when an error is caught.\n *\n * @extends React.Component\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -503,7 +503,7 @@
         {
           "kind": "Function",
           "canonicalReference": "@datadog/browser-rum-react!reactPlugin:function(1)",
-          "docComment": "",
+          "docComment": "/**\n * Factory returning the react plugin to pass to datadogRum.init({ plugins: [...] }).\n *\n * The plugin wires React-specific features such as: - ErrorBoundary integration (errors forwarded as RUM *Error* events) - Optional react-router view tracking - Component performance tracking utilities (see {@link UNSTABLE_ReactComponentTracker}).\n *\n * @param configuration - React plugin specific configuration.\n *\n * @returns A RUM plugin instance to include in the SDK init.\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -576,7 +576,7 @@
         {
           "kind": "Variable",
           "canonicalReference": "@datadog/browser-rum-react!UNSTABLE_ReactComponentTracker:var",
-          "docComment": "",
+          "docComment": "/**\n * Experimental component that measures the render lifecycle of its children and reports a duration vital named `reactComponentRender`.\n *\n * @experimental\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",

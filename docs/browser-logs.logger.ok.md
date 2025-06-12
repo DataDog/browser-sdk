@@ -4,6 +4,8 @@
 
 ## Logger.ok() method
 
+Add an OK log (success).
+
 **Signature:**
 
 ```typescript

@@ -4,6 +4,8 @@
 
 ## Logger.error() method
 
+Add an ERROR log (runtime error).
+
 **Signature:**
 
 ```typescript

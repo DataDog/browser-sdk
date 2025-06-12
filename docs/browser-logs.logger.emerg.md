@@ -4,6 +4,8 @@
 
 ## Logger.emerg() method
 
+Add an EMERGENCY log (system is unusable).
+
 **Signature:**
 
 ```typescript

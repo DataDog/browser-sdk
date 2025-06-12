@@ -26,6 +26,10 @@ Description
 
 </td><td>
 
+Error Boundary component used to capture runtime errors in the React tree below and report them to Datadog RUM. It renders the `fallback` component when an error is caught.
+
+ React.Component
+
 
 </td></tr>
 </tbody></table>
@@ -50,6 +54,8 @@ Description
 
 </td><td>
 
+Report an error originating from React (Error Boundary or `componentDidCatch`) to Datadog RUM. This helper should not be called directly; prefer to use the <a href="./browser-rum-react.errorboundary.html">ErrorBoundary</a> component or React's error lifecycle.
+
 
 </td></tr>
 <tr><td>
@@ -58,6 +64,10 @@ Description
 
 
 </td><td>
+
+Factory returning the react plugin to pass to datadogRum.init({ plugins: [...] }).
+
+The plugin wires React-specific features such as: - ErrorBoundary integration (errors forwarded as RUM \*Error\* events) - Optional react-router view tracking - Component performance tracking utilities (see <a href="./browser-rum-react.unstable_reactcomponenttracker.html">UNSTABLE_ReactComponentTracker</a>).
 
 
 </td></tr>
@@ -82,6 +92,8 @@ Description
 
 
 </td><td>
+
+Experimental component that measures the render lifecycle of its children and reports a duration vital named `reactComponentRender`.
 
 
 </td></tr>

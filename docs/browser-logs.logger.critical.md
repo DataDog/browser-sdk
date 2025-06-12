@@ -4,6 +4,8 @@
 
 ## Logger.critical() method
 
+Add a CRITICAL log (serious failure).
+
 **Signature:**
 
 ```typescript

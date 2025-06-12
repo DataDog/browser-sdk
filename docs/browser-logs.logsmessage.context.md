@@ -4,6 +4,8 @@
 
 ## LogsMessage.context property
 
+Optional context attached to the log
+
 **Signature:**
 
 ```typescript

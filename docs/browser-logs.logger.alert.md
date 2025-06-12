@@ -4,6 +4,8 @@
 
 ## Logger.alert() method
 
+Add an ALERT log (action must be taken immediately).
+
 **Signature:**
 
 ```typescript

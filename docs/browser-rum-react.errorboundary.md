@@ -4,6 +4,10 @@
 
 ## ErrorBoundary class
 
+Error Boundary component used to capture runtime errors in the React tree below and report them to Datadog RUM. It renders the `fallback` component when an error is caught.
+
+ React.Component
+
 **Signature:**
 
 ```typescript

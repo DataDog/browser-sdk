@@ -4,6 +4,8 @@
 
 ## LogsMessage interface
 
+Structure passed to the internal log handling strategy.
+
 **Signature:**
 
 ```typescript
@@ -48,7 +50,7 @@ Context
 
 </td><td>
 
-(Optional)
+(Optional) Optional context attached to the log
 
 
 </td></tr>
@@ -67,6 +69,8 @@ string
 
 </td><td>
 
+Raw message provided by the customer
+
 
 </td></tr>
 <tr><td>
@@ -83,6 +87,8 @@ string
 
 
 </td><td>
+
+Severity of the log
 
 
 </td></tr>

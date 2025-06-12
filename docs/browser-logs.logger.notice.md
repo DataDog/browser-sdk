@@ -4,6 +4,8 @@
 
 ## Logger.notice() method
 
+Add a NOTICE log (normal but significant).
+
 **Signature:**
 
 ```typescript

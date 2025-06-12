@@ -4,7 +4,7 @@
 
 ## RumXhrResourceEventDomainContext interface
 
-Additional information available when the SDK dispatches an \*\*XHR\*\* resource event.
+Additional information available when the SDK dispatches an XHR resource event.
 
 **Signature:**
 

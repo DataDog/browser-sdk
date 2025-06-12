@@ -20,6 +20,7 @@ import type { InternalContext } from '../domain/contexts/internalContext'
 import type { StartLogs, StartLogsResult } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
 
+//
 export interface LoggerConfiguration {
   level?: StatusType
   handler?: HandlerType | HandlerType[]

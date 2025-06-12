@@ -4,6 +4,8 @@
 
 ## addReactError() function
 
+Report an error originating from React (Error Boundary or `componentDidCatch`) to Datadog RUM. This helper should not be called directly; prefer to use the <a href="./browser-rum-react.errorboundary.html">ErrorBoundary</a> component or React's error lifecycle.
+
 **Signature:**
 
 ```typescript
@@ -40,6 +42,8 @@ Error
 
 </td><td>
 
+The JavaScript `Error` instance thrown by React.
+
 
 </td></tr>
 <tr><td>
@@ -53,6 +57,8 @@ ErrorInfo
 
 
 </td><td>
+
+Additional React error information, including the component stack.
 
 
 </td></tr>

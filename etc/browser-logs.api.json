@@ -1037,7 +1037,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-logs!Logger:interface",
-          "docComment": "",
+          "docComment": "/**\n * Set of convenience methods for each supported log level.\n *\n * All methods accept the same parameters: `message`: human-readable log text. `messageContext`: optional JSON-serialisable object merged with the log context. `error`: optional `Error` instance captured with the log.\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1052,7 +1052,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#alert:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add an ALERT log (action must be taken immediately).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1130,7 +1130,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#critical:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add a CRITICAL log (serious failure).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1208,7 +1208,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#debug:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add a DEBUG log (developer usage).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1286,7 +1286,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#emerg:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add an EMERGENCY log (system is unusable).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1364,7 +1364,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#error:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add an ERROR log (runtime error).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1442,7 +1442,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#info:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add an INFO log (notable but expected).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1520,7 +1520,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#notice:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add a NOTICE log (normal but significant).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1598,7 +1598,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#ok:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add an OK log (success).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -1676,7 +1676,7 @@
             {
               "kind": "MethodSignature",
               "canonicalReference": "@datadog/browser-logs!Logger#warn:member(1)",
-              "docComment": "",
+              "docComment": "/**\n * Add a WARN log (unexpected behaviour).\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3350,7 +3350,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-logs!LogsMessage:interface",
-          "docComment": "",
+          "docComment": "/**\n * Structure passed to the internal log handling strategy.\n *\n * @public\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -3365,7 +3365,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-logs!LogsMessage#context:member",
-              "docComment": "",
+              "docComment": "/**\n * Optional context attached to the log\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3393,7 +3393,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-logs!LogsMessage#message:member",
-              "docComment": "",
+              "docComment": "/**\n * Raw message provided by the customer\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",
@@ -3420,7 +3420,7 @@
             {
               "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-logs!LogsMessage#status:member",
-              "docComment": "",
+              "docComment": "/**\n * Severity of the log\n */\n",
               "excerptTokens": [
                 {
                   "kind": "Content",

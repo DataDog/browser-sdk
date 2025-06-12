@@ -4,7 +4,7 @@
 
 ## RumViewEventDomainContext interface
 
-Additional information available when the SDK dispatches a RUM \*\*View\*\* event.
+Additional information available when the SDK dispatches a RUM View event.
 
 **Signature:**
 

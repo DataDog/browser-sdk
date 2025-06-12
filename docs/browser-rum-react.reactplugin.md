@@ -4,6 +4,10 @@
 
 ## reactPlugin() function
 
+Factory returning the react plugin to pass to datadogRum.init({ plugins: [...] }).
+
+The plugin wires React-specific features such as: - ErrorBoundary integration (errors forwarded as RUM \*Error\* events) - Optional react-router view tracking - Component performance tracking utilities (see <a href="./browser-rum-react.unstable_reactcomponenttracker.html">UNSTABLE_ReactComponentTracker</a>).
+
 **Signature:**
 
 ```typescript
@@ -52,7 +56,7 @@ ReactPluginConfiguration
 
 </td><td>
 
-(Optional)
+(Optional) React plugin specific configuration.
 
 
 </td></tr>
@@ -60,4 +64,6 @@ ReactPluginConfiguration
 **Returns:**
 
 { name: string; onInit({ publicApi, initConfiguration }: { initConfiguration: import("@datadog/browser-rum-core").RumInitConfiguration; publicApi: RumPublicApi; }): void; onRumStart({ strategy }: { strategy: Strategy; }): void; getConfigurationTelemetry(): { router: boolean; }; }
+
+A RUM plugin instance to include in the SDK init.
 
