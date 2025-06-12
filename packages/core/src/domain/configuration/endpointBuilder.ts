@@ -27,7 +27,6 @@ export function createEndpointBuilder(initConfiguration: InitConfiguration, trac
       const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload)
       return buildUrlWithParameters(parameters)
     },
-    urlPrefix: buildUrlWithParameters(''),
     trackType,
   }
 }
