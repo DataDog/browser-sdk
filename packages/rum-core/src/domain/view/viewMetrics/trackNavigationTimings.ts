@@ -40,7 +40,6 @@ function processNavigationEntry(
 ): NavigationTimings {
   const activationStart = getActivationStartImpl()
 
-  // Calculate TTFB (firstByte) relative to activation start for prerendered pages
   const adjustedResponseStart =
     activationStart > 0 ? Math.max(0, entry.responseStart - activationStart) : entry.responseStart
 
