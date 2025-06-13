@@ -94,6 +94,12 @@ export function startSessionManager<TrackingType extends string>(
       addTelemetryDebug('Unexpected session state', {
         sessionStore: sessionStore.getSession(),
       })
+      return {
+        id: undefined as any,
+        trackingType: undefined as any as TrackingType,
+        isReplayForced: false,
+        anonymousId: undefined,
+      }
     }
     return {
       id: session.id!,

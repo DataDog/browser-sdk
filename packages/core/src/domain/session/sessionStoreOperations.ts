@@ -1,5 +1,6 @@
 import { setTimeout } from '../../tools/timer'
 import { generateUUID } from '../../tools/utils/stringUtils'
+import { dateNow } from '../../tools/utils/timeUtils'
 import { addTelemetryDebug } from '../telemetry'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -12,6 +13,7 @@ type Operations = {
 
 export const LOCK_RETRY_DELAY = 10
 export const LOCK_MAX_TRIES = 100
+export const LOCK_STALE_DURATION = LOCK_RETRY_DELAY * LOCK_MAX_TRIES * 10
 const bufferedOperations: Operations[] = []
 let ongoingOperations: Operations | undefined
 
@@ -21,13 +23,35 @@ export function processSessionStoreOperations(
   numberOfRetries = 0
 ) {
   const { isLockEnabled, persistSession, expireSession } = sessionStoreStrategy
-  const persistWithLock = (session: SessionState) => persistSession({ ...session, lock: currentLock })
+  const persistWithLock = (session: SessionState) =>
+    persistSession({ ...session, lock: currentLock, lockTimestamp: String(dateNow()) })
   const retrieveStore = () => {
     const session = sessionStoreStrategy.retrieveSession()
-    const lock = session.lock
+    let lock = session.lock
+
+    if (lock && session.lockTimestamp) {
+      const lockAge = dateNow() - Number(session.lockTimestamp)
+      if (lockAge > LOCK_STALE_DURATION) {
+        addTelemetryDebug('Ignoring stale session lock', {
+          lockAge,
+          lock,
+          sessionState: session,
+        })
+        delete session.lock
+        delete session.lockTimestamp
+        lock = undefined
+        if (isLockEnabled) {
+          persistSession(session)
+        }
+      }
+    }
 
     if (session.lock) {
       delete session.lock
+    }
+
+    if (session.lockTimestamp) {
+      delete session.lockTimestamp
     }
 
     return {
