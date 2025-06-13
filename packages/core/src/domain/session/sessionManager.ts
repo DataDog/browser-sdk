@@ -2,14 +2,17 @@ import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
+import { relativeNow, clocksOrigin, ONE_MINUTE, dateNow } from '../../tools/utils/timeUtils'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
+import { addTelemetryDebug } from '../telemetry'
+import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
+import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -88,11 +91,37 @@ export function startSessionManager<TrackingType extends string>(
   trackResume(configuration, () => sessionStore.restartSession())
 
   function buildSessionContext() {
+    const session = sessionStore.getSession()
+
+    if (!session) {
+      const rawSession = retrieveSessionCookie()
+      const debugData: any = {
+        session: rawSession,
+        isSyntheticsTest: isSyntheticsTest(),
+      }
+
+      if (rawSession?.created) {
+        const createdTime = Number(rawSession.created)
+        const timeFromCreated = dateNow() - createdTime
+        debugData.timeFromCreated = timeFromCreated
+      }
+
+      if (rawSession?.expire) {
+        const expireTime = Number(rawSession.expire)
+        const timeToExpire = expireTime - dateNow()
+        debugData.timeToExpire = timeToExpire
+      }
+
+      debugData.differenceCreatedToExpire = Number(rawSession?.expire) - Number(rawSession?.created)
+
+      addTelemetryDebug('Unexpected session state', debugData)
+    }
+
     return {
-      id: sessionStore.getSession().id!,
-      trackingType: sessionStore.getSession()[productKey] as TrackingType,
-      isReplayForced: !!sessionStore.getSession().forcedReplay,
-      anonymousId: sessionStore.getSession().anonymousId,
+      id: session.id!,
+      trackingType: session[productKey] as TrackingType,
+      isReplayForced: !!session.forcedReplay,
+      anonymousId: session.anonymousId,
     }
   }
 
