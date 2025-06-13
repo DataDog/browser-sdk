@@ -7,6 +7,7 @@ import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/ad
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
+import { addTelemetryDebug } from '../telemetry'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -90,7 +91,9 @@ export function startSessionManager<TrackingType extends string>(
   function buildSessionContext() {
     const session = sessionStore.getSession()
     if (!session) {
-      throw new Error('Unexpected session state')
+      addTelemetryDebug('Unexpected session state', {
+        sessionStore: sessionStore.getSession(),
+      })
     }
     return {
       id: session.id!,
