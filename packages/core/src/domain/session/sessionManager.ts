@@ -11,6 +11,7 @@ import { addTelemetryDebug } from '../telemetry'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
+import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -90,11 +91,11 @@ export function startSessionManager<TrackingType extends string>(
 
   function buildSessionContext() {
     const session = sessionStore.getSession()
-    if (!session) {
-      addTelemetryDebug('Unexpected session state', {
-        sessionStore: sessionStore.getSession(),
-      })
-    }
+
+    addTelemetryDebug('Session Cookie', {
+      session: retrieveSessionCookie(),
+    })
+
     return {
       id: session.id!,
       trackingType: session[productKey] as TrackingType,
