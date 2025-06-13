@@ -53,7 +53,7 @@ function expireSessionCookie(options: CookieOptions, sessionState: SessionState,
   )
 }
 
-function retrieveSessionCookie(): SessionState {
+export function retrieveSessionCookie(): SessionState {
   const sessionString = getCookie(SESSION_STORE_KEY)
   const sessionState = toSessionState(sessionString)
   return sessionState
