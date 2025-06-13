@@ -243,7 +243,7 @@
         {
           "kind": "Variable",
           "canonicalReference": "@datadog/browser-logs!HandlerType:var",
-          "docComment": "",
+          "docComment": "/**\n * Defines the types of handlers for processing logs: console, HTTP, or silent.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1037,7 +1037,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-logs!Logger:interface",
-          "docComment": "/**\n * Set of convenience methods for each supported log level.\n *\n * All methods accept the same parameters: `message`: human-readable log text. `messageContext`: optional JSON-serialisable object merged with the log context. `error`: optional `Error` instance captured with the log.\n *\n * @public\n */\n",
+          "docComment": "/**\n * Provides convenience methods for logging at each supported level. Each method accepts a message, optional context, and an optional error.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1757,7 +1757,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-logs!LoggerConfiguration:interface",
-          "docComment": "",
+          "docComment": "/**\n * Configuration options for a logger. Includes the log level to determine the severity of logs, the handler(s) responsible for processing log messages, and an optional context object to provide additional metadata for logs.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -1871,7 +1871,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-logs!LogsEvent:interface",
-          "docComment": "",
+          "docComment": "/**\n * Represents a log event collected by the Datadog Browser Logs SDK, containing information such as message, context, and metadata.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -2376,7 +2376,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-logs!LogsGlobal:interface",
-          "docComment": "",
+          "docComment": "/**\n * The public API for the Datadog Browser Logs SDK. Provides methods to initialize the SDK, manage global/user/account contexts, and interact with loggers for collecting and forwarding logs.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -3155,7 +3155,7 @@
         {
           "kind": "Interface",
           "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration:interface",
-          "docComment": "",
+          "docComment": "/**\n * Configuration options for initializing the Datadog Browser Logs SDK. Extends the base InitConfiguration and includes additional options specific to log collection, such as error forwarding, console log forwarding, and the ability to modify or discard logs before they are sent.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",
@@ -3495,7 +3495,7 @@
         {
           "kind": "Variable",
           "canonicalReference": "@datadog/browser-logs!StatusType:var",
-          "docComment": "",
+          "docComment": "/**\n * Defines the severity levels for log messages, ranging from debug to emergency.\n */\n",
           "excerptTokens": [
             {
               "kind": "Content",

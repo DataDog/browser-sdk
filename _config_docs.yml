@@ -1,0 +1,33 @@
+
+title:  "Datadog Browser SDK Docs"
+description: "API documentation for the Datadog Browser SDK."
+
+url: "https://datadoghq.dev"
+baseurl: "/browser-sdk"       
+
+
+remote_theme: "just-the-docs/just-the-docs"
+
+just_the_docs:
+  search_enabled: true
+  nav_depth: 2
+
+plugins:
+  - jekyll-remote-theme 
+  - jekyll-seo-tag
+  - jekyll-sitemap     
+  - jekyll-relative-links
+
+exclude:
+  - node_modules/
+  - vendor/
+  - Gemfile*
+  - package*.json
+  - yarn.lock
+  - _site/
+
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: "default"

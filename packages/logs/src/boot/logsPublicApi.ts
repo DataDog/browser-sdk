@@ -20,13 +20,22 @@ import type { InternalContext } from '../domain/contexts/internalContext'
 import type { StartLogs, StartLogsResult } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
 
-//
+/**
+ * Configuration options for a logger.
+ * Includes the log level to determine the severity of logs,
+ * the handler(s) responsible for processing log messages,
+ * and an optional context object to provide additional metadata for logs.
+ */
 export interface LoggerConfiguration {
   level?: StatusType
   handler?: HandlerType | HandlerType[]
   context?: object
 }
-
+/**
+ * The public API for the Datadog Browser Logs SDK.
+ * Provides methods to initialize the SDK, manage global/user/account contexts,
+ * and interact with loggers for collecting and forwarding logs.
+ */
 export interface LogsPublicApi extends PublicApi {
   logger: Logger
 

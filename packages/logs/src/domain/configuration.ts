@@ -12,6 +12,12 @@ import {
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
 
+/**
+ * Configuration options for initializing the Datadog Browser Logs SDK.
+ * Extends the base InitConfiguration and includes additional options
+ * specific to log collection, such as error forwarding, console log forwarding,
+ * and the ability to modify or discard logs before they are sent.
+ */
 export interface LogsInitConfiguration extends InitConfiguration {
   /**
    * Access to every logs collected by the Logs SDK before they are sent to Datadog.

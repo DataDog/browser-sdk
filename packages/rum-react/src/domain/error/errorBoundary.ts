@@ -35,11 +35,8 @@ type State =
 const INITIAL_STATE: State = { didCatch: false, error: null }
 
 /**
- * Error Boundary component used to capture runtime errors in the React tree
- * below and report them to Datadog RUM. It renders the `fallback` component
- * when an error is caught.
- *
- * @extends React.Component
+ * A React Error Boundary that captures runtime errors in its child components
+ * and reports them to Datadog RUM, rendering the `fallback` component when an error occurs.
  */
 // eslint-disable-next-line no-restricted-syntax
 export class ErrorBoundary extends React.Component<Props, State> {

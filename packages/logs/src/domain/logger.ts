@@ -29,6 +29,9 @@ export interface LogsMessage {
   context?: Context
 }
 
+/**
+ * Defines the types of handlers for processing logs: console, HTTP, or silent.
+ */
 export const HandlerType = {
   console: 'console',
   http: 'http',
@@ -158,14 +161,8 @@ Logger.prototype.emerg = createLoggerMethod(StatusType.emerg)
 /* eslint-enable local-rules/disallow-side-effects */
 
 /**
- * Set of convenience methods for each supported log level.
- *
- * All methods accept the same parameters:
- * `message`: human-readable log text.
- * `messageContext`: optional JSON-serialisable object merged with the log context.
- * `error`: optional `Error` instance captured with the log.
- *
- * @public
+ * Provides convenience methods for logging at each supported level.
+ * Each method accepts a message, optional context, and an optional error.
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export interface Logger {

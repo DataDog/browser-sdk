@@ -24,17 +24,9 @@ export interface ReactPluginConfiguration {
 }
 
 /**
- * Factory returning the react plugin to pass to datadogRum.init({ plugins: [...] }).
- *
- * The plugin wires React-specific features such as:
- * - ErrorBoundary integration (errors forwarded as RUM *Error* events)
- * - Optional react-router view tracking
- * - Component performance tracking utilities (see {@link UNSTABLE_ReactComponentTracker}).
- *
- *
- * @param configuration React plugin specific configuration.
- * @returns A RUM plugin instance to include in the SDK init.
- * @public
+ * Factory function that creates the React plugin for Datadog RUM,
+ * enabling features like ErrorBoundary integration, optional react-router view tracking,
+ * and component performance tracking utilities.
  */
 export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
   return {
