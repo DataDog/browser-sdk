@@ -26,6 +26,8 @@ export type PartialRumEvent =
   | PartialRumLongTaskEvent
   | PartialRumVitalEvent
 
+const allowedEventTypes = ['action', 'error', 'long_task', 'resource', 'vital'] as const
+
 export function startEventCollection(lifeCycle: LifeCycle) {
   return {
     addEvent: (
@@ -33,12 +35,17 @@ export function startEventCollection(lifeCycle: LifeCycle) {
       event: PartialRumEvent,
       domainContext: RumEventDomainContext,
       duration?: Duration
-    ) =>
+    ) => {
+      if (!allowedEventTypes.includes(event.type)) {
+        return
+      }
+
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         startTime,
         rawRumEvent: event as RawRumEvent,
         domainContext,
         duration,
-      }),
+      })
+    },
   }
 }
