@@ -11,12 +11,13 @@ import {
 } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import { mockedTrace } from './test-utils/mockedTrace'
+import type { SendProfileFunction } from './transport/transport'
 import { transport } from './transport/transport'
 import { createRumProfiler } from './profiler'
 import type { RumProfilerTrace } from './types'
 
 describe('profiler', () => {
-  let sendProfileSpy: jasmine.Spy
+  let sendProfileSpy: jasmine.Spy<SendProfileFunction>
 
   beforeEach(() => {
     // Spy on transport.sendProfile to avoid sending data to the server, and check what's sent.
@@ -78,7 +79,7 @@ describe('profiler', () => {
     expect(sendProfileSpy).toHaveBeenCalledTimes(1)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(mockedTrace, jasmine.any(Object), jasmine.any(String), 'session-id-1')
+    expect(sendProfileSpy).toHaveBeenCalledWith(mockedTrace, jasmine.any(Object), 'session-id-1')
   })
 
   it('should pause profiling collection on hidden visibility and restart on visible visibility', async () => {
@@ -121,7 +122,7 @@ describe('profiler', () => {
     expect(sendProfileSpy).toHaveBeenCalledTimes(2)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(mockedTrace, jasmine.any(Object), jasmine.any(String), 'session-id-1')
+    expect(sendProfileSpy).toHaveBeenCalledWith(mockedTrace, jasmine.any(Object), 'session-id-1')
   })
 
   it('should collect long task from core and then attach long task id to the Profiler trace', async () => {
@@ -168,7 +169,7 @@ describe('profiler', () => {
     // Wait for stop of collection.
     await waitForBoolean(() => profiler.isStopped())
 
-    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0] as unknown as RumProfilerTrace
+    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0]
 
     expect(lastCall.longTasks.length).toBe(1)
     expect(lastCall.longTasks[0].id).toBeDefined()

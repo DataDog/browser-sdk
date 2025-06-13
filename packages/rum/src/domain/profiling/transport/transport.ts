@@ -1,4 +1,5 @@
-import { addTelemetryDebug, currentDrift, type EndpointBuilder, type Payload } from '@datadog/browser-core'
+import { addTelemetryDebug, currentDrift, type Payload } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace } from '../types'
 
 interface ProfileEventAttributes {
@@ -21,18 +22,18 @@ interface ProfileEvent extends ProfileEventAttributes {
   }
 }
 
-type SendProfileFunction = (
+export type SendProfileFunction = (
   trace: RumProfilerTrace,
-  endpointBuilder: EndpointBuilder,
-  applicationId: string,
+  configuration: RumConfiguration,
   sessionId: string | undefined
 ) => Promise<unknown>
 
 /**
  * Send RUM profile as JSON to public profiling intake.
  */
-const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applicationId, sessionId) => {
-  const event = buildProfileEvent(profilerTrace, endpointBuilder, applicationId, sessionId)
+const sendProfile: SendProfileFunction = (profilerTrace, configuration, sessionId) => {
+  const { profilingEndpointBuilder: endpointBuilder, applicationId } = configuration
+  const event = buildProfileEvent(profilerTrace, configuration, sessionId)
   const payload = buildProfilingPayload(profilerTrace, event)
 
   // Create URL, public profiling intake.
@@ -49,12 +50,11 @@ const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applic
 
 function buildProfileEvent(
   profilerTrace: RumProfilerTrace,
-  endpointBuilder: EndpointBuilder,
-  applicationId: string,
+  configuration: RumConfiguration,
   sessionId: string | undefined
 ): ProfileEvent {
-  const tags = endpointBuilder.tags
-  const profileAttributes = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
+  const tags = configuration.tags
+  const profileAttributes = buildProfileEventAttributes(profilerTrace, configuration.applicationId, sessionId)
   const profileEventTags = buildProfileEventTags(tags)
 
   const profileEvent: ProfileEvent = {

@@ -22,7 +22,7 @@ import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifi
 import { startResourceCollection } from './resourceCollection'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
-const baseConfiguration = mockRumConfiguration()
+let baseConfiguration: RumConfiguration
 const pageStateHistory = mockPageStateHistory()
 
 describe('resourceCollection', () => {
@@ -53,6 +53,7 @@ describe('resourceCollection', () => {
   }
 
   beforeEach(() => {
+    baseConfiguration = mockRumConfiguration()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
   })

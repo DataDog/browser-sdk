@@ -7,16 +7,18 @@ import { RumEventType } from '../../rawRumEvent.types'
 import * as performanceObservable from '../../browser/performanceObservable'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
+import type { RumConfiguration } from '../configuration'
 import type { PageStateHistory } from './pageStateHistory'
 import { PageState, startPageStateHistory } from './pageStateHistory'
 
 describe('pageStateHistory', () => {
   let clock: Clock
   let hooks: Hooks
-  const configuration = mockRumConfiguration()
+  let configuration: RumConfiguration
   let getEntriesByTypeSpy: jasmine.Spy<Performance['getEntriesByType']>
 
   beforeEach(() => {
+    configuration = mockRumConfiguration()
     clock = mockClock()
     hooks = createHooks()
     getEntriesByTypeSpy = spyOn(performance, 'getEntriesByType').and.returnValue([])

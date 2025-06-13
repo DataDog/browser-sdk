@@ -145,4 +145,40 @@ describe('logger collection', () => {
       expect(rawLogsEvents.length).toBe(0)
     })
   })
+
+  describe('ddtags', () => {
+    beforeEach(() => {
+      logger.setHandler(HandlerType.http)
+    })
+
+    it('should contain the ddtags of the logger', () => {
+      logger.setContext({ ddtags: 'tag1:value1,tag2:value2' })
+      handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
+
+      expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag1:value1,tag2:value2')
+    })
+
+    it('should contain the ddtags of the message context', () => {
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { ddtags: 'tag3:value3' } },
+        logger,
+        HANDLING_STACK,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag3:value3')
+    })
+
+    it('should merge the ddtags of the logger and the message context', () => {
+      logger.setContext({ ddtags: 'tag1:value1,tag2:value2' })
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { ddtags: 'tag3:value3' } },
+        logger,
+        HANDLING_STACK,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag1:value1,tag2:value2,tag3:value3')
+    })
+  })
 })

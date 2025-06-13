@@ -3,9 +3,12 @@ import type { InitConfiguration } from './configuration'
 
 export const TAG_SIZE_LIMIT = 200
 
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
 export function buildTags(configuration: InitConfiguration): string[] {
   const { env, service, version, datacenter } = configuration
-  const tags = []
+  const tags = [buildTag('sdk_version', __BUILD_ENV__SDK_VERSION__)]
 
   if (env) {
     tags.push(buildTag('env', env))

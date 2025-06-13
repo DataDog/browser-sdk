@@ -5,6 +5,7 @@ import {
   willSyntheticsInjectRum,
   canUseEventBridge,
   startAccountContext,
+  startTagContext,
   startGlobalContext,
   startTelemetry,
   TelemetryService,
@@ -66,6 +67,7 @@ export function startLogs(
   const accountContext = startAccountContext(hooks, configuration, 'logs')
   const globalContext = startGlobalContext(hooks, configuration, 'logs', false)
   const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
+  startTagContext(hooks, configuration)
   telemetry.setContextProvider('application.id', () => getRUMInternalContext()?.application_id)
   telemetry.setContextProvider('view.id', () => (getRUMInternalContext()?.view as Context)?.id)
   telemetry.setContextProvider('action.id', () => (getRUMInternalContext()?.user_action as Context)?.id)

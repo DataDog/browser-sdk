@@ -182,6 +182,46 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents[0].application_id).toBe(APPLICATION_ID)
     })
 
+  createTest('add default tags to logs')
+    .withLogs({
+      service: 'foo',
+      env: 'dev',
+      version: '1.0.0',
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.log('hello world!')
+      })
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),env:dev,service:foo,version:1.0.0$/)
+    })
+
+  createTest('add tags from logger context')
+    .withLogs()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.setContext({ ddtags: 'planet:mars' })
+        window.DD_LOGS!.logger.log('hello world!')
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),planet:mars$/)
+    })
+
+  createTest('add tags from message context')
+    .withLogs()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.log('hello world!', { ddtags: 'planet:earth' })
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),planet:earth$/)
+    })
+
   createTest('allow to modify events')
     .withLogs({
       beforeSend: (event) => {
