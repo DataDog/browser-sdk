@@ -1,4 +1,4 @@
-import { mergeObservables, Observable } from './observable'
+import { BufferedObservable, mergeObservables, Observable } from './observable'
 
 describe('observable', () => {
   let observable: Observable<void>
@@ -119,3 +119,144 @@ describe('mergeObservables', () => {
     expect(subscriber).not.toHaveBeenCalled()
   })
 })
+
+describe('BufferedObservable', () => {
+  it('invokes the observer with buffered data', async () => {
+    const observable = new BufferedObservable<string>(100)
+    observable.notify('first')
+    observable.notify('second')
+
+    const observer = jasmine.createSpy('observer')
+    observable.subscribe(observer)
+
+    await nextMicroTask()
+
+    expect(observer).toHaveBeenCalledTimes(2)
+  })
+
+  it('invokes the observer asynchronously', async () => {
+    const observable = new BufferedObservable<string>(100)
+    observable.notify('first')
+
+    const observer = jasmine.createSpy('observer')
+    observable.subscribe(observer)
+
+    expect(observer).not.toHaveBeenCalled()
+
+    await nextMicroTask()
+
+    expect(observer).toHaveBeenCalledWith('first')
+  })
+
+  it('invokes the observer when new data is notified after subscription', async () => {
+    const observable = new BufferedObservable<string>(100)
+
+    const observer = jasmine.createSpy('observer')
+    observable.subscribe(observer)
+
+    observable.notify('first')
+
+    await nextMicroTask()
+
+    observable.notify('second')
+
+    expect(observer).toHaveBeenCalledTimes(2)
+    expect(observer).toHaveBeenCalledWith('first')
+    expect(observer).toHaveBeenCalledWith('second')
+  })
+
+  it('drops data when the buffer is full', async () => {
+    const observable = new BufferedObservable<string>(2)
+    observable.notify('first') // This should be dropped
+    observable.notify('second')
+    observable.notify('third')
+
+    const observer = jasmine.createSpy('observer')
+    observable.subscribe(observer)
+
+    await nextMicroTask()
+
+    expect(observer).toHaveBeenCalledTimes(2)
+    expect(observer).toHaveBeenCalledWith('second')
+    expect(observer).toHaveBeenCalledWith('third')
+  })
+
+  it('allows to unsubscribe from the observer, the middle of buffered data', async () => {
+    const observable = new BufferedObservable<string>(100)
+    observable.notify('first')
+    observable.notify('second')
+
+    const observer = jasmine.createSpy('observer').and.callFake(() => {
+      subscription.unsubscribe()
+    })
+    const subscription = observable.subscribe(observer)
+
+    await nextMicroTask()
+
+    expect(observer).toHaveBeenCalledTimes(1)
+  })
+
+  it('allows to unsubscribe before the buffered data', async () => {
+    const observable = new BufferedObservable<string>(100)
+    observable.notify('first')
+
+    const observer = jasmine.createSpy('observer')
+    const subscription = observable.subscribe(observer)
+
+    subscription.unsubscribe()
+
+    await nextMicroTask()
+
+    expect(observer).not.toHaveBeenCalled()
+  })
+
+  it('allows to unsubscribe after the buffered data', async () => {
+    const observable = new BufferedObservable<string>(100)
+
+    const observer = jasmine.createSpy('observer')
+    const subscription = observable.subscribe(observer)
+
+    await nextMicroTask()
+
+    subscription.unsubscribe()
+
+    observable.notify('first')
+
+    expect(observer).not.toHaveBeenCalled()
+  })
+
+  it('calling unbuffer() removes buffered data', async () => {
+    const observable = new BufferedObservable<string>(2)
+    observable.notify('first')
+    observable.notify('second')
+
+    observable.unbuffer()
+    await nextMicroTask()
+
+    const observer = jasmine.createSpy('observer')
+    observable.subscribe(observer)
+    await nextMicroTask()
+
+    expect(observer).not.toHaveBeenCalled()
+  })
+
+  it('when calling unbuffer() right after subscription, buffered data should still be notified', async () => {
+    const observable = new BufferedObservable<string>(2)
+    observable.notify('first')
+    observable.notify('second')
+
+    const observer = jasmine.createSpy('observer')
+    observable.subscribe(observer)
+
+    observable.unbuffer()
+    await nextMicroTask()
+
+    expect(observer).toHaveBeenCalledTimes(2)
+    expect(observer).toHaveBeenCalledWith('first')
+    expect(observer).toHaveBeenCalledWith('second')
+  })
+})
+
+function nextMicroTask() {
+  return Promise.resolve()
+}

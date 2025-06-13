@@ -1,4 +1,12 @@
-import type { Observable, RawError, DeflateEncoderStreamId, Encoder, TrackingConsentState } from '@datadog/browser-core'
+import type {
+  Observable,
+  RawError,
+  DeflateEncoderStreamId,
+  Encoder,
+  TrackingConsentState,
+  EarlyData,
+  BufferedObservable,
+} from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -63,6 +71,7 @@ export function startRum(
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
+  earlyDataObservable: BufferedObservable<EarlyData>,
   sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   const cleanupTasks: Array<() => void> = []
@@ -183,7 +192,8 @@ export function startRum(
     }
   }
 
-  const { addError } = startErrorCollection(lifeCycle, configuration)
+  const { addError } = startErrorCollection(lifeCycle, configuration, earlyDataObservable)
+  earlyDataObservable.unbuffer()
 
   startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 

@@ -28,6 +28,7 @@ import {
   timeStampToClocks,
   CustomerContextKey,
   defineContextMethod,
+  startEarlyDataCollection,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -423,6 +424,7 @@ export function makeRumPublicApi(
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
+  const earlyDataObservable = startEarlyDataCollection().observable
 
   let strategy = createPreStartStrategy(
     options,
@@ -439,6 +441,7 @@ export function makeRumPublicApi(
           : createIdentityEncoder,
         trackingConsentState,
         customVitalsState,
+        earlyDataObservable,
         options.sdkName
       )
 

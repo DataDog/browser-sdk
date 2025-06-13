@@ -13,6 +13,7 @@ import {
   deepClone,
   createTrackingConsentState,
   defineContextMethod,
+  startEarlyDataCollection,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -215,6 +216,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     },
   })
   const trackingConsentState = createTrackingConsentState()
+  const earlyDataObservable = startEarlyDataCollection().observable
 
   function getCommonContext() {
     return buildCommonContext(userContextManager)
@@ -225,7 +227,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
       storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
     }
 
-    const startLogsResult = startLogsImpl(configuration, getCommonContext, trackingConsentState)
+    const startLogsResult = startLogsImpl(configuration, getCommonContext, trackingConsentState, earlyDataObservable)
 
     strategy = createPostStartStrategy(initConfiguration, startLogsResult)
     return startLogsResult

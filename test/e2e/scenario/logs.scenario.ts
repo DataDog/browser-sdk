@@ -169,6 +169,22 @@ test.describe('logs', () => {
       expect(unreachableRequest.error!.stack).toContain('TypeError')
     })
 
+  createTest('send runtime errors happening before initialization')
+    .withLogs({ forwardErrorsToLogs: true })
+    .withLogsInit((configuration) => {
+      // Simulate a late initialization of the Logs SDK
+      setTimeout(() => window.DD_LOGS!.init(configuration))
+      throw new Error('oh snap')
+    })
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs }) => {
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('oh snap')
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
+    })
+
   createTest('add RUM internal context to logs')
     .withRum()
     .withLogs()
