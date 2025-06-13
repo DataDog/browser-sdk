@@ -30,7 +30,8 @@ export type { ViewCreatedEvent } from './domain/view/trackViews'
 export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistory'
 export { startViewHistory } from './domain/contexts/viewHistory'
 export type { RumSessionManager, RumSession } from './domain/rumSessionManager'
-export { createProfilingContextManager, type ProfilingContextManager } from './domain/contexts/profilingContext'
+export { createProfilingContextManager } from './domain/contexts/profilingContext'
+export type { ProfilingContextManager } from './domain/contexts/profilingContext'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
 export type {
   RumMutationRecord,
