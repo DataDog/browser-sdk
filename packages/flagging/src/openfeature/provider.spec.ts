@@ -18,8 +18,8 @@ describe('DatadogProvider', () => {
       applicationId: 'xxx',
       clientToken: 'xxx',
       site: 'http://localhost:8000',
-      datadogRum: {
-        datadogRum: mockDatadogRum,
+      rum: {
+        sdk: mockDatadogRum,
         ddFlaggingTracking: false,
         ddExposureLogging: false,
       },

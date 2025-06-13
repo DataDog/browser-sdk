@@ -17,7 +17,7 @@ import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
 import { DDRum, newDatadogRumIntegration } from './rum-integration'
 
-export type DatadogProviderOptions = {
+export interface DatadogProviderOptions {
   /**
    * The RUM application ID.
    */
@@ -34,22 +34,22 @@ export type DatadogProviderOptions = {
 
   initialConfiguration?: Configuration
 
-  // RUM-related options
-  datadogRum?: {
+  /**
+   * RUM integration options
+   */
+  rum?: {
     /**
-     * Whether to use the Flagging Tracking feature of the RUM 
+     * The RUM SDK instance to use for tracking
+     */
+    sdk: DDRum
+    /**
+     * Whether to track feature flag evaluations in RUM
      */
     ddFlaggingTracking?: boolean
-
     /**
-     * Whether to log exposures to RUM
+     * Whether to log exposures in RUM
      */
     ddExposureLogging?: boolean
-
-    /**
-     * Object satisfying the minimum required interface for the RUM SDK. Default is the global datadogRum object from `@datadog/browser-rum`.
-     */
-    datadogRum: DDRum
   }
 }
 
@@ -73,12 +73,12 @@ export class DatadogProvider implements Provider {
 
   constructor(options: DatadogProviderOptions) {
     this.options = options
-    this.dd_flagging_tracking = options.datadogRum?.ddFlaggingTracking ?? false
-    this.dd_exposure_logging = options.datadogRum?.ddExposureLogging ?? false
+    this.dd_flagging_tracking = options.rum?.ddFlaggingTracking ?? false
+    this.dd_exposure_logging = options.rum?.ddExposureLogging ?? false
 
-    if (options.datadogRum) {
+    if (options.rum) {
       // Integrate with the RUM SDK
-      const rumIntegration = newDatadogRumIntegration(options.datadogRum.datadogRum)
+      const rumIntegration = newDatadogRumIntegration(options.rum.sdk)
 
       const flaggingProvider = this;
 
