@@ -2,12 +2,13 @@ import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
+import { relativeNow, clocksOrigin, ONE_MINUTE, dateNow } from '../../tools/utils/timeUtils'
 import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { addTelemetryDebug } from '../telemetry'
+import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -93,9 +94,27 @@ export function startSessionManager<TrackingType extends string>(
     const session = sessionStore.getSession()
 
     if (!session) {
-      addTelemetryDebug('Unexpected session state', {
-        session: retrieveSessionCookie(),
-      })
+      const rawSession = retrieveSessionCookie()
+      const debugData: any = {
+        session: rawSession,
+        isSyntheticsTest: isSyntheticsTest(),
+      }
+
+      if (rawSession?.created) {
+        const createdTime = Number(rawSession.created)
+        const timeFromCreated = dateNow() - createdTime
+        debugData.timeFromCreated = timeFromCreated
+      }
+
+      if (rawSession?.expire) {
+        const expireTime = Number(rawSession.expire)
+        const timeToExpire = expireTime - dateNow()
+        debugData.timeToExpire = timeToExpire
+      }
+
+      debugData.differenceCreatedToExpire = Number(rawSession?.expire) - Number(rawSession?.created)
+
+      addTelemetryDebug('Unexpected session state', debugData)
     }
 
     return {
