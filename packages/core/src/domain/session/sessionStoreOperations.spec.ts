@@ -2,7 +2,13 @@ import { mockClock } from '../../../test'
 import type { Configuration } from '../configuration'
 import type { SessionState } from './sessionState'
 import { expandSessionState, getExpiredSessionState } from './sessionState'
-import { processSessionStoreOperations, LOCK_MAX_TRIES, LOCK_RETRY_DELAY } from './sessionStoreOperations'
+import {
+  processSessionStoreOperations,
+  LOCK_MAX_TRIES,
+  LOCK_RETRY_DELAY,
+  createLock,
+  LOCK_EXPIRATION_DELAY,
+} from './sessionStoreOperations'
 
 const EXPIRED_SESSION: SessionState = { isExpired: '1', anonymousId: '0' }
 
@@ -126,7 +132,7 @@ describe('sessionStoreOperations', () => {
         const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
         sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex, {
           ...initialSession,
-          lock: 'locked',
+          lock: createLock(),
         })
         sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex + 1, {
           ...initialSession,
@@ -167,7 +173,7 @@ describe('sessionStoreOperations', () => {
 
       const sessionStoreStrategy = createFakeSessionStoreStrategy({
         isLockEnabled: true,
-        initialSession: { ...initialSession, lock: 'locked' },
+        initialSession: { ...initialSession, lock: createLock() },
       })
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
@@ -181,7 +187,7 @@ describe('sessionStoreOperations', () => {
     it('should execute cookie accesses in order', (done) => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({
         isLockEnabled: true,
-        initialSession: { ...initialSession, lock: 'locked' },
+        initialSession: { ...initialSession, lock: createLock() },
       })
       sessionStoreStrategy.planRetrieveSession(1, initialSession)
 
@@ -203,6 +209,27 @@ describe('sessionStoreOperations', () => {
         },
         sessionStoreStrategy
       )
+    })
+
+    it('ignores locks set by an older version of the SDK (without creation date)', () => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({
+        isLockEnabled: true,
+        initialSession: { ...initialSession, lock: 'locked' },
+      })
+
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
+      expect(processSpy).toHaveBeenCalled()
+    })
+
+    it('ignores expired locks', () => {
+      const clock = mockClock()
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({
+        isLockEnabled: true,
+        initialSession: { ...initialSession, lock: createLock() },
+      })
+      clock.tick(LOCK_EXPIRATION_DELAY + 1)
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
+      expect(processSpy).toHaveBeenCalled()
     })
   })
 })
