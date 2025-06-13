@@ -51,30 +51,3 @@ The RUM integration is handled through the `rum` option in the provider configur
 2. Log exposures in RUM when `ddExposureLogging` is enabled
 
 The integration uses a factory function pattern that provides a clean abstraction over the RUM SDK calls while maintaining the same functionality.
-
-## Integration with RUM feature flag tracking
-
-```typescript
-// Initialize RUM with experimental feature flags tracking
-import { datadogRum } from '@datadog/browser-rum';
-import { createDatadogRumIntegration } from '@datadog/openfeature-provider';
-
-// Initialize Datadog Browser SDK
-datadogRum.init({
-  ...
-  enableExperimentalFeatures: ["feature_flags"],
-  ...
-});
-
-// Create the RUM integration
-const rumIntegration = createDatadogRumIntegration();
-
-// Add OpenFeature hook
-OpenFeature.addHooks({
-  after(_hookContext: HookContext, details: EvaluationDetails<FlagValue>) {
-    rumIntegration.trackFeatureFlag(details.flagKey, details.value)
-  }
-})
-```
-
-The RUM integration is handled through a factory function that returns an object conforming to the `RumIntegration` interface. This provides better abstraction and testability while maintaining a simple functional approach.
