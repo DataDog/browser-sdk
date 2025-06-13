@@ -15,9 +15,9 @@ import { OpenFeature, ProviderStatus } from '@openfeature/web-sdk'
 
 import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
-import { DDRum, newDatadogRumIntegration } from './rum-integration'
+import { DDRum } from './rum-integration'
 
-export interface DatadogProviderOptions {
+export type DatadogProviderOptions = {
   /**
    * The RUM application ID.
    */
@@ -73,24 +73,24 @@ export class DatadogProvider implements Provider {
     const logExposures = options.rum?.ddExposureLogging ?? false
 
     if (options.rum) {
-      // Integrate with the RUM SDK
-      const rumIntegration = newDatadogRumIntegration(options.rum.sdk)
-
+      const rum = options.rum.sdk;
       // Add OpenFeature hook
       OpenFeature.addHooks({
         after(_hookContext: HookContext, details: EvaluationDetails<FlagValue>) {
           if (trackFlags) {
-            // Integrate with existing RUM flagging tracking
-            rumIntegration.trackFeatureFlag(details.flagKey, details.value)
+            // Track feature flag evaluation
+            rum.addFeatureFlagEvaluation(details.flagKey, details.value)
           }
           if (logExposures) {
-            rumIntegration.trackExposure({
-              flagKey: details.flagKey,
-              allocationKey: details.flagMetadata?.allocationKey as string ?? '',
-              exposureKey: `${details.flagKey}-${details.flagMetadata?.allocationKey}`,
-              subjectKey: _hookContext.context.targetingKey,
-              subjectAttributes: _hookContext.context,
-              variantKey: details.variant,
+            // Log exposure
+            rum.addAction('__dd_exposure', {
+              timestamp: Date.now(),
+              flag_key: details.flagKey,
+              allocation_key: details.flagMetadata?.allocationKey as string ?? '',
+              exposure_key: `${details.flagKey}-${details.flagMetadata?.allocationKey}`,
+              subject_key: _hookContext.context.targetingKey,
+              subject_attributes: _hookContext.context,
+              variant_key: details.variant,
             })
           }
         }
