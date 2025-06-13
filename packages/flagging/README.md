@@ -49,5 +49,3 @@ The RUM integration is handled through the `rum` option in the provider configur
 
 1. Track feature flag evaluations in RUM when `ddFlaggingTracking` is enabled
 2. Log exposures in RUM when `ddExposureLogging` is enabled
-
-The integration uses a factory function pattern that provides a clean abstraction over the RUM SDK calls while maintaining the same functionality.
