@@ -10,7 +10,7 @@ describe('DatadogProvider', () => {
     provider = new DatadogProvider({
       applicationId: 'xxx',
       clientToken: 'xxx',
-      baseUrl: 'http://localhost:8000',
+      site: 'http://localhost:8000',
     })
     mockLogger = {
       debug: jasmine.createSpy('debug'),

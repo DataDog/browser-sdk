@@ -23,7 +23,10 @@ export type DatadogProviderOptions = {
    */
   clientToken: string
 
-  baseUrl?: string
+  /**
+   * The site to use for the Datadog API.
+   */
+  site?: string
 
   initialConfiguration?: Configuration
 }
@@ -109,7 +112,7 @@ export class DatadogProvider implements Provider {
 }
 
 async function fetchConfiguration(options: DatadogProviderOptions, context: EvaluationContext): Promise<Configuration> {
-  const baseUrl = options.baseUrl || 'https://dd.datad0g.com'
+  const baseUrl = options.site || 'https://dd.datad0g.com'
 
   const parameters = [`application_id=${options.applicationId}`, `client_token=${options.clientToken}`]
 
