@@ -134,6 +134,7 @@ export {
   willSyntheticsInjectRum,
   getSyntheticsTestId,
   getSyntheticsResultId,
+  isSyntheticsTest,
 } from './domain/synthetics/syntheticsWorkerValues'
 export type { User } from './domain/user.types'
 export type { Account } from './domain/account.types'
