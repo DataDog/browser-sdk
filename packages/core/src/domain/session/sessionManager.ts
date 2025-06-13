@@ -92,9 +92,11 @@ export function startSessionManager<TrackingType extends string>(
   function buildSessionContext() {
     const session = sessionStore.getSession()
 
-    addTelemetryDebug('Session Cookie', {
-      session: retrieveSessionCookie(),
-    })
+    if (!session) {
+      addTelemetryDebug('Unexpected session state', {
+        session: retrieveSessionCookie(),
+      })
+    }
 
     return {
       id: session.id!,
