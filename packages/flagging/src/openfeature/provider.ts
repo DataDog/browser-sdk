@@ -57,10 +57,6 @@ export interface DatadogProviderOptions {
 // which requires class methods and properties. This is a valid exception to the no-classes rule.
 /* eslint-disable-next-line no-restricted-syntax */
 export class DatadogProvider implements Provider {
-  private readonly dd_flagging_tracking: boolean
-  private readonly dd_exposure_logging: boolean
-  private evaluationContext: EvaluationContext = {}
-
   readonly metadata: ProviderMetadata = {
     name: 'datadog',
   }
@@ -73,29 +69,27 @@ export class DatadogProvider implements Provider {
 
   constructor(options: DatadogProviderOptions) {
     this.options = options
-    this.dd_flagging_tracking = options.rum?.ddFlaggingTracking ?? false
-    this.dd_exposure_logging = options.rum?.ddExposureLogging ?? false
+    const trackFlags = options.rum?.ddFlaggingTracking ?? false
+    const logExposures = options.rum?.ddExposureLogging ?? false
 
     if (options.rum) {
       // Integrate with the RUM SDK
       const rumIntegration = newDatadogRumIntegration(options.rum.sdk)
 
-      const flaggingProvider = this;
-
       // Add OpenFeature hook
       OpenFeature.addHooks({
         after(_hookContext: HookContext, details: EvaluationDetails<FlagValue>) {
-          if (flaggingProvider.dd_flagging_tracking) {
+          if (trackFlags) {
             // Integrate with existing RUM flagging tracking
             rumIntegration.trackFeatureFlag(details.flagKey, details.value)
           }
-          if (flaggingProvider.dd_exposure_logging) {
+          if (logExposures) {
             rumIntegration.trackExposure({
               flagKey: details.flagKey,
               allocationKey: details.flagMetadata?.allocationKey as string ?? '',
               exposureKey: `${details.flagKey}-${details.flagMetadata?.allocationKey}`,
               subjectKey: _hookContext.context.targetingKey,
-              subjectAttributes: flaggingProvider.evaluationContext,
+              subjectAttributes: _hookContext.context,
               variantKey: details.variant,
             })
           }
