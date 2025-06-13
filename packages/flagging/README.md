@@ -33,6 +33,7 @@ const flagEval = client.getBooleanValue('<FLAG_KEY>', false)
 ```typescript
 // Initialize RUM with experimental feature flags tracking
 import { datadogRum } from '@datadog/browser-rum';
+import { createDatadogRumIntegration } from '@datadog/openfeature-provider';
 
 // Initialize Datadog Browser SDK
 datadogRum.init({
@@ -41,10 +42,15 @@ datadogRum.init({
   ...
 });
 
+// Create the RUM integration
+const rumIntegration = createDatadogRumIntegration();
+
 // Add OpenFeature hook
 OpenFeature.addHooks({
   after(_hookContext: HookContext, details: EvaluationDetails<FlagValue>) {
-    datadogRum.addFeatureFlagEvaluation(details.flagKey, details.value)
+    rumIntegration.trackFeatureFlag(details.flagKey, details.value)
   }
 })
 ```
+
+The RUM integration is handled through a factory function that returns an object conforming to the `RumIntegration` interface. This provides better abstraction and testability while maintaining a simple functional approach.

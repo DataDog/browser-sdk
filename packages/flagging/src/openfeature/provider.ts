@@ -6,12 +6,18 @@ import type {
   Paradigm,
   ProviderMetadata,
   ResolutionDetails,
+  HookContext,
+  EvaluationDetails,
+  FlagValue,
 } from '@openfeature/web-sdk'
 /* eslint-disable-next-line local-rules/disallow-side-effects */
-import { ProviderStatus } from '@openfeature/web-sdk'
+import { OpenFeature, ProviderStatus } from '@openfeature/web-sdk'
+
+import { datadogRum } from '@datadog/browser-rum'
 
 import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
+import { DDRum, newDatadogRumIntegration } from './rum-integration'
 
 export type DatadogProviderOptions = {
   /**
@@ -29,12 +35,33 @@ export type DatadogProviderOptions = {
   site?: string
 
   initialConfiguration?: Configuration
+
+  // RUM-related options
+
+  /**
+   * Whether to use the Flagging Tracking feature of the RUM 
+   */
+  ddFlaggingTracking?: boolean
+
+  /**
+   * Whether to log exposures to RUM
+   */
+  ddExposureLogging?: boolean
+
+  /**
+   * Object satisfying the minimum required interface for the RUM SDK. Default is the global datadogRum object from `@datadog/browser-rum`.
+   */
+  ddRumSdk?: DDRum
 }
 
 // We need to use a class here to properly implement the OpenFeature Provider interface
 // which requires class methods and properties. This is a valid exception to the no-classes rule.
 /* eslint-disable-next-line no-restricted-syntax */
 export class DatadogProvider implements Provider {
+  private readonly dd_flagging_tracking: boolean
+  private readonly dd_exposure_logging: boolean
+  private evaluationContext: EvaluationContext = {}
+
   readonly metadata: ProviderMetadata = {
     name: 'datadog',
   }
@@ -47,6 +74,35 @@ export class DatadogProvider implements Provider {
 
   constructor(options: DatadogProviderOptions) {
     this.options = options
+    this.dd_flagging_tracking = options.ddFlaggingTracking ?? false
+    this.dd_exposure_logging = options.ddExposureLogging ?? false
+
+    if (this.dd_flagging_tracking || this.dd_exposure_logging) {
+      // Integrate with the RUM SDK
+      const rumIntegration = newDatadogRumIntegration(options?.ddRumSdk ?? datadogRum); // Need to inject the RUM SDK somehow.
+
+      const flaggingProvider = this;
+
+      // Add OpenFeature hook
+      OpenFeature.addHooks({
+        after(_hookContext: HookContext, details: EvaluationDetails<FlagValue>) {
+          if (flaggingProvider.dd_flagging_tracking) {
+            // Integrate with existing RUM flagging tracking
+            rumIntegration.trackFeatureFlag(details.flagKey, details.value)
+          }
+          if (flaggingProvider.dd_exposure_logging) {
+            rumIntegration.trackExposure({
+              flagKey: details.flagKey,
+              allocationKey: details.flagMetadata?.allocationKey as string ?? '',
+              exposureKey: `${details.flagKey}-${details.flagMetadata?.allocationKey}`,
+              subjectKey: _hookContext.context.targetingKey,
+              subjectAttributes: flaggingProvider.evaluationContext,
+              variantKey: details.variant,
+            })
+          }
+        }
+      })
+    }
 
     if (options.initialConfiguration) {
       this.configuration = options.initialConfiguration
