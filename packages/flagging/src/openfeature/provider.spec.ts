@@ -18,7 +18,11 @@ describe('DatadogProvider', () => {
       applicationId: 'xxx',
       clientToken: 'xxx',
       site: 'http://localhost:8000',
-      ddRumSdk: mockDatadogRum,
+      datadogRum: {
+        datadogRum: mockDatadogRum,
+        ddFlaggingTracking: false,
+        ddExposureLogging: false,
+      },
     })
     mockLogger = {
       debug: jasmine.createSpy('debug'),

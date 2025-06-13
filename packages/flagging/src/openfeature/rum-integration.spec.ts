@@ -1,14 +1,16 @@
-import { datadogRum } from '@datadog/browser-rum'
-import { DatadogRumAdapter } from './rum-integration'
+import { newDatadogRumIntegration } from './rum-integration'
 
-describe('DatadogRumAdapter', () => {
-  let adapter: DatadogRumAdapter
+const mockDatadogRum = {
+  addFeatureFlagEvaluation: jasmine.createSpy('addFeatureFlagEvaluation'),
+  addAction: jasmine.createSpy('addAction'),
+}
+
+describe('DatadogRumIntegration', () => {
+  let rumIntegration: ReturnType<typeof newDatadogRumIntegration>
 
   beforeEach(() => {
-    adapter = new DatadogRumAdapter()
-    // Mock datadogRum methods
-    spyOn(datadogRum, 'addFeatureFlagEvaluation')
-    spyOn(datadogRum, 'addAction')
+    // Mock RUM SDK methods
+    rumIntegration = newDatadogRumIntegration(mockDatadogRum)
   })
 
   describe('trackFeatureFlag', () => {
@@ -16,9 +18,9 @@ describe('DatadogRumAdapter', () => {
       const flagKey = 'test-flag'
       const value = true
 
-      adapter.trackFeatureFlag(flagKey, value)
+      rumIntegration.trackFeatureFlag(flagKey, value)
 
-      expect(datadogRum.addFeatureFlagEvaluation).toHaveBeenCalledWith(flagKey, value)
+      expect(mockDatadogRum.addFeatureFlagEvaluation).toHaveBeenCalledWith(flagKey, value)
     })
   })
 
@@ -34,9 +36,9 @@ describe('DatadogRumAdapter', () => {
         metadata: { source: 'test' }
       }
 
-      adapter.trackExposure(params)
+      rumIntegration.trackExposure(params)
 
-      expect(datadogRum.addAction).toHaveBeenCalledWith('__dd_exposure', {
+      expect(mockDatadogRum.addAction).toHaveBeenCalledWith('__dd_exposure', {
         timestamp: 0,
         flag_key: params.flagKey,
         allocation_key: params.allocationKey,
@@ -54,9 +56,9 @@ describe('DatadogRumAdapter', () => {
         exposureKey: 'test-flag-test-allocation'
       }
 
-      adapter.trackExposure(params)
+      rumIntegration.trackExposure(params)
 
-      expect(datadogRum.addAction).toHaveBeenCalledWith('__dd_exposure', {
+      expect(mockDatadogRum.addAction).toHaveBeenCalledWith('__dd_exposure', {
         timestamp: 0,
         flag_key: params.flagKey,
         exposure_key: params.exposureKey,

@@ -13,8 +13,6 @@ import type {
 /* eslint-disable-next-line local-rules/disallow-side-effects */
 import { OpenFeature, ProviderStatus } from '@openfeature/web-sdk'
 
-import { datadogRum } from '@datadog/browser-rum'
-
 import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
 import { DDRum, newDatadogRumIntegration } from './rum-integration'
@@ -37,21 +35,22 @@ export type DatadogProviderOptions = {
   initialConfiguration?: Configuration
 
   // RUM-related options
+  datadogRum?: {
+    /**
+     * Whether to use the Flagging Tracking feature of the RUM 
+     */
+    ddFlaggingTracking?: boolean
 
-  /**
-   * Whether to use the Flagging Tracking feature of the RUM 
-   */
-  ddFlaggingTracking?: boolean
+    /**
+     * Whether to log exposures to RUM
+     */
+    ddExposureLogging?: boolean
 
-  /**
-   * Whether to log exposures to RUM
-   */
-  ddExposureLogging?: boolean
-
-  /**
-   * Object satisfying the minimum required interface for the RUM SDK. Default is the global datadogRum object from `@datadog/browser-rum`.
-   */
-  ddRumSdk?: DDRum
+    /**
+     * Object satisfying the minimum required interface for the RUM SDK. Default is the global datadogRum object from `@datadog/browser-rum`.
+     */
+    datadogRum: DDRum
+  }
 }
 
 // We need to use a class here to properly implement the OpenFeature Provider interface
@@ -74,12 +73,12 @@ export class DatadogProvider implements Provider {
 
   constructor(options: DatadogProviderOptions) {
     this.options = options
-    this.dd_flagging_tracking = options.ddFlaggingTracking ?? false
-    this.dd_exposure_logging = options.ddExposureLogging ?? false
+    this.dd_flagging_tracking = options.datadogRum?.ddFlaggingTracking ?? false
+    this.dd_exposure_logging = options.datadogRum?.ddExposureLogging ?? false
 
-    if (this.dd_flagging_tracking || this.dd_exposure_logging) {
+    if (options.datadogRum) {
       // Integrate with the RUM SDK
-      const rumIntegration = newDatadogRumIntegration(options?.ddRumSdk ?? datadogRum); // Need to inject the RUM SDK somehow.
+      const rumIntegration = newDatadogRumIntegration(options.datadogRum.datadogRum)
 
       const flaggingProvider = this;
 
