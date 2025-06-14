@@ -25,7 +25,7 @@ describe('httpRequest', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
   })
 
   describe('send', () => {
@@ -244,7 +244,7 @@ describe('httpRequest intake parameters', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
   })
 
   it('should have a unique request id', async () => {

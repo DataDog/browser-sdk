@@ -108,7 +108,7 @@ export function startRum(
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushObservable)
+    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }

@@ -70,7 +70,7 @@ export {
   getEventBridge,
   bridgeSupports,
   BridgeCapability,
-  startBatchWithReplica,
+  createBatch,
   createFlushController,
 } from './transport'
 export * from './tools/display'
