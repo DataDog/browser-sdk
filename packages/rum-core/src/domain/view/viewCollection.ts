@@ -138,6 +138,11 @@ function processViewUpdate(
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,
     },
+    device: {
+      locale: navigator.language,
+      locales: navigator?.languages ?? [],
+      time_zone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
   }
 
   if (!isEmptyObject(view.customTimings)) {
