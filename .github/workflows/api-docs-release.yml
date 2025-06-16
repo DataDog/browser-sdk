@@ -8,7 +8,7 @@ permissions:
 on:
   push:
     branches:
-      - romanG/api-reference   
+      - romanG/api-reference-github
     tags:
       - 'v*.*.*'
   workflow_dispatch:

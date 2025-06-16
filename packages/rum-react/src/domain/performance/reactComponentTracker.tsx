@@ -3,7 +3,7 @@ import { createTimer } from './timer'
 import { addDurationVital } from './addDurationVital'
 
 /**
- * Experimental component that tracks the render lifecycle of its children 
+ * Experimental component that tracks the render lifecycle of its children
  * and reports a duration vital named `reactComponentRender`.
  */
 // eslint-disable-next-line

@@ -12,19 +12,19 @@ function titleFromContent(content, fallback) {
 
 function addJekyllFrontMatter(content, filename) {
   const title = titleFromContent(content, path.basename(filename, '.md'))
-  return (
-    `---\n` +
-    `layout: default\n` +
-    `title: "${title}"\n` +
-    `nav_order: ${navOrder++}\n` +
-    `permalink: /${filename.replace('.md', '.html')}\n` +
-    `---\n\n` +
-    content
-  )
+  return `---
+layout: default
+title: "${title}"
+nav_order: ${navOrder++}
+permalink: /${filename.replace('.md', '.html')}
+---
+
+${content}`
 }
 
 function cleanMarkdownForJekyll(md) {
   return md
+    .replace(/[“”]/g, '"')
     .replace(/_\(Optional\)_/g, '(Optional)')
     .replace(/\[([^\]]+)]\(\s*(https?:\/\/[^\s)]+?)\s*\)/g, (_, label, rawUrl) => {
       const url = rawUrl.replace(/\\([)#])/g, '$1')
@@ -37,7 +37,7 @@ function cleanMarkdownForJekyll(md) {
         return `<a href="{{ "/${file}" | relative_url }}">${txt}</a>`
       }
     )
-    .replace(/\\([_*`\\])/g, '$1')
+    .replace(/\\([_*`\\<>])/g, '$1')
     .replace(/\\\|/g, '|')
 }
 
@@ -48,19 +48,12 @@ function processDocFile(file) {
   fs.writeFileSync(file, content, 'utf8')
 }
 
-function cleanupMarkdownFiles() {
-  globSync(`${DOCS_DIR}/*.md`)
-    .filter((f) => !f.endsWith('index.md'))
-    .forEach((f) => {
-      fs.unlinkSync(f)
-    })
-}
-
-function main() {
+function runMain() {
   const files = globSync(`${DOCS_DIR}/*.md`)
   files.forEach(processDocFile)
-  if (process.env.CLEANUP_MD === 'true') cleanupMarkdownFiles()
 }
 
-if (require.main === module) main()
+if (require.main === module) {
+  runMain()
+}
 module.exports = { addJekyllFrontMatter, cleanMarkdownForJekyll }

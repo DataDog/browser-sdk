@@ -198,7 +198,7 @@
                 },
                 {
                   "kind": "Content",
-                  "text": "{\n        readonly format_version: 2;\n        session?: {\n            plan?: 1 | 2;\n            readonly session_precondition?: 'user_app_launch' | 'inactivity_timeout' | 'max_duration' | 'background_launch' | 'prewarm' | 'from_non_interactive_session' | 'explicit_stop';\n            [k: string]: unknown;\n        };\n        readonly configuration?: {\n            readonly session_sample_rate: number;\n            readonly session_replay_sample_rate?: number;\n            [k: string]: unknown;\n        };\n        readonly browser_sdk_version?: string;\n        [k: string]: unknown;\n    }"
+                  "text": "{\n        readonly format_version: 2;\n        session?: {\n            plan?: 1 | 2;\n            readonly session_precondition?: 'user_app_launch' | 'inactivity_timeout' | 'max_duration' | 'background_launch' | 'prewarm' | 'from_non_interactive_session' | 'explicit_stop';\n            [k: string]: unknown;\n        };\n        readonly configuration?: {\n            readonly session_sample_rate: number;\n            readonly session_replay_sample_rate?: number;\n            readonly profiling_sample_rate?: number;\n            [k: string]: unknown;\n        };\n        readonly browser_sdk_version?: string;\n        readonly sdk_name?: string;\n        [k: string]: unknown;\n    }"
                 },
                 {
                   "kind": "Content",
@@ -485,7 +485,7 @@
                 },
                 {
                   "kind": "Content",
-                  "text": "{\n        readonly type: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other';\n        readonly name?: string;\n        readonly model?: string;\n        readonly brand?: string;\n        readonly architecture?: string;\n        [k: string]: unknown;\n    }"
+                  "text": "{\n        readonly type?: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other';\n        readonly name?: string;\n        readonly model?: string;\n        readonly brand?: string;\n        readonly architecture?: string;\n        readonly locale?: string;\n        readonly locales?: string[];\n        readonly time_zone?: string;\n        [k: string]: unknown;\n    }"
                 },
                 {
                   "kind": "Content",
@@ -922,7 +922,7 @@
             },
             {
               "kind": "Content",
-              "text": " & {\n    readonly type: 'error';\n    readonly error: {\n        readonly id?: string;\n        message: string;\n        readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report';\n        stack?: string;\n        causes?: {\n            message: string;\n            readonly type?: string;\n            stack?: string;\n            readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report';\n            [k: string]: unknown;\n        }[];\n        readonly is_crash?: boolean;\n        fingerprint?: string;\n        readonly type?: string;\n        readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning';\n        readonly handling?: 'handled' | 'unhandled';\n        readonly handling_stack?: string;\n        readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku' | 'ndk' | 'ios+il2cpp' | 'ndk+il2cpp';\n        readonly resource?: {\n            readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT';\n            readonly status_code: number;\n            url: string;\n            readonly provider?: {\n                readonly domain?: string;\n                readonly name?: string;\n                readonly type?: 'ad' | 'advertising' | 'analytics' | 'cdn' | 'content' | 'customer-success' | 'first party' | 'hosting' | 'marketing' | 'other' | 'social' | 'tag-manager' | 'utility' | 'video';\n                [k: string]: unknown;\n            };\n            [k: string]: unknown;\n        };\n        threads?: {\n            readonly name: string;\n            readonly crashed: boolean;\n            readonly stack: string;\n            readonly state?: string;\n            [k: string]: unknown;\n        }[];\n        readonly binary_images?: {\n            readonly uuid: string;\n            readonly name: string;\n            readonly is_system: boolean;\n            readonly load_address?: string;\n            readonly max_address?: string;\n            readonly arch?: string;\n            [k: string]: unknown;\n        }[];\n        readonly was_truncated?: boolean;\n        readonly meta?: {\n            readonly code_type?: string;\n            readonly parent_process?: string;\n            readonly incident_identifier?: string;\n            readonly process?: string;\n            readonly exception_type?: string;\n            readonly exception_codes?: string;\n            readonly path?: string;\n            [k: string]: unknown;\n        };\n        readonly csp?: {\n            readonly disposition?: 'enforce' | 'report';\n            [k: string]: unknown;\n        };\n        readonly time_since_app_start?: number;\n        [k: string]: unknown;\n    };\n    readonly freeze?: {\n        readonly duration: number;\n        [k: string]: unknown;\n    };\n    readonly view?: {\n        readonly in_foreground?: boolean;\n        [k: string]: unknown;\n    };\n    readonly feature_flags?: {\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+              "text": " & {\n    readonly type: 'error';\n    readonly error: {\n        readonly id?: string;\n        message: string;\n        readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report';\n        stack?: string;\n        causes?: {\n            message: string;\n            readonly type?: string;\n            stack?: string;\n            readonly source: 'network' | 'source' | 'console' | 'logger' | 'agent' | 'webview' | 'custom' | 'report';\n            [k: string]: unknown;\n        }[];\n        readonly is_crash?: boolean;\n        fingerprint?: string;\n        readonly type?: string;\n        readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning' | 'Network';\n        readonly handling?: 'handled' | 'unhandled';\n        readonly handling_stack?: string;\n        readonly source_type?: 'android' | 'browser' | 'ios' | 'react-native' | 'flutter' | 'roku' | 'ndk' | 'ios+il2cpp' | 'ndk+il2cpp';\n        readonly resource?: {\n            readonly method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH' | 'TRACE' | 'OPTIONS' | 'CONNECT';\n            readonly status_code: number;\n            url: string;\n            readonly provider?: {\n                readonly domain?: string;\n                readonly name?: string;\n                readonly type?: 'ad' | 'advertising' | 'analytics' | 'cdn' | 'content' | 'customer-success' | 'first party' | 'hosting' | 'marketing' | 'other' | 'social' | 'tag-manager' | 'utility' | 'video';\n                [k: string]: unknown;\n            };\n            [k: string]: unknown;\n        };\n        threads?: {\n            readonly name: string;\n            readonly crashed: boolean;\n            readonly stack: string;\n            readonly state?: string;\n            [k: string]: unknown;\n        }[];\n        readonly binary_images?: {\n            readonly uuid: string;\n            readonly name: string;\n            readonly is_system: boolean;\n            readonly load_address?: string;\n            readonly max_address?: string;\n            readonly arch?: string;\n            [k: string]: unknown;\n        }[];\n        readonly was_truncated?: boolean;\n        readonly meta?: {\n            readonly code_type?: string;\n            readonly parent_process?: string;\n            readonly incident_identifier?: string;\n            readonly process?: string;\n            readonly exception_type?: string;\n            readonly exception_codes?: string;\n            readonly path?: string;\n            [k: string]: unknown;\n        };\n        readonly csp?: {\n            readonly disposition?: 'enforce' | 'report';\n            [k: string]: unknown;\n        };\n        readonly time_since_app_start?: number;\n        [k: string]: unknown;\n    };\n    readonly freeze?: {\n        readonly duration: number;\n        [k: string]: unknown;\n    };\n    readonly view?: {\n        readonly in_foreground?: boolean;\n        [k: string]: unknown;\n    };\n    readonly feature_flags?: {\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
             },
             {
               "kind": "Content",
@@ -3173,6 +3173,33 @@
             },
             {
               "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#trackBfcacheViews:member",
+              "docComment": "/**\n * Enable the creation of dedicated views for pages restored from the Back-Forward cache.  @default false\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "trackBfcacheViews?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "trackBfcacheViews",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-rum!RumInitConfiguration#trackFeatureFlagsForEvents:member",
               "docComment": "/**\n * Enables collection of features flags in chosen events.\n */\n",
               "excerptTokens": [
@@ -3380,7 +3407,16 @@
             },
             {
               "kind": "Content",
-              "text": " & {\n    readonly type: 'long_task';\n    readonly long_task: {\n        readonly id?: string;\n        readonly start_time?: number;\n        readonly entry_type?: 'long-task' | 'long-animation-frame';\n        readonly duration: number;\n        readonly blocking_duration?: number;\n        readonly render_start?: number;\n        readonly style_and_layout_start?: number;\n        readonly first_ui_event_timestamp?: number;\n        readonly is_frozen_frame?: boolean;\n        readonly scripts?: {\n            readonly duration?: number;\n            readonly pause_duration?: number;\n            readonly forced_style_and_layout_duration?: number;\n            readonly start_time?: number;\n            readonly execution_start?: number;\n            source_url?: string;\n            readonly source_function_name?: string;\n            readonly source_char_position?: number;\n            invoker?: string;\n            readonly invoker_type?: 'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script';\n            readonly window_attribution?: string;\n            [k: string]: unknown;\n        }[];\n        [k: string]: unknown;\n    };\n    readonly _dd?: {\n        readonly discarded?: boolean;\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+              "text": " & {\n    readonly type: 'long_task';\n    readonly long_task: {\n        readonly id?: string;\n        readonly start_time?: number;\n        readonly entry_type?: 'long-task' | 'long-animation-frame';\n        readonly duration: number;\n        readonly blocking_duration?: number;\n        readonly render_start?: number;\n        readonly style_and_layout_start?: number;\n        readonly first_ui_event_timestamp?: number;\n        readonly is_frozen_frame?: boolean;\n        readonly scripts?: {\n            readonly duration?: number;\n            readonly pause_duration?: number;\n            readonly forced_style_and_layout_duration?: number;\n            readonly start_time?: number;\n            readonly execution_start?: number;\n            source_url?: string;\n            readonly source_function_name?: string;\n            readonly source_char_position?: number;\n            invoker?: string;\n            readonly invoker_type?: 'user-callback' | 'event-listener' | 'resolve-promise' | 'reject-promise' | 'classic-script' | 'module-script';\n            readonly window_attribution?: string;\n            [k: string]: unknown;\n        }[];\n        [k: string]: unknown;\n    };\n    readonly _dd?: {\n        readonly discarded?: boolean;\n        profiling?: "
+            },
+            {
+              "kind": "Reference",
+              "text": "ProfilingInternalContextSchema",
+              "canonicalReference": "@datadog/browser-rum!ProfilingInternalContextSchema:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ";\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
             },
             {
               "kind": "Content",
@@ -3392,7 +3428,7 @@
           "name": "RumLongTaskEvent",
           "typeTokenRange": {
             "startIndex": 1,
-            "endIndex": 7
+            "endIndex": 9
           }
         },
         {
@@ -3597,7 +3633,16 @@
             },
             {
               "kind": "Content",
-              "text": ";\n        [k: string]: unknown;\n    };\n    readonly session?: {\n        readonly is_active?: boolean;\n        readonly sampled_for_replay?: boolean;\n        [k: string]: unknown;\n    };\n    readonly feature_flags?: {\n        [k: string]: unknown;\n    };\n    readonly privacy?: {\n        readonly replay_level: 'allow' | 'mask' | 'mask-user-input';\n        [k: string]: unknown;\n    };\n    readonly _dd: {\n        readonly document_version: number;\n        readonly page_states?: {\n            readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated';\n            readonly start: number;\n            [k: string]: unknown;\n        }[];\n        replay_stats?: {\n            records_count?: number;\n            segments_count?: number;\n            segments_total_raw_size?: number;\n            [k: string]: unknown;\n        };\n        readonly cls?: {\n            readonly device_pixel_ratio?: number;\n            [k: string]: unknown;\n        };\n        readonly configuration?: {\n            readonly start_session_replay_recording_manually?: boolean;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    readonly display?: {\n        readonly scroll?: {\n            readonly max_depth: number;\n            readonly max_depth_scroll_top: number;\n            readonly max_scroll_height: number;\n            readonly max_scroll_height_time: number;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
+              "text": ";\n        [k: string]: unknown;\n    };\n    readonly session?: {\n        readonly is_active?: boolean;\n        readonly sampled_for_replay?: boolean;\n        [k: string]: unknown;\n    };\n    readonly feature_flags?: {\n        [k: string]: unknown;\n    };\n    readonly privacy?: {\n        readonly replay_level: 'allow' | 'mask' | 'mask-user-input';\n        [k: string]: unknown;\n    };\n    readonly _dd: {\n        readonly document_version: number;\n        readonly page_states?: {\n            readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated';\n            readonly start: number;\n            [k: string]: unknown;\n        }[];\n        replay_stats?: {\n            records_count?: number;\n            segments_count?: number;\n            segments_total_raw_size?: number;\n            [k: string]: unknown;\n        };\n        readonly cls?: {\n            readonly device_pixel_ratio?: number;\n            [k: string]: unknown;\n        };\n        readonly configuration?: {\n            readonly start_session_replay_recording_manually?: boolean;\n            [k: string]: unknown;\n        };\n        profiling?: "
+            },
+            {
+              "kind": "Reference",
+              "text": "ProfilingInternalContextSchema",
+              "canonicalReference": "@datadog/browser-rum!ProfilingInternalContextSchema:interface"
+            },
+            {
+              "kind": "Content",
+              "text": ";\n        [k: string]: unknown;\n    };\n    readonly display?: {\n        readonly scroll?: {\n            readonly max_depth: number;\n            readonly max_depth_scroll_top: number;\n            readonly max_scroll_height: number;\n            readonly max_scroll_height_time: number;\n            [k: string]: unknown;\n        };\n        [k: string]: unknown;\n    };\n    [k: string]: unknown;\n}"
             },
             {
               "kind": "Content",
@@ -3609,7 +3654,7 @@
           "name": "RumViewEvent",
           "typeTokenRange": {
             "startIndex": 1,
-            "endIndex": 13
+            "endIndex": 15
           }
         },
         {

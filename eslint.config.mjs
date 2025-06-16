@@ -26,6 +26,7 @@ export default tseslint.config(
       'packages/*/cjs',
       'packages/*/esm',
       'developer-extension/dist',
+      '_site',
       'test/**/dist',
       'sandbox',
       'coverage',

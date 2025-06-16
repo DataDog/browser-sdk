@@ -2235,6 +2235,33 @@
             },
             {
               "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#user_action:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "user_action?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        id: string | string[];\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "user_action",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
               "canonicalReference": "@datadog/browser-logs!LogsEvent#view:member",
               "docComment": "/**\n * View properties\n */\n",
               "excerptTokens": [
@@ -2244,7 +2271,7 @@
                 },
                 {
                   "kind": "Content",
-                  "text": "{\n        referrer?: string;\n        url: string;\n        id?: string;\n        [k: string]: unknown;\n    }"
+                  "text": "{\n        referrer?: string;\n        url: string;\n        id?: string;\n        name?: string;\n        [k: string]: unknown;\n    }"
                 },
                 {
                   "kind": "Content",
