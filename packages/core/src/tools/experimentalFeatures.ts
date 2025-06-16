@@ -14,7 +14,6 @@ import { objectHasValue } from './utils/objectUtils'
 
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
-  PROFILING = 'profiling',
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
 }
