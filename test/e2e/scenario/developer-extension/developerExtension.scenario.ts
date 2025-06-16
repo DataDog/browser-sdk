@@ -1,6 +1,5 @@
 import path from 'path'
 import { expect } from '@playwright/test'
-import type { Page } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 
 createTest('should switch between tabs')
