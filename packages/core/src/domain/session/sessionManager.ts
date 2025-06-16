@@ -95,16 +95,14 @@ export function startSessionManager<TrackingType extends string>(
 
     if (!session) {
       const rawSession = retrieveSessionCookie()
-      const debugData: any = {
+
+      addTelemetryDebug('Unexpected session state', {
         session: rawSession,
         isSyntheticsTest: isSyntheticsTest(),
         createdTimestamp: rawSession?.created,
         expireTimestamp: rawSession?.expire,
-      }
+      })
 
-      debugData.differenceCreatedToExpire = Number(rawSession?.expire) - Number(rawSession?.created)
-
-      addTelemetryDebug('Unexpected session state', debugData)
       return {
         id: 'invalid',
         trackingType: SESSION_NOT_TRACKED as TrackingType,
