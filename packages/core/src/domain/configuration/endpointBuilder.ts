@@ -99,12 +99,10 @@ function buildEndpointParameters(
   }
 
   if (trackType === 'rum') {
-    parameters.push(`batch_time=${timeStampNow()}`)
-    parameters.push(`_dd.api=${api}`)
+    parameters.push(`batch_time=${timeStampNow()}`, `_dd.api=${api}`)
 
     if (retry) {
-      parameters.push(`_dd.retry_count=${retry.count}`)
-      parameters.push(`_dd.retry_after=${retry.lastFailureStatus}`)
+      parameters.push(`_dd.retry_count=${retry.count}`, `_dd.retry_after=${retry.lastFailureStatus}`)
     }
   }
 

@@ -11,15 +11,7 @@ export function startTagContext(hooks: AbstractHooks, configuration: Configurati
 type ContextWithTags = { ddtags?: string } | undefined
 
 export function combineTags(a: ContextWithTags, b: ContextWithTags) {
-  let ddtags = a?.ddtags
-
-  if (b?.ddtags) {
-    if (ddtags && ddtags.length > 0) {
-      ddtags += `,${b.ddtags}`
-    } else {
-      ddtags = b.ddtags
-    }
-  }
-
-  return ddtags
+  const tagsA = a?.ddtags
+  const tagsB = b?.ddtags
+  return tagsA && tagsB ? `${tagsA},${tagsB}` : tagsA || tagsB
 }

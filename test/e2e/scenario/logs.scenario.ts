@@ -211,7 +211,11 @@ test.describe('logs', () => {
     })
 
   createTest('add tags from message context')
-    .withLogs()
+    .withLogs({
+      service: 'foo',
+      env: 'dev',
+      version: '1.0.0',
+    })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         window.DD_LOGS!.logger.log('hello world!', { ddtags: 'planet:earth' })
@@ -219,7 +223,9 @@ test.describe('logs', () => {
 
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
-      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),planet:earth$/)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(
+        /sdk_version:(.*),env:dev,service:foo,version:1.0.0,planet:earth$/
+      )
     })
 
   createTest('allow to modify events')
