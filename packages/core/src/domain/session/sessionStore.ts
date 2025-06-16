@@ -7,13 +7,13 @@ import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import type { SessionState } from './sessionState'
 import {
   getExpiredSessionState,
   isSessionInExpiredState,
   isSessionInNotStartedState,
   isSessionStarted,
 } from './sessionState'
-import type { SessionState } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
@@ -186,7 +186,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function hasSessionInCache() {
-    return sessionCache[productKey] !== undefined
+    return sessionCache && sessionCache[productKey] !== undefined
   }
 
   function isSessionInCacheOutdated(sessionState: SessionState) {

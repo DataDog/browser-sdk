@@ -26,3 +26,7 @@ export function getSyntheticsResultId(): string | undefined {
     (window as BrowserWindow)._DATADOG_SYNTHETICS_RESULT_ID || getInitCookie(SYNTHETICS_RESULT_ID_COOKIE_NAME)
   return typeof value === 'string' ? value : undefined
 }
+
+export function isSyntheticsTest(): boolean {
+  return Boolean(getSyntheticsTestId() && getSyntheticsResultId())
+}

@@ -15,6 +15,7 @@ import {
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
+  setTimeout,
 } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
@@ -100,7 +101,10 @@ export function createPreStartStrategy(
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration
-    addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+    // FIXME temporary hack to avoid sending configuration without all the context data
+    setTimeout(() => {
+      addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+    })
 
     if (cachedConfiguration) {
       displayAlreadyInitializedError('DD_RUM', initConfiguration)
