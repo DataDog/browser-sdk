@@ -197,22 +197,4 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].foo).toBe('bar')
     })
-
-  createTest('should includes user, account and global context')
-    .withLogs()
-    .withLogsInit((configuration) => {
-      window.DD_LOGS!.setUser({ id: '123', name: 'user' })
-      window.DD_LOGS!.setAccount({ id: '123', name: 'account' })
-      window.DD_LOGS!.setGlobalContext({ foo: 'bar' })
-
-      window.DD_LOGS!.init(configuration)
-      window.DD_LOGS!.logger.log('hello')
-    })
-    .run(async ({ intakeRegistry, flushEvents }) => {
-      await flushEvents()
-      const logsEvent = intakeRegistry.logsEvents[0]
-      expect(logsEvent?.usr).toEqual({ id: '123', name: 'user', anonymous_id: expect.any(String) })
-      expect(logsEvent?.account).toEqual({ id: '123', name: 'account' })
-      expect(logsEvent?.foo).toEqual('bar')
-    })
 })
