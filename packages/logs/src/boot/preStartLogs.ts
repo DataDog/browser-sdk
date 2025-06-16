@@ -13,6 +13,7 @@ import {
   bufferContextCalls,
   addTelemetryConfiguration,
   buildGlobalContextManager,
+  setTimeout,
 } from '@datadog/browser-core'
 import {
   serializeLogsConfiguration,
@@ -68,7 +69,9 @@ export function createPreStartStrategy(
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration
-      addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
+      setTimeout(() => {
+        addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
+      })
 
       if (cachedConfiguration) {
         displayAlreadyInitializedError('DD_LOGS', initConfiguration)
