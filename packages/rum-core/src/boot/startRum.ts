@@ -1,20 +1,11 @@
-import type {
-  Observable,
-  TelemetryEvent,
-  RawError,
-  DeflateEncoderStreamId,
-  Encoder,
-  TrackingConsentState,
-} from '@datadog/browser-core'
+import type { Observable, RawError, DeflateEncoderStreamId, Encoder, TrackingConsentState } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
   TelemetryService,
   startTelemetry,
   canUseEventBridge,
-  getEventBridge,
   addTelemetryDebug,
-  drainPreStartTelemetry,
   startAccountContext,
   startGlobalContext,
   startUserContext,
@@ -71,29 +62,14 @@ export function startRum(
   // collecting logs unconditionally. As such, `startRum` should be called with a
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
-  customVitalsState: CustomVitalsState
+  customVitalsState: CustomVitalsState,
+  sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
-
-  const telemetry = startRumTelemetry(configuration)
-  telemetry.setContextProvider(() => ({
-    application: {
-      id: configuration.applicationId,
-    },
-    session: {
-      id: session.findTrackedSession()?.id,
-    },
-    view: {
-      id: viewHistory.findView()?.id,
-    },
-    action: {
-      id: actionContexts.findActionId(),
-    },
-  }))
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
@@ -106,15 +82,26 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
+  const telemetry = startTelemetry(
+    TelemetryService.RUM,
+    configuration,
+    reportError,
+    pageMayExitObservable,
+    createEncoder
+  )
+  cleanupTasks.push(telemetry.stop)
+  telemetry.setContextProvider('application.id', () => configuration.applicationId)
+
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
+
+  telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
       lifeCycle,
-      telemetry.observable,
       reportError,
       pageMayExitObservable,
       session.expireObservable,
@@ -131,10 +118,11 @@ export function startRum(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  startDefaultContext(hooks, configuration)
+  startDefaultContext(hooks, configuration, sdkName)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
+  telemetry.setContextProvider('view.id', () => viewHistory.findView()?.id)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
@@ -158,8 +146,7 @@ export function startRum(
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
-
-  drainPreStartTelemetry()
+  telemetry.setContextProvider('action.id', () => actionContexts.findActionId())
 
   const {
     addTiming,
@@ -237,15 +224,6 @@ export function startRum(
       cleanupTasks.forEach((task) => task())
     },
   }
-}
-
-function startRumTelemetry(configuration: RumConfiguration) {
-  const telemetry = startTelemetry(TelemetryService.RUM, configuration)
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
-    telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
-  }
-  return telemetry
 }
 
 export function startRumEventCollection(

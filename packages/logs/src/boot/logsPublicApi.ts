@@ -209,7 +209,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     buildCommonContext,
     trackingConsentState,
     (initConfiguration, configuration) => {
-      const startLogsResult = startLogsImpl(initConfiguration, configuration, buildCommonContext, trackingConsentState)
+      const startLogsResult = startLogsImpl(configuration, buildCommonContext, trackingConsentState)
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)
       return startLogsResult

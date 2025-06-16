@@ -799,7 +799,7 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly span_id?: string
       /**
-       * trace identifier in decimal format
+       * trace identifier, either a 64 bit decimal number or a 128 bit hexadecimal number padded with 0s
        */
       readonly trace_id?: string
       /**
@@ -1574,6 +1574,10 @@ export interface CommonProperties {
      * Browser SDK version
      */
     readonly browser_sdk_version?: string
+    /**
+     * SDK name (e.g. 'logs', 'rum', 'rum-slim', etc.)
+     */
+    readonly sdk_name?: string
     [k: string]: unknown
   }
   /**

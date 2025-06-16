@@ -4,6 +4,21 @@
   "compilerOptions": {
     "types": ["jasmine"]
   },
-  "include": ["packages", "scripts", "test", "eslint.config.mjs", "eslint-local-rules"],
-  "exclude": ["packages/*/cjs", "packages/*/esm", "packages/*/bundle", "test/e2e", "test/apps", "developer-extension"]
+  "exclude": [
+    // Generated files
+    "packages/*/cjs",
+    "packages/*/esm",
+    "packages/*/bundle",
+
+    // Those folders have their own tsconfig.json
+    "test/e2e",
+    "test/apps",
+    "developer-extension",
+    "rum-events-format",
+
+    // Excluded for now, because this pulls in the Node.js types which conflict with the browser
+    // types. We should revisit this using "references" tsconfig files like vite does:
+    // https://github.com/vitejs/vite/blob/4b77d008aca457944f583ba8a1ff530d5df87cc1/packages/create-vite/template-react-ts/tsconfig.json
+    "performances"
+  ]
 }

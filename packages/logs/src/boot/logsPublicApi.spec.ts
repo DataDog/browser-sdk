@@ -76,7 +76,7 @@ describe('logs entry', () => {
     it('should have the current date, view and global context', () => {
       LOGS.setGlobalContextProperty('foo', 'bar')
 
-      const getCommonContext = startLogs.calls.mostRecent().args[2]
+      const getCommonContext = startLogs.calls.mostRecent().args[1]
       expect(getCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
