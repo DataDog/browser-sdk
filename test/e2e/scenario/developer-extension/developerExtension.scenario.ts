@@ -10,24 +10,13 @@ createTest('should switch between tabs')
 
     await page.goto(`chrome-extension://${extensionId}/panel.html`)
 
-    const developerExtension = new DeveloperExtensionPage(page)
+    const getSelectedTab = () => page.getByRole('tab', { selected: true })
+    const getTab = (name: string) => page.getByRole('tab', { name })
 
-    expect(await developerExtension.getSelectedTab().innerText()).toEqual('Events')
+    expect(await getSelectedTab().innerText()).toEqual('Events')
 
-    await developerExtension.getTab('Infos').click()
-    expect(await developerExtension.getSelectedTab().innerText()).toEqual('Infos')
+    await getTab('Infos').click()
+    expect(await getSelectedTab().innerText()).toEqual('Infos')
 
     flushBrowserLogs()
   })
-
-class DeveloperExtensionPage {
-  constructor(public readonly page: Page) {}
-
-  getTab(name: string) {
-    return this.page.getByRole('tab', { name })
-  }
-
-  getSelectedTab() {
-    return this.page.getByRole('tab', { selected: true })
-  }
-}
