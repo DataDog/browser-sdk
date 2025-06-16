@@ -1,273 +1,159 @@
-import type { MockStorage } from '../../../test'
-import { mockClock, mockCookie, mockLocalStorage } from '../../../test'
-import type { CookieOptions } from '../../browser/cookie'
+import { mockClock } from '../../../test'
 import type { Configuration } from '../configuration'
-import { initCookieStrategy } from './storeStrategies/sessionInCookie'
-import { initLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import type { SessionState } from './sessionState'
-import { expandSessionState, toSessionString } from './sessionState'
+import { expandSessionState, getExpiredSessionState } from './sessionState'
 import { processSessionStoreOperations, LOCK_MAX_TRIES, LOCK_RETRY_DELAY } from './sessionStoreOperations'
-import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
-const cookieOptions: CookieOptions = {}
 const EXPIRED_SESSION: SessionState = { isExpired: '1', anonymousId: '0' }
-const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
-;(
-  [
-    {
-      title: 'Cookie Storage',
-      createSessionStoreStrategy: () => initCookieStrategy(DEFAULT_INIT_CONFIGURATION, cookieOptions),
-      mockStorage: mockCookie,
-      storageKey: SESSION_STORE_KEY,
-    },
-    {
-      title: 'Local Storage',
-      createSessionStoreStrategy: () => initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION),
-      mockStorage: mockLocalStorage,
-      storageKey: SESSION_STORE_KEY,
-    },
-  ] as const
-).forEach(({ title, createSessionStoreStrategy, mockStorage, storageKey }) => {
-  describe(`process operations mechanism with ${title}`, () => {
-    const sessionStoreStrategy = createSessionStoreStrategy()
-    let initialSession: SessionState
-    let otherSession: SessionState
-    let processSpy: jasmine.Spy<jasmine.Func>
-    let afterSpy: jasmine.Spy<jasmine.Func>
-    let storage: MockStorage
-    const now = Date.now()
 
-    beforeEach(() => {
-      sessionStoreStrategy.expireSession(initialSession)
-      initialSession = { id: '123', created: String(now) }
-      otherSession = { id: '456', created: String(now + 100) }
-      processSpy = jasmine.createSpy('process')
-      afterSpy = jasmine.createSpy('after')
-      storage = mockStorage()
+describe('sessionStoreOperations', () => {
+  let initialSession: SessionState
+  let otherSession: SessionState
+  let processSpy: jasmine.Spy<jasmine.Func>
+  let afterSpy: jasmine.Spy<jasmine.Func>
+  const now = Date.now()
+
+  beforeEach(() => {
+    initialSession = { id: '123', created: String(now) }
+    otherSession = { id: '456', created: String(now + 100) }
+    processSpy = jasmine.createSpy('process')
+    afterSpy = jasmine.createSpy('after')
+  })
+
+  describe('with lock access disabled', () => {
+    it('should persist session when process returns a value', () => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession })
+      processSpy.and.returnValue({ ...otherSession })
+
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
+
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
+      const expectedSession = { ...otherSession, expire: jasmine.any(String) }
+      expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
+      expect(afterSpy).toHaveBeenCalledWith(expectedSession)
     })
 
-    describe('with lock access disabled', () => {
-      beforeEach(() => {
-        if (sessionStoreStrategy.isLockEnabled) {
-          pending('lock-access required')
-        }
-      })
+    it('should clear session when process returns an expired session', () => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession })
+      processSpy.and.returnValue(EXPIRED_SESSION)
 
-      it('should persist session when process returns a value', () => {
-        sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue({ ...otherSession })
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-        processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
-
-        expect(processSpy).toHaveBeenCalledWith(initialSession)
-        const expectedSession = { ...otherSession, expire: jasmine.any(String) }
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
-        expect(afterSpy).toHaveBeenCalledWith(expectedSession)
-      })
-
-      it('should clear session when process returns an expired session', () => {
-        sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue(EXPIRED_SESSION)
-
-        processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
-
-        expect(processSpy).toHaveBeenCalledWith(initialSession)
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
-        expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
-      })
-
-      it('should not persist session when process returns undefined', () => {
-        sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue(undefined)
-
-        processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
-
-        expect(processSpy).toHaveBeenCalledWith(initialSession)
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(initialSession)
-        expect(afterSpy).toHaveBeenCalledWith(initialSession)
-      })
-
-      it('LOCK_MAX_TRIES value should not influence the behavior when lock mechanism is not enabled', () => {
-        sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue({ ...otherSession })
-
-        processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy, LOCK_MAX_TRIES)
-
-        expect(processSpy).toHaveBeenCalledWith(initialSession)
-        const expectedSession = { ...otherSession, expire: jasmine.any(String) }
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
-        expect(afterSpy).toHaveBeenCalledWith(expectedSession)
-      })
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
+      expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
+      expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
     })
 
-    describe('with lock access enabled', () => {
-      beforeEach(() => {
-        if (!sessionStoreStrategy.isLockEnabled) {
-          pending('lock-access not enabled')
-        }
-      })
+    it('should not persist session when process returns undefined', () => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession })
+      processSpy.and.returnValue(undefined)
 
-      it('should persist session when process returns a value', () => {
-        sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue({ ...otherSession })
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-        processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
+      expect(sessionStoreStrategy.retrieveSession()).toEqual(initialSession)
+      expect(afterSpy).toHaveBeenCalledWith(initialSession)
+    })
 
-        expect(processSpy).toHaveBeenCalledWith(initialSession)
-        const expectedSession = { ...otherSession, expire: jasmine.any(String) }
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
-        expect(afterSpy).toHaveBeenCalledWith(expectedSession)
-      })
+    it('LOCK_MAX_TRIES value should not influence the behavior when lock mechanism is not enabled', () => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession })
+      processSpy.and.returnValue({ ...otherSession })
 
-      it('should clear session when process returns an expired session', () => {
-        sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue(EXPIRED_SESSION)
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy, LOCK_MAX_TRIES)
 
-        processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
+      const expectedSession = { ...otherSession, expire: jasmine.any(String) }
+      expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
+      expect(afterSpy).toHaveBeenCalledWith(expectedSession)
+    })
+  })
 
-        expect(processSpy).toHaveBeenCalledWith(initialSession)
+  describe('with lock access enabled', () => {
+    it('should persist session when process returns a value', () => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
+      processSpy.and.returnValue({ ...otherSession })
 
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
-        expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
-      })
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-      it('should not persist session when process returns undefined', () => {
-        sessionStoreStrategy.persistSession(initialSession)
-        processSpy.and.returnValue(undefined)
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
+      const expectedSession = { ...otherSession, expire: jasmine.any(String) }
+      expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
+      expect(afterSpy).toHaveBeenCalledWith(expectedSession)
+    })
 
-        processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
+    it('should clear session when process returns an expired session', () => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
+      processSpy.and.returnValue(EXPIRED_SESSION)
 
-        expect(processSpy).toHaveBeenCalledWith(initialSession)
-        expect(sessionStoreStrategy.retrieveSession()).toEqual(initialSession)
-        expect(afterSpy).toHaveBeenCalledWith(initialSession)
-      })
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-      type OnLockCheck = () => { currentState: SessionState; retryState: SessionState }
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
 
-      function lockScenario({
-        onInitialLockCheck,
-        onAcquiredLockCheck,
-        onPostProcessLockCheck,
-        onPostPersistLockCheck,
-      }: {
-        onInitialLockCheck?: OnLockCheck
-        onAcquiredLockCheck?: OnLockCheck
-        onPostProcessLockCheck?: OnLockCheck
-        onPostPersistLockCheck?: OnLockCheck
-      }) {
-        const onLockChecks = [onInitialLockCheck, onAcquiredLockCheck, onPostProcessLockCheck, onPostPersistLockCheck]
-        storage.getSpy.and.callFake(() => {
-          const currentOnLockCheck = onLockChecks.shift()
-          if (!currentOnLockCheck) {
-            return storage.currentValue(storageKey)
-          }
-          const { currentState, retryState } = currentOnLockCheck()
-          storage.setCurrentValue(storageKey, toSessionString(retryState))
-          return buildSessionString(currentState)
+      expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
+      expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
+    })
+
+    it('should not persist session when process returns undefined', () => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
+      processSpy.and.returnValue(undefined)
+
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
+
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
+      expect(sessionStoreStrategy.retrieveSession()).toEqual(initialSession)
+      expect(afterSpy).toHaveBeenCalledWith(initialSession)
+    })
+    ;[
+      {
+        description: 'should wait for lock to be free',
+        lockConflictOnRetrievedSessionIndex: 0,
+      },
+      {
+        description: 'should retry if lock was acquired before process',
+        lockConflictOnRetrievedSessionIndex: 1,
+      },
+      {
+        description: 'should retry if lock was acquired after process',
+        lockConflictOnRetrievedSessionIndex: 2,
+      },
+      {
+        description: 'should retry if lock was acquired after persist',
+        lockConflictOnRetrievedSessionIndex: 3,
+      },
+    ].forEach(({ description, lockConflictOnRetrievedSessionIndex }) => {
+      it(description, (done) => {
+        expandSessionState(initialSession)
+        const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
+        sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex, {
+          ...initialSession,
+          lock: 'locked',
         })
-      }
-
-      function buildSessionString(currentState: SessionState) {
-        return `${storageKey}=${toSessionString(currentState)}`
-      }
-
-      ;[
-        {
-          description: 'should wait for lock to be free',
-          lockConflict: 'onInitialLockCheck',
-        },
-        {
-          description: 'should retry if lock was acquired before process',
-          lockConflict: 'onAcquiredLockCheck',
-        },
-        {
-          description: 'should retry if lock was acquired after process',
-          lockConflict: 'onPostProcessLockCheck',
-        },
-        {
-          description: 'should retry if lock was acquired after persist',
-          lockConflict: 'onPostPersistLockCheck',
-        },
-      ].forEach(({ description, lockConflict }) => {
-        it(description, (done) => {
-          lockScenario({
-            [lockConflict]: () => ({
-              currentState: { ...initialSession, lock: 'locked' },
-              retryState: { ...initialSession, other: 'other' },
-            }),
-          })
-          expandSessionState(initialSession)
-          sessionStoreStrategy.persistSession(initialSession)
-          processSpy.and.callFake((session) => ({ ...session, processed: 'processed' }) as SessionState)
-
-          processSessionStoreOperations(
-            {
-              process: processSpy,
-              after: (afterSession) => {
-                // session with 'other' value on process
-                expect(processSpy).toHaveBeenCalledWith({
-                  ...initialSession,
-                  other: 'other',
-                  expire: jasmine.any(String),
-                })
-
-                // end state with session 'other' and 'processed' value
-                const expectedSession = {
-                  ...initialSession,
-                  other: 'other',
-                  processed: 'processed',
-                  expire: jasmine.any(String),
-                }
-                expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
-                expect(afterSession).toEqual(expectedSession)
-                done()
-              },
-            },
-            sessionStoreStrategy
-          )
+        sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex + 1, {
+          ...initialSession,
+          other: 'other',
         })
-      })
-
-      it('should abort after a max number of retry', () => {
-        const clock = mockClock()
-
-        sessionStoreStrategy.persistSession(initialSession)
-        storage.setSpy.calls.reset()
-
-        storage.getSpy.and.returnValue(buildSessionString({ ...initialSession, lock: 'locked' }))
-        processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
-
-        const lockMaxTries = sessionStoreStrategy.isLockEnabled ? LOCK_MAX_TRIES : 0
-        const lockRetryDelay = sessionStoreStrategy.isLockEnabled ? LOCK_RETRY_DELAY : 0
-
-        clock.tick(lockMaxTries * lockRetryDelay)
-        expect(processSpy).not.toHaveBeenCalled()
-        expect(afterSpy).not.toHaveBeenCalled()
-        expect(storage.setSpy).not.toHaveBeenCalled()
-      })
-
-      it('should execute cookie accesses in order', (done) => {
-        lockScenario({
-          onInitialLockCheck: () => ({
-            currentState: { ...initialSession, lock: 'locked' }, // force to retry the first access later
-            retryState: initialSession,
-          }),
-        })
-        sessionStoreStrategy.persistSession(initialSession)
+        processSpy.and.callFake((session) => ({ ...session, processed: 'processed' }) as SessionState)
 
         processSessionStoreOperations(
           {
-            process: (session) => ({ ...session, value: 'foo' }),
-            after: afterSpy,
-          },
-          sessionStoreStrategy
-        )
-        processSessionStoreOperations(
-          {
-            process: (session) => ({ ...session, value: `${session.value || ''}bar` }),
-            after: (session) => {
-              expect(session.value).toBe('foobar')
-              expect(afterSpy).toHaveBeenCalled()
+            process: processSpy,
+            after: (afterSession) => {
+              // session with 'other' value on process
+              expect(processSpy).toHaveBeenCalledWith({
+                ...initialSession,
+                other: 'other',
+                expire: jasmine.any(String),
+              })
+
+              // end state with session 'other' and 'processed' value
+              const expectedSession = {
+                ...initialSession,
+                other: 'other',
+                processed: 'processed',
+                expire: jasmine.any(String),
+              }
+              expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
+              expect(afterSession).toEqual(expectedSession)
               done()
             },
           },
@@ -275,5 +161,80 @@ const DEFAULT_INIT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
         )
       })
     })
+
+    it('should abort after a max number of retry', () => {
+      const clock = mockClock()
+
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({
+        isLockEnabled: true,
+        initialSession: { ...initialSession, lock: 'locked' },
+      })
+
+      processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
+
+      clock.tick(LOCK_MAX_TRIES * LOCK_RETRY_DELAY)
+      expect(processSpy).not.toHaveBeenCalled()
+      expect(afterSpy).not.toHaveBeenCalled()
+      expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
+    })
+
+    it('should execute cookie accesses in order', (done) => {
+      const sessionStoreStrategy = createFakeSessionStoreStrategy({
+        isLockEnabled: true,
+        initialSession: { ...initialSession, lock: 'locked' },
+      })
+      sessionStoreStrategy.planRetrieveSession(1, initialSession)
+
+      processSessionStoreOperations(
+        {
+          process: (session) => ({ ...session, value: 'foo' }),
+          after: afterSpy,
+        },
+        sessionStoreStrategy
+      )
+      processSessionStoreOperations(
+        {
+          process: (session) => ({ ...session, value: `${session.value || ''}bar` }),
+          after: (session) => {
+            expect(session.value).toBe('foobar')
+            expect(afterSpy).toHaveBeenCalled()
+            done()
+          },
+        },
+        sessionStoreStrategy
+      )
+    })
   })
 })
+
+function createFakeSessionStoreStrategy({
+  isLockEnabled = false,
+  initialSession = {},
+}: { isLockEnabled?: boolean; initialSession?: SessionState } = {}) {
+  let session: SessionState = initialSession
+  const plannedRetrieveSessions: SessionState[] = []
+
+  return {
+    isLockEnabled,
+
+    persistSession: jasmine.createSpy('persistSession').and.callFake((newSession) => {
+      session = newSession
+    }),
+
+    retrieveSession: jasmine.createSpy('retrieveSession').and.callFake(() => {
+      const plannedSession = plannedRetrieveSessions.shift()
+      if (plannedSession) {
+        session = plannedSession
+      }
+      return { ...session }
+    }),
+
+    expireSession: jasmine.createSpy('expireSession').and.callFake((previousSession) => {
+      session = getExpiredSessionState(previousSession, { trackAnonymousUser: true } as Configuration)
+    }),
+
+    planRetrieveSession: (index: number, fakeSession: SessionState) => {
+      plannedRetrieveSessions[index] = fakeSession
+    },
+  }
+}
