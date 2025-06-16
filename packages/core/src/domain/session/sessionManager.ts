@@ -2,14 +2,14 @@ import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { relativeNow, clocksOrigin, ONE_MINUTE, dateNow } from '../../tools/utils/timeUtils'
-import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
+import { clocksOrigin, dateNow, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
+import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { addTelemetryDebug } from '../telemetry'
 import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
-import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
 import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
@@ -115,6 +115,12 @@ export function startSessionManager<TrackingType extends string>(
       debugData.differenceCreatedToExpire = Number(rawSession?.expire) - Number(rawSession?.created)
 
       addTelemetryDebug('Unexpected session state', debugData)
+      return {
+        id: 'invalid',
+        trackingType: SESSION_NOT_TRACKED as TrackingType,
+        isReplayForced: false,
+        anonymousId: undefined,
+      }
     }
 
     return {
