@@ -121,9 +121,6 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     performance?: ViewPerformanceData
-    locales?: string[] | readonly string[]
-    locale?: string
-    timezone?: string
   }
   display?: ViewDisplay
   privacy?: {
