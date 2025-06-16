@@ -67,7 +67,7 @@ export interface InitConfiguration {
    * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
+   * See {@link https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk | Monitor Electron Applications Using the Browser SDK} for further information.
    * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
    */
   allowFallbackToLocalStorage?: boolean | undefined
@@ -79,13 +79,13 @@ export interface InitConfiguration {
   allowUntrustedEvents?: boolean | undefined
   /**
    * Store global context and user context in localStorage to preserve them along the user navigation.
-   * See [Contexts life cycle](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#contexts-life-cycle) for further information.
+   * See {@link https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#contexts-life-cycle | Contexts life cycle} for further information.
    * @default false
    */
   storeContextsAcrossPages?: boolean | undefined
   /**
    * Set the initial user tracking consent state.
-   * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#user-tracking-consent) for further information.
+   * See {@link https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#user-tracking-consent | User tracking consent} for further information.
    * @default granted
    */
   trackingConsent?: TrackingConsent | undefined
@@ -100,7 +100,7 @@ export interface InitConfiguration {
   // transport options
   /**
    * Optional proxy URL, for example: https://www.proxy.com/path.
-   * See [Proxy Your Browser RUM Data](https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data) for further information.
+   * See {@link https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data | Proxy Your Browser RUM Data} for further information.
    */
   proxy?: string | ProxyFn | undefined
   /**
@@ -115,11 +115,11 @@ export interface InitConfiguration {
    */
   service?: string | undefined | null
   /**
-   * The application’s environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   * The application's environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    */
   env?: string | undefined | null
   /**
-   * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   * The application's version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    */
   version?: string | undefined | null
 

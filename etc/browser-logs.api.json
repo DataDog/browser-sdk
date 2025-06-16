@@ -1,0 +1,3521 @@
+{
+  "metadata": {
+    "toolPackage": "@microsoft/api-extractor",
+    "toolVersion": "7.38.0",
+    "schemaVersion": 1011,
+    "oldestForwardsCompatibleVersion": 1001,
+    "tsdocConfig": {
+      "$schema": "https://developer.microsoft.com/json-schemas/tsdoc/v0/tsdoc.schema.json",
+      "noStandardTags": true,
+      "tagDefinitions": [
+        {
+          "tagName": "@alpha",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@beta",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@defaultValue",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@decorator",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@deprecated",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@eventProperty",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@example",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@experimental",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@inheritDoc",
+          "syntaxKind": "inline"
+        },
+        {
+          "tagName": "@internal",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@label",
+          "syntaxKind": "inline"
+        },
+        {
+          "tagName": "@link",
+          "syntaxKind": "inline",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@override",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@packageDocumentation",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@param",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@privateRemarks",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@public",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@readonly",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@remarks",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@returns",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@sealed",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@see",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@throws",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@typeParam",
+          "syntaxKind": "block",
+          "allowMultiple": true
+        },
+        {
+          "tagName": "@virtual",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@betaDocumentation",
+          "syntaxKind": "modifier"
+        },
+        {
+          "tagName": "@internalRemarks",
+          "syntaxKind": "block"
+        },
+        {
+          "tagName": "@preapproved",
+          "syntaxKind": "modifier"
+        }
+      ],
+      "supportForTags": {
+        "@alpha": true,
+        "@beta": true,
+        "@defaultValue": true,
+        "@decorator": true,
+        "@deprecated": true,
+        "@eventProperty": true,
+        "@example": true,
+        "@experimental": true,
+        "@inheritDoc": true,
+        "@internal": true,
+        "@label": true,
+        "@link": true,
+        "@override": true,
+        "@packageDocumentation": true,
+        "@param": true,
+        "@privateRemarks": true,
+        "@public": true,
+        "@readonly": true,
+        "@remarks": true,
+        "@returns": true,
+        "@sealed": true,
+        "@see": true,
+        "@throws": true,
+        "@typeParam": true,
+        "@virtual": true,
+        "@betaDocumentation": true,
+        "@internalRemarks": true,
+        "@preapproved": true
+      },
+      "reportUnsupportedHtmlElements": false
+    }
+  },
+  "kind": "Package",
+  "canonicalReference": "@datadog/browser-logs!",
+  "docComment": "/**\n * Datadog Browser Logs SDK for collecting and forwarding browser logs to Datadog. Provides comprehensive logging capabilities with automatic error tracking and custom log collection.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/logs/log_collection/javascript/ | Browser Log Collection}\n *\n * @packageDocumentation\n */\n",
+  "name": "@datadog/browser-logs",
+  "preserveMemberOrder": false,
+  "members": [
+    {
+      "kind": "EntryPoint",
+      "canonicalReference": "@datadog/browser-logs!",
+      "name": "",
+      "preserveMemberOrder": false,
+      "members": [
+        {
+          "kind": "Variable",
+          "canonicalReference": "@datadog/browser-logs!datadogLogs:var",
+          "docComment": "/**\n * The global Logs instance. Use this to call Logs methods.\n *\n * @see\n *\n * {@link https://docs.datadoghq.com/logs/log_collection/javascript/ | Browser Log Collection}\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "datadogLogs: "
+            },
+            {
+              "kind": "Reference",
+              "text": "LogsPublicApi",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal:interface"
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/entries/main.d.ts",
+          "isReadonly": true,
+          "releaseTag": "Public",
+          "name": "datadogLogs",
+          "variableTypeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 2
+          }
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-logs!HandlerType:type",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type HandlerType = "
+            },
+            {
+              "kind": "Content",
+              "text": "(typeof "
+            },
+            {
+              "kind": "Reference",
+              "text": "HandlerType",
+              "canonicalReference": "@datadog/browser-logs!HandlerType:var"
+            },
+            {
+              "kind": "Content",
+              "text": ")[keyof typeof "
+            },
+            {
+              "kind": "Reference",
+              "text": "HandlerType",
+              "canonicalReference": "@datadog/browser-logs!HandlerType:var"
+            },
+            {
+              "kind": "Content",
+              "text": "]"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domain/logger.d.ts",
+          "releaseTag": "Public",
+          "name": "HandlerType",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 6
+          }
+        },
+        {
+          "kind": "Variable",
+          "canonicalReference": "@datadog/browser-logs!HandlerType:var",
+          "docComment": "/**\n * Defines the types of handlers for processing logs: console, HTTP, or silent.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "HandlerType: "
+            },
+            {
+              "kind": "Content",
+              "text": "{\n    readonly console: \"console\";\n    readonly http: \"http\";\n    readonly silent: \"silent\";\n}"
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domain/logger.d.ts",
+          "isReadonly": true,
+          "releaseTag": "Public",
+          "name": "HandlerType",
+          "variableTypeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 2
+          }
+        },
+        {
+          "kind": "Class",
+          "canonicalReference": "@datadog/browser-logs!Logger:class",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export declare class Logger "
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domain/logger.d.ts",
+          "releaseTag": "Public",
+          "isAbstract": false,
+          "name": "Logger",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "Constructor",
+              "canonicalReference": "@datadog/browser-logs!Logger:constructor(1)",
+              "docComment": "/**\n * Constructs a new instance of the `Logger` class\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "constructor(handleLogStrategy: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(logsMessage: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LogsMessage",
+                  "canonicalReference": "@datadog/browser-logs!LogsMessage:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", logger: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Logger",
+                  "canonicalReference": "@datadog/browser-logs!Logger:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", handlingStack?: string) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", name?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", handlerType?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HandlerType",
+                  "canonicalReference": "@datadog/browser-logs!HandlerType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HandlerType",
+                  "canonicalReference": "@datadog/browser-logs!HandlerType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", level?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StatusType",
+                  "canonicalReference": "@datadog/browser-logs!StatusType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", loggerContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ");"
+                }
+              ],
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "handleLogStrategy",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 6
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "name",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 7,
+                    "endIndex": 8
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "handlerType",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 9,
+                    "endIndex": 13
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "level",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 14,
+                    "endIndex": 15
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "loggerContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 16,
+                    "endIndex": 17
+                  },
+                  "isOptional": true
+                }
+              ]
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#clearContext:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clearContext(): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "clearContext"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#getContext:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getContext(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "getContext"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#getHandler:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getHandler(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HandlerType",
+                  "canonicalReference": "@datadog/browser-logs!HandlerType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HandlerType",
+                  "canonicalReference": "@datadog/browser-logs!HandlerType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 5
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "getHandler"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#getLevel:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getLevel(): "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StatusType",
+                  "canonicalReference": "@datadog/browser-logs!StatusType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "getLevel"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#log:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "log(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", status?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StatusType",
+                  "canonicalReference": "@datadog/browser-logs!StatusType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 9,
+                "endIndex": 10
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "status",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 7,
+                    "endIndex": 8
+                  },
+                  "isOptional": true
+                }
+              ],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "log"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#logImplementation:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "logImplementation(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", status?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StatusType",
+                  "canonicalReference": "@datadog/browser-logs!StatusType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", handlingStack?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 11,
+                "endIndex": 12
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "status",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 7,
+                    "endIndex": 8
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "handlingStack",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 9,
+                    "endIndex": 10
+                  },
+                  "isOptional": true
+                }
+              ],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "logImplementation"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#removeContextProperty:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "removeContextProperty(key: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "key",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "removeContextProperty"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#setContext:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setContext(context: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "context",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "setContext"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#setContextProperty:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setContextProperty(key: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", value: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "any"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 5,
+                "endIndex": 6
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "key",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "value",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": false
+                }
+              ],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "setContextProperty"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#setHandler:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setHandler(handler: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HandlerType",
+                  "canonicalReference": "@datadog/browser-logs!HandlerType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HandlerType",
+                  "canonicalReference": "@datadog/browser-logs!HandlerType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 6,
+                "endIndex": 7
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "handler",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 5
+                  },
+                  "isOptional": false
+                }
+              ],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "setHandler"
+            },
+            {
+              "kind": "Method",
+              "canonicalReference": "@datadog/browser-logs!Logger#setLevel:member(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setLevel(level: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StatusType",
+                  "canonicalReference": "@datadog/browser-logs!StatusType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isStatic": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "isProtected": false,
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "level",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "isOptional": false,
+              "isAbstract": false,
+              "name": "setLevel"
+            }
+          ],
+          "implementsTokenRanges": []
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-logs!Logger:interface",
+          "docComment": "/**\n * Provides convenience methods for logging at each supported level. Each method accepts a message, optional context, and an optional error.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface Logger "
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domain/logger.d.ts",
+          "releaseTag": "Public",
+          "name": "Logger",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#alert:member(1)",
+              "docComment": "/**\n * Add an ALERT log (action must be taken immediately).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "alert(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "alert"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#critical:member(1)",
+              "docComment": "/**\n * Add a CRITICAL log (serious failure).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "critical(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "critical"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#debug:member(1)",
+              "docComment": "/**\n * Add a DEBUG log (developer usage).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "debug(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "debug"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#emerg:member(1)",
+              "docComment": "/**\n * Add an EMERGENCY log (system is unusable).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "emerg(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "emerg"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#error:member(1)",
+              "docComment": "/**\n * Add an ERROR log (runtime error).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "error(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "error"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#info:member(1)",
+              "docComment": "/**\n * Add an INFO log (notable but expected).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "info(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "info"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#notice:member(1)",
+              "docComment": "/**\n * Add a NOTICE log (normal but significant).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "notice(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "notice"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#ok:member(1)",
+              "docComment": "/**\n * Add an OK log (success).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "ok(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "ok"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!Logger#warn:member(1)",
+              "docComment": "/**\n * Add a WARN log (unexpected behaviour).\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "warn(message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", messageContext?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", error?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Error",
+                  "canonicalReference": "!Error:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 7,
+                "endIndex": 8
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "message",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                },
+                {
+                  "parameterName": "messageContext",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 3,
+                    "endIndex": 4
+                  },
+                  "isOptional": true
+                },
+                {
+                  "parameterName": "error",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 5,
+                    "endIndex": 6
+                  },
+                  "isOptional": true
+                }
+              ],
+              "name": "warn"
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-logs!LoggerConfiguration:interface",
+          "docComment": "/**\n * Configuration options for a logger. Includes the log level to determine the severity of logs, the handler(s) responsible for processing log messages, and an optional context object to provide additional metadata for logs.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface LoggerConfiguration "
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/boot/logsPublicApi.d.ts",
+          "releaseTag": "Public",
+          "name": "LoggerConfiguration",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LoggerConfiguration#context:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "context?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "object"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "context",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LoggerConfiguration#handler:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "handler?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HandlerType",
+                  "canonicalReference": "@datadog/browser-logs!HandlerType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "HandlerType",
+                  "canonicalReference": "@datadog/browser-logs!HandlerType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[]"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "handler",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 5
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LoggerConfiguration#level:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "level?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StatusType",
+                  "canonicalReference": "@datadog/browser-logs!StatusType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "level",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-logs!LogsEvent:interface",
+          "docComment": "/**\n * Represents a log event collected by the Datadog Browser Logs SDK, containing information such as message, context, and metadata.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface LogsEvent "
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/logsEvent.types.d.ts",
+          "releaseTag": "Public",
+          "name": "LogsEvent",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "IndexSignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent:index(1)",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "[k: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": "]: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "unknown"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "k",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ]
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#application_id:member",
+              "docComment": "/**\n * UUID of the application\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "application_id?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "application_id",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#date:member",
+              "docComment": "/**\n * Start of the log in ms from epoch\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "date: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "number"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "date",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#error:member",
+              "docComment": "/**\n * Error properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "error?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        kind?: string;\n        stack?: string;\n        fingerprint?: string;\n        message?: string;\n        causes?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Array",
+                  "canonicalReference": "!Array:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "<{\n            message: string;\n            source: string;\n            type?: string;\n            stack?: string;\n        }>;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "error",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#http:member",
+              "docComment": "/**\n * Resource properties of the error\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "http?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        method: 'POST' | 'GET' | 'HEAD' | 'PUT' | 'DELETE' | 'PATCH';\n        status_code: number;\n        url: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "http",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#logger:member",
+              "docComment": "/**\n * Logger properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "logger?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        name: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "logger",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#message:member",
+              "docComment": "/**\n * The log message\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "message",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#origin:member",
+              "docComment": "/**\n * Origin of the log\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "origin: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "'network' | 'source' | 'console' | 'logger' | 'agent' | 'report'"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "origin",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#service:member",
+              "docComment": "/**\n * The service name\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "service?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "service",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#session_id:member",
+              "docComment": "/**\n * UUID of the session (deprecated in favor of session.id)\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "session_id?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "session_id",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#session:member",
+              "docComment": "/**\n * Session properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "session?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        id?: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "session",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#status:member",
+              "docComment": "/**\n * The log status\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "status: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "'ok' | 'debug' | 'info' | 'notice' | 'warn' | 'error' | 'critical' | 'alert' | 'emerg'"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "status",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsEvent#view:member",
+              "docComment": "/**\n * View properties\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "view: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "{\n        referrer?: string;\n        url: string;\n        id?: string;\n        [k: string]: unknown;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "view",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-logs!LogsEventDomainContext:type",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type LogsEventDomainContext<T extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "ErrorSource",
+              "canonicalReference": "@datadog/browser-core!ErrorSource:type"
+            },
+            {
+              "kind": "Content",
+              "text": " = "
+            },
+            {
+              "kind": "Content",
+              "text": "any"
+            },
+            {
+              "kind": "Content",
+              "text": "> = "
+            },
+            {
+              "kind": "Content",
+              "text": "T extends typeof "
+            },
+            {
+              "kind": "Reference",
+              "text": "ErrorSource.NETWORK",
+              "canonicalReference": "@datadog/browser-core!__type#NETWORK:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "NetworkLogsEventDomainContext",
+              "canonicalReference": "@datadog/browser-logs!~NetworkLogsEventDomainContext:type"
+            },
+            {
+              "kind": "Content",
+              "text": " : T extends typeof "
+            },
+            {
+              "kind": "Reference",
+              "text": "ErrorSource.CONSOLE",
+              "canonicalReference": "@datadog/browser-core!__type#CONSOLE:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "ConsoleLogsEventDomainContext",
+              "canonicalReference": "@datadog/browser-logs!~ConsoleLogsEventDomainContext:type"
+            },
+            {
+              "kind": "Content",
+              "text": " : T extends typeof "
+            },
+            {
+              "kind": "Reference",
+              "text": "ErrorSource.LOGGER",
+              "canonicalReference": "@datadog/browser-core!__type#LOGGER:member"
+            },
+            {
+              "kind": "Content",
+              "text": " ? "
+            },
+            {
+              "kind": "Reference",
+              "text": "LoggerLogsEventDomainContext",
+              "canonicalReference": "@datadog/browser-logs!~LoggerLogsEventDomainContext:type"
+            },
+            {
+              "kind": "Content",
+              "text": " : never"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domainContext.types.d.ts",
+          "releaseTag": "Public",
+          "name": "LogsEventDomainContext",
+          "typeParameters": [
+            {
+              "typeParameterName": "T",
+              "constraintTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              },
+              "defaultTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              }
+            }
+          ],
+          "typeTokenRange": {
+            "startIndex": 5,
+            "endIndex": 18
+          }
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-logs!LogsGlobal:interface",
+          "docComment": "/**\n * The public API for the Datadog Browser Logs SDK. Provides methods to initialize the SDK, manage global/user/account contexts, and interact with loggers for collecting and forwarding logs.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface LogsPublicApi extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "PublicApi",
+              "canonicalReference": "@datadog/browser-core!PublicApi:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/boot/logsPublicApi.d.ts",
+          "releaseTag": "Public",
+          "name": "LogsGlobal",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#clearAccount:member",
+              "docComment": "/**\n * Clear all account information\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clearAccount: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "clearAccount",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#clearGlobalContext:member",
+              "docComment": "/**\n * Clear the global context\n *\n * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clearGlobalContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "clearGlobalContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#clearUser:member",
+              "docComment": "/**\n * Clear all user information\n *\n * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "clearUser: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "clearUser",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#createLogger:member",
+              "docComment": "/**\n * The Datadog browser logs SDK contains a default logger `DD_LOGS.logger`, but this API allows to create different ones.\n *\n * See [Define multiple loggers](https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "createLogger: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(name: string, conf?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LoggerConfiguration",
+                  "canonicalReference": "@datadog/browser-logs!LoggerConfiguration:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Logger",
+                  "canonicalReference": "@datadog/browser-logs!Logger:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "createLogger",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 5
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#getAccount:member",
+              "docComment": "/**\n * Get account information\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getAccount: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getAccount",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#getGlobalContext:member",
+              "docComment": "/**\n * Get the global Context\n *\n * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getGlobalContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getGlobalContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#getInitConfiguration:member",
+              "docComment": "/**\n * Get the init configuration\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getInitConfiguration: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LogsInitConfiguration",
+                  "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getInitConfiguration",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#getInternalContext:member",
+              "docComment": "/**\n * [Internal API] Get the internal SDK context\n *\n * See [Access internal context](https://docs.datadoghq.com/logs/log_collection/javascript/#access-internal-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getInternalContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(startTime?: number) => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "InternalContext",
+                  "canonicalReference": "@datadog/browser-logs!~InternalContext:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getInternalContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#getLogger:member",
+              "docComment": "/**\n * Get a logger\n *\n * See [Define multiple loggers](https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getLogger: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(name: string) => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Logger",
+                  "canonicalReference": "@datadog/browser-logs!Logger:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": " | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getLogger",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#getUser:member",
+              "docComment": "/**\n * Get user information\n *\n * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "getUser: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "() => "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "getUser",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#init:member",
+              "docComment": "/**\n * Init the Logs browser SDK.\n *\n * @param initConfiguration - Configuration options of the SDK\n *\n * See [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "init: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(initConfiguration: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LogsInitConfiguration",
+                  "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "init",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#logger:member",
+              "docComment": "",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "logger: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Logger",
+                  "canonicalReference": "@datadog/browser-logs!Logger:class"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "logger",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#removeAccountProperty:member",
+              "docComment": "/**\n * Remove an account property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "removeAccountProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: string) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "removeAccountProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#removeGlobalContextProperty:member",
+              "docComment": "/**\n * Remove a global context property\n *\n * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "removeGlobalContextProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "removeGlobalContextProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#removeUserProperty:member",
+              "docComment": "/**\n * Remove a user property\n *\n * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "removeUserProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "removeUserProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#setAccount:member",
+              "docComment": "/**\n * Set account information to all events, stored in `@account`\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setAccount: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(newAccount: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Account",
+                  "canonicalReference": "@datadog/browser-core!Account:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setAccount",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#setAccountProperty:member",
+              "docComment": "/**\n * Set or update the account property, stored in `@account.<key>`\n *\n * @param key - Key of the property\n *\n * @param property - Value of the property\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setAccountProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: string, property: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setAccountProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#setGlobalContext:member",
+              "docComment": "/**\n * Set the global context information to all logs, stored in `@context`\n *\n * @param context - Global context\n *\n * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setGlobalContext: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(context: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setGlobalContext",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#setGlobalContextProperty:member",
+              "docComment": "/**\n * Set or update a global context property, stored in `@context.<key>`\n *\n * @param key - Key of the property\n *\n * @param property - Value of the property\n *\n * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setGlobalContextProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: any, value: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setGlobalContextProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#setTrackingConsent:member",
+              "docComment": "/**\n * Set the tracking consent of the current user.\n *\n * @param trackingConsent - The user tracking consent\n *\n * Logs will be sent only if it is set to \"granted\". This value won't be stored by the library across page loads: you will need to call this method or set the appropriate `trackingConsent` field in the init() method at each page load.\n *\n * If this method is called before the init() method, the provided value will take precedence over the one provided as initialization parameter.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setTrackingConsent: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(trackingConsent: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "TrackingConsent",
+                  "canonicalReference": "@datadog/browser-core!TrackingConsent:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setTrackingConsent",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 4
+              }
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#setUser:member(1)",
+              "docComment": "/**\n * Set user information to all events, stored in `@usr`\n *\n * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setUser(newUser: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "User",
+                  "canonicalReference": "@datadog/browser-core!User:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": " & {\n        id: string;\n    }"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 4,
+                "endIndex": 5
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 1,
+              "parameters": [
+                {
+                  "parameterName": "newUser",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 3
+                  },
+                  "isOptional": false
+                }
+              ],
+              "name": "setUser"
+            },
+            {
+              "kind": "MethodSignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#setUser:member(2)",
+              "docComment": "/**\n * Set user information to all events, stored in `@usr`\n *\n * @deprecated\n *\n * You must specified a user id\n *\n * @see\n *\n * {@link setUser}\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setUser(newUser: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "User",
+                  "canonicalReference": "@datadog/browser-core!User:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": "): "
+                },
+                {
+                  "kind": "Content",
+                  "text": "void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isOptional": false,
+              "returnTypeTokenRange": {
+                "startIndex": 3,
+                "endIndex": 4
+              },
+              "releaseTag": "Public",
+              "overloadIndex": 2,
+              "parameters": [
+                {
+                  "parameterName": "newUser",
+                  "parameterTypeTokenRange": {
+                    "startIndex": 1,
+                    "endIndex": 2
+                  },
+                  "isOptional": false
+                }
+              ],
+              "name": "setUser"
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsGlobal#setUserProperty:member",
+              "docComment": "/**\n * Set or update the user property, stored in `@usr.<key>`\n *\n * @param key - Key of the property\n *\n * @param property - Value of the property\n *\n * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "setUserProperty: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "(key: any, property: any) => void"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "setUserProperty",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": [
+            {
+              "startIndex": 1,
+              "endIndex": 2
+            }
+          ]
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration:interface",
+          "docComment": "/**\n * Configuration options for initializing the Datadog Browser Logs SDK. Extends the base InitConfiguration and includes additional options specific to log collection, such as error forwarding, console log forwarding, and the ability to modify or discard logs before they are sent.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface LogsInitConfiguration extends "
+            },
+            {
+              "kind": "Reference",
+              "text": "InitConfiguration",
+              "canonicalReference": "@datadog/browser-core!InitConfiguration:interface"
+            },
+            {
+              "kind": "Content",
+              "text": " "
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domain/configuration.d.ts",
+          "releaseTag": "Public",
+          "name": "LogsInitConfiguration",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration#beforeSend:member",
+              "docComment": "/**\n * Access to every logs collected by the Logs SDK before they are sent to Datadog. It allows: - Enrich your logs with additional context attributes - Modify your logs to modify their content, or redact sensitive sequences (see the list of editable properties) - Discard selected logs\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "beforeSend?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "((event: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LogsEvent",
+                  "canonicalReference": "@datadog/browser-logs!LogsEvent:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ", context: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "LogsEventDomainContext",
+                  "canonicalReference": "@datadog/browser-logs!LogsEventDomainContext:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ") => boolean) | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "beforeSend",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 6
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration#forwardConsoleLogs:member",
+              "docComment": "/**\n * Forward logs from console.* to Datadog. Use \"all\" to forward everything or an array of console API names to forward only a subset.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "forwardConsoleLogs?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "ConsoleApiName",
+                  "canonicalReference": "@datadog/browser-core!ConsoleApiName:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[] | 'all' | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "forwardConsoleLogs",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration#forwardErrorsToLogs:member",
+              "docComment": "/**\n * Forward console.error logs, uncaught exceptions and network errors to Datadog.  @default true\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "forwardErrorsToLogs?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "forwardErrorsToLogs",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration#forwardReports:member",
+              "docComment": "/**\n * Forward reports from the [Reporting API](https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API) to Datadog. Use \"all\" to forward everything or an array of report types to forward only a subset.\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "forwardReports?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "RawReportType",
+                  "canonicalReference": "@datadog/browser-core!RawReportType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": "[] | 'all' | undefined"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "forwardReports",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 3
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsInitConfiguration#usePciIntake:member",
+              "docComment": "/**\n * Use PCI-compliant intake. See [PCI DSS Compliance](https://docs.datadoghq.com/data_security/pci_compliance/?tab=logmanagement) for further information.  @default false\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "usePciIntake?: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "boolean"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "usePciIntake",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": [
+            {
+              "startIndex": 1,
+              "endIndex": 2
+            }
+          ]
+        },
+        {
+          "kind": "Interface",
+          "canonicalReference": "@datadog/browser-logs!LogsMessage:interface",
+          "docComment": "/**\n * Structure passed to the internal log handling strategy.\n *\n * @public\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export interface LogsMessage "
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domain/logger.d.ts",
+          "releaseTag": "Public",
+          "name": "LogsMessage",
+          "preserveMemberOrder": false,
+          "members": [
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsMessage#context:member",
+              "docComment": "/**\n * Optional context attached to the log\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "context?: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "Context",
+                  "canonicalReference": "@datadog/browser-core!Context:interface"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": true,
+              "releaseTag": "Public",
+              "name": "context",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsMessage#message:member",
+              "docComment": "/**\n * Raw message provided by the customer\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "message: "
+                },
+                {
+                  "kind": "Content",
+                  "text": "string"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "message",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            },
+            {
+              "kind": "PropertySignature",
+              "canonicalReference": "@datadog/browser-logs!LogsMessage#status:member",
+              "docComment": "/**\n * Severity of the log\n */\n",
+              "excerptTokens": [
+                {
+                  "kind": "Content",
+                  "text": "status: "
+                },
+                {
+                  "kind": "Reference",
+                  "text": "StatusType",
+                  "canonicalReference": "@datadog/browser-logs!StatusType:type"
+                },
+                {
+                  "kind": "Content",
+                  "text": ";"
+                }
+              ],
+              "isReadonly": false,
+              "isOptional": false,
+              "releaseTag": "Public",
+              "name": "status",
+              "propertyTypeTokenRange": {
+                "startIndex": 1,
+                "endIndex": 2
+              }
+            }
+          ],
+          "extendsTokenRanges": []
+        },
+        {
+          "kind": "TypeAlias",
+          "canonicalReference": "@datadog/browser-logs!StatusType:type",
+          "docComment": "",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "export type StatusType = "
+            },
+            {
+              "kind": "Content",
+              "text": "(typeof "
+            },
+            {
+              "kind": "Reference",
+              "text": "StatusType",
+              "canonicalReference": "@datadog/browser-logs!StatusType:var"
+            },
+            {
+              "kind": "Content",
+              "text": ")[keyof typeof "
+            },
+            {
+              "kind": "Reference",
+              "text": "StatusType",
+              "canonicalReference": "@datadog/browser-logs!StatusType:var"
+            },
+            {
+              "kind": "Content",
+              "text": "]"
+            },
+            {
+              "kind": "Content",
+              "text": ";"
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domain/logger/isAuthorized.d.ts",
+          "releaseTag": "Public",
+          "name": "StatusType",
+          "typeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 6
+          }
+        },
+        {
+          "kind": "Variable",
+          "canonicalReference": "@datadog/browser-logs!StatusType:var",
+          "docComment": "/**\n * Defines the severity levels for log messages, ranging from debug to emergency.\n */\n",
+          "excerptTokens": [
+            {
+              "kind": "Content",
+              "text": "StatusType: "
+            },
+            {
+              "kind": "Content",
+              "text": "{\n    readonly ok: \"ok\";\n    readonly debug: \"debug\";\n    readonly info: \"info\";\n    readonly notice: \"notice\";\n    readonly warn: \"warn\";\n    readonly error: \"error\";\n    readonly critical: \"critical\";\n    readonly alert: \"alert\";\n    readonly emerg: \"emerg\";\n}"
+            }
+          ],
+          "fileUrlPath": "packages/logs/esm/domain/logger/isAuthorized.d.ts",
+          "isReadonly": true,
+          "releaseTag": "Public",
+          "name": "StatusType",
+          "variableTypeTokenRange": {
+            "startIndex": 1,
+            "endIndex": 2
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -47,6 +47,10 @@ import type { StartRum, StartRumResult } from './startRum'
 export interface StartRecordingOptions {
   force: boolean
 }
+
+/**
+ * The RUM Browser SDK global object that provides all the public methods.
+ */
 export interface RumPublicApi extends PublicApi {
   /**
    * Init the RUM browser SDK.
@@ -258,7 +262,7 @@ export interface RumPublicApi extends PublicApi {
 
   /**
    * Start a view manually.
-   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
+   * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you've defined them in your SPA application routing.
    *
    * @param options.name name of the view
    * @param options.service service of the view

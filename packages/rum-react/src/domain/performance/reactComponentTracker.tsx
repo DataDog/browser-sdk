@@ -2,6 +2,10 @@ import * as React from 'react'
 import { createTimer } from './timer'
 import { addDurationVital } from './addDurationVital'
 
+/**
+ * Experimental component that tracks the render lifecycle of its children 
+ * and reports a duration vital named `reactComponentRender`.
+ */
 // eslint-disable-next-line
 export const UNSTABLE_ReactComponentTracker = ({
   name: componentName,

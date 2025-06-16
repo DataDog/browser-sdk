@@ -15,12 +15,23 @@ import {
 import { isAuthorized, StatusType } from './logger/isAuthorized'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
 
+/**
+ * Structure passed to the internal log handling strategy.
+ *
+ * @public
+ */
 export interface LogsMessage {
+  /** Raw message provided by the customer */
   message: string
+  /** Severity of the log */
   status: StatusType
+  /** Optional context attached to the log */
   context?: Context
 }
 
+/**
+ * Defines the types of handlers for processing logs: console, HTTP, or silent.
+ */
 export const HandlerType = {
   console: 'console',
   http: 'http',
@@ -150,17 +161,29 @@ Logger.prototype.alert = createLoggerMethod(StatusType.alert)
 Logger.prototype.emerg = createLoggerMethod(StatusType.emerg)
 /* eslint-enable local-rules/disallow-side-effects */
 
-// note: it is safe to merge declarations as long as the methods are actually defined on the prototype
+/**
+ * Provides convenience methods for logging at each supported level.
+ * Each method accepts a message, optional context, and an optional error.
+ */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export interface Logger {
+  /** Add an OK log (success). */
   ok(message: string, messageContext?: object, error?: Error): void
+  /** Add a DEBUG log (developer usage). */
   debug(message: string, messageContext?: object, error?: Error): void
+  /** Add an INFO log (notable but expected). */
   info(message: string, messageContext?: object, error?: Error): void
+  /** Add a NOTICE log (normal but significant). */
   notice(message: string, messageContext?: object, error?: Error): void
+  /** Add a WARN log (unexpected behaviour). */
   warn(message: string, messageContext?: object, error?: Error): void
+  /** Add an ERROR log (runtime error). */
   error(message: string, messageContext?: object, error?: Error): void
+  /** Add a CRITICAL log (serious failure). */
   critical(message: string, messageContext?: object, error?: Error): void
+  /** Add an ALERT log (action must be taken immediately). */
   alert(message: string, messageContext?: object, error?: Error): void
+  /** Add an EMERGENCY log (system is unusable). */
   emerg(message: string, messageContext?: object, error?: Error): void
 }
 

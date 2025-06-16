@@ -35,11 +35,19 @@
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",
     "rum-events-format:sync": "scripts/cli update_submodule && scripts/cli build_json2type && node scripts/generate-schema-types.js",
     "size": "node scripts/show-bundle-size.js",
-    "woke": "scripts/cli woke"
+    "woke": "scripts/cli woke",
+    "build:types": "lerna run build:esm --stream",
+    "docs:api": "yarn build:types && api-extractor run --local -c packages/rum/api-extractor.json && api-extractor run --local -c packages/logs/api-extractor.json && api-extractor run --local -c packages/rum-slim/api-extractor.json && api-extractor run --local -c packages/rum-react/api-extractor.json && api-documenter markdown -i etc -o docs && node scripts/docs-jekyll.js",
+    "docs:api:clean": "CLEANUP_MD=true yarn docs:api",
+    "docs:release": "yarn docs:api && echo 'Documentation ready for release'",
+    "docs:serve": "bundle exec jekyll serve --source docs --destination _site --config _config_docs.yml",
+    "docs:build": "bundle exec jekyll build --source docs --destination _site --config _config_docs.yml"
   },
   "devDependencies": {
     "@eslint/js": "9.28.0",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
+    "@microsoft/api-documenter": "7.25.9",
+    "@microsoft/api-extractor": "7.38.0",
     "@playwright/test": "1.52.0",
     "@swc/core": "1.12.0",
     "@types/chrome": "0.0.326",

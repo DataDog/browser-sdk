@@ -9,13 +9,25 @@ type StartSubscriber = (strategy: Strategy) => void
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
 
+/**
+ * Configuration options for the React integration plugin.
+ *
+ * @public
+ */
 export interface ReactPluginConfiguration {
   /**
-   * Enable react-router integration
+   * Enable react-router integration (v6+). When set, the underlying RUM SDK
+   * will switch to manual view tracking so that view updates follow your SPA
+   * routing logic.
    */
   router?: boolean
 }
 
+/**
+ * Factory function that creates the React plugin for Datadog RUM,
+ * enabling features like ErrorBoundary integration, optional react-router view tracking,
+ * and component performance tracking utilities.
+ */
 export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
   return {
     name: 'react',
