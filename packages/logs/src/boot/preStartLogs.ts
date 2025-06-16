@@ -69,6 +69,7 @@ export function createPreStartStrategy(
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration
+      // FIXME temporary hack to avoid sending configuration without all the context data
       setTimeout(() => {
         addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
       })

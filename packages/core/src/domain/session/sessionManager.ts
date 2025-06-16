@@ -2,7 +2,7 @@ import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { clocksOrigin, dateNow, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
+import { clocksOrigin, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
@@ -98,18 +98,8 @@ export function startSessionManager<TrackingType extends string>(
       const debugData: any = {
         session: rawSession,
         isSyntheticsTest: isSyntheticsTest(),
-      }
-
-      if (rawSession?.created) {
-        const createdTime = Number(rawSession.created)
-        const timeFromCreated = dateNow() - createdTime
-        debugData.timeFromCreated = timeFromCreated
-      }
-
-      if (rawSession?.expire) {
-        const expireTime = Number(rawSession.expire)
-        const timeToExpire = expireTime - dateNow()
-        debugData.timeToExpire = timeToExpire
+        createdTimestamp: rawSession?.created,
+        expireTimestamp: rawSession?.expire,
       }
 
       debugData.differenceCreatedToExpire = Number(rawSession?.expire) - Number(rawSession?.created)

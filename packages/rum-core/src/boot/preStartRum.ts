@@ -101,6 +101,7 @@ export function createPreStartStrategy(
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration
+    // FIXME temporary hack to avoid sending configuration without all the context data
     setTimeout(() => {
       addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
     })
