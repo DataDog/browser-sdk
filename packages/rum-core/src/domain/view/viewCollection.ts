@@ -1,5 +1,5 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import { DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import { getTimeZone, DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
@@ -139,9 +139,9 @@ function processViewUpdate(
       replay_level: configuration.defaultPrivacyLevel,
     },
     device: {
-      locale: navigator.language,
+      locale: navigator?.language,
       locales: navigator?.languages ?? [],
-      time_zone: new Intl.DateTimeFormat().resolvedOptions().timeZone,
+      time_zone: getTimeZone(),
     },
   }
 
