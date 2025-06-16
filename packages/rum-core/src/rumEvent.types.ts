@@ -233,7 +233,7 @@ export type RumErrorEvent = CommonProperties &
       /**
        * The specific category of the error. It provides a high-level grouping for different types of errors.
        */
-      readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning'
+      readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning' | 'Network'
       /**
        * Whether the error has been handled manually in the source code or not
        */
@@ -555,6 +555,10 @@ export type RumLongTaskEvent = CommonProperties &
        * Whether the long task should be discarded or indexed
        */
       readonly discarded?: boolean
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -1175,6 +1179,10 @@ export type RumViewEvent = CommonProperties &
         readonly start_session_replay_recording_manually?: boolean
         [k: string]: unknown
       }
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     /**
@@ -1532,7 +1540,7 @@ export interface CommonProperties {
     /**
      * Ordered list of the user’s preferred system languages as IETF language tags.
      */
-    readonly locales?: unknown[]
+    readonly locales?: string[]
     /**
      * The device’s current time zone identifier, e.g. 'Europe/Berlin'.
      */
@@ -1580,6 +1588,10 @@ export interface CommonProperties {
        * The percentage of sessions with RUM & Session Replay pricing tracked
        */
       readonly session_replay_sample_rate?: number
+      /**
+       * The percentage of views profiled
+       */
+      readonly profiling_sample_rate?: number
       [k: string]: unknown
     }
     /**
@@ -1648,6 +1660,37 @@ export interface ActionChildProperties {
     readonly id: string | string[]
     [k: string]: unknown
   }
+  [k: string]: unknown
+}
+/**
+ * RUM Profiler Internal Context schema
+ */
+export interface ProfilingInternalContextSchema {
+  /**
+   * Used to track the status of the RUM Profiler.
+   *
+   * They are defined in order of when they can happen, from the moment the SDK is initialized to the moment the Profiler is actually running.
+   *
+   * - `starting`: The Profiler is starting (i.e., when the SDK just started). This is the initial status.
+   * - `running`: The Profiler is running.
+   * - `stopped`: The Profiler is stopped.
+   * - `error`: The Profiler encountered an error. See `error_reason` for more details.
+   */
+  readonly status?: 'starting' | 'running' | 'stopped' | 'error'
+  /**
+   * The reason the Profiler encountered an error. This attribute is only present if the status is `error`.
+   *
+   * Possible values:
+   * - `not-supported-by-browser`: The browser does not support the Profiler (i.e., `window.Profiler` is not available).
+   * - `failed-to-lazy-load`: The Profiler script failed to be loaded by the browser (may be a connection issue or the chunk was not found).
+   * - `missing-document-policy-header`: The Profiler failed to start because its missing `Document-Policy: js-profiling` HTTP response header.
+   * - `unexpected-exception`: An exception occurred when starting the Profiler.
+   */
+  readonly error_reason?:
+    | 'not-supported-by-browser'
+    | 'failed-to-lazy-load'
+    | 'missing-document-policy-header'
+    | 'unexpected-exception'
   [k: string]: unknown
 }
 /**
