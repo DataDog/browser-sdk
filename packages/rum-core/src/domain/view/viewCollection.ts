@@ -139,8 +139,8 @@ function processViewUpdate(
       replay_level: configuration.defaultPrivacyLevel,
     },
     device: {
-      locale: navigator?.language,
-      locales: navigator?.languages ?? [],
+      locale: navigator.language,
+      locales: navigator.languages,
       time_zone: getTimeZone(),
     },
   }
