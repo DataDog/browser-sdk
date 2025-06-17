@@ -31,7 +31,6 @@ export function getTimeZone() {
 
     return intl.resolvedOptions().timeZone
   } catch {
-    // Fallback to a default value if the time zone cannot be determined
     return undefined
   }
 }
