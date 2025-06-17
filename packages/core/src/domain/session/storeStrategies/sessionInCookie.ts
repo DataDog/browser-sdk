@@ -26,7 +26,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
      * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
      */
     isLockEnabled: isChromium(),
-    persistSession: persistSessionCookie(cookieOptions),
+    persistSession: persistSessionCookie(cookieOptions, configuration),
     retrieveSession: retrieveSessionCookie,
     expireSession: (sessionState: SessionState) => expireSessionCookie(cookieOptions, sessionState, configuration),
   }
@@ -36,9 +36,14 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
   return cookieStore
 }
 
-function persistSessionCookie(options: CookieOptions) {
+function persistSessionCookie(options: CookieOptions, configuration: Configuration) {
   return (session: SessionState) => {
-    setCookie(SESSION_STORE_KEY, toSessionString(session), SESSION_EXPIRATION_DELAY, options)
+    setCookie(
+      SESSION_STORE_KEY,
+      toSessionString(session),
+      configuration.trackAnonymousUser ? SESSION_COOKIE_EXPIRATION_DELAY : SESSION_EXPIRATION_DELAY,
+      options
+    )
   }
 }
 

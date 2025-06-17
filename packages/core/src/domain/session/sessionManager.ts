@@ -7,6 +7,7 @@ import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/ad
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
+import { addTelemetryDebug } from '../telemetry'
 import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -88,11 +89,23 @@ export function startSessionManager<TrackingType extends string>(
   trackResume(configuration, () => sessionStore.restartSession())
 
   function buildSessionContext() {
+    const session = sessionStore.getSession()
+    if (!session) {
+      addTelemetryDebug('Unexpected session state', {
+        sessionStore: sessionStore.getSession(),
+      })
+      return {
+        id: undefined as any,
+        trackingType: undefined as any as TrackingType,
+        isReplayForced: false,
+        anonymousId: undefined,
+      }
+    }
     return {
-      id: sessionStore.getSession().id!,
-      trackingType: sessionStore.getSession()[productKey] as TrackingType,
-      isReplayForced: !!sessionStore.getSession().forcedReplay,
-      anonymousId: sessionStore.getSession().anonymousId,
+      id: session.id!,
+      trackingType: session[productKey] as TrackingType,
+      isReplayForced: !!session.forcedReplay,
+      anonymousId: session.anonymousId,
     }
   }
 

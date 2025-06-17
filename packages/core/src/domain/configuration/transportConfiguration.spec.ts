@@ -1,6 +1,6 @@
+import { INTAKE_SITE_FED_STAGING } from '../intakeSites'
 import type { Payload } from '../../transport'
 import { computeTransportConfiguration, isIntakeUrl } from './transportConfiguration'
-import { INTAKE_SITE_FED_STAGING } from './intakeSites'
 
 const DEFAULT_PAYLOAD = {} as Payload
 
