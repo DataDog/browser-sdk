@@ -186,7 +186,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function hasSessionInCache() {
-    return sessionCache && sessionCache[productKey] !== undefined
+    return sessionCache?.[productKey] !== undefined
   }
 
   function isSessionInCacheOutdated(sessionState: SessionState) {
