@@ -97,6 +97,7 @@ export function startRum(
     : startRumSessionManagerStub()
 
   telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
+  telemetry.setContextProvider('usr.anonymous_id', () => session.findTrackedSession()?.anonymousId)
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
