@@ -1,11 +1,4 @@
-import type { ProfilingContextManager } from '@datadog/browser-rum-core'
-import {
-  createProfilingContextManager,
-  LifeCycle,
-  LifeCycleEventType,
-  RumEventType,
-  RumPerformanceEntryType,
-} from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, RumEventType, RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { relativeNow, timeStampNow } from '@datadog/browser-core'
 import { setPageVisibility, restorePageVisibility, createNewEvent } from '@datadog/browser-core/test'
@@ -22,6 +15,8 @@ import { mockedTrace } from './test-utils/mockedTrace'
 import { transport } from './transport/transport'
 import { createRumProfiler } from './profiler'
 import type { RUMProfiler, RumProfilerTrace } from './types'
+import type { ProfilingContextManager } from './profilingContext'
+import { createProfilingContextManager } from './profilingContext'
 
 describe('profiler', () => {
   let sendProfileSpy: jasmine.Spy

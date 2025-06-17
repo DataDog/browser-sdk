@@ -4,12 +4,13 @@ import type {
   RumSessionManager,
   RumConfiguration,
   ProfilerApi,
-  ProfilingContextManager,
+  Hooks,
 } from '@datadog/browser-rum-core'
-import { createProfilingContextManager } from '@datadog/browser-rum-core'
 import { addTelemetryDebug, monitorError, performDraw } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
+import { createProfilingContextManager, startProfilingContext } from '../domain/profiling/profilingContext'
+import type { ProfilingContextManager } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
@@ -18,6 +19,7 @@ export function makeProfilerApi(): ProfilerApi {
 
   function onRumStart(
     lifeCycle: LifeCycle,
+    hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
@@ -38,6 +40,9 @@ export function makeProfilerApi(): ProfilerApi {
       return
     }
 
+    // Listen to events and add the profiling context to them.
+    startProfilingContext(hooks, profilingContextManager)
+
     lazyLoadProfiler()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
@@ -57,6 +62,5 @@ export function makeProfilerApi(): ProfilerApi {
     stop: () => {
       profiler?.stop().catch(monitorError)
     },
-    getProfilingContext: profilingContextManager.getProfilingContext,
   }
 }

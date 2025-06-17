@@ -10,6 +10,7 @@ export type {
   RumResourceEvent,
   RumLongTaskEvent,
   RumVitalEvent,
+  ProfilingInternalContextSchema,
 } from './rumEvent.types'
 export type {
   RumLongTaskEventDomainContext,
@@ -30,8 +31,6 @@ export type { ViewCreatedEvent } from './domain/view/trackViews'
 export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistory'
 export { startViewHistory } from './domain/contexts/viewHistory'
 export type { RumSessionManager, RumSession } from './domain/rumSessionManager'
-export { createProfilingContextManager } from './domain/contexts/profilingContext'
-export type { ProfilingContextManager } from './domain/contexts/profilingContext'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
 export type {
   RumMutationRecord,
@@ -54,3 +53,4 @@ export type { RumPlugin } from './domain/plugins'
 export type { MouseEventOnElement } from './domain/action/listenActionEvents'
 export { supportPerformanceTimingEvent } from './browser/performanceObservable'
 export { RumPerformanceEntryType } from './browser/performanceObservable'
+export type { Hooks, DefaultRumEventAttributes } from './domain/hooks'

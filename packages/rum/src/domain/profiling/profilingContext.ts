@@ -1,7 +1,5 @@
 import { HookNames } from '@datadog/browser-core'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
-import type { ProfilerApi } from '../../boot/rumPublicApi'
-import type { ProfilingInternalContextSchema } from '../../rumEvent.types'
+import type { Hooks, DefaultRumEventAttributes, ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
 
 export interface ProfilingContextManager {
   setProfilingContext: (next: Partial<ProfilingInternalContextSchema> | undefined) => void
@@ -27,13 +25,13 @@ export const createProfilingContextManager = (
   }
 }
 
-export const startProfilingContext = (hooks: Hooks, profilerApi: ProfilerApi) => {
+export const startProfilingContext = (hooks: Hooks, contextManager: ProfilingContextManager) => {
   hooks.register(
     HookNames.Assemble,
     ({ eventType }): DefaultRumEventAttributes => ({
       type: eventType,
       _dd: {
-        profiling: profilerApi.getProfilingContext(),
+        profiling: contextManager.getProfilingContext(),
       },
     })
   )

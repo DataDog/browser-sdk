@@ -13,13 +13,7 @@ import {
   elapsed,
 } from '@datadog/browser-core'
 
-import type {
-  LifeCycle,
-  ProfilingContextManager,
-  RumConfiguration,
-  RumSessionManager,
-  ViewHistoryEntry,
-} from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, RumPerformanceEntryType, supportPerformanceTimingEvent } from '@datadog/browser-rum-core'
 import type {
   RumProfilerTrace,
@@ -33,6 +27,7 @@ import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
+import type { ProfilingContextManager } from './profilingContext'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
