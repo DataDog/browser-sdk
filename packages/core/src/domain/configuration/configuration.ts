@@ -15,7 +15,6 @@ import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 import type { Site } from './intakeSites'
-import { buildTags } from './tags'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -204,7 +203,9 @@ export interface Configuration extends TransportConfiguration {
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
   telemetryUsageSampleRate: number
-  service: string | undefined
+  service?: string | undefined
+  version?: string | undefined
+  env?: string | undefined
   silentMultipleInit: boolean
   allowUntrustedEvents: boolean
   trackingConsent: TrackingConsent
@@ -219,7 +220,6 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
-  tags: string[]
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -290,7 +290,10 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
     telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
     telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-    service: initConfiguration.service || undefined,
+    service: initConfiguration.service ?? undefined,
+    env: initConfiguration.env ?? undefined,
+    version: initConfiguration.version ?? undefined,
+    datacenter: initConfiguration.datacenter ?? undefined,
     silentMultipleInit: !!initConfiguration.silentMultipleInit,
     allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
@@ -316,7 +319,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
      */
     batchMessagesLimit: 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
-    tags: buildTags(initConfiguration),
     ...computeTransportConfiguration(initConfiguration),
   }
 }

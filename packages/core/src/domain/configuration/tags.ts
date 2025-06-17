@@ -1,12 +1,12 @@
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
-import type { InitConfiguration } from './configuration'
+import type { Configuration } from './configuration'
 
 export const TAG_SIZE_LIMIT = 200
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export function buildTags(configuration: InitConfiguration): string[] {
+export function buildTags(configuration: Configuration): string[] {
   const { env, service, version, datacenter } = configuration
   const tags = [buildTag('sdk_version', __BUILD_ENV__SDK_VERSION__)]
 

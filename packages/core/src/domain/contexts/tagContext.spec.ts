@@ -13,7 +13,10 @@ describe('tag context', () => {
     startTagContext(
       hooks,
       mockRumConfiguration({
-        tags: ['tag1:value1', 'tag2:value2'],
+        service: 'service',
+        env: 'env',
+        version: 'version',
+        datacenter: 'datacenter',
       })
     )
   })
@@ -22,7 +25,7 @@ describe('tag context', () => {
     const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {})
 
     expect(defaultRumEventAttributes).toEqual({
-      ddtags: 'tag1:value1,tag2:value2',
+      ddtags: 'sdk_version:test,env:env,service:service,version:version,datacenter:datacenter',
     })
   })
 })

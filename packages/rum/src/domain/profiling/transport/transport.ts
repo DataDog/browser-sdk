@@ -1,4 +1,4 @@
-import { addTelemetryDebug, currentDrift, type Payload } from '@datadog/browser-core'
+import { addTelemetryDebug, buildTags, currentDrift, type Payload } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace } from '../types'
 
@@ -53,7 +53,7 @@ function buildProfileEvent(
   configuration: RumConfiguration,
   sessionId: string | undefined
 ): ProfileEvent {
-  const tags = configuration.tags
+  const tags = buildTags(configuration) // TODO: get that from the tagContext hook
   const profileAttributes = buildProfileEventAttributes(profilerTrace, configuration.applicationId, sessionId)
   const profileEventTags = buildProfileEventTags(tags)
 

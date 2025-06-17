@@ -9,6 +9,7 @@ export interface TransportConfiguration {
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
   profilingEndpointBuilder: EndpointBuilder
+  datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
 }

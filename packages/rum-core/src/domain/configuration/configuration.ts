@@ -181,7 +181,6 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean
   trackLongTasks: boolean
   trackBfcacheViews: boolean
-  version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
@@ -234,7 +233,6 @@ export function validateAndBuildRumConfiguration(
 
   return {
     applicationId: initConfiguration.applicationId,
-    version: initConfiguration.version || undefined,
     actionNameAttribute: initConfiguration.actionNameAttribute,
     sessionReplaySampleRate,
     startSessionReplayRecordingManually:
