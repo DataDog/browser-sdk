@@ -169,7 +169,7 @@ describe('logger collection', () => {
       expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag3:value3')
     })
 
-    it('should merge the ddtags of the logger and the message context', () => {
+    it('should prioritize the ddtags of the message context', () => {
       logger.setContext({ ddtags: 'tag1:value1,tag2:value2' })
       handleLog(
         { message: 'message', status: StatusType.error, context: { ddtags: 'tag3:value3' } },
@@ -178,7 +178,7 @@ describe('logger collection', () => {
         COMMON_CONTEXT
       )
 
-      expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag1:value1,tag2:value2,tag3:value3')
+      expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag3:value3')
     })
   })
 })
