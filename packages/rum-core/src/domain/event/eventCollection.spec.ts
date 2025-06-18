@@ -1,7 +1,7 @@
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import { VitalType } from '../../rawRumEvent.types'
+import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import { startEventCollection } from './eventCollection'
 
 describe('eventCollection', () => {
@@ -18,7 +18,7 @@ describe('eventCollection', () => {
     const startTime = 123 as RelativeTime
     const duration = 456 as Duration
     const event = {
-      type: 'vital' as const,
+      type: RumEventType.VITAL as const,
       date: Date.now() as TimeStamp,
       context: { foo: 'bar' },
       vital: {
