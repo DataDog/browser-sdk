@@ -9,6 +9,7 @@ import {
   startTelemetry,
   TelemetryService,
   createIdentityEncoder,
+  startUserContext,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -26,6 +27,8 @@ import { startReportError } from '../domain/reportError'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
+
+const LOGS_STORAGE_KEY = 'logs'
 
 export type StartLogs = typeof startLogs
 export type StartLogsResult = ReturnType<StartLogs>
@@ -63,8 +66,10 @@ export function startLogs(
       : startLogsSessionManagerStub(configuration)
   telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
-  const accountContext = startAccountContext(hooks, configuration, 'logs')
-  const globalContext = startGlobalContext(hooks, configuration, 'logs', false)
+  // Start user and account context first to allow overrides from global context
+  const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
+  const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
+  const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
   const { stop, getRUMInternalContext } = startRUMInternalContext(hooks)
   telemetry.setContextProvider('application.id', () => getRUMInternalContext()?.application_id)
   telemetry.setContextProvider('view.id', () => (getRUMInternalContext()?.view as Context)?.id)
@@ -98,6 +103,7 @@ export function startLogs(
     getInternalContext: internalContext.get,
     accountContext,
     globalContext,
+    userContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
       stop()
