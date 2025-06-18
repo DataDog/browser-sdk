@@ -123,6 +123,9 @@ export { defineContextMethod, bufferContextCalls } from './domain/context/define
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
+export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
+export type { User } from './domain/contexts/userContext'
+export type { Account } from './domain/contexts/accountContext'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
@@ -136,8 +139,6 @@ export {
   getSyntheticsResultId,
   isSyntheticsTest,
 } from './domain/synthetics/syntheticsWorkerValues'
-export type { User } from './domain/user.types'
-export type { Account } from './domain/account.types'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './tools/utils/polyfills'
