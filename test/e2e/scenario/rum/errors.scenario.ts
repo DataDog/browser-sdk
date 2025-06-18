@@ -81,6 +81,27 @@ test.describe('rum errors', () => {
       })
     })
 
+  createTest('send runtime errors happening before initialization')
+    .withRum()
+    .withRumInit((configuration) => {
+      // Simulate a late initialization of the RUM SDK
+      setTimeout(() => window.DD_RUM!.init(configuration))
+      throw new Error('oh snap')
+    })
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs, baseUrl }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: 'oh snap',
+        source: 'source',
+        handling: 'unhandled',
+        stack: ['Error: oh snap', `at <anonymous> @ ${baseUrl}/:`],
+      })
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
+    })
+
   createTest('send unhandled rejections')
     .withRum()
     .withBody(createBody('Promise.reject(foo())'))
