@@ -1,3 +1,4 @@
+import type { ExperimentalFeatureType } from './experimentalFeatures'
 import {
   ExperimentalFeature,
   addExperimentalFeatures,
@@ -6,8 +7,8 @@ import {
   resetExperimentalFeatures,
 } from './experimentalFeatures'
 
-const TEST_FEATURE_FLAG_ONE = 'foo' as ExperimentalFeature
-const TEST_FEATURE_FLAG_TWO = 'bar' as ExperimentalFeature
+const TEST_FEATURE_FLAG_ONE = 'foo' as ExperimentalFeatureType
+const TEST_FEATURE_FLAG_TWO = 'bar' as ExperimentalFeatureType
 
 describe('experimentalFeatures', () => {
   afterEach(() => {

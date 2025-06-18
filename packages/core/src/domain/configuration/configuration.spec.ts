@@ -2,6 +2,7 @@ import type { RumEvent } from '../../../../rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
+import type { ExperimentalFeatureType } from '../../tools/experimentalFeatures'
 import {
   ExperimentalFeature,
   isExperimentalFeatureEnabled,
@@ -26,7 +27,7 @@ describe('validateAndBuildConfiguration', () => {
   })
 
   describe('experimentalFeatures', () => {
-    const TEST_FEATURE_FLAG = 'foo' as ExperimentalFeature
+    const TEST_FEATURE_FLAG = 'foo' as ExperimentalFeatureType
 
     beforeEach(() => {
       ;(ExperimentalFeature as any).FOO = TEST_FEATURE_FLAG

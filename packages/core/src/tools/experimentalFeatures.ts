@@ -12,31 +12,32 @@
 
 import { objectHasValue } from './utils/objectUtils'
 
-// eslint-disable-next-line no-restricted-syntax
-export enum ExperimentalFeature {
-  TRACK_INTAKE_REQUESTS = 'track_intake_requests',
-  WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
-}
+export const ExperimentalFeature = {
+  TRACK_INTAKE_REQUESTS: 'track_intake_requests',
+  WRITABLE_RESOURCE_GRAPHQL: 'writable_resource_graphql',
+} as const
 
-const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
+export type ExperimentalFeatureType = (typeof ExperimentalFeature)[keyof typeof ExperimentalFeature]
+
+const enabledExperimentalFeatures: Set<ExperimentalFeatureType> = new Set()
 
 export function initFeatureFlags(enableExperimentalFeatures: string[] | undefined) {
   if (Array.isArray(enableExperimentalFeatures)) {
     addExperimentalFeatures(
-      enableExperimentalFeatures.filter((flag): flag is ExperimentalFeature =>
+      enableExperimentalFeatures.filter((flag): flag is ExperimentalFeatureType =>
         objectHasValue(ExperimentalFeature, flag)
       )
     )
   }
 }
 
-export function addExperimentalFeatures(enabledFeatures: ExperimentalFeature[]): void {
+export function addExperimentalFeatures(enabledFeatures: ExperimentalFeatureType[]): void {
   enabledFeatures.forEach((flag) => {
     enabledExperimentalFeatures.add(flag)
   })
 }
 
-export function isExperimentalFeatureEnabled(featureName: ExperimentalFeature): boolean {
+export function isExperimentalFeatureEnabled(featureName: ExperimentalFeatureType): boolean {
   return enabledExperimentalFeatures.has(featureName)
 }
 
@@ -44,6 +45,6 @@ export function resetExperimentalFeatures(): void {
   enabledExperimentalFeatures.clear()
 }
 
-export function getExperimentalFeatures(): Set<ExperimentalFeature> {
+export function getExperimentalFeatures(): Set<ExperimentalFeatureType> {
   return enabledExperimentalFeatures
 }

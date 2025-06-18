@@ -1,6 +1,6 @@
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
-import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
+import type { ExperimentalFeatureType } from '../../tools/experimentalFeatures'
 import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
@@ -113,7 +113,7 @@ describe('telemetry', () => {
   })
 
   it('should contains feature flags', () => {
-    addExperimentalFeatures(['foo' as ExperimentalFeature])
+    addExperimentalFeatures(['foo' as ExperimentalFeatureType])
     const { notifySpy } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')
