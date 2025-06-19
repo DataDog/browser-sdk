@@ -1,9 +1,10 @@
 // Exported only for tests
-export const enum Browser {
-  CHROMIUM,
-  SAFARI,
-  OTHER,
-}
+export const Browser = {
+  CHROMIUM: 0,
+  SAFARI: 1,
+  OTHER: 2,
+} as const
+export type BrowserEnum = (typeof Browser)[keyof typeof Browser]
 
 export function isChromium() {
   return detectBrowserCached() === Browser.CHROMIUM
@@ -13,7 +14,7 @@ export function isSafari() {
   return detectBrowserCached() === Browser.SAFARI
 }
 
-let browserCache: Browser | undefined
+let browserCache: BrowserEnum | undefined
 function detectBrowserCached() {
   return browserCache ?? (browserCache = detectBrowser())
 }

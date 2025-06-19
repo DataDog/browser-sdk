@@ -8,16 +8,17 @@ import type { RumConfiguration } from '../configuration'
  */
 export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
-export const enum ActionNameSource {
-  CUSTOM_ATTRIBUTE = 'custom_attribute',
-  MASK_PLACEHOLDER = 'mask_placeholder',
-  TEXT_CONTENT = 'text_content',
-  STANDARD_ATTRIBUTE = 'standard_attribute',
-  BLANK = 'blank',
-}
+export const ActionNameSource = {
+  CUSTOM_ATTRIBUTE: 'custom_attribute',
+  MASK_PLACEHOLDER: 'mask_placeholder',
+  TEXT_CONTENT: 'text_content',
+  STANDARD_ATTRIBUTE: 'standard_attribute',
+  BLANK: 'blank',
+} as const
+export type ActionNameSourceEnum = (typeof ActionNameSource)[keyof typeof ActionNameSource]
 type ActionName = {
   name: string
-  nameSource: ActionNameSource
+  nameSource: ActionNameSourceEnum
 }
 
 export function getActionNameFromElement(

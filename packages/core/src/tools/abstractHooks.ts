@@ -1,15 +1,16 @@
 import { combine } from './mergeInto'
 
-export const enum HookNames {
-  Assemble,
-}
+export const HookNames = {
+  Assemble: 0,
+} as const
+export type HookNamesEnum = (typeof HookNames)[keyof typeof HookNames]
 
 // This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
 // project configured with `isolatedModules: true`. Even if the const enum is declared in this
 // module, we cannot use it directly to define the EventMap interface keys (TS error: "Cannot access
 // ambient const enums when the '--isolatedModules' flag is provided.").
 export declare const HookNamesAsConst: {
-  ASSEMBLE: HookNames.Assemble
+  ASSEMBLE: typeof HookNames.Assemble
 }
 
 export type RecursivePartialExcept<T, K extends keyof T = never> = {
@@ -28,11 +29,11 @@ export type SKIPPED = typeof SKIPPED
 
 export type AbstractHooks = ReturnType<typeof abstractHooks>
 
-export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => any }, E>() {
-  const callbacks: { [K in HookNames]?: Array<T[K]> } = {}
+export function abstractHooks<T extends { [K in HookNamesEnum]: (...args: any[]) => any }, E>() {
+  const callbacks: { [K in HookNamesEnum]?: Array<T[K]> } = {}
 
   return {
-    register<K extends HookNames>(hookName: K, callback: T[K]) {
+    register<K extends HookNamesEnum>(hookName: K, callback: T[K]) {
       if (!callbacks[hookName]) {
         callbacks[hookName] = []
       }
@@ -43,7 +44,7 @@ export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => 
         },
       }
     },
-    triggerHook<K extends HookNames>(hookName: K, param: Parameters<T[K]>[0]): E | DISCARDED | undefined {
+    triggerHook<K extends HookNamesEnum>(hookName: K, param: Parameters<T[K]>[0]): E | DISCARDED | undefined {
       const hookCallbacks = callbacks[hookName] || []
       const results = []
 

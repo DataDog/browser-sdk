@@ -10,24 +10,25 @@ type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.MASK
   | typeof NodePrivacyLevel.MASK_USER_INPUT
 
-export const enum SerializationContextStatus {
-  INITIAL_FULL_SNAPSHOT,
-  SUBSEQUENT_FULL_SNAPSHOT,
-  MUTATION,
-}
+export const SerializationContextStatus = {
+  INITIAL_FULL_SNAPSHOT: 0,
+  SUBSEQUENT_FULL_SNAPSHOT: 1,
+  MUTATION: 2,
+} as const
+export type SerializationContextStatusEnum = (typeof SerializationContextStatus)[keyof typeof SerializationContextStatus]
 
 export type SerializationContext =
   | {
-      status: SerializationContextStatus.MUTATION
+      status: typeof SerializationContextStatus.MUTATION
       shadowRootsController: ShadowRootsController
     }
   | {
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT
+      status: typeof SerializationContextStatus.INITIAL_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
       shadowRootsController: ShadowRootsController
     }
   | {
-      status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
+      status: typeof SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT
       elementsScrollPositions: ElementsScrollPositions
       shadowRootsController: ShadowRootsController
     }

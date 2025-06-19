@@ -6,10 +6,12 @@ export const TelemetryType = {
   usage: 'usage',
 } as const
 
-export const enum StatusType {
-  debug = 'debug',
-  error = 'error',
-}
+export const StatusType = {
+  debug: 'debug',
+  error: 'error',
+} as const
+
+export type StatusTypeEnum = (typeof StatusType)[keyof typeof StatusType]
 
 export interface RuntimeEnvInfo {
   is_local_file: boolean

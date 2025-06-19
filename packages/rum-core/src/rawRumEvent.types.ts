@@ -1,35 +1,39 @@
+/* eslint-disable @typescript-eslint/naming-convention */
+
 import type {
   Duration,
   ErrorSource,
-  ErrorHandling,
-  ResourceType,
+  ErrorHandlingEnum,
+  ResourceTypeEnum,
   ServerDuration,
   TimeStamp,
   RawErrorCause,
   DefaultPrivacyLevel,
   Csp,
 } from '@datadog/browser-core'
-import type { PageState } from './domain/contexts/pageStateHistory'
+import type { PageStateEnum } from './domain/contexts/pageStateHistory'
 
-export const enum RumEventType {
-  ACTION = 'action',
-  ERROR = 'error',
-  LONG_TASK = 'long_task',
-  VIEW = 'view',
-  RESOURCE = 'resource',
-  VITAL = 'vital',
-}
+export const RumEventType = {
+  ACTION: 'action',
+  ERROR: 'error',
+  LONG_TASK: 'long_task',
+  VIEW: 'view',
+  RESOURCE: 'resource',
+  VITAL: 'vital',
+} as const
+export type RumEventTypeEnum = (typeof RumEventType)[keyof typeof RumEventType]
 
-export const enum RumLongTaskEntryType {
-  LONG_TASK = 'long-task',
-  LONG_ANIMATION_FRAME = 'long-animation-frame',
-}
+export const RumLongTaskEntryType = {
+  LONG_TASK: 'long-task',
+  LONG_ANIMATION_FRAME: 'long-animation-frame',
+} as const
+export type RumLongTaskEntryTypeEnum = (typeof RumLongTaskEntryType)[keyof typeof RumLongTaskEntryType]
 
 export interface RawRumResourceEvent {
   date: TimeStamp
-  type: RumEventType.RESOURCE
+  type: typeof RumEventType.RESOURCE
   resource: {
-    type: ResourceType
+    type: ResourceTypeEnum
     id: string
     duration?: ServerDuration
     url: string
@@ -66,7 +70,7 @@ export interface ResourceEntryDetailsElement {
 
 export interface RawRumErrorEvent {
   date: TimeStamp
-  type: RumEventType.ERROR
+  type: typeof RumEventType.ERROR
   error: {
     id: string
     type?: string
@@ -76,7 +80,7 @@ export interface RawRumErrorEvent {
     fingerprint?: string
     source: ErrorSource
     message: string
-    handling?: ErrorHandling
+    handling?: ErrorHandlingEnum
     causes?: RawErrorCause[]
     source_type: 'browser'
     csp?: Csp
@@ -88,9 +92,9 @@ export interface RawRumErrorEvent {
 
 export interface RawRumViewEvent {
   date: TimeStamp
-  type: RumEventType.VIEW
+  type: typeof RumEventType.VIEW
   view: {
-    loading_type: ViewLoadingType
+    loading_type: ViewLoadingTypeEnum
     first_byte?: ServerDuration
     first_contentful_paint?: ServerDuration
     first_input_delay?: ServerDuration
@@ -183,13 +187,14 @@ export interface RumRect {
   height: number
 }
 
-export type PageStateServerEntry = { state: PageState; start: ServerDuration }
+export type PageStateServerEntry = { state: PageStateEnum; start: ServerDuration }
 
-export const enum ViewLoadingType {
-  INITIAL_LOAD = 'initial_load',
-  ROUTE_CHANGE = 'route_change',
-  BF_CACHE = 'bf_cache',
-}
+export const ViewLoadingType = {
+  INITIAL_LOAD: 'initial_load',
+  ROUTE_CHANGE: 'route_change',
+  BF_CACHE: 'bf_cache',
+} as const
+export type ViewLoadingTypeEnum = (typeof ViewLoadingType)[keyof typeof ViewLoadingType]
 
 export interface ViewCustomTimings {
   [key: string]: Duration
@@ -207,10 +212,10 @@ interface Count {
 
 export interface RawRumLongTaskEvent {
   date: TimeStamp
-  type: RumEventType.LONG_TASK
+  type: typeof RumEventType.LONG_TASK
   long_task: {
     id: string
-    entry_type: RumLongTaskEntryType.LONG_TASK
+    entry_type: typeof RumLongTaskEntryType.LONG_TASK
     duration: ServerDuration
   }
   _dd: {
@@ -230,10 +235,10 @@ export type InvokerType =
 
 export interface RawRumLongAnimationFrameEvent {
   date: TimeStamp
-  type: RumEventType.LONG_TASK // LoAF are ingested as Long Task
+  type: typeof RumEventType.LONG_TASK // LoAF are ingested as Long Task
   long_task: {
     id: string
-    entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME
+    entry_type: typeof RumLongTaskEntryType.LONG_ANIMATION_FRAME
     duration: ServerDuration
     blocking_duration: ServerDuration
     first_ui_event_timestamp: ServerDuration
@@ -261,13 +266,13 @@ export interface RawRumLongAnimationFrameEvent {
 
 export interface RawRumActionEvent {
   date: TimeStamp
-  type: RumEventType.ACTION
+  type: typeof RumEventType.ACTION
   action: {
     id: string
-    type: ActionType
+    type: ActionTypeEnum
     loading_time?: ServerDuration
     frustration?: {
-      type: FrustrationType[]
+      type: FrustrationTypeEnum[]
     }
     error?: Count
     long_task?: Count
@@ -296,24 +301,26 @@ export interface RawRumActionEvent {
   }
 }
 
-export const enum ActionType {
-  CLICK = 'click',
-  CUSTOM = 'custom',
-}
+export const ActionType = {
+  CLICK: 'click',
+  CUSTOM: 'custom',
+} as const
+export type ActionTypeEnum = (typeof ActionType)[keyof typeof ActionType]
 
-export const enum FrustrationType {
-  RAGE_CLICK = 'rage_click',
-  ERROR_CLICK = 'error_click',
-  DEAD_CLICK = 'dead_click',
-}
+export const FrustrationType = {
+  RAGE_CLICK: 'rage_click',
+  ERROR_CLICK: 'error_click',
+  DEAD_CLICK: 'dead_click',
+} as const
+export type FrustrationTypeEnum = (typeof FrustrationType)[keyof typeof FrustrationType]
 
 export interface RawRumVitalEvent {
   date: TimeStamp
-  type: RumEventType.VITAL
+  type: typeof RumEventType.VITAL
   vital: {
     id: string
     name: string
-    type: VitalType
+    type: VitalTypeEnum
     description?: string
     duration: number
   }
@@ -324,11 +331,16 @@ export interface RawRumVitalEvent {
   }
 }
 
-export const enum VitalType {
-  DURATION = 'duration',
-}
+export const VitalType = {
+  DURATION: 'duration',
+} as const
+export type VitalTypeEnum = (typeof VitalType)[keyof typeof VitalType]
 
-export type RawRumEvent =
+type Prettify<T> = {
+  [K in keyof T]: T[K]
+} & {}
+
+export type RawRumEvent = Prettify<
   | RawRumErrorEvent
   | RawRumResourceEvent
   | RawRumViewEvent
@@ -336,3 +348,4 @@ export type RawRumEvent =
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
+>

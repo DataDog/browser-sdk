@@ -1,10 +1,11 @@
-export const enum CustomerDataType {
-  FeatureFlag,
-  User,
-  GlobalContext,
-  View,
-  Account,
-}
+export const CustomerDataType = {
+  FeatureFlag: 0,
+  User: 1,
+  GlobalContext: 2,
+  View: 3,
+  Account: 4,
+} as const
+export type CustomerDataTypeEnum = (typeof CustomerDataType)[keyof typeof CustomerDataType]
 
 // Use a const instead of const enum to avoid inlining the enum values in the bundle and save bytes
 export const CustomerContextKey = {

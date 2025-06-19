@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime, ResourceTypeEnum } from '@datadog/browser-core'
 import {
   addTelemetryDebug,
   elapsed,
@@ -27,7 +27,7 @@ export interface ResourceEntryDetails {
 
 export const FAKE_INITIAL_DOCUMENT = 'initial_document'
 
-const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string) => boolean]> = [
+const RESOURCE_TYPES: Array<[ResourceTypeEnum, (initiatorType: string, path: string) => boolean]> = [
   [ResourceType.DOCUMENT, (initiatorType: string) => FAKE_INITIAL_DOCUMENT === initiatorType],
   [ResourceType.XHR, (initiatorType: string) => 'xmlhttprequest' === initiatorType],
   [ResourceType.FETCH, (initiatorType: string) => 'fetch' === initiatorType],

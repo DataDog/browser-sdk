@@ -22,19 +22,20 @@ export const MAX_PAGE_STATE_ENTRIES_SELECTABLE = 500
 
 export const PAGE_STATE_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
-export const enum PageState {
-  ACTIVE = 'active',
-  PASSIVE = 'passive',
-  HIDDEN = 'hidden',
-  FROZEN = 'frozen',
-  TERMINATED = 'terminated',
-}
+export const PageState = {
+  ACTIVE: 'active',
+  PASSIVE: 'passive',
+  HIDDEN: 'hidden',
+  FROZEN: 'frozen',
+  TERMINATED: 'terminated',
+} as const
+export type PageStateEnum = (typeof PageState)[keyof typeof PageState]
 
-export type PageStateEntry = { state: PageState; startTime: RelativeTime }
+export type PageStateEntry = { state: PageStateEnum; startTime: RelativeTime }
 
 export interface PageStateHistory {
-  wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
-  addPageState(nextPageState: PageState, startTime?: RelativeTime): void
+  wasInPageStateDuringPeriod: (state: PageStateEnum, startTime: RelativeTime, duration: Duration) => boolean
+  addPageState(nextPageState: PageStateEnum, startTime?: RelativeTime): void
   stop: () => void
 }
 
@@ -48,7 +49,7 @@ export function startPageStateHistory(
     maxEntries: MAX_PAGE_STATE_ENTRIES,
   })
 
-  let currentPageState: PageState
+  let currentPageState: PageStateEnum
 
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
     const visibilityEntries = performance.getEntriesByType(
@@ -81,7 +82,7 @@ export function startPageStateHistory(
     { capture: true }
   )
 
-  function addPageState(nextPageState: PageState, startTime = relativeNow()) {
+  function addPageState(nextPageState: PageStateEnum, startTime = relativeNow()) {
     if (nextPageState === currentPageState) {
       return
     }
@@ -91,7 +92,7 @@ export function startPageStateHistory(
     pageStateEntryHistory.add({ state: currentPageState, startTime }, startTime)
   }
 
-  function wasInPageStateDuringPeriod(state: PageState, startTime: RelativeTime, duration: Duration) {
+  function wasInPageStateDuringPeriod(state: PageStateEnum, startTime: RelativeTime, duration: Duration) {
     return pageStateEntryHistory.findAll(startTime, duration).some((pageState) => pageState.state === state)
   }
 

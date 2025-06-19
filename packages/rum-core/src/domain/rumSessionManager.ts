@@ -12,11 +12,12 @@ import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
-export const enum SessionType {
-  SYNTHETICS = 'synthetics',
-  USER = 'user',
-  CI_TEST = 'ci_test',
-}
+export const SessionType = {
+  SYNTHETICS: 'synthetics',
+  USER: 'user',
+  CI_TEST: 'ci_test',
+} as const
+export type SessionTypeEnum = (typeof SessionType)[keyof typeof SessionType]
 
 export const RUM_SESSION_KEY = 'rum'
 
@@ -29,21 +30,23 @@ export interface RumSessionManager {
 
 export type RumSession = {
   id: string
-  sessionReplay: SessionReplayState
+  sessionReplay: SessionReplayStateEnum
   anonymousId?: string
 }
 
-export const enum RumTrackingType {
-  NOT_TRACKED = SESSION_NOT_TRACKED,
-  TRACKED_WITH_SESSION_REPLAY = '1',
-  TRACKED_WITHOUT_SESSION_REPLAY = '2',
-}
+export const RumTrackingType = {
+  NOT_TRACKED: SESSION_NOT_TRACKED,
+  TRACKED_WITH_SESSION_REPLAY: '1',
+  TRACKED_WITHOUT_SESSION_REPLAY: '2',
+} as const
+export type RumTrackingTypeEnum = (typeof RumTrackingType)[keyof typeof RumTrackingType]
 
-export const enum SessionReplayState {
-  OFF,
-  SAMPLED,
-  FORCED,
-}
+export const SessionReplayState = {
+  OFF: 0,
+  SAMPLED: 1,
+  FORCED: 2,
+} as const
+export type SessionReplayStateEnum = (typeof SessionReplayState)[keyof typeof SessionReplayState]
 
 export function startRumSessionManager(
   configuration: RumConfiguration,
@@ -125,7 +128,7 @@ function computeTrackingType(configuration: RumConfiguration, rawTrackingType?: 
   return RumTrackingType.TRACKED_WITH_SESSION_REPLAY
 }
 
-function hasValidRumSession(trackingType?: string): trackingType is RumTrackingType {
+function hasValidRumSession(trackingType?: string): trackingType is RumTrackingTypeEnum {
   return (
     trackingType === RumTrackingType.NOT_TRACKED ||
     trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY ||

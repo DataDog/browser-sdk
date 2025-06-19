@@ -3,6 +3,7 @@ import { Observable, resetExperimentalFeatures, startFakeTelemetry } from '@data
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
+import type { RumEventTypeEnum } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -29,7 +30,7 @@ describe('customerDataTelemetry', () => {
     contextBytesCount = fakeContextBytesCount,
   }: {
     eventNumber: number
-    eventType?: RumEventType | 'Telemetry'
+    eventType?: RumEventTypeEnum | 'Telemetry'
     batchBytesCount?: number
     contextBytesCount?: number
     context?: Context

@@ -10,7 +10,7 @@ import {
   createValueHistory,
   PageExitReason,
 } from '@datadog/browser-core'
-import type { FrustrationType } from '../../rawRumEvent.types'
+import type { FrustrationTypeEnum } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -35,7 +35,7 @@ interface ActionCounts {
 }
 
 export interface ClickAction {
-  type: ActionType.CLICK
+  type: typeof ActionType.CLICK
   id: string
   name: string
   nameSource: string
@@ -49,7 +49,7 @@ export interface ClickAction {
   duration?: Duration
   counts: ActionCounts
   event: MouseEventOnElement
-  frustrationTypes: FrustrationType[]
+  frustrationTypes: FrustrationTypeEnum[]
   events: Event[]
 }
 
@@ -262,14 +262,12 @@ function computeClickActionBase(
   }
 }
 
-const enum ClickStatus {
-  // Initial state, the click is still ongoing.
-  ONGOING,
-  // The click is no more ongoing but still needs to be validated or discarded.
-  STOPPED,
-  // Final state, the click has been stopped and validated or discarded.
-  FINALIZED,
-}
+const ClickStatus = {
+  ONGOING: 0,
+  STOPPED: 1,
+  FINALIZED: 2,
+} as const
+type ClickStatusEnum = (typeof ClickStatus)[keyof typeof ClickStatus]
 
 export type Click = ReturnType<typeof newClick>
 
@@ -289,9 +287,9 @@ function newClick(
       event.action !== undefined &&
       (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
   })
-  let status = ClickStatus.ONGOING
+  let status: ClickStatusEnum = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
-  const frustrationTypes: FrustrationType[] = []
+  const frustrationTypes: FrustrationTypeEnum[] = []
   const stopObservable = new Observable<void>()
 
   function stop(newActivityEndTime?: TimeStamp) {
@@ -321,7 +319,7 @@ function newClick(
       return activityEndTime !== undefined
     },
     getUserActivity,
-    addFrustration: (frustrationType: FrustrationType) => {
+    addFrustration: (frustrationType: FrustrationTypeEnum) => {
       frustrationTypes.push(frustrationType)
     },
     startClocks,

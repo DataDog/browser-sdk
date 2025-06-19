@@ -1,17 +1,19 @@
-export const enum ResourceType {
-  DOCUMENT = 'document',
-  XHR = 'xhr',
-  BEACON = 'beacon',
-  FETCH = 'fetch',
-  CSS = 'css',
-  JS = 'js',
-  IMAGE = 'image',
-  FONT = 'font',
-  MEDIA = 'media',
-  OTHER = 'other',
-}
+export const ResourceType = {
+  DOCUMENT: 'document',
+  XHR: 'xhr',
+  BEACON: 'beacon',
+  FETCH: 'fetch',
+  CSS: 'css',
+  JS: 'js',
+  IMAGE: 'image',
+  FONT: 'font',
+  MEDIA: 'media',
+  OTHER: 'other',
+} as const
+export type ResourceTypeEnum = (typeof ResourceType)[keyof typeof ResourceType]
 
-export const enum RequestType {
-  FETCH = ResourceType.FETCH,
-  XHR = ResourceType.XHR,
-}
+export const RequestType = {
+  FETCH: ResourceType.FETCH,
+  XHR: ResourceType.XHR,
+} as const
+export type RequestTypeEnum = (typeof RequestType)[keyof typeof RequestType]

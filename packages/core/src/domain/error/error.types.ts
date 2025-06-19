@@ -32,7 +32,7 @@ export interface RawError {
   stack?: string
   source: ErrorSource
   originalError?: unknown
-  handling?: ErrorHandling
+  handling?: ErrorHandlingEnum
   handlingStack?: string
   componentStack?: string
   causes?: RawErrorCause[]
@@ -51,14 +51,16 @@ export const ErrorSource = {
   REPORT: 'report',
 } as const
 
-export const enum NonErrorPrefix {
-  UNCAUGHT = 'Uncaught',
-  PROVIDED = 'Provided',
-}
+export const NonErrorPrefix = {
+  UNCAUGHT: 'Uncaught',
+  PROVIDED: 'Provided',
+} as const
+export type NonErrorPrefixEnum = (typeof NonErrorPrefix)[keyof typeof NonErrorPrefix]
 
-export const enum ErrorHandling {
-  HANDLED = 'handled',
-  UNHANDLED = 'unhandled',
-}
+export const ErrorHandling = {
+  HANDLED: 'handled',
+  UNHANDLED: 'unhandled',
+} as const
+export type ErrorHandlingEnum = (typeof ErrorHandling)[keyof typeof ErrorHandling]
 
 export type ErrorSource = (typeof ErrorSource)[keyof typeof ErrorSource]

@@ -3,31 +3,34 @@
 
 import type { BrowserRecord, RecordType } from '@datadog/browser-rum/src/types'
 
-export enum MessageBridgeUpType {
-  READY = 'ready',
-  RECORD_APPLIED = 'record_applied',
-  LOG = 'log',
-  ERROR = 'error',
-  METRIC_TIMING = 'timing',
-  METRIC_INCREMENT = 'increment',
-  CAPABILITIES = 'capabilities',
-  SERVICE_WORKER_ACTIVATED = 'service_worker_activated',
-  RENDERER_DIMENSIONS = 'renderer_dimensions',
-  ELEMENT_POSITION = 'element_position',
-}
+export const MessageBridgeDownType = {
+  RECORD: 'record',
+  RESET: 'reset',
+  ELEMENT_POSITION: 'element_position',
+} as const
+export type MessageBridgeDownTypeEnum = (typeof MessageBridgeDownType)[keyof typeof MessageBridgeDownType]
 
-export enum MessageBridgeDownType {
-  RECORD = 'record',
-  RESET = 'reset',
-  ELEMENT_POSITION = 'element_position',
-}
+export const MessageBridgeUpLogLevel = {
+  LOG: 'log',
+  DEBUG: 'debug',
+  WARN: 'warn',
+  ERROR: 'error',
+} as const
+export type MessageBridgeUpLogLevelEnum = (typeof MessageBridgeUpLogLevel)[keyof typeof MessageBridgeUpLogLevel]
 
-export enum MessageBridgeUpLogLevel {
-  LOG = 'log',
-  DEBUG = 'debug',
-  WARN = 'warn',
-  ERROR = 'error',
-}
+export const MessageBridgeUpType = {
+  READY: 'ready',
+  RECORD_APPLIED: 'record_applied',
+  LOG: 'log',
+  ERROR: 'error',
+  METRIC_TIMING: 'timing',
+  METRIC_INCREMENT: 'increment',
+  CAPABILITIES: 'capabilities',
+  SERVICE_WORKER_ACTIVATED: 'service_worker_activated',
+  RENDERER_DIMENSIONS: 'renderer_dimensions',
+  ELEMENT_POSITION: 'element_position',
+} as const
+export type MessageBridgeUpTypeEnum = (typeof MessageBridgeUpType)[keyof typeof MessageBridgeUpType]
 
 export interface Dimensions {
   width: number
@@ -100,14 +103,14 @@ export type MessageBridgeUp = {
  * Message send by the sanboxing when iframe is ready
  */
 export type MessageBridgeUpReady = {
-  type: MessageBridgeUpType.READY
+  type: typeof MessageBridgeUpType.READY
 }
 
 /**
  * Message send by the sanboxing when a record has been applied
  */
 export type MessageBridgeUpRecordApplied = {
-  type: MessageBridgeUpType.RECORD_APPLIED
+  type: typeof MessageBridgeUpType.RECORD_APPLIED
   /** OrderId of the Record applied */
   orderId: number
   /** Type of the Record applied */
@@ -118,8 +121,8 @@ export type MessageBridgeUpRecordApplied = {
  * Message send by the sanboxing when a log is sent
  */
 export type MessageBridgeUpLog = {
-  type: MessageBridgeUpType.LOG
-  level: MessageBridgeUpLogLevel
+  type: typeof MessageBridgeUpType.LOG
+  level: MessageBridgeUpLogLevelEnum
   message: string
   context?: { [key: string]: any }
 }
@@ -128,7 +131,7 @@ export type MessageBridgeUpLog = {
  * Message send by the sanboxing iframe when there is an error
  */
 export type MessageBridgeUpError = {
-  type: MessageBridgeUpType.ERROR
+  type: typeof MessageBridgeUpType.ERROR
   serialisedError: SerialisedError
   context?: { [key: string]: any }
 }
@@ -137,7 +140,7 @@ export type MessageBridgeUpError = {
  * Message send by the sanboxing iframe with a custom timing
  */
 export type MessageBridgeUpTiming = {
-  type: MessageBridgeUpType.METRIC_TIMING
+  type: typeof MessageBridgeUpType.METRIC_TIMING
   name: string
   duration: number
   context?: { [key: string]: any }
@@ -147,14 +150,14 @@ export type MessageBridgeUpTiming = {
  * Message send by the sanboxing iframe with a custom count
  */
 export type MessageBridgeUpIncrement = {
-  type: MessageBridgeUpType.METRIC_INCREMENT
+  type: typeof MessageBridgeUpType.METRIC_INCREMENT
   name: string
   value: number
   context?: { [key: string]: any }
 }
 
 export type MessageBridgeUpCapabilities = {
-  type: MessageBridgeUpType.CAPABILITIES
+  type: typeof MessageBridgeUpType.CAPABILITIES
   capabilities: {
     SERVICE_WORKER: boolean
     THIRD_PARTY_STORAGE: boolean
@@ -162,11 +165,11 @@ export type MessageBridgeUpCapabilities = {
 }
 
 export type MessageBridgeUpServiceWorkerActivated = {
-  type: MessageBridgeUpType.SERVICE_WORKER_ACTIVATED
+  type: typeof MessageBridgeUpType.SERVICE_WORKER_ACTIVATED
 }
 
 export type MessageBridgeUpRendererDimensions = {
-  type: MessageBridgeUpType.RENDERER_DIMENSIONS
+  type: typeof MessageBridgeUpType.RENDERER_DIMENSIONS
   dimensions: Dimensions
 }
 
@@ -176,7 +179,7 @@ export type ElementPositionResponse = {
 }
 
 export type MessageBridgeUpElementPosition = {
-  type: MessageBridgeUpType.ELEMENT_POSITION
+  type: typeof MessageBridgeUpType.ELEMENT_POSITION
   positions: ElementPositionResponse[]
 }
 
@@ -187,16 +190,16 @@ type MessageBridgeMetadata = {
 export type MessageBridgeDown = MessageBridgeDownRecords | MessageBridgeDownReset | MessageBridgeDownElementPosition
 
 export type MessageBridgeDownReset = {
-  type: MessageBridgeDownType.RESET
+  type: typeof MessageBridgeDownType.RESET
 } & MessageBridgeMetadata
 
 export type MessageBridgeDownRecords = {
-  type: MessageBridgeDownType.RECORD
+  type: typeof MessageBridgeDownType.RECORD
   record: RecordWithMetadata
 } & MessageBridgeMetadata
 
 export type MessageBridgeDownElementPosition = {
-  type: MessageBridgeDownType.ELEMENT_POSITION
+  type: typeof MessageBridgeDownType.ELEMENT_POSITION
   cssSelectors: string[]
 } & MessageBridgeMetadata
 
