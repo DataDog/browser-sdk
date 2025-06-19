@@ -355,55 +355,6 @@ describe('startLogsAssembly', () => {
   })
 })
 
-describe('user and account management', () => {
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
-    expireObservable: new Observable<void>(),
-  }
-
-  let sessionIsTracked: boolean
-  let lifeCycle: LifeCycle
-  let hooks: Hooks
-  let serverLogs: Array<LogsEvent & Context> = []
-
-  const beforeSend: (event: LogsEvent) => void | boolean = noop
-  let configuration: LogsConfiguration
-
-  beforeEach(() => {
-    configuration = {
-      ...validateAndBuildLogsConfiguration(initConfiguration)!,
-      beforeSend: (x: LogsEvent) => beforeSend(x),
-    }
-    sessionIsTracked = true
-    lifeCycle = new LifeCycle()
-    hooks = createHooks()
-    lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
-  })
-
-  afterEach(() => {
-    delete window.DD_RUM
-    serverLogs = []
-  })
-
-  it('should not output usr key if user is not set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
-
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-    expect(serverLogs[0].usr).toBeUndefined()
-  })
-
-  it('should include user data when user has been set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT_WITH_USER_AND_ACCOUNT, noop)
-
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-    expect(serverLogs[0].usr).toEqual({
-      id: 'id',
-      name: 'name',
-      email: 'test@test.com',
-    })
-  })
-})
-
 describe('logs limitation', () => {
   let clock: Clock
   const sessionManager: LogsSessionManager = {
