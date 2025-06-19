@@ -12,7 +12,7 @@ datadogRum.init({
   plugins: [reactPlugin({ router: true })],
 })
 
-datadogFlagging.init()
+datadogFlagging.init({})
 
 const router = createBrowserRouter(
   [

@@ -6,47 +6,47 @@ __metadata:
   cacheKey: 10c0
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=rum-testing-extension%40workspace%3A.":
-  version: 6.10.1
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=0f3984&locator=rum-testing-extension%40workspace%3A."
-  checksum: 10c0/2bbd76c4beb8f3f91e36d44383197febf8551f33338d333b71804cb76a5d7db02a58590fec56ba411d1ddb3982b540a6de869e974808b32d24c71f9cfd0ee793
+  version: 6.12.0
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=0ad2fc&locator=rum-testing-extension%40workspace%3A."
+  checksum: 10c0/6507da4cf4c3b1b037654435d480eaf83234c915fa10f6dc32e9036a6aeb2b0565cbb29ceaaa5560cad7be703d29fbc4c065e40cdf18cecc5d32740ff65c85e6
   languageName: node
   linkType: hard
 
 "@datadog/browser-logs@file:../../../packages/logs/package.tgz::locator=rum-testing-extension%40workspace%3A.":
-  version: 6.10.1
-  resolution: "@datadog/browser-logs@file:../../../packages/logs/package.tgz#../../../packages/logs/package.tgz::hash=8d6ebc&locator=rum-testing-extension%40workspace%3A."
+  version: 6.12.0
+  resolution: "@datadog/browser-logs@file:../../../packages/logs/package.tgz#../../../packages/logs/package.tgz::hash=60d630&locator=rum-testing-extension%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.10.1"
+    "@datadog/browser-core": "npm:6.12.0"
   peerDependencies:
-    "@datadog/browser-rum": 6.10.1
+    "@datadog/browser-rum": 6.12.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
-  checksum: 10c0/9d17efab53044ed89c007612c4b77a2960db446ed4385de490aafa806909b6401eaaa17b05056a28d4856c6b27a4a15a3679ba8650d554478790bd93a0938e4f
+  checksum: 10c0/91065017bdf5edcda05fad5a7ef6e4fa5210f234ae08277414373f8fd8d8e2905e4ad7db836f88000610d3ca7bc2ce6d9e01334f861d6cab4a275c41dd761c9b
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=rum-testing-extension%40workspace%3A.":
-  version: 6.10.1
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=fe2416&locator=rum-testing-extension%40workspace%3A."
+  version: 6.12.0
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=5bf78d&locator=rum-testing-extension%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.10.1"
-  checksum: 10c0/215935b2d1c900a8da50e37fd43b947ece1c20ce75832d8560fe03f4ac59b8bd3e76f91900db0b6c10b4702fef68ea47c7b0f26c56b52f187fdb044ffef51f85
+    "@datadog/browser-core": "npm:6.12.0"
+  checksum: 10c0/b637ca8e392421dc3f58748a7b9777bdf20431fe24c93a343f3ab0fdf60f4129f7d7b5f4f5136c4f52d0f8dc6574f3f937dc86ccb35c5e5e81f96f5e340e1b45
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=rum-testing-extension%40workspace%3A.":
-  version: 6.10.1
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=e9970f&locator=rum-testing-extension%40workspace%3A."
+  version: 6.12.0
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=3318e5&locator=rum-testing-extension%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.10.1"
-    "@datadog/browser-rum-core": "npm:6.10.1"
+    "@datadog/browser-core": "npm:6.12.0"
+    "@datadog/browser-rum-core": "npm:6.12.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.10.1
+    "@datadog/browser-logs": 6.12.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/ceb8abfaa7bf3ccdf0af4a9f359ce09f4f38226626fdeb1ce93a8f4c38c4b668b24fdecdd1c493de44f7e70cf25b4845e93d22094cb3256f3253d8b8ccee3557
+  checksum: 10c0/b7627444c693a4b3b62adc31516ccbd21e39c2c51789633a48804a52cedd8ac6fb3311e0e36c40c214f5ae13fc5b8596c767fd8ccd48ae490773ecb28010424f
   languageName: node
   linkType: hard
 

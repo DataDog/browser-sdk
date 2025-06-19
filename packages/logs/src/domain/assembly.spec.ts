@@ -36,12 +36,6 @@ const COMMON_CONTEXT: CommonContext = {
     referrer: 'referrer_from_common_context',
     url: 'url_from_common_context',
   },
-  user: {},
-}
-
-const COMMON_CONTEXT_WITH_USER_AND_ACCOUNT: CommonContext = {
-  ...COMMON_CONTEXT,
-  user: { id: 'id', name: 'name', email: 'test@test.com' },
 }
 
 describe('startLogsAssembly', () => {
@@ -278,7 +272,6 @@ describe('startLogsAssembly', () => {
             referrer: 'referrer_from_common_context',
             url: 'url_from_common_context',
           },
-          user: { name: 'name_from_common_context' },
         },
       })
 

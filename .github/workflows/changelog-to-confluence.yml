@@ -15,15 +15,15 @@ jobs:
       - name: Prepare Only Changelog
         run: |
           mkdir -p publish_folder
-          cp CHANGELOG.md publish_folder/
+          cp CHANGELOG.md publish_folder/browser-sdk-changelog.md
           echo "Publishing only CHANGELOG.md"
 
       - name: Publish Markdown to Confluence
         uses: markdown-confluence/publish-action@7767a0a7f438bb1497ee7ffd7d3d685b81dfe700 # v5
         with:
-          confluenceBaseUrl: ${{ secrets.CONFLUENCE_BASE_URL }}
+          confluenceBaseUrl: ${{ secrets.DATADOG_CONFLUENCE_BASE_URL }}
           confluenceParentId: ${{ secrets.CONFLUENCE_PARENT_ID }}
-          atlassianUserName: ${{ secrets.ATLASSIAN_USERNAME }}
-          atlassianApiToken: ${{ secrets.ATLASSIAN_API_TOKEN }}
+          atlassianUserName: ${{ secrets.CONFLUENCE_ROBOT_RUM_EMAIL }}
+          atlassianApiToken: ${{ secrets.CONFLUENCE_ROBOT_RUM_API_KEY }}
           contentRoot: '.'
           folderToPublish: 'publish_folder'

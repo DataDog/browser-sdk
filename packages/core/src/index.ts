@@ -6,14 +6,10 @@ export {
   serializeConfiguration,
   isSampleRate,
   buildEndpointHost,
-  INTAKE_SITE_STAGING,
-  INTAKE_SITE_US1,
-  INTAKE_SITE_US1_FED,
-  INTAKE_SITE_EU1,
-  INTAKE_URL_PARAMETERS,
   isIntakeUrl,
   buildTags,
 } from './domain/configuration'
+export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
 export {
@@ -129,6 +125,9 @@ export { storeContextManager, removeStorageListeners } from './domain/context/st
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
 export { startTagContext, combineTags } from './domain/contexts/tagContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
+export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
+export type { User } from './domain/contexts/userContext'
+export type { Account } from './domain/contexts/accountContext'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
@@ -140,9 +139,8 @@ export {
   willSyntheticsInjectRum,
   getSyntheticsTestId,
   getSyntheticsResultId,
+  isSyntheticsTest,
 } from './domain/synthetics/syntheticsWorkerValues'
-export type { User } from './domain/user.types'
-export type { Account } from './domain/account.types'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './tools/utils/polyfills'
