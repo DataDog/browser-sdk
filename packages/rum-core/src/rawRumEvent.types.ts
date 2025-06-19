@@ -336,11 +336,7 @@ export const VitalType = {
 } as const
 export type VitalTypeEnum = (typeof VitalType)[keyof typeof VitalType]
 
-type Prettify<T> = {
-  [K in keyof T]: T[K]
-} & {}
-
-export type RawRumEvent = Prettify<
+export type RawRumEvent =
   | RawRumErrorEvent
   | RawRumResourceEvent
   | RawRumViewEvent
@@ -348,4 +344,3 @@ export type RawRumEvent = Prettify<
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
->

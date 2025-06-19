@@ -8,6 +8,8 @@ import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
 
 export const LifeCycleEventType = {
+  // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
+  // It ensures the context is available during the non prefixed event callbacks
   AUTO_ACTION_COMPLETED: 0,
   BEFORE_VIEW_CREATED: 1,
   VIEW_CREATED: 2,
@@ -17,6 +19,17 @@ export const LifeCycleEventType = {
   AFTER_VIEW_ENDED: 6,
   REQUEST_STARTED: 7,
   REQUEST_COMPLETED: 8,
+
+  // The SESSION_EXPIRED lifecycle event has been introduced to represent when a session has expired
+  // and trigger cleanup tasks related to this, prior to renewing the session. Its implementation is
+  // slightly naive: it is not triggered as soon as the session is expired, but rather just before
+  // notifying that the session is renewed. Thus, the session id is already set to the newly renewed
+  // session.
+  //
+  // This implementation is "good enough" for our use-cases. Improving this is not trivial,
+  // primarily because multiple instances of the SDK may be managing the same session cookie at
+  // the same time, for example when using Logs and RUM on the same page, or opening multiple tabs
+  // on the same domain.
   SESSION_EXPIRED: 9,
   SESSION_RENEWED: 10,
   PAGE_MAY_EXIT: 11,

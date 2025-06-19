@@ -190,18 +190,27 @@ export type RumPerformanceEntry =
   | RumFirstHiddenTiming
 
 export type EntryTypeToReturnType = {
-  [K in RumPerformanceEntryTypeEnum]:
-    K extends typeof RumPerformanceEntryType.EVENT ? RumPerformanceEventTiming :
-    K extends typeof RumPerformanceEntryType.FIRST_INPUT ? RumFirstInputTiming :
-    K extends typeof RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT ? RumLargestContentfulPaintTiming :
-    K extends typeof RumPerformanceEntryType.LAYOUT_SHIFT ? RumLayoutShiftTiming :
-    K extends typeof RumPerformanceEntryType.PAINT ? RumPerformancePaintTiming :
-    K extends typeof RumPerformanceEntryType.LONG_TASK ? RumPerformanceLongTaskTiming :
-    K extends typeof RumPerformanceEntryType.LONG_ANIMATION_FRAME ? RumPerformanceLongAnimationFrameTiming :
-    K extends typeof RumPerformanceEntryType.NAVIGATION ? RumPerformanceNavigationTiming :
-    K extends typeof RumPerformanceEntryType.RESOURCE ? RumPerformanceResourceTiming :
-    K extends typeof RumPerformanceEntryType.VISIBILITY_STATE ? RumFirstHiddenTiming :
-    never
+  [K in RumPerformanceEntryTypeEnum]: K extends typeof RumPerformanceEntryType.EVENT
+    ? RumPerformanceEventTiming
+    : K extends typeof RumPerformanceEntryType.FIRST_INPUT
+      ? RumFirstInputTiming
+      : K extends typeof RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT
+        ? RumLargestContentfulPaintTiming
+        : K extends typeof RumPerformanceEntryType.LAYOUT_SHIFT
+          ? RumLayoutShiftTiming
+          : K extends typeof RumPerformanceEntryType.PAINT
+            ? RumPerformancePaintTiming
+            : K extends typeof RumPerformanceEntryType.LONG_TASK
+              ? RumPerformanceLongTaskTiming
+              : K extends typeof RumPerformanceEntryType.LONG_ANIMATION_FRAME
+                ? RumPerformanceLongAnimationFrameTiming
+                : K extends typeof RumPerformanceEntryType.NAVIGATION
+                  ? RumPerformanceNavigationTiming
+                  : K extends typeof RumPerformanceEntryType.RESOURCE
+                    ? RumPerformanceResourceTiming
+                    : K extends typeof RumPerformanceEntryType.VISIBILITY_STATE
+                      ? RumFirstHiddenTiming
+                      : never
 }
 
 export function createPerformanceObservable<T extends RumPerformanceEntryTypeEnum>(
@@ -239,7 +248,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryTypeEnu
       // Some old browser versions (<= chrome 74 ) don't support the PerformanceObserver type and buffered options
       // In these cases, fallback to getEntriesByType and PerformanceObserver with entryTypes
       // TODO: remove this fallback in the next major version
-      const fallbackSupportedEntryTypes: string[] = [
+      const fallbackSupportedEntryTypes: RumPerformanceEntryTypeEnum[] = [
         RumPerformanceEntryType.RESOURCE,
         RumPerformanceEntryType.NAVIGATION,
         RumPerformanceEntryType.LONG_TASK,
@@ -247,10 +256,10 @@ export function createPerformanceObservable<T extends RumPerformanceEntryTypeEnu
       ]
       if (fallbackSupportedEntryTypes.includes(options.type)) {
         if (options.buffered) {
-          timeoutId = setTimeout(() => handlePerformanceEntries(performance.getEntriesByType(options.type as string)))
+          timeoutId = setTimeout(() => handlePerformanceEntries(performance.getEntriesByType(options.type)))
         }
         try {
-          observer.observe({ entryTypes: [options.type as string] })
+          observer.observe({ entryTypes: [options.type] })
         } catch {
           // Old versions of Safari are throwing "entryTypes contained only unsupported types"
           // errors when observing only unsupported entry types.
