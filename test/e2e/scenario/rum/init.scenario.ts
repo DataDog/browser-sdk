@@ -303,6 +303,19 @@ test.describe('allowedTrackingOrigins', () => {
     })
 })
 
+test.describe('Synthetics Browser Test', () => {
+  createTest('ignores init() call if Synthetics will inject its own instance of RUM')
+    .withRum()
+    .withRumInit((configuration) => {
+      ;(window as any)._DATADOG_SYNTHETICS_INJECTS_RUM = true
+      window.DD_RUM!.init(configuration)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumViewEvents).toHaveLength(0)
+    })
+})
+
 function expectToHaveErrors(
   events: IntakeRegistry,
   ...errors: Array<{ message: string; viewId: string; context?: Context }>

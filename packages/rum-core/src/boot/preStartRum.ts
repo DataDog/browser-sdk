@@ -32,7 +32,7 @@ import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   doStartRum: (
