@@ -10,6 +10,7 @@ import {
   DISCARDED,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
+import type { RumEventTypeEnum } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
@@ -34,7 +35,7 @@ const ROOT_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   version: 'string',
 }
 
-let modifiableFieldPathsByEvent: { [key in RumEventType]: ModifiableFieldPaths }
+let modifiableFieldPathsByEvent: { [key in RumEventTypeEnum]: ModifiableFieldPaths }
 
 export function startRumAssembly(
   configuration: RumConfiguration,
@@ -132,7 +133,7 @@ function shouldSend(
   event: RumEvent & Context,
   beforeSend: RumConfiguration['beforeSend'],
   domainContext: RumEventDomainContext,
-  eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }
+  eventRateLimiters: { [key in RumEventTypeEnum]?: EventRateLimiter }
 ) {
   if (beforeSend) {
     const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>

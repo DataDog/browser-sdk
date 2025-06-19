@@ -14,7 +14,7 @@ export function retrieveInitialDocumentResourceTiming(
   runOnReadyState(configuration, 'interactive', () => {
     const navigationEntry = getNavigationEntryImpl()
     const entry: RumPerformanceResourceTiming = Object.assign(navigationEntry.toJSON(), {
-      entryType: RumPerformanceEntryType.RESOURCE as const,
+      entryType: RumPerformanceEntryType.RESOURCE,
       initiatorType: FAKE_INITIAL_DOCUMENT,
       // The ResourceTiming duration entry should be `responseEnd - startTime`. With
       // NavigationTiming entries, `startTime` is always 0, so set it to `responseEnd`.

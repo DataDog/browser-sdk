@@ -21,6 +21,7 @@ import { createBoundedBuffer } from '../../tools/boundedBuffer'
 import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../transport'
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
+import type { DeflateEncoderStreamIdEnum } from '../deflate'
 import { DeflateEncoderStreamId } from '../deflate'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
@@ -68,7 +69,7 @@ export function startTelemetry(
   configuration: Configuration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  createEncoder: (streamId: DeflateEncoderStreamIdEnum) => Encoder
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
 
@@ -158,7 +159,7 @@ function startTelemetryTransport(
   configuration: Configuration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  createEncoder: (streamId: DeflateEncoderStreamIdEnum) => Encoder,
   telemetryObservable: Observable<TelemetryEvent & Context>
 ) {
   const cleanupTasks: Array<() => void> = []

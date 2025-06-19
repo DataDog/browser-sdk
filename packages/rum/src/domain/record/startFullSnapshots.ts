@@ -7,6 +7,7 @@ import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { SerializationContextStatus, serializeDocument } from './serialization'
 import { getVisualViewport } from './viewports'
+import type { SerializationContextStatusEnum } from './serialization/serialization.types'
 
 export function startFullSnapshots(
   elementsScrollPositions: ElementsScrollPositions,
@@ -19,7 +20,7 @@ export function startFullSnapshots(
   const takeFullSnapshot = (
     timestamp = timeStampNow(),
     serializationContext = {
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT as SerializationContextStatusEnum,
       elementsScrollPositions,
       shadowRootsController,
     }

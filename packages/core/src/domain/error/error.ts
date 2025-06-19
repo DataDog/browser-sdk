@@ -5,7 +5,14 @@ import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
-import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause, NonErrorPrefix } from './error.types'
+import type {
+  ErrorSource,
+  RawError,
+  RawErrorCause,
+  ErrorWithCause,
+  NonErrorPrefixEnum,
+  ErrorHandlingEnum,
+} from './error.types'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
 
@@ -15,10 +22,10 @@ type RawErrorParams = {
   handlingStack?: string
   componentStack?: string
   startClocks: ClocksState
-  nonErrorPrefix: NonErrorPrefix
+  nonErrorPrefix: NonErrorPrefixEnum
   useFallbackStack?: boolean
   source: ErrorSource
-  handling: ErrorHandling
+  handling: ErrorHandlingEnum
 }
 
 export function computeRawError({
@@ -56,7 +63,7 @@ export function computeRawError({
 function computeMessage(
   stackTrace: StackTrace | undefined,
   isErrorInstance: boolean,
-  nonErrorPrefix: NonErrorPrefix,
+  nonErrorPrefix: NonErrorPrefixEnum,
   originalError: unknown
 ) {
   // Favor stackTrace message only if tracekit has really been able to extract something meaningful (message + name)

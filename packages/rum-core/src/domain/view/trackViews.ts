@@ -27,7 +27,7 @@ import {
   Observable,
   createContextManager,
 } from '@datadog/browser-core'
-import type { ViewCustomTimings } from '../../rawRumEvent.types'
+import type { ViewCustomTimings, ViewLoadingTypeEnum } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -59,7 +59,7 @@ export interface ViewEvent {
   duration: Duration
   isActive: boolean
   sessionIsActive: boolean
-  loadingType: ViewLoadingType
+  loadingType: ViewLoadingTypeEnum
 }
 
 export interface ViewCreatedEvent {
@@ -129,7 +129,7 @@ export function trackViews(
     }
   }
 
-  function startNewView(loadingType: ViewLoadingType, startClocks?: ClocksState, viewOptions?: ViewOptions) {
+  function startNewView(loadingType: ViewLoadingTypeEnum, startClocks?: ClocksState, viewOptions?: ViewOptions) {
     const newlyCreatedView = newView(
       lifeCycle,
       domMutationObservable,
@@ -210,7 +210,7 @@ function newView(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   initialLocation: Location,
-  loadingType: ViewLoadingType,
+  loadingType: ViewLoadingTypeEnum,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
 ) {

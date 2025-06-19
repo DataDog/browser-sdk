@@ -6,6 +6,7 @@ import type {
   FetchStartContext,
   FetchResolveContext,
   ContextManager,
+  RequestTypeEnum,
 } from '@datadog/browser-core'
 import {
   RequestType,
@@ -42,7 +43,7 @@ export interface RequestStartEvent {
 }
 export interface RequestCompleteEvent {
   requestIndex: number
-  type: RequestType
+  type: RequestTypeEnum
   method: string
   url: string
   status: number

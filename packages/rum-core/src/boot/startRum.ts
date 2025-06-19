@@ -1,4 +1,10 @@
-import type { Observable, RawError, DeflateEncoderStreamId, Encoder, TrackingConsentState } from '@datadog/browser-core'
+import type {
+  Observable,
+  RawError,
+  Encoder,
+  TrackingConsentState,
+  DeflateEncoderStreamIdEnum,
+} from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -56,7 +62,7 @@ export function startRum(
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  createEncoder: (streamId: DeflateEncoderStreamIdEnum) => Encoder,
 
   // `startRum` and its subcomponents assume tracking consent is granted initially and starts
   // collecting logs unconditionally. As such, `startRum` should be called with a

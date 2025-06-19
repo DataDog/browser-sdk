@@ -1,9 +1,9 @@
 import type {
   DeflateWorkerResponse,
   DeflateEncoder,
-  DeflateEncoderStreamId,
   DeflateWorker,
   EncoderResult,
+  DeflateEncoderStreamIdEnum,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/browser-core'
@@ -11,7 +11,7 @@ import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/bro
 export function createDeflateEncoder(
   configuration: RumConfiguration,
   worker: DeflateWorker,
-  streamId: DeflateEncoderStreamId
+  streamId: DeflateEncoderStreamIdEnum
 ): DeflateEncoder {
   let rawBytesCount = 0
   let compressedData: Uint8Array[] = []
@@ -30,7 +30,7 @@ export function createDeflateEncoder(
     worker,
     'message',
     ({ data: workerResponse }: MessageEvent<DeflateWorkerResponse>) => {
-      if (workerResponse.type !== 'wrote' || (workerResponse.streamId as DeflateEncoderStreamId) !== streamId) {
+      if (workerResponse.type !== 'wrote' || (workerResponse.streamId as DeflateEncoderStreamIdEnum) !== streamId) {
         return
       }
 

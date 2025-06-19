@@ -5,12 +5,12 @@ import type {
   User,
   Account,
   DeflateWorker,
-  DeflateEncoderStreamId,
   DeflateEncoder,
   TrackingConsent,
   PublicApi,
   Duration,
   ContextManager,
+  DeflateEncoderStreamIdEnum,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -385,7 +385,7 @@ export interface RumPublicApiOptions {
   createDeflateEncoder?: (
     configuration: RumConfiguration,
     worker: DeflateWorker,
-    streamId: DeflateEncoderStreamId
+    streamId: DeflateEncoderStreamIdEnum
   ) => DeflateEncoder
   sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
 }

@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
-import type { ViewLoadingType } from '../../../rawRumEvent.types'
+import type { ViewLoadingType, ViewLoadingTypeEnum } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumMutationRecord } from '../../../browser/domMutationObservable'
@@ -24,7 +24,7 @@ export function trackCommonViewMetrics(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
   scheduleViewUpdate: () => void,
-  loadingType: ViewLoadingType,
+  loadingType: ViewLoadingTypeEnum,
   viewStart: ClocksState
 ) {
   const commonViewMetrics: CommonViewMetrics = {}

@@ -18,7 +18,7 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
 
   const timings = computeTimingsFromDeprecatedPerformanceTiming()
   const entry: RumPerformanceNavigationTiming = {
-    entryType: RumPerformanceEntryType.NAVIGATION as const,
+    entryType: RumPerformanceEntryType.NAVIGATION,
     initiatorType: 'navigation' as const,
     name: window.location.href,
     startTime: 0 as RelativeTime,

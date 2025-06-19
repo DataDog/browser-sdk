@@ -6,6 +6,7 @@ import {
   supportPerformanceTimingEvent,
 } from '../../../browser/performanceObservable'
 import type { RumFirstInputTiming, RumPerformanceEventTiming } from '../../../browser/performanceObservable'
+import type { ViewLoadingTypeEnum } from '../../../rawRumEvent.types'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import { isElementNode } from '../../../browser/htmlDomUtils'
@@ -32,7 +33,7 @@ export interface InteractionToNextPaint {
 export function trackInteractionToNextPaint(
   configuration: RumConfiguration,
   viewStart: RelativeTime,
-  viewLoadingType: ViewLoadingType
+  viewLoadingType: ViewLoadingTypeEnum
 ) {
   if (!isInteractionToNextPaintSupported()) {
     return {
@@ -161,7 +162,7 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
   }
 }
 
-export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
+export function trackViewInteractionCount(viewLoadingType: ViewLoadingTypeEnum) {
   initInteractionCountPolyfill()
   const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
   let state: { stopped: false } | { stopped: true; interactionCount: number } = { stopped: false }

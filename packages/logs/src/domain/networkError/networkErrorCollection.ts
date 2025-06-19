@@ -1,4 +1,4 @@
-import type { FetchResolveContext, XhrCompleteContext } from '@datadog/browser-core'
+import type { FetchResolveContext, RequestTypeEnum, XhrCompleteContext } from '@datadog/browser-core'
 import {
   ErrorSource,
   initXhrObservable,
@@ -35,7 +35,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     }
   })
 
-  function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
+  function handleResponse(type: RequestTypeEnum, request: XhrCompleteContext | FetchResolveContext) {
     if (!isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
       if ('xhr' in request) {
         computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
@@ -174,7 +174,7 @@ function truncateResponseText(responseText: string, configuration: LogsConfigura
   return responseText
 }
 
-function format(type: RequestType) {
+function format(type: RequestTypeEnum) {
   if (RequestType.XHR === type) {
     return 'XHR'
   }

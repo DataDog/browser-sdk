@@ -4,7 +4,7 @@ import type { Configuration } from '../configuration'
 import { combine } from '../../tools/mergeInto'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import type { ContextManager } from './contextManager'
-import type { CustomerDataType } from './contextConstants'
+import type { CustomerDataTypeEnum } from './contextConstants'
 
 const CONTEXT_STORE_KEY_PREFIX = '_dd_c'
 
@@ -14,7 +14,7 @@ export function storeContextManager(
   configuration: Configuration,
   contextManager: ContextManager,
   productKey: string,
-  customerDataType: CustomerDataType
+  customerDataType: CustomerDataTypeEnum
 ) {
   const storageKey = buildStorageKey(productKey, customerDataType)
 
@@ -46,7 +46,7 @@ export function storeContextManager(
   }
 }
 
-export function buildStorageKey(productKey: string, customerDataType: CustomerDataType) {
+export function buildStorageKey(productKey: string, customerDataType: CustomerDataTypeEnum) {
   return `${CONTEXT_STORE_KEY_PREFIX}_${productKey}_${customerDataType}`
 }
 

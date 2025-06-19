@@ -3,6 +3,7 @@ import { elapsed } from '@datadog/browser-core'
 import { waitPageActivityEnd } from '../../waitPageActivityEnd'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
+import type { ViewLoadingTypeEnum } from '../../../rawRumEvent.types'
 import { ViewLoadingType } from '../../../rawRumEvent.types'
 import type { RumMutationRecord } from '../../../browser/domMutationObservable'
 import { trackFirstHidden } from './trackFirstHidden'
@@ -18,7 +19,7 @@ export function trackLoadingTime(
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
-  loadType: ViewLoadingType,
+  loadType: ViewLoadingTypeEnum,
   viewStart: ClocksState,
   callback: (loadingTime: Duration) => void
 ) {
