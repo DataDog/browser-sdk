@@ -138,7 +138,7 @@ export default tseslint.config(
           'ts-expect-error': 'allow-with-description',
           'ts-ignore': 'allow-with-description',
           'ts-nocheck': 'allow-with-description',
-          'ts-check': 'allow-with-description',
+          'ts-check': false,
         },
       ],
       '@typescript-eslint/no-restricted-types': [
@@ -262,7 +262,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
+    files: ['scripts/**', 'packages/*/scripts/**'],
     ignores: ['**/lib/**'],
     rules: {
       'unicorn/filename-case': ['error', { case: 'kebabCase' }],
@@ -270,7 +270,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['scripts/**/*.js', 'packages/*/scripts/**/*.js'],
+    files: ['scripts/**', 'packages/*/scripts/**'],
     ignores: ['**/lib/**', SPEC_FILES],
     rules: {
       'local-rules/secure-command-execution': 'error',
@@ -352,7 +352,7 @@ export default tseslint.config(
     // Files executed by nodejs
     files: [
       '**/webpack.*.js',
-      'scripts/**/*.js',
+      'scripts/**',
       'test/**/*.js',
       'eslint-local-rules/**/*.js',
       'eslint.config.mjs',
