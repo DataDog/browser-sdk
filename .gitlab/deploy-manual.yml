@@ -75,7 +75,7 @@ create-github-release:
   allow_failure: false
   script:
     - yarn
-    - node ./scripts/deploy/create-github-release.js
+    - node ./scripts/release/create-github-release.mjs
 
 ########################################################################################################################
 # Notify
