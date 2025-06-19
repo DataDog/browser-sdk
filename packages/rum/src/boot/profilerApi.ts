@@ -9,13 +9,11 @@ import type {
 import { addTelemetryDebug, monitorError, performDraw } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
-import { createProfilingContextManager, startProfilingContext } from '../domain/profiling/profilingContext'
-import type { ProfilingContextManager } from '../domain/profiling/profilingContext'
+import { startProfilingContext } from '../domain/profiling/profilingContext'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
   let profiler: RUMProfiler | undefined
-  const profilingContextManager: ProfilingContextManager = createProfilingContextManager('starting')
 
   function onRumStart(
     lifeCycle: LifeCycle,
@@ -26,28 +24,28 @@ export function makeProfilerApi(): ProfilerApi {
   ) {
     // Sampling.
     if (!performDraw(configuration.profilingSampleRate)) {
-      // No sampling, no profiling, no context.
-      profilingContextManager.setProfilingContext(undefined)
+      // No sampling, no profiling. 
+      // Note: No Profiling context is set at this stage.
       return
     }
 
+    // Listen to events and add the profiling context to them.
+    const profilingContextManager = startProfilingContext(hooks)
+
     // Browser support check
     if (!isProfilingSupported()) {
-      profilingContextManager.setProfilingContext({
+      profilingContextManager.set({
         status: 'error',
         error_reason: 'not-supported-by-browser',
       })
       return
     }
 
-    // Listen to events and add the profiling context to them.
-    startProfilingContext(hooks, profilingContextManager)
-
     lazyLoadProfiler()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
           addTelemetryDebug('[DD_RUM] Failed to lazy load the RUM Profiler')
-          profilingContextManager.setProfilingContext({ status: 'error', error_reason: 'failed-to-lazy-load' })
+          profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
           return
         }
 

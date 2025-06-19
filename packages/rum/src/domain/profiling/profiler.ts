@@ -84,7 +84,7 @@ export function createRumProfiler(
     cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
 
     // Update Profiling status once the Profiler has been stopped.
-    profilingContextManager.setProfilingContext({ status: 'stopped', error_reason: undefined })
+    profilingContextManager.set({ status: 'stopped', error_reason: undefined })
   }
 
   /**
@@ -139,7 +139,7 @@ export function createRumProfiler(
     const globalThisProfiler: Profiler | undefined = getGlobalObject<any>().Profiler
 
     if (!globalThisProfiler) {
-      profilingContextManager.setProfilingContext({ status: 'error', error_reason: 'not-supported-by-browser' })
+      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
       throw new Error('RUM Profiler is not supported in this browser.')
     }
 
@@ -166,14 +166,14 @@ export function createRumProfiler(
           '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
           e
         )
-        profilingContextManager.setProfilingContext({ status: 'error', error_reason: 'missing-document-policy-header' })
+        profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
       } else {
-        profilingContextManager.setProfilingContext({ status: 'error', error_reason: 'unexpected-exception' })
+        profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
       }
       return
     }
 
-    profilingContextManager.setProfilingContext({ status: 'running', error_reason: undefined })
+    profilingContextManager.set({ status: 'running', error_reason: undefined })
 
     // Kick-off the new instance
     instance = {

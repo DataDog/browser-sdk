@@ -1,38 +1,32 @@
 import { HookNames } from '@datadog/browser-core'
-import type { Hooks, DefaultRumEventAttributes, ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
-
+import type { DefaultRumEventAttributes, ProfilingInternalContextSchema } from '@datadog/browser-rum-core'
+import type { AbstractHooks } from '@datadog/browser-core'
 export interface ProfilingContextManager {
-  setProfilingContext: (next: Partial<ProfilingInternalContextSchema> | undefined) => void
-  getProfilingContext: () => ProfilingInternalContextSchema | undefined
+  set: (next: ProfilingInternalContextSchema) => void
+  get: () => ProfilingInternalContextSchema | undefined
 }
 
-export const createProfilingContextManager = (
-  initialStatus: NonNullable<ProfilingInternalContextSchema['status']>
-): ProfilingContextManager => {
-  let currentContext: ProfilingInternalContextSchema | undefined = {
-    status: initialStatus,
+export const startProfilingContext = (hooks: AbstractHooks): ProfilingContextManager => {
+  // Default status is `starting`.
+  let currentContext: ProfilingInternalContextSchema = {
+    status: 'starting',
   }
 
-  const setProfilingContext = (partialContext: Partial<ProfilingInternalContextSchema> | undefined) => {
-    currentContext = { ...currentContext, ...partialContext }
-  }
-
-  const getProfilingContext = () => currentContext
-
-  return {
-    setProfilingContext,
-    getProfilingContext,
-  }
-}
-
-export const startProfilingContext = (hooks: Hooks, contextManager: ProfilingContextManager) => {
+  // Register the assemble hook to add the profiling context to the event attributes.
   hooks.register(
     HookNames.Assemble,
     ({ eventType }): DefaultRumEventAttributes => ({
       type: eventType,
       _dd: {
-        profiling: contextManager.getProfilingContext(),
+        profiling: currentContext,
       },
     })
   )
+
+  return {
+    get: () => currentContext,
+    set: (newContext: ProfilingInternalContextSchema) => {
+      currentContext = newContext
+    },
+  }
 }
