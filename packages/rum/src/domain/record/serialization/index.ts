@@ -5,6 +5,7 @@ export {
   nodeAndAncestorsHaveSerializedNode,
 } from './serializationUtils'
 export type { NodeWithSerializedNode } from './serialization.types'
+export type { SerializationContextStatusEnum } from './serialization.types'
 export { SerializationContextStatus } from './serialization.types'
 export { serializeDocument } from './serializeDocument'
 export { serializeNodeWithId } from './serializeNode'

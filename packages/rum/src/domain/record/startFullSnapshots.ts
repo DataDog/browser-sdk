@@ -5,9 +5,9 @@ import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
+import type { SerializationContextStatusEnum } from './serialization'
 import { SerializationContextStatus, serializeDocument } from './serialization'
 import { getVisualViewport } from './viewports'
-import type { SerializationContextStatusEnum } from './serialization/serialization.types'
 
 export function startFullSnapshots(
   elementsScrollPositions: ElementsScrollPositions,

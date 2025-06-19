@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Observable } from '@datadog/browser-core'
-import type { ViewLoadingType, ViewLoadingTypeEnum } from '../../../rawRumEvent.types'
+import type { ViewLoadingTypeEnum } from '../../../rawRumEvent.types'
 import type { RumConfiguration } from '../../configuration'
 import type { LifeCycle } from '../../lifeCycle'
 import type { RumMutationRecord } from '../../../browser/domMutationObservable'
