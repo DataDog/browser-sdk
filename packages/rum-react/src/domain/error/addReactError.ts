@@ -30,7 +30,7 @@ export function addReactError(error: Error, info: ErrorInfo) {
       addEvent(
         startClocks.relative,
         {
-          type: RumEventType.ERROR as const,
+          type: RumEventType.ERROR,
           date: rawError.startClocks.timeStamp,
           error: {
             id: generateUUID(),

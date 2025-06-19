@@ -11,22 +11,30 @@ import type {
   RawRumResourceEvent,
   RawRumVitalEvent,
 } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
 
-const allowedEventTypes = ['action', 'error', 'long_task', 'resource', 'vital'] as const
+const allowedEventTypes = [
+  RumEventType.ACTION,
+  RumEventType.ERROR,
+  RumEventType.LONG_TASK,
+  RumEventType.RESOURCE,
+  RumEventType.VITAL,
+] as const
 
-type RawRumEvent =
-  | (RawRumErrorEvent & { context: Context })
-  | (RawRumResourceEvent & { context: Context })
-  | (RawRumLongTaskEvent & { context: Context })
-  | (RawRumLongAnimationFrameEvent & { context: Context })
-  | (RawRumActionEvent & { context: Context })
-  | (RawRumVitalEvent & { context: Context })
+export type AllowedRawRumEvent = (
+  | RawRumErrorEvent
+  | RawRumResourceEvent
+  | RawRumLongTaskEvent
+  | RawRumLongAnimationFrameEvent
+  | RawRumActionEvent
+  | RawRumVitalEvent
+) & { context?: Context }
 
 export function startEventCollection(lifeCycle: LifeCycle) {
   return {
     addEvent: (
       startTime: RelativeTime,
-      event: RawRumEvent,
+      event: AllowedRawRumEvent,
       domainContext: RumEventDomainContext,
       duration?: Duration
     ) => {

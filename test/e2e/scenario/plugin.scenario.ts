@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { type RumPlugin } from '@datadog/browser-rum-core'
+import type { RumPlugin } from '@datadog/browser-rum-core'
+import { ActionType, RumEventType } from '@datadog/browser-rum-core'
+import type { ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { clocksNow, generateUUID } from '@datadog/browser-core'
-import type { PartialRumEvent } from '@datadog/browser-rum-core/cjs/domain/event/eventCollection'
+import type { AllowedRawRumEvent } from '@datadog/browser-rum-core/cjs/domain/event/eventCollection'
 import { createTest } from '../lib/framework'
 
 declare global {
@@ -19,50 +21,59 @@ function createPlugin(): RumPlugin {
   }
 }
 
-const mockPartiaEvents: PartialRumEvent[] = [
+const mockPartiaEvents: AllowedRawRumEvent[] = [
   {
-    type: 'action',
-    date: 1,
+    type: RumEventType.ACTION,
+    date: 1 as TimeStamp,
     action: {
       id: generateUUID(),
-      type: 'click',
-      name: 'click on button',
+      type: ActionType.CLICK,
+      target: {
+        name: 'click on button',
+      },
     },
   },
   {
-    type: 'error',
-    date: 1,
+    type: RumEventType.ERROR,
+    date: 1 as TimeStamp,
     error: {
       id: generateUUID(),
       message: 'test error',
       source: 'source',
+      source_type: 'browser',
     },
   },
   {
-    type: 'long_task',
-    date: 1,
+    type: RumEventType.LONG_TASK,
+    date: 1 as TimeStamp,
     long_task: {
       id: generateUUID(),
-      name: 'long task',
-      duration: 100,
+      entry_type: 'long-task',
+      duration: 100 as ServerDuration,
+    },
+    _dd: {
+      discarded: false,
     },
   },
   {
-    type: 'resource',
-    date: 1,
+    type: RumEventType.RESOURCE,
+    date: 1 as TimeStamp,
     resource: {
       id: generateUUID(),
       type: 'document',
       url: 'https://www.datadoghq.com',
       method: 'GET',
-      status: 200,
-      duration: 100,
+      status_code: 200,
+      duration: 100 as ServerDuration,
       size: 100,
+    },
+    _dd: {
+      discarded: false,
     },
   },
   {
-    type: 'vital',
-    date: 1,
+    type: RumEventType.VITAL,
+    date: 1 as TimeStamp,
     vital: {
       id: generateUUID(),
       type: 'duration',
@@ -115,7 +126,7 @@ test.describe('onRumStart @only', () => {
                 id: uuid,
                 name: 'TrackedPage',
               },
-            } as unknown as PartialRumEvent,
+            } as unknown as AllowedRawRumEvent,
             {}
           )
         },

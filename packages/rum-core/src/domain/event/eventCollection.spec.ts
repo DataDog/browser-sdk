@@ -18,7 +18,7 @@ describe('eventCollection', () => {
     const startTime = 123 as RelativeTime
     const duration = 456 as Duration
     const event = {
-      type: RumEventType.VITAL as const,
+      type: RumEventType.VITAL,
       date: Date.now() as TimeStamp,
       context: { foo: 'bar' },
       vital: {
