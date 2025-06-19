@@ -42,7 +42,9 @@ function printLog(...params) {
 async function fetchHandlingError(url, options) {
   const response = await fetch(url, options)
   if (!response.ok) {
-    throw new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+    const error = new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+    error.status = response.status
+    throw error
   }
 
   return response

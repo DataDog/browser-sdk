@@ -18,6 +18,19 @@
 
 ---
 
+## v6.12.0
+
+**Public Changes:**
+
+- ✨[RUM Profiler] remove profiling experimental flag ([#3639](https://github.com/DataDog/browser-sdk/pull/3639)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 fix typecheck issue + increase base tsconfig coverage ([#3625](https://github.com/DataDog/browser-sdk/pull/3625))
+- 🔊 [IR-39238] Add session diagnostic telemetry and improve configuration timing ([#3629](https://github.com/DataDog/browser-sdk/pull/3629)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-10074] Use createTest in developer extensions tests ([#3628](https://github.com/DataDog/browser-sdk/pull/3628))
+- Update changelog-to-confluence: Update secret names, name of page being published ([#3631](https://github.com/DataDog/browser-sdk/pull/3631))
+
 ## v6.11.0
 
 **Public Changes:**

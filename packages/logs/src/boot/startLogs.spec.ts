@@ -48,9 +48,6 @@ declare global {
 const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 const COMMON_CONTEXT = {
   view: { referrer: 'common_referrer', url: 'common_url' },
-  context: {},
-  user: {},
-  account: {},
 }
 const DEFAULT_PAYLOAD = {} as Payload
 
@@ -65,6 +62,7 @@ describe('logs', () => {
   let displayLogSpy: jasmine.Spy
   let globalContext: ContextManager
   let accountContext: ContextManager
+  let userContext: ContextManager
 
   beforeEach(() => {
     baseConfiguration = {
@@ -289,18 +287,29 @@ describe('logs', () => {
         stop: stopLogs,
         globalContext,
         accountContext,
+        userContext,
       } = startLogs(baseConfiguration, () => COMMON_CONTEXT, createTrackingConsentState(TrackingConsent.GRANTED)))
       registerCleanupTask(stopLogs)
     })
 
     it('global context should take precedence over account', () => {
-      globalContext.setContext({ account: 'from-global-context' })
+      globalContext.setContext({ account: { id: 'from-global-context' } })
       accountContext.setContext({ id: 'from-account-context' })
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
       const firstRequest = getLoggedMessage(requests, 0)
-      expect(firstRequest.account).toEqual('from-global-context')
+      expect(firstRequest.account).toEqual({ id: 'from-global-context' })
+    })
+
+    it('global context should take precedence over usr', () => {
+      globalContext.setContext({ usr: { id: 'from-global-context' } })
+      userContext.setContext({ id: 'from-user-context' })
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+      expect(firstRequest.usr).toEqual(jasmine.objectContaining({ id: 'from-global-context' }))
     })
 
     it('RUM context should take precedence over global context', () => {

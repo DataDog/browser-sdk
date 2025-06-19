@@ -4,17 +4,19 @@ import {
   getSyntheticsTestId,
   HookNames,
   willSyntheticsInjectRum,
+  isSyntheticsTest,
 } from '@datadog/browser-core'
 import { SessionType } from '../rumSessionManager'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export function startSyntheticsContext(hooks: Hooks) {
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes | SKIPPED => {
-    const testId = getSyntheticsTestId()
-    const resultId = getSyntheticsResultId()
-    if (!testId || !resultId) {
+    if (!isSyntheticsTest()) {
       return SKIPPED
     }
+
+    const testId = getSyntheticsTestId()
+    const resultId = getSyntheticsResultId()
 
     return {
       type: eventType,
@@ -22,8 +24,8 @@ export function startSyntheticsContext(hooks: Hooks) {
         type: SessionType.SYNTHETICS,
       },
       synthetics: {
-        test_id: testId,
-        result_id: resultId,
+        test_id: testId!,
+        result_id: resultId!,
         injected: willSyntheticsInjectRum(),
       },
     }

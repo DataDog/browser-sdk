@@ -8,6 +8,7 @@ import {
   addTelemetryDebug,
   startAccountContext,
   startGlobalContext,
+  startUserContext,
 } from '@datadog/browser-core'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
@@ -39,7 +40,6 @@ import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
-import { startUserContext } from '../domain/contexts/userContext'
 import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
@@ -98,6 +98,7 @@ export function startRum(
     : startRumSessionManagerStub()
 
   telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
+  telemetry.setContextProvider('usr.anonymous_id', () => session.findTrackedSession()?.anonymousId)
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
@@ -130,7 +131,7 @@ export function startRum(
   startSessionContext(hooks, session, recorderApi, viewHistory)
   startConnectivityContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(hooks, configuration, session)
+  const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
   const {
