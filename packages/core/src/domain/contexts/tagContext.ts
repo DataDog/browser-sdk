@@ -1,4 +1,5 @@
-import { buildTags, type Configuration } from '../configuration'
+import { buildTags } from '../configuration'
+import type { Configuration } from '../configuration'
 import type { AbstractHooks } from '../../tools/abstractHooks'
 import { HookNames } from '../../tools/abstractHooks'
 
