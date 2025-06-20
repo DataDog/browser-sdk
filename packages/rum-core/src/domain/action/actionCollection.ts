@@ -15,7 +15,7 @@ import { trackClickActions } from './trackClickActions'
 export type { ActionContexts }
 
 export interface CustomAction {
-  type: ActionType.CUSTOM
+  type: typeof ActionType.CUSTOM
   name: string
   startClocks: ClocksState
   context?: Context
@@ -108,7 +108,7 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
     {
       action: { id: generateUUID(), target: { name: action.name }, type: action.type },
       date: action.startClocks.timeStamp,
-      type: RumEventType.ACTION as const,
+      type: RumEventType.ACTION,
     },
     autoActionProperties
   )

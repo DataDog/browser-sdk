@@ -95,9 +95,9 @@ export function startTelemetryCollection(
     !TELEMETRY_EXCLUDED_SITES.includes(configuration.site) && performDraw(configuration.telemetrySampleRate)
 
   const telemetryEnabledPerType = {
-    [TelemetryType.log]: telemetryEnabled,
-    [TelemetryType.configuration]: telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate),
-    [TelemetryType.usage]: telemetryEnabled && performDraw(configuration.telemetryUsageSampleRate),
+    [TelemetryType.LOG]: telemetryEnabled,
+    [TelemetryType.CONFIGURATION]: telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate),
+    [TelemetryType.USAGE]: telemetryEnabled && performDraw(configuration.telemetryUsageSampleRate),
   }
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
@@ -231,7 +231,7 @@ export function isTelemetryReplicationAllowed(configuration: Configuration) {
 export function addTelemetryDebug(message: string, context?: Context) {
   displayIfDebugEnabled(ConsoleApiName.debug, message, context)
   onRawTelemetryEventCollected({
-    type: TelemetryType.log,
+    type: TelemetryType.LOG,
     message,
     status: StatusType.debug,
     ...context,
@@ -240,7 +240,7 @@ export function addTelemetryDebug(message: string, context?: Context) {
 
 export function addTelemetryError(e: unknown, context?: Context) {
   onRawTelemetryEventCollected({
-    type: TelemetryType.log,
+    type: TelemetryType.LOG,
     status: StatusType.error,
     ...formatError(e),
     ...context,
@@ -249,14 +249,14 @@ export function addTelemetryError(e: unknown, context?: Context) {
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
   onRawTelemetryEventCollected({
-    type: TelemetryType.configuration,
+    type: TelemetryType.CONFIGURATION,
     configuration,
   })
 }
 
 export function addTelemetryUsage(usage: RawTelemetryUsage) {
   onRawTelemetryEventCollected({
-    type: TelemetryType.usage,
+    type: TelemetryType.USAGE,
     usage,
   })
 }
