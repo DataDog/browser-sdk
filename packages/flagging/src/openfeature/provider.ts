@@ -13,10 +13,10 @@ import type {
 /* eslint-disable-next-line local-rules/disallow-side-effects */
 import { OpenFeature, ProviderStatus } from '@openfeature/web-sdk'
 
+import { dateNow } from '@datadog/browser-core'
 import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
-import type { DDRum } from './rum-integration'
-import { dateNow } from '@datadog/browser-core'
+import type { DDRum } from './rumIntegration'
 
 export type DatadogProviderOptions = {
   /**

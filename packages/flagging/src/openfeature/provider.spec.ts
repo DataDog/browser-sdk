@@ -1,6 +1,6 @@
 import { StandardResolutionReasons, type EvaluationContext, type Logger } from '@openfeature/core'
 import { DatadogProvider } from './provider'
-import type { DDRum } from './rum-integration'
+import type { DDRum } from './rumIntegration'
 
 describe('DatadogProvider', () => {
   let provider: DatadogProvider
