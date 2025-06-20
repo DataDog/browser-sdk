@@ -182,6 +182,7 @@ describe('session store', () => {
     let sessionStoreManager: SessionStore
     let clock: Clock
     let persistSessionSpy: jasmine.Spy<jasmine.Func>
+    let isLockEnabled: boolean
 
     function setupSessionStore(
       computeTrackingType: (rawTrackingType?: string) => FakeTrackingType = () => FakeTrackingType.TRACKED
@@ -194,6 +195,7 @@ describe('session store', () => {
 
       const sessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, DEFAULT_CONFIGURATION)
       persistSessionSpy = spyOn(sessionStoreStrategy, 'persistSession').and.callThrough()
+      isLockEnabled = sessionStoreStrategy.isLockEnabled
 
       sessionStoreManager = startSessionStore(
         sessionStoreStrategyType,
@@ -477,7 +479,10 @@ describe('session store', () => {
         expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
-        expect(persistSessionSpy).toHaveBeenCalled()
+
+        if (isLockEnabled) {
+          expect(persistSessionSpy).toHaveBeenCalled()
+        }
       })
 
       it('when session not in cache and session in store, should do nothing', () => {
@@ -501,7 +506,10 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expectSessionToBeExpiredInStore()
         expect(expireSpy).toHaveBeenCalled()
-        expect(persistSessionSpy).toHaveBeenCalled()
+
+        if (isLockEnabled) {
+          expect(persistSessionSpy).toHaveBeenCalled()
+        }
       })
 
       it('when session in cache is same session than in store, should synchronize session', () => {
