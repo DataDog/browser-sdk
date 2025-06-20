@@ -15,6 +15,23 @@ function createBody(errorGenerator: string) {
       function foo() {
         return new Error('oh snap')
       }
+      function customError() {
+        class CustomTestError extends Error {}
+        return new CustomTestError('oh snap')
+      }
+      function customErrorWithInheritance() {
+        class CustomTestError extends Error {}
+        class CustomTestError2 extends CustomTestError {}
+
+        // this is an anonymous class, which has no name
+        // we're checking if the stacktrace is correctly reported for this specific case (with the class name missing)
+        return new (class extends CustomTestError2 {
+          constructor(e) {
+            super(e)
+            this.name = 'CustomTestError3'
+          }
+        })('oh snap')
+      }
     </script>
   `
 }
@@ -114,6 +131,52 @@ test.describe('rum errors', () => {
         message: 'oh snap',
         source: 'custom',
         stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        handling: 'handled',
+      })
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(0)
+      })
+    })
+
+  // non-native errors should have the same stack trace as regular errors on ALL BROWSERS
+  createTest('send non-native errors')
+    .withRum()
+    .withBody(createBody('DD_RUM.addError(customError())'))
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
+      await button.click()
+
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: 'oh snap',
+        source: 'custom',
+        stack: ['Error: oh snap', `at customError @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        handling: 'handled',
+      })
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(0)
+      })
+    })
+
+  // non-native should have the same stack trace as regular errors on ALL BROWSERS
+  // this should also work for custom error classes that inherit from other custom error classes
+  createTest('send non-native errors with inheritance')
+    .withRum()
+    .withBody(createBody('DD_RUM.addError(customErrorWithInheritance())'))
+    .run(async ({ flushEvents, page, intakeRegistry, baseUrl, withBrowserLogs }) => {
+      const button = page.locator('button')
+      await button.click()
+
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: 'oh snap',
+        source: 'custom',
+        stack: ['CustomTestError3: oh snap', `at customErrorWithInheritance @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
         handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
         handling: 'handled',
       })
