@@ -4,7 +4,12 @@ import { setCookie } from '../../browser/cookie'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
 import type { SessionStore } from './sessionStore'
-import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
+import {
+  STORAGE_POLL_DELAY,
+  startSessionStore,
+  selectSessionStoreStrategyType,
+  getSessionStoreStrategy,
+} from './sessionStore'
 import {
   SESSION_EXPIRATION_DELAY,
   SESSION_NOT_TRACKED,
@@ -176,6 +181,7 @@ describe('session store', () => {
     let renewSpy: () => void
     let sessionStoreManager: SessionStore
     let clock: Clock
+    let persistSessionSpy: jasmine.Spy<jasmine.Func>
 
     function setupSessionStore(
       computeTrackingType: (rawTrackingType?: string) => FakeTrackingType = () => FakeTrackingType.TRACKED
@@ -185,14 +191,21 @@ describe('session store', () => {
         fail('Unable to initialize cookie storage')
         return
       }
+
+      const sessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, DEFAULT_CONFIGURATION)
+      persistSessionSpy = spyOn(sessionStoreStrategy, 'persistSession').and.callThrough()
+
       sessionStoreManager = startSessionStore(
         sessionStoreStrategyType,
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
-        computeTrackingType
+        computeTrackingType,
+        sessionStoreStrategy
       )
       sessionStoreManager.expireObservable.subscribe(expireSpy)
       sessionStoreManager.renewObservable.subscribe(renewSpy)
+
+      persistSessionSpy.calls.reset()
     }
 
     beforeEach(() => {
@@ -456,7 +469,7 @@ describe('session store', () => {
     })
 
     describe('regular watch', () => {
-      it('when session not in cache and session not in store, should do nothing', () => {
+      it('when session not in cache and session not in store, should expire session in store', () => {
         setupSessionStore()
 
         clock.tick(STORAGE_POLL_DELAY)
@@ -464,6 +477,7 @@ describe('session store', () => {
         expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
+        expect(persistSessionSpy).toHaveBeenCalled()
       })
 
       it('when session not in cache and session in store, should do nothing', () => {
@@ -474,6 +488,7 @@ describe('session store', () => {
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
+        expect(persistSessionSpy).not.toHaveBeenCalled()
       })
 
       it('when session in cache and session not in store, should expire session', () => {
@@ -486,6 +501,7 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expectSessionToBeExpiredInStore()
         expect(expireSpy).toHaveBeenCalled()
+        expect(persistSessionSpy).toHaveBeenCalled()
       })
 
       it('when session in cache is same session than in store, should synchronize session', () => {
@@ -498,9 +514,10 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
         expect(expireSpy).not.toHaveBeenCalled()
+        expect(persistSessionSpy).not.toHaveBeenCalled()
       })
 
-      it('when session id in cache is different than session id in store, should expire session', () => {
+      it('when session id in cache is different than session id in store, should expire session in cache', () => {
         setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
         setupSessionStore()
         setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
@@ -509,6 +526,7 @@ describe('session store', () => {
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
+        expect(persistSessionSpy).not.toHaveBeenCalled()
       })
 
       it('when session type in cache is different than session type in store, should expire session', () => {
@@ -520,6 +538,7 @@ describe('session store', () => {
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
+        expect(persistSessionSpy).not.toHaveBeenCalled()
       })
     })
 
