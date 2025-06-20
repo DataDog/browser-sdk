@@ -73,7 +73,7 @@ export class DatadogProvider implements Provider {
     const logExposures = options.rum?.ddExposureLogging ?? false
 
     if (options.rum) {
-      const rum = options.rum.sdk;
+      const rum = options.rum.sdk
       // Add OpenFeature hook
       OpenFeature.addHooks({
         after(_hookContext: HookContext, details: EvaluationDetails<FlagValue>) {
@@ -86,14 +86,14 @@ export class DatadogProvider implements Provider {
             rum.addAction('__dd_exposure', {
               timestamp: Date.now(),
               flag_key: details.flagKey,
-              allocation_key: details.flagMetadata?.allocationKey as string ?? '',
+              allocation_key: (details.flagMetadata?.allocationKey as string) ?? '',
               exposure_key: `${details.flagKey}-${details.flagMetadata?.allocationKey}`,
               subject_key: _hookContext.context.targetingKey,
               subject_attributes: _hookContext.context,
               variant_key: details.variant,
             })
           }
-        }
+        },
       })
     }
 
