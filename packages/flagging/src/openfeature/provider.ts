@@ -15,7 +15,8 @@ import { OpenFeature, ProviderStatus } from '@openfeature/web-sdk'
 
 import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
-import { DDRum } from './rum-integration'
+import type { DDRum } from './rum-integration'
+import { dateNow } from '@datadog/browser-core'
 
 export type DatadogProviderOptions = {
   /**
@@ -84,7 +85,7 @@ export class DatadogProvider implements Provider {
           if (logExposures) {
             // Log exposure
             rum.addAction('__dd_exposure', {
-              timestamp: Date.now(),
+              timestamp: dateNow(),
               flag_key: details.flagKey,
               allocation_key: (details.flagMetadata?.allocationKey as string) ?? '',
               exposure_key: `${details.flagKey}-${details.flagMetadata?.allocationKey}`,
