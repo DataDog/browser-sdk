@@ -21,3 +21,23 @@ export function objectValues<T = unknown>(object: { [key: string]: T }) {
 export function objectEntries<T = unknown>(object: { [key: string]: T }): Array<[string, T]> {
   return Object.entries(object)
 }
+
+export function replaceAll(
+  str: string,
+  search: string | RegExp,
+  replacement: string | ((substring: string, ...args: any[]) => string)
+): string {
+  if (search instanceof RegExp) {
+    return str.replace(search, replacement as any)
+  }
+
+  if (typeof search !== 'string') {
+    throw new TypeError('First argument must be a string or RegExp')
+  }
+
+  // Escape string for RegExp and create global regex
+  const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(escapedSearch, 'g')
+
+  return str.replace(regex, replacement as any)
+}

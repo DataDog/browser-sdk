@@ -243,7 +243,8 @@ function computeClickActionBase(
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
-  const actionName = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+
+  const { name, nameSource } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
@@ -257,8 +258,8 @@ function computeClickActionBase(
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: actionName.name,
-    nameSource: actionName.nameSource,
+    name,
+    nameSource,
   }
 }
 

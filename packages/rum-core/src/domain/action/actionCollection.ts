@@ -11,6 +11,13 @@ import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
+import {
+  addAllowlistObserver,
+  createActionAllowList,
+  maskAutoActionName,
+} from './privacy/allowedDictionary'
+import type { AllowedDictionary } from './privacy/allowedDictionary'
+import { ActionNameSource } from './getActionNameFromElement'
 
 export type { ActionContexts }
 
@@ -31,9 +38,12 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
-  )
+  const actionNameDictionary = createActionAllowList()
+  addAllowlistObserver(actionNameDictionary)
+
+  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, actionNameDictionary))
+  })
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (
@@ -69,14 +79,19 @@ export function startActionCollection(
 
   return {
     addAction: (action: CustomAction) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, actionNameDictionary))
     },
     actionContexts,
     stop,
   }
 }
 
-function processAction(action: AutoAction | CustomAction): RawRumEventCollectedData<RawRumActionEvent> {
+function processAction(
+  action: AutoAction | CustomAction,
+  actionNameDictionary: AllowedDictionary
+): RawRumEventCollectedData<RawRumActionEvent> {
+  const { name: updatedName, masked } = maskAutoActionName(action.name, actionNameDictionary.allowlist)
+
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
@@ -99,14 +114,22 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
           action: {
             target: action.target,
             position: action.position,
-            name_source: action.nameSource,
+            name_source: masked ? ActionNameSource.MASK_DISALLOWED : action.nameSource,
           },
         },
       }
-    : undefined
+    : masked
+      ? {
+          _dd: {
+            action: {
+              name_source: ActionNameSource.MASK_DISALLOWED,
+            },
+          },
+        }
+      : undefined
   const actionEvent: RawRumActionEvent = combine(
     {
-      action: { id: generateUUID(), target: { name: action.name }, type: action.type },
+      action: { id: generateUUID(), target: { name: updatedName }, type: action.type },
       date: action.startClocks.timeStamp,
       type: RumEventType.ACTION as const,
     },
