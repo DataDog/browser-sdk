@@ -95,12 +95,17 @@ export function startSessionManager<TrackingType extends string>(
 
     if (!session) {
       const rawSession = retrieveSessionCookie()
+      const sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith('_dd_s'))
 
       addTelemetryDebug('Unexpected session state', {
         session: rawSession,
         isSyntheticsTest: isSyntheticsTest(),
         createdTimestamp: rawSession?.created,
         expireTimestamp: rawSession?.expire,
+        cookie: {
+          count: sessionCookies.length,
+          ...sessionCookies,
+        },
       })
 
       return {
