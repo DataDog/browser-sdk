@@ -292,6 +292,15 @@ describe('logs', () => {
       registerCleanupTask(stopLogs)
     })
 
+    it('global context should take precedence over session', () => {
+      globalContext.setContext({ session_id: 'from-global-context' })
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+      expect(firstRequest.session_id).toEqual('from-global-context')
+    })
+
     it('global context should take precedence over account', () => {
       globalContext.setContext({ account: { id: 'from-global-context' } })
       accountContext.setContext({ id: 'from-account-context' })

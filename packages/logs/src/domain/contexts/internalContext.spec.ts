@@ -1,25 +1,16 @@
-import { Observable } from '@datadog/browser-core'
+import { createLogsSessionManagerMock } from '../../../test/mockLogsSessionManager'
 import { startInternalContext } from './internalContext'
 
 describe('internal context', () => {
-  it('should return undefined if sessionManager cannot find session', () => {
-    const sessionManagerMock = {
-      findTrackedSession: () => undefined,
-      expireObservable: new Observable<void>(),
-    }
+  it('should return undefined if session is not tracked', () => {
+    const sessionManagerMock = createLogsSessionManagerMock().setNotTracked()
     expect(startInternalContext(sessionManagerMock).get()).toEqual(undefined)
   })
 
   it('should return internal context corresponding to startTime', () => {
-    const sessionIdMock = '123'
-    const sessionManagerMock = {
-      findTrackedSession: () => ({
-        id: sessionIdMock,
-      }),
-      expireObservable: new Observable<void>(),
-    }
+    const sessionManagerMock = createLogsSessionManagerMock().setTracked()
     expect(startInternalContext(sessionManagerMock).get()).toEqual({
-      session_id: sessionIdMock,
+      session_id: jasmine.any(String),
     })
   })
 })
