@@ -1,0 +1,36 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+  "mainEntryPointFilePath": "./esm/entries/main.d.ts",
+  "compiler": {
+    "tsconfigFilePath": "./tsconfig.esm.json"
+  },
+  "dtsRollup": {
+    "enabled": false
+  },
+  "apiReport": {
+    "enabled": false
+  },
+  "bundledPackages": ["@datadog/browser-rum-core"],
+  "docModel": {
+    "enabled": true,
+    "apiJsonFilePath": "<projectFolder>/etc/<unscopedPackageName>.api.json"
+  },
+  "messages": {
+    "compilerMessageReporting": {
+      "default": {
+        "logLevel": "warning"
+      }
+    },
+    "extractorMessageReporting": {
+      "default": {
+        "logLevel": "warning",
+        "addToApiReportFile": false
+      }
+    },
+    "tsdocMessageReporting": {
+      "default": {
+        "logLevel": "warning"
+      }
+    }
+  }
+}

@@ -1,3 +1,7 @@
+/**
+ * Represents a log event collected by the Datadog Browser Logs SDK,
+ * containing information such as message, context, and metadata.
+ */
 export interface LogsEvent {
   /**
    * Start of the log in ms from epoch
