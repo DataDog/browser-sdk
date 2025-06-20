@@ -18,6 +18,17 @@
 
 ---
 
+## v6.12.2
+
+**Public Changes:**
+
+- 🐛 ignore init() if Synthetics will inject its own instance of RUM ([#3649](https://github.com/DataDog/browser-sdk/pull/3649)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 reduce playwright workers to improve reliability ([#3650](https://github.com/DataDog/browser-sdk/pull/3650))
+- 🔊 add cookie data in debug logs ([#3647](https://github.com/DataDog/browser-sdk/pull/3647)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.12.1
 
 **Public Changes:**
