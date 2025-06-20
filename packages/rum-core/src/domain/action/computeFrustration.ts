@@ -67,5 +67,20 @@ export function isDead(click: Click) {
   if (click.hasPageActivity || click.getUserActivity().input || click.getUserActivity().scroll) {
     return false
   }
-  return !click.event.target.matches(DEAD_CLICK_EXCLUDE_SELECTOR)
+
+  const target = click.event.target
+
+  if (target.matches(DEAD_CLICK_EXCLUDE_SELECTOR)) {
+    return false
+  }
+
+  if (target.tagName === 'LABEL' && target.hasAttribute('for')) {
+    const forId = target.getAttribute('for')
+    const referencedElement = document.getElementById(forId!)
+    if (referencedElement && referencedElement.matches(DEAD_CLICK_EXCLUDE_SELECTOR)) {
+      return false
+    }
+  }
+
+  return true
 }
