@@ -1,5 +1,12 @@
 import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
-import { ErrorSource, HookNames, combine, createEventRateLimiter, getRelativeTime } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  HookNames,
+  combine,
+  combineTags,
+  createEventRateLimiter,
+  getRelativeTime,
+} from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsConfiguration } from './configuration'
@@ -39,6 +46,7 @@ export function startLogsAssembly(
         startTime,
       }) as DefaultLogsEventAttributes
 
+      const ddtags = combineTags(defaultLogsEventAttributes, messageContext)
       const log = combine(
         {
           service: configuration.service,
@@ -48,7 +56,8 @@ export function startLogsAssembly(
         },
         defaultLogsEventAttributes,
         rawLogsEvent,
-        messageContext
+        messageContext,
+        ddtags ? { ddtags } : undefined
       ) as LogsEvent & Context
 
       if (

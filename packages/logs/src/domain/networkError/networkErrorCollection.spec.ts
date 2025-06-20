@@ -85,7 +85,9 @@ describe('network error collection', () => {
 
   it('should not track intake error', (done) => {
     startCollection()
-    fetch('https://logs-intake.com/v1/input/send?ddsource=browser&ddtags=sdk_version').resolveWith(DEFAULT_REQUEST)
+    fetch(
+      'https://logs-intake.com/v1/input/send?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
+    ).resolveWith(DEFAULT_REQUEST)
 
     mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents.length).toEqual(0)

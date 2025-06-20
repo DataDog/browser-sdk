@@ -260,9 +260,7 @@ export function createRumProfiler(
     const sessionId = session.findTrackedSession()?.id
 
     // Send JSON Profile to intake.
-    transport
-      .sendProfile(trace, configuration.profilingEndpointBuilder, configuration.applicationId, sessionId)
-      .catch(monitorError)
+    transport.sendProfile(trace, configuration, sessionId).catch(monitorError)
   }
 
   function handleSampleBufferFull(): void {

@@ -13,4 +13,4 @@ export const INTAKE_SITE_EU1: Site = 'datadoghq.eu'
 export const INTAKE_SITE_US1_FED: Site = 'ddog-gov.com'
 
 export const PCI_INTAKE_HOST_US1 = 'pci.browser-intake-datadoghq.com'
-export const INTAKE_URL_PARAMETERS = ['ddsource', 'ddtags']
+export const INTAKE_URL_PARAMETERS = ['ddsource', 'dd-api-key', 'dd-request-id']

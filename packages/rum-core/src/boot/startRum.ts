@@ -7,6 +7,7 @@ import {
   canUseEventBridge,
   addTelemetryDebug,
   startAccountContext,
+  startTagContext,
   startGlobalContext,
   startUserContext,
 } from '@datadog/browser-core'
@@ -129,6 +130,7 @@ export function startRum(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, session, recorderApi, viewHistory)
   startConnectivityContext(hooks)
+  startTagContext(hooks, configuration)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')

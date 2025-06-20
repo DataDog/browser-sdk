@@ -7,6 +7,7 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
+  buildTags,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -122,6 +123,7 @@ export { createContextManager } from './domain/context/contextManager'
 export { defineContextMethod, bufferContextCalls } from './domain/context/defineContextMethod'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
+export { startTagContext, combineTags } from './domain/contexts/tagContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
 export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
 export type { User } from './domain/contexts/userContext'
