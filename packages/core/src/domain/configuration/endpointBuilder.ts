@@ -22,16 +22,17 @@ export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
   trackType: TrackType,
-  configurationTags: string[]
+  extraTags: string[],
+  extraParameters?: string[]
 ) {
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
 
   return {
     build(api: ApiType, payload: Payload) {
-      const parameters = buildEndpointParameters(initConfiguration, trackType, configurationTags, api, payload)
+      const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload, extraTags, extraParameters)
       return buildUrlWithParameters(parameters)
     },
-    tags: configurationTags,
+    tags: extraTags,
     urlPrefix: buildUrlWithParameters(''),
     trackType,
   }
@@ -89,11 +90,12 @@ export function buildEndpointHost(
 function buildEndpointParameters(
   { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
   trackType: TrackType,
-  configurationTags: string[],
   api: ApiType,
-  { retry, encoding }: Payload
+  { retry, encoding }: Payload,
+  extraTags: string[],
+  extraParameters: string[] = []
 ) {
-  const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
+  const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(extraTags)
   if (retry) {
     tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
   }
@@ -105,7 +107,7 @@ function buildEndpointParameters(
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
     `dd-request-id=${generateUUID()}`,
-  ]
+  ].concat(extraParameters)
 
   if (encoding) {
     parameters.push(`dd-evp-encoding=${encoding}`)

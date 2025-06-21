@@ -15,7 +15,6 @@ export interface TransportConfiguration {
 }
 
 export interface ReplicaConfiguration {
-  applicationId?: string
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
 }
@@ -58,12 +57,12 @@ function computeReplicaConfiguration(
     clientToken: initConfiguration.replica.clientToken,
   }
 
-  const replicaEndpointBuilders = {
+  return {
     logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs', tags),
-    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
+    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags, [
+      `application.id=${initConfiguration.replica.applicationId}`,
+    ]),
   }
-
-  return { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }
 }
 
 export function isIntakeUrl(url: string): boolean {
