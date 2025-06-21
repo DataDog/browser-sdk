@@ -31,6 +31,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   globalContext: {} as any,
   userContext: {} as any,
   accountContext: {} as any,
+  hooks: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
