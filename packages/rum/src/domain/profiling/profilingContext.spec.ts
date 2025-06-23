@@ -15,8 +15,6 @@ describe('Profiling Context', () => {
 
     const viewRumEventAttributes = hooks.triggerHook(HookNames.Assemble, { eventType: RumEventType.VIEW })
 
-    console.log(viewRumEventAttributes)
-
     expect(viewRumEventAttributes).toEqual(
       jasmine.objectContaining({
         _dd: {
