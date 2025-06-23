@@ -1,4 +1,5 @@
 import { LifeCycle, LifeCycleEventType, RumEventType, RumPerformanceEntryType } from '@datadog/browser-rum-core'
+import type { Hooks } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { relativeNow, timeStampNow } from '@datadog/browser-core'
 import { setPageVisibility, restorePageVisibility, createNewEvent, createHooks } from '@datadog/browser-core/test'
