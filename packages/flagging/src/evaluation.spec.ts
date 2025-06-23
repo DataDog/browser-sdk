@@ -31,6 +31,9 @@ describe('evaluate', () => {
     expect(result).toEqual({
       value: true,
       variant: 'variation-124',
+      flagMetadata: {
+        allocationKey: 'allocation-124',
+      },
       reason: 'TARGETING_MATCH',
     })
   })
@@ -40,6 +43,9 @@ describe('evaluate', () => {
     expect(result).toEqual({
       value: 'red',
       variant: 'variation-123',
+      flagMetadata: {
+        allocationKey: 'allocation-123',
+      },
       reason: 'TARGETING_MATCH',
     })
   })
@@ -49,6 +55,9 @@ describe('evaluate', () => {
     expect(result).toEqual({
       value: { key: 'value', prop: 123 },
       variant: 'variation-127',
+      flagMetadata: {
+        allocationKey: 'allocation-127',
+      },
       reason: 'TARGETING_MATCH',
     })
   })
