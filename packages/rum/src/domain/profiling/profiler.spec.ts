@@ -1,5 +1,5 @@
+import type { Hooks} from '@datadog/browser-rum-core';
 import { LifeCycle, LifeCycleEventType, RumEventType, RumPerformanceEntryType } from '@datadog/browser-rum-core'
-import type { Hooks } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { relativeNow, timeStampNow } from '@datadog/browser-core'
 import { setPageVisibility, restorePageVisibility, createNewEvent, createHooks } from '@datadog/browser-core/test'
@@ -40,7 +40,7 @@ describe('profiler', () => {
   } {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
-    const hooks = createHooks()
+    const hooks = createHooks() as Hooks
     const profilingContextManager: ProfilingContextManager = startProfilingContext(hooks)
     const { notifyPerformanceEntries } = mockPerformanceObserver()
 
