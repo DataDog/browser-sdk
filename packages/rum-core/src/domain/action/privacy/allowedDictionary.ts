@@ -16,7 +16,6 @@ export function getMatchRegex(): RegExp {
   return /[\p{Letter}]+|[\p{Symbol}\p{Number}]+/gu
 }
 
-const MAX_WORD_LENGTH = 20
 export type AllowedDictionary = {
   updatedCounter: number
   allowlist: Set<string>
@@ -61,9 +60,6 @@ function processRawString(str: string, dictionary: AllowedDictionary) {
   const words: string[] | null = str.match(getMatchRegex())
   if (words) {
     for (const word of words) {
-      if (word.length > MAX_WORD_LENGTH) {
-        continue
-      }
       const normalizeWord = word.toLocaleLowerCase()
       if (!dictionary.allowlist.has(normalizeWord)) {
         dictionary.allowlist.add(normalizeWord)

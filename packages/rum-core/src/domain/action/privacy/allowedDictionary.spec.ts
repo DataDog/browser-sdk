@@ -28,6 +28,7 @@ describe('allowedDictionary', () => {
   })
 
   afterEach(() => {
+    window.$DD_ALLOW = undefined as any
     window.$DD_ALLOW_OBSERVERS = undefined
   })
 
@@ -57,7 +58,15 @@ describe('allowedDictionary', () => {
     expect(dict.allowlist.has('world')).toBeTrue()
   })
 
-  describe('maskAutoActionName', () => {
+  describe('maskActionName', () => {
+    it('should not run if $DD_ALLOW is not defined', () => {
+      window.$DD_ALLOW = undefined as any
+      const dict = createActionAllowList()
+      const testString = maskActionName('mask-feature-off', dict.allowlist)
+      expect(testString.masked).toBeFalse()
+      expect(testString.name).toBe('mask-feature-off')
+    })
+
     it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
       const dict = createActionAllowList()
       const testString1 = maskActionName('test-💥-$>=123-pii', dict.allowlist)
