@@ -958,4 +958,51 @@ Error: foo
       column: undefined,
     })
   })
+
+  it('should normalize non native errors stacktraces across browsers', () => {
+    /* eslint-disable no-restricted-syntax */
+    class DatadogTestCustomError extends Error {
+      constructor() {
+        super()
+        this.name = 'Error' // set name to Error so that no browser would default to the constructor name
+      }
+    }
+    class DatadogTestCustomError2 extends DatadogTestCustomError {}
+
+    const [customError, customErrorWithInheritance, customErrorWithAnonymousInheritance, nativeError] = [
+      DatadogTestCustomError,
+      DatadogTestCustomError2,
+      // this is an anonymous class, which has no name
+      // we're checking if the stacktrace is correctly reported for this specific case (with the class name missing)
+      class extends DatadogTestCustomError2 {
+        constructor() {
+          super()
+          this.name = 'Error'
+        }
+      },
+      Error,
+    ].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
+
+    expect(computeStackTrace(customError.stack)).toEqual(computeStackTrace(nativeError.stack))
+    expect(computeStackTrace(customErrorWithInheritance.stack)).toEqual(computeStackTrace(nativeError.stack))
+    expect(computeStackTrace(customErrorWithAnonymousInheritance.stack)).toEqual(computeStackTrace(nativeError.stack))
+  })
+
+  it('should skip empty lines in stacktraces', () => {
+    const wasmStack = `
+  Error: Wasm Error
+    myModule.foo@http://example.com/my-module.wasm:wasm-function[42]:0x1a3b\n \n\t\n`
+    const mockErr = { message: 'Wasm Error', name: 'Error', stack: wasmStack }
+    const stackFrames = computeStackTrace(mockErr)
+
+    expect(stackFrames.stack.length).toBe(1)
+
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      func: 'myModule.foo',
+      url: 'http://example.com/my-module.wasm:wasm-function[42]:0x1a3b',
+      line: undefined,
+      column: undefined,
+    })
+  })
 })

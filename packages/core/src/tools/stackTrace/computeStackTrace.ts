@@ -48,6 +48,29 @@ export function computeStackTrace(ex: unknown): StackTrace {
     })
   }
 
+  if (stack.length > 0 && isWronglyReportingCustomErrors() && ex instanceof Error) {
+    // if we are wrongly reporting custom errors
+    const constructors: string[] = []
+
+    // go through each inherited constructor
+    let currentPrototype: object | undefined = ex
+    while (
+      (currentPrototype = Object.getPrototypeOf(currentPrototype)) &&
+      isNonNativeClassPrototype(currentPrototype)
+    ) {
+      const constructorName = currentPrototype.constructor?.name || UNKNOWN_FUNCTION
+      constructors.push(constructorName)
+    }
+
+    // traverse the stacktrace in reverse order because the stacktrace starts with the last inherited constructor
+    // we check constructor names to ensure we remove the correct frame (and there isn't a weird unsupported environment behavior)
+    for (let i = constructors.length - 1; i >= 0 && stack[0]?.func === constructors[i]; i--) {
+      // if the first stack frame is the custom error constructor
+      // null stack frames may represent frames that failed to be parsed because the error class did not have a constructor
+      stack.shift() // remove it
+    }
+  }
+
   return {
     message: tryToGetString(ex, 'message'),
     name: tryToGetString(ex, 'name'),
@@ -125,7 +148,7 @@ function parseWinLine(line: string): StackFrame | undefined {
 }
 
 const GECKO_LINE_RE =
-  /^\s*(.*?)(?:\((.*?)\))?(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle|\[wasm code\])(?::(\d+))?(?::(\d+))?\s*$/i
+  /^\s*(.*?)(?:\((.*?)\))?(?:(?:(?:^|@)((?:file|https?|blob|chrome|webpack|resource|capacitor|\[native).*?|[^@]*bundle|\[wasm code\])(?::(\d+))?(?::(\d+))?)|@)\s*$/i
 const GECKO_EVAL_RE = /(\S+) line (\d+)(?: > eval line \d+)* > eval/i
 
 function parseGeckoLine(line: string): StackFrame | undefined {
@@ -189,4 +212,39 @@ function tryToParseMessage(messageObj: unknown) {
     ;[, name, message] = ERROR_TYPES_RE.exec(messageObj as string)!
   }
   return { name, message }
+}
+
+// Custom error stacktrace fix
+// Some browsers (safari/firefox) add the error constructor as a frame in the stacktrace
+// In order to normalize the stacktrace, we need to remove it
+
+function isNonNativeClassPrototype(prototype: object) {
+  return String(prototype.constructor).startsWith('class ')
+}
+
+let isWronglyReportingCustomErrorsCache: boolean | undefined
+
+function isWronglyReportingCustomErrors() {
+  if (isWronglyReportingCustomErrorsCache !== undefined) {
+    return isWronglyReportingCustomErrorsCache
+  }
+
+  /* eslint-disable no-restricted-syntax */
+  class DatadogTestCustomError extends Error {
+    constructor() {
+      super()
+      this.name = 'Error' // set name to Error so that no browser would default to the constructor name
+    }
+  }
+
+  const [customError, nativeError] = [DatadogTestCustomError, Error].map((errConstructor) => new errConstructor()) // so that both errors should exactly have the same stacktrace
+
+  isWronglyReportingCustomErrorsCache =
+    // If customError is not a class, it means that this was built with ES5 as target, converting the class to a normal object.
+    // Thus, error constructors will be reported on all browsers, which is the expected behavior.
+    isNonNativeClassPrototype(Object.getPrototypeOf(customError)) &&
+    // If the browser is correctly reporting the stacktrace, the normal error stacktrace should be the same as the custom error stacktrace
+    nativeError.stack !== customError.stack
+
+  return isWronglyReportingCustomErrorsCache
 }
