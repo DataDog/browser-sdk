@@ -14,8 +14,9 @@ export const enum ActionNameSource {
   TEXT_CONTENT = 'text_content',
   STANDARD_ATTRIBUTE = 'standard_attribute',
   BLANK = 'blank',
+  MASK_DISALLOWED = 'mask_disallowed',
 }
-type ActionName = {
+export type ActionName = {
   name: string
   nameSource: ActionNameSource
 }

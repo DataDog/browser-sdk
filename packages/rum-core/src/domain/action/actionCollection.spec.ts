@@ -188,4 +188,44 @@ describe('actionCollection', () => {
       })
     })
   })
+
+  describe('maskActionName', () => {
+    beforeEach(() => {
+      window.$DD_ALLOW = new Set(['foo-bar'])
+      // the listeners should have been registered successfully
+      window.$DD_ALLOW_OBSERVERS?.forEach((observer) => observer())
+    })
+    it('should mask custom action with the action name dictionary', () => {
+      addAction({
+        name: 'foo bar baz',
+        startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+        type: ActionType.CUSTOM,
+      })
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe('foo bar MASKED')
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent)._dd?.action?.name_source).toBe('mask_disallowed')
+    })
+
+    it('should mask auto name with the action name dictionary', () => {
+      const event = createNewEvent('pointerup', { target: document.createElement('button') })
+      lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, {
+        counts: {
+          errorCount: 0,
+          longTaskCount: 0,
+          resourceCount: 0,
+        },
+        duration: -10 as Duration,
+        event,
+        events: [event],
+        frustrationTypes: [],
+        id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        name: 'foo bar baz',
+        nameSource: 'text_content',
+        startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+        type: ActionType.CLICK,
+      })
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe('foo bar MASKED')
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent)._dd?.action?.name_source).toBe('mask_disallowed')
+    })
+  })
 })
