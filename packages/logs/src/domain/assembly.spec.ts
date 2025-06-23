@@ -1,9 +1,8 @@
-import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { Observable, ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@datadog/browser-core'
+import { Observable, ErrorSource, ONE_MINUTE, noop, HookNames } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
-import type { CommonContext } from '../rawLogsEvent.types'
 import { startLogsAssembly } from './assembly'
 import type { LogsConfiguration } from './configuration'
 import { validateAndBuildLogsConfiguration } from './configuration'
@@ -22,12 +21,6 @@ const DEFAULT_MESSAGE = {
   message: 'message',
   origin: ErrorSource.LOGGER,
   date: 123456 as TimeStamp,
-}
-const COMMON_CONTEXT: CommonContext = {
-  view: {
-    referrer: 'referrer_from_common_context',
-    url: 'url_from_common_context',
-  },
 }
 
 describe('startLogsAssembly', () => {
@@ -62,7 +55,7 @@ describe('startLogsAssembly', () => {
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
     startRUMInternalContext(hooks)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -161,70 +154,11 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0].foo).toEqual('from-message-context')
     })
 
-    it('should include common context', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-
-      expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
-          view: COMMON_CONTEXT.view,
-        })
-      )
-    })
-
-    it('should include saved common context instead of common context when present', () => {
-      const savedCommonContext = {
-        view: {
-          referrer: 'referrer_from_saved_common_context',
-          url: 'url_from_saved_common_context',
-        },
-        user: { email: 'test@test.com' },
-        account: { id: '123' },
-      }
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE, savedCommonContext })
-
-      expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
-          view: savedCommonContext.view,
-        })
-      )
-      expect(serverLogs[0].common_context_key).toBeUndefined()
-    })
-
     it('should not include main logger context', () => {
       mainLogger.setContext({ foo: 'from-main-logger' })
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].foo).toBeUndefined()
-    })
-
-    it('should include rum internal context related to the error time', () => {
-      window.DD_RUM = {
-        getInternalContext(startTime) {
-          return { foo: startTime === 1234 ? 'b' : 'a' }
-        },
-      }
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
-      })
-
-      expect(serverLogs[0].foo).toBe('b')
-    })
-
-    it('should include RUM context', () => {
-      window.DD_RUM = {
-        getInternalContext() {
-          return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
-        },
-      }
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-
-      expect(serverLogs[0].view).toEqual({
-        id: 'view-id',
-        url: 'http://from-rum-context.com',
-        referrer: 'referrer_from_common_context',
-      })
     })
 
     it('should include raw log', () => {
@@ -245,36 +179,6 @@ describe('startLogsAssembly', () => {
 
       expect(serverLogs[0].service).toBe('foo')
       expect(serverLogs[0].session_id).toBe('bar')
-    })
-
-    it('defaultLogsEventAttributes should take precedence over common context', () => {
-      hooks.register(HookNames.Assemble, () => ({
-        view: {
-          referrer: 'referrer_from_defaultLogsEventAttributes',
-          url: 'url_from_defaultLogsEventAttributes',
-        },
-        user: { name: 'name_from_defaultLogsEventAttributes' },
-      }))
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-        savedCommonContext: {
-          view: {
-            referrer: 'referrer_from_common_context',
-            url: 'url_from_common_context',
-          },
-        },
-      })
-
-      expect(serverLogs[0]).toEqual(
-        jasmine.objectContaining({
-          view: {
-            referrer: 'referrer_from_defaultLogsEventAttributes',
-            url: 'url_from_defaultLogsEventAttributes',
-          },
-          user: { name: 'name_from_defaultLogsEventAttributes' },
-        })
-      )
     })
 
     it('raw log should take precedence over defaultLogsEventAttributes', () => {
@@ -351,7 +255,7 @@ describe('logs limitation', () => {
     }
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
+    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, reportErrorSpy)
     clock = mockClock()
   })
 

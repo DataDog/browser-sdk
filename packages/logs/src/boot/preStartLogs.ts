@@ -15,6 +15,7 @@ import {
   buildGlobalContextManager,
   buildUserContextManager,
   setTimeout,
+  getGlobalObject,
 } from '@datadog/browser-core'
 import {
   serializeLogsConfiguration,
@@ -22,12 +23,11 @@ import {
   type LogsConfiguration,
   type LogsInitConfiguration,
 } from '../domain/configuration'
-import type { CommonContext } from '../rawLogsEvent.types'
+import { cacheUrlContext } from '../domain/contexts/urlContexts'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
 export function createPreStartStrategy(
-  getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
   doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
 ): Strategy {
@@ -42,6 +42,13 @@ export function createPreStartStrategy(
 
   const userContext = buildUserContextManager()
   bufferContextCalls(userContext, CustomerContextKey.userContext, bufferApiCalls)
+
+  // TODO next major: remove cacheUrlContext, less precision in pre-init URL context is acceptable, and RUM is already less precise
+  // `location` is undefined during server-side rendering (e.g., in Node)
+  const location = getGlobalObject().location
+  if (location) {
+    cacheUrlContext(location)
+  }
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
@@ -109,10 +116,8 @@ export function createPreStartStrategy(
 
     getInternalContext: noop as () => undefined,
 
-    handleLog(message, statusType, handlingStack, context = getCommonContext(), date = timeStampNow()) {
-      bufferApiCalls.add((startLogsResult) =>
-        startLogsResult.handleLog(message, statusType, handlingStack, context, date)
-      )
+    handleLog(message, statusType, handlingStack, date = timeStampNow()) {
+      bufferApiCalls.add((startLogsResult) => startLogsResult.handleLog(message, statusType, handlingStack, date))
     },
   }
 }

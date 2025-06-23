@@ -3,7 +3,6 @@ import { monitor, display, createContextManager } from '@datadog/browser-core'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
-import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs } from './startLogs'
@@ -14,19 +13,12 @@ const mockSessionId = 'some-session-id'
 const getInternalContext = () => ({ session_id: mockSessionId })
 
 describe('logs entry', () => {
-  let handleLogSpy: jasmine.Spy<
-    (
-      logsMessage: LogsMessage,
-      logger: Logger,
-      commonContext: CommonContext | undefined,
-      date: TimeStamp | undefined
-    ) => void
-  >
+  let handleLogSpy: jasmine.Spy<(logsMessage: LogsMessage, logger: Logger, date: TimeStamp | undefined) => void>
   let startLogs: jasmine.Spy<StartLogs>
 
   function getLoggedMessage(index: number) {
-    const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
-    return { message, logger, savedCommonContext, savedDate }
+    const [message, logger, savedDate] = handleLogSpy.calls.argsFor(index)
+    return { message, logger, savedDate }
   }
 
   beforeEach(() => {
@@ -63,27 +55,6 @@ describe('logs entry', () => {
   it('should provide sdk version', () => {
     const LOGS = makeLogsPublicApi(startLogs)
     expect(LOGS.version).toBe('test')
-  })
-
-  describe('common context', () => {
-    let LOGS: LogsPublicApi
-
-    beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogs)
-      LOGS.init(DEFAULT_INIT_CONFIGURATION)
-    })
-
-    it('should have the current date, view and global context', () => {
-      LOGS.setGlobalContextProperty('foo', 'bar')
-
-      const getCommonContext = startLogs.calls.mostRecent().args[1]
-      expect(getCommonContext()).toEqual({
-        view: {
-          referrer: document.referrer,
-          url: window.location.href,
-        },
-      })
-    })
   })
 
   describe('post start API usages', () => {

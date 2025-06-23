@@ -10,6 +10,7 @@ import {
   setCookie,
   STORAGE_POLL_DELAY,
   ONE_MINUTE,
+  timeStampNow,
 } from '@datadog/browser-core'
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
@@ -29,6 +30,7 @@ import { HandlerType, Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { LogsEvent } from '../logsEvent.types'
+import { cacheUrlContext, clearCachedUrlContext } from '../domain/contexts/urlContexts'
 import { startLogs } from './startLogs'
 
 function getLoggedMessage(requests: Request[], index: number) {
@@ -46,9 +48,6 @@ declare global {
 }
 
 const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
-const COMMON_CONTEXT = {
-  view: { referrer: 'common_referrer', url: 'common_url' },
-}
 const DEFAULT_PAYLOAD = {} as Payload
 
 describe('logs', () => {
@@ -65,6 +64,7 @@ describe('logs', () => {
   let userContext: ContextManager
 
   beforeEach(() => {
+    cacheUrlContext(location)
     baseConfiguration = {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
       logsEndpointBuilder: mockEndpointBuilder('https://localhost/v1/input/log'),
@@ -80,13 +80,13 @@ describe('logs', () => {
   afterEach(() => {
     delete window.DD_RUM
     stopSessionManager()
+    clearCachedUrlContext()
   })
 
   describe('request', () => {
     it('should send the needed data', async () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         baseConfiguration,
-        () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
       registerCleanupTask(stopLogs)
@@ -95,7 +95,7 @@ describe('logs', () => {
         { message: 'message', status: StatusType.warn, context: { foo: 'bar' } },
         logger,
         'fake-handling-stack',
-        COMMON_CONTEXT
+        timeStampNow()
       )
 
       await interceptor.waitForAllFetchCalls()
@@ -113,8 +113,8 @@ describe('logs', () => {
         },
         status: StatusType.warn,
         view: {
-          referrer: 'common_referrer',
-          url: 'common_url',
+          referrer: jasmine.any(String),
+          url: jasmine.any(String),
         },
         origin: ErrorSource.LOGGER,
         usr: {
@@ -126,7 +126,6 @@ describe('logs', () => {
     it('should all use the same batch', async () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         { ...baseConfiguration, batchMessagesLimit: 3 },
-        () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
       registerCleanupTask(stopLogs)
@@ -144,7 +143,6 @@ describe('logs', () => {
       const sendSpy = spyOn(mockEventBridge(), 'send')
       ;({ handleLog, stop: stopLogs } = startLogs(
         baseConfiguration,
-        () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
       registerCleanupTask(stopLogs)
@@ -166,22 +164,14 @@ describe('logs', () => {
       const sendSpy = spyOn(mockEventBridge(), 'send')
 
       let configuration = { ...baseConfiguration, sessionSampleRate: 0 }
-      ;({ handleLog, stop: stopLogs } = startLogs(
-        configuration,
-        () => COMMON_CONTEXT,
-        createTrackingConsentState(TrackingConsent.GRANTED)
-      ))
+      ;({ handleLog, stop: stopLogs } = startLogs(configuration, createTrackingConsentState(TrackingConsent.GRANTED)))
       registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
       expect(sendSpy).not.toHaveBeenCalled()
 
       configuration = { ...baseConfiguration, sessionSampleRate: 100 }
-      ;({ handleLog, stop: stopLogs } = startLogs(
-        configuration,
-        () => COMMON_CONTEXT,
-        createTrackingConsentState(TrackingConsent.GRANTED)
-      ))
+      ;({ handleLog, stop: stopLogs } = startLogs(configuration, createTrackingConsentState(TrackingConsent.GRANTED)))
       registerCleanupTask(stopLogs)
       handleLog(DEFAULT_MESSAGE, logger)
 
@@ -193,7 +183,6 @@ describe('logs', () => {
     logger.setHandler([HandlerType.console])
     ;({ handleLog, stop: stopLogs } = startLogs(
       { ...baseConfiguration, forwardConsoleLogs: ['log'] },
-      () => COMMON_CONTEXT,
       createTrackingConsentState(TrackingConsent.GRANTED)
     ))
     registerCleanupTask(stopLogs)
@@ -209,7 +198,6 @@ describe('logs', () => {
     it('creates a session on normal conditions', () => {
       ;({ handleLog, stop: stopLogs } = startLogs(
         baseConfiguration,
-        () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
       registerCleanupTask(stopLogs)
@@ -221,7 +209,6 @@ describe('logs', () => {
       mockEventBridge()
       ;({ handleLog, stop: stopLogs } = startLogs(
         baseConfiguration,
-        () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
       registerCleanupTask(stopLogs)
@@ -233,7 +220,6 @@ describe('logs', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
       ;({ handleLog, stop: stopLogs } = startLogs(
         baseConfiguration,
-        () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
       registerCleanupTask(stopLogs)
@@ -252,7 +238,6 @@ describe('logs', () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       ;({ handleLog, stop: stopLogs } = startLogs(
         baseConfiguration,
-        () => COMMON_CONTEXT,
         createTrackingConsentState(TrackingConsent.GRANTED)
       ))
       registerCleanupTask(stopLogs)
@@ -288,8 +273,18 @@ describe('logs', () => {
         globalContext,
         accountContext,
         userContext,
-      } = startLogs(baseConfiguration, () => COMMON_CONTEXT, createTrackingConsentState(TrackingConsent.GRANTED)))
+      } = startLogs(baseConfiguration, createTrackingConsentState(TrackingConsent.GRANTED)))
       registerCleanupTask(stopLogs)
+    })
+
+    it('global context should take precedence over url context', () => {
+      globalContext.setContext({ view: { url: 'url-from-global-context', referrer: 'referrer-from-global-context' } })
+
+      handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      const firstRequest = getLoggedMessage(requests, 0)
+      expect(firstRequest.view.url).toEqual('url-from-global-context')
+      expect(firstRequest.view.referrer).toEqual('referrer-from-global-context')
     })
 
     it('global context should take precedence over account', () => {

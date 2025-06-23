@@ -24,9 +24,9 @@ import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
-import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
+import { startUrlContexts } from '../domain/contexts/urlContexts'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -35,7 +35,6 @@ export type StartLogsResult = ReturnType<StartLogs>
 
 export function startLogs(
   configuration: LogsConfiguration,
-  getCommonContext: () => CommonContext,
 
   // `startLogs` and its subcomponents assume tracking consent is granted initially and starts
   // collecting logs unconditionally. As such, `startLogs` should be called with a
@@ -66,7 +65,8 @@ export function startLogs(
       : startLogsSessionManagerStub(configuration)
   telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
-  // Start user and account context first to allow overrides from global context
+  // Start url, user and account context first to allow overrides from global context
+  startUrlContexts(hooks, location)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
@@ -81,7 +81,7 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  startLogsAssembly(session, configuration, lifeCycle, hooks, getCommonContext, reportError)
+  startLogsAssembly(session, configuration, lifeCycle, hooks, reportError)
 
   if (!canUseEventBridge()) {
     const { stop: stopLogsBatch } = startLogsBatch(
