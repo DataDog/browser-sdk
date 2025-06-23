@@ -24,7 +24,7 @@ export function makeProfilerApi(): ProfilerApi {
   ) {
     // Sampling.
     if (!performDraw(configuration.profilingSampleRate)) {
-      // No sampling, no profiling. 
+      // No sampling, no profiling.
       // Note: No Profiling context is set at this stage.
       return
     }
