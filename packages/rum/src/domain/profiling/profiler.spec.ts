@@ -1,4 +1,3 @@
-import type { Hooks } from '@datadog/browser-rum-core'
 import {
   LifeCycle,
   LifeCycleEventType,

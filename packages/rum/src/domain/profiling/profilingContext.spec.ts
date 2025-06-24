@@ -1,6 +1,3 @@
-// Let's write some test for the profiling context.
-// In particular, we want to test that the profiling context is added to the event attributes only for the right event types.
-
 import { RumEventType, createHooks } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
@@ -15,58 +12,28 @@ describe('Profiling Context', () => {
 
     profilingContextManager.set({ status: 'running' })
 
-    const viewRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-      eventType: RumEventType.VIEW,
-      startTime: relativeTime,
-    })
-
-    expect(viewRumEventAttributes).toEqual(
-      jasmine.objectContaining({
-        _dd: {
-          profiling: { status: 'running' },
-        },
+    for (const eventType of [RumEventType.VIEW, RumEventType.LONG_TASK]) {
+      const eventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType,
+        startTime: relativeTime,
       })
-    )
 
-    const longTaskRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-      eventType: RumEventType.LONG_TASK,
-      startTime: relativeTime,
-    })
+      expect(eventAttributes).toEqual(
+        jasmine.objectContaining({
+          _dd: {
+            profiling: { status: 'running' },
+          },
+        })
+      )
+    }
 
-    expect(longTaskRumEventAttributes).toEqual(
-      jasmine.objectContaining({
-        _dd: {
-          profiling: { status: 'running' },
-        },
+    for (const eventType of [RumEventType.ERROR, RumEventType.ACTION, RumEventType.RESOURCE, RumEventType.VITAL]) {
+      const eventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType,
+        startTime: relativeTime,
       })
-    )
 
-    const errorRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-      eventType: RumEventType.ERROR,
-      startTime: relativeTime,
-    })
-
-    expect(errorRumEventAttributes).toBeUndefined()
-
-    const actionRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-      eventType: RumEventType.ACTION,
-      startTime: relativeTime,
-    })
-
-    expect(actionRumEventAttributes).toBeUndefined()
-
-    const resourceRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-      eventType: RumEventType.RESOURCE,
-      startTime: relativeTime,
-    })
-
-    expect(resourceRumEventAttributes).toBeUndefined()
-
-    const vitalRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-      eventType: RumEventType.VITAL,
-      startTime: relativeTime,
-    })
-
-    expect(vitalRumEventAttributes).toBeUndefined()
+      expect(eventAttributes).toBeUndefined()
+    }
   })
 })
