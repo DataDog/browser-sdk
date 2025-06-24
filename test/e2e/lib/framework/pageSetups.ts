@@ -54,9 +54,10 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   }
 
   if (options.logs) {
+    const logsUrl = `${servers.crossOrigin.url}/datadog-logs.js`
     body += html`
       <script>
-        ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
+        ${formatSnippet(logsUrl, 'DD_LOGS')}
         DD_LOGS.onReady(function () {
           DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
@@ -66,9 +67,10 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   }
 
   if (options.rum) {
+    const rumUrl = `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`
     body += html`
       <script type="text/javascript">
-        ${formatSnippet(options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js', 'DD_RUM')}
+        ${formatSnippet(rumUrl, 'DD_RUM')}
         DD_RUM.onReady(function () {
           DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
@@ -92,7 +94,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
 
   if (options.logs) {
     header += html`
-      <script type="text/javascript" src="./datadog-logs.js"></script>
+      <script type="text/javascript" src="${servers.crossOrigin.url}/datadog-logs.js""></script>
       <script type="text/javascript">
         DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
@@ -101,11 +103,9 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
   }
 
   if (options.rum) {
+    const rumScriptUrl = `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`
     header += html`
-      <script
-        type="text/javascript"
-        src="${options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js'}"
-      ></script>
+      <script type="text/javascript" src="${rumScriptUrl}"></script>
       <script type="text/javascript">
         DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
