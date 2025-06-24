@@ -111,7 +111,7 @@ function processRequest(
         url: sanitizeIfLongDataUrl(request.url),
         delivery_type: matchingTiming && computeResourceEntryDeliveryType(matchingTiming),
       },
-      type: RumEventType.RESOURCE as const,
+      type: RumEventType.RESOURCE,
       _dd: {
         discarded: !configuration.trackResources,
       },
@@ -163,7 +163,7 @@ function processResourceEntry(
         protocol: computeResourceEntryProtocol(entry),
         delivery_type: computeResourceEntryDeliveryType(entry),
       },
-      type: RumEventType.RESOURCE as const,
+      type: RumEventType.RESOURCE,
       _dd: {
         discarded: !configuration.trackResources,
       },

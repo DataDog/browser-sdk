@@ -1,6 +1,6 @@
 export type { RumPublicApi, RecorderApi, ProfilerApi, StartRecordingOptions, Strategy } from './boot/rumPublicApi'
 export { makeRumPublicApi } from './boot/rumPublicApi'
-export type { StartRum } from './boot/startRum'
+export type { StartRum, StartRumResult } from './boot/startRum'
 export type {
   RumEvent,
   RumActionEvent,
@@ -52,3 +52,4 @@ export type { RumPlugin } from './domain/plugins'
 export type { MouseEventOnElement } from './domain/action/listenActionEvents'
 export { supportPerformanceTimingEvent } from './browser/performanceObservable'
 export { RumPerformanceEntryType } from './browser/performanceObservable'
+export type { AllowedRawRumEvent } from './domain/event/eventCollection'

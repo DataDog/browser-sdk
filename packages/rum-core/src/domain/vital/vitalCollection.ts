@@ -25,7 +25,7 @@ export interface DurationVitalStart {
 
 export interface DurationVital {
   name: string
-  type: VitalType.DURATION
+  type: typeof VitalType.DURATION
   startClocks: ClocksState
   duration: Duration
   description?: string

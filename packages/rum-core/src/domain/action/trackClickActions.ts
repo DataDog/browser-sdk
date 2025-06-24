@@ -35,7 +35,7 @@ interface ActionCounts {
 }
 
 export interface ClickAction {
-  type: ActionType.CLICK
+  type: typeof ActionType.CLICK
   id: string
   name: string
   nameSource: string

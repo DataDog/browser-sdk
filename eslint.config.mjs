@@ -257,6 +257,11 @@ export default tseslint.config(
           selector: 'property',
           format: ['snake_case'],
         },
+        {
+          leadingUnderscore: 'allow',
+          selector: 'objectLiteralProperty',
+          format: ['UPPER_CASE'],
+        },
       ],
     },
   },
