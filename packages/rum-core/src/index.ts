@@ -10,6 +10,7 @@ export type {
   RumResourceEvent,
   RumLongTaskEvent,
   RumVitalEvent,
+  ProfilingInternalContextSchema,
 } from './rumEvent.types'
 export type {
   RumLongTaskEventDomainContext,
@@ -52,3 +53,5 @@ export type { RumPlugin } from './domain/plugins'
 export type { MouseEventOnElement } from './domain/action/listenActionEvents'
 export { supportPerformanceTimingEvent } from './browser/performanceObservable'
 export { RumPerformanceEntryType } from './browser/performanceObservable'
+export type { Hooks, DefaultRumEventAttributes } from './domain/hooks'
+export { createHooks } from './domain/hooks'

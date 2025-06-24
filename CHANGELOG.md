@@ -18,6 +18,13 @@
 
 ---
 
+## v6.12.3
+
+**Plublic Changes:**
+
+- 🐛fix: skip unwanted stackframe on custom errors for faulty browsers ([#3555](https://github.com/DataDog/browser-sdk/pull/3555)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛🍒 [RUM-10101] Persist session cookie to one year when opt-in anonymous user tracking ([#3559](https://github.com/DataDog/browser-sdk/pull/3559)) ([#3654](https://github.com/DataDog/browser-sdk/pull/3654)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.12.2
 
 **Public Changes:**
