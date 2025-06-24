@@ -142,6 +142,7 @@ export {
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './tools/utils/polyfills'
+export * from './tools/utils/timezone'
 export * from './tools/utils/numberUtils'
 export * from './tools/utils/byteUtils'
 export * from './tools/utils/objectUtils'
