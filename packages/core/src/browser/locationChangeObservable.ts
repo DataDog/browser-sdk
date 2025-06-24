@@ -1,12 +1,15 @@
-import { addEventListener, DOM_EVENT, instrumentMethod, Observable, shallowClone } from '@datadog/browser-core'
-import type { RumConfiguration } from '../domain/configuration'
+import type { Configuration } from '../domain/configuration'
+import { instrumentMethod } from '../tools/instrumentMethod'
+import { Observable } from '../tools/observable'
+import { shallowClone } from '../tools/utils/objectUtils'
+import { DOM_EVENT, addEventListener } from './addEventListener'
 
 export interface LocationChange {
   oldLocation: Readonly<Location>
   newLocation: Readonly<Location>
 }
 
-export function createLocationChangeObservable(configuration: RumConfiguration, location: Location) {
+export function createLocationChangeObservable(configuration: Configuration, location: Location) {
   let currentLocation = shallowClone(location)
 
   return new Observable<LocationChange>((observable) => {
@@ -32,7 +35,7 @@ export function createLocationChangeObservable(configuration: RumConfiguration, 
   })
 }
 
-function trackHistory(configuration: RumConfiguration, onHistoryChange: () => void) {
+function trackHistory(configuration: Configuration, onHistoryChange: () => void) {
   const { stop: stopInstrumentingPushState } = instrumentMethod(
     getHistoryInstrumentationTarget('pushState'),
     'pushState',
@@ -58,7 +61,7 @@ function trackHistory(configuration: RumConfiguration, onHistoryChange: () => vo
   }
 }
 
-function trackHash(configuration: RumConfiguration, onHashChange: () => void) {
+function trackHash(configuration: Configuration, onHashChange: () => void) {
   return addEventListener(configuration, window, DOM_EVENT.HASH_CHANGE, onHashChange)
 }
 

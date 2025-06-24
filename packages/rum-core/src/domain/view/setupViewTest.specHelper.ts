@@ -1,5 +1,6 @@
 import { Observable, deepClone } from '@datadog/browser-core'
-import { mockRumConfiguration, setupLocationObserver } from '../../../test'
+import { setupLocationObserver } from '@datadog/browser-core/test'
+import { mockRumConfiguration } from '../../../test'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'

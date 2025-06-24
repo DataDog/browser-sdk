@@ -30,7 +30,7 @@ import { HandlerType, Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { startLoggerCollection } from '../domain/logger/loggerCollection'
 import type { LogsEvent } from '../logsEvent.types'
-import { cacheUrlContext, clearCachedUrlContext } from '../domain/contexts/urlContexts'
+import { startUrlContextHistory, stopUrlContextHistory } from '../domain/contexts/urlContexts'
 import { startLogs } from './startLogs'
 
 function getLoggedMessage(requests: Request[], index: number) {
@@ -64,7 +64,7 @@ describe('logs', () => {
   let userContext: ContextManager
 
   beforeEach(() => {
-    cacheUrlContext(location)
+    startUrlContextHistory(location)
     baseConfiguration = {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
       logsEndpointBuilder: mockEndpointBuilder('https://localhost/v1/input/log'),
@@ -80,7 +80,7 @@ describe('logs', () => {
   afterEach(() => {
     delete window.DD_RUM
     stopSessionManager()
-    clearCachedUrlContext()
+    stopUrlContextHistory()
   })
 
   describe('request', () => {

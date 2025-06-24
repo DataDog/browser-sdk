@@ -23,7 +23,7 @@ import {
   type LogsConfiguration,
   type LogsInitConfiguration,
 } from '../domain/configuration'
-import { cacheUrlContext } from '../domain/contexts/urlContexts'
+import { startUrlContextHistory } from '../domain/contexts/urlContexts'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
@@ -43,11 +43,11 @@ export function createPreStartStrategy(
   const userContext = buildUserContextManager()
   bufferContextCalls(userContext, CustomerContextKey.userContext, bufferApiCalls)
 
-  // TODO next major: remove cacheUrlContext, less precision in pre-init URL context is acceptable, and RUM is already less precise
+  // TODO next major: remove startUrlContextHistory from preStartStrategy, less precision in pre-init URL context is acceptable, and RUM is already less precise
   // `location` is undefined during server-side rendering (e.g., in Node)
   const location = getGlobalObject().location
   if (location) {
-    cacheUrlContext(location)
+    startUrlContextHistory(location)
   }
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
@@ -115,7 +115,6 @@ export function createPreStartStrategy(
     userContext,
 
     getInternalContext: noop as () => undefined,
-
     handleLog(message, statusType, handlingStack, date = timeStampNow()) {
       bufferApiCalls.add((startLogsResult) => startLogsResult.handleLog(message, statusType, handlingStack, date))
     },

@@ -106,6 +106,8 @@ export type { XhrCompleteContext, XhrStartContext } from './browser/xhrObservabl
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
 export { initFetchObservable, resetFetchObservable } from './browser/fetchObservable'
+export type { LocationChange } from './browser/locationChangeObservable'
+export { createLocationChangeObservable } from './browser/locationChangeObservable'
 export type { PageMayExitEvent } from './browser/pageMayExitObservable'
 export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
 export * from './browser/addEventListener'
