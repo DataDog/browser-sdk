@@ -6,6 +6,9 @@ export function isAuthorized(status: StatusType, handlerType: HandlerType, logge
   return STATUS_PRIORITIES[status] >= STATUS_PRIORITIES[logger.getLevel()] && sanitizedHandlerType.includes(handlerType)
 }
 
+/**
+ * Defines the severity levels for log messages, ranging from debug to emergency.
+ */
 export const StatusType = {
   ok: 'ok',
   debug: 'debug',

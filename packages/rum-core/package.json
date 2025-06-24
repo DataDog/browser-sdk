@@ -4,7 +4,7 @@
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
-  "types": "cjs/index.d.ts",
+  "types": "esm/index.d.ts",
   "scripts": {
     "pack": "yarn pack",
     "build": "run-p build:cjs build:esm",
