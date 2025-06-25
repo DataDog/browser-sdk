@@ -7,7 +7,7 @@ import {
   globalConsole,
   ConsoleApiName,
 } from '@datadog/browser-core'
-import type { CommonContext, RawLogsEvent } from '../../rawLogsEvent.types'
+import type { RawLogsEvent } from '../../rawLogsEvent.types'
 import type { LifeCycle, RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { Logger, LogsMessage } from '../logger'
@@ -15,13 +15,7 @@ import { HandlerType } from '../logger'
 import { isAuthorized, StatusType } from './isAuthorized'
 
 export function startLoggerCollection(lifeCycle: LifeCycle) {
-  function handleLog(
-    logsMessage: LogsMessage,
-    logger: Logger,
-    handlingStack?: string,
-    savedCommonContext?: CommonContext,
-    savedDate?: TimeStamp
-  ) {
+  function handleLog(logsMessage: LogsMessage, logger: Logger, handlingStack?: string, savedDate?: TimeStamp) {
     const messageContext = combine(logger.getContext(), logsMessage.context)
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
@@ -37,7 +31,6 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
           origin: ErrorSource.LOGGER,
         },
         messageContext,
-        savedCommonContext,
       }
 
       if (handlingStack) {

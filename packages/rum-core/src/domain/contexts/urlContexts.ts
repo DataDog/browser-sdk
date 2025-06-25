@@ -1,6 +1,5 @@
-import type { RelativeTime, Observable } from '@datadog/browser-core'
+import type { RelativeTime, Observable, LocationChange } from '@datadog/browser-core'
 import { SESSION_TIME_OUT_DELAY, relativeNow, createValueHistory, HookNames, DISCARDED } from '@datadog/browser-core'
-import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'

@@ -47,6 +47,18 @@ describe('startRUMInternalContext', () => {
     expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
   })
 
+  it('should include rum internal context  related to the start time', () => {
+    window.DD_RUM = {
+      getInternalContext(startTime) {
+        return { foo: startTime === 1234 ? 'b' : 'a' }
+      },
+    }
+    const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      startTime: 1234 as RelativeTime,
+    })
+    expect(defaultLogsEventAttributes).toEqual({ foo: 'b' })
+  })
+
   describe('when RUM is injected by Synthetics', () => {
     let telemetryEvents: RawTelemetryEvent[]
 

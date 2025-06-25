@@ -1,6 +1,6 @@
-import { buildLocation } from '@datadog/browser-core/test'
-import { Observable } from '@datadog/browser-core'
-import type { LocationChange } from '../src/browser/locationChangeObservable'
+import type { LocationChange } from '@datadog/browser-core/src/browser/locationChangeObservable'
+import { Observable } from '../src/tools/observable'
+import { buildLocation } from './emulate/buildLocation'
 
 export function setupLocationObserver(initialLocation?: string) {
   const fakeLocation = initialLocation ? buildLocation(initialLocation) : location

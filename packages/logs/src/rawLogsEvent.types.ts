@@ -60,10 +60,3 @@ export interface RawAgentLogsEvent extends CommonRawLogsEvent {
   origin: typeof ErrorSource.AGENT
   status: typeof StatusType.error
 }
-
-export interface CommonContext {
-  view: {
-    referrer: string
-    url: string
-  }
-}

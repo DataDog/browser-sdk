@@ -15,7 +15,6 @@ import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
 import type { StatusType } from '../domain/logger/isAuthorized'
 import { Logger } from '../domain/logger'
-import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { StartLogs, StartLogsResult } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
@@ -205,16 +204,12 @@ export interface Strategy {
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
 
-  let strategy = createPreStartStrategy(
-    buildCommonContext,
-    trackingConsentState,
-    (initConfiguration, configuration) => {
-      const startLogsResult = startLogsImpl(configuration, buildCommonContext, trackingConsentState)
+  let strategy = createPreStartStrategy(trackingConsentState, (initConfiguration, configuration) => {
+    const startLogsResult = startLogsImpl(configuration, trackingConsentState)
 
-      strategy = createPostStartStrategy(initConfiguration, startLogsResult)
-      return startLogsResult
-    }
-  )
+    strategy = createPostStartStrategy(initConfiguration, startLogsResult)
+    return startLogsResult
+  })
 
   const getStrategy = () => strategy
 

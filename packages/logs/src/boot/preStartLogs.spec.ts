@@ -7,7 +7,6 @@ import {
   display,
   resetFetchObservable,
 } from '@datadog/browser-core'
-import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
@@ -23,13 +22,12 @@ describe('preStartLogs', () => {
     (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
   >
   let handleLogSpy: jasmine.Spy<StartLogsResult['handleLog']>
-  let getCommonContextSpy: jasmine.Spy<() => CommonContext>
   let strategy: Strategy
   let clock: Clock
 
   function getLoggedMessage(index: number) {
-    const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
-    return { message, logger, handlingStack, savedCommonContext, savedDate }
+    const [message, logger, handlingStack, savedDate] = handleLogSpy.calls.argsFor(index)
+    return { message, logger, handlingStack, savedDate }
   }
 
   beforeEach(() => {
@@ -37,8 +35,7 @@ describe('preStartLogs', () => {
     doStartLogsSpy = jasmine.createSpy().and.returnValue({
       handleLog: handleLogSpy,
     } as unknown as StartLogsResult)
-    getCommonContextSpy = jasmine.createSpy()
-    strategy = createPreStartStrategy(getCommonContextSpy, createTrackingConsentState(), doStartLogsSpy)
+    strategy = createPreStartStrategy(createTrackingConsentState(), doStartLogsSpy)
     clock = mockClock()
   })
 
@@ -150,20 +147,6 @@ describe('preStartLogs', () => {
       expect(getLoggedMessage(0).savedDate).toEqual((Date.now() - ONE_SECOND) as TimeStamp)
     })
 
-    it('saves the URL', () => {
-      getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
-      strategy.handleLog(
-        {
-          status: StatusType.info,
-          message: 'message',
-        },
-        {} as Logger
-      )
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(getLoggedMessage(0).savedCommonContext!.view.url).toEqual('url')
-    })
-
     it('saves the log context', () => {
       const context = { foo: 'bar' }
       strategy.handleLog(
@@ -182,20 +165,13 @@ describe('preStartLogs', () => {
     })
   })
 
-  describe('internal context', () => {
-    it('should return undefined if not initialized', () => {
-      const strategy = createPreStartStrategy(getCommonContextSpy, createTrackingConsentState(), doStartLogsSpy)
-      expect(strategy.getInternalContext()).toBeUndefined()
-    })
-  })
-
   describe('tracking consent', () => {
     let strategy: Strategy
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
-      strategy = createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy)
+      strategy = createPreStartStrategy(trackingConsentState, doStartLogsSpy)
     })
 
     describe('basic methods instrumentation', () => {

@@ -18,7 +18,9 @@ import {
   mockClock,
   mockEventBridge,
   registerCleanupTask,
+  setupLocationObserver,
 } from '@datadog/browser-core/test'
+import type { LocationChange } from '@datadog/browser-core/src/browser/locationChangeObservable'
 import type { RumSessionManagerMock } from '../../test'
 import {
   createPerformanceEntry,
@@ -29,14 +31,12 @@ import {
   mockRumConfiguration,
   noopProfilerApi,
   noopRecorderApi,
-  setupLocationObserver,
 } from '../../test'
 import { RumPerformanceEntryType } from '../browser/performanceObservable'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/view/trackViews'
 import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
-import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'

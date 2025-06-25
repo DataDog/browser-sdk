@@ -1,7 +1,7 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { ConsoleApiName, timeStampNow, ErrorSource, originalConsoleMethods } from '@datadog/browser-core'
 import { mockClock } from '@datadog/browser-core/test'
-import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
+import type { RawLoggerLogsEvent } from '../../rawLogsEvent.types'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { HandlerType, Logger } from '../logger'
@@ -9,7 +9,6 @@ import { StatusType } from './isAuthorized'
 import { startLoggerCollection } from './loggerCollection'
 
 const HANDLING_STACK = 'handlingStack'
-const COMMON_CONTEXT = {} as CommonContext
 const FAKE_DATE = 1234 as TimeStamp
 
 describe('logger collection', () => {
@@ -46,8 +45,7 @@ describe('logger collection', () => {
       handleLog(
         { message: 'message', status: StatusType.error, context: { bar: 'from-message' } },
         logger,
-        HANDLING_STACK,
-        COMMON_CONTEXT
+        HANDLING_STACK
       )
 
       expect(originalConsoleMethods.error).toHaveBeenCalledOnceWith('message', {
@@ -69,7 +67,7 @@ describe('logger collection', () => {
     ]) {
       it(`should use console.${api} to log messages with status ${status}`, () => {
         logger.setLevel(StatusType.ok)
-        handleLog({ message: 'message', status }, logger, HANDLING_STACK, COMMON_CONTEXT)
+        handleLog({ message: 'message', status }, logger, HANDLING_STACK)
 
         expect(originalConsoleMethods[api]).toHaveBeenCalled()
       })
@@ -77,13 +75,13 @@ describe('logger collection', () => {
 
     it('does not print the log if its status is below the logger level', () => {
       logger.setLevel(StatusType.warn)
-      handleLog({ message: 'message', status: StatusType.info }, logger, HANDLING_STACK, COMMON_CONTEXT)
+      handleLog({ message: 'message', status: StatusType.info }, logger, HANDLING_STACK)
 
       expect(originalConsoleMethods.info).not.toHaveBeenCalled()
     })
 
     it('does not print the log and does not crash if its status is unknown', () => {
-      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, HANDLING_STACK, COMMON_CONTEXT)
+      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, HANDLING_STACK)
 
       expect(originalConsoleMethods.info).not.toHaveBeenCalled()
       expect(originalConsoleMethods.log).not.toHaveBeenCalled()
@@ -104,8 +102,7 @@ describe('logger collection', () => {
       handleLog(
         { message: 'message', status: StatusType.error, context: { bar: 'from-message' } },
         logger,
-        HANDLING_STACK,
-        COMMON_CONTEXT
+        HANDLING_STACK
       )
 
       expect(rawLogsEvents[0]).toEqual({
@@ -119,7 +116,6 @@ describe('logger collection', () => {
           foo: 'from-logger',
           bar: 'from-message',
         },
-        savedCommonContext: COMMON_CONTEXT,
         domainContext: {
           handlingStack: HANDLING_STACK,
         },
@@ -127,20 +123,20 @@ describe('logger collection', () => {
     })
 
     it('should send the saved date when present', () => {
-      handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT, FAKE_DATE)
+      handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, FAKE_DATE)
 
       expect(rawLogsEvents[0].rawLogsEvent.date).toEqual(FAKE_DATE)
     })
 
     it('does not send the log if its status is below the logger level', () => {
       logger.setLevel(StatusType.warn)
-      handleLog({ message: 'message', status: StatusType.info }, logger, HANDLING_STACK, COMMON_CONTEXT)
+      handleLog({ message: 'message', status: StatusType.info }, logger, HANDLING_STACK)
 
       expect(rawLogsEvents.length).toBe(0)
     })
 
     it('does not send the log and does not crash if its status is unknown', () => {
-      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, HANDLING_STACK, COMMON_CONTEXT)
+      handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, HANDLING_STACK)
 
       expect(rawLogsEvents.length).toBe(0)
     })
