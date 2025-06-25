@@ -18,6 +18,64 @@
 
 ---
 
+## v6.12.3
+
+**Plublic Changes:**
+
+- 🐛fix: skip unwanted stackframe on custom errors for faulty browsers ([#3555](https://github.com/DataDog/browser-sdk/pull/3555)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛🍒 [RUM-10101] Persist session cookie to one year when opt-in anonymous user tracking ([#3559](https://github.com/DataDog/browser-sdk/pull/3559)) ([#3654](https://github.com/DataDog/browser-sdk/pull/3654)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.12.2
+
+**Public Changes:**
+
+- 🐛 ignore init() if Synthetics will inject its own instance of RUM ([#3649](https://github.com/DataDog/browser-sdk/pull/3649)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 reduce playwright workers to improve reliability ([#3650](https://github.com/DataDog/browser-sdk/pull/3650))
+- 🔊 add cookie data in debug logs ([#3647](https://github.com/DataDog/browser-sdk/pull/3647)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.12.1
+
+**Public Changes:**
+
+- 🐛 [RUM-10366] mitigate cookie dead lock ([#3637](https://github.com/DataDog/browser-sdk/pull/3637)) [LOGS] [RUM] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 🔧 create a GitHub release when deploying ([#3644](https://github.com/DataDog/browser-sdk/pull/3644))
+- ♻️ [RUM-10311] Use hooks for Logs SDK to decouple user ([#3620](https://github.com/DataDog/browser-sdk/pull/3620)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.12.0
+
+**Public Changes:**
+
+- ✨[RUM Profiler] remove profiling experimental flag ([#3639](https://github.com/DataDog/browser-sdk/pull/3639)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 fix typecheck issue + increase base tsconfig coverage ([#3625](https://github.com/DataDog/browser-sdk/pull/3625))
+- 🔊 [IR-39238] Add session diagnostic telemetry and improve configuration timing ([#3629](https://github.com/DataDog/browser-sdk/pull/3629)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-10074] Use createTest in developer extensions tests ([#3628](https://github.com/DataDog/browser-sdk/pull/3628))
+- Update changelog-to-confluence: Update secret names, name of page being published ([#3631](https://github.com/DataDog/browser-sdk/pull/3631))
+
+## v6.11.0
+
+**Public Changes:**
+
+- ✨ [RUM-7213] DOM mutation ignoring ([#3606](https://github.com/DataDog/browser-sdk/pull/3606)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3615](https://github.com/DataDog/browser-sdk/pull/3615)) [RUM-REACT]
+- 👷 Configure devflow integration branch ([#3619](https://github.com/DataDog/browser-sdk/pull/3619))
+- 👷[RUM-9996] move ap2 deployment to minor dcs ([#3601](https://github.com/DataDog/browser-sdk/pull/3601))
+- 👷 fix update-branch script success condition ([#3612](https://github.com/DataDog/browser-sdk/pull/3612))
+- 👌 [RUM-10290] Remove built extensions from ignored in eslint.config ([#3609](https://github.com/DataDog/browser-sdk/pull/3609))
+- 👷 [Events] Add `_dd.sdk_name` to common context ([#3611](https://github.com/DataDog/browser-sdk/pull/3611)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🔈 [RUM-10284] collect telemetry before starting the session manager ([#3602](https://github.com/DataDog/browser-sdk/pull/3602)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.10.1
 
 **Public Changes:**

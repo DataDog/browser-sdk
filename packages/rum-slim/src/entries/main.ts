@@ -28,7 +28,9 @@ export type {
 } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
-export const datadogRum = makeRumPublicApi(startRum, makeRecorderApiStub(), makeProfilerApiStub())
+export const datadogRum = makeRumPublicApi(startRum, makeRecorderApiStub(), makeProfilerApiStub(), {
+  sdkName: 'rum-slim',
+})
 
 interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi

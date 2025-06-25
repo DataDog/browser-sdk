@@ -31,6 +31,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   globalContext: {} as any,
   userContext: {} as any,
   accountContext: {} as any,
+  hooks: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -873,6 +874,24 @@ describe('rum public api', () => {
     it('should return an empty object before init', () => {
       expect(rumPublicApi.getViewContext()).toEqual({})
       expect(getViewContextSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('it should pass down the sdk name to startRum', () => {
+    let startRumSpy: jasmine.Spy<StartRum>
+
+    beforeEach(() => {
+      startRumSpy = jasmine.createSpy().and.callFake(noopStartRum)
+    })
+
+    it('should return the sdk name', () => {
+      const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, noopProfilerApi, {
+        sdkName: 'rum-slim',
+      })
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      const sdkName = startRumSpy.calls.argsFor(0)[7]
+      expect(sdkName).toBe('rum-slim')
     })
   })
 })

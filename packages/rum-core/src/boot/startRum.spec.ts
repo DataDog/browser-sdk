@@ -328,7 +328,8 @@ describe('view events', () => {
       undefined,
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),
-      createCustomVitalsState()
+      createCustomVitalsState(),
+      'rum'
     )
 
     stop = startResult.stop
@@ -384,5 +385,24 @@ describe('view events', () => {
     }
     expect(lastBridgeMessage.event.type).toBe('view')
     expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
+  })
+
+  it('sends a view update with the correct sdk name', () => {
+    // Arbitrary duration to simulate a non-zero view duration
+    const VIEW_DURATION = ONE_SECOND as Duration
+
+    setupViewCollectionTest()
+
+    clock.tick(VIEW_DURATION - relativeNow())
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
+      .split('\n')
+      .map((line) => JSON.parse(line) as RumEvent)
+    const lastRumViewEvent = findLast(
+      lastRumEvents,
+      (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
+    )!
+    expect(lastRumViewEvent._dd.sdk_name).toBe('rum')
   })
 })

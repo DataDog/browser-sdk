@@ -286,6 +286,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
         | 'MixedViewTrackingStrategy'
         | 'NavigationViewTrackingStrategy'
       /**
+       * Whether SwiftUI view instrumentation is enabled
+       */
+      swiftui_view_tracking_enabled?: boolean
+      /**
+       * Whether SwiftUI action instrumentation is enabled
+       */
+      swiftui_action_tracking_enabled?: boolean
+      /**
        * Whether RUM events are tracked when the application is in Background
        */
       track_background_events?: boolean

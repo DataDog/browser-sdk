@@ -41,6 +41,7 @@ import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
+import type { Hooks } from '../domain/hooks'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -369,6 +370,7 @@ export interface ProfilerApi {
   stop: () => void
   onRumStart: (
     lifeCycle: LifeCycle,
+    hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
@@ -387,6 +389,7 @@ export interface RumPublicApiOptions {
     worker: DeflateWorker,
     streamId: DeflateEncoderStreamId
   ) => DeflateEncoder
+  sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
 }
 
 export interface Strategy {
@@ -437,7 +440,8 @@ export function makeRumPublicApi(
           ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
           : createIdentityEncoder,
         trackingConsentState,
-        customVitalsState
+        customVitalsState,
+        options.sdkName
       )
 
       recorderApi.onRumStart(
@@ -450,6 +454,7 @@ export function makeRumPublicApi(
 
       profilerApi.onRumStart(
         startRumResult.lifeCycle,
+        startRumResult.hooks,
         configuration,
         startRumResult.session,
         startRumResult.viewHistory

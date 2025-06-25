@@ -6,13 +6,9 @@ export {
   serializeConfiguration,
   isSampleRate,
   buildEndpointHost,
-  INTAKE_SITE_STAGING,
-  INTAKE_SITE_US1,
-  INTAKE_SITE_US1_FED,
-  INTAKE_SITE_EU1,
-  INTAKE_URL_PARAMETERS,
   isIntakeUrl,
 } from './domain/configuration'
+export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
 export {
@@ -52,7 +48,6 @@ export {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
-  drainPreStartTelemetry,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
@@ -129,6 +124,9 @@ export { defineContextMethod, bufferContextCalls } from './domain/context/define
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
+export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
+export type { User } from './domain/contexts/userContext'
+export type { Account } from './domain/contexts/accountContext'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
@@ -140,9 +138,8 @@ export {
   willSyntheticsInjectRum,
   getSyntheticsTestId,
   getSyntheticsResultId,
+  isSyntheticsTest,
 } from './domain/synthetics/syntheticsWorkerValues'
-export type { User } from './domain/user.types'
-export type { Account } from './domain/account.types'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
 export * from './tools/utils/polyfills'
