@@ -28,7 +28,15 @@ export function startDefaultContext(
         id: configuration.applicationId,
       },
       date: timeStampNow(),
-      source: 'browser',
+      source:
+        configuration.plugins
+          .map((plugin) => plugin?.overrides?.source)
+          .filter(Boolean)
+          .join(',') ?? 'browser',
+      variant: configuration.plugins
+        .map((plugin) => plugin?.overrides?.variant)
+        .filter(Boolean)
+        .join(','),
     })
   )
 }
