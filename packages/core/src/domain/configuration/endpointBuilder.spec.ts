@@ -27,6 +27,12 @@ describe('endpointBuilder', () => {
       )
     })
 
+    it('should add batch_time for exposure endpoint', () => {
+      expect(createEndpointBuilder(initConfiguration, 'exposure', []).build('fetch', DEFAULT_PAYLOAD)).toContain(
+        '&batch_time='
+      )
+    })
+
     it('should not add batch_time for logs and replay endpoints', () => {
       expect(createEndpointBuilder(initConfiguration, 'logs', []).build('fetch', DEFAULT_PAYLOAD)).not.toContain(
         '&batch_time='

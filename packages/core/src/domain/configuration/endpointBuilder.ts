@@ -8,7 +8,7 @@ import type { InitConfiguration } from './configuration'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export type TrackType = 'logs' | 'rum' | 'replay' | 'profile'
+export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposure'
 export type ApiType =
   | 'fetch-keepalive'
   | 'fetch'
@@ -112,6 +112,10 @@ function buildEndpointParameters(
   }
 
   if (trackType === 'rum') {
+    parameters.push(`batch_time=${timeStampNow()}`)
+  }
+
+  if (trackType === 'exposure') {
     parameters.push(`batch_time=${timeStampNow()}`)
   }
 

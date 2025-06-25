@@ -10,6 +10,7 @@ export interface TransportConfiguration {
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
   profilingEndpointBuilder: EndpointBuilder
+  exposureEndpointBuilder: EndpointBuilder
   replica?: ReplicaConfiguration
   site: Site
 }
@@ -18,6 +19,7 @@ export interface ReplicaConfiguration {
   applicationId?: string
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
+  exposureEndpointBuilder: EndpointBuilder
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
@@ -41,6 +43,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration, tags: str
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum', tags),
     profilingEndpointBuilder: createEndpointBuilder(initConfiguration, 'profile', tags),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'replay', tags),
+    exposureEndpointBuilder: createEndpointBuilder(initConfiguration, 'exposure', tags),
   }
 }
 
@@ -61,6 +64,7 @@ function computeReplicaConfiguration(
   const replicaEndpointBuilders = {
     logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs', tags),
     rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', tags),
+    exposureEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'exposure', tags),
   }
 
   return { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }

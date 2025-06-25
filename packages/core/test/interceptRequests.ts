@@ -12,6 +12,7 @@ export const NETWORK_ERROR_FETCH_MOCK = () => Promise.reject(new Error('Network 
 export const SPEC_ENDPOINTS = {
   logsEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
   rumEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
+  exposureEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
 }
 
 export function mockEndpointBuilder(url: string) {

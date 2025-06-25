@@ -64,6 +64,12 @@ describe('transportConfiguration', () => {
       expect(logsEndpoint).not.toContain(',service:')
       expect(logsEndpoint).not.toContain(',version:')
       expect(logsEndpoint).not.toContain(',datacenter:')
+
+      const exposureEndpoint = decodeURIComponent(configuration.exposureEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
+      expect(exposureEndpoint).not.toContain(',env:')
+      expect(exposureEndpoint).not.toContain(',service:')
+      expect(exposureEndpoint).not.toContain(',version:')
+      expect(exposureEndpoint).not.toContain(',datacenter:')
     })
 
     it('should be set as tags in the logs and rum endpoints', () => {
@@ -72,6 +78,9 @@ describe('transportConfiguration', () => {
         'env:foo,service:bar,version:baz'
       )
       expect(decodeURIComponent(configuration.logsEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))).toContain(
+        'env:foo,service:bar,version:baz'
+      )
+      expect(decodeURIComponent(configuration.exposureEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))).toContain(
         'env:foo,service:bar,version:baz'
       )
     })
@@ -94,6 +103,7 @@ describe('transportConfiguration', () => {
         expect(isIntakeUrl(`https://${intakeDomain}/api/v2/rum?${intakeParameters}`)).toBe(true)
         expect(isIntakeUrl(`https://${intakeDomain}/api/v2/logs?${intakeParameters}`)).toBe(true)
         expect(isIntakeUrl(`https://${intakeDomain}/api/v2/replay?${intakeParameters}`)).toBe(true)
+        expect(isIntakeUrl(`https://${intakeDomain}/api/v2/exposure?${intakeParameters}`)).toBe(true)
       })
 
       it(`should detect older versions of the ${site} site for intake domain ${intakeDomain}`, () => {
@@ -101,6 +111,7 @@ describe('transportConfiguration', () => {
         expect(isIntakeUrl(`https://rum.${intakeDomain}/api/v2/rum?${intakeParameters}`)).toBe(true)
         expect(isIntakeUrl(`https://logs.${intakeDomain}/api/v2/logs?${intakeParameters}`)).toBe(true)
         expect(isIntakeUrl(`https://replay.${intakeDomain}/api/v2/replay?${intakeParameters}`)).toBe(true)
+        expect(isIntakeUrl(`https://exposure.${intakeDomain}/api/v2/exposure?${intakeParameters}`)).toBe(true)
 
         // pre-v4 intake endpoints
         expect(isIntakeUrl(`https://rum.${intakeDomain}${v1IntakePath}?${intakeParameters}`)).toBe(true)
@@ -151,6 +162,9 @@ describe('transportConfiguration', () => {
         )
         expect(
           isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/replay?${intakeParameters}`)
+        ).toBe(true)
+        expect(
+          isIntakeUrl(`https://${internalAnalyticsSubdomain}.datadoghq.com/api/v2/exposure?${intakeParameters}`)
         ).toBe(true)
       })
     })
