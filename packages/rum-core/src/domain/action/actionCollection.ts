@@ -11,7 +11,7 @@ import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
-import { addAllowlistObserver, createActionAllowList, maskActionName } from './privacy/allowedDictionary'
+import { createActionAllowList, maskActionName } from './privacy/allowedDictionary'
 import type { AllowedDictionary } from './privacy/allowedDictionary'
 import { ActionNameSource } from './getActionNameFromElement'
 
@@ -35,11 +35,14 @@ export function startActionCollection(
   configuration: RumConfiguration
 ) {
   const actionNameDictionary = createActionAllowList()
-  addAllowlistObserver(actionNameDictionary)
+  const clearActionNameDictionary: () => void = actionNameDictionary.clear
 
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, actionNameDictionary))
-  })
+  const { unsubscribe: unsubscribeAutoActionCompleted } = lifeCycle.subscribe(
+    LifeCycleEventType.AUTO_ACTION_COMPLETED,
+    (action) => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, actionNameDictionary))
+    }
+  )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (
@@ -78,7 +81,11 @@ export function startActionCollection(
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action, actionNameDictionary))
     },
     actionContexts,
-    stop,
+    stop: () => {
+      clearActionNameDictionary()
+      unsubscribeAutoActionCompleted()
+      stop()
+    },
   }
 }
 
@@ -87,7 +94,6 @@ function processAction(
   actionNameDictionary: AllowedDictionary
 ): RawRumEventCollectedData<RawRumActionEvent> {
   const { name: updatedName, masked } = maskActionName(action.name, actionNameDictionary.allowlist)
-
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {

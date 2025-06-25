@@ -190,11 +190,16 @@ describe('actionCollection', () => {
   })
 
   describe('maskActionName', () => {
-    beforeEach(() => {
+    beforeAll(() => {
       window.$DD_ALLOW = new Set(['foo-bar'])
-      // the listeners should have been registered successfully
+      // notify the observer to process the allowlist
       window.$DD_ALLOW_OBSERVERS?.forEach((observer) => observer())
     })
+
+    afterAll(() => {
+      window.$DD_ALLOW = undefined
+    })
+
     it('should mask custom action with the action name dictionary', () => {
       addAction({
         name: 'foo bar baz',
@@ -202,7 +207,7 @@ describe('actionCollection', () => {
         type: ActionType.CUSTOM,
       })
 
-      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe('foo bar MASKED')
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe('foo bar ***')
       expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent)._dd?.action?.name_source).toBe('mask_disallowed')
     })
 
@@ -224,7 +229,7 @@ describe('actionCollection', () => {
         startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
         type: ActionType.CLICK,
       })
-      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe('foo bar MASKED')
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe('foo bar ***')
       expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent)._dd?.action?.name_source).toBe('mask_disallowed')
     })
   })
