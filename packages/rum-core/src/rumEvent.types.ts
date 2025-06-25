@@ -1351,6 +1351,7 @@ export interface CommonProperties {
     | 'roku'
     | 'unity'
     | 'kotlin-multiplatform'
+    | (string & {})
   /**
    * View properties
    */
