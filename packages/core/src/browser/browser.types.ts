@@ -87,3 +87,27 @@ export function isPrerenderingSupported(): boolean {
     return false
   }
 }
+
+/**
+ * Detect if the current page is or was prerendered.
+ * This checks both the current prerendering state and the presence of activationStart > 0.
+ */
+export function isPagePrerendered(): boolean {
+  try {
+    if (isPrerenderingSupported() && (document as DocumentWithPrerendering)?.prerendering) {
+      return true
+    }
+
+    if (typeof performance !== 'undefined' && performance.getEntriesByType) {
+      const navigationEntries = performance.getEntriesByType('navigation')
+      if (navigationEntries.length > 0) {
+        const navEntry = navigationEntries[0] as any
+        return navEntry.activationStart > 0
+      }
+    }
+
+    return false
+  } catch {
+    return false
+  }
+}

@@ -26,6 +26,7 @@ import {
   setTimeout,
   Observable,
   createContextManager,
+  isPagePrerendered,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
@@ -112,7 +113,9 @@ export function trackViews(
   initialViewOptions?: ViewOptions
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
-  let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
+
+  const initialLoadingType = isPagePrerendered() ? ViewLoadingType.PRERENDERED : ViewLoadingType.INITIAL_LOAD
+  let currentView = startNewView(initialLoadingType, clocksOrigin(), initialViewOptions)
   let stopOnBFCacheRestore: (() => void) | undefined
 
   startViewLifeCycle()
@@ -266,7 +269,7 @@ function newView(
   )
 
   const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
-    loadingType === ViewLoadingType.INITIAL_LOAD
+    loadingType === ViewLoadingType.INITIAL_LOAD || loadingType === ViewLoadingType.PRERENDERED
       ? trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 

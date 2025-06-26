@@ -163,7 +163,10 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
 
 export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   initInteractionCountPolyfill()
-  const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
+  const previousInteractionCount =
+    viewLoadingType === ViewLoadingType.INITIAL_LOAD || viewLoadingType === ViewLoadingType.PRERENDERED
+      ? 0
+      : getInteractionCount()
   let state: { stopped: false } | { stopped: true; interactionCount: number } = { stopped: false }
 
   function computeViewInteractionCount() {

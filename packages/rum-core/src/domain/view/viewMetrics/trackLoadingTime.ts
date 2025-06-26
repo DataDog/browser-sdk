@@ -22,7 +22,7 @@ export function trackLoadingTime(
   viewStart: ClocksState,
   callback: (loadingTime: Duration) => void
 ) {
-  let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD
+  let isWaitingForLoadEvent = loadType === ViewLoadingType.INITIAL_LOAD || loadType === ViewLoadingType.PRERENDERED
   let isWaitingForActivityLoadingTime = true
   const loadingTimeCandidates: Duration[] = []
   const firstHidden = trackFirstHidden(configuration, viewStart)

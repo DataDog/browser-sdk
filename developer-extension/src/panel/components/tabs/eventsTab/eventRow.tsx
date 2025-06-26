@@ -327,11 +327,26 @@ function TelemetryDescription({ event }: { event: TelemetryEvent }) {
 }
 
 function ViewDescription({ event }: { event: RumViewEvent }) {
-  const isRouteChange = event.view.loading_type === 'route_change'
+  const loadingType = event.view.loading_type
+  let description = 'Load Page'
+
+  switch (loadingType) {
+    case 'route_change':
+      description = 'SPA Route Change'
+      break
+    case 'bf_cache':
+      description = 'BF Cache Restore'
+      break
+    case 'prerendered':
+      description = 'Prerendered Page'
+      break
+    default:
+      description = 'Load Page'
+  }
 
   return (
     <>
-      {isRouteChange ? 'SPA Route Change' : 'Load Page'} <Emphasis>{getViewName(event.view)}</Emphasis>
+      {description} <Emphasis>{getViewName(event.view)}</Emphasis>
     </>
   )
 }

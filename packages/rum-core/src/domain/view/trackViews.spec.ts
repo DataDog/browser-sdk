@@ -1048,3 +1048,28 @@ describe('BFCache views', () => {
     expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.BF_CACHE)
   })
 })
+
+describe('Prerendered views', () => {
+  const lifeCycle = new LifeCycle()
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    const mockNavigationEntry = {
+      activationStart: 100,
+      entryType: 'navigation',
+    }
+    spyOn(performance, 'getEntriesByType').and.returnValue([mockNavigationEntry] as any)
+
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
+  it('should create initial view with "prerendered" loading type when page has activationStart > 0', () => {
+    const { getViewUpdate } = viewTest
+
+    expect(getViewUpdate(0).loadingType).toBe(ViewLoadingType.PRERENDERED)
+  })
+})
