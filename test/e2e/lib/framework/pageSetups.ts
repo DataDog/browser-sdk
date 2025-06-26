@@ -53,8 +53,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 })(window,document,'script','${url}','${globalName}')`
   }
 
-  const logsScriptUrl = `${servers.crossOrigin.url}/datadog-logs.js`
-  const rumScriptUrl = `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`
+  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
     body += html`
@@ -93,8 +92,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += setupEventBridge(servers)
   }
 
-  const logsScriptUrl = `${servers.crossOrigin.url}/datadog-logs.js`
-  const rumScriptUrl = `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`
+  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
     header += html`
@@ -252,4 +250,11 @@ function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitC
     result = result.replace('"BEFORE_SEND"', initConfiguration.beforeSend.toString())
   }
   return result
+}
+
+function createCrossOriginScriptUrls(servers: Servers, options: SetupOptions) {
+  return {
+    logsScriptUrl: `${servers.crossOrigin.url}/datadog-logs.js`,
+    rumScriptUrl: `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`,
+  }
 }
