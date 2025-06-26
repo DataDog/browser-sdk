@@ -1052,41 +1052,24 @@ describe('BFCache views', () => {
 describe('Prerendered views', () => {
   const lifeCycle = new LifeCycle()
   let viewTest: ViewTest
-  let getEntriesByTypeSpy: jasmine.Spy
 
   beforeEach(() => {
     const mockNavigationEntry = {
       activationStart: 100,
       entryType: 'navigation',
     }
-    getEntriesByTypeSpy = spyOn(performance, 'getEntriesByType').and.returnValue([mockNavigationEntry] as any)
-  })
+    spyOn(performance, 'getEntriesByType').and.returnValue([mockNavigationEntry] as any)
 
-  afterEach(() => {
-    if (viewTest) {
-      viewTest.stop()
-    }
-  })
+    viewTest = setupViewTest({ lifeCycle })
 
-  it('should create initial view with "prerendered" loading type when trackPrerenderedViews is true and page has activationStart > 0', () => {
-    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackPrerenderedViews: true } })
     registerCleanupTask(() => {
       viewTest.stop()
     })
+  })
 
+  it('should create initial view with "prerendered" loading type when page has activationStart > 0', () => {
     const { getViewUpdate } = viewTest
 
     expect(getViewUpdate(0).loadingType).toBe(ViewLoadingType.PRERENDERED)
-  })
-
-  it('should create initial view with "initial_load" loading type when trackPrerenderedViews is false', () => {
-    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackPrerenderedViews: false } })
-    registerCleanupTask(() => {
-      viewTest.stop()
-    })
-
-    const { getViewUpdate } = viewTest
-
-    expect(getViewUpdate(0).loadingType).toBe(ViewLoadingType.INITIAL_LOAD)
   })
 })

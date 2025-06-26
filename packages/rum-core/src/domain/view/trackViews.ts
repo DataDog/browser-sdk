@@ -43,8 +43,6 @@ import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { onBFCacheRestore } from './bfCacheSupport'
 import { trackBfcacheMetrics } from './viewMetrics/trackBfcacheMetrics'
-import { trackPrerenderMetrics } from './viewMetrics/trackPrerenderMetrics'
-import { onPrerenderActivation } from './prerenderSupport'
 
 export interface ViewEvent {
   id: string
@@ -116,9 +114,7 @@ export function trackViews(
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
 
-  const initialLoadingType = (configuration.trackPrerenderedViews && isPagePrerendered()) 
-    ? ViewLoadingType.PRERENDERED 
-    : ViewLoadingType.INITIAL_LOAD
+  const initialLoadingType = isPagePrerendered() ? ViewLoadingType.PRERENDERED : ViewLoadingType.INITIAL_LOAD
   let currentView = startNewView(initialLoadingType, clocksOrigin(), initialViewOptions)
   let stopOnBFCacheRestore: (() => void) | undefined
 
@@ -280,18 +276,6 @@ function newView(
   // Start BFCache-specific metrics when restoring from BFCache
   if (loadingType === ViewLoadingType.BF_CACHE) {
     trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
-  }
-
-  if (loadingType === ViewLoadingType.PRERENDERED) {
-    trackPrerenderMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
-
-    const stopPrerenderActivation = onPrerenderActivation(() => {
-      scheduleViewUpdate()
-    })
-
-    stopObservable.subscribe(() => {
-      stopPrerenderActivation()
-    })
   }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
