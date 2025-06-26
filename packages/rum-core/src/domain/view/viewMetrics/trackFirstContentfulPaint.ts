@@ -2,7 +2,6 @@ import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { ONE_MINUTE, elapsed, relativeNow } from '@datadog/browser-core'
 import type { RumPerformancePaintTiming } from '../../../browser/performanceObservable'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { getActivationStart } from '../../../browser/performanceUtils'
 import type { RumConfiguration } from '../../configuration'
 import type { FirstHidden } from './trackFirstHidden'
 
@@ -13,10 +12,8 @@ export const FCP_MAXIMUM_DELAY = 10 * ONE_MINUTE
 export function trackFirstContentfulPaint(
   configuration: RumConfiguration,
   firstHidden: FirstHidden,
-  callback: (fcpTiming: RelativeTime) => void,
-  getActivationStartImpl = getActivationStart
+  callback: (fcpTiming: RelativeTime) => void
 ) {
-  const activationStart = getActivationStartImpl()
   const performanceSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.PAINT,
     buffered: true,
@@ -28,8 +25,7 @@ export function trackFirstContentfulPaint(
         entry.startTime < FCP_MAXIMUM_DELAY
     )
     if (fcpEntry) {
-      const adjustedFcp = activationStart > 0 ? Math.max(0, fcpEntry.startTime - activationStart) : fcpEntry.startTime
-      callback(adjustedFcp as RelativeTime)
+      callback(fcpEntry.startTime)
     }
   })
   return {

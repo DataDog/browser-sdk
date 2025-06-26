@@ -1060,7 +1060,7 @@ describe('Prerendered views', () => {
     }
     spyOn(performance, 'getEntriesByType').and.returnValue([mockNavigationEntry] as any)
 
-    viewTest = setupViewTest({ lifeCycle })
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackPrerenderViews: true } })
 
     registerCleanupTask(() => {
       viewTest.stop()

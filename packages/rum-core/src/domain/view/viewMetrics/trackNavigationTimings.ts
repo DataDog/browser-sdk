@@ -1,8 +1,8 @@
-import type { Duration, RelativeTime, TimeoutId } from '@datadog/browser-core'
+import type { Duration, TimeoutId } from '@datadog/browser-core'
 import { setTimeout, relativeNow, runOnReadyState, clearTimeout } from '@datadog/browser-core'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
-import { getActivationStart, getNavigationEntry } from '../../../browser/performanceUtils'
+import { getNavigationEntry } from '../../../browser/performanceUtils'
 
 export interface NavigationTimings {
   domComplete: Duration
@@ -22,27 +22,18 @@ export type RelevantNavigationTiming = Pick<
 export function trackNavigationTimings(
   configuration: RumConfiguration,
   callback: (timings: NavigationTimings) => void,
-  getNavigationEntryImpl: () => RelevantNavigationTiming = getNavigationEntry,
-  getActivationStartImpl = getActivationStart
+  getNavigationEntryImpl: () => RelevantNavigationTiming = getNavigationEntry
 ) {
   return waitAfterLoadEvent(configuration, () => {
     const entry = getNavigationEntryImpl()
 
     if (!isIncompleteNavigation(entry)) {
-      callback(processNavigationEntry(entry, getActivationStartImpl))
+      callback(processNavigationEntry(entry))
     }
   })
 }
 
-function processNavigationEntry(
-  entry: RelevantNavigationTiming,
-  getActivationStartImpl: () => RelativeTime
-): NavigationTimings {
-  const activationStart = getActivationStartImpl()
-
-  const adjustedResponseStart =
-    activationStart > 0 ? Math.max(0, entry.responseStart - activationStart) : entry.responseStart
-
+function processNavigationEntry(entry: RelevantNavigationTiming): NavigationTimings {
   return {
     domComplete: entry.domComplete,
     domContentLoaded: entry.domContentLoadedEventEnd,
@@ -52,10 +43,7 @@ function processNavigationEntry(
     // than the current page time. Ignore these cases:
     // https://github.com/GoogleChrome/web-vitals/issues/137
     // https://github.com/GoogleChrome/web-vitals/issues/162
-    firstByte:
-      adjustedResponseStart >= 0 && adjustedResponseStart <= relativeNow()
-        ? (adjustedResponseStart as Duration)
-        : undefined,
+    firstByte: entry.responseStart >= 0 && entry.responseStart <= relativeNow() ? entry.responseStart : undefined,
   }
 }
 

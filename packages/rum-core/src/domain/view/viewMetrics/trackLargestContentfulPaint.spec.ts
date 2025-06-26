@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, DOM_EVENT, isPrerenderingSupported } from '@datadog/browser-core'
+import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
 import {
   setPageVisibility,
   createNewEvent,
@@ -18,7 +18,7 @@ describe('trackLargestContentfulPaint', () => {
   let eventTarget: Window
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
-  function startLCPTracking(activationStart?: RelativeTime) {
+  function startLCPTracking() {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
@@ -26,8 +26,7 @@ describe('trackLargestContentfulPaint', () => {
       mockRumConfiguration(),
       firstHidden,
       eventTarget,
-      lcpCallback,
-      () => activationStart as RelativeTime
+      lcpCallback
     )
 
     registerCleanupTask(() => {
@@ -165,23 +164,4 @@ describe('trackLargestContentfulPaint', () => {
       resourceUrl: undefined,
     })
   })
-
-  if (isPrerenderingSupported()) {
-    it('should adjust LCP based on activationStart when prerendered', () => {
-      startLCPTracking(100 as RelativeTime)
-
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 250 as RelativeTime,
-          size: 100,
-        }),
-      ])
-
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 150 as RelativeTime,
-        targetSelector: undefined,
-        resourceUrl: undefined,
-      })
-    })
-  }
 })
