@@ -26,7 +26,6 @@ describe('trackPrerenderMetrics', () => {
 
     trackPrerenderMetrics(mockInitialViewMetrics, scheduleViewUpdateSpy, getActivationStartSpy)
 
-    // Wait for the interval to trigger
     setTimeout(() => {
       expect(getActivationStartSpy).toHaveBeenCalled()
       expect(mockInitialViewMetrics.firstContentfulPaint).toBe(150 as RelativeTime)

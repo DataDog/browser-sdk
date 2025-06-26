@@ -18,17 +18,14 @@ export function trackPrerenderMetrics(
     return
   }
 
-  // Set up a periodic check to adjust metrics as they become available
   const adjustmentInterval: TimeoutId = setInterval(() => {
     let hasAdjustments = false
 
-    // Adjust FCP if present and not yet adjusted
     if (metrics.firstContentfulPaint !== undefined && metrics.firstContentfulPaint >= activationStart) {
       metrics.firstContentfulPaint = Math.max(0, metrics.firstContentfulPaint - activationStart) as Duration
       hasAdjustments = true
     }
 
-    // Adjust LCP if present and not yet adjusted
     if (metrics.largestContentfulPaint !== undefined && metrics.largestContentfulPaint.value >= activationStart) {
       metrics.largestContentfulPaint = {
         ...metrics.largestContentfulPaint,
@@ -37,7 +34,6 @@ export function trackPrerenderMetrics(
       hasAdjustments = true
     }
 
-    // Adjust navigation timings if present and not yet adjusted
     if (metrics.navigationTimings?.firstByte !== undefined && metrics.navigationTimings.firstByte >= activationStart) {
       metrics.navigationTimings = {
         ...metrics.navigationTimings,
@@ -49,9 +45,8 @@ export function trackPrerenderMetrics(
     if (hasAdjustments) {
       scheduleViewUpdate()
     }
-  }, 100) // Check every 100ms
+  }, 100)
 
-  // Clear the interval after a reasonable time (10 seconds)
   setTimeout(() => {
     clearInterval(adjustmentInterval)
   }, 10000)
