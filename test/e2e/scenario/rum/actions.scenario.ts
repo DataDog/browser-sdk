@@ -275,6 +275,19 @@ test.describe('action collection', () => {
       expect(actionEvents[0].action.frustration!.type).toHaveLength(0)
     })
 
+  createTest('do not consider a click on a label referring to a text input as "dead_click"')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html` <input type="text" id="my-input" /><label for="my-input">Click me</label> `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const label = page.locator('label')
+      await label.click()
+      await flushEvents()
+      const actionEvents = intakeRegistry.rumActionEvents
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.frustration!.type).toHaveLength(0)
+    })
+
   createTest('do not consider clicks leading to scrolls as "dead_click"')
     .withRum({ trackUserInteractions: true })
     .withBody(html`
