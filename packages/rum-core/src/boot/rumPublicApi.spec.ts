@@ -708,6 +708,7 @@ describe('rum public api', () => {
       expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
         description: 'description-value',
         context: { foo: 'bar' },
+        userStory: undefined,
       })
     })
   })
