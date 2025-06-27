@@ -16,6 +16,6 @@ export async function lazyLoadRecorder(
 }
 
 async function importRecorder() {
-  const module = await import(/* webpackChunkName: "recorder" */ './startRecording')
+  const module = await import(/* webpackChunkName: "datadog-recorder" */ './startRecording')
   return module.startRecording
 }
