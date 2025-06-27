@@ -29,6 +29,15 @@ if (isBrowserSupported()) {
       expect(paragraphMixedTokens).not.toContain('123')
     })
 
+    it('should return empty array for whitespace-only strings', () => {
+      expect(tokenize(' ')).toEqual([])
+      expect(tokenize('  ')).toEqual([])
+      expect(tokenize('\t')).toEqual([])
+      expect(tokenize('\n')).toEqual([])
+      expect(tokenize('\r')).toEqual([])
+      expect(tokenize('   \t\n\r   ')).toEqual([])
+    })
+
     /**
      * This test is to ensure that the match regex is working as expected in all browsers.
      * With unicode regex, we can support symbols and emojis OOTB.

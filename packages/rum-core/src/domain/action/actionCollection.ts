@@ -93,10 +93,8 @@ function processAction(
   action: AutoAction | CustomAction,
   actionNameDictionary: AllowedDictionary
 ): RawRumEventCollectedData<RawRumActionEvent> {
-  const { name: updatedName, masked } =
-    isAutoAction(action) && action.nameSource === ActionNameSource.MASK_PLACEHOLDER
-      ? { name: action.name, masked: false }
-      : maskActionName(action.name, actionNameDictionary.allowlist)
+  const { name: updatedName, masked } = maskActionName(action.name, actionNameDictionary.allowlist)
+
   const autoActionProperties = isAutoAction(action)
     ? {
         action: {
