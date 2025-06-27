@@ -68,19 +68,11 @@ export function isDead(click: Click) {
     return false
   }
 
-  const target = click.event.target
-
-  if (target.matches(DEAD_CLICK_EXCLUDE_SELECTOR)) {
-    return false
-  }
+  let target: Element | null = click.event.target
 
   if (target.tagName === 'LABEL' && target.hasAttribute('for')) {
-    const forId = target.getAttribute('for')
-    const referencedElement = document.getElementById(forId!)
-    if (referencedElement && referencedElement.matches(DEAD_CLICK_EXCLUDE_SELECTOR)) {
-      return false
-    }
+    target = document.getElementById(target.getAttribute('for')!)
   }
 
-  return true
+  return !target || !target.matches(DEAD_CLICK_EXCLUDE_SELECTOR)
 }

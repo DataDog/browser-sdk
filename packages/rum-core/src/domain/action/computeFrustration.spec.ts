@@ -201,5 +201,18 @@ describe('isDead', () => {
         )
       ).toBe(true)
     })
+
+    it('considers as dead when the click target is a label referring to a non-existent element', () => {
+      const label = appendElement('<label for="non-existent-id">Click me</label>')
+
+      expect(
+        isDead(
+          createFakeClick({
+            hasPageActivity: false,
+            event: { target: label },
+          })
+        )
+      ).toBe(true)
+    })
   })
 })
