@@ -35,7 +35,7 @@ export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
   OPTGROUP: true,
 }
 
-const TEXT_MASKING_CHAR = 'x'
+export const TEXT_MASKING_CHAR = 'x'
 
 export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
 

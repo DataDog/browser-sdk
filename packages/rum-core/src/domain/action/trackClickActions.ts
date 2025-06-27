@@ -23,6 +23,7 @@ import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import type { ActionNameSource } from './getActionNameFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
@@ -38,7 +39,7 @@ export interface ClickAction {
   type: ActionType.CLICK
   id: string
   name: string
-  nameSource: string
+  nameSource: ActionNameSource
   target?: {
     selector: string | undefined
     width: number
@@ -243,7 +244,8 @@ function computeClickActionBase(
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
-  const actionName = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+
+  const { name, nameSource } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
@@ -257,8 +259,8 @@ function computeClickActionBase(
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: actionName.name,
-    nameSource: actionName.nameSource,
+    name,
+    nameSource,
   }
 }
 

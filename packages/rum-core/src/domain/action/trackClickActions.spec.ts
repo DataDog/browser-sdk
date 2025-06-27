@@ -21,6 +21,7 @@ import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
+import { ActionNameSource } from './getActionNameFromElement'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -117,7 +118,7 @@ describe('trackClickActions', () => {
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
         id: jasmine.any(String),
         name: 'Click me',
-        nameSource: 'text_content',
+        nameSource: ActionNameSource.TEXT_CONTENT,
         startClocks: {
           relative: addDuration(pointerDownClocks.relative, EMULATED_CLICK_DURATION),
           timeStamp: addDuration(pointerDownClocks.timeStamp, EMULATED_CLICK_DURATION),
