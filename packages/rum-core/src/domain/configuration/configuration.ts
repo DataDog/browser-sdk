@@ -126,6 +126,11 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   trackBfcacheViews?: boolean | undefined
   /**
+   * Enable the creation of dedicated views for pages prerendered.
+   * @default false
+   */
+  trackPrerenderViews?: boolean | undefined
+  /**
    * Enables collection of resource events.
    * @default true
    */
@@ -179,6 +184,7 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean
   trackLongTasks: boolean
   trackBfcacheViews: boolean
+  trackPrerenderViews: boolean
   version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
@@ -248,6 +254,7 @@ export function validateAndBuildRumConfiguration(
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
     trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
+    trackPrerenderViews: !!initConfiguration.trackPrerenderViews,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
@@ -341,6 +348,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
     track_bfcache_views: configuration.trackBfcacheViews,
+    track_prerender_views: configuration.trackPrerenderViews,
     plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),

@@ -189,6 +189,7 @@ export const enum ViewLoadingType {
   INITIAL_LOAD = 'initial_load',
   ROUTE_CHANGE = 'route_change',
   BF_CACHE = 'bf_cache',
+  PRERENDERED = 'prerendered',
 }
 
 export interface ViewCustomTimings {
