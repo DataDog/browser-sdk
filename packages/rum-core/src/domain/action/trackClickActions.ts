@@ -22,7 +22,7 @@ import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
-import { getActionNameFromElement } from './getActionNameFromElement'
+import { getActionNameFromElement, ActionNameSource } from './getActionNameFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
@@ -38,7 +38,7 @@ export interface ClickAction {
   type: ActionType.CLICK
   id: string
   name: string
-  nameSource: string
+  nameSource: ActionNameSource
   target?: {
     selector: string | undefined
     width: number

@@ -11,6 +11,8 @@ import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
 import { startActionCollection } from './actionCollection'
+import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from './getActionNameFromElement'
+import { isBrowserSupported } from './privacy/allowedDictionary'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -50,7 +52,7 @@ describe('actionCollection', () => {
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
-      nameSource: 'text_content',
+      nameSource: ActionNameSource.TEXT_CONTENT,
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
       event,
@@ -142,7 +144,7 @@ describe('actionCollection', () => {
       frustrationTypes: [],
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
-      nameSource: 'text_content',
+      nameSource: ActionNameSource.TEXT_CONTENT,
       startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
       type: ActionType.CLICK,
     })
@@ -207,7 +209,12 @@ describe('actionCollection', () => {
         type: ActionType.CUSTOM,
       })
 
-      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe('foo bar ***')
+      let expectedName = 'foo bar xxx'
+      if (!isBrowserSupported()) {
+        expectedName = ACTION_NAME_PLACEHOLDER
+      }
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe(expectedName)
       expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent)._dd?.action?.name_source).toBe('mask_disallowed')
     })
 
@@ -225,11 +232,16 @@ describe('actionCollection', () => {
         frustrationTypes: [],
         id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         name: 'foo bar baz',
-        nameSource: 'text_content',
+        nameSource: ActionNameSource.TEXT_CONTENT,
         startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
         type: ActionType.CLICK,
       })
-      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe('foo bar ***')
+
+      let expectedName = 'foo bar xxx'
+      if (!isBrowserSupported()) {
+        expectedName = ACTION_NAME_PLACEHOLDER
+      }
+      expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent).action.target.name).toBe(expectedName)
       expect((rawRumEvents[0].rawRumEvent as RawRumActionEvent)._dd?.action?.name_source).toBe('mask_disallowed')
     })
   })
