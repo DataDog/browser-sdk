@@ -20,17 +20,17 @@ import type { DDRum } from './rumIntegration'
 
 export type DatadogProviderOptions = {
   /**
-   * The application key for Datadog. Required for initializing the Datadog RUM client.
+   * The application key for Datadog. Required for initializing the Datadog Flagging client.
    */
   applicationId: string
 
   /**
-   * The client token for Datadog. Required for initializing the Datadog RUM client.
+   * The client token for Datadog. Required for initializing the Datadog Flagging client.
    */
   clientToken: string
 
   /**
-   * The environment for Datadog.
+   * The application environment.
    */
   env: string
 
@@ -216,7 +216,7 @@ async function fetchConfiguration(options: DatadogProviderOptions, context: Eval
     precomputed: {
       response: precomputed,
       context,
-      fetchedAt: Date.now(),
+      fetchedAt: dateNow(),
     },
   }
 }
