@@ -15,8 +15,9 @@ describe('DatadogProvider', () => {
       addAction: jasmine.createSpy('addAction'),
     }
     provider = new DatadogProvider({
-      applicationId: 'xxx',
       clientToken: 'xxx',
+      applicationId: 'xxx',
+      env: 'test',
       site: 'http://localhost:8000',
       rum: {
         sdk: mockDatadogRum,
