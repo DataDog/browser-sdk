@@ -189,11 +189,12 @@ async function fetchConfiguration(options: DatadogProviderOptions, context: Eval
     method: 'POST',
     headers: {
       'Content-Type': 'application/vnd.api+json',
-      ...(!options.overwriteRequestHeaders ?
-        {
-          'dd-client-token': options.clientToken,
-          'dd-application-id': options.applicationId
-        } : {}),
+      ...(!options.overwriteRequestHeaders
+        ? {
+            'dd-client-token': options.clientToken,
+            'dd-application-id': options.applicationId,
+          }
+        : {}),
       ...options.customHeaders,
     },
     body: JSON.stringify({
