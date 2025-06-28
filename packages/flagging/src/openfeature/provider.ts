@@ -20,15 +20,6 @@ import type { DDRum } from './rumIntegration'
 
 export type DatadogProviderOptions = {
   /**
-   * The API key for Datadog. Required for authenticating your application with Datadog.
-   */
-  apiKey: string
-  /**
-   * The application key for Datadog. Required for authenticating your application with Datadog.
-   */
-  applicationKey: string
-
-  /**
    * The application key for Datadog. Required for initializing the Datadog RUM client.
    */
   applicationId: string
@@ -42,7 +33,6 @@ export type DatadogProviderOptions = {
    * The environment for Datadog.
    */
   env: string
-
 
   /**
    * The site to use for the Datadog API.
@@ -68,6 +58,15 @@ export type DatadogProviderOptions = {
      */
     ddExposureLogging?: boolean
   }
+  /**
+   * Custom headers to add to the request to the Datadog API.
+   */
+  customHeaders?: Record<string, string>
+
+  /**
+   * Whether to overwrite the default request headers.
+   */
+  overwriteRequestHeaders?: boolean
 }
 
 // We need to use a class here to properly implement the OpenFeature Provider interface
@@ -180,12 +179,22 @@ export class DatadogProvider implements Provider {
 async function fetchConfiguration(options: DatadogProviderOptions, context: EvaluationContext): Promise<Configuration> {
   const baseUrl = options.site || 'https://dd.datad0g.com'
 
+  // Stringify all context values
+  const stringifiedContext: Record<string, string> = {}
+  for (const [key, value] of Object.entries(context)) {
+    stringifiedContext[key] = typeof value === 'string' ? value : JSON.stringify(value)
+  }
+
   const response = await fetch(`${baseUrl}/api/unstable/precompute-assignments`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/vnd.api+json',
-      'dd-api-key': options.apiKey,
-      'dd-application-key': options.applicationKey,
+      ...(!options.overwriteRequestHeaders ?
+        {
+          'dd-client-token': options.clientToken,
+          'dd-application-id': options.applicationId
+        } : {}),
+      ...options.customHeaders,
     },
     body: JSON.stringify({
       data: {
@@ -196,14 +205,18 @@ async function fetchConfiguration(options: DatadogProviderOptions, context: Eval
           },
           subject: {
             targeting_key: context.targetingKey || '',
-            targeting_attributes: {
-              ...context,
-            },
+            targeting_attributes: stringifiedContext,
           },
         },
       },
     }),
   })
   const precomputed = await response.json()
-  return { precomputed }
+  return {
+    precomputed: {
+      response: precomputed,
+      context,
+      fetchedAt: Date.now(),
+    },
+  }
 }
