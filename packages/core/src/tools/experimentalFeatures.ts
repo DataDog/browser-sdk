@@ -17,7 +17,6 @@ export enum ExperimentalFeature {
   PROFILING = 'profiling',
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
-  DOM_MUTATION_IGNORING = 'dom_mutation_ignoring',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

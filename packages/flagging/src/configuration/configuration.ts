@@ -1,4 +1,4 @@
-import type { EvaluationContext, FlagValueType, JsonValue, ResolutionDetails } from '@openfeature/web-sdk'
+import type { EvaluationContext, FlagValueType, JsonValue, ResolutionReason } from '@openfeature/web-sdk'
 /**
  * Internal configuration for DatadogProvider.
  */
@@ -41,6 +41,11 @@ export type PrecomputedConfigurationResponse = {
 
 /** @internal */
 export type PrecomputedFlag<T extends FlagValueType = FlagValueType> = {
-  type: T
-  resolution: ResolutionDetails<FlagTypeToValue<T>>
+  allocationKey: string
+  variationKey: string
+  variationType: T
+  variationValue: FlagTypeToValue<T>
+  reason: ResolutionReason
+  doLog: boolean
+  extraLogging: Record<string, unknown>
 }

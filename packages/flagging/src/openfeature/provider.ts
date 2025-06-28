@@ -6,12 +6,17 @@ import type {
   Provider,
   ProviderMetadata,
   ResolutionDetails,
+  HookContext,
+  EvaluationDetails,
+  FlagValue,
 } from '@openfeature/web-sdk'
 /* eslint-disable-next-line local-rules/disallow-side-effects */
-import { ProviderStatus } from '@openfeature/web-sdk'
+import { OpenFeature, ProviderStatus } from '@openfeature/web-sdk'
 
+import { dateNow } from '@datadog/browser-core'
 import type { Configuration } from '../configuration'
 import { evaluate } from '../evaluation'
+import type { DDRum } from './rumIntegration'
 
 export type DatadogProviderOptions = {
   /**
@@ -38,9 +43,31 @@ export type DatadogProviderOptions = {
    */
   env: string
 
-  baseUrl?: string
+
+  /**
+   * The site to use for the Datadog API.
+   */
+  site?: string
 
   initialConfiguration?: Configuration
+
+  /**
+   * RUM integration options
+   */
+  rum?: {
+    /**
+     * The RUM SDK instance to use for tracking
+     */
+    sdk: DDRum
+    /**
+     * Whether to track feature flag evaluations in RUM
+     */
+    ddFlaggingTracking?: boolean
+    /**
+     * Whether to log exposures in RUM
+     */
+    ddExposureLogging?: boolean
+  }
 }
 
 // We need to use a class here to properly implement the OpenFeature Provider interface
@@ -59,6 +86,33 @@ export class DatadogProvider implements Provider {
 
   constructor(options: DatadogProviderOptions) {
     this.options = options
+    const trackFlags = options.rum?.ddFlaggingTracking ?? false
+    const logExposures = options.rum?.ddExposureLogging ?? false
+
+    if (options.rum) {
+      const rum = options.rum.sdk
+      // Add OpenFeature hook
+      OpenFeature.addHooks({
+        after(_hookContext: HookContext, details: EvaluationDetails<FlagValue>) {
+          if (trackFlags) {
+            // Track feature flag evaluation
+            rum.addFeatureFlagEvaluation(details.flagKey, details.value)
+          }
+          if (logExposures) {
+            // Log exposure
+            rum.addAction('__dd_exposure', {
+              timestamp: dateNow(),
+              flag_key: details.flagKey,
+              allocation_key: (details.flagMetadata?.allocationKey as string) ?? '',
+              exposure_key: `${details.flagKey}-${details.flagMetadata?.allocationKey}`,
+              subject_key: _hookContext.context.targetingKey,
+              subject_attributes: _hookContext.context,
+              variant_key: details.variant,
+            })
+          }
+        },
+      })
+    }
 
     if (options.initialConfiguration) {
       this.configuration = options.initialConfiguration
@@ -124,7 +178,7 @@ export class DatadogProvider implements Provider {
 }
 
 async function fetchConfiguration(options: DatadogProviderOptions, context: EvaluationContext): Promise<Configuration> {
-  const baseUrl = options.baseUrl || 'https://dd.datad0g.com'
+  const baseUrl = options.site || 'https://dd.datad0g.com'
 
   const response = await fetch(`${baseUrl}/api/unstable/precompute-assignments`, {
     method: 'POST',

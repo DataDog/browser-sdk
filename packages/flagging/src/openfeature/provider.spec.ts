@@ -1,19 +1,31 @@
 import { StandardResolutionReasons, type EvaluationContext, type Logger } from '@openfeature/core'
 import { DatadogProvider } from './provider'
+import type { DDRum } from './rumIntegration'
 
 describe('DatadogProvider', () => {
   let provider: DatadogProvider
   let mockLogger: Logger
   let mockContext: EvaluationContext
 
+  let mockDatadogRum: DDRum
+
   beforeEach(() => {
+    mockDatadogRum = {
+      addFeatureFlagEvaluation: jasmine.createSpy('addFeatureFlagEvaluation'),
+      addAction: jasmine.createSpy('addAction'),
+    }
     provider = new DatadogProvider({
       apiKey: 'xxx',
       applicationKey: 'xxx',
       applicationId: 'xxx',
       clientToken: 'xxx',
       env: 'test',
-      baseUrl: 'http://localhost:8000',
+      site: 'http://localhost:8000',
+      rum: {
+        sdk: mockDatadogRum,
+        ddFlaggingTracking: false,
+        ddExposureLogging: false,
+      },
     })
     mockLogger = {
       debug: jasmine.createSpy('debug'),

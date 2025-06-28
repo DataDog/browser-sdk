@@ -165,7 +165,7 @@ describe('preStartLogs', () => {
     })
 
     it('saves the common context', () => {
-      getCommonContextSpy.and.returnValue({ context: { foo: 'bar' } } as unknown as CommonContext)
+      getCommonContextSpy.and.returnValue({ user: { foo: 'bar' } } as unknown as CommonContext)
       strategy.handleLog(
         {
           status: StatusType.info,
@@ -173,11 +173,11 @@ describe('preStartLogs', () => {
         },
         {} as Logger
       )
-      getCommonContextSpy.and.returnValue({ context: { foo: 'baz' } } as unknown as CommonContext)
+      getCommonContextSpy.and.returnValue({ user: { foo: 'baz' } } as unknown as CommonContext)
 
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
-      expect(getLoggedMessage(0).savedCommonContext!.context.foo).toEqual('bar')
+      expect(getLoggedMessage(0).savedCommonContext!.user.foo).toEqual('bar')
     })
 
     it('saves the log context', () => {
