@@ -2,15 +2,7 @@ import { performDraw } from '@datadog/browser-core'
 
 const sampleDecisionCache: Map<number, { sessionId: string; decision: boolean }> = new Map()
 
-export function isTraceSampled(sessionId: string, sampleRate: number) {
-  return isSampled(sessionId, sampleRate)
-}
-
-export function isProfilingSampled(sessionId: string, sampleRate: number) {
-  return isSampled(sessionId, sampleRate)
-}
-
-function isSampled(sessionId: string, sampleRate: number) {
+export function isSampled(sessionId: string, sampleRate: number) {
   // Shortcuts for common cases. This is not strictly necessary, but it makes the code faster for
   // customers willing to ingest all traces.
   if (sampleRate === 100) {

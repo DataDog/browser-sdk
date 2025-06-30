@@ -15,7 +15,7 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
-import { isTraceSampled } from '../sampler/sampler'
+import { isSampled } from '../sampler/sampler'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
@@ -141,7 +141,7 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const traceSampled = isTraceSampled(session.id, configuration.traceSampleRate)
+  const traceSampled = isSampled(session.id, configuration.traceSampleRate)
 
   const shouldInjectHeaders = traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
   if (!shouldInjectHeaders) {

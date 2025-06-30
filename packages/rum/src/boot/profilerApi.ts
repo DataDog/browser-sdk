@@ -7,7 +7,7 @@ import type {
   Hooks,
 } from '@datadog/browser-rum-core'
 import { addTelemetryDebug, monitorError } from '@datadog/browser-core'
-import { isProfilingSampled } from '@datadog/browser-rum-core'
+import { isSampled } from '@datadog/browser-rum-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
@@ -32,7 +32,7 @@ export function makeProfilerApi(): ProfilerApi {
     }
 
     // Sampling (sticky sampling based on session id)
-    if (!isProfilingSampled(session.id, configuration.profilingSampleRate)) {
+    if (!isSampled(session.id, configuration.profilingSampleRate)) {
       // No sampling, no profiling.
       // Note: No Profiling context is set at this stage.
       return
