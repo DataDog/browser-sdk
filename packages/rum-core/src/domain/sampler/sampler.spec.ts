@@ -1,4 +1,4 @@
-import { isTraceSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
+import { isSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
 
 // UUID known to yield a low hash value using the Knuth formula, making it more likely to be sampled
 const LOW_HASH_UUID = '29a4b5e3-9859-4290-99fa-4bc4a1a348b9'
@@ -9,17 +9,17 @@ const HIGH_HASH_UUID = '5321b54a-d6ec-4b24-996d-dd70c617e09a'
 // UUID chosen arbitrarily, to be used when the test doesn't actually depend on it.
 const ARBITRARY_UUID = '1ff81c8c-6e32-473b-869b-55af08048323'
 
-describe('isTraceSampled', () => {
+describe('isSampled', () => {
   beforeEach(() => {
     resetSampleDecisionCache()
   })
 
   it('returns true when sampleRate is 100', () => {
-    expect(isTraceSampled(ARBITRARY_UUID, 100)).toBeTrue()
+    expect(isSampled(ARBITRARY_UUID, 100)).toBeTrue()
   })
 
   it('returns false when sampleRate is 0', () => {
-    expect(isTraceSampled(ARBITRARY_UUID, 0)).toBeFalse()
+    expect(isSampled(ARBITRARY_UUID, 0)).toBeFalse()
   })
 
   describe('with bigint support', () => {
@@ -30,31 +30,31 @@ describe('isTraceSampled', () => {
     })
 
     it('a session id with a low hash value should be sampled with a rate close to 0%', () => {
-      expect(isTraceSampled(LOW_HASH_UUID, 0.1)).toBeTrue()
+      expect(isSampled(LOW_HASH_UUID, 0.1)).toBeTrue()
       resetSampleDecisionCache()
-      expect(isTraceSampled(LOW_HASH_UUID, 0.01)).toBeTrue()
+      expect(isSampled(LOW_HASH_UUID, 0.01)).toBeTrue()
       resetSampleDecisionCache()
-      expect(isTraceSampled(LOW_HASH_UUID, 0.001)).toBeTrue()
+      expect(isSampled(LOW_HASH_UUID, 0.001)).toBeTrue()
       resetSampleDecisionCache()
-      expect(isTraceSampled(LOW_HASH_UUID, 0.0001)).toBeTrue()
+      expect(isSampled(LOW_HASH_UUID, 0.0001)).toBeTrue()
       resetSampleDecisionCache()
       // At some point the sample rate is so low that the session is not sampled even if the hash
       // is low. This is not an error: we can probably find a UUID with an even lower hash.
-      expect(isTraceSampled(LOW_HASH_UUID, 0.0000000001)).toBeFalse()
+      expect(isSampled(LOW_HASH_UUID, 0.0000000001)).toBeFalse()
     })
 
     it('a session id with a high hash value should not be sampled even if the rate is close to 100%', () => {
-      expect(isTraceSampled(HIGH_HASH_UUID, 99.9)).toBeFalse()
+      expect(isSampled(HIGH_HASH_UUID, 99.9)).toBeFalse()
       resetSampleDecisionCache()
-      expect(isTraceSampled(HIGH_HASH_UUID, 99.99)).toBeFalse()
+      expect(isSampled(HIGH_HASH_UUID, 99.99)).toBeFalse()
       resetSampleDecisionCache()
-      expect(isTraceSampled(HIGH_HASH_UUID, 99.999)).toBeFalse()
+      expect(isSampled(HIGH_HASH_UUID, 99.999)).toBeFalse()
       resetSampleDecisionCache()
-      expect(isTraceSampled(HIGH_HASH_UUID, 99.9999)).toBeFalse()
+      expect(isSampled(HIGH_HASH_UUID, 99.9999)).toBeFalse()
       resetSampleDecisionCache()
       // At some point the sample rate is so high that the session is sampled even if the hash is
       // high. This is not an error: we can probably find a UUID with an even higher hash.
-      expect(isTraceSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
+      expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
     })
   })
 
@@ -69,8 +69,8 @@ describe('isTraceSampled', () => {
 
     it('sampling decision should be cached', () => {
       spyOn(Math, 'random').and.returnValues(0.2, 0.8)
-      expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeTrue()
-      expect(isTraceSampled(ARBITRARY_UUID, 50)).toBeTrue()
+      expect(isSampled(ARBITRARY_UUID, 50)).toBeTrue()
+      expect(isSampled(ARBITRARY_UUID, 50)).toBeTrue()
     })
   })
 })
@@ -103,5 +103,12 @@ describe('sampleUsingKnuthFactor', () => {
         .withContext(`identifier=${identifier}, sampleRate=${sampleRate}`)
         .toBe(expected)
     }
+  })
+
+  it('should cache sampling decision per sampling rate', () => {
+    // For the same session id, the sampling decision should be different for trace and profiling, eg. trace should not cache profiling decisions and vice versa
+    expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
+    expect(isSampled(HIGH_HASH_UUID, 0.0000001)).toBeFalse()
+    expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
   })
 })

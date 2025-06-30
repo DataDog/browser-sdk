@@ -1,8 +1,8 @@
 import { performDraw } from '@datadog/browser-core'
 
-let sampleDecisionCache: { sessionId: string; decision: boolean } | undefined
+const sampleDecisionCache: Map<number, { sessionId: string; decision: boolean }> = new Map()
 
-export function isTraceSampled(sessionId: string, sampleRate: number) {
+export function isSampled(sessionId: string, sampleRate: number) {
   // Shortcuts for common cases. This is not strictly necessary, but it makes the code faster for
   // customers willing to ingest all traces.
   if (sampleRate === 100) {
@@ -13,8 +13,9 @@ export function isTraceSampled(sessionId: string, sampleRate: number) {
     return false
   }
 
-  if (sampleDecisionCache && sessionId === sampleDecisionCache.sessionId) {
-    return sampleDecisionCache.decision
+  const cachedDecision = sampleDecisionCache.get(sampleRate)
+  if (cachedDecision && sessionId === cachedDecision.sessionId) {
+    return cachedDecision.decision
   }
 
   let decision: boolean
@@ -26,13 +27,13 @@ export function isTraceSampled(sessionId: string, sampleRate: number) {
     // TODO: remove this when all browser we support have BigInt support
     decision = performDraw(sampleRate)
   }
-  sampleDecisionCache = { sessionId, decision }
+  sampleDecisionCache.set(sampleRate, { sessionId, decision })
   return decision
 }
 
 // Exported for tests
 export function resetSampleDecisionCache() {
-  sampleDecisionCache = undefined
+  sampleDecisionCache.clear()
 }
 
 /**
