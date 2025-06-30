@@ -6,7 +6,8 @@ import type {
   ProfilerApi,
   Hooks,
 } from '@datadog/browser-rum-core'
-import { addTelemetryDebug, monitorError, performDraw } from '@datadog/browser-core'
+import { addTelemetryDebug, monitorError } from '@datadog/browser-core'
+import { isSampled } from '@datadog/browser-rum-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
@@ -22,8 +23,16 @@ export function makeProfilerApi(): ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
   ) {
-    // Sampling.
-    if (!performDraw(configuration.profilingSampleRate)) {
+    const session = sessionManager.findTrackedSession() // Check if the session is tracked.
+
+    if (!session) {
+      // No session tracked, no profiling.
+      // Note: No Profiling context is set at this stage.
+      return
+    }
+
+    // Sampling (sticky sampling based on session id)
+    if (!isSampled(session.id, configuration.profilingSampleRate)) {
       // No sampling, no profiling.
       // Note: No Profiling context is set at this stage.
       return
