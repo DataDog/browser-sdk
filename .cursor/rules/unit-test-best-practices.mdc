@@ -8,19 +8,87 @@ description: For writing or refactoring unit tests
 globs: 
 alwaysApply: true
 ---
-## Run unit tests
+## Running Unit Tests
 
-- Run all unit tests wih `yarn test:unit`
-- Prepend `f` to `describe` and `it` for running specific tests
-- Run a spec with `--spec` command
+### Basic Commands
 
-## Test best practices
+- **Run all unit tests**: `yarn test:unit`
+- **Run a specific spec file**: `yarn test:unit --spec <file-path>`
+- **Focus on specific tests**: Prepend `f` to `describe` and `it` (e.g., `fdescribe`, `fit`)
 
-- Use descriptive test names that follows the pattern:
+### Examples
+
+#### Run All Tests
+```bash
+yarn test:unit
+```
+
+#### Run Single File
+```bash
+# Full path
+yarn test:unit --spec packages/core/src/browser/addEventListener.spec.ts
+
+# Pattern matching (if filename is unique)
+yarn test:unit --spec "**/addEventListener.spec.ts"
+
+# Multiple files with wildcards
+yarn test:unit --spec "packages/core/**/browser/*.spec.ts"
+```
+
+#### Focus on Specific Tests
+```typescript
+// Run only this describe block
+fdescribe('addEventListener', () => {
+  // All tests in this block will run
+  it('should add event listener', () => {})
+  it('should remove event listener', () => {})
+})
+
+// Run only this single test
+describe('addEventListener', () => {
+  fit('should add event listener', () => {
+    // Only this test will run
+  })
+  
+  it('should remove event listener', () => {
+    // This test will be skipped
+  })
+})
+```
+
+## Debugging Flaky Tests
+
+```bash
+# 1. Check test output for randomization seed
+yarn test:unit
+# Look for: "Randomized with seed 65781"
+
+# 2. Set seed in karma configuration
+# Edit test/unit/karma.base.conf.js:
+module.exports = {
+  // ... other config
+  client: {
+    jasmine: {
+      // ... other jasmine config
+      seed: 65781  // Use the seed from step 1
+    }
+  }
+}
+
+# 3. Run tests with the same order
+yarn test:unit
+
+# 4. Remove seed after debugging
+```
+
+## Test Structure Best Practices
+
+### Descriptive Test Names
+Use test names that follow clear patterns:
 
 ```typescript
 describe('functionOrClassName', () => {
-  // Setup variables
+  // Setup variables with proper types
   let variable: Type
   let mockObject: MockType
   
@@ -31,34 +99,68 @@ describe('functionOrClassName', () => {
   })
   
   afterEach(() => {
-    // Cleanup after each test
+    // Cleanup after each test (when needed)
     cleanupResources()
   })
   
-  describe('nested functionality', () => {
-    // Group related tests
+  describe('when condition is met', () => {
+    // Group related tests by behavior/context
+    
+    it('should perform expected action', () => {
+      // Arrange
+      const input = 'test-data'
+      
+      // Act
+      const result = variable.process(input)
+      
+      // Assert
+      expect(result).toBe('expected-output')
+    })
+    
+    it('should handle edge cases', () => {
+      // Test boundary conditions
+      expect(variable.process('')).toBe('')
+      expect(variable.process(null)).toThrow()
+    })
   })
   
-  it('should describe expected behavior', () => {
-    // Test implementation
+  describe('when condition is not met', () => {
+    it('should handle alternative behavior', () => {
+      // Test alternative paths
+    })
   })
 })
 ```
 
-- Test files use the .spec.ts extension and are co-located with source files. Follow pattern: sourceFile.ts → sourceFile.spec.ts
-
-- Tests are automatically discovered via glob pattern: packages/*/@(src|test)/**/*.spec.@(ts|tsx)
+### File Organization
+- **Co-location**: Test files use `.spec.ts` extension and are placed next to source files
+- **Naming pattern**: `sourceFile.ts` → `sourceFile.spec.ts`
+- **Auto-discovery**: Tests are found via glob: `packages/*/@(src|test)/**/*.spec.@(ts|tsx)`
 
 ## Test Utilities & Helpers
-- Cleanup Management
+
+### Resource Cleanup Management
+**Always use `registerCleanupTask`** for automatic cleanup:
+
 ```typescript
 import { registerCleanupTask } from '@datadog/browser-core/test'
 
 beforeEach(() => {
-  const subscription = lifeCycle.subscribe(...)
+  // Subscribe to lifecycle events
+  const subscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, callback)
+  
+  // Register cleanup - runs even if test fails
   registerCleanupTask(() => {
     subscription.unsubscribe()
-    // Other cleanup tasks
+    resetGlobalState()
+    clearDataStructures()
+  })
+  
+  // Setup DOM elements
+  const button = document.createElement('button')
+  document.body.appendChild(button)
+  registerCleanupTask(() => {
+    button.parentNode?.removeChild(button)
   })
 })
 ```
@@ -69,22 +171,43 @@ beforeEach(() => {
 import { mockClock } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 
-let clock: Clock
+describe('time-dependent functionality', () => {
+  let clock: Clock
 
-beforeEach(() => {
-  clock = mockClock()
-  // Cleanup is handled automatically via registerCleanupTask
-})
+  beforeEach(() => {
+    clock = mockClock()
+    // Cleanup is handled automatically via registerCleanupTask
+  })
 
-it('should handle time-based logic', () => {
-  // Trigger time-dependent code
-  someAsyncFunction()
+  it('should handle delayed operations', () => {
+    const callback = jasmine.createSpy('callback')
+    
+    // Trigger time-dependent code
+    setTimeout(callback, 1000)
+    
+    // Verify callback hasn't been called yet
+    expect(callback).not.toHaveBeenCalled()
+    
+    // Advance time by 1 second
+    clock.tick(1000)
+    
+    // Now callback should have been called
+    expect(callback).toHaveBeenCalled()
+  })
   
-  // Advance time
-  clock.tick(1000) // 1 second
-  
-  // Verify time-based behavior
-  expect(callback).toHaveBeenCalled()
+  it('should handle multiple time intervals', () => {
+    const results: number[] = []
+    
+    // Set up recurring timer
+    setInterval(() => results.push(Date.now()), 500)
+    
+    // Advance time in steps
+    clock.tick(500)  // First call
+    clock.tick(500)  // Second call
+    clock.tick(1000) // Third and fourth calls
+    
+    expect(results).toHaveLength(4)
+  })
 })
 ```
 
@@ -94,133 +217,126 @@ it('should handle time-based logic', () => {
 import { createNewEvent } from '@datadog/browser-core/test'
 
 describe('DOM interactions', () => {
+  let container: HTMLDivElement
   let button: HTMLButtonElement
   
   beforeEach(() => {
+    // Create test DOM structure
+    container = document.createElement('div')
     button = document.createElement('button')
     button.id = 'test-button'
     button.textContent = 'Click me'
-    document.body.appendChild(button)
-  })
-  
-  afterEach(() => {
-    // Clean up DOM elements
-    button.parentNode!.removeChild(button)
-  })
-  
-  it('should handle click events', () => {
-    const listener = jasmine.createSpy()
-    button.addEventListener('click', listener)
+    button.style.width = '100px'
+    button.style.height = '50px'
     
+    container.appendChild(button)
+    document.body.appendChild(container)
+    
+    // Register cleanup
+    registerCleanupTask(() => {
+      container.parentNode?.removeChild(container)
+    })
+  })
+  
+  it('should handle click events with proper event properties', () => {
+    const clickHandler = jasmine.createSpy('clickHandler')
+    button.addEventListener('click', clickHandler)
+    
+    // Create realistic click event
     const clickEvent = createNewEvent('click', { 
       target: button,
-      __ddIsTrusted: true  // Mark as trusted event
+      clientX: 50,
+      clientY: 25,
+      __ddIsTrusted: true  // Mark as trusted DataDog event
     })
     
+    // Dispatch event
     button.dispatchEvent(clickEvent)
     
-    expect(listener).toHaveBeenCalled()
+    // Verify handler was called with correct event
+    expect(clickHandler).toHaveBeenCalledTimes(1)
+    expect(clickHandler).toHaveBeenCalledWith(jasmine.objectContaining({
+      target: button,
+      type: 'click'
+    }))
+  })
+  
+  it('should handle keyboard events', () => {
+    const keyHandler = jasmine.createSpy('keyHandler')
+    button.addEventListener('keydown', keyHandler)
+    
+    const keyEvent = createNewEvent('keydown', {
+      target: button,
+      key: 'Enter',
+      keyCode: 13,
+      __ddIsTrusted: true
+    })
+    
+    button.dispatchEvent(keyEvent)
+    
+    expect(keyHandler).toHaveBeenCalledWith(jasmine.objectContaining({
+      key: 'Enter',
+      keyCode: 13
+    }))
   })
 })
 ```
-## Function Spying
+
+### Function Spying & Mocking
 
 ```typescript
-describe('method calls', () => {
-  it('should call specific methods', () => {
+describe('service interactions', () => {
+  let service: MyService
+  let dependency: ExternalDependency
+  
+  beforeEach(() => {
+    dependency = {
+      fetchData: jasmine.createSpy('fetchData').and.returnValue(Promise.resolve('data')),
+      processData: jasmine.createSpy('processData').and.callFake((data) => `processed-${data}`)
+    }
+    service = new MyService(dependency)
+  })
+  
+  it('should call dependencies with correct parameters', async () => {
+    const input = 'test-input'
+    
+    // Execute method under test
+    const result = await service.handleRequest(input)
+    
+    // Verify all interactions
+    expect(dependency.fetchData).toHaveBeenCalledTimes(1)
+    expect(dependency.fetchData).toHaveBeenCalledWith(input)
+    expect(dependency.processData).toHaveBeenCalledWith('data')
+    expect(result).toBe('processed-data')
+  })
+  
+  it('should handle errors gracefully', async () => {
+    // Configure spy to throw error
+    dependency.fetchData.and.rejectWith(new Error('Network error'))
+    
+    // Verify error handling
+    await expectAsync(service.handleRequest('input')).toBeRejectedWith(jasmine.any(Error))
+    expect(dependency.fetchData).toHaveBeenCalled()
+    expect(dependency.processData).not.toHaveBeenCalled()
+  })
+  
+  it('should spy on existing object methods', () => {
+    const existingObject = { method: () => 'original' }
+    
     // Spy on existing method
-    const spy = spyOn(object, 'method').and.returnValue(expectedValue)
+    const spy = spyOn(existingObject, 'method').and.returnValue('mocked')
     
-    // Create standalone spy
-    const standaloneSpy = jasmine.createSpy('methodName').and.returnValue(value)
+    const result = existingObject.method()
     
-    // Execute code under test
-    functionUnderTest()
-    
-    // Verify interactions
     expect(spy).toHaveBeenCalled()
-    expect(spy).toHaveBeenCalledWith(expectedArgs)
-    expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy).not.toHaveBeenCalled()
+    expect(result).toBe('mocked')
+    
+    // Restore original implementation if needed
+    spy.and.callThrough()
+    expect(existingObject.method()).toBe('original')
   })
 })
 ```
-
-## Event Collection & Validation
-
-### Event Collector Pattern
-
-```typescript
-function eventsCollector<T>() {
-  const events: T[] = []
-  beforeEach(() => {
-    events.length = 0  // Reset array
-  })
-  return {
-    events,
-    pushEvent: (event: T) => events.push(event)
-  }
-}
-
-describe('event generation', () => {
-  const { events, pushEvent } = eventsCollector<ClickAction>()
-  
-  beforeEach(() => {
-    const subscription = lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-    registerCleanupTask(() => subscription.unsubscribe())
-  })
-  
-  it('should generate expected events', () => {
-    // Trigger event generation
-    performAction()
-    
-    // Advance time to complete async operations
-    clock.tick(VALIDATION_DELAY)
-    
-    // Verify events
-    expect(events).toHaveLength(1)
-    expect(events[0]).toEqual(expectedEvent)
-  })
-})
-```
-
-### Raw Event Validation
-
-```typescript
-import { collectAndValidateRawRumEvents } from '../../../test'
-
-describe('RUM event creation', () => {
-  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
-  
-  beforeEach(() => {
-    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
-  })
-  
-  it('should create proper event structure', () => {
-    // Trigger event creation
-    addAction({
-      name: 'custom-action',
-      type: ActionType.CUSTOM,
-      startClocks: clocksNow()
-    })
-    
-    expect(rawRumEvents[0].rawRumEvent).toEqual({
-      action: {
-        id: jasmine.any(String),
-        target: { name: 'custom-action' },
-        type: ActionType.CUSTOM
-      },
-      date: jasmine.any(Number),
-      type: RumEventType.ACTION,
-      _dd: jasmine.any(Object)
-    })
-    
-    expect(rawRumEvents[0].startTime).toBe(expectedTime)
-    expect(rawRumEvents[0].domainContext).toEqual(expectedContext)
-  })
-})
-```
-
 ## Async Testing Patterns
 
 ### Activity Validation
@@ -229,20 +345,41 @@ describe('RUM event creation', () => {
 describe('page activity tracking', () => {
   const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
   const EXPIRE_DELAY = CLICK_ACTION_MAX_DURATION * 10
+  let clock: Clock
   
-  it('should validate after activity completes', () => {
-    // Start activity
-    emulateClick({ activity: {} })
+  beforeEach(() => {
+    clock = mockClock()
+  })
+  
+  it('should wait for page activity to complete before finalizing action', () => {
+    // Start activity that will trigger validation
+    emulateClick({ 
+      activity: { 
+        loadingTime: 500,
+        resourceCount: 2
+      } 
+    })
     
-    // Before validation delay - action should be pending
+    // Before validation delay - action should still be pending
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     expect(findActionId()).toBeDefined()
     expect(events).toHaveLength(0)
     
-    // After expiration - action should be completed
-    clock.tick(EXPIRE_DELAY)
+    // After full validation delay - action should be completed
+    clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY - BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     expect(events).toHaveLength(1)
-    expect(events[0].duration).toBe(expectedDuration)
+    expect(events[0].loadingTime).toBe(500)
+  })
+  
+  it('should expire actions that take too long', () => {
+    emulateClick({ activity: { loadingTime: Infinity } })
+    
+    // Fast forward to expiration
+    clock.tick(EXPIRE_DELAY)
+    
+    expect(events).toHaveLength(1)
+    expect(events[0].duration).toBe(CLICK_ACTION_MAX_DURATION)
+    expect(events[0].frustrationTypes).toContain('dead_click')
   })
 })
 ```
@@ -250,182 +387,285 @@ describe('page activity tracking', () => {
 ### Observable Testing
 
 ```typescript
-describe('observables', () => {
+describe('observable streams', () => {
   it('should handle observable emissions', () => {
-    const observable = new Observable<string>()
-    const callback = jasmine.createSpy()
+    const observable = new Observable<UserAction>()
+    const subscriber = jasmine.createSpy('subscriber')
     
-    const subscription = observable.subscribe(callback)
+    // Subscribe with cleanup
+    const subscription = observable.subscribe(subscriber)
     registerCleanupTask(() => subscription.unsubscribe())
     
-    // Emit values
-    observable.notify('test-value')
+    // Test emission
+    const testAction: UserAction = { type: 'CLICK', target: 'button' }
+    observable.notify(testAction)
     
-    expect(callback).toHaveBeenCalledWith('test-value')
+    expect(subscriber).toHaveBeenCalledTimes(1)
+    expect(subscriber).toHaveBeenCalledWith(testAction)
+  })
+  
+  it('should handle observable errors', () => {
+    const observable = new Observable<string>()
+    const errorHandler = jasmine.createSpy('errorHandler')
+    
+    const subscription = observable.subscribe({
+      next: jasmine.createSpy('next'),
+      error: errorHandler
+    })
+    registerCleanupTask(() => subscription.unsubscribe())
+    
+    // Trigger error
+    const testError = new Error('Test error')
+    observable.error(testError)
+    
+    expect(errorHandler).toHaveBeenCalledWith(testError)
   })
 })
 ```
 
 ## Test Organization Patterns
 
-### Helper Functions
-
-```typescript
-describe('session management', () => {
-  function startSessionManagerWithDefaults(options: Partial<Options> = {}) {
-    return startSessionManager({
-      configuration: mockConfiguration(),
-      productKey: 'test-product',
-      computeTrackingType: () => TrackingType.TRACKED,
-      trackingConsentState: createTrackingConsentState(TrackingConsent.GRANTED),
-      ...options
-    })
-  }
-  
-  function expectSessionIdToBe(manager: SessionManager, sessionId: string) {
-    expect(manager.findSession()!.id).toBe(sessionId)
-    expect(getSessionState().id).toBe(sessionId)
-  }
-  
-  function expectSessionToBeExpired(manager: SessionManager) {
-    expect(manager.findSession()).toBeUndefined()
-    expect(getSessionState().isExpired).toBe('1')
-  }
-})
-```
-
 ### Parameterized Tests
 
 ```typescript
 describe('event type handling', () => {
+  // Test data
+  const eventTypesWithActions = [
+    RumEventType.RESOURCE,
+    RumEventType.LONG_TASK,
+    RumEventType.ERROR,
+    RumEventType.VITAL
+  ]
+  
+  const eventTypesWithoutActions = [
+    RumEventType.VIEW,
+    RumEventType.ACTION
+  ]
+  
   // Test multiple event types with same logic
-  ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((eventType) => {
-    it(`should add action properties on ${eventType}`, () => {
-      const actionId = 'test-action-id'
+  eventTypesWithActions.forEach((eventType) => {
+    it(`should add action context to ${eventType} events`, () => {
+      const actionId = 'test-action-id-123'
       spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
       
-      const attributes = hooks.triggerHook(HookNames.Assemble, {
+      const attributes = hooks.triggerHook(HookNames.BEFORE_SEND, {
         eventType,
-        startTime: 0 as RelativeTime
+        startTime: 0 as RelativeTime,
+        rawRumEvent: createMockRumEvent(eventType)
       })
       
-      expect(attributes).toEqual({ 
-        type: eventType, 
-        action: { id: actionId } 
+      expect(attributes).toEqual(jasmine.objectContaining({
+        action: { id: actionId }
+      }))
+    })
+    
+    it(`should handle missing action context for ${eventType}`, () => {
+      spyOn(actionContexts, 'findActionId').and.returnValue(undefined)
+      
+      const attributes = hooks.triggerHook(HookNames.BEFORE_SEND, {
+        eventType,
+        startTime: 0 as RelativeTime,
+        rawRumEvent: createMockRumEvent(eventType)
       })
+      
+      expect(attributes?.action).toBeUndefined()
     })
   })
   
   // Test exclusions
-  ;[RumEventType.VIEW, RumEventType.VITAL].forEach((eventType) => {
-    it(`should not add action properties on ${eventType}`, () => {
-      const attributes = hooks.triggerHook(HookNames.Assemble, {
+  eventTypesWithoutActions.forEach((eventType) => {
+    it(`should not add action context to ${eventType} events`, () => {
+      spyOn(actionContexts, 'findActionId').and.returnValue('some-action-id')
+      
+      const attributes = hooks.triggerHook(HookNames.BEFORE_SEND, {
         eventType,
-        startTime: 0 as RelativeTime
+        startTime: 0 as RelativeTime,
+        rawRumEvent: createMockRumEvent(eventType)
       })
       
-      expect(attributes).toBeUndefined()
+      expect(attributes?.action).toBeUndefined()
     })
   })
+  
+  // Helper function
+  function createMockRumEvent(type: RumEventType): RawRumEvent {
+    return {
+      type,
+      date: Date.now(),
+      _dd: { format_version: 2 }
+    } as RawRumEvent
+  }
 })
 ```
 
 ## Memory Leak Prevention
 
 ### Cleanup Checklist
-
+✅ **Always do:**
 - Use `registerCleanupTask()` for all resource cleanup
 - Unsubscribe from observables and event listeners
 - Remove DOM elements after tests
-- Clear intervals/timeouts (handled by clock cleanup)
 - Reset global state in `beforeEach`
 - Stop managers and services properly
+- Clear intervals/timeouts (handled by clock cleanup)
+
+❌ **Never do:**
+- Rely on `afterEach` for critical cleanup (may not run if test fails)
+- Leave DOM elements attached to document
+- Use real timers in tests
+- Test multiple unrelated behaviors in one test
+
+### Cleanup Examples
+
+```typescript
+describe('comprehensive cleanup example', () => {
+  let manager: ResourceManager
+  let element: HTMLElement
+  let subscription: Subscription
+  let intervalId: number
+  
+  beforeEach(() => {
+    // Setup with proper cleanup registration
+    manager = new ResourceManager()
+    registerCleanupTask(() => manager.destroy())
+    
+    element = document.createElement('div')
+    document.body.appendChild(element)
+    registerCleanupTask(() => element.parentNode?.removeChild(element))
+    
+    subscription = eventStream.subscribe(handler)
+    registerCleanupTask(() => subscription.unsubscribe())
+    
+    intervalId = setInterval(periodicTask, 1000)
+    registerCleanupTask(() => clearInterval(intervalId))
+  })
+  
+  it('should handle all resources properly', () => {
+    // Test implementation
+    // All cleanup happens automatically via registerCleanupTask
+  })
+})
+```
 
 ## Common Anti-Patterns to Avoid
 
 ### ❌ Don't Do This
 
 ```typescript
-// Don't use afterEach for cleanup
+// DON'T: Use afterEach for cleanup - may not run if test fails
 afterEach(() => {
-  subscription.unsubscribe()  // May not run if test fails
+  subscription.unsubscribe()  // Might not execute
+  element.remove()           // Memory leak potential
 })
 
-// Don't forget to clean up DOM
-it('should test DOM', () => {
+// DON'T: Forget to clean up DOM
+it('should test DOM interaction', () => {
   const element = document.createElement('div')
   document.body.appendChild(element)
   // Missing cleanup - memory leak!
 })
 
-// Don't use real timers
-it('should test timeout', (done) => {
+// DON'T: Use real timers - makes tests slow and flaky
+it('should handle delayed action', (done) => {
   setTimeout(() => {
-    // Real timeout makes tests slow and flaky
+    expect(something).toBeTruthy()
     done()
-  }, 1000)
+  }, 1000) // Real 1-second delay!
 })
 
-// Don't test multiple things in one test
+// DON'T: Test multiple unrelated behaviors
 it('should do everything', () => {
-  // Test setup
-  // Test behavior A
-  // Test behavior B  
-  // Test behavior C - Hard to debug when it fails
+  // Setup user
+  const user = createUser()
+  expect(user.id).toBeDefined()
+  
+  // Test login
+  user.login()
+  expect(user.isLoggedIn).toBeTruthy()
+  
+  // Test permissions  
+  expect(user.hasPermission('admin')).toBeFalsy()
+  
+  // Test logout
+  user.logout()
+  expect(user.isLoggedIn).toBeFalsy()
+  // Hard to debug when one part fails!
+})
+
+// DON'T: Use vague test names
+it('should work', () => {
+  // What should work? How?
+})
+
+it('should test the function', () => {
+  // Which function? What aspect?
 })
 ```
 
 ### ✅ Do This Instead
 
 ```typescript
-// Use registerCleanupTask
+// DO: Use registerCleanupTask for reliable cleanup
 beforeEach(() => {
   const subscription = observable.subscribe(handler)
   registerCleanupTask(() => subscription.unsubscribe())
+  
+  const element = document.createElement('div')
+  document.body.appendChild(element)
+  registerCleanupTask(() => element.parentNode?.removeChild(element))
 })
 
-// Always clean up DOM
+// DO: Always clean up DOM elements
 beforeEach(() => {
-  element = document.createElement('div')
-  document.body.appendChild(element)
+  container = document.createElement('div')
+  document.body.appendChild(container)
 })
 afterEach(() => {
-  element.parentNode!.removeChild(element)
+  container.parentNode?.removeChild(container)
 })
 
-// Use mocked clock
+// DO: Use mocked clock for time-based tests
 beforeEach(() => {
   clock = mockClock()
 })
-it('should test timeout', () => {
-  scheduleTimeout()
-  clock.tick(1000)
+it('should handle delayed operations', () => {
+  const callback = jasmine.createSpy()
+  setTimeout(callback, 1000)
+  
+  clock.tick(1000) // Instant!
   expect(callback).toHaveBeenCalled()
 })
 
-// One assertion per test
-it('should setup correctly', () => {
-  expect(setupResult).toBeDefined()
+// DO: One focused assertion per test
+describe('User', () => {
+  it('should generate unique ID on creation', () => {
+    const user = createUser()
+    expect(user.id).toMatch(/^user-\d+$/)
+  })
+  
+  it('should start in logged-out state', () => {
+    const user = createUser()
+    expect(user.isLoggedIn).toBeFalsy()
+  })
+  
+  it('should allow login with valid credentials', () => {
+    const user = createUser()
+    user.login('valid@email.com', 'password')
+    expect(user.isLoggedIn).toBeTruthy()
+  })
+  
+  it('should deny admin permissions to regular user', () => {
+    const user = createUser()
+    expect(user.hasPermission('admin')).toBeFalsy()
+  })
 })
-it('should handle behavior A', () => {
-  expect(behaviorA()).toBe(expected)
+
+// DO: Use descriptive, specific test names
+it('should generate SHA-256 hash for user password', () => {
+  // Clear what's being tested
+})
+
+it('should throw ValidationError when email format is invalid', () => {
+  // Clear behavior and expected outcome
 })
 ```
-
-## Debug flaky unit tests
-
-- Top-level describe blocks are run in a random order. Sometimes, an issue can only be reproduced with a given order. To reproduce a test run order:
-
-  1. Check the Randomized with seed XXXX message from the test output 
-  2. Temporarily set it as a seed: XXXX property in the jasmine configuration
-    ```typescript
-    module.exports = {
-    ...,
-    client: {
-        jasmine: {
-        ...,
-        seed: 80413
-        },
-    },
-    ```
-  3. Run yarn test

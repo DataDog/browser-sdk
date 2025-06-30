@@ -6,6 +6,9 @@ alwaysApply: true
 ---
 description: Standards for Test-Driven Development in the Browser SDK project
 globs:
+tags:
+  - jasmine
+  - karma
 alwaysApply: true
 ---
 
