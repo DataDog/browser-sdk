@@ -1,6 +1,7 @@
-import { ActionType } from 'packages/rum-core/src/rawRumEvent.types'
-import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../getActionNameFromElement'
-import { ClickActionBase } from '../trackClickActions'
+import { ActionType } from '../../../rawRumEvent.types'
+import { NodePrivacyLevel } from '../../privacy'
+import { ActionNameSource, ACTION_NAME_PLACEHOLDER } from '../getActionNameFromElement'
+import type { ClickActionBase } from '../trackClickActions'
 import {
   createActionAllowList,
   processRawAllowList,
@@ -9,7 +10,6 @@ import {
   isBrowserSupported,
 } from './allowedDictionary'
 import type { AllowedDictionary } from './allowedDictionary'
-import { NodePrivacyLevel } from '../../privacy'
 
 const TEST_STRINGS = {
   COMPLEX_MIXED: 'test-user-name:💥$$$, test-user-id:hello>=42@world?',

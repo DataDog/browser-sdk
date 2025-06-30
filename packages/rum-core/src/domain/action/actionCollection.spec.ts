@@ -11,8 +11,7 @@ import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
 import { startActionCollection } from './actionCollection'
-import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from './getActionNameFromElement'
-import { isBrowserSupported } from './privacy/allowedDictionary'
+import { ActionNameSource } from './getActionNameFromElement'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
