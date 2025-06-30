@@ -1,22 +1,16 @@
 import { performDraw } from '@datadog/browser-core'
 
-let sampleDecisionPerFeatureCache: {
-  trace: { sessionId: string; decision: boolean } | undefined
-  profiling: { sessionId: string; decision: boolean } | undefined
-} = {
-  trace: undefined,
-  profiling: undefined,
-}
+const sampleDecisionCache: Map<number, { sessionId: string; decision: boolean }> = new Map()
 
 export function isTraceSampled(sessionId: string, sampleRate: number) {
-  return isSampled(sessionId, sampleRate, 'trace')
+  return isSampled(sessionId, sampleRate)
 }
 
 export function isProfilingSampled(sessionId: string, sampleRate: number) {
-  return isSampled(sessionId, sampleRate, 'profiling')
+  return isSampled(sessionId, sampleRate)
 }
 
-function isSampled(sessionId: string, sampleRate: number, feature: 'trace' | 'profiling') {
+function isSampled(sessionId: string, sampleRate: number) {
   // Shortcuts for common cases. This is not strictly necessary, but it makes the code faster for
   // customers willing to ingest all traces.
   if (sampleRate === 100) {
@@ -27,8 +21,9 @@ function isSampled(sessionId: string, sampleRate: number, feature: 'trace' | 'pr
     return false
   }
 
-  if (sampleDecisionPerFeatureCache[feature] && sessionId === sampleDecisionPerFeatureCache[feature].sessionId) {
-    return sampleDecisionPerFeatureCache[feature].decision
+  const cachedDecision = sampleDecisionCache.get(sampleRate)
+  if (cachedDecision && sessionId === cachedDecision.sessionId) {
+    return cachedDecision.decision
   }
 
   let decision: boolean
@@ -40,16 +35,13 @@ function isSampled(sessionId: string, sampleRate: number, feature: 'trace' | 'pr
     // TODO: remove this when all browser we support have BigInt support
     decision = performDraw(sampleRate)
   }
-  sampleDecisionPerFeatureCache[feature] = { sessionId, decision }
+  sampleDecisionCache.set(sampleRate, { sessionId, decision })
   return decision
 }
 
 // Exported for tests
 export function resetSampleDecisionCache() {
-  sampleDecisionPerFeatureCache = {
-    trace: undefined,
-    profiling: undefined,
-  }
+  sampleDecisionCache.clear()
 }
 
 /**
