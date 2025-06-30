@@ -1,4 +1,4 @@
-import { isTraceSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
+import { isProfilingSampled, isTraceSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
 
 // UUID known to yield a low hash value using the Knuth formula, making it more likely to be sampled
 const LOW_HASH_UUID = '29a4b5e3-9859-4290-99fa-4bc4a1a348b9'
@@ -103,5 +103,12 @@ describe('sampleUsingKnuthFactor', () => {
         .withContext(`identifier=${identifier}, sampleRate=${sampleRate}`)
         .toBe(expected)
     }
+  })
+
+  it('should separate sampling for trace and profiling', () => {
+    // For the same session id, the sampling decision should be different for trace and profiling, eg. trace should not cache profiling decisions and vice versa
+    expect(isTraceSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
+    expect(isProfilingSampled(HIGH_HASH_UUID, 0.0000001)).toBeFalse()
+    expect(isTraceSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
   })
 })

@@ -1,8 +1,22 @@
 import { performDraw } from '@datadog/browser-core'
 
-let sampleDecisionCache: { sessionId: string; decision: boolean } | undefined
+let sampleDecisionPerFeatureCache: {
+  trace: { sessionId: string; decision: boolean } | undefined
+  profiling: { sessionId: string; decision: boolean } | undefined
+} = {
+  trace: undefined,
+  profiling: undefined,
+}
 
 export function isTraceSampled(sessionId: string, sampleRate: number) {
+  return isSampled(sessionId, sampleRate, 'trace')
+}
+
+export function isProfilingSampled(sessionId: string, sampleRate: number) {
+  return isSampled(sessionId, sampleRate, 'profiling')
+}
+
+function isSampled(sessionId: string, sampleRate: number, feature: 'trace' | 'profiling') {
   // Shortcuts for common cases. This is not strictly necessary, but it makes the code faster for
   // customers willing to ingest all traces.
   if (sampleRate === 100) {
@@ -13,8 +27,8 @@ export function isTraceSampled(sessionId: string, sampleRate: number) {
     return false
   }
 
-  if (sampleDecisionCache && sessionId === sampleDecisionCache.sessionId) {
-    return sampleDecisionCache.decision
+  if (sampleDecisionPerFeatureCache[feature] && sessionId === sampleDecisionPerFeatureCache[feature].sessionId) {
+    return sampleDecisionPerFeatureCache[feature].decision
   }
 
   let decision: boolean
@@ -26,13 +40,16 @@ export function isTraceSampled(sessionId: string, sampleRate: number) {
     // TODO: remove this when all browser we support have BigInt support
     decision = performDraw(sampleRate)
   }
-  sampleDecisionCache = { sessionId, decision }
+  sampleDecisionPerFeatureCache[feature] = { sessionId, decision }
   return decision
 }
 
 // Exported for tests
 export function resetSampleDecisionCache() {
-  sampleDecisionCache = undefined
+  sampleDecisionPerFeatureCache = {
+    trace: undefined,
+    profiling: undefined,
+  }
 }
 
 /**

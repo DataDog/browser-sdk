@@ -15,10 +15,10 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
+import { isTraceSampled } from '../sampler/sampler'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
-import { isTraceSampled } from './sampler'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
