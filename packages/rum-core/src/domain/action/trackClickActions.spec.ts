@@ -22,6 +22,7 @@ import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 import { ActionNameSource } from './getActionNameFromElement'
+import { createActionAllowList } from './privacy/allowedDictionary'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -62,7 +63,8 @@ describe('trackClickActions', () => {
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(partialConfig)
+      mockRumConfiguration(partialConfig),
+      createActionAllowList()
     )
 
     findActionId = trackClickActionsResult.actionContexts.findActionId
@@ -445,6 +447,59 @@ describe('trackClickActions', () => {
 
       emulateClick({ eventProperty: { timeStamp } })
       expect(getInteractionSelector(timeStamp)).toBe('#button')
+    })
+  })
+
+  describe('maskActionName', () => {
+    beforeAll(() => {
+      window.$DD_ALLOW = new Set(['foo-bar'])
+      // notify the observer to process the allowlist
+      window.$DD_ALLOW_OBSERVERS?.forEach((observer) => observer())
+    })
+
+    afterAll(() => {
+      window.$DD_ALLOW = undefined
+    })
+
+    it('should mask action name when defaultPrivacyLevel is mask and not in allowlist', () => {
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('xxxxx xx')
+      expect(events[0].nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
+    })
+
+    it('should not mask action name when defaultPrivacyLevel is allow', () => {
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Click me')
+    })
+
+    it('should not use allowlist masking when enablePrivacyForActionName is true', () => {
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        enablePrivacyForActionName: true,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Masked Element')
     })
   })
 

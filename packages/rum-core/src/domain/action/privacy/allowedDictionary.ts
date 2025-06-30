@@ -1,5 +1,6 @@
-import { TEXT_MASKING_CHAR } from '../../privacy'
-import { ACTION_NAME_PLACEHOLDER } from '../getActionNameFromElement'
+import { NodePrivacyLevel, TEXT_MASKING_CHAR } from '../../privacy'
+import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../getActionNameFromElement'
+import type { ClickActionBase } from '../trackClickActions'
 
 declare global {
   interface Window {
@@ -59,7 +60,7 @@ export function isBrowserSupported(): boolean {
 export type AllowedDictionary = {
   rawStringCounter: number
   allowlist: Set<string>
-  rawStringIterator: SetIterator<string> | undefined
+  rawStringIterator: IterableIterator<string> | undefined
   clear: () => void
 }
 
@@ -117,15 +118,26 @@ export function processRawAllowList(rawAllowlist: Set<string> | undefined, dicti
   }
 }
 
-export function maskActionName(name: string, processedAllowlist: Set<string>): { masked: boolean; name: string } {
-  if (!window.$DD_ALLOW || name === ACTION_NAME_PLACEHOLDER) {
-    return { name, masked: false }
+export function maskActionName(
+  actionName: ClickActionBase,
+  nodeSelfPrivacy: NodePrivacyLevel,
+  processedAllowlist: Set<string>
+): ClickActionBase {
+  if (!window.$DD_ALLOW) {
+    return actionName
   }
+
+  if (nodeSelfPrivacy === NodePrivacyLevel.ALLOW) {
+    return actionName
+  }
+
+  const { name, nameSource } = actionName
 
   if (!initializeUnicodeSupport()) {
     return {
+      ...actionName,
       name: name ? ACTION_NAME_PLACEHOLDER : '',
-      masked: !!name,
+      nameSource: name ? ActionNameSource.MASK_DISALLOWED : nameSource,
     }
   }
 
@@ -141,7 +153,8 @@ export function maskActionName(name: string, processedAllowlist: Set<string>): {
   })
 
   return {
+    ...actionName,
     name: maskedName,
-    masked: hasBeenMasked,
+    nameSource: hasBeenMasked ? ActionNameSource.MASK_DISALLOWED : nameSource,
   }
 }

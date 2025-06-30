@@ -1,4 +1,6 @@
-import { ACTION_NAME_PLACEHOLDER } from '../getActionNameFromElement'
+import { ActionType } from 'packages/rum-core/src/rawRumEvent.types'
+import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../getActionNameFromElement'
+import { ClickActionBase } from '../trackClickActions'
 import {
   createActionAllowList,
   processRawAllowList,
@@ -7,6 +9,7 @@ import {
   isBrowserSupported,
 } from './allowedDictionary'
 import type { AllowedDictionary } from './allowedDictionary'
+import { NodePrivacyLevel } from '../../privacy'
 
 const TEST_STRINGS = {
   COMPLEX_MIXED: 'test-user-name:💥$$$, test-user-id:hello>=42@world?',
@@ -228,6 +231,17 @@ if (isBrowserSupported()) {
 describe('createActionNameDictionary and maskActionName', () => {
   let actionNameDictionary: AllowedDictionary
   let clearActionNameDictionary: () => void
+  const clickActionBase: ClickActionBase = {
+    type: ActionType.CLICK,
+    name: 'test-💥-xxxxxx-xxx',
+    nameSource: ActionNameSource.MASK_DISALLOWED,
+    target: {
+      selector: 'button',
+      width: 100,
+      height: 100,
+    },
+    position: { x: 0, y: 0 },
+  }
 
   beforeEach(() => {
     window.$DD_ALLOW = new Set([TEST_STRINGS.COMPLEX_MIXED, TEST_STRINGS.PARAGRAPH_MIXED])
@@ -242,33 +256,36 @@ describe('createActionNameDictionary and maskActionName', () => {
 
   it('should not run if $DD_ALLOW is not defined', () => {
     window.$DD_ALLOW = undefined as any
-    const testString = maskActionName('mask-feature-off', actionNameDictionary.allowlist)
-    expect(testString.masked).toBeFalse()
+    clickActionBase.name = 'mask-feature-off'
+    const testString = maskActionName(clickActionBase, NodePrivacyLevel.ALLOW, actionNameDictionary.allowlist)
     expect(testString.name).toBe('mask-feature-off')
+    expect(testString.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
   })
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
+    clickActionBase.name = 'test-💥-$>=123-pii'
     let expected = 'test-💥-xxxxxx-xxx'
     if (!isBrowserSupported()) {
       expected = ACTION_NAME_PLACEHOLDER
     }
-
-    const testString1 = maskActionName('test-💥-$>=123-pii', actionNameDictionary.allowlist)
-    expect(testString1.masked).toBeTrue()
+    const testString1 = maskActionName(clickActionBase, NodePrivacyLevel.MASK, actionNameDictionary.allowlist)
     expect(testString1.name).toBe(expected)
+    expect(testString1.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
 
+    clickActionBase.name = 'test-💥+123*hello wild'
     expected = 'test-xxxxxx*hello xxxx'
     if (!isBrowserSupported()) {
       expected = ACTION_NAME_PLACEHOLDER
     }
-    const testString2 = maskActionName('test-💥+123*hello wild', actionNameDictionary.allowlist)
-    expect(testString2.masked).toBeTrue()
+    const testString2 = maskActionName(clickActionBase, NodePrivacyLevel.MASK, actionNameDictionary.allowlist)
     expect(testString2.name).toBe(expected)
+    expect(testString2.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
   })
 
   it('handles empty string', () => {
-    const result = maskActionName('', actionNameDictionary.allowlist)
-    expect(result.masked).toBeFalse()
+    clickActionBase.name = ''
+    const result = maskActionName(clickActionBase, NodePrivacyLevel.ALLOW, actionNameDictionary.allowlist)
     expect(result.name).toBe('')
+    expect(result.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
   })
 })
