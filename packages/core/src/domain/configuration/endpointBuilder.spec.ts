@@ -145,17 +145,29 @@ describe('endpointBuilder', () => {
     })
   })
 
-  describe('overridable source', () => {
-    it('should use the plugin override source in the endpoint URL', () => {
-      const plugin = { overrides: { source: 'plugin-source' } }
+  describe('overridable source and variant', () => {
+    it('should use the plugin override source and variant in the endpoint URL', () => {
+      const plugin = { overrides: { source: 'plugin-source', variant: 'plugin-variant' } }
       const config = { ...initConfiguration, plugins: [plugin] }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=plugin-source')
+      expect(endpoint).toContain('dd-variant=plugin-variant')
     })
-    it('should use the default source if no plugin override is provided', () => {
+    it('should join multiple plugin sources and variants', () => {
+      const plugins = [
+        { overrides: { source: 'source1', variant: 'variant1' } },
+        { overrides: { source: 'source2', variant: 'variant2' } },
+      ]
+      const config = { ...initConfiguration, plugins }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=source1,source2')
+      expect(endpoint).toContain('dd-variant=variant1,variant2')
+    })
+    it('should use the default source and no variant if not provided', () => {
       const config = { ...initConfiguration, plugins: [] }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=browser')
+      expect(endpoint).not.toContain('dd-variant=')
     })
   })
 })
