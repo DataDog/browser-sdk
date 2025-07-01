@@ -1331,6 +1331,7 @@ export interface CommonProperties {
     | 'roku'
     | 'unity'
     | 'kotlin-multiplatform'
+    // This is a trick to allow the source to be any string and have auto-completion in IDEs
     | (string & {})
   /**
    * View properties
