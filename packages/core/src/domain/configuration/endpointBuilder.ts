@@ -1,4 +1,4 @@
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { RumPlugin } from '../../../../rum-core/src/domain/plugins'
 import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
@@ -82,11 +82,7 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  {
-    clientToken,
-    internalAnalyticsSubdomain,
-    plugins = [],
-  }: InitConfiguration & Partial<Pick<RumInitConfiguration, 'plugins'>>,
+  { clientToken, internalAnalyticsSubdomain, plugins = [] }: InitConfiguration & { plugins?: RumPlugin[] },
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload
