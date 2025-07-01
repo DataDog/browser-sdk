@@ -32,7 +32,7 @@ export function startDefaultContext(
         configuration.plugins
           .map((plugin) => plugin?.overrides?.source)
           .filter(Boolean)
-          .join(',') ?? 'browser',
+          .join(',') || 'browser',
       variant: configuration.plugins
         .map((plugin) => plugin?.overrides?.variant)
         .filter(Boolean)

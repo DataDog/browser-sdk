@@ -29,8 +29,8 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
         initConfiguration.trackViewsManually = true
       }
     },
-    onRumStart({ configuration, strategy }) {
-      configuration.variant = 'react'
+    onRumStart({ strategy }) {
+      globalStrategy = strategy
       for (const subscriber of onRumStartSubscribers) {
         subscriber(strategy)
       }
