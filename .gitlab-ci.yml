@@ -239,6 +239,15 @@ check-licenses:
     - yarn
     - node --no-warnings scripts/check-licenses.js
 
+check-node-version:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - node scripts/check-node-version.js
+
 check-release:
   extends:
     - .base-configuration
