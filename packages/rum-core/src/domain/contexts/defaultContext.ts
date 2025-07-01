@@ -10,9 +10,19 @@ export function startDefaultContext(
   configuration: RumConfiguration,
   sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
-  hooks.register(
-    HookNames.Assemble,
-    ({ eventType }): DefaultRumEventAttributes => ({
+  hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
+    const source =
+      configuration.plugins
+        .map((plugin) => plugin?.overrides?.source)
+        .filter(Boolean)
+        .join(',') || 'browser'
+
+    const variant = configuration.plugins
+      .map((plugin) => plugin?.overrides?.variant)
+      .filter(Boolean)
+      .join(',')
+
+    return {
       type: eventType,
       _dd: {
         format_version: 2,
@@ -29,15 +39,8 @@ export function startDefaultContext(
         id: configuration.applicationId,
       },
       date: timeStampNow(),
-      source:
-        configuration.plugins
-          .map((plugin) => plugin?.overrides?.source)
-          .filter(Boolean)
-          .join(',') || 'browser',
-      variant: configuration.plugins
-        .map((plugin) => plugin?.overrides?.variant)
-        .filter(Boolean)
-        .join(','),
-    })
-  )
+      source: source || 'browser',
+      ...(variant ? { variant } : {}),
+    }
+  })
 }

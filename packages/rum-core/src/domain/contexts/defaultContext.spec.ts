@@ -66,5 +66,43 @@ describe('startDefaultContext', () => {
       expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)
       expect(event._dd!.sdk_name).toBe('rum')
     })
+
+    it('should set the configured source and variant', () => {
+      startDefaultContext(
+        hooks,
+        mockRumConfiguration({
+          applicationId: '1',
+          plugins: [
+            {
+              name: 'test-plugin',
+              overrides: {
+                source: 'test-source',
+                variant: 'test-variant',
+              },
+            },
+          ],
+        }),
+        'rum'
+      )
+
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(defaultRumEventAttributes).toEqual({
+        type: 'view',
+        application: {
+          id: '1',
+        },
+        date: timeStampNow(),
+        source: 'test-source',
+        variant: 'test-variant',
+        _dd: jasmine.objectContaining({
+          format_version: 2,
+          drift: jasmine.any(Number),
+        }),
+      })
+    })
   })
 })
