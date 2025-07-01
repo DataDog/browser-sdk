@@ -41,8 +41,8 @@
   "devDependencies": {
     "@eslint/js": "9.30.0",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
-    "@playwright/test": "1.52.0",
-    "@swc/core": "1.12.7",
+    "@playwright/test": "1.53.2",
+    "@swc/core": "1.12.9",
     "@types/chrome": "0.0.328",
     "@types/connect-busboy": "1.0.3",
     "@types/cors": "2.8.19",
@@ -87,7 +87,7 @@
     "ts-node": "10.9.2",
     "tsconfig-paths-webpack-plugin": "4.2.0",
     "typescript": "5.8.3",
-    "typescript-eslint": "8.35.0",
+    "typescript-eslint": "8.35.1",
     "webpack": "5.99.9",
     "webpack-cli": "6.0.1",
     "webpack-dev-middleware": "7.4.2"
