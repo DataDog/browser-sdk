@@ -3,7 +3,6 @@ const readline = require('readline')
 const path = require('path')
 const packageJson = require('../package.json')
 const { printLog, printError, runMain } = require('./lib/executionUtils')
-const { command } = require('./lib/command')
 
 runMain(async () => {
   printLog('Check that node version across configurations are matching...\n')
@@ -14,10 +13,10 @@ runMain(async () => {
   const voltaVersion = packageJson.volta.node
   printLog(`volta: ${voltaVersion}`)
 
-  const cliVersion = retrieveCliVersion()
-  printLog(`cli: ${cliVersion}`)
+  const processVersion = retrieveProcessVersion()
+  printLog(`process: ${processVersion}`)
 
-  if (dockerVersion !== voltaVersion || dockerVersion !== cliVersion) {
+  if (dockerVersion !== voltaVersion || dockerVersion !== processVersion) {
     printError('Different node versions detected!\n')
     printError('Ensure to:')
     printError(`- run \`volta pin node@${dockerVersion}\``)
@@ -35,9 +34,9 @@ async function retrieveDockerVersion() {
   }
 }
 
-function retrieveCliVersion() {
-  // node cli returns vX.Y.Z
-  return extractVersion(command`node -v`.run())
+function retrieveProcessVersion() {
+  // process.version returns vX.Y.Z
+  return extractVersion(process.version)
 }
 
 function extractVersion(input) {
