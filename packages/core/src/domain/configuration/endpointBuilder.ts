@@ -1,3 +1,4 @@
+import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
@@ -81,13 +82,23 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
+  {
+    clientToken,
+    internalAnalyticsSubdomain,
+    plugins = [],
+  }: InitConfiguration & Partial<Pick<RumInitConfiguration, 'plugins'>>,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload
 ) {
+  const source =
+    plugins
+      .map((plugin) => plugin.name)
+      .filter(Boolean)
+      .join(',') || 'browser'
+
   const parameters = [
-    'ddsource=browser',
+    `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
