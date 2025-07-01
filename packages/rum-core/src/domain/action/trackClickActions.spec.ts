@@ -501,6 +501,20 @@ describe('trackClickActions', () => {
       expect(events.length).toBe(1)
       expect(events[0].name).toBe('Masked Element')
     })
+
+    it('should not mask action name when defaultPrivacyLevel is mask but dd-privacy is allow', () => {
+      button.setAttribute('data-dd-privacy', 'allow')
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Click me')
+    })
   })
 
   function emulateClick({

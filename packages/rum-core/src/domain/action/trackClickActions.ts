@@ -154,9 +154,7 @@ function processPointerDown(
   actionNameDictionary: AllowedDictionary
 ) {
   const nodeSelfPrivacy = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-  const nodePrivacyLevel = configuration.enablePrivacyForActionName
-    ? getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-    : NodePrivacyLevel.ALLOW
+  const nodePrivacyLevel = configuration.enablePrivacyForActionName ? nodeSelfPrivacy : NodePrivacyLevel.ALLOW
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return undefined
