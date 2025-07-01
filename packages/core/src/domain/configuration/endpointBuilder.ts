@@ -97,13 +97,18 @@ function buildEndpointParameters(
       .filter(Boolean)
       .join(',') || 'browser'
 
+  const variant = plugins
+    .map((plugin) => plugin?.overrides?.variant)
+    .filter(Boolean)
+    .join(',')
+
   const parameters = [
     `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
     `dd-request-id=${generateUUID()}`,
-  ]
+  ].concat(variant ? [`dd-variant=${variant}`] : [])
 
   if (encoding) {
     parameters.push(`dd-evp-encoding=${encoding}`)
