@@ -93,7 +93,7 @@ function buildEndpointParameters(
 ) {
   const source =
     plugins
-      .map((plugin) => plugin.name)
+      .map((plugin) => plugin?.overrides?.source)
       .filter(Boolean)
       .join(',') || 'browser'
 
