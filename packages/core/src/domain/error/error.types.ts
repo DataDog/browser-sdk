@@ -16,7 +16,7 @@ export interface ErrorWithCause extends Omit<Error, 'cause'> {
 
 export type RawErrorCause = {
   message: string
-  source: string
+  source: ErrorSource
   type?: string
   stack?: string
 }

@@ -4,17 +4,17 @@
 
 import type { RumEventType } from './rawRumEvent.types'
 
-export type RumEventDomainContext<T extends RumEventType = any> = T extends RumEventType.VIEW
+export type RumEventDomainContext<T extends RumEventType = any> = T extends typeof RumEventType.VIEW
   ? RumViewEventDomainContext
-  : T extends RumEventType.ACTION
+  : T extends typeof RumEventType.ACTION
     ? RumActionEventDomainContext
-    : T extends RumEventType.RESOURCE
+    : T extends typeof RumEventType.RESOURCE
       ? RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext
-      : T extends RumEventType.ERROR
+      : T extends typeof RumEventType.ERROR
         ? RumErrorEventDomainContext
-        : T extends RumEventType.LONG_TASK
+        : T extends typeof RumEventType.LONG_TASK
           ? RumLongTaskEventDomainContext
-          : T extends RumEventType.VITAL
+          : T extends typeof RumEventType.VITAL
             ? RumVitalEventDomainContext
             : never
 

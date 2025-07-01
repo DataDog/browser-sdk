@@ -84,7 +84,7 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
       fingerprint: error.fingerprint,
       csp: error.csp,
     },
-    type: RumEventType.ERROR as const,
+    type: RumEventType.ERROR,
   }
 
   const domainContext: RumErrorEventDomainContext = {

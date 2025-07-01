@@ -462,7 +462,10 @@ export function makeRumPublicApi(
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
-      callPluginsMethod(configuration.plugins, 'onRumStart', { strategy })
+      callPluginsMethod(configuration.plugins, 'onRumStart', {
+        strategy, // TODO: remove this in the next major release
+        addEvent: startRumResult.addEvent,
+      })
 
       return startRumResult
     }
