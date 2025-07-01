@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test'
-import type { RumPlugin } from '@datadog/browser-rum-core'
+import type { RumPlugin, AllowedRawRumEvent } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType } from '@datadog/browser-rum-core'
 import type { ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { clocksNow, generateUUID } from '@datadog/browser-core'
-import type { AllowedRawRumEvent } from '@datadog/browser-rum-core/cjs/domain/event/eventCollection'
 import { createTest } from '../lib/framework'
 
 declare global {
@@ -21,7 +20,7 @@ function createPlugin(): RumPlugin {
   }
 }
 
-const mockPartiaEvents: AllowedRawRumEvent[] = [
+const mockPartialEvents: AllowedRawRumEvent[] = [
   {
     type: RumEventType.ACTION,
     date: 1 as TimeStamp,
@@ -84,8 +83,8 @@ const mockPartiaEvents: AllowedRawRumEvent[] = [
   },
 ] as const
 
-test.describe('onRumStart @only', () => {
-  for (const partialEvent of mockPartiaEvents) {
+test.describe('onRumStart', () => {
+  for (const partialEvent of mockPartialEvents) {
     createTest(`addEvent can send ${partialEvent.type} events`)
       .withRum({ plugins: [createPlugin()] })
       .run(async ({ flushEvents, intakeRegistry, page }) => {
@@ -94,7 +93,7 @@ test.describe('onRumStart @only', () => {
 
         await page.evaluate(
           ({ startClocks, event }) => {
-            window.TEST_PLUGIN.addEvent(startClocks.relative, event, {})
+            window.TEST_PLUGIN.addEvent?.(startClocks.relative, event, {})
           },
           { startClocks, event: partialEvent }
         )
@@ -102,9 +101,7 @@ test.describe('onRumStart @only', () => {
         const event = intakeRegistry.rumEvents.filter(
           (e) => e.type === partialEvent.type && (e as any)[eventType]?.id === (partialEvent as any)[eventType].id
         )
-        console.log('event', event)
-
-        expect(event.length).toBeGreaterThan(0)
+        expect(event.length).toBe(1)
         expect((event[0] as any)[eventType].id).toBe((partialEvent as any)[eventType].id)
       })
   }
@@ -117,7 +114,7 @@ test.describe('onRumStart @only', () => {
 
       await page.evaluate(
         ({ startClocks, uuid }) => {
-          window.TEST_PLUGIN.addEvent(
+          window.TEST_PLUGIN.addEvent?.(
             startClocks.relative,
             {
               type: 'view',

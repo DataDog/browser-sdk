@@ -32,7 +32,9 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
     onRumStart({ addEvent }) {
       globalAddEvent = addEvent
       for (const subscriber of onRumStartSubscribers) {
-        subscriber(addEvent)
+        if (addEvent) {
+          subscriber(addEvent)
+        }
       }
     },
     getConfigurationTelemetry() {
