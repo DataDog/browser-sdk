@@ -144,4 +144,18 @@ describe('endpointBuilder', () => {
       )
     })
   })
+
+  describe('overridable source', () => {
+    it('should use the plugin override source in the endpoint URL', () => {
+      const plugin = { overrides: { source: 'plugin-source' } }
+      const config = { ...initConfiguration, plugins: [plugin] }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=plugin-source')
+    })
+    it('should use the default source if no plugin override is provided', () => {
+      const config = { ...initConfiguration, plugins: [] }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=browser')
+    })
+  })
 })
