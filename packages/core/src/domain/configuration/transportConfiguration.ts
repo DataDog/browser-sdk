@@ -1,4 +1,3 @@
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { Site } from '../intakeSites'
 import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from '../intakeSites'
 import type { InitConfiguration } from './configuration'
