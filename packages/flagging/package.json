@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-flagging",
-  "version": "6.12.0",
+  "version": "6.12.3",
   "license": "Apache-2.0",
   "private": true,
   "main": "cjs/entries/main.js",
@@ -15,10 +15,10 @@
     "replace-build-env": "node ../../scripts/build/replace-build-env.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.12.0"
+    "@datadog/browser-core": "6.12.3"
   },
   "peerDependencies": {
-    "@datadog/browser-rum": "6.12.0"
+    "@datadog/browser-rum": "6.12.3"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-rum": {

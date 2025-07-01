@@ -227,6 +227,7 @@ export function startRum(
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
+    hooks,
   }
 }
 

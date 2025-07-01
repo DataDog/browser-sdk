@@ -18,6 +18,35 @@
 
 ---
 
+## v6.12.3
+
+**Plublic Changes:**
+
+- 🐛fix: skip unwanted stackframe on custom errors for faulty browsers ([#3555](https://github.com/DataDog/browser-sdk/pull/3555)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛🍒 [RUM-10101] Persist session cookie to one year when opt-in anonymous user tracking ([#3559](https://github.com/DataDog/browser-sdk/pull/3559)) ([#3654](https://github.com/DataDog/browser-sdk/pull/3654)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.12.2
+
+**Public Changes:**
+
+- 🐛 ignore init() if Synthetics will inject its own instance of RUM ([#3649](https://github.com/DataDog/browser-sdk/pull/3649)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 reduce playwright workers to improve reliability ([#3650](https://github.com/DataDog/browser-sdk/pull/3650))
+- 🔊 add cookie data in debug logs ([#3647](https://github.com/DataDog/browser-sdk/pull/3647)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.12.1
+
+**Public Changes:**
+
+- 🐛 [RUM-10366] mitigate cookie dead lock ([#3637](https://github.com/DataDog/browser-sdk/pull/3637)) [LOGS] [RUM] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 🔧 create a GitHub release when deploying ([#3644](https://github.com/DataDog/browser-sdk/pull/3644))
+- ♻️ [RUM-10311] Use hooks for Logs SDK to decouple user ([#3620](https://github.com/DataDog/browser-sdk/pull/3620)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.12.0
 
 **Public Changes:**
