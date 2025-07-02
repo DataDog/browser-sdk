@@ -26,10 +26,10 @@ alwaysApply: true
 **Before writing ANY implementation:**
 ```bash
 # Check for existing spec file
-ls packages/*/src/path/to/feature.spec.ts
+ls packages/some-package/src/path/to/feature.spec.ts
 
 # If missing, create spec file first
-touch packages/core/src/domain/newFeature.spec.ts
+touch packages/some-package/src/path/to/feature.spec.ts
 ```
 
 **Spec file must exist BEFORE implementation file**
