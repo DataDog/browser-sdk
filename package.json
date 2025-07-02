@@ -48,7 +48,7 @@
     "@types/cors": "2.8.19",
     "@types/express": "5.0.3",
     "@types/jasmine": "3.10.18",
-    "@types/node": "22.15.34",
+    "@types/node": "24.0.10",
     "ajv": "8.17.1",
     "browserstack-local": "1.5.7",
     "chrome-webstore-upload": "3.1.4",
