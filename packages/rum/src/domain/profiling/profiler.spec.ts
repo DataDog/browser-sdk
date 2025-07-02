@@ -207,7 +207,7 @@ describe('profiler', () => {
   })
 
   it('should collect views and set default view name in the Profile', async () => {
-    const { profiler, notifyPerformanceEntries, profilingContextManager } = setupProfiler()
+    const { profiler, profilingContextManager } = setupProfiler()
 
     // Store the original pathname
     const originalPathname = document.location.pathname
