@@ -23,6 +23,7 @@
 **Public Changes:**
 
 - 🐛 [RUM-146] Modify label behavior in dead click logic ([#3642](https://github.com/DataDog/browser-sdk/pull/3642)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM Profiler] Sticky sampling based on session ([#3661](https://github.com/DataDog/browser-sdk/pull/3661)) [RUM] [RUM-REACT] [RUM-SLIM]
 
 **Internal Changes:**
 
@@ -34,7 +35,6 @@
 - 👷 [RUM-9218] Adjust E2E setup to use cross-origin URLs for loading CDN bundles ([#3657](https://github.com/DataDog/browser-sdk/pull/3657)) [RUM] [RUM-REACT] [RUM-SLIM]
 - 👷 Bump chrome to 138.0.7204.49-1 ([#3658](https://github.com/DataDog/browser-sdk/pull/3658))
 - ♻️ [RUM-10005] Exposes `addEvent` instead of `strategy` to plugins ([#3567](https://github.com/DataDog/browser-sdk/pull/3567)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
-- 👷 [RUM Profiler] Sticky sampling based on session ([#3661](https://github.com/DataDog/browser-sdk/pull/3661)) [RUM] [RUM-REACT] [RUM-SLIM]
 - ♻️ [RUM-10407] Use hooks for Logs SDK to decouple session ([#3643](https://github.com/DataDog/browser-sdk/pull/3643)) [LOGS]
 - 👷 [RUM Profiler] Add `_dd.profiling` context to Long Task and View events ([#3583](https://github.com/DataDog/browser-sdk/pull/3583)) [RUM] [RUM-REACT] [RUM-SLIM]
 
