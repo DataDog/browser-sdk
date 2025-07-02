@@ -6,8 +6,8 @@ describe('getCustomOrDefaultViewName', () => {
       expect(getCustomOrDefaultViewName('Custom View Name', '/user/123')).toBe('Custom View Name')
     })
 
-    it('should return the custom view name even when it is an empty string', () => {
-      expect(getCustomOrDefaultViewName('', '/user/123')).toBe('')
+    it('should return the default view name when it is an empty string', () => {
+      expect(getCustomOrDefaultViewName('', '/user/123')).toBe('/user/?')
     })
 
     it('should return the custom view name for various URL paths', () => {
