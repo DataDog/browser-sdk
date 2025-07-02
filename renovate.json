@@ -13,7 +13,7 @@
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "matchUpdateTypes": ["minor", "patch"],
-      "matchPackageNames": ["!karma-webpack"]
+      "matchPackageNames": ["!karma-webpack", "!@playwright/test"]
     }
   ]
 }
