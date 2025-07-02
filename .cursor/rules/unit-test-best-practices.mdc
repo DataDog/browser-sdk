@@ -1,9 +1,4 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
 description: For writing or refactoring unit tests
 globs: 
 alwaysApply: true
@@ -49,7 +44,7 @@ describe('addEventListener', () => {
   fit('should add event listener', () => {
     // Only this test will run
   })
-  
+
   it('should remove event listener', () => {
     // This test will be skipped
   })
@@ -91,39 +86,35 @@ describe('functionOrClassName', () => {
   // Setup variables with proper types
   let variable: Type
   let mockObject: MockType
-  
+
   beforeEach(() => {
     // Setup for each test
     variable = setupVariable()
     mockObject = createMock()
+    registerCleanupTask(() => cleanUpResources())
   })
-  
-  afterEach(() => {
-    // Cleanup after each test (when needed)
-    cleanupResources()
-  })
-  
+
   describe('when condition is met', () => {
     // Group related tests by behavior/context
-    
+
     it('should perform expected action', () => {
       // Arrange
       const input = 'test-data'
-      
+
       // Act
       const result = variable.process(input)
-      
+
       // Assert
       expect(result).toBe('expected-output')
     })
-    
+
     it('should handle edge cases', () => {
       // Test boundary conditions
       expect(variable.process('')).toBe('')
       expect(variable.process(null)).toThrow()
     })
   })
-  
+
   describe('when condition is not met', () => {
     it('should handle alternative behavior', () => {
       // Test alternative paths
@@ -148,14 +139,14 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 beforeEach(() => {
   // Subscribe to lifecycle events
   const subscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, callback)
-  
+
   // Register cleanup - runs even if test fails
   registerCleanupTask(() => {
     subscription.unsubscribe()
     resetGlobalState()
     clearDataStructures()
   })
-  
+
   // Setup DOM elements
   const button = document.createElement('button')
   document.body.appendChild(button)
@@ -181,31 +172,31 @@ describe('time-dependent functionality', () => {
 
   it('should handle delayed operations', () => {
     const callback = jasmine.createSpy('callback')
-    
+
     // Trigger time-dependent code
     setTimeout(callback, 1000)
-    
+
     // Verify callback hasn't been called yet
     expect(callback).not.toHaveBeenCalled()
-    
+
     // Advance time by 1 second
     clock.tick(1000)
-    
+
     // Now callback should have been called
     expect(callback).toHaveBeenCalled()
   })
-  
+
   it('should handle multiple time intervals', () => {
     const results: number[] = []
-    
+
     // Set up recurring timer
     setInterval(() => results.push(Date.now()), 500)
-    
+
     // Advance time in steps
     clock.tick(500)  // First call
     clock.tick(500)  // Second call
     clock.tick(1000) // Third and fourth calls
-    
+
     expect(results).toHaveLength(4)
   })
 })
@@ -219,7 +210,7 @@ import { createNewEvent } from '@datadog/browser-core/test'
 describe('DOM interactions', () => {
   let container: HTMLDivElement
   let button: HTMLButtonElement
-  
+
   beforeEach(() => {
     // Create test DOM structure
     container = document.createElement('div')
@@ -228,31 +219,31 @@ describe('DOM interactions', () => {
     button.textContent = 'Click me'
     button.style.width = '100px'
     button.style.height = '50px'
-    
+
     container.appendChild(button)
     document.body.appendChild(container)
-    
+
     // Register cleanup
     registerCleanupTask(() => {
       container.parentNode?.removeChild(container)
     })
   })
-  
+
   it('should handle click events with proper event properties', () => {
     const clickHandler = jasmine.createSpy('clickHandler')
     button.addEventListener('click', clickHandler)
-    
+
     // Create realistic click event
-    const clickEvent = createNewEvent('click', { 
+    const clickEvent = createNewEvent('click', {
       target: button,
       clientX: 50,
       clientY: 25,
       __ddIsTrusted: true  // Mark as trusted DataDog event
     })
-    
+
     // Dispatch event
     button.dispatchEvent(clickEvent)
-    
+
     // Verify handler was called with correct event
     expect(clickHandler).toHaveBeenCalledTimes(1)
     expect(clickHandler).toHaveBeenCalledWith(jasmine.objectContaining({
@@ -260,20 +251,20 @@ describe('DOM interactions', () => {
       type: 'click'
     }))
   })
-  
+
   it('should handle keyboard events', () => {
     const keyHandler = jasmine.createSpy('keyHandler')
     button.addEventListener('keydown', keyHandler)
-    
+
     const keyEvent = createNewEvent('keydown', {
       target: button,
       key: 'Enter',
       keyCode: 13,
       __ddIsTrusted: true
     })
-    
+
     button.dispatchEvent(keyEvent)
-    
+
     expect(keyHandler).toHaveBeenCalledWith(jasmine.objectContaining({
       key: 'Enter',
       keyCode: 13
@@ -288,7 +279,7 @@ describe('DOM interactions', () => {
 describe('service interactions', () => {
   let service: MyService
   let dependency: ExternalDependency
-  
+
   beforeEach(() => {
     dependency = {
       fetchData: jasmine.createSpy('fetchData').and.returnValue(Promise.resolve('data')),
@@ -296,41 +287,41 @@ describe('service interactions', () => {
     }
     service = new MyService(dependency)
   })
-  
+
   it('should call dependencies with correct parameters', async () => {
     const input = 'test-input'
-    
+
     // Execute method under test
     const result = await service.handleRequest(input)
-    
+
     // Verify all interactions
     expect(dependency.fetchData).toHaveBeenCalledTimes(1)
     expect(dependency.fetchData).toHaveBeenCalledWith(input)
     expect(dependency.processData).toHaveBeenCalledWith('data')
     expect(result).toBe('processed-data')
   })
-  
+
   it('should handle errors gracefully', async () => {
     // Configure spy to throw error
     dependency.fetchData.and.rejectWith(new Error('Network error'))
-    
+
     // Verify error handling
     await expectAsync(service.handleRequest('input')).toBeRejectedWith(jasmine.any(Error))
     expect(dependency.fetchData).toHaveBeenCalled()
     expect(dependency.processData).not.toHaveBeenCalled()
   })
-  
+
   it('should spy on existing object methods', () => {
     const existingObject = { method: () => 'original' }
-    
+
     // Spy on existing method
     const spy = spyOn(existingObject, 'method').and.returnValue('mocked')
-    
+
     const result = existingObject.method()
-    
+
     expect(spy).toHaveBeenCalled()
     expect(result).toBe('mocked')
-    
+
     // Restore original implementation if needed
     spy.and.callThrough()
     expect(existingObject.method()).toBe('original')
@@ -346,37 +337,37 @@ describe('page activity tracking', () => {
   const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
   const EXPIRE_DELAY = CLICK_ACTION_MAX_DURATION * 10
   let clock: Clock
-  
+
   beforeEach(() => {
     clock = mockClock()
   })
-  
+
   it('should wait for page activity to complete before finalizing action', () => {
     // Start activity that will trigger validation
-    emulateClick({ 
-      activity: { 
+    emulateClick({
+      activity: {
         loadingTime: 500,
         resourceCount: 2
-      } 
+      }
     })
-    
+
     // Before validation delay - action should still be pending
     clock.tick(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     expect(findActionId()).toBeDefined()
     expect(events).toHaveLength(0)
-    
+
     // After full validation delay - action should be completed
     clock.tick(PAGE_ACTIVITY_VALIDATION_DELAY - BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY)
     expect(events).toHaveLength(1)
     expect(events[0].loadingTime).toBe(500)
   })
-  
+
   it('should expire actions that take too long', () => {
     emulateClick({ activity: { loadingTime: Infinity } })
-    
+
     // Fast forward to expiration
     clock.tick(EXPIRE_DELAY)
-    
+
     expect(events).toHaveLength(1)
     expect(events[0].duration).toBe(CLICK_ACTION_MAX_DURATION)
     expect(events[0].frustrationTypes).toContain('dead_click')
@@ -391,33 +382,33 @@ describe('observable streams', () => {
   it('should handle observable emissions', () => {
     const observable = new Observable<UserAction>()
     const subscriber = jasmine.createSpy('subscriber')
-    
+
     // Subscribe with cleanup
     const subscription = observable.subscribe(subscriber)
     registerCleanupTask(() => subscription.unsubscribe())
-    
+
     // Test emission
     const testAction: UserAction = { type: 'CLICK', target: 'button' }
     observable.notify(testAction)
-    
+
     expect(subscriber).toHaveBeenCalledTimes(1)
     expect(subscriber).toHaveBeenCalledWith(testAction)
   })
-  
+
   it('should handle observable errors', () => {
     const observable = new Observable<string>()
     const errorHandler = jasmine.createSpy('errorHandler')
-    
+
     const subscription = observable.subscribe({
       next: jasmine.createSpy('next'),
       error: errorHandler
     })
     registerCleanupTask(() => subscription.unsubscribe())
-    
+
     // Trigger error
     const testError = new Error('Test error')
     observable.error(testError)
-    
+
     expect(errorHandler).toHaveBeenCalledWith(testError)
   })
 })
@@ -436,57 +427,57 @@ describe('event type handling', () => {
     RumEventType.ERROR,
     RumEventType.VITAL
   ]
-  
+
   const eventTypesWithoutActions = [
     RumEventType.VIEW,
     RumEventType.ACTION
   ]
-  
+
   // Test multiple event types with same logic
   eventTypesWithActions.forEach((eventType) => {
     it(`should add action context to ${eventType} events`, () => {
       const actionId = 'test-action-id-123'
       spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
-      
+
       const attributes = hooks.triggerHook(HookNames.BEFORE_SEND, {
         eventType,
         startTime: 0 as RelativeTime,
         rawRumEvent: createMockRumEvent(eventType)
       })
-      
+
       expect(attributes).toEqual(jasmine.objectContaining({
         action: { id: actionId }
       }))
     })
-    
+
     it(`should handle missing action context for ${eventType}`, () => {
       spyOn(actionContexts, 'findActionId').and.returnValue(undefined)
-      
+
       const attributes = hooks.triggerHook(HookNames.BEFORE_SEND, {
         eventType,
         startTime: 0 as RelativeTime,
         rawRumEvent: createMockRumEvent(eventType)
       })
-      
+
       expect(attributes?.action).toBeUndefined()
     })
   })
-  
+
   // Test exclusions
   eventTypesWithoutActions.forEach((eventType) => {
     it(`should not add action context to ${eventType} events`, () => {
       spyOn(actionContexts, 'findActionId').and.returnValue('some-action-id')
-      
+
       const attributes = hooks.triggerHook(HookNames.BEFORE_SEND, {
         eventType,
         startTime: 0 as RelativeTime,
         rawRumEvent: createMockRumEvent(eventType)
       })
-      
+
       expect(attributes?.action).toBeUndefined()
     })
   })
-  
+
   // Helper function
   function createMockRumEvent(type: RumEventType): RawRumEvent {
     return {
@@ -523,23 +514,23 @@ describe('comprehensive cleanup example', () => {
   let element: HTMLElement
   let subscription: Subscription
   let intervalId: number
-  
+
   beforeEach(() => {
     // Setup with proper cleanup registration
     manager = new ResourceManager()
     registerCleanupTask(() => manager.destroy())
-    
+
     element = document.createElement('div')
     document.body.appendChild(element)
     registerCleanupTask(() => element.parentNode?.removeChild(element))
-    
+
     subscription = eventStream.subscribe(handler)
     registerCleanupTask(() => subscription.unsubscribe())
-    
+
     intervalId = setInterval(periodicTask, 1000)
     registerCleanupTask(() => clearInterval(intervalId))
   })
-  
+
   it('should handle all resources properly', () => {
     // Test implementation
     // All cleanup happens automatically via registerCleanupTask
@@ -558,11 +549,12 @@ afterEach(() => {
   element.remove()           // Memory leak potential
 })
 
-// DON'T: Forget to clean up DOM
+// DON'T: Create DOM manually
 it('should test DOM interaction', () => {
   const element = document.createElement('div')
   document.body.appendChild(element)
   // Missing cleanup - memory leak!
+  // use appendElement helper!
 })
 
 // DON'T: Use real timers - makes tests slow and flaky
@@ -578,14 +570,14 @@ it('should do everything', () => {
   // Setup user
   const user = createUser()
   expect(user.id).toBeDefined()
-  
+
   // Test login
   user.login()
   expect(user.isLoggedIn).toBeTruthy()
-  
-  // Test permissions  
+
+  // Test permissions
   expect(user.hasPermission('admin')).toBeFalsy()
-  
+
   // Test logout
   user.logout()
   expect(user.isLoggedIn).toBeFalsy()
@@ -609,19 +601,16 @@ it('should test the function', () => {
 beforeEach(() => {
   const subscription = observable.subscribe(handler)
   registerCleanupTask(() => subscription.unsubscribe())
-  
+
   const element = document.createElement('div')
   document.body.appendChild(element)
   registerCleanupTask(() => element.parentNode?.removeChild(element))
 })
 
-// DO: Always clean up DOM elements
-beforeEach(() => {
-  container = document.createElement('div')
-  document.body.appendChild(container)
-})
-afterEach(() => {
-  container.parentNode?.removeChild(container)
+// DO: use existing helpers
+  it('should add DOM with appendElement helper', () => {
+  appendElement('<input type="checkbox" id="test-checkbox" />')
+  const label = appendElement('<label for="test-checkbox">Check me</label>')
 })
 
 // DO: Use mocked clock for time-based tests
@@ -631,7 +620,7 @@ beforeEach(() => {
 it('should handle delayed operations', () => {
   const callback = jasmine.createSpy()
   setTimeout(callback, 1000)
-  
+
   clock.tick(1000) // Instant!
   expect(callback).toHaveBeenCalled()
 })
@@ -642,18 +631,18 @@ describe('User', () => {
     const user = createUser()
     expect(user.id).toMatch(/^user-\d+$/)
   })
-  
+
   it('should start in logged-out state', () => {
     const user = createUser()
     expect(user.isLoggedIn).toBeFalsy()
   })
-  
+
   it('should allow login with valid credentials', () => {
     const user = createUser()
     user.login('valid@email.com', 'password')
     expect(user.isLoggedIn).toBeTruthy()
   })
-  
+
   it('should deny admin permissions to regular user', () => {
     const user = createUser()
     expect(user.hasPermission('admin')).toBeFalsy()

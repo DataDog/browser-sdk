@@ -1,9 +1,4 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
 description: Standards for Test-Driven Development in the Browser SDK project
 globs:
 tags:
@@ -46,7 +41,7 @@ beforeEach(() => {
     // Setup for each test
     mockDependency = jasmine.createSpy()
     feature = new FeatureName(mockDependency)
-    
+
     // Use registerCleanupTask for cleanup
     registerCleanupTask(() => {
     feature.dispose()
@@ -57,15 +52,15 @@ describe('when condition', () => {
     it('should behave correctly', () => {
     // Arrange
     const input = 'test-input'
-    
+
     // Act
     const result = feature.process(input)
-    
+
     // Assert
     expect(result).toBe(expectedOutput)
     expect(mockDependency).toHaveBeenCalledWith(input)
     })
-    
+
     it('should handle edge cases', () => {
     // Test edge cases, errors, boundaries
     })

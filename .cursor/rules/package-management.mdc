@@ -1,11 +1,6 @@
 ---
-description: 
-globs: 
-alwaysApply: true
----
----
 description: Read this to know which package manager to use
-globs: 
+globs:
 alwaysApply: true
 ---
 - We use Yarn. Never use neither `npm` nor `npx`.
