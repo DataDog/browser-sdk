@@ -205,6 +205,61 @@ describe('profiler', () => {
     expect(lastCall.longTasks[0].id).toBeDefined()
     expect(lastCall.longTasks[0].startClocks.relative).toBe(12345 as RelativeTime)
   })
+
+  it('should collect views and set default view name in the Profile', async () => {
+    const { profiler, notifyPerformanceEntries, profilingContextManager } = setupProfiler()
+
+    // Store the original pathname
+    const originalPathname = document.location.pathname
+
+    // Navigate to the user view
+    history.pushState({}, '', '/user/123')
+
+    profiler.start({
+      id: 'view-user',
+      name: '', // no custom view name, should fallback to default view name
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    })
+
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Navigate to the profile view
+    history.pushState({}, '', '/v1/user/3A2/profile')
+
+    // Emit a view created event
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      id: 'view-profile',
+      name: '', // no custom view name, should fallback to default view name
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    })
+
+    // Stop collection of profile.
+    await profiler.stop()
+
+    // Wait for stop of collection.
+    await waitForBoolean(() => profiler.isStopped())
+
+    // Go back to the original pathname
+    history.pushState({}, '', originalPathname)
+
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0] as unknown as RumProfilerTrace
+
+    expect(lastCall.views.length).toBe(2)
+    expect(lastCall.views[0].viewId).toBe('view-user')
+    expect(lastCall.views[0].viewName).toBe('/user/?')
+    expect(lastCall.views[1].viewId).toBe('view-profile')
+    expect(lastCall.views[1].viewName).toBe('/v1/user/?/profile')
+  })
 })
 
 function waitForBoolean(booleanCallback: () => boolean) {
