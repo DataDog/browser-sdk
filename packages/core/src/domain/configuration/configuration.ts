@@ -178,6 +178,16 @@ export interface InitConfiguration {
    * @default 5
    */
   telemetryUsageSampleRate?: number
+  /**
+   * [Internal option] The source of the data, overrides the default value based on the SDK.
+   * Used in plugins to identify the source of the data.
+   * @default browser
+   */
+  source?: string
+  /**
+   * [Internal option] The variant of the data, provides extra information on the plugin version.
+   */
+  variant?: string
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -220,6 +230,10 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
+
+  // internal
+  source?: string | undefined
+  variant?: string | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -269,6 +283,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isString(initConfiguration.version, 'Version') ||
     !isString(initConfiguration.env, 'Env') ||
     !isString(initConfiguration.service, 'Service') ||
+    !isString(initConfiguration.source, 'Source') ||
     !isAllowedTrackingOrigins(initConfiguration)
   ) {
     return

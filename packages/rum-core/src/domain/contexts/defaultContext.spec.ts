@@ -72,15 +72,8 @@ describe('startDefaultContext', () => {
         hooks,
         mockRumConfiguration({
           applicationId: '1',
-          plugins: [
-            {
-              name: 'test-plugin',
-              overrides: {
-                source: 'test-source',
-                variant: 'test-variant',
-              },
-            },
-          ],
+          source: 'test-source',
+          variant: 'test-variant',
         }),
         'rum'
       )
@@ -97,10 +90,10 @@ describe('startDefaultContext', () => {
         },
         date: timeStampNow(),
         source: 'test-source',
-        variant: 'test-variant',
         _dd: jasmine.objectContaining({
           format_version: 2,
           drift: jasmine.any(Number),
+          variant: 'test-variant',
         }),
       })
     })
