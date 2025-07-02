@@ -28,7 +28,9 @@ describe('getDefaultViewName', () => {
     })
 
     it('should handle UUID and alphanumeric segments', () => {
-      expect(getDefaultViewName('/v1/user/dc893c65-a46d-4f63-a7be-e119b97b1b32/profile/2A3')).toBe('/v1/user/?/profile/?')
+      expect(getDefaultViewName('/v1/user/dc893c65-a46d-4f63-a7be-e119b97b1b32/profile/2A3')).toBe(
+        '/v1/user/?/profile/?'
+      )
     })
   })
 })
