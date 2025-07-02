@@ -152,19 +152,7 @@ describe('endpointBuilder', () => {
       expect(endpoint).not.toContain('_dd.variant=')
     })
 
-    it('should use configuration source when provided', () => {
-      const config = { ...initConfiguration, source: 'my-app-source' }
-      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
-      expect(endpoint).toContain('ddsource=my-app-source')
-    })
-
-    it('should use configuration variant when provided', () => {
-      const config = { ...initConfiguration, variant: 'test-variant' }
-      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
-      expect(endpoint).toContain('_dd.variant=test-variant')
-    })
-
-    it('should use both source and variant when provided', () => {
+    it('should use source and variant when provided', () => {
       const config = { ...initConfiguration, source: 'my-source', variant: 'my-variant' }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=my-source')
