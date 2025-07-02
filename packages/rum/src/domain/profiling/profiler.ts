@@ -61,7 +61,11 @@ export function createRumProfiler(
     // Add initial view
     // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
     lastViewEntry = viewEntry
-      ? { startClocks: viewEntry.startClocks, viewId: viewEntry.id, viewName: viewEntry.name }
+      ? {
+          startClocks: viewEntry.startClocks,
+          viewId: viewEntry.id,
+          viewName: getCustomOrDefaultViewName(viewEntry.name, document.location.pathname),
+        }
       : undefined
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
