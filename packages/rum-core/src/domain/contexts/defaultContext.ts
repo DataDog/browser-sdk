@@ -11,16 +11,8 @@ export function startDefaultContext(
   sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
-    const source =
-      configuration.plugins
-        .map((plugin) => plugin?.overrides?.source)
-        .filter(Boolean)
-        .join(',') || 'browser'
-
-    const variant = configuration.plugins
-      .map((plugin) => plugin?.overrides?.variant)
-      .filter(Boolean)
-      .join(',')
+    const source = configuration.source || 'browser'
+    const variant = configuration.variant
 
     return {
       type: eventType,
@@ -33,13 +25,13 @@ export function startDefaultContext(
         },
         browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
         sdk_name: sdkName,
+        ...(variant ? { variant } : {}),
       },
       application: {
         id: configuration.applicationId,
       },
       date: timeStampNow(),
-      source: source || 'browser',
-      ...(variant ? { variant } : {}),
+      source,
     }
   })
 }

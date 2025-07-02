@@ -1,4 +1,3 @@
-import type { RumPlugin } from '../../../../rum-core/src/domain/plugins'
 import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
@@ -82,21 +81,12 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, plugins = [] }: InitConfiguration & { plugins?: RumPlugin[] },
+  { clientToken, internalAnalyticsSubdomain, source: configSource, variant }: InitConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload
 ) {
-  const source =
-    plugins
-      .map((plugin) => plugin?.overrides?.source)
-      .filter(Boolean)
-      .join(',') || 'browser'
-
-  const variant = plugins
-    .map((plugin) => plugin?.overrides?.variant)
-    .filter(Boolean)
-    .join(',')
+  const source = configSource || 'browser'
 
   const parameters = [
     `ddsource=${source}`,
@@ -104,7 +94,7 @@ function buildEndpointParameters(
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
     `dd-request-id=${generateUUID()}`,
-  ].concat(variant ? [`dd-variant=${variant}`] : [])
+  ].concat(variant ? [`_dd.variant=${variant}`] : [])
 
   if (encoding) {
     parameters.push(`dd-evp-encoding=${encoding}`)
