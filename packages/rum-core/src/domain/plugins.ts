@@ -15,10 +15,6 @@ export interface RumPlugin {
   getConfigurationTelemetry?(): Record<string, unknown>
   onInit?(options: { initConfiguration: RumInitConfiguration; publicApi: RumPublicApi }): void
   onRumStart?(options: OnRumStartOptions): void
-  overrides?: {
-    source?: string
-    variant?: string
-  }
 }
 
 type MethodNames = 'onInit' | 'onRumStart'
