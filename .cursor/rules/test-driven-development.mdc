@@ -17,9 +17,9 @@ alwaysApply: true
 ## 1. RED-GREEN-REFACTOR Cycle
 
 **ALWAYS follow this sequence:**
-a) 🔴 **RED**: Write failing test first
-b) 🟢 **GREEN**: Write minimal code to make test pass
-c) 🔵 **REFACTOR**: Improve code while keeping tests green
+1. 🔴 **RED**: Write failing test first
+2. 🟢 **GREEN**: Write minimal code to make test pass
+3. 🔵 **REFACTOR**: Improve code while keeping tests green
 
 ## 2. Spec First, Code Second
 
