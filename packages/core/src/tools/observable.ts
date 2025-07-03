@@ -93,7 +93,7 @@ export class BufferedObservable<T> extends Observable<T> {
   /**
    * Drop buffered data and don't buffer future data. This is to avoid leaking memory when it's not
    * needed anymore. This can be seen as a performance optimization, and things will work probably
-   * work even if this method isn't called, but still useful to clarify our intent and lowering our
+   * even if this method isn't called, but still useful to clarify our intent and lowering our
    * memory impact.
    */
   unbuffer() {
