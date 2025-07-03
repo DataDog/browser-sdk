@@ -41,7 +41,7 @@ export function startLogsAssembly(
         return
       }
 
-      const defaultDdtags = (defaultLogsEventAttributes.ddtags as unknown as string[]) ?? []
+      const defaultDdtags = (defaultLogsEventAttributes?.ddtags as unknown as string[]) ?? []
 
       const log = combine(
         {
