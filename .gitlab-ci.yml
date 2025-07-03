@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-26
+  CURRENT_STAGING: staging-27
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 81
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
@@ -238,6 +238,15 @@ check-licenses:
   script:
     - yarn
     - node --no-warnings scripts/check-licenses.js
+
+check-node-version:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - node scripts/check-node-version.js
 
 check-release:
   extends:
