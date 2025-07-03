@@ -116,7 +116,12 @@ export function Panel() {
 }
 
 function isInterceptingNetworkRequests(settings: Settings) {
-  return settings.blockIntakeRequests || settings.useDevBundles || settings.useRumSlim || (settings.trialMode && settings.sdkInjection.enabled)
+  return (
+    settings.blockIntakeRequests ||
+    settings.useDevBundles ||
+    settings.useRumSlim ||
+    (settings.trialMode && settings.sdkInjection.enabled)
+  )
 }
 
 function isOverridingInitConfiguration(settings: Settings) {

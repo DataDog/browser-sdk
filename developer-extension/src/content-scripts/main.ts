@@ -201,20 +201,21 @@ function getRumBundleUrl(bundle: string): string {
   return bundle === 'rum-slim' ? DEV_RUM_SLIM_URL : DEV_RUM_URL
 }
 
-function injectAndInitializeSDK(url: string, globalName: 'DD_RUM' | 'DD_LOGS', config: object) {  
+function injectAndInitializeSDK(url: string, globalName: 'DD_RUM' | 'DD_LOGS', config: object) {
   loadSdkScriptFromURL(url)
-  
+
   const checkAndInit = () => {
     const sdk = window[globalName] as SdkPublicApi
     if (sdk && typeof sdk.init === 'function') {
       try {
         sdk.init(config)
-      } catch (error) {
+      } catch {
+        // Ignore initialization errors
       }
     } else {
       setTimeout(checkAndInit, 100)
     }
   }
-  
+
   setTimeout(checkAndInit, 50)
 }

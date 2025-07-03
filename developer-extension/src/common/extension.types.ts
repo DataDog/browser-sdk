@@ -63,7 +63,7 @@ export interface Settings {
 
 export interface SdkInjectionConfig {
   enabled: boolean
-  sdkTypes: ('rum' | 'logs')[]
+  sdkTypes: Array<'rum' | 'logs'>
   rumBundle: 'rum' | 'rum-slim'
   rumConfig: {
     applicationId: string
