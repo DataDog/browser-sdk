@@ -1,12 +1,5 @@
 import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  HookNames,
-  combine,
-  combineTags,
-  createEventRateLimiter,
-  getRelativeTime,
-} from '@datadog/browser-core'
+import { ErrorSource, HookNames, combine, createEventRateLimiter, getRelativeTime } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsConfiguration } from './configuration'
@@ -32,7 +25,7 @@ export function startLogsAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
-    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext }) => {
+    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext, ddtags }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
       const session = sessionManager.findTrackedSession(startTime)
       const shouldSendLog = sessionManager.findTrackedSession(startTime, { returnInactive: true })
@@ -46,7 +39,8 @@ export function startLogsAssembly(
         startTime,
       }) as DefaultLogsEventAttributes
 
-      const ddtags = combineTags(defaultLogsEventAttributes, messageContext)
+      const defaultDdtags = (defaultLogsEventAttributes.ddtags as unknown as string[]) ?? []
+
       const log = combine(
         {
           service: configuration.service,
@@ -57,7 +51,9 @@ export function startLogsAssembly(
         defaultLogsEventAttributes,
         rawLogsEvent,
         messageContext,
-        ddtags ? { ddtags } : undefined
+        {
+          ddtags: defaultDdtags.concat(ddtags ?? []).join(','),
+        }
       ) as LogsEvent & Context
 
       if (

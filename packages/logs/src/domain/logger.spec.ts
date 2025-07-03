@@ -187,6 +187,38 @@ describe('Logger', () => {
     })
   })
 
+  describe('tags', () => {
+    it('should add a key:value tag', () => {
+      logger.addTag('foo', 'bar')
+      expect(logger.getTags()).toEqual(['foo:bar'])
+    })
+
+    it('should add a key only tag', () => {
+      logger.addTag('foo')
+      expect(logger.getTags()).toEqual(['foo'])
+    })
+
+    it('should remove tags with key', () => {
+      logger.addTag('foo', 'bar')
+      logger.addTag('foo', 'baz')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual([])
+    })
+
+    it('should remove key only tags', () => {
+      logger.addTag('foo')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual([])
+    })
+
+    it('should not remove tags starting with the key', () => {
+      logger.addTag('foo', 'bar')
+      logger.addTag('foo-bar', 'baz')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual(['foo-bar:baz'])
+    })
+  })
+
   describe('context methods', () => {
     beforeEach(() => {
       const loggerContext = { foo: 'bar' }

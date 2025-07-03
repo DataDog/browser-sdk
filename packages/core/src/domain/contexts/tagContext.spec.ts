@@ -25,7 +25,7 @@ describe('tag context', () => {
     const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {})
 
     expect(defaultRumEventAttributes).toEqual({
-      ddtags: 'sdk_version:test,env:env,service:service,version:version,datacenter:datacenter',
+      ddtags: ['sdk_version:test', 'env:env', 'service:service', 'version:version', 'datacenter:datacenter'],
     })
   })
 })

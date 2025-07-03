@@ -123,6 +123,7 @@ describe('logger collection', () => {
         domainContext: {
           handlingStack: HANDLING_STACK,
         },
+        ddtags: [],
       })
     })
 
@@ -152,33 +153,28 @@ describe('logger collection', () => {
     })
 
     it('should contain the ddtags of the logger', () => {
-      logger.setContext({ ddtags: 'tag1:value1,tag2:value2' })
+      logger.addTag('tag1', 'value1')
       handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
 
-      expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag1:value1,tag2:value2')
+      expect(rawLogsEvents[0].ddtags).toEqual(['tag1:value1'])
     })
 
-    it('should contain the ddtags of the message context', () => {
+    it('should ignore the tags of the message context', () => {
       handleLog(
-        { message: 'message', status: StatusType.error, context: { ddtags: 'tag3:value3' } },
+        { message: 'message', status: StatusType.error, context: { ddtags: ['tag3:value3'] } },
         logger,
         HANDLING_STACK,
         COMMON_CONTEXT
       )
 
-      expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag3:value3')
+      expect(rawLogsEvents[0].ddtags).toEqual([])
     })
 
-    it('should prioritize the ddtags of the message context', () => {
-      logger.setContext({ ddtags: 'tag1:value1,tag2:value2' })
-      handleLog(
-        { message: 'message', status: StatusType.error, context: { ddtags: 'tag3:value3' } },
-        logger,
-        HANDLING_STACK,
-        COMMON_CONTEXT
-      )
+    it('should ignore the tags of the logger context', () => {
+      logger.setContext({ ddtags: ['tag1:value1'] })
+      handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
 
-      expect(rawLogsEvents[0].messageContext?.ddtags).toEqual('tag3:value3')
+      expect(rawLogsEvents[0].ddtags).toEqual([])
     })
   })
 })

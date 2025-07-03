@@ -197,11 +197,11 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),env:dev,service:foo,version:1.0.0$/)
     })
 
-  createTest('add tags from logger context')
+  createTest('add tags to the logger')
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
-        window.DD_LOGS!.logger.setContext({ ddtags: 'planet:mars' })
+        window.DD_LOGS!.logger.addTag('planet', 'mars')
         window.DD_LOGS!.logger.log('hello world!')
       })
 
@@ -210,22 +210,17 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),planet:mars$/)
     })
 
-  createTest('add tags from message context')
-    .withLogs({
-      service: 'foo',
-      env: 'dev',
-      version: '1.0.0',
-    })
+  createTest('ignore tags from message context and logger context')
+    .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
+        window.DD_LOGS!.logger.setContextProperty('ddtags', 'planet:mars')
         window.DD_LOGS!.logger.log('hello world!', { ddtags: 'planet:earth' })
       })
 
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
-      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(
-        /sdk_version:(.*),env:dev,service:foo,version:1.0.0,planet:earth$/
-      )
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*)$/)
     })
 
   createTest('allow to modify events')

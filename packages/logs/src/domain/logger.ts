@@ -10,6 +10,7 @@ import {
   sanitize,
   NonErrorPrefix,
   createHandlingStack,
+  buildTag,
 } from '@datadog/browser-core'
 
 import { isAuthorized, StatusType } from './logger/isAuthorized'
@@ -34,6 +35,7 @@ export const STATUSES = Object.keys(StatusType) as StatusType[]
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, no-restricted-syntax
 export class Logger {
   private contextManager: ContextManager
+  private tags: string[]
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger, handlingStack?: string) => void,
@@ -43,6 +45,7 @@ export class Logger {
     loggerContext: object = {}
   ) {
     this.contextManager = createContextManager('logger')
+    this.tags = []
     this.contextManager.setContext(loggerContext as Context)
     if (name) {
       this.contextManager.setContextProperty('logger', { name })
@@ -119,6 +122,22 @@ export class Logger {
 
   clearContext() {
     this.contextManager.clearContext()
+  }
+
+  addTag(key: string, value?: string) {
+    this.tags.push(buildTag(key, value))
+  }
+
+  removeTagsWithKey(key: string) {
+    // Match tags starting with the key and either:
+    // - followed by a colon (tag in the form `key:value`)
+    // - followed by the end of the string (key-only tags)
+    const regex = new RegExp(`^${key}(:|$)`)
+    this.tags = this.tags.filter((tag) => !regex.test(tag))
+  }
+
+  getTags() {
+    return this.tags
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {

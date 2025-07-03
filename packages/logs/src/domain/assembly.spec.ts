@@ -307,22 +307,17 @@ describe('startLogsAssembly', () => {
   })
 
   describe('ddtags', () => {
-    it('should contain the ddtags of the configuration', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
+    it('should contain and format the default tags', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
       expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0')
     })
 
-    it('should contain the ddtags of the configuration and the message context', () => {
+    it('should append custom tags', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
         rawLogsEvent: DEFAULT_MESSAGE,
-        messageContext: { ddtags: 'tag1:value1,tag2:value2' },
+        ddtags: ['foo:bar'],
       })
-
-      expect(serverLogs[0].ddtags).toEqual(
-        'sdk_version:test,env:test,service:service,version:1.0.0,tag1:value1,tag2:value2'
-      )
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0,foo:bar')
     })
   })
 
@@ -380,6 +375,7 @@ describe('logs limitation', () => {
     }
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
+    startTagContext(hooks, configuration)
     startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
     clock = mockClock()
   })
