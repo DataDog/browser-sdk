@@ -9,6 +9,7 @@ import {
 import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
+import { addExperimentalFeatures, resetExperimentalFeatures, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { noop } from '../tools/utils/functionUtils'
 import { createHttpRequest, fetchKeepAliveStrategy, fetchStrategy } from './httpRequest'
 import type { HttpRequest } from './httpRequest'
@@ -261,5 +262,50 @@ describe('httpRequest intake parameters', () => {
 
     expect(requestId1).not.toBe(requestId2)
     expect(requests.length).toEqual(2)
+  })
+})
+
+describe('httpRequest with AVOID_FETCH_KEEPALIVE feature flag', () => {
+  const BATCH_BYTES_LIMIT = 100
+  const ENDPOINT_URL = 'http://my.website'
+  let interceptor: ReturnType<typeof interceptRequests>
+  let requests: Request[]
+  let endpointBuilder: EndpointBuilder
+  let request: HttpRequest
+
+  beforeEach(() => {
+    interceptor = interceptRequests()
+    requests = interceptor.requests
+    endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
+  })
+
+  afterEach(() => {
+    resetExperimentalFeatures()
+  })
+
+  it('should use regular fetch (without keepalive) when feature flag is enabled', async () => {
+    addExperimentalFeatures([ExperimentalFeature.AVOID_FETCH_KEEPALIVE])
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+
+    request.send({ data: '{"foo":"bar"}', bytesCount: 10 })
+    await interceptor.waitForAllFetchCalls()
+
+    expect(requests.length).toEqual(1)
+    expect(requests[0].type).toBe('fetch')
+    expect(requests[0].url).toContain(ENDPOINT_URL)
+  })
+
+  it('should use fetch keepalive when feature flag is not enabled', async () => {
+    if (!interceptor.isFetchKeepAliveSupported()) {
+      pending('no fetch keepalive support')
+    }
+
+    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+
+    request.send({ data: '{"foo":"bar"}', bytesCount: 10 })
+    await interceptor.waitForAllFetchCalls()
+
+    expect(requests.length).toEqual(1)
+    expect(requests[0].type).toBe('fetch-keepalive')
   })
 })

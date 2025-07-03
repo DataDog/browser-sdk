@@ -2,6 +2,7 @@ import type { EndpointBuilder } from '../domain/configuration'
 import type { Context } from '../tools/serialisation/context'
 import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
+import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
 /**
@@ -38,8 +39,13 @@ export function createHttpRequest(
   reportError: (error: RawError) => void
 ) {
   const retryState = newRetryState()
-  const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
-    fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
+  const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) => {
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.AVOID_FETCH_KEEPALIVE)) {
+      fetchStrategy(endpointBuilder, payload, onResponse)
+    } else {
+      fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
+    }
+  }
 
   return {
     send: (payload: Payload) => {
