@@ -50,6 +50,10 @@ function main() {
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
     }
   }
+
+  if (settings && settings.trialMode && settings.sdkInjection.enabled && noBrowserSdkLoaded()) {
+    injectBrowserSDK(settings.sdkInjection)
+  }
 }
 
 main()
@@ -177,4 +181,40 @@ function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
 
 function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
   Object.assign(target, root)
+}
+
+function injectBrowserSDK(config: Settings['sdkInjection']) {
+  const { sdkTypes, rumBundle, rumConfig, logsConfig } = config
+
+  if (sdkTypes.includes('rum')) {
+    const rumUrl = getRumBundleUrl(rumBundle)
+    injectAndInitializeSDK(rumUrl, 'DD_RUM', rumConfig)
+  }
+
+  if (sdkTypes.includes('logs')) {
+    const logsUrl = DEV_LOGS_URL
+    injectAndInitializeSDK(logsUrl, 'DD_LOGS', logsConfig)
+  }
+}
+
+function getRumBundleUrl(bundle: string): string {
+  return bundle === 'rum-slim' ? DEV_RUM_SLIM_URL : DEV_RUM_URL
+}
+
+function injectAndInitializeSDK(url: string, globalName: 'DD_RUM' | 'DD_LOGS', config: object) {  
+  loadSdkScriptFromURL(url)
+  
+  const checkAndInit = () => {
+    const sdk = window[globalName] as SdkPublicApi
+    if (sdk && typeof sdk.init === 'function') {
+      try {
+        sdk.init(config)
+      } catch (error) {
+      }
+    } else {
+      setTimeout(checkAndInit, 100)
+    }
+  }
+  
+  setTimeout(checkAndInit, 50)
 }

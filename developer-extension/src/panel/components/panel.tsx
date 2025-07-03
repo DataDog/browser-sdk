@@ -13,6 +13,7 @@ import { SettingsTab } from './tabs/settingsTab'
 import { InfosTab } from './tabs/infosTab'
 import { EventsTab, DEFAULT_COLUMNS } from './tabs/eventsTab'
 import { ReplayTab } from './tabs/replayTab'
+import { TrialTab } from './tabs/trialTab'
 
 import * as classes from './panel.module.css'
 
@@ -65,6 +66,18 @@ export function Panel() {
           >
             Settings
           </Tabs.Tab>
+          <Tabs.Tab
+            value={PanelTabs.Trial}
+            rightSection={
+              settings.trialMode && (
+                <Text c="blue" fw="bold" title="Trial mode enabled">
+                  ●
+                </Text>
+              )
+            }
+          >
+            Trial
+          </Tabs.Tab>
         </div>
         <Anchor
           className={classes.link}
@@ -95,12 +108,15 @@ export function Panel() {
       <Tabs.Panel value={PanelTabs.Settings} className={classes.tab}>
         <SettingsTab />
       </Tabs.Panel>
+      <Tabs.Panel value={PanelTabs.Trial} className={classes.tab}>
+        <TrialTab />
+      </Tabs.Panel>
     </Tabs>
   )
 }
 
 function isInterceptingNetworkRequests(settings: Settings) {
-  return settings.blockIntakeRequests || settings.useDevBundles || settings.useRumSlim
+  return settings.blockIntakeRequests || settings.useDevBundles || settings.useRumSlim || (settings.trialMode && settings.sdkInjection.enabled)
 }
 
 function isOverridingInitConfiguration(settings: Settings) {

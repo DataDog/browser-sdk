@@ -36,6 +36,7 @@ Then, in Google Chrome:
 - Load the SDK development bundles instead of production ones
 - Switch between `rum` and `rum-slim` bundles
 - Retrieve Logs/RUM configuration
+- **Trial Mode**: Enable SDK injection capabilities to automatically inject and configure the Datadog Browser SDK into pages that don't have it
 
 ## Browser compatibility
 
@@ -82,6 +83,8 @@ Info tab contains information about Session and RUM SDK configurations
 > Don’t forget to reset everything in the Setting Tab after experimenting.
 
 - **Request Interception**: override the current SDK bundle with local build, or ​​switch between `rum` and `rum-slim` bundles on any site that is using RUM SDK. (note: if the SDK is installed from NPM, this override might not work, as it is still in an experimental stage.)
+
+- **Trial Mode**: Access SDK injection capabilities through the Trial tab. When enabled, you can configure and inject the Datadog Browser SDK into pages that don't have it. Configure your Application ID, Client Token, site, and other parameters to test SDK features on any website.
 
 - **Debug Mode**: This option enables debug mode from the developer extension to display errors happening in RUM and LOGS in the developer console.
 
