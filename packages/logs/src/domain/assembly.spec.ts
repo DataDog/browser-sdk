@@ -1,13 +1,5 @@
 import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import {
-  Observable,
-  ErrorSource,
-  ONE_MINUTE,
-  getTimeStamp,
-  noop,
-  startTagContext,
-  HookNames,
-} from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, startTagContext, HookNames } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -17,14 +9,12 @@ import type { LogsConfiguration } from './configuration'
 import { validateAndBuildLogsConfiguration } from './configuration'
 import { Logger } from './logger'
 import { StatusType } from './logger/isAuthorized'
-import type { LogsSessionManager } from './logsSessionManager'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { Hooks } from './hooks'
 import { createHooks } from './hooks'
 import { startRUMInternalContext } from './contexts/rumInternalContext'
 
 const initConfiguration = { clientToken: 'xxx', service: 'service', env: 'test', version: '1.0.0' }
-const SESSION_ID = 'session-id'
 const DEFAULT_MESSAGE = {
   status: StatusType.info,
   message: 'message',
@@ -39,18 +29,7 @@ const COMMON_CONTEXT: CommonContext = {
 }
 
 describe('startLogsAssembly', () => {
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: (_startTime, options) => {
-      if (sessionIsTracked && (sessionIsActive || options?.returnInactive)) {
-        return { id: SESSION_ID }
-      }
-    },
-    expireObservable: new Observable(),
-  }
-
   let beforeSend: (event: LogsEvent) => void | boolean
-  let sessionIsActive: boolean
-  let sessionIsTracked: boolean
   let lifeCycle: LifeCycle
   let configuration: LogsConfiguration
   let serverLogs: Array<LogsEvent & Context> = []
@@ -58,8 +37,6 @@ describe('startLogsAssembly', () => {
   let hooks: Hooks
 
   beforeEach(() => {
-    sessionIsTracked = true
-    sessionIsActive = true
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
     configuration = {
@@ -71,7 +48,7 @@ describe('startLogsAssembly', () => {
     hooks = createHooks()
     startRUMInternalContext(hooks)
     startTagContext(hooks, configuration)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -104,56 +81,6 @@ describe('startLogsAssembly', () => {
       rawLogsEvent: DEFAULT_MESSAGE,
     })
     expect(serverLogs.length).toEqual(0)
-  })
-
-  describe('event generation condition', () => {
-    it('should not send if session is not tracked', () => {
-      sessionIsTracked = false
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(0)
-    })
-
-    it('should send log with session id if session is active', () => {
-      sessionIsTracked = true
-      sessionIsActive = true
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-      expect(serverLogs[0].session_id).toEqual(SESSION_ID)
-    })
-
-    it('should send log without session id if session has expired', () => {
-      sessionIsTracked = true
-      sessionIsActive = false
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-      expect(serverLogs[0].session_id).toBeUndefined()
-    })
-
-    it('should enable/disable the sending when the tracking type change', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-
-      sessionIsTracked = false
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-
-      sessionIsTracked = true
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(2)
-    })
   })
 
   describe('contexts inclusion', () => {
@@ -352,11 +279,6 @@ describe('startLogsAssembly', () => {
 
 describe('logs limitation', () => {
   let clock: Clock
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => ({ id: SESSION_ID }),
-    expireObservable: new Observable(),
-  }
-
   let beforeSend: (event: LogsEvent) => void | boolean
   let lifeCycle: LifeCycle
   let hooks: Hooks
@@ -376,7 +298,7 @@ describe('logs limitation', () => {
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
     startTagContext(hooks, configuration)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
     clock = mockClock()
   })
 

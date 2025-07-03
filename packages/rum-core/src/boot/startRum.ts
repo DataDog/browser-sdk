@@ -47,6 +47,7 @@ import { startConnectivityContext } from '../domain/contexts/connectivityContext
 import { startDefaultContext } from '../domain/contexts/defaultContext'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
+import { startEventCollection } from '../domain/event/eventCollection'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -138,6 +139,7 @@ export function startRum(
   const {
     actionContexts,
     addAction,
+    addEvent,
     stop: stopRumEventCollection,
   } = startRumEventCollection(
     lifeCycle,
@@ -204,6 +206,7 @@ export function startRum(
 
   return {
     addAction,
+    addEvent,
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
@@ -226,6 +229,7 @@ export function startRum(
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
+    hooks,
   }
 }
 
@@ -246,6 +250,8 @@ export function startRumEventCollection(
     configuration
   )
 
+  const eventCollection = startEventCollection(lifeCycle)
+
   const displayContext = startDisplayContext(hooks, configuration)
   const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
   startSyntheticsContext(hooks)
@@ -255,6 +261,7 @@ export function startRumEventCollection(
   return {
     pageStateHistory,
     addAction: actionCollection.addAction,
+    addEvent: eventCollection.addEvent,
     actionContexts: actionCollection.actionContexts,
     stop: () => {
       actionCollection.stop()

@@ -41,6 +41,7 @@ import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
+import type { Hooks } from '../domain/hooks'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -369,6 +370,7 @@ export interface ProfilerApi {
   stop: () => void
   onRumStart: (
     lifeCycle: LifeCycle,
+    hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
@@ -452,6 +454,7 @@ export function makeRumPublicApi(
 
       profilerApi.onRumStart(
         startRumResult.lifeCycle,
+        startRumResult.hooks,
         configuration,
         startRumResult.session,
         startRumResult.viewHistory
@@ -459,7 +462,10 @@ export function makeRumPublicApi(
 
       strategy = createPostStartStrategy(strategy, startRumResult)
 
-      callPluginsMethod(configuration.plugins, 'onRumStart', { strategy })
+      callPluginsMethod(configuration.plugins, 'onRumStart', {
+        strategy, // TODO: remove this in the next major release
+        addEvent: startRumResult.addEvent,
+      })
 
       return startRumResult
     }

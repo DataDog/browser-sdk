@@ -18,6 +18,55 @@
 
 ---
 
+## v6.13.0
+
+**Public Changes:**
+
+- 🐛 [RUM-146] Modify label behavior in dead click logic ([#3642](https://github.com/DataDog/browser-sdk/pull/3642)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM Profiler] Sticky sampling based on session ([#3661](https://github.com/DataDog/browser-sdk/pull/3661)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 [RUM-9918] add a node version check ([#3663](https://github.com/DataDog/browser-sdk/pull/3663))
+- 👷 Update dependency eslint-plugin-jsdoc to v51 ([#3636](https://github.com/DataDog/browser-sdk/pull/3636))
+- 👷 Update actions/checkout action to v4 ([#3565](https://github.com/DataDog/browser-sdk/pull/3565))
+- 👷 Lock file maintenance ([#3540](https://github.com/DataDog/browser-sdk/pull/3540))
+- 👷 Update all non-major dependencies ([#3635](https://github.com/DataDog/browser-sdk/pull/3635)) [RUM-REACT]
+- 👷 [RUM-9218] Adjust E2E setup to use cross-origin URLs for loading CDN bundles ([#3657](https://github.com/DataDog/browser-sdk/pull/3657)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 Bump chrome to 138.0.7204.49-1 ([#3658](https://github.com/DataDog/browser-sdk/pull/3658))
+- ♻️ [RUM-10005] Exposes `addEvent` instead of `strategy` to plugins ([#3567](https://github.com/DataDog/browser-sdk/pull/3567)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [RUM-10407] Use hooks for Logs SDK to decouple session ([#3643](https://github.com/DataDog/browser-sdk/pull/3643)) [LOGS]
+- 👷 [RUM Profiler] Add `_dd.profiling` context to Long Task and View events ([#3583](https://github.com/DataDog/browser-sdk/pull/3583)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+## v6.12.3
+
+**Plublic Changes:**
+
+- 🐛fix: skip unwanted stackframe on custom errors for faulty browsers ([#3555](https://github.com/DataDog/browser-sdk/pull/3555)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛🍒 [RUM-10101] Persist session cookie to one year when opt-in anonymous user tracking ([#3559](https://github.com/DataDog/browser-sdk/pull/3559)) ([#3654](https://github.com/DataDog/browser-sdk/pull/3654)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.12.2
+
+**Public Changes:**
+
+- 🐛 ignore init() if Synthetics will inject its own instance of RUM ([#3649](https://github.com/DataDog/browser-sdk/pull/3649)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 reduce playwright workers to improve reliability ([#3650](https://github.com/DataDog/browser-sdk/pull/3650))
+- 🔊 add cookie data in debug logs ([#3647](https://github.com/DataDog/browser-sdk/pull/3647)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.12.1
+
+**Public Changes:**
+
+- 🐛 [RUM-10366] mitigate cookie dead lock ([#3637](https://github.com/DataDog/browser-sdk/pull/3637)) [LOGS] [RUM] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 🔧 create a GitHub release when deploying ([#3644](https://github.com/DataDog/browser-sdk/pull/3644))
+- ♻️ [RUM-10311] Use hooks for Logs SDK to decouple user ([#3620](https://github.com/DataDog/browser-sdk/pull/3620)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.12.0
 
 **Public Changes:**

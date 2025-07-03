@@ -27,6 +27,7 @@ import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
+import type { ProfilingContextManager } from './profilingContext'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -39,6 +40,7 @@ export function createRumProfiler(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   session: RumSessionManager,
+  profilingContextManager: ProfilingContextManager,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
@@ -80,6 +82,9 @@ export function createRumProfiler(
 
     // Cleanup Long Task Registry as we no longer need to correlate them with RUM
     cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
+
+    // Update Profiling status once the Profiler has been stopped.
+    profilingContextManager.set({ status: 'stopped', error_reason: undefined })
   }
 
   /**
@@ -134,6 +139,7 @@ export function createRumProfiler(
     const globalThisProfiler: Profiler | undefined = getGlobalObject<any>().Profiler
 
     if (!globalThisProfiler) {
+      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
       throw new Error('RUM Profiler is not supported in this browser.')
     }
 
@@ -153,14 +159,21 @@ export function createRumProfiler(
         ),
       })
     } catch (e) {
-      // If we fail to create a profiler, it's likely due to the missing Response Header (`js-profiling`) that is required to enable the profiler.
-      // We should suggest the user to enable the Response Header in their server configuration.
-      display.warn(
-        '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
-        e
-      )
+      if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
+        // Missing Response Header (`js-profiling`) that is required to enable the profiler.
+        // We should suggest the user to enable the Response Header in their server configuration.
+        display.warn(
+          '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
+          e
+        )
+        profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
+      } else {
+        profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
+      }
       return
     }
+
+    profilingContextManager.set({ status: 'running', error_reason: undefined })
 
     // Kick-off the new instance
     instance = {

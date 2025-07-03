@@ -28,6 +28,7 @@ import { startReportError } from '../domain/reportError'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
+import { startSessionContext } from '../domain/contexts/sessionContext'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -68,6 +69,7 @@ export function startLogs(
   telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
   // Start user and account context first to allow overrides from global context
+  startSessionContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
@@ -83,7 +85,7 @@ export function startLogs(
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)
 
-  startLogsAssembly(session, configuration, lifeCycle, hooks, getCommonContext, reportError)
+  startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
 
   if (!canUseEventBridge()) {
     const { stop: stopLogsBatch } = startLogsBatch(

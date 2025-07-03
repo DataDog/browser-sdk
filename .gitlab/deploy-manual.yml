@@ -66,7 +66,7 @@ step-6_publish-developer-extension:
     - yarn
     - node ./scripts/deploy/publish-developer-extension.js
 
-create-github-release:
+step-7_create-github-release:
   needs:
     - step-6_publish-developer-extension
   stage: deploy
