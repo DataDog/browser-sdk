@@ -141,6 +141,11 @@ export interface RawRumViewEvent {
       start_session_replay_recording_manually: boolean
     }
   }
+  device?: {
+    locale?: string
+    locales?: readonly string[]
+    time_zone?: string
+  }
 }
 
 interface ViewDisplay {
