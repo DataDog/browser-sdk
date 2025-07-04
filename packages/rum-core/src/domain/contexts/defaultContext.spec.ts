@@ -72,7 +72,7 @@ describe('startDefaultContext', () => {
         hooks,
         mockRumConfiguration({
           applicationId: '1',
-          source: 'test-source',
+          source: 'browser',
           variant: 'test-variant',
         }),
         'rum'
@@ -89,7 +89,7 @@ describe('startDefaultContext', () => {
           id: '1',
         },
         date: timeStampNow(),
-        source: 'test-source',
+        source: 'browser',
         _dd: jasmine.objectContaining({
           format_version: 2,
           drift: jasmine.any(Number),
