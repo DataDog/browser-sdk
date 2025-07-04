@@ -282,7 +282,8 @@ export function processSessionStoreOperations(
   // Call the after callback with the final session state
   // This is called even if the session wasn't persisted, allowing operations
   // on the most up-to-date session state (which could have been modified by another tab)
-  operations.after?.(processedSession || currentStore.session)
+  const finalSessionState = processedSession || currentStore.session
+  operations.after?.(finalSessionState)
 
   // Process the next operation in the queue
   next(sessionStoreStrategy)
