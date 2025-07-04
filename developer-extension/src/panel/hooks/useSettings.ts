@@ -19,6 +19,29 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   logsConfigurationOverride: null,
   debugMode: false,
   datadogMode: false,
+  trialMode: false,
+  sdkInjection: {
+    enabled: false,
+    debugMode: false,
+    sdkTypes: ['rum'],
+    rumBundle: 'rum',
+    rumConfig: {
+      applicationId: 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
+      clientToken: 'pubXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+      site: 'datadoghq.com',
+      service: 'developer-extension-test',
+      version: '1.0.0',
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 100,
+      env: 'dev',
+    },
+    logsConfig: {
+      clientToken: 'pubXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
+      site: 'datadoghq.com',
+      service: 'developer-extension-test',
+      version: '1.0.0',
+    },
+  },
 }
 
 let settings: Settings | undefined

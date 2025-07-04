@@ -57,4 +57,29 @@ export interface Settings {
   logsConfigurationOverride: object | null
   debugMode: boolean
   datadogMode: boolean
+  trialMode: boolean
+  sdkInjection: SdkInjectionConfig
+}
+
+export interface SdkInjectionConfig {
+  enabled: boolean
+  debugMode: boolean
+  sdkTypes: Array<'rum' | 'logs'>
+  rumBundle: 'rum' | 'rum-slim'
+  rumConfig: {
+    applicationId: string
+    clientToken: string
+    site: string
+    service: string
+    version: string
+    sessionSampleRate: number
+    sessionReplaySampleRate: number
+    env: string
+  }
+  logsConfig: {
+    clientToken: string
+    site: string
+    service: string
+    version: string
+  }
 }
