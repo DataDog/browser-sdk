@@ -7,6 +7,8 @@ import {
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import {
@@ -39,6 +41,8 @@ import {
   sanitizeIfLongDataUrl,
 } from './resourceUtils'
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
+import type { RequestRegistry } from './requestRegistry'
+import { createRequestRegistry } from './requestRegistry'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
@@ -47,23 +51,30 @@ export function startResourceCollection(
   taskQueue = createTaskQueue(),
   retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
-    handleResource(() => processRequest(request, configuration, pageStateHistory))
-  })
+  let requestRegistry: RequestRegistry | undefined
+  const isEarlyRequestCollectionEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.EARLY_REQUEST_COLLECTION)
+
+  if (isEarlyRequestCollectionEnabled) {
+    requestRegistry = createRequestRegistry(lifeCycle)
+  } else {
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request: RequestCompleteEvent) => {
+      handleResource(() => processRequest(request, configuration, pageStateHistory))
+    })
+  }
 
   const performanceResourceSubscription = createPerformanceObservable(configuration, {
     type: RumPerformanceEntryType.RESOURCE,
     buffered: true,
   }).subscribe((entries) => {
     for (const entry of entries) {
-      if (!isResourceEntryRequestType(entry)) {
-        handleResource(() => processResourceEntry(entry, configuration, pageStateHistory))
+      if (isEarlyRequestCollectionEnabled || !isResourceEntryRequestType(entry)) {
+        handleResource(() => processResourceEntry(entry, configuration, pageStateHistory, requestRegistry))
       }
     }
   })
 
   retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
-    handleResource(() => processResourceEntry(timing, configuration, pageStateHistory))
+    handleResource(() => processResourceEntry(timing, configuration, pageStateHistory, requestRegistry))
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
@@ -94,9 +105,12 @@ function processRequest(
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory
+  pageStateHistory: PageStateHistory,
+  requestRegistry: RequestRegistry | undefined
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
-  return assembleResource(entry, undefined, pageStateHistory, configuration)
+  const matchingRequest =
+    isResourceEntryRequestType(entry) && requestRegistry ? requestRegistry.getMatchingRequest(entry) : undefined
+  return assembleResource(entry, matchingRequest, pageStateHistory, configuration)
 }
 
 // TODO: In the future, the `entry` parameter should be required, making things simpler.
@@ -128,6 +142,7 @@ function assembleResource(
       resource: {
         id: generateUUID(),
         duration: toServerDuration(duration),
+        // TODO: in the future when `entry` is required, we can probably only rely on `computeResourceEntryType`
         type: request
           ? request.type === RequestType.XHR
             ? ResourceType.XHR
