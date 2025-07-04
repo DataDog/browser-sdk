@@ -1,0 +1,133 @@
+---
+description: Standards for Test-Driven Development in the Browser SDK project
+globs:
+tags:
+  - jasmine
+  - karma
+alwaysApply: true
+---
+
+# Test-Driven Development (TDD) Rule
+
+## 1. RED-GREEN-REFACTOR Cycle
+
+**ALWAYS follow this sequence:**
+1. 🔴 **RED**: Write failing test first
+2. 🟢 **GREEN**: Write minimal code to make test pass
+3. 🔵 **REFACTOR**: Improve code while keeping tests green
+
+## 2. Spec First, Code Second
+
+**Before writing ANY implementation:**
+```bash
+# Check for existing spec file
+ls packages/some-package/src/path/to/feature.spec.ts
+
+# If missing, create spec file first
+touch packages/some-package/src/path/to/feature.spec.ts
+```
+
+**Spec file must exist BEFORE implementation file**
+
+## 3. Spec Structure (Jasmine/Karma)
+
+```typescript
+describe('FeatureName', () => {
+// Setup variables
+let feature: FeatureType
+let mockDependency: MockType
+
+beforeEach(() => {
+    // Setup for each test
+    mockDependency = jasmine.createSpy()
+    feature = new FeatureName(mockDependency)
+
+    // Use registerCleanupTask for cleanup
+    registerCleanupTask(() => {
+    feature.dispose()
+    })
+})
+
+describe('when condition', () => {
+    it('should behave correctly', () => {
+    // Arrange
+    const input = 'test-input'
+
+    // Act
+    const result = feature.process(input)
+
+    // Assert
+    expect(result).toBe(expectedOutput)
+    expect(mockDependency).toHaveBeenCalledWith(input)
+    })
+
+    it('should handle edge cases', () => {
+    // Test edge cases, errors, boundaries
+    })
+})
+})
+```
+
+## 4. Implementation Process
+
+**Step-by-step workflow:**
+
+1. **Analyze Requirements**
+    - Understand the feature/bug
+    - Identify acceptance criteria
+    - Consider edge cases
+
+2. **Create/Review Spec**
+
+3. **Run Tests (Should Fail)**
+    ```bash
+    yarn test:unit
+    # Verify test fails for the right reason
+    ```
+
+4. **Implement Minimal Code**
+
+5. **Run Tests (Should Pass)**
+    ```bash
+    yarn test:unit
+    # Verify test passes
+    ```
+
+6. **Refactor & Add More Tests**
+    - Improve implementation
+    - Add edge case tests
+    - Ensure all tests still pass
+
+## 5. Browser SDK Specific Patterns
+
+**Use established test utilities:**
+[unit-test.mdc](mdc:.cursor/rules/unit-test.mdc)
+
+**Follow co-location pattern:**
+```
+src/
+├── domain/
+│   ├── feature.ts          ← Implementation
+│   ├── feature.spec.ts     ← Tests (co-located)
+│   └── anotherFeature.ts
+```
+
+## 8. Error Prevention Rules
+
+**❌ NEVER do this:**
+- Write implementation without tests
+- Skip edge case testing
+- Leave failing tests
+- Forget cleanup tasks
+- Use real timers in tests
+- Test multiple behaviors in one test
+
+**✅ ALWAYS do this:**
+- Write test first
+- Use `registerCleanupTask` for cleanup
+- Mock external dependencies
+- Test both success and failure paths
+- Use descriptive test names
+- Follow existing patterns in codebase
+
+Remember: **Tests are documentation**. Write them as if explaining the feature to a new team member.
