@@ -3,6 +3,7 @@ import {
   DISCARDED,
   ErrorSource,
   HookNames,
+  buildTags,
   combine,
   createEventRateLimiter,
   getRelativeTime,
@@ -41,7 +42,7 @@ export function startLogsAssembly(
         return
       }
 
-      const defaultDdtags = (defaultLogsEventAttributes?.ddtags as unknown as string[]) ?? []
+      const defaultDdtags = buildTags(configuration)
 
       const log = combine(
         {

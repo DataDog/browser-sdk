@@ -129,11 +129,7 @@ export class Logger {
   }
 
   removeTagsWithKey(key: string) {
-    // Match tags starting with the key and either:
-    // - followed by a colon (tag in the form `key:value`)
-    // - followed by the end of the string (key-only tags)
-    const regex = new RegExp(`^${key}(:|$)`)
-    this.tags = this.tags.filter((tag) => !regex.test(tag))
+    this.tags = this.tags.filter((tag) => tag !== key && !tag.startsWith(`${key}:`))
   }
 
   getTags() {
