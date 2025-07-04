@@ -308,23 +308,30 @@ function attemptLockAcquisition(sessionStore: SessionStoreStrategy): {
     return { success: true }
   }
 
-  const { lock, ...session } = retrieveSession()
-  const existingLock = lock && !isLockExpired(lock) ? lock : undefined
+  try {
+    const { lock, ...session } = retrieveSession()
+    const existingLock = lock && !isLockExpired(lock) ? lock : undefined
 
-  if (existingLock) {
+    if (existingLock) {
+      // Normal contention: just retry later, no telemetry
+      return { success: false }
+    }
+
+    const newLock = createLock()
+    persistSession({ ...session, lock: newLock })
+
+    // Verify we actually acquired the lock (another tab might have acquired it first)
+    const { lock: acquiredLock } = retrieveSession()
+    if (acquiredLock !== newLock) {
+      // Normal contention: just retry later, no telemetry
+      return { success: false }
+    }
+
+    return { success: true, lock: newLock }
+  } catch {
+    // On error, just fail and let the main function handle retry/telemetry if needed
     return { success: false }
   }
-
-  const newLock = createLock()
-  persistSession({ ...session, lock: newLock })
-
-  // Verify we actually acquired the lock (another tab might have acquired it first)
-  const { lock: acquiredLock } = retrieveSession()
-  if (acquiredLock !== newLock) {
-    return { success: false }
-  }
-
-  return { success: true, lock: newLock }
 }
 
 /**
@@ -335,8 +342,13 @@ function attemptLockAcquisition(sessionStore: SessionStoreStrategy): {
  * @returns true if lock is valid, false otherwise
  */
 function validateLockIntegrity(sessionStore: SessionStoreStrategy, expectedLock: string): boolean {
-  const { lock } = sessionStore.retrieveSession()
-  return lock === expectedLock
+  try {
+    const { lock } = sessionStore.retrieveSession()
+    return lock === expectedLock
+  } catch {
+    // On error, just fail and let the main function handle retry/telemetry if needed
+    return false
+  }
 }
 
 /**
@@ -354,7 +366,6 @@ function persistSessionWithLock(
   currentLock?: string
 ): void {
   const { persistSession } = sessionStore
-
   if (isLockEnabled && currentLock) {
     persistSession({ ...session, lock: currentLock })
   } else {
