@@ -57,13 +57,13 @@ export function startResourceCollection(
   }).subscribe((entries) => {
     for (const entry of entries) {
       if (!isResourceEntryRequestType(entry)) {
-        handleResource(() => processResourceEntry(entry, configuration))
+        handleResource(() => processResourceEntry(entry, configuration, pageStateHistory))
       }
     }
   })
 
   retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
-    handleResource(() => processResourceEntry(timing, configuration))
+    handleResource(() => processResourceEntry(timing, configuration, pageStateHistory))
   })
 
   function handleResource(computeRawEvent: () => RawRumEventCollectedData<RawRumResourceEvent> | undefined) {
@@ -88,75 +88,57 @@ function processRequest(
   pageStateHistory: PageStateHistory
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const matchingTiming = matchRequestResourceEntry(request)
-  const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
-  const tracingInfo = computeRequestTracingInfo(request, configuration)
-  if (!configuration.trackResources && !tracingInfo) {
-    return
-  }
-
-  const type = request.type === RequestType.XHR ? ResourceType.XHR : ResourceType.FETCH
-
-  const correspondingTimingOverrides = matchingTiming ? computeResourceEntryMetrics(matchingTiming) : undefined
-
-  const duration = matchingTiming
-    ? computeResourceEntryDuration(matchingTiming)
-    : computeRequestDuration(pageStateHistory, startClocks, request.duration)
-
-  const resourceEvent = combine(
-    {
-      date: startClocks.timeStamp,
-      resource: {
-        id: generateUUID(),
-        type,
-        duration: toServerDuration(duration),
-        method: request.method,
-        status_code: request.status,
-        protocol: matchingTiming && computeResourceEntryProtocol(matchingTiming),
-        url: sanitizeIfLongDataUrl(request.url),
-        delivery_type: matchingTiming && computeResourceEntryDeliveryType(matchingTiming),
-      },
-      type: RumEventType.RESOURCE,
-      _dd: {
-        discarded: !configuration.trackResources,
-      },
-    },
-    tracingInfo,
-    correspondingTimingOverrides
-  )
-
-  return {
-    startTime: startClocks.relative,
-    duration,
-    rawRumEvent: resourceEvent,
-    domainContext: getResourceDomainContext(matchingTiming, request),
-  }
+  return assembleResource(matchingTiming, request, pageStateHistory, configuration)
 }
 
 function processResourceEntry(
   entry: RumPerformanceResourceTiming,
+  configuration: RumConfiguration,
+  pageStateHistory: PageStateHistory
+): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
+  return assembleResource(entry, undefined, pageStateHistory, configuration)
+}
+
+// TODO: In the future, the `entry` parameter should be required, making things simpler.
+function assembleResource(
+  entry: RumPerformanceResourceTiming | undefined,
+  request: RequestCompleteEvent | undefined,
+  pageStateHistory: PageStateHistory,
   configuration: RumConfiguration
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
-  const startClocks = relativeToClocks(entry.startTime)
-  const tracingInfo = computeResourceEntryTracingInfo(entry, configuration)
+  if (!entry && !request) {
+    return
+  }
+
+  const tracingInfo = request
+    ? computeRequestTracingInfo(request, configuration)
+    : computeResourceEntryTracingInfo(entry!, configuration)
   if (!configuration.trackResources && !tracingInfo) {
     return
   }
 
-  const type = computeResourceEntryType(entry)
-  const entryMetrics = computeResourceEntryMetrics(entry)
-  const duration = computeResourceEntryDuration(entry)
+  const startClocks = entry ? relativeToClocks(entry.startTime) : request!.startClocks
+  const duration = entry
+    ? computeResourceEntryDuration(entry)
+    : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
       resource: {
         id: generateUUID(),
-        type,
         duration: toServerDuration(duration),
-        url: entry.name,
-        status_code: discardZeroStatus(entry.responseStatus),
-        protocol: computeResourceEntryProtocol(entry),
-        delivery_type: computeResourceEntryDeliveryType(entry),
+        // TODO: in the future when `entry` is required, we can probably only rely on `computeResourceEntryType`
+        type: request
+          ? request.type === RequestType.XHR
+            ? ResourceType.XHR
+            : ResourceType.FETCH
+          : computeResourceEntryType(entry!),
+        method: request ? request.method : undefined,
+        status_code: request ? request.status : discardZeroStatus(entry!.responseStatus),
+        url: request ? sanitizeIfLongDataUrl(request.url) : entry!.name,
+        protocol: entry && computeResourceEntryProtocol(entry),
+        delivery_type: entry && computeResourceEntryDeliveryType(entry),
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -164,13 +146,14 @@ function processResourceEntry(
       },
     },
     tracingInfo,
-    entryMetrics
+    entry && computeResourceEntryMetrics(entry)
   )
+
   return {
     startTime: startClocks.relative,
     duration,
     rawRumEvent: resourceEvent,
-    domainContext: getResourceDomainContext(entry, undefined),
+    domainContext: getResourceDomainContext(entry, request),
   }
 }
 

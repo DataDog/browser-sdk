@@ -88,6 +88,7 @@ describe('resourceCollection', () => {
         protocol: 'HTTP/1.0',
         delivery_type: 'cache',
         render_blocking_status: 'blocking',
+        method: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
