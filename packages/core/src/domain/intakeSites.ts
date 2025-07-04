@@ -5,6 +5,7 @@ export type Site =
   | 'datadoghq.eu'
   | 'ddog-gov.com'
   | 'ap1.datadoghq.com'
+  | 'ap2.datadoghq.com'
 
 export const INTAKE_SITE_STAGING: Site = 'datad0g.com' as Site
 export const INTAKE_SITE_FED_STAGING: Site = 'dd0g-gov.com' as Site
