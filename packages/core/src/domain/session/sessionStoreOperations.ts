@@ -7,18 +7,30 @@ import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrateg
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
-type Operations = {
+// Types
+export interface Operations {
   process: (sessionState: SessionState) => SessionState | undefined
   after?: (sessionState: SessionState) => void
 }
 
+export interface OperationResult {
+  success: boolean
+  session?: SessionState
+  error?: string
+  retryable?: boolean
+}
+
+export interface StoreWithLock {
+  session: SessionState
+  lock?: string
+}
+
+// Constants
 export const LOCK_RETRY_DELAY = 10
 export const LOCK_MAX_TRIES = 100
-
-// Locks should be hold for a few milliseconds top, just the time it takes to read and write a
-// cookie. Using one second should be enough in most situations.
 export const LOCK_EXPIRATION_DELAY = ONE_SECOND
-const LOCK_SEPARATOR = '--'
+export const LOCK_SEPARATOR = '--'
+export const MAX_QUEUE_SIZE = 50
 
 const bufferedOperations: Operations[] = []
 let ongoingOperations: Operations | undefined
