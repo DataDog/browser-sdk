@@ -11,7 +11,7 @@ export function startDefaultContext(
   sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
-    const source = configuration.source || 'browser'
+    const source = (configuration.source || 'browser') as 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity' | 'kotlin-multiplatform'
     const variant = configuration.variant
 
     return {
