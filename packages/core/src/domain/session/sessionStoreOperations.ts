@@ -169,6 +169,12 @@ export function processSessionStoreOperations(
 
   // If a different operation is running, queue this one and return
   if (operations !== ongoingOperations) {
+    // Prevent unbounded queue growth (memory leak)
+    if (bufferedOperations.length >= MAX_QUEUE_SIZE) {
+      // TODO: Consider exposing a callback or telemetry for queue overflow
+      addTelemetryDebug('Session operation queue full, dropping operation')
+      return
+    }
     bufferedOperations.push(operations)
     return
   }
@@ -260,16 +266,19 @@ export function processSessionStoreOperations(
     // handling lock issues around expiration would require changes at several levels.
     // Since we don't have evidence of lock issues around expiration, we avoid
     // the complexity for now.
+    // TODO: Revisit this if we ever see lock issues around expiration in the wild.
     if (!(processedSession && isSessionInExpiredState(processedSession))) {
       // Check if our lock was corrupted after persisting
       currentStore = retrieveStore()
       if (currentStore.lock !== currentLock!) {
+        // TODO: Consider adding exponential backoff or circuit breaker here
         retryLater(operations, sessionStoreStrategy, numberOfRetries)
         return
       }
 
       // If lock is still valid, restore the original session state
       // This ensures we don't lose data if another tab modified the session
+      // TODO: This could overwrite changes from the current operation. Consider a merge strategy.
       persistSession(currentStore.session)
       processedSession = currentStore.session
     }
