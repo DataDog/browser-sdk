@@ -26,6 +26,7 @@ import {
   setTimeout,
   Observable,
   createContextManager,
+  isPagePrerendered,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
@@ -42,6 +43,7 @@ import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { onBFCacheRestore } from './bfCacheSupport'
 import { trackBfcacheMetrics } from './viewMetrics/trackBfcacheMetrics'
+import { trackPrerenderMetrics } from './viewMetrics/trackPrerenderMetrics'
 
 export interface ViewEvent {
   id: string
@@ -112,7 +114,12 @@ export function trackViews(
   initialViewOptions?: ViewOptions
 ) {
   const activeViews: Set<ReturnType<typeof newView>> = new Set()
-  let currentView = startNewView(ViewLoadingType.INITIAL_LOAD, clocksOrigin(), initialViewOptions)
+
+  const initialLoadingType =
+    configuration.trackPrerenderViews && isPagePrerendered()
+      ? ViewLoadingType.PRERENDERED
+      : ViewLoadingType.INITIAL_LOAD
+  let currentView = startNewView(initialLoadingType, clocksOrigin(), initialViewOptions)
   let stopOnBFCacheRestore: (() => void) | undefined
 
   startViewLifeCycle()
@@ -266,13 +273,18 @@ function newView(
   )
 
   const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
-    loadingType === ViewLoadingType.INITIAL_LOAD
+    loadingType === ViewLoadingType.INITIAL_LOAD || loadingType === ViewLoadingType.PRERENDERED
       ? trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate)
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   // Start BFCache-specific metrics when restoring from BFCache
   if (loadingType === ViewLoadingType.BF_CACHE) {
     trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
+  }
+
+  // Start prerender-specific metrics when loading from prerendered state
+  if (loadingType === ViewLoadingType.PRERENDERED) {
+    trackPrerenderMetrics(initialViewMetrics, scheduleViewUpdate)
   }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)

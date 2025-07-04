@@ -1,10 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { getRelativeTime, isNumber } from '@datadog/browser-core'
-import {
-  RumPerformanceEntryType,
-  supportPerformanceTimingEvent,
-  type RumPerformanceNavigationTiming,
-} from './performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
+import type { RumPerformanceNavigationTiming } from './performanceObservable'
 
 export function getNavigationEntry(): RumPerformanceNavigationTiming {
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {
@@ -12,6 +9,10 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
       RumPerformanceEntryType.NAVIGATION
     )[0] as unknown as RumPerformanceNavigationTiming
     if (navigationEntry) {
+      // Ensure activationStart is always present for compatibility with older browsers
+      if (navigationEntry.activationStart === undefined) {
+        navigationEntry.activationStart = 0 as RelativeTime
+      }
       return navigationEntry
     }
   }
@@ -20,6 +21,7 @@ export function getNavigationEntry(): RumPerformanceNavigationTiming {
   const entry: RumPerformanceNavigationTiming = {
     entryType: RumPerformanceEntryType.NAVIGATION as const,
     initiatorType: 'navigation' as const,
+    activationStart: 0 as RelativeTime,
     name: window.location.href,
     startTime: 0 as RelativeTime,
     duration: timings.loadEventEnd,
@@ -50,4 +52,9 @@ export function computeTimingsFromDeprecatedPerformanceTiming() {
     }
   }
   return result as TimingsFromDeprecatedPerformanceTiming
+}
+
+export function getActivationStart(): RelativeTime {
+  const navEntry = getNavigationEntry()
+  return (navEntry && navEntry.activationStart) || (0 as RelativeTime)
 }

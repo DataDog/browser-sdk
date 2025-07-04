@@ -198,6 +198,7 @@ export const ViewLoadingType = {
   INITIAL_LOAD: 'initial_load',
   ROUTE_CHANGE: 'route_change',
   BF_CACHE: 'bf_cache',
+  PRERENDERED: 'prerendered',
 } as const
 
 export type ViewLoadingType = (typeof ViewLoadingType)[keyof typeof ViewLoadingType]
