@@ -335,6 +335,12 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
      */
     batchMessagesLimit: 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
+
+    /**
+     * Default source
+     */
+    source: initConfiguration.source ?? 'browser',
+
     ...computeTransportConfiguration(initConfiguration),
   }
 }
