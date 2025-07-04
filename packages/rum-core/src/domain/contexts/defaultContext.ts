@@ -20,6 +20,7 @@ export function startDefaultContext(
       | 'unity'
       | 'kotlin-multiplatform'
     const variant = configuration.variant
+    const isSourceOverridden = source !== 'browser'
 
     return {
       type: eventType,
@@ -30,7 +31,7 @@ export function startDefaultContext(
           session_sample_rate: round(configuration.sessionSampleRate, 3),
           session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
         },
-        browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
+        browser_sdk_version: canUseEventBridge() || isSourceOverridden ? __BUILD_ENV__SDK_VERSION__ : undefined,
         sdk_name: sdkName,
         ...(variant ? { variant } : {}),
       },
