@@ -81,18 +81,20 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, source: configSource, variant }: InitConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload
 ) {
+  const source = configSource || 'browser'
+
   const parameters = [
-    'ddsource=browser',
+    `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
     `dd-request-id=${generateUUID()}`,
-  ]
+  ].concat(variant ? [`_dd.variant=${variant}`] : [])
 
   if (encoding) {
     parameters.push(`dd-evp-encoding=${encoding}`)
