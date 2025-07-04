@@ -61,6 +61,25 @@ export function TrialTab() {
                 <>
                   <SettingItem
                     input={
+                      <Switch
+                        label="Debug mode only (don't send data to Datadog)"
+                        checked={sdkInjection.debugMode}
+                        onChange={(event) =>
+                          setSetting('sdkInjection', { ...sdkInjection, debugMode: event.currentTarget.checked })
+                        }
+                        color="orange"
+                      />
+                    }
+                    description={
+                      <>
+                        When enabled, the SDK will be injected but no data will be sent to Datadog. Perfect for
+                        debugging SDK functionality or previewing features without requiring a Datadog org.
+                      </>
+                    }
+                  />
+
+                  <SettingItem
+                    input={
                       <MultiSelect
                         label="SDK Types"
                         placeholder="Select SDK types to inject"
@@ -105,15 +124,42 @@ export function TrialTab() {
           )}
         </Columns.Column>
 
-        {trialMode && sdkInjection.enabled && sdkInjection.sdkTypes.includes('rum') && (
+        {trialMode && sdkInjection.enabled && !sdkInjection.debugMode && sdkInjection.sdkTypes.includes('rum') && (
           <Columns.Column title="RUM Configuration">
+            <Text size="sm" c="dimmed" mb="md">
+              Configure your Datadog RUM settings to send data to your organization.
+            </Text>
             <RumConfigurationForm sdkInjection={sdkInjection} setSetting={setSetting} />
           </Columns.Column>
         )}
 
-        {trialMode && sdkInjection.enabled && sdkInjection.sdkTypes.includes('logs') && (
+        {trialMode && sdkInjection.enabled && !sdkInjection.debugMode && sdkInjection.sdkTypes.includes('logs') && (
           <Columns.Column title="Logs Configuration">
+            <Text size="sm" c="dimmed" mb="md">
+              Configure your Datadog Logs settings to send data to your organization.
+            </Text>
             <LogsConfigurationForm sdkInjection={sdkInjection} setSetting={setSetting} />
+          </Columns.Column>
+        )}
+
+        {trialMode && sdkInjection.enabled && sdkInjection.debugMode && (
+          <Columns.Column title="Debug Mode">
+            <Text size="sm" c="orange" mb="md">
+              <strong>Debug Mode Active</strong>
+            </Text>
+            <Text size="sm" c="dimmed" mb="md">
+              The SDK will be injected with sample rates set to 0, preventing any data from being sent to Datadog. This
+              is perfect for:
+            </Text>
+            <Text size="sm" c="dimmed" mb="md">
+              • Internal debugging of SDK functionality
+              <br />
+              • Previewing session replay features without signing up
+              <br />• Testing SDK behavior without requiring a Datadog org
+            </Text>
+            <Text size="sm" c="dimmed">
+              To send data to your Datadog organization, disable debug mode and configure your settings.
+            </Text>
           </Columns.Column>
         )}
       </Columns>
@@ -259,6 +305,28 @@ function RumConfigurationForm({
           />
         }
         description={<>Percentage of sessions to track (0-100).</>}
+      />
+
+      <SettingItem
+        input={
+          <NumberInput
+            label="Session Replay Sample Rate"
+            placeholder="100"
+            value={sdkInjection.rumConfig.sessionReplaySampleRate}
+            min={0}
+            max={100}
+            onChange={(value) =>
+              setSetting('sdkInjection', {
+                ...sdkInjection,
+                rumConfig: {
+                  ...sdkInjection.rumConfig,
+                  sessionReplaySampleRate: typeof value === 'number' ? value : 100,
+                },
+              })
+            }
+          />
+        }
+        description={<>Percentage of sessions to record for session replay (0-100).</>}
       />
     </>
   )

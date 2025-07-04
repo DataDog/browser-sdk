@@ -36,7 +36,7 @@ Then, in Google Chrome:
 - Load the SDK development bundles instead of production ones
 - Switch between `rum` and `rum-slim` bundles
 - Retrieve Logs/RUM configuration
-- **Trial Mode**: Enable SDK injection capabilities to automatically inject and configure the Datadog Browser SDK into pages that don't have it
+- **Trial Mode**: Enable SDK injection capabilities to automatically inject and configure the Datadog Browser SDK into pages that don't have it. Supports both customer trial mode (with Datadog org) and debug mode (no data sent)
 
 ## Browser compatibility
 
@@ -70,7 +70,7 @@ The Events List offers an interactive experience to visualize RUM events:
 
 ### Info Tab
 
-**⚠️Don’t forget to reset everything in the Info Tab after experimenting.**
+**⚠️Don't forget to reset everything in the Info Tab after experimenting.**
 
 Info tab contains information about Session and RUM SDK configurations
 
@@ -80,11 +80,13 @@ Info tab contains information about Session and RUM SDK configurations
 ### Setting Tab
 
 > [!IMPORTANT]
-> Don’t forget to reset everything in the Setting Tab after experimenting.
+> Don't forget to reset everything in the Setting Tab after experimenting.
 
 - **Request Interception**: override the current SDK bundle with local build, or ​​switch between `rum` and `rum-slim` bundles on any site that is using RUM SDK. (note: if the SDK is installed from NPM, this override might not work, as it is still in an experimental stage.)
 
-- **Trial Mode**: Access SDK injection capabilities through the Trial tab. When enabled, you can configure and inject the Datadog Browser SDK into pages that don't have it. Configure your Application ID, Client Token, site, and other parameters to test SDK features on any website.
+- **Trial Mode**: Access SDK injection capabilities through the Trial tab. This feature supports two modes:
+  - **Customer Trial Mode**: Configure and inject the Datadog Browser SDK with your Application ID, Client Token, and other parameters to test SDK features on any website and send data to your Datadog organization.
+  - **Debug Mode**: Inject the SDK without sending data to Datadog (sample rates set to 0). Perfect for internal debugging, previewing session replay features, or testing SDK behavior without requiring a Datadog org.
 
 - **Debug Mode**: This option enables debug mode from the developer extension to display errors happening in RUM and LOGS in the developer console.
 
@@ -98,4 +100,4 @@ To work on the developer extension and debug it easily:
 
 3. In Chrome, load the `developer-extension/dist` folder as an unpacked extension.
 
-4. After you make a change, right-click on the extension UI and “Reload frame”.
+4. After you make a change, right-click on the extension UI and "Reload frame".

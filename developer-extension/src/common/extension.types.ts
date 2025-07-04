@@ -63,6 +63,7 @@ export interface Settings {
 
 export interface SdkInjectionConfig {
   enabled: boolean
+  debugMode: boolean
   sdkTypes: Array<'rum' | 'logs'>
   rumBundle: 'rum' | 'rum-slim'
   rumConfig: {
@@ -72,6 +73,7 @@ export interface SdkInjectionConfig {
     service: string
     version: string
     sessionSampleRate: number
+    sessionReplaySampleRate: number
     env: string
   }
   logsConfig: {

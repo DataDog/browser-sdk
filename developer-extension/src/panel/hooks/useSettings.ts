@@ -22,6 +22,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   trialMode: false,
   sdkInjection: {
     enabled: false,
+    debugMode: false,
     sdkTypes: ['rum'],
     rumBundle: 'rum',
     rumConfig: {
@@ -31,6 +32,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
       service: 'developer-extension-test',
       version: '1.0.0',
       sessionSampleRate: 100,
+      sessionReplaySampleRate: 100,
       env: 'dev',
     },
     logsConfig: {
