@@ -54,6 +54,16 @@ describe('startDefaultContext', () => {
       expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeUndefined()
     })
 
+    it('should set the browser sdk version if source is overridden', () => {
+      startDefaultContext(hooks, mockRumConfiguration({ source: 'flutter' }), 'rum')
+      const eventWithOverriddenSource = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      }) as DefaultRumEventAttributes
+
+      expect(eventWithOverriddenSource._dd!.browser_sdk_version).toBeDefined()
+    })
+
     it('should set the configured sample rates', () => {
       startDefaultContext(hooks, mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20 }), 'rum')
 
