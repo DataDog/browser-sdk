@@ -13,6 +13,7 @@ import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import type { Site } from '../intakeSites'
+import _ from '../../../rumEvent.types'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -284,6 +285,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isString(initConfiguration.env, 'Env') ||
     !isString(initConfiguration.service, 'Service') ||
     !isString(initConfiguration.source, 'Source') ||
+    !isString(initConfiguration.source, 'Variant') ||
     !isAllowedTrackingOrigins(initConfiguration)
   ) {
     return
