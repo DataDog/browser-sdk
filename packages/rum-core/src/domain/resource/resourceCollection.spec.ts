@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
-import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { createTaskQueue, ExperimentalFeature, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import { mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
   collectAndValidateRawRumEvents,
@@ -146,6 +146,53 @@ describe('resourceCollection', () => {
       performanceEntry: jasmine.any(Object),
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+    })
+  })
+
+  describe('with EARLY_REQUEST_COLLECTION enabled', () => {
+    beforeEach(() => {
+      mockExperimentalFeatures([ExperimentalFeature.EARLY_REQUEST_COLLECTION])
+    })
+
+    it('creates a resource from a performance entry without a matching request', () => {
+      setupResourceCollection({ trackResources: true })
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          initiatorType: RequestType.FETCH,
+        }),
+      ])
+      runTasks()
+
+      expect(rawRumEvents.length).toBe(1)
+      expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
+      expect(rawRumEvents[0].rawRumEvent).toEqual({
+        date: jasmine.any(Number),
+        resource: {
+          id: jasmine.any(String),
+          duration: (100 * 1e6) as ServerDuration,
+          method: undefined,
+          status_code: 200,
+          delivery_type: 'cache',
+          protocol: 'HTTP/1.0',
+          type: ResourceType.FETCH,
+          url: 'https://resource.com/valid',
+          render_blocking_status: 'non-blocking',
+          size: undefined,
+          encoded_body_size: undefined,
+          decoded_body_size: undefined,
+          transfer_size: undefined,
+          download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
+          first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
+        },
+        type: RumEventType.RESOURCE,
+        _dd: {
+          discarded: false,
+        },
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        performanceEntry: jasmine.any(Object),
+      })
     })
   })
 
