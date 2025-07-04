@@ -146,9 +146,6 @@ export function processSessionStoreOperations(
 ) {
   const { isLockEnabled, persistSession, expireSession } = sessionStoreStrategy
 
-  // Helper function to persist session with current lock
-  const persistWithLock = (session: SessionState) => persistSession({ ...session, lock: currentLock })
-
   // Helper function to retrieve and parse session with lock validation
   const retrieveStore = () => {
     const { lock, ...session } = sessionStoreStrategy.retrieveSession()
@@ -196,7 +193,7 @@ export function processSessionStoreOperations(
   // LOCK ACQUISITION (if enabled)
   // ============================================================================
 
-  let currentLock: string
+  let currentLock: string | undefined
   let currentStore = retrieveStore()
 
   if (isLockEnabled) {
@@ -206,16 +203,13 @@ export function processSessionStoreOperations(
       return
     }
 
-    // Attempt to acquire the lock
-    currentLock = createLock()
-    persistWithLock(currentStore.session)
-
-    // Verify we actually acquired the lock (another tab might have acquired it first)
-    currentStore = retrieveStore()
-    if (currentStore.lock !== currentLock) {
+    // Attempt to acquire the lock using helper function
+    const lockResult = attemptLockAcquisition(sessionStoreStrategy)
+    if (!lockResult.success) {
       retryLater(operations, sessionStoreStrategy, numberOfRetries)
       return
     }
+    currentLock = lockResult.lock!
   }
 
   // ============================================================================
@@ -231,8 +225,7 @@ export function processSessionStoreOperations(
 
   if (isLockEnabled) {
     // Check if our lock was corrupted during processing (another tab might have interfered)
-    currentStore = retrieveStore()
-    if (currentStore.lock !== currentLock!) {
+    if (!validateLockIntegrity(sessionStoreStrategy, currentLock!)) {
       retryLater(operations, sessionStoreStrategy, numberOfRetries)
       return
     }
@@ -249,11 +242,7 @@ export function processSessionStoreOperations(
     } else {
       // Otherwise, expand the session state and persist it
       expandSessionState(processedSession)
-      if (isLockEnabled) {
-        persistWithLock(processedSession)
-      } else {
-        persistSession(processedSession)
-      }
+      persistSessionWithLock(sessionStoreStrategy, processedSession, isLockEnabled, currentLock)
     }
   }
 
@@ -301,6 +290,77 @@ export function processSessionStoreOperations(
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
+
+/**
+ * Attempts to acquire a lock for session store operations.
+ *
+ * @param sessionStore - The session store strategy
+ * @returns Object containing success status and lock information
+ */
+function attemptLockAcquisition(sessionStore: SessionStoreStrategy): {
+  success: boolean
+  lock?: string
+  currentStore?: any
+} {
+  const { isLockEnabled, persistSession, retrieveSession } = sessionStore
+
+  if (!isLockEnabled) {
+    return { success: true }
+  }
+
+  const { lock, ...session } = retrieveSession()
+  const existingLock = lock && !isLockExpired(lock) ? lock : undefined
+
+  if (existingLock) {
+    return { success: false }
+  }
+
+  const newLock = createLock()
+  persistSession({ ...session, lock: newLock })
+
+  // Verify we actually acquired the lock (another tab might have acquired it first)
+  const { lock: acquiredLock } = retrieveSession()
+  if (acquiredLock !== newLock) {
+    return { success: false }
+  }
+
+  return { success: true, lock: newLock }
+}
+
+/**
+ * Validates that the current lock is still valid.
+ *
+ * @param sessionStore - The session store strategy
+ * @param expectedLock - The lock we expect to be present
+ * @returns true if lock is valid, false otherwise
+ */
+function validateLockIntegrity(sessionStore: SessionStoreStrategy, expectedLock: string): boolean {
+  const { lock } = sessionStore.retrieveSession()
+  return lock === expectedLock
+}
+
+/**
+ * Handles session persistence with appropriate lock management.
+ *
+ * @param sessionStore - The session store strategy
+ * @param session - The session to persist
+ * @param isLockEnabled - Whether lock mechanism is enabled
+ * @param currentLock - Current lock if enabled
+ */
+function persistSessionWithLock(
+  sessionStore: SessionStoreStrategy,
+  session: SessionState,
+  isLockEnabled: boolean,
+  currentLock?: string
+): void {
+  const { persistSession } = sessionStore
+
+  if (isLockEnabled && currentLock) {
+    persistSession({ ...session, lock: currentLock })
+  } else {
+    persistSession(session)
+  }
+}
 
 /**
  * Schedules a retry of the operation after a delay.
