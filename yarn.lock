@@ -1375,14 +1375,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@playwright/test@npm:1.52.0":
-  version: 1.52.0
-  resolution: "@playwright/test@npm:1.52.0"
+"@playwright/test@npm:1.53.2":
+  version: 1.53.2
+  resolution: "@playwright/test@npm:1.53.2"
   dependencies:
-    playwright: "npm:1.52.0"
+    playwright: "npm:1.53.2"
   bin:
     playwright: cli.js
-  checksum: 10c0/1c428b421593eb4f79b7c99783a389c3ab3526c9051ec772749f4fca61414dfa9f2344eba846faac5f238084aa96c836364a91d81d3034ac54924f239a93e247
+  checksum: 10c0/cdc718a94df00aaaff5489421a89286e006e9c7781c5e8294fd10aaffcf6558cfe3d0db2d76a447574b334329902659cd539756dfd12fafde03627e2013698ae
   languageName: node
   linkType: hard
 
@@ -3081,7 +3081,7 @@ __metadata:
   dependencies:
     "@eslint/js": "npm:9.30.0"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
-    "@playwright/test": "npm:1.52.0"
+    "@playwright/test": "npm:1.53.2"
     "@swc/core": "npm:1.12.7"
     "@types/chrome": "npm:0.0.328"
     "@types/connect-busboy": "npm:1.0.3"
@@ -9383,27 +9383,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"playwright-core@npm:1.52.0":
-  version: 1.52.0
-  resolution: "playwright-core@npm:1.52.0"
+"playwright-core@npm:1.53.2":
+  version: 1.53.2
+  resolution: "playwright-core@npm:1.53.2"
   bin:
     playwright-core: cli.js
-  checksum: 10c0/640945507e6ca2144e9f596b2a6ecac042c2fd3683ff99e6271e9a7b38f3602d415f282609d569456f66680aab8b3c5bb1b257d8fb63a7fc0ed648261110421f
+  checksum: 10c0/cd9434736687600943e749313e3d6166ef5d8614e64e74f440099f3a1b0fe56a9a462921c0ca9264aebc7bfc4ffeaec3fddf1c30731c0d60de3211d796f1be44
   languageName: node
   linkType: hard
 
-"playwright@npm:1.52.0":
-  version: 1.52.0
-  resolution: "playwright@npm:1.52.0"
+"playwright@npm:1.53.2":
+  version: 1.53.2
+  resolution: "playwright@npm:1.53.2"
   dependencies:
     fsevents: "npm:2.3.2"
-    playwright-core: "npm:1.52.0"
+    playwright-core: "npm:1.53.2"
   dependenciesMeta:
     fsevents:
       optional: true
   bin:
     playwright: cli.js
-  checksum: 10c0/2c6edf1e15e59bbaf77f3fa0fe0ac975793c17cff835d9c8b8bc6395a3b6f1c01898b3058ab37891b2e4d424bcc8f1b4844fe70d943e0143d239d7451408c579
+  checksum: 10c0/4620bdb2bd341916cae50721336f628abc9d0b1a097fd74a93127feed8dede52be4fb789ac0d17aefac74e5d43a5832b1b79a0d3c2af5abc5a82491b72ebcf92
   languageName: node
   linkType: hard
 
