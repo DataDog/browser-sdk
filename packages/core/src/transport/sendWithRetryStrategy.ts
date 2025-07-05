@@ -32,7 +32,7 @@ export interface RetryState {
   queueFullReported: boolean
 }
 
-type SendStrategy = (payload: Payload, onResponse: (r: HttpResponse) => void) => void
+export type SendStrategy = (payload: Payload, onResponse: (r: HttpResponse) => void) => void
 
 export function sendWithRetryStrategy(
   payload: Payload,
