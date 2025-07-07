@@ -16,6 +16,11 @@ import type { Site } from '../intakeSites'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
+/**
+ * Default privacy level for the browser SDK.
+ *
+ * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
+ */
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
   MASK: 'mask',
@@ -23,6 +28,11 @@ export const DefaultPrivacyLevel = {
 } as const
 export type DefaultPrivacyLevel = (typeof DefaultPrivacyLevel)[keyof typeof DefaultPrivacyLevel]
 
+/**
+ * Trace context injection option.
+ *
+ * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+ */
 export const TraceContextInjection = {
   ALL: 'all',
   SAMPLED: 'sampled',
@@ -33,6 +43,8 @@ export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof 
 export interface InitConfiguration {
   /**
    * The client token for Datadog. Required for authenticating your application with Datadog.
+   *
+   * @category Core
    */
   clientToken: string
   /**
@@ -41,17 +53,22 @@ export interface InitConfiguration {
   beforeSend?: GenericBeforeSendCallback | undefined
   /**
    * The percentage of sessions tracked. A value between 0 and 100.
-   * @default 100
+   *
+   * @category Session behavior
+   * @defaultValue 100
    */
   sessionSampleRate?: number | undefined
   /**
    * The percentage of telemetry events sent. A value between 0 and 100.
-   * @default 20
+   *
+   * @category Core
+   * @defaultValue 20
    */
   telemetrySampleRate?: number | undefined
   /**
    * Initialization fails silently if the RUM Browser SDK is already initialized on the page.
-   * @default false
+   * @category Custom Behavior
+   * @defaultValue false
    */
   silentMultipleInit?: boolean | undefined
 
@@ -59,7 +76,9 @@ export interface InitConfiguration {
    * Which storage strategy to use for persisting sessions. Can be either 'cookie' or 'local-storage'.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * @default "cookie"
+   *
+   * @category Session behavior
+   * @defaultValue "cookie"
    */
   sessionPersistence?: SessionPersistence | undefined
 
@@ -68,25 +87,33 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
+   *
+   * @category Custom Behavior
    * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
    */
   allowFallbackToLocalStorage?: boolean | undefined
 
   /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
-   * @default false
+   *
+   * @category Custom Behavior
+   * @defaultValue false
    */
   allowUntrustedEvents?: boolean | undefined
   /**
    * Store global context and user context in localStorage to preserve them along the user navigation.
    * See [Contexts life cycle](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#contexts-life-cycle) for further information.
-   * @default false
+   *
+   * @category Custom Behavior
+   * @defaultValue false
    */
   storeContextsAcrossPages?: boolean | undefined
   /**
    * Set the initial user tracking consent state.
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#user-tracking-consent) for further information.
-   * @default granted
+   *
+   * @category Privacy
+   * @defaultValue granted
    */
   trackingConsent?: TrackingConsent | undefined
 
@@ -94,6 +121,8 @@ export interface InitConfiguration {
    * List of origins where the SDK is allowed to run when used in a browser extension context.
    * Matches urls against the extensions origin.
    * If not provided and the SDK is running in a browser extension, a warning will be displayed.
+   *
+   * @category Privacy
    */
   allowedTrackingOrigins?: MatchOption[] | undefined
 
@@ -101,25 +130,35 @@ export interface InitConfiguration {
   /**
    * Optional proxy URL, for example: https://www.proxy.com/path.
    * See [Proxy Your Browser RUM Data](https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data) for further information.
+   *
+   * @category Core
    */
   proxy?: string | ProxyFn | undefined
   /**
    * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
-   * @default datadoghq.com
+   *
+   * @category Core
+   * @defaultValue datadoghq.com
    */
   site?: Site | undefined
 
   // tag and context options
   /**
    * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Core
    */
   service?: string | undefined | null
   /**
    * The application’s environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Core
    */
   env?: string | undefined | null
   /**
    * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Core
    */
   version?: string | undefined | null
 
@@ -128,54 +167,74 @@ export interface InitConfiguration {
    * Use a partitioned secure cross-site session cookie. This allows the RUM Browser SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * @default false
+   *
+   * @category Session behavior
+   * @defaultValue false
    */
   usePartitionedCrossSiteSessionCookie?: boolean | undefined
   /**
    * Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * @default false
+   *
+   * @category Session behavior
+   * @defaultValue false
    */
   useSecureSessionCookie?: boolean | undefined
   /**
    * Preserve the session across subdomains for the same site.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * @default false
+   *
+   * @category Session behavior
+   * @defaultValue false
    */
   trackSessionAcrossSubdomains?: boolean | undefined
   /**
    * Track anonymous user for the same site and extend cookie expiration date
-   * @default true
+   *
+   * @category Session behavior
+   * @defaultValue true
    */
   trackAnonymousUser?: boolean | undefined
   // internal options
   /**
    * [Internal option] Enable experimental features
+   *
+   * @internal
    */
   enableExperimentalFeatures?: string[] | undefined
   /**
    * [Internal option] Configure the dual chipping to another datacenter
+   *
+   * @internal
    */
   replica?: ReplicaUserConfiguration | undefined
   /**
    * [Internal option] Set the datacenter from where the data is dual chipped
+   *
+   * @internal
    */
   datacenter?: string
   /**
    * [Internal option] Datadog internal analytics subdomain
+   *
+   * @internal
    */
   // TODO next major: remove this option and replace usages by proxyFn
   internalAnalyticsSubdomain?: string
   /**
    * [Internal option] The percentage of telemetry configuration sent. A value between 0 and 100.
-   * @default 5
+   *
+   * @internal
+   * @defaultValue 5
    */
   telemetryConfigurationSampleRate?: number
   /**
    * [Internal option] The percentage of telemetry usage sent. A value between 0 and 100.
-   * @default 5
+   *
+   * @internal
+   * @defaultValue 5
    */
   telemetryUsageSampleRate?: number
 }
@@ -188,8 +247,11 @@ type GenericBeforeSendCallback = (event: any, context?: any) => unknown
  * path: /api/vX/product
  * parameters: xxx=yyy&zzz=aaa
  */
-type ProxyFn = (options: { path: string; parameters: string }) => string
+export type ProxyFn = (options: { path: string; parameters: string }) => string
 
+/**
+ * @internal
+ */
 export interface ReplicaUserConfiguration {
   applicationId?: string
   clientToken: string

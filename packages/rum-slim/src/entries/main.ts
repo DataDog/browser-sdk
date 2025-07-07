@@ -6,21 +6,50 @@ import { makeRecorderApiStub } from '../boot/stubRecorderApi'
 import { makeProfilerApiStub } from '../boot/stubProfilerApi'
 
 export type {
-  CommonProperties,
+  User,
+  Account,
+  TraceContextInjection,
+  SessionPersistence,
+  TrackingConsent,
+  MatchOption,
+  ProxyFn,
+  Site,
+  Context,
+  ContextValue,
+  ContextArray,
+} from '@datadog/browser-core'
+
+export type {
   RumPublicApi as RumGlobal,
   RumInitConfiguration,
+  InternalContext,
+  ViewOptions,
+  StartRecordingOptions,
+  AddDurationVitalOptions,
+  DurationVitalOptions,
+  DurationVitalReference,
+  TracingOption,
+  RumPlugin,
+  OnRumStartOptions,
+  PropagatorType,
+  FeatureFlagsForEvents,
+
   // Events
+  CommonProperties,
   RumEvent,
   RumActionEvent,
   RumErrorEvent,
   RumLongTaskEvent,
   RumResourceEvent,
   RumViewEvent,
+  RumVitalEvent,
+
   // Events context
   RumEventDomainContext,
   RumViewEventDomainContext,
   RumErrorEventDomainContext,
   RumActionEventDomainContext,
+  RumVitalEventDomainContext,
   RumFetchResourceEventDomainContext,
   RumXhrResourceEventDomainContext,
   RumOtherResourceEventDomainContext,

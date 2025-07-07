@@ -12,6 +12,20 @@ import {
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
 
+/**
+ * Init Configuration for the Logs browser SDK.
+ *
+ * @category Configuration
+ * @example
+ * ```ts
+ * DD_LOGS.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   ...
+ * })
+ * ```
+ */
 export interface LogsInitConfiguration extends InitConfiguration {
   /**
    * Access to every logs collected by the Logs SDK before they are sent to Datadog.
@@ -23,7 +37,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: LogsEvent, context: LogsEventDomainContext) => boolean) | undefined
   /**
    * Forward console.error logs, uncaught exceptions and network errors to Datadog.
-   * @default true
+   * @defaultValue true
    */
   forwardErrorsToLogs?: boolean | undefined
   /**
@@ -36,7 +50,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   forwardReports?: RawReportType[] | 'all' | undefined
   /**
    * Use PCI-compliant intake. See [PCI DSS Compliance](https://docs.datadoghq.com/data_security/pci_compliance/?tab=logmanagement) for further information.
-   * @default false
+   * @defaultValue false
    */
   usePciIntake?: boolean
 }
