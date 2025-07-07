@@ -1,13 +1,12 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "name": "Datadog Browser SDK",
   "entryPoints": [
     "./packages/rum/src/entries/main.ts",
     "./packages/logs/src/entries/main.ts",
     "./packages/rum-react/src/entries/main.ts",
     "./packages/rum-slim/src/entries/main.ts"
   ],
-  "out": "./docs-typedoc",
+  "out": "./docs",
   "plugin": ["typedoc-material-theme"],
   "themeColor": "#632ca6",
   "includeVersion": true,
