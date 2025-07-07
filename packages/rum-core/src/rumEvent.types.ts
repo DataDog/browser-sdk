@@ -803,6 +803,10 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly span_id?: string
       /**
+       * parent span identifier in decimal format
+       */
+      readonly parent_span_id?: string
+      /**
        * trace identifier, either a 64 bit decimal number or a 128 bit hexadecimal number padded with 0s
        */
       readonly trace_id?: string
