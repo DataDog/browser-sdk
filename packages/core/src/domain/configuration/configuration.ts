@@ -178,16 +178,11 @@ export interface InitConfiguration {
    * @default 5
    */
   telemetryUsageSampleRate?: number
+
   /**
-   * [Internal option] The source of the data, overrides the default value based on the SDK.
-   * Used in plugins to identify the source of the data.
-   * @default browser
+   * [Internal option] Additional configuration for the SDK.
    */
-  source?: string
-  /**
-   * [Internal option] The variant of the data, provides extra information on the plugin version.
-   */
-  variant?: string
+  additionalConfig?: Record<string, unknown>
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -232,8 +227,7 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 
   // internal
-  source?: string | undefined
-  variant?: string | undefined
+  additionalConfig: Record<string, unknown>
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -283,8 +277,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isString(initConfiguration.version, 'Version') ||
     !isString(initConfiguration.env, 'Env') ||
     !isString(initConfiguration.service, 'Service') ||
-    !isString(initConfiguration.source, 'Source') ||
-    !isString(initConfiguration.source, 'Variant') ||
     !isAllowedTrackingOrigins(initConfiguration)
   ) {
     return
@@ -337,9 +329,9 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
 
     /**
-     * Default source
+     * Additional configuration for the SDK.
      */
-    source: initConfiguration.source ?? 'browser',
+    additionalConfig: initConfiguration.additionalConfig ?? {},
 
     ...computeTransportConfiguration(initConfiguration),
   }

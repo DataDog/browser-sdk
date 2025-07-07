@@ -81,20 +81,19 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, source: configSource, variant }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, additionalConfig = {} }: InitConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload
 ) {
-  const source = configSource || 'browser'
+  const source = (additionalConfig.source as string) || 'browser'
 
   const parameters = [
-    `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
     `dd-request-id=${generateUUID()}`,
-  ].concat(variant ? [`_dd.variant=${variant}`] : [])
+  ]
 
   if (encoding) {
     parameters.push(`dd-evp-encoding=${encoding}`)
@@ -106,6 +105,8 @@ function buildEndpointParameters(
     if (retry) {
       parameters.push(`_dd.retry_count=${retry.count}`, `_dd.retry_after=${retry.lastFailureStatus}`)
     }
+  } else if (trackType === 'logs') {
+    parameters.push(`ddsource=${source}`)
   }
 
   if (internalAnalyticsSubdomain) {
