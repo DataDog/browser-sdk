@@ -43,7 +43,6 @@ import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { trackCommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import { onBFCacheRestore } from './bfCacheSupport'
 import { trackBfcacheMetrics } from './viewMetrics/trackBfcacheMetrics'
-import { trackPrerenderMetrics } from './viewMetrics/trackPrerenderMetrics'
 
 export interface ViewEvent {
   id: string
@@ -274,17 +273,18 @@ function newView(
 
   const { stop: stopInitialViewMetricsTracking, initialViewMetrics } =
     loadingType === ViewLoadingType.INITIAL_LOAD || loadingType === ViewLoadingType.PRERENDERED
-      ? trackInitialViewMetrics(configuration, startClocks, setLoadEvent, scheduleViewUpdate)
+      ? trackInitialViewMetrics(
+          configuration,
+          startClocks,
+          setLoadEvent,
+          scheduleViewUpdate,
+          loadingType === ViewLoadingType.PRERENDERED
+        )
       : { stop: noop, initialViewMetrics: {} as InitialViewMetrics }
 
   // Start BFCache-specific metrics when restoring from BFCache
   if (loadingType === ViewLoadingType.BF_CACHE) {
     trackBfcacheMetrics(startClocks, initialViewMetrics, scheduleViewUpdate)
-  }
-
-  // Start prerender-specific metrics when loading from prerendered state
-  if (loadingType === ViewLoadingType.PRERENDERED) {
-    trackPrerenderMetrics(initialViewMetrics, scheduleViewUpdate)
   }
 
   const { stop: stopEventCountsTracking, eventCounts } = trackViewEventCounts(lifeCycle, id, scheduleViewUpdate)
