@@ -1,0 +1,46 @@
+{
+  "name": "@datadog/browser-exposure",
+  "version": "0.0.1",
+  "description": "Datadog Browser Exposure SDK",
+  "main": "index.js",
+  "module": "index.js",
+  "types": "index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "build": "rollup -c",
+    "test": "yarn test:unit",
+    "test:unit": "karma start",
+    "test:unit:watch": "karma start --auto-watch",
+    "test:e2e": "playwright test",
+    "test:e2e:debug": "playwright test --debug",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@datadog/browser-core": "workspace:*",
+    "@rollup/plugin-commonjs": "^25.0.0",
+    "@rollup/plugin-node-resolve": "^15.0.0",
+    "@types/jasmine": "^4.3.0",
+    "eslint": "^8.0.0",
+    "jasmine-core": "^4.5.0",
+    "karma": "^6.4.0",
+    "karma-chrome-launcher": "^3.1.0",
+    "karma-jasmine": "^4.0.0",
+    "karma-rollup-preprocessor": "^7.0.0",
+    "playwright": "^1.30.0",
+    "rollup": "^3.0.0",
+    "rollup-plugin-typescript2": "^0.34.0",
+    "typescript": "^4.9.0"
+  },
+  "peerDependencies": {
+    "@datadog/browser-core": "workspace:*"
+  }
+}
