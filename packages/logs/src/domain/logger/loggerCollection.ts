@@ -23,7 +23,6 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     savedDate?: TimeStamp
   ) {
     const messageContext = combine(logger.getContext(), logsMessage.context)
-    messageContext.ddsource = 'browser-logs'
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
       displayInConsole(logsMessage, messageContext)

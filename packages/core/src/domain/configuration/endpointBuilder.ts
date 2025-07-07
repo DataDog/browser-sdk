@@ -87,8 +87,10 @@ function buildEndpointParameters(
   { retry, encoding }: Payload
 ) {
   const source = (additionalConfig.source as string) || 'browser'
+  const variant = additionalConfig.variant as string
 
   const parameters = [
+    `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
@@ -102,11 +104,13 @@ function buildEndpointParameters(
   if (trackType === 'rum') {
     parameters.push(`batch_time=${timeStampNow()}`, `_dd.api=${api}`)
 
+    if (variant) {
+      parameters.push(`_dd.variant=${variant}`)
+    }
+
     if (retry) {
       parameters.push(`_dd.retry_count=${retry.count}`, `_dd.retry_after=${retry.lastFailureStatus}`)
     }
-  } else if (trackType === 'logs') {
-    parameters.push(`ddsource=${source}`)
   }
 
   if (internalAnalyticsSubdomain) {
