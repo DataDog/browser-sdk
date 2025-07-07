@@ -23,10 +23,13 @@ import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import type { ActionNameSource } from './getActionNameFromElement'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
+import { maskActionName } from './privacy/allowedDictionary'
+import type { AllowedDictionary } from './privacy/allowedDictionary'
 
 interface ActionCounts {
   errorCount: number
@@ -38,7 +41,7 @@ export interface ClickAction {
   type: typeof ActionType.CLICK
   id: string
   name: string
-  nameSource: string
+  nameSource: ActionNameSource
   target?: {
     selector: string | undefined
     width: number
@@ -65,7 +68,8 @@ export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  actionNameDictionary: AllowedDictionary
 ) {
   const history: ClickActionIdHistory = createValueHistory({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
   const stopObservable = new Observable<void>()
@@ -87,7 +91,14 @@ export function trackClickActions(
     hadActivityOnPointerDown: () => boolean
   }>(configuration, {
     onPointerDown: (pointerDownEvent) =>
-      processPointerDown(configuration, lifeCycle, domMutationObservable, pointerDownEvent, windowOpenObservable),
+      processPointerDown(
+        configuration,
+        lifeCycle,
+        domMutationObservable,
+        pointerDownEvent,
+        windowOpenObservable,
+        actionNameDictionary
+      ),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
       startClickAction(
         configuration,
@@ -139,17 +150,22 @@ function processPointerDown(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   pointerDownEvent: MouseEventOnElement,
-  windowOpenObservable: Observable<void>
+  windowOpenObservable: Observable<void>,
+  actionNameDictionary: AllowedDictionary
 ) {
-  const nodePrivacyLevel = configuration.enablePrivacyForActionName
-    ? getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-    : NodePrivacyLevel.ALLOW
+  const nodeSelfPrivacy = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+  const nodePrivacyLevel = configuration.enablePrivacyForActionName ? nodeSelfPrivacy : NodePrivacyLevel.ALLOW
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return undefined
   }
 
-  const clickActionBase = computeClickActionBase(pointerDownEvent, nodePrivacyLevel, configuration)
+  let clickActionBase = computeClickActionBase(pointerDownEvent, nodePrivacyLevel, configuration)
+
+  // mask with allowlist when enablePrivacyForActionName is not set to true
+  if (!configuration.enablePrivacyForActionName) {
+    clickActionBase = maskActionName(clickActionBase, nodeSelfPrivacy, actionNameDictionary.allowlist)
+  }
 
   let hadActivityOnPointerDown = false
 
@@ -231,7 +247,7 @@ function startClickAction(
   })
 }
 
-type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
+export type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
 
 function computeClickActionBase(
   event: MouseEventOnElement,
@@ -243,7 +259,8 @@ function computeClickActionBase(
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
-  const actionName = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+
+  const { name, nameSource } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
@@ -257,8 +274,8 @@ function computeClickActionBase(
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: actionName.name,
-    nameSource: actionName.nameSource,
+    name,
+    nameSource,
   }
 }
 
