@@ -11,8 +11,7 @@ export function startDefaultContext(
   sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
-    const source = configuration.source
-    const variant = configuration.variant
+    const { source, sdk_version: sdkVersion } = configuration.additionalConfig ?? {}
     const isSourceOverridden = source !== 'browser'
 
     return {
@@ -27,7 +26,7 @@ export function startDefaultContext(
         },
         browser_sdk_version: canUseEventBridge() || isSourceOverridden ? __BUILD_ENV__SDK_VERSION__ : undefined,
         sdk_name: sdkName,
-        ...(variant ? { variant } : {}),
+        ...(sdkVersion ? { sdk_version: sdkVersion } : {}),
       },
       application: {
         id: configuration.applicationId,
