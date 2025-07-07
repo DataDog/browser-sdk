@@ -227,7 +227,9 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 
   // internal
-  additionalConfig: Record<string, unknown>
+  source?: string | undefined
+  variant?: string | undefined
+  sdk_version?: string | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -329,9 +331,11 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
 
     /**
-     * Additional configuration for the SDK.
+     *
      */
-    additionalConfig: initConfiguration.additionalConfig ?? {},
+    source: initConfiguration.additionalConfig?.source as string,
+    variant: initConfiguration.additionalConfig?.variant as string,
+    sdk_version: initConfiguration.additionalConfig?.sdk_version as string,
 
     ...computeTransportConfiguration(initConfiguration),
   }
