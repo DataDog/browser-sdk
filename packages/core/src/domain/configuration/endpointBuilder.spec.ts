@@ -153,7 +153,7 @@ describe('endpointBuilder', () => {
     })
 
     it('should use source and variant when provided', () => {
-      const config = { ...initConfiguration, source: 'my-source', variant: 'my-variant' }
+      const config = { ...initConfiguration, additionalConfig: { source: 'my-source', variant: 'my-variant' } }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=my-source')
       expect(endpoint).toContain('_dd.variant=my-variant')
