@@ -36,7 +36,10 @@
     "rum-events-format:sync": "scripts/cli update_submodule && yarn rum-events-format:generate",
     "rum-events-format:generate": "scripts/cli build_json2type && node scripts/generate-schema-types.js",
     "size": "node scripts/show-bundle-size.js",
-    "woke": "scripts/cli woke"
+    "woke": "scripts/cli woke",
+    "docs:build": "typedoc",
+    "docs:serve": "typedoc && npx http-server ./docs-typedoc -p 8080 -o",
+    "docs:watch": "typedoc --watch"
   },
   "devDependencies": {
     "@eslint/js": "9.30.0",
@@ -65,6 +68,7 @@
     "glob": "11.0.3",
     "globals": "16.2.0",
     "html-webpack-plugin": "5.6.3",
+    "http-server": "14.1.1",
     "jasmine-core": "3.99.1",
     "json-schema-to-typescript": "bcaudan/json-schema-to-typescript#bcaudan/add-readonly-support",
     "karma": "6.4.4",
@@ -86,6 +90,8 @@
     "ts-loader": "9.5.2",
     "ts-node": "10.9.2",
     "tsconfig-paths-webpack-plugin": "4.2.0",
+    "typedoc": "0.28.7",
+    "typedoc-material-theme": "1.4.0",
     "typescript": "5.8.3",
     "typescript-eslint": "8.35.0",
     "webpack": "5.99.9",

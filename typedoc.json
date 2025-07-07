@@ -1,0 +1,30 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "Datadog Browser SDK",
+  "entryPoints": [
+    "./packages/rum/src/entries/main.ts",
+    "./packages/logs/src/entries/main.ts",
+    "./packages/rum-react/src/entries/main.ts",
+    "./packages/rum-slim/src/entries/main.ts"
+  ],
+  "out": "./docs-typedoc",
+  "plugin": ["typedoc-material-theme"],
+  "themeColor": "#632ca6",
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "searchInComments": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeExternals": false,
+  "hideGenerator": false,
+  "skipErrorChecking": true,
+  "readme": "./README.md",
+  "sort": ["source-order"],
+  "visibilityFilters": {
+    "protected": false,
+    "private": false,
+    "inherited": true,
+    "external": false
+  },
+  "customCss": "./typedoc-custom.css"
+} 
