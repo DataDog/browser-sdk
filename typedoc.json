@@ -1,11 +1,13 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": [
-    "./packages/rum/src/entries/main.ts",
-    "./packages/logs/src/entries/main.ts",
-    "./packages/rum-react/src/entries/main.ts",
-    "./packages/rum-slim/src/entries/main.ts"
-  ],
+  "name": "Datadog Browser SDK",
+  "entryPoints": ["packages/*"],
+  "entryPointStrategy": "packages",
+  "exclude": ["packages/core", "packages/rum-core", "packages/flagging", "packages/worker"],
+  "navigationLinks": {
+    "Documentation": "https://docs.datadoghq.com/",
+    "GitHub": "https://github.com/DataDog/browser-sdk"
+  },
   "out": "./docs",
   "plugin": ["typedoc-material-theme"],
   "themeColor": "#632ca6",
@@ -17,13 +19,7 @@
   "excludeExternals": false,
   "hideGenerator": false,
   "skipErrorChecking": true,
-  "readme": "./README.md",
-  "sort": ["source-order"],
-  "visibilityFilters": {
-    "protected": false,
-    "private": false,
-    "inherited": true,
-    "external": false
-  },
+  "readme": "./doc.md",
+  "sort": ["source-order"], 
   "customCss": "./typedoc-custom.css"
 } 
