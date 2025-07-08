@@ -40,6 +40,10 @@ export function buildTag(key: string, rawValue?: string) {
 
   // Let the backend do most of the sanitization, but still make sure multiple tags can't be crafted
   // by forging a value containing commas.
+  return sanitizeTag(tag)
+}
+
+export function sanitizeTag(tag: string) {
   return tag.replace(/,/g, '_')
 }
 

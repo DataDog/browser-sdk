@@ -11,6 +11,7 @@ import {
   NonErrorPrefix,
   createHandlingStack,
   buildTag,
+  sanitizeTag,
 } from '@datadog/browser-core'
 
 import { isAuthorized, StatusType } from './logger/isAuthorized'
@@ -35,6 +36,8 @@ export const STATUSES = Object.keys(StatusType) as StatusType[]
 // eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging, no-restricted-syntax
 export class Logger {
   private contextManager: ContextManager
+
+  // Tags are formatted as either `key:value` or `key_only`
   private tags: string[]
 
   constructor(
@@ -129,7 +132,9 @@ export class Logger {
   }
 
   removeTagsWithKey(key: string) {
-    this.tags = this.tags.filter((tag) => tag !== key && !tag.startsWith(`${key}:`))
+    const sanitizedKey = sanitizeTag(key)
+
+    this.tags = this.tags.filter((tag) => tag !== sanitizedKey && !tag.startsWith(`${sanitizedKey}:`))
   }
 
   getTags() {

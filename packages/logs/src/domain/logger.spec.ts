@@ -198,6 +198,16 @@ describe('Logger', () => {
       expect(logger.getTags()).toEqual(['foo'])
     })
 
+    it('should sanitize a key with a comma', () => {
+      logger.addTag('foo,bar', 'baz')
+      expect(logger.getTags()).toEqual(['foo_bar:baz'])
+    })
+
+    it('should sanitize a tag with a comma in the value', () => {
+      logger.addTag('foo', 'baz,qux')
+      expect(logger.getTags()).toEqual(['foo:baz_qux'])
+    })
+
     it('should remove tags with key', () => {
       logger.addTag('foo', 'bar')
       logger.addTag('foo', 'baz')
@@ -208,6 +218,12 @@ describe('Logger', () => {
     it('should remove key only tags', () => {
       logger.addTag('foo')
       logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual([])
+    })
+
+    it('should remove tag keys that were sanitized', () => {
+      logger.addTag('foo,bar', 'baz')
+      logger.removeTagsWithKey('foo,bar')
       expect(logger.getTags()).toEqual([])
     })
 
