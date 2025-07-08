@@ -73,3 +73,6 @@ dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,swc-loader,MIT,Copyright (c) SWC Contributors
+dev,http-server,MIT,Copyright http-party contributors
+dev,typedoc,Apache-2.0,Copyright Microsoft Corporation
+dev,typedoc-material-theme,MIT,Copyright (c) TypeDoc contributors

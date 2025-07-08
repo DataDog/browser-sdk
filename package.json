@@ -38,8 +38,7 @@
     "size": "node scripts/show-bundle-size.js",
     "woke": "scripts/cli woke",
     "docs:build": "typedoc",
-    "docs:serve": "typedoc && npx http-server ./docs -p 8080 -o",
-    "docs:watch": "typedoc --watch"
+    "docs:serve": "typedoc && npx http-server ./docs -p 8080 -o"
   },
   "devDependencies": {
     "@eslint/js": "9.30.0",
