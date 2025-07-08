@@ -6,7 +6,7 @@ import {
   createHooks,
 } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
-import { relativeNow, timeStampNow } from '@datadog/browser-core'
+import { clocksOrigin, relativeNow, timeStampNow } from '@datadog/browser-core'
 import { setPageVisibility, restorePageVisibility, createNewEvent } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from 'packages/rum-core/src/browser/performanceObservable'
 import {
@@ -21,12 +21,14 @@ import { mockedTrace } from './test-utils/mockedTrace'
 import type { SendProfileFunction } from './transport/transport'
 import { transport } from './transport/transport'
 import { createRumProfiler } from './profiler'
-import type { RUMProfiler, RumProfilerTrace } from './types'
+import type { ProfilerTrace, RUMProfiler, RumProfilerTrace } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 
 describe('profiler', () => {
-  let sendProfileSpy: jasmine.Spy<SendProfileFunction>
+  // Store the original pathname
+  const originalPathname = document.location.pathname
+  let sendProfileSpy: jasmine.Spy<typeof transport.sendProfile>
 
   beforeEach(() => {
     // Spy on transport.sendProfile to avoid sending data to the server, and check what's sent.
@@ -35,6 +37,8 @@ describe('profiler', () => {
 
   afterEach(() => {
     restorePageVisibility()
+    // Go back to the original pathname
+    history.pushState({}, '', originalPathname)
   })
 
   let lifeCycle = new LifeCycle()
@@ -43,6 +47,7 @@ describe('profiler', () => {
     profiler: RUMProfiler
     notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
     profilingContextManager: ProfilingContextManager
+    mockedRumProfilerTrace: RumProfilerTrace
   } {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
@@ -50,8 +55,25 @@ describe('profiler', () => {
     const profilingContextManager: ProfilingContextManager = startProfilingContext(hooks)
     const { notifyPerformanceEntries } = mockPerformanceObserver()
 
+    const mockProfilerTrace: ProfilerTrace = structuredClone(mockedTrace)
+
+    const mockedRumProfilerTrace: RumProfilerTrace = Object.assign(mockProfilerTrace, {
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+      endClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+      clocksOrigin: clocksOrigin(),
+      sampleInterval: 10,
+      longTasks: [],
+      views: [],
+    })
+
     // Replace Browser's Profiler with a mock for testing purpose.
-    mockProfiler(mockedTrace)
+    mockProfiler(mockProfilerTrace)
 
     // Start collection of profile.
     const profiler = createRumProfiler(
@@ -67,11 +89,11 @@ describe('profiler', () => {
         minProfileDurationMs: 0,
       }
     )
-    return { profiler, notifyPerformanceEntries, profilingContextManager }
+    return { profiler, notifyPerformanceEntries, profilingContextManager, mockedRumProfilerTrace }
   }
 
   it('should start profiling collection and collect data on stop', async () => {
-    const { profiler, profilingContextManager } = setupProfiler()
+    const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler()
 
     expect(profilingContextManager.get()?.status).toBe('starting')
 
@@ -100,11 +122,15 @@ describe('profiler', () => {
     expect(sendProfileSpy).toHaveBeenCalledTimes(1)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(mockedTrace, jasmine.any(Object), 'session-id-1')
+    expect(sendProfileSpy).toHaveBeenCalledWith(
+      mockedRumProfilerTrace,
+      jasmine.any(Object),
+      'session-id-1'
+    )
   })
 
   it('should pause profiling collection on hidden visibility and restart on visible visibility', async () => {
-    const { profiler, profilingContextManager } = setupProfiler()
+    const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler()
 
     profiler.start({
       id: 'view-id-1',
@@ -149,7 +175,11 @@ describe('profiler', () => {
     expect(sendProfileSpy).toHaveBeenCalledTimes(2)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(mockedTrace, jasmine.any(Object), 'session-id-1')
+    expect(sendProfileSpy).toHaveBeenCalledWith(
+      mockedRumProfilerTrace,
+      jasmine.any(Object),
+      'session-id-1'
+    )
   })
 
   it('should collect long task from core and then attach long task id to the Profiler trace', async () => {
@@ -200,12 +230,60 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    expect(profilingContextManager.get()?.status).toBe('stopped')
-    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0] as unknown as RumProfilerTrace
+    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0]
 
     expect(lastCall.longTasks.length).toBe(1)
     expect(lastCall.longTasks[0].id).toBeDefined()
     expect(lastCall.longTasks[0].startClocks.relative).toBe(12345 as RelativeTime)
+  })
+
+  it('should collect views and set default view name in the Profile', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    // Navigate to the user view
+    history.pushState({}, '', '/user/123')
+
+    profiler.start({
+      id: 'view-user',
+      name: '', // no custom view name, should fallback to default view name
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    })
+
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Navigate to the profile view
+    history.pushState({}, '', '/v1/user/3A2/profile')
+
+    // Emit a view created event
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
+      id: 'view-profile',
+      name: '', // no custom view name, should fallback to default view name
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    })
+
+    // Stop collection of profile.
+    await profiler.stop()
+
+    // Wait for stop of collection.
+    await waitForBoolean(() => profiler.isStopped())
+
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0]
+
+    expect(lastCall.views.length).toBe(2)
+    expect(lastCall.views[0].viewId).toBe('view-user')
+    expect(lastCall.views[0].viewName).toBe('/user/?')
+    expect(lastCall.views[1].viewId).toBe('view-profile')
+    expect(lastCall.views[1].viewName).toBe('/v1/user/?/profile')
   })
 })
 

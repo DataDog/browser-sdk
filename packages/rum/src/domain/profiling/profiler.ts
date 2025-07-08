@@ -28,6 +28,7 @@ import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/l
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import { transport } from './transport/transport'
 import type { ProfilingContextManager } from './profilingContext'
+import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -60,7 +61,11 @@ export function createRumProfiler(
     // Add initial view
     // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
     lastViewEntry = viewEntry
-      ? { startClocks: viewEntry.startClocks, viewId: viewEntry.id, viewName: viewEntry.name }
+      ? {
+          startClocks: viewEntry.startClocks,
+          viewId: viewEntry.id,
+          viewName: getCustomOrDefaultViewName(viewEntry.name, document.location.pathname),
+        }
       : undefined
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
@@ -124,7 +129,11 @@ export function createRumProfiler(
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
       // Note: `view.name` is only filled when users use manual view creation via `startView` method.
-      collectViewEntry({ viewId: view.id, viewName: view.name, startClocks: view.startClocks })
+      collectViewEntry({
+        viewId: view.id,
+        viewName: getCustomOrDefaultViewName(view.name, document.location.pathname),
+        startClocks: view.startClocks,
+      })
     })
     cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
