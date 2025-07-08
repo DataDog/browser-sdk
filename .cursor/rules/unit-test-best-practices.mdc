@@ -24,7 +24,7 @@ yarn test:unit
 yarn test:unit --spec packages/core/src/browser/addEventListener.spec.ts
 
 # Pattern matching (if filename is unique)
-yarn test:unit --spec "**/addEventListener.spec.ts"
+yarn test:unit --spec "packages/**/addEventListener.spec.ts"
 
 # Multiple files with wildcards
 yarn test:unit --spec "packages/core/**/browser/*.spec.ts"
