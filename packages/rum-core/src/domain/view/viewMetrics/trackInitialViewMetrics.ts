@@ -8,6 +8,7 @@ import { trackNavigationTimings } from './trackNavigationTimings'
 import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
+import { trackPrerenderMetrics } from './trackPrerenderMetrics'
 
 export interface InitialViewMetrics {
   firstContentfulPaint?: Duration
@@ -20,9 +21,14 @@ export function trackInitialViewMetrics(
   configuration: RumConfiguration,
   viewStart: ClocksState,
   setLoadEvent: (loadEnd: Duration) => void,
-  scheduleViewUpdate: () => void
+  scheduleViewUpdate: () => void,
+  isPrerendered = false
 ) {
   const initialViewMetrics: InitialViewMetrics = {}
+
+  if (isPrerendered) {
+    trackPrerenderMetrics(configuration, initialViewMetrics, scheduleViewUpdate)
+  }
 
   const { stop: stopNavigationTracking } = trackNavigationTimings(configuration, (navigationTimings) => {
     setLoadEvent(navigationTimings.loadEvent)

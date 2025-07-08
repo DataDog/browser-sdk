@@ -67,3 +67,47 @@ export type CookieChangeEvent = Event & {
   changed: CookieChangeItem[]
   deleted: CookieChangeItem[]
 }
+
+// Document interface extension for the prerendering API
+// https://developer.mozilla.org/en-US/docs/Web/API/Document/prerendering
+export interface DocumentWithPrerendering extends Document {
+  prerendering?: boolean
+}
+
+/**
+ * Check whether the Prerender API is supported by the browser.
+ * The prerendering property is only available in Chrome 108+ and Edge 108+.
+ * https://developer.mozilla.org/en-US/docs/Web/API/Document/prerendering
+ * Fully typed to prevent runtime errors when the property is not available.
+ */
+export function isPrerenderingSupported(): boolean {
+  try {
+    return typeof document !== 'undefined' && typeof (document as DocumentWithPrerendering).prerendering !== 'undefined'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Detect if the current page is or was prerendered.
+ * This checks both the current prerendering state and the presence of activationStart > 0.
+ */
+export function isPagePrerendered(): boolean {
+  try {
+    if (isPrerenderingSupported() && (document as DocumentWithPrerendering)?.prerendering) {
+      return true
+    }
+
+    if (typeof performance !== 'undefined' && performance.getEntriesByType) {
+      const navigationEntries = performance.getEntriesByType('navigation')
+      if (navigationEntries.length > 0) {
+        const navEntry = navigationEntries[0] as any
+        return navEntry.activationStart > 0
+      }
+    }
+
+    return false
+  } catch {
+    return false
+  }
+}

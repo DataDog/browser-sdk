@@ -960,7 +960,7 @@ Error: foo
   })
 
   it('should normalize non native errors stacktraces across browsers', () => {
-    /* eslint-disable no-restricted-syntax */
+     
     class DatadogTestCustomError extends Error {
       constructor() {
         super()
