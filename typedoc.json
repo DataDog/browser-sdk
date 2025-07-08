@@ -20,6 +20,6 @@
   "hideGenerator": false,
   "skipErrorChecking": true,
   "readme": "./doc.md",
-  "sort": ["source-order"], 
+  "sort": ["source-order"],
   "customCss": "./typedoc-custom.css"
-} 
+}
