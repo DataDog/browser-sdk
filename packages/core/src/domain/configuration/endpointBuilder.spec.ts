@@ -150,6 +150,7 @@ describe('endpointBuilder', () => {
       const endpoint = createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=browser')
       expect(endpoint).not.toContain('_dd.variant=')
+      expect(endpoint).not.toContain('_dd.sdk_version=')
     })
 
     it('should use source and variant when provided', () => {
@@ -157,6 +158,12 @@ describe('endpointBuilder', () => {
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=my-source')
       expect(endpoint).toContain('_dd.variant=my-variant')
+    })
+
+    it('should include sdk_version when provided in additionalConfig', () => {
+      const config = { ...initConfiguration, additionalConfig: { sdk_version: '1.2.3' } }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('_dd.sdk_version=1.2.3')
     })
   })
 })

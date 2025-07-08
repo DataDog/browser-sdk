@@ -88,6 +88,7 @@ function buildEndpointParameters(
 ) {
   const source = (additionalConfig.source as string) || 'browser'
   const variant = additionalConfig.variant as string
+  const sdkVersion = additionalConfig.sdk_version as string
 
   const parameters = [
     `ddsource=${source}`,
@@ -101,12 +102,16 @@ function buildEndpointParameters(
     parameters.push(`dd-evp-encoding=${encoding}`)
   }
 
+  if (sdkVersion) {
+    parameters.push(`_dd.sdk_version=${sdkVersion}`)
+  }
+
+  if (variant) {
+    parameters.push(`_dd.variant=${variant}`)
+  }
+
   if (trackType === 'rum') {
     parameters.push(`batch_time=${timeStampNow()}`, `_dd.api=${api}`)
-
-    if (variant) {
-      parameters.push(`_dd.variant=${variant}`)
-    }
 
     if (retry) {
       parameters.push(`_dd.retry_count=${retry.count}`, `_dd.retry_after=${retry.lastFailureStatus}`)
