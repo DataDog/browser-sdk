@@ -24,6 +24,8 @@ const IS_EXPIRED = '1'
 const DEFAULT_INIT_CONFIGURATION: InitConfiguration = { clientToken: 'abc' }
 const DEFAULT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 
+const EMPTY_SESSION_STATE: SessionState = {}
+
 function createSessionState(
   trackingType: FakeTrackingType = FakeTrackingType.TRACKED,
   id?: string,
@@ -267,7 +269,7 @@ describe('session store', () => {
         'when session not in cache, session not in store and new session not tracked, ' +
           'should store not tracked session and trigger renew session',
         () => {
-          setupSessionStore(undefined, () => FakeTrackingType.NOT_TRACKED)
+          setupSessionStore(EMPTY_SESSION_STATE, () => FakeTrackingType.NOT_TRACKED)
 
           sessionStoreManager.expandOrRenewSession()
 
@@ -461,7 +463,7 @@ describe('session store', () => {
     })
 
     describe('regular watch', () => {
-      it('when session not in cache and session not in store, should expire session in store', () => {
+      it('when session not in cache and session not in store, should store the expired session', () => {
         setupSessionStore()
 
         clock.tick(STORAGE_POLL_DELAY)
@@ -509,7 +511,7 @@ describe('session store', () => {
         expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
       })
 
-      it('when session id in cache is different than session id in store, should expire session in cache', () => {
+      it('when session id in cache is different than session id in store, should expire session and not touch the store', () => {
         setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
         setSessionInStore(createSessionState(FakeTrackingType.TRACKED, SECOND_ID))
 
@@ -520,7 +522,7 @@ describe('session store', () => {
         expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
       })
 
-      it('when session type in cache is different than session type in store, should expire session', () => {
+      it('when session type in cache is different than session type in store, should expire session and not touch the store', () => {
         setupSessionStore(createSessionState(FakeTrackingType.NOT_TRACKED, FIRST_ID))
         setSessionInStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
