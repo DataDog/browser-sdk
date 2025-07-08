@@ -1,3 +1,4 @@
+import type { TrackingConsentState } from '@datadog/browser-core'
 import { DISCARDED, HookNames } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LogsSessionManager } from '../logsSessionManager'
@@ -6,7 +7,8 @@ import type { Hooks } from '../hooks'
 export function startSessionContext(
   hooks: Hooks,
   configuration: LogsConfiguration,
-  sessionManager: LogsSessionManager
+  sessionManager: LogsSessionManager,
+  trackingConsentState: TrackingConsentState
 ) {
   hooks.register(HookNames.Assemble, ({ startTime }) => {
     const session = sessionManager.findTrackedSession(startTime)

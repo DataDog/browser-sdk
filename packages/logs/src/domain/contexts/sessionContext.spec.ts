@@ -1,5 +1,5 @@
-import type { RelativeTime } from '@datadog/browser-core'
-import { DISCARDED, HookNames } from '@datadog/browser-core'
+import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
+import { DISCARDED, HookNames, TrackingConsent, createTrackingConsentState } from '@datadog/browser-core'
 import type { LogsSessionManager } from '../logsSessionManager'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
@@ -10,15 +10,17 @@ import { startSessionContext } from './sessionContext'
 describe('session context', () => {
   let hooks: Hooks
   let sessionManager: LogsSessionManager
+  let trackingConsentState: TrackingConsentState
   const configuration = { service: 'foo' } as LogsConfiguration
 
   beforeEach(() => {
     hooks = createHooks()
     sessionManager = createLogsSessionManagerMock().setTracked()
+    trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
   })
 
   it('should set service', () => {
-    startSessionContext(hooks, configuration, sessionManager)
+    startSessionContext(hooks, configuration, sessionManager, trackingConsentState)
 
     const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
       startTime: 0 as RelativeTime,
@@ -28,7 +30,7 @@ describe('session context', () => {
   })
 
   it('should discard logs if session is not tracked', () => {
-    startSessionContext(hooks, configuration, createLogsSessionManagerMock().setNotTracked())
+    startSessionContext(hooks, configuration, createLogsSessionManagerMock().setNotTracked(), trackingConsentState)
 
     const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
       startTime: 0 as RelativeTime,
@@ -38,7 +40,7 @@ describe('session context', () => {
   })
 
   it('should set session id if session is active', () => {
-    startSessionContext(hooks, configuration, createLogsSessionManagerMock().setTracked())
+    startSessionContext(hooks, configuration, createLogsSessionManagerMock().setTracked(), trackingConsentState)
 
     const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
       startTime: 0 as RelativeTime,
@@ -52,7 +54,7 @@ describe('session context', () => {
   })
 
   it('should no set session id if session has expired', () => {
-    startSessionContext(hooks, configuration, createLogsSessionManagerMock().expire())
+    startSessionContext(hooks, configuration, createLogsSessionManagerMock().expire(), trackingConsentState)
 
     const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
       startTime: 0 as RelativeTime,
@@ -63,5 +65,16 @@ describe('session context', () => {
       session_id: undefined,
       session: undefined,
     })
+  })
+
+  it('should discard logs if tracking consent is not granted', () => {
+    const notGrantedTrackingConsent = createTrackingConsentState(TrackingConsent.NOT_GRANTED)
+    startSessionContext(hooks, configuration, sessionManager, notGrantedTrackingConsent)
+
+    const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
+      startTime: 0 as RelativeTime,
+    })
+
+    expect(defaultLogAttributes).toBe(DISCARDED)
   })
 })
