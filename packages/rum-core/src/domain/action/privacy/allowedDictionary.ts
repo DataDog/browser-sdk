@@ -10,32 +10,30 @@ declare global {
 }
 
 type UnicodeRegexes = {
-  splitRegex: RegExp
   matchRegex: RegExp
+  splitRegex: RegExp
 }
 
 // Cache regex compilation and browser support detection
 let cachedRegexes: UnicodeRegexes | undefined
-let supportsUnicodeRegex: boolean | undefined
 
-function initializeUnicodeSupport(): boolean {
-  if (supportsUnicodeRegex !== undefined) {
-    return supportsUnicodeRegex
+function getOrInitRegexes(): UnicodeRegexes | undefined {
+  if (cachedRegexes !== undefined) {
+    return cachedRegexes
   }
 
   try {
     cachedRegexes = {
       // Split on punctuation, separators, and control characters
-      splitRegex: new RegExp('[^\\p{Punctuation}\\p{Separator}\\p{Cc}]+', 'gu'),
+      splitRegex: new RegExp(`[^\\p{Separator}\\p{Cc}\\p{Sm}!"(),-./:;?[\\]\`_{|}]+`, 'gu'),
       // Match letters (including apostrophes), emojis, and mathematical symbols
-      matchRegex: new RegExp("[\\p{Letter}']+|[\\p{Emoji_Presentation}]+|[\\p{Sm}]+", 'gu'),
+      matchRegex: new RegExp("[\\p{Letter}’']+|[\\p{Emoji_Presentation}]+|[\\p{Sm}]+", 'gu'),
     }
-    supportsUnicodeRegex = true
-  } catch {
-    supportsUnicodeRegex = false
+  } catch { 
+    cachedRegexes = undefined
   }
 
-  return supportsUnicodeRegex
+  return cachedRegexes
 }
 
 export function tokenize(str: string): string[] {
@@ -43,18 +41,16 @@ export function tokenize(str: string): string[] {
     return []
   }
 
-  if (!initializeUnicodeSupport() || !cachedRegexes) {
+  if (!getOrInitRegexes() || !cachedRegexes) {
     return []
   }
 
-  const { splitRegex, matchRegex } = cachedRegexes
-  const segments = str.match(splitRegex) || []
-
-  return segments.flatMap((segment) => segment.match(matchRegex) || [])
+  const { matchRegex } = cachedRegexes
+  return str.match(matchRegex) || []
 }
 
 export function isBrowserSupported(): boolean {
-  return initializeUnicodeSupport()
+  return getOrInitRegexes() !== undefined
 }
 
 export type AllowedDictionary = {
@@ -68,22 +64,17 @@ export function createActionAllowList(): AllowedDictionary {
   const dictionary: AllowedDictionary = {
     rawStringCounter: 0,
     allowlist: new Set<string>(),
-    rawStringIterator: window.$DD_ALLOW?.values(),
+    rawStringIterator: undefined,
     clear: () => {
       dictionary.allowlist.clear()
       dictionary.rawStringCounter = 0
       dictionary.rawStringIterator = undefined
-      supportsUnicodeRegex = undefined
       window.$DD_ALLOW_OBSERVERS?.delete(observer)
     },
   }
 
   const observer = () => processRawAllowList(window.$DD_ALLOW, dictionary)
-
-  // Initialize allowlist if needed
-  if (dictionary.allowlist.size === 0) {
-    processRawAllowList(window.$DD_ALLOW, dictionary)
-  }
+  processRawAllowList(window.$DD_ALLOW, dictionary)
 
   // Add observer
   if (!window.$DD_ALLOW_OBSERVERS) {
@@ -132,8 +123,9 @@ export function maskActionName(
   }
 
   const { name, nameSource } = actionName
+  const regexes = getOrInitRegexes()
 
-  if (!initializeUnicodeSupport()) {
+  if (!regexes) {
     return {
       ...actionName,
       name: name ? ACTION_NAME_PLACEHOLDER : '',
@@ -141,10 +133,9 @@ export function maskActionName(
     }
   }
 
-  const { splitRegex } = cachedRegexes!
   let hasBeenMasked = false
 
-  const maskedName = name.replace(splitRegex, (segment: string) => {
+  const maskedName = name.replace(regexes.splitRegex, (segment: string) => {
     if (!processedAllowlist.has(segment.toLowerCase())) {
       hasBeenMasked = true
       return TEXT_MASKING_CHAR.repeat(segment.length)

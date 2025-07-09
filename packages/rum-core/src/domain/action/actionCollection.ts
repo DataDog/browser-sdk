@@ -33,7 +33,6 @@ export function startActionCollection(
   configuration: RumConfiguration
 ) {
   const actionNameDictionary = createActionAllowList()
-  const clearActionNameDictionary: () => void = actionNameDictionary.clear
 
   const { unsubscribe: unsubscribeAutoActionCompleted } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
@@ -81,7 +80,7 @@ export function startActionCollection(
     },
     actionContexts,
     stop: () => {
-      clearActionNameDictionary()
+      actionNameDictionary.clear()
       unsubscribeAutoActionCompleted()
       stop()
     },

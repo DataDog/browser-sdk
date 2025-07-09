@@ -13,15 +13,15 @@ import type { AllowedDictionary } from './allowedDictionary'
 
 const TEST_STRINGS = {
   COMPLEX_MIXED: 'test-user-name:💥$$$, test-user-id:hello>=42@world?',
-  PARAGRAPH_MIXED: 'This is a test paragraph with various symbols: 💥, $$$, 123, and more.',
+  PARAGRAPH_MIXED: "This isn't a sentence, it's RUM's test: 💥, $$$ = 1 + 2 + 3, and more.",
 }
 
 const LANGUAGES_TEST_STRINGS = {
-  FRENCH_MIXED_SENTENCE: "C'est un test avec des mots français et des symboles: 💥, $$$, 123, et plus. Bonjour!",
-  SPANISH_MIXED_SENTENCE: 'Este es un test con palabras en español y símbolos: 💥, $$$, 123, y más. ¡Hola!',
-  GERMAN_MIXED_SENTENCE: 'Das ist ein Test mit deutschen Wörtern und Symbolen: 💥, $$$, 123, und mehr. Hallo!',
-  ITALIAN_MIXED_SENTENCE: 'Questo è un test con parole in italiano e simboli: 💥, $$$, 123, e altro. Ciao!',
-  PORTUGUESE_MIXED_SENTENCE: 'Este é um teste com palavras em português e símbolos: 💥, $$$, 123, e mais. Olá!',
+  FRENCH_MIXED_SENTENCE: "C'est pas un test, c'est RUM's test: 💥, $$$ = 1 + 2 + 3, et plus.",
+  SPANISH_MIXED_SENTENCE: "Este no es un test, es RUM's test: 💥, $$$ = 1 + 2 + 3, y más.",
+  GERMAN_MIXED_SENTENCE: "Das ist kein Test, das ist RUM's Test: 💥, $$$ = 1 + 2 + 3, und mehr.",
+  ITALIAN_MIXED_SENTENCE: "Questo non è un test, questo è RUM's test: 💥, $$$ = 1 + 2 + 3, e altro.",
+  PORTUGUESE_MIXED_SENTENCE: "Este não é um teste, este é RUM's test: 💥, $$$ = 1 + 2 + 3, e mais.",
 }
 if (isBrowserSupported()) {
   describe('Test tokenize', () => {
@@ -29,7 +29,9 @@ if (isBrowserSupported()) {
       const paragraphMixedTokens = tokenize(TEST_STRINGS.PARAGRAPH_MIXED)
       expect(paragraphMixedTokens).toContain('💥')
       expect(paragraphMixedTokens).not.toContain('$$$')
-      expect(paragraphMixedTokens).not.toContain('123')
+      expect(paragraphMixedTokens).not.toContain('1')
+      expect(paragraphMixedTokens).not.toContain('2')
+      expect(paragraphMixedTokens).not.toContain('3')
     })
 
     it('should return empty array for whitespace-only strings', () => {
@@ -52,101 +54,20 @@ if (isBrowserSupported()) {
      * Asian languages are not supported by our current tokenizer strategy.
      */
     it('Tokenized results matches words and symbols in TEST_STRINGS', () => {
-      const paragraphMixedTokens = tokenize(TEST_STRINGS.PARAGRAPH_MIXED)
-      const expectedParagraphMixed = [
-        'This',
-        'is',
-        'a',
-        'test',
-        'paragraph',
-        'with',
-        'various',
-        'symbols',
-        'and',
-        'more',
-      ]
-      expectedParagraphMixed.forEach((expected) => {
-        expect(paragraphMixedTokens).toContain(expected)
-      })
-      const frenchTokens = tokenize(LANGUAGES_TEST_STRINGS.FRENCH_MIXED_SENTENCE)
-      const expectedFrench = [
-        'C',
-        'est',
-        'un',
-        'test',
-        'avec',
-        'des',
-        'mots',
-        'français',
-        'et',
-        'des',
-        'symboles',
-        'et',
-        'plus',
-        'Bonjour',
-      ]
-      expectedFrench.forEach((expected) => {
-        expect(frenchTokens).toContain(expected)
-      })
+      const expectedParagraphMixed = ['This', "isn't", 'a', 'sentence', "it's", "RUM's", 'test', '💥', '=', '+', '+', 'and', 'more']
+      expect(tokenize(TEST_STRINGS.PARAGRAPH_MIXED).sort()).toEqual(expectedParagraphMixed.sort())
 
-      const spanishTokens = tokenize(LANGUAGES_TEST_STRINGS.SPANISH_MIXED_SENTENCE)
-      const expectedSpanish = [
-        'Este',
-        'es',
-        'un',
-        'test',
-        'con',
-        'palabras',
-        'en',
-        'español',
-        'y',
-        'símbolos',
-        'y',
-        'más',
-        'Hola',
-      ]
-      expectedSpanish.forEach((expected) => {
-        expect(spanishTokens).toContain(expected)
-      })
+      const expectedFrench = ["C'est", 'pas', 'un', 'test', "c'est", "RUM's", 'test', '💥', '=', '+', '+', 'et', 'plus']  
+      expect(tokenize(LANGUAGES_TEST_STRINGS.FRENCH_MIXED_SENTENCE).sort()).toEqual(expectedFrench.sort())
 
-      const germanTokens = tokenize(LANGUAGES_TEST_STRINGS.GERMAN_MIXED_SENTENCE)
-      const expectedGerman = [
-        'Das',
-        'ist',
-        'ein',
-        'Test',
-        'mit',
-        'deutschen',
-        'Wörtern',
-        'und',
-        'Symbolen',
-        'und',
-        'mehr',
-        'Hallo',
-      ]
-      expectedGerman.forEach((expected) => {
-        expect(germanTokens).toContain(expected)
-      })
+      const expectedSpanish = ['Este', 'no', 'es', 'un', 'test', 'es', "RUM's", 'test', '💥', '=', '+', '+', 'y', 'más']
+      expect(tokenize(LANGUAGES_TEST_STRINGS.SPANISH_MIXED_SENTENCE).sort()).toEqual(expectedSpanish.sort())
 
-      const portugueseTokens = tokenize(LANGUAGES_TEST_STRINGS.PORTUGUESE_MIXED_SENTENCE)
-      const expectedPortuguese = [
-        'Este',
-        'é',
-        'um',
-        'teste',
-        'com',
-        'palavras',
-        'em',
-        'português',
-        'e',
-        'símbolos',
-        'e',
-        'mais',
-        'Olá',
-      ]
-      expectedPortuguese.forEach((expected) => {
-        expect(portugueseTokens).toContain(expected)
-      })
+      const expectedGerman = ['Das', 'ist', 'kein', 'Test', 'das', 'ist', "RUM's", 'Test', '💥', '=', '+', '+', 'und', 'mehr']
+      expect(tokenize(LANGUAGES_TEST_STRINGS.GERMAN_MIXED_SENTENCE).sort()).toEqual(expectedGerman.sort())
+
+      const expectedPortuguese = ['Este', 'não', 'é', 'um', 'teste', 'este', 'é', "RUM's", 'test', '💥', '=', '+', '+', 'e', 'mais']
+      expect(tokenize(LANGUAGES_TEST_STRINGS.PORTUGUESE_MIXED_SENTENCE).sort()).toEqual(expectedPortuguese.sort())
     })
   })
 }
@@ -244,7 +165,7 @@ describe('createActionNameDictionary and maskActionName', () => {
   }
 
   beforeEach(() => {
-    window.$DD_ALLOW = new Set([TEST_STRINGS.COMPLEX_MIXED, TEST_STRINGS.PARAGRAPH_MIXED])
+    window.$DD_ALLOW = new Set([TEST_STRINGS.PARAGRAPH_MIXED])
     actionNameDictionary = createActionAllowList()
     clearActionNameDictionary = actionNameDictionary.clear
   })
@@ -263,8 +184,8 @@ describe('createActionNameDictionary and maskActionName', () => {
   })
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
-    clickActionBase.name = 'test-💥-$>=123-pii'
-    let expected = 'test-💥-xxxxxx-xxx'
+    clickActionBase.name = "test this: if 💥 isn't pii"
+    let expected = "test this: xx 💥 isn't xxx"
     if (!isBrowserSupported()) {
       expected = ACTION_NAME_PLACEHOLDER
     }
@@ -273,7 +194,7 @@ describe('createActionNameDictionary and maskActionName', () => {
     expect(testString1.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
 
     clickActionBase.name = 'test-💥+123*hello wild'
-    expected = 'test-xxxxxx*hello xxxx'
+    expected = 'test-💥+xxxxxxxxx xxxx'
     if (!isBrowserSupported()) {
       expected = ACTION_NAME_PLACEHOLDER
     }
