@@ -54,19 +54,64 @@ if (isBrowserSupported()) {
      * Asian languages are not supported by our current tokenizer strategy.
      */
     it('Tokenized results matches words and symbols in TEST_STRINGS', () => {
-      const expectedParagraphMixed = ['This', "isn't", 'a', 'sentence', "it's", "RUM's", 'test', '💥', '=', '+', '+', 'and', 'more']
+      const expectedParagraphMixed = [
+        'This',
+        "isn't",
+        'a',
+        'sentence',
+        "it's",
+        "RUM's",
+        'test',
+        '💥',
+        '=',
+        '+',
+        '+',
+        'and',
+        'more',
+      ]
       expect(tokenize(TEST_STRINGS.PARAGRAPH_MIXED).sort()).toEqual(expectedParagraphMixed.sort())
 
-      const expectedFrench = ["C'est", 'pas', 'un', 'test', "c'est", "RUM's", 'test', '💥', '=', '+', '+', 'et', 'plus']  
+      const expectedFrench = ["C'est", 'pas', 'un', 'test', "c'est", "RUM's", 'test', '💥', '=', '+', '+', 'et', 'plus']
       expect(tokenize(LANGUAGES_TEST_STRINGS.FRENCH_MIXED_SENTENCE).sort()).toEqual(expectedFrench.sort())
 
       const expectedSpanish = ['Este', 'no', 'es', 'un', 'test', 'es', "RUM's", 'test', '💥', '=', '+', '+', 'y', 'más']
       expect(tokenize(LANGUAGES_TEST_STRINGS.SPANISH_MIXED_SENTENCE).sort()).toEqual(expectedSpanish.sort())
 
-      const expectedGerman = ['Das', 'ist', 'kein', 'Test', 'das', 'ist', "RUM's", 'Test', '💥', '=', '+', '+', 'und', 'mehr']
+      const expectedGerman = [
+        'Das',
+        'ist',
+        'kein',
+        'Test',
+        'das',
+        'ist',
+        "RUM's",
+        'Test',
+        '💥',
+        '=',
+        '+',
+        '+',
+        'und',
+        'mehr',
+      ]
       expect(tokenize(LANGUAGES_TEST_STRINGS.GERMAN_MIXED_SENTENCE).sort()).toEqual(expectedGerman.sort())
 
-      const expectedPortuguese = ['Este', 'não', 'é', 'um', 'teste', 'este', 'é', "RUM's", 'test', '💥', '=', '+', '+', 'e', 'mais']
+      const expectedPortuguese = [
+        'Este',
+        'não',
+        'é',
+        'um',
+        'teste',
+        'este',
+        'é',
+        "RUM's",
+        'test',
+        '💥',
+        '=',
+        '+',
+        '+',
+        'e',
+        'mais',
+      ]
       expect(tokenize(LANGUAGES_TEST_STRINGS.PORTUGUESE_MIXED_SENTENCE).sort()).toEqual(expectedPortuguese.sort())
     })
   })

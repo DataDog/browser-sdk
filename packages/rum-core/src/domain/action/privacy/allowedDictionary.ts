@@ -24,12 +24,12 @@ function getOrInitRegexes(): UnicodeRegexes | undefined {
 
   try {
     cachedRegexes = {
-      // Split on punctuation, separators, and control characters
-      splitRegex: new RegExp(`[^\\p{Separator}\\p{Cc}\\p{Sm}!"(),-./:;?[\\]\`_{|}]+`, 'gu'),
+      // Split on separators, control characters, and selected punctuation
+      splitRegex: new RegExp('[^\\p{Separator}\\p{Cc}\\p{Sm}!"(),-./:;?[\\]`_{|}]+', 'gu'),
       // Match letters (including apostrophes), emojis, and mathematical symbols
       matchRegex: new RegExp("[\\p{Letter}’']+|[\\p{Emoji_Presentation}]+|[\\p{Sm}]+", 'gu'),
     }
-  } catch { 
+  } catch {
     cachedRegexes = undefined
   }
 
