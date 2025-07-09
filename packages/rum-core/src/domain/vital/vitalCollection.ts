@@ -139,6 +139,7 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
       description: vital.description,
     },
     type: RumEventType.VITAL,
+    context: vital.context,
   }
 
   if (valueComputedBySdk) {
@@ -153,7 +154,6 @@ function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRum
     rawRumEvent,
     startTime: vital.startClocks.relative,
     duration: vital.duration,
-    customerContext: vital.context,
     domainContext: {},
   }
 }

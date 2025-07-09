@@ -73,7 +73,6 @@ describe('error collection', () => {
 
         expect(rawRumEvents.length).toBe(1)
         expect(rawRumEvents[0]).toEqual({
-          customerContext: undefined,
           rawRumEvent: {
             date: jasmine.any(Number),
             error: {
@@ -91,6 +90,7 @@ describe('error collection', () => {
               csp: undefined,
             },
             type: RumEventType.ERROR,
+            context: undefined,
           },
           startTime: 1234 as RelativeTime,
           domainContext: {
@@ -167,7 +167,7 @@ describe('error collection', () => {
         handlingStack: 'Error: handling foo',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       })
-      expect(rawRumEvents[0].customerContext).toEqual({
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).context).toEqual({
         foo: 'bar',
       })
     })
@@ -214,6 +214,7 @@ describe('error collection', () => {
           originalError: error,
           handlingStack: 'Error: handling foo',
           componentStack: 'at div',
+          context: { foo: 'bar' },
         },
       })
 
@@ -235,6 +236,7 @@ describe('error collection', () => {
           csp: undefined,
         },
         type: RumEventType.ERROR,
+        context: { foo: 'bar' },
       })
       expect(rawRumEvents[0].domainContext).toEqual({
         error,
@@ -274,7 +276,8 @@ describe('error collection', () => {
         handlingStack: 'Error: handling dd_context',
         startClocks: { relative: 500 as RelativeTime, timeStamp: 500000 as TimeStamp },
       })
-      expect(rawRumEvents[0].customerContext).toEqual({
+
+      expect((rawRumEvents[0].rawRumEvent as RawRumErrorEvent).context).toEqual({
         component: 'Menu',
         param: 123,
         user: 'john',

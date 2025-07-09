@@ -103,7 +103,9 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
           },
         },
       }
-    : undefined
+    : {
+        context: action.context,
+      }
   const actionEvent: RawRumActionEvent = combine(
     {
       action: { id: generateUUID(), target: { name: action.name }, type: action.type },
@@ -114,13 +116,11 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
   )
 
   const duration = isAutoAction(action) ? action.duration : undefined
-  const customerContext = !isAutoAction(action) ? action.context : undefined
   const domainContext: RumActionEventDomainContext = isAutoAction(action)
     ? { events: action.events }
     : { handlingStack: action.handlingStack }
 
   return {
-    customerContext,
     rawRumEvent: actionEvent,
     duration,
     startTime: action.startClocks.relative,
