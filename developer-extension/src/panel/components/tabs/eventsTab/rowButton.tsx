@@ -1,7 +1,7 @@
 import type { ActionIconProps } from '@mantine/core'
 import { ActionIcon } from '@mantine/core'
 import type { PolymorphicComponentProps } from '@mantine/core/lib/core/factory/create-polymorphic-component'
-import clsx from 'clsx'
+import { default as clsx } from 'clsx'
 import type { JSXElementConstructor } from 'react'
 import React, { forwardRef } from 'react'
 import * as classes from './rowButton.module.css'

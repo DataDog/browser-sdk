@@ -2,7 +2,7 @@ import { Table, Badge, Menu } from '@mantine/core'
 import { IconCopy, IconDotsVertical, IconColumnInsertRight } from '@tabler/icons-react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
-import clsx from 'clsx'
+import { default as clsx } from 'clsx'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type {
