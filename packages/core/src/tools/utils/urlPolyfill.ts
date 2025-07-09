@@ -38,20 +38,23 @@ export function getNativeURL(): typeof URL | undefined {
   if (cachedNativeURL !== undefined) {
     return cachedNativeURL
   }
+  try {
+    const iframe = document.createElement('iframe')
+    document.body.appendChild(iframe)
 
-  const iframe = document.createElement('iframe')
-  document.body.appendChild(iframe)
-
-  const iframeWindow = iframe.contentWindow
-  if (iframeWindow && (iframeWindow as any).URL) {
-    const iframeURL = (iframeWindow as any).URL as typeof URL
-    const testURL = new iframeURL('http://test.com')
-    if (testURL.href === 'http://test.com/') {
-      cachedNativeURL = iframeURL
+    const iframeWindow = iframe.contentWindow
+    if (iframeWindow && (iframeWindow as any).URL) {
+      const iframeURL = (iframeWindow as any).URL as typeof URL
+      const testURL = new iframeURL('http://test.com')
+      if (testURL.href === 'http://test.com/') {
+        cachedNativeURL = iframeURL
+      }
     }
-  }
 
-  document.body.removeChild(iframe)
+    document.body.removeChild(iframe)
+  } catch {
+    // If iframe approach fails, we'll use the original URL constructor
+  }
 
   return cachedNativeURL
 }
