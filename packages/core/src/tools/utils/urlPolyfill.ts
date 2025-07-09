@@ -18,40 +18,40 @@ export function getPathName(url: string) {
 }
 
 export function buildUrl(url: string, base?: string) {
-  const supportedURL = getSupportedUrl()
-  if (supportedURL) {
-    try {
-      return base !== undefined ? new supportedURL(url, base) : new supportedURL(url)
-    } catch (error) {
-      throw new Error(`Failed to construct URL: ${String(error)} ${jsonStringify({ url, base })!}`)
-    }
+  const nativeURL = getNativeURL()
+  const URLConstructor = nativeURL || URL
+
+  try {
+    return base !== undefined ? new URLConstructor(url, base) : new URLConstructor(url)
+  } catch (error) {
+    throw new Error(`Failed to construct URL: ${String(error)} ${jsonStringify({ url, base })!}`)
   }
-  if (base === undefined && !/:/.test(url)) {
-    throw new Error(`Invalid URL: '${url}'`)
-  }
-  let doc = document
-  const anchorElement = doc.createElement('a')
-  if (base !== undefined) {
-    doc = document.implementation.createHTMLDocument('')
-    const baseElement = doc.createElement('base')
-    baseElement.href = base
-    doc.head.appendChild(baseElement)
-    doc.body.appendChild(anchorElement)
-  }
-  anchorElement.href = url
-  return anchorElement
 }
 
-const originalURL = URL
-let isURLSupported: boolean | undefined
-function getSupportedUrl(): typeof URL | undefined {
-  if (isURLSupported === undefined) {
-    try {
-      const url = new originalURL('http://test/path')
-      isURLSupported = url.href === 'http://test/path'
-    } catch {
-      isURLSupported = false
+/**
+ * Get native URL constructor from a clean iframe
+ * This avoids polyfill issues by getting the native implementation from a fresh iframe context
+ * Falls back to the original URL constructor if iframe approach fails
+ */
+let cachedNativeURL: typeof URL | undefined
+export function getNativeURL(): typeof URL | undefined {
+  if (cachedNativeURL !== undefined) {
+    return cachedNativeURL
+  }
+
+  const iframe = document.createElement('iframe')
+  document.body.appendChild(iframe)
+
+  const iframeWindow = iframe.contentWindow
+  if (iframeWindow && (iframeWindow as any).URL) {
+    const iframeURL = (iframeWindow as any).URL as typeof URL
+    const testURL = new iframeURL('http://test.com')
+    if (testURL.href === 'http://test.com/') {
+      cachedNativeURL = iframeURL
     }
   }
-  return isURLSupported ? originalURL : undefined
+
+  document.body.removeChild(iframe)
+
+  return cachedNativeURL
 }
