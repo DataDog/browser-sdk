@@ -1,4 +1,6 @@
 import { Observable } from '../tools/observable'
+import type { ValueHistory } from '../tools/valueHistory'
+import { createValueHistory } from '../tools/valueHistory'
 
 export const TrackingConsent = {
   GRANTED: 'granted',
@@ -11,6 +13,7 @@ export interface TrackingConsentState {
   update: (trackingConsent: TrackingConsent) => void
   isGranted: () => boolean
   observable: Observable<void>
+  history: ValueHistory<boolean>
 }
 
 export function createTrackingConsentState(currentConsent?: TrackingConsent): TrackingConsentState {
@@ -30,5 +33,6 @@ export function createTrackingConsentState(currentConsent?: TrackingConsent): Tr
       return currentConsent === TrackingConsent.GRANTED
     },
     observable,
+    history: createValueHistory({ expireDelay: 1000 }),
   }
 }

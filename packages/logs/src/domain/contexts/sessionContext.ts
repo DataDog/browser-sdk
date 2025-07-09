@@ -7,8 +7,7 @@ import type { Hooks } from '../hooks'
 export function startSessionContext(
   hooks: Hooks,
   configuration: LogsConfiguration,
-  sessionManager: LogsSessionManager,
-  trackingConsentState: TrackingConsentState
+  sessionManager: LogsSessionManager
 ) {
   hooks.register(HookNames.Assemble, ({ startTime }) => {
     const session = sessionManager.findTrackedSession(startTime)
