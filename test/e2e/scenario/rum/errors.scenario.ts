@@ -98,6 +98,32 @@ test.describe('rum errors', () => {
       })
     })
 
+  createTest('send runtime errors happening before initialization')
+    .withRum()
+    .withRumInit((configuration) => {
+      // Use a setTimeout to:
+      // * have a constant stack trace regardless of the setup used
+      // * avoid the exception to be swallowed by the `onReady` logic
+      setTimeout(() => {
+        throw new Error('oh snap')
+      })
+      // Simulate a late initialization of the RUM SDK
+      setTimeout(() => window.DD_RUM!.init(configuration))
+    })
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs, baseUrl }) => {
+      await flushEvents()
+      expect(intakeRegistry.rumErrorEvents).toHaveLength(1)
+      expectError(intakeRegistry.rumErrorEvents[0].error, {
+        message: 'oh snap',
+        source: 'source',
+        handling: 'unhandled',
+        stack: ['Error: oh snap', `at <anonymous> @ ${baseUrl}/:`],
+      })
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
+    })
+
   createTest('send unhandled rejections')
     .withRum()
     .withBody(createBody('Promise.reject(foo())'))
@@ -252,7 +278,7 @@ function expectStack(stack: string | undefined, expectedLines?: Array<string | R
     expect(stack).toBeDefined()
     const actualLines = stack!.split('\n')
     expect.soft(actualLines.length).toBeGreaterThanOrEqual(expectedLines.length)
-    expect.soft(actualLines.length).toBeLessThanOrEqual(expectedLines.length + 1) // FF have one more line of stack
+    expect.soft(actualLines.length).toBeLessThanOrEqual(expectedLines.length + 2) // FF may have more lines of stack
 
     expectedLines.forEach((line, i) => {
       if (typeof line !== 'string') {

@@ -1,4 +1,4 @@
-import type { Context, TrackingConsentState } from '@datadog/browser-core'
+import type { BufferedObservable, Context, BufferedData, TrackingConsentState } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -41,7 +41,8 @@ export function startLogs(
   // `startLogs` and its subcomponents assume tracking consent is granted initially and starts
   // collecting logs unconditionally. As such, `startLogs` should be called with a
   // `trackingConsentState` set to "granted".
-  trackingConsentState: TrackingConsentState
+  trackingConsentState: TrackingConsentState,
+  bufferedDataObservable: BufferedObservable<BufferedData>
 ) {
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
@@ -78,7 +79,8 @@ export function startLogs(
   telemetry.setContextProvider('action.id', () => (getRUMInternalContext()?.user_action as Context)?.id)
 
   startNetworkErrorCollection(configuration, lifeCycle)
-  startRuntimeErrorCollection(configuration, lifeCycle)
+  startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
+  bufferedDataObservable.unbuffer()
   startConsoleCollection(configuration, lifeCycle)
   startReportCollection(configuration, lifeCycle)
   const { handleLog } = startLoggerCollection(lifeCycle)

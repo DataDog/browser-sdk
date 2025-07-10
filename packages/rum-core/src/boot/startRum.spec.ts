@@ -1,4 +1,4 @@
-import type { RawError, Duration, RelativeTime } from '@datadog/browser-core'
+import type { RawError, Duration, RelativeTime, BufferedData } from '@datadog/browser-core'
 import {
   Observable,
   stopSessionManager,
@@ -10,6 +10,7 @@ import {
   createIdentityEncoder,
   createTrackingConsentState,
   TrackingConsent,
+  BufferedObservable,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -329,6 +330,7 @@ describe('view events', () => {
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),
       createCustomVitalsState(),
+      new BufferedObservable<BufferedData>(100),
       'rum'
     )
 
