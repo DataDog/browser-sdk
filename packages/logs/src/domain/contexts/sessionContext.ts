@@ -1,4 +1,3 @@
-import type { TrackingConsentState } from '@datadog/browser-core'
 import { DISCARDED, HookNames } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LogsSessionManager } from '../logsSessionManager'
