@@ -28,6 +28,7 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 import { startSessionContext } from '../domain/contexts/sessionContext'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -68,6 +69,7 @@ export function startLogs(
   telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
   // Start user and account context first to allow overrides from global context
+  startTrackingConsentContext(hooks, trackingConsentState)
   startSessionContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
