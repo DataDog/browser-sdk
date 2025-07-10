@@ -1,6 +1,6 @@
 import { Observable } from '../tools/observable'
-import type { ValueHistory } from '../tools/valueHistory'
 import { createValueHistory } from '../tools/valueHistory'
+import type { RelativeTime } from '../tools/utils/timeUtils'
 
 export const TrackingConsent = {
   GRANTED: 'granted',
@@ -11,13 +11,13 @@ export type TrackingConsent = (typeof TrackingConsent)[keyof typeof TrackingCons
 export interface TrackingConsentState {
   tryToInit: (trackingConsent: TrackingConsent) => void
   update: (trackingConsent: TrackingConsent) => void
-  isGranted: () => boolean
+  isGranted: (startTime?: RelativeTime) => boolean
   observable: Observable<void>
-  history: ValueHistory<boolean>
 }
 
 export function createTrackingConsentState(currentConsent?: TrackingConsent): TrackingConsentState {
   const observable = new Observable<void>()
+  const history = createValueHistory<TrackingConsent>({ expireDelay: 1000 })
 
   return {
     tryToInit(trackingConsent: TrackingConsent) {
@@ -29,10 +29,11 @@ export function createTrackingConsentState(currentConsent?: TrackingConsent): Tr
       currentConsent = trackingConsent
       observable.notify()
     },
-    isGranted() {
-      return currentConsent === TrackingConsent.GRANTED
+    isGranted(startTime?: RelativeTime) {
+      const value = startTime === undefined ? currentConsent : history.find(startTime)
+
+      return value === TrackingConsent.GRANTED
     },
     observable,
-    history: createValueHistory({ expireDelay: 1000 }),
   }
 }
