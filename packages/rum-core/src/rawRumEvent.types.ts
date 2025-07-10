@@ -8,6 +8,7 @@ import type {
   RawErrorCause,
   DefaultPrivacyLevel,
   Csp,
+  Context,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
@@ -88,6 +89,7 @@ export interface RawRumErrorEvent {
   view?: {
     in_foreground: boolean
   }
+  context?: Context
 }
 
 export interface RawRumViewEvent {
@@ -305,6 +307,7 @@ export interface RawRumActionEvent {
       pointer_up_delay?: Duration
     }
   }
+  context?: Context
 }
 
 export const ActionType = {
@@ -337,6 +340,7 @@ export interface RawRumVitalEvent {
       computed_value: true
     }
   }
+  context?: Context
 }
 
 export const VitalType = {

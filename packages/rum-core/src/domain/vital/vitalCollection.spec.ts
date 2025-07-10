@@ -172,7 +172,7 @@ describe('vitalCollection', () => {
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
       })
 
       it('should create a vital from start API using ref', () => {
@@ -188,7 +188,7 @@ describe('vitalCollection', () => {
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
       })
 
       it('should discard a vital for which a frozen state happened', () => {
@@ -218,6 +218,7 @@ describe('vitalCollection', () => {
             duration: 0,
             description: undefined,
           },
+          context: undefined,
           type: RumEventType.VITAL,
           _dd: {
             vital: {
@@ -241,7 +242,7 @@ describe('vitalCollection', () => {
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
       })
     })
   })
