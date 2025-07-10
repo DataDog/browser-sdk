@@ -199,5 +199,14 @@ describe('actionCollection', () => {
 
       expect(telemetryEventAttributes.action?.id).toEqual(actionId)
     })
+
+    it('should not add action id if the action is not found', () => {
+      spyOn(actionContexts, 'findActionId').and.returnValue(undefined)
+      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(telemetryEventAttributes).toBeUndefined()
+    })
   })
 })

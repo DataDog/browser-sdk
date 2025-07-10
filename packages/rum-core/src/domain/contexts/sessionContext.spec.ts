@@ -156,5 +156,14 @@ describe('session context', () => {
 
       expect(telemetryEventAttributes.session?.id).toEqual('123')
     })
+
+    it('should not add session.id if no session', () => {
+      sessionManager.setNotTracked()
+      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(telemetryEventAttributes).toBeUndefined()
+    })
   })
 })

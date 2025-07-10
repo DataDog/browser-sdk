@@ -294,5 +294,14 @@ describe('viewCollection', () => {
 
       expect(telemetryEventAttributes.view?.id).toEqual('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
     })
+
+    it('should not add view id if no view', () => {
+      setupViewCollection({ trackViewsManually: true }, undefined)
+      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(telemetryEventAttributes).toBeUndefined()
+    })
   })
 })

@@ -108,6 +108,17 @@ describe('startRUMInternalContext', () => {
         action: { id: '789' },
       })
     })
+
+    it('should not set internal context if the RUM instance is not present', () => {
+      window.DD_RUM = {
+        getInternalContext: () => undefined,
+      }
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(defaultRumEventAttributes).toEqual(undefined)
+    })
   })
 
   describe('getRUMInternalContext', () => {
