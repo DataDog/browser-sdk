@@ -1,11 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   Switch,
   Checkbox,
   MultiSelect,
   SegmentedControl,
-  TextInput,
-  NumberInput,
+  JsonInput,
+  Button,
   Text,
   Space,
   Box,
@@ -15,6 +15,7 @@ import { useSettings } from '../../hooks/useSettings'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
 import type { Settings, SdkInjectionConfig } from '../../../common/extension.types'
+import { Json } from '../json'
 
 export function TrialTab() {
   const [{ trialMode, sdkInjection }, setSetting] = useSettings()
@@ -50,7 +51,7 @@ export function TrialTab() {
                 input={
                   <Checkbox
                     label="Disable event intake (do not send data to Datadog)"
-                    checked={sdkInjection.skipIntake}
+                    checked={sdkInjection.enabled && sdkInjection.skipIntake}
                     onChange={(event) =>
                       setSetting('sdkInjection', { ...sdkInjection, skipIntake: event.currentTarget.checked })
                     }
@@ -139,6 +140,58 @@ function SettingItem({ description, input }: { description?: React.ReactNode; in
   )
 }
 
+function ConfigEditor({ label, value, onChange }: { label: string; value: object; onChange: (value: object) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [newValue, setNewValue] = useState(JSON.stringify(value, null, 2))
+
+  const apply = () => {
+    try {
+      const parsed = JSON.parse(newValue)
+      onChange(parsed)
+      setEditing(false)
+    } catch {
+      // keep editing until valid JSON
+    }
+  }
+
+  return (
+    <SettingItem
+      input={
+        !editing ? (
+          <>
+            <Group align="center" gap="xs">
+              <Text fw={500}>{label}</Text>
+              <Button size="compact-xs" variant="light" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+            </Group>
+            <Json value={value} />
+          </>
+        ) : (
+          <>
+            <JsonInput
+              validationError="Invalid JSON"
+              formatOnBlur
+              autosize
+              minRows={8}
+              value={newValue}
+              onChange={setNewValue}
+            />
+            <Group gap="xs" mt="xs">
+              <Button size="compact-xs" variant="light" onClick={apply} className="dd-privacy-allow">
+                Apply
+              </Button>
+              <Button size="compact-xs" variant="light" color="gray" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+            </Group>
+          </>
+        )
+      }
+    />
+  )
+}
+
 function RumConfigurationForm({
   sdkInjection,
   setSetting,
@@ -147,150 +200,11 @@ function RumConfigurationForm({
   setSetting: <Name extends keyof Settings>(name: Name, value: Settings[Name]) => void
 }) {
   return (
-    <>
-      <SettingItem
-        input={
-          <TextInput
-            label="Application ID"
-            placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
-            value={sdkInjection.rumConfig.applicationId}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                rumConfig: { ...sdkInjection.rumConfig, applicationId: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Your RUM application ID from Datadog.</>}
-      />
-
-      <SettingItem
-        input={
-          <TextInput
-            label="Client Token"
-            placeholder="pubXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-            value={sdkInjection.rumConfig.clientToken}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                rumConfig: { ...sdkInjection.rumConfig, clientToken: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Your RUM client token from Datadog.</>}
-      />
-
-      <SettingItem
-        input={
-          <TextInput
-            label="Site"
-            placeholder="datadoghq.com"
-            value={sdkInjection.rumConfig.site}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                rumConfig: { ...sdkInjection.rumConfig, site: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Your Datadog site (e.g., datadoghq.com, datadoghq.eu).</>}
-      />
-
-      <SettingItem
-        input={
-          <TextInput
-            label="Service"
-            placeholder="my-service"
-            value={sdkInjection.rumConfig.service}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                rumConfig: { ...sdkInjection.rumConfig, service: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Service name for the injected SDK.</>}
-      />
-
-      <SettingItem
-        input={
-          <TextInput
-            label="Version"
-            placeholder="1.0.0"
-            value={sdkInjection.rumConfig.version}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                rumConfig: { ...sdkInjection.rumConfig, version: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Version of your application.</>}
-      />
-
-      <SettingItem
-        input={
-          <TextInput
-            label="Environment"
-            placeholder="dev"
-            value={sdkInjection.rumConfig.env}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                rumConfig: { ...sdkInjection.rumConfig, env: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Environment (e.g., dev, staging, prod).</>}
-      />
-
-      <SettingItem
-        input={
-          <NumberInput
-            label="Session Sample Rate"
-            placeholder="100"
-            value={sdkInjection.rumConfig.sessionSampleRate}
-            min={0}
-            max={100}
-            onChange={(value) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                rumConfig: { ...sdkInjection.rumConfig, sessionSampleRate: typeof value === 'number' ? value : 100 },
-              })
-            }
-          />
-        }
-        description={<>Percentage of sessions to track (0-100).</>}
-      />
-
-      <SettingItem
-        input={
-          <NumberInput
-            label="Session Replay Sample Rate"
-            placeholder="100"
-            value={sdkInjection.rumConfig.sessionReplaySampleRate}
-            min={0}
-            max={100}
-            onChange={(value) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                rumConfig: {
-                  ...sdkInjection.rumConfig,
-                  sessionReplaySampleRate: typeof value === 'number' ? value : 100,
-                },
-              })
-            }
-          />
-        }
-        description={<>Percentage of sessions that will be recorded for session replay (0-100).</>}
-      />
-    </>
+    <ConfigEditor
+      label="RUM Configuration"
+      value={sdkInjection.rumConfig}
+      onChange={(value) => setSetting('sdkInjection', { ...sdkInjection, rumConfig: value as any })}
+    />
   )
 }
 
@@ -302,74 +216,10 @@ function LogsConfigurationForm({
   setSetting: <Name extends keyof Settings>(name: Name, value: Settings[Name]) => void
 }) {
   return (
-    <>
-      <SettingItem
-        input={
-          <TextInput
-            label="Client Token"
-            placeholder="pubXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-            value={sdkInjection.logsConfig.clientToken}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                logsConfig: { ...sdkInjection.logsConfig, clientToken: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Your Logs client token from Datadog.</>}
-      />
-
-      <SettingItem
-        input={
-          <TextInput
-            label="Site"
-            placeholder="datadoghq.com"
-            value={sdkInjection.logsConfig.site}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                logsConfig: { ...sdkInjection.logsConfig, site: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Your Datadog site (e.g., datadoghq.com, datadoghq.eu).</>}
-      />
-
-      <SettingItem
-        input={
-          <TextInput
-            label="Service"
-            placeholder="my-service"
-            value={sdkInjection.logsConfig.service}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                logsConfig: { ...sdkInjection.logsConfig, service: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Service name for the injected SDK.</>}
-      />
-
-      <SettingItem
-        input={
-          <TextInput
-            label="Version"
-            placeholder="1.0.0"
-            value={sdkInjection.logsConfig.version}
-            onChange={(event) =>
-              setSetting('sdkInjection', {
-                ...sdkInjection,
-                logsConfig: { ...sdkInjection.logsConfig, version: event.currentTarget.value },
-              })
-            }
-          />
-        }
-        description={<>Version of your application.</>}
-      />
-    </>
+    <ConfigEditor
+      label="Logs Configuration"
+      value={sdkInjection.logsConfig}
+      onChange={(value) => setSetting('sdkInjection', { ...sdkInjection, logsConfig: value as any })}
+    />
   )
 }
