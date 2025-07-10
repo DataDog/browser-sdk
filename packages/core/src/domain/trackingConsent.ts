@@ -2,6 +2,7 @@ import { Observable } from '../tools/observable'
 import { createValueHistory } from '../tools/valueHistory'
 import type { RelativeTime } from '../tools/utils/timeUtils'
 import { relativeNow } from '../tools/utils/timeUtils'
+import { SESSION_TIME_OUT_DELAY } from './session/sessionConstants'
 
 export const TrackingConsent = {
   GRANTED: 'granted',
@@ -18,7 +19,8 @@ export interface TrackingConsentState {
 
 export function createTrackingConsentState(currentConsent?: TrackingConsent): TrackingConsentState {
   const observable = new Observable<void>()
-  const history = createValueHistory<TrackingConsent>({ expireDelay: 1000 })
+  // Reuse the same expire delay as the session timeout delay because the tracking consent is expected to be valid for the same duration as the session.
+  const history = createValueHistory<TrackingConsent>({ expireDelay: SESSION_TIME_OUT_DELAY })
 
   if (currentConsent) {
     history.add(currentConsent, relativeNow())
