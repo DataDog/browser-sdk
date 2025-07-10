@@ -32,7 +32,7 @@ export function startLogsSessionManager(
   return {
     findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
       const session = sessionManager.findSession(startTime, options)
-      const wasConsented = trackingConsentState.history.find(startTime)
+      const wasConsented = trackingConsentState.isGranted(startTime)
 
       return session && session.trackingType === LoggerTrackingType.TRACKED && wasConsented
         ? {
