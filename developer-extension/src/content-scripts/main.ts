@@ -184,18 +184,16 @@ function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
 }
 
 function injectBrowserSDK(config: Settings['sdkInjection']) {
-  const { sdkTypes, rumBundle, rumConfig, logsConfig, debugMode } = config
+  const { sdkTypes, rumBundle, rumConfig, logsConfig } = config
 
   if (sdkTypes.includes('rum')) {
     const rumUrl = getRumBundleUrl(rumBundle)
-    const finalRumConfig = debugMode ? { ...rumConfig, sessionSampleRate: 0, sessionReplaySampleRate: 0 } : rumConfig
-    injectAndInitializeSDK(rumUrl, 'DD_RUM', finalRumConfig)
+    injectAndInitializeSDK(rumUrl, 'DD_RUM', rumConfig)
   }
 
   if (sdkTypes.includes('logs')) {
     const logsUrl = DEV_LOGS_URL
-    const finalLogsConfig = debugMode ? { ...logsConfig, sampleRate: 0 } : logsConfig
-    injectAndInitializeSDK(logsUrl, 'DD_LOGS', finalLogsConfig)
+    injectAndInitializeSDK(logsUrl, 'DD_LOGS', logsConfig)
   }
 }
 
