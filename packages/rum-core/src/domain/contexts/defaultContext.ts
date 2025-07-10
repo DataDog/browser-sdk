@@ -1,6 +1,6 @@
 import { canUseEventBridge, currentDrift, HookNames, round, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -30,6 +30,13 @@ export function startDefaultContext(
       },
       date: timeStampNow(),
       source: 'browser',
+    })
+  )
+
+  hooks.register(
+    HookNames.AssembleTelemetry,
+    (): DefaultTelemetryEventAttributes => ({
+      application: { id: configuration.applicationId },
     })
   )
 }

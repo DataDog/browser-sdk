@@ -4,10 +4,11 @@ import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
-import { setNavigatorOnLine, setNavigatorConnection } from '../../../test'
+import { setNavigatorOnLine, setNavigatorConnection, createHooks } from '../../../test'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
+import { HookNames } from '../../tools/abstractHooks'
 import {
   addTelemetryError,
   resetTelemetry,
@@ -25,7 +26,7 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
 
   const notifySpy = jasmine.createSpy('notified')
   observable.subscribe(notifySpy)
-
+  const hooks = createHooks()
   const telemetry = startTelemetryCollection(
     TelemetryService.RUM,
     {
@@ -34,12 +35,14 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
       telemetryUsageSampleRate: 100,
       ...configuration,
     } as Configuration,
+    hooks,
     observable
   )
 
   return {
     notifySpy,
     telemetry,
+    hooks,
   }
 }
 
@@ -158,42 +161,41 @@ describe('telemetry', () => {
     expect(notifySpy).toHaveBeenCalled()
   })
 
-  describe('telemetry context', () => {
-    it('should be added to telemetry events', () => {
-      const { telemetry, notifySpy } = startAndSpyTelemetry()
+  describe('assemble telemetry hook', () => {
+    it('should add default telemetry event attributes', () => {
+      const { notifySpy, hooks } = startAndSpyTelemetry()
 
-      telemetry.setContextProvider('foo', () => 'bar')
+      hooks.register(HookNames.AssembleTelemetry, () => ({ foo: 'bar' }))
 
       callMonitored(() => {
         throw new Error('foo')
       })
-      expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
 
-      telemetry.setContextProvider('foo', () => undefined)
-      callMonitored(() => {
-        throw new Error('bar')
-      })
-      expect(notifySpy.calls.mostRecent().args[0].foo).not.toBeDefined()
+      expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
     })
 
-    it('allows adding context progressively', () => {
-      const { telemetry, notifySpy } = startAndSpyTelemetry()
-      telemetry.setContextProvider('application.id', () => 'bar')
+    it('should add context progressively', () => {
+      const { hooks, notifySpy } = startAndSpyTelemetry()
+      hooks.register(HookNames.AssembleTelemetry, () => ({
+        application: {
+          id: 'bar',
+        },
+      }))
       callMonitored(() => {
         throw new Error('foo')
       })
-      telemetry.setContextProvider('session.id', () => '123')
+      hooks.register(HookNames.AssembleTelemetry, () => ({
+        session: {
+          id: '123',
+        },
+      }))
       callMonitored(() => {
         throw new Error('bar')
       })
 
-      expect(notifySpy.calls.argsFor(0)[0]['application.id']).toEqual('bar')
-      expect(notifySpy.calls.argsFor(1)[0]).toEqual(
-        jasmine.objectContaining({
-          'application.id': 'bar',
-          'session.id': '123',
-        })
-      )
+      expect(notifySpy.calls.argsFor(0)[0].application.id).toEqual('bar')
+      expect(notifySpy.calls.argsFor(1)[0].application.id).toEqual('bar')
+      expect(notifySpy.calls.argsFor(1)[0].session.id).toEqual('123')
     })
   })
 

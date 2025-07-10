@@ -7,7 +7,7 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
@@ -53,6 +53,15 @@ export function startActionCollection(
       type: eventType,
       action: { id: actionId },
     }
+  })
+
+  hooks.register(HookNames.AssembleTelemetry, ({ startTime }): DefaultTelemetryEventAttributes | SKIPPED => {
+    const actionId = actionContexts.findActionId(startTime)
+    if (!actionId) {
+      return SKIPPED
+    }
+
+    return { action: { id: actionId as string } }
   })
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }

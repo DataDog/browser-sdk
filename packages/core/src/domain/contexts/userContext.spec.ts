@@ -100,6 +100,18 @@ describe('user context', () => {
       })
     })
   })
+
+  describe('assemble telemetry hook', () => {
+    it('should set the anonymous_id', () => {
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(defaultRumEventAttributes).toEqual({
+        anonymous_id: 'device-123',
+      })
+    })
+  })
 })
 
 describe('user context across pages', () => {
