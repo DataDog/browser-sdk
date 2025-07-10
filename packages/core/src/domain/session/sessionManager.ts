@@ -125,13 +125,7 @@ export function startSessionManager<TrackingType extends string>(
   }
 
   return {
-    findSession: (startTime, options) => {
-      const wasConsented = trackingConsentState.history.find(startTime)
-
-      if (wasConsented) {
-        return sessionContextHistory.find(startTime, options)
-      }
-    },
+    findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
     renewObservable,
     expireObservable,
     sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
