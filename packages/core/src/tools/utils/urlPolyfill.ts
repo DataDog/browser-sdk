@@ -18,8 +18,7 @@ export function getPathName(url: string) {
 }
 
 export function buildUrl(url: string, base?: string) {
-  const nativeURL = getNativeURL()
-  const URLConstructor = nativeURL || URL
+  const URLConstructor = getNativeURL()
 
   try {
     return base !== undefined ? new URLConstructor(url, base) : new URLConstructor(url)
@@ -34,12 +33,15 @@ export function buildUrl(url: string, base?: string) {
  * Falls back to the original URL constructor if iframe approach fails
  */
 let cachedNativeURL: typeof URL | undefined
-export function getNativeURL(): typeof URL | undefined {
+export function getNativeURL(): typeof URL {
   if (cachedNativeURL !== undefined) {
     return cachedNativeURL
   }
+
+  let iframe: HTMLIFrameElement | undefined
   try {
-    const iframe = document.createElement('iframe')
+    iframe = document.createElement('iframe')
+    iframe.style.display = 'none'
     document.body.appendChild(iframe)
 
     const iframeWindow = iframe.contentWindow
@@ -50,10 +52,17 @@ export function getNativeURL(): typeof URL | undefined {
         cachedNativeURL = iframeURL
       }
     }
-
-    document.body.removeChild(iframe)
   } catch {
     // If iframe approach fails, we'll use the original URL constructor
+    cachedNativeURL = URL
+  } finally {
+    if (iframe && iframe.parentNode) {
+      document.body.removeChild(iframe)
+    }
+  }
+
+  if (!cachedNativeURL) {
+    cachedNativeURL = URL
   }
 
   return cachedNativeURL
