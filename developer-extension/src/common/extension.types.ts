@@ -65,6 +65,7 @@ export interface SdkInjectionConfig {
   enabled: boolean
   sdkTypes: Array<'rum' | 'logs'>
   rumBundle: 'rum' | 'rum-slim'
+  skipIntake: boolean
   rumConfig: {
     applicationId: string
     clientToken: string
@@ -72,6 +73,7 @@ export interface SdkInjectionConfig {
     service: string
     version: string
     sessionSampleRate: number
+    sessionReplaySampleRate: number
     env: string
   }
   logsConfig: {

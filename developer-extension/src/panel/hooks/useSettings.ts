@@ -19,11 +19,12 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   logsConfigurationOverride: null,
   debugMode: false,
   datadogMode: false,
-  trialMode: false,
+  trialMode: true,
   sdkInjection: {
     enabled: false,
     sdkTypes: ['rum'],
     rumBundle: 'rum',
+    skipIntake: false,
     rumConfig: {
       applicationId: 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
       clientToken: 'pubXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',
@@ -31,6 +32,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
       service: 'developer-extension-test',
       version: '1.0.0',
       sessionSampleRate: 100,
+      sessionReplaySampleRate: 100,
       env: 'dev',
     },
     logsConfig: {

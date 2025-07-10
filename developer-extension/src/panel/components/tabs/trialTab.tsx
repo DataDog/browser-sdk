@@ -1,7 +1,7 @@
 import React from 'react'
 import {
-  Checkbox,
   Switch,
+  Checkbox,
   MultiSelect,
   SegmentedControl,
   TextInput,
@@ -23,18 +23,7 @@ export function TrialTab() {
     <TabBase>
       <Columns>
         <Columns.Column title="Trial Mode">
-          <SettingItem
-            input={
-              <Checkbox
-                label="Enable trial mode"
-                checked={trialMode}
-                onChange={(event) => setSetting('trialMode', event.currentTarget.checked)}
-                color="violet"
-              />
-            }
-            description={<>Enable trial mode to access SDK injection capabilities for testing.</>}
-          />
-
+          <Text>After each change please reload the page.</Text>
           {trialMode && (
             <>
               <Space h="lg" />
@@ -55,6 +44,25 @@ export function TrialTab() {
                   />
                 }
                 description={<>Automatically inject the Datadog Browser SDK into pages that don't have it.</>}
+              />
+
+              <SettingItem
+                input={
+                  <Checkbox
+                    label="Disable event intake (do not send data to Datadog)"
+                    checked={sdkInjection.skipIntake}
+                    onChange={(event) =>
+                      setSetting('sdkInjection', { ...sdkInjection, skipIntake: event.currentTarget.checked })
+                    }
+                    color="violet"
+                  />
+                }
+                description={
+                  <>
+                    When enabled, the SDK will drop all events before they are sent. Useful for local debugging without
+                    a Datadog org.
+                  </>
+                }
               />
 
               {sdkInjection.enabled && (
@@ -259,6 +267,28 @@ function RumConfigurationForm({
           />
         }
         description={<>Percentage of sessions to track (0-100).</>}
+      />
+
+      <SettingItem
+        input={
+          <NumberInput
+            label="Session Replay Sample Rate"
+            placeholder="100"
+            value={sdkInjection.rumConfig.sessionReplaySampleRate}
+            min={0}
+            max={100}
+            onChange={(value) =>
+              setSetting('sdkInjection', {
+                ...sdkInjection,
+                rumConfig: {
+                  ...sdkInjection.rumConfig,
+                  sessionReplaySampleRate: typeof value === 'number' ? value : 100,
+                },
+              })
+            }
+          />
+        }
+        description={<>Percentage of sessions that will be recorded for session replay (0-100).</>}
       />
     </>
   )
