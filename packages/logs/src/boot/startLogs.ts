@@ -68,8 +68,8 @@ export function startLogs(
       : startLogsSessionManagerStub(configuration)
   telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
 
-  // Start user and account context first to allow overrides from global context
   startTrackingConsentContext(hooks, trackingConsentState)
+  // Start user and account context first to allow overrides from global context
   startSessionContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
