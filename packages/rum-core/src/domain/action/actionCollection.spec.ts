@@ -6,7 +6,7 @@ import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { Hooks } from '../hooks'
+import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
@@ -186,6 +186,18 @@ describe('actionCollection', () => {
 
         expect(defaultRumEventAttributes).toEqual(undefined)
       })
+    })
+  })
+
+  describe('assemble telemetry hook', () => {
+    it('should add action id', () => {
+      const actionId = '1'
+      spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
+      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      }) as DefaultTelemetryEventAttributes
+
+      expect(telemetryEventAttributes.action?.id).toEqual(actionId)
     })
   })
 })

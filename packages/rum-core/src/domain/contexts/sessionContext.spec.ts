@@ -3,7 +3,7 @@ import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock, noopRecorderApi } from '../../../test'
 import { SessionType } from '../rumSessionManager'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
@@ -30,6 +30,7 @@ describe('session context', () => {
     viewHistory = { findView: () => undefined } as ViewHistory
     hooks = createHooks()
     sessionManager = createRumSessionManagerMock()
+    sessionManager.setId('123')
     const recorderApi = noopRecorderApi
 
     isRecordingSpy = spyOn(recorderApi, 'isRecording')
@@ -145,5 +146,15 @@ describe('session context', () => {
     })
 
     expect(defaultRumEventAttributes).toBe(DISCARDED)
+  })
+
+  describe('assemble telemetry hook', () => {
+    it('should add session.id', () => {
+      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      }) as DefaultTelemetryEventAttributes
+
+      expect(telemetryEventAttributes.session?.id).toEqual('123')
+    })
   })
 })

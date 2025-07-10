@@ -5,6 +5,7 @@ import type {
   RecursivePartialExcept,
   RelativeTime,
   SKIPPED,
+  TelemetryEvent,
 } from '@datadog/browser-core'
 import { abstractHooks } from '@datadog/browser-core'
 import type { RumEvent } from '../rumEvent.types'
@@ -12,6 +13,7 @@ import type { RumEvent } from '../rumEvent.types'
 // Define a partial RUM event type.
 // Ensuring the `type` field is always present improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'view')`).
 export type DefaultRumEventAttributes = RecursivePartialExcept<RumEvent, 'type'>
+export type DefaultTelemetryEventAttributes = RecursivePartialExcept<TelemetryEvent>
 
 export type HookCallbackMap = {
   [HookNamesAsConst.ASSEMBLE]: (param: {
@@ -19,8 +21,11 @@ export type HookCallbackMap = {
     startTime: RelativeTime
     duration?: Duration | undefined
   }) => DefaultRumEventAttributes | SKIPPED | DISCARDED
+  [HookNamesAsConst.ASSEMBLE_TELEMETRY]: (param: {
+    startTime: RelativeTime
+  }) => DefaultTelemetryEventAttributes | SKIPPED
 }
 
 export type Hooks = ReturnType<typeof createHooks>
 
-export const createHooks = abstractHooks<HookCallbackMap, DefaultRumEventAttributes>
+export const createHooks = abstractHooks<HookCallbackMap>
