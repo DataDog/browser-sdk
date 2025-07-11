@@ -10,6 +10,6 @@ export function startTrackingConsentContext(hooks: Hooks, trackingConsentState: 
       return DISCARDED
     }
 
-    return {}
+    return SKIPPED
   })
 }
