@@ -8,12 +8,13 @@ import {
   mockPerformanceObserver,
   mockRumConfiguration,
 } from '../../test'
+import type { RumConfiguration } from '../domain/configuration'
 import { RumPerformanceEntryType, createPerformanceObservable } from './performanceObservable'
 
 describe('performanceObservable', () => {
   let performanceSubscription: Subscription | undefined
-  const configuration = mockRumConfiguration()
-  const forbiddenUrl = 'https://forbidden.url/abce?ddsource=browser&ddtags=sdk_version'
+  let configuration: RumConfiguration
+  const forbiddenUrl = 'https://forbidden.url/abce?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
   const allowedUrl = 'https://allowed.url'
   let observableCallback: jasmine.Spy
   let clock: Clock
@@ -24,6 +25,7 @@ describe('performanceObservable', () => {
     }
     observableCallback = jasmine.createSpy()
     clock = mockClock()
+    configuration = mockRumConfiguration()
   })
 
   afterEach(() => {

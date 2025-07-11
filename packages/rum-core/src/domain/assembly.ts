@@ -8,6 +8,7 @@ import {
   ExperimentalFeature,
   HookNames,
   DISCARDED,
+  buildTags,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -115,8 +116,16 @@ export function startRumAssembly(
         return
       }
 
-      const serverRumEvent = combine(defaultRumEventAttributes, { context: customerContext }, rawRumEvent) as RumEvent &
-        Context
+      const serverRumEvent = combine(
+        defaultRumEventAttributes,
+        {
+          context: customerContext,
+        },
+        rawRumEvent,
+        {
+          ddtags: buildTags(configuration).join(','),
+        }
+      ) as RumEvent & Context
 
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
         if (isEmptyObject(serverRumEvent.context!)) {
