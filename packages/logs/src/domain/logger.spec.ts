@@ -187,6 +187,54 @@ describe('Logger', () => {
     })
   })
 
+  describe('tags', () => {
+    it('should add a key:value tag', () => {
+      logger.addTag('foo', 'bar')
+      expect(logger.getTags()).toEqual(['foo:bar'])
+    })
+
+    it('should add a key only tag', () => {
+      logger.addTag('foo')
+      expect(logger.getTags()).toEqual(['foo'])
+    })
+
+    it('should sanitize a key with a comma', () => {
+      logger.addTag('foo,bar', 'baz')
+      expect(logger.getTags()).toEqual(['foo_bar:baz'])
+    })
+
+    it('should sanitize a tag with a comma in the value', () => {
+      logger.addTag('foo', 'baz,qux')
+      expect(logger.getTags()).toEqual(['foo:baz_qux'])
+    })
+
+    it('should remove tags with key', () => {
+      logger.addTag('foo', 'bar')
+      logger.addTag('foo', 'baz')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual([])
+    })
+
+    it('should remove key only tags', () => {
+      logger.addTag('foo')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual([])
+    })
+
+    it('should remove tag keys that were sanitized', () => {
+      logger.addTag('foo,bar', 'baz')
+      logger.removeTagsWithKey('foo,bar')
+      expect(logger.getTags()).toEqual([])
+    })
+
+    it('should not remove tags starting with the key', () => {
+      logger.addTag('foo', 'bar')
+      logger.addTag('foo-bar', 'baz')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual(['foo-bar:baz'])
+    })
+  })
+
   describe('context methods', () => {
     beforeEach(() => {
       const loggerContext = { foo: 'bar' }

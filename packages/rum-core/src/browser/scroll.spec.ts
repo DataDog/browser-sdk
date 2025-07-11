@@ -1,15 +1,17 @@
 import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../test'
+import type { RumConfiguration } from '../domain/configuration'
 import { getScrollX, getScrollY } from './scroll'
 
 describe('scroll', () => {
   let shouldWaitForWindowScrollEvent: boolean
-  const configuration = mockRumConfiguration()
+  let configuration: RumConfiguration
   const addVerticalScrollBar = () => {
     document.body.style.setProperty('margin-bottom', '5000px')
   }
 
   beforeEach(() => {
+    configuration = mockRumConfiguration()
     shouldWaitForWindowScrollEvent = false
   })
 
