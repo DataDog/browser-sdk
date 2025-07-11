@@ -37,7 +37,7 @@ function getOrInitRegexes(): UnicodeRegexes | undefined {
 }
 
 export function tokenize(str: string): string[] {
-  if (!str.trim()) {
+  if (typeof str !== 'string' || !str.trim()) {
     return []
   }
 
