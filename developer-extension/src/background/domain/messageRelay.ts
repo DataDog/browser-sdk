@@ -51,10 +51,17 @@ onDevtoolsLastDisconnection.subscribe(() => {
 
 // Listen for messages coming from the "isolated" content-script and relay them to a potential
 // devtools panel connection.
-chrome.runtime.onMessage.addListener((message, sender) => {
-  if (sender.tab && sender.tab.id) {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (sender.tab && sender.tab.id && message && typeof message === 'object') {
+    if ('type' in message && message.type === 'get_settings_for_content_script') {
+      chrome.storage.local.get(null, (allSettings) => {
+        sendResponse({ settings: allSettings })
+      })
+      return true
+    }
     sendMessageToDevtools(sender.tab.id, { type: 'sdk-message', message })
   }
+  return false
 })
 
 async function unregisterContentScripts() {
