@@ -5,6 +5,18 @@ import { createLogger } from '../common/logger'
 
 const logger = createLogger('content-script-isolated')
 
+chrome.runtime.onMessage.addListener((message) => {
+  if (message && typeof message === 'object' && 'type' in message && message.type === 'settings_updated') {
+    window.dispatchEvent(
+      new CustomEvent('__ddBrowserSdkSettingsUpdate', {
+        detail: message.settings,
+      })
+    )
+    return true
+  }
+  return false
+})
+
 interface IsolatedWindow {
   unregisterIsolatedScript?(): void
 }
@@ -17,9 +29,11 @@ if (isolatedWindow.unregisterIsolatedScript) {
 }
 // Register the new callback
 window.addEventListener('__ddBrowserSdkMessage', browserSdkMessageListener)
+window.addEventListener('__ddBrowserSdkGetSettings', getSettingsListener)
 
 isolatedWindow.unregisterIsolatedScript = () => {
   window.removeEventListener('__ddBrowserSdkMessage', browserSdkMessageListener)
+  window.removeEventListener('__ddBrowserSdkGetSettings', getSettingsListener)
 }
 
 // Listen to events from the "main" content script and relays them to the background script via the
@@ -34,6 +48,24 @@ function browserSdkMessageListener(event: unknown) {
     // don't want to spam the console in this case.
     if (!isDisconnectError(error)) {
       logger.error('Failed to send message:', error)
+    }
+  }
+}
+
+function getSettingsListener() {
+  try {
+    chrome.runtime.sendMessage({ type: 'get_settings_for_content_script' }, (response) => {
+      if (response && response.settings) {
+        window.dispatchEvent(
+          new CustomEvent('__ddBrowserSdkSettingsResponse', {
+            detail: response.settings,
+          })
+        )
+      }
+    })
+  } catch (error) {
+    if (!isDisconnectError(error)) {
+      logger.error('Failed to get settings:', error)
     }
   }
 }

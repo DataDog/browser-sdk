@@ -1,7 +1,10 @@
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
-import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
+import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL, CDN_BASE_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
+import { createLogger } from '../common/logger'
+
+const logger = createLogger('content-script-main')
 
 declare global {
   interface Window extends EventTarget {
@@ -21,14 +24,28 @@ function main() {
 
   sendEventsToExtension()
 
-  const settings = getSettings()
+  window.addEventListener('__ddBrowserSdkSettingsUpdate', (event) => {
+    const settings = (event as CustomEvent).detail as Settings
+    if (settings) {
+      try {
+        sessionStorage.setItem(SESSION_STORAGE_SETTINGS_KEY, JSON.stringify(settings))
+      } catch (e) {
+        logger.error('Error storing settings in sessionStorage', e)
+      }
+      applySettings(settings)
+    }
+  })
 
-  if (
-    settings &&
-    // Avoid instrumenting SDK global variables if the SDKs are already loaded.
-    // This happens when the page is loaded and then the devtools are opened.
-    noBrowserSdkLoaded()
-  ) {
+  const settings = getSettings()
+  if (settings) {
+    applySettings(settings)
+  } else {
+    requestSettingsAsync()
+  }
+}
+
+function applySettings(settings: Settings) {
+  if (noBrowserSdkLoaded()) {
     const ddRumGlobal = instrumentGlobal('DD_RUM')
     const ddLogsGlobal = instrumentGlobal('DD_LOGS')
 
@@ -49,13 +66,31 @@ function main() {
       injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
     }
-  }
 
-  if (settings && settings.trialMode && settings.sdkInjection.enabled && noBrowserSdkLoaded()) {
-    injectBrowserSDK(settings.sdkInjection)
+    if (settings.trialMode && settings.sdkInjection.enabled) {
+      injectBrowserSDK(settings.sdkInjection)
+    }
   }
 }
 
+function requestSettingsAsync() {
+  const settingsResponseListener = (event: Event) => {
+    const settings = (event as CustomEvent).detail as Settings
+    if (settings) {
+      try {
+        sessionStorage.setItem(SESSION_STORAGE_SETTINGS_KEY, JSON.stringify(settings))
+
+        applySettings(settings)
+      } catch (e) {
+        logger.error('Error storing settings in sessionStorage', e)
+      }
+    }
+  }
+
+  window.addEventListener('__ddBrowserSdkSettingsResponse', settingsResponseListener, { once: true })
+
+  window.dispatchEvent(new CustomEvent('__ddBrowserSdkGetSettings'))
+}
 main()
 
 function sendEventsToExtension() {
@@ -78,8 +113,8 @@ function getSettings() {
     // JSON.parse throws if the stringSettings is not a valid JSON
     return JSON.parse(stringSettings || 'null') as Settings | null
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error getting settings', error)
+    logger.error('Error getting settings', error)
+    return null
   }
 }
 
@@ -119,13 +154,15 @@ function overrideInitConfiguration(global: GlobalInstrumentation, configurationO
 }
 
 function loadSdkScriptFromURL(url: string) {
+  // Always load the bundle via XHR and evaluate it inline. This bypasses page CSP restrictions
+  // while still allowing relative chunks/workers to resolve correctly by patching Webpack
+  // publicPath with the original URL.
   const xhr = new XMLHttpRequest()
   try {
-    xhr.open('GET', url, false) // `false` makes the request synchronous
+    xhr.open('GET', url, false) // synchronous to ensure the SDK is available immediately
     xhr.send()
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(`[DD Browser SDK extension] Error while loading ${url}:`, error)
+    logger.error(`[DD Browser SDK extension] Error while loading ${url}:`, error)
     return
   }
   if (xhr.status === 200) {
@@ -140,15 +177,24 @@ function loadSdkScriptFromURL(url: string) {
     //
     // We'll probably have to revisit when using actual `import()` expressions instead of relying on
     // Webpack runtime to load the chunks.
+
+    // Webpack v6+ changed the wording of the runtime guard that throws when `scriptUrl` cannot be
+    // determined.  Patch *any* occurrence of that guard so `scriptUrl` is initialised with the
+    // actual bundle URL we just downloaded, ensuring chunks/workers resolve correctly.
     sdkCode = sdkCode.replace(
-      'if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");',
+      /if\s*\(!scriptUrl\)\s*throw new Error\([^)]*Automatic publicPath[^)]*\);/,
       `if (!scriptUrl) scriptUrl = ${JSON.stringify(url)};`
     )
+    // Fallback – if the above pattern did not match (future wording change), explicitly set the
+    // webpack public path at the very top of the bundle so chunk loading keeps working.
+    if (!sdkCode.includes(`scriptUrl = ${JSON.stringify(url)}`)) {
+      const publicPath = url.substring(0, url.lastIndexOf('/') + 1)
+      sdkCode = `window.__webpack_public_path__ = ${JSON.stringify(publicPath)};\n${sdkCode}`
+    }
 
     const script = document.createElement('script')
     script.type = 'text/javascript'
     script.text = sdkCode
-
     document.documentElement.prepend(script)
   }
 }
@@ -184,7 +230,7 @@ function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
 }
 
 function injectBrowserSDK(config: Settings['sdkInjection']) {
-  const { sdkTypes, rumBundle, rumConfig, logsConfig, skipIntake } = config
+  const { sdkTypes, rumBundle, bundleSource, rumConfig, logsConfig, skipIntake } = config
 
   const beforeSendDropAll = skipIntake
     ? {
@@ -192,36 +238,104 @@ function injectBrowserSDK(config: Settings['sdkInjection']) {
       }
     : {}
 
-  if (sdkTypes.includes('rum')) {
-    const rumUrl = getRumBundleUrl(rumBundle)
-    injectAndInitializeSDK(rumUrl, 'DD_RUM', { ...rumConfig, ...beforeSendDropAll })
-  }
+  const injectWhenReady = () => {
+    if (sdkTypes.includes('rum')) {
+      const rumUrl = getRumBundleUrl(rumBundle, bundleSource, rumConfig.site as string | undefined)
+      injectAndInitializeSDK(rumUrl, 'DD_RUM', { ...rumConfig, ...beforeSendDropAll })
+    }
 
-  if (sdkTypes.includes('logs')) {
-    const logsUrl = DEV_LOGS_URL
-    injectAndInitializeSDK(logsUrl, 'DD_LOGS', { ...logsConfig, ...beforeSendDropAll })
-  }
-}
-
-function getRumBundleUrl(bundle: string): string {
-  return bundle === 'rum-slim' ? DEV_RUM_SLIM_URL : DEV_RUM_URL
-}
-
-function injectAndInitializeSDK(url: string, globalName: 'DD_RUM' | 'DD_LOGS', config: object) {
-  loadSdkScriptFromURL(url)
-
-  const checkAndInit = () => {
-    const sdk = window[globalName] as SdkPublicApi
-    if (sdk && typeof sdk.init === 'function') {
-      try {
-        sdk.init(config)
-      } catch {
-        // Ignore initialization errors
-      }
-    } else {
-      setTimeout(checkAndInit, 100)
+    if (sdkTypes.includes('logs')) {
+      const logsUrl = getLogsBundleUrl(bundleSource, rumConfig.site as string | undefined)
+      injectAndInitializeSDK(logsUrl, 'DD_LOGS', { ...logsConfig, ...beforeSendDropAll })
     }
   }
 
-  setTimeout(checkAndInit, 50)
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectWhenReady, { once: true })
+  } else {
+    injectWhenReady()
+  }
+}
+
+function getRumBundleUrl(bundle: 'rum' | 'rum-slim', source: 'dev' | 'cdn', site?: string): string {
+  if (source === 'cdn') {
+    const region = getCdnRegion(site)
+    return `${CDN_BASE_URL}/${region}/v6/datadog-${bundle}.js`
+  }
+  return bundle === 'rum-slim' ? DEV_RUM_SLIM_URL : DEV_RUM_URL
+}
+
+function getLogsBundleUrl(source: 'dev' | 'cdn', site?: string) {
+  if (source === 'cdn') {
+    const region = getCdnRegion(site)
+    return `${CDN_BASE_URL}/${region}/v6/datadog-logs.js`
+  }
+  return DEV_LOGS_URL
+}
+
+function getCdnRegion(site?: string) {
+  if (!site || site === 'datadoghq.com') {
+    return 'us1'
+  }
+  if (site === 'datadoghq.eu') {
+    return 'eu1'
+  }
+  if (site.startsWith('us3.')) {
+    return 'us3'
+  }
+  if (site.startsWith('us5.')) {
+    return 'us5'
+  }
+  if (site.endsWith('datad0g.com')) {
+    return 'us3'
+  }
+  // fall back to us1
+  return 'us1'
+}
+
+function injectAndInitializeSDK(url: string, globalName: 'DD_RUM' | 'DD_LOGS', config: object) {
+  // If the SDK is already loaded, don't try to load it again
+  if (window[globalName]) {
+    logger.log(`${globalName} already exists, skipping injection`)
+    return
+  }
+
+  // For CDN URLs, use a more reliable script injection approach
+  if (url.includes('datadoghq-browser-agent.com')) {
+    const script = document.createElement('script')
+    script.src = url
+    script.async = true
+    script.onload = () => {
+      if (window[globalName] && 'init' in window[globalName]) {
+        try {
+          window[globalName].init(config)
+        } catch (e) {
+          logger.error(`Error initializing ${globalName}:`, e)
+        }
+      } else {
+        logger.error(`${globalName} not found after script load`)
+      }
+    }
+    script.onerror = (e) => {
+      logger.error(`Error loading ${globalName} script:`, e)
+    }
+    document.head.appendChild(script)
+  } else {
+    loadSdkScriptFromURL(url)
+
+    const checkAndInit = () => {
+      const sdk = window[globalName]
+      if (sdk && typeof sdk === 'object' && 'init' in sdk) {
+        try {
+          sdk.init(config)
+        } catch (error) {
+          logger.error(`Error while initializing ${globalName}:`, error)
+        }
+      } else {
+        setTimeout(checkAndInit, 100)
+      }
+    }
+
+    checkAndInit()
+  }
 }

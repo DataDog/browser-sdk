@@ -108,6 +108,27 @@ export function TrialTab() {
                       <>Choose the RUM bundle variant. Session replay features won't work with the slim version.</>
                     }
                   />
+
+                  <SettingItem
+                    input={
+                      <Group>
+                        <Text>Bundle Source:</Text>
+                        <SegmentedControl
+                          color="violet"
+                          value={sdkInjection.bundleSource}
+                          size="xs"
+                          data={[
+                            { value: 'dev', label: 'Dev' },
+                            { value: 'cdn', label: 'CDN' },
+                          ]}
+                          onChange={(value) =>
+                            setSetting('sdkInjection', { ...sdkInjection, bundleSource: value as 'dev' | 'cdn' })
+                          }
+                        />
+                      </Group>
+                    }
+                    description={<>Select where to load SDK scripts from.</>}
+                  />
                 </>
               )}
             </>

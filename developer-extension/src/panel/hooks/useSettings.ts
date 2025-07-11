@@ -20,10 +20,12 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   debugMode: false,
   datadogMode: false,
   trialMode: true,
+  bundleSource: 'dev',
   sdkInjection: {
     enabled: false,
     sdkTypes: ['rum'],
     rumBundle: 'rum',
+    bundleSource: 'dev',
     skipIntake: false,
     rumConfig: {
       applicationId: 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
@@ -69,12 +71,39 @@ async function loadSettingsFromStorage() {
 
 function setSetting<Name extends keyof Settings>(name: Name, value: Settings[Name]) {
   settings![name] = value
+
+  // Special case: keep bundleSource and sdkInjection.bundleSource in sync
+  if (name === 'bundleSource' && typeof value === 'string' && (value === 'dev' || value === 'cdn')) {
+    settings!.sdkInjection.bundleSource = value
+  } else if (name === 'sdkInjection' && typeof value === 'object' && value && 'bundleSource' in value) {
+    settings!.bundleSource = value.bundleSource
+  }
+
   onSettingsChange.notify()
   chrome.storage.local
     .set({ [name]: value })
     .catch((error) => logger.error('Error while storing setting to the storage', error))
+
   if (settings) {
     syncSettingsWithSessionStorage(settings)
+
+    // For critical settings that affect injection, also notify the current tab
+    if (name === 'sdkInjection' || name === 'bundleSource' || name === 'trialMode') {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]?.id) {
+          chrome.tabs
+            .sendMessage(tabs[0].id, {
+              type: 'settings_updated',
+              settings,
+            })
+            .catch((error) => {
+              if (!String(error).includes('The message port closed')) {
+                logger.error('Error sending settings to content script', error)
+              }
+            })
+        }
+      })
+    }
   }
 }
 

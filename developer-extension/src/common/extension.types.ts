@@ -59,12 +59,14 @@ export interface Settings {
   datadogMode: boolean
   trialMode: boolean
   sdkInjection: SdkInjectionConfig
+  bundleSource: 'dev' | 'cdn'
 }
 
 export interface SdkInjectionConfig {
   enabled: boolean
   sdkTypes: Array<'rum' | 'logs'>
   rumBundle: 'rum' | 'rum-slim'
+  bundleSource: 'dev' | 'cdn'
   skipIntake: boolean
   rumConfig: {
     applicationId: string
