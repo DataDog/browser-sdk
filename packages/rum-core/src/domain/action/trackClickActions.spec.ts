@@ -461,9 +461,9 @@ describe('trackClickActions', () => {
       window.$DD_ALLOW = undefined
     })
 
-    it('should mask action name when defaultPrivacyLevel is mask and not in allowlist', () => {
+    it('should mask action name when defaultPrivacyLevel is mask_unless_allowlisted and not in allowlist', () => {
       startClickActionsTracking({
-        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
       })
 
       emulateClick({ activity: {} })

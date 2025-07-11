@@ -7,6 +7,7 @@ export const NodePrivacyLevel = {
   ALLOW: DefaultPrivacyLevel.ALLOW,
   MASK: DefaultPrivacyLevel.MASK,
   MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT,
+  MASK_UNLESS_ALLOWLISTED: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
 } as const
 export type NodePrivacyLevel = (typeof NodePrivacyLevel)[keyof typeof NodePrivacyLevel]
 
@@ -82,6 +83,7 @@ export function reducePrivacyLevel(
     case NodePrivacyLevel.ALLOW:
     case NodePrivacyLevel.MASK:
     case NodePrivacyLevel.MASK_USER_INPUT:
+    case NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED:
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return childPrivacyLevel
@@ -133,6 +135,10 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     return NodePrivacyLevel.MASK_USER_INPUT
   }
 
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED))) {
+    return NodePrivacyLevel.MASK
+  }
+
   if (node.matches(getPrivacySelector(NodePrivacyLevel.ALLOW))) {
     return NodePrivacyLevel.ALLOW
   }
@@ -158,6 +164,7 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
     case NodePrivacyLevel.MASK:
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
+    case NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED:
       return true
     case NodePrivacyLevel.MASK_USER_INPUT:
       return isTextNode(node) ? isFormElement(node.parentNode) : isFormElement(node)

@@ -114,18 +114,16 @@ export function maskActionName(
   nodeSelfPrivacy: NodePrivacyLevel,
   processedAllowlist: Set<string>
 ): ClickActionBase {
-  if (!window.$DD_ALLOW) {
-    return actionName
-  }
-
   if (nodeSelfPrivacy === NodePrivacyLevel.ALLOW) {
+    return actionName
+  } else if (nodeSelfPrivacy !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED && (!window.$DD_ALLOW || !window.$DD_ALLOW.size)) {
     return actionName
   }
 
   const { name, nameSource } = actionName
   const regexes = getOrInitRegexes()
 
-  if (!regexes) {
+  if (!regexes || !window.$DD_ALLOW || !window.$DD_ALLOW.size) { 
     return {
       ...actionName,
       name: name ? ACTION_NAME_PLACEHOLDER : '',
