@@ -20,7 +20,7 @@ export function EventsList({
   filters: EventFilters
   facetRegistry: FacetRegistry
   columns: EventListColumn[]
-  onColumnsChange: (columns: EventListColumn[]) => void
+  onColumnsChange(columns: EventListColumn[]): void
 }) {
   const headerRowRef = useRef<HTMLTableRowElement>(null)
 

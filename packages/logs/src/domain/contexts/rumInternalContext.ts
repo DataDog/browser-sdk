@@ -10,7 +10,7 @@ import {
 import type { Hooks } from '../hooks'
 
 interface Rum {
-  getInternalContext?: (startTime?: RelativeTime) => Context | undefined
+  getInternalContext?(startTime?: RelativeTime): Context | undefined
 }
 
 interface BrowserWindow {

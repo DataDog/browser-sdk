@@ -26,10 +26,10 @@ export const enum RecorderStatus {
 }
 
 export interface Strategy {
-  start: (options?: StartRecordingOptions) => void
-  stop: () => void
-  isRecording: () => boolean
-  getSessionReplayLink: () => string | undefined
+  start(options?: StartRecordingOptions): void
+  stop(): void
+  isRecording(): boolean
+  getSessionReplayLink(): string | undefined
 }
 
 export function createPostStartStrategy(

@@ -6,13 +6,13 @@ import { LifeCycleEventType } from './lifeCycle'
 
 export const MEASURES_PERIOD_DURATION = 10 * ONE_SECOND
 
-type Measure = {
+interface Measure {
   min: number
   max: number
   sum: number
 }
 
-type CurrentPeriodMeasures = {
+interface CurrentPeriodMeasures {
   batchCount: number
   batchBytesCount: Measure
   batchMessagesCount: Measure

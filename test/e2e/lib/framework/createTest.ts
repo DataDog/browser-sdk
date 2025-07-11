@@ -55,12 +55,12 @@ interface TestContext {
   page: Page
   browserContext: BrowserContext
   browserName: 'chromium' | 'firefox' | 'webkit' | 'msedge'
-  getExtensionId: () => Promise<string>
-  withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
-  flushBrowserLogs: () => void
-  flushEvents: () => Promise<void>
-  deleteAllCookies: () => Promise<void>
-  sendXhr: (url: string, headers?: string[][]) => Promise<string>
+  getExtensionId(this: void): Promise<string>
+  withBrowserLogs(this: void, cb: (logs: BrowserLog[]) => void): void
+  flushBrowserLogs(this: void): void
+  flushEvents(this: void): Promise<void>
+  deleteAllCookies(this: void): Promise<void>
+  sendXhr(this: void, url: string, headers?: string[][]): Promise<string>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void

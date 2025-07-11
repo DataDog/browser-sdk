@@ -1,4 +1,4 @@
-export type BrowserConfiguration = {
+export interface BrowserConfiguration {
   sessionName: string
   name: string
   version?: string

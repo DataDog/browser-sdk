@@ -10,7 +10,7 @@ export function EventsTabSide({
 }: {
   facetRegistry?: FacetRegistry
   filters: EventFilters
-  onFiltersChange: (filters: EventFilters) => void
+  onFiltersChange(filters: EventFilters): void
 }) {
   return (
     <Box ml="md">

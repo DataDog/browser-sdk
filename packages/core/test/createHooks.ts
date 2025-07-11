@@ -5,7 +5,7 @@ export type Hooks = ReturnType<typeof createHooks>
 
 export const createHooks = abstractHooks<
   {
-    [HookNames.Assemble]: (...args: any[]) => any
+    [HookNames.Assemble](...args: any[]): any
   },
   { [key: string]: any }
 >

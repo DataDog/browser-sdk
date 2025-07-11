@@ -67,9 +67,9 @@ function LifeCycle({
   onLayoutEffect,
   onEffect,
 }: {
-  onRender: () => void
-  onLayoutEffect: () => void
-  onEffect: () => void
+  onRender(): void
+  onLayoutEffect(): void
+  onEffect(): void
 }) {
   onRender()
   React.useLayoutEffect(onLayoutEffect)

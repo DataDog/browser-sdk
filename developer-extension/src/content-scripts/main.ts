@@ -7,11 +7,11 @@ declare global {
   interface Window extends EventTarget {
     DD_RUM?: SdkPublicApi
     DD_LOGS?: SdkPublicApi
-    __ddBrowserSdkExtensionCallback?: (message: unknown) => void
+    __ddBrowserSdkExtensionCallback?(message: unknown): void
   }
 }
 
-type SdkPublicApi = { [key: string]: (...args: any[]) => unknown }
+interface SdkPublicApi { [key: string]: (...args: any[]) => unknown }
 
 function main() {
   // Prevent multiple executions when the devetools are reconnecting

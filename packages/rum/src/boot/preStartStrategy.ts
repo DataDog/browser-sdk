@@ -10,7 +10,7 @@ const enum PreStartRecorderStatus {
 
 export function createPreStartStrategy(): {
   strategy: Strategy
-  shouldStartImmediately: (configuration: RumConfiguration) => boolean
+  shouldStartImmediately(configuration: RumConfiguration): boolean
 } {
   let status = PreStartRecorderStatus.None
   return {

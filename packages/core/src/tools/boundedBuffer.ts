@@ -3,9 +3,9 @@ import { removeItem } from './utils/arrayUtils'
 const BUFFER_LIMIT = 500
 
 export interface BoundedBuffer<T = void> {
-  add: (callback: (arg: T) => void) => void
-  remove: (callback: (arg: T) => void) => void
-  drain: (arg: T) => void
+  add(callback: (arg: T) => void): void
+  remove(callback: (arg: T) => void): void
+  drain(arg: T): void
 }
 
 export function createBoundedBuffer<T = void>(): BoundedBuffer<T> {

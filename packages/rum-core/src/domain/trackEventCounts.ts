@@ -18,8 +18,8 @@ export function trackEventCounts({
   onChange: callback = noop,
 }: {
   lifeCycle: LifeCycle
-  isChildEvent: (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean
-  onChange?: () => void
+  isChildEvent(event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent): boolean
+  onChange?(): void
 }) {
   const eventCounts: EventCounts = {
     errorCount: 0,

@@ -14,7 +14,7 @@ export interface BatchConfiguration {
 }
 
 interface ReplicaBatchConfiguration<T> extends BatchConfiguration {
-  transformMessage?: (message: T) => T
+  transformMessage?(message: T): T
 }
 
 export function startBatchWithReplica<T extends Context>(

@@ -19,8 +19,8 @@ export interface UrlContext {
 }
 
 export interface UrlContexts {
-  findUrl: (startTime?: RelativeTime) => UrlContext | undefined
-  stop: () => void
+  findUrl(startTime?: RelativeTime): UrlContext | undefined
+  stop(): void
 }
 
 export function startUrlContexts(

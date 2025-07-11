@@ -10,8 +10,8 @@ export function EventsTabTop({
   clear,
 }: {
   filters: EventFilters
-  onFiltersChange: (filters: EventFilters) => void
-  clear: () => void
+  onFiltersChange(filters: EventFilters): void
+  clear(): void
 }) {
   return (
     <Group className="dd-privacy-allow">

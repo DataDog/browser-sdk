@@ -5,11 +5,11 @@ import type { LogsConfiguration } from './configuration'
 export const LOGS_SESSION_KEY = 'logs'
 
 export interface LogsSessionManager {
-  findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => LogsSession | undefined
+  findTrackedSession(startTime?: RelativeTime, options?: { returnInactive: boolean }): LogsSession | undefined
   expireObservable: Observable<void>
 }
 
-export type LogsSession = {
+export interface LogsSession {
   id?: string // session can be tracked without id
   anonymousId?: string // device id lasts across session
 }

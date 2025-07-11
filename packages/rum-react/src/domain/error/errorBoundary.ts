@@ -7,7 +7,7 @@ interface Props {
   children: React.ReactNode
 }
 
-export type Fallback = React.ComponentType<{ error: Error; resetError: () => void }>
+export type Fallback = React.ComponentType<{ error: Error; resetError(): void }>
 
 type State =
   | {

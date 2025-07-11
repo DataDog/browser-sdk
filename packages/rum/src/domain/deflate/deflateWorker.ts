@@ -26,7 +26,7 @@ type DeflateWorkerState =
   | {
       status: DeflateWorkerStatus.Loading
       worker: DeflateWorker
-      stop: () => void
+      stop(this: void): void
       initializationFailureCallbacks: Array<() => void>
     }
   | {
@@ -35,7 +35,7 @@ type DeflateWorkerState =
   | {
       status: DeflateWorkerStatus.Initialized
       worker: DeflateWorker
-      stop: () => void
+      stop(): void
       version: string
     }
 

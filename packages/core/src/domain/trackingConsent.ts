@@ -7,9 +7,9 @@ export const TrackingConsent = {
 export type TrackingConsent = (typeof TrackingConsent)[keyof typeof TrackingConsent]
 
 export interface TrackingConsentState {
-  tryToInit: (trackingConsent: TrackingConsent) => void
-  update: (trackingConsent: TrackingConsent) => void
-  isGranted: () => boolean
+  tryToInit(trackingConsent: TrackingConsent): void
+  update(trackingConsent: TrackingConsent): void
+  isGranted(): boolean
   observable: Observable<void>
 }
 

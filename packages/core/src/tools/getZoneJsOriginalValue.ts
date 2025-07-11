@@ -5,7 +5,7 @@ export interface BrowserWindowWithZoneJs extends Window {
     // All Zone.js versions expose the __symbol__ method, but we observed that some website have a
     // 'Zone' global variable unrelated to Zone.js, so let's consider this method optional
     // nonetheless.
-    __symbol__?: (name: string) => string
+    __symbol__?(name: string): string
   }
 }
 

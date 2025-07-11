@@ -7,7 +7,7 @@ import { createHandlingStack } from './stackTrace/handlingStack'
  * Object passed to the callback of an instrumented method call. See `instrumentMethod` for more
  * info.
  */
-export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> = {
+export interface InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET> {
   /**
    * The target object on which the method was called.
    */
@@ -24,7 +24,7 @@ export type InstrumentedMethodCall<TARGET extends { [key: string]: any }, METHOD
    * Registers a callback that will be called after the original method is called, with the method
    * result passed as argument.
    */
-  onPostCall: (callback: PostCallCallback<TARGET, METHOD>) => void
+  onPostCall(callback: PostCallCallback<TARGET, METHOD>): void
 
   /**
    * The stack trace of the method call.

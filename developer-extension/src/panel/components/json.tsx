@@ -282,7 +282,7 @@ function JsonLine({
   isFloating,
 }: {
   children: ReactNode
-  onClick?: () => void
+  onClick?(): void
   descriptor: JsonValueDescriptor
   isFloating?: boolean
 }) {

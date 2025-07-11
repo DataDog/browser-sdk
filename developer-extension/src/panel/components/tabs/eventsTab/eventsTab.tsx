@@ -12,10 +12,10 @@ interface EventsTabProps {
   events: SdkEvent[]
   facetRegistry: FacetRegistry | undefined
   filters: EventFilters
-  onFiltersChange: (filters: EventFilters) => void
+  onFiltersChange(this: void, filters: EventFilters): void
   columns: EventListColumn[]
-  onColumnsChange: (columns: EventListColumn[]) => void
-  clear: () => void
+  onColumnsChange(this: void, columns: EventListColumn[]): void
+  clear(this: void): void
 }
 
 export function EventsTab({

@@ -4,8 +4,8 @@ import { trackInput, trackMutation, trackScroll } from './trackers'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 
 interface ShadowRootController {
-  stop: () => void
-  flush: () => void
+  stop(): void
+  flush(): void
 }
 
 export type ShadowRootCallBack = (shadowRoot: ShadowRoot) => void
@@ -13,8 +13,8 @@ export type ShadowRootCallBack = (shadowRoot: ShadowRoot) => void
 export interface ShadowRootsController {
   addShadowRoot: ShadowRootCallBack
   removeShadowRoot: ShadowRootCallBack
-  stop: () => void
-  flush: () => void
+  stop(this: void): void
+  flush(): void
 }
 
 export const initShadowRootsController = (

@@ -15,7 +15,7 @@ export const enum ActionNameSource {
   STANDARD_ATTRIBUTE = 'standard_attribute',
   BLANK = 'blank',
 }
-type ActionName = {
+interface ActionName {
   name: string
   nameSource: ActionNameSource
 }

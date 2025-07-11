@@ -54,7 +54,7 @@ export function createPreStartStrategy(
   bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
 
   let firstStartViewCall:
-    | { options: ViewOptions | undefined; callback: (startRumResult: StartRumResult) => void }
+    | { options: ViewOptions | undefined; callback(startRumResult: StartRumResult): void }
     | undefined
   let deflateWorker: DeflateWorker | undefined
 

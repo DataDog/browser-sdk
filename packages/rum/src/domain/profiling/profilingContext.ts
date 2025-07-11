@@ -3,8 +3,8 @@ import type { Hooks, ProfilingInternalContextSchema } from '@datadog/browser-rum
 import { RumEventType } from '@datadog/browser-rum-core'
 
 export interface ProfilingContextManager {
-  set: (next: ProfilingInternalContextSchema) => void
-  get: () => ProfilingInternalContextSchema | undefined
+  set(next: ProfilingInternalContextSchema): void
+  get(): ProfilingInternalContextSchema | undefined
 }
 
 export const startProfilingContext = (hooks: Hooks): ProfilingContextManager => {

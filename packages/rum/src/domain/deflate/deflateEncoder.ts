@@ -19,8 +19,8 @@ export function createDeflateEncoder(
 
   let nextWriteActionId = 0
   const pendingWriteActions: Array<{
-    writeCallback?: (additionalEncodedBytesCount: number) => void
-    finishCallback?: () => void
+    writeCallback?(additionalEncodedBytesCount: number): void
+    finishCallback?(): void
     id: number
     data: string
   }> = []

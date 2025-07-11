@@ -46,7 +46,7 @@ export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
 }
 
-export type DeflateEncoder = Encoder<Uint8Array> & { stop: () => void }
+export type DeflateEncoder = Encoder<Uint8Array> & { stop(): void }
 
 export const enum DeflateEncoderStreamId {
   REPLAY = 1,

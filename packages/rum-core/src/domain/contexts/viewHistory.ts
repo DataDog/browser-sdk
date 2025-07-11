@@ -17,8 +17,8 @@ export interface ViewHistoryEntry {
 }
 
 export interface ViewHistory {
-  findView: (startTime?: RelativeTime) => ViewHistoryEntry | undefined
-  stop: () => void
+  findView(startTime?: RelativeTime): ViewHistoryEntry | undefined
+  stop(): void
 }
 
 export function startViewHistory(lifeCycle: LifeCycle): ViewHistory {

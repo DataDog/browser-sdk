@@ -192,7 +192,7 @@ export interface RumRect {
   height: number
 }
 
-export type PageStateServerEntry = { state: PageState; start: ServerDuration }
+export interface PageStateServerEntry { state: PageState; start: ServerDuration }
 
 export const ViewLoadingType = {
   INITIAL_LOAD: 'initial_load',

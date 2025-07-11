@@ -43,8 +43,8 @@ describe('ErrorBoundary', () => {
   })
 
   it('renders the fallback class component when an error occurs', () => {
-    class FallbackComponent extends React.Component<{ error: Error; resetError: () => void }> {
-      constructor(props: { error: Error; resetError: () => void }) {
+    class FallbackComponent extends React.Component<{ error: Error; resetError(this: void): void }> {
+      constructor(props: { error: Error; resetError(): void }) {
         super(props)
         expect(props).toEqual({ error: new Error('error'), resetError: jasmine.any(Function) })
       }

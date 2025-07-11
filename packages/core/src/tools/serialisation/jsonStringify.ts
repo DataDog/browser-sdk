@@ -37,7 +37,7 @@ export function jsonStringify(
 }
 
 export interface ObjectWithToJsonMethod {
-  toJSON?: () => unknown
+  toJSON?(): unknown
 }
 
 export function detachToJsonMethod(value: object) {

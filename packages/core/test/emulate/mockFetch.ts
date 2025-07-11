@@ -162,9 +162,9 @@ export interface MockResponseOptions {
 export type MockFetch = (input: RequestInfo, init?: RequestInit) => MockFetchPromise
 
 export interface MockFetchPromise extends Promise<Response> {
-  resolveWith: (response: MockResponseOptions) => void
-  rejectWith: (error: Error) => void
-  abort: () => void
+  resolveWith(response: MockResponseOptions): void
+  rejectWith(error: Error): void
+  abort(): void
 }
 
 function notYetImplemented(): never {

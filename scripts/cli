@@ -28,7 +28,7 @@ cmd_typecheck () {
 
 cmd_lint () {
   local project_path="${1}"
-  eslint "$project_path"
+  eslint "$project_path" --fix
 }
 
 cmd_init_submodule () {

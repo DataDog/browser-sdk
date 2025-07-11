@@ -1,5 +1,5 @@
 export interface GlobalPerformanceBufferMock {
-  addPerformanceEntry: (entry: PerformanceEntry) => void
+  addPerformanceEntry(entry: PerformanceEntry): void
 }
 
 export function mockGlobalPerformanceBuffer(initialEntries: PerformanceEntry[] = []): GlobalPerformanceBufferMock {

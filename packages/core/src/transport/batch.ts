@@ -10,9 +10,9 @@ import type { FlushController, FlushEvent } from './flushController'
 
 export interface Batch {
   flushController: FlushController
-  add: (message: Context) => void
-  upsert: (message: Context, key: string) => void
-  stop: () => void
+  add(message: Context): void
+  upsert(message: Context, key: string): void
+  stop(): void
 }
 
 export function createBatch({

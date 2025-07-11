@@ -8,7 +8,7 @@ import type { CustomerDataType } from './contextConstants'
 
 const CONTEXT_STORE_KEY_PREFIX = '_dd_c'
 
-const storageListeners: Array<{ stop: () => void }> = []
+const storageListeners: Array<{ stop(): void }> = []
 
 export function storeContextManager(
   configuration: Configuration,

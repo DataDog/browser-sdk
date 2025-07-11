@@ -50,8 +50,8 @@ export const enum TelemetryService {
 }
 
 export interface Telemetry {
-  setContextProvider: (key: string, contextProvider: () => ContextValue | undefined) => void
-  stop: () => void
+  setContextProvider(key: string, contextProvider: () => ContextValue | undefined): void
+  stop(): void
   enabled: boolean
 }
 

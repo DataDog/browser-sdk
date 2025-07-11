@@ -87,7 +87,7 @@ function send(
   payload: Payload,
   state: RetryState,
   sendStrategy: SendStrategy,
-  { onSuccess, onFailure }: { onSuccess: () => void; onFailure: () => void }
+  { onSuccess, onFailure }: { onSuccess(): void; onFailure(): void }
 ) {
   state.bandwidthMonitor.add(payload)
   sendStrategy(payload, (response) => {

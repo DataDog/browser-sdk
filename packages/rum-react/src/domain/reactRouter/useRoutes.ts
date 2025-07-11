@@ -8,8 +8,8 @@ export function wrapUseRoutes<T extends AnyUseRoute<any>>({
   matchRoutes,
 }: {
   useRoutes: T
-  useLocation: () => { pathname: string }
-  matchRoutes: (routes: AnyRouteObject[], pathname: string) => AnyRouteMatch[] | null
+  useLocation(this: void): { pathname: string }
+  matchRoutes(this: void, routes: AnyRouteObject[], pathname: string): AnyRouteMatch[] | null
 }): T {
   return ((routes, locationArg) => {
     const location = useLocation()

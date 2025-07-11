@@ -21,13 +21,13 @@ export const enum SessionType {
 export const RUM_SESSION_KEY = 'rum'
 
 export interface RumSessionManager {
-  findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined
-  expire: () => void
+  findTrackedSession(startTime?: RelativeTime): RumSession | undefined
+  expire(this: void): void
   expireObservable: Observable<void>
-  setForcedReplay: () => void
+  setForcedReplay(): void
 }
 
-export type RumSession = {
+export interface RumSession {
   id: string
   sessionReplay: SessionReplayState
   anonymousId?: string

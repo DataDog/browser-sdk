@@ -8,7 +8,7 @@ export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-exe
 
 export interface CiTestWindow extends Window {
   Cypress?: {
-    env: (key: string) => string | undefined
+    env(key: string): string | undefined
   }
 }
 

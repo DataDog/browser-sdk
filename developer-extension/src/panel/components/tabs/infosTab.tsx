@@ -154,7 +154,7 @@ function Entry({
   name: string
   value: any
   isOverridden?: boolean
-  onChange?: (value: object | null) => void
+  onChange?(value: object | null): void
 }) {
   const [edited, setEdited] = useState(false)
   const [newValue, setNewValue] = React.useState<string | null>()

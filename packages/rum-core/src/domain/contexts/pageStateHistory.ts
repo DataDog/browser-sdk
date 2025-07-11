@@ -30,12 +30,15 @@ export const enum PageState {
   TERMINATED = 'terminated',
 }
 
-export type PageStateEntry = { state: PageState; startTime: RelativeTime }
+export interface PageStateEntry {
+  state: PageState
+  startTime: RelativeTime
+}
 
 export interface PageStateHistory {
-  wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
+  wasInPageStateDuringPeriod(state: PageState, startTime: RelativeTime, duration: Duration): boolean
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
-  stop: () => void
+  stop(this: void): void
 }
 
 export function startPageStateHistory(

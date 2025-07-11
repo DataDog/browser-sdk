@@ -8,8 +8,8 @@ export interface SetupOptions {
   rum?: RumInitConfiguration
   useRumSlim: boolean
   logs?: LogsInitConfiguration
-  logsInit: (initConfiguration: LogsInitConfiguration) => void
-  rumInit: (initConfiguration: RumInitConfiguration) => void
+  logsInit(initConfiguration: LogsInitConfiguration): void
+  rumInit(initConfiguration: RumInitConfiguration): void
   eventBridge: boolean
   head?: string
   body?: string

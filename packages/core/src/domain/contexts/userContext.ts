@@ -18,7 +18,7 @@ export function startUserContext(
   hooks: AbstractHooks,
   configuration: Configuration,
   sessionManager: {
-    findTrackedSession: (startTime?: RelativeTime) => { anonymousId?: string } | undefined
+    findTrackedSession(startTime?: RelativeTime): { anonymousId?: string } | undefined
   },
   productKey: string
 ) {

@@ -2,7 +2,7 @@ import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 
-export type ExtraPointerEventFields = {
+export interface ExtraPointerEventFields {
   target: Element
   timeStamp: RelativeTime
 }
@@ -14,8 +14,8 @@ export interface UserActivity {
   scroll: boolean
 }
 export interface ActionEventsHooks<ClickContext> {
-  onPointerDown: (event: MouseEventOnElement) => ClickContext | undefined
-  onPointerUp: (context: ClickContext, event: MouseEventOnElement, getUserActivity: () => UserActivity) => void
+  onPointerDown(event: MouseEventOnElement): ClickContext | undefined
+  onPointerUp(context: ClickContext, event: MouseEventOnElement, getUserActivity: () => UserActivity): void
 }
 
 export function listenActionEvents<ClickContext>(

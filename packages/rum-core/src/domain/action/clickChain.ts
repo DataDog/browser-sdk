@@ -3,8 +3,8 @@ import { ONE_SECOND, clearTimeout, setTimeout } from '@datadog/browser-core'
 import type { Click } from './trackClickActions'
 
 export interface ClickChain {
-  tryAppend: (click: Click) => boolean
-  stop: () => void
+  tryAppend(click: Click): boolean
+  stop(): void
 }
 
 export const MAX_DURATION_BETWEEN_CLICKS = ONE_SECOND

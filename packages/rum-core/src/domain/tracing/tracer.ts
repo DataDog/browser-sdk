@@ -21,9 +21,9 @@ import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 
 export interface Tracer {
-  traceFetch: (context: Partial<RumFetchStartContext>) => void
-  traceXhr: (context: Partial<RumXhrStartContext>, xhr: XMLHttpRequest) => void
-  clearTracingIfNeeded: (context: RumFetchResolveContext | RumXhrCompleteContext) => void
+  traceFetch(context: Partial<RumFetchStartContext>): void
+  traceXhr(context: Partial<RumXhrStartContext>, xhr: XMLHttpRequest): void
+  clearTracingIfNeeded(context: RumFetchResolveContext | RumXhrCompleteContext): void
 }
 
 interface TracingHeaders {

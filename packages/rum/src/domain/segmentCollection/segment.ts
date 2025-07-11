@@ -8,8 +8,8 @@ export type FlushCallback = (metadata: BrowserSegmentMetadata, encoderResult: En
 export type AddRecordCallback = (encodedBytesCount: number) => void
 
 export interface Segment {
-  addRecord: (record: BrowserRecord, callback: AddRecordCallback) => void
-  flush: (callback: FlushCallback) => void
+  addRecord(record: BrowserRecord, callback: AddRecordCallback): void
+  flush(callback: FlushCallback): void
 }
 
 export function createSegment({

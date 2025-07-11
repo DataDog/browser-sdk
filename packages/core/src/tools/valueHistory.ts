@@ -21,13 +21,13 @@ export const CLEAR_OLD_VALUES_INTERVAL = ONE_MINUTE
  * chronological order (i.e. all entries have an increasing start time).
  */
 export interface ValueHistory<Value> {
-  add: (value: Value, startTime: RelativeTime) => ValueHistoryEntry<Value>
-  find: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => Value | undefined
+  add(value: Value, startTime: RelativeTime): ValueHistoryEntry<Value>
+  find(startTime?: RelativeTime, options?: { returnInactive: boolean }): Value | undefined
 
-  closeActive: (endTime: RelativeTime) => void
-  findAll: (startTime?: RelativeTime, duration?: Duration) => Value[]
-  reset: () => void
-  stop: () => void
+  closeActive(endTime: RelativeTime): void
+  findAll(startTime?: RelativeTime, duration?: Duration): Value[]
+  reset(): void
+  stop(): void
 }
 
 let cleanupHistoriesInterval: TimeoutId | null = null

@@ -14,7 +14,7 @@ export function AddColumnPopover({
   facetRegistry,
 }: {
   columns: EventListColumn[]
-  onColumnsChange: (columns: EventListColumn[]) => void
+  onColumnsChange(this: void, columns: EventListColumn[]): void
   facetRegistry: FacetRegistry
 }) {
   return (
@@ -46,7 +46,7 @@ function AddDefaultColumnButton({
 }: {
   column: EventListColumn
   columns: EventListColumn[]
-  onColumnsChange: (columns: EventListColumn[]) => void
+  onColumnsChange(columns: EventListColumn[]): void
 }) {
   if (includesColumn(columns, column)) {
     return null
@@ -71,7 +71,7 @@ function AddFieldColumn({
   facetRegistry,
 }: {
   columns: EventListColumn[]
-  onColumnsChange: (columns: EventListColumn[]) => void
+  onColumnsChange(columns: EventListColumn[]): void
   facetRegistry: FacetRegistry
 }) {
   const [input, setInput] = useState('')

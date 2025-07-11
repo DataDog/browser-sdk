@@ -8,7 +8,7 @@ import * as classes from './eventsListHeader.module.css'
 
 interface Props {
   columns: EventListColumn[]
-  onColumnsChange: (columns: EventListColumn[]) => void
+  onColumnsChange(columns: EventListColumn[]): void
   facetRegistry: FacetRegistry
 }
 
@@ -40,7 +40,7 @@ function ColumnHeader({
 }: {
   columns: EventListColumn[]
   column: EventListColumn
-  onColumnsChange: (columns: EventListColumn[]) => void
+  onColumnsChange(columns: EventListColumn[]): void
 }) {
   return (
     <Table.Th

@@ -3,12 +3,12 @@ import type { LogsEvent } from '../../../packages/logs/src/logsEvent.types'
 import type { RumEvent } from '../../../packages/rum-core/src/rumEvent.types'
 import type { BrowserRecord, BrowserSegmentMetadata } from '../../../packages/rum/src/types'
 
-export type BackgroundToDevtoolsMessage = {
+export interface BackgroundToDevtoolsMessage {
   type: 'sdk-message'
   message: SdkMessage
 }
 
-export type DevtoolsToBackgroundMessage = {
+export interface DevtoolsToBackgroundMessage {
   type: 'update-net-request-rules'
   options: NetRequestRulesOptions
 }

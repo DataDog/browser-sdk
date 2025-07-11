@@ -136,7 +136,7 @@ export interface RumLayoutShiftTiming {
 }
 
 // Documentation https://developer.chrome.com/docs/web-platform/long-animation-frames#better-attribution
-export type RumPerformanceScriptTiming = {
+export interface RumPerformanceScriptTiming {
   duration: Duration
   entryType: 'script'
   executionStart: RelativeTime
@@ -191,7 +191,7 @@ export type RumPerformanceEntry =
   | RumLayoutShiftTiming
   | RumFirstHiddenTiming
 
-export type EntryTypeToReturnType = {
+export interface EntryTypeToReturnType {
   [RumPerformanceEntryType.EVENT]: RumPerformanceEventTiming
   [RumPerformanceEntryType.FIRST_INPUT]: RumFirstInputTiming
   [RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT]: RumLargestContentfulPaintTiming
@@ -287,7 +287,7 @@ export function createPerformanceObservable<T extends RumPerformanceEntryType>(
   })
 }
 
-let resourceTimingBufferFullListener: { stop: () => void }
+let resourceTimingBufferFullListener: { stop(): void }
 function manageResourceTimingBufferFull(configuration: RumConfiguration) {
   if (!resourceTimingBufferFullListener && supportPerformanceObject() && 'addEventListener' in performance) {
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1559377

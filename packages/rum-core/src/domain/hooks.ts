@@ -13,12 +13,12 @@ import type { RumEvent } from '../rumEvent.types'
 // Ensuring the `type` field is always present improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'view')`).
 export type DefaultRumEventAttributes = RecursivePartialExcept<RumEvent, 'type'>
 
-export type HookCallbackMap = {
-  [HookNamesAsConst.ASSEMBLE]: (param: {
+export interface HookCallbackMap {
+  [HookNamesAsConst.ASSEMBLE](param: {
     eventType: RumEvent['type']
     startTime: RelativeTime
     duration?: Duration | undefined
-  }) => DefaultRumEventAttributes | SKIPPED | DISCARDED
+  }): DefaultRumEventAttributes | SKIPPED | DISCARDED
 }
 
 export type Hooks = ReturnType<typeof createHooks>

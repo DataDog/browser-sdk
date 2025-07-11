@@ -15,15 +15,15 @@ import type { SessionState } from './sessionState'
 import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
 
 export interface SessionManager<TrackingType extends string> {
-  findSession: (
+  findSession(
     startTime?: RelativeTime,
     options?: { returnInactive: boolean }
-  ) => SessionContext<TrackingType> | undefined
+  ): SessionContext<TrackingType> | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
-  expire: () => void
-  updateSessionState: (state: Partial<SessionState>) => void
+  expire(): void
+  updateSessionState(state: Partial<SessionState>): void
 }
 
 export interface SessionContext<TrackingType extends string> extends Context {

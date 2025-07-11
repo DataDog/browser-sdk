@@ -17,8 +17,8 @@ export function withXhr({
   setup,
   onComplete,
 }: {
-  setup: (xhr: MockXhr) => void
-  onComplete: (xhr: XMLHttpRequest) => void
+  setup(xhr: MockXhr): void
+  onComplete(xhr: XMLHttpRequest): void
 }) {
   const xhr = new XMLHttpRequest()
   const loadend = () => {

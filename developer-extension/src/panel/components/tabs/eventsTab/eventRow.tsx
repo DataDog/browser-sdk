@@ -71,7 +71,7 @@ export const EventRow = React.memo(
     event: SdkEvent
     columns: EventListColumn[]
     facetRegistry: FacetRegistry
-    onColumnsChange: (newColumn: EventListColumn[]) => void
+    onColumnsChange(newColumn: EventListColumn[]): void
   }) => {
     const [isCollapsed, setIsCollapsed] = useState(true)
     const jsonRef = useRef<HTMLDivElement>(null)

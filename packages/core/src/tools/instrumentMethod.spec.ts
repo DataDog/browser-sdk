@@ -29,7 +29,7 @@ describe('instrumentMethod', () => {
   })
 
   it('does not set a method originally undefined', () => {
-    const object: { method?: () => number } = {}
+    const object: { method?(): number } = {}
 
     instrumentMethod(object, 'method', noop)
 
@@ -37,7 +37,7 @@ describe('instrumentMethod', () => {
   })
 
   it('sets an event handler even if it was originally undefined', () => {
-    const object: { onevent?: () => void } = { onevent: undefined }
+    const object: { onevent?(): void } = { onevent: undefined }
 
     const instrumentationSpy = jasmine.createSpy()
     instrumentMethod(object, 'onevent', instrumentationSpy)
@@ -49,7 +49,7 @@ describe('instrumentMethod', () => {
   })
 
   it('do not set an event handler even if the event is not supported (i.e. property does not exist on object)', () => {
-    const object: { onevent?: () => void } = {}
+    const object: { onevent?(): void } = {}
 
     const instrumentationSpy = jasmine.createSpy()
     instrumentMethod(object, 'onevent', instrumentationSpy)
@@ -167,7 +167,7 @@ describe('instrumentMethod', () => {
       })
 
       it('should not throw errors if original method was undefined', () => {
-        const object: { onevent?: () => number } = {}
+        const object: { onevent?(): number } = {}
         const instrumentationStub = () => 2
         const { stop } = instrumentMethod(object, 'onevent', instrumentationStub)
 
@@ -180,7 +180,7 @@ describe('instrumentMethod', () => {
     })
   })
 
-  function thirdPartyInstrumentation(object: { method?: () => number; onevent?: () => void }) {
+  function thirdPartyInstrumentation(object: { method?(): number; onevent?(): void }) {
     const originalMethod = object.method
     if (typeof originalMethod === 'function') {
       object.method = () => {

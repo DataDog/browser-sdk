@@ -13,7 +13,7 @@ export function FacetList({
 }: {
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
-  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
+  onExcludedFacetValuesChange(newExcludedFacetValues: FacetValuesFilter): void
 }) {
   return (
     <FacetField
@@ -40,7 +40,7 @@ function FacetField({
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
   parentList: string[]
-  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
+  onExcludedFacetValuesChange(newExcludedFacetValues: FacetValuesFilter): void
 }) {
   const facetValueCounts = facetRegistry.getFacetValueCounts(facet.path)
 
@@ -88,7 +88,7 @@ function FacetValue({
   facetRegistry: FacetRegistry
   facetValuesFilter: FacetValuesFilter
   parentList: string[]
-  onExcludedFacetValuesChange: (newExcludedFacetValues: FacetValuesFilter) => void
+  onExcludedFacetValuesChange(newExcludedFacetValues: FacetValuesFilter): void
 }) {
   const isTopLevel = depth === 0
   const facetSelectState = computeSelectionState(facetValuesFilter, facetRegistry, facet, facetValue, parentList)

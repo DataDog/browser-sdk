@@ -78,11 +78,11 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
 
 export interface RUMProfiler {
-  start: (viewEntry: ViewHistoryEntry | undefined) => void
-  stop: () => Promise<void>
-  isStopped: () => boolean
-  isRunning: () => boolean
-  isPaused: () => boolean
+  start(viewEntry: ViewHistoryEntry | undefined): void
+  stop(): Promise<void>
+  isStopped(): boolean
+  isRunning(): boolean
+  isPaused(): boolean
 }
 
 export interface RUMProfilerConfiguration {

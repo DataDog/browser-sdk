@@ -5,7 +5,7 @@ import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../..
 
 export type FirstHidden = ReturnType<typeof trackFirstHidden>
 
-export type Options = {
+export interface Options {
   viewStart: ClocksState
 }
 

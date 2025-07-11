@@ -36,16 +36,16 @@ export function initDrag({
   onDrop,
 }: {
   target: HTMLElement
-  onStart: (event: { target: HTMLElement; position: Coordinates }) => boolean | void
-  onMove: (event: { position: Coordinates }) => void
-  onDrop: () => void
-  onAbort: () => void
+  onStart(event: { target: HTMLElement; position: Coordinates }): boolean | void
+  onMove(event: { position: Coordinates }): void
+  onDrop(): void
+  onAbort(): void
 }) {
   type DragState =
     | { isDragging: false }
     | {
         isDragging: true
-        removeListeners: () => void
+        removeListeners(): void
       }
 
   let state: DragState = {

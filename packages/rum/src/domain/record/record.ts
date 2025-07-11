@@ -24,15 +24,15 @@ import { startFullSnapshots } from './startFullSnapshots'
 import { initRecordIds } from './recordIds'
 
 export interface RecordOptions {
-  emit?: (record: BrowserRecord) => void
+  emit?(record: BrowserRecord): void
   configuration: RumConfiguration
   lifeCycle: LifeCycle
   viewHistory: ViewHistory
 }
 
 export interface RecordAPI {
-  stop: () => void
-  flushMutations: () => void
+  stop(this: void): void
+  flushMutations(): void
   shadowRootsController: ShadowRootsController
 }
 

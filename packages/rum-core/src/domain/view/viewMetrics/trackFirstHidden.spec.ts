@@ -7,7 +7,7 @@ import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
   const configuration = mockRumConfiguration()
-  let firstHidden: { timeStamp: RelativeTime; stop: () => void }
+  let firstHidden: { timeStamp: RelativeTime; stop(): void }
   let performanceBufferMock: GlobalPerformanceBufferMock
 
   function trackFirstHiddenWithDefaults({

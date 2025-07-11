@@ -6,7 +6,7 @@ export function runOnReadyState(
   configuration: Configuration,
   expectedReadyState: 'complete' | 'interactive',
   callback: () => void
-): { stop: () => void } {
+): { stop(): void } {
   if (document.readyState === expectedReadyState || document.readyState === 'complete') {
     callback()
     return { stop: noop }

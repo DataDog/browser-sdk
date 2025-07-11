@@ -16,7 +16,7 @@ export interface PublicApi {
    *
    * See [CDN async setup](https://docs.datadoghq.com/real_user_monitoring/browser/#cdn-async) for further information.
    */
-  onReady: (callback: () => void) => void
+  onReady(callback: () => void): void
 }
 
 export function makePublicApi<T extends PublicApi>(stub: Omit<T, keyof PublicApi>): T {

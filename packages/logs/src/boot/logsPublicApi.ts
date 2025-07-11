@@ -35,7 +35,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript) for further information.
    */
-  init: (initConfiguration: LogsInitConfiguration) => void
+  init(initConfiguration: LogsInitConfiguration): void
 
   /**
    * Set the tracking consent of the current user.
@@ -49,14 +49,14 @@ export interface LogsPublicApi extends PublicApi {
    * If this method is called before the init() method, the provided value will take precedence
    * over the one provided as initialization parameter.
    */
-  setTrackingConsent: (trackingConsent: TrackingConsent) => void
+  setTrackingConsent(trackingConsent: TrackingConsent): void
 
   /**
    * Get the global Context
    *
    * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    */
-  getGlobalContext: () => Context
+  getGlobalContext(): Context
 
   /**
    * Set the global context information to all logs, stored in `@context`
@@ -65,7 +65,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    */
-  setGlobalContext: (context: any) => void
+  setGlobalContext(context: any): void
 
   /**
    * Set or update a global context property, stored in `@context.<key>`
@@ -75,47 +75,47 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    */
-  setGlobalContextProperty: (key: any, value: any) => void
+  setGlobalContextProperty(key: any, value: any): void
 
   /**
    * Remove a global context property
    *
    * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    */
-  removeGlobalContextProperty: (key: any) => void
+  removeGlobalContextProperty(key: any): void
 
   /**
    * Clear the global context
    *
    * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    */
-  clearGlobalContext: () => void
+  clearGlobalContext(): void
 
   /**
    * The Datadog browser logs SDK contains a default logger `DD_LOGS.logger`, but this API allows to create different ones.
    *
    * See [Define multiple loggers](https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers) for further information.
    */
-  createLogger: (name: string, conf?: LoggerConfiguration) => Logger
+  createLogger(name: string, conf?: LoggerConfiguration): Logger
 
   /**
    * Get a logger
    *
    * See [Define multiple loggers](https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers) for further information.
    */
-  getLogger: (name: string) => Logger | undefined
+  getLogger(name: string): Logger | undefined
 
   /**
    * Get the init configuration
    */
-  getInitConfiguration: () => LogsInitConfiguration | undefined
+  getInitConfiguration(): LogsInitConfiguration | undefined
 
   /**
    * [Internal API] Get the internal SDK context
    *
    * See [Access internal context](https://docs.datadoghq.com/logs/log_collection/javascript/#access-internal-context) for further information.
    */
-  getInternalContext: (startTime?: number) => InternalContext | undefined
+  getInternalContext(startTime?: number): InternalContext | undefined
 
   /**
    * Set user information to all events, stored in `@usr`
@@ -137,7 +137,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
-  getUser: () => Context
+  getUser(): Context
 
   /**
    * Set or update the user property, stored in `@usr.<key>`
@@ -147,31 +147,31 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
-  setUserProperty: (key: any, property: any) => void
+  setUserProperty(key: any, property: any): void
 
   /**
    * Remove a user property
    *
    * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
-  removeUserProperty: (key: any) => void
+  removeUserProperty(key: any): void
 
   /**
    * Clear all user information
    *
    * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
-  clearUser: () => void
+  clearUser(): void
 
   /**
    * Set account information to all events, stored in `@account`
    */
-  setAccount: (newAccount: Account) => void
+  setAccount(newAccount: Account): void
 
   /**
    * Get account information
    */
-  getAccount: () => Context
+  getAccount(): Context
 
   /**
    * Set or update the account property, stored in `@account.<key>`
@@ -179,21 +179,21 @@ export interface LogsPublicApi extends PublicApi {
    * @param key Key of the property
    * @param property Value of the property
    */
-  setAccountProperty: (key: string, property: any) => void
+  setAccountProperty(key: string, property: any): void
 
   /**
    * Remove an account property
    */
-  removeAccountProperty: (key: string) => void
+  removeAccountProperty(key: string): void
 
   /**
    * Clear all account information
    */
-  clearAccount: () => void
+  clearAccount(): void
 }
 
 export interface Strategy {
-  init: (initConfiguration: LogsInitConfiguration) => void
+  init(initConfiguration: LogsInitConfiguration): void
   initConfiguration: LogsInitConfiguration | undefined
   globalContext: ContextManager
   accountContext: ContextManager

@@ -658,7 +658,7 @@ describe('startSessionManager', () => {
   }: {
     configuration?: Partial<Configuration>
     productKey?: string
-    computeTrackingType?: () => FakeTrackingType
+    computeTrackingType?(): FakeTrackingType
     trackingConsentState?: TrackingConsentState
   } = {}) {
     return startSessionManager(

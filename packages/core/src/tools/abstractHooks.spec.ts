@@ -6,7 +6,7 @@ describe('startHooks', () => {
   const hookParams = { eventType: 'error', startTime: 1011 as RelativeTime } as any
   const createHooks = abstractHooks<
     {
-      [HookNames.Assemble]: (...args: any[]) => any
+      [HookNames.Assemble](...args: any[]): any
     },
     { [key: string]: any }
   >

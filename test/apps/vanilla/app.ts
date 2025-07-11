@@ -3,8 +3,8 @@ import { datadogRum } from '@datadog/browser-rum'
 
 declare global {
   interface Window {
-    LOGS_INIT?: () => void
-    RUM_INIT?: () => void
+    LOGS_INIT?(): void
+    RUM_INIT?(): void
   }
 }
 

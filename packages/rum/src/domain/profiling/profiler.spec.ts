@@ -44,7 +44,7 @@ describe('profiler', () => {
 
   function setupProfiler(): {
     profiler: RUMProfiler
-    notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+    notifyPerformanceEntries(this: void, entries: RumPerformanceEntry[]): void
     profilingContextManager: ProfilingContextManager
     mockedRumProfilerTrace: RumProfilerTrace
   } {

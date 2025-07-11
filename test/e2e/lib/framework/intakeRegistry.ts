@@ -16,7 +16,7 @@ import type {
 import type { BrowserSegment } from '@datadog/browser-rum/src/types'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 
-type BaseIntakeRequest = {
+interface BaseIntakeRequest {
   isBridge: boolean
   encoding: string | null
 }

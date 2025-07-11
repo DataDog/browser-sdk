@@ -55,7 +55,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser) for further information.
    */
-  init: (initConfiguration: RumInitConfiguration) => void
+  init(initConfiguration: RumInitConfiguration): void
 
   /**
    * Set the tracking consent of the current user.
@@ -71,7 +71,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-tracking-consent) for further information.
    */
-  setTrackingConsent: (trackingConsent: TrackingConsent) => void
+  setTrackingConsent(trackingConsent: TrackingConsent): void
 
   /**
    * Set View Name.
@@ -80,7 +80,7 @@ export interface RumPublicApi extends PublicApi {
    * @param name name of the view
    * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
    */
-  setViewName: (name: string) => void
+  setViewName(name: string): void
 
   /**
    * Set View Context.
@@ -88,7 +88,7 @@ export interface RumPublicApi extends PublicApi {
    * Enable to manually set the context of the current view.
    * @param context context of the view
    */
-  setViewContext: (context: Context) => void
+  setViewContext(context: Context): void
   /**
    * Set View Context Property.
    *
@@ -96,12 +96,12 @@ export interface RumPublicApi extends PublicApi {
    * @param key key of the property
    * @param value value of the property
    */
-  setViewContextProperty: (key: string, value: any) => void
+  setViewContextProperty(key: string, value: any): void
 
   /**
    * Get View Context.
    */
-  getViewContext: () => Context
+  getViewContext(): Context
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -110,14 +110,14 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    */
-  setGlobalContext: (context: any) => void
+  setGlobalContext(context: any): void
 
   /**
    * Get the global Context
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    */
-  getGlobalContext: () => Context
+  getGlobalContext(): Context
 
   /**
    * Set or update a global context property, stored in `@context.<key>`
@@ -127,31 +127,31 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    */
-  setGlobalContextProperty: (key: any, value: any) => void
+  setGlobalContextProperty(key: any, value: any): void
 
   /**
    * Remove a global context property
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    */
-  removeGlobalContextProperty: (key: any) => void
+  removeGlobalContextProperty(key: any): void
 
   /**
    * Clear the global context
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    */
-  clearGlobalContext: () => void
+  clearGlobalContext(): void
 
   /**
    * [Internal API] Get the internal SDK context
    */
-  getInternalContext: (startTime?: number) => InternalContext | undefined
+  getInternalContext(startTime?: number): InternalContext | undefined
 
   /**
    * Get the init configuration
    */
-  getInitConfiguration: () => RumInitConfiguration | undefined
+  getInitConfiguration(): RumInitConfiguration | undefined
 
   /**
    * Add a custom action, stored in `@action`
@@ -160,7 +160,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
    */
-  addAction: (name: string, context?: object) => void
+  addAction(name: string, context?: object): void
 
   /**
    * Add a custom error, stored in `@error`.
@@ -169,7 +169,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
    */
-  addError: (error: unknown, context?: object) => void
+  addError(error: unknown, context?: object): void
 
   /**
    * Add a custom timing relative to the start of the current view,
@@ -182,7 +182,7 @@ export interface RumPublicApi extends PublicApi {
    * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
    * see https://github.com/DataDog/browser-sdk/issues/2552
    */
-  addTiming: (name: string, time?: number) => void
+  addTiming(name: string, time?: number): void
 
   /**
    * Set user information to all events, stored in `@usr`
@@ -203,7 +203,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
-  getUser: () => Context
+  getUser(): Context
 
   /**
    * Set or update the user property, stored in `@usr.<key>`
@@ -213,31 +213,31 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
-  setUserProperty: (key: any, property: any) => void
+  setUserProperty(key: any, property: any): void
 
   /**
    * Remove a user property
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
-  removeUserProperty: (key: any) => void
+  removeUserProperty(key: any): void
 
   /**
    * Clear all user information
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
-  clearUser: () => void
+  clearUser(): void
 
   /**
    * Set account information to all events, stored in `@account`
    */
-  setAccount: (newAccount: Account) => void
+  setAccount(newAccount: Account): void
 
   /**
    * Get account information
    */
-  getAccount: () => Context
+  getAccount(): Context
 
   /**
    * Set or update the account property, stored in `@account.<key>`
@@ -245,17 +245,17 @@ export interface RumPublicApi extends PublicApi {
    * @param key Key of the property
    * @param property Value of the property
    */
-  setAccountProperty: (key: string, property: any) => void
+  setAccountProperty(key: string, property: any): void
 
   /**
    * Remove an account property
    */
-  removeAccountProperty: (key: string) => void
+  removeAccountProperty(key: string): void
 
   /**
    * Clear all account information
    */
-  clearAccount: () => void
+  clearAccount(): void
 
   /**
    * Start a view manually.
@@ -275,7 +275,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Stop the session. A new session will start at the next user interaction with the page.
    */
-  stopSession: () => void
+  stopSession(): void
 
   /**
    * Add a feature flag evaluation,
@@ -288,14 +288,14 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Feature Flag Tracking](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/) for further information.
    */
-  addFeatureFlagEvaluation: (key: string, value: any) => void
+  addFeatureFlagEvaluation(key: string, value: any): void
 
   /**
    * Get the Session Replay Link.
    *
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
    */
-  getSessionReplayLink: () => string | undefined
+  getSessionReplayLink(): string | undefined
 
   /**
    * Start Session Replay recording.
@@ -303,14 +303,14 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.
    */
-  startSessionReplayRecording: (options?: StartRecordingOptions) => void
+  startSessionReplayRecording(options?: StartRecordingOptions): void
 
   /**
    * Stop Session Replay recording.
    *
    * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.
    */
-  stopSessionReplayRecording: () => void
+  stopSessionReplayRecording(): void
 
   /**
    * Add a custom duration vital
@@ -321,10 +321,10 @@ export interface RumPublicApi extends PublicApi {
    * @param options.context custom context attached to the vital
    * @param options.description  Description of the vital
    */
-  addDurationVital: (
+  addDurationVital(
     name: string,
     options: { startTime: number; duration: number; context?: object; description?: string }
-  ) => void
+  ): void
 
   /**
    * Start a custom duration vital.
@@ -336,7 +336,7 @@ export interface RumPublicApi extends PublicApi {
    * @param options.description Description of the vital
    * @returns reference to the custom vital
    */
-  startDurationVital: (name: string, options?: { context?: object; description?: string }) => DurationVitalReference
+  startDurationVital(name: string, options?: { context?: object; description?: string }): DurationVitalReference
 
   /**
    * Stop a custom duration vital
@@ -345,55 +345,55 @@ export interface RumPublicApi extends PublicApi {
    * @param options.context custom context attached to the vital
    * @param options.description Description of the vital
    */
-  stopDurationVital: (
+  stopDurationVital(
     nameOrRef: string | DurationVitalReference,
     options?: { context?: object; description?: string }
-  ) => void
+  ): void
 }
 
 export interface RecorderApi {
-  start: (options?: StartRecordingOptions) => void
-  stop: () => void
-  onRumStart: (
+  start(options?: StartRecordingOptions): void
+  stop(): void
+  onRumStart(
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined
-  ) => void
-  isRecording: () => boolean
-  getReplayStats: (viewId: string) => ReplayStats | undefined
-  getSessionReplayLink: () => string | undefined
+  ): void
+  isRecording(): boolean
+  getReplayStats(viewId: string): ReplayStats | undefined
+  getSessionReplayLink(): string | undefined
 }
 
 export interface ProfilerApi {
-  stop: () => void
-  onRumStart: (
+  stop(): void
+  onRumStart(
     lifeCycle: LifeCycle,
     hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
-  ) => void
+  ): void
 }
 
 export interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
-  startDeflateWorker?: (
+  startDeflateWorker?(
     configuration: RumConfiguration,
     source: string,
     onInitializationFailure: () => void
-  ) => DeflateWorker | undefined
-  createDeflateEncoder?: (
+  ): DeflateWorker | undefined
+  createDeflateEncoder?(
     configuration: RumConfiguration,
     worker: DeflateWorker,
     streamId: DeflateEncoderStreamId
-  ) => DeflateEncoder
+  ): DeflateEncoder
   sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
 }
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
+  init(initConfiguration: RumInitConfiguration, publicApi: RumPublicApi): void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']

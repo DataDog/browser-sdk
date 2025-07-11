@@ -1,5 +1,5 @@
 export interface Subscription {
-  unsubscribe: () => void
+  unsubscribe(this: void): void
 }
 
 // eslint-disable-next-line no-restricted-syntax

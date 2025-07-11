@@ -1,5 +1,5 @@
 interface BrowserWindow {
-  __ddBrowserSdkExtensionCallback?: (message: unknown) => void
+  __ddBrowserSdkExtensionCallback?(message: unknown): void
 }
 
 type ExtensionMessageType = 'logs' | 'record' | 'rum' | 'telemetry'

@@ -8,14 +8,14 @@ import type { RequestStatsForHost } from './profiling.types'
 export interface Proxy {
   origin: string
   spkiFingerprint: string
-  stop: () => void
+  stop(): void
   stats: ProxyStats
 }
 
 interface ProxyStats {
-  addRequest: (request: IncomingMessage, size: number) => void
-  getStatsByHost: () => RequestStatsForHost[]
-  reset: () => void
+  addRequest(request: IncomingMessage, size: number): void
+  getStatsByHost(): RequestStatsForHost[]
+  reset(): void
 }
 
 function createProxyStats(): ProxyStats {

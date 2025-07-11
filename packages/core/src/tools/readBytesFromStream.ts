@@ -1,7 +1,7 @@
 import { monitor } from './monitor'
 import { noop } from './utils/functionUtils'
 
-type Options = {
+interface Options {
   bytesLimit: number
   collectStreamBody?: boolean
 }

@@ -19,16 +19,16 @@ import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
 
 export interface SessionStore {
-  expandOrRenewSession: () => void
-  expandSession: () => void
-  getSession: () => SessionState
-  restartSession: () => void
+  expandOrRenewSession(): void
+  expandSession(): void
+  getSession(): SessionState
+  restartSession(): void
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
-  expire: () => void
-  stop: () => void
-  updateSessionState: (state: Partial<SessionState>) => void
+  expire(): void
+  stop(): void
+  updateSessionState(state: Partial<SessionState>): void
 }
 
 /**

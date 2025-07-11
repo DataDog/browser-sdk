@@ -12,7 +12,7 @@ export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
 export type FeatureFlagContext = Context
 
 export interface FeatureFlagContexts {
-  addFeatureFlagEvaluation: (key: string, value: ContextValue) => void
+  addFeatureFlagEvaluation(key: string, value: ContextValue): void
 }
 
 /**

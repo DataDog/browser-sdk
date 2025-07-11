@@ -7,9 +7,9 @@ import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrateg
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
-type Operations = {
-  process: (sessionState: SessionState) => SessionState | undefined
-  after?: (sessionState: SessionState) => void
+interface Operations {
+  process(sessionState: SessionState): SessionState | undefined
+  after?(sessionState: SessionState): void
 }
 
 export const LOCK_RETRY_DELAY = 10
