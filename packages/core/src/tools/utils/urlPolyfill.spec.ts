@@ -84,11 +84,11 @@ describe('getNativeURLFromIframe', () => {
   it('should get native URL constructor from iframe', () => {
     const nativeURL = getNativeURL()
 
-    if (nativeURL) {
-      expect(typeof nativeURL).toBe('function')
-      const url = new nativeURL('http://example.com')
-      expect(url.href).toBe('http://example.com/')
-    }
+    expect(nativeURL).toBeDefined()
+    expect(typeof nativeURL).toBe('function')
+
+    const url = new nativeURL('http://example.com')
+    expect(url.href).toBe('http://example.com/')
   })
 
   it('should work even if main window URL is overridden', () => {
@@ -97,23 +97,18 @@ describe('getNativeURLFromIframe', () => {
       throw new Error('Bad polyfill')
     }
     const nativeURL = getNativeURL()
-    if (nativeURL) {
-      expect(typeof nativeURL).toBe('function')
-      const url = new nativeURL('http://example.com')
-      expect(url.href).toBe('http://example.com/')
-    }
+
+    expect(nativeURL).toBeDefined()
+    expect(typeof nativeURL).toBe('function')
+
+    const url = new nativeURL('http://example.com')
+    expect(url.href).toBe('http://example.com/')
     ;(window as any).URL = originalURL
-  })
-
-  it('should cache the native URL constructor', () => {
-    const firstCall = getNativeURL()
-    const secondCall = getNativeURL()
-
-    expect(firstCall).toBe(secondCall)
   })
 
   it('should keep the same constructor and still resolve relative URLs correctly', () => {
     const nativeURL1 = getNativeURL()
+    expect(nativeURL1).toBeDefined()
 
     history.pushState({}, '', '/foo/')
     const url1 = buildUrl('./bar', location.href)
@@ -121,6 +116,7 @@ describe('getNativeURLFromIframe', () => {
 
     history.pushState({}, '', '/baz/')
     const nativeURL2 = getNativeURL()
+    expect(nativeURL2).toBeDefined()
     expect(nativeURL2).toBe(nativeURL1)
 
     const url2 = buildUrl('./qux', location.href)
