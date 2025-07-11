@@ -2,12 +2,10 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { DISCARDED, HookNames, createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import type { LogsConfiguration } from '../configuration'
 import { startTrackingConsentContext } from './trackingConsentContext'
 
 describe('tracking consent context', () => {
   let hooks: Hooks
-  const configuration = { service: 'foo' } as LogsConfiguration
 
   beforeEach(() => {
     hooks = createHooks()
