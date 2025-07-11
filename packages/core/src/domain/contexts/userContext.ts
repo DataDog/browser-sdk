@@ -7,11 +7,6 @@ import type { Configuration } from '../configuration'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 
-/**
- * User information for the browser SDK.
- *
- * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
- */
 export interface User {
   id?: string | undefined
   email?: string | undefined

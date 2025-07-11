@@ -19,7 +19,7 @@ import { computeTransportConfiguration } from './transportConfiguration'
 /**
  * Default privacy level for the browser SDK.
  *
- * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
+ * [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
  */
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -38,6 +38,13 @@ export const TraceContextInjection = {
   SAMPLED: 'sampled',
 } as const
 
+/**
+ * Trace context injection option.
+ *
+ * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+ *
+ *
+ */
 export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
 
 export interface InitConfiguration {
@@ -67,6 +74,7 @@ export interface InitConfiguration {
   telemetrySampleRate?: number | undefined
   /**
    * Initialization fails silently if the RUM Browser SDK is already initialized on the page.
+   *
    * @category Custom Behavior
    * @defaultValue false
    */

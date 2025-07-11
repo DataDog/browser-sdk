@@ -1,9 +1,9 @@
 /**
- * @packageDocumentation
  * Datadog Browser RUM SDK - Full version with Session Replay and Real User Profiling capabilities.
  * Use this package to monitor your web application's performance and user experience.
  *
- * @see {@link https://docs.datadoghq.com/real_user_monitoring/browser/ | RUM Browser Monitoring Setup}
+ * @packageDocumentation
+ * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
 
 // Keep the following in sync with packages/rum-slim/src/entries/main.ts
@@ -73,7 +73,8 @@ const profilerApi = makeProfilerApi()
 
 /**
  * The global RUM instance. Use this to call RUM methods.
- * @see {@link https://docs.datadoghq.com/real_user_monitoring/browser/ | RUM Browser Monitoring Setup}
+ *
+ * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
 export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
   startDeflateWorker,

@@ -1,5 +1,6 @@
 /**
  * Return true if the draw is successful
+ *
  * @param threshold - Threshold between 0 and 100
  */
 export function performDraw(threshold: number): boolean {

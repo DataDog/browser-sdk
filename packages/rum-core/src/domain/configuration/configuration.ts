@@ -120,6 +120,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Allow to protect end user privacy and prevent sensitive organizational information from being collected.
    *
    * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
+   *
    * @category Privacy
    * @defaultValue mask
    */
@@ -129,6 +130,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL .
    *
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
+   *
    * @category Session Replay
    */
   subdomain?: string
@@ -136,6 +138,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * The percentage of tracked sessions with [Browser RUM & Session Replay pricing](https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay) features: 100 for all, 0 for none.
    *
    * See [Configure Your Setup For Browser RUM and Browser RUM & Session Replay Sampling](https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans) for further information.
+   *
    * @category Session Replay
    */
   sessionReplaySampleRate?: number | undefined
@@ -143,12 +146,14 @@ export interface RumInitConfiguration extends InitConfiguration {
    * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false.
    *
    * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
+   *
    * @category Session Replay
    */
   startSessionReplayRecordingManually?: boolean | undefined
 
   /**
    * Enables privacy control for action names.
+   *
    * @category Privacy
    */
   enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
@@ -156,6 +161,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Enables automatic collection of users actions.
    *
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
+   *
    * @category Data Collection
    * @defaultValue true
    */
@@ -164,6 +170,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * Specify your own attribute to use to name actions.
    *
    * See [Declare a name for click actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions) for further information.
+   *
    * @category Custom Behavior
    */
   actionNameAttribute?: string | undefined

@@ -37,6 +37,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   beforeSend?: ((event: LogsEvent, context: LogsEventDomainContext) => boolean) | undefined
   /**
    * Forward console.error logs, uncaught exceptions and network errors to Datadog.
+   *
    * @defaultValue true
    */
   forwardErrorsToLogs?: boolean | undefined
@@ -50,6 +51,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
   forwardReports?: RawReportType[] | 'all' | undefined
   /**
    * Use PCI-compliant intake. See [PCI DSS Compliance](https://docs.datadoghq.com/data_security/pci_compliance/?tab=logmanagement) for further information.
+   *
    * @defaultValue false
    */
   usePciIntake?: boolean

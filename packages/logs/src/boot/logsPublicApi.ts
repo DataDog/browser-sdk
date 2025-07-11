@@ -74,7 +74,6 @@ export interface LogsPublicApi extends PublicApi {
    *
    * @category Global Context
    * @param context - Global context
-   *
    */
   setGlobalContext(context: any): void
 
@@ -123,7 +122,6 @@ export interface LogsPublicApi extends PublicApi {
    *
    * @category User
    * @param newUser - User information
-   *
    */
   setUser(newUser: User & { id: string }): void
 
@@ -154,7 +152,6 @@ export interface LogsPublicApi extends PublicApi {
    * @category User
    * @param key - Key of the property
    * @param property - Value of the property
-   *
    */
   setUserProperty(key: any, property: any): void
 

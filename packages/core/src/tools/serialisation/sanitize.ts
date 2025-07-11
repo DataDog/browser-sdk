@@ -45,8 +45,8 @@ const KEY_DECORATION_LENGTH = 3
  * - Size does not take into account indentation that can be applied to JSON.stringify
  * - Non-numerical properties of Arrays are ignored. Same behavior as JSON.stringify
  *
- * @param source              User-provided data meant to be serialized using JSON.stringify
- * @param maxCharacterCount   Maximum number of characters allowed in serialized form
+ * @param source              - User-provided data meant to be serialized using JSON.stringify
+ * @param maxCharacterCount   - Maximum number of characters allowed in serialized form
  */
 export function sanitize(source: string, maxCharacterCount?: number): string | undefined
 export function sanitize(source: Context, maxCharacterCount?: number): Context

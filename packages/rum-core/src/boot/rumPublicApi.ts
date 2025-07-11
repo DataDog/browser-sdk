@@ -66,6 +66,8 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser) for further information.
    *
+   * @category Init
+   * @param initConfiguration - Configuration options of the SDK
    * @example Init RUM Browser SDK example
    * ```ts
    * datadogRum.init({
@@ -82,8 +84,6 @@ export interface RumPublicApi extends PublicApi {
    *   trackUserInteractions: true,
    * })
    * ```
-   * @category Init
-   * @param initConfiguration - Configuration options of the SDK
    */
   init(initConfiguration: RumInitConfiguration): void
 
@@ -122,7 +122,6 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category View
    * @param context - Context of the view
-   *
    */
   setViewContext(context: any): void
   /**
@@ -131,8 +130,8 @@ export interface RumPublicApi extends PublicApi {
    * Enable to manually set a property of the context of the current view.
    *
    * @category View
-   * @param key key of the property
-   * @param value value of the property
+   * @param key - key of the property
+   * @param value - value of the property
    */
   setViewContextProperty(key: string, value: any): void
 
@@ -176,7 +175,6 @@ export interface RumPublicApi extends PublicApi {
    * @category Custom Errors
    * @param error - Error. Favor sending a [Javascript Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) to have a stack trace attached to the error event.
    * @param context - Context of the error
-   *
    */
   addError(error: unknown, context?: object): void
 
@@ -191,7 +189,6 @@ export interface RumPublicApi extends PublicApi {
    * @category Custom Timings
    * @param name - Name of the custom timing
    * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
-   *
    */
   addTiming(name: string, time?: number): void
 
@@ -201,7 +198,6 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Global Context
    * @param context - Global context
-   *
    */
   setGlobalContext(context: any): void
 
@@ -250,7 +246,6 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category User
    * @param newUser - User information
-   *
    */
   setUser(newUser: User & { id: string }): void
 
@@ -281,7 +276,6 @@ export interface RumPublicApi extends PublicApi {
    * @category User
    * @param key - Key of the property
    * @param property - Value of the property
-   *
    */
   setUserProperty(key: any, property: any): void
 
@@ -351,7 +345,6 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category View
    * @param nameOrOptions - Name or options (name, service, version) for the view
-   *
    */
   startView(nameOrOptions?: string | ViewOptions): void
 
@@ -372,7 +365,6 @@ export interface RumPublicApi extends PublicApi {
    *
    * @param key - The key of the feature flag.
    * @param value - The value of the feature flag.
-   *
    */
   addFeatureFlagEvaluation(key: string, value: any): void
 
@@ -436,48 +428,49 @@ export interface RumPublicApi extends PublicApi {
 }
 
 export interface RecorderApi {
-  start: (options?: StartRecordingOptions) => void
-  stop: () => void
-  onRumStart: (
+  start(this: void, options?: StartRecordingOptions): void
+  stop(this: void): void
+  onRumStart(
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined
-  ) => void
-  isRecording: () => boolean
-  getReplayStats: (viewId: string) => ReplayStats | undefined
-  getSessionReplayLink: () => string | undefined
+  ): void
+  isRecording(): boolean
+  getReplayStats(viewId: string): ReplayStats | undefined
+  getSessionReplayLink(this: void): string | undefined
 }
 
 export interface ProfilerApi {
-  stop: () => void
-  onRumStart: (
+  stop(): void
+  onRumStart(
     lifeCycle: LifeCycle,
     hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
-  ) => void
+  ): void
 }
 
 export interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
-  startDeflateWorker?: (
+  startDeflateWorker?(
+    this: void,
     configuration: RumConfiguration,
     source: string,
     onInitializationFailure: () => void
-  ) => DeflateWorker | undefined
-  createDeflateEncoder?: (
+  ): DeflateWorker | undefined
+  createDeflateEncoder?(
     configuration: RumConfiguration,
     worker: DeflateWorker,
     streamId: DeflateEncoderStreamId
-  ) => DeflateEncoder
+  ): DeflateEncoder
   sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
 }
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
+  init(initConfiguration: RumInitConfiguration, publicApi: RumPublicApi): void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']

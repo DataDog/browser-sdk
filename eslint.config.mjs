@@ -229,6 +229,33 @@ export default tseslint.config(
 
       'jsdoc/check-alignment': 'error',
       'jsdoc/check-indentation': 'error',
+      'jsdoc/sort-tags': [
+        'error',
+        {
+          tagSequence: [
+            {
+              linesBetween: 0,
+              tags: [
+                'category',
+                'packageDocumentation',
+                'internal',
+                'deprecated',
+                'experimental',
+                'defaultValue',
+                'param',
+                'return',
+                'returns',
+                'see',
+                'example',
+              ],
+            },
+          ],
+        },
+      ],
+      'jsdoc/require-description': 'error',
+      'jsdoc/require-param-description': 'error',
+      'jsdoc/require-hyphen-before-param-description': 'error',
+      'jsdoc/tag-lines': ['error', 'any', { startLines: 1 }],
 
       'local-rules/disallow-test-import-export-from-src': 'error',
       'local-rules/disallow-generic-utils': 'error',

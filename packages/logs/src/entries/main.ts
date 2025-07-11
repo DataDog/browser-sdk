@@ -1,9 +1,10 @@
 /**
- * @packageDocumentation
+ *
  * Datadog Browser Logs SDK for collecting and forwarding browser logs to Datadog.
  * Provides comprehensive logging capabilities with automatic error tracking and custom log collection.
  *
- * @see {@link https://docs.datadoghq.com/logs/log_collection/javascript/ | Browser Log Collection}
+ * @packageDocumentation
+ * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
@@ -47,7 +48,7 @@ export type {
 /**
  * The global Logs instance. Use this to call Logs methods.
  *
- * @see {@link https://docs.datadoghq.com/logs/log_collection/javascript/ | Browser Log Collection}
+ * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 export const datadogLogs = makeLogsPublicApi(startLogs)
 
