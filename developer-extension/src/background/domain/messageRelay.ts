@@ -29,12 +29,12 @@ const CONTENT_SCRIPTS: Array<{
 }> = [
   {
     id: 'browser-sdk-content-script-main',
-    world: 'MAIN',
+    world: chrome.scripting.ExecutionWorld.MAIN,
     file: './content-script-main.js',
   },
   {
     id: 'browser-sdk-content-script-isolated',
-    world: 'ISOLATED',
+    world: chrome.scripting.ExecutionWorld.ISOLATED,
     file: './content-script-isolated.js',
   },
 ]
