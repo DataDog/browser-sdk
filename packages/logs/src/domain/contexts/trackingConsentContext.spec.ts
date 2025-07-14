@@ -1,5 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DISCARDED, HookNames, createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
+import { DISCARDED, HookNames, createTrackingConsentState, TrackingConsent, SKIPPED } from '@datadog/browser-core'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startTrackingConsentContext } from './trackingConsentContext'
@@ -30,7 +30,7 @@ describe('tracking consent context', () => {
       startTime: undefined as any,
     }) as DefaultLogsEventAttributes
 
-    expect(defaultLogAttributes).toEqual({})
+    expect(defaultLogAttributes).toBeUndefined()
   })
 
   it('should not discard logs when startTime is provided (due to empty history)', () => {
@@ -41,7 +41,7 @@ describe('tracking consent context', () => {
       startTime: 100 as RelativeTime,
     })
 
-    expect(defaultLogAttributes).toEqual({})
+    expect(defaultLogAttributes).toBeUndefined()
   })
 
   it('should discard logs when startTime is provided and consent was not granted initially', () => {
