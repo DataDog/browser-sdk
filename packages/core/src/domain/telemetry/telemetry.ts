@@ -22,6 +22,7 @@ import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
+import type { TrackingConsentState } from '../trackingConsent'
 import { HookNames } from '../../tools/abstractHooks'
 import type { AbstractHooks } from '../../tools/abstractHooks'
 import type { TelemetryEvent } from './telemetryEvent.types'
@@ -70,11 +71,19 @@ export function startTelemetry(
   hooks: AbstractHooks,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  trackingConsentState: TrackingConsentState
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
 
-  const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
+  const { stop } = startTelemetryTransport(
+    configuration,
+    reportError,
+    pageMayExitObservable,
+    createEncoder,
+    observable,
+    trackingConsentState
+  )
 
   const { enabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
 
@@ -160,7 +169,8 @@ function startTelemetryTransport(
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-  telemetryObservable: Observable<TelemetryEvent & Context>
+  telemetryObservable: Observable<TelemetryEvent & Context>,
+  trackingConsentState: TrackingConsentState
 ) {
   const cleanupTasks: Array<() => void> = []
   if (canUseEventBridge()) {
@@ -186,9 +196,11 @@ function startTelemetryTransport(
       new Observable()
     )
     cleanupTasks.push(() => telemetryBatch.stop())
-    const telemetrySubscription = telemetryObservable.subscribe((event) =>
-      telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
-    )
+    const telemetrySubscription = telemetryObservable.subscribe((event) => {
+      if (trackingConsentState.isGranted()) {
+        telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
+      }
+    })
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
 
