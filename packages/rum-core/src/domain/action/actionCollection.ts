@@ -11,6 +11,7 @@ import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
+import { createActionAllowList } from './privacy/allowedDictionary'
 
 export type { ActionContexts }
 
@@ -31,8 +32,13 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+  const actionNameDictionary = createActionAllowList()
+
+  const { unsubscribe: unsubscribeAutoActionCompleted } = lifeCycle.subscribe(
+    LifeCycleEventType.AUTO_ACTION_COMPLETED,
+    (action) => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    }
   )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
@@ -63,7 +69,8 @@ export function startActionCollection(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
-      configuration
+      configuration,
+      actionNameDictionary
     ))
   }
 
@@ -72,7 +79,11 @@ export function startActionCollection(
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
     },
     actionContexts,
-    stop,
+    stop: () => {
+      actionNameDictionary.clear()
+      unsubscribeAutoActionCompleted()
+      stop()
+    },
   }
 }
 
@@ -104,6 +115,7 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
         },
       }
     : undefined
+
   const actionEvent: RawRumActionEvent = combine(
     {
       action: { id: generateUUID(), target: { name: action.name }, type: action.type },
