@@ -17,13 +17,13 @@ export interface ValueHistoryEntry<T> {
 export const CLEAR_OLD_VALUES_INTERVAL = ONE_MINUTE
 
 /**
- * Store and keep track of values spans. This whole cache assumes that values are added in
- * chronological order (i.e. all entries have an increasing start time).
+ * Store and keep track of values spans. Entries are automatically sorted by start time
+ * to maintain chronological order regardless of insertion order.
  */
 export interface ValueHistory<Value> {
   add: (value: Value, startTime: RelativeTime) => ValueHistoryEntry<Value>
   find: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => Value | undefined
-
+  entries: Array<ValueHistoryEntry<Value>>
   closeActive: (endTime: RelativeTime) => void
   findAll: (startTime?: RelativeTime, duration?: Duration) => Value[]
   reset: () => void
@@ -62,7 +62,8 @@ export function createValueHistory<Value>({
 
   /**
    * Add a value to the history associated with a start time. Returns a reference to this newly
-   * added entry that can be removed or closed.
+   * added entry that can be removed or closed. Entries are inserted in chronological order
+   * by start time.
    */
   function add(value: Value, startTime: RelativeTime): ValueHistoryEntry<Value> {
     const entry: ValueHistoryEntry<Value> = {
@@ -81,7 +82,13 @@ export function createValueHistory<Value>({
       entries.pop()
     }
 
-    entries.unshift(entry)
+    // Find the correct position to insert the entry to maintain chronological order
+    let insertIndex = 0
+    while (insertIndex < entries.length && entries[insertIndex].startTime > startTime) {
+      insertIndex++
+    }
+
+    entries.splice(insertIndex, 0, entry)
 
     return entry
   }
@@ -147,5 +154,5 @@ export function createValueHistory<Value>({
     }
   }
 
-  return { add, find, closeActive, findAll, reset, stop }
+  return { add, entries, find, closeActive, findAll, reset, stop }
 }

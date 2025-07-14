@@ -177,4 +177,18 @@ describe('valueHistory', () => {
     expect(values.length).toEqual(5)
     expect(values).toEqual(['5', '4', '3', '2', '1'])
   })
+
+  it('should handle entries added in unordered time sequence', () => {
+    valueHistory.add('third', 10 as RelativeTime).close(15 as RelativeTime)
+    valueHistory.add('first', 0 as RelativeTime).close(5 as RelativeTime)
+    valueHistory.add('second', 5 as RelativeTime).close(10 as RelativeTime)
+
+    // Entries should be automatically sorted by start time, so queries work correctly
+    expect(valueHistory.find(2 as RelativeTime)).toEqual('first')
+    expect(valueHistory.find(7 as RelativeTime)).toEqual('second')
+    expect(valueHistory.find(12 as RelativeTime)).toEqual('third')
+
+    // Test findAll with unordered entries - should return in chronological order
+    expect(valueHistory.findAll(0 as RelativeTime, 15 as Duration)).toEqual(['third', 'second', 'first'])
+  })
 })
