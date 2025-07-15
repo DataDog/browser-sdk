@@ -2,7 +2,7 @@ import type { RumPublicApi, Strategy } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
 import type { RumInitConfiguration } from './configuration'
 
-interface OnRumStartOptions {
+export interface OnRumStartOptions {
   /**
    * @deprecated Use `addEvent` instead.
    */
