@@ -14,7 +14,10 @@ export type AnyUseRoute<Location extends AnyLocation> = (
   routes: AnyRouteObject[],
   location?: Location
 ) => React.ReactElement | null
-export interface AnyRouteMatch { route: AnyRouteObject; params: Record<string, string | undefined> }
+export interface AnyRouteMatch {
+  route: AnyRouteObject
+  params: Record<string, string | undefined>
+}
 export type AnyLocation = { pathname: string } | string
 export type AnyCreateRouter<Options> = (
   routes: AnyRouteObject[],
