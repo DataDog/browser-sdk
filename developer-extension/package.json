@@ -4,18 +4,25 @@
   "private": true,
   "scripts": {
     "build": "rm -rf dist && webpack --mode production",
-    "dev": "webpack --mode development --watch"
+    "dev": "webpack --mode development --watch",
+    "dev:panel": "rm -rf dist && webpack --mode development && webpack serve --mode development --config-name=panel --hot"
   },
   "devDependencies": {
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@types/chrome": "0.1.0",
     "@types/react": "19.1.8",
     "@types/react-dom": "19.1.6",
+    "@types/webpack-env": "^1.18.4",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
     "copy-webpack-plugin": "13.0.0",
     "css-loader": "7.1.2",
     "html-webpack-plugin": "5.6.3",
+    "react-refresh": "^0.14.2",
+    "react-refresh-typescript": "^2.0.9",
     "style-loader": "4.0.0",
-    "webpack": "5.100.1"
+    "webpack": "5.100.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
   },
   "dependencies": {
     "@datadog/browser-core": "workspace:*",
