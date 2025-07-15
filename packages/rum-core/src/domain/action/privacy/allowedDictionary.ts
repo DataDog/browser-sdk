@@ -17,7 +17,7 @@ type UnicodeRegexes = {
 // Cache regex compilation and browser support detection
 let cachedRegexes: UnicodeRegexes | undefined
 
-function getOrInitRegexes(): UnicodeRegexes | undefined {
+export function getOrInitRegexes(): UnicodeRegexes | undefined {
   if (cachedRegexes !== undefined) {
     return cachedRegexes
   }
@@ -109,6 +109,20 @@ export function processRawAllowList(rawAllowlist: Set<string> | undefined, dicti
   }
 }
 
+export function maskTextContent(text: string, processedAllowlist: Set<string>, regexes: UnicodeRegexes): {maskedText: string, hasBeenMasked: boolean} {
+  let hasBeenMasked = false
+
+  const maskedText = text.replace(regexes.splitRegex, (segment: string) => {
+    if (!processedAllowlist.has(segment.toLowerCase())) {
+      hasBeenMasked = true
+      return TEXT_MASKING_CHAR.repeat(segment.length)
+    }
+    return segment
+  })
+
+  return {maskedText, hasBeenMasked}
+}
+
 export function maskActionName(
   actionName: ClickActionBase,
   nodeSelfPrivacy: NodePrivacyLevel,
@@ -118,7 +132,8 @@ export function maskActionName(
     return actionName
   } else if (nodeSelfPrivacy !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED && (!window.$DD_ALLOW || !window.$DD_ALLOW.size)) {
     return actionName
-  }
+  } // if the privacy level is MASK or MASK_USER_INPUT and the allowlist is present, we continue of masking the action name
+
 
   const { name, nameSource } = actionName
   const regexes = getOrInitRegexes()
@@ -131,19 +146,11 @@ export function maskActionName(
     }
   }
 
-  let hasBeenMasked = false
-
-  const maskedName = name.replace(regexes.splitRegex, (segment: string) => {
-    if (!processedAllowlist.has(segment.toLowerCase())) {
-      hasBeenMasked = true
-      return TEXT_MASKING_CHAR.repeat(segment.length)
-    }
-    return segment
-  })
+  const maskedName = maskTextContent(name, processedAllowlist, regexes)
 
   return {
     ...actionName,
-    name: maskedName,
-    nameSource: hasBeenMasked ? ActionNameSource.MASK_DISALLOWED : nameSource,
+    name: maskedName.maskedText,
+    nameSource: maskedName.hasBeenMasked ? ActionNameSource.MASK_DISALLOWED : nameSource,
   }
 }

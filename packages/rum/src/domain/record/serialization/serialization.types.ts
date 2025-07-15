@@ -9,6 +9,7 @@ type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.ALLOW
   | typeof NodePrivacyLevel.MASK
   | typeof NodePrivacyLevel.MASK_USER_INPUT
+  | typeof NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
 
 export const enum SerializationContextStatus {
   INITIAL_FULL_SNAPSHOT,

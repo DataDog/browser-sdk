@@ -24,6 +24,7 @@ export interface CustomAction {
 }
 
 export type AutoAction = ClickAction
+export const actionNameDictionary = createActionAllowList()
 
 export function startActionCollection(
   lifeCycle: LifeCycle,
@@ -32,7 +33,6 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  const actionNameDictionary = createActionAllowList()
 
   const { unsubscribe: unsubscribeAutoActionCompleted } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,

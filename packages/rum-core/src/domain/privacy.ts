@@ -1,5 +1,7 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
+import { getOrInitRegexes, maskTextContent } from './action/privacy/allowedDictionary'
+import { actionNameDictionary } from './action/actionCollection'
 
 export const NodePrivacyLevel = {
   IGNORE: 'ignore',
@@ -136,7 +138,7 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
   }
 
   if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED))) {
-    return NodePrivacyLevel.MASK
+    return NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
   }
 
   if (node.matches(getPrivacySelector(NodePrivacyLevel.ALLOW))) {
@@ -233,6 +235,11 @@ export function getTextContent(
     } else if (parentTagName === 'OPTION') {
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
+    } else if(nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
+      const regexes = getOrInitRegexes()
+      if (regexes) {
+        textContent = maskTextContent(textContent, actionNameDictionary.allowlist, regexes).maskedText
+      }
     } else {
       textContent = censorText(textContent)
     }
