@@ -5,7 +5,8 @@ import { ONE_MEBI_BYTE, ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { isServerError } from '../tools/utils/responseUtils'
 import type { RawError } from '../domain/error/error.types'
 import { ErrorSource } from '../domain/error/error.types'
-import type { Payload, HttpResponse } from './httpRequest'
+import type { Observable } from '../tools/observable'
+import type { Payload, HttpRequestEvent, HttpResponse, BandwidthStats } from './httpRequest'
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 export const MAX_ONGOING_REQUESTS = 32
@@ -24,69 +25,77 @@ const enum RetryReason {
   AFTER_RESUME,
 }
 
-export interface RetryState {
+export interface RetryState<Body extends Payload> {
   transportStatus: TransportStatus
   currentBackoffTime: number
   bandwidthMonitor: ReturnType<typeof newBandwidthMonitor>
-  queuedPayloads: ReturnType<typeof newPayloadQueue>
+  queuedPayloads: ReturnType<typeof newPayloadQueue<Body>>
   queueFullReported: boolean
 }
 
-type SendStrategy = (payload: Payload, onResponse: (r: HttpResponse) => void) => void
+type SendStrategy<Body extends Payload> = (payload: Body, onResponse: (r: HttpResponse) => void) => void
 
-export function sendWithRetryStrategy(
-  payload: Payload,
-  state: RetryState,
-  sendStrategy: SendStrategy,
+export function sendWithRetryStrategy<Body extends Payload>(
+  payload: Body,
+  state: RetryState<Body>,
+  sendStrategy: SendStrategy<Body>,
   trackType: TrackType,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  observable: Observable<HttpRequestEvent<Body>>
 ) {
   if (
     state.transportStatus === TransportStatus.UP &&
     state.queuedPayloads.size() === 0 &&
     state.bandwidthMonitor.canHandle(payload)
   ) {
-    send(payload, state, sendStrategy, {
-      onSuccess: () => retryQueuedPayloads(RetryReason.AFTER_SUCCESS, state, sendStrategy, trackType, reportError),
+    send(payload, state, sendStrategy, observable, {
+      onSuccess: () =>
+        retryQueuedPayloads(RetryReason.AFTER_SUCCESS, state, sendStrategy, trackType, reportError, observable),
       onFailure: () => {
-        state.queuedPayloads.enqueue(payload)
-        scheduleRetry(state, sendStrategy, trackType, reportError)
+        if (!state.queuedPayloads.enqueue(payload)) {
+          observable.notify({ type: 'queue-full', bandwidth: state.bandwidthMonitor.stats(), payload })
+        }
+        scheduleRetry(state, sendStrategy, trackType, reportError, observable)
       },
     })
   } else {
-    state.queuedPayloads.enqueue(payload)
+    if (!state.queuedPayloads.enqueue(payload)) {
+      observable.notify({ type: 'queue-full', bandwidth: state.bandwidthMonitor.stats(), payload })
+    }
   }
 }
 
-function scheduleRetry(
-  state: RetryState,
-  sendStrategy: SendStrategy,
+function scheduleRetry<Body extends Payload>(
+  state: RetryState<Body>,
+  sendStrategy: SendStrategy<Body>,
   trackType: TrackType,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  observable: Observable<HttpRequestEvent<Body>>
 ) {
   if (state.transportStatus !== TransportStatus.DOWN) {
     return
   }
   setTimeout(() => {
     const payload = state.queuedPayloads.first()
-    send(payload, state, sendStrategy, {
+    send(payload, state, sendStrategy, observable, {
       onSuccess: () => {
         state.queuedPayloads.dequeue()
         state.currentBackoffTime = INITIAL_BACKOFF_TIME
-        retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, trackType, reportError)
+        retryQueuedPayloads(RetryReason.AFTER_RESUME, state, sendStrategy, trackType, reportError, observable)
       },
       onFailure: () => {
         state.currentBackoffTime = Math.min(MAX_BACKOFF_TIME, state.currentBackoffTime * 2)
-        scheduleRetry(state, sendStrategy, trackType, reportError)
+        scheduleRetry(state, sendStrategy, trackType, reportError, observable)
       },
     })
   }, state.currentBackoffTime)
 }
 
-function send(
-  payload: Payload,
-  state: RetryState,
-  sendStrategy: SendStrategy,
+function send<Body extends Payload>(
+  payload: Body,
+  state: RetryState<Body>,
+  sendStrategy: SendStrategy<Body>,
+  observable: Observable<HttpRequestEvent<Body>>,
   { onSuccess, onFailure }: { onSuccess: () => void; onFailure: () => void }
 ) {
   state.bandwidthMonitor.add(payload)
@@ -94,6 +103,7 @@ function send(
     state.bandwidthMonitor.remove(payload)
     if (!shouldRetryRequest(response)) {
       state.transportStatus = TransportStatus.UP
+      observable.notify({ type: 'success', bandwidth: state.bandwidthMonitor.stats(), payload })
       onSuccess()
     } else {
       // do not consider transport down if another ongoing request could succeed
@@ -103,17 +113,19 @@ function send(
         count: payload.retry ? payload.retry.count + 1 : 1,
         lastFailureStatus: response.status,
       }
+      observable.notify({ type: 'failure', bandwidth: state.bandwidthMonitor.stats(), payload })
       onFailure()
     }
   })
 }
 
-function retryQueuedPayloads(
+function retryQueuedPayloads<Body extends Payload>(
   reason: RetryReason,
-  state: RetryState,
-  sendStrategy: SendStrategy,
+  state: RetryState<Body>,
+  sendStrategy: SendStrategy<Body>,
   trackType: TrackType,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  observable: Observable<HttpRequestEvent<Body>>
 ) {
   if (reason === RetryReason.AFTER_SUCCESS && state.queuedPayloads.isFull() && !state.queueFullReported) {
     reportError({
@@ -126,7 +138,7 @@ function retryQueuedPayloads(
   const previousQueue = state.queuedPayloads
   state.queuedPayloads = newPayloadQueue()
   while (previousQueue.size() > 0) {
-    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy, trackType, reportError)
+    sendWithRetryStrategy(previousQueue.dequeue()!, state, sendStrategy, trackType, reportError, observable)
   }
 }
 
@@ -140,7 +152,7 @@ function shouldRetryRequest(response: HttpResponse) {
   )
 }
 
-export function newRetryState(): RetryState {
+export function newRetryState<Body extends Payload>(): RetryState<Body> {
   return {
     transportStatus: TransportStatus.UP,
     currentBackoffTime: INITIAL_BACKOFF_TIME,
@@ -150,16 +162,17 @@ export function newRetryState(): RetryState {
   }
 }
 
-function newPayloadQueue() {
-  const queue: Payload[] = []
+function newPayloadQueue<Body extends Payload>() {
+  const queue: Body[] = []
   return {
     bytesCount: 0,
-    enqueue(payload: Payload) {
+    enqueue(payload: Body) {
       if (this.isFull()) {
-        return
+        return false
       }
       queue.push(payload)
       this.bytesCount += payload.bytesCount
+      return true
     },
     first() {
       return queue[0]
@@ -198,6 +211,12 @@ function newBandwidthMonitor() {
     remove(payload: Payload) {
       this.ongoingRequestCount -= 1
       this.ongoingByteCount -= payload.bytesCount
+    },
+    stats(): BandwidthStats {
+      return {
+        ongoingByteCount: this.ongoingByteCount,
+        ongoingRequestCount: this.ongoingRequestCount,
+      }
     },
   }
 }

@@ -10,46 +10,50 @@ import type { ShadowRootsController } from './shadowRootsController'
 describe('startFullSnapshots', () => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
   let lifeCycle: LifeCycle
-  let fullSnapshotCallback: jasmine.Spy<(records: BrowserRecord[]) => void>
+  let emitCallback: jasmine.Spy<(record: BrowserRecord) => void>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    fullSnapshotCallback = jasmine.createSpy()
+    emitCallback = jasmine.createSpy()
     startFullSnapshots(
       createElementsScrollPositions(),
       {} as ShadowRootsController,
       lifeCycle,
       {} as RumConfiguration,
       noop,
-      fullSnapshotCallback
+      emitCallback
     )
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {
-    expect(fullSnapshotCallback).toHaveBeenCalledTimes(1)
+    expect(emitCallback).toHaveBeenCalled()
   })
 
   it('takes a full snapshot when the view changes', () => {
+    emitCallback.calls.reset()
+
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,
     } as Partial<ViewCreatedEvent> as any)
 
-    expect(fullSnapshotCallback).toHaveBeenCalledTimes(2)
+    expect(emitCallback).toHaveBeenCalled()
   })
 
   it('full snapshot related records should have the view change date', () => {
+    emitCallback.calls.reset()
+
     lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, {
       startClocks: viewStartClock,
     } as Partial<ViewCreatedEvent> as any)
 
-    const records = fullSnapshotCallback.calls.mostRecent().args[0]
+    const records = emitCallback.calls.allArgs().map((args) => args[0])
     expect(records[0].timestamp).toEqual(1)
     expect(records[1].timestamp).toEqual(1)
     expect(records[2].timestamp).toEqual(1)
   })
 
   it('full snapshot records should contain Meta, Focus, FullSnapshot', () => {
-    const records = fullSnapshotCallback.calls.mostRecent().args[0]
+    const records = emitCallback.calls.allArgs().map((args) => args[0])
 
     expect(records).toEqual(
       jasmine.arrayContaining([
@@ -88,16 +92,12 @@ describe('startFullSnapshots', () => {
     if (!window.visualViewport) {
       pending('visualViewport not supported')
     }
-    const records = fullSnapshotCallback.calls.mostRecent().args[0]
+    const record = emitCallback.calls.mostRecent().args[0]
 
-    expect(records).toEqual(
-      jasmine.arrayContaining([
-        {
-          data: jasmine.any(Object),
-          type: RecordType.VisualViewport,
-          timestamp: jasmine.any(Number),
-        },
-      ])
-    )
+    expect(record).toEqual({
+      data: jasmine.any(Object),
+      type: RecordType.VisualViewport,
+      timestamp: jasmine.any(Number),
+    })
   })
 })

@@ -13,6 +13,7 @@ import { createSegment } from './segment'
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD_TIMESTAMP = 10 as TimeStamp
 const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
+const RECORD_STATS = { cssText: { count: 0, max: 0, sum: 0 } }
 const FULL_SNAPSHOT_RECORD: BrowserRecord = {
   type: RecordType.FullSnapshot,
   timestamp: RECORD_TIMESTAMP,
@@ -43,7 +44,7 @@ describe('Segment', () => {
     const addRecordCallbackSpy = jasmine.createSpy<AddRecordCallback>()
     const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
     const segment = createTestSegment()
-    segment.addRecord(RECORD, addRecordCallbackSpy)
+    segment.addRecord(RECORD, RECORD_STATS, addRecordCallbackSpy)
 
     worker.processAllMessages()
     expect(addRecordCallbackSpy).toHaveBeenCalledTimes(1)
@@ -54,7 +55,7 @@ describe('Segment', () => {
     expect(addRecordCallbackSpy).toHaveBeenCalledTimes(1)
     expect(flushCallbackSpy).toHaveBeenCalledTimes(1)
 
-    expect(parseSegment(flushCallbackSpy.calls.mostRecent().args[1].output)).toEqual({
+    expect(parseSegment(flushCallbackSpy.calls.mostRecent().args[2].output)).toEqual({
       source: 'browser' as const,
       creation_reason: 'init' as const,
       end: 10,
@@ -75,7 +76,7 @@ describe('Segment', () => {
   it('compressed bytes count is updated when a record is added', () => {
     const addRecordCallbackSpy = jasmine.createSpy<AddRecordCallback>()
     const segment = createTestSegment()
-    segment.addRecord(RECORD, addRecordCallbackSpy)
+    segment.addRecord(RECORD, RECORD_STATS, addRecordCallbackSpy)
     worker.processAllMessages()
     expect(addRecordCallbackSpy).toHaveBeenCalledOnceWith(
       ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT
@@ -85,7 +86,7 @@ describe('Segment', () => {
   it('calls the flush callback with metadata and encoder output as argument', () => {
     const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
     const segment = createTestSegment()
-    segment.addRecord(RECORD, noop)
+    segment.addRecord(RECORD, RECORD_STATS, noop)
     segment.flush(flushCallbackSpy)
     worker.processAllMessages()
     expect(flushCallbackSpy).toHaveBeenCalledOnceWith(
@@ -99,6 +100,7 @@ describe('Segment', () => {
         records_count: 1,
         ...CONTEXT,
       },
+      RECORD_STATS,
       {
         output: jasmine.any(Uint8Array) as unknown as Uint8Array,
         outputBytesCount:
@@ -116,16 +118,16 @@ describe('Segment', () => {
     const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
 
     const segment1 = createTestSegment({ creationReason: 'init' })
-    segment1.addRecord(RECORD, noop)
+    segment1.addRecord(RECORD, RECORD_STATS, noop)
     segment1.flush(flushCallbackSpy)
 
     const segment2 = createTestSegment({ creationReason: 'segment_duration_limit' })
-    segment2.addRecord(FULL_SNAPSHOT_RECORD, noop)
+    segment2.addRecord(FULL_SNAPSHOT_RECORD, RECORD_STATS, noop)
     segment2.flush(flushCallbackSpy)
 
     worker.processAllMessages()
-    expect(parseSegment(flushCallbackSpy.calls.argsFor(0)[1].output).records.length).toBe(1)
-    expect(parseSegment(flushCallbackSpy.calls.argsFor(1)[1].output).records.length).toBe(1)
+    expect(parseSegment(flushCallbackSpy.calls.argsFor(0)[2].output).records.length).toBe(1)
+    expect(parseSegment(flushCallbackSpy.calls.argsFor(1)[2].output).records.length).toBe(1)
   })
 
   it('throws when trying to flush an empty segment', () => {
@@ -138,8 +140,8 @@ describe('Segment', () => {
       let segment: Segment
       beforeEach(() => {
         segment = createTestSegment()
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }, noop)
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }, RECORD_STATS, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 15 as TimeStamp }, RECORD_STATS, noop)
       })
 
       it('does increment records_count', () => {
@@ -151,7 +153,7 @@ describe('Segment', () => {
       })
 
       it('does change the start timestamp when receiving an earlier record', () => {
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment).start).toBe(5)
       })
 
@@ -160,7 +162,7 @@ describe('Segment', () => {
       })
 
       it('does not change the end timestamp when receiving an earlier record', () => {
-        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, noop)
+        segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment).end).toBe(15)
       })
     })
@@ -168,20 +170,20 @@ describe('Segment', () => {
     describe('has_full_snapshot', () => {
       it('sets has_full_snapshot to false if a segment has a no FullSnapshot', () => {
         const segment = createTestSegment()
-        segment.addRecord(RECORD, noop)
+        segment.addRecord(RECORD, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment).has_full_snapshot).toEqual(false)
       })
 
       it('sets has_full_snapshot to true if a segment has a FullSnapshot', () => {
         const segment = createTestSegment()
-        segment.addRecord(FULL_SNAPSHOT_RECORD, noop)
+        segment.addRecord(FULL_SNAPSHOT_RECORD, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment).has_full_snapshot).toEqual(true)
       })
 
       it("doesn't overrides has_full_snapshot to false once it has been set to true", () => {
         const segment = createTestSegment()
-        segment.addRecord(FULL_SNAPSHOT_RECORD, noop)
-        segment.addRecord(RECORD, noop)
+        segment.addRecord(FULL_SNAPSHOT_RECORD, RECORD_STATS, noop)
+        segment.addRecord(RECORD, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment).has_full_snapshot).toEqual(true)
       })
     })
@@ -189,25 +191,25 @@ describe('Segment', () => {
     describe('index_in_view', () => {
       it('increments index_in_view every time a segment is created for the same view', () => {
         const segment1 = createTestSegment()
-        segment1.addRecord(RECORD, noop)
+        segment1.addRecord(RECORD, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment1).index_in_view).toBe(0)
 
         const segment2 = createTestSegment()
-        segment2.addRecord(RECORD, noop)
+        segment2.addRecord(RECORD, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment2).index_in_view).toBe(1)
 
         const segment3 = createTestSegment()
-        segment3.addRecord(RECORD, noop)
+        segment3.addRecord(RECORD, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment3).index_in_view).toBe(2)
       })
 
       it('resets segments_count when creating a segment for a new view', () => {
         const segment1 = createTestSegment()
-        segment1.addRecord(RECORD, noop)
+        segment1.addRecord(RECORD, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment1).index_in_view).toBe(0)
 
         const segment2 = createTestSegment({ context: { ...CONTEXT, view: { id: 'view-2' } } })
-        segment2.addRecord(RECORD, noop)
+        segment2.addRecord(RECORD, RECORD_STATS, noop)
         expect(flushAndGetMetadata(segment2).index_in_view).toBe(0)
       })
     })
@@ -241,7 +243,7 @@ describe('Segment', () => {
 
     it('when flushing a segment', () => {
       const segment = createTestSegment()
-      segment.addRecord(RECORD, noop)
+      segment.addRecord(RECORD, RECORD_STATS, noop)
       segment.flush(noop)
       worker.processAllMessages()
       expect(getReplayStats('b')).toEqual(

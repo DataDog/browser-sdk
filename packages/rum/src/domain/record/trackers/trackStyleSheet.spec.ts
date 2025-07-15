@@ -1,5 +1,5 @@
 import { isFirefox, registerCleanupTask } from '@datadog/browser-core/test'
-import { serializeDocument, SerializationContextStatus } from '../serialization'
+import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { StyleSheetCallback } from './trackStyleSheet'
@@ -21,6 +21,7 @@ describe('trackStyleSheet', () => {
     styleSheet = styleElement.sheet!
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
+      serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),

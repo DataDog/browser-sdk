@@ -11,7 +11,7 @@ import {
 import { createMutationPayloadValidator } from '../../../../test'
 import type { AttributeMutation, Attributes, BrowserMutationPayload } from '../../../types'
 import { NodeType } from '../../../types'
-import { serializeDocument, SerializationContextStatus } from '../serialization'
+import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { appendElement, appendText } from '../../../../../rum-core/test'
@@ -56,6 +56,7 @@ describe('trackMutation', () => {
         defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
       } as RumConfiguration,
       {
+        serializationStats: createSerializationStats(),
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
         elementsScrollPositions: createElementsScrollPositions(),

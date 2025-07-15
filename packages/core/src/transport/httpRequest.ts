@@ -2,6 +2,7 @@ import type { EndpointBuilder } from '../domain/configuration'
 import type { Context } from '../tools/serialisation/context'
 import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
+import { Observable } from '../tools/observable'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
 /**
@@ -13,12 +14,41 @@ import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
  * to be parsed correctly without content type header
  */
 
-export type HttpRequest = ReturnType<typeof createHttpRequest>
+export interface HttpRequest<Body extends Payload = Payload> {
+  observable: Observable<HttpRequestEvent<Body>>
+  send(this: void, payload: Body): void
+  sendOnExit(this: void, payload: Body): void
+}
 
 export interface HttpResponse extends Context {
   status: number
   type?: ResponseType
 }
+
+export interface BandwidthStats {
+  ongoingByteCount: number
+  ongoingRequestCount: number
+}
+
+export type HttpRequestEvent<Body extends Payload = Payload> =
+  | {
+      // A request to send the given payload failed. (We may retry.)
+      type: 'failure'
+      bandwidth: BandwidthStats
+      payload: Body
+    }
+  | {
+      // The given payload was discarded because the request queue is full.
+      type: 'queue-full'
+      bandwidth: BandwidthStats
+      payload: Body
+    }
+  | {
+      // A request to send the given payload succeeded.
+      type: 'success'
+      bandwidth: BandwidthStats
+      payload: Body
+    }
 
 export interface Payload {
   data: string | FormData | Blob
@@ -32,24 +62,33 @@ export interface RetryInfo {
   lastFailureStatus: number
 }
 
-export function createHttpRequest(
+export function createHttpRequest<Body extends Payload = Payload>(
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   reportError: (error: RawError) => void
-) {
-  const retryState = newRetryState()
-  const sendStrategyForRetry = (payload: Payload, onResponse: (r: HttpResponse) => void) =>
+): HttpRequest<Body> {
+  const observable = new Observable<HttpRequestEvent<Body>>()
+  const retryState = newRetryState<Body>()
+  const sendStrategyForRetry = (payload: Body, onResponse: (r: HttpResponse) => void) =>
     fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
 
   return {
-    send: (payload: Payload) => {
-      sendWithRetryStrategy(payload, retryState, sendStrategyForRetry, endpointBuilder.trackType, reportError)
+    observable,
+    send: (payload: Body) => {
+      sendWithRetryStrategy(
+        payload,
+        retryState,
+        sendStrategyForRetry,
+        endpointBuilder.trackType,
+        reportError,
+        observable
+      )
     },
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,
      * keep using sendBeaconStrategy on exit
      */
-    sendOnExit: (payload: Payload) => {
+    sendOnExit: (payload: Body) => {
       sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
     },
   }

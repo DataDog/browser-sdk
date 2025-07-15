@@ -1,11 +1,13 @@
 import { LifeCycleEventType, getScrollX, getScrollY, getViewportDimension } from '@datadog/browser-rum-core'
 import type { RumConfiguration, LifeCycle } from '@datadog/browser-rum-core'
 import { timeStampNow } from '@datadog/browser-core'
+import type { TimeStamp } from '@datadog/browser-core'
 import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
-import { SerializationContextStatus, serializeDocument } from './serialization'
+import type { SerializationContext, SerializationStats } from './serialization'
+import { createSerializationStats, SerializationContextStatus, serializeDocument } from './serialization'
 import { getVisualViewport } from './viewports'
 
 export function startFullSnapshots(
@@ -14,34 +16,35 @@ export function startFullSnapshots(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   flushMutations: () => void,
-  fullSnapshotCallback: (records: BrowserRecord[]) => void
+  emit: (record: BrowserRecord, stats?: SerializationStats) => void
 ) {
-  const takeFullSnapshot = (
-    timestamp = timeStampNow(),
-    serializationContext = {
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+  const takeFullSnapshot = (timestamp: TimeStamp, status: SerializationContextStatus) => {
+    const { width, height } = getViewportDimension()
+    emit({
+      data: {
+        height,
+        href: window.location.href,
+        width,
+      },
+      type: RecordType.Meta,
+      timestamp,
+    })
+    emit({
+      data: {
+        has_focus: document.hasFocus(),
+      },
+      type: RecordType.Focus,
+      timestamp,
+    })
+
+    const serializationStats = createSerializationStats()
+    const serializationContext: SerializationContext = {
+      status,
       elementsScrollPositions,
+      serializationStats,
       shadowRootsController,
     }
-  ) => {
-    const { width, height } = getViewportDimension()
-    const records: BrowserRecord[] = [
-      {
-        data: {
-          height,
-          href: window.location.href,
-          width,
-        },
-        type: RecordType.Meta,
-        timestamp,
-      },
-      {
-        data: {
-          has_focus: document.hasFocus(),
-        },
-        type: RecordType.Focus,
-        timestamp,
-      },
+    emit(
       {
         data: {
           node: serializeDocument(document, configuration, serializationContext),
@@ -53,29 +56,23 @@ export function startFullSnapshots(
         type: RecordType.FullSnapshot,
         timestamp,
       },
-    ]
+      serializationStats
+    )
 
     if (window.visualViewport) {
-      records.push({
+      emit({
         data: getVisualViewport(window.visualViewport),
         type: RecordType.VisualViewport,
         timestamp,
       })
     }
-    return records
   }
 
-  fullSnapshotCallback(takeFullSnapshot())
+  takeFullSnapshot(timeStampNow(), SerializationContextStatus.INITIAL_FULL_SNAPSHOT)
 
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
-    fullSnapshotCallback(
-      takeFullSnapshot(view.startClocks.timeStamp, {
-        shadowRootsController,
-        status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
-        elementsScrollPositions,
-      })
-    )
+    takeFullSnapshot(view.startClocks.timeStamp, SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT)
   })
 
   return {
