@@ -70,7 +70,6 @@ export function startRUMInternalContext(hooks: Hooks) {
   }
 
   return {
-    getRUMInternalContext,
     stop: () => {
       logsSentBeforeRumInjectionTelemetryAdded = false
     },

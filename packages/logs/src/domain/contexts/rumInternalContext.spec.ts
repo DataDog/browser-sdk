@@ -1,4 +1,4 @@
-import type { Context, RelativeTime, RawTelemetryEvent } from '@datadog/browser-core'
+import type { RelativeTime, RawTelemetryEvent } from '@datadog/browser-core'
 import { HookNames, startFakeTelemetry } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import type { Hooks } from '../hooks'
@@ -8,11 +8,10 @@ import { startRUMInternalContext } from './rumInternalContext'
 describe('startRUMInternalContext', () => {
   let hooks: Hooks
   let stopRUMInternalContext: () => void
-  let getRUMInternalContext: (startTime?: RelativeTime) => Context | undefined
 
   beforeEach(() => {
     hooks = createHooks()
-    ;({ stop: stopRUMInternalContext, getRUMInternalContext } = startRUMInternalContext(hooks))
+    ;({ stop: stopRUMInternalContext } = startRUMInternalContext(hooks))
   })
 
   afterEach(() => {
@@ -118,16 +117,6 @@ describe('startRUMInternalContext', () => {
       })
 
       expect(defaultRumEventAttributes).toEqual(undefined)
-    })
-  })
-
-  describe('getRUMInternalContext', () => {
-    it('should get the RUM internal context', () => {
-      window.DD_RUM = {
-        getInternalContext: () => ({ foo: 'bar' }),
-      }
-      const rumInternalContext = getRUMInternalContext()
-      expect(rumInternalContext).toEqual({ foo: 'bar' })
     })
   })
 })
