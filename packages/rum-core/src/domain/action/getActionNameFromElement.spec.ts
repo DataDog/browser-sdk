@@ -1,5 +1,5 @@
 import { appendElement, mockRumConfiguration } from '../../../test'
-import { NodePrivacyLevel } from '../privacy'
+import { NodePrivacyLevel } from '../privacyConstants'
 import { ActionNameSource, getActionNameFromElement } from './getActionNameFromElement'
 
 const defaultConfiguration = mockRumConfiguration()

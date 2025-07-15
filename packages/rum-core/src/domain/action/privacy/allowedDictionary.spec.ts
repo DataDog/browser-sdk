@@ -1,5 +1,5 @@
 import { ActionType } from '../../../rawRumEvent.types'
-import { NodePrivacyLevel } from '../../privacy'
+import { NodePrivacyLevel } from '../../privacyConstants'
 import { ActionNameSource, ACTION_NAME_PLACEHOLDER } from '../getActionNameFromElement'
 import type { ClickActionBase } from '../trackClickActions'
 import {

@@ -1,5 +1,5 @@
 import { safeTruncate } from '@datadog/browser-core'
-import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
+import { NodePrivacyLevel, getPrivacySelector } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 
 /**

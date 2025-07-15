@@ -1,4 +1,4 @@
-import { NodePrivacyLevel, TEXT_MASKING_CHAR } from '../../privacy'
+import { NodePrivacyLevel, TEXT_MASKING_CHAR } from '../../privacyConstants'
 import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../getActionNameFromElement'
 import type { ClickActionBase } from '../trackClickActions'
 
@@ -7,6 +7,17 @@ declare global {
     $DD_ALLOW?: Set<string>
     $DD_ALLOW_OBSERVERS?: Set<() => void>
   }
+}
+
+export const actionNameDictionary: AllowedDictionary = {
+  rawStringCounter: 0,
+  allowlist: new Set<string>(),
+  rawStringIterator: undefined,
+  clear: () => {
+    actionNameDictionary.allowlist.clear()
+    actionNameDictionary.rawStringCounter = 0
+    actionNameDictionary.rawStringIterator = undefined
+  },
 }
 
 type UnicodeRegexes = {
@@ -61,20 +72,15 @@ export type AllowedDictionary = {
 }
 
 export function createActionAllowList(): AllowedDictionary {
-  const dictionary: AllowedDictionary = {
-    rawStringCounter: 0,
-    allowlist: new Set<string>(),
-    rawStringIterator: undefined,
-    clear: () => {
-      dictionary.allowlist.clear()
-      dictionary.rawStringCounter = 0
-      dictionary.rawStringIterator = undefined
-      window.$DD_ALLOW_OBSERVERS?.delete(observer)
-    },
+  actionNameDictionary.clear = () => {
+    actionNameDictionary.allowlist.clear()
+    actionNameDictionary.rawStringCounter = 0
+    actionNameDictionary.rawStringIterator = undefined
+    window.$DD_ALLOW_OBSERVERS?.delete(observer)
   }
 
-  const observer = () => processRawAllowList(window.$DD_ALLOW, dictionary)
-  processRawAllowList(window.$DD_ALLOW, dictionary)
+  const observer = () => processRawAllowList(window.$DD_ALLOW, actionNameDictionary)
+  processRawAllowList(window.$DD_ALLOW, actionNameDictionary)
 
   // Add observer
   if (!window.$DD_ALLOW_OBSERVERS) {
@@ -82,7 +88,7 @@ export function createActionAllowList(): AllowedDictionary {
   }
   window.$DD_ALLOW_OBSERVERS.add(observer)
 
-  return dictionary
+  return actionNameDictionary
 }
 
 export function processRawAllowList(rawAllowlist: Set<string> | undefined, dictionary: AllowedDictionary): void {
@@ -109,7 +115,11 @@ export function processRawAllowList(rawAllowlist: Set<string> | undefined, dicti
   }
 }
 
-export function maskTextContent(text: string, processedAllowlist: Set<string>, regexes: UnicodeRegexes): {maskedText: string, hasBeenMasked: boolean} {
+export function maskTextContent(
+  text: string,
+  processedAllowlist: Set<string>,
+  regexes: UnicodeRegexes
+): { maskedText: string; hasBeenMasked: boolean } {
   let hasBeenMasked = false
 
   const maskedText = text.replace(regexes.splitRegex, (segment: string) => {
@@ -120,7 +130,7 @@ export function maskTextContent(text: string, processedAllowlist: Set<string>, r
     return segment
   })
 
-  return {maskedText, hasBeenMasked}
+  return { maskedText, hasBeenMasked }
 }
 
 export function maskActionName(
@@ -130,15 +140,17 @@ export function maskActionName(
 ): ClickActionBase {
   if (nodeSelfPrivacy === NodePrivacyLevel.ALLOW) {
     return actionName
-  } else if (nodeSelfPrivacy !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED && (!window.$DD_ALLOW || !window.$DD_ALLOW.size)) {
+  } else if (
+    nodeSelfPrivacy !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
+    (!window.$DD_ALLOW || !window.$DD_ALLOW.size)
+  ) {
     return actionName
   } // if the privacy level is MASK or MASK_USER_INPUT and the allowlist is present, we continue of masking the action name
-
 
   const { name, nameSource } = actionName
   const regexes = getOrInitRegexes()
 
-  if (!regexes || !window.$DD_ALLOW || !window.$DD_ALLOW.size) { 
+  if (!regexes || !window.$DD_ALLOW || !window.$DD_ALLOW.size) {
     return {
       ...actionName,
       name: name ? ACTION_NAME_PLACEHOLDER : '',

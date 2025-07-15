@@ -4,11 +4,8 @@ import {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
-  getNodeSelfPrivacyLevel,
-  reducePrivacyLevel,
-  getNodePrivacyLevel,
-  shouldMaskNode,
-} from './privacy'
+} from './privacyConstants'
+import { getNodeSelfPrivacyLevel, reducePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from './privacy'
 
 describe('getNodePrivacyLevel', () => {
   it('returns the element privacy mode if it has one', () => {

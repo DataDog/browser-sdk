@@ -1,44 +1,12 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
-import { getOrInitRegexes, maskTextContent } from './action/privacy/allowedDictionary'
-import { actionNameDictionary } from './action/actionCollection'
-
-export const NodePrivacyLevel = {
-  IGNORE: 'ignore',
-  HIDDEN: 'hidden',
-  ALLOW: DefaultPrivacyLevel.ALLOW,
-  MASK: DefaultPrivacyLevel.MASK,
-  MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT,
-  MASK_UNLESS_ALLOWLISTED: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
-} as const
-export type NodePrivacyLevel = (typeof NodePrivacyLevel)[keyof typeof NodePrivacyLevel]
-
-export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
-
-// Privacy Attrs
-export const PRIVACY_ATTR_VALUE_ALLOW = 'allow'
-export const PRIVACY_ATTR_VALUE_MASK = 'mask'
-export const PRIVACY_ATTR_VALUE_MASK_USER_INPUT = 'mask-user-input'
-export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden'
-
-// Privacy Classes - not all customers can set plain HTML attributes, so support classes too
-export const PRIVACY_CLASS_PREFIX = 'dd-privacy-'
-
-// Private Replacement Templates
-export const CENSORED_STRING_MARK = '***'
-export const CENSORED_IMG_MARK = 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=='
-
-export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
-  INPUT: true,
-  OUTPUT: true,
-  TEXTAREA: true,
-  SELECT: true,
-  OPTION: true,
-  DATALIST: true,
-  OPTGROUP: true,
-}
-
-export const TEXT_MASKING_CHAR = 'x'
+import { getOrInitRegexes, maskTextContent, actionNameDictionary } from './action/privacy/allowedDictionary'
+import {
+  NodePrivacyLevel,
+  FORM_PRIVATE_TAG_NAMES,
+  TEXT_MASKING_CHAR,
+  CENSORED_STRING_MARK,
+  getPrivacySelector,
+} from './privacyConstants'
 
 export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
 
@@ -235,9 +203,9 @@ export function getTextContent(
     } else if (parentTagName === 'OPTION') {
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
-    } else if(nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
+    } else if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
       const regexes = getOrInitRegexes()
-      if (regexes) {
+      if (regexes && actionNameDictionary) {
         textContent = maskTextContent(textContent, actionNameDictionary.allowlist, regexes).maskedText
       }
     } else {
@@ -318,8 +286,4 @@ export function shouldIgnoreElement(element: Element): boolean {
   }
 
   return false
-}
-
-export function getPrivacySelector(privacyLevel: string) {
-  return `[${PRIVACY_ATTR_NAME}="${privacyLevel}"], .${PRIVACY_CLASS_PREFIX}${privacyLevel}`
 }
