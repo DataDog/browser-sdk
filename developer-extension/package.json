@@ -20,6 +20,7 @@
     "react-refresh": "^0.14.2",
     "react-refresh-typescript": "^2.0.9",
     "style-loader": "4.0.0",
+    "typescript": "5.8.3",
     "webpack": "5.100.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4"
