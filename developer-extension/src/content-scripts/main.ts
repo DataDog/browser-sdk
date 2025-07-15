@@ -11,7 +11,7 @@ declare global {
   }
 }
 
-type SdkPublicApi = { [key: string]: (...args: any[]) => unknown }
+interface SdkPublicApi { [key: string]: (...args: any[]) => unknown }
 
 function main() {
   // Prevent multiple executions when the devetools are reconnecting

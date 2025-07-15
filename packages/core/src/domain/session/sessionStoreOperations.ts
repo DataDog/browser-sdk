@@ -7,7 +7,7 @@ import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrateg
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
-type Operations = {
+interface Operations {
   process: (sessionState: SessionState) => SessionState | undefined
   after?: (sessionState: SessionState) => void
 }
