@@ -4,7 +4,7 @@ import type { LogsEvent } from '../logsEvent.types'
 
 export type DefaultLogsEventAttributes = RecursivePartialExcept<LogsEvent>
 
-export type HookCallbackMap = {
+export interface HookCallbackMap {
   [HookNamesAsConst.ASSEMBLE]: (param: { startTime: RelativeTime }) => DefaultLogsEventAttributes | SKIPPED | DISCARDED
 }
 

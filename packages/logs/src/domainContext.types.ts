@@ -8,15 +8,15 @@ export type LogsEventDomainContext<T extends ErrorSource = any> = T extends type
       ? LoggerLogsEventDomainContext
       : never
 
-export type NetworkLogsEventDomainContext = {
+export interface NetworkLogsEventDomainContext {
   isAborted: boolean
   handlingStack?: string
 }
 
-export type ConsoleLogsEventDomainContext = {
+export interface ConsoleLogsEventDomainContext {
   handlingStack: string
 }
 
-export type LoggerLogsEventDomainContext = {
+export interface LoggerLogsEventDomainContext {
   handlingStack: string
 }
