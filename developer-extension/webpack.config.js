@@ -28,9 +28,28 @@ module.exports = (_env, argv) => {
         new CopyPlugin({
           patterns: [
             { from: './icons/' },
-            ...(isDevelopment
-              ? [{ from: './manifest-dev.json', to: 'manifest.json', force: true }]
-              : [{ from: './manifest.json', to: 'manifest.json' }]),
+            {
+              from: './manifest.json',
+              to: 'manifest.json',
+              transform(content) {
+                const manifest = JSON.parse(content.toString())
+                const packageJson = require('./package.json')
+
+                // Add required fields
+                manifest.version = packageJson.version
+                manifest.version_name = packageJson.version
+
+                if (isDevelopment) {
+                  // Inject dev CSP
+                  manifest.content_security_policy = {
+                    extension_pages: "script-src 'self' http://localhost:3001; object-src 'self'",
+                  }
+                  manifest.name = `${manifest.name} (DEV)`
+                }
+
+                return JSON.stringify(manifest, null, 2)
+              },
+            },
           ],
         }),
       ],
@@ -68,12 +87,26 @@ module.exports = (_env, argv) => {
       plugins: [
         new HtmlWebpackPlugin({
           filename: 'panel.html',
-          template: 'src/panel/panel.html.template',
           inject: false, // Disable auto script injection - we handle it manually
-          templateParameters: {
-            isDevelopment,
-            devServerUrl: 'http://localhost:3001/',
-          },
+          templateContent: ({ isDevelopment }) => `
+            <!doctype html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <title>Datadog Browser SDK Panel</title>
+              <meta name="viewport" content="width=device-width,initial-scale=1">
+            </head>
+            <body>
+              <div id="root"></div>
+              ${
+                isDevelopment
+                  ? `<script src='http://localhost:3001/panel.js'></script>`
+                  : `<script src='panel.js'></script>`
+              }
+            </body>
+            </html>
+          `,
+          templateParameters: { isDevelopment },
         }),
         createDefinePlugin(),
         ...(isDevelopment ? [new HotModuleReplacementPlugin(), new ReactRefreshWebpackPlugin()] : []),
