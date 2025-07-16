@@ -138,7 +138,7 @@ export class Logger {
   }
 
   getTags() {
-    return this.tags
+    return this.tags.slice()
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {

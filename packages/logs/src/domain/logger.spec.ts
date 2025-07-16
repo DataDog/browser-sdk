@@ -233,6 +233,12 @@ describe('Logger', () => {
       logger.removeTagsWithKey('foo')
       expect(logger.getTags()).toEqual(['foo-bar:baz'])
     })
+
+    it('should not be able to edit tags in place', () => {
+      const tags = logger.getTags()
+      tags.push('foo-bar:baz')
+      expect(logger.getTags()).toEqual([])
+    })
   })
 
   describe('context methods', () => {
