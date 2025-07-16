@@ -31,6 +31,20 @@ export function startRUMInternalContext(hooks: Hooks) {
     return internalContext
   })
 
+  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => {
+    const internalContext = getRUMInternalContext(startTime)
+
+    if (!internalContext) {
+      return SKIPPED
+    }
+
+    return {
+      application: internalContext.application_id ? { id: internalContext.application_id as string } : undefined,
+      view: internalContext.view ? { id: (internalContext.view as Context).id as string } : undefined,
+      action: internalContext.user_action ? { id: (internalContext.user_action as Context).id as string } : undefined,
+    }
+  })
+
   function getRUMInternalContext(startTime?: RelativeTime) {
     const willSyntheticsInjectRumResult = willSyntheticsInjectRum()
     const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
@@ -56,7 +70,6 @@ export function startRUMInternalContext(hooks: Hooks) {
   }
 
   return {
-    getRUMInternalContext,
     stop: () => {
       logsSentBeforeRumInjectionTelemetryAdded = false
     },
