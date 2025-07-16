@@ -100,8 +100,8 @@ module.exports = (_env, argv) => {
               <div id="root"></div>
               ${
                 isDevelopment
-                  ? `<script src='http://localhost:3001/panel.js'></script>`
-                  : `<script src='panel.js'></script>`
+                  ? "<script src='http://localhost:3001/panel.js'></script>"
+                  : "<script src='panel.js'></script>"
               }
             </body>
             </html>
