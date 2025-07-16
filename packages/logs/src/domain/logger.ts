@@ -1,4 +1,4 @@
-import type { Context, ContextManager, Tag } from '@datadog/browser-core'
+import type { Context, ContextManager } from '@datadog/browser-core'
 import {
   clocksNow,
   computeRawError,
@@ -38,7 +38,7 @@ export class Logger {
   private contextManager: ContextManager
 
   // Tags are formatted as either `key:value` or `key_only`
-  private tags: Tag[]
+  private tags: string[]
 
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger, handlingStack?: string) => void,
