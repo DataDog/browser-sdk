@@ -230,7 +230,7 @@ describe('createActionNameDictionary and maskActionName', () => {
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
     clickActionBase.name = "test this: if 💥 isn't pii"
-    let expected = "test this: xx 💥 isn't xxx"
+    let expected = "test this: xxx 💥 isn't xxx"
     if (!isBrowserSupported()) {
       expected = ACTION_NAME_PLACEHOLDER
     }
@@ -239,7 +239,7 @@ describe('createActionNameDictionary and maskActionName', () => {
     expect(testString1.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
 
     clickActionBase.name = 'test-💥+123*hello wild'
-    expected = 'test-💥+xxxxxxxxx xxxx'
+    expected = 'test-💥+xxx xxx'
     if (!isBrowserSupported()) {
       expected = ACTION_NAME_PLACEHOLDER
     }

@@ -1,4 +1,4 @@
-import { NodePrivacyLevel, TEXT_MASKING_CHAR } from '../../privacyConstants'
+import { NodePrivacyLevel, TEXT_MASKING_CHAR, FIXED_MASKING_STRING } from '../../privacyConstants'
 import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../getActionNameFromElement'
 import type { ClickActionBase } from '../trackClickActions'
 
@@ -118,14 +118,15 @@ export function processRawAllowList(rawAllowlist: Set<string> | undefined, dicti
 export function maskTextContent(
   text: string,
   processedAllowlist: Set<string>,
-  regexes: UnicodeRegexes
+  regexes: UnicodeRegexes,
+  fixedMask?: string
 ): { maskedText: string; hasBeenMasked: boolean } {
   let hasBeenMasked = false
 
   const maskedText = text.replace(regexes.splitRegex, (segment: string) => {
     if (!processedAllowlist.has(segment.toLowerCase())) {
       hasBeenMasked = true
-      return TEXT_MASKING_CHAR.repeat(segment.length)
+      return fixedMask ?? TEXT_MASKING_CHAR.repeat(segment.length)
     }
     return segment
   })
@@ -158,7 +159,7 @@ export function maskActionName(
     }
   }
 
-  const maskedName = maskTextContent(name, processedAllowlist, regexes)
+  const maskedName = maskTextContent(name, processedAllowlist, regexes, FIXED_MASKING_STRING)
 
   return {
     ...actionName,

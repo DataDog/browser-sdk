@@ -36,6 +36,7 @@ export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
 }
 
 export const TEXT_MASKING_CHAR = 'x'
+export const FIXED_MASKING_STRING = 'xxx'
 
 export function getPrivacySelector(privacyLevel: string) {
   return `[${PRIVACY_ATTR_NAME}="${privacyLevel}"], .${PRIVACY_CLASS_PREFIX}${privacyLevel}`
