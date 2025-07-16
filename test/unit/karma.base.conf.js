@@ -131,6 +131,7 @@ function overrideTsLoaderRule(module) {
 function getFiles() {
   const { values } = parseArgs({
     allowPositionals: true,
+    strict: false,
     options: {
       spec: {
         type: 'string',

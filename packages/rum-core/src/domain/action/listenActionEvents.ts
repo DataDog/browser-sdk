@@ -2,7 +2,7 @@ import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 
-export type ExtraPointerEventFields = {
+export interface ExtraPointerEventFields {
   target: Element
   timeStamp: RelativeTime
 }
