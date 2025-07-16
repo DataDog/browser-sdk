@@ -1,5 +1,4 @@
-import type { ClocksState } from '@datadog/browser-core'
-import type { RumProfilerTrace } from '../types'
+import type { ProfilerTrace } from '../types'
 
 const generateFiftyRandomSamples = () => {
   const samples = []
@@ -15,13 +14,14 @@ const generateFiftyRandomSamples = () => {
 // eslint-disable-next-line local-rules/disallow-side-effects
 const randomSamples = generateFiftyRandomSamples()
 
-export const mockedTrace: RumProfilerTrace = {
-  startClocks: {} as ClocksState,
-  endClocks: {} as ClocksState,
-  clocksOrigin: {} as ClocksState,
-  sampleInterval: 1000,
-  longTasks: [],
-  views: [],
+export const mockedEmptyTrace: ProfilerTrace = {
+  resources: [],
+  frames: [],
+  stacks: [],
+  samples: [],
+}
+
+export const mockedTrace: ProfilerTrace = {
   resources: ['resource1', 'resource2', 'resource3'],
   frames: [
     {
