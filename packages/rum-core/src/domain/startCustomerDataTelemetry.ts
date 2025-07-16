@@ -46,6 +46,8 @@ export function startCustomerDataTelemetry(
     if (!batchHasRumEvent) {
       return
     }
+    batchHasRumEvent = false
+
     currentPeriodMeasures.batchCount += 1
     updateMeasure(currentPeriodMeasures.batchBytesCount, bytesCount)
     updateMeasure(currentPeriodMeasures.batchMessagesCount, messagesCount)
