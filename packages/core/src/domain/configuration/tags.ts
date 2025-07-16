@@ -6,7 +6,10 @@ export const TAG_SIZE_LIMIT = 200
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export function buildTags(configuration: Configuration): string[] {
+// Tag type is a string with the format "key:value" or just "key".
+export type Tag = `${string}:${string}` | (string & {})
+
+export function buildTags(configuration: Configuration): Tag[] {
   const { env, service, version, datacenter } = configuration
   const tags = [buildTag('sdk_version', __BUILD_ENV__SDK_VERSION__)]
 
@@ -26,7 +29,7 @@ export function buildTags(configuration: Configuration): string[] {
   return tags
 }
 
-export function buildTag(key: string, rawValue?: string) {
+export function buildTag(key: string, rawValue?: string): Tag {
   // See https://docs.datadoghq.com/getting_started/tagging/#defining-tags for tags syntax. Note
   // that the backend may not follow the exact same rules, so we only want to display an informal
   // warning.
@@ -47,7 +50,7 @@ export function sanitizeTag(tag: string) {
   return tag.replace(/,/g, '_')
 }
 
-function hasForbiddenCharacters(rawValue: string) {
+function hasForbiddenCharacters(rawTag: Tag) {
   // Unicode property escapes is not supported in all browsers, so we use a try/catch.
   // Todo: Remove the try/catch when dropping support for Chrome 63 and Firefox 67
   // see: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape#browser_compatibility
@@ -59,7 +62,7 @@ function hasForbiddenCharacters(rawValue: string) {
   // p{Ll} matches a lowercase letter.
   // p{Lo} matches a letter that is neither uppercase nor lowercase (ex: Japanese characters).
   // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Regular_expressions/Unicode_character_class_escape#unicode_property_escapes_vs._character_classes
-  return new RegExp('[^\\p{Ll}\\p{Lo}0-9_:./-]', 'u').test(rawValue)
+  return new RegExp('[^\\p{Ll}\\p{Lo}0-9_:./-]', 'u').test(rawTag)
 }
 
 export function supportUnicodePropertyEscapes() {

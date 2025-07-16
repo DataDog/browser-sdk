@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, EndpointBuilder } from './domain/configuration'
+export type { Configuration, InitConfiguration, EndpointBuilder, Tag } from './domain/configuration'
 export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
