@@ -3,11 +3,10 @@ import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'
 import { mockRumConfiguration, mockGlobalPerformanceBuffer } from '../../../../test'
 import type { GlobalPerformanceBufferMock } from '../../../../test'
-import type { RumConfiguration } from '../../configuration'
 import { trackFirstHidden } from './trackFirstHidden'
 
 describe('trackFirstHidden', () => {
-  let configuration: RumConfiguration
+  const configuration = mockRumConfiguration()
   let firstHidden: { timeStamp: RelativeTime; stop: () => void }
   let performanceBufferMock: GlobalPerformanceBufferMock
 
@@ -18,10 +17,6 @@ describe('trackFirstHidden', () => {
   }): ReturnType<typeof trackFirstHidden> {
     return trackFirstHidden(configuration, viewStart, eventTarget)
   }
-
-  beforeEach(() => {
-    configuration = mockRumConfiguration()
-  })
 
   afterEach(() => {
     restorePageVisibility()
