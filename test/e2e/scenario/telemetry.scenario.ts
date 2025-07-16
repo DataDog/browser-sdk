@@ -114,7 +114,7 @@ test.describe('telemetry', () => {
       const telemetryEvents = intakeRegistry.telemetryUsageEvents
       expect(telemetryEvents.length).toBeGreaterThanOrEqual(2)
 
-      // Verify no telemetry for post-revocation action
+      // Verify no telemetry for post-revocation action or get-account
       const postRevocationEvents = telemetryEvents.filter(
         (event) => event.telemetry.usage.feature === 'add-action' || event.telemetry.usage.feature === 'get-account'
       )
