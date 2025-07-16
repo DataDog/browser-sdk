@@ -96,6 +96,31 @@ test.describe('telemetry', () => {
       expect(event.telemetry.usage.feature).toEqual('set-tracking-consent')
     })
 
+  createTest('stops sending telemetry after consent revocation')
+    .withRum()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      // Generate initial telemetry, revoke consent, then try to generate more
+      await page.evaluate(() => {
+        window.DD_RUM!.addAction('initial-action')
+        window.DD_RUM!.setTrackingConsent('not-granted')
+        window.DD_RUM!.addAction('post-revocation-action')
+        window.DD_RUM!.getAccount()
+      })
+
+      await flushEvents()
+
+      // Verify telemetry events: should have initial action and consent revocation,
+      // but NOT the post-revocation action
+      const telemetryEvents = intakeRegistry.telemetryUsageEvents
+      expect(telemetryEvents.length).toBeGreaterThanOrEqual(2)
+
+      // Verify no telemetry for post-revocation action
+      const postRevocationEvents = telemetryEvents.filter(
+        (event) => event.telemetry.usage.feature === 'add-action' || event.telemetry.usage.feature === 'get-account'
+      )
+      expect(postRevocationEvents.length).toEqual(1) // Only the initial action
+    })
+
   test.describe('collect errors related to session initialization', () => {
     // Test for RUM and Logs separately, because using both at the same time via NPM triggers
     // different errors (because both SDKs are sharing the same cookie store `operationBuffer`
