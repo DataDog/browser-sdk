@@ -9,6 +9,7 @@ import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { addTelemetryDebug } from '../telemetry'
 import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
+import type { CookieStore } from '../../browser/browser.types'
 import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -94,19 +95,7 @@ export function startSessionManager<TrackingType extends string>(
     const session = sessionStore.getSession()
 
     if (!session) {
-      const rawSession = retrieveSessionCookie()
-      const sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith('_dd_s'))
-
-      addTelemetryDebug('Unexpected session state', {
-        session: rawSession,
-        isSyntheticsTest: isSyntheticsTest(),
-        createdTimestamp: rawSession?.created,
-        expireTimestamp: rawSession?.expire,
-        cookie: {
-          count: sessionCookies.length,
-          ...sessionCookies,
-        },
-      })
+      reportUnexpectedSessionState().catch(() => void 0) // Ignore errors
 
       return {
         id: 'invalid',
@@ -169,4 +158,26 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
 function trackResume(configuration: Configuration, cb: () => void) {
   const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
   stopCallbacks.push(stop)
+}
+
+async function reportUnexpectedSessionState() {
+  const rawSession = retrieveSessionCookie()
+  let sessionCookies: string[] | Awaited<ReturnType<CookieStore['getAll']>> = []
+
+  if ('cookieStore' in window) {
+    sessionCookies = await (window as Window & { cookieStore: CookieStore }).cookieStore.getAll('_dd_s')
+  } else {
+    sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith('_dd_s'))
+  }
+
+  addTelemetryDebug('Unexpected session state', {
+    session: rawSession,
+    isSyntheticsTest: isSyntheticsTest(),
+    createdTimestamp: rawSession?.created,
+    expireTimestamp: rawSession?.expire,
+    cookie: {
+      count: sessionCookies.length,
+      ...sessionCookies,
+    },
+  })
 }
