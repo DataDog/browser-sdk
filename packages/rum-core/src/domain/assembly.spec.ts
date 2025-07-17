@@ -19,7 +19,7 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '../rumEvent.types'
+import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
