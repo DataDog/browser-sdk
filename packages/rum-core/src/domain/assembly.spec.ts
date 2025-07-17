@@ -393,8 +393,8 @@ describe('rum assembly', () => {
   describe('service and version', () => {
     const extraConfigurationOptions = { service: 'default service', version: 'default version' }
 
-    describe('fields service and version', () => {
-      it('it should be modifiable', () => {
+    Object.values(RumEventType).forEach((eventType) => {
+      it(`should be modifiable for ${eventType}`, () => {
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             ...extraConfigurationOptions,
@@ -408,7 +408,7 @@ describe('rum assembly', () => {
         })
 
         notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+          rawRumEvent: createRawRumEvent(eventType),
         })
         expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
