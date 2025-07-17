@@ -1,4 +1,4 @@
-import { addTelemetryDebug, currentDrift, type EndpointBuilder, type Payload } from '@datadog/browser-core'
+import { currentDrift, type EndpointBuilder, type Payload } from '@datadog/browser-core'
 import type { RumProfilerTrace } from '../types'
 
 interface ProfileEventAttributes {
@@ -37,8 +37,6 @@ const sendProfile: SendProfileFunction = (profilerTrace, endpointBuilder, applic
 
   // Create URL, public profiling intake.
   const profilingIntakeURL = endpointBuilder.build('fetch', payload)
-
-  addTelemetryDebug('Sending profile to public profiling intake', { profilingIntakeURL, applicationId, sessionId })
 
   // Send payload (event + profile as attachment).
   return fetch(profilingIntakeURL, {
