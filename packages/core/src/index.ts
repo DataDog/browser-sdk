@@ -126,6 +126,7 @@ export { startGlobalContext, buildGlobalContextManager } from './domain/contexts
 export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
 export type { User } from './domain/contexts/userContext'
 export type { Account } from './domain/contexts/accountContext'
+export type { RumInternalContext } from './domain/contexts/rumInternalContext.type'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'

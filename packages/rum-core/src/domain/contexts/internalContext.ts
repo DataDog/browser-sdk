@@ -1,22 +1,8 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, RumInternalContext } from '@datadog/browser-core'
 import type { ActionContexts } from '../action/actionCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'
-
-export interface InternalContext {
-  application_id: string
-  session_id: string | undefined
-  view?: {
-    id: string
-    url: string
-    referrer: string
-    name?: string
-  }
-  user_action?: {
-    id: string | string[]
-  }
-}
 
 /**
  * Internal context keep returning v1 format
@@ -30,7 +16,7 @@ export function startInternalContext(
   urlContexts: UrlContexts
 ) {
   return {
-    get: (startTime?: number): InternalContext | undefined => {
+    get: (startTime?: number): RumInternalContext | undefined => {
       const viewContext = viewHistory.findView(startTime as RelativeTime)
       const urlContext = urlContexts.findUrl(startTime as RelativeTime)
       const session = sessionManager.findTrackedSession(startTime as RelativeTime)

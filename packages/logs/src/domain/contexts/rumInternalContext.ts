@@ -1,4 +1,4 @@
-import type { Context, RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, RumInternalContext } from '@datadog/browser-core'
 import {
   willSyntheticsInjectRum,
   addTelemetryDebug,
@@ -10,7 +10,7 @@ import {
 import type { Hooks } from '../hooks'
 
 interface Rum {
-  getInternalContext?: (startTime?: RelativeTime) => Context | undefined
+  getInternalContext?: (startTime?: RelativeTime) => RumInternalContext | undefined
 }
 
 interface BrowserWindow {
@@ -39,9 +39,9 @@ export function startRUMInternalContext(hooks: Hooks) {
     }
 
     return {
-      application: internalContext.application_id ? { id: internalContext.application_id as string } : undefined,
-      view: internalContext.view ? { id: (internalContext.view as Context).id as string } : undefined,
-      action: internalContext.user_action ? { id: (internalContext.user_action as Context).id as string } : undefined,
+      application: { id: internalContext.application_id },
+      view: { id: internalContext.view?.id },
+      action: { id: internalContext.user_action?.id as string },
     }
   })
 
@@ -63,7 +63,7 @@ export function startRUMInternalContext(hooks: Hooks) {
     }
   }
 
-  function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): Context | undefined {
+  function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): RumInternalContext | undefined {
     if (rumGlobal && rumGlobal.getInternalContext) {
       return rumGlobal.getInternalContext(startTime)
     }
