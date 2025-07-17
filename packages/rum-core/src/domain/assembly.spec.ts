@@ -412,6 +412,7 @@ describe('rum assembly', () => {
         })
         expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
+      })
     })
   })
 
