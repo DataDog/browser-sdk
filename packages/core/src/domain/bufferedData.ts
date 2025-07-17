@@ -8,7 +8,7 @@ export const enum BufferedDataType {
   RUNTIME_ERROR,
 }
 
-export type BufferedData = {
+export interface BufferedData {
   type: BufferedDataType.RUNTIME_ERROR
   error: RawError
 }
