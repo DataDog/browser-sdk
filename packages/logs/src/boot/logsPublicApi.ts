@@ -10,6 +10,7 @@ import {
   deepClone,
   createTrackingConsentState,
   defineContextMethod,
+  startBufferingData,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -204,12 +205,18 @@ export interface Strategy {
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
+  const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
     (initConfiguration, configuration) => {
-      const startLogsResult = startLogsImpl(configuration, buildCommonContext, trackingConsentState)
+      const startLogsResult = startLogsImpl(
+        configuration,
+        buildCommonContext,
+        trackingConsentState,
+        bufferedDataObservable
+      )
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)
       return startLogsResult
