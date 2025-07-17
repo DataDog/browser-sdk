@@ -54,6 +54,16 @@ describe('startDefaultContext', () => {
       expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeUndefined()
     })
 
+    it('should set the browser sdk version if source is overridden', () => {
+      startDefaultContext(hooks, mockRumConfiguration({ source: 'flutter' }), 'rum')
+      const eventWithOverriddenSource = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      }) as DefaultRumEventAttributes
+
+      expect(eventWithOverriddenSource._dd!.browser_sdk_version).toBeDefined()
+    })
+
     it('should set the configured sample rates', () => {
       startDefaultContext(hooks, mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20 }), 'rum')
 
@@ -65,6 +75,37 @@ describe('startDefaultContext', () => {
       expect(event._dd!.configuration!.session_sample_rate).toBe(10)
       expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)
       expect(event._dd!.sdk_name).toBe('rum')
+    })
+
+    it('should set the configured source and variant', () => {
+      startDefaultContext(
+        hooks,
+        mockRumConfiguration({
+          applicationId: '1',
+          source: 'browser',
+          variant: 'test-variant',
+        }),
+        'rum'
+      )
+
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(defaultRumEventAttributes).toEqual({
+        type: 'view',
+        application: {
+          id: '1',
+        },
+        date: timeStampNow(),
+        source: 'browser',
+        _dd: jasmine.objectContaining({
+          format_version: 2,
+          drift: jasmine.any(Number),
+          variant: 'test-variant',
+        }),
+      })
     })
   })
 })

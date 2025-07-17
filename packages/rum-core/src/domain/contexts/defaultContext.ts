@@ -10,9 +10,12 @@ export function startDefaultContext(
   configuration: RumConfiguration,
   sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
-  hooks.register(
-    HookNames.Assemble,
-    ({ eventType }): DefaultRumEventAttributes => ({
+  hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
+    const source = configuration.source
+    const variant = configuration.variant
+    const isSourceOverridden = source !== 'browser'
+
+    return {
       type: eventType,
       _dd: {
         format_version: 2,
@@ -22,14 +25,15 @@ export function startDefaultContext(
           session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
           profiling_sample_rate: round(configuration.profilingSampleRate, 3),
         },
-        browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
+        browser_sdk_version: canUseEventBridge() || isSourceOverridden ? __BUILD_ENV__SDK_VERSION__ : undefined,
         sdk_name: sdkName,
+        ...(variant ? { variant } : {}),
       },
       application: {
         id: configuration.applicationId,
       },
       date: timeStampNow(),
-      source: 'browser',
-    })
-  )
+      source: source as DefaultRumEventAttributes['source'],
+    }
+  })
 }
