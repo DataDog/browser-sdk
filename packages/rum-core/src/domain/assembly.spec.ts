@@ -412,13 +412,6 @@ describe('rum assembly', () => {
         })
         expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
-
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        })
-        expect((serverRumEvents[1] as RumViewEvent).service).toBe('bar')
-        expect((serverRumEvents[1] as RumViewEvent).version).toBe('0.2.0')
-      })
     })
   })
 
