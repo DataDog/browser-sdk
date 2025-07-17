@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
+  monitor,
   addEventListener,
   clearTimeout,
   setTimeout,
@@ -224,34 +225,36 @@ export function createRumProfiler(
     // Stop current profiler to get trace
     await lastInstance.profiler
       .stop()
-      .then((trace) => {
-        const endClocks = clocksNow()
+      .then(
+        monitor((trace) => {
+          const endClocks = clocksNow()
 
-        const hasLongTasks = longTasks.length > 0
-        const isBelowDurationThreshold =
-          elapsed(startClocks.timeStamp, endClocks.timeStamp) < profilerConfiguration.minProfileDurationMs
-        const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
+          const hasLongTasks = longTasks.length > 0
+          const isBelowDurationThreshold =
+            elapsed(startClocks.timeStamp, endClocks.timeStamp) < profilerConfiguration.minProfileDurationMs
+          const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
-        if (!hasLongTasks && (isBelowDurationThreshold || isBelowSampleThreshold)) {
-          // Skip very short profiles to reduce noise and cost, but keep them if they contain long tasks.
-          return
-        }
+          if (!hasLongTasks && (isBelowDurationThreshold || isBelowSampleThreshold)) {
+            // Skip very short profiles to reduce noise and cost, but keep them if they contain long tasks.
+            return
+          }
 
-        handleProfilerTrace(
-          // Enrich trace with time and instance data
-          Object.assign(trace, {
-            startClocks,
-            endClocks,
-            clocksOrigin: clocksOrigin(),
-            longTasks,
-            views,
-            sampleInterval: profilerConfiguration.sampleIntervalMs,
-          })
-        )
+          handleProfilerTrace(
+            // Enrich trace with time and instance data
+            Object.assign(trace, {
+              startClocks,
+              endClocks,
+              clocksOrigin: clocksOrigin(),
+              longTasks,
+              views,
+              sampleInterval: profilerConfiguration.sampleIntervalMs,
+            })
+          )
 
-        // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
-        cleanupLongTaskRegistryAfterCollection(collectClocks.relative)
-      })
+          // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
+          cleanupLongTaskRegistryAfterCollection(collectClocks.relative)
+        })
+      )
       .catch(monitorError)
   }
 

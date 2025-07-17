@@ -6,11 +6,12 @@ import type {
   ProfilerApi,
   Hooks,
 } from '@datadog/browser-rum-core'
-import { addTelemetryDebug, monitorError } from '@datadog/browser-core'
 import { isSampled } from '@datadog/browser-rum-core'
+import { addTelemetryDebug, monitorError, monitor } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
+import type { createRumProfiler } from '../domain/profiling/profiler'
 import { lazyLoadProfiler } from './lazyLoadProfiler'
 
 export function makeProfilerApi(): ProfilerApi {
@@ -51,16 +52,18 @@ export function makeProfilerApi(): ProfilerApi {
     }
 
     lazyLoadProfiler()
-      .then((createRumProfiler) => {
-        if (!createRumProfiler) {
-          addTelemetryDebug('[DD_RUM] Failed to lazy load the RUM Profiler')
-          profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
-          return
-        }
+      .then(
+        monitor((createRumProfilerImpl: typeof createRumProfiler | undefined) => {
+          if (!createRumProfilerImpl) {
+            addTelemetryDebug('[DD_RUM] Failed to lazy load the RUM Profiler')
+            profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
+            return
+          }
 
-        profiler = createRumProfiler(configuration, lifeCycle, sessionManager, profilingContextManager)
-        profiler.start(viewHistory.findView())
-      })
+          profiler = createRumProfilerImpl(configuration, lifeCycle, sessionManager, profilingContextManager)
+          profiler.start(viewHistory.findView())
+        })
+      )
       .catch(monitorError)
   }
 
