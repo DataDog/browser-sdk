@@ -2,7 +2,7 @@ import type {
   DISCARDED,
   Duration,
   HookNamesAsConst,
-  RecursivePartialExcept,
+  RecursivePartial,
   RelativeTime,
   SKIPPED,
   TelemetryEvent,
@@ -12,8 +12,8 @@ import type { RumEvent } from '../rumEvent.types'
 
 // Define a partial RUM event type.
 // Ensuring the `type` field is always present improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'view')`).
-export type DefaultRumEventAttributes = RecursivePartialExcept<RumEvent, 'type'>
-export type DefaultTelemetryEventAttributes = RecursivePartialExcept<TelemetryEvent>
+export type DefaultRumEventAttributes = RecursivePartial<RumEvent> & { type: RumEvent['type'] }
+export type DefaultTelemetryEventAttributes = RecursivePartial<TelemetryEvent>
 
 export type HookCallbackMap = {
   [HookNamesAsConst.ASSEMBLE]: (param: {

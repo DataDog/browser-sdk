@@ -299,9 +299,9 @@ describe('viewCollection', () => {
       setupViewCollection({ trackViewsManually: true }, undefined)
       const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
         startTime: 0 as RelativeTime,
-      })
+      }) as DefaultTelemetryEventAttributes
 
-      expect(telemetryEventAttributes).toBeUndefined()
+      expect(telemetryEventAttributes.view?.id).toBeUndefined()
     })
   })
 })

@@ -46,13 +46,9 @@ export function startUserContext(
     }
   })
 
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => {
-    const session = sessionManager.findTrackedSession(startTime)
-
-    return {
-      anonymous_id: session?.anonymousId,
-    }
-  })
+  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => ({
+    anonymous_id: sessionManager.findTrackedSession(startTime)?.anonymousId,
+  }))
 
   return userContextManager
 }

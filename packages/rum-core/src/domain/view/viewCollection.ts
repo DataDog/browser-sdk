@@ -1,13 +1,5 @@
-import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import {
-  getTimeZone,
-  DISCARDED,
-  HookNames,
-  isEmptyObject,
-  mapValues,
-  toServerDuration,
-  SKIPPED,
-} from '@datadog/browser-core'
+import type { Duration, ServerDuration, Observable, SKIPPED } from '@datadog/browser-core'
+import { getTimeZone, DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
@@ -59,19 +51,14 @@ export function startViewCollection(
     }
   })
 
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }): DefaultTelemetryEventAttributes | SKIPPED => {
-    const view = viewHistory.findView(startTime)
-
-    if (!view) {
-      return SKIPPED
-    }
-
-    return {
+  hooks.register(
+    HookNames.AssembleTelemetry,
+    ({ startTime }): DefaultTelemetryEventAttributes => ({
       view: {
-        id: view.id,
+        id: viewHistory.findView(startTime)?.id,
       },
-    }
-  })
+    })
+  )
 
   return trackViews(
     location,

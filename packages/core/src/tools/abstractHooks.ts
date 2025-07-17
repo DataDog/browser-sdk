@@ -14,10 +14,12 @@ export declare const HookNamesAsConst: {
   ASSEMBLE_TELEMETRY: HookNames.AssembleTelemetry
 }
 
-export type RecursivePartialExcept<T, K extends keyof T = never> = {
-  [P in keyof T]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
-} & {
-  [P in K]: T[P]
+export type RecursivePartial<T> = {
+  [P in keyof T]?: T[P] extends Array<infer U>
+    ? Array<RecursivePartial<U>>
+    : T[P] extends object | undefined
+      ? RecursivePartial<T[P]>
+      : T[P]
 }
 
 // Discards the event from being sent
@@ -30,7 +32,7 @@ export type SKIPPED = typeof SKIPPED
 
 export type AbstractHooks = ReturnType<typeof abstractHooks>
 
-export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => any }>() {
+export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => unknown }>() {
   const callbacks: { [K in HookNames]?: Array<T[K]> } = {}
 
   return {
@@ -50,7 +52,7 @@ export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => 
       param: Parameters<T[K]>[0]
     ): Exclude<ReturnType<T[K]>, SKIPPED> | DISCARDED | undefined {
       const hookCallbacks = callbacks[hookName] || []
-      const results: Array<T[K]> = []
+      const results: any[] = []
 
       for (const callback of hookCallbacks) {
         const result = callback(param)
@@ -64,8 +66,7 @@ export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => 
         results.push(result)
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return combine(...(results as unknown as [object, object])) as Exclude<ReturnType<T[K]>, SKIPPED>
+      return combine(...(results as [any, any])) as Exclude<ReturnType<T[K]>, SKIPPED>
     },
   }
 }

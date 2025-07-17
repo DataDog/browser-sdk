@@ -55,14 +55,12 @@ export function startActionCollection(
     }
   })
 
-  hooks.register(HookNames.AssembleTelemetry, ({ startTime }): DefaultTelemetryEventAttributes | SKIPPED => {
-    const actionId = actionContexts.findActionId(startTime)
-    if (!actionId) {
-      return SKIPPED
-    }
-
-    return { action: { id: actionId as string } }
-  })
+  hooks.register(
+    HookNames.AssembleTelemetry,
+    ({ startTime }): DefaultTelemetryEventAttributes => ({
+      action: { id: actionContexts.findActionId(startTime) as string },
+    })
+  )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   let stop: () => void = noop
