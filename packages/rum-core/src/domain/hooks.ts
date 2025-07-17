@@ -15,7 +15,7 @@ import type { RumEvent } from '../rumEvent.types'
 export type DefaultRumEventAttributes = RecursivePartial<RumEvent> & { type: RumEvent['type'] }
 export type DefaultTelemetryEventAttributes = RecursivePartial<TelemetryEvent>
 
-export type HookCallbackMap = {
+export interface HookCallbackMap {
   [HookNamesAsConst.ASSEMBLE]: (param: {
     eventType: RumEvent['type']
     startTime: RelativeTime

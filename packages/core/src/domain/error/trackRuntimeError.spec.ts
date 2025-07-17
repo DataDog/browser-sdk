@@ -1,5 +1,4 @@
 import { disableJasmineUncaughtExceptionTracking, wait } from '../../../test'
-import { Observable } from '../../tools/observable'
 import type { UnhandledErrorCallback } from './trackRuntimeError'
 import { instrumentOnError, instrumentUnhandledRejection, trackRuntimeError } from './trackRuntimeError'
 import type { RawError } from './error.types'
@@ -10,11 +9,10 @@ describe('trackRuntimeError', () => {
   const errorViaTrackRuntimeError = async (callback: () => void): Promise<RawError> => {
     disableJasmineUncaughtExceptionTracking()
 
-    const errorObservable = new Observable<RawError>()
+    const errorObservable = trackRuntimeError()
     const errorNotification = new Promise<RawError>((resolve) => {
       errorObservable.subscribe((e: RawError) => resolve(e))
     })
-    const { stop } = trackRuntimeError(errorObservable)
 
     try {
       await invokeAndWaitForErrorHandlers(callback)

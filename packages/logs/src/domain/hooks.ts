@@ -12,7 +12,7 @@ import type { LogsEvent } from '../logsEvent.types'
 export type DefaultLogsEventAttributes = RecursivePartial<LogsEvent>
 export type DefaultTelemetryEventAttributes = RecursivePartial<TelemetryEvent>
 
-export type HookCallbackMap = {
+export interface HookCallbackMap {
   [HookNamesAsConst.ASSEMBLE]: (param: { startTime: RelativeTime }) => DefaultLogsEventAttributes | SKIPPED | DISCARDED
   [HookNamesAsConst.ASSEMBLE_TELEMETRY]: (param: {
     startTime: RelativeTime

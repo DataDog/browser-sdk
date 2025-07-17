@@ -204,9 +204,9 @@ describe('actionCollection', () => {
       spyOn(actionContexts, 'findActionId').and.returnValue(undefined)
       const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
         startTime: 0 as RelativeTime,
-      })
+      }) as DefaultTelemetryEventAttributes
 
-      expect(telemetryEventAttributes).toBeUndefined()
+      expect(telemetryEventAttributes.action?.id).toBeUndefined()
     })
   })
 })
