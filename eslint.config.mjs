@@ -382,6 +382,7 @@ export default tseslint.config(
 
   {
     files: ['packages/core/src/tools/**/*.ts'],
+    ignores: [SPEC_FILES],
     rules: {
       'no-restricted-imports': [
         'error',
