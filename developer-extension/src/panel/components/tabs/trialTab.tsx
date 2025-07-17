@@ -131,6 +131,10 @@ export function TrialTab() {
                   />
                 </>
               )}
+              <Text>
+                If you already have an SDK injected and the Infos tab does not reflect the same RUM as set in Trial,
+                please go to the Infos tab and "End current session" and press "Clear" in configuration under RUM.
+              </Text>
             </>
           )}
         </Columns.Column>
