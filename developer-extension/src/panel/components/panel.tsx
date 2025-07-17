@@ -69,8 +69,9 @@ export function Panel() {
           <Tabs.Tab
             value={PanelTabs.Trial}
             rightSection={
-              settings.trialMode && (
-                <Text c="blue" fw="bold" title="Trial mode enabled">
+              settings.trialMode &&
+              settings.sdkInjection.enabled && (
+                <Text c={settings.sdkInjection.skipIntake ? 'orange' : 'blue'} fw="bold" title="Trial mode enabled">
                   ●
                 </Text>
               )

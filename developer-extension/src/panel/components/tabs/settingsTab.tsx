@@ -1,4 +1,5 @@
 import { Badge, Box, Checkbox, Code, Group, Space, Switch, Text, SegmentedControl, Accordion } from '@mantine/core'
+import { Alert } from '../alert'
 import React, { useEffect } from 'react'
 import { DEV_LOGS_URL, DEV_REPLAY_SANDBOX_URL } from '../../../common/packagesUrlConstants'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
@@ -34,7 +35,7 @@ export function SettingsTab() {
       // as the dev tools messaging may not work
       setSetting('eventCollectionStrategy', 'requests')
       setSetting('autoFlush', true)
-    } else if (!sdkInjection.enabled) {
+    } else if (!sdkInjection.enabled || sdkInjection.bundleSource !== 'cdn') {
       // Reset to default settings when SDK injection is disabled
       setSetting('eventCollectionStrategy', 'sdk')
       setSetting('autoFlush', false)
@@ -71,7 +72,13 @@ export function SettingsTab() {
                   </Box>
 
                   <Space h="md" />
-
+                  {sdkInjection.enabled && (
+                    <Alert
+                      mt="sm"
+                      level="warning"
+                      message="⚠️ SDK injection is enabled. The override strategy is not available."
+                    />
+                  )}
                   <SettingItem
                     input={
                       <Group>
@@ -88,6 +95,7 @@ export function SettingsTab() {
                           onChange={(value) =>
                             setSetting('useDevBundles', value === 'off' ? false : (value as DevBundlesOverride))
                           }
+                          disabled={sdkInjection.enabled}
                         />
                       </Group>
                     }
