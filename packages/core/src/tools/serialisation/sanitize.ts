@@ -7,16 +7,18 @@ import { detachToJsonMethod } from './jsonStringify'
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function
 type ExtendedContextValue = PrimitivesAndFunctions | object | ExtendedContext | ExtendedContextArray
-type ExtendedContext = { [key: string]: ExtendedContextValue }
+interface ExtendedContext {
+  [key: string]: ExtendedContextValue
+}
 type ExtendedContextArray = ExtendedContextValue[]
 
-type ContainerElementToProcess = {
+interface ContainerElementToProcess {
   source: ExtendedContextArray | ExtendedContext
   target: ContextArray | Context
   path: string
 }
 
-type SanitizedEvent = {
+interface SanitizedEvent extends Context {
   type: string
   isTrusted: boolean
   currentTarget: string | null | undefined

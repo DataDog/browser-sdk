@@ -9,7 +9,7 @@ export type RawLogsEvent =
   | RawReportLogsEvent
   | RawRuntimeLogsEvent
 
-type Error = {
+interface Error {
   message?: string
   kind?: string
   stack?: string

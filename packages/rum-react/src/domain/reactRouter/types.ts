@@ -6,7 +6,7 @@
 // * compatible with all react-router-dom versions we support
 // * include the minimal set of attributes used by our instrumentation functions.
 
-export type AnyRouteObject = {
+export interface AnyRouteObject {
   path?: string | undefined
   element?: React.ReactNode
 }
@@ -14,7 +14,10 @@ export type AnyUseRoute<Location extends AnyLocation> = (
   routes: AnyRouteObject[],
   location?: Location
 ) => React.ReactElement | null
-export type AnyRouteMatch = { route: AnyRouteObject; params: Record<string, string | undefined> }
+export interface AnyRouteMatch {
+  route: AnyRouteObject
+  params: Record<string, string | undefined>
+}
 export type AnyLocation = { pathname: string } | string
 export type AnyCreateRouter<Options> = (
   routes: AnyRouteObject[],
