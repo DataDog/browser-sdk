@@ -1,0 +1,75 @@
+/* 
+  Force the light theme 
+*/
+:root {
+  color-scheme: light;
+}
+
+/*
+  Hide the index group
+*/
+.tsd-panel-group.tsd-index-group {
+  display: none;
+}
+
+/*
+  Hide the hierarchy panel
+*/
+.tsd-panel.tsd-hierarchy {
+  display: none;
+}
+
+/*
+  Remove bullet points from the Type declaration
+*/
+.tsd-type-declaration > .tsd-parameters {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+/*
+  Customize the parameter list to be a table instead of a list
+*/
+.tsd-parameter-list {
+  display: table;
+  width: 100%;
+  list-style-type: none;
+  padding: 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tsd-parameter-list li {
+  display: table-row;
+  background-color: #fcfcfc;
+}
+
+.tsd-parameter-list li > * {
+  display: table-cell;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Hide empty table cells to avoid taking space */
+.tsd-parameter-list li > *:empty {
+  display: none;
+}
+
+/*
+  Customize the member panel to be a card
+*/
+.tsd-panel.tsd-member {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+  margin-bottom: 1rem;
+}

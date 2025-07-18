@@ -13,7 +13,9 @@ runMain(async () => {
 })
 
 /**
- * @param {string} requestedVersion
+ * Get the version and body of the release to create.
+ *
+ * @param {string} requestedVersion - The version to create a release for.
  * @return {{ version: string, body: string }}
  */
 function getReleaseVersionAndBody(requestedVersion) {
@@ -27,6 +29,8 @@ function getReleaseVersionAndBody(requestedVersion) {
 }
 
 /**
+ * Iterate over the releases in the CHANGELOG.md file.
+ *
  * @returns {Iterable<{version: string, body: string}>}
  */
 function* iterReleases() {

@@ -23,6 +23,8 @@ module.exports = {
     schema: [],
   },
   /**
+   * Create an ESLint rule to enforce that only prod dependencies are imported in prod files.
+   *
    * @returns {Record<string, Function>}
    */
   create(context) {
@@ -47,8 +49,10 @@ module.exports = {
  * Parses the package name from an import source, in particular removes a potential entry path.
  *
  * @example
+ * ```ts
  * parsePackageName('foo/bar') // 'foo'
  * parsePackageName('@foo/bar/baz') // '@foo/bar'
+ * ```
  */
 function parsePackageName(importSource) {
   return importSource.split('/', importSource.startsWith('@') ? 2 : 1).join('/')

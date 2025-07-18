@@ -8,7 +8,14 @@ import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 
 export interface DurationVitalOptions {
-  context?: Context
+  context?: any
+  description?: string
+}
+
+export interface AddDurationVitalOptions {
+  startTime: number
+  duration: number
+  context?: any
   description?: string
 }
 

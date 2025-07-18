@@ -2412,8 +2412,10 @@ var deflate_fast = function deflate_fast(s, flush) {
     if (s.match_length >= MIN_MATCH$1) {
       // check_match(s, s.strstart, s.match_start, s.match_length); // for debug only
 
-      /** * _tr_tally_dist(s, s.strstart - s.match_start,
-                       s.match_length - MIN_MATCH, bflush); ** */
+      /**
+       * _tr_tally_dist(s, s.strstart - s.match_start,
+                       s.match_length - MIN_MATCH, bflush); **
+       */
       bflush = _tr_tally$1(s, s.strstart - s.match_start, s.match_length - MIN_MATCH$1)
       s.lookahead -= s.match_length
       /* Insert new strings in the hash table only if the match length
@@ -2593,8 +2595,10 @@ var deflate_slow = function deflate_slow(s, flush) {
       /* Do not insert strings in hash table beyond this. */
       // check_match(s, s.strstart-1, s.prev_match, s.prev_length);
 
-      /** *_tr_tally_dist(s, s.strstart - 1 - s.prev_match,
-                       s.prev_length - MIN_MATCH, bflush);** */
+      /**
+       *_tr_tally_dist(s, s.strstart - 1 - s.prev_match,
+                       s.prev_length - MIN_MATCH, bflush);**
+       */
 
       bflush = _tr_tally$1(s, s.strstart - 1 - s.prev_match, s.prev_length - MIN_MATCH$1)
       /* Insert in hash table all strings up to the end of the match.

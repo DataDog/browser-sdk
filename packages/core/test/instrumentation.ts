@@ -1,9 +1,12 @@
 /**
- * @returns a fluent interface for asserting that the given callback adds
- * instrumentation to certain methods. Usage:
- * > callbackAddsInstrumentation(() => {
- * >   // ... code that's intended to instrument window.foo ...
- * > }).toMethod(window, 'foo').whenCalled()
+ * Create a fluent interface for asserting that the given callback adds
+ *
+ * @example
+ * ```ts
+ * callbackAddsInstrumentation(() => {
+ *   // ... code that's intended to instrument window.foo ...
+ * }).toMethod(window, 'foo').whenCalled()
+ * ```
  */
 export function callbackAddsInstrumentation(callback: () => void) {
   const existingMethods: Array<[any, string, unknown]> = []

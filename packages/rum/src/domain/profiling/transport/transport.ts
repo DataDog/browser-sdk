@@ -77,7 +77,8 @@ function buildProfileEvent(
 
 /**
  * Builds tags for the Profile Event.
- * @param tags RUM tags
+ *
+ * @param tags - RUM tags
  * @returns Combined tags for the Profile Event.
  */
 function buildProfileEventTags(tags: string[]): string[] {
@@ -90,8 +91,9 @@ function buildProfileEventTags(tags: string[]): string[] {
 
 /**
  * Builds payload for Profiling intake. It includes the profile event and the profiler trace as attachment.
- * @param profilerTrace Profiler trace
- * @param profileEvent Profiling event.
+ *
+ * @param profilerTrace - Profiler trace
+ * @param profileEvent - Profiling event.
  * @returns Payload to be sent to the intake.
  */
 function buildProfilingPayload(profilerTrace: RumProfilerTrace, profileEvent: ProfileEvent): Payload {
@@ -107,9 +109,10 @@ function buildProfilingPayload(profilerTrace: RumProfilerTrace, profileEvent: Pr
 
 /**
  * Builds attributes for the Profile Event.
- * @param profilerTrace Profiler trace
- * @param applicationId application id.
- * @param sessionId session id.
+ *
+ * @param profilerTrace - Profiler trace
+ * @param applicationId - application id.
+ * @param sessionId - session id.
  * @returns Additional attributes.
  */
 function buildProfileEventAttributes(

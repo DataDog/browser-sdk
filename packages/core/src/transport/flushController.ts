@@ -89,7 +89,7 @@ export function createFlushController({
      * This function needs to be called synchronously, right before adding the message, so no flush
      * event can happen after `notifyBeforeAddMessage` and before adding the message.
      *
-     * @param estimatedMessageBytesCount: an estimation of the message bytes count once it is
+     * @param estimatedMessageBytesCount - an estimation of the message bytes count once it is
      * actually added.
      */
     notifyBeforeAddMessage(estimatedMessageBytesCount: number) {
@@ -110,7 +110,7 @@ export function createFlushController({
      * This function can be called asynchronously after the message was added, but in this case it
      * should not be called if a flush event occurred in between.
      *
-     * @param messageBytesCountDiff: the difference between the estimated message bytes count and
+     * @param messageBytesCountDiff - the difference between the estimated message bytes count and
      * its actual bytes count once added to the pool.
      */
     notifyAfterAddMessage(messageBytesCountDiff = 0) {
@@ -129,7 +129,7 @@ export function createFlushController({
      * This function needs to be called synchronously, right after removing the message, so no flush
      * event can happen after removing the message and before `notifyAfterRemoveMessage`.
      *
-     * @param messageBytesCount: the message bytes count that was added to the pool. Should
+     * @param messageBytesCount - the message bytes count that was added to the pool. Should
      * correspond to the sum of bytes counts passed to `notifyBeforeAddMessage` and
      * `notifyAfterAddMessage`.
      */

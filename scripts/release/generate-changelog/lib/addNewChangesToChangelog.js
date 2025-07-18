@@ -11,7 +11,9 @@ const { CHANGELOG_FILE, CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI
 const FIRST_EMOJI_REGEX = /\p{Extended_Pictographic}/u
 
 /**
- * @param previousContent {string}
+ * Add new changes to the changelog.
+ *
+ * @param previousContent - {string}
  * @returns {Promise<string>}
  */
 exports.addNewChangesToChangelog = async (previousContent) => {

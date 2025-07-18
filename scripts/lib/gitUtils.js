@@ -14,9 +14,11 @@ async function fetchPR(localBranch) {
 }
 
 /**
- * @param {Object} params
- * @param {string} params.version
- * @param {string} params.body
+ * Create a GitHub release.
+ *
+ * @param {Object} params - The parameters for the GitHub release.
+ * @param {string} params.version - The version to create a release for.
+ * @param {string} params.body - The body of the release.
  */
 async function createGitHubRelease({ version, body }) {
   try {
