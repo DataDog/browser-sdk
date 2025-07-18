@@ -44,7 +44,7 @@ const browserConfigurations = [
     name: 'safari',
     os: 'ios',
     osVersion: '14',
-    device: 'iPhone 11',
+    device: 'iPhone 12',
   },
 ]
 
