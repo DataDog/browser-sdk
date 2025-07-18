@@ -12,4 +12,14 @@ export function startTrackingConsentContext(hooks: Hooks, trackingConsentState: 
 
     return SKIPPED
   })
+
+  hooks.register(HookNames.AssembleTelemetry, () => {
+    const wasConsented = trackingConsentState.isGranted()
+
+    if (!wasConsented) {
+      return DISCARDED
+    }
+
+    return SKIPPED
+  })
 }
