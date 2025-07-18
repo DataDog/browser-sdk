@@ -7,7 +7,7 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
@@ -54,6 +54,13 @@ export function startActionCollection(
       action: { id: actionId },
     }
   })
+
+  hooks.register(
+    HookNames.AssembleTelemetry,
+    ({ startTime }): DefaultTelemetryEventAttributes => ({
+      action: { id: actionContexts.findActionId(startTime) as string },
+    })
+  )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   let stop: () => void = noop

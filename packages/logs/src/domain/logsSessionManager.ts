@@ -9,7 +9,7 @@ export interface LogsSessionManager {
   expireObservable: Observable<void>
 }
 
-export type LogsSession = {
+export interface LogsSession {
   id?: string // session can be tracked without id
   anonymousId?: string // device id lasts across session
 }

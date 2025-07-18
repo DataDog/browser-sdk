@@ -46,6 +46,10 @@ export function startUserContext(
     }
   })
 
+  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => ({
+    anonymous_id: sessionManager.findTrackedSession(startTime)?.anonymousId,
+  }))
+
   return userContextManager
 }
 
