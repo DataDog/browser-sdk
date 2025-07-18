@@ -64,6 +64,7 @@ describe('startDefaultContext', () => {
 
       expect(event._dd!.configuration!.session_sample_rate).toBe(10)
       expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)
+      expect(event._dd!.configuration!.profiling_sample_rate).toBe(0)
       expect(event._dd!.sdk_name).toBe('rum')
     })
   })
