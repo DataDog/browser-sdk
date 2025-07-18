@@ -371,6 +371,7 @@ export default tseslint.config(
     files: ['packages/**/*.ts'],
     rules: {
       'local-rules/disallow-spec-import': 'error',
+      'jsdoc/no-types': 'error',
     },
   },
 
