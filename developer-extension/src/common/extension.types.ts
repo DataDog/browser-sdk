@@ -67,7 +67,6 @@ export interface SdkInjectionConfig {
   sdkTypes: Array<'rum' | 'logs'>
   rumBundle: 'rum' | 'rum-slim'
   bundleSource: 'dev' | 'cdn'
-  skipIntake: boolean
   rumConfig: {
     applicationId: string
     clientToken: string

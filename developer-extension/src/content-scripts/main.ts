@@ -46,6 +46,11 @@ function main() {
 
 function applySettings(settings: Settings) {
   if (noBrowserSdkLoaded()) {
+    if (settings.trialMode && settings.sdkInjection.enabled) {
+      injectBrowserSDK(settings.sdkInjection)
+      return // Early return to prevent other injection methods
+    }
+
     const ddRumGlobal = instrumentGlobal('DD_RUM')
     const ddLogsGlobal = instrumentGlobal('DD_LOGS')
 
@@ -65,10 +70,6 @@ function applySettings(settings: Settings) {
     if (settings.useDevBundles === 'npm') {
       injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
-    }
-
-    if (settings.trialMode && settings.sdkInjection.enabled) {
-      injectBrowserSDK(settings.sdkInjection)
     }
   }
 }
@@ -230,23 +231,17 @@ function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
 }
 
 function injectBrowserSDK(config: Settings['sdkInjection']) {
-  const { sdkTypes, rumBundle, bundleSource, rumConfig, logsConfig, skipIntake } = config
-
-  const beforeSendDropAll = skipIntake
-    ? {
-        beforeSend: () => false,
-      }
-    : {}
+  const { sdkTypes, rumBundle, bundleSource, rumConfig, logsConfig } = config
 
   const injectWhenReady = () => {
     if (sdkTypes.includes('rum')) {
       const rumUrl = getRumBundleUrl(rumBundle, bundleSource, rumConfig.site as string | undefined)
-      injectAndInitializeSDK(rumUrl, 'DD_RUM', { ...rumConfig, ...beforeSendDropAll })
+      injectAndInitializeSDK(rumUrl, 'DD_RUM', rumConfig)
     }
 
     if (sdkTypes.includes('logs')) {
       const logsUrl = getLogsBundleUrl(bundleSource, rumConfig.site as string | undefined)
-      injectAndInitializeSDK(logsUrl, 'DD_LOGS', { ...logsConfig, ...beforeSendDropAll })
+      injectAndInitializeSDK(logsUrl, 'DD_LOGS', logsConfig)
     }
   }
 

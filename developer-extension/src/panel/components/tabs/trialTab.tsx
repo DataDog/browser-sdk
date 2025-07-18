@@ -1,16 +1,5 @@
 import React, { useState } from 'react'
-import {
-  Switch,
-  Checkbox,
-  MultiSelect,
-  SegmentedControl,
-  JsonInput,
-  Button,
-  Text,
-  Space,
-  Box,
-  Group,
-} from '@mantine/core'
+import { Switch, MultiSelect, SegmentedControl, JsonInput, Button, Text, Space, Box, Group } from '@mantine/core'
 import { useSettings } from '../../hooks/useSettings'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
@@ -45,25 +34,6 @@ export function TrialTab() {
                   />
                 }
                 description={<>Automatically inject the Datadog Browser SDK into pages that don't have it.</>}
-              />
-
-              <SettingItem
-                input={
-                  <Checkbox
-                    label="Disable event intake (do not send data to Datadog)"
-                    checked={sdkInjection.enabled && sdkInjection.skipIntake}
-                    onChange={(event) =>
-                      setSetting('sdkInjection', { ...sdkInjection, skipIntake: event.currentTarget.checked })
-                    }
-                    color="violet"
-                  />
-                }
-                description={
-                  <>
-                    When enabled, the SDK will drop all events before they are sent. Useful for local debugging without
-                    a Datadog org.
-                  </>
-                }
               />
 
               {sdkInjection.enabled && (

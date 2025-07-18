@@ -26,7 +26,6 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
     sdkTypes: ['rum'],
     rumBundle: 'rum',
     bundleSource: 'dev',
-    skipIntake: false,
     rumConfig: {
       applicationId: 'XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX',
       clientToken: 'pubXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX',

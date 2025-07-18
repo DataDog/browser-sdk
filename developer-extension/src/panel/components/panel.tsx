@@ -71,7 +71,7 @@ export function Panel() {
             rightSection={
               settings.trialMode &&
               settings.sdkInjection.enabled && (
-                <Text c={settings.sdkInjection.skipIntake ? 'orange' : 'blue'} fw="bold" title="Trial mode enabled">
+                <Text c="blue" fw="bold" title="Trial mode enabled">
                   ●
                 </Text>
               )

@@ -32,11 +32,11 @@ export function SettingsTab() {
     // to allow proper event collection from the CDN bundle
     if (sdkInjection.enabled && sdkInjection.bundleSource === 'cdn') {
       // For CDN bundles, we need to collect events from requests
-      // as the dev tools messaging may not work
+      // as the dev tools messaging may not work reliably
       setSetting('eventCollectionStrategy', 'requests')
       setSetting('autoFlush', true)
-    } else if (!sdkInjection.enabled || sdkInjection.bundleSource !== 'cdn') {
-      // Reset to default settings when SDK injection is disabled
+    } else if (!sdkInjection.enabled) {
+      // Reset to default settings when SDK injection is completely disabled
       setSetting('eventCollectionStrategy', 'sdk')
       setSetting('autoFlush', false)
     }
