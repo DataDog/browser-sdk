@@ -169,6 +169,27 @@ test.describe('logs', () => {
       expect(unreachableRequest.error!.stack).toContain('TypeError')
     })
 
+  createTest('send runtime errors happening before initialization')
+    .withLogs({ forwardErrorsToLogs: true })
+    .withLogsInit((configuration) => {
+      // Use a setTimeout to:
+      // * have a constant stack trace regardless of the setup used
+      // * avoid the exception to be swallowed by the `onReady` logic
+      setTimeout(() => {
+        throw new Error('oh snap')
+      })
+      // Simulate a late initialization of the RUM SDK
+      setTimeout(() => window.DD_LOGS!.init(configuration))
+    })
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs }) => {
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('oh snap')
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
+    })
+
   createTest('add RUM internal context to logs')
     .withRum()
     .withLogs()

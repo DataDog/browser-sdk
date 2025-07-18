@@ -7,7 +7,7 @@ import type { RumInitConfiguration } from './configuration'
  *
  * @experimental
  */
-export type OnRumStartOptions = {
+export interface OnRumStartOptions {
   /**
    * @deprecated Use `addEvent` instead.
    */

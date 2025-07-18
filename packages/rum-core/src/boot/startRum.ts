@@ -1,4 +1,12 @@
-import type { Observable, RawError, DeflateEncoderStreamId, Encoder, TrackingConsentState } from '@datadog/browser-core'
+import type {
+  Observable,
+  RawError,
+  DeflateEncoderStreamId,
+  Encoder,
+  TrackingConsentState,
+  BufferedData,
+  BufferedObservable,
+} from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -64,6 +72,7 @@ export function startRum(
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
+  bufferedDataObservable: BufferedObservable<BufferedData>,
   sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   const cleanupTasks: Array<() => void> = []
@@ -86,19 +95,16 @@ export function startRum(
   const telemetry = startTelemetry(
     TelemetryService.RUM,
     configuration,
+    hooks,
     reportError,
     pageMayExitObservable,
     createEncoder
   )
   cleanupTasks.push(telemetry.stop)
-  telemetry.setContextProvider('application.id', () => configuration.applicationId)
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
-
-  telemetry.setContextProvider('session.id', () => session.findTrackedSession()?.id)
-  telemetry.setContextProvider('usr.anonymous_id', () => session.findTrackedSession()?.anonymousId)
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
@@ -124,7 +130,6 @@ export function startRum(
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
-  telemetry.setContextProvider('view.id', () => viewHistory.findView()?.id)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
@@ -149,7 +154,6 @@ export function startRum(
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
-  telemetry.setContextProvider('action.id', () => actionContexts.findActionId())
 
   const {
     addTiming,
@@ -186,7 +190,8 @@ export function startRum(
     }
   }
 
-  const { addError } = startErrorCollection(lifeCycle, configuration)
+  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
+  bufferedDataObservable.unbuffer()
 
   startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 

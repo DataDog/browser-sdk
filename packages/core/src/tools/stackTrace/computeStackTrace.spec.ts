@@ -960,7 +960,6 @@ Error: foo
   })
 
   it('should normalize non native errors stacktraces across browsers', () => {
-     
     class DatadogTestCustomError extends Error {
       constructor() {
         super()

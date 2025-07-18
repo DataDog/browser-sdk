@@ -27,13 +27,13 @@ export type {
   Context,
   ContextValue,
   ContextArray,
+  RumInternalContext,
 } from '@datadog/browser-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
 export type {
   RumPublicApi as RumGlobal,
   RumInitConfiguration,
-  InternalContext,
   ViewOptions,
   StartRecordingOptions,
   AddDurationVitalOptions,

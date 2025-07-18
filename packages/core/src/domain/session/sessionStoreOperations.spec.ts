@@ -1,7 +1,6 @@
-import { mockClock } from '../../../test'
-import type { Configuration } from '../configuration'
+import { createFakeSessionStoreStrategy, mockClock } from '../../../test'
 import type { SessionState } from './sessionState'
-import { expandSessionState, getExpiredSessionState } from './sessionState'
+import { expandSessionState } from './sessionState'
 import {
   processSessionStoreOperations,
   LOCK_MAX_TRIES,
@@ -233,35 +232,3 @@ describe('sessionStoreOperations', () => {
     })
   })
 })
-
-function createFakeSessionStoreStrategy({
-  isLockEnabled = false,
-  initialSession = {},
-}: { isLockEnabled?: boolean; initialSession?: SessionState } = {}) {
-  let session: SessionState = initialSession
-  const plannedRetrieveSessions: SessionState[] = []
-
-  return {
-    isLockEnabled,
-
-    persistSession: jasmine.createSpy('persistSession').and.callFake((newSession) => {
-      session = newSession
-    }),
-
-    retrieveSession: jasmine.createSpy('retrieveSession').and.callFake(() => {
-      const plannedSession = plannedRetrieveSessions.shift()
-      if (plannedSession) {
-        session = plannedSession
-      }
-      return { ...session }
-    }),
-
-    expireSession: jasmine.createSpy('expireSession').and.callFake((previousSession) => {
-      session = getExpiredSessionState(previousSession, { trackAnonymousUser: true } as Configuration)
-    }),
-
-    planRetrieveSession: (index: number, fakeSession: SessionState) => {
-      plannedRetrieveSessions[index] = fakeSession
-    },
-  }
-}

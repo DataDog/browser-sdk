@@ -30,7 +30,6 @@ export type { RawRumEventCollectedData } from './domain/lifeCycle'
 export { LifeCycle, LifeCycleEventType } from './domain/lifeCycle'
 export type { ViewCreatedEvent, ViewOptions } from './domain/view/trackViews'
 export type { ViewHistoryEntry, ViewHistory } from './domain/contexts/viewHistory'
-export type { InternalContext } from './domain/contexts/internalContext'
 export { startViewHistory } from './domain/contexts/viewHistory'
 export type { RumSessionManager, RumSession } from './domain/rumSessionManager'
 export { getMutationObserverConstructor } from './browser/domMutationObservable'
@@ -62,7 +61,7 @@ export type {
   AddDurationVitalOptions,
   DurationVitalOptions,
 } from './domain/vital/vitalCollection'
-export type { Hooks, DefaultRumEventAttributes } from './domain/hooks'
+export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes } from './domain/hooks'
 export { createHooks } from './domain/hooks'
 export { isSampled } from './domain/sampler/sampler'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'

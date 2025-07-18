@@ -78,10 +78,12 @@ export function startRumAssembly(
       'long_task.scripts[].invoker': 'string',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
     [RumEventType.VITAL]: {
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
   }
   const eventRateLimiters = {
