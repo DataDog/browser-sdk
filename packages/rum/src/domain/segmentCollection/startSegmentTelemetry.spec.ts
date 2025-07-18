@@ -1,5 +1,6 @@
 import type { Telemetry, RawTelemetryEvent, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
 import { Observable, startFakeTelemetry } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
@@ -51,11 +52,8 @@ describe('segmentTelemetry', () => {
       { enabled: true } as Telemetry,
       requestObservable
     ))
+    registerCleanupTask(stopSegmentTelemetry)
   }
-
-  afterEach(() => {
-    stopSegmentTelemetry?.()
-  })
 
   it('should collect segment telemetry for all full snapshots', () => {
     setupSegmentTelemetryCollection()
