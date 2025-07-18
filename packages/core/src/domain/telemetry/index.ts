@@ -9,6 +9,7 @@ export {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
+  addTelemetryMetrics,
 } from './telemetry'
 
 export * from './rawTelemetryEvent.types'
