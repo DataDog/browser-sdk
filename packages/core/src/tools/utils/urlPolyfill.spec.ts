@@ -1,4 +1,4 @@
-import { buildUrl, getPathName, isValidUrl, normalizeUrl } from './urlPolyfill'
+import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from './urlPolyfill'
 
 describe('normalize url', () => {
   it('should resolve absolute paths', () => {
@@ -77,5 +77,49 @@ describe('buildUrl', () => {
 
     expect(['file:///bar', 'file://foo.com/bar']).toContain(buildUrl('./bar', 'file://foo.com/faa').href)
     expect(['file:///bar', 'file://foo.com/bar']).toContain(buildUrl('/bar', 'file://foo.com/faa').href)
+  })
+})
+
+describe('getNativeURLFromIframe', () => {
+  it('should get native URL constructor from iframe', () => {
+    const { URL } = getPristineWindow()
+
+    expect(URL).toBeDefined()
+    expect(typeof URL).toBe('function')
+
+    const url = new URL('http://example.com')
+    expect(url.href).toBe('http://example.com/')
+  })
+
+  it('should work even if main window URL is overridden', () => {
+    const originalURL = window.URL
+    ;(window as any).URL = function badURL() {
+      throw new Error('Bad polyfill')
+    }
+    const { URL } = getPristineWindow()
+
+    expect(URL).toBeDefined()
+    expect(typeof URL).toBe('function')
+
+    const url = new URL('http://example.com')
+    expect(url.href).toBe('http://example.com/')
+    ;(window as any).URL = originalURL
+  })
+
+  it('should keep the same constructor and still resolve relative URLs correctly', () => {
+    const { URL: nativeURL1 } = getPristineWindow()
+    expect(nativeURL1).toBeDefined()
+
+    history.pushState({}, '', '/foo/')
+    const url1 = buildUrl('./bar', location.href)
+    expect(url1.href).toBe(`${location.origin}/foo/bar`)
+
+    history.pushState({}, '', '/baz/')
+    const { URL: nativeURL2 } = getPristineWindow()
+    expect(nativeURL2).toBeDefined()
+    expect(nativeURL2).toBe(nativeURL1)
+
+    const url2 = buildUrl('./qux', location.href)
+    expect(url2.href).toBe(`${location.origin}/baz/qux`)
   })
 })
