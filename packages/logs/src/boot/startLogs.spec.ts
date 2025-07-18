@@ -51,7 +51,10 @@ const COMMON_CONTEXT = {
 }
 const DEFAULT_PAYLOAD = {} as Payload
 
-function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
+function startLogsWithDefaults(
+  { configuration }: { configuration?: Partial<LogsConfiguration> } = {},
+  trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+) {
   const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
@@ -61,7 +64,7 @@ function startLogsWithDefaults({ configuration }: { configuration?: Partial<Logs
       ...configuration,
     },
     () => COMMON_CONTEXT,
-    createTrackingConsentState(TrackingConsent.GRANTED),
+    trackingConsentState,
     new BufferedObservable<BufferedData>(100)
   )
 
@@ -292,9 +295,7 @@ describe('logs', () => {
   describe('tracking consent', () => {
     it('should not send logs after tracking consent is revoked', async () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-
-      ;({ handleLog, stop: stopLogs } = startLogs(baseConfiguration, () => COMMON_CONTEXT, trackingConsentState))
-      registerCleanupTask(stopLogs)
+      const { handleLog, logger } = startLogsWithDefaults({}, trackingConsentState)
 
       // Log a message with consent granted - should be sent
       handleLog({ status: StatusType.info, message: 'message before revocation' }, logger)
