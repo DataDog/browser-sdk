@@ -60,8 +60,7 @@ export function startLogs(
     hooks,
     reportError,
     pageMayExitObservable,
-    createIdentityEncoder,
-    trackingConsentState
+    createIdentityEncoder
   )
   cleanupTasks.push(telemetry.stop)
 
