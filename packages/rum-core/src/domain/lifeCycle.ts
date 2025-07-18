@@ -95,7 +95,6 @@ export interface LifeCycleEventMap {
 export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
   startTime: RelativeTime
   duration?: Duration
-  customerContext?: Context
   rawRumEvent: E
   domainContext: RumEventDomainContext<E['type']>
 }
