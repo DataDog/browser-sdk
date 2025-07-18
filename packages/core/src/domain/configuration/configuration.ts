@@ -43,7 +43,6 @@ export const TraceContextInjection = {
  *
  * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
  *
- *
  */
 export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
 

@@ -10,6 +10,7 @@
     "notDocumented": false,
     "unusedMergeModuleWith": true
   },
+  "visibilityFilters": {}, // disable all visibility filters
   "customCss": "./typedoc.css",
   "navigation": {
     "includeCategories": true
