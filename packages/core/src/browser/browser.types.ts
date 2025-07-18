@@ -55,6 +55,18 @@ export interface WeakRefConstructor {
 
 export interface CookieStore extends EventTarget {
   get(name: string): Promise<unknown>
+  getAll(name?: string): Promise<
+    Array<{
+      name: string
+      value: string
+      domain?: string
+      path?: string
+      expires?: number
+      secure?: boolean
+      sameSite?: 'strict' | 'lax' | 'none'
+      partitioned?: boolean
+    }>
+  >
 }
 
 export interface CookieStoreEventMap {
