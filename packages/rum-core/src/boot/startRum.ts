@@ -99,8 +99,7 @@ export function startRum(
     hooks,
     reportError,
     pageMayExitObservable,
-    createEncoder,
-    trackingConsentState
+    createEncoder
   )
   cleanupTasks.push(telemetry.stop)
 
