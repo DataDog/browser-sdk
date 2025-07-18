@@ -49,8 +49,6 @@ export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof 
 export interface InitConfiguration {
   /**
    * The client token for Datadog. Required for authenticating your application with Datadog.
-   *
-   * @category Core
    */
   clientToken: string
   /**
@@ -60,21 +58,18 @@ export interface InitConfiguration {
   /**
    * The percentage of sessions tracked. A value between 0 and 100.
    *
-   * @category Session behavior
    * @defaultValue 100
    */
   sessionSampleRate?: number | undefined
   /**
    * The percentage of telemetry events sent. A value between 0 and 100.
    *
-   * @category Core
    * @defaultValue 20
    */
   telemetrySampleRate?: number | undefined
   /**
    * Initialization fails silently if the RUM Browser SDK is already initialized on the page.
    *
-   * @category Custom Behavior
    * @defaultValue false
    */
   silentMultipleInit?: boolean | undefined
@@ -84,7 +79,6 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
-   * @category Session behavior
    * @defaultValue "cookie"
    */
   sessionPersistence?: SessionPersistence | undefined
@@ -95,7 +89,6 @@ export interface InitConfiguration {
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
    *
-   * @category Custom Behavior
    * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
    */
   allowFallbackToLocalStorage?: boolean | undefined
@@ -103,7 +96,6 @@ export interface InitConfiguration {
   /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
    *
-   * @category Custom Behavior
    * @defaultValue false
    */
   allowUntrustedEvents?: boolean | undefined
@@ -111,7 +103,6 @@ export interface InitConfiguration {
    * Store global context and user context in localStorage to preserve them along the user navigation.
    * See [Contexts life cycle](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#contexts-life-cycle) for further information.
    *
-   * @category Custom Behavior
    * @defaultValue false
    */
   storeContextsAcrossPages?: boolean | undefined
@@ -119,7 +110,6 @@ export interface InitConfiguration {
    * Set the initial user tracking consent state.
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#user-tracking-consent) for further information.
    *
-   * @category Privacy
    * @defaultValue granted
    */
   trackingConsent?: TrackingConsent | undefined
@@ -128,8 +118,6 @@ export interface InitConfiguration {
    * List of origins where the SDK is allowed to run when used in a browser extension context.
    * Matches urls against the extensions origin.
    * If not provided and the SDK is running in a browser extension, a warning will be displayed.
-   *
-   * @category Privacy
    */
   allowedTrackingOrigins?: MatchOption[] | undefined
 
@@ -137,14 +125,11 @@ export interface InitConfiguration {
   /**
    * Optional proxy URL, for example: https://www.proxy.com/path.
    * See [Proxy Your Browser RUM Data](https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data) for further information.
-   *
-   * @category Core
    */
   proxy?: string | ProxyFn | undefined
   /**
    * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
    *
-   * @category Core
    * @defaultValue datadoghq.com
    */
   site?: Site | undefined
@@ -152,20 +137,15 @@ export interface InitConfiguration {
   // tag and context options
   /**
    * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
-   *
-   * @category Core
    */
   service?: string | undefined | null
   /**
    * The application’s environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    *
-   * @category Core
    */
   env?: string | undefined | null
   /**
    * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
-   *
-   * @category Core
    */
   version?: string | undefined | null
 
@@ -175,7 +155,6 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
-   * @category Session behavior
    * @defaultValue false
    */
   usePartitionedCrossSiteSessionCookie?: boolean | undefined
@@ -184,7 +163,6 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
-   * @category Session behavior
    * @defaultValue false
    */
   useSecureSessionCookie?: boolean | undefined
@@ -193,14 +171,12 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
-   * @category Session behavior
    * @defaultValue false
    */
   trackSessionAcrossSubdomains?: boolean | undefined
   /**
    * Track anonymous user for the same site and extend cookie expiration date
    *
-   * @category Session behavior
    * @defaultValue true
    */
   trackAnonymousUser?: boolean | undefined

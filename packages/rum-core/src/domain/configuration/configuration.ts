@@ -37,14 +37,11 @@ export interface RumInitConfiguration extends InitConfiguration {
   // global options
   /**
    * The RUM application ID.
-   *
-   * @category Core
    */
   applicationId: string
   /**
    * Whether to propagate user and account IDs in the baggage header of trace requests.
    *
-   * @category Tracing
    * @defaultValue false
    */
   propagateTraceBaggage?: boolean | undefined
@@ -57,7 +54,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Enrich And Control Browser RUM Data With beforeSend](https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data) for further information.
    *
-   * @category Custom Behavior
    * @param event - The RUM event
    * @param context - The RUM event domain context providing access to native browser data based on the event type (e.g. error, performance entry).
    * @returns true if the event should be sent to Datadog, false otherwise
@@ -66,8 +62,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * A list of request origins ignored when computing the page activity.
    * See [How page activity is calculated](https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated) for further information.
-   *
-   * @category Custom Behavior
    */
   excludedActivityUrls?: MatchOption[] | undefined
   /**
@@ -94,7 +88,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * A list of request URLs used to inject tracing headers.
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
    *
-   * @category Tracing
    */
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
 
@@ -110,7 +103,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
    *
-   * @category Tracing
    * @defaultValue sampled
    */
   traceContextInjection?: TraceContextInjection | undefined
@@ -121,7 +113,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
    *
-   * @category Privacy
    * @defaultValue mask
    */
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
@@ -131,7 +122,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
    *
-   * @category Session Replay
    */
   subdomain?: string
   /**
@@ -139,7 +129,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Configure Your Setup For Browser RUM and Browser RUM & Session Replay Sampling](https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans) for further information.
    *
-   * @category Session Replay
    */
   sessionReplaySampleRate?: number | undefined
   /**
@@ -147,14 +136,12 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
    *
-   * @category Session Replay
    */
   startSessionReplayRecordingManually?: boolean | undefined
 
   /**
    * Enables privacy control for action names.
    *
-   * @category Privacy
    */
   enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
   /**
@@ -162,7 +149,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
    *
-   * @category Data Collection
    * @defaultValue true
    */
   trackUserInteractions?: boolean | undefined
@@ -171,7 +157,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Declare a name for click actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions) for further information.
    *
-   * @category Custom Behavior
    */
   actionNameAttribute?: string | undefined
 
@@ -179,13 +164,11 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
    *
-   * @category Data Collection
    */
   trackViewsManually?: boolean | undefined
   /**
    * Enable the creation of dedicated views for pages restored from the Back-Forward cache.
    *
-   * @category Data Collection
    * @defaultValue false
    */
   trackBfcacheViews?: boolean | undefined
