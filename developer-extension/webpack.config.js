@@ -65,7 +65,7 @@ module.exports = (_env, argv) => {
             headers: {
               'Access-Control-Allow-Origin': '*',
             },
-            allowedHosts: 'all',
+            allowedHosts: 'auto',
             liveReload: false,
             client: {
               overlay: {
