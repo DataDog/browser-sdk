@@ -19,7 +19,6 @@ export default tseslint.config(
   tseslint.configs.recommendedTypeChecked,
   importPlugin.flatConfigs.recommended,
   importPlugin.flatConfigs.typescript,
-
   {
     ignores: [
       'packages/*/bundle',
@@ -227,9 +226,9 @@ export default tseslint.config(
       'import/order': 'error',
 
       'jasmine/no-focused-tests': 'error',
-
       'jsdoc/check-alignment': 'error',
       'jsdoc/check-indentation': 'error',
+      'jsdoc/no-blank-blocks': 'error',
       'jsdoc/sort-tags': [
         'error',
         {
@@ -257,6 +256,10 @@ export default tseslint.config(
       'jsdoc/require-param-description': 'error',
       'jsdoc/require-hyphen-before-param-description': 'error',
       'jsdoc/tag-lines': ['error', 'any', { startLines: 1 }],
+      'jsdoc/require-property-description': 'error',
+      'jsdoc/require-property-name': 'error',
+      'jsdoc/check-param-names': 'error',
+      'jsdoc/multiline-blocks': 'error',
 
       'local-rules/disallow-test-import-export-from-src': 'error',
       'local-rules/disallow-generic-utils': 'error',
