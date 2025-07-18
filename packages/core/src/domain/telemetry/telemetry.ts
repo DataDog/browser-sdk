@@ -78,13 +78,7 @@ export function startTelemetry(
 
   const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
 
-  const { enabled } = startTelemetryCollection(
-    telemetryService,
-    configuration,
-    hooks,
-    observable,
-    trackingConsentState
-  )
+  const { enabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable, trackingConsentState)
 
   return {
     stop,
