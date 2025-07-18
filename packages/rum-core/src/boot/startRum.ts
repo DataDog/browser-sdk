@@ -52,6 +52,7 @@ import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
@@ -136,6 +137,7 @@ export function startRum(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, session, recorderApi, viewHistory)
   startConnectivityContext(hooks)
+  startTrackingConsentContext(hooks, trackingConsentState)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
