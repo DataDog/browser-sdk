@@ -1,7 +1,7 @@
 import type {
   DISCARDED,
   HookNamesAsConst,
-  RecursivePartialExcept,
+  RecursivePartial,
   RelativeTime,
   SKIPPED,
   TelemetryEvent,
@@ -9,8 +9,8 @@ import type {
 import { abstractHooks } from '@datadog/browser-core'
 import type { LogsEvent } from '../logsEvent.types'
 
-export type DefaultLogsEventAttributes = RecursivePartialExcept<LogsEvent>
-export type DefaultTelemetryEventAttributes = RecursivePartialExcept<TelemetryEvent>
+export type DefaultLogsEventAttributes = RecursivePartial<LogsEvent>
+export type DefaultTelemetryEventAttributes = RecursivePartial<TelemetryEvent>
 
 export interface HookCallbackMap {
   [HookNamesAsConst.ASSEMBLE]: (param: { startTime: RelativeTime }) => DefaultLogsEventAttributes | SKIPPED | DISCARDED
