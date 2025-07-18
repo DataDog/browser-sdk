@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { DISCARDED, HookNames, createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startTrackingConsentContext } from './trackingConsentContext'
 

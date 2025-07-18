@@ -71,14 +71,13 @@ export function startTelemetry(
   hooks: AbstractHooks,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-  trackingConsentState: TrackingConsentState
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
 
   const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
 
-  const { enabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable, trackingConsentState)
+  const { enabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
 
   return {
     stop,
@@ -90,8 +89,7 @@ export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
   hooks: AbstractHooks,
-  observable: Observable<TelemetryEvent & Context>,
-  trackingConsentState: TrackingConsentState
+  observable: Observable<TelemetryEvent & Context>
 ) {
   const alreadySentEvents = new Set<string>()
 
@@ -108,7 +106,6 @@ export function startTelemetryCollection(
   onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
     const stringifiedEvent = jsonStringify(rawEvent)!
     if (
-      trackingConsentState.isGranted() &&
       telemetryEnabledPerType[rawEvent.type!] &&
       alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
       !alreadySentEvents.has(stringifiedEvent)
