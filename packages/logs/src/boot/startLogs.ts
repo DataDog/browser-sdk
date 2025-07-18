@@ -1,4 +1,4 @@
-import type { BufferedData, BufferedObservable, TrackingConsentState } from '@datadog/browser-core'
+import type { TrackingConsentState, BufferedObservable, BufferedData } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
