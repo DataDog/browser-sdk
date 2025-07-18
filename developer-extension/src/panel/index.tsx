@@ -11,6 +11,8 @@ import React from 'react'
 import { App } from './components/app'
 import { initMonitoring } from './monitoring'
 
+declare const module: { hot?: { accept(): void } }
+
 mockDevtoolsApiForTests()
 
 const main = document.createElement('main')
@@ -18,6 +20,10 @@ document.body.append(main)
 const root = createRoot(main)
 root.render(<App />)
 initMonitoring()
+
+if (module.hot) {
+  module.hot.accept()
+}
 
 /**
  * Allow to display the extension panel outside of chrome devtools for testing
