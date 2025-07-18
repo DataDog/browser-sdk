@@ -22,7 +22,6 @@ import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
-import type { TrackingConsentState } from '../trackingConsent'
 import { HookNames, DISCARDED } from '../../tools/abstractHooks'
 import type { AbstractHooks, DISCARDED as DISCARDED_TYPE } from '../../tools/abstractHooks'
 import type { TelemetryEvent } from './telemetryEvent.types'
