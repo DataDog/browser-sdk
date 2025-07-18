@@ -86,7 +86,7 @@ export interface RumPublicApi extends PublicApi {
    * })
    * ```
    */
-  init(initConfiguration: RumInitConfiguration): void
+  init: (initConfiguration: RumInitConfiguration) => void
 
   /**
    * Set the tracking consent of the current user.
@@ -103,7 +103,7 @@ export interface RumPublicApi extends PublicApi {
    * @category Tracking Consent
    * @param trackingConsent - The user tracking consent
    */
-  setTrackingConsent(trackingConsent: TrackingConsent): void
+  setTrackingConsent: (trackingConsent: TrackingConsent) => void
 
   /**
    * Set View Name.
@@ -114,7 +114,7 @@ export interface RumPublicApi extends PublicApi {
    * @category View
    * @param name - Name of the view
    */
-  setViewName(name: string): void
+  setViewName: (name: string) => void
 
   /**
    * Set View Context.
@@ -124,7 +124,7 @@ export interface RumPublicApi extends PublicApi {
    * @category View
    * @param context - Context of the view
    */
-  setViewContext(context: any): void
+  setViewContext: (context: Context) => void
   /**
    * Set View Context Property.
    *
@@ -134,7 +134,7 @@ export interface RumPublicApi extends PublicApi {
    * @param key - key of the property
    * @param value - value of the property
    */
-  setViewContextProperty(key: string, value: any): void
+  setViewContextProperty: (key: string, value: any) => void
 
   /**
    * Get View Context.
@@ -155,7 +155,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Init
    */
-  getInitConfiguration(): RumInitConfiguration | undefined
+  getInitConfiguration: () => RumInitConfiguration | undefined
 
   /**
    * Add a custom action, stored in `@action`
@@ -166,7 +166,7 @@ export interface RumPublicApi extends PublicApi {
    * @param name - Name of the action
    * @param context - Context of the action
    */
-  addAction(name: string, context?: object): void
+  addAction: (name: string, context?: object) => void
 
   /**
    * Add a custom error, stored in `@error`.
@@ -177,7 +177,7 @@ export interface RumPublicApi extends PublicApi {
    * @param error - Error. Favor sending a [Javascript Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) to have a stack trace attached to the error event.
    * @param context - Context of the error
    */
-  addError(error: unknown, context?: object): void
+  addError: (error: unknown, context?: object) => void
 
   /**
    * Add a custom timing relative to the start of the current view,
@@ -191,7 +191,7 @@ export interface RumPublicApi extends PublicApi {
    * @param name - Name of the custom timing
    * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
    */
-  addTiming(name: string, time?: number): void
+  addTiming: (name: string, time?: number) => void
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -200,7 +200,7 @@ export interface RumPublicApi extends PublicApi {
    * @category Global Context
    * @param context - Global context
    */
-  setGlobalContext(context: any): void
+  setGlobalContext: (context: Context) => void
 
   /**
    * Get the global Context
@@ -209,7 +209,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Global Context
    */
-  getGlobalContext(): Context
+  getGlobalContext: () => Context
 
   /**
    * Set or update a global context property, stored in `@context.<key>`
@@ -220,7 +220,7 @@ export interface RumPublicApi extends PublicApi {
    * @param key - Key of the property
    * @param value - Value of the property
    */
-  setGlobalContextProperty(key: any, value: any): void
+  setGlobalContextProperty: (key: any, value: any) => void
 
   /**
    * Remove a global context property
@@ -229,7 +229,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Global Context
    */
-  removeGlobalContextProperty(key: any): void
+  removeGlobalContextProperty: (key: any) => void
 
   /**
    * Clear the global context
@@ -267,7 +267,7 @@ export interface RumPublicApi extends PublicApi {
    * @category User
    * @returns User information
    */
-  getUser(): Context
+  getUser: () => Context
 
   /**
    * Set or update the user property, stored in `@usr.<key>`
@@ -278,7 +278,7 @@ export interface RumPublicApi extends PublicApi {
    * @param key - Key of the property
    * @param property - Value of the property
    */
-  setUserProperty(key: any, property: any): void
+  setUserProperty: (key: any, property: any) => void
 
   /**
    * Remove a user property
@@ -287,7 +287,7 @@ export interface RumPublicApi extends PublicApi {
    * @param key - Key of the property to remove
    * @see [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
-  removeUserProperty(key: any): void
+  removeUserProperty: (key: any) => void
 
   /**
    * Clear all user information
@@ -296,7 +296,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category User
    */
-  clearUser(): void
+  clearUser: () => void
 
   /**
    * Set account information to all events, stored in `@account`
@@ -304,7 +304,7 @@ export interface RumPublicApi extends PublicApi {
    * @category Account
    * @param newAccount - Account information
    */
-  setAccount(newAccount: Account): void
+  setAccount: (newAccount: Account) => void
 
   /**
    * Get account information
@@ -312,7 +312,7 @@ export interface RumPublicApi extends PublicApi {
    * @category Account
    * @returns Account information
    */
-  getAccount(): Context
+  getAccount: () => Context
 
   /**
    * Set or update the account property, stored in `@account.<key>`
@@ -321,7 +321,7 @@ export interface RumPublicApi extends PublicApi {
    * @param key - Key of the property
    * @param property - Value of the property
    */
-  setAccountProperty(key: string, property: any): void
+  setAccountProperty: (key: string, property: any) => void
 
   /**
    * Remove an account property
@@ -329,7 +329,7 @@ export interface RumPublicApi extends PublicApi {
    * @category Account
    * @param key - Key of the property to remove
    */
-  removeAccountProperty(key: string): void
+  removeAccountProperty: (key: string) => void
 
   /**
    * Clear all account information
@@ -337,7 +337,7 @@ export interface RumPublicApi extends PublicApi {
    * @category Account
    * @returns Clear all account information
    */
-  clearAccount(): void
+  clearAccount: () => void
   /**
    * Start a view manually.
    * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
@@ -367,7 +367,7 @@ export interface RumPublicApi extends PublicApi {
    * @param key - The key of the feature flag.
    * @param value - The value of the feature flag.
    */
-  addFeatureFlagEvaluation(key: string, value: any): void
+  addFeatureFlagEvaluation: (key: string, value: any) => void
 
   /**
    * Get the Session Replay Link.
@@ -376,7 +376,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Session Replay
    */
-  getSessionReplayLink(): string | undefined
+  getSessionReplayLink: () => string | undefined
 
   /**
    * Start Session Replay recording.
@@ -386,7 +386,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Session Replay
    */
-  startSessionReplayRecording(options?: StartRecordingOptions): void
+  startSessionReplayRecording: (options?: StartRecordingOptions) => void
 
   /**
    * Stop Session Replay recording.
@@ -395,7 +395,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Session Replay
    */
-  stopSessionReplayRecording(): void
+  stopSessionReplayRecording: () => void
 
   /**
    * Add a custom duration vital
@@ -404,7 +404,7 @@ export interface RumPublicApi extends PublicApi {
    * @param name - Name of the custom vital
    * @param options - Options for the custom vital (startTime, duration, context, description)
    */
-  addDurationVital(name: string, options: AddDurationVitalOptions): void
+  addDurationVital: (name: string, options: AddDurationVitalOptions) => void
 
   /**
    * Start a custom duration vital.
@@ -416,7 +416,7 @@ export interface RumPublicApi extends PublicApi {
    * @param options - Options for the custom vital (context, description)
    * @returns reference to the custom vital
    */
-  startDurationVital(name: string, options?: DurationVitalOptions): DurationVitalReference
+  startDurationVital: (name: string, options?: DurationVitalOptions) => DurationVitalReference
 
   /**
    * Stop a custom duration vital
@@ -425,53 +425,52 @@ export interface RumPublicApi extends PublicApi {
    * @param nameOrRef - Name or reference of the custom vital
    * @param options - Options for the custom vital (context, description)
    */
-  stopDurationVital(nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions): void
+  stopDurationVital: (nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions) => void
 }
 
 export interface RecorderApi {
-  start(this: void, options?: StartRecordingOptions): void
-  stop(this: void): void
-  onRumStart(
+  start: (options?: StartRecordingOptions) => void
+  stop: () => void
+  onRumStart: (
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined
-  ): void
-  isRecording(): boolean
-  getReplayStats(viewId: string): ReplayStats | undefined
-  getSessionReplayLink(this: void): string | undefined
+  ) => void
+  isRecording: () => boolean
+  getReplayStats: (viewId: string) => ReplayStats | undefined
+  getSessionReplayLink: () => string | undefined
 }
 
 export interface ProfilerApi {
-  stop(): void
-  onRumStart(
+  stop: () => void
+  onRumStart: (
     lifeCycle: LifeCycle,
     hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory
-  ): void
+  ) => void
 }
 
 export interface RumPublicApiOptions {
   ignoreInitIfSyntheticsWillInjectRum?: boolean
-  startDeflateWorker?(
-    this: void,
+  startDeflateWorker?: (
     configuration: RumConfiguration,
     source: string,
     onInitializationFailure: () => void
-  ): DeflateWorker | undefined
-  createDeflateEncoder?(
+  ) => DeflateWorker | undefined
+  createDeflateEncoder?: (
     configuration: RumConfiguration,
     worker: DeflateWorker,
     streamId: DeflateEncoderStreamId
-  ): DeflateEncoder
+  ) => DeflateEncoder
   sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
 }
 
 export interface Strategy {
-  init(initConfiguration: RumInitConfiguration, publicApi: RumPublicApi): void
+  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']

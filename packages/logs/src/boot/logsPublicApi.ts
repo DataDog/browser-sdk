@@ -50,7 +50,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
    */
-  init(initConfiguration: LogsInitConfiguration): void
+  init: (initConfiguration: LogsInitConfiguration) => void
 
   /**
    * Set the tracking consent of the current user.
@@ -67,7 +67,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Tracking Consent
    * @param trackingConsent - The user tracking consent
    */
-  setTrackingConsent(trackingConsent: TrackingConsent): void
+  setTrackingConsent: (trackingConsent: TrackingConsent) => void
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -76,7 +76,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Global Context
    * @param context - Global context
    */
-  setGlobalContext(context: any): void
+  setGlobalContext: (context: any) => void
 
   /**
    * Get the global Context
@@ -85,7 +85,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * @category Global Context
    */
-  getGlobalContext(): Context
+  getGlobalContext: () => Context
 
   /**
    * Set or update a global context property, stored in `@context.<key>`
@@ -96,7 +96,7 @@ export interface LogsPublicApi extends PublicApi {
    * @param key - Key of the property
    * @param value - Value of the property
    */
-  setGlobalContextProperty(key: any, value: any): void
+  setGlobalContextProperty: (key: any, value: any) => void
 
   /**
    * Remove a global context property
@@ -105,7 +105,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * @category Global Context
    */
-  removeGlobalContextProperty(key: any): void
+  removeGlobalContextProperty: (key: any) => void
 
   /**
    * Clear the global context
@@ -114,7 +114,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * @category Global Context
    */
-  clearGlobalContext(): void
+  clearGlobalContext: () => void
 
   /**
    * Set user information to all events, stored in `@usr`
@@ -143,7 +143,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category User
    * @returns User information
    */
-  getUser(): Context
+  getUser: () => Context
 
   /**
    * Set or update the user property, stored in `@usr.<key>`
@@ -154,7 +154,7 @@ export interface LogsPublicApi extends PublicApi {
    * @param key - Key of the property
    * @param property - Value of the property
    */
-  setUserProperty(key: any, property: any): void
+  setUserProperty: (key: any, property: any) => void
 
   /**
    * Remove a user property
@@ -163,7 +163,7 @@ export interface LogsPublicApi extends PublicApi {
    * @param key - Key of the property to remove
    * @see [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
-  removeUserProperty(key: any): void
+  removeUserProperty: (key: any) => void
 
   /**
    * Clear all user information
@@ -172,7 +172,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * @category User
    */
-  clearUser(): void
+  clearUser: () => void
 
   /**
    * Set account information to all events, stored in `@account`
@@ -180,7 +180,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Account
    * @param newAccount - Account information
    */
-  setAccount(newAccount: Account): void
+  setAccount: (newAccount: Account) => void
 
   /**
    * Get account information
@@ -188,7 +188,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Account
    * @returns Account information
    */
-  getAccount(): Context
+  getAccount: () => Context
 
   /**
    * Set or update the account property, stored in `@account.<key>`
@@ -197,7 +197,7 @@ export interface LogsPublicApi extends PublicApi {
    * @param key - Key of the property
    * @param property - Value of the property
    */
-  setAccountProperty(key: string, property: any): void
+  setAccountProperty: (key: string, property: any) => void
 
   /**
    * Remove an account property
@@ -205,7 +205,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Account
    * @param key - Key of the property to remove
    */
-  removeAccountProperty(key: string): void
+  removeAccountProperty: (key: string) => void
 
   /**
    * Clear all account information
@@ -213,7 +213,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Account
    * @returns Clear all account information
    */
-  clearAccount(): void
+  clearAccount: () => void
 
   /**
    * The Datadog browser logs SDK contains a default logger `DD_LOGS.logger`, but this API allows to create different ones.
@@ -224,7 +224,7 @@ export interface LogsPublicApi extends PublicApi {
    * @param name - Name of the logger
    * @param conf - Configuration of the logger (level, handler, context)
    */
-  createLogger(name: string, conf?: LoggerConfiguration): Logger
+  createLogger: (name: string, conf?: LoggerConfiguration) => Logger
 
   /**
    * Get a logger
@@ -234,7 +234,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Logger
    * @param name - Name of the logger
    */
-  getLogger(name: string): Logger | undefined
+  getLogger: (name: string) => Logger | undefined
 
   /**
    * Get the init configuration
@@ -242,7 +242,7 @@ export interface LogsPublicApi extends PublicApi {
    * @category Init
    * @returns The init configuration
    */
-  getInitConfiguration(): LogsInitConfiguration | undefined
+  getInitConfiguration: () => LogsInitConfiguration | undefined
 
   /**
    * [Internal API] Get the internal SDK context
@@ -251,7 +251,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * @internal
    */
-  getInternalContext(startTime?: number): InternalContext | undefined
+  getInternalContext: (startTime?: number) => InternalContext | undefined
 }
 
 export interface Strategy {
