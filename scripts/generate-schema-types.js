@@ -31,8 +31,7 @@ async function generateTypesFromSchema(typesPath, schema, { options = {} } = {})
   printLog(`Compiling ${schemaPath}...`)
   const compiledTypes = await compileFromFile(schemaPath, {
     cwd: schemasDirectoryPath,
-    bannerComment:
-      '/* eslint-disable */\n/**\n * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.\n*/',
+    bannerComment: '/* eslint-disable */\n/**\n * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.\n*/',
     style: prettierConfig,
     ...options,
   })
