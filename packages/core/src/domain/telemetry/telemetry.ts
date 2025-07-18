@@ -22,8 +22,8 @@ import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
-import { HookNames } from '../../tools/abstractHooks'
-import type { AbstractHooks } from '../../tools/abstractHooks'
+import { HookNames, DISCARDED } from '../../tools/abstractHooks'
+import type { AbstractHooks, DISCARDED as DISCARDED_TYPE } from '../../tools/abstractHooks'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -110,9 +110,11 @@ export function startTelemetryCollection(
       !alreadySentEvents.has(stringifiedEvent)
     ) {
       const event = toTelemetryEvent(hooks, telemetryService, rawEvent, runtimeEnvInfo)
-      observable.notify(event)
-      sendToExtension('telemetry', event)
-      alreadySentEvents.add(stringifiedEvent)
+      if (event !== DISCARDED) {
+        observable.notify(event)
+        sendToExtension('telemetry', event)
+        alreadySentEvents.add(stringifiedEvent)
+      }
     }
   }
   // need to be called after telemetry context is provided and observers are registered
@@ -128,11 +130,15 @@ export function startTelemetryCollection(
     telemetryService: TelemetryService,
     rawEvent: RawTelemetryEvent,
     runtimeEnvInfo: RuntimeEnvInfo
-  ): TelemetryEvent & Context {
+  ): (TelemetryEvent & Context) | DISCARDED_TYPE {
     const clockNow = clocksNow()
     const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
       startTime: clockNow.relative,
     })
+
+    if (defaultTelemetryEventAttributes === DISCARDED) {
+      return DISCARDED
+    }
 
     const event = {
       type: 'telemetry' as const,
@@ -186,9 +192,9 @@ function startTelemetryTransport(
       new Observable()
     )
     cleanupTasks.push(() => telemetryBatch.stop())
-    const telemetrySubscription = telemetryObservable.subscribe((event) =>
+    const telemetrySubscription = telemetryObservable.subscribe((event) => {
       telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
-    )
+    })
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
 

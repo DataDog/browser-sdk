@@ -16,7 +16,7 @@ export interface HookCallbackMap {
   [HookNamesAsConst.ASSEMBLE]: (param: { startTime: RelativeTime }) => DefaultLogsEventAttributes | SKIPPED | DISCARDED
   [HookNamesAsConst.ASSEMBLE_TELEMETRY]: (param: {
     startTime: RelativeTime
-  }) => DefaultTelemetryEventAttributes | SKIPPED
+  }) => DefaultTelemetryEventAttributes | SKIPPED | DISCARDED
 }
 
 export type Hooks = ReturnType<typeof createHooks>
