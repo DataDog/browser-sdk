@@ -3,7 +3,7 @@ import { createTest, html } from '../lib/framework'
 
 test.describe('telemetry', () => {
   createTest('send errors for logs')
-    .withLogs()
+    .withLogs({ trackingConsent: 'granted' })
     .run(async ({ intakeRegistry, page, flushEvents }) => {
       await page.evaluate(() => {
         const context = {
