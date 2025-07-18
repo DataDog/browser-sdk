@@ -23,7 +23,7 @@ export interface HookCallbackMap {
   }) => DefaultRumEventAttributes | SKIPPED | DISCARDED
   [HookNamesAsConst.ASSEMBLE_TELEMETRY]: (param: {
     startTime: RelativeTime
-  }) => DefaultTelemetryEventAttributes | SKIPPED
+  }) => DefaultTelemetryEventAttributes | SKIPPED | DISCARDED
 }
 
 export type Hooks = ReturnType<typeof createHooks>
