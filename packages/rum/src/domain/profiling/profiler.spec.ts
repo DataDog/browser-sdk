@@ -121,12 +121,7 @@ describe('profiler', () => {
     expect(sendProfileSpy).toHaveBeenCalledTimes(1)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(
-      mockedRumProfilerTrace,
-      jasmine.any(Object),
-      jasmine.any(String),
-      'session-id-1'
-    )
+    expect(sendProfileSpy).toHaveBeenCalledWith(mockedRumProfilerTrace, jasmine.any(Object), 'session-id-1')
   })
 
   it('should pause profiling collection on hidden visibility and restart on visible visibility', async () => {
@@ -175,12 +170,7 @@ describe('profiler', () => {
     expect(sendProfileSpy).toHaveBeenCalledTimes(2)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(
-      mockedRumProfilerTrace,
-      jasmine.any(Object),
-      jasmine.any(String),
-      'session-id-1'
-    )
+    expect(sendProfileSpy).toHaveBeenCalledWith(mockedRumProfilerTrace, jasmine.any(Object), 'session-id-1')
   })
 
   it('should collect long task from core and then attach long task id to the Profiler trace', async () => {

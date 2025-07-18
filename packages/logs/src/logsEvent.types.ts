@@ -24,6 +24,10 @@ export interface LogsEvent {
    */
   service?: string
   /**
+   * Tags of the log
+   */
+  ddtags?: string
+  /**
    * UUID of the session (deprecated in favor of session.id)
    */
   session_id?: string

@@ -7,6 +7,9 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
+  buildTags,
+  buildTag,
+  sanitizeTag,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
