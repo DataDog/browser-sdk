@@ -12,6 +12,7 @@ import type {
   Duration,
   ContextManager,
   RumInternalContext,
+  Telemetry,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -360,7 +361,8 @@ export interface RecorderApi {
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
-    deflateWorker: DeflateWorker | undefined
+    deflateWorker: DeflateWorker | undefined,
+    telemetry: Telemetry
   ) => void
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
@@ -452,7 +454,8 @@ export function makeRumPublicApi(
         configuration,
         startRumResult.session,
         startRumResult.viewHistory,
-        deflateWorker
+        deflateWorker,
+        startRumResult.telemetry
       )
 
       profilerApi.onRumStart(

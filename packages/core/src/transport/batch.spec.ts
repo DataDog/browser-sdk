@@ -1,10 +1,11 @@
+import { Observable } from '..'
 import type { MockFlushController } from '../../test'
 import { createMockFlushController } from '../../test'
 import { display } from '../tools/display'
 import type { Encoder } from '../tools/encoder'
 import { createIdentityEncoder } from '../tools/encoder'
 import { createBatch, type Batch } from './batch'
-import type { HttpRequest } from './httpRequest'
+import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 
 describe('batch', () => {
   const MESSAGE_BYTES_LIMIT = 50
@@ -16,6 +17,7 @@ describe('batch', () => {
 
   let batch: Batch
   let transport: {
+    observable: Observable<HttpRequestEvent>
     send: jasmine.Spy<HttpRequest['send']>
     sendOnExit: jasmine.Spy<HttpRequest['sendOnExit']>
   }
@@ -25,6 +27,7 @@ describe('batch', () => {
 
   beforeEach(() => {
     transport = {
+      observable: new Observable<HttpRequestEvent>(),
       send: jasmine.createSpy(),
       sendOnExit: jasmine.createSpy(),
     } satisfies HttpRequest
