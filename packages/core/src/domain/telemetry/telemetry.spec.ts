@@ -8,7 +8,6 @@ import { setNavigatorOnLine, setNavigatorConnection, createHooks } from '../../.
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
-import { createTrackingConsentState, TrackingConsent } from '../trackingConsent'
 import { HookNames } from '../../tools/abstractHooks'
 import {
   addTelemetryError,
@@ -24,7 +23,6 @@ import type { TelemetryEvent } from './telemetryEvent.types'
 
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
   const observable = new Observable<TelemetryEvent & Context>()
-  const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
 
   const notifySpy = jasmine.createSpy('notified')
   observable.subscribe(notifySpy)
@@ -38,8 +36,7 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
       ...configuration,
     } as Configuration,
     hooks,
-    observable,
-    trackingConsentState
+    observable
   )
 
   return {
