@@ -5,10 +5,10 @@ import { printLog, runMain } from '../lib/executionUtils.js'
 import { command } from '../lib/command.js'
 import { modifyFile } from '../lib/filesUtils.js'
 
-const EXTENSIONS_INIT_PARAMETERS = {
-  'allowed-tracking-origin': 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],',
-  'invalid-tracking-origin': "allowedTrackingOrigins: ['https://app.example.com'],",
-}
+const EXTRA_EXTENSIONS = [
+  { name: 'allowed-tracking-origin', initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],' },
+  { name: 'invalid-tracking-origin', initParameter: "allowedTrackingOrigins: ['https://app.example.com']," },
+]
 
 runMain(async () => {
   printLog('Packing packages...')
@@ -28,51 +28,21 @@ function buildApp(appPath) {
 }
 
 async function buildExtensions() {
-  printLog('Building extensions with different configurations...')
+  const baseExtDir = 'test/apps/base-extension'
 
-  // Base extension directory
-  const baseExtDir = path.join(process.cwd(), 'test/apps/base-extension')
+  buildApp(baseExtDir)
 
-  // Extension configurations
-  const extensionNames = Object.keys(EXTENSIONS_INIT_PARAMETERS)
+  for (const { name, initParameter } of EXTRA_EXTENSIONS) {
+    const targetDir = path.join('test/apps', name)
 
-  // 1. Build the base extension first
-  printLog('Building base extension...')
-  command`yarn install --no-immutable`.withCurrentWorkingDirectory(baseExtDir).withLogs().run()
-  command`yarn build`.withCurrentWorkingDirectory(baseExtDir).withLogs().run()
-
-  // 2. Create and build extensions with different configurations
-  for (const extName of extensionNames) {
-    const targetDir = path.join(process.cwd(), 'test/apps', extName)
-    const initParameter = EXTENSIONS_INIT_PARAMETERS[extName]
-
-    printLog(`Creating ${extName} extension...`)
-
-    // Remove existing directory if it exists
-    if (fs.existsSync(targetDir)) {
-      fs.rmSync(targetDir, { recursive: true, force: true })
-    }
-
-    // Copy base extension to target directory
+    fs.rmSync(targetDir, { recursive: true, force: true })
     fs.cpSync(baseExtDir, targetDir, { recursive: true })
 
-    // Add the configuration parameter
     const contentScriptPath = path.join(targetDir, 'src/contentScript.ts')
     await modifyFile(contentScriptPath, (content) =>
       content.replace(/\/\* EXTENSION_INIT_PARAMETER \*\//g, initParameter)
     )
 
-    // Build the extension
-    printLog(`Building ${extName} extension...`)
-    command`yarn install --no-immutable`.withCurrentWorkingDirectory(targetDir).withLogs().run()
-    command`yarn build`.withCurrentWorkingDirectory(targetDir).withLogs().run()
-  }
-
-  printLog('Extension builds completed successfully.')
-  printLog('Available extensions:')
-  printLog(`  - Base: ${baseExtDir}`)
-
-  for (const extName of extensionNames) {
-    printLog(`  - ${extName}: test/apps/${extName}`)
+    buildApp(targetDir)
   }
 }
