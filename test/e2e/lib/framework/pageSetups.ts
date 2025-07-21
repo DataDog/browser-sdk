@@ -1,4 +1,4 @@
-import { INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
+import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
@@ -53,10 +53,12 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 })(window,document,'script','${url}','${globalName}')`
   }
 
+  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+
   if (options.logs) {
     body += html`
       <script>
-        ${formatSnippet('./datadog-logs.js', 'DD_LOGS')}
+        ${formatSnippet(logsScriptUrl, 'DD_LOGS')}
         DD_LOGS.onReady(function () {
           DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
@@ -68,7 +70,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
   if (options.rum) {
     body += html`
       <script type="text/javascript">
-        ${formatSnippet(options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js', 'DD_RUM')}
+        ${formatSnippet(rumScriptUrl, 'DD_RUM')}
         DD_RUM.onReady(function () {
           DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
           ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
@@ -90,9 +92,11 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += setupEventBridge(servers)
   }
 
+  const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+
   if (options.logs) {
     header += html`
-      <script type="text/javascript" src="./datadog-logs.js"></script>
+      <script type="text/javascript" src="${logsScriptUrl}"></script>
       <script type="text/javascript">
         DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
@@ -102,10 +106,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
 
   if (options.rum) {
     header += html`
-      <script
-        type="text/javascript"
-        src="${options.useRumSlim ? './datadog-rum-slim.js' : './datadog-rum.js'}"
-      ></script>
+      <script type="text/javascript" src="${rumScriptUrl}"></script>
       <script type="text/javascript">
         DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
@@ -236,17 +237,38 @@ function setupEventBridge(servers: Servers) {
 }
 
 function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
+  const fns = new Map<string, () => void>()
+
   let result = JSON.stringify(
     {
       ...initConfiguration,
       proxy: servers.intake.url,
     },
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    (key, value) => (key === 'beforeSend' ? 'BEFORE_SEND' : value)
+    (_key, value) => {
+      if (typeof value === 'function') {
+        const id = generateUUID()
+        fns.set(id, value)
+
+        return id
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+      return value
+    }
   )
+
   result = result.replace('"LOCATION_ORIGIN"', 'location.origin')
-  if (initConfiguration.beforeSend) {
-    result = result.replace('"BEFORE_SEND"', initConfiguration.beforeSend.toString())
+
+  for (const [id, fn] of fns) {
+    result = result.replace(`"${id}"`, fn.toString())
   }
+
   return result
+}
+
+function createCrossOriginScriptUrls(servers: Servers, options: SetupOptions) {
+  return {
+    logsScriptUrl: `${servers.crossOrigin.url}/datadog-logs.js`,
+    rumScriptUrl: `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`,
+  }
 }

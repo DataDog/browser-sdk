@@ -1,0 +1,211 @@
+---
+description: 
+globs: **/*.spec.ts
+alwaysApply: false
+---
+## Running Unit Tests
+
+### Basic Commands
+
+- **Run all unit tests**: `yarn test:unit`
+- **Run a specific spec file**: `yarn test:unit --spec <file-path>`
+- **Focus on specific tests**: Prepend `f` to `describe` and `it` (e.g., `fdescribe`, `fit`)
+
+### Examples
+
+#### Run All Tests
+```bash
+yarn test:unit
+```
+
+#### Run Single File
+```bash
+# Full path
+yarn test:unit --spec packages/core/src/browser/addEventListener.spec.ts
+
+# Pattern matching (if filename is unique)
+yarn test:unit --spec "packages/**/addEventListener.spec.ts"
+
+# Multiple files with wildcards
+yarn test:unit --spec "packages/core/**/browser/*.spec.ts"
+```
+
+#### Focus on Specific Tests
+```typescript
+// Run only this describe block
+fdescribe('addEventListener', () => {
+  // All tests in this block will run
+  it('should add event listener', () => {})
+  it('should remove event listener', () => {})
+})
+
+// Run only this single test
+describe('addEventListener', () => {
+  fit('should add event listener', () => {
+    // Only this test will run
+  })
+
+  it('should remove event listener', () => {
+    // This test will be skipped
+  })
+})
+```
+
+#### Test observable/callback cleanup
+- **Subscription Management**: Testing that event subscriptions are properly cleaned up
+- **DOM Event Cleanup**: Ensuring event listeners are removed from DOM elements
+- **Timer Cleanup**: Verifying that intervals and timeouts are cleared
+- **Async Operation Cancellation**: Testing that pending promises/callbacks are cancelled
+- **Observable**: Ensuring observers are unsubscribed and streams are completed
+- **Memory Leak Detection**: Patterns for detecting memory leaks in tests
+
+## Debugging Flaky Tests
+
+```bash
+# 1. Check test output for randomization seed
+yarn test:unit
+# Look for: "Randomized with seed 65781"
+
+# 2. Set seed in karma configuration
+# Edit test/unit/karma.base.conf.js:
+module.exports = {
+  // ... other config
+  client: {
+    jasmine: {
+      // ... other jasmine config
+      seed: 65781  // Use the seed from step 1
+    }
+  }
+}
+
+# 3. Run tests with the same order
+yarn test:unit
+
+# 4. Remove seed after debugging
+```
+
+### File Organization
+- **Co-location**: Test files use `.spec.ts` extension and are placed next to source files
+- **Naming pattern**: `sourceFile.ts` → `sourceFile.spec.ts`
+- **Auto-discovery**: Tests are found via glob: `packages/*/@(src|test)/**/*.spec.@(ts|tsx)`
+
+## Common Anti-Patterns to Avoid
+
+### ❌ Don't Do This
+
+```typescript
+// DON'T: Use afterEach for cleanup - may not run if test fails
+afterEach(() => {
+  subscription.unsubscribe()  // Might not execute
+  element.remove()           // Memory leak potential
+})
+
+// DON'T: Create DOM manually
+it('should test DOM interaction', () => {
+  const element = document.createElement('div')
+  document.body.appendChild(element)
+  // Missing cleanup - memory leak!
+  // use appendElement helper!
+})
+
+// DON'T: Use real timers - makes tests slow and flaky
+it('should handle delayed action', (done) => {
+  setTimeout(() => {
+    expect(something).toBeTruthy()
+    done()
+  }, 1000) // Real 1-second delay!
+})
+
+// DON'T: Test multiple unrelated behaviors
+it('should do everything', () => {
+  // Setup user
+  const user = createUser()
+  expect(user.id).toBeDefined()
+
+  // Test login
+  user.login()
+  expect(user.isLoggedIn).toBeTruthy()
+
+  // Test permissions
+  expect(user.hasPermission('admin')).toBeFalsy()
+
+  // Test logout
+  user.logout()
+  expect(user.isLoggedIn).toBeFalsy()
+  // Hard to debug when one part fails!
+})
+
+// DON'T: Use vague test names
+it('should work', () => {
+  // What should work? How?
+})
+
+it('should test the function', () => {
+  // Which function? What aspect?
+})
+```
+
+### ✅ Do This Instead
+
+```typescript
+// DO: Use registerCleanupTask for reliable cleanup
+beforeEach(() => {
+  const subscription = observable.subscribe(handler)
+  registerCleanupTask(() => subscription.unsubscribe())
+
+  const element = document.createElement('div')
+  document.body.appendChild(element)
+  registerCleanupTask(() => element.parentNode?.removeChild(element))
+})
+
+// DO: use existing helpers
+  it('should add DOM with appendElement helper', () => {
+  appendElement('<input type="checkbox" id="test-checkbox" />')
+  const label = appendElement('<label for="test-checkbox">Check me</label>')
+})
+
+// DO: Use mocked clock for time-based tests
+beforeEach(() => {
+  clock = mockClock()
+})
+it('should handle delayed operations', () => {
+  const callback = jasmine.createSpy()
+  setTimeout(callback, 1000)
+
+  clock.tick(1000) // Instant!
+  expect(callback).toHaveBeenCalled()
+})
+
+// DO: One focused assertion per test
+describe('User', () => {
+  it('should generate unique ID on creation', () => {
+    const user = createUser()
+    expect(user.id).toMatch(/^user-\d+$/)
+  })
+
+  it('should start in logged-out state', () => {
+    const user = createUser()
+    expect(user.isLoggedIn).toBeFalsy()
+  })
+
+  it('should allow login with valid credentials', () => {
+    const user = createUser()
+    user.login('valid@email.com', 'password')
+    expect(user.isLoggedIn).toBeTruthy()
+  })
+
+  it('should deny admin permissions to regular user', () => {
+    const user = createUser()
+    expect(user.hasPermission('admin')).toBeFalsy()
+  })
+})
+
+// DO: Use descriptive, specific test names
+it('should generate SHA-256 hash for user password', () => {
+  // Clear what's being tested
+})
+
+it('should throw ValidationError when email format is invalid', () => {
+  // Clear behavior and expected outcome
+})
+```

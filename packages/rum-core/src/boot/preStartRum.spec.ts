@@ -193,6 +193,20 @@ describe('preStartRum', () => {
         expect(doStartRumSpy).not.toHaveBeenCalled()
       })
 
+      it('when undefined, ignores init() call if Synthetics will inject its own instance of RUM', () => {
+        mockSyntheticsWorkerValues({ injectsRum: true })
+
+        const strategy = createPreStartStrategy(
+          {},
+          createTrackingConsentState(),
+          createCustomVitalsState(),
+          doStartRumSpy
+        )
+        strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+        expect(doStartRumSpy).not.toHaveBeenCalled()
+      })
+
       it('when false, does not ignore init() call even if Synthetics will inject its own instance of RUM', () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
 

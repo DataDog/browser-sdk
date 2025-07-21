@@ -1,13 +1,13 @@
 variables:
-  CURRENT_STAGING: staging-25
+  CURRENT_STAGING: staging-30
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 80
+  CURRENT_CI_IMAGE: 84
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: ''
-  CHROME_PACKAGE_VERSION: 137.0.7151.55-1
+  CHROME_PACKAGE_VERSION: 138.0.7204.49-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 
 cache:
@@ -238,6 +238,15 @@ check-licenses:
   script:
     - yarn
     - node --no-warnings scripts/check-licenses.js
+
+check-node-version:
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
+  interruptible: true
+  script:
+    - yarn
+    - node scripts/check-node-version.js
 
 check-release:
   extends:

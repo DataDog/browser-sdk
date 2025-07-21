@@ -12,9 +12,9 @@ import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
+import type { Site } from '../intakeSites'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
-import type { Site } from './intakeSites'
 
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
@@ -157,11 +157,11 @@ export interface InitConfiguration {
    */
   enableExperimentalFeatures?: string[] | undefined
   /**
-   * [Internal option] Configure the dual chipping to another datacenter
+   * [Internal option] Configure the dual shipping to another datacenter
    */
   replica?: ReplicaUserConfiguration | undefined
   /**
-   * [Internal option] Set the datacenter from where the data is dual chipped
+   * [Internal option] Set the datacenter from where the data is dual shipped
    */
   datacenter?: string
   /**
@@ -204,7 +204,9 @@ export interface Configuration extends TransportConfiguration {
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
   telemetryUsageSampleRate: number
-  service: string | undefined
+  service?: string | undefined
+  version?: string | undefined
+  env?: string | undefined
   silentMultipleInit: boolean
   allowUntrustedEvents: boolean
   trackingConsent: TrackingConsent
@@ -289,7 +291,10 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
     telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
     telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-    service: initConfiguration.service || undefined,
+    service: initConfiguration.service ?? undefined,
+    env: initConfiguration.env ?? undefined,
+    version: initConfiguration.version ?? undefined,
+    datacenter: initConfiguration.datacenter ?? undefined,
     silentMultipleInit: !!initConfiguration.silentMultipleInit,
     allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,

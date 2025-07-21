@@ -9,7 +9,7 @@ import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCaus
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
 
-type RawErrorParams = {
+interface RawErrorParams {
   stackTrace?: StackTrace
   originalError: unknown
   handlingStack?: string

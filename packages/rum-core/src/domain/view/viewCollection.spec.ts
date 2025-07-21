@@ -10,7 +10,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
-import type { Hooks } from '../hooks'
+import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startViewCollection } from './viewCollection'
@@ -201,6 +201,11 @@ describe('viewCollection', () => {
         },
       },
       privacy: { replay_level: 'mask' },
+      device: {
+        locale: jasmine.any(String),
+        locales: jasmine.any(Array),
+        time_zone: jasmine.any(String),
+      },
     })
   })
 
@@ -247,16 +252,7 @@ describe('viewCollection', () => {
 
   describe('assembly hook', () => {
     it('should add view properties from the history', () => {
-      const viewHistoryEntry: ViewHistoryEntry = {
-        service: 'service',
-        version: 'version',
-        context: { myContext: 'foo' },
-        id: 'id',
-        name: 'name',
-        startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
-      }
-
-      setupViewCollection({ trackViewsManually: true }, viewHistoryEntry)
+      setupViewCollection({ trackViewsManually: true }, VIEW)
 
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
@@ -265,12 +261,12 @@ describe('viewCollection', () => {
 
       expect(defaultRumEventAttributes).toEqual(
         jasmine.objectContaining({
-          service: 'service',
-          version: 'version',
-          context: { myContext: 'foo' },
+          service: VIEW.service,
+          version: VIEW.version,
+          context: VIEW.context,
           view: {
-            id: 'id',
-            name: 'name',
+            id: VIEW.id,
+            name: VIEW.name,
           },
         })
       )
@@ -285,6 +281,27 @@ describe('viewCollection', () => {
       })
 
       expect(defaultRumEventAttributes).toBe(DISCARDED)
+    })
+  })
+
+  describe('assemble telemetry hook', () => {
+    it('should add view id', () => {
+      setupViewCollection({ trackViewsManually: true }, VIEW)
+
+      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: VIEW.startClocks.relative,
+      }) as DefaultTelemetryEventAttributes
+
+      expect(telemetryEventAttributes.view?.id).toEqual('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+    })
+
+    it('should not add view id if no view', () => {
+      setupViewCollection({ trackViewsManually: true }, undefined)
+      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      }) as DefaultTelemetryEventAttributes
+
+      expect(telemetryEventAttributes.view?.id).toBeUndefined()
     })
   })
 })

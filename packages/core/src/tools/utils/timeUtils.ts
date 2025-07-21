@@ -10,7 +10,10 @@ export type Duration = number & { d: 'Duration in ms' }
 export type ServerDuration = number & { s: 'Duration in ns' }
 export type TimeStamp = number & { t: 'Epoch time' }
 export type RelativeTime = number & { r: 'Time relative to navigation start' } & { d: 'Duration in ms' }
-export type ClocksState = { relative: RelativeTime; timeStamp: TimeStamp }
+export interface ClocksState {
+  relative: RelativeTime
+  timeStamp: TimeStamp
+}
 
 export function relativeToClocks(relative: RelativeTime) {
   return { relative, timeStamp: getCorrectedTimeStamp(relative) }

@@ -6,13 +6,12 @@ export {
   serializeConfiguration,
   isSampleRate,
   buildEndpointHost,
-  INTAKE_SITE_STAGING,
-  INTAKE_SITE_US1,
-  INTAKE_SITE_US1_FED,
-  INTAKE_SITE_EU1,
-  INTAKE_URL_PARAMETERS,
   isIntakeUrl,
+  buildTags,
+  buildTag,
+  sanitizeTag,
 } from './domain/configuration'
+export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
 export {
@@ -55,7 +54,7 @@ export {
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
-export { Observable } from './tools/observable'
+export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager } from './domain/session/sessionManager'
 export { startSessionManager, stopSessionManager } from './domain/session/sessionManager'
 export {
@@ -127,6 +126,10 @@ export { defineContextMethod, bufferContextCalls } from './domain/context/define
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
 export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
 export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
+export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
+export type { User } from './domain/contexts/userContext'
+export type { Account } from './domain/contexts/accountContext'
+export type { RumInternalContext } from './domain/contexts/rumInternalContext.type'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
@@ -138,12 +141,13 @@ export {
   willSyntheticsInjectRum,
   getSyntheticsTestId,
   getSyntheticsResultId,
+  isSyntheticsTest,
 } from './domain/synthetics/syntheticsWorkerValues'
-export type { User } from './domain/user.types'
-export type { Account } from './domain/account.types'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
+export * from './domain/bufferedData'
 export * from './tools/utils/polyfills'
+export * from './tools/utils/timezone'
 export * from './tools/utils/numberUtils'
 export * from './tools/utils/byteUtils'
 export * from './tools/utils/objectUtils'

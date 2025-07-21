@@ -7,7 +7,7 @@ import { checkContext } from './contextUtils'
 
 export type ContextManager = ReturnType<typeof createContextManager>
 
-export type PropertiesConfig = {
+export interface PropertiesConfig {
   [key: string]: {
     required?: boolean
     type?: 'string'

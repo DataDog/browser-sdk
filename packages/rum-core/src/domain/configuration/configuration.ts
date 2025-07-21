@@ -10,8 +10,6 @@ import {
   validateAndBuildConfiguration,
   isSampleRate,
   isNumber,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -181,7 +179,6 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean
   trackLongTasks: boolean
   trackBfcacheViews: boolean
-  version?: string
   subdomain?: string
   customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
@@ -228,13 +225,10 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const profilingEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING)
-
   const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
 
   return {
     applicationId: initConfiguration.applicationId,
-    version: initConfiguration.version || undefined,
     actionNameAttribute: initConfiguration.actionNameAttribute,
     sessionReplaySampleRate,
     startSessionReplayRecordingManually:
@@ -263,7 +257,7 @@ export function validateAndBuildRumConfiguration(
       : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
-    profilingSampleRate: profilingEnabled ? (initConfiguration.profilingSampleRate ?? 0) : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
+    profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     ...baseConfiguration,
   }

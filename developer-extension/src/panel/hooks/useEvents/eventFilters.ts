@@ -9,7 +9,10 @@ export interface EventFilters {
   outdatedVersions: boolean
 }
 
-export type FacetValuesFilter = { type: 'include' | 'exclude'; facetValues: FacetValues }
+export interface FacetValuesFilter {
+  type: 'include' | 'exclude'
+  facetValues: FacetValues
+}
 export interface FacetValues {
   [facetPath: string]: string[]
 }

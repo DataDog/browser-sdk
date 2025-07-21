@@ -14,14 +14,14 @@ export interface ErrorWithCause extends Omit<Error, 'cause'> {
   cause?: unknown
 }
 
-export type RawErrorCause = {
+export interface RawErrorCause {
   message: string
-  source: string
+  source: ErrorSource
   type?: string
   stack?: string
 }
 
-export type Csp = {
+export interface Csp {
   disposition: 'enforce' | 'report'
 }
 

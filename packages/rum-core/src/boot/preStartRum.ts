@@ -15,6 +15,8 @@ import {
   CustomerContextKey,
   buildAccountContextManager,
   buildGlobalContextManager,
+  buildUserContextManager,
+  setTimeout,
 } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
@@ -26,12 +28,11 @@ import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalColl
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
-import { buildUserContextManager } from '../domain/contexts/userContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   doStartRum: (
@@ -100,7 +101,10 @@ export function createPreStartStrategy(
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration
-    addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+    // FIXME temporary hack to avoid sending configuration without all the context data
+    setTimeout(() => {
+      addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
+    })
 
     if (cachedConfiguration) {
       displayAlreadyInitializedError('DD_RUM', initConfiguration)

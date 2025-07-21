@@ -6,20 +6,45 @@ const { getGithubDeployKey, getGithubAccessToken } = require('./secrets')
 const { fetchHandlingError } = require('./executionUtils')
 
 async function fetchPR(localBranch) {
-  const response = await fetchHandlingError(
-    `https://api.github.com/repos/DataDog/browser-sdk/pulls?head=DataDog:${localBranch}`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `token ${getGithubAccessToken()}`,
-      },
-    }
-  )
-  const pr = response.body ? await response.json() : null
+  const pr = await callGitHubApi('GET', `pulls?head=DataDog:${localBranch}`)
   if (pr && pr.length > 1) {
     throw new Error('Multiple pull requests found for the branch')
   }
   return pr ? pr[0] : null
+}
+
+/**
+ * @param {Object} params
+ * @param {string} params.version
+ * @param {string} params.body
+ */
+async function createGitHubRelease({ version, body }) {
+  try {
+    await callGitHubApi('GET', `releases/tags/${version}`)
+    throw new Error(`Release ${version} already exists`)
+  } catch (error) {
+    if (error.status !== 404) {
+      throw error
+    }
+  }
+
+  return callGitHubApi('POST', 'releases', {
+    tag_name: version,
+    name: version,
+    body,
+  })
+}
+
+async function callGitHubApi(method, path, body) {
+  const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
+    method,
+    headers: {
+      Authorization: `token ${getGithubAccessToken()}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: JSON.stringify(body),
+  })
+  return response.json()
 }
 
 function getLastCommonCommit(baseBranch) {
@@ -52,5 +77,6 @@ module.exports = {
   initGitConfig,
   fetchPR,
   getLastCommonCommit,
+  createGitHubRelease,
   LOCAL_BRANCH: process.env.CI_COMMIT_REF_NAME,
 }

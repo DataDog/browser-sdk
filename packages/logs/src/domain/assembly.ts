@@ -1,11 +1,12 @@
 import type { Context, EventRateLimiter, RawError } from '@datadog/browser-core'
 import {
+  DISCARDED,
   ErrorSource,
   HookNames,
+  buildTags,
   combine,
   createEventRateLimiter,
   getRelativeTime,
-  isEmptyObject,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsEvent } from '../logsEvent.types'
@@ -13,11 +14,9 @@ import type { LogsConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import { STATUSES } from './logger'
-import type { LogsSessionManager } from './logsSessionManager'
-import type { DefaultLogsEventAttributes, Hooks } from './hooks'
+import type { Hooks } from './hooks'
 
 export function startLogsAssembly(
-  sessionManager: LogsSessionManager,
   configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   hooks: Hooks,
@@ -32,37 +31,29 @@ export function startLogsAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
-    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext }) => {
+    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext, ddtags = [] }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
-      const session = sessionManager.findTrackedSession(startTime)
-      const shouldSendLog = sessionManager.findTrackedSession(startTime, { returnInactive: true })
+      const commonContext = savedCommonContext || getCommonContext()
+      const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        startTime,
+      })
 
-      if (!shouldSendLog) {
+      if (defaultLogsEventAttributes === DISCARDED) {
         return
       }
 
-      const commonContext = savedCommonContext || getCommonContext()
-
-      if (session && session.anonymousId && !commonContext.user.anonymous_id) {
-        commonContext.user.anonymous_id = session.anonymousId
-      }
-
-      const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-        startTime,
-      }) as DefaultLogsEventAttributes
+      const defaultDdtags = buildTags(configuration)
 
       const log = combine(
         {
-          service: configuration.service,
-          session_id: session ? session.id : undefined,
-          session: session ? { id: session.id } : undefined,
-          // Insert user and account first to allow overrides from global context
-          usr: !isEmptyObject(commonContext.user) ? commonContext.user : undefined,
           view: commonContext.view,
         },
         defaultLogsEventAttributes,
         rawLogsEvent,
-        messageContext
+        messageContext,
+        {
+          ddtags: defaultDdtags.concat(ddtags).join(','),
+        }
       ) as LogsEvent & Context
 
       if (

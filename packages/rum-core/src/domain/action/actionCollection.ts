@@ -7,7 +7,7 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
@@ -16,7 +16,7 @@ import { createActionAllowList, actionNameDictionary } from './privacy/allowedDi
 export type { ActionContexts }
 
 export interface CustomAction {
-  type: ActionType.CUSTOM
+  type: typeof ActionType.CUSTOM
   name: string
   startClocks: ClocksState
   context?: Context
@@ -60,6 +60,13 @@ export function startActionCollection(
       action: { id: actionId },
     }
   })
+
+  hooks.register(
+    HookNames.AssembleTelemetry,
+    ({ startTime }): DefaultTelemetryEventAttributes => ({
+      action: { id: actionContexts.findActionId(startTime) as string },
+    })
+  )
 
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   let stop: () => void = noop
@@ -120,7 +127,7 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
     {
       action: { id: generateUUID(), target: { name: action.name }, type: action.type },
       date: action.startClocks.timeStamp,
-      type: RumEventType.ACTION as const,
+      type: RumEventType.ACTION,
     },
     autoActionProperties
   )

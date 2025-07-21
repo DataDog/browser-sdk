@@ -2,8 +2,8 @@ import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
+import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from '../intakeSites'
 import type { InitConfiguration } from './configuration'
-import { INTAKE_SITE_US1, INTAKE_SITE_FED_STAGING, PCI_INTAKE_HOST_US1 } from './intakeSites'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -19,20 +19,14 @@ export type ApiType =
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
-export function createEndpointBuilder(
-  initConfiguration: InitConfiguration,
-  trackType: TrackType,
-  configurationTags: string[]
-) {
+export function createEndpointBuilder(initConfiguration: InitConfiguration, trackType: TrackType) {
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
 
   return {
     build(api: ApiType, payload: Payload) {
-      const parameters = buildEndpointParameters(initConfiguration, trackType, configurationTags, api, payload)
+      const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload)
       return buildUrlWithParameters(parameters)
     },
-    tags: configurationTags,
-    urlPrefix: buildUrlWithParameters(''),
     trackType,
   }
 }
@@ -89,18 +83,11 @@ export function buildEndpointHost(
 function buildEndpointParameters(
   { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
   trackType: TrackType,
-  configurationTags: string[],
   api: ApiType,
   { retry, encoding }: Payload
 ) {
-  const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
-  if (retry) {
-    tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
-  }
-
   const parameters = [
     'ddsource=browser',
-    `ddtags=${encodeURIComponent(tags.join(','))}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
@@ -112,7 +99,11 @@ function buildEndpointParameters(
   }
 
   if (trackType === 'rum') {
-    parameters.push(`batch_time=${timeStampNow()}`)
+    parameters.push(`batch_time=${timeStampNow()}`, `_dd.api=${api}`)
+
+    if (retry) {
+      parameters.push(`_dd.retry_count=${retry.count}`, `_dd.retry_after=${retry.lastFailureStatus}`)
+    }
   }
 
   if (internalAnalyticsSubdomain) {

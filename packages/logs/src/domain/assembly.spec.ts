@@ -1,5 +1,5 @@
 import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { Observable, ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -9,14 +9,12 @@ import type { LogsConfiguration } from './configuration'
 import { validateAndBuildLogsConfiguration } from './configuration'
 import { Logger } from './logger'
 import { StatusType } from './logger/isAuthorized'
-import type { LogsSessionManager } from './logsSessionManager'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { Hooks } from './hooks'
 import { createHooks } from './hooks'
 import { startRUMInternalContext } from './contexts/rumInternalContext'
 
-const initConfiguration = { clientToken: 'xxx', service: 'service' }
-const SESSION_ID = 'session-id'
+const initConfiguration = { clientToken: 'xxx', service: 'service', env: 'test', version: '1.0.0' }
 const DEFAULT_MESSAGE = {
   status: StatusType.info,
   message: 'message',
@@ -28,27 +26,10 @@ const COMMON_CONTEXT: CommonContext = {
     referrer: 'referrer_from_common_context',
     url: 'url_from_common_context',
   },
-  user: {},
-}
-
-const COMMON_CONTEXT_WITH_USER_AND_ACCOUNT: CommonContext = {
-  ...COMMON_CONTEXT,
-  user: { id: 'id', name: 'name', email: 'test@test.com' },
 }
 
 describe('startLogsAssembly', () => {
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: (_startTime, options) => {
-      if (sessionIsTracked && (sessionIsActive || options?.returnInactive)) {
-        return { id: SESSION_ID }
-      }
-    },
-    expireObservable: new Observable(),
-  }
-
   let beforeSend: (event: LogsEvent) => void | boolean
-  let sessionIsActive: boolean
-  let sessionIsTracked: boolean
   let lifeCycle: LifeCycle
   let configuration: LogsConfiguration
   let serverLogs: Array<LogsEvent & Context> = []
@@ -56,8 +37,6 @@ describe('startLogsAssembly', () => {
   let hooks: Hooks
 
   beforeEach(() => {
-    sessionIsTracked = true
-    sessionIsActive = true
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
     configuration = {
@@ -68,7 +47,7 @@ describe('startLogsAssembly', () => {
     mainLogger = new Logger(() => noop)
     hooks = createHooks()
     startRUMInternalContext(hooks)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -101,56 +80,6 @@ describe('startLogsAssembly', () => {
       rawLogsEvent: DEFAULT_MESSAGE,
     })
     expect(serverLogs.length).toEqual(0)
-  })
-
-  describe('event generation condition', () => {
-    it('should not send if session is not tracked', () => {
-      sessionIsTracked = false
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(0)
-    })
-
-    it('should send log with session id if session is active', () => {
-      sessionIsTracked = true
-      sessionIsActive = true
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-      expect(serverLogs[0].session_id).toEqual(SESSION_ID)
-    })
-
-    it('should send log without session id if session has expired', () => {
-      sessionIsTracked = true
-      sessionIsActive = false
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-      expect(serverLogs[0].session_id).toBeUndefined()
-    })
-
-    it('should enable/disable the sending when the tracking type change', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-
-      sessionIsTracked = false
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-
-      sessionIsTracked = true
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(2)
-    })
   })
 
   describe('contexts inclusion', () => {
@@ -269,7 +198,6 @@ describe('startLogsAssembly', () => {
             referrer: 'referrer_from_common_context',
             url: 'url_from_common_context',
           },
-          user: { name: 'name_from_common_context' },
         },
       })
 
@@ -304,6 +232,21 @@ describe('startLogsAssembly', () => {
     })
   })
 
+  describe('ddtags', () => {
+    it('should contain and format the default tags', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0')
+    })
+
+    it('should append custom tags', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+        ddtags: ['foo:bar'],
+      })
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0,foo:bar')
+    })
+  })
+
   describe('beforeSend', () => {
     it('should allow modification of existing fields', () => {
       beforeSend = (event: LogsEvent) => {
@@ -333,61 +276,8 @@ describe('startLogsAssembly', () => {
   })
 })
 
-describe('user and account management', () => {
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
-    expireObservable: new Observable<void>(),
-  }
-
-  let sessionIsTracked: boolean
-  let lifeCycle: LifeCycle
-  let hooks: Hooks
-  let serverLogs: Array<LogsEvent & Context> = []
-
-  const beforeSend: (event: LogsEvent) => void | boolean = noop
-  const configuration = {
-    ...validateAndBuildLogsConfiguration(initConfiguration)!,
-    beforeSend: (x: LogsEvent) => beforeSend(x),
-  }
-
-  beforeEach(() => {
-    sessionIsTracked = true
-    lifeCycle = new LifeCycle()
-    hooks = createHooks()
-    lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
-  })
-
-  afterEach(() => {
-    delete window.DD_RUM
-    serverLogs = []
-  })
-
-  it('should not output usr key if user is not set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
-
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-    expect(serverLogs[0].usr).toBeUndefined()
-  })
-
-  it('should include user data when user has been set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT_WITH_USER_AND_ACCOUNT, noop)
-
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-    expect(serverLogs[0].usr).toEqual({
-      id: 'id',
-      name: 'name',
-      email: 'test@test.com',
-    })
-  })
-})
-
 describe('logs limitation', () => {
   let clock: Clock
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => ({ id: SESSION_ID }),
-    expireObservable: new Observable(),
-  }
-
   let beforeSend: (event: LogsEvent) => void | boolean
   let lifeCycle: LifeCycle
   let hooks: Hooks
@@ -406,7 +296,7 @@ describe('logs limitation', () => {
     }
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(sessionManager, configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
     clock = mockClock()
   })
 

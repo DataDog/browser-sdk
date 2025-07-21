@@ -1,4 +1,4 @@
-import type { ErrorSource, RawErrorCause, TimeStamp, User, ErrorHandling } from '@datadog/browser-core'
+import type { ErrorSource, RawErrorCause, TimeStamp, ErrorHandling } from '@datadog/browser-core'
 import type { StatusType } from './domain/logger/isAuthorized'
 
 export type RawLogsEvent =
@@ -9,7 +9,7 @@ export type RawLogsEvent =
   | RawReportLogsEvent
   | RawRuntimeLogsEvent
 
-type Error = {
+interface Error {
   message?: string
   kind?: string
   stack?: string
@@ -66,5 +66,4 @@ export interface CommonContext {
     referrer: string
     url: string
   }
-  user: User
 }

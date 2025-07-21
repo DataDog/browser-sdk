@@ -2,14 +2,18 @@ import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { relativeNow, clocksOrigin, ONE_MINUTE } from '../../tools/utils/timeUtils'
-import { DOM_EVENT, addEventListener, addEventListeners } from '../../browser/addEventListener'
+import { clocksOrigin, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
+import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
-import { SESSION_TIME_OUT_DELAY } from './sessionConstants'
+import { addTelemetryDebug } from '../telemetry'
+import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
+import type { CookieStore } from '../../browser/browser.types'
+import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
+import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -88,11 +92,24 @@ export function startSessionManager<TrackingType extends string>(
   trackResume(configuration, () => sessionStore.restartSession())
 
   function buildSessionContext() {
+    const session = sessionStore.getSession()
+
+    if (!session) {
+      reportUnexpectedSessionState().catch(() => void 0) // Ignore errors
+
+      return {
+        id: 'invalid',
+        trackingType: SESSION_NOT_TRACKED as TrackingType,
+        isReplayForced: false,
+        anonymousId: undefined,
+      }
+    }
+
     return {
-      id: sessionStore.getSession().id!,
-      trackingType: sessionStore.getSession()[productKey] as TrackingType,
-      isReplayForced: !!sessionStore.getSession().forcedReplay,
-      anonymousId: sessionStore.getSession().anonymousId,
+      id: session.id!,
+      trackingType: session[productKey] as TrackingType,
+      isReplayForced: !!session.forcedReplay,
+      anonymousId: session.anonymousId,
     }
   }
 
@@ -141,4 +158,26 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
 function trackResume(configuration: Configuration, cb: () => void) {
   const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
   stopCallbacks.push(stop)
+}
+
+async function reportUnexpectedSessionState() {
+  const rawSession = retrieveSessionCookie()
+  let sessionCookies: string[] | Awaited<ReturnType<CookieStore['getAll']>> = []
+
+  if ('cookieStore' in window) {
+    sessionCookies = await (window as Window & { cookieStore: CookieStore }).cookieStore.getAll('_dd_s')
+  } else {
+    sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith('_dd_s'))
+  }
+
+  addTelemetryDebug('Unexpected session state', {
+    session: rawSession,
+    isSyntheticsTest: isSyntheticsTest(),
+    createdTimestamp: rawSession?.created,
+    expireTimestamp: rawSession?.expire,
+    cookie: {
+      count: sessionCookies.length,
+      ...sessionCookies,
+    },
+  })
 }
