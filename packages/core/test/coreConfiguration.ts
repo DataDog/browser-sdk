@@ -38,6 +38,10 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   telemetryConfigurationSampleRate: 70,
   telemetryUsageSampleRate: 80,
   allowedTrackingOrigins: ['chrome-extension://example'],
+  additionalConfig: {
+    source: 'browser',
+    variant: 'test-variant',
+  },
 }
 
 export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
@@ -58,6 +62,10 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   tracking_consent: 'not-granted' as const,
   track_anonymous_user: true,
   use_allowed_tracking_origins: true,
+  additional_config: {
+    source: 'browser',
+    variant: 'test-variant',
+  },
 }
 
 /**
