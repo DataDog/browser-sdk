@@ -30,6 +30,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       configuration: {
         session_sample_rate: 40,
         session_replay_sample_rate: 60,
+        profiling_sample_rate: 0,
       },
     },
     application: {

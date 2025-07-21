@@ -14,7 +14,7 @@ import { MessageBridgeDownType, MessageBridgeUpLogLevel, MessageBridgeUpType } f
 const sandboxLogger = createLogger('sandbox')
 
 export type SessionReplayPlayerStatus = 'loading' | 'waiting-for-full-snapshot' | 'ready'
-export type SessionReplayPlayerState = {
+export interface SessionReplayPlayerState {
   status: SessionReplayPlayerStatus
   recordCount: number
   excludeMouseMovements: boolean

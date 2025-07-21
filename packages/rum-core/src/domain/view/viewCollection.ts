@@ -9,7 +9,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import type { ViewHistory } from '../contexts/viewHistory'
-import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
@@ -50,6 +50,15 @@ export function startViewCollection(
       },
     }
   })
+
+  hooks.register(
+    HookNames.AssembleTelemetry,
+    ({ startTime }): DefaultTelemetryEventAttributes => ({
+      view: {
+        id: viewHistory.findView(startTime)?.id,
+      },
+    })
+  )
 
   return trackViews(
     location,
