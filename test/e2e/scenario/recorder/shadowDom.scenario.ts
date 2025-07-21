@@ -23,7 +23,8 @@ import {
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
 
-/** Will generate the following HTML
+/**
+ * Will generate the following HTML
  * ```html
  * <my-input-field id="titi">
  *  #shadow-root
@@ -63,7 +64,8 @@ const inputShadowDom = `<script>
  </script>
  `
 
-/** Will generate the following HTML
+/**
+ * Will generate the following HTML
  * ```html
  * <my-div id="titi">
  *  #shadow-root
@@ -88,7 +90,8 @@ const divShadowDom = `<script>
  </script>
  `
 
-/** Will generate the following HTML
+/**
+ * Will generate the following HTML
  * ```html
  * <my-div id="titi">
  *  #shadow-root
@@ -131,7 +134,8 @@ const scrollableDivShadowDom = `<script>
  </script>
  `
 
-/** Will generate the following HTML
+/**
+ * Will generate the following HTML
  * ```html
  * <div-with-style>
  *  #shadow-root

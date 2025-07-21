@@ -2,6 +2,11 @@ import * as React from 'react'
 import { createTimer } from './timer'
 import { addDurationVital } from './addDurationVital'
 
+/**
+ * Track the performance of a React component.
+ *
+ * @experimental
+ */
 // eslint-disable-next-line
 export const UNSTABLE_ReactComponentTracker = ({
   name: componentName,
