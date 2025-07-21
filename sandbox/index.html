@@ -17,6 +17,11 @@
         telemetryConfigurationSampleRate: 100,
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
+        additionalConfig: {
+          source: 'test-source',
+          variant: 'test-variant',
+          sdk_version: '1.0.0-test'
+        }
       })
       DD_LOGS.init({
         clientToken: 'xxx',
@@ -24,6 +29,11 @@
         telemetryConfigurationSampleRate: 100,
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
+        additionalConfig: {
+          source: 'test-source',
+          variant: 'test-variant',
+          sdk_version: '1.0.0-test'
+        }
       })
       DD_FLAGGING.init()
     </script>
