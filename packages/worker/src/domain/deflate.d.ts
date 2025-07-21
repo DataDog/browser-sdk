@@ -6,8 +6,6 @@ export class Deflate {
   push(data: Uint8Array | ArrayBuffer | string, flushMode: number | boolean): boolean
 }
 
-export const constants: {
-  [name: string]: number
-}
+export const Z_SYNC_FLUSH: number
 
 export function string2buf(input: string): Uint8Array
