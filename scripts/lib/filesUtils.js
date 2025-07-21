@@ -30,8 +30,10 @@ async function replaceCiFileVariable(variableName, value) {
 }
 
 /**
- * @param filePath {string}
- * @param modifier {(content: string) => string | Promise<string>}
+ * Modify a file.
+ *
+ * @param filePath - {string}
+ * @param modifier - {(content: string) => string | Promise<string>}
  */
 async function modifyFile(filePath, modifier) {
   const content = await fsPromises.readFile(filePath, { encoding: 'utf-8' })

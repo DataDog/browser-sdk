@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration } from './configuration'
+export type { Configuration, InitConfiguration, ProxyFn } from './configuration'
 export {
   DefaultPrivacyLevel,
   TraceContextInjection,
