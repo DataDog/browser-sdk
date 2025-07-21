@@ -3,6 +3,7 @@ import {
   DISCARDED,
   ErrorSource,
   HookNames,
+  buildTags,
   combine,
   createEventRateLimiter,
   getRelativeTime,
@@ -30,7 +31,7 @@ export function startLogsAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_LOG_COLLECTED,
-    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext }) => {
+    ({ rawLogsEvent, messageContext = undefined, savedCommonContext = undefined, domainContext, ddtags = [] }) => {
       const startTime = getRelativeTime(rawLogsEvent.date)
       const commonContext = savedCommonContext || getCommonContext()
       const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
@@ -41,13 +42,18 @@ export function startLogsAssembly(
         return
       }
 
+      const defaultDdtags = buildTags(configuration)
+
       const log = combine(
         {
           view: commonContext.view,
         },
         defaultLogsEventAttributes,
         rawLogsEvent,
-        messageContext
+        messageContext,
+        {
+          ddtags: defaultDdtags.concat(ddtags).join(','),
+        }
       ) as LogsEvent & Context
 
       if (
