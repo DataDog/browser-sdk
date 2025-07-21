@@ -32,5 +32,9 @@ describe('getDefaultViewName', () => {
         '/v1/user/?/profile/?'
       )
     })
+
+    it('should not touch text-only segments', () => {
+      expect(getDefaultViewName('/v1/user/explorer')).toBe('/v1/user/explorer')
+    })
   })
 })
