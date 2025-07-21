@@ -1,7 +1,19 @@
 import { display, addEventListener, buildEndpointHost } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
+import type { RumSdkConfig } from './remoteConfig.types'
 
+type RumRemoteConfiguration = Exclude<RumSdkConfig['rum'], undefined>
 const REMOTE_CONFIGURATION_VERSION = 'v1'
+const STATIC_OPTIONS: Array<keyof RumInitConfiguration> = [
+  'applicationId',
+  'service',
+  'env',
+  'version',
+  'sessionSampleRate',
+  'sessionReplaySampleRate',
+  'defaultPrivacyLevel',
+  'enablePrivacyForActionName',
+]
 
 export function fetchAndApplyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
@@ -14,21 +26,34 @@ export function fetchAndApplyRemoteConfiguration(
 
 export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
-  remoteInitConfiguration: Partial<RumInitConfiguration>
-) {
-  return { ...initConfiguration, ...remoteInitConfiguration }
+  rumRemoteConfiguration: RumRemoteConfiguration & { [key: string]: unknown }
+): RumInitConfiguration {
+  // intents:
+  // - explicitly set each supported field to limit risk in case an attacker can create configurations
+  // - check the existence in the remote config to avoid clearing a provided init field
+  const appliedConfiguration = { ...initConfiguration } as RumInitConfiguration & { [key: string]: unknown }
+  STATIC_OPTIONS.forEach((option: string) => {
+    if (option in rumRemoteConfiguration) {
+      appliedConfiguration[option] = rumRemoteConfiguration[option]
+    }
+  })
+  return appliedConfiguration
 }
 
 export function fetchRemoteConfiguration(
   configuration: RumInitConfiguration,
-  callback: (remoteConfiguration: Partial<RumInitConfiguration>) => void
+  callback: (remoteConfiguration: RumRemoteConfiguration) => void
 ) {
   const xhr = new XMLHttpRequest()
 
   addEventListener(configuration, xhr, 'load', function () {
     if (xhr.status === 200) {
-      const remoteConfiguration = JSON.parse(xhr.responseText)
-      callback(remoteConfiguration.rum)
+      const remoteConfiguration = JSON.parse(xhr.responseText) as RumSdkConfig
+      if (remoteConfiguration.rum) {
+        callback(remoteConfiguration.rum)
+      } else {
+        display.error('No remote configuration for RUM.')
+      }
     } else {
       displayRemoteConfigurationFetchingError()
     }
