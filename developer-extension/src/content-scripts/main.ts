@@ -1,6 +1,6 @@
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
-import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL, CDN_BASE_URL } from '../common/packagesUrlConstants'
+import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL, CDN_BASE_URL, CDN_VERSION } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 import { createLogger } from '../common/logger'
 
@@ -257,7 +257,7 @@ function injectBrowserSDK(config: Settings['sdkInjection']) {
 function getRumBundleUrl(bundle: 'rum' | 'rum-slim', source: 'dev' | 'cdn', site?: string): string {
   if (source === 'cdn') {
     const region = getCdnRegion(site)
-    return `${CDN_BASE_URL}/${region}/v6/datadog-${bundle}.js`
+    return `${CDN_BASE_URL}/${region}/${CDN_VERSION}/datadog-${bundle}.js`
   }
   return bundle === 'rum-slim' ? DEV_RUM_SLIM_URL : DEV_RUM_URL
 }
@@ -265,7 +265,7 @@ function getRumBundleUrl(bundle: 'rum' | 'rum-slim', source: 'dev' | 'cdn', site
 function getLogsBundleUrl(source: 'dev' | 'cdn', site?: string) {
   if (source === 'cdn') {
     const region = getCdnRegion(site)
-    return `${CDN_BASE_URL}/${region}/v6/datadog-logs.js`
+    return `${CDN_BASE_URL}/${region}/${CDN_VERSION}/datadog-logs.js`
   }
   return DEV_LOGS_URL
 }

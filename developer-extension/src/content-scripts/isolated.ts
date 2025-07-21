@@ -6,7 +6,7 @@ import { createLogger } from '../common/logger'
 const logger = createLogger('content-script-isolated')
 
 chrome.runtime.onMessage.addListener((message) => {
-  if (message && typeof message === 'object' && 'type' in message && message.type === 'settings_updated') {
+  if (message?.type === 'settings_updated') {
     window.dispatchEvent(
       new CustomEvent('__ddBrowserSdkSettingsUpdate', {
         detail: message.settings,
@@ -55,7 +55,7 @@ function browserSdkMessageListener(event: unknown) {
 function getSettingsListener() {
   try {
     chrome.runtime.sendMessage({ type: 'get_settings_for_content_script' }, (response) => {
-      if (response && response.settings) {
+      if (response?.settings) {
         window.dispatchEvent(
           new CustomEvent('__ddBrowserSdkSettingsResponse', {
             detail: response.settings,
