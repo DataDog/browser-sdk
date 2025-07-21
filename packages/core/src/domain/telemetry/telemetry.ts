@@ -22,8 +22,8 @@ import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
+import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
 import { HookNames, DISCARDED } from '../../tools/abstractHooks'
-import type { AbstractHooks, DISCARDED as DISCARDED_TYPE } from '../../tools/abstractHooks'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -109,12 +109,22 @@ export function startTelemetryCollection(
       alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
       !alreadySentEvents.has(stringifiedEvent)
     ) {
-      const event = toTelemetryEvent(hooks, telemetryService, rawEvent, runtimeEnvInfo)
-      if (event !== DISCARDED) {
-        observable.notify(event)
-        sendToExtension('telemetry', event)
-        alreadySentEvents.add(stringifiedEvent)
+      const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: clocksNow().relative,
+      })
+
+      if (defaultTelemetryEventAttributes === DISCARDED) {
+        return
       }
+      const event = toTelemetryEvent(
+        defaultTelemetryEventAttributes as RecursivePartial<TelemetryEvent>,
+        telemetryService,
+        rawEvent,
+        runtimeEnvInfo
+      )
+      observable.notify(event)
+      sendToExtension('telemetry', event)
+      alreadySentEvents.add(stringifiedEvent)
     }
   }
   // need to be called after telemetry context is provided and observers are registered
@@ -126,19 +136,12 @@ export function startTelemetryCollection(
   }
 
   function toTelemetryEvent(
-    hooks: AbstractHooks,
+    defaultTelemetryEventAttributes: RecursivePartial<TelemetryEvent>,
     telemetryService: TelemetryService,
     rawEvent: RawTelemetryEvent,
     runtimeEnvInfo: RuntimeEnvInfo
-  ): (TelemetryEvent & Context) | DISCARDED_TYPE {
+  ): TelemetryEvent & Context {
     const clockNow = clocksNow()
-    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-      startTime: clockNow.relative,
-    })
-
-    if (defaultTelemetryEventAttributes === DISCARDED) {
-      return DISCARDED
-    }
 
     const event = {
       type: 'telemetry' as const,
