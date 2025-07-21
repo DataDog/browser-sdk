@@ -1,6 +1,6 @@
 /* eslint-disable */
 /**
- * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.
+ * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.
  */
 
 /**
