@@ -21,7 +21,9 @@ describe('getNodePrivacyLevel', () => {
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK)).toBe(NodePrivacyLevel.MASK)
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_USER_INPUT)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.HIDDEN)).toBe(NodePrivacyLevel.HIDDEN)
-    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe(NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe(
+      NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+    )
   })
 
   describe('inheritance', () => {

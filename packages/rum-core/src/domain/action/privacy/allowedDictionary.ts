@@ -1,5 +1,6 @@
 import { NodePrivacyLevel, TEXT_MASKING_CHAR } from '../../privacyConstants'
-import { ACTION_NAME_PLACEHOLDER, ActionName, ActionNameSource } from '../getActionNameFromElement'
+import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../actionNameConstants'
+import type { ActionName } from '../actionNameConstants'
 
 declare global {
   interface Window {
@@ -7,33 +8,25 @@ declare global {
   }
 }
 
-export function maskTextContent(
-  text: string,
-  fixedMask?: string,
-): { maskedText: string; hasBeenMasked: boolean } {
+export function maskTextContent(text: string, fixedMask?: string): { maskedText: string; hasBeenMasked: boolean } {
   if (!text.trim()) {
     return { maskedText: text, hasBeenMasked: false }
   }
   // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
-  if(window.$DD_ALLOW && window.$DD_ALLOW.has(text.toLocaleLowerCase())) {
+  if (window.$DD_ALLOW && window.$DD_ALLOW.has(text.toLocaleLowerCase())) {
     return { maskedText: text, hasBeenMasked: false }
-  } else {
-    return { maskedText: fixedMask || text.replace(/\S/g, TEXT_MASKING_CHAR), hasBeenMasked: true }
   }
+  return { maskedText: fixedMask || text.replace(/\S/g, TEXT_MASKING_CHAR), hasBeenMasked: true }
 }
 
-export function maskActionName(
-  actionName: ActionName,
-  nodeSelfPrivacy: NodePrivacyLevel,
-): ActionName {
+export function maskActionName(actionName: ActionName, nodeSelfPrivacy: NodePrivacyLevel): ActionName {
   if (nodeSelfPrivacy === NodePrivacyLevel.ALLOW || nodeSelfPrivacy === NodePrivacyLevel.MASK_USER_INPUT) {
     return actionName
-  } else if (
-    nodeSelfPrivacy !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
-    (!window.$DD_ALLOW || !window.$DD_ALLOW.size)
-  ) {
+  }
+  if (nodeSelfPrivacy !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED && (!window.$DD_ALLOW || !window.$DD_ALLOW.size)) {
     return actionName
   } // if the privacy level is MASK or MASK_USER_INPUT and the allowlist is present, we continue of masking the action name
+
   const { name, nameSource } = actionName
   if (!window.$DD_ALLOW || !window.$DD_ALLOW.size) {
     return {

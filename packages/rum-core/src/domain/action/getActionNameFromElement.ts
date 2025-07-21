@@ -2,25 +2,12 @@ import { safeTruncate } from '@datadog/browser-core'
 import { NodePrivacyLevel, getPrivacySelector } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import { maskActionName } from './privacy/allowedDictionary'
-
-/**
- * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
- * It can also be retrieved from a user defined attribute.
- */
-export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
-export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
-export const enum ActionNameSource {
-  CUSTOM_ATTRIBUTE = 'custom_attribute',
-  MASK_PLACEHOLDER = 'mask_placeholder',
-  TEXT_CONTENT = 'text_content',
-  STANDARD_ATTRIBUTE = 'standard_attribute',
-  BLANK = 'blank',
-  MASK_DISALLOWED = 'mask_disallowed',
-}
-export type ActionName = {
-  name: string
-  nameSource: ActionNameSource
-}
+import {
+  ActionNameSource,
+  DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
+  ACTION_NAME_PLACEHOLDER,
+} from './actionNameConstants'
+import type { ActionName } from './actionNameConstants'
 
 export function getActionNameFromElement(
   element: Element,
@@ -50,19 +37,19 @@ export function getActionNameFromElement(
       userProgrammaticAttribute,
       priorityStrategies,
       nodePrivacyLevel || NodePrivacyLevel.MASK_USER_INPUT,
-      enablePrivacyForActionName,
+      enablePrivacyForActionName
     ) ||
     getActionNameFromElementForStrategies(
       element,
       userProgrammaticAttribute,
       fallbackStrategies,
       nodePrivacyLevel || NodePrivacyLevel.MASK_USER_INPUT,
-      enablePrivacyForActionName,
+      enablePrivacyForActionName
     ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
 }
 
-function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string, nodeSelfPrivacy?: NodePrivacyLevel) {
+function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
   const elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
@@ -146,7 +133,7 @@ function getActionNameFromElementForStrategies(
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
   nodeSelfPrivacy: NodePrivacyLevel,
-  enablePrivacyForActionName?: boolean,
+  enablePrivacyForActionName?: boolean
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -160,7 +147,9 @@ function getActionNameFromElementForStrategies(
     for (const strategy of strategies) {
       const actionName = strategy(element, userProgrammaticAttribute, enablePrivacyForActionName)
       if (actionName) {
-        const { name, nameSource } = enablePrivacyForActionName ? actionName : maskActionName(actionName, nodeSelfPrivacy)
+        const { name, nameSource } = enablePrivacyForActionName
+          ? actionName
+          : maskActionName(actionName, nodeSelfPrivacy)
         const trimmedName = name && name.trim()
         if (trimmedName) {
           return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }

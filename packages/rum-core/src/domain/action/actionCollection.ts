@@ -31,7 +31,6 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-
   const { unsubscribe: unsubscribeAutoActionCompleted } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
     (action) => {
@@ -74,7 +73,7 @@ export function startActionCollection(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
-      configuration,
+      configuration
     ))
   }
 

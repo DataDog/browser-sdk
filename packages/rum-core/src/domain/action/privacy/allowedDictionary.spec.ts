@@ -1,16 +1,13 @@
 import { ActionType } from '../../../rawRumEvent.types'
 import { NodePrivacyLevel } from '../../privacyConstants'
-import { ActionNameSource } from '../getActionNameFromElement'
+import { ActionNameSource } from '../actionNameConstants'
 import type { ClickActionBase } from '../trackClickActions'
-import {
-  maskActionName,
-} from './allowedDictionary'
+import { maskActionName } from './allowedDictionary'
 
 const TEST_STRINGS = {
   COMPLEX_MIXED: 'test-team-name:💥$$$',
-  PARAGRAPH_MIXED: "✅ This is an action name in allowlist",
+  PARAGRAPH_MIXED: '✅ This is an action name in allowlist',
 }
-
 
 describe('createActionNameDictionary and maskActionName', () => {
   const clickActionBase: ClickActionBase = {
@@ -42,7 +39,7 @@ describe('createActionNameDictionary and maskActionName', () => {
   })
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
-    clickActionBase.name = "This is an action name in allowlist"
+    clickActionBase.name = 'This is an action name in allowlist'
     const testString1 = maskActionName(clickActionBase, NodePrivacyLevel.MASK)
     expect(testString1.name).toBe('Masked Element')
     expect(testString1.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)

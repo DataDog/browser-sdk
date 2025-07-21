@@ -833,7 +833,7 @@ describe('serializeNodeWithId', () => {
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
           if (textContent.trim()) {
-            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s\*]*$/))
+            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }
       })
@@ -841,12 +841,12 @@ describe('serializeNodeWithId', () => {
       it('fails close when allowlist is undefined', () => {
         window.$DD_ALLOW = undefined
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
-        
+
         // All text content should be masked
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
           if (textContent.trim()) {
-            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s\*]*$/))
+            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }
       })
@@ -952,7 +952,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
       registerCleanupTask(() => {
         window.$DD_ALLOW = undefined
       })
-      
+
       const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
       expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_UNLESS_ALLOWLISTED)
     })

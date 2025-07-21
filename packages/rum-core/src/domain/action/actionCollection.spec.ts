@@ -11,7 +11,7 @@ import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
 import { startActionCollection } from './actionCollection'
-import { ActionNameSource } from './getActionNameFromElement'
+import { ActionNameSource } from './actionNameConstants'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
