@@ -13,6 +13,7 @@ export function startDefaultContext(
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
     const source = configuration.source
     const variant = configuration.variant
+    const version = configuration.version
     const isSourceOverridden = source !== 'browser'
 
     return {
@@ -27,7 +28,7 @@ export function startDefaultContext(
         },
         browser_sdk_version: canUseEventBridge() || isSourceOverridden ? __BUILD_ENV__SDK_VERSION__ : undefined,
         sdk_name: sdkName,
-        ...(variant ? { variant } : {}),
+        ...(variant || version ? { variant, version } : {}),
       },
       application: {
         id: configuration.applicationId,
