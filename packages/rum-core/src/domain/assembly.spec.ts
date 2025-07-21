@@ -19,7 +19,7 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '../rumEvent.types'
+import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -393,8 +393,8 @@ describe('rum assembly', () => {
   describe('service and version', () => {
     const extraConfigurationOptions = { service: 'default-service', version: 'default-version' }
 
-    describe('fields service and version', () => {
-      it('it should be modifiable', () => {
+    Object.values(RumEventType).forEach((eventType) => {
+      it(`should be modifiable for ${eventType}`, () => {
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             ...extraConfigurationOptions,
@@ -408,16 +408,10 @@ describe('rum assembly', () => {
         })
 
         notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+          rawRumEvent: createRawRumEvent(eventType),
         })
         expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
-
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        })
-        expect((serverRumEvents[1] as RumViewEvent).service).toBe('bar')
-        expect((serverRumEvents[1] as RumViewEvent).version).toBe('0.2.0')
       })
     })
 

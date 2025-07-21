@@ -87,10 +87,32 @@ describe('customerDataTelemetry', () => {
   it('should collect customer data only if batches contains rum events, no just telemetry', () => {
     setupCustomerTelemetryCollection()
 
+    // Generate an initial batch with no RUM events. We should not generate any customer
+    // data telemetry.
     batchFlushObservable.notify({ reason: 'duration_limit', bytesCount: 1, messagesCount: 1 })
-
     clock.tick(MEASURES_PERIOD_DURATION)
+    expect(telemetryEvents.length).toEqual(0)
 
+    // Generate a batch with RUM events. We should generate customer data telemetry for
+    // this batch.
+    generateBatch({ eventNumber: 10, contextBytesCount: 10, batchBytesCount: 10 })
+    clock.tick(MEASURES_PERIOD_DURATION)
+    expect(telemetryEvents[0]).toEqual(
+      jasmine.objectContaining({
+        type: 'log',
+        status: 'debug',
+        message: 'Customer data measures',
+        batchCount: 1,
+        batchBytesCount: { min: 10, max: 10, sum: 10 },
+        batchMessagesCount: { min: 10, max: 10, sum: 10 },
+      })
+    )
+    telemetryEvents.length = 0
+
+    // Generate another batch with no RUM events. We should not generate any customer data
+    // telemetry.
+    batchFlushObservable.notify({ reason: 'duration_limit', bytesCount: 1, messagesCount: 1 })
+    clock.tick(MEASURES_PERIOD_DURATION)
     expect(telemetryEvents.length).toEqual(0)
   })
 

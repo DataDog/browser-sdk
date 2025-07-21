@@ -11,6 +11,7 @@ import type {
   PublicApi,
   Duration,
   ContextManager,
+  RumInternalContext,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -28,6 +29,7 @@ import {
   timeStampToClocks,
   CustomerContextKey,
   defineContextMethod,
+  startBufferingData,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -37,7 +39,6 @@ import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { InternalContext } from '../domain/contexts/internalContext'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
@@ -146,7 +147,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * [Internal API] Get the internal SDK context
    */
-  getInternalContext: (startTime?: number) => InternalContext | undefined
+  getInternalContext: (startTime?: number) => RumInternalContext | undefined
 
   /**
    * Get the init configuration
@@ -425,6 +426,7 @@ export function makeRumPublicApi(
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
+  const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     options,
@@ -441,6 +443,7 @@ export function makeRumPublicApi(
           : createIdentityEncoder,
         trackingConsentState,
         customVitalsState,
+        bufferedDataObservable,
         options.sdkName
       )
 
