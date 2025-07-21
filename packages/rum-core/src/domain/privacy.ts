@@ -1,5 +1,5 @@
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
-import { getOrInitRegexes, maskTextContent, actionNameDictionary } from './action/privacy/allowedDictionary'
+import { maskTextContent } from './action/privacy/allowedDictionary'
 import {
   NodePrivacyLevel,
   FORM_PRIVATE_TAG_NAMES,
@@ -204,10 +204,7 @@ export function getTextContent(
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
     } else if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
-      const regexes = getOrInitRegexes()
-      if (regexes && actionNameDictionary) {
-        textContent = maskTextContent(textContent, actionNameDictionary.allowlist, regexes).maskedText
-      }
+      textContent = maskTextContent(textContent).maskedText
     } else {
       textContent = censorText(textContent)
     }

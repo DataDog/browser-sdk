@@ -723,6 +723,313 @@ export const AST_MASK_USER_INPUT = {
   ],
 }
 
+export const AST_MASK_UNLESS_ALLOWLISTED = {
+  type: 0,
+  childNodes: [
+    {
+      type: 1,
+      name: 'html',
+      publicId: '',
+      systemId: '',
+    },
+    {
+      type: 2,
+      tagName: 'html',
+      attributes: {
+        'data-dd-privacy': 'mask-unless-allowlisted',
+      },
+      childNodes: [
+        {
+          type: 2,
+          tagName: 'head',
+          attributes: {},
+          childNodes: [
+            {
+              type: 2,
+              tagName: 'link',
+              attributes: {
+                href: 'https://public.com/path/nested?query=param#hash',
+                rel: 'stylesheet',
+              },
+              childNodes: [],
+            },
+            {
+              type: 2,
+              tagName: 'style',
+              attributes: { _cssText: '.example { color: red; }' },
+              childNodes: [],
+            },
+            {
+              type: 2,
+              tagName: 'meta',
+              attributes: {},
+              childNodes: [],
+            },
+            {
+              type: 2,
+              tagName: 'base',
+              attributes: {},
+              childNodes: [],
+            },
+            {
+              type: 2,
+              tagName: 'title',
+              attributes: {},
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: 'xxxxxxx xxxxx',
+                },
+              ],
+            },
+          ],
+        },
+        {
+          type: 3,
+          textContent: '\n',
+        },
+        {
+          type: 2,
+          tagName: 'body',
+          attributes: {},
+          childNodes: [
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'h1',
+              attributes: {},
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: 'xxxxx xxxxxxx xxxxx',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'p',
+              attributes: {},
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: 'xxxxxx xxxxx xxxxxxx xxxx',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'noscript',
+              attributes: {},
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: 'xxxxx xxxxxxx xxxxx',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'a',
+              attributes: {
+                href: 'https://private.com/path/nested?query=param#hash',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      xxxxx xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n    ',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'img',
+              attributes: {
+                src: 'https://private.com/path/nested?query=param#hash',
+              },
+              childNodes: [],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'select',
+              attributes: {
+                value: '***',
+              },
+              childNodes: [
+                {
+                  type: 2,
+                  tagName: 'option',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: '***',
+                    },
+                  ],
+                },
+                {
+                  type: 2,
+                  tagName: 'option',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: '***',
+                    },
+                  ],
+                },
+                {
+                  type: 2,
+                  tagName: 'option',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: '***',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'input',
+              attributes: {
+                type: 'password',
+              },
+              childNodes: [],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'input',
+              attributes: {
+                type: 'text',
+              },
+              childNodes: [],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'input',
+              attributes: {
+                type: 'checkbox',
+                name: 'inputFoo',
+                value: '***',
+              },
+              childNodes: [],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'label',
+              attributes: {
+                for: 'inputFoo',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: 'xxxxxxxx xxxxx',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'input',
+              attributes: {
+                type: 'radio',
+                name: 'radioGroup',
+                value: '***',
+              },
+              childNodes: [],
+            },
+            {
+              type: 3,
+              textContent: '\n\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'textarea',
+              attributes: {
+                name: 'baz',
+                rows: '2',
+                cols: '20',
+                value: '***',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '      xxxxxx xxxxx xxxxxxx xxx\n    ',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'div',
+              attributes: {
+                contenteditable: '',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: 'xxxxxxxx xxxxxxx xxx',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n',
+            },
+          ],
+        },
+      ],
+    },
+  ],
+}
+
 export const AST_ALLOW = {
   type: 0,
   childNodes: [

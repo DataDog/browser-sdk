@@ -1,6 +1,7 @@
 import { safeTruncate } from '@datadog/browser-core'
 import { NodePrivacyLevel, getPrivacySelector } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
+import { maskActionName } from './privacy/allowedDictionary'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -48,18 +49,20 @@ export function getActionNameFromElement(
       element,
       userProgrammaticAttribute,
       priorityStrategies,
-      enablePrivacyForActionName
+      nodePrivacyLevel || NodePrivacyLevel.MASK_USER_INPUT,
+      enablePrivacyForActionName,
     ) ||
     getActionNameFromElementForStrategies(
       element,
       userProgrammaticAttribute,
       fallbackStrategies,
-      enablePrivacyForActionName
+      nodePrivacyLevel || NodePrivacyLevel.MASK_USER_INPUT,
+      enablePrivacyForActionName,
     ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
 }
 
-function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
+function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string, nodeSelfPrivacy?: NodePrivacyLevel) {
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
   const elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
@@ -142,7 +145,8 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
-  privacyEnabledActionName?: boolean
+  nodeSelfPrivacy: NodePrivacyLevel,
+  enablePrivacyForActionName?: boolean,
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -154,9 +158,9 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
+      const actionName = strategy(element, userProgrammaticAttribute, enablePrivacyForActionName)
       if (actionName) {
-        const { name, nameSource } = actionName
+        const { name, nameSource } = enablePrivacyForActionName ? actionName : maskActionName(actionName, nodeSelfPrivacy)
         const trimmedName = name && name.trim()
         if (trimmedName) {
           return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }

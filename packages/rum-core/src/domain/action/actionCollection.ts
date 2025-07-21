@@ -11,7 +11,6 @@ import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks 
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
-import { createActionAllowList, actionNameDictionary } from './privacy/allowedDictionary'
 
 export type { ActionContexts }
 
@@ -32,7 +31,6 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  createActionAllowList()
 
   const { unsubscribe: unsubscribeAutoActionCompleted } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
@@ -77,7 +75,6 @@ export function startActionCollection(
       domMutationObservable,
       windowOpenObservable,
       configuration,
-      actionNameDictionary
     ))
   }
 
@@ -87,7 +84,6 @@ export function startActionCollection(
     },
     actionContexts,
     stop: () => {
-      actionNameDictionary?.clear()
       unsubscribeAutoActionCompleted()
       stop()
     },

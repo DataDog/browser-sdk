@@ -663,4 +663,169 @@ describe('getActionNameFromElement', () => {
       })
     })
   })
+
+  describe('privacy masking logic for action names', () => {
+    describe('when privacyEnabledActionName is false', () => {
+      beforeEach(() => {
+        window.$DD_ALLOW = new Set(['allowed text', 'button text'])
+      })
+
+      afterEach(() => {
+        window.$DD_ALLOW = undefined
+      })
+
+      it('applies maskActionName when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<button>secret text</button>'),
+          {
+            ...defaultConfiguration,
+            defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+            enablePrivacyForActionName: false,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('Masked Element')
+        expect(nameSource).toBe('mask_disallowed')
+      })
+
+      it('preserves allowlisted text when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<button>allowed text</button>'),
+          {
+            ...defaultConfiguration,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('allowed text')
+        expect(nameSource).toBe('text_content')
+      })
+
+      it('apply mask placeholder whenprivacy level is MASK', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<button>any text</button>'),
+          {
+            ...defaultConfiguration,
+          },
+          NodePrivacyLevel.MASK
+        )
+        expect(name).toBe('Masked Element')
+        expect(nameSource).toBe('mask_placeholder')
+      })
+
+      it('does not apply masking when privacy level is ALLOW', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<button>any text</button>'),
+          {
+            ...defaultConfiguration,
+          },
+          NodePrivacyLevel.ALLOW
+        )
+        expect(name).toBe('any text')
+        expect(nameSource).toBe('text_content')
+      })
+
+      it('handles empty allowlist with MASK_UNLESS_ALLOWLISTED privacy level', () => {
+        window.$DD_ALLOW = new Set()
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<button>any text</button>'),
+          {
+            ...defaultConfiguration,
+            enablePrivacyForActionName: false,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('Masked Element')
+        expect(nameSource).toBe('mask_disallowed')
+      })
+
+      it('handles undefined allowlist with MASK_UNLESS_ALLOWLISTED privacy level', () => {
+        window.$DD_ALLOW = undefined
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<button>any text</button>'),
+          {
+            ...defaultConfiguration,
+            enablePrivacyForActionName: false,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('Masked Element')
+        expect(nameSource).toBe('mask_disallowed')
+      })
+
+      it('applies masking to input button values when not allowlisted', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<input type="button" value="secret button" />'),
+          {
+            ...defaultConfiguration,
+            enablePrivacyForActionName: false,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('Masked Element')
+        expect(nameSource).toBe('mask_disallowed')
+      })
+
+      it('preserves input button values when allowlisted', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<input type="button" value="button text" />'),
+          {
+            ...defaultConfiguration,
+            enablePrivacyForActionName: false,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('button text')
+        expect(nameSource).toBe('text_content')
+      })
+
+      it('applies masking to aria-label when not allowlisted', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<span aria-label="secret label" />'),
+          {
+            ...defaultConfiguration,
+            enablePrivacyForActionName: false,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('Masked Element')
+        expect(nameSource).toBe('mask_disallowed')
+      })
+
+      it('preserves aria-label when allowlisted', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<span aria-label="allowed text" />'),
+          {
+            ...defaultConfiguration,
+            enablePrivacyForActionName: false,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('allowed text')
+        expect(nameSource).toBe('standard_attribute')
+      })
+    })
+
+    describe('when privacyEnabledActionName is true', () => {
+      beforeEach(() => {
+        window.$DD_ALLOW = new Set(['allowed text'])
+      })
+
+      afterEach(() => {
+        window.$DD_ALLOW = undefined
+      })
+
+      it('bypasses maskActionName when nodePrivacyLevel is MASK_UNLESS_ALLOWLISTED', () => {
+        const { name, nameSource } = getActionNameFromElement(
+          appendElement('<button>secret text</button>'),
+          {
+            ...defaultConfiguration,
+            enablePrivacyForActionName: true,
+          },
+          NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+        )
+        expect(name).toBe('secret text')
+        expect(nameSource).toBe('text_content')
+      })
+    })
+  })
 })

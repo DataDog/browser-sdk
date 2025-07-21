@@ -16,6 +16,7 @@ export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
 export const PRIVACY_ATTR_VALUE_ALLOW = 'allow'
 export const PRIVACY_ATTR_VALUE_MASK = 'mask'
 export const PRIVACY_ATTR_VALUE_MASK_USER_INPUT = 'mask-user-input'
+export const PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED = 'mask-unless-allowlisted'
 export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden'
 
 // Privacy Classes - not all customers can set plain HTML attributes, so support classes too
@@ -36,7 +37,6 @@ export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
 }
 
 export const TEXT_MASKING_CHAR = 'x'
-export const FIXED_MASKING_STRING = 'xxx'
 
 export function getPrivacySelector(privacyLevel: string) {
   return `[${PRIVACY_ATTR_NAME}="${privacyLevel}"], .${PRIVACY_CLASS_PREFIX}${privacyLevel}`

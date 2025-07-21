@@ -21,6 +21,7 @@ describe('getNodePrivacyLevel', () => {
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK)).toBe(NodePrivacyLevel.MASK)
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_USER_INPUT)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.HIDDEN)).toBe(NodePrivacyLevel.HIDDEN)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe(NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)
   })
 
   describe('inheritance', () => {
@@ -385,6 +386,15 @@ describe('shouldMaskNode', () => {
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.HIDDEN)).toBeTrue()
+    })
+  })
+
+  describe('for privacy level mask_unless_allowlisted', () => {
+    it('returns true if the text content is not in the allowlist', () => {
+      const element = document.createElement('div')
+      const text = document.createTextNode('foo')
+      element.appendChild(text)
+      expect(shouldMaskNode(text, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
     })
   })
 })

@@ -29,8 +29,6 @@ import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
-import { maskActionName } from './privacy/allowedDictionary'
-import type { AllowedDictionary } from './privacy/allowedDictionary'
 
 interface ActionCounts {
   errorCount: number
@@ -70,7 +68,6 @@ export function trackClickActions(
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
-  actionNameDictionary: AllowedDictionary
 ) {
   const history: ClickActionIdHistory = createValueHistory({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
   const stopObservable = new Observable<void>()
@@ -98,7 +95,6 @@ export function trackClickActions(
         domMutationObservable,
         pointerDownEvent,
         windowOpenObservable,
-        actionNameDictionary
       ),
     onPointerUp: ({ clickActionBase, hadActivityOnPointerDown }, startEvent, getUserActivity) => {
       startClickAction(
@@ -152,21 +148,19 @@ function processPointerDown(
   domMutationObservable: Observable<RumMutationRecord[]>,
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>,
-  actionNameDictionary: AllowedDictionary
 ) {
   const nodeSelfPrivacy = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-  const nodePrivacyLevel = configuration.enablePrivacyForActionName ? nodeSelfPrivacy : NodePrivacyLevel.ALLOW
+  // If the node privacy level is MASK_UNLESS_ALLOWLISTED, we use the default privacy level
+  // If the enablePrivacyForActionName is true, we use the node privacy level
+  // Otherwise, we use the allow level
+  // TODO: we should make enablePrivacyForActionName true by default for the next major version
+  const nodePrivacyLevel = nodeSelfPrivacy === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED ? nodeSelfPrivacy : configuration.enablePrivacyForActionName ? nodeSelfPrivacy : NodePrivacyLevel.ALLOW;
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return undefined
   }
 
   let clickActionBase = computeClickActionBase(pointerDownEvent, nodePrivacyLevel, configuration)
-
-  // mask with allowlist when enablePrivacyForActionName is not set to true
-  if (!configuration.enablePrivacyForActionName) {
-    clickActionBase = maskActionName(clickActionBase, nodeSelfPrivacy, actionNameDictionary.allowlist)
-  }
 
   let hadActivityOnPointerDown = false
 
