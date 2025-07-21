@@ -7,4 +7,7 @@ import type { MatchOption } from '@datadog/browser-core'
  * b3multi: B3 Multiple Headers (X-B3-*)
  */
 export type PropagatorType = 'datadog' | 'b3' | 'b3multi' | 'tracecontext'
-export type TracingOption = { match: MatchOption; propagatorTypes: PropagatorType[] }
+export interface TracingOption {
+  match: MatchOption
+  propagatorTypes: PropagatorType[]
+}

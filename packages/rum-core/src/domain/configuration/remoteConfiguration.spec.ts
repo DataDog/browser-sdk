@@ -2,10 +2,12 @@ import { DefaultPrivacyLevel, display, INTAKE_SITE_US1 } from '@datadog/browser-
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
+import type { RumSdkConfig } from './remoteConfig.types'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',
   applicationId: 'xxx',
+  service: 'xxx',
   sessionReplaySampleRate: 100,
   defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
 }
@@ -42,7 +44,7 @@ describe('remoteConfiguration', () => {
       fetchRemoteConfiguration(configuration, remoteConfigurationCallback)
     })
 
-    it('should print an error if the fetching as failed', (done) => {
+    it('should print an error if the fetching fails with a server error', (done) => {
       interceptor.withMockXhr((xhr) => {
         xhr.complete(500)
         expect(remoteConfigurationCallback).not.toHaveBeenCalled()
@@ -51,18 +53,44 @@ describe('remoteConfiguration', () => {
       })
       fetchRemoteConfiguration(configuration, remoteConfigurationCallback)
     })
+
+    it('should print an error if the fetching fails with a client error', (done) => {
+      interceptor.withMockXhr((xhr) => {
+        xhr.complete(404)
+        expect(remoteConfigurationCallback).not.toHaveBeenCalled()
+        expect(displayErrorSpy).toHaveBeenCalledOnceWith('Error fetching the remote configuration.')
+        done()
+      })
+      fetchRemoteConfiguration(configuration, remoteConfigurationCallback)
+    })
+
+    it('should print an error if the remote config does not contain rum config', (done) => {
+      interceptor.withMockXhr((xhr) => {
+        xhr.complete(200, '{}')
+        expect(remoteConfigurationCallback).not.toHaveBeenCalled()
+        expect(displayErrorSpy).toHaveBeenCalledOnceWith('No remote configuration for RUM.')
+        done()
+      })
+      fetchRemoteConfiguration(configuration, remoteConfigurationCallback)
+    })
   })
 
   describe('applyRemoteConfiguration', () => {
     it('should override the initConfiguration options with the ones from the remote configuration', () => {
-      const remoteConfiguration: Partial<RumInitConfiguration> = {
+      const remoteConfiguration: RumSdkConfig['rum'] = {
+        applicationId: 'yyy',
         sessionSampleRate: 1,
         sessionReplaySampleRate: 1,
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, remoteConfiguration)).toEqual(
-        jasmine.objectContaining(remoteConfiguration)
-      )
+      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, remoteConfiguration)).toEqual({
+        applicationId: 'yyy',
+        clientToken: 'xxx',
+        service: 'xxx',
+        sessionSampleRate: 1,
+        sessionReplaySampleRate: 1,
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+      })
     })
   })
 

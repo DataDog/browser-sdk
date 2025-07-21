@@ -27,7 +27,7 @@ export interface RumSessionManager {
   setForcedReplay: () => void
 }
 
-export type RumSession = {
+export interface RumSession {
   id: string
   sessionReplay: SessionReplayState
   anonymousId?: string

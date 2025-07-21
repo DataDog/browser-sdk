@@ -1,4 +1,4 @@
-import type { Context, ContextValue } from '../../tools/serialisation/context'
+import type { Context } from '../../tools/serialisation/context'
 import { ConsoleApiName } from '../../tools/display'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
@@ -6,7 +6,7 @@ import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../intakeSites'
 import { Observable } from '../../tools/observable'
-import { timeStampNow } from '../../tools/utils/timeUtils'
+import { clocksNow } from '../../tools/utils/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
 import { performDraw } from '../../tools/utils/numberUtils'
@@ -22,6 +22,8 @@ import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
+import { HookNames } from '../../tools/abstractHooks'
+import type { AbstractHooks } from '../../tools/abstractHooks'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -50,7 +52,6 @@ export const enum TelemetryService {
 }
 
 export interface Telemetry {
-  setContextProvider: (key: string, contextProvider: () => ContextValue | undefined) => void
   stop: () => void
   enabled: boolean
 }
@@ -66,6 +67,7 @@ let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
 export function startTelemetry(
   telemetryService: TelemetryService,
   configuration: Configuration,
+  hooks: AbstractHooks,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
@@ -74,10 +76,9 @@ export function startTelemetry(
 
   const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
 
-  const { enabled, setContextProvider } = startTelemetryCollection(telemetryService, configuration, observable)
+  const { enabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
 
   return {
-    setContextProvider,
     stop,
     enabled,
   }
@@ -86,10 +87,10 @@ export function startTelemetry(
 export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
+  hooks: AbstractHooks,
   observable: Observable<TelemetryEvent & Context>
 ) {
   const alreadySentEvents = new Set<string>()
-  const contextProviders = new Map<string, () => ContextValue | undefined>()
 
   const telemetryEnabled =
     !TELEMETRY_EXCLUDED_SITES.includes(configuration.site) && performDraw(configuration.telemetrySampleRate)
@@ -108,7 +109,7 @@ export function startTelemetryCollection(
       alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
       !alreadySentEvents.has(stringifiedEvent)
     ) {
-      const event = toTelemetryEvent(telemetryService, rawEvent, runtimeEnvInfo)
+      const event = toTelemetryEvent(hooks, telemetryService, rawEvent, runtimeEnvInfo)
       observable.notify(event)
       sendToExtension('telemetry', event)
       alreadySentEvents.add(stringifiedEvent)
@@ -119,19 +120,23 @@ export function startTelemetryCollection(
   startMonitorErrorCollection(addTelemetryError)
 
   return {
-    setContextProvider: (key: string, contextProvider: () => ContextValue | undefined) =>
-      contextProviders.set(key, contextProvider),
     enabled: telemetryEnabled,
   }
 
   function toTelemetryEvent(
+    hooks: AbstractHooks,
     telemetryService: TelemetryService,
     rawEvent: RawTelemetryEvent,
     runtimeEnvInfo: RuntimeEnvInfo
   ): TelemetryEvent & Context {
+    const clockNow = clocksNow()
+    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      startTime: clockNow.relative,
+    })
+
     const event = {
       type: 'telemetry' as const,
-      date: timeStampNow(),
+      date: clockNow.timeStamp,
       service: telemetryService,
       version: __BUILD_ENV__SDK_VERSION__,
       source: 'browser' as const,
@@ -144,13 +149,9 @@ export function startTelemetryCollection(
         sdk_setup: __BUILD_ENV__SDK_SETUP__,
       }) as TelemetryEvent['telemetry'],
       experimental_features: Array.from(getExperimentalFeatures()),
-    } as TelemetryEvent & Context
-
-    for (const [key, contextProvider] of contextProviders) {
-      event[key] = contextProvider()
     }
 
-    return event
+    return combine(event, defaultTelemetryEventAttributes) as TelemetryEvent & Context
   }
 }
 

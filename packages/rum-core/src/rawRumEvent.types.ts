@@ -141,6 +141,11 @@ export interface RawRumViewEvent {
       start_session_replay_recording_manually: boolean
     }
   }
+  device?: {
+    locale?: string
+    locales?: readonly string[]
+    time_zone?: string
+  }
 }
 
 interface ViewDisplay {
@@ -187,7 +192,11 @@ export interface RumRect {
   height: number
 }
 
-export type PageStateServerEntry = { state: PageState; start: ServerDuration }
+export interface PageStateServerEntry {
+  state: PageState
+  start: ServerDuration
+  [k: string]: unknown
+}
 
 export const ViewLoadingType = {
   INITIAL_LOAD: 'initial_load',

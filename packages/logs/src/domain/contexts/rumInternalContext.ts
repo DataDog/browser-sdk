@@ -1,4 +1,4 @@
-import type { Context, RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, RumInternalContext } from '@datadog/browser-core'
 import {
   willSyntheticsInjectRum,
   addTelemetryDebug,
@@ -10,7 +10,7 @@ import {
 import type { Hooks } from '../hooks'
 
 interface Rum {
-  getInternalContext?: (startTime?: RelativeTime) => Context | undefined
+  getInternalContext?: (startTime?: RelativeTime) => RumInternalContext | undefined
 }
 
 interface BrowserWindow {
@@ -31,6 +31,20 @@ export function startRUMInternalContext(hooks: Hooks) {
     return internalContext
   })
 
+  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => {
+    const internalContext = getRUMInternalContext(startTime)
+
+    if (!internalContext) {
+      return SKIPPED
+    }
+
+    return {
+      application: { id: internalContext.application_id },
+      view: { id: internalContext.view?.id },
+      action: { id: internalContext.user_action?.id as string },
+    }
+  })
+
   function getRUMInternalContext(startTime?: RelativeTime) {
     const willSyntheticsInjectRumResult = willSyntheticsInjectRum()
     const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
@@ -49,14 +63,13 @@ export function startRUMInternalContext(hooks: Hooks) {
     }
   }
 
-  function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): Context | undefined {
+  function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): RumInternalContext | undefined {
     if (rumGlobal && rumGlobal.getInternalContext) {
       return rumGlobal.getInternalContext(startTime)
     }
   }
 
   return {
-    getRUMInternalContext,
     stop: () => {
       logsSentBeforeRumInjectionTelemetryAdded = false
     },
