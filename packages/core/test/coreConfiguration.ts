@@ -86,6 +86,7 @@ export type MapInitConfigurationKey<Key extends string> =
           | 'internalAnalyticsSubdomain'
           | 'replica'
           | 'enableExperimentalFeatures'
+          | 'additionalConfig'
       ? never
       : // Other keys are simply snake cased
         CamelToSnakeCase<Key>
