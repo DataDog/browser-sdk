@@ -51,7 +51,10 @@ const COMMON_CONTEXT = {
 }
 const DEFAULT_PAYLOAD = {} as Payload
 
-function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
+function startLogsWithDefaults(
+  { configuration }: { configuration?: Partial<LogsConfiguration> } = {},
+  trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+) {
   const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
@@ -61,7 +64,7 @@ function startLogsWithDefaults({ configuration }: { configuration?: Partial<Logs
       ...configuration,
     },
     () => COMMON_CONTEXT,
-    createTrackingConsentState(TrackingConsent.GRANTED),
+    trackingConsentState,
     new BufferedObservable<BufferedData>(100)
   )
 
@@ -106,6 +109,7 @@ describe('logs', () => {
         foo: 'bar',
         message: 'message',
         service: 'service',
+        ddtags: 'sdk_version:test,service:service',
         session_id: jasmine.any(String),
         session: {
           id: jasmine.any(String),
@@ -286,6 +290,30 @@ describe('logs', () => {
 
       const firstRequest = getLoggedMessage(requests, 0)
       expect(firstRequest.view.url).toEqual('from-rum-context')
+    })
+  })
+
+  describe('tracking consent', () => {
+    it('should not send logs after tracking consent is revoked', async () => {
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+      const { handleLog, logger } = startLogsWithDefaults({}, trackingConsentState)
+
+      // Log a message with consent granted - should be sent
+      handleLog({ status: StatusType.info, message: 'message before revocation' }, logger)
+
+      await interceptor.waitForAllFetchCalls()
+      expect(requests.length).toEqual(1)
+      expect(getLoggedMessage(requests, 0).message).toBe('message before revocation')
+
+      // Revoke consent
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+
+      // Log another message - should not be sent
+      handleLog({ status: StatusType.info, message: 'message after revocation' }, logger)
+
+      await interceptor.waitForAllFetchCalls()
+      // Should still only have the first request
+      expect(requests.length).toEqual(1)
     })
   })
 })

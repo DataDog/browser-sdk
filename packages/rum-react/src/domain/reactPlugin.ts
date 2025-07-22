@@ -9,6 +9,9 @@ type StartSubscriber = (addEvent: StartRumResult['addEvent']) => void
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
 
+/**
+ * React plugin configuration.
+ */
 export interface ReactPluginConfiguration {
   /**
    * Enable react-router integration
@@ -16,7 +19,19 @@ export interface ReactPluginConfiguration {
   router?: boolean
 }
 
-export function reactPlugin(configuration: ReactPluginConfiguration = {}) {
+/**
+ * React plugin type.
+ *
+ * The plugins API is unstable and experimental, and may change without notice. Please don't use this type directly.
+ *
+ * @internal
+ */
+export type ReactPlugin = Required<RumPlugin>
+
+/**
+ * React plugin constructor.
+ */
+export function reactPlugin(configuration: ReactPluginConfiguration = {}): ReactPlugin {
   return {
     name: 'react',
     onInit({ publicApi, initConfiguration }) {

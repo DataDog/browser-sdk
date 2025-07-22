@@ -22,8 +22,8 @@ import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
-import { HookNames } from '../../tools/abstractHooks'
-import type { AbstractHooks } from '../../tools/abstractHooks'
+import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
+import { HookNames, DISCARDED } from '../../tools/abstractHooks'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -109,7 +109,19 @@ export function startTelemetryCollection(
       alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
       !alreadySentEvents.has(stringifiedEvent)
     ) {
-      const event = toTelemetryEvent(hooks, telemetryService, rawEvent, runtimeEnvInfo)
+      const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: clocksNow().relative,
+      })
+
+      if (defaultTelemetryEventAttributes === DISCARDED) {
+        return
+      }
+      const event = toTelemetryEvent(
+        defaultTelemetryEventAttributes as RecursivePartial<TelemetryEvent>,
+        telemetryService,
+        rawEvent,
+        runtimeEnvInfo
+      )
       observable.notify(event)
       sendToExtension('telemetry', event)
       alreadySentEvents.add(stringifiedEvent)
@@ -124,15 +136,12 @@ export function startTelemetryCollection(
   }
 
   function toTelemetryEvent(
-    hooks: AbstractHooks,
+    defaultTelemetryEventAttributes: RecursivePartial<TelemetryEvent>,
     telemetryService: TelemetryService,
     rawEvent: RawTelemetryEvent,
     runtimeEnvInfo: RuntimeEnvInfo
   ): TelemetryEvent & Context {
     const clockNow = clocksNow()
-    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-      startTime: clockNow.relative,
-    })
 
     const event = {
       type: 'telemetry' as const,
@@ -186,9 +195,9 @@ function startTelemetryTransport(
       new Observable()
     )
     cleanupTasks.push(() => telemetryBatch.stop())
-    const telemetrySubscription = telemetryObservable.subscribe((event) =>
+    const telemetrySubscription = telemetryObservable.subscribe((event) => {
       telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
-    )
+    })
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
 

@@ -3,7 +3,7 @@ import { createTest, html } from '../lib/framework'
 
 test.describe('telemetry', () => {
   createTest('send errors for logs')
-    .withLogs()
+    .withLogs({ trackingConsent: 'granted' })
     .run(async ({ intakeRegistry, page, flushEvents }) => {
       await page.evaluate(() => {
         const context = {
@@ -94,6 +94,31 @@ test.describe('telemetry', () => {
       const event = intakeRegistry.telemetryUsageEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.usage.feature).toEqual('set-tracking-consent')
+    })
+
+  createTest('stops sending telemetry after consent revocation')
+    .withRum()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      // Generate initial telemetry, revoke consent, then try to generate more
+      await page.evaluate(() => {
+        window.DD_RUM!.addAction('initial-action')
+        window.DD_RUM!.setTrackingConsent('not-granted')
+        window.DD_RUM!.addAction('post-revocation-action')
+        window.DD_RUM!.getAccount()
+      })
+
+      await flushEvents()
+
+      // Verify telemetry events: should have initial action and consent revocation,
+      // but NOT the post-revocation action
+      const telemetryEvents = intakeRegistry.telemetryUsageEvents
+      expect(telemetryEvents.length).toBeGreaterThanOrEqual(2)
+
+      // Verify no telemetry for post-revocation action or get-account
+      const postRevocationEvents = telemetryEvents.filter(
+        (event) => event.telemetry.usage.feature === 'add-action' || event.telemetry.usage.feature === 'get-account'
+      )
+      expect(postRevocationEvents.length).toEqual(1) // Only the initial action
     })
 
   test.describe('collect errors related to session initialization', () => {

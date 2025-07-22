@@ -123,6 +123,7 @@ describe('logger collection', () => {
         domainContext: {
           handlingStack: HANDLING_STACK,
         },
+        ddtags: [],
       })
     })
 
@@ -143,6 +144,37 @@ describe('logger collection', () => {
       handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, HANDLING_STACK, COMMON_CONTEXT)
 
       expect(rawLogsEvents.length).toBe(0)
+    })
+  })
+
+  describe('ddtags', () => {
+    beforeEach(() => {
+      logger.setHandler(HandlerType.http)
+    })
+
+    it('should contain the ddtags of the logger', () => {
+      logger.addTag('tag1', 'value1')
+      handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
+
+      expect(rawLogsEvents[0].ddtags).toEqual(['tag1:value1'])
+    })
+
+    it('should ignore the tags of the message context', () => {
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { ddtags: ['tag3:value3'] } },
+        logger,
+        HANDLING_STACK,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0].ddtags).toEqual([])
+    })
+
+    it('should ignore the tags of the logger context', () => {
+      logger.setContext({ ddtags: ['tag1:value1'] })
+      handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
+
+      expect(rawLogsEvents[0].ddtags).toEqual([])
     })
   })
 })
