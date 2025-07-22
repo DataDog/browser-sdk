@@ -18,8 +18,14 @@ import {
   addTelemetryUsage,
   TelemetryService,
   startTelemetryCollection,
+  addTelemetryMetrics,
+  addTelemetryDebug,
 } from './telemetry'
 import type { TelemetryEvent } from './telemetryEvent.types'
+import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
+
+const NETWORK_METRICS_KIND = 'Network metrics'
+const PERFORMANCE_METRICS_KIND = 'Performance metrics'
 
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
   const observable = new Observable<TelemetryEvent & Context>()
@@ -57,6 +63,14 @@ describe('telemetry', () => {
       throw new Error('message')
     })
     expect(notifySpy).toHaveBeenCalledTimes(1)
+    expect(notifySpy.calls.mostRecent().args[0]).toEqual(
+      jasmine.objectContaining({
+        telemetry: jasmine.objectContaining({
+          type: TelemetryType.LOG,
+          status: StatusType.error,
+        }),
+      })
+    )
   })
 
   describe('addTelemetryConfiguration', () => {
@@ -70,6 +84,14 @@ describe('telemetry', () => {
       addTelemetryConfiguration({})
 
       expect(notifySpy).toHaveBeenCalled()
+      expect(notifySpy.calls.mostRecent().args[0]).toEqual(
+        jasmine.objectContaining({
+          telemetry: jasmine.objectContaining({
+            type: TelemetryType.CONFIGURATION,
+            configuration: jasmine.anything(),
+          }),
+        })
+      )
     })
 
     it('should not notify configuration when not sampled', () => {
@@ -96,6 +118,14 @@ describe('telemetry', () => {
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
       expect(notifySpy).toHaveBeenCalled()
+      expect(notifySpy.calls.mostRecent().args[0]).toEqual(
+        jasmine.objectContaining({
+          telemetry: jasmine.objectContaining({
+            type: TelemetryType.USAGE,
+            usage: jasmine.anything(),
+          }),
+        })
+      )
     })
 
     it('should not notify usage when not sampled', () => {
@@ -110,6 +140,33 @@ describe('telemetry', () => {
       const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryUsageSampleRate: 100 })
 
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
+
+      expect(notifySpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('addTelemetryMetrics', () => {
+    it('should collect metrics when sampled', () => {
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100 })
+
+      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
+
+      expect(notifySpy).toHaveBeenCalled()
+      expect(notifySpy.calls.mostRecent().args[0]).toEqual(
+        jasmine.objectContaining({
+          telemetry: jasmine.objectContaining({
+            type: TelemetryType.LOG,
+            message: PERFORMANCE_METRICS_KIND,
+            status: StatusType.debug,
+          }),
+        })
+      )
+    })
+
+    it('should not notify metrics when not sampled', () => {
+      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0 })
+
+      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
 
       expect(notifySpy).not.toHaveBeenCalled()
     })
@@ -248,6 +305,62 @@ describe('telemetry', () => {
       expect(notifySpy).toHaveBeenCalledTimes(2)
       expect(notifySpy.calls.argsFor(0)[0].telemetry.usage.feature).toEqual('stop-session')
       expect(notifySpy.calls.argsFor(1)[0].telemetry.usage.feature).toEqual('start-session-replay-recording')
+    })
+  })
+
+  describe('maxTelemetryEventsPerPage', () => {
+    it('should be enforced', () => {
+      const { notifySpy } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+
+      addTelemetryUsage({ feature: 'stop-session' })
+      addTelemetryUsage({ feature: 'start-session-replay-recording' })
+      addTelemetryUsage({ feature: 'start-view' })
+
+      expect(notifySpy).toHaveBeenCalledTimes(2)
+      expect(notifySpy.calls.argsFor(0)[0].telemetry.usage.feature).toEqual('stop-session')
+      expect(notifySpy.calls.argsFor(1)[0].telemetry.usage.feature).toEqual('start-session-replay-recording')
+    })
+
+    it('should be enforced separately for different kinds of telemetry', () => {
+      const { notifySpy } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+
+      // Group 1. These are all distinct kinds of telemetry, so these should all be sent.
+      addTelemetryDebug('debug 1')
+      addTelemetryError(new Error('error 1'))
+      addTelemetryMetrics(NETWORK_METRICS_KIND, { bandwidth: 500 })
+      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
+      addTelemetryUsage({ feature: 'stop-session' })
+
+      // Group 2. Again, these should all be sent.
+      addTelemetryDebug('debug 2')
+      addTelemetryError(new Error('error 2'))
+      addTelemetryMetrics(NETWORK_METRICS_KIND, { latency: 50 })
+      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { jank: 50 })
+      addTelemetryUsage({ feature: 'start-session-replay-recording' })
+
+      // Group 3. Each of these events should hit the limit for their respective kind of
+      // telemetry, so none of them should be sent.
+      addTelemetryDebug('debug 3')
+      addTelemetryError(new Error('error 3'))
+      addTelemetryMetrics(NETWORK_METRICS_KIND, { packet_loss: 99 })
+      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { latency: 500 })
+      addTelemetryUsage({ feature: 'start-view' })
+
+      expect(notifySpy.calls.all().map((call) => call.args[0].telemetry as TelemetryEvent['telemetry'])).toEqual([
+        // Group 1.
+        jasmine.objectContaining({ message: 'debug 1' }),
+        jasmine.objectContaining({ message: 'error 1' }),
+        jasmine.objectContaining({ message: NETWORK_METRICS_KIND, bandwidth: 500 }),
+        jasmine.objectContaining({ message: PERFORMANCE_METRICS_KIND, speed: 1000 }),
+        jasmine.objectContaining({ usage: jasmine.objectContaining({ feature: 'stop-session' }) }),
+
+        // Group 2.
+        jasmine.objectContaining({ message: 'debug 2' }),
+        jasmine.objectContaining({ message: 'error 2' }),
+        jasmine.objectContaining({ message: NETWORK_METRICS_KIND, latency: 50 }),
+        jasmine.objectContaining({ message: PERFORMANCE_METRICS_KIND, jank: 50 }),
+        jasmine.objectContaining({ usage: jasmine.objectContaining({ feature: 'start-session-replay-recording' }) }),
+      ])
     })
   })
 
