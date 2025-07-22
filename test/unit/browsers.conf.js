@@ -43,8 +43,8 @@ const browserConfigurations = [
     sessionName: 'Safari mobile',
     name: 'safari',
     os: 'ios',
-    osVersion: '14',
-    device: 'iPhone 12',
+    osVersion: '15',
+    device: 'iPhone 13',
   },
 ]
 
