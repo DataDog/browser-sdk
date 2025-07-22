@@ -401,6 +401,5 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
-    additional_config: initConfiguration.additionalConfig,
   } satisfies RawTelemetryConfiguration
 }
