@@ -1,5 +1,5 @@
 import type { Context, FlushEvent, Observable, Telemetry } from '@datadog/browser-core'
-import { performDraw, ONE_SECOND, addTelemetryDebug, setInterval } from '@datadog/browser-core'
+import { performDraw, ONE_SECOND, addTelemetryMetrics, setInterval } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -61,7 +61,7 @@ function sendCurrentPeriodMeasures() {
     return
   }
 
-  addTelemetryDebug('Customer data measures', currentPeriodMeasures)
+  addTelemetryMetrics('Customer data measures', currentPeriodMeasures)
   initCurrentPeriodMeasures()
 }
 
