@@ -1,8 +1,7 @@
 import { ActionType } from '../../../rawRumEvent.types'
-import { NodePrivacyLevel } from '../../privacyConstants'
 import { ActionNameSource } from '../actionNameConstants'
 import type { ClickActionBase } from '../trackClickActions'
-import { maskActionName } from './allowedDictionary'
+import { maskDisallowedActionName } from './allowedDictionary'
 
 const TEST_STRINGS = {
   COMPLEX_MIXED: 'test-team-name:💥$$$',
@@ -30,29 +29,29 @@ describe('createActionNameDictionary and maskActionName', () => {
     window.$DD_ALLOW = undefined
   })
 
-  it('should not run if $DD_ALLOW is not defined', () => {
+  it('should fail close if $DD_ALLOW is not defined', () => {
     window.$DD_ALLOW = undefined as any
-    clickActionBase.name = 'mask-feature-off'
-    const testString = maskActionName(clickActionBase, NodePrivacyLevel.ALLOW)
-    expect(testString.name).toBe('mask-feature-off')
+    clickActionBase.name = 'mask-feature-on'
+    const testString = maskDisallowedActionName(clickActionBase)
+    expect(testString.name).toBe('Masked Element')
     expect(testString.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
   })
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
     clickActionBase.name = 'This is an action name in allowlist'
-    const testString1 = maskActionName(clickActionBase, NodePrivacyLevel.MASK)
+    const testString1 = maskDisallowedActionName(clickActionBase)
     expect(testString1.name).toBe('Masked Element')
     expect(testString1.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
 
     clickActionBase.name = 'any unallowed string'
-    const testString2 = maskActionName(clickActionBase, NodePrivacyLevel.MASK)
+    const testString2 = maskDisallowedActionName(clickActionBase)
     expect(testString2.name).toBe('Masked Element')
     expect(testString2.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
   })
 
   it('handles empty string', () => {
     clickActionBase.name = ''
-    const result = maskActionName(clickActionBase, NodePrivacyLevel.ALLOW)
+    const result = maskDisallowedActionName(clickActionBase)
     expect(result.name).toBe('')
     expect(result.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
   })

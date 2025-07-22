@@ -262,6 +262,10 @@ describe('trackClickActions', () => {
   })
 
   describe('with enablePrivacyForActionName false', () => {
+    beforeAll(() => {
+      window.$DD_ALLOW = undefined
+    })
+
     it('extracts action name when default privacy level is mask', () => {
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
@@ -448,7 +452,7 @@ describe('trackClickActions', () => {
     })
   })
 
-  describe('maskActionName', () => {
+  describe('NodePrivacyLevel masking', () => {
     beforeAll(() => {
       window.$DD_ALLOW = new Set(['foo-bar'])
     })
@@ -484,7 +488,7 @@ describe('trackClickActions', () => {
       expect(events[0].name).toBe('Click me')
     })
 
-    it('should not use allowlist masking when enablePrivacyForActionName is true', () => {
+    it('should not use allowlist masking when enablePrivacyForActionName is true and defaultPrivacyLevel is mask', () => {
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
         enablePrivacyForActionName: true,
@@ -496,12 +500,43 @@ describe('trackClickActions', () => {
 
       expect(events.length).toBe(1)
       expect(events[0].name).toBe('Masked Element')
+      expect(events[0].nameSource).toBe(ActionNameSource.MASK_PLACEHOLDER)
     })
 
-    it('should not mask action name when defaultPrivacyLevel is mask but dd-privacy is allow', () => {
+    it('should use allowlist masking when defaultPrivacyLevel is allow and node privacy level is mask-unless-allowlisted', () => {
+      button.setAttribute('data-dd-privacy', 'mask-unless-allowlisted')
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Masked Element')
+      expect(events[0].nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
+    })
+
+    it('should not use allowlist masking when defaultPrivacyLevel is mask-unless-allowlisted but node privacy level is mask', () => {
+      button.setAttribute('data-dd-privacy', 'mask')
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Masked Element')
+      expect(events[0].nameSource).toBe(ActionNameSource.MASK_PLACEHOLDER)
+    })
+
+    it('should not use allowlist masking when defaultPrivacyLevel is mask-unless-allowlisted but dd-privacy is allow', () => {
       button.setAttribute('data-dd-privacy', 'allow')
       startClickActionsTracking({
-        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
       })
 
       emulateClick({ activity: {} })

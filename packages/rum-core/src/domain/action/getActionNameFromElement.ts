@@ -1,7 +1,7 @@
-import { safeTruncate } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, safeTruncate } from '@datadog/browser-core'
 import { NodePrivacyLevel, getPrivacySelector } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
-import { maskActionName } from './privacy/allowedDictionary'
+import { maskDisallowedActionName } from './privacy/allowedDictionary'
 import {
   ActionNameSource,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
@@ -11,7 +11,7 @@ import type { ActionName } from './actionNameConstants'
 
 export function getActionNameFromElement(
   element: Element,
-  { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
+  { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute, defaultPrivacyLevel }: RumConfiguration,
   nodePrivacyLevel?: NodePrivacyLevel
 ): ActionName {
   // Proceed to get the action name in two steps:
@@ -36,14 +36,16 @@ export function getActionNameFromElement(
       element,
       userProgrammaticAttribute,
       priorityStrategies,
-      nodePrivacyLevel || NodePrivacyLevel.MASK_USER_INPUT,
+      defaultPrivacyLevel,
+      nodePrivacyLevel,
       enablePrivacyForActionName
     ) ||
     getActionNameFromElementForStrategies(
       element,
       userProgrammaticAttribute,
       fallbackStrategies,
-      nodePrivacyLevel || NodePrivacyLevel.MASK_USER_INPUT,
+      defaultPrivacyLevel,
+      nodePrivacyLevel,
       enablePrivacyForActionName
     ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
@@ -132,8 +134,9 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
-  nodeSelfPrivacy: NodePrivacyLevel,
-  enablePrivacyForActionName?: boolean
+  defaultPrivacyLevel: DefaultPrivacyLevel,
+  nodeSelfPrivacy?: NodePrivacyLevel,
+  privacyEnabledActionName?: boolean
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -145,11 +148,14 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const actionName = strategy(element, userProgrammaticAttribute, enablePrivacyForActionName)
+      const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
       if (actionName) {
-        const { name, nameSource } = enablePrivacyForActionName
-          ? actionName
-          : maskActionName(actionName, nodeSelfPrivacy)
+        const { name, nameSource } =
+          (defaultPrivacyLevel === DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
+            nodeSelfPrivacy !== NodePrivacyLevel.ALLOW) ||
+          nodeSelfPrivacy === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+            ? maskDisallowedActionName(actionName)
+            : actionName
         const trimmedName = name && name.trim()
         if (trimmedName) {
           return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }

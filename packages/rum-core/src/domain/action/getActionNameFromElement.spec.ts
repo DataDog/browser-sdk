@@ -665,7 +665,7 @@ describe('getActionNameFromElement', () => {
     })
   })
 
-  describe('privacy masking logic for action names', () => {
+  describe('Mask with allowlist for action names', () => {
     describe('when privacyEnabledActionName is false', () => {
       beforeEach(() => {
         window.$DD_ALLOW = new Set(['allowed text', 'button text'])
@@ -701,7 +701,10 @@ describe('getActionNameFromElement', () => {
         expect(nameSource).toBe('text_content')
       })
 
-      it('apply mask placeholder whenprivacy level is MASK', () => {
+      // TODO: remove this comment after we make enablePrivacyForActionName true by default
+      // This case should not happen in the field for now, because we do not set node privacy level to MASK
+      // when enablePrivacyForActionName is false in the configuration yet
+      it('apply mask placeholder when privacy level is MASK if DD_ALLOW is not empty', () => {
         const { name, nameSource } = getActionNameFromElement(
           appendElement('<button>any text</button>'),
           {
@@ -815,7 +818,7 @@ describe('getActionNameFromElement', () => {
         window.$DD_ALLOW = undefined
       })
 
-      it('bypasses maskActionName when nodePrivacyLevel is MASK_UNLESS_ALLOWLISTED', () => {
+      it('should use allowlist masking when nodePrivacyLevel is MASK_UNLESS_ALLOWLISTED', () => {
         const { name, nameSource } = getActionNameFromElement(
           appendElement('<button>secret text</button>'),
           {
@@ -824,8 +827,8 @@ describe('getActionNameFromElement', () => {
           },
           NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
         )
-        expect(name).toBe('secret text')
-        expect(nameSource).toBe('text_content')
+        expect(name).toBe('Masked Element')
+        expect(nameSource).toBe('mask_disallowed')
       })
     })
   })

@@ -148,7 +148,13 @@ function processPointerDown(
   // If the enablePrivacyForActionName is true, we use the node privacy level
   // Otherwise, we use the allow level
   // TODO: we should make enablePrivacyForActionName true by default for the next major version
+
+  // this won't work because there would always be a case when we set the nodeSelfPrivacy to ALLOW
+  // if we use configuration.defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED as a check
+  // then when we set defaultPrivacyLevel to ALLOW, and override the node privacy level to MASK_UNLESS_ALLOWLISTED
+
   const nodePrivacyLevel =
+    configuration.defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED ||
     nodeSelfPrivacy === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
       ? nodeSelfPrivacy
       : configuration.enablePrivacyForActionName
