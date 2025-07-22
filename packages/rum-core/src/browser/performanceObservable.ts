@@ -58,9 +58,9 @@ export interface RumPerformanceResourceTiming {
   responseEnd: RelativeTime
   redirectStart: RelativeTime
   redirectEnd: RelativeTime
-  decodedBodySize: number
-  encodedBodySize: number
-  transferSize: number
+  decodedBodySize?: number
+  encodedBodySize?: number
+  transferSize?: number
   nextHopProtocol?: string
   renderBlockingStatus?: string
   traceId?: string
