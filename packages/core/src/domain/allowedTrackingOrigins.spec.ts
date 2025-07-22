@@ -1,7 +1,7 @@
 import { display } from '../tools/display'
 import {
   isAllowedTrackingOrigins,
-  WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
+  ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
   ERROR_NOT_ALLOWED_TRACKING_ORIGIN,
 } from './allowedTrackingOrigins'
 
@@ -170,7 +170,7 @@ describe('checkForAllowedTrackingOrigins', () => {
   })
 
   describe('when configuration does not have allowedTrackingOrigins', () => {
-    it('should warn when in extension environment and allowedTrackingOrigins is undefined', () => {
+    it('should error when in extension environment and allowedTrackingOrigins is undefined', () => {
       const result = isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
@@ -179,8 +179,8 @@ describe('checkForAllowedTrackingOrigins', () => {
         'https://example.com',
         'Error: at chrome-extension://abcdefghijklmno/content.js:10:15'
       )
-      expect(displayWarnSpy).toHaveBeenCalledWith(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
-      expect(result).toBe(true)
+      expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
+      expect(result).toBe(false)
     })
 
     it('should error when in extension environment and allowedTrackingOrigins is an empty array', () => {

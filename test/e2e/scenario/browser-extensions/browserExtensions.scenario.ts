@@ -9,17 +9,27 @@ const pathToAllowedTrackingOriginExtension = path.join(__dirname, '../../../../t
 // Contains allowedTrackingOrigins parameter with app.example.com origin
 const pathToInvalidTrackingOriginExtension = path.join(__dirname, '../../../../test/apps/invalid-tracking-origin')
 
-const warningMessage =
-  'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
-const errorMessage = 'Datadog Browser SDK: SDK initialized on a non-allowed domain.'
+const errorDoesNotHaveAllowedTrackingOriginMessage =
+  'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is forbidden unless the `allowedTrackingOrigins` option is provided.'
+const errorNotAllowedTrackingOriginMessage = 'Datadog Browser SDK: SDK initialized on a non-allowed domain.'
 
 test.describe('browser extensions', () => {
   createTest('popup page should load extension popup and display expected content')
     .withExtension(pathToBaseExtension)
-    .run(async ({ page, getExtensionId }) => {
+    .run(async ({ page, getExtensionId, withBrowserLogs }) => {
       const extensionId = await getExtensionId()
       await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
       await expect(page).toHaveTitle(/Extension Popup/)
+
+      withBrowserLogs((logs) => {
+        expect(logs.length).toBeGreaterThanOrEqual(2)
+        expect(logs).toContainEqual(
+          expect.objectContaining({
+            level: 'error',
+            message: errorDoesNotHaveAllowedTrackingOriginMessage,
+          })
+        )
+      })
     })
 
   createTest(
@@ -52,8 +62,8 @@ test.describe('browser extensions', () => {
         expect(logs.length).toBeGreaterThanOrEqual(2)
         expect(logs).toContainEqual(
           expect.objectContaining({
-            level: 'warning',
-            message: warningMessage,
+            level: 'error',
+            message: errorDoesNotHaveAllowedTrackingOriginMessage,
           })
         )
       })
@@ -125,7 +135,7 @@ test.describe('browser extensions', () => {
         expect(logs).toContainEqual(
           expect.objectContaining({
             level: 'error',
-            message: errorMessage,
+            message: errorNotAllowedTrackingOriginMessage,
           })
         )
       })
