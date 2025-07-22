@@ -427,6 +427,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether a list of allowed origins is used to control SDK execution in browser extension contexts. When enabled, the SDK will check if the current origin matches the allowed origins list before running.
        */
       use_allowed_tracking_origins?: boolean
+      /**
+       * Additional configuration parameters
+       */
+      additional_config?: Record<string, unknown>
       [k: string]: unknown
     }
     [k: string]: unknown
