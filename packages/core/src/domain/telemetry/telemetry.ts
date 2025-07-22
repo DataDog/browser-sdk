@@ -22,8 +22,8 @@ import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
-import { HookNames } from '../../tools/abstractHooks'
-import type { AbstractHooks } from '../../tools/abstractHooks'
+import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
+import { HookNames, DISCARDED } from '../../tools/abstractHooks'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -60,8 +60,8 @@ const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
 // eslint-disable-next-line local-rules/disallow-side-effects
 let preStartTelemetryBuffer = createBoundedBuffer()
-let onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
-  preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
+let onRawTelemetryEventCollected = (event: RawTelemetryEvent, kind: string) => {
+  preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event, kind))
 }
 
 export function startTelemetry(
@@ -90,7 +90,7 @@ export function startTelemetryCollection(
   hooks: AbstractHooks,
   observable: Observable<TelemetryEvent & Context>
 ) {
-  const alreadySentEvents = new Set<string>()
+  const alreadySentEventsByKind: Record<string, Set<string>> = {}
 
   const telemetryEnabled =
     !TELEMETRY_EXCLUDED_SITES.includes(configuration.site) && performDraw(configuration.telemetrySampleRate)
@@ -102,18 +102,42 @@ export function startTelemetryCollection(
   }
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
-  onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent) => {
-    const stringifiedEvent = jsonStringify(rawEvent)!
-    if (
-      telemetryEnabledPerType[rawEvent.type!] &&
-      alreadySentEvents.size < configuration.maxTelemetryEventsPerPage &&
-      !alreadySentEvents.has(stringifiedEvent)
-    ) {
-      const event = toTelemetryEvent(hooks, telemetryService, rawEvent, runtimeEnvInfo)
-      observable.notify(event)
-      sendToExtension('telemetry', event)
-      alreadySentEvents.add(stringifiedEvent)
+  onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent, kind: string) => {
+    if (!telemetryEnabledPerType[rawEvent.type!]) {
+      return
     }
+
+    let alreadySentEvents = alreadySentEventsByKind[kind]
+    if (!alreadySentEvents) {
+      alreadySentEvents = alreadySentEventsByKind[kind] = new Set()
+    }
+
+    if (alreadySentEvents.size >= configuration.maxTelemetryEventsPerPage) {
+      return
+    }
+
+    const stringifiedEvent = jsonStringify(rawEvent)!
+    if (alreadySentEvents.has(stringifiedEvent)) {
+      return
+    }
+
+    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      startTime: clocksNow().relative,
+    })
+
+    if (defaultTelemetryEventAttributes === DISCARDED) {
+      return
+    }
+
+    const event = toTelemetryEvent(
+      defaultTelemetryEventAttributes as RecursivePartial<TelemetryEvent>,
+      telemetryService,
+      rawEvent,
+      runtimeEnvInfo
+    )
+    observable.notify(event)
+    sendToExtension('telemetry', event)
+    alreadySentEvents.add(stringifiedEvent)
   }
   // need to be called after telemetry context is provided and observers are registered
   preStartTelemetryBuffer.drain()
@@ -124,15 +148,12 @@ export function startTelemetryCollection(
   }
 
   function toTelemetryEvent(
-    hooks: AbstractHooks,
+    defaultTelemetryEventAttributes: RecursivePartial<TelemetryEvent>,
     telemetryService: TelemetryService,
     rawEvent: RawTelemetryEvent,
     runtimeEnvInfo: RuntimeEnvInfo
   ): TelemetryEvent & Context {
     const clockNow = clocksNow()
-    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
-      startTime: clockNow.relative,
-    })
 
     const event = {
       type: 'telemetry' as const,
@@ -186,9 +207,9 @@ function startTelemetryTransport(
       new Observable()
     )
     cleanupTasks.push(() => telemetryBatch.stop())
-    const telemetrySubscription = telemetryObservable.subscribe((event) =>
+    const telemetrySubscription = telemetryObservable.subscribe((event) => {
       telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
-    )
+    })
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }
 
@@ -216,8 +237,8 @@ export function startFakeTelemetry() {
 
 export function resetTelemetry() {
   preStartTelemetryBuffer = createBoundedBuffer()
-  onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
-    preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event))
+  onRawTelemetryEventCollected = (event: RawTelemetryEvent, kind: string) => {
+    preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event, kind))
   }
 }
 
@@ -231,35 +252,59 @@ export function isTelemetryReplicationAllowed(configuration: Configuration) {
 
 export function addTelemetryDebug(message: string, context?: Context) {
   displayIfDebugEnabled(ConsoleApiName.debug, message, context)
-  onRawTelemetryEventCollected({
-    type: TelemetryType.LOG,
-    message,
-    status: StatusType.debug,
-    ...context,
-  })
+  onRawTelemetryEventCollected(
+    {
+      type: TelemetryType.LOG,
+      message,
+      status: StatusType.debug,
+      ...context,
+    },
+    StatusType.debug
+  )
 }
 
 export function addTelemetryError(e: unknown, context?: Context) {
-  onRawTelemetryEventCollected({
-    type: TelemetryType.LOG,
-    status: StatusType.error,
-    ...formatError(e),
-    ...context,
-  })
+  onRawTelemetryEventCollected(
+    {
+      type: TelemetryType.LOG,
+      status: StatusType.error,
+      ...formatError(e),
+      ...context,
+    },
+    StatusType.error
+  )
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
-  onRawTelemetryEventCollected({
-    type: TelemetryType.CONFIGURATION,
-    configuration,
-  })
+  onRawTelemetryEventCollected(
+    {
+      type: TelemetryType.CONFIGURATION,
+      configuration,
+    },
+    TelemetryType.CONFIGURATION
+  )
+}
+
+export function addTelemetryMetrics(kind: string, context?: Context) {
+  onRawTelemetryEventCollected(
+    {
+      type: TelemetryType.LOG,
+      message: kind,
+      status: StatusType.debug,
+      ...context,
+    },
+    kind
+  )
 }
 
 export function addTelemetryUsage(usage: RawTelemetryUsage) {
-  onRawTelemetryEventCollected({
-    type: TelemetryType.USAGE,
-    usage,
-  })
+  onRawTelemetryEventCollected(
+    {
+      type: TelemetryType.USAGE,
+      usage,
+    },
+    TelemetryType.USAGE
+  )
 }
 
 export function formatError(e: unknown) {

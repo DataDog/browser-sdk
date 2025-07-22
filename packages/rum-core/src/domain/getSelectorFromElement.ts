@@ -182,13 +182,11 @@ function isSelectorUniqueGlobally(
  * Check whether the selector is unique among the element siblings. In other words, it returns true
  * if "ELEMENT_PARENT > CHILD_SELECTOR" returns a single element.
  *
- * @param {Element} currentElement - the element being considered while iterating over the target
+ * @param currentElement - the element being considered while iterating over the target
  * element ancestors.
- *
- * @param {string} currentElementSelector - a selector that matches the current element. That
+ * @param currentElementSelector - a selector that matches the current element. That
  * selector is not a composed selector (i.e. it might be a single tag name, class name...).
- *
- * @param {string|undefined} childSelector - child selector is a selector that targets a descendant
+ * @param childSelector - child selector is a selector that targets a descendant
  * of the current element. When undefined, the current element is the target element.
  *
  * # Scope selector usage

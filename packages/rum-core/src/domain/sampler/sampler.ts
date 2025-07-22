@@ -40,8 +40,8 @@ export function resetSampleDecisionCache() {
  * Perform sampling using the Knuth factor method. This method offer consistent sampling result
  * based on the provided identifier.
  *
- * @param identifier The identifier to use for sampling.
- * @param sampleRate The sample rate in percentage between 0 and 100.
+ * @param identifier - The identifier to use for sampling.
+ * @param sampleRate - The sample rate in percentage between 0 and 100.
  */
 export function sampleUsingKnuthFactor(identifier: bigint, sampleRate: number) {
   // The formula is:

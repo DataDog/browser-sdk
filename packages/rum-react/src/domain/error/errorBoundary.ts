@@ -2,14 +2,14 @@ import React from 'react'
 import type { ErrorInfo } from 'react'
 import { addReactError } from './addReactError'
 
-interface Props {
+export interface Props {
   fallback: Fallback
   children: React.ReactNode
 }
 
 export type Fallback = React.ComponentType<{ error: Error; resetError: () => void }>
 
-type State =
+export type State =
   | {
       didCatch: false
       error: null

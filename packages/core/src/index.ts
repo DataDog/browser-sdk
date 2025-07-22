@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, EndpointBuilder } from './domain/configuration'
+export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn } from './domain/configuration'
 export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
@@ -51,6 +51,7 @@ export {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
+  addTelemetryMetrics,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
