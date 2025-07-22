@@ -1,7 +1,7 @@
 import { DefaultPrivacyLevel, safeTruncate } from '@datadog/browser-core'
 import { NodePrivacyLevel, getPrivacySelector } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
-import { maskDisallowedActionName } from './privacy/allowedDictionary'
+import { maskDisallowedActionName } from './privacy/maskWithAllowlist'
 import {
   ActionNameSource,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,

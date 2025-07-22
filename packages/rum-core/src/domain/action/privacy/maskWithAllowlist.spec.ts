@@ -1,14 +1,14 @@
 import { ActionType } from '../../../rawRumEvent.types'
 import { ActionNameSource } from '../actionNameConstants'
 import type { ClickActionBase } from '../trackClickActions'
-import { maskDisallowedActionName } from './allowedDictionary'
+import { maskDisallowedActionName } from './maskWithAllowlist'
 
 const TEST_STRINGS = {
   COMPLEX_MIXED: 'test-team-name:💥$$$',
   PARAGRAPH_MIXED: '✅ This is an action name in allowlist',
 }
 
-describe('createActionNameDictionary and maskActionName', () => {
+describe('maskWithAllowlist', () => {
   const clickActionBase: ClickActionBase = {
     type: ActionType.CLICK,
     name: '',

@@ -1,5 +1,5 @@
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
-import { maskTextContent } from './action/privacy/allowedDictionary'
+import { maskTextContent } from './action/privacy/maskWithAllowlist'
 import {
   NodePrivacyLevel,
   FORM_PRIVATE_TAG_NAMES,
