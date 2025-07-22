@@ -44,9 +44,10 @@ const browserConfigurations = [
     name: 'safari',
     os: 'ios',
     osVersion: '15',
-    device: 'iPhone 12 Pro',
+    device: 'iPhone 13',
   },
 ]
+
 module.exports = {
   browserConfigurations,
 }
