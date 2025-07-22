@@ -3,6 +3,8 @@ import { isPageExitReason, ONE_SECOND, clearTimeout, setTimeout } from '@datadog
 import type { LifeCycle, ViewHistory, RumSessionManager, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserRecord, CreationReason, SegmentContext } from '../../types'
+import type { SerializationStats } from '../record'
+import type { ReplayPayload } from './buildReplayPayload'
 import { buildReplayPayload } from './buildReplayPayload'
 import type { FlushReason, Segment } from './segment'
 import { createSegment } from './segment'
@@ -39,14 +41,19 @@ export let SEGMENT_BYTES_LIMIT = 60_000
 // To help investigate session replays issues, each segment is created with a "creation reason",
 // indicating why the session has been created.
 
+export interface SegmentCollector {
+  addRecord(this: void, record: BrowserRecord, stats?: SerializationStats): void
+  stop(this: void): void
+}
+
 export function startSegmentCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
-  httpRequest: HttpRequest,
+  httpRequest: HttpRequest<ReplayPayload>,
   encoder: DeflateEncoder
-) {
+): SegmentCollector {
   return doStartSegmentCollection(
     lifeCycle,
     () => computeSegmentContext(configuration.applicationId, sessionManager, viewHistory),
@@ -77,9 +84,9 @@ type SegmentCollectionState =
 export function doStartSegmentCollection(
   lifeCycle: LifeCycle,
   getSegmentContext: () => SegmentContext | undefined,
-  httpRequest: HttpRequest,
+  httpRequest: HttpRequest<ReplayPayload>,
   encoder: DeflateEncoder
-) {
+): SegmentCollector {
   let state: SegmentCollectionState = {
     status: SegmentCollectionStatus.WaitingForInitialRecord,
     nextSegmentCreationReason: 'init',
@@ -98,8 +105,8 @@ export function doStartSegmentCollection(
 
   function flushSegment(flushReason: FlushReason) {
     if (state.status === SegmentCollectionStatus.SegmentPending) {
-      state.segment.flush((metadata, encoderResult) => {
-        const payload = buildReplayPayload(encoderResult.output, metadata, encoderResult.rawBytesCount)
+      state.segment.flush((metadata, stats, encoderResult) => {
+        const payload = buildReplayPayload(encoderResult.output, metadata, stats, encoderResult.rawBytesCount)
 
         if (isPageExitReason(flushReason)) {
           httpRequest.sendOnExit(payload)
@@ -123,7 +130,7 @@ export function doStartSegmentCollection(
   }
 
   return {
-    addRecord: (record: BrowserRecord) => {
+    addRecord: (record: BrowserRecord, stats?: SerializationStats) => {
       if (state.status === SegmentCollectionStatus.Stopped) {
         return
       }
@@ -143,7 +150,7 @@ export function doStartSegmentCollection(
         }
       }
 
-      state.segment.addRecord(record, (encodedBytesCount) => {
+      state.segment.addRecord(record, stats, (encodedBytesCount) => {
         if (encodedBytesCount > SEGMENT_BYTES_LIMIT) {
           flushSegment('segment_bytes_limit')
         }
