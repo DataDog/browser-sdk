@@ -216,6 +216,11 @@ export interface InitConfiguration {
    * @defaultValue 5
    */
   telemetryUsageSampleRate?: number
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   */
+  additionalConfig?: Record<string, unknown>
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -261,6 +266,11 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
+
+  // internal
+  source?: string | undefined
+  variant?: string | undefined
+  sdk_version?: string | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -360,6 +370,14 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
      */
     batchMessagesLimit: 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
+
+    /**
+     * The source of the SDK, used for support plugins purposes.
+     */
+    source: (initConfiguration.additionalConfig?.source as string) || 'browser',
+    variant: initConfiguration.additionalConfig?.variant as string,
+    sdk_version: initConfiguration.additionalConfig?.sdk_version as string,
+
     ...computeTransportConfiguration(initConfiguration),
   }
 }

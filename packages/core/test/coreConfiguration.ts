@@ -38,6 +38,10 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   telemetryConfigurationSampleRate: 70,
   telemetryUsageSampleRate: 80,
   allowedTrackingOrigins: ['chrome-extension://example'],
+  additionalConfig: {
+    source: 'browser',
+    variant: 'test-variant',
+  },
 }
 
 export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
@@ -78,6 +82,7 @@ export type MapInitConfigurationKey<Key extends string> =
           | 'internalAnalyticsSubdomain'
           | 'replica'
           | 'enableExperimentalFeatures'
+          | 'additionalConfig'
       ? never
       : // Other keys are simply snake cased
         CamelToSnakeCase<Key>
