@@ -18,6 +18,39 @@
 
 ---
 
+## v6.14.0
+
+**Public Changes:**
+
+- ✨ [RUM-10145] collect errors on module evaluation ([#3622](https://github.com/DataDog/browser-sdk/pull/3622)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ don't write lock to cookie for read only operation ([#3652](https://github.com/DataDog/browser-sdk/pull/3652)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-10223] Add locale and timezone data to view event ([#3598](https://github.com/DataDog/browser-sdk/pull/3598)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Allow service and version to be modifiable for long_task and vital events ([#3691](https://github.com/DataDog/browser-sdk/pull/3691)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [PANA-3447] Don't send customer data telemetry for any batch with no RUM events ([#3689](https://github.com/DataDog/browser-sdk/pull/3689)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🏷️ add ap2 site to TypeScript types ([#3672](https://github.com/DataDog/browser-sdk/pull/3672)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 simplify test apps build ([#3702](https://github.com/DataDog/browser-sdk/pull/3702))
+- 👷 use SIGKILL instead of SIGTERM to kill child jobs ([#3699](https://github.com/DataDog/browser-sdk/pull/3699))
+- 👷 use our own `deepClone` method instead of `structuredClone` ([#3700](https://github.com/DataDog/browser-sdk/pull/3700)) [RUM]
+- 👷 Add cookie options to telemetry debug ([#3693](https://github.com/DataDog/browser-sdk/pull/3693)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3673](https://github.com/DataDog/browser-sdk/pull/3673)) [FLAGGING] [WORKER]
+- 👷 Lock file maintenance ([#3675](https://github.com/DataDog/browser-sdk/pull/3675))
+- 👷 fix `yarn test` and `yarn test:unit:watch` commands ([#3684](https://github.com/DataDog/browser-sdk/pull/3684))
+- 👷 fix `yarn test` and `yarn test:unit:watch` commands ([#3683](https://github.com/DataDog/browser-sdk/pull/3683))
+- 👷 Update Node.js to v24 ([#3522](https://github.com/DataDog/browser-sdk/pull/3522)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷‍♀️ [devx] Add cursor rules to improve testing experience ([#3662](https://github.com/DataDog/browser-sdk/pull/3662))
+- 👷 add `--spec` option to `yarn test:unit` ([#3678](https://github.com/DataDog/browser-sdk/pull/3678))
+- 👷 add `step-7_` prefix to `create-github-release` ci job ([#3668](https://github.com/DataDog/browser-sdk/pull/3668))
+- 👷 ignore @playwright/test updates ([#3666](https://github.com/DataDog/browser-sdk/pull/3666))
+- ♻️ [Remote config] use types from JSON schema ([#3694](https://github.com/DataDog/browser-sdk/pull/3694)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump device version in unit tests ([#3703](https://github.com/DataDog/browser-sdk/pull/3703))
+- [RUM Profiler] fix unit test, remove RegExp lookbehind ([#3701](https://github.com/DataDog/browser-sdk/pull/3701)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ [RUM-10900] Introduce assemble telemetry hook ([#3685](https://github.com/DataDog/browser-sdk/pull/3685)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ Enforce using interface over type ([#3686](https://github.com/DataDog/browser-sdk/pull/3686)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [RUM Profiler] add default view names to profiles ([#3669](https://github.com/DataDog/browser-sdk/pull/3669)) [RUM]
+
 ## v6.13.0
 
 **Public Changes:**

@@ -1,0 +1,24 @@
+{
+  "entryPoints": ["packages/*"],
+  "entryPointStrategy": "packages",
+  "includeVersion": true,
+  "exclude": ["packages/core", "packages/rum-core", "packages/flagging", "packages/worker"],
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "rewrittenLink": true,
+    "notDocumented": false,
+    "unusedMergeModuleWith": true
+  },
+  "visibilityFilters": {}, // disable all visibility filters
+  "customCss": "./typedoc.css",
+  "navigation": {
+    "includeCategories": true
+  },
+  "packageOptions": {
+    "excludeInternal": true
+  },
+  "externalSymbolLinkMappings": {
+    "@types/react": { "*": "#" }
+  }
+}

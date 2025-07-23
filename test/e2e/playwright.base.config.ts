@@ -24,7 +24,7 @@ export const config: Config = {
   fullyParallel: true,
   forbidOnly: isCi,
   retries: isCi ? 2 : 0,
-  workers: 15,
+  workers: 5,
   reporter: reporters,
   use: {
     trace: isCi ? 'off' : 'retain-on-failure',

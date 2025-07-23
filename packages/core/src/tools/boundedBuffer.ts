@@ -3,6 +3,8 @@ import { removeItem } from './utils/arrayUtils'
 const BUFFER_LIMIT = 500
 
 /**
+ * BoundedBuffer is a deprecated interface.
+ *
  * @deprecated Use `BufferedObservable` instead.
  */
 export interface BoundedBuffer<T = void> {
@@ -12,6 +14,8 @@ export interface BoundedBuffer<T = void> {
 }
 
 /**
+ * createBoundedBuffer creates a BoundedBuffer.
+ *
  * @deprecated Use `BufferedObservable` instead.
  */
 export function createBoundedBuffer<T = void>(): BoundedBuffer<T> {
