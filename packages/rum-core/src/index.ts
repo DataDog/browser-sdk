@@ -42,7 +42,12 @@ export type {
 export type { ViewportDimension } from './browser/viewportObservable'
 export { initViewportObservable, getViewportDimension } from './browser/viewportObservable'
 export { getScrollX, getScrollY } from './browser/scroll'
-export type { RumInitConfiguration, RumConfiguration, FeatureFlagsForEvents } from './domain/configuration'
+export type {
+  RumInitConfiguration,
+  RumConfiguration,
+  FeatureFlagsForEvents,
+  RumSdkConfig,
+} from './domain/configuration'
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/getActionNameFromElement'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'
