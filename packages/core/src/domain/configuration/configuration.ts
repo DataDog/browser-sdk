@@ -25,6 +25,7 @@ export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
   MASK: 'mask',
   MASK_USER_INPUT: 'mask-user-input',
+  MASK_UNLESS_ALLOWLISTED: 'mask-unless-allowlisted',
 } as const
 export type DefaultPrivacyLevel = (typeof DefaultPrivacyLevel)[keyof typeof DefaultPrivacyLevel]
 

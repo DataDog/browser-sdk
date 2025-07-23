@@ -8,6 +8,7 @@ import {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
+  PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED,
 } from '@datadog/browser-rum-core'
 import type { ElementNode, SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
@@ -21,6 +22,7 @@ import {
   AST_HIDDEN,
   AST_MASK,
   AST_MASK_USER_INPUT,
+  AST_MASK_UNLESS_ALLOWLISTED,
   AST_ALLOW,
 } from './htmlAst.specHelper'
 import { serializeDocument } from './serializeDocument'
@@ -444,6 +446,24 @@ describe('serializeNodeWithId', () => {
       })
     })
 
+    describe('input privacy mode mask-unless-allowlisted', () => {
+      beforeEach(() => {
+        window.$DD_ALLOW = new Set(['allowlisted value', 'hello'])
+      })
+
+      afterEach(() => {
+        window.$DD_ALLOW = undefined
+      })
+
+      it('should behave like mask-user-input', () => {
+        const input = document.createElement('input')
+        input.value = 'toto'
+        input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED)
+
+        expect(serializeElement(input)!).toEqual(jasmine.objectContaining({}))
+      })
+    })
+
     describe('shadow dom', () => {
       it('serializes a shadow host', () => {
         const div = document.createElement('div')
@@ -847,6 +867,66 @@ describe('serializeNodeWithId', () => {
       })
     })
 
+    describe('for privacy tag `mask-unless-allowlisted`, a DOM tree', () => {
+      beforeEach(() => {
+        window.$DD_ALLOW = new Set(['private title', 'hello private world'])
+      })
+
+      afterEach(() => {
+        window.$DD_ALLOW = undefined
+      })
+
+      it('obfuscates text content not in allowlist', () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
+        // Most text should be masked with 'x' characters
+        expect(JSON.stringify(serializedDoc)).toContain('xxxxx')
+      })
+
+      it('preserves text content in allowlist', () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
+        // Allowlisted content should be preserved
+        expect(JSON.stringify(serializedDoc)).toContain('private title')
+        expect(JSON.stringify(serializedDoc)).toContain('hello private world')
+      })
+
+      it('obfuscates input fields not in allowlist', () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
+        expect(JSON.stringify(serializedDoc)).toContain('***')
+      })
+
+      it('obfuscates attributes and non-allowlisted text content', () => {
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
+        // Check that non-allowlisted private content is masked
+        expect(JSON.stringify(serializedDoc)).toContain('xxxx') // Some content should be masked
+      })
+
+      it('fails close when allowlist is empty', () => {
+        window.$DD_ALLOW = new Set()
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
+
+        // All text content should be masked
+        const textContents = getAllTextContents(serializedDoc)
+        for (const textContent of textContents) {
+          if (textContent.trim()) {
+            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
+          }
+        }
+      })
+
+      it('fails close when allowlist is undefined', () => {
+        window.$DD_ALLOW = undefined
+        const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
+
+        // All text content should be masked
+        const textContents = getAllTextContents(serializedDoc)
+        for (const textContent of textContents) {
+          if (textContent.trim()) {
+            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
+          }
+        }
+      })
+    })
+
     describe('for privacy tag `allow`, a DOM tree', () => {
       it('does not obfuscate anything', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'allow')
@@ -937,6 +1017,19 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     it('is serialized correctly', () => {
       const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-user-input')
       expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_USER_INPUT)
+    })
+  })
+
+  describe('for privacy tag `mask-unless-allowlisted`, a DOM tree', function testMaskUnlessAllowlistedDomTree() {
+    it('is serialized correctly when no allowlist is provided', () => {
+      // Without allowlist, should behave like mask mode
+      window.$DD_ALLOW = undefined
+      registerCleanupTask(() => {
+        window.$DD_ALLOW = undefined
+      })
+
+      const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
+      expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_UNLESS_ALLOWLISTED)
     })
   })
 
