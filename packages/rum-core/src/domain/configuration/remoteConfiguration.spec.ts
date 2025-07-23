@@ -101,5 +101,9 @@ describe('remoteConfiguration', () => {
         `https://sdk-configuration.browser-intake-datadoghq.com/v1/${remoteConfigurationId}.json`
       )
     })
+
+    it('should return the remote configuration proxy', () => {
+      expect(buildEndpoint({ remoteConfigurationProxy: '/config' } as RumInitConfiguration)).toEqual('/config')
+    })
   })
 })
