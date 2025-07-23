@@ -3,7 +3,7 @@ import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
-import { serializeDocument, SerializationContextStatus } from '../serialization'
+import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { RecordIds } from '../recordIds'
 import { initRecordIds } from '../recordIds'
@@ -25,6 +25,7 @@ describe('trackMouseInteraction', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
+      serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),

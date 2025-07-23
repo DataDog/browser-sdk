@@ -1,4 +1,4 @@
-import type { DeflateWorker, RawTelemetryEvent } from '@datadog/browser-core'
+import type { DeflateWorker, RawTelemetryEvent, Telemetry } from '@datadog/browser-core'
 import { display, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
@@ -34,6 +34,7 @@ describe('lazyLoadRecorder', () => {
     startSessionReplayRecordingManually?: boolean
   } = {}) {
     telemetryEvents = startFakeTelemetry()
+    const mockTelemetry = { enabled: true } as Telemetry
     mockWorker = new MockWorker()
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
     displaySpy = spyOn(display, 'error')
@@ -60,7 +61,8 @@ describe('lazyLoadRecorder', () => {
         mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
-        worker
+        worker,
+        mockTelemetry
       )
     }
 
