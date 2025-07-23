@@ -895,13 +895,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@material/material-color-utilities@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "@material/material-color-utilities@npm:0.3.0"
-  checksum: 10c0/3bef025428b893f2acc9e9e2bd186363a60b7c0836fe43c78222e29fe67dc579618e844f0661a20657ed9f7fd8b94fd43a2961892894d0b6a2ba5264ce2673f8
-  languageName: node
-  linkType: hard
-
 "@napi-rs/wasm-runtime@npm:0.2.4":
   version: 0.2.4
   resolution: "@napi-rs/wasm-runtime@npm:0.2.4"
