@@ -19,7 +19,6 @@ export default tseslint.config(
   tseslint.configs.recommendedTypeChecked,
   importPlugin.flatConfigs.recommended,
   importPlugin.flatConfigs.typescript,
-
   {
     ignores: [
       'packages/*/bundle',
@@ -227,9 +226,40 @@ export default tseslint.config(
       'import/order': 'error',
 
       'jasmine/no-focused-tests': 'error',
-
       'jsdoc/check-alignment': 'error',
       'jsdoc/check-indentation': 'error',
+      'jsdoc/no-blank-blocks': 'error',
+      'jsdoc/sort-tags': [
+        'error',
+        {
+          tagSequence: [
+            {
+              linesBetween: 0,
+              tags: [
+                'category',
+                'packageDocumentation',
+                'internal',
+                'deprecated',
+                'experimental',
+                'defaultValue',
+                'param',
+                'return',
+                'returns',
+                'see',
+                'example',
+              ],
+            },
+          ],
+        },
+      ],
+      'jsdoc/require-description': 'error',
+      'jsdoc/require-param-description': 'error',
+      'jsdoc/require-hyphen-before-param-description': 'error',
+      'jsdoc/tag-lines': ['error', 'any', { startLines: 1 }],
+      'jsdoc/require-property-description': 'error',
+      'jsdoc/require-property-name': 'error',
+      'jsdoc/check-param-names': 'error',
+      'jsdoc/multiline-blocks': 'error',
 
       'local-rules/disallow-test-import-export-from-src': 'error',
       'local-rules/disallow-generic-utils': 'error',
@@ -286,7 +316,7 @@ export default tseslint.config(
 
   {
     // JS files. Allow weaker typings since TS can't infer types as accurately as TS files.
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs'],
     rules: {
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
@@ -344,6 +374,7 @@ export default tseslint.config(
     files: ['packages/**/*.ts'],
     rules: {
       'local-rules/disallow-spec-import': 'error',
+      'jsdoc/no-types': 'error',
     },
   },
 
