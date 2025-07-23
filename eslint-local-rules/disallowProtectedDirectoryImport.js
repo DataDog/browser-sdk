@@ -26,6 +26,8 @@ module.exports = {
     ],
   },
   /**
+   * Create an ESLint rule to disallow importing modules from protected directories.
+   *
    * @returns {Record<string, Function>}
    */
   create(context) {

@@ -19,7 +19,7 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumErrorEvent, RumEvent, RumResourceEvent, RumViewEvent } from '../rumEvent.types'
+import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
@@ -391,10 +391,10 @@ describe('rum assembly', () => {
   })
 
   describe('service and version', () => {
-    const extraConfigurationOptions = { service: 'default service', version: 'default version' }
+    const extraConfigurationOptions = { service: 'default-service', version: 'default-version' }
 
-    describe('fields service and version', () => {
-      it('it should be modifiable', () => {
+    Object.values(RumEventType).forEach((eventType) => {
+      it(`should be modifiable for ${eventType}`, () => {
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             ...extraConfigurationOptions,
@@ -408,24 +408,29 @@ describe('rum assembly', () => {
         })
 
         notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE),
+          rawRumEvent: createRawRumEvent(eventType),
         })
         expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
-
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-        })
-        expect((serverRumEvents[1] as RumViewEvent).service).toBe('bar')
-        expect((serverRumEvents[1] as RumViewEvent).version).toBe('0.2.0')
       })
+    })
+
+    it('should be added to the event as ddtags', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: extraConfigurationOptions,
+      })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].ddtags).toEqual('sdk_version:test,service:default-service,version:default-version')
     })
   })
 
   describe('assemble hook', () => {
     it('should add and override common properties', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults({
-        partialConfiguration: { service: 'default service', version: 'default version' },
+        partialConfiguration: { service: 'default-service', version: 'default-version' },
       })
 
       hooks.register(HookNames.Assemble, ({ eventType }) => ({

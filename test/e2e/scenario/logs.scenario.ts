@@ -169,6 +169,27 @@ test.describe('logs', () => {
       expect(unreachableRequest.error!.stack).toContain('TypeError')
     })
 
+  createTest('send runtime errors happening before initialization')
+    .withLogs({ forwardErrorsToLogs: true })
+    .withLogsInit((configuration) => {
+      // Use a setTimeout to:
+      // * have a constant stack trace regardless of the setup used
+      // * avoid the exception to be swallowed by the `onReady` logic
+      setTimeout(() => {
+        throw new Error('oh snap')
+      })
+      // Simulate a late initialization of the RUM SDK
+      setTimeout(() => window.DD_LOGS!.init(configuration))
+    })
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs }) => {
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('oh snap')
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
+    })
+
   createTest('add RUM internal context to logs')
     .withRum()
     .withLogs()
@@ -180,6 +201,47 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].view.id).toBeDefined()
       expect(intakeRegistry.logsEvents[0].application_id).toBe(APPLICATION_ID)
+    })
+
+  createTest('add default tags to logs')
+    .withLogs({
+      service: 'foo',
+      env: 'dev',
+      version: '1.0.0',
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.log('hello world!')
+      })
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),env:dev,service:foo,version:1.0.0$/)
+    })
+
+  createTest('add tags to the logger')
+    .withLogs()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.addTag('planet', 'mars')
+        window.DD_LOGS!.logger.log('hello world!')
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),planet:mars$/)
+    })
+
+  createTest('ignore tags from message context and logger context')
+    .withLogs()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.setContextProperty('ddtags', 'planet:mars')
+        window.DD_LOGS!.logger.log('hello world!', { ddtags: 'planet:earth' })
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*)$/)
     })
 
   createTest('allow to modify events')

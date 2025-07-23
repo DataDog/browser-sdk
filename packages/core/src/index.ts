@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, EndpointBuilder } from './domain/configuration'
+export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn } from './domain/configuration'
 export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
@@ -7,6 +7,9 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
+  buildTags,
+  buildTag,
+  sanitizeTag,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -48,10 +51,11 @@ export {
   isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
+  addTelemetryMetrics,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
-export { Observable } from './tools/observable'
+export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager } from './domain/session/sessionManager'
 export { startSessionManager, stopSessionManager } from './domain/session/sessionManager'
 export {
@@ -126,6 +130,7 @@ export { startGlobalContext, buildGlobalContextManager } from './domain/contexts
 export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
 export type { User } from './domain/contexts/userContext'
 export type { Account } from './domain/contexts/accountContext'
+export type { RumInternalContext } from './domain/contexts/rumInternalContext.type'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
@@ -141,6 +146,7 @@ export {
 } from './domain/synthetics/syntheticsWorkerValues'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
+export * from './domain/bufferedData'
 export * from './tools/utils/polyfills'
 export * from './tools/utils/timezone'
 export * from './tools/utils/numberUtils'

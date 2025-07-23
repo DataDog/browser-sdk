@@ -2,15 +2,16 @@ import type {
   Context,
   TimeStamp,
   RelativeTime,
-  User,
-  Account,
   DeflateWorker,
   DeflateEncoderStreamId,
   DeflateEncoder,
-  TrackingConsent,
   PublicApi,
   Duration,
   ContextManager,
+  TrackingConsent,
+  User,
+  Account,
+  RumInternalContext,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -28,6 +29,7 @@ import {
   timeStampToClocks,
   CustomerContextKey,
   defineContextMethod,
+  startBufferingData,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -37,8 +39,11 @@ import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { InternalContext } from '../domain/contexts/internalContext'
-import type { DurationVitalReference } from '../domain/vital/vitalCollection'
+import type {
+  AddDurationVitalOptions,
+  DurationVitalOptions,
+  DurationVitalReference,
+} from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
@@ -48,19 +53,43 @@ import type { StartRum, StartRumResult } from './startRum'
 export interface StartRecordingOptions {
   force: boolean
 }
+
+/**
+ * Public API for the RUM browser SDK.
+ *
+ * See [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser) for further information.
+ *
+ * @category API
+ */
 export interface RumPublicApi extends PublicApi {
   /**
    * Init the RUM browser SDK.
-   * @param initConfiguration Configuration options of the SDK
    *
    * See [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser) for further information.
+   *
+   * @category Init
+   * @param initConfiguration - Configuration options of the SDK
+   * @example Init RUM Browser SDK example
+   * ```ts
+   * datadogRum.init({
+   *   applicationId: '<DATADOG_APPLICATION_ID>',
+   *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+   *   site: '<DATADOG_SITE>',
+   *   //  service: 'my-web-application',
+   *   //  env: 'production',
+   *   //  version: '1.0.0',
+   *   sessionSampleRate: 100,
+   *   sessionReplaySampleRate: 100,
+   *   trackResources: true,
+   *   trackLongTasks: true,
+   *   trackUserInteractions: true,
+   * })
+   * ```
    */
   init: (initConfiguration: RumInitConfiguration) => void
 
   /**
    * Set the tracking consent of the current user.
-   *
-   * @param {"granted" | "not-granted"} trackingConsent The user tracking consent
    *
    * Data will be sent only if it is set to "granted". This value won't be stored by the library
    * across page loads: you will need to call this method or set the appropriate `trackingConsent`
@@ -70,6 +99,9 @@ export interface RumPublicApi extends PublicApi {
    * over the one provided as initialization parameter.
    *
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-tracking-consent) for further information.
+   *
+   * @category Tracking Consent
+   * @param trackingConsent - The user tracking consent
    */
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
 
@@ -77,8 +109,10 @@ export interface RumPublicApi extends PublicApi {
    * Set View Name.
    *
    * Enable to manually change the name of the current view.
-   * @param name name of the view
    * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
+   *
+   * @category View
+   * @param name - Name of the view
    */
   setViewName: (name: string) => void
 
@@ -86,88 +120,62 @@ export interface RumPublicApi extends PublicApi {
    * Set View Context.
    *
    * Enable to manually set the context of the current view.
-   * @param context context of the view
+   *
+   * @category View
+   * @param context - Context of the view
    */
   setViewContext: (context: Context) => void
   /**
    * Set View Context Property.
    *
    * Enable to manually set a property of the context of the current view.
-   * @param key key of the property
-   * @param value value of the property
+   *
+   * @category View
+   * @param key - key of the property
+   * @param value - value of the property
    */
   setViewContextProperty: (key: string, value: any) => void
 
   /**
    * Get View Context.
+   *
+   * @category View
    */
-  getViewContext: () => Context
-
-  /**
-   * Set the global context information to all events, stored in `@context`
-   *
-   * @param context Global context
-   *
-   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
-   */
-  setGlobalContext: (context: any) => void
-
-  /**
-   * Get the global Context
-   *
-   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
-   */
-  getGlobalContext: () => Context
-
-  /**
-   * Set or update a global context property, stored in `@context.<key>`
-   *
-   * @param key Key of the property
-   * @param property Value of the property
-   *
-   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
-   */
-  setGlobalContextProperty: (key: any, value: any) => void
-
-  /**
-   * Remove a global context property
-   *
-   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
-   */
-  removeGlobalContextProperty: (key: any) => void
-
-  /**
-   * Clear the global context
-   *
-   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
-   */
-  clearGlobalContext: () => void
+  getViewContext(): Context
 
   /**
    * [Internal API] Get the internal SDK context
+   *
+   * @internal
    */
-  getInternalContext: (startTime?: number) => InternalContext | undefined
+  getInternalContext: (startTime?: number) => RumInternalContext | undefined
 
   /**
    * Get the init configuration
+   *
+   * @category Init
    */
   getInitConfiguration: () => RumInitConfiguration | undefined
 
   /**
    * Add a custom action, stored in `@action`
-   * @param name Name of the action
-   * @param context Context of the action
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
+   *
+   * @category Custom Actions
+   * @param name - Name of the action
+   * @param context - Context of the action
    */
   addAction: (name: string, context?: object) => void
 
   /**
    * Add a custom error, stored in `@error`.
-   * @param error Error. Favor sending a [Javascript Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) to have a stack trace attached to the error event.
-   * @param context Context of the error
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
+   *
+   * @category Custom Errors
+   * @param error - Error. Favor sending a [Javascript Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) to have a stack trace attached to the error event.
+   * @param context - Context of the error
    */
   addError: (error: unknown, context?: object) => void
 
@@ -175,50 +183,109 @@ export interface RumPublicApi extends PublicApi {
    * Add a custom timing relative to the start of the current view,
    * stored in `@view.custom_timings.<timing_name>`
    *
-   * @param name Name of the custom timing
-   * @param [time] Epoch timestamp of the custom timing (if not set, will use current time)
-   *
    * Note: passing a relative time is discouraged since it is actually used as-is but displayed relative to the view start.
    * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
    * see https://github.com/DataDog/browser-sdk/issues/2552
+   *
+   * @category Custom Timings
+   * @param name - Name of the custom timing
+   * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
    */
   addTiming: (name: string, time?: number) => void
+
+  /**
+   * Set the global context information to all events, stored in `@context`
+   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
+   *
+   * @category Global Context
+   * @param context - Global context
+   */
+  setGlobalContext: (context: Context) => void
+
+  /**
+   * Get the global Context
+   *
+   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
+   *
+   * @category Global Context
+   */
+  getGlobalContext: () => Context
+
+  /**
+   * Set or update a global context property, stored in `@context.<key>`
+   *
+   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
+   *
+   * @category Global Context
+   * @param key - Key of the property
+   * @param value - Value of the property
+   */
+  setGlobalContextProperty: (key: any, value: any) => void
+
+  /**
+   * Remove a global context property
+   *
+   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
+   *
+   * @category Global Context
+   */
+  removeGlobalContextProperty: (key: any) => void
+
+  /**
+   * Clear the global context
+   *
+   * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
+   *
+   * @category Global Context
+   */
+  clearGlobalContext(): void
 
   /**
    * Set user information to all events, stored in `@usr`
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
+   *
+   * @category User
+   * @param newUser - User information
    */
   setUser(newUser: User & { id: string }): void
 
   /**
    * Set user information to all events, stored in `@usr`
    *
-   * @deprecated You must specify a user id
-   * @see {@link setUser}
+   * @category User
+   * @deprecated You must specify a user id, favor using {@link setUser} instead
+   * @param newUser - User information with optional id
    */
   setUser(newUser: User): void
+
   /**
    * Get user information
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
+   *
+   * @category User
+   * @returns User information
    */
   getUser: () => Context
 
   /**
    * Set or update the user property, stored in `@usr.<key>`
    *
-   * @param key Key of the property
-   * @param property Value of the property
-   *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
+   *
+   * @category User
+   * @param key - Key of the property
+   * @param property - Value of the property
    */
   setUserProperty: (key: any, property: any) => void
 
   /**
    * Remove a user property
    *
-   * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
+   * @category User
+   * @param key - Key of the property to remove
+   * @see [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
   removeUserProperty: (key: any) => void
 
@@ -226,67 +293,79 @@ export interface RumPublicApi extends PublicApi {
    * Clear all user information
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
+   *
+   * @category User
    */
   clearUser: () => void
 
   /**
    * Set account information to all events, stored in `@account`
+   *
+   * @category Account
+   * @param newAccount - Account information
    */
   setAccount: (newAccount: Account) => void
 
   /**
    * Get account information
+   *
+   * @category Account
+   * @returns Account information
    */
   getAccount: () => Context
 
   /**
    * Set or update the account property, stored in `@account.<key>`
    *
-   * @param key Key of the property
-   * @param property Value of the property
+   * @category Account
+   * @param key - Key of the property
+   * @param property - Value of the property
    */
   setAccountProperty: (key: string, property: any) => void
 
   /**
    * Remove an account property
+   *
+   * @category Account
+   * @param key - Key of the property to remove
    */
   removeAccountProperty: (key: string) => void
 
   /**
    * Clear all account information
+   *
+   * @category Account
+   * @returns Clear all account information
    */
   clearAccount: () => void
-
   /**
    * Start a view manually.
    * Enable to manual start a view, use `trackViewsManually: true` init parameter and call `startView()` to create RUM views and be aligned with how you’ve defined them in your SPA application routing.
    *
-   * @param options.name name of the view
-   * @param options.service service of the view
-   * @param options.version version of the view
-   *
    * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
+   *
+   * @category View
+   * @param nameOrOptions - Name or options (name, service, version) for the view
    */
-  startView: {
-    (name?: string): void
-    (options: ViewOptions): void
-  }
+  startView(nameOrOptions?: string | ViewOptions): void
 
   /**
    * Stop the session. A new session will start at the next user interaction with the page.
+   *
+   * @category Session
    */
-  stopSession: () => void
+  stopSession(): void
 
   /**
    * Add a feature flag evaluation,
    * stored in `@feature_flags.<feature_flag_key>`
    *
-   * @param {string} key The key of the feature flag.
-   * @param {any} value The value of the feature flag.
-   *
    * We recommend enabling the intake request compression when using feature flags `compressIntakeRequests: true`.
    *
    * See [Feature Flag Tracking](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/) for further information.
+   *
+   * @param key - The key of the feature flag.
+   * @param value - The value of the feature flag.
    */
   addFeatureFlagEvaluation: (key: string, value: any) => void
 
@@ -294,6 +373,8 @@ export interface RumPublicApi extends PublicApi {
    * Get the Session Replay Link.
    *
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
+   *
+   * @category Session Replay
    */
   getSessionReplayLink: () => string | undefined
 
@@ -302,6 +383,8 @@ export interface RumPublicApi extends PublicApi {
    * Enable to conditionally start the recording, use the `startSessionReplayRecordingManually:true` init parameter and call `startSessionReplayRecording()`
    *
    * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.
+   *
+   * @category Session Replay
    */
   startSessionReplayRecording: (options?: StartRecordingOptions) => void
 
@@ -309,46 +392,40 @@ export interface RumPublicApi extends PublicApi {
    * Stop Session Replay recording.
    *
    * See [Browser Session Replay](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser) for further information.
+   *
+   * @category Session Replay
    */
   stopSessionReplayRecording: () => void
 
   /**
    * Add a custom duration vital
    *
-   * @param name name of the custom vital
-   * @param options.startTime epoch timestamp of the start of the custom vital
-   * @param options.duration duration of the custom vital in millisecond
-   * @param options.context custom context attached to the vital
-   * @param options.description  Description of the vital
+   * @category Vital
+   * @param name - Name of the custom vital
+   * @param options - Options for the custom vital (startTime, duration, context, description)
    */
-  addDurationVital: (
-    name: string,
-    options: { startTime: number; duration: number; context?: object; description?: string }
-  ) => void
+  addDurationVital: (name: string, options: AddDurationVitalOptions) => void
 
   /**
    * Start a custom duration vital.
    *
    * If you plan to have multiple durations for the same vital, you should use the reference returned by this method.
    *
-   * @param name name of the custom vital
-   * @param options.context custom context attached to the vital
-   * @param options.description Description of the vital
+   * @category Vital
+   * @param name - Name of the custom vital
+   * @param options - Options for the custom vital (context, description)
    * @returns reference to the custom vital
    */
-  startDurationVital: (name: string, options?: { context?: object; description?: string }) => DurationVitalReference
+  startDurationVital: (name: string, options?: DurationVitalOptions) => DurationVitalReference
 
   /**
    * Stop a custom duration vital
    *
-   * @param nameOrRef name of the custom vital or the reference to it
-   * @param options.context custom context attached to the vital
-   * @param options.description Description of the vital
+   * @category Vital
+   * @param nameOrRef - Name or reference of the custom vital
+   * @param options - Options for the custom vital (context, description)
    */
-  stopDurationVital: (
-    nameOrRef: string | DurationVitalReference,
-    options?: { context?: object; description?: string }
-  ) => void
+  stopDurationVital: (nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions) => void
 }
 
 export interface RecorderApi {
@@ -425,6 +502,7 @@ export function makeRumPublicApi(
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
+  const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     options,
@@ -441,6 +519,7 @@ export function makeRumPublicApi(
           : createIdentityEncoder,
         trackingConsentState,
         customVitalsState,
+        bufferedDataObservable,
         options.sdkName
       )
 

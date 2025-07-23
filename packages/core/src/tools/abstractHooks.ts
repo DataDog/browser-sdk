@@ -2,6 +2,7 @@ import { combine } from './mergeInto'
 
 export const enum HookNames {
   Assemble,
+  AssembleTelemetry,
 }
 
 // This is a workaround for an issue occurring when the Browser SDK is included in a TypeScript
@@ -10,12 +11,15 @@ export const enum HookNames {
 // ambient const enums when the '--isolatedModules' flag is provided.").
 export declare const HookNamesAsConst: {
   ASSEMBLE: HookNames.Assemble
+  ASSEMBLE_TELEMETRY: HookNames.AssembleTelemetry
 }
 
-export type RecursivePartialExcept<T, K extends keyof T = never> = {
-  [P in keyof T]?: T[P] extends object ? RecursivePartialExcept<T[P], never> : T[P]
-} & {
-  [P in K]: T[P]
+export type RecursivePartial<T> = {
+  [P in keyof T]?: T[P] extends Array<infer U>
+    ? Array<RecursivePartial<U>>
+    : T[P] extends object | undefined
+      ? RecursivePartial<T[P]>
+      : T[P]
 }
 
 // Discards the event from being sent
@@ -28,7 +32,7 @@ export type SKIPPED = typeof SKIPPED
 
 export type AbstractHooks = ReturnType<typeof abstractHooks>
 
-export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => any }, E>() {
+export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => unknown }>() {
   const callbacks: { [K in HookNames]?: Array<T[K]> } = {}
 
   return {
@@ -43,9 +47,12 @@ export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => 
         },
       }
     },
-    triggerHook<K extends HookNames>(hookName: K, param: Parameters<T[K]>[0]): E | DISCARDED | undefined {
+    triggerHook<K extends HookNames>(
+      hookName: K,
+      param: Parameters<T[K]>[0]
+    ): Exclude<ReturnType<T[K]>, SKIPPED> | DISCARDED | undefined {
       const hookCallbacks = callbacks[hookName] || []
-      const results = []
+      const results: any[] = []
 
       for (const callback of hookCallbacks) {
         const result = callback(param)
@@ -59,7 +66,7 @@ export function abstractHooks<T extends { [K in HookNames]: (...args: any[]) => 
         results.push(result)
       }
 
-      return combine(...(results as unknown as [object, object])) as E
+      return combine(...(results as [any, any])) as Exclude<ReturnType<T[K]>, SKIPPED>
     },
   }
 }

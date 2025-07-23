@@ -7,4 +7,4 @@ rum-events-format
 developer-extension/dist
 test/**/dist
 yarn.lock
-docs
+docs.json

@@ -6,6 +6,9 @@ import type { AbstractHooks } from '../../tools/abstractHooks'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { createContextManager } from '../context/contextManager'
 
+/**
+ * Account information for the browser SDK.
+ */
 export interface Account {
   id: string
   name?: string | undefined

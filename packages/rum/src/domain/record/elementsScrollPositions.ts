@@ -1,5 +1,8 @@
 export type ElementsScrollPositions = ReturnType<typeof createElementsScrollPositions>
-export type ScrollPositions = { scrollLeft: number; scrollTop: number }
+export interface ScrollPositions {
+  scrollLeft: number
+  scrollTop: number
+}
 
 export function createElementsScrollPositions() {
   const scrollPositionsByElement = new WeakMap<Element, ScrollPositions>()
