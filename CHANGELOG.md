@@ -18,6 +18,19 @@
 
 ---
 
+## v6.16.0
+
+**Public Changes:**
+
+- Revert "✨ don't write lock to cookie for read only operation ([#3652](https://github.com/DataDog/browser-sdk/pull/3652))" ([#3719](https://github.com/DataDog/browser-sdk/pull/3719)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-8313] Remove URL polyfill and retrieve native URL constructor ([#3682](https://github.com/DataDog/browser-sdk/pull/3682)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 bump playwright to match browserStack version ([#3714](https://github.com/DataDog/browser-sdk/pull/3714))
+- Add telemetry to isUnsupportedExtensionEnvironment warning ([#3717](https://github.com/DataDog/browser-sdk/pull/3717)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump OS and device version, and fix the spec ([#3716](https://github.com/DataDog/browser-sdk/pull/3716)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.15.0
 
 **Public Changes:**
