@@ -7,7 +7,7 @@ export const TAG_SIZE_LIMIT = 200
 declare const __BUILD_ENV__SDK_VERSION__: string
 
 export function buildTags(configuration: Configuration): string[] {
-  const { env, service, version, datacenter, sdk_version: sdkVersion, variant } = configuration
+  const { env, service, version, datacenter, sdkVersion, variant } = configuration
   const tags = [buildTag('sdk_version', sdkVersion ?? __BUILD_ENV__SDK_VERSION__)]
 
   if (env) {
