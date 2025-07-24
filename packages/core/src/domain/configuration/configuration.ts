@@ -220,7 +220,17 @@ export interface InitConfiguration {
   /**
    * [Internal option] Additional configuration for the SDK.
    */
-  additionalConfig?: Record<string, unknown>
+  source?: string | undefined
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   */
+  sdkVersion?: string | undefined
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   */
+  variant?: string | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -268,9 +278,9 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 
   // internal
-  source?: string | undefined
+  sdkVersion?: string | undefined
+  source: string
   variant?: string | undefined
-  sdk_version?: string | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -374,9 +384,9 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     /**
      * The source of the SDK, used for support plugins purposes.
      */
-    source: (initConfiguration.additionalConfig?.source as string) || 'browser',
-    variant: initConfiguration.additionalConfig?.variant as string,
-    sdk_version: initConfiguration.additionalConfig?.sdk_version as string,
+    source: initConfiguration?.source || 'browser',
+    variant: initConfiguration?.variant,
+    sdkVersion: initConfiguration?.sdkVersion,
 
     ...computeTransportConfiguration(initConfiguration),
   }
@@ -401,5 +411,8 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
+    source: initConfiguration.source || 'browser',
+    sdk_version: initConfiguration.sdkVersion,
+    variant: initConfiguration.variant,
   } satisfies RawTelemetryConfiguration
 }
