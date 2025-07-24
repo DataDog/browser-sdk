@@ -54,7 +54,7 @@ export function interceptRequests() {
     requests.push({
       type: config?.keepalive ? 'fetch-keepalive' : 'fetch',
       url: url as string,
-      body: config!.body as string,
+      body: config?.body as string,
     })
     return fetchPromise()
       .then((response) => response as Response)
