@@ -59,6 +59,12 @@ export interface RequestCompleteEvent {
   error?: Error
   isAborted: boolean
   handlingStack?: string
+  graphql?: {
+    operationType?: string
+    operationName?: string
+    variables?: string
+    payload?: string
+  }
 }
 
 let nextRequestIndex = 1
@@ -108,6 +114,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           xhr: context.xhr,
           isAborted: context.isAborted,
           handlingStack: context.handlingStack,
+          graphql: context.graphql,
         })
         break
     }
@@ -153,6 +160,7 @@ export function trackFetch(lifeCycle: LifeCycle, tracer: Tracer) {
             input: context.input,
             isAborted: context.isAborted,
             handlingStack: context.handlingStack,
+            graphql: context.graphql,
           })
         })
         break

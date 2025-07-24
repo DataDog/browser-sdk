@@ -86,6 +86,8 @@ function processRequest(
   const matchingTiming = matchRequestResourceEntry(request)
   const startClocks = matchingTiming ? relativeToClocks(matchingTiming.startTime) : request.startClocks
   const tracingInfo = computeRequestTracingInfo(request, configuration)
+  const graphqlInfo = computeGraphQLInfo(request)
+
   if (!configuration.trackResources && !tracingInfo) {
     return
   }
@@ -117,7 +119,8 @@ function processRequest(
       },
     },
     tracingInfo,
-    correspondingTimingOverrides
+    correspondingTimingOverrides,
+    graphqlInfo
   )
 
   return {
@@ -216,6 +219,23 @@ function computeResourceEntryTracingInfo(entry: RumPerformanceResourceTiming, co
       trace_id: entry.traceId,
       span_id: createSpanIdentifier().toString(),
       rule_psr: configuration.rulePsr,
+    },
+  }
+}
+
+function computeGraphQLInfo(request: RequestCompleteEvent) {
+  if (!request.graphql || !request.graphql.operationType) {
+    return undefined
+  }
+
+  return {
+    resource: {
+      graphql: {
+        operationType: request.graphql.operationType,
+        ...(request.graphql.operationName && { operationName: request.graphql.operationName }),
+        ...(request.graphql.variables && { variables: request.graphql.variables }),
+        ...(request.graphql.payload && { payload: request.graphql.payload }),
+      },
     },
   }
 }

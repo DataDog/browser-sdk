@@ -53,6 +53,12 @@ export interface RawRumResourceEvent {
     download?: ResourceEntryDetailsElement
     protocol?: string
     delivery_type?: DeliveryType
+    graphql?: {
+      operation_type: string
+      operation_name?: string
+      variables?: string
+      payload?: string
+    }
   }
   _dd: {
     trace_id?: string

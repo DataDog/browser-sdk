@@ -20,6 +20,12 @@ export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
   isAborted: boolean
   xhr: XMLHttpRequest
   handlingStack?: string
+  graphql?: {
+    operationType?: string
+    operationName?: string
+    variables?: string
+    payload?: string
+  }
 }
 
 export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
@@ -55,10 +61,17 @@ function createXhrObservable(configuration: Configuration) {
 
     const { stop: stopInstrumentingAbort } = instrumentMethod(XMLHttpRequest.prototype, 'abort', abortXhr)
 
+    const { stop: stopInstrumentingSetRequestHeader } = instrumentMethod(
+      XMLHttpRequest.prototype,
+      'setRequestHeader',
+      setRequestHeader
+    )
+
     return () => {
       stopInstrumentingStart()
       stopInstrumentingSend()
       stopInstrumentingAbort()
+      stopInstrumentingSetRequestHeader()
     }
   })
 }
@@ -72,7 +85,7 @@ function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodC
 }
 
 function sendXhr(
-  { target: xhr, handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
+  { target: xhr, handlingStack, parameters }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
   configuration: Configuration,
   observable: Observable<XhrContext>
 ) {
@@ -87,6 +100,17 @@ function sendXhr(
   startContext.isAborted = false
   startContext.xhr = xhr
   startContext.handlingStack = handlingStack
+
+  if (startContext.graphql && parameters.length > 0 && typeof parameters[0] === 'string') {
+    try {
+      const body = JSON.parse(parameters[0])
+      if (body.query) {
+        startContext.graphql.payload = body.query
+      }
+    } catch {
+      // Ignore JSON parse errors
+    }
+  }
 
   let hasBeenReported = false
 
@@ -124,5 +148,34 @@ function abortXhr({ target: xhr }: InstrumentedMethodCall<XMLHttpRequest, 'abort
   const context = xhrContexts.get(xhr) as XhrStartContext | undefined
   if (context) {
     context.isAborted = true
+  }
+}
+
+function setRequestHeader({
+  target: xhr,
+  parameters: [name, value],
+}: InstrumentedMethodCall<XMLHttpRequest, 'setRequestHeader'>) {
+  const context = xhrContexts.get(xhr) as XhrStartContext | undefined
+  if (!context) {
+    return
+  }
+
+  const headerName = String(name).toLowerCase()
+
+  if (headerName === '_dd-graphql-operation-type') {
+    if (!context.graphql) {
+      context.graphql = {}
+    }
+    context.graphql.operationType = String(value)
+  } else if (headerName === '_dd-graphql-operation-name') {
+    if (!context.graphql) {
+      context.graphql = {}
+    }
+    context.graphql.operationName = String(value)
+  } else if (headerName === '_dd-graphql-variables') {
+    if (!context.graphql) {
+      context.graphql = {}
+    }
+    context.graphql.variables = String(value)
   }
 }

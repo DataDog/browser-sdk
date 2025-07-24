@@ -20,6 +20,7 @@ runMain(() => {
   const app = express()
   app.use(createStaticSandboxApp())
   app.use('/react-app', createReactApp())
+  app.use('/rum-graphql', createRumGraphqlApp())
   app.listen(port, () => printLog(`Server listening on port ${port}.`))
 })
 
@@ -31,7 +32,6 @@ function createStaticSandboxApp() {
     app.use(middleware(webpack(config(null, { mode: 'development' }))))
   }
 
-  // Redirect suffixed files
   app.use((req, res, next) => {
     const matches = /(.*)-(canary|staging|v\d*)\.js/.exec(req.url)
     if (matches) {
@@ -47,7 +47,6 @@ function createStaticSandboxApp() {
 function createReactApp() {
   const app = express()
 
-  // Redirect requests to the "index.html" file, so that the React app can handle routing
   app.use((req, _, next) => {
     if (req.url !== '/main.js') {
       req.url = '/index.html'
@@ -61,6 +60,38 @@ function createReactApp() {
         webpackBase({
           entry: `${sandboxPath}/react-app/main.tsx`,
           plugins: [new HtmlWebpackPlugin({ publicPath: '/react-app/' })],
+          mode: 'development',
+        })
+      )
+    )
+  )
+
+  return app
+}
+
+function createRumGraphqlApp() {
+  const app = express()
+
+  app.use((req, _, next) => {
+    if (!req.url.endsWith('.js') && !req.url.endsWith('.css')) {
+      req.url = '/index.html'
+    }
+    next()
+  })
+
+  app.use(
+    middleware(
+      webpack(
+        webpackBase({
+          entry: `${sandboxPath}/rum-graphql/app.js`,
+          plugins: [
+            new HtmlWebpackPlugin({
+              template: `${sandboxPath}/rum-graphql/index.html`,
+              filename: 'index.html',
+              publicPath: '/rum-graphql/',
+              inject: true,
+            }),
+          ],
           mode: 'development',
         })
       )

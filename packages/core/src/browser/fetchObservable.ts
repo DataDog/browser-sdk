@@ -13,6 +13,12 @@ interface FetchContextBase {
   init?: RequestInit
   url: string
   handlingStack?: string
+  graphql?: {
+    operationType?: string
+    operationName?: string
+    variables?: string
+    payload?: string
+  }
 }
 
 export interface FetchStartContext extends FetchContextBase {
@@ -80,6 +86,47 @@ function beforeSend(
     startClocks,
     url,
     handlingStack,
+  }
+
+  if (init?.headers) {
+    const graphql: FetchContextBase['graphql'] = {}
+    let hasGraphQL = false
+
+    const extractHeader = (name: string, value: string) => {
+      const headerName = name.toLowerCase()
+      if (headerName === '_dd-graphql-operation-type') {
+        graphql.operationType = value
+        hasGraphQL = true
+      } else if (headerName === '_dd-graphql-operation-name') {
+        graphql.operationName = value
+        hasGraphQL = true
+      } else if (headerName === '_dd-graphql-variables') {
+        graphql.variables = value
+        hasGraphQL = true
+      }
+    }
+
+    if (init.headers instanceof Headers) {
+      init.headers.forEach((value, name) => extractHeader(name, value))
+    } else if (Array.isArray(init.headers)) {
+      init.headers.forEach(([name, value]) => extractHeader(name, value))
+    } else if (typeof init.headers === 'object') {
+      Object.entries(init.headers).forEach(([name, value]) => extractHeader(name, String(value)))
+    }
+
+    if (hasGraphQL) {
+      if (init.body && typeof init.body === 'string') {
+        try {
+          const body = JSON.parse(init.body)
+          if (body.query) {
+            graphql.payload = body.query
+          }
+        } catch {
+          // Ignore JSON parse errors
+        }
+      }
+      context.graphql = graphql
+    }
   }
 
   observable.notify(context)
