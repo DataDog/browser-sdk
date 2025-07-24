@@ -18,6 +18,39 @@
 
 ---
 
+## v6.16.0
+
+**Public Changes:**
+
+- Revert "✨ don't write lock to cookie for read only operation ([#3652](https://github.com/DataDog/browser-sdk/pull/3652))" ([#3719](https://github.com/DataDog/browser-sdk/pull/3719)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-8313] Remove URL polyfill and retrieve native URL constructor ([#3682](https://github.com/DataDog/browser-sdk/pull/3682)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 bump playwright to match browserStack version ([#3714](https://github.com/DataDog/browser-sdk/pull/3714))
+- Add telemetry to isUnsupportedExtensionEnvironment warning ([#3717](https://github.com/DataDog/browser-sdk/pull/3717)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump OS and device version, and fix the spec ([#3716](https://github.com/DataDog/browser-sdk/pull/3716)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+## v6.15.0
+
+**Public Changes:**
+
+- ✨ [PANA-3449] Apply separate event limits for different kinds of telemetry ([#3692](https://github.com/DataDog/browser-sdk/pull/3692)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-10006] add tagging capabilities to loggers in the Logs SDK ([#3616](https://github.com/DataDog/browser-sdk/pull/3616)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 prevent log reporting after consent revocation ([#3680](https://github.com/DataDog/browser-sdk/pull/3680)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 📝 [RUM-10899] Add API reference using typedoc ([#3677](https://github.com/DataDog/browser-sdk/pull/3677)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 reduce the number of concurrent workers used by playwright ([#3706](https://github.com/DataDog/browser-sdk/pull/3706))
+- 👷 simplify test apps build ([#3702](https://github.com/DataDog/browser-sdk/pull/3702))
+- 👷 use SIGKILL instead of SIGTERM to kill child jobs ([#3699](https://github.com/DataDog/browser-sdk/pull/3699))
+- 👷 use our own `deepClone` method instead of `structuredClone` ([#3700](https://github.com/DataDog/browser-sdk/pull/3700)) [RUM]
+- 👷 Add cookie options to telemetry debug ([#3693](https://github.com/DataDog/browser-sdk/pull/3693)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [Remote config] use types from JSON schema ([#3694](https://github.com/DataDog/browser-sdk/pull/3694)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump device version in unit tests ([#3703](https://github.com/DataDog/browser-sdk/pull/3703))
+- [RUM Profiler] fix unit test, remove RegExp lookbehind ([#3701](https://github.com/DataDog/browser-sdk/pull/3701)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.14.0
 
 **Public Changes:**
