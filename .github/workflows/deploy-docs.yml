@@ -39,7 +39,7 @@ jobs:
         run: yarn install --immutable
 
       - name: Build documentation
-        run: yarn docs:build
+        run: yarn build:docs:html
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

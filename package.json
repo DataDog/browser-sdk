@@ -36,7 +36,6 @@
     "json-schemas:generate": "scripts/cli build_json2type && node scripts/generate-schema-types.js",
     "size": "node scripts/show-bundle-size.js",
     "woke": "scripts/cli woke",
-    "docs:build": "typedoc",
     "docs:serve": "typedoc && npx http-server ./docs -p 8080 -o"
   },
   "devDependencies": {
