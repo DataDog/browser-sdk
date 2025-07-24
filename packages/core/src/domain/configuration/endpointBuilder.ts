@@ -81,15 +81,11 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, additionalConfig = {} }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, sdkVersion, source, variant }: InitConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload
 ) {
-  const source = (additionalConfig.source as string) || 'browser'
-  const variant = additionalConfig.variant as string
-  const sdkVersion = additionalConfig.sdk_version as string
-
   const parameters = [
     `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
