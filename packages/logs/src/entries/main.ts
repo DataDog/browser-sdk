@@ -11,7 +11,7 @@ import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
 import { startLogs } from '../boot/startLogs'
-
+import { initServiceWorkerPolyfillIfNeeded } from '../polyfill/logsPolyfill'
 export type { InternalContext } from '../domain/contexts/internalContext'
 export type { LogsMessage } from '../domain/logger'
 export { Logger, HandlerType } from '../domain/logger'
@@ -50,6 +50,9 @@ export type {
  *
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
+
+initServiceWorkerPolyfillIfNeeded()
+
 export const datadogLogs = makeLogsPublicApi(startLogs)
 
 interface BrowserWindow extends Window {
