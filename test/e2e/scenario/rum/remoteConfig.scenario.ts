@@ -8,7 +8,7 @@ test.describe('remote configuration', () => {
       remoteConfigurationId: 'e2e',
     })
     .withRemoteConfig({
-      rum: { sessionSampleRate: 1 },
+      rum: { applicationId: 'e2e', sessionSampleRate: 1 },
     })
     .run(async ({ page }) => {
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
