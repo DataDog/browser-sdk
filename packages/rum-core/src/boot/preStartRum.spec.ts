@@ -444,18 +444,21 @@ describe('preStartRum', () => {
       })
 
       it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
-        interceptor.withMockXhr((xhr) => {
-          xhr.complete(200, '{"rum":{"sessionSampleRate":50}}')
-
-          expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
-          done()
-        })
-
+        interceptor.withFetch(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+          })
+        )
         const strategy = createPreStartStrategy(
           {},
           createTrackingConsentState(),
           createCustomVitalsState(),
-          doStartRumSpy
+          (configuration) => {
+            expect(configuration.sessionSampleRate).toEqual(50)
+            done()
+            return {} as StartRumResult
+          }
         )
         strategy.init(
           {
@@ -595,19 +598,17 @@ describe('preStartRum', () => {
     })
 
     it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
-      interceptor.withMockXhr((xhr) => {
-        xhr.complete(200, '{"rum":{"sessionSampleRate":50}}')
-
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+        })
+      )
+      const strategy = createPreStartStrategy({}, createTrackingConsentState(), createCustomVitalsState(), () => {
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
         done()
+        return {} as StartRumResult
       })
-
-      const strategy = createPreStartStrategy(
-        {},
-        createTrackingConsentState(),
-        createCustomVitalsState(),
-        doStartRumSpy
-      )
       strategy.init(
         {
           ...DEFAULT_INIT_CONFIGURATION,
