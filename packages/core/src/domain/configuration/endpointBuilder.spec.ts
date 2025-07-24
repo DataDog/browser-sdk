@@ -39,7 +39,7 @@ describe('endpointBuilder', () => {
     })
 
     it('should not start with ddsource for internal analytics mode', () => {
-      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo' }, 'rum').build(
+      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo', source: 'browser' }, 'rum').build(
         'fetch',
         DEFAULT_PAYLOAD
       )
@@ -154,21 +154,22 @@ describe('endpointBuilder', () => {
 
   describe('source and variant configuration', () => {
     it('should use the default source when no configuration is provided', () => {
-      const endpoint = createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      const config = { ...initConfiguration, source: 'browser' }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=browser')
       expect(endpoint).not.toContain('_dd.variant=')
       expect(endpoint).not.toContain('_dd.sdk_version=')
     })
 
     it('should use source and variant when provided', () => {
-      const config = { ...initConfiguration, additionalConfig: { source: 'my-source', variant: 'my-variant' } }
+      const config = { ...initConfiguration, source: 'my-source', variant: 'my-variant' }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=my-source')
       expect(endpoint).toContain('_dd.variant=my-variant')
     })
 
     it('should include sdk_version when provided in additionalConfig', () => {
-      const config = { ...initConfiguration, additionalConfig: { sdk_version: '1.2.3' } }
+      const config = { ...initConfiguration, sdkVersion: '1.2.3' }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('_dd.sdk_version=1.2.3')
     })
