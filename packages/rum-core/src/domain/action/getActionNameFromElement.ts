@@ -1,28 +1,17 @@
-import { safeTruncate } from '@datadog/browser-core'
-import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
+import { DefaultPrivacyLevel, safeTruncate } from '@datadog/browser-core'
+import { NodePrivacyLevel, getPrivacySelector } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
-
-/**
- * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
- * It can also be retrieved from a user defined attribute.
- */
-export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
-export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
-export const enum ActionNameSource {
-  CUSTOM_ATTRIBUTE = 'custom_attribute',
-  MASK_PLACEHOLDER = 'mask_placeholder',
-  TEXT_CONTENT = 'text_content',
-  STANDARD_ATTRIBUTE = 'standard_attribute',
-  BLANK = 'blank',
-}
-interface ActionName {
-  name: string
-  nameSource: ActionNameSource
-}
+import { maskDisallowedActionName } from './privacy/maskWithAllowlist'
+import {
+  ActionNameSource,
+  DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
+  ACTION_NAME_PLACEHOLDER,
+} from './actionNameConstants'
+import type { ActionName } from './actionNameConstants'
 
 export function getActionNameFromElement(
   element: Element,
-  { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
+  { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute, defaultPrivacyLevel }: RumConfiguration,
   nodePrivacyLevel?: NodePrivacyLevel
 ): ActionName {
   // Proceed to get the action name in two steps:
@@ -47,12 +36,16 @@ export function getActionNameFromElement(
       element,
       userProgrammaticAttribute,
       priorityStrategies,
+      defaultPrivacyLevel,
+      nodePrivacyLevel,
       enablePrivacyForActionName
     ) ||
     getActionNameFromElementForStrategies(
       element,
       userProgrammaticAttribute,
       fallbackStrategies,
+      defaultPrivacyLevel,
+      nodePrivacyLevel,
       enablePrivacyForActionName
     ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
@@ -141,6 +134,8 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
+  defaultPrivacyLevel: DefaultPrivacyLevel,
+  nodeSelfPrivacy?: NodePrivacyLevel,
   privacyEnabledActionName?: boolean
 ) {
   let element: Element | null = targetElement
@@ -155,7 +150,12 @@ function getActionNameFromElementForStrategies(
     for (const strategy of strategies) {
       const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
       if (actionName) {
-        const { name, nameSource } = actionName
+        const { name, nameSource } =
+          (defaultPrivacyLevel === DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
+            nodeSelfPrivacy !== NodePrivacyLevel.ALLOW) ||
+          nodeSelfPrivacy === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+            ? maskDisallowedActionName(actionName)
+            : actionName
         const trimmedName = name && name.trim()
         if (trimmedName) {
           return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }
