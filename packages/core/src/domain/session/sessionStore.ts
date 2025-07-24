@@ -6,7 +6,7 @@ import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
-import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import {
   getExpiredSessionState,
@@ -65,15 +65,6 @@ export function selectSessionStoreStrategyType(
   }
 }
 
-export function getSessionStoreStrategy(
-  sessionStoreStrategyType: SessionStoreStrategyType,
-  configuration: Configuration
-) {
-  return sessionStoreStrategyType.type === SessionPersistence.COOKIE
-    ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
-    : initLocalStorageStrategy(configuration)
-}
-
 /**
  * Different session concepts:
  * - tracked, the session has an id and is updated along the user navigation
@@ -84,12 +75,17 @@ export function startSessionStore<TrackingType extends string>(
   sessionStoreStrategyType: SessionStoreStrategyType,
   configuration: Configuration,
   productKey: string,
-  computeTrackingType: (rawTrackingType?: string) => TrackingType,
-  sessionStoreStrategy: SessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, configuration)
+  computeTrackingType: (rawTrackingType?: string) => TrackingType
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
   const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
+
+  const sessionStoreStrategy =
+    sessionStoreStrategyType.type === SessionPersistence.COOKIE
+      ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
+      : initLocalStorageStrategy(configuration)
+  const { expireSession } = sessionStoreStrategy
 
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState
@@ -134,18 +130,14 @@ export function startSessionStore<TrackingType extends string>(
    * - if the session is not active, clear the session store and expire the session cache
    */
   function watchSession() {
-    const sessionState = sessionStoreStrategy.retrieveSession()
-    if (isSessionInExpiredState(sessionState)) {
-      processSessionStoreOperations(
-        {
-          process: (sessionState) => getExpiredSessionState(sessionState, configuration),
-          after: synchronizeSession,
-        },
-        sessionStoreStrategy
-      )
-    } else {
-      synchronizeSession(sessionState)
-    }
+    processSessionStoreOperations(
+      {
+        process: (sessionState) =>
+          isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
+        after: synchronizeSession,
+      },
+      sessionStoreStrategy
+    )
   }
 
   function synchronizeSession(sessionState: SessionState) {
@@ -231,7 +223,7 @@ export function startSessionStore<TrackingType extends string>(
     restartSession: startSession,
     expire: () => {
       cancelExpandOrRenewSession()
-      sessionStoreStrategy.expireSession(sessionCache)
+      expireSession(sessionCache)
       synchronizeSession(getExpiredSessionState(sessionCache, configuration))
     },
     stop: () => {
