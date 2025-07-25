@@ -1,21 +1,31 @@
-'use strict'
+import { printLog, runMain } from '../lib/executionUtils'
+import { fetchPR, LOCAL_BRANCH } from '../lib/gitUtils'
+import { command } from '../lib/command'
+import { forEachFile } from '../lib/filesUtils'
 
-const { printLog, runMain } = require('../lib/executionUtils')
-const { fetchPR, LOCAL_BRANCH } = require('../lib/gitUtils')
-const { command } = require('../lib/command')
-const { forEachFile } = require('../lib/filesUtils')
-
-const {
+import {
   buildRootUploadPath,
   buildDatacenterUploadPath,
   buildBundleFolder,
   buildPullRequestUploadPath,
   packages,
-} = require('./lib/deploymentUtils')
+} from './lib/deploymentUtils'
+
+interface AwsConfig {
+  accountId: number
+  bucketName: string
+  distributionId: string
+}
+
+interface AwsCredentials {
+  AccessKeyId: string
+  SecretAccessKey: string
+  SessionToken: string
+}
 
 const ONE_MINUTE_IN_SECOND = 60
 const ONE_HOUR_IN_SECOND = 60 * ONE_MINUTE_IN_SECOND
-const AWS_CONFIG = {
+const AWS_CONFIG: Record<string, AwsConfig> = {
   prod: {
     accountId: 464622532012,
     bucketName: 'browser-agent-artifacts-prod',
@@ -27,6 +37,7 @@ const AWS_CONFIG = {
     distributionId: 'E2FP11ZSCFD3EU',
   },
 }
+
 /**
  * Deploy SDK files to CDN
  * Usage:
@@ -41,9 +52,9 @@ if (require.main === module) {
   })
 }
 
-async function main(env, version, uploadPathTypes) {
+export async function main(env: string, version: string, uploadPathTypes: string[]): Promise<void> {
   const awsConfig = AWS_CONFIG[env]
-  let cloudfrontPathsToInvalidate = []
+  const cloudfrontPathsToInvalidate: string[] = []
   for (const { packageName } of packages) {
     const pathsToInvalidate = await uploadPackage(awsConfig, packageName, version, uploadPathTypes)
     cloudfrontPathsToInvalidate.push(...pathsToInvalidate)
@@ -51,8 +62,13 @@ async function main(env, version, uploadPathTypes) {
   invalidateCloudfront(awsConfig, cloudfrontPathsToInvalidate)
 }
 
-async function uploadPackage(awsConfig, packageName, version, uploadPathTypes) {
-  const cloudfrontPathsToInvalidate = []
+async function uploadPackage(
+  awsConfig: AwsConfig,
+  packageName: string,
+  version: string,
+  uploadPathTypes: string[]
+): Promise<string[]> {
+  const cloudfrontPathsToInvalidate: string[] = []
   const bundleFolder = buildBundleFolder(packageName)
 
   for (const uploadPathType of uploadPathTypes) {
@@ -72,11 +88,11 @@ async function uploadPackage(awsConfig, packageName, version, uploadPathTypes) {
   return cloudfrontPathsToInvalidate
 }
 
-async function generateUploadPath(uploadPathType, filePath, version) {
+async function generateUploadPath(uploadPathType: string, filePath: string, version: string): Promise<string> {
   let uploadPath
 
   if (uploadPathType === 'pull-request') {
-    const pr = await fetchPR(LOCAL_BRANCH)
+    const pr = await fetchPR(LOCAL_BRANCH || '')
     if (!pr) {
       console.log('No pull requests found for the branch')
       process.exit(0)
@@ -91,7 +107,7 @@ async function generateUploadPath(uploadPathType, filePath, version) {
   return uploadPath
 }
 
-function uploadToS3(awsConfig, bundlePath, uploadPath, version) {
+function uploadToS3(awsConfig: AwsConfig, bundlePath: string, uploadPath: string, version: string): void {
   const accessToS3 = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-browser-agent-artifacts-s3-write')
 
   const browserCache =
@@ -107,7 +123,7 @@ function uploadToS3(awsConfig, bundlePath, uploadPath, version) {
     .run()
 }
 
-function invalidateCloudfront(awsConfig, pathsToInvalidate) {
+function invalidateCloudfront(awsConfig: AwsConfig, pathsToInvalidate: string[]): void {
   const accessToCloudfront = generateEnvironmentForRole(awsConfig.accountId, 'build-stable-cloudfront-invalidation')
 
   printLog(`Trigger invalidation on ${awsConfig.distributionId} for: ${pathsToInvalidate.join(', ')}`)
@@ -117,19 +133,15 @@ function invalidateCloudfront(awsConfig, pathsToInvalidate) {
     .run()
 }
 
-function generateEnvironmentForRole(awsAccountId, roleName) {
+function generateEnvironmentForRole(awsAccountId: number, roleName: string): NodeJS.ProcessEnv {
   const rawCredentials = command`
   aws sts assume-role
     --role-arn arn:aws:iam::${awsAccountId}:role/${roleName}
     --role-session-name AWSCLI-Session`.run()
-  const credentials = JSON.parse(rawCredentials)['Credentials']
+  const credentials: AwsCredentials = JSON.parse(rawCredentials)['Credentials']
   return {
-    AWS_ACCESS_KEY_ID: credentials['AccessKeyId'],
-    AWS_SECRET_ACCESS_KEY: credentials['SecretAccessKey'],
-    AWS_SESSION_TOKEN: credentials['SessionToken'],
+    AWS_ACCESS_KEY_ID: credentials.AccessKeyId,
+    AWS_SECRET_ACCESS_KEY: credentials.SecretAccessKey,
+    AWS_SESSION_TOKEN: credentials.SessionToken,
   }
-}
-
-module.exports = {
-  main,
 }

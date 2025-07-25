@@ -1,5 +1,5 @@
-const { printLog, runMain, timeout } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
+import { printLog, runMain, timeout } from '../lib/executionUtils'
+import { command } from '../lib/command'
 
 /**
  * Orchestrate the deployments of the artifacts for specific DCs
@@ -15,7 +15,7 @@ const uploadPath = process.argv[3]
 const withGateMonitors = process.argv[4] === 'true'
 
 runMain(async () => {
-  command`node ./scripts/deploy/check-monitors.js ${uploadPath}`.withLogs().run()
+  command`node ./scripts/deploy/check-monitors.js ${version} ${uploadPath}`.withLogs().run()
   command`node ./scripts/deploy/deploy.js prod ${version} ${uploadPath}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.js ${version} ${uploadPath}`.withLogs().run()
 
@@ -24,7 +24,7 @@ runMain(async () => {
   }
 })
 
-async function gateMonitors(uploadPath) {
+async function gateMonitors(uploadPath: string): Promise<void> {
   printLog(`Check monitors for ${uploadPath} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
   for (let i = 0; i < GATE_DURATION; i += GATE_INTERVAL) {
     command`node ./scripts/deploy/check-monitors.js ${uploadPath}`.run()

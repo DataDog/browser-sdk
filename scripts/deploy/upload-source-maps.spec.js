@@ -2,7 +2,7 @@ const assert = require('node:assert/strict')
 const path = require('node:path')
 const { beforeEach, before, describe, it, mock } = require('node:test')
 const { siteByDatacenter } = require('../lib/datadogSites')
-const { mockModule, mockCommandImplementation, replaceChunkHashes } = require('./lib/testHelpers.js')
+const { mockModule, mockCommandImplementation, replaceChunkHashes } = require('./lib/testHelpers')
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
 const ENV_STAGING = {
@@ -32,7 +32,7 @@ void describe('upload-source-maps', () => {
 
     // This MUST be a dynamic import because that is the only way to ensure the
     // import starts after the mock has been set up.
-    ;({ main: uploadSourceMaps } = await import('./upload-source-maps.js'))
+    ;({ main: uploadSourceMaps } = await import('./upload-source-maps'))
   })
 
   beforeEach(() => {

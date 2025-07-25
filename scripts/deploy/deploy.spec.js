@@ -7,7 +7,7 @@ const {
   replaceChunkHashes,
   FAKE_AWS_ENV_CREDENTIALS,
   FAKE_CHUNK_HASH,
-} = require('./lib/testHelpers.js')
+} = require('./lib/testHelpers')
 
 void describe('deploy', () => {
   let commandMock = mock.fn()
@@ -33,7 +33,7 @@ void describe('deploy', () => {
 
     // This MUST be a dynamic import because that is the only way to ensure the
     // import starts after the mock has been set up.
-    ;({ main: deploy } = await import('./deploy.js'))
+    ;({ main: deploy } = await import('./deploy'))
   })
 
   beforeEach(() => {

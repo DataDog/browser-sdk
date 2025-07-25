@@ -1,7 +1,7 @@
-const fs = require('fs')
-const { printLog, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { getNpmToken } = require('../lib/secrets')
+import * as fs from 'fs'
+import { printLog, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { getNpmToken } from '../lib/secrets'
 
 runMain(() => {
   printLog('Building the project')

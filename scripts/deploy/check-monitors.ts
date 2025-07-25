@@ -3,11 +3,17 @@
  * Usage:
  * node check-monitors.js us1,eu1,...
  */
-const { printLog, runMain, fetchHandlingError } = require('../lib/executionUtils')
-const { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } = require('../lib/secrets')
-const { siteByDatacenter } = require('../lib/datadogSites')
+import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils'
+import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/secrets'
+import { siteByDatacenter, type Datacenter } from '../lib/datadogSites'
 
-const monitorIdsByDatacenter = {
+interface MonitorStatus {
+  id: number
+  name: string
+  overall_state: string
+}
+
+const monitorIdsByDatacenter: Record<string, number[]> = {
   us1: [72055549, 68975047, 110519972],
   eu1: [5855803, 5663834, 9896387],
   us3: [164368, 160677, 329066],
@@ -25,7 +31,7 @@ runMain(async () => {
       continue
     }
     const monitorIds = monitorIdsByDatacenter[datacenter]
-    const site = siteByDatacenter[datacenter]
+    const site = siteByDatacenter[datacenter as Datacenter]
     const monitorStatuses = await Promise.all(monitorIds.map((monitorId) => fetchMonitorStatus(site, monitorId)))
     for (const monitorStatus of monitorStatuses) {
       printLog(`${monitorStatus.overall_state} - ${monitorStatus.name}`)
@@ -38,7 +44,7 @@ runMain(async () => {
   }
 })
 
-async function fetchMonitorStatus(site, monitorId) {
+async function fetchMonitorStatus(site: string, monitorId: number): Promise<MonitorStatus> {
   const response = await fetchHandlingError(`https://api.${site}/api/v1/monitor/${monitorId}`, {
     method: 'GET',
     headers: {
@@ -47,14 +53,14 @@ async function fetchMonitorStatus(site, monitorId) {
       'DD-APPLICATION-KEY': getTelemetryOrgApplicationKey(site),
     },
   })
-  return response.json()
+  return response.json() as Promise<MonitorStatus>
 }
 
-function computeMonitorLink(site, monitorId) {
+function computeMonitorLink(site: string, monitorId: number): string {
   return `https://${computeTelemetryOrgDomain(site)}/monitors/${monitorId}`
 }
 
-function computeTelemetryOrgDomain(site) {
+function computeTelemetryOrgDomain(site: string): string {
   switch (site) {
     case 'datadoghq.com':
     case 'datadoghq.eu':

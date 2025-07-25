@@ -1,14 +1,10 @@
 // chrome-webstore-upload only support ESM syntax.
-const webstore = (...args) => import('chrome-webstore-upload').then(({ default: webstore }) => webstore(...args))
-const fs = require('node:fs')
+const webstore = (options: any) => import('chrome-webstore-upload').then(({ default: webstore }) => webstore(options))
+import * as fs from 'node:fs'
 
-const { printLog, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const {
-  getChromeWebStoreClientId,
-  getChromeWebStoreClientSecret,
-  getChromeWebStoreRefreshToken,
-} = require('../lib/secrets')
+import { printLog, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { getChromeWebStoreClientId, getChromeWebStoreClientSecret, getChromeWebStoreRefreshToken } from '../lib/secrets'
 
 const ZIP_FILE_NAME = 'developer-extension.zip'
 
@@ -25,7 +21,7 @@ runMain(async () => {
   printLog('Developer extension published.')
 })
 
-async function uploadAndPublish() {
+async function uploadAndPublish(): Promise<void> {
   const zipFile = fs.createReadStream(ZIP_FILE_NAME)
   const api = await webstore({
     extensionId: 'boceobohkgenpcpogecpjlnmnfbdigda',
@@ -43,7 +39,7 @@ async function uploadAndPublish() {
 
     printLog('Publishing')
     await api.publish()
-  } catch (err) {
+  } catch (err: any) {
     const body = err?.response?.body
     if (body) {
       throw body
