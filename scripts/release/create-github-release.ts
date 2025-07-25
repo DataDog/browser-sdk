@@ -1,8 +1,8 @@
 // @ts-check
 
 import { readFileSync } from 'node:fs'
-import { createGitHubRelease } from '../lib/gitUtils.ts'
-import { printLog, runMain } from '../lib/executionUtils.ts'
+import { createGitHubRelease } from '../lib/gitUtils'
+import { printLog, runMain } from '../lib/executionUtils'
 
 interface ReleaseInfo {
   version: string

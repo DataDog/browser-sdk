@@ -2,8 +2,8 @@ import { readFile } from 'fs/promises'
 import * as fs from 'fs'
 import * as emojiNameMap from 'emoji-name-map'
 
-import { browserSdkVersion } from '../../../lib/browserSdkVersion.js'
-import { command } from '../../../lib/command.js'
+import { browserSdkVersion } from '../../../lib/browserSdkVersion'
+import { command } from '../../../lib/command'
 import { getAffectedPackages } from './getAffectedPackages'
 import { CHANGELOG_FILE, CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI_PRIORITY } from './constants'
 

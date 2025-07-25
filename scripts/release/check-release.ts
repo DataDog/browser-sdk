@@ -1,7 +1,7 @@
 import { version as releaseVersion } from '../../lerna.json'
-import { printLog, runMain } from '../lib/executionUtils.js'
-import { command } from '../lib/command.js'
-import { findBrowserSdkPackageJsonFiles } from '../lib/filesUtils.js'
+import { printLog, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { findBrowserSdkPackageJsonFiles } from '../lib/filesUtils'
 
 interface PackageJsonFile {
   relativePath: string

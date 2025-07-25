@@ -1,6 +1,6 @@
-import { command } from '../../lib/command.js'
-import { spawnCommand, printError, runMain } from '../../lib/executionUtils.js'
-import { modifyFile } from '../../lib/filesUtils.js'
+import { command } from '../../lib/command'
+import { spawnCommand, printError, runMain } from '../../lib/executionUtils'
+import { modifyFile } from '../../lib/filesUtils'
 import { addNewChangesToChangelog } from './lib/addNewChangesToChangelog'
 import { CHANGELOG_FILE } from './lib/constants'
 
