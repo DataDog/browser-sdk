@@ -1,8 +1,8 @@
-const { command } = require('../../lib/command')
-const { spawnCommand, printError, runMain } = require('../../lib/executionUtils')
-const { modifyFile } = require('../../lib/filesUtils')
-const { addNewChangesToChangelog } = require('./lib/addNewChangesToChangelog')
-const { CHANGELOG_FILE } = require('./lib/constants')
+import { command } from '../../lib/command.js'
+import { spawnCommand, printError, runMain } from '../../lib/executionUtils.js'
+import { modifyFile } from '../../lib/filesUtils.js'
+import { addNewChangesToChangelog } from './lib/addNewChangesToChangelog'
+import { CHANGELOG_FILE } from './lib/constants'
 
 runMain(async () => {
   if (!process.env.EDITOR) {
