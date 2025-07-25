@@ -17,6 +17,7 @@
     "format": "prettier --check .",
     "lint": "scripts/cli lint .",
     "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension",
+    "typecheck:scripts": "tsc --project scripts/tsconfig.json",
     "dev": "node scripts/dev-server.js",
     "release": "scripts/cli release",
     "version": "scripts/cli version",
