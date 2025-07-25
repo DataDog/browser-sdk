@@ -41,6 +41,9 @@ jobs:
       - name: Build documentation
         run: yarn build:docs:html
 
+      - name: Build SDK
+        run: yarn build
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
