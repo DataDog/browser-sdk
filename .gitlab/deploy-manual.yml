@@ -16,7 +16,7 @@ stages:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - ts-node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $UPLOAD_PATH false
+    - yarn exec ts-node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $UPLOAD_PATH false
 
 step-1_deploy-prod-minor-dcs:
   extends:
@@ -54,7 +54,7 @@ step-5_publish-npm:
   allow_failure: false
   script:
     - yarn
-    - ts-node ./scripts/deploy/publish-npm.ts
+    - yarn exec ts-node ./scripts/deploy/publish-npm.ts
 
 step-6_publish-developer-extension:
   stage: deploy
@@ -64,7 +64,7 @@ step-6_publish-developer-extension:
   allow_failure: false
   script:
     - yarn
-    - ts-node ./scripts/deploy/publish-developer-extension.ts
+    - yarn exec ts-node ./scripts/deploy/publish-developer-extension.ts
 
 step-7_create-github-release:
   needs:
