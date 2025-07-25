@@ -1,10 +1,10 @@
 'use strict'
 
 import * as fs from 'fs'
-import { printLog, runMain } from '../lib/executionUtils'
-import { command } from '../lib/command'
-import { CI_FILE, replaceCiFileVariable, readCiFileVariable } from '../lib/filesUtils'
-import { initGitConfig } from '../lib/gitUtils'
+import { printLog, runMain } from '../lib/executionUtils.js'
+import { command } from '../lib/command.js'
+import { CI_FILE, replaceCiFileVariable, readCiFileVariable } from '../lib/filesUtils.js'
+import { initGitConfig } from '../lib/gitUtils.js'
 
 const REPOSITORY = process.env.GIT_REPOSITORY as string
 const MAIN_BRANCH = process.env.MAIN_BRANCH as string

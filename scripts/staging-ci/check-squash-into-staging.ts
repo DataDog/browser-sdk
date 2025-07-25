@@ -1,8 +1,8 @@
 'use strict'
 
-import { printLog, printError, runMain } from '../lib/executionUtils'
-import { command } from '../lib/command'
-import { initGitConfig } from '../lib/gitUtils'
+import { printLog, printError, runMain } from '../lib/executionUtils.js'
+import { command } from '../lib/command.js'
+import { initGitConfig } from '../lib/gitUtils.js'
 
 const REPOSITORY = process.env.GIT_REPOSITORY as string
 const CI_COMMIT_SHORT_SHA = process.env.CI_COMMIT_SHORT_SHA as string
