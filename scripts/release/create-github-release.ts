@@ -4,11 +4,20 @@ import { readFileSync } from 'node:fs'
 import { createGitHubRelease } from '../lib/gitUtils.js'
 import { printLog, runMain } from '../lib/executionUtils.js'
 
+interface ReleaseInfo {
+  version: string
+  body: string
+}
+
+interface GitHubReleaseResponse {
+  html_url: string
+}
+
 runMain(async () => {
   const requestedVersion = process.argv[2]
   printLog(`Creating GitHub release for ${requestedVersion ? `version ${requestedVersion}` : 'latest version'}`)
   const versionAndBody = getReleaseVersionAndBody(requestedVersion)
-  const response = await createGitHubRelease(versionAndBody)
+  const response = (await createGitHubRelease(versionAndBody)) as GitHubReleaseResponse
   printLog(`GitHub release created: ${response.html_url}`)
 })
 
@@ -18,7 +27,7 @@ runMain(async () => {
  * @param {string} requestedVersion - The version to create a release for.
  * @return {{ version: string, body: string }}
  */
-function getReleaseVersionAndBody(requestedVersion) {
+function getReleaseVersionAndBody(requestedVersion?: string): ReleaseInfo {
   for (const { version, body } of iterReleases()) {
     if (!requestedVersion || version === requestedVersion) {
       return { version, body }
@@ -33,7 +42,7 @@ function getReleaseVersionAndBody(requestedVersion) {
  *
  * @returns {Iterable<{version: string, body: string}>}
  */
-function* iterReleases() {
+function* iterReleases(): Iterable<ReleaseInfo> {
   const changelog = readFileSync('CHANGELOG.md', 'utf8')
   const titleMatches = changelog.matchAll(/^## (v\d+\.\d+\.\d+)/gm)
   let titleMatch = titleMatches.next().value

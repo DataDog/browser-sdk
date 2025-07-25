@@ -1,14 +1,20 @@
-const { readFile } = require('fs/promises')
-const fs = require('fs')
+import { readFile } from 'fs/promises'
+import * as fs from 'fs'
+// @ts-ignore no declaration files
+import * as emojiNameMap from 'emoji-name-map'
 
-const emojiNameMap = require('emoji-name-map')
-
-const { browserSdkVersion } = require('../../../lib/browserSdkVersion')
-const { command } = require('../../../lib/command')
-const { getAffectedPackages } = require('./getAffectedPackages')
-const { CHANGELOG_FILE, CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI_PRIORITY } = require('./constants')
+import { browserSdkVersion } from '../../../lib/browserSdkVersion.js'
+import { command } from '../../../lib/command.js'
+import { getAffectedPackages } from './getAffectedPackages'
+import { CHANGELOG_FILE, CONTRIBUTING_FILE, PUBLIC_EMOJI_PRIORITY, INTERNAL_EMOJI_PRIORITY } from './constants'
 
 const FIRST_EMOJI_REGEX = /\p{Extended_Pictographic}/u
+
+interface Change {
+  hash: string
+  message: string
+  emoji?: string
+}
 
 /**
  * Add new changes to the changelog.
@@ -16,7 +22,7 @@ const FIRST_EMOJI_REGEX = /\p{Extended_Pictographic}/u
  * @param previousContent - {string}
  * @returns {Promise<string>}
  */
-exports.addNewChangesToChangelog = async (previousContent) => {
+export const addNewChangesToChangelog = async (previousContent: string): Promise<string> => {
   const emojisLegend = await getEmojisLegend()
   const changeLists = getChangeLists()
 
@@ -33,7 +39,7 @@ ${changeLists}
 ${previousContent.slice(previousContent.indexOf('\n##'))}`
 }
 
-async function getEmojisLegend() {
+async function getEmojisLegend(): Promise<string> {
   const contributing = await readFile(CONTRIBUTING_FILE, { encoding: 'utf-8' })
   let collectLines = false
 
@@ -56,12 +62,12 @@ async function getEmojisLegend() {
   return lines.join('\n')
 }
 
-function getChangeLists() {
+function getChangeLists(): string {
   const lastTagName = getLastReleaseTagName()
   const commits = command`git log ${[`${lastTagName}..HEAD`, '--pretty=format:%H %s']}`.run().split('\n')
 
-  const internalChanges = []
-  const publicChanges = []
+  const internalChanges: Change[] = []
+  const publicChanges: Change[] = []
 
   commits.forEach((commit) => {
     const spaceIndex = commit.indexOf(' ')
@@ -71,9 +77,8 @@ function getChangeLists() {
       return
     }
 
-    const change = formatChange(hash, message)
-    const emoji = findFirstEmoji(change)
-    if (PUBLIC_EMOJI_PRIORITY.includes(emoji)) {
+    const change: Change = { hash, message, emoji: findFirstEmoji(message) }
+    if (PUBLIC_EMOJI_PRIORITY.includes(change.emoji || '')) {
       publicChanges.push(change)
     } else {
       internalChanges.push(change)
@@ -88,7 +93,7 @@ function getChangeLists() {
     .join('\n\n')
 }
 
-function getLastReleaseTagName() {
+function getLastReleaseTagName(): string {
   const changelog = fs.readFileSync(CHANGELOG_FILE, { encoding: 'utf-8' })
   const match = changelog.match(/^## (v\d+\.\d+\.\d+.*)/m)
   if (!match) {
@@ -97,24 +102,25 @@ function getLastReleaseTagName() {
   return match[1]
 }
 
-function sortByEmojiPriority(a, b, priorityList) {
-  const getFirstRelevantEmojiIndex = (text) => {
+function sortByEmojiPriority(a: Change, b: Change, priorityList: readonly string[]): number {
+  const getFirstRelevantEmojiIndex = (text: string): number => {
     const emoji = findFirstEmoji(text)
     return emoji && priorityList.includes(emoji) ? priorityList.indexOf(emoji) : Number.MAX_VALUE
   }
-  return getFirstRelevantEmojiIndex(a) - getFirstRelevantEmojiIndex(b)
+  return getFirstRelevantEmojiIndex(a.message) - getFirstRelevantEmojiIndex(b.message)
 }
 
-function formatChangeList(title, changes, priority) {
+function formatChangeList(title: string, changes: Change[], priority: readonly string[]): string {
   if (!changes.length) {
     return ''
   }
 
-  const formatedList = changes.sort((a, b) => sortByEmojiPriority(a, b, priority)).join('\n')
+  const sortedChanges = changes.sort((a, b) => sortByEmojiPriority(a, b, priority))
+  const formatedList = sortedChanges.map((change) => `- ${formatChange(change.hash, change.message)}`).join('\n')
   return `**${title}:**\n\n${formatedList}`
 }
 
-function formatChange(hash, message) {
+function formatChange(hash: string, message: string): string {
   let change = `- ${message}`
 
   const affectedPackages = getAffectedPackages(hash)
@@ -128,22 +134,23 @@ function formatChange(hash, message) {
   return addLinksToGithubIssues(emojiNameToUnicode(change))
 }
 
-function emojiNameToUnicode(message) {
+function emojiNameToUnicode(message: string): string {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call,@typescript-eslint/no-unsafe-return
   return message.replace(/:[^:\s]*(?:::[^:\s]*)*:/g, (emoji) => emojiNameMap.get(emoji) || emoji)
 }
 
-function addLinksToGithubIssues(message) {
+function addLinksToGithubIssues(message: string): string {
   return message.replace(/\(#(\d+)\)/gm, (_, id) => `([#${id}](https://github.com/DataDog/browser-sdk/pull/${id}))`)
 }
 
-function findFirstEmoji(message) {
+function findFirstEmoji(message: string): string | undefined {
   return message.match(FIRST_EMOJI_REGEX)?.[0]
 }
 
-function isVersionMessage(line) {
+function isVersionMessage(line: string): boolean {
   return /^v\d+\.\d+\.\d+/.test(line)
 }
 
-function isStagingBumpMessage(line) {
+function isStagingBumpMessage(line: string): boolean {
   return /Bump staging to staging-\d+/.test(line)
 }
