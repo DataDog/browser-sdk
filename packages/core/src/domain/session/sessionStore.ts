@@ -138,7 +138,8 @@ export function startSessionStore<TrackingType extends string>(
     if (isSessionInExpiredState(sessionState)) {
       processSessionStoreOperations(
         {
-          process: (sessionState) => getExpiredSessionState(sessionState, configuration),
+          process: (sessionState) =>
+            isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
           after: synchronizeSession,
         },
         sessionStoreStrategy
