@@ -4,6 +4,13 @@
   "compilerOptions": {
     "types": ["jasmine"]
   },
+  "ts-node": {
+    "transpileOnly": true,
+    "compilerOptions": {
+      "module": "commonjs",
+      "allowJs": true
+    }
+  },
   "exclude": [
     // Generated files
     "packages/*/cjs",

@@ -237,7 +237,7 @@ check-licenses:
   interruptible: true
   script:
     - yarn
-    - ts-node --no-warnings scripts/check-licenses.ts
+    - yarn ts-node scripts/check-licenses.ts
 
 check-node-version:
   extends:
