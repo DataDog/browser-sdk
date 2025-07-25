@@ -1,9 +1,20 @@
-'use strict'
+import lernaJson from '../../lerna.json'
+import { printLog, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { findBrowserSdkPackageJsonFiles } from '../lib/filesUtils'
 
-const { version: releaseVersion } = require('../../lerna.json')
-const { printLog, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { findBrowserSdkPackageJsonFiles } = require('../lib/filesUtils')
+const releaseVersion = lernaJson.version
+
+interface PackageJsonFile {
+  relativePath: string
+  content: {
+    name?: string
+    version?: string
+    dependencies?: Record<string, string>
+    devDependencies?: Record<string, string>
+    peerDependencies?: Record<string, string>
+  }
+}
 
 runMain(() => {
   checkGitTag()
@@ -12,21 +23,21 @@ runMain(() => {
   printLog('Release check done.')
 })
 
-function checkGitTag() {
+function checkGitTag(): void {
   printLog('Checking release version tag is on HEAD')
   const headRef = command`git rev-parse HEAD`.run()
-  let tagRef
+  let tagRef: string
   try {
     tagRef = command`git rev-list -n 1 v${releaseVersion} --`.run()
   } catch (error) {
-    throw new Error(`Failed to find git tag reference: ${error}`)
+    throw new Error(`Failed to find git tag reference: ${String(error)}`)
   }
   if (tagRef !== headRef) {
     throw new Error('Git tag not on HEAD')
   }
 }
 
-function checkBrowserSdkPackageJsonFiles() {
+function checkBrowserSdkPackageJsonFiles(): void {
   const packageJsonFiles = findBrowserSdkPackageJsonFiles()
 
   printLog(
@@ -41,7 +52,7 @@ function checkBrowserSdkPackageJsonFiles() {
   }
 }
 
-function checkPackageJsonVersion(packageJsonFile) {
+function checkPackageJsonVersion(packageJsonFile: PackageJsonFile): void {
   if (
     isBrowserSdkPublicPackageName(packageJsonFile.content.name) &&
     packageJsonFile.content.version !== releaseVersion
@@ -52,7 +63,7 @@ function checkPackageJsonVersion(packageJsonFile) {
   }
 }
 
-function checkPackageDependencyVersions(packageJsonFile) {
+function checkPackageDependencyVersions(packageJsonFile: PackageJsonFile): void {
   for (const dependencies of [
     packageJsonFile.content.dependencies,
     packageJsonFile.content.devDependencies,
@@ -77,6 +88,6 @@ function checkPackageDependencyVersions(packageJsonFile) {
   }
 }
 
-function isBrowserSdkPublicPackageName(name) {
-  return name?.startsWith('@datadog/')
+function isBrowserSdkPublicPackageName(name?: string): boolean {
+  return name?.startsWith('@datadog/') ?? false
 }

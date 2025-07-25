@@ -1,8 +1,11 @@
-// @ts-check
-
 import { readFileSync } from 'node:fs'
-import { createGitHubRelease } from '../lib/gitUtils.js'
-import { printLog, runMain } from '../lib/executionUtils.js'
+import { createGitHubRelease } from '../lib/gitUtils'
+import { printLog, runMain } from '../lib/executionUtils'
+
+interface Release {
+  version: string
+  body: string
+}
 
 runMain(async () => {
   const requestedVersion = process.argv[2]
@@ -15,10 +18,10 @@ runMain(async () => {
 /**
  * Get the version and body of the release to create.
  *
- * @param {string} requestedVersion - The version to create a release for.
- * @return {{ version: string, body: string }}
+ * @param requestedVersion - The version to create a release for.
+ * @return The version and body for the release
  */
-function getReleaseVersionAndBody(requestedVersion) {
+function getReleaseVersionAndBody(requestedVersion?: string): Release {
   for (const { version, body } of iterReleases()) {
     if (!requestedVersion || version === requestedVersion) {
       return { version, body }
@@ -31,16 +34,16 @@ function getReleaseVersionAndBody(requestedVersion) {
 /**
  * Iterate over the releases in the CHANGELOG.md file.
  *
- * @returns {Iterable<{version: string, body: string}>}
+ * @returns An iterator of releases
  */
-function* iterReleases() {
+function* iterReleases(): Generator<Release> {
   const changelog = readFileSync('CHANGELOG.md', 'utf8')
   const titleMatches = changelog.matchAll(/^## (v\d+\.\d+\.\d+)/gm)
-  let titleMatch = titleMatches.next().value
+  let titleMatch = titleMatches.next().value as RegExpMatchArray | undefined
   while (titleMatch) {
-    const nextTitleMatch = titleMatches.next().value
+    const nextTitleMatch = titleMatches.next().value as RegExpMatchArray | undefined
     const version = titleMatch[1]
-    const body = changelog.slice(titleMatch.index + titleMatch[0].length, nextTitleMatch?.index).trim()
+    const body = changelog.slice(titleMatch.index! + titleMatch[0].length, nextTitleMatch?.index).trim()
     yield { version, body }
     titleMatch = nextTitleMatch
   }

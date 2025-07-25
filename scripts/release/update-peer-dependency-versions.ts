@@ -1,8 +1,8 @@
-const { runMain } = require('../lib/executionUtils')
-const { modifyFile } = require('../lib/filesUtils')
-const { command } = require('../lib/command')
-const { browserSdkVersion } = require('../lib/browserSdkVersion')
-const { packagesDirectoryNames } = require('../lib/packagesDirectoryNames')
+import { runMain } from '../lib/executionUtils'
+import { modifyFile } from '../lib/filesUtils'
+import { command } from '../lib/command'
+import { browserSdkVersion } from '../lib/browserSdkVersion'
+import { packagesDirectoryNames } from '../lib/packagesDirectoryNames'
 
 const JSON_FILES = packagesDirectoryNames.map((packageName) => `./packages/${packageName}/package.json`)
 
@@ -23,7 +23,7 @@ runMain(async () => {
   command`yarn`.run()
 })
 
-function updateJsonPeerDependencies(content) {
+function updateJsonPeerDependencies(content: string): string {
   const json = JSON.parse(content)
   Object.keys(json.peerDependencies || [])
     .filter((key) => key.startsWith('@datadog'))
