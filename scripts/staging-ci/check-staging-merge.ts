@@ -23,7 +23,9 @@ runMain(() => {
   command`git checkout ${currentStaging} -f`.run()
   command`git pull`.run()
 
-  printLog(`Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHORT_SHA}) can be merged into ${currentStaging}...`)
+  printLog(
+    `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHORT_SHA}) can be merged into ${currentStaging}...`
+  )
   try {
     command`git merge --no-ff ${CI_COMMIT_SHA}`.run()
   } catch (error) {
