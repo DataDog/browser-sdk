@@ -164,7 +164,7 @@ build-and-lint:
     - yarn
     - yarn build
     - yarn lint
-    - node scripts/check-packages.js
+    - node scripts/check-packages.ts
 
 test-performance:
   extends:
@@ -178,8 +178,8 @@ test-performance:
   script:
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.js staging pull-request pull-request
-    - node ./scripts/performance/index.js
+    - node ./scripts/deploy/deploy.ts staging pull-request pull-request
+    - node ./scripts/performance/index.ts
 
 build-bundle:
   extends:
@@ -212,7 +212,7 @@ unit:
     - yarn
     - yarn test:unit
   after_script:
-    - node ./scripts/test/export-test-result.js unit
+    - node ./scripts/test/export-test-result.ts unit
 
 e2e:
   extends:
@@ -227,7 +227,7 @@ e2e:
     - yarn
     - FORCE_COLOR=1 yarn test:e2e:ci
   after_script:
-    - node ./scripts/test/export-test-result.js e2e
+    - node ./scripts/test/export-test-result.ts e2e
 
 check-licenses:
   extends:
@@ -236,7 +236,7 @@ check-licenses:
   interruptible: true
   script:
     - yarn
-    - node --no-warnings scripts/check-licenses.js
+    - node scripts/check-licenses.ts
 
 check-node-version:
   extends:
@@ -245,7 +245,7 @@ check-node-version:
   interruptible: true
   script:
     - yarn
-    - node scripts/check-node-version.js
+    - node scripts/check-node-version.ts
 
 check-release:
   extends:
@@ -255,7 +255,7 @@ check-release:
   script:
     - yarn
     - BUILD_MODE=release yarn build
-    - node scripts/release/check-release.js
+    - node scripts/release/check-release.ts
 
 check-schemas:
   extends:
@@ -264,7 +264,7 @@ check-schemas:
   interruptible: true
   script:
     - yarn
-    - node scripts/check-schemas.js
+    - node scripts/check-schemas.ts
 
 unit-bs:
   stage: browserstack
@@ -281,7 +281,7 @@ unit-bs:
     - yarn
     - ./scripts/test/ci-bs.sh test:unit
   after_script:
-    - node ./scripts/test/export-test-result.js unit-bs
+    - node ./scripts/test/export-test-result.ts unit-bs
 
 e2e-bs:
   stage: browserstack
@@ -301,7 +301,7 @@ e2e-bs:
     - yarn
     - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e:ci
   after_script:
-    - node ./scripts/test/export-test-result.js e2e-bs
+    - node ./scripts/test/export-test-result.ts e2e-bs
 
 script-tests:
   extends:
@@ -328,7 +328,7 @@ deploy-feature:
     - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.js staging $SUFFIX root
+    - node ./scripts/deploy/deploy.ts staging $SUFFIX root
 
 deploy-staging:
   stage: deploy
@@ -339,8 +339,8 @@ deploy-staging:
     - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.js staging staging root
-    - node ./scripts/deploy/upload-source-maps.js staging root
+    - node ./scripts/deploy/deploy.ts staging staging root
+    - node ./scripts/deploy/upload-source-maps.ts staging root
 
 deploy-prod-canary:
   stage: deploy:canary
@@ -351,8 +351,8 @@ deploy-prod-canary:
     - export BUILD_MODE=canary
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.js prod canary root
-    - node ./scripts/deploy/upload-source-maps.js canary root
+    - node ./scripts/deploy/deploy.ts prod canary root
+    - node ./scripts/deploy/upload-source-maps.ts canary root
 
 deploy-next-major-canary:
   stage: deploy
@@ -364,8 +364,8 @@ deploy-next-major-canary:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy.js prod v${VERSION%%.*}-canary root
-    - node ./scripts/deploy/upload-source-maps.js v${VERSION%%.*}-canary root
+    - node ./scripts/deploy/deploy.ts prod v${VERSION%%.*}-canary root
+    - node ./scripts/deploy/upload-source-maps.ts v${VERSION%%.*}-canary root
 
 deploy-manual:
   stage: deploy
@@ -444,7 +444,7 @@ staging-reset-scheduled:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/staging-ci/staging-reset.js
+    - node scripts/staging-ci/staging-reset.ts
   artifacts:
     reports:
       dotenv: build.env
@@ -481,7 +481,7 @@ merge-into-staging:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/update-branch.js $CURRENT_STAGING
+    - node scripts/update-branch.ts $CURRENT_STAGING
 
 merge-into-next-major:
   stage: pre-deploy
@@ -499,7 +499,7 @@ merge-into-next-major:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/update-branch.js $NEXT_MAJOR_BRANCH
+    - node scripts/update-branch.ts $NEXT_MAJOR_BRANCH
 
 check-staging-merge:
   stage: test
@@ -511,7 +511,7 @@ check-staging-merge:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/staging-ci/check-staging-merge.js
+    - node scripts/staging-ci/check-staging-merge.ts
 
 # A noop job that's used to signal to `to-staging` that it can merge to the
 # staging branch, even though the pipeline is still running
@@ -536,7 +536,7 @@ check-squash-into-staging:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/staging-ci/check-squash-into-staging.js
+    - node scripts/staging-ci/check-squash-into-staging.ts
 
 ########################################################################################################################
 # Bump e2e chrome version
@@ -552,7 +552,7 @@ bump-chrome-version-scheduled:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/test/bump-chrome-version.js
+    - node scripts/test/bump-chrome-version.ts
   artifacts:
     reports:
       dotenv: build.env

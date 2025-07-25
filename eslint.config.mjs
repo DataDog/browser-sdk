@@ -49,6 +49,7 @@ export default tseslint.config(
           './tsconfig.json',
           './test/apps/**/tsconfig.json',
           './test/e2e/tsconfig.json',
+          './scripts/tsconfig.json',
           './developer-extension/tsconfig.json',
           './performances/tsconfig.json',
         ],
@@ -295,6 +296,13 @@ export default tseslint.config(
           format: ['UPPER_CASE'],
         },
       ],
+    },
+  },
+
+  {
+    files: ['scripts/**'],
+    rules: {
+      'import/extensions': ['error', 'ignorePackages'],
     },
   },
 
