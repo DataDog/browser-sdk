@@ -12,9 +12,16 @@ const { getOrg2ApiKey } = require('../lib/secrets')
 
 const testType = process.argv[2]
 const resultFolder = `test-report/${testType}/`
+const coverageFolder = `coverage/${testType}/`
 
 runMain(() => {
   command`datadog-ci junit upload --service browser-sdk --env ci --tags test.type:${testType} ${resultFolder}`
+    .withEnvironment({
+      DATADOG_API_KEY: getOrg2ApiKey(),
+    })
+    .withLogs()
+    .run()
+  command`datadog-ci coverage upload --service browser-sdk --env ci --tags test.type:${testType} ${coverageFolder}`
     .withEnvironment({
       DATADOG_API_KEY: getOrg2ApiKey(),
     })

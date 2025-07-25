@@ -208,9 +208,6 @@ unit:
   artifacts:
     reports:
       junit: test-report/unit/*.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage/cobertura-coverage.xml
   script:
     - yarn
     - yarn test:unit
@@ -280,9 +277,6 @@ unit-bs:
   artifacts:
     reports:
       junit: test-report/unit-bs/*.xml
-      coverage_report:
-        coverage_format: cobertura
-        path: coverage/cobertura-coverage.xml
   script:
     - yarn
     - ./scripts/test/ci-bs.sh test:unit
