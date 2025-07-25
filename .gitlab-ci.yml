@@ -211,7 +211,6 @@ unit:
   script:
     - yarn
     - yarn test:unit
-    - ./scripts/test/codecov.sh
   after_script:
     - node ./scripts/test/export-test-result.js unit
 
