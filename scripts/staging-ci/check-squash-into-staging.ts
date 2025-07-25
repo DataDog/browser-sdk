@@ -20,7 +20,9 @@ runMain(() => {
   const currentStaging = currentStagingMatch[1]
   command`git fetch --no-tags origin ${currentStaging}`.run()
 
-  printLog(`Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHA}) can be squash merged into ${currentStaging}...`)
+  printLog(
+    `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHA}) can be squash merged into ${currentStaging}...`
+  )
 
   try {
     command`git checkout ${MAIN_BRANCH} -f`.run()

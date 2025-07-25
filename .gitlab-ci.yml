@@ -445,7 +445,7 @@ staging-reset-scheduled:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/staging-ci/staging-reset.js
+    - ts-node scripts/staging-ci/staging-reset.ts
   artifacts:
     reports:
       dotenv: build.env
@@ -512,7 +512,7 @@ check-staging-merge:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/staging-ci/check-staging-merge.js
+    - ts-node scripts/staging-ci/check-staging-merge.ts
 
 # A noop job that's used to signal to `to-staging` that it can merge to the
 # staging branch, even though the pipeline is still running
@@ -537,7 +537,7 @@ check-squash-into-staging:
     - eval $(ssh-agent -s)
   script:
     - yarn
-    - node scripts/staging-ci/check-squash-into-staging.js
+    - ts-node scripts/staging-ci/check-squash-into-staging.ts
 
 ########################################################################################################################
 # Bump e2e chrome version
