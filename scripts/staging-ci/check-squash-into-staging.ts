@@ -1,8 +1,6 @@
-'use strict'
-
-const { printLog, printError, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { initGitConfig } = require('../lib/gitUtils')
+import { printLog, printError, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { initGitConfig } from '../lib/gitUtils'
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA
@@ -11,10 +9,19 @@ const CI_COMMIT_REF_NAME = process.env.CI_COMMIT_REF_NAME
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 
 runMain(() => {
+  if (!REPOSITORY || !CI_COMMIT_SHA || !CI_COMMIT_SHORT_SHA || !CI_COMMIT_REF_NAME || !MAIN_BRANCH) {
+    throw new Error('Missing required environment variables')
+  }
+
   initGitConfig(REPOSITORY)
   command`git fetch --no-tags origin ${MAIN_BRANCH}`.run()
   const ciConfigurationFromMain = command`git show origin/${MAIN_BRANCH}:.gitlab-ci.yml`.run()
   const currentStaging = /CURRENT_STAGING: (staging-.*)/g.exec(ciConfigurationFromMain)?.[1]
+
+  if (!currentStaging) {
+    throw new Error('Could not find CURRENT_STAGING in .gitlab-ci.yml')
+  }
+
   command`git fetch --no-tags origin ${currentStaging}`.run()
 
   printLog(

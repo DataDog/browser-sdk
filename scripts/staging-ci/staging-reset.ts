@@ -1,10 +1,8 @@
-'use strict'
-
-const fs = require('fs')
-const { printLog, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { CI_FILE, replaceCiFileVariable, readCiFileVariable } = require('../lib/filesUtils')
-const { initGitConfig } = require('../lib/gitUtils')
+import * as fs from 'fs'
+import { printLog, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { CI_FILE, replaceCiFileVariable, readCiFileVariable } from '../lib/filesUtils'
+import { initGitConfig } from '../lib/gitUtils'
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
@@ -14,6 +12,14 @@ const NEW_STAGING_NUMBER = getWeekNumber().toString().padStart(2, '0')
 const NEW_STAGING_BRANCH = `staging-${NEW_STAGING_NUMBER}`
 
 runMain(async () => {
+  if (!REPOSITORY || !MAIN_BRANCH) {
+    throw new Error('Missing required environment variables')
+  }
+
+  if (!CURRENT_STAGING_BRANCH) {
+    throw new Error('Could not read CURRENT_STAGING from CI file')
+  }
+
   // used to share the new staging name to the notification jobs
   fs.appendFileSync('build.env', `NEW_STAGING=${NEW_STAGING_BRANCH}`)
 
@@ -59,8 +65,8 @@ runMain(async () => {
   printLog('Reset done.')
 })
 
-function getWeekNumber() {
+function getWeekNumber(): number {
   const today = new Date()
   const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1))
-  return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
+  return Math.ceil(((today.getTime() - yearStart.getTime()) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }
