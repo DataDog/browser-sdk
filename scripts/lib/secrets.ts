@@ -1,48 +1,48 @@
-const { command } = require('../lib/command')
+import { command } from './command.ts'
 
-function getGithubDeployKey() {
+function getGithubDeployKey(): string {
   return getSecretKey('ci.browser-sdk.github_deploy_key')
 }
 
-function getGithubAccessToken() {
+function getGithubAccessToken(): string {
   return getSecretKey('ci.browser-sdk.github_access_token')
 }
 
-function getOrg2ApiKey() {
+function getOrg2ApiKey(): string {
   return getSecretKey('ci.browser-sdk.datadog_ci_api_key')
 }
 
-function getOrg2AppKey() {
+function getOrg2AppKey(): string {
   return getSecretKey('ci.browser-sdk.datadog_ci_application_key')
 }
 
-function getTelemetryOrgApiKey(site) {
+function getTelemetryOrgApiKey(site: string): string {
   const normalizedSite = site.replaceAll('.', '-')
   return getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 }
 
-function getTelemetryOrgApplicationKey(site) {
+function getTelemetryOrgApplicationKey(site: string): string {
   const normalizedSite = site.replaceAll('.', '-')
   return getSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
 }
 
-function getNpmToken() {
+function getNpmToken(): string {
   return getSecretKey('ci.browser-sdk.npm_token')
 }
 
-function getChromeWebStoreClientId() {
+function getChromeWebStoreClientId(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.client_id')
 }
 
-function getChromeWebStoreClientSecret() {
+function getChromeWebStoreClientSecret(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.client_secret')
 }
 
-function getChromeWebStoreRefreshToken() {
+function getChromeWebStoreRefreshToken(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.refresh_token')
 }
 
-function getSecretKey(name) {
+function getSecretKey(name: string): string {
   return command`
     aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}
   `
@@ -50,7 +50,7 @@ function getSecretKey(name) {
     .trim()
 }
 
-module.exports = {
+export {
   getChromeWebStoreClientId,
   getChromeWebStoreClientSecret,
   getChromeWebStoreRefreshToken,

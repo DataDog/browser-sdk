@@ -1,8 +1,8 @@
-import { runMain } from '../lib/executionUtils.js'
-import { modifyFile } from '../lib/filesUtils.js'
-import { command } from '../lib/command.js'
-import { browserSdkVersion } from '../lib/browserSdkVersion.js'
-import { packagesDirectoryNames } from '../lib/packagesDirectoryNames.js'
+import { runMain } from '../lib/executionUtils.ts'
+import { modifyFile } from '../lib/filesUtils.ts'
+import { command } from '../lib/command.ts'
+import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
+import { packagesDirectoryNames } from '../lib/packagesDirectoryNames.ts'
 
 const JSON_FILES = packagesDirectoryNames.map((packageName) => `./packages/${packageName}/package.json`)
 

@@ -1,12 +1,30 @@
-const os = require('os')
-const fs = require('fs')
+import os from 'os'
+import fs from 'fs'
+import { command } from './command.ts'
+import { getGithubDeployKey, getGithubAccessToken } from './secrets.ts'
+import { fetchHandlingError } from './executionUtils.ts'
 
-const { command } = require('../lib/command')
-const { getGithubDeployKey, getGithubAccessToken } = require('./secrets')
-const { fetchHandlingError } = require('./executionUtils')
+interface GitHubPR {
+  // eslint-disable-next-line id-denylist
+  number: number
+  title: string
+  body: string
+  base: {
+    ref: string
+  }
+}
 
-async function fetchPR(localBranch) {
-  const pr = await callGitHubApi('GET', `pulls?head=DataDog:${localBranch}`)
+interface GitHubRelease {
+  html_url: string
+}
+
+interface GitHubReleaseParams {
+  version: string
+  body: string
+}
+
+async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
+  const pr = (await callGitHubApi('GET', `pulls?head=DataDog:${localBranch}`)) as GitHubPR[]
   if (pr && pr.length > 1) {
     throw new Error('Multiple pull requests found for the branch')
   }
@@ -16,28 +34,28 @@ async function fetchPR(localBranch) {
 /**
  * Create a GitHub release.
  *
- * @param {Object} params - The parameters for the GitHub release.
- * @param {string} params.version - The version to create a release for.
- * @param {string} params.body - The body of the release.
+ * @param params - The parameters for the GitHub release.
+ * @param params.version - The version to create a release for.
+ * @param params.body - The body of the release.
  */
-async function createGitHubRelease({ version, body }) {
+async function createGitHubRelease(params: GitHubReleaseParams): Promise<GitHubRelease> {
   try {
-    await callGitHubApi('GET', `releases/tags/${version}`)
-    throw new Error(`Release ${version} already exists`)
+    await callGitHubApi('GET', `releases/tags/${params.version}`)
+    throw new Error(`Release ${params.version} already exists`)
   } catch (error) {
-    if (error.status !== 404) {
+    if ((error as any).status !== 404) {
       throw error
     }
   }
 
   return callGitHubApi('POST', 'releases', {
-    tag_name: version,
-    name: version,
-    body,
-  })
+    tag_name: params.version,
+    name: params.version,
+    body: params.body,
+  }) as Promise<GitHubRelease>
 }
 
-async function callGitHubApi(method, path, body) {
+async function callGitHubApi(method: string, path: string, body?: any): Promise<any> {
   const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
     method,
     headers: {
@@ -49,7 +67,7 @@ async function callGitHubApi(method, path, body) {
   return response.json()
 }
 
-function getLastCommonCommit(baseBranch) {
+function getLastCommonCommit(baseBranch: string): string {
   try {
     command`git fetch --depth=100 origin ${baseBranch}`.run()
     const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
@@ -60,7 +78,7 @@ function getLastCommonCommit(baseBranch) {
   }
 }
 
-function initGitConfig(repository) {
+function initGitConfig(repository: string): void {
   const homedir = os.homedir()
 
   // ssh-add expects a new line at the end of the PEM-formatted private key
@@ -75,10 +93,6 @@ function initGitConfig(repository) {
   command`git remote set-url origin ${repository}`.run()
 }
 
-module.exports = {
-  initGitConfig,
-  fetchPR,
-  getLastCommonCommit,
-  createGitHubRelease,
-  LOCAL_BRANCH: process.env.CI_COMMIT_REF_NAME,
-}
+export { initGitConfig, fetchPR, getLastCommonCommit, createGitHubRelease }
+
+export const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME

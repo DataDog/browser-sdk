@@ -1,12 +1,12 @@
 'use strict'
 
 const path = require('path')
-const { printLog, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { getBuildEnvValue } = require('../lib/buildEnv')
-const { getTelemetryOrgApiKey } = require('../lib/secrets')
-const { siteByDatacenter } = require('../lib/datadogSites')
-const { forEachFile } = require('../lib/filesUtils')
+const { printLog, runMain } = require('../lib/executionUtils.ts')
+const { command } = require('../lib/command.ts')
+const { getBuildEnvValue } = require('../lib/buildEnv.ts')
+const { getTelemetryOrgApiKey } = require('../lib/secrets.ts')
+const { siteByDatacenter } = require('../lib/datadogSites.ts')
+const { forEachFile } = require('../lib/filesUtils.ts')
 const { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } = require('./lib/deploymentUtils')
 
 /**

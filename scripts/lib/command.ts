@@ -1,6 +1,18 @@
-const childProcess = require('child_process')
+import childProcess from 'child_process'
+import { printError } from './executionUtils.ts'
 
-const { printError } = require('./executionUtils')
+interface CommandOptions {
+  cwd?: string
+  stdio?: 'inherit' | 'pipe'
+}
+
+interface CommandBuilder {
+  withInput(newInput: string): CommandBuilder
+  withEnvironment(newEnv: Record<string, string>): CommandBuilder
+  withCurrentWorkingDirectory(newCurrentWorkingDirectory: string): CommandBuilder
+  withLogs(): CommandBuilder
+  run(): string
+}
 
 /**
  * Helper to run executables. This has been introduced to work around Shell injections[0] while
@@ -16,25 +28,25 @@ const { printError } = require('./executionUtils')
  *
  * [0]: https://matklad.github.io/2021/07/30/shell-injection.html
  */
-function command(...templateArguments) {
+function command(...templateArguments: [TemplateStringsArray, ...any[]]): CommandBuilder {
   const [commandName, ...commandArguments] = parseCommandTemplateArguments(...templateArguments)
 
   let input = ''
-  let env
-  const extraOptions = {}
+  let env: Record<string, string> | undefined
+  const extraOptions: CommandOptions = {}
 
   return {
-    withInput(newInput) {
+    withInput(newInput: string) {
       input = newInput
       return this
     },
 
-    withEnvironment(newEnv) {
+    withEnvironment(newEnv: Record<string, string>) {
       env = newEnv
       return this
     },
 
-    withCurrentWorkingDirectory(newCurrentWorkingDirectory) {
+    withCurrentWorkingDirectory(newCurrentWorkingDirectory: string) {
       extraOptions.cwd = newCurrentWorkingDirectory
       return this
     },
@@ -44,7 +56,7 @@ function command(...templateArguments) {
       return this
     },
 
-    run() {
+    run(): string {
       const commandResult = childProcess.spawnSync(commandName, commandArguments, {
         input,
         env: { ...process.env, ...env },
@@ -62,9 +74,9 @@ function command(...templateArguments) {
             : commandResult.status !== null
               ? ` with exit status ${commandResult.status}`
               : ''
-        const error = new Error(`Command failed${exitCause}: ${formattedCommand}${formattedStderr}${formattedStdout}`)
-        error.cause = commandResult.error
-        throw error
+        throw new Error(`Command failed${exitCause}: ${formattedCommand}${formattedStderr}${formattedStdout}`, {
+          cause: commandResult.error,
+        })
       }
 
       if (commandResult.stderr) {
@@ -112,8 +124,8 @@ function command(...templateArguments) {
  *
  * [1]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#tagged_templates
  */
-function parseCommandTemplateArguments(templateStrings, ...templateVariables) {
-  let parsedArguments = []
+function parseCommandTemplateArguments(templateStrings: TemplateStringsArray, ...templateVariables: any[]): string[] {
+  const parsedArguments: string[] = []
   for (let i = 0; i < templateStrings.length; i += 1) {
     if (i > 0) {
       // Interleave variables with template strings
@@ -135,7 +147,7 @@ function parseCommandTemplateArguments(templateStrings, ...templateVariables) {
 
     if (parsedArguments.length && words.length && !templateStrings[i].match(/^\s/)) {
       // If the string does not start with a space, append it to the latest argument
-      parsedArguments[parsedArguments.length - 1] += words.shift()
+      parsedArguments[parsedArguments.length - 1] += words.shift()!
     }
 
     parsedArguments.push(...words)
@@ -143,6 +155,4 @@ function parseCommandTemplateArguments(templateStrings, ...templateVariables) {
   return parsedArguments
 }
 
-module.exports = {
-  command,
-}
+export { command }

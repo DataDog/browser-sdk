@@ -1,6 +1,6 @@
 import * as fs from 'fs'
-import { packagesDirectoryNames } from '../../../lib/packagesDirectoryNames.js'
-import { command } from '../../../lib/command.js'
+import { packagesDirectoryNames } from '../../../lib/packagesDirectoryNames.ts'
+import { command } from '../../../lib/command.ts'
 
 interface PackageJson {
   dependencies?: Record<string, string>

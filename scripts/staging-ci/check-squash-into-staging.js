@@ -1,8 +1,8 @@
 'use strict'
 
-const { printLog, printError, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { initGitConfig } = require('../lib/gitUtils')
+const { printLog, printError, runMain } = require('../lib/executionUtils.ts')
+const { command } = require('../lib/command.ts')
+const { initGitConfig } = require('../lib/gitUtils.ts')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA

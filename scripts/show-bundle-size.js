@@ -1,5 +1,5 @@
-const { calculateBundleSizes, formatSize } = require('./lib/computeBundleSize.js')
-const { printLog, runMain } = require('./lib/executionUtils')
+const { calculateBundleSizes, formatSize } = require('./lib/computeBundleSize.ts')
+const { printLog, runMain } = require('./lib/executionUtils.ts')
 
 const COL_WIDTH = 12
 

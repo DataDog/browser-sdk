@@ -1,9 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 
-import { printLog, runMain } from '../lib/executionUtils.js'
-import { command } from '../lib/command.js'
-import { modifyFile } from '../lib/filesUtils.js'
+import { printLog, runMain } from '../lib/executionUtils.ts'
+import { command } from '../lib/command.ts'
+import { modifyFile } from '../lib/filesUtils.ts'
 
 const EXTRA_EXTENSIONS = [
   { name: 'allowed-tracking-origin', initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],' },

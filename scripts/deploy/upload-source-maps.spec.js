@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict')
 const path = require('node:path')
 const { beforeEach, before, describe, it, mock } = require('node:test')
-const { siteByDatacenter } = require('../lib/datadogSites')
+const { siteByDatacenter } = require('../lib/datadogSites.ts')
 const { mockModule, mockCommandImplementation, replaceChunkHashes } = require('./lib/testHelpers.js')
 
 const FAKE_API_KEY = 'FAKE_API_KEY'

@@ -1,7 +1,7 @@
 const glob = require('glob')
-const { printLog, runMain } = require('../lib/executionUtils')
-const { modifyFile } = require('../lib/filesUtils')
-const { buildEnvKeys, getBuildEnvValue } = require('../lib/buildEnv')
+const { printLog, runMain } = require('../lib/executionUtils.ts')
+const { modifyFile } = require('../lib/filesUtils.ts')
+const { buildEnvKeys, getBuildEnvValue } = require('../lib/buildEnv.ts')
 
 /**
  * Replace BuildEnv in build files

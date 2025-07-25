@@ -1,11 +1,11 @@
 'use strict'
 
 const fs = require('fs')
-const { printLog, runMain, fetchHandlingError } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { CI_FILE, replaceCiFileVariable } = require('../lib/filesUtils')
-const { initGitConfig } = require('../lib/gitUtils')
-const { getGithubAccessToken } = require('../lib/secrets')
+const { printLog, runMain, fetchHandlingError } = require('../lib/executionUtils.ts')
+const { command } = require('../lib/command.ts')
+const { CI_FILE, replaceCiFileVariable } = require('../lib/filesUtils.ts')
+const { initGitConfig } = require('../lib/gitUtils.ts')
+const { getGithubAccessToken } = require('../lib/secrets.ts')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH

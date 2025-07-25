@@ -1,9 +1,9 @@
 'use strict'
 
-const { printLog, runMain } = require('../lib/executionUtils')
-const { fetchPR, LOCAL_BRANCH } = require('../lib/gitUtils')
-const { command } = require('../lib/command')
-const { forEachFile } = require('../lib/filesUtils')
+const { printLog, runMain } = require('../lib/executionUtils.ts')
+const { fetchPR, LOCAL_BRANCH } = require('../lib/gitUtils.ts')
+const { command } = require('../lib/command.ts')
+const { forEachFile } = require('../lib/filesUtils.ts')
 
 const {
   buildRootUploadPath,

@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer')
-const { fetchPR, LOCAL_BRANCH } = require('../../lib/gitUtils')
+const { fetchPR, LOCAL_BRANCH } = require('../../lib/gitUtils.ts')
 const NUMBER_OF_RUNS = 30 // Rule of thumb: this should be enough to get a good average
 const BATCH_SIZE = 2
 const TESTS = [
