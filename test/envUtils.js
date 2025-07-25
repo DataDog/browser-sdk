@@ -36,16 +36,12 @@ function getTestReportDirectory() {
   if (process.env.CI_JOB_NAME) {
     return `test-report/${process.env.CI_JOB_NAME}`
   }
-
-  return 'test-report/unit'
 }
 
 function getCoverageReportDirectory() {
   if (process.env.CI_JOB_NAME) {
     return `coverage/${process.env.CI_JOB_NAME}`
   }
-
-  return 'coverage/unit'
 }
 
 module.exports = {
