@@ -1,10 +1,17 @@
-const { calculateBundleSizes, formatSize } = require('./lib/computeBundleSize.js')
-const { printLog, runMain } = require('./lib/executionUtils')
+import { calculateBundleSizes, formatSize } from './lib/computeBundleSize.js'
+import { printLog, runMain } from './lib/executionUtils.js'
 
 const COL_WIDTH = 12
 
+interface BundleSizes {
+  [key: string]: {
+    uncompressed: number
+    gzipped: number
+  }
+}
+
 runMain(() => {
-  const bundleSizes = calculateBundleSizes()
+  const bundleSizes = calculateBundleSizes() as BundleSizes
 
   printRow('Bundle', 'Size', 'Gzip')
   printRow('-'.repeat(COL_WIDTH), '-'.repeat(COL_WIDTH), '-'.repeat(COL_WIDTH))
@@ -14,6 +21,6 @@ runMain(() => {
   }
 })
 
-function printRow(key, ...values) {
+function printRow(key: string, ...values: string[]) {
   printLog(`${key.padEnd(COL_WIDTH)} | ${values.map((value) => value.padStart(COL_WIDTH)).join(' | ')}`)
 }

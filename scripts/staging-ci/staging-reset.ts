@@ -1,13 +1,13 @@
 'use strict'
 
-const fs = require('fs')
-const { printLog, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { CI_FILE, replaceCiFileVariable, readCiFileVariable } = require('../lib/filesUtils')
-const { initGitConfig } = require('../lib/gitUtils')
+import * as fs from 'fs'
+import { printLog, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { CI_FILE, replaceCiFileVariable, readCiFileVariable } from '../lib/filesUtils'
+import { initGitConfig } from '../lib/gitUtils'
 
-const REPOSITORY = process.env.GIT_REPOSITORY
-const MAIN_BRANCH = process.env.MAIN_BRANCH
+const REPOSITORY = process.env.GIT_REPOSITORY as string
+const MAIN_BRANCH = process.env.MAIN_BRANCH as string
 
 const CURRENT_STAGING_BRANCH = readCiFileVariable('CURRENT_STAGING')
 const NEW_STAGING_NUMBER = getWeekNumber().toString().padStart(2, '0')
@@ -62,5 +62,5 @@ runMain(async () => {
 function getWeekNumber() {
   const today = new Date()
   const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1))
-  return Math.ceil(((today - yearStart) / 86400000 + yearStart.getUTCDay() + 1) / 7)
+  return Math.ceil(((today.getTime() - yearStart.getTime()) / 86400000 + yearStart.getUTCDay() + 1) / 7)
 }

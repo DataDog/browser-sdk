@@ -35,7 +35,7 @@
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",
     "json-schemas:sync": "scripts/cli update_submodule && yarn json-schemas:generate",
     "json-schemas:generate": "scripts/cli build_json2type && node scripts/generate-schema-types.js",
-    "size": "node scripts/show-bundle-size.js",
+    "size": "ts-node scripts/show-bundle-size.ts",
     "woke": "scripts/cli woke",
     "docs:serve": "typedoc && npx http-server ./docs -p 8080 -o"
   },
