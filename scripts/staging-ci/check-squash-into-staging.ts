@@ -5,6 +5,7 @@ import { command } from '../lib/command'
 import { initGitConfig } from '../lib/gitUtils'
 
 const REPOSITORY = process.env.GIT_REPOSITORY as string
+const CI_COMMIT_SHORT_SHA = process.env.CI_COMMIT_SHORT_SHA as string
 const CI_COMMIT_SHA = process.env.CI_COMMIT_SHA as string
 const CI_COMMIT_REF_NAME = process.env.CI_COMMIT_REF_NAME as string
 const MAIN_BRANCH = process.env.MAIN_BRANCH as string
@@ -21,7 +22,7 @@ runMain(() => {
   command`git fetch --no-tags origin ${currentStaging}`.run()
 
   printLog(
-    `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHA}) can be squash merged into ${currentStaging}...`
+    `Checking if branch '${CI_COMMIT_REF_NAME}' (${CI_COMMIT_SHORT_SHA}) can be squash merged into ${currentStaging}...`
   )
 
   try {
