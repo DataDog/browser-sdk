@@ -1,6 +1,6 @@
-const { fetchHandlingError } = require('../lib/executionUtils')
+import { fetchHandlingError } from './executionUtils'
 
-async function browserStackRequest(url, options) {
+export async function browserStackRequest(url: string, options?: RequestInit): Promise<any> {
   const response = await fetchHandlingError(url, {
     headers: {
       Authorization: `Basic ${Buffer.from(`${process.env.BS_USERNAME}:${process.env.BS_ACCESS_KEY}`).toString('base64')}`,
@@ -8,8 +8,4 @@ async function browserStackRequest(url, options) {
     ...options,
   })
   return response.json()
-}
-
-module.exports = {
-  browserStackRequest,
 }

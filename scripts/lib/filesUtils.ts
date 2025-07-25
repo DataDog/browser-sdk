@@ -1,18 +1,17 @@
-const fs = require('fs')
-const path = require('path')
-const fsPromises = require('fs/promises')
+import * as fs from 'fs'
+import * as path from 'path'
+import * as fsPromises from 'fs/promises'
+import { command } from './command'
 
-const { command } = require('./command')
+export const CI_FILE = '.gitlab-ci.yml'
 
-const CI_FILE = '.gitlab-ci.yml'
-
-function readCiFileVariable(variableName) {
+export function readCiFileVariable(variableName: string): string | undefined {
   const regexp = new RegExp(`${variableName}: (.*)`)
   const ciFileContent = fs.readFileSync(CI_FILE, { encoding: 'utf-8' })
   return regexp.exec(ciFileContent)?.[1]
 }
 
-async function forEachFile(directoryPath, callback) {
+export async function forEachFile(directoryPath: string, callback: (filePath: string) => Promise<void>): Promise<void> {
   for (const entry of fs.readdirSync(directoryPath, { withFileTypes: true })) {
     const entryPath = `${directoryPath}/${entry.name}`
     if (entry.isFile()) {
@@ -23,8 +22,8 @@ async function forEachFile(directoryPath, callback) {
   }
 }
 
-async function replaceCiFileVariable(variableName, value) {
-  await modifyFile(CI_FILE, (content) =>
+export function replaceCiFileVariable(variableName: string, value: string): Promise<boolean> {
+  return modifyFile(CI_FILE, (content) =>
     content.replace(new RegExp(`${variableName}: .*`), `${variableName}: ${value}`)
   )
 }
@@ -35,7 +34,10 @@ async function replaceCiFileVariable(variableName, value) {
  * @param filePath - {string}
  * @param modifier - {(content: string) => string | Promise<string>}
  */
-async function modifyFile(filePath, modifier) {
+export async function modifyFile(
+  filePath: string,
+  modifier: (content: string) => string | Promise<string>
+): Promise<boolean> {
   const content = await fsPromises.readFile(filePath, { encoding: 'utf-8' })
   const modifiedContent = await modifier(content)
   if (content !== modifiedContent) {
@@ -45,7 +47,13 @@ async function modifyFile(filePath, modifier) {
   return false
 }
 
-function findBrowserSdkPackageJsonFiles() {
+interface PackageJsonFile {
+  relativePath: string
+  path: string
+  content: any
+}
+
+export function findBrowserSdkPackageJsonFiles(): PackageJsonFile[] {
   const manifestPaths = command`git ls-files -- package.json */package.json`.run()
   return manifestPaths
     .trim()
@@ -58,13 +66,4 @@ function findBrowserSdkPackageJsonFiles() {
         content: require(absoluteManifestPath),
       }
     })
-}
-
-module.exports = {
-  CI_FILE,
-  readCiFileVariable,
-  replaceCiFileVariable,
-  modifyFile,
-  findBrowserSdkPackageJsonFiles,
-  forEachFile,
 }

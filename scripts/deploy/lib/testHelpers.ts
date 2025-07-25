@@ -1,9 +1,14 @@
-const { mock } = require('node:test')
+import { mock as nodeMock } from 'node:test'
 
-async function mockModule(modulePath, mockObject) {
+interface CommandDetail {
+  command: string
+  env?: NodeJS.ProcessEnv
+}
+
+export async function mockModule(modulePath: string, mockObject: Record<string, any>): Promise<void> {
   const { default: defaultExport, ...namedExports } = await import(modulePath)
 
-  mock.module(modulePath, {
+  nodeMock.module(modulePath, {
     defaultExport,
     namedExports: {
       ...namedExports,
@@ -12,23 +17,23 @@ async function mockModule(modulePath, mockObject) {
   })
 }
 
-const FAKE_AWS_ENV_CREDENTIALS = {
+export const FAKE_AWS_ENV_CREDENTIALS = {
   AWS_ACCESS_KEY_ID: 'FAKEACCESSKEYID123456',
   AWS_SECRET_ACCESS_KEY: 'FAKESECRETACCESSKEY123456',
   AWS_SESSION_TOKEN: 'FAKESESSIONTOKEN123456',
 }
 
-const FAKE_CHUNK_HASH = 'FAKEHASHd7628536637b074ddc3b'
+export const FAKE_CHUNK_HASH = 'FAKEHASHd7628536637b074ddc3b'
 
-function mockCommandImplementation(mock) {
-  const commands = []
+export function mockCommandImplementation(mock: { mock: { mockImplementation: (fn: any) => void } }): CommandDetail[] {
+  const commands: CommandDetail[] = []
 
-  mock.mock.mockImplementation((template, ...values) => {
+  mock.mock.mockImplementation((template: TemplateStringsArray, ...values: any[]) => {
     const command = rebuildStringTemplate(template, ...values)
-    let commandDetail = { command }
+    const commandDetail: CommandDetail = { command }
     const result = {
       withInput: () => result,
-      withEnvironment: (newEnv) => {
+      withEnvironment: (newEnv: NodeJS.ProcessEnv) => {
         commandDetail.env = newEnv
         return result
       },
@@ -54,23 +59,15 @@ function mockCommandImplementation(mock) {
   return commands
 }
 
-function rebuildStringTemplate(template, ...values) {
+function rebuildStringTemplate(template: TemplateStringsArray, ...values: any[]): string {
   const combinedString = template.reduce((acc, part, i) => acc + part + (values[i] || ''), '')
   const normalizedString = combinedString.replace(/\s+/g, ' ').trim()
   return normalizedString
 }
 
-function replaceChunkHashes(commandDetail) {
+export function replaceChunkHashes(commandDetail: CommandDetail): CommandDetail {
   return {
     ...commandDetail,
     command: commandDetail.command.replace(/-[a-f0-9]+-datadog-rum/g, `-${FAKE_CHUNK_HASH}-datadog-rum`),
   }
-}
-
-module.exports = {
-  mockModule,
-  mockCommandImplementation,
-  replaceChunkHashes,
-  FAKE_AWS_ENV_CREDENTIALS,
-  FAKE_CHUNK_HASH,
 }

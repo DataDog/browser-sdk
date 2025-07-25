@@ -1,4 +1,4 @@
-const spawn = require('child_process').spawn
+import { spawn } from 'child_process'
 
 /**
  * Helper to run executables asynchronously, in a shell. This function does not prevent Shell
@@ -7,16 +7,16 @@ const spawn = require('child_process').spawn
  *
  * [0]: https://matklad.github.io/2021/07/30/shell-injection.html
  */
-function spawnCommand(command, args) {
+export function spawnCommand(command: string, args?: string[]): Promise<number | null> {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit', shell: true })
+    const child = spawn(command, args || [], { stdio: 'inherit', shell: true })
     child.on('error', reject)
     child.on('close', resolve)
     child.on('exit', resolve)
   })
 }
 
-function runMain(mainFunction) {
+export function runMain(mainFunction: () => void | Promise<void>): void {
   Promise.resolve()
     // The main function can be either synchronous or asynchronous, so let's wrap it in an async
     // callback that will catch both thrown errors and rejected promises
@@ -29,20 +29,24 @@ function runMain(mainFunction) {
 
 const resetColor = '\x1b[0m'
 
-function printError(...params) {
+export function printError(...params: any[]): void {
   const redColor = '\x1b[31;1m'
   console.log(redColor, ...params, resetColor)
 }
 
-function printLog(...params) {
+export function printLog(...params: any[]): void {
   const greenColor = '\x1b[32;1m'
   console.log(greenColor, ...params, resetColor)
 }
 
-async function fetchHandlingError(url, options) {
+interface FetchError extends Error {
+  status?: number
+}
+
+export async function fetchHandlingError(url: string, options?: RequestInit): Promise<Response> {
   const response = await fetch(url, options)
   if (!response.ok) {
-    const error = new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
+    const error: FetchError = new Error(`HTTP Error Response: ${response.status} ${response.statusText}`)
     error.status = response.status
     throw error
   }
@@ -50,15 +54,6 @@ async function fetchHandlingError(url, options) {
   return response
 }
 
-function timeout(ms) {
+export function timeout(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
-}
-
-module.exports = {
-  spawnCommand,
-  printError,
-  printLog,
-  runMain,
-  fetchHandlingError,
-  timeout,
 }
