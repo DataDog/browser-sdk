@@ -4,8 +4,26 @@ function getGithubDeployKey() {
   return getSecretKey('ci.browser-sdk.github_deploy_key')
 }
 
-function getGithubAccessToken() {
-  return getSecretKey('ci.browser-sdk.github_access_token')
+/**
+ * This token is scoped to main branch only.
+ */
+function getGithubPullRequestToken() {
+  return command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.pull_request`.run().trim()
+}
+
+/**
+ * This token is scoped to tags only.
+ */
+function getGithubReleaseToken() {
+  return command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.release`.run().trim()
+}
+
+function getGithubReadToken() {
+  return command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.read`.run().trim()
+}
+
+function revokeGithubToken() {
+  return command`dd-octo-sts revoke`.run().trim()
 }
 
 function getOrg2ApiKey() {
@@ -55,7 +73,10 @@ module.exports = {
   getChromeWebStoreClientSecret,
   getChromeWebStoreRefreshToken,
   getGithubDeployKey,
-  getGithubAccessToken,
+  getGithubPullRequestToken,
+  getGithubReadToken,
+  getGithubReleaseToken,
+  revokeGithubToken,
   getNpmToken,
   getOrg2ApiKey,
   getOrg2AppKey,

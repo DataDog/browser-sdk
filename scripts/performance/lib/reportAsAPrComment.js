@@ -1,8 +1,7 @@
 const { command } = require('../../lib/command')
 const { formatSize } = require('../../lib/computeBundleSize')
 const { fetchHandlingError } = require('../../lib/executionUtils')
-const { LOCAL_BRANCH, getLastCommonCommit, fetchPR } = require('../../lib/gitUtils')
-const { getGithubAccessToken } = require('../../lib/secrets')
+const { LOCAL_BRANCH, getLastCommonCommit, fetchPR, getPrComments } = require('../../lib/gitUtils')
 const { fetchPerformanceMetrics } = require('./fetchPerformanceMetrics')
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere --raw`.run()
@@ -71,16 +70,7 @@ function compare(baseResults, localResults) {
 }
 
 async function retrieveExistingCommentId(prNumber) {
-  const response = await fetchHandlingError(
-    `https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `token ${getGithubAccessToken()}`,
-      },
-    }
-  )
-  const comments = await response.json()
+  const comments = await getPrComments(prNumber)
   const targetComment = comments.find((comment) => comment.body.startsWith(`## ${PR_COMMENT_HEADER}`))
   if (targetComment !== undefined) {
     return targetComment.id

@@ -1,7 +1,7 @@
 variables:
   CURRENT_STAGING: staging-30
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 84
+  CURRENT_CI_IMAGE: 86
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -19,7 +19,7 @@ cache:
 
 stages:
   - task
-  - ci-image
+  - setup
   - test
   - after-tests
   - browserstack
@@ -33,6 +33,9 @@ stages:
   tags:
     - 'arch:amd64'
   image: $CI_IMAGE
+  id_tokens:
+    DDOCTOSTS_ID_TOKEN:
+      aud: dd-octo-sts
   retry:
     max: 2
     when:
@@ -110,7 +113,7 @@ stages:
 ########################################################################################################################
 
 ci-image:
-  stage: ci-image
+  stage: setup
   extends:
     - .base-configuration
     - .feature-branches
@@ -120,6 +123,59 @@ ci-image:
   script:
     - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE .
     - docker push $CI_IMAGE
+
+
+# Use dd-octo-sts to get a GitHub access token
+dd-octo-sts-gitlab-id-token:
+  stage: setup
+  extends:
+    - .base-configuration
+    - .feature-branches
+  id_tokens:
+    DDOCTOSTS_ID_TOKEN:
+      aud: dd-octo-sts
+
+  before_script:
+    # Get a token
+    - dd-octo-sts version
+    - dd-octo-sts debug --scope DataDog/browser-sdk --policy self.gitlab.read
+    - dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.read > token.txt
+
+  script:
+    - export GITHUB_TOKEN=$(cat token.txt)
+    # Use token via gh cli
+    - GH_PAGER=cat gh repo list --visibility=internal DataDog
+    # or curl the API directly
+    - |
+      curl -s -H "Authorization: Bearer $GITHUB_TOKEN" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/DataDog/dd-octo-sts-sandbox" \
+        | jq '{name, full_name, private, description, html_url, default_branch, created_at, updated_at, pushed_at}'
+    - echo "Done!"
+
+  after_script:
+    # Revoke the token after usage
+    - dd-octo-sts revoke -t $(cat token.txt)
+
+octo-test:
+  stage: setup
+  extends:
+    - .base-configuration
+    - .feature-branches
+  id_tokens:
+    DDOCTOSTS_ID_TOKEN:
+      aud: dd-octo-sts
+
+  # before_script:
+  #   # Get a token
+  #   - dd-octo-sts version
+  #   - dd-octo-sts debug --scope DataDog/browser-sdk --policy self.gitlab.read
+  #   - dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.read > token.txt
+
+  script:
+    - node scripts/octo-test.js
+
+  # after_script:
+  #   # Revoke the token after usage
+  #   - dd-octo-sts revoke -t $(cat token.txt)
 
 ########################################################################################################################
 # Tests

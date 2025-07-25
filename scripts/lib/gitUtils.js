@@ -2,7 +2,13 @@ const os = require('os')
 const fs = require('fs')
 
 const { command } = require('../lib/command')
-const { getGithubDeployKey, getGithubAccessToken } = require('./secrets')
+const {
+  getGithubDeployKey,
+  getGithubReadToken,
+  getGithubReleaseToken,
+  getGithubPullRequestToken,
+  revokeGithubToken,
+} = require('./secrets')
 const { fetchHandlingError } = require('./executionUtils')
 
 async function fetchPR(localBranch) {
@@ -22,7 +28,7 @@ async function fetchPR(localBranch) {
  */
 async function createGitHubRelease({ version, body }) {
   try {
-    await callGitHubApi('GET', `releases/tags/${version}`)
+    await callGitHubApi('GET', `releases/tags/${version}`, getGithubReadToken())
     throw new Error(`Release ${version} already exists`)
   } catch (error) {
     if (error.status !== 404) {
@@ -30,23 +36,48 @@ async function createGitHubRelease({ version, body }) {
     }
   }
 
-  return callGitHubApi('POST', 'releases', {
-    tag_name: version,
-    name: version,
-    body,
-  })
+  // content write
+  return callGitHubApi(
+    'POST',
+    'releases',
+    {
+      tag_name: version,
+      name: version,
+      body,
+    },
+    getGithubReleaseToken()
+  )
 }
 
-async function callGitHubApi(method, path, body) {
-  const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
-    method,
-    headers: {
-      Authorization: `token ${getGithubAccessToken()}`,
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: JSON.stringify(body),
-  })
-  return response.json()
+async function getPrComments(prNumber) {
+  const response = await callGitHubApi('GET', `issues/${prNumber}/comments`, getGithubReadToken())
+  return response
+}
+
+function createPullRequest(mainBranch) {
+  try {
+    command`gh auth login --with-token`.withInput(getGithubPullRequestToken()).run()
+    const pullRequestUrl = command`gh pr create --fill --base ${mainBranch}`.run()
+    return pullRequestUrl.trim()
+  } finally {
+    revokeGithubToken()
+  }
+}
+
+async function callGitHubApi(method, path, token, body) {
+  try {
+    const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
+      method,
+      headers: {
+        Authorization: `token ${token}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: JSON.stringify(body),
+    })
+    return await response.json()
+  } finally {
+    revokeGithubToken()
+  }
 }
 
 function getLastCommonCommit(baseBranch) {
@@ -79,6 +110,8 @@ module.exports = {
   initGitConfig,
   fetchPR,
   getLastCommonCommit,
+  getPrComments,
+  createPullRequest,
   createGitHubRelease,
   LOCAL_BRANCH: process.env.CI_COMMIT_REF_NAME,
 }
