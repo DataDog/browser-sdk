@@ -1,10 +1,10 @@
-import { display, buildEndpointHost } from '@datadog/browser-core'
+import { display, buildEndpointHost, mapValues } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
-import type { RumSdkConfig } from './remoteConfig.types'
+import type { RumSdkConfig, ComplexOption } from './remoteConfig.types'
 
 type RumRemoteConfiguration = Exclude<RumSdkConfig['rum'], undefined>
 const REMOTE_CONFIGURATION_VERSION = 'v1'
-const STATIC_OPTIONS: Array<keyof RumInitConfiguration> = [
+const SUPPORTED_FIELDS: Array<keyof RumInitConfiguration> = [
   'applicationId',
   'service',
   'env',
@@ -13,6 +13,10 @@ const STATIC_OPTIONS: Array<keyof RumInitConfiguration> = [
   'sessionReplaySampleRate',
   'defaultPrivacyLevel',
   'enablePrivacyForActionName',
+  'traceSampleRate',
+  'trackSessionAcrossSubdomains',
+  'allowedTracingUrls',
+  'allowedTrackingOrigins',
 ]
 
 export async function fetchAndApplyRemoteConfiguration(initConfiguration: RumInitConfiguration) {
@@ -34,12 +38,53 @@ export function applyRemoteConfiguration(
   // - explicitly set each supported field to limit risk in case an attacker can create configurations
   // - check the existence in the remote config to avoid clearing a provided init field
   const appliedConfiguration = { ...initConfiguration } as RumInitConfiguration & { [key: string]: unknown }
-  STATIC_OPTIONS.forEach((option: string) => {
+  SUPPORTED_FIELDS.forEach((option: string) => {
     if (option in rumRemoteConfiguration) {
-      appliedConfiguration[option] = rumRemoteConfiguration[option]
+      appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
     }
   })
   return appliedConfiguration
+}
+
+function resolveConfigurationProperty(property: unknown): unknown {
+  if (Array.isArray(property)) {
+    return property.map(resolveConfigurationProperty)
+  }
+  if (isObject(property)) {
+    if (isComplexOption(property)) {
+      const $type = property.$type
+      switch ($type) {
+        case 'string':
+          return property.value
+        case 'regex':
+          return resolveRegex(property)
+        default:
+          exhaustiveCheck($type)
+      }
+    }
+    return mapValues(property, resolveConfigurationProperty)
+  }
+  return property
+}
+
+function isObject(property: unknown): property is { [key: string]: unknown } {
+  return typeof property === 'object' && property !== null
+}
+
+function isComplexOption(value: object): value is ComplexOption {
+  return '$type' in value
+}
+
+function exhaustiveCheck(never: never) {
+  throw new Error(`Unsupported value: '${never as string}'`)
+}
+
+function resolveRegex(property: ComplexOption): RegExp | undefined {
+  try {
+    return new RegExp(property.value)
+  } catch {
+    display.error(`Invalid regex in the remote configuration: '${property.value}'`)
+  }
 }
 
 export async function fetchRemoteConfiguration(configuration: RumInitConfiguration) {
