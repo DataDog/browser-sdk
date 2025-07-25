@@ -1,10 +1,8 @@
-'use strict'
-
-const fs = require('fs')
-const path = require('path')
-const readline = require('readline')
-const { printLog, printError, runMain } = require('./lib/executionUtils')
-const { findBrowserSdkPackageJsonFiles } = require('./lib/filesUtils')
+import * as fs from 'fs'
+import * as path from 'path'
+import * as readline from 'readline'
+import { printLog, printError, runMain } from './lib/executionUtils'
+import { findBrowserSdkPackageJsonFiles } from './lib/filesUtils'
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
@@ -35,11 +33,11 @@ runMain(async () => {
   printLog('Dependencies check done.')
 })
 
-function retrievePackageDependencies(packageJsonFile) {
+function retrievePackageDependencies(packageJsonFile: { content: any }): string[] {
   return Object.entries(packageJsonFile.content.dependencies || {})
     .concat(Object.entries(packageJsonFile.content.devDependencies || {}))
     .map(([dependency, version]) => {
-      if (version.startsWith('npm:')) {
+      if (typeof version === 'string' && version.startsWith('npm:')) {
         // Extract the original dependency name from the npm protocol version string. Example:
         // npm:react@17  ->  react
         return version.slice(4).split('@')[0]
@@ -49,14 +47,14 @@ function retrievePackageDependencies(packageJsonFile) {
     .filter((dependency) => !dependency.includes('@datadog'))
 }
 
-function withoutDuplicates(a) {
+function withoutDuplicates<T>(a: T[]): T[] {
   return [...new Set(a)]
 }
 
-async function retrieveLicenses() {
+async function retrieveLicenses(): Promise<string[]> {
   const fileStream = fs.createReadStream(path.join(__dirname, '..', LICENSE_FILE))
   const rl = readline.createInterface({ input: fileStream })
-  const licenses = []
+  const licenses: string[] = []
   let header = true
   for await (const line of rl) {
     const csvColumns = line.split(',')

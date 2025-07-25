@@ -1,17 +1,32 @@
-'use strict'
-
-const { parseArgs } = require('node:util')
-const { printLog, printError, runMain, fetchHandlingError } = require('./lib/executionUtils')
-const { command } = require('./lib/command')
+import { parseArgs } from 'node:util'
+import { printLog, printError, runMain, fetchHandlingError } from './lib/executionUtils'
+import { command } from './lib/command'
 
 const REPOSITORY = process.env.APP
 const DEVFLOW_AUTH_TOKEN = command`authanywhere --audience sdm --raw`.run()
 const DEVFLOW_API_URL = 'https://devflow-api.us1.ddbuild.io/internal/api/v2/devflow/execute/'
 const FEEDBACK_LEVEL_FAILURE = 'FEEDBACK_LEVEL_FAILURE'
 
+interface DevFlowFeedback {
+  level: string
+  title: string
+  message?: string
+  details_url?: string
+}
+
+interface DevFlowResponse {
+  state: {
+    feedbacks: DevFlowFeedback[]
+  }
+}
+
 runMain(async () => {
   const args = parseArgs({ allowPositionals: true })
   const [branch] = args.positionals
+
+  if (!branch) {
+    throw new Error('Branch name is required')
+  }
 
   await updateBranch(branch)
 
@@ -19,15 +34,15 @@ runMain(async () => {
   await triggerCi(branch)
 })
 
-async function updateBranch(branch) {
+async function updateBranch(branch: string): Promise<void> {
   await devFlow('update-branch', { branch })
 }
 
-async function triggerCi(branch) {
+async function triggerCi(branch: string): Promise<void> {
   await devFlow('trigger-ci', { ref: branch })
 }
 
-async function devFlow(action, options) {
+async function devFlow(action: string, options: Record<string, string>): Promise<void> {
   const params = getDevFlowURLSearchParams(options)
   const rawResponse = await fetchHandlingError(`${DEVFLOW_API_URL}/${action}?${params}`, {
     headers: {
@@ -35,7 +50,7 @@ async function devFlow(action, options) {
     },
   })
 
-  const jsonResponse = await rawResponse.json()
+  const jsonResponse = (await rawResponse.json()) as DevFlowResponse
 
   let isSuccess = true
   for (const feedback of jsonResponse.state.feedbacks) {
@@ -57,9 +72,9 @@ async function devFlow(action, options) {
   }
 }
 
-function getDevFlowURLSearchParams(options) {
+function getDevFlowURLSearchParams(options: Record<string, string>): string {
   const params = new URLSearchParams({
-    repository: REPOSITORY,
+    repository: REPOSITORY || '',
     ...options,
   })
 

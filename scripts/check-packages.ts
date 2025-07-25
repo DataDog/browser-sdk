@@ -1,13 +1,21 @@
-const fs = require('fs')
-const path = require('path')
-const glob = require('glob')
-const minimatch = require('minimatch')
-const { printLog, printError, runMain } = require('./lib/executionUtils')
-const { command } = require('./lib/command')
+import * as fs from 'fs'
+import * as path from 'path'
+import { globSync } from 'glob'
+import { minimatch } from 'minimatch'
+import { printLog, printError, runMain } from './lib/executionUtils'
+import { command } from './lib/command'
+
+interface PackageFile {
+  path: string
+}
+
+interface NpmPackOutput {
+  files: PackageFile[]
+}
 
 runMain(() => {
   let success = true
-  for (const packagePath of glob.globSync('packages/*')) {
+  for (const packagePath of globSync('packages/*')) {
     success = checkPackage(packagePath) && success
   }
 
@@ -19,30 +27,31 @@ runMain(() => {
   }
 })
 
-function checkPackage(packagePath) {
+function checkPackage(packagePath: string): boolean {
   printLog(`Checking ${packagePath}`)
   const packageFiles = getPackageFiles(packagePath)
   return checkPackageJsonEntryPoints(packagePath, packageFiles) && checkNpmIgnore(packagePath, packageFiles)
 }
 
-function getPackageFiles(packagePath) {
+function getPackageFiles(packagePath: string): string[] {
   // Yarn behavior is a bit different from npm regarding `.npmignore` globs. Since we are publishing
   // packages using npm through Lerna[1], let's use npm to list files here.
   //
   // [1]: Quoting Lerna doc: "Lerna always uses npm to publish packages."
   // https://lerna.js.org/docs/features/version-and-publish#from-package
   const output = command`npm pack --dry-run --json`.withCurrentWorkingDirectory(packagePath).run()
-  return JSON.parse(output)[0].files.map((file) => file.path)
+  const parsed: NpmPackOutput[] = JSON.parse(output)
+  return parsed[0].files.map((file) => file.path)
 }
 
-function checkPackageJsonEntryPoints(packagePath, packageFiles) {
+function checkPackageJsonEntryPoints(packagePath: string, packageFiles: string[]): boolean {
   const filesFromPackageJsonEntryPoints = packageFiles
     .filter((file) => file.endsWith('package.json'))
     .flatMap((packageJsonPath) => {
-      const content = JSON.parse(fs.readFileSync(path.join(packagePath, packageJsonPath)))
+      const content = JSON.parse(fs.readFileSync(path.join(packagePath, packageJsonPath), 'utf8'))
       return [content.main, content.module, content.types]
         .filter(Boolean)
-        .map((entryPointPath) => path.join(path.dirname(packageJsonPath), entryPointPath))
+        .map((entryPointPath: string) => path.join(path.dirname(packageJsonPath), entryPointPath))
     })
 
   for (const file of filesFromPackageJsonEntryPoints) {
@@ -58,7 +67,7 @@ function checkPackageJsonEntryPoints(packagePath, packageFiles) {
 // [1]: https://docs.npmjs.com/cli/v9/using-npm/developers#keeping-files-out-of-your-package
 const FILES_ALWAYS_INCLUDED_BY_NPM = ['package.json', 'README.md']
 
-function checkNpmIgnore(packagePath, packageFiles) {
+function checkNpmIgnore(packagePath: string, packageFiles: string[]): boolean {
   const npmIgnorePath = path.join(packagePath, '.npmignore')
   const npmNegatedIgnoreRules = fs
     .readFileSync(npmIgnorePath, { encoding: 'utf8' })

@@ -1,5 +1,5 @@
-const { printLog, printError, runMain } = require('./lib/executionUtils')
-const { command } = require('./lib/command')
+import { printLog, printError, runMain } from './lib/executionUtils'
+import { command } from './lib/command'
 
 runMain(() => {
   printLog('Regenerating schemas...')

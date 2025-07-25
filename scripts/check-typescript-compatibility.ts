@@ -1,11 +1,15 @@
-'use strict'
-
-const fs = require('fs')
-const path = require('path')
-const { printLog, runMain } = require('./lib/executionUtils')
-const { command } = require('./lib/command')
+import * as fs from 'fs'
+import * as path from 'path'
+import { printLog, runMain } from './lib/executionUtils'
+import { command } from './lib/command'
 
 const TEST_APP_DIR = path.join(__dirname, '..', 'test', 'apps', 'vanilla')
+
+interface TypeScriptCheck {
+  title: string
+  version: string
+  compilerOptions?: Partial<any>
+}
 
 runMain(() => {
   printLog('Building project...')
@@ -15,7 +19,7 @@ runMain(() => {
   printLog('Setting up test environment...')
   command`yarn install --no-immutable`.withCurrentWorkingDirectory(TEST_APP_DIR).run()
 
-  const checks = [
+  const checks: TypeScriptCheck[] = [
     {
       title: 'TypeScript 3.8.2 compatibility',
       version: '3.8.2',
@@ -54,7 +58,9 @@ runMain(() => {
     try {
       command`yarn compat:tsc`.withCurrentWorkingDirectory(TEST_APP_DIR).run()
     } catch (error) {
-      throw new Error(`${title} compatibility broken`, { cause: error })
+      const newError = new Error(`${title} compatibility broken`)
+      ;(newError as any).cause = error
+      throw newError
     } finally {
       command`git checkout -- ${TEST_APP_DIR}`.run()
     }
@@ -63,7 +69,7 @@ runMain(() => {
   printLog('All TypeScript compatibility checks passed.')
 })
 
-function modifyTestAppConfig(partialCompilerOptions) {
+function modifyTestAppConfig(partialCompilerOptions: any): void {
   const configPath = path.join(TEST_APP_DIR, 'tsconfig.json')
   const originalConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'))
   fs.writeFileSync(

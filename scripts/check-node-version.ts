@@ -1,8 +1,8 @@
-const fs = require('fs')
-const readline = require('readline')
-const path = require('path')
-const packageJson = require('../package.json')
-const { printLog, printError, runMain } = require('./lib/executionUtils')
+import * as fs from 'fs'
+import * as readline from 'readline'
+import * as path from 'path'
+import packageJson from '../package.json'
+import { printLog, printError, runMain } from './lib/executionUtils'
 
 runMain(async () => {
   printLog('Check that node version across configurations are matching...\n')
@@ -25,20 +25,25 @@ runMain(async () => {
   }
 })
 
-async function retrieveDockerVersion() {
+async function retrieveDockerVersion(): Promise<string> {
   const fileStream = fs.createReadStream(path.join(__dirname, '..', 'Dockerfile'))
   const rl = readline.createInterface({ input: fileStream })
   for await (const line of rl) {
     // node image on first line
     return extractVersion(line)
   }
+  throw new Error('Could not find node version in Dockerfile')
 }
 
-function retrieveProcessVersion() {
+function retrieveProcessVersion(): string {
   // process.version returns vX.Y.Z
   return extractVersion(process.version)
 }
 
-function extractVersion(input) {
-  return /\d+\.\d+\.\d+/.exec(input)[0]
+function extractVersion(input: string): string {
+  const match = /\d+\.\d+\.\d+/.exec(input)
+  if (!match) {
+    throw new Error(`Could not extract version from: ${input}`)
+  }
+  return match[0]
 }

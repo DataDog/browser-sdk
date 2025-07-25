@@ -1,17 +1,17 @@
-const path = require('path')
-const express = require('express')
-const middleware = require('webpack-dev-middleware')
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const webpack = require('webpack')
-const cors = require('cors')
+import * as path from 'path'
+import express from 'express'
+import middleware from 'webpack-dev-middleware'
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+import webpack from 'webpack'
+import cors from 'cors'
+import { printLog, runMain } from './lib/executionUtils'
 
-const logsConfig = require('../packages/logs/webpack.config')
-const rumSlimConfig = require('../packages/rum-slim/webpack.config')
-const rumConfig = require('../packages/rum/webpack.config')
-const flaggingConfig = require('../packages/flagging/webpack.config')
-const workerConfig = require('../packages/worker/webpack.config')
-const webpackBase = require('../webpack.base')
-const { printLog, runMain } = require('./lib/executionUtils')
+const logsConfig = require('../packages/logs/webpack.config') as (env: any, args: any) => webpack.Configuration
+const rumSlimConfig = require('../packages/rum-slim/webpack.config') as (env: any, args: any) => webpack.Configuration
+const rumConfig = require('../packages/rum/webpack.config') as (env: any, args: any) => webpack.Configuration
+const flaggingConfig = require('../packages/flagging/webpack.config') as (env: any, args: any) => webpack.Configuration
+const workerConfig = require('../packages/worker/webpack.config') as (env: any, args: any) => webpack.Configuration
+const webpackBase = require('../webpack.base') as (config: webpack.Configuration) => webpack.Configuration
 
 const sandboxPath = path.join(__dirname, '../sandbox')
 const port = 8080
@@ -23,7 +23,7 @@ runMain(() => {
   app.listen(port, () => printLog(`Server listening on port ${port}.`))
 })
 
-function createStaticSandboxApp() {
+function createStaticSandboxApp(): express.Application {
   const app = express()
   app.use(cors())
   app.use(express.static(sandboxPath))
@@ -44,7 +44,7 @@ function createStaticSandboxApp() {
   return app
 }
 
-function createReactApp() {
+function createReactApp(): express.Application {
   const app = express()
 
   // Redirect requests to the "index.html" file, so that the React app can handle routing

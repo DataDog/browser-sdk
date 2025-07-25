@@ -1,10 +1,11 @@
-const fs = require('fs')
-const path = require('path')
+import * as fs from 'fs'
+import * as path from 'path'
+import { printLog, runMain } from './lib/executionUtils'
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-var-requires
 const { compileFromFile } = require('json-schema-to-typescript')
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const prettier = require('prettier')
-const { printLog, runMain } = require('./lib/executionUtils')
 
 const prettierConfigPath = path.join(__dirname, '../.prettierrc.yml')
 
@@ -13,7 +14,7 @@ runMain(async () => {
   await generateRemoteConfigTypes(path.join(__dirname, '../remote-config'))
 })
 
-async function generateRumEventsFormatTypes(schemasDirectoryPath) {
+async function generateRumEventsFormatTypes(schemasDirectoryPath: string): Promise<void> {
   await generateTypesFromSchema(
     path.join(__dirname, '../packages/rum-core/src/rumEvent.types.ts'),
     schemasDirectoryPath,
@@ -32,7 +33,7 @@ async function generateRumEventsFormatTypes(schemasDirectoryPath) {
   )
 }
 
-async function generateRemoteConfigTypes(schemasDirectoryPath) {
+async function generateRemoteConfigTypes(schemasDirectoryPath: string): Promise<void> {
   await generateTypesFromSchema(
     path.join(__dirname, '../packages/rum-core/src/domain/configuration/remoteConfig.types.ts'),
     schemasDirectoryPath,
@@ -40,16 +41,27 @@ async function generateRemoteConfigTypes(schemasDirectoryPath) {
   )
 }
 
-async function generateTypesFromSchema(typesPath, schemasDirectoryPath, schema, { options = {} } = {}) {
+interface GenerateOptions {
+  options?: any
+}
+
+async function generateTypesFromSchema(
+  typesPath: string,
+  schemasDirectoryPath: string,
+  schema: string,
+  { options = {} }: GenerateOptions = {}
+): Promise<void> {
   const schemaPath = path.join(schemasDirectoryPath, schema)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   const prettierConfig = await prettier.resolveConfig(prettierConfigPath)
   printLog(`Compiling ${schemaPath}...`)
-  const compiledTypes = await compileFromFile(schemaPath, {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  const compiledTypes = (await compileFromFile(schemaPath, {
     cwd: schemasDirectoryPath,
     bannerComment: '/* eslint-disable */\n/**\n * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.\n*/',
-    style: prettierConfig,
+    style: prettierConfig || {},
     ...options,
-  })
+  })) as string
   printLog(`Writing ${typesPath}...`)
   fs.writeFileSync(typesPath, compiledTypes)
   printLog('Generation done.')
