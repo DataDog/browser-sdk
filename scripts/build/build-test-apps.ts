@@ -1,11 +1,16 @@
-import fs from 'fs'
-import path from 'path'
+import * as fs from 'fs'
+import * as path from 'path'
 
-import { printLog, runMain } from '../lib/executionUtils.js'
-import { command } from '../lib/command.js'
-import { modifyFile } from '../lib/filesUtils.js'
+import { printLog, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { modifyFile } from '../lib/filesUtils'
 
-const EXTRA_EXTENSIONS = [
+interface Extension {
+  name: string
+  initParameter: string
+}
+
+const EXTRA_EXTENSIONS: Extension[] = [
   { name: 'allowed-tracking-origin', initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],' },
   { name: 'invalid-tracking-origin', initParameter: "allowedTrackingOrigins: ['https://app.example.com']," },
 ]
@@ -21,13 +26,13 @@ runMain(async () => {
   printLog('Test apps and extensions built successfully.')
 })
 
-function buildApp(appPath) {
+function buildApp(appPath: string): void {
   printLog(`Building app at ${appPath}...`)
   command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).run()
   command`yarn build`.withCurrentWorkingDirectory(appPath).run()
 }
 
-async function buildExtensions() {
+async function buildExtensions(): Promise<void> {
   const baseExtDir = 'test/apps/base-extension'
 
   buildApp(baseExtDir)
