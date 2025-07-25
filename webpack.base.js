@@ -1,3 +1,9 @@
+// Register ts-node to be able to import TypeScript files
+require('ts-node').register({
+  project: require('path').resolve(__dirname, 'tsconfig.scripts.json'),
+  transpileOnly: true,
+})
+
 const path = require('path')
 const webpack = require('webpack')
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')

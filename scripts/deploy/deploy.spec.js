@@ -7,7 +7,7 @@ const {
   replaceChunkHashes,
   FAKE_AWS_ENV_CREDENTIALS,
   FAKE_CHUNK_HASH,
-} = require('./lib/testHelpers.js')
+} = require('./lib/testHelpers')
 
 void describe('deploy', () => {
   let commandMock = mock.fn()
@@ -28,12 +28,12 @@ void describe('deploy', () => {
   }
 
   before(async () => {
-    await mockModule(path.resolve(__dirname, '../lib/command.js'), { command: commandMock })
-    await mockModule(path.resolve(__dirname, '../lib/gitUtils.js'), { fetchPR: fetchPRMock })
+    await mockModule(path.resolve(__dirname, '../lib/command.ts'), { command: commandMock })
+    await mockModule(path.resolve(__dirname, '../lib/gitUtils.ts'), { fetchPR: fetchPRMock })
 
     // This MUST be a dynamic import because that is the only way to ensure the
     // import starts after the mock has been set up.
-    ;({ main: deploy } = await import('./deploy.js'))
+    ;({ main: deploy } = await import('./deploy'))
   })
 
   beforeEach(() => {
