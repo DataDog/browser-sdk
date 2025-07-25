@@ -1,6 +1,6 @@
-import { printLog, runMain } from '../lib/executionUtils.js'
-import { command } from '../lib/command.js'
-import { getOrg2ApiKey } from '../lib/secrets.js'
+import { printLog, runMain } from '../lib/executionUtils.ts'
+import { command } from '../lib/command.ts'
+import { getOrg2ApiKey } from '../lib/secrets.ts'
 
 /**
  * Upload test result to datadog

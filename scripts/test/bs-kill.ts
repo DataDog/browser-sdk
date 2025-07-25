@@ -1,5 +1,5 @@
-import { printLog, runMain, timeout } from '../lib/executionUtils.js'
-import { browserStackRequest } from '../lib/bsUtils.js'
+import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
+import { browserStackRequest } from '../lib/bsUtils.ts'
 
 const MINIMUM_WORKER_LIFE = 30_000
 

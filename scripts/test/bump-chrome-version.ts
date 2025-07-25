@@ -1,9 +1,9 @@
 import fs from 'fs'
-import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.js'
-import { command } from '../lib/command.js'
-import { CI_FILE, replaceCiFileVariable } from '../lib/filesUtils.js'
-import { initGitConfig } from '../lib/gitUtils.js'
-import { getGithubAccessToken } from '../lib/secrets.js'
+import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
+import { command } from '../lib/command.ts'
+import { CI_FILE, replaceCiFileVariable } from '../lib/filesUtils.ts'
+import { initGitConfig } from '../lib/gitUtils.ts'
+import { getGithubAccessToken } from '../lib/secrets.ts'
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
@@ -38,8 +38,8 @@ runMain(async () => {
   command`git checkout -b ${chromeVersionBranch}`.run()
 
   printLog('Update versions...')
-  await replaceCiFileVariable('CHROME_PACKAGE_VERSION', packageVersion)
-  await replaceCiFileVariable('CURRENT_CI_IMAGE', Number(CURRENT_CI_IMAGE) + 1)
+  await replaceCiFileVariable('CHROME_PACKAGE_VERSION', packageVersion!)
+  await replaceCiFileVariable('CURRENT_CI_IMAGE', (Number(CURRENT_CI_IMAGE!) + 1).toString())
 
   command`git add ${CI_FILE}`.run()
   command`git commit -m ${commitMessage}`.run()

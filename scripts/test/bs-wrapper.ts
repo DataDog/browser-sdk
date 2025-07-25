@@ -16,9 +16,9 @@
 import type { ChildProcess } from 'child_process'
 import { spawn } from 'child_process'
 import browserStack from 'browserstack-local'
-import { printLog, runMain, timeout, printError } from '../lib/executionUtils.js'
-import { command } from '../lib/command.js'
-import { browserStackRequest } from '../lib/bsUtils.js'
+import { printLog, runMain, timeout, printError } from '../lib/executionUtils.ts'
+import { command } from '../lib/command.ts'
+import { browserStackRequest } from '../lib/bsUtils.ts'
 
 const AVAILABILITY_CHECK_DELAY = 30_000
 const NO_OUTPUT_TIMEOUT = 5 * 60_000
