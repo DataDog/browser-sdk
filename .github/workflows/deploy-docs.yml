@@ -38,6 +38,9 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Build SDK
+        run: yarn build
+
       - name: Build documentation
         run: yarn build:docs:html
 
