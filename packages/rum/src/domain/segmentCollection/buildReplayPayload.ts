@@ -1,16 +1,25 @@
 import type { Payload } from '@datadog/browser-core'
 import type { BrowserSegmentMetadata } from '../../types'
+import type { SerializationMetric, SerializationStats } from '../record'
 
 export type BrowserSegmentMetadataAndSegmentSizes = BrowserSegmentMetadata & {
   raw_segment_size: number
   compressed_segment_size: number
 }
 
+export type ReplayPayload = Payload & {
+  cssText: SerializationMetric
+  isFullSnapshot: boolean
+  rawSize: number
+  recordCount: number
+}
+
 export function buildReplayPayload(
   data: Uint8Array,
   metadata: BrowserSegmentMetadata,
+  stats: SerializationStats,
   rawSegmentBytesCount: number
-): Payload {
+): ReplayPayload {
   const formData = new FormData()
 
   formData.append(
@@ -30,5 +39,12 @@ export function buildReplayPayload(
   const serializedMetadataAndSegmentSizes = JSON.stringify(metadataAndSegmentSizes)
   formData.append('event', new Blob([serializedMetadataAndSegmentSizes], { type: 'application/json' }))
 
-  return { data: formData, bytesCount: data.byteLength }
+  return {
+    data: formData,
+    bytesCount: data.byteLength,
+    cssText: stats.cssText,
+    isFullSnapshot: metadata.index_in_view === 0,
+    rawSize: rawSegmentBytesCount,
+    recordCount: metadata.records_count,
+  }
 }

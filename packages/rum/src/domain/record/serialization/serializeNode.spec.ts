@@ -28,6 +28,7 @@ import type { SerializationContext, SerializeOptions } from './serialization.typ
 import { SerializationContextStatus } from './serialization.types'
 import { hasSerializedNode } from './serializationUtils'
 import { serializeChildNodes, serializeDocumentNode, serializeNodeWithId } from './serializeNode'
+import { createSerializationStats } from './serializationStats'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
 
@@ -38,16 +39,21 @@ const DEFAULT_SHADOW_ROOT_CONTROLLER: ShadowRootsController = {
   removeShadowRoot: noop,
 }
 
-const DEFAULT_SERIALIZATION_CONTEXT: SerializationContext = {
-  shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-  status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-  elementsScrollPositions: createElementsScrollPositions(),
+function getDefaultSerializationContext(): SerializationContext {
+  return {
+    serializationStats: createSerializationStats(),
+    shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
+    status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
+    elementsScrollPositions: createElementsScrollPositions(),
+  }
 }
 
-const DEFAULT_OPTIONS: SerializeOptions = {
-  parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
-  serializationContext: DEFAULT_SERIALIZATION_CONTEXT,
-  configuration: DEFAULT_CONFIGURATION,
+function getDefaultOptions(): SerializeOptions {
+  return {
+    parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
+    serializationContext: getDefaultSerializationContext(),
+    configuration: DEFAULT_CONFIGURATION,
+  }
 }
 
 describe('serializeNodeWithId', () => {
@@ -60,7 +66,7 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
-      expect(serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
+      expect(serializeDocument(document, DEFAULT_CONFIGURATION, getDefaultSerializationContext())).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -75,9 +81,9 @@ describe('serializeNodeWithId', () => {
   describe('elements serialization', () => {
     function serializeElement(
       node: Element,
-      options: SerializeOptions = DEFAULT_OPTIONS
+      options: SerializeOptions | undefined = undefined
     ): (ElementNode & { id: number }) | null {
-      return serializeNodeWithId(node, options) as (ElementNode & { id: number }) | null
+      return serializeNodeWithId(node, options ?? getDefaultOptions()) as (ElementNode & { id: number }) | null
     }
 
     it('serializes a div', () => {
@@ -143,8 +149,9 @@ describe('serializeNodeWithId', () => {
 
       it('should be retrieved from attributes during initial full snapshot', () => {
         const serializedAttributes = serializeElement(element, {
-          ...DEFAULT_OPTIONS,
+          ...getDefaultOptions(),
           serializationContext: {
+            serializationStats: createSerializationStats(),
             shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
             status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
             elementsScrollPositions,
@@ -162,8 +169,9 @@ describe('serializeNodeWithId', () => {
 
       it('should not be retrieved from attributes during subsequent full snapshot', () => {
         const serializedAttributes = serializeElement(element, {
-          ...DEFAULT_OPTIONS,
+          ...getDefaultOptions(),
           serializationContext: {
+            serializationStats: createSerializationStats(),
             shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
             status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
             elementsScrollPositions,
@@ -179,8 +187,9 @@ describe('serializeNodeWithId', () => {
         elementsScrollPositions.set(element, { scrollLeft: 10, scrollTop: 20 })
 
         const serializedAttributes = serializeElement(element, {
-          ...DEFAULT_OPTIONS,
+          ...getDefaultOptions(),
           serializationContext: {
+            serializationStats: createSerializationStats(),
             shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
             status: SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT,
             elementsScrollPositions,
@@ -199,8 +208,9 @@ describe('serializeNodeWithId', () => {
         elementsScrollPositions.set(element, { scrollLeft: 10, scrollTop: 20 })
 
         const serializedAttributes = serializeElement(element, {
-          ...DEFAULT_OPTIONS,
+          ...getDefaultOptions(),
           serializationContext: {
+            serializationStats: createSerializationStats(),
             shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
             status: SerializationContextStatus.MUTATION,
           },
@@ -438,7 +448,7 @@ describe('serializeNodeWithId', () => {
       it('serializes a shadow host', () => {
         const div = document.createElement('div')
         div.attachShadow({ mode: 'open' })
-        expect(serializeElement(div, DEFAULT_OPTIONS)).toEqual({
+        expect(serializeElement(div)).toEqual({
           type: NodeType.Element,
           tagName: 'div',
           attributes: {},
@@ -462,9 +472,9 @@ describe('serializeNodeWithId', () => {
         div.shadowRoot!.appendChild(document.createElement('hr'))
 
         const options: SerializeOptions = {
-          ...DEFAULT_OPTIONS,
+          ...getDefaultOptions(),
           serializationContext: {
-            ...DEFAULT_SERIALIZATION_CONTEXT,
+            ...getDefaultSerializationContext(),
             shadowRootsController: {
               ...DEFAULT_SHADOW_ROOT_CONTROLLER,
               addShadowRoot: addShadowRootSpy,
@@ -505,7 +515,7 @@ describe('serializeNodeWithId', () => {
         div.attachShadow({ mode: 'open' })
         div.shadowRoot!.appendChild(document.createTextNode('foo'))
 
-        expect(serializeElement(div, DEFAULT_OPTIONS)).toEqual(
+        expect(serializeElement(div)).toEqual(
           jasmine.objectContaining({
             attributes: {
               [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK,
@@ -529,7 +539,8 @@ describe('serializeNodeWithId', () => {
         const styleNode = appendElement('<style></style>', document.head) as HTMLStyleElement
         styleNode.sheet!.insertRule('body { width: 100%; }')
 
-        expect(serializeElement(styleNode)).toEqual({
+        const options = getDefaultOptions()
+        expect(serializeElement(styleNode, options)).toEqual({
           type: NodeType.Element,
           tagName: 'style',
           id: jasmine.any(Number) as unknown as number,
@@ -537,18 +548,25 @@ describe('serializeNodeWithId', () => {
           attributes: { _cssText: 'body { width: 100%; }' },
           childNodes: [],
         })
+        expect(options.serializationContext.serializationStats).toEqual({
+          cssText: { count: 1, max: 21, sum: 21 },
+        })
       })
 
       it('serializes a node with CSS rules specified as inner text', () => {
         const styleNode = appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
 
-        expect(serializeElement(styleNode)).toEqual({
+        const options = getDefaultOptions()
+        expect(serializeElement(styleNode, options)).toEqual({
           type: NodeType.Element,
           tagName: 'style',
           id: jasmine.any(Number) as unknown as number,
           isSVG: undefined,
           attributes: { _cssText: 'body { width: 100%; }' },
           childNodes: [],
+        })
+        expect(options.serializationContext.serializationStats).toEqual({
+          cssText: { count: 1, max: 21, sum: 21 },
         })
       })
 
@@ -556,13 +574,57 @@ describe('serializeNodeWithId', () => {
         const styleNode = appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
         styleNode.sheet!.insertRule('body { color: red; }')
 
-        expect(serializeElement(styleNode)).toEqual({
+        const options = getDefaultOptions()
+        expect(serializeElement(styleNode, options)).toEqual({
           type: NodeType.Element,
           tagName: 'style',
           id: jasmine.any(Number) as unknown as number,
           isSVG: undefined,
           attributes: { _cssText: 'body { color: red; }body { width: 100%; }' },
           childNodes: [],
+        })
+        expect(options.serializationContext.serializationStats).toEqual({
+          cssText: { count: 1, max: 41, sum: 41 },
+        })
+      })
+
+      it('serializes a subtree with multiple nodes', () => {
+        const containerNode = appendElement('<div></div>', document.body) as HTMLDivElement
+
+        const cssText1 = 'body { width: 100%; }'
+        appendElement(`<style>${cssText1}</style>`, containerNode) as HTMLStyleElement
+
+        const cssText2 = 'body { background-color: green; }'
+        appendElement(`<style>${cssText2}</style>`, containerNode) as HTMLStyleElement
+
+        const options = getDefaultOptions()
+        expect(serializeElement(containerNode, options)).toEqual({
+          type: NodeType.Element,
+          tagName: 'div',
+          id: jasmine.any(Number) as unknown as number,
+          isSVG: undefined,
+          attributes: {},
+          childNodes: [
+            {
+              type: NodeType.Element,
+              tagName: 'style',
+              id: jasmine.any(Number) as unknown as number,
+              isSVG: undefined,
+              attributes: { _cssText: cssText1 },
+              childNodes: [],
+            },
+            {
+              type: NodeType.Element,
+              tagName: 'style',
+              id: jasmine.any(Number) as unknown as number,
+              isSVG: undefined,
+              attributes: { _cssText: cssText2 },
+              childNodes: [],
+            },
+          ],
+        })
+        expect(options.serializationContext.serializationStats).toEqual({
+          cssText: { count: 2, max: 33, sum: 54 },
         })
       })
     })
@@ -578,13 +640,18 @@ describe('serializeNodeWithId', () => {
           "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
           document.head
         )
-        expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+
+        const options = getDefaultOptions()
+        expect(serializeNodeWithId(linkNode, options)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
           isSVG: undefined,
           attributes: { rel: 'stylesheet', href: 'https://datadoghq.com/some/style.css' },
           childNodes: [],
+        })
+        expect(options.serializationContext.serializationStats).toEqual({
+          cssText: { count: 0, max: 0, sum: 0 },
         })
       })
 
@@ -603,7 +670,8 @@ describe('serializeNodeWithId', () => {
           configurable: true,
         })
 
-        expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+        const options = getDefaultOptions()
+        expect(serializeNodeWithId(linkNode, options)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
@@ -614,6 +682,9 @@ describe('serializeNodeWithId', () => {
             href: 'https://datadoghq.com/some/style.css',
           },
           childNodes: [],
+        })
+        expect(options.serializationContext.serializationStats).toEqual({
+          cssText: { count: 1, max: 21, sum: 21 },
         })
       })
 
@@ -635,7 +706,8 @@ describe('serializeNodeWithId', () => {
           configurable: true,
         })
 
-        expect(serializeNodeWithId(linkNode, DEFAULT_OPTIONS)).toEqual({
+        const options = getDefaultOptions()
+        expect(serializeNodeWithId(linkNode, options)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
@@ -645,6 +717,9 @@ describe('serializeNodeWithId', () => {
             href: 'https://datadoghq.com/some/style.css',
           },
           childNodes: [],
+        })
+        expect(options.serializationContext.serializationStats).toEqual({
+          cssText: { count: 0, max: 0, sum: 0 },
         })
       })
     })
@@ -656,7 +731,7 @@ describe('serializeNodeWithId', () => {
       parentEl.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_ALLOW)
       const textNode = document.createTextNode('foo')
       parentEl.appendChild(textNode)
-      expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
+      expect(serializeNodeWithId(textNode, getDefaultOptions())).toEqual({
         type: NodeType.Text,
         id: jasmine.any(Number) as unknown as number,
         textContent: 'foo',
@@ -667,7 +742,7 @@ describe('serializeNodeWithId', () => {
       const parentEl = document.createElement('bar')
       const textNode = document.createTextNode('')
       parentEl.appendChild(textNode)
-      expect(serializeNodeWithId(textNode, DEFAULT_OPTIONS)).toEqual({
+      expect(serializeNodeWithId(textNode, getDefaultOptions())).toEqual({
         type: NodeType.Text,
         id: jasmine.any(Number) as unknown as number,
         textContent: '',
@@ -676,7 +751,7 @@ describe('serializeNodeWithId', () => {
 
     it('does not serialize text nodes with only white space if the ignoreWhiteSpace option is specified', () => {
       expect(
-        serializeNodeWithId(document.createTextNode('   '), { ...DEFAULT_OPTIONS, ignoreWhiteSpace: true })
+        serializeNodeWithId(document.createTextNode('   '), { ...getDefaultOptions(), ignoreWhiteSpace: true })
       ).toEqual(null)
     })
   })
@@ -684,7 +759,7 @@ describe('serializeNodeWithId', () => {
   describe('CDATA nodes serialization', () => {
     it('serializes a CDATA node', () => {
       const xmlDocument = new DOMParser().parseFromString('<root></root>', 'text/xml')
-      expect(serializeNodeWithId(xmlDocument.createCDATASection('foo'), DEFAULT_OPTIONS)).toEqual({
+      expect(serializeNodeWithId(xmlDocument.createCDATASection('foo'), getDefaultOptions())).toEqual({
         type: NodeType.CDATA,
         id: jasmine.any(Number) as unknown as number,
         textContent: '',
@@ -694,47 +769,47 @@ describe('serializeNodeWithId', () => {
 
   it('adds serialized node ids to the provided Set', () => {
     const serializedNodeIds = new Set<number>()
-    const node = serializeNodeWithId(document.createElement('div'), { ...DEFAULT_OPTIONS, serializedNodeIds })!
+    const node = serializeNodeWithId(document.createElement('div'), { ...getDefaultOptions(), serializedNodeIds })!
     expect(serializedNodeIds).toEqual(new Set([node.id]))
   })
 
   describe('ignores some nodes', () => {
     it('does not save ignored nodes in the serializedNodeIds set', () => {
       const serializedNodeIds = new Set<number>()
-      serializeNodeWithId(document.createElement('script'), { ...DEFAULT_OPTIONS, serializedNodeIds })
+      serializeNodeWithId(document.createElement('script'), { ...getDefaultOptions(), serializedNodeIds })
       expect(serializedNodeIds.size).toBe(0)
     })
 
     it('does not serialize ignored nodes', () => {
       const scriptElement = document.createElement('script')
-      serializeNodeWithId(scriptElement, DEFAULT_OPTIONS)
+      serializeNodeWithId(scriptElement, getDefaultOptions())
       expect(hasSerializedNode(scriptElement)).toBe(false)
     })
 
     it('ignores script tags', () => {
-      expect(serializeNodeWithId(document.createElement('script'), DEFAULT_OPTIONS)).toEqual(null)
+      expect(serializeNodeWithId(document.createElement('script'), getDefaultOptions())).toEqual(null)
     })
 
     it('ignores comments', () => {
-      expect(serializeNodeWithId(document.createComment('foo'), DEFAULT_OPTIONS)).toEqual(null)
+      expect(serializeNodeWithId(document.createComment('foo'), getDefaultOptions())).toEqual(null)
     })
 
     it('ignores link favicons', () => {
       const linkElement = document.createElement('link')
       linkElement.setAttribute('rel', 'shortcut icon')
-      expect(serializeNodeWithId(linkElement, DEFAULT_OPTIONS)).toEqual(null)
+      expect(serializeNodeWithId(linkElement, getDefaultOptions())).toEqual(null)
     })
 
     it('ignores meta keywords', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'keywords')
-      expect(serializeNodeWithId(metaElement, DEFAULT_OPTIONS)).toEqual(null)
+      expect(serializeNodeWithId(metaElement, getDefaultOptions())).toEqual(null)
     })
 
     it('ignores meta name attribute casing', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'KeYwOrDs')
-      expect(serializeNodeWithId(metaElement, DEFAULT_OPTIONS)).toEqual(null)
+      expect(serializeNodeWithId(metaElement, getDefaultOptions())).toEqual(null)
     })
   })
 
@@ -814,7 +889,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
       const styleSheet = new window.CSSStyleSheet()
       styleSheet.insertRule('div { width: 100%; }')
       document.adoptedStyleSheets = [styleSheet]
-      expect(serializeDocument(document, DEFAULT_CONFIGURATION, DEFAULT_SERIALIZATION_CONTEXT)).toEqual({
+      expect(serializeDocument(document, DEFAULT_CONFIGURATION, getDefaultSerializationContext())).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType }),
@@ -834,7 +909,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
   it('a masked DOM Document itself is still serialized ', () => {
     const serializeOptionsMask: SerializeOptions = {
-      ...DEFAULT_OPTIONS,
+      ...getDefaultOptions(),
       parentNodePrivacyLevel: NodePrivacyLevel.MASK,
     }
     expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
