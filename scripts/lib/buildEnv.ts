@@ -75,6 +75,7 @@ function getBuildMode(): BuildMode {
   }
   console.log(`Invalid build mode "${process.env.BUILD_MODE}". Possible build modes are: ${BUILD_MODES.join(', ')}`)
   process.exit(1)
+  return BUILD_MODES[0] // This line will never be reached but satisfies TypeScript
 }
 
 function getSdkSetup(): SdkSetup {
@@ -86,4 +87,5 @@ function getSdkSetup(): SdkSetup {
   }
   console.log(`Invalid SDK setup "${process.env.SDK_SETUP}". Possible SDK setups are: ${SDK_SETUPS.join(', ')}`)
   process.exit(1)
+  return SDK_SETUPS[0] // This line will never be reached but satisfies TypeScript
 }
