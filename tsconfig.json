@@ -2,13 +2,14 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["jasmine"]
+    "types": ["jasmine", "node"]
   },
   "ts-node": {
     "transpileOnly": true,
     "compilerOptions": {
       "module": "commonjs",
-      "allowJs": true
+      "allowJs": true,
+      "types": ["node"]
     }
   },
   "exclude": [

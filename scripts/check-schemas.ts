@@ -4,7 +4,7 @@ import { command } from './lib/command'
 runMain(() => {
   printLog('Regenerating schemas...')
   command`scripts/cli build_json2type`.run()
-  command`node scripts/generate-schema-types.js`.run()
+  command`yarn exec ts-node scripts/generate-schema-types.ts`.run()
 
   printLog('Checking untracked changes...')
   const diff = command`git diff --color`.run()
