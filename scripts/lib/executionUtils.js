@@ -1,4 +1,5 @@
 const spawn = require('child_process').spawn
+const { revokeGithubToken } = require('./secrets')
 
 /**
  * Helper to run executables asynchronously, in a shell. This function does not prevent Shell
@@ -21,6 +22,7 @@ function runMain(mainFunction) {
     // The main function can be either synchronous or asynchronous, so let's wrap it in an async
     // callback that will catch both thrown errors and rejected promises
     .then(() => mainFunction())
+    .then(() => revokeGithubToken())
     .catch((error) => {
       printError('\nScript exited with error:', error)
       process.exit(1)

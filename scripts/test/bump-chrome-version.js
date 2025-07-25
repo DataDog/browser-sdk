@@ -4,8 +4,7 @@ const fs = require('fs')
 const { printLog, runMain, fetchHandlingError } = require('../lib/executionUtils')
 const { command } = require('../lib/command')
 const { CI_FILE, replaceCiFileVariable } = require('../lib/filesUtils')
-const { initGitConfig } = require('../lib/gitUtils')
-const { getGithubAccessToken } = require('../lib/secrets')
+const { initGitConfig, createPullRequest } = require('../lib/gitUtils')
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
@@ -49,7 +48,7 @@ runMain(async () => {
 
   printLog('Create PR...')
 
-  const pullRequestUrl = createPullRequest()
+  const pullRequestUrl = createPullRequest(MAIN_BRANCH)
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
 
   // used to share the pull request url to the notification jobs
@@ -69,10 +68,4 @@ function getMajor(version) {
   const major = majorMatches ? majorMatches[1] : null
 
   return Number(major)
-}
-
-function createPullRequest() {
-  command`gh auth login --with-token`.withInput(getGithubAccessToken()).run()
-  const pullRequestUrl = command`gh pr create --fill --base ${MAIN_BRANCH}`.run()
-  return pullRequestUrl.trim()
 }
