@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, INTAKE_SITE_US1 } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, INTAKE_SITE_US1, display } from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
@@ -95,11 +95,30 @@ describe('remoteConfiguration', () => {
   })
 
   describe('applyRemoteConfiguration', () => {
+    let displaySpy: jasmine.Spy
+
+    beforeEach(() => {
+      displaySpy = spyOn(display, 'error')
+    })
+
     it('should override the initConfiguration options with the ones from the remote configuration', () => {
       const remoteConfiguration: RumSdkConfig['rum'] = {
         applicationId: 'yyy',
         sessionSampleRate: 1,
         sessionReplaySampleRate: 1,
+        traceSampleRate: 1,
+        trackSessionAcrossSubdomains: true,
+        allowedTrackingOrigins: [
+          { $type: 'string', value: 'https://example.com' },
+          { $type: 'regex', value: '^https:\\/\\/app-\\w+\\.datadoghq\\.com' },
+        ],
+        allowedTracingUrls: [
+          { match: { $type: 'string', value: 'https://example.com' }, propagatorTypes: ['b3', 'tracecontext'] },
+          {
+            match: { $type: 'regex', value: '^https:\\/\\/app-\\w+\\.datadoghq\\.com' },
+            propagatorTypes: ['datadog', 'b3multi'],
+          },
+        ],
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
       expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, remoteConfiguration)).toEqual({
@@ -108,8 +127,28 @@ describe('remoteConfiguration', () => {
         service: 'xxx',
         sessionSampleRate: 1,
         sessionReplaySampleRate: 1,
+        traceSampleRate: 1,
+        trackSessionAcrossSubdomains: true,
+        allowedTrackingOrigins: ['https://example.com', /^https:\/\/app-\w+\.datadoghq\.com/],
+        allowedTracingUrls: [
+          { match: 'https://example.com', propagatorTypes: ['b3', 'tracecontext'] },
+          { match: /^https:\/\/app-\w+\.datadoghq\.com/, propagatorTypes: ['datadog', 'b3multi'] },
+        ],
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
+    })
+
+    it('should display an error if the remote config contain invalid regex', () => {
+      const remoteConfiguration: RumSdkConfig['rum'] = {
+        applicationId: 'yyy',
+        allowedTrackingOrigins: [{ $type: 'regex', value: 'Hello(?|!)' }],
+      }
+      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, remoteConfiguration)).toEqual({
+        ...DEFAULT_INIT_CONFIGURATION,
+        applicationId: 'yyy',
+        allowedTrackingOrigins: [undefined as any],
+      })
+      expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
     })
   })
 
