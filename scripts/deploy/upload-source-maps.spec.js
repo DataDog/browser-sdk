@@ -27,8 +27,8 @@ void describe('upload-source-maps', () => {
   }
 
   before(async () => {
-    await mockModule(path.resolve(__dirname, '../lib/command.js'), { command: commandMock })
-    await mockModule(path.resolve(__dirname, '../lib/secrets.js'), { getTelemetryOrgApiKey: () => FAKE_API_KEY })
+    await mockModule(path.resolve(__dirname, '../lib/command.ts'), { command: commandMock })
+    await mockModule(path.resolve(__dirname, '../lib/secrets.ts'), { getTelemetryOrgApiKey: () => FAKE_API_KEY })
 
     // This MUST be a dynamic import because that is the only way to ensure the
     // import starts after the mock has been set up.

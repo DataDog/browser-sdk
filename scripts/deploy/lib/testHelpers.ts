@@ -6,15 +6,28 @@ interface CommandDetail {
 }
 
 export async function mockModule(modulePath: string, mockObject: Record<string, any>): Promise<void> {
-  const { default: defaultExport, ...namedExports } = await import(modulePath)
+  const moduleExports = await import(modulePath)
 
-  nodeMock.module(modulePath, {
-    defaultExport,
-    namedExports: {
-      ...namedExports,
-      ...mockObject,
-    },
-  })
+  // If the module only has named exports (no default export)
+  if (!moduleExports.default) {
+    nodeMock.module(modulePath, {
+      namedExports: {
+        ...moduleExports,
+        ...mockObject,
+      },
+    })
+  } else {
+    // If the module has a default export
+    const { default: defaultExport, ...namedExports } = moduleExports
+
+    nodeMock.module(modulePath, {
+      defaultExport,
+      namedExports: {
+        ...namedExports,
+        ...mockObject,
+      },
+    })
+  }
 }
 
 export const FAKE_AWS_ENV_CREDENTIALS = {

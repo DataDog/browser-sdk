@@ -28,8 +28,8 @@ void describe('deploy', () => {
   }
 
   before(async () => {
-    await mockModule(path.resolve(__dirname, '../lib/command.js'), { command: commandMock })
-    await mockModule(path.resolve(__dirname, '../lib/gitUtils.js'), { fetchPR: fetchPRMock })
+    await mockModule(path.resolve(__dirname, '../lib/command.ts'), { command: commandMock })
+    await mockModule(path.resolve(__dirname, '../lib/gitUtils.ts'), { fetchPR: fetchPRMock })
 
     // This MUST be a dynamic import because that is the only way to ensure the
     // import starts after the mock has been set up.
