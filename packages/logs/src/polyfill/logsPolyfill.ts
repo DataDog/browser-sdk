@@ -1,4 +1,3 @@
-import { LocalStoragePolyfill, ServiceWorkerStorage } from './ServiceWorkerStorage'
 
 // Simple XMLHttpRequest polyfill using fetch for Service Workers
 function createXMLHttpRequestPolyfill() {
@@ -113,6 +112,16 @@ export function initServiceWorkerPolyfillIfNeeded(): void {
         removeEventListener: () => {},
         navigator: self.navigator,
         XMLHttpRequest: createXMLHttpRequestPolyfill(),
+        // Simple localStorage fallback (memory-only)
+        localStorage: {
+          _data: {} as Record<string, string>,
+          get length() { return Object.keys(this._data).length },
+          key(index: number) { return Object.keys(this._data)[index] || null },
+          getItem(key: string) { return this._data[key] || null },
+          setItem(key: string, value: string) { this._data[key] = String(value) },
+          removeItem(key: string) { delete this._data[key] },
+          clear() { this._data = {} }
+        }
       }
 
       // Add XMLHttpRequest to global scope directly (not just window)
@@ -130,7 +139,7 @@ export function initServiceWorkerPolyfillIfNeeded(): void {
         ;(globalThis as any).performance.timing = {
           navigationStart: startTime,
         }
-      }
+      }  
     } catch (error) {
       // Graceful fallback - don't break Service Worker initialization
       console.warn('[DD] Service Worker polyfill initialization failed:', error)
