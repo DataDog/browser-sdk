@@ -11,6 +11,8 @@
     "packages/*/bundle",
 
     // Those folders have their own tsconfig.json
+    "scripts",
+    "test/unit",
     "test/e2e",
     "test/apps",
     "developer-extension",
