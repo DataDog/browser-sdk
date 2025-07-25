@@ -21,7 +21,7 @@ runMain(() => {
     })
     .withLogs()
     .run()
-  command`datadog-ci coverage upload --service browser-sdk --env ci --tags test.type:${testType} ${coverageFolder}`
+  command`datadog-ci coverage upload --tags service:browser-sdk --tags env:ci --tags test.type:${testType} ${coverageFolder}`
     .withEnvironment({
       DATADOG_API_KEY: getOrg2ApiKey(),
     })
