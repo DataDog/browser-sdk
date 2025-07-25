@@ -1,8 +1,6 @@
-'use strict'
-
-const { printLog, runMain } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { getOrg2ApiKey } = require('../lib/secrets')
+import { printLog, runMain } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { getOrg2ApiKey } from '../lib/secrets'
 
 /**
  * Upload test result to datadog

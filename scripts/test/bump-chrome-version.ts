@@ -1,26 +1,33 @@
-'use strict'
-
-const fs = require('fs')
-const { printLog, runMain, fetchHandlingError } = require('../lib/executionUtils')
-const { command } = require('../lib/command')
-const { CI_FILE, replaceCiFileVariable } = require('../lib/filesUtils')
-const { initGitConfig } = require('../lib/gitUtils')
-const { getGithubAccessToken } = require('../lib/secrets')
+import * as fs from 'fs'
+import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils'
+import { command } from '../lib/command'
+import { CI_FILE, replaceCiFileVariable } from '../lib/filesUtils'
+import { initGitConfig } from '../lib/gitUtils'
+import { getGithubAccessToken } from '../lib/secrets'
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
 const CURRENT_CI_IMAGE = process.env.CURRENT_CI_IMAGE
-
 const CURRENT_PACKAGE_VERSION = process.env.CHROME_PACKAGE_VERSION
+
 const CHROME_PACKAGE_URL = 'https://www.ubuntuupdates.org/package/google_chrome/stable/main/base/google-chrome-stable'
 
 runMain(async () => {
+  if (!REPOSITORY || !MAIN_BRANCH || !CURRENT_CI_IMAGE || !CURRENT_PACKAGE_VERSION) {
+    throw new Error('Missing required environment variables')
+  }
+
   initGitConfig(REPOSITORY)
   command`git fetch --no-tags origin ${MAIN_BRANCH}`.run()
   command`git checkout ${MAIN_BRANCH} -f`.run()
   command`git pull origin ${MAIN_BRANCH}`.run()
 
   const packageVersion = await getPackageVersion()
+
+  if (!packageVersion) {
+    throw new Error('Could not fetch Chrome package version')
+  }
+
   const majorPackageVersion = getMajor(packageVersion)
 
   if (majorPackageVersion <= getMajor(CURRENT_PACKAGE_VERSION)) {
@@ -41,7 +48,7 @@ runMain(async () => {
 
   printLog('Update versions...')
   await replaceCiFileVariable('CHROME_PACKAGE_VERSION', packageVersion)
-  await replaceCiFileVariable('CURRENT_CI_IMAGE', Number(CURRENT_CI_IMAGE) + 1)
+  await replaceCiFileVariable('CURRENT_CI_IMAGE', String(Number(CURRENT_CI_IMAGE) + 1))
 
   command`git add ${CI_FILE}`.run()
   command`git commit -m ${commitMessage}`.run()
@@ -56,14 +63,14 @@ runMain(async () => {
   fs.appendFileSync('build.env', `BUMP_CHROME_PULL_REQUEST_URL=${pullRequestUrl}`)
 })
 
-async function getPackageVersion() {
+async function getPackageVersion(): Promise<string | null> {
   const packagePage = await (await fetchHandlingError(CHROME_PACKAGE_URL)).text()
   const packageMatches = /<td>([0-9.-]+)<\/td>/.exec(packagePage)
 
   return packageMatches ? packageMatches[1] : null
 }
 
-function getMajor(version) {
+function getMajor(version: string): number {
   const majorRegex = /^([0-9]+)./
   const majorMatches = majorRegex.exec(version)
   const major = majorMatches ? majorMatches[1] : null
@@ -71,7 +78,7 @@ function getMajor(version) {
   return Number(major)
 }
 
-function createPullRequest() {
+function createPullRequest(): string {
   command`gh auth login --with-token`.withInput(getGithubAccessToken()).run()
   const pullRequestUrl = command`gh pr create --fill --base ${MAIN_BRANCH}`.run()
   return pullRequestUrl.trim()
