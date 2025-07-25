@@ -78,10 +78,20 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Custom Behavior
    */
   compressIntakeRequests?: boolean | undefined
+
   /**
+   * [Internal option] Id of the remote configuration
+   *
    * @internal
    */
   remoteConfigurationId?: string | undefined
+
+  /**
+   * [Internal option] set a proxy URL for the remote configuration
+   *
+   * @internal
+   */
+  remoteConfigurationProxy?: string | undefined
 
   // tracing options
   /**
