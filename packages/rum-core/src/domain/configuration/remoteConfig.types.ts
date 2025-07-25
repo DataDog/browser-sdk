@@ -43,5 +43,25 @@ export interface RumSdkConfig {
      * Privacy control for action name
      */
     enablePrivacyForActionName?: boolean
+
+    traceSampleRate?: number
+    trackSessionAcrossSubdomains?: boolean
+    allowedTracingUrls?: TracingOption[]
+    allowedTrackingOrigins?: ComplexOption[]
   }
+}
+
+export type ComplexOption =
+  | {
+      $type: 'string'
+      value: string
+    }
+  | {
+      $type: 'regex'
+      value: string
+    }
+
+export interface TracingOption {
+  match: ComplexOption
+  propagatorTypes: Array<'b3' | 'b3multi' | 'datadog' | 'tracecontext'>
 }
