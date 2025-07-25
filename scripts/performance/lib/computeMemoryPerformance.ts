@@ -1,8 +1,27 @@
-const puppeteer = require('puppeteer')
-const { fetchPR, LOCAL_BRANCH } = require('../../lib/gitUtils')
+import puppeteer, { type Browser, type Page, type CDPSession, type Protocol } from 'puppeteer'
+import { fetchPR, LOCAL_BRANCH } from '../../lib/gitUtils'
+
 const NUMBER_OF_RUNS = 30 // Rule of thumb: this should be enough to get a good average
 const BATCH_SIZE = 2
-const TESTS = [
+
+interface Test {
+  name: string
+  button: string
+  property: string
+}
+
+interface MemoryResult {
+  testProperty: string
+  sdkMemoryBytes: number
+  sdkMemoryPercentage: number
+}
+
+interface TestRunResult {
+  medianPercentage: number
+  medianBytes: number
+}
+
+const TESTS: Test[] = [
   {
     name: 'RUM - add global context',
     button: '#rum-add-global-context',
@@ -40,10 +59,10 @@ const TESTS = [
   },
 ]
 
-async function computeMemoryPerformance() {
-  const results = []
-  const pr = await fetchPR(LOCAL_BRANCH)
-  const benchmarkUrl = pr
+export async function computeMemoryPerformance(): Promise<MemoryResult[]> {
+  const results: MemoryResult[] = []
+  const pr = LOCAL_BRANCH ? await fetchPR(LOCAL_BRANCH) : null
+  const benchmarkUrl = pr?.number
     ? `https://datadoghq.dev/browser-sdk-test-playground/performance/memory?prNumber=${pr.number}`
     : 'https://datadoghq.dev/browser-sdk-test-playground/performance/memory'
 
@@ -54,14 +73,14 @@ async function computeMemoryPerformance() {
   return results
 }
 
-async function runTests(tests, benchmarkUrl, cb) {
+async function runTests(tests: Test[], benchmarkUrl: string, cb: (result: MemoryResult) => void): Promise<void> {
   await Promise.all(
     tests.map(async (test) => {
       const testName = test.name
       const testButton = test.button
       const testProperty = test.property
-      const allBytesMeasurements = []
-      const allPercentageMeasurements = []
+      const allBytesMeasurements: number[] = []
+      const allPercentageMeasurements: number[] = []
       console.log(`Running test for: ${testButton}`)
       for (let j = 0; j < NUMBER_OF_RUNS; j++) {
         const { medianPercentage, medianBytes } = await runTest(testButton, benchmarkUrl)
@@ -78,20 +97,23 @@ async function runTests(tests, benchmarkUrl, cb) {
   )
 }
 
-async function runTest(testButton, benchmarkUrl) {
-  const browser = await puppeteer.launch({
+async function runTest(testButton: string, benchmarkUrl: string): Promise<TestRunResult> {
+  const browser: Browser = await puppeteer.launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
-  const page = await browser.newPage()
+  const page: Page = await browser.newPage()
   await page.goto(benchmarkUrl)
 
   // Start the Chrome DevTools Protocol session and enable the heap profiler
-  const client = await page.target().createCDPSession()
+  const client: CDPSession = await page.target().createCDPSession()
   await client.send('HeapProfiler.enable')
 
   // Select the button to trigger the test
-  await page.waitForSelector(`${testButton}`)
-  const button = await page.$(`${testButton}`)
+  await page.waitForSelector(testButton)
+  const button = await page.$(testButton)
+  if (!button) {
+    throw new Error(`Button ${testButton} not found`)
+  }
 
   await client.send('HeapProfiler.collectGarbage')
 
@@ -102,9 +124,10 @@ async function runTest(testButton, benchmarkUrl) {
 
   await button.click()
   const { profile } = await client.send('HeapProfiler.stopSampling')
-  const measurementsPercentage = []
-  const measurementsBytes = []
-  const sizeForNodeId = new Map()
+  const measurementsPercentage: number[] = []
+  const measurementsBytes: number[] = []
+  const sizeForNodeId = new Map<number, number>()
+
   for (const sample of profile.samples) {
     sizeForNodeId.set(sample.nodeId, (sizeForNodeId.get(sample.nodeId) || 0) + sample.size)
     let totalSize = 0
@@ -127,26 +150,27 @@ async function runTest(testButton, benchmarkUrl) {
   return { medianPercentage, medianBytes }
 }
 
-function* children(node) {
+function* children(
+  node: Protocol.HeapProfiler.SamplingHeapProfileNode
+): Generator<Protocol.HeapProfiler.SamplingHeapProfileNode> {
   yield node
   for (const child of node.children || []) {
     yield* children(child)
   }
 }
-function isSdkBundleUrl(url) {
+
+function isSdkBundleUrl(url: string): boolean {
   return (
     url.startsWith('https://www.datad0g-browser-agent.com/') ||
     url.startsWith('https://www.datadoghq-browser-agent.com/')
   )
 }
 
-function average(values) {
+function average(values: number[]): number {
   return Number((values.reduce((a, b) => a + b, 0) / values.length).toFixed(2))
 }
 
-function median(values) {
+function median(values: number[]): number {
   values.sort((a, b) => a - b)
   return values[Math.floor(values.length / 2)]
 }
-
-module.exports = { computeMemoryPerformance }

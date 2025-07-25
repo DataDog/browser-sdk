@@ -1,9 +1,13 @@
-const { runMain } = require('../lib/executionUtils')
-const { calculateBundleSizes } = require('../lib/computeBundleSize')
-const { reportAsPrComment } = require('./lib/reportAsAPrComment')
-const { reportToDatadog } = require('./lib/reportToDatadog')
-const { computeCpuPerformance } = require('./lib/computeCpuPerformance')
-const { computeMemoryPerformance } = require('./lib/computeMemoryPerformance')
+import { runMain } from '../lib/executionUtils'
+import { calculateBundleSizes } from '../lib/computeBundleSize'
+import { reportAsPrComment } from './lib/reportAsAPrComment'
+import { reportToDatadog } from './lib/reportToDatadog'
+import { computeCpuPerformance } from './lib/computeCpuPerformance'
+import { computeMemoryPerformance } from './lib/computeMemoryPerformance'
+
+interface UncompressedBundleSizes {
+  [key: string]: number
+}
 
 runMain(async () => {
   const localBundleSizes = extractUncompressedBundleSizes(calculateBundleSizes())
@@ -15,6 +19,8 @@ runMain(async () => {
 })
 
 // keep compatibility with the logs and PR comment format
-function extractUncompressedBundleSizes(bundleSizes) {
+function extractUncompressedBundleSizes(
+  bundleSizes: Record<string, { uncompressed: number }>
+): UncompressedBundleSizes {
   return Object.fromEntries(Object.entries(bundleSizes).map(([key, size]) => [key, size.uncompressed]))
 }

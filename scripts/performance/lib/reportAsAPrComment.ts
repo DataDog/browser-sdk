@@ -1,27 +1,58 @@
-const { command } = require('../../lib/command')
-const { formatSize } = require('../../lib/computeBundleSize')
-const { fetchHandlingError } = require('../../lib/executionUtils')
-const { LOCAL_BRANCH, getLastCommonCommit, fetchPR } = require('../../lib/gitUtils')
-const { getGithubAccessToken } = require('../../lib/secrets')
-const { fetchPerformanceMetrics } = require('./fetchPerformanceMetrics')
+import { command } from '../../lib/command'
+import { formatSize } from '../../lib/computeBundleSize'
+import { fetchHandlingError } from '../../lib/executionUtils'
+import { LOCAL_BRANCH, getLastCommonCommit, fetchPR } from '../../lib/gitUtils'
+import { getGithubAccessToken } from '../../lib/secrets'
+import { fetchPerformanceMetrics } from './fetchPerformanceMetrics'
+
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere --raw`.run()
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
 const LOCAL_COMMIT_SHA = process.env.CI_COMMIT_SHORT_SHA
 
-async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
+interface BundleSizes {
+  [key: string]: number
+}
+
+interface MemoryPerformance {
+  testProperty: string
+  sdkMemoryBytes: number
+  sdkMemoryPercentage: number
+}
+
+interface PerformanceMetric {
+  name: string
+  value: number | null
+}
+
+interface PerformanceDifference {
+  name: string
+  change: number | null
+  percentageChange: string | number | null
+}
+
+export async function reportAsPrComment(
+  localBundleSizes: BundleSizes,
+  memoryLocalPerformance: MemoryPerformance[]
+): Promise<void> {
+  if (!LOCAL_BRANCH) {
+    console.log('LOCAL_BRANCH is not defined')
+    return
+  }
+
   const pr = await fetchPR(LOCAL_BRANCH)
   if (!pr) {
     console.log('No pull requests found for the branch')
     return
   }
-  const lastCommonCommit = getLastCommonCommit(pr.base.ref, LOCAL_BRANCH)
+
+  const lastCommonCommit = getLastCommonCommit(pr.base.ref)
   const packageNames = Object.keys(localBundleSizes)
   const testNames = memoryLocalPerformance.map((obj) => obj.testProperty)
   const baseBundleSizes = await fetchPerformanceMetrics('bundle', packageNames, lastCommonCommit)
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testNames, lastCommonCommit)
-  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA)
+  const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA || '')
   const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
   const differenceBundle = compare(baseBundleSizes, localBundleSizes)
   const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
@@ -40,24 +71,27 @@ async function reportAsPrComment(localBundleSizes, memoryLocalPerformance) {
   await updateOrAddComment(message, pr.number, commentId)
 }
 
-function compare(baseResults, localResults) {
+function compare(
+  baseResults: PerformanceMetric[],
+  localResults: BundleSizes | PerformanceMetric[]
+): PerformanceDifference[] {
   return baseResults.map((baseResult) => {
-    let localResult = null
+    let localResult: number | null = null
 
     if (Array.isArray(localResults)) {
       const localResultObj = localResults.find((result) => result.name === baseResult.name)
       localResult = localResultObj ? localResultObj.value : null
     } else {
-      localResult = localResults[baseResult.name]
+      localResult = localResults[baseResult.name] ?? null
     }
 
     let change = null
-    let percentageChange = null
+    let percentageChange: string | number | null = null
 
-    if (baseResult.value && localResult) {
+    if (baseResult.value !== null && localResult !== null) {
       change = localResult - baseResult.value
       percentageChange = ((change / baseResult.value) * 100).toFixed(2)
-    } else if (localResult) {
+    } else if (localResult !== null) {
       change = localResult
       percentageChange = 'N/A'
     }
@@ -70,7 +104,7 @@ function compare(baseResults, localResults) {
   })
 }
 
-async function retrieveExistingCommentId(prNumber) {
+async function retrieveExistingCommentId(prNumber: number): Promise<number | undefined> {
   const response = await fetchHandlingError(
     `https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`,
     {
@@ -80,13 +114,14 @@ async function retrieveExistingCommentId(prNumber) {
       },
     }
   )
-  const comments = await response.json()
+  const comments = (await response.json()) as Array<{ id: number; body: string }>
   const targetComment = comments.find((comment) => comment.body.startsWith(`## ${PR_COMMENT_HEADER}`))
   if (targetComment !== undefined) {
     return targetComment.id
   }
 }
-async function updateOrAddComment(message, prNumber, commentId) {
+
+async function updateOrAddComment(message: string, prNumber: number, commentId: number | undefined): Promise<void> {
   const method = commentId ? 'PATCH' : 'POST'
   const payload = {
     pr_url: `https://github.com/DataDog/browser-sdk/pull/${prNumber}`,
@@ -105,24 +140,25 @@ async function updateOrAddComment(message, prNumber, commentId) {
 }
 
 function createMessage(
-  differenceBundle,
-  differenceCpu,
-  baseBundleSizes,
-  localBundleSizes,
-  memoryBasePerformance,
-  memoryLocalPerformance,
-  cpuBasePerformance,
-  cpuLocalPerformance,
-  prNumber
-) {
+  differenceBundle: PerformanceDifference[],
+  differenceCpu: PerformanceDifference[],
+  baseBundleSizes: PerformanceMetric[],
+  localBundleSizes: BundleSizes,
+  memoryBasePerformance: PerformanceMetric[],
+  memoryLocalPerformance: MemoryPerformance[],
+  cpuBasePerformance: PerformanceMetric[],
+  cpuLocalPerformance: PerformanceMetric[],
+  prNumber: number
+): string {
   let highIncreaseDetected = false
   const bundleRows = differenceBundle.map((diff, index) => {
-    const baseSize = formatSize(baseBundleSizes[index].value)
-    const localSize = formatSize(localBundleSizes[diff.name])
-    const diffSize = formatSize(diff.change)
-    const sign = diff.percentageChange > 0 ? '+' : ''
+    const baseSize = formatSize(baseBundleSizes[index].value ?? 0)
+    const localSize = formatSize(localBundleSizes[diff.name] ?? 0)
+    const diffSize = formatSize(diff.change ?? 0)
+    const sign =
+      diff.percentageChange && typeof diff.percentageChange === 'number' && diff.percentageChange > 0 ? '+' : ''
     let status = '✅'
-    if (diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
+    if (typeof diff.percentageChange === 'number' && diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
       status = '⚠️'
       highIncreaseDetected = true
     }
@@ -158,15 +194,15 @@ function createMessage(
 
   const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
     const memoryTestPerformance = memoryLocalPerformance[index]
-    const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
+    const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 0
     const localMemoryTestValue =
-      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
-        ? memoryTestPerformance.sdkMemoryBytes
-        : 'N/A'
+      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null ? memoryTestPerformance.sdkMemoryBytes : 0
     return [
       memoryTestPerformance.testProperty,
-      formatSize(baseMemoryTestValue),
-      formatSize(localMemoryTestValue),
+      baseMemoryPerf.value !== null ? formatSize(baseMemoryPerf.value) : 'N/A',
+      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
+        ? formatSize(memoryTestPerformance.sdkMemoryBytes)
+        : 'N/A',
       formatSize(localMemoryTestValue - baseMemoryTestValue),
     ]
   })
@@ -183,14 +219,19 @@ function createMessage(
   return message
 }
 
-function formatBundleName(bundleName) {
+function formatBundleName(bundleName: string): string {
   return bundleName
     .split('_')
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
 }
 
-function markdownArray({ headers, rows }) {
+interface MarkdownArrayOptions {
+  headers: string[]
+  rows: string[][]
+}
+
+function markdownArray({ headers, rows }: MarkdownArrayOptions): string {
   let markdown = `| ${headers.join(' | ')} |\n| ${new Array(headers.length).fill('---').join(' | ')} |\n`
   rows.forEach((row) => {
     markdown += `| ${row.join(' | ')} |\n`
@@ -198,7 +239,4 @@ function markdownArray({ headers, rows }) {
   return markdown
 }
 
-module.exports = {
-  LOCAL_COMMIT_SHA,
-  reportAsPrComment,
-}
+export { LOCAL_COMMIT_SHA }

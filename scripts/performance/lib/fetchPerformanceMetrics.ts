@@ -1,12 +1,24 @@
-const { getOrg2ApiKey, getOrg2AppKey } = require('../../lib/secrets')
-const { fetchHandlingError } = require('../../lib/executionUtils')
+import { getOrg2ApiKey, getOrg2AppKey } from '../../lib/secrets'
+import { fetchHandlingError } from '../../lib/executionUtils'
+
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 
-function fetchPerformanceMetrics(type, names, commitId) {
+interface Metric {
+  name: string
+  value: number | null
+}
+
+interface DatadogResponse {
+  series?: Array<{
+    pointlist?: Array<[number, number]>
+  }>
+}
+
+export function fetchPerformanceMetrics(type: string, names: string[], commitId: string): Promise<Metric[]> {
   return Promise.all(names.map((name) => fetchMetric(type, name, commitId)))
 }
 
-async function fetchMetric(type, name, commitId) {
+async function fetchMetric(type: string, name: string, commitId: string): Promise<Metric> {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
   let query = ''
@@ -31,7 +43,7 @@ async function fetchMetric(type, name, commitId) {
       'DD-APPLICATION-KEY': getOrg2AppKey(),
     },
   })
-  const data = await response.json()
+  const data = (await response.json()) as DatadogResponse
   if (data.series && data.series.length > 0 && data.series[0].pointlist && data.series[0].pointlist.length > 0) {
     return {
       name,
@@ -42,8 +54,4 @@ async function fetchMetric(type, name, commitId) {
     name,
     value: null,
   }
-}
-
-module.exports = {
-  fetchPerformanceMetrics,
 }
