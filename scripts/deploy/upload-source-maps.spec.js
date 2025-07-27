@@ -73,6 +73,13 @@ void describe('upload-source-maps', () => {
           command:
             'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-v6.js.map',
         },
+        {
+          command: 'mv packages/flagging/bundle/datadog-flagging.js packages/flagging/bundle/datadog-flagging-v6.js',
+        },
+        {
+          command:
+            'mv packages/flagging/bundle/datadog-flagging.js.map packages/flagging/bundle/datadog-flagging-v6.js.map',
+        },
       ])
 
       // upload the source maps
@@ -90,6 +97,11 @@ void describe('upload-source-maps', () => {
         {
           command:
             'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/flagging/bundle --service browser-flagging-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-flagging/ --repository-url https://www.github.com/datadog/browser-sdk',
           env,
         },
       ])
@@ -113,6 +125,11 @@ void describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/flagging/bundle --service browser-flagging-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-flagging/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
     ])
@@ -142,6 +159,13 @@ void describe('upload-source-maps', () => {
         command:
           'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-staging.js.map',
       },
+      {
+        command: 'mv packages/flagging/bundle/datadog-flagging.js packages/flagging/bundle/datadog-flagging-staging.js',
+      },
+      {
+        command:
+          'mv packages/flagging/bundle/datadog-flagging.js.map packages/flagging/bundle/datadog-flagging-staging.js.map',
+      },
     ])
 
     // upload the source maps
@@ -174,6 +198,16 @@ void describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/flagging/bundle --service browser-flagging-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-flagging/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_STAGING,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/flagging/bundle --service browser-flagging-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-flagging/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
     ])
@@ -203,6 +237,13 @@ void describe('upload-source-maps', () => {
         command:
           'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-canary.js.map',
       },
+      {
+        command: 'mv packages/flagging/bundle/datadog-flagging.js packages/flagging/bundle/datadog-flagging-canary.js',
+      },
+      {
+        command:
+          'mv packages/flagging/bundle/datadog-flagging.js.map packages/flagging/bundle/datadog-flagging-canary.js.map',
+      },
     ])
 
     // upload the source maps
@@ -220,6 +261,11 @@ void describe('upload-source-maps', () => {
       {
         command:
           'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/flagging/bundle --service browser-flagging-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-flagging/ --repository-url https://www.github.com/datadog/browser-sdk',
         env: ENV_PROD,
       },
     ])
