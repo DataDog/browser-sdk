@@ -2,7 +2,7 @@ import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import { HookNames, timeStampNow } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { DefaultTelemetryEventAttributes, DefaultRumEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startDefaultContext } from './defaultContext'
 
@@ -36,7 +36,7 @@ describe('startDefaultContext', () => {
       })
     })
 
-    it('should set the browser sdk version if event bridge detected', () => {
+    it('should set the browser sdk version always', () => {
       startDefaultContext(hooks, mockRumConfiguration(), 'rum')
       const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
@@ -51,7 +51,48 @@ describe('startDefaultContext', () => {
       }) as DefaultRumEventAttributes
 
       expect(eventWithEventBridge._dd!.browser_sdk_version).toBeDefined()
-      expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeUndefined()
+      expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeDefined()
+    })
+
+    it('should set the browser sdk version if source is overridden', () => {
+      startDefaultContext(hooks, mockRumConfiguration({ source: 'flutter' }), 'rum')
+      const eventWithOverriddenSource = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      }) as DefaultRumEventAttributes
+
+      expect(eventWithOverriddenSource._dd!.browser_sdk_version).toBeDefined()
+    })
+
+    it('should set the configured source and variant', () => {
+      startDefaultContext(
+        hooks,
+        mockRumConfiguration({
+          applicationId: '1',
+          source: 'browser',
+          variant: 'test-variant',
+        }),
+        'rum'
+      )
+
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      })
+
+      expect(defaultRumEventAttributes).toEqual({
+        type: 'view',
+        application: {
+          id: '1',
+        },
+        date: timeStampNow(),
+        source: 'browser',
+        _dd: jasmine.objectContaining({
+          format_version: 2,
+          drift: jasmine.any(Number),
+          variant: 'test-variant',
+        }),
+      })
     })
 
     it('should set the configured sample rates', () => {
