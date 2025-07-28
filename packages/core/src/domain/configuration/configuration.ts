@@ -220,7 +220,7 @@ export interface InitConfiguration {
   /**
    * [Internal option] Additional configuration for the SDK.
    */
-  source?: string | undefined
+  source?: 'browser' | 'flutter' | undefined
 
   /**
    * [Internal option] Additional configuration for the SDK.
@@ -279,7 +279,7 @@ export interface Configuration extends TransportConfiguration {
 
   // internal
   sdkVersion?: string | undefined
-  source: string
+  source: 'browser' | 'flutter'
   variant?: string | undefined
 }
 
@@ -411,7 +411,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
-    source: initConfiguration.source || 'browser',
+    source: initConfiguration.source,
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,
   } satisfies RawTelemetryConfiguration
