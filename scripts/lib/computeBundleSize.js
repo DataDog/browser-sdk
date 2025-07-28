@@ -72,6 +72,10 @@ function calculateBundleSizes() {
 }
 
 function formatSize(bytes) {
+  if (bytes === null) {
+    return 'N/A'
+  }
+
   if (bytes < 1024) {
     return `${Math.round(bytes)} B`
   }

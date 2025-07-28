@@ -120,9 +120,9 @@ function createMessage(
     const baseSize = formatSize(baseBundleSizes[index].value)
     const localSize = formatSize(localBundleSizes[diff.name])
     const diffSize = formatSize(diff.change)
-    const sign = diff.percentageChange > 0 ? '+' : ''
+    const sign = typeof diff.percentageChange === 'number' && diff.percentageChange > 0 ? '+' : ''
     let status = '✅'
-    if (diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
+    if (typeof diff.percentageChange === 'number' && diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
       status = '⚠️'
       highIncreaseDetected = true
     }
@@ -158,16 +158,15 @@ function createMessage(
 
   const memoryRows = memoryBasePerformance.map((baseMemoryPerf, index) => {
     const memoryTestPerformance = memoryLocalPerformance[index]
-    const baseMemoryTestValue = baseMemoryPerf.value !== null ? baseMemoryPerf.value : 'N/A'
-    const localMemoryTestValue =
-      memoryTestPerformance && memoryTestPerformance.sdkMemoryBytes !== null
-        ? memoryTestPerformance.sdkMemoryBytes
-        : 'N/A'
+    const baseMemoryTestValue = baseMemoryPerf.value
+    const localMemoryTestValue = memoryTestPerformance.sdkMemoryBytes
     return [
       memoryTestPerformance.testProperty,
       formatSize(baseMemoryTestValue),
       formatSize(localMemoryTestValue),
-      formatSize(localMemoryTestValue - baseMemoryTestValue),
+      typeof localMemoryTestValue === 'number' && typeof baseMemoryTestValue === 'number'
+        ? formatSize(localMemoryTestValue - baseMemoryTestValue)
+        : 'N/A',
     ]
   })
 
