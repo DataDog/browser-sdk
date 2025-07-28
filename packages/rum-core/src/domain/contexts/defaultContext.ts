@@ -14,7 +14,6 @@ export function startDefaultContext(
     const source = configuration.source
     const variant = configuration.variant
     const version = configuration.version
-    const isSourceOverridden = source !== 'browser'
 
     return {
       type: eventType,
@@ -26,7 +25,7 @@ export function startDefaultContext(
           session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
           profiling_sample_rate: round(configuration.profilingSampleRate, 3),
         },
-        browser_sdk_version: canUseEventBridge() || isSourceOverridden ? __BUILD_ENV__SDK_VERSION__ : undefined,
+        browser_sdk_version: __BUILD_ENV__SDK_VERSION__,
         sdk_name: sdkName,
         ...(variant || version ? { variant, version } : {}),
       },
