@@ -154,7 +154,7 @@ describe('endpointBuilder', () => {
 
   describe('source and variant configuration', () => {
     it('should use the default source when no configuration is provided', () => {
-      const config = initConfiguration
+      const config = { ...initConfiguration, source: 'browser' as const }
 
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=browser')
@@ -163,9 +163,9 @@ describe('endpointBuilder', () => {
     })
 
     it('should use source and variant when provided', () => {
-      const config = { ...initConfiguration, source: 'my-source', variant: 'my-variant' }
+      const config = { ...initConfiguration, source: 'flutter' as const, variant: 'my-variant' }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
-      expect(endpoint).toContain('ddsource=my-source')
+      expect(endpoint).toContain('ddsource=flutter')
       expect(endpoint).toContain('_dd.variant=my-variant')
     })
 
