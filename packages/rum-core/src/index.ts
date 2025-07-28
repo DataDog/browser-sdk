@@ -46,7 +46,7 @@ export type {
   RumInitConfiguration,
   RumConfiguration,
   FeatureFlagsForEvents,
-  RumSdkConfig,
+  RemoteConfiguration,
 } from './domain/configuration'
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/getActionNameFromElement'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'

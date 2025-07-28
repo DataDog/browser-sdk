@@ -1,5 +1,5 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration, RumSdkConfig } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
@@ -69,7 +69,7 @@ class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
   private alsoRunWithRumSlim = false
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
-  private remoteConfig?: RumSdkConfig = undefined
+  private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
   private body = ''
   private basePath = ''
@@ -134,8 +134,8 @@ class TestBuilder {
     return this
   }
 
-  withRemoteConfig(config: RumSdkConfig) {
-    this.remoteConfig = config
+  withRemoteConfiguration(remoteConfiguration: RemoteConfiguration) {
+    this.remoteConfiguration = remoteConfiguration
     return this
   }
 
@@ -145,7 +145,7 @@ class TestBuilder {
       head: this.head,
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
-      remoteConfig: this.remoteConfig,
+      remoteConfiguration: this.remoteConfiguration,
       rumInit: this.rumInit,
       logsInit: this.logsInit,
       useRumSlim: false,
@@ -216,7 +216,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfig))
+    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(browserLogs, testContext)

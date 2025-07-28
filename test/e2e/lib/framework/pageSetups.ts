@@ -1,6 +1,6 @@
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration, RumSdkConfig } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import type { Servers } from './httpServers'
 
@@ -10,7 +10,7 @@ export interface SetupOptions {
   logs?: LogsInitConfiguration
   logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
-  remoteConfig?: RumSdkConfig
+  remoteConfiguration?: RemoteConfiguration
   eventBridge: boolean
   head?: string
   body?: string

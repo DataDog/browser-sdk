@@ -7,7 +7,7 @@ test.describe('remote configuration', () => {
       sessionSampleRate: 100,
       remoteConfigurationId: 'e2e',
     })
-    .withRemoteConfig({
+    .withRemoteConfiguration({
       rum: { applicationId: 'e2e', sessionSampleRate: 1 },
     })
     .run(async ({ page }) => {
