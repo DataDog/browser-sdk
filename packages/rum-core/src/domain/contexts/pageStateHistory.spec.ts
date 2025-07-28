@@ -2,7 +2,7 @@ import type { ServerDuration, Duration, RelativeTime } from '@datadog/browser-co
 import { HookNames } from '@datadog/browser-core'
 import type { Clock } from '../../../../core/test'
 import { mockClock, registerCleanupTask } from '../../../../core/test'
-import { mockRumConfiguration, mockPerformanceObserver } from '../../../test'
+import { mockRumConfiguration } from '../../../test'
 import { RumEventType } from '../../rawRumEvent.types'
 import * as performanceObservable from '../../browser/performanceObservable'
 import type { Hooks } from '../hooks'
@@ -226,14 +226,12 @@ describe('pageStateHistory', () => {
     })
 
     it('should backfill history if visibility-state is supported and entries exist', () => {
-      mockPerformanceObserver({
-        supportedEntryTypes: [
-          ...Object.values(performanceObservable.RumPerformanceEntryType).filter(
-            (type) => type !== performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE
-          ),
-          performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE,
-        ],
-      })
+      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.returnValue([
+        ...Object.values(performanceObservable.RumPerformanceEntryType).filter(
+          (type) => type !== performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE
+        ),
+        performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE,
+      ])
 
       const mockEntries = [
         { entryType: 'visibility-state', name: 'visible', startTime: 5 },
@@ -253,11 +251,11 @@ describe('pageStateHistory', () => {
     })
 
     it('should not backfill if visibility-state is not supported', () => {
-      mockPerformanceObserver({
-        supportedEntryTypes: Object.values(performanceObservable.RumPerformanceEntryType).filter(
+      spyOnProperty(PerformanceObserver, 'supportedEntryTypes', 'get').and.returnValue(
+        Object.values(performanceObservable.RumPerformanceEntryType).filter(
           (type) => type !== performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE
-        ),
-      })
+        )
+      )
 
       getEntriesByTypeSpy.calls.reset()
 
