@@ -64,8 +64,8 @@ function getPackageSize(packageName) {
 function calculateBundleSizes() {
   const bundleSizes = {}
 
-  for (const package of packages) {
-    Object.assign(bundleSizes, getPackageSize(package))
+  for (const pkg of packages) {
+    Object.assign(bundleSizes, getPackageSize(pkg))
   }
 
   return bundleSizes
