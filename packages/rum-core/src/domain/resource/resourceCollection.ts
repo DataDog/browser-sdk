@@ -14,7 +14,11 @@ import {
   createPerformanceObservable,
   type RumPerformanceResourceTiming,
 } from '../../browser/performanceObservable'
-import type { RumXhrResourceEventDomainContext, RumFetchResourceEventDomainContext } from '../../domainContext.types'
+import type {
+  RumXhrResourceEventDomainContext,
+  RumFetchResourceEventDomainContext,
+  RumOtherResourceEventDomainContext,
+} from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -124,16 +128,7 @@ function processRequest(
     startTime: startClocks.relative,
     duration,
     rawRumEvent: resourceEvent,
-    domainContext: {
-      performanceEntry: matchingTiming,
-      xhr: request.xhr,
-      response: request.response,
-      requestInput: request.input,
-      requestInit: request.init,
-      error: request.error,
-      isAborted: request.isAborted,
-      handlingStack: request.handlingStack,
-    } as RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext,
+    domainContext: getResourceDomainContext(matchingTiming, request),
   }
 }
 
@@ -175,9 +170,37 @@ function processResourceEntry(
     startTime: startClocks.relative,
     duration,
     rawRumEvent: resourceEvent,
-    domainContext: {
+    domainContext: getResourceDomainContext(entry, undefined),
+  }
+}
+
+function getResourceDomainContext(
+  entry: RumPerformanceResourceTiming | undefined,
+  request: RequestCompleteEvent | undefined
+): RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext {
+  if (request) {
+    const baseDomainContext = {
       performanceEntry: entry,
-    },
+      isAborted: request.isAborted,
+      handlingStack: request.handlingStack,
+    }
+
+    if (request.type === RequestType.XHR) {
+      return {
+        xhr: request.xhr!,
+        ...baseDomainContext,
+      }
+    }
+    return {
+      requestInput: request.input as RequestInfo,
+      requestInit: request.init,
+      response: request.response,
+      error: request.error,
+      ...baseDomainContext,
+    }
+  }
+  return {
+    performanceEntry: entry!,
   }
 }
 
