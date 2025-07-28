@@ -36,7 +36,7 @@ describe('startDefaultContext', () => {
       })
     })
 
-    it('should set the browser sdk version if event bridge detected', () => {
+    it('should set the browser sdk version always', () => {
       startDefaultContext(hooks, mockRumConfiguration(), 'rum')
       const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
@@ -51,7 +51,7 @@ describe('startDefaultContext', () => {
       }) as DefaultRumEventAttributes
 
       expect(eventWithEventBridge._dd!.browser_sdk_version).toBeDefined()
-      expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeUndefined()
+      expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeDefined()
     })
 
     it('should set the browser sdk version if source is overridden', () => {
