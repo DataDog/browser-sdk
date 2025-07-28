@@ -35,8 +35,7 @@ describe('resourceCollection', () => {
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
-    // Run tasks immediately to simplify general tests
-    taskQueuePushSpy = spyOn(taskQueue, 'push').and.callFake((task) => task())
+    taskQueuePushSpy = spyOn(taskQueue, 'push')
     const startResult = startResourceCollection(
       lifeCycle,
       { ...baseConfiguration, ...partialConfig },
@@ -69,6 +68,7 @@ describe('resourceCollection', () => {
       responseStart: 250 as RelativeTime,
     })
     notifyPerformanceEntries([performanceEntry])
+    runTasks()
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -151,6 +151,7 @@ describe('resourceCollection', () => {
         setupResourceCollection({ trackResources: false })
 
         notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+        runTasks()
 
         expect(rawRumEvents.length).toBe(0)
       })
@@ -172,6 +173,7 @@ describe('resourceCollection', () => {
         setupResourceCollection({ trackResources: false })
 
         notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
+        runTasks()
 
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
@@ -283,6 +285,7 @@ describe('resourceCollection', () => {
     setupResourceCollection()
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
     notifyPerformanceEntries([performanceEntry])
+    runTasks()
     expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBeUndefined()
   })
 
@@ -290,6 +293,7 @@ describe('resourceCollection', () => {
     it('should be processed from traced initial document', () => {
       setupResourceCollection()
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
+      runTasks()
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
@@ -402,8 +406,6 @@ describe('resourceCollection', () => {
 
   it('collects handle resources in different tasks', () => {
     setupResourceCollection()
-    // Don't run the tasks immediately
-    taskQueuePushSpy.and.callFake(noop)
 
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
@@ -421,6 +423,13 @@ describe('resourceCollection', () => {
     })
   })
 
+  function runTasks() {
+    taskQueuePushSpy.calls.allArgs().forEach(([task]) => {
+      task()
+    })
+    taskQueuePushSpy.calls.reset()
+  }
+
   function notifyRequest(options: { request?: Partial<RequestCompleteEvent> } = {}) {
     const requestCompleteEvent = {
       duration: 100 as Duration,
@@ -435,5 +444,7 @@ describe('resourceCollection', () => {
     } satisfies Partial<RequestCompleteEvent> as RequestCompleteEvent
 
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, requestCompleteEvent)
+
+    runTasks()
   }
 })
