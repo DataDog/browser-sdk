@@ -39,10 +39,10 @@ describe('endpointBuilder', () => {
     })
 
     it('should not start with ddsource for internal analytics mode', () => {
-      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo', source: 'browser' }, 'rum').build(
-        'fetch',
-        DEFAULT_PAYLOAD
-      )
+      const url = createEndpointBuilder(
+        { ...initConfiguration, internalAnalyticsSubdomain: 'foo', source: 'browser' },
+        'rum'
+      ).build('fetch', DEFAULT_PAYLOAD)
       expect(url).not.toContain('/rum?ddsource')
       expect(url).toContain('ddsource=browser')
     })
