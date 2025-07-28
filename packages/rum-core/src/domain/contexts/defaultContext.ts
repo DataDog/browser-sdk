@@ -1,4 +1,4 @@
-import { canUseEventBridge, currentDrift, HookNames, round, timeStampNow } from '@datadog/browser-core'
+import { currentDrift, HookNames, round, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 
