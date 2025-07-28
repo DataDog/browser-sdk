@@ -102,9 +102,8 @@ describe('resourceCollection', () => {
   it('should create resource from completed XHR request', () => {
     setupResourceCollection()
     const xhr = new XMLHttpRequest()
-    lifeCycle.notify(
-      LifeCycleEventType.REQUEST_COMPLETED,
-      createCompletedRequest({
+    notifyRequest({
+      request: {
         duration: 100 as Duration,
         method: 'GET',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
@@ -113,8 +112,8 @@ describe('resourceCollection', () => {
         url: 'https://resource.com/valid',
         xhr,
         isAborted: false,
-      })
-    )
+      },
+    })
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -158,12 +157,11 @@ describe('resourceCollection', () => {
 
       it('should not collect a resource from a completed XHR request', () => {
         setupResourceCollection({ trackResources: false })
-        lifeCycle.notify(
-          LifeCycleEventType.REQUEST_COMPLETED,
-          createCompletedRequest({
+        notifyRequest({
+          request: {
             type: RequestType.XHR,
-          })
-        )
+          },
+        })
 
         expect(rawRumEvents.length).toBe(0)
       })
@@ -181,15 +179,14 @@ describe('resourceCollection', () => {
 
       it('should collect a resource from a completed XHR request', () => {
         setupResourceCollection({ trackResources: false })
-        lifeCycle.notify(
-          LifeCycleEventType.REQUEST_COMPLETED,
-          createCompletedRequest({
+        notifyRequest({
+          request: {
             type: RequestType.XHR,
             traceId: createTraceIdentifier(),
             spanId: createSpanIdentifier(),
             traceSampled: true,
-          })
-        )
+          },
+        })
 
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
@@ -199,11 +196,9 @@ describe('resourceCollection', () => {
 
   it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
     setupResourceCollection()
-    const mockXHR = createCompletedRequest()
-
     wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
+    notifyRequest()
 
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
@@ -212,9 +207,8 @@ describe('resourceCollection', () => {
   it('should create resource from completed fetch request', () => {
     setupResourceCollection()
     const response = new Response()
-    lifeCycle.notify(
-      LifeCycleEventType.REQUEST_COMPLETED,
-      createCompletedRequest({
+    notifyRequest({
+      request: {
         duration: 100 as Duration,
         method: 'GET',
         startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
@@ -225,8 +219,8 @@ describe('resourceCollection', () => {
         input: 'https://resource.com/valid',
         init: { headers: { foo: 'bar' } },
         isAborted: false,
-      })
-    )
+      },
+    })
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -262,13 +256,9 @@ describe('resourceCollection', () => {
       typeof input === 'object' ? JSON.stringify(input) : String(input)
     } as fetch input parameter`, () => {
       setupResourceCollection()
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
-          type: RequestType.FETCH,
-          input,
-        })
-      )
+      notifyRequest({
+        request: { type: RequestType.FETCH, input },
+      })
 
       expect(rawRumEvents.length).toBe(1)
       expect((rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext).requestInput).toBe(input)
@@ -278,7 +268,9 @@ describe('resourceCollection', () => {
   it('should include the error in failed fetch requests', () => {
     setupResourceCollection()
     const error = new Error()
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ error }))
+    notifyRequest({
+      request: { type: RequestType.FETCH, error },
+    })
 
     expect(rawRumEvents[0].domainContext).toEqual(
       jasmine.objectContaining({
@@ -306,14 +298,13 @@ describe('resourceCollection', () => {
 
     it('should be processed from sampled completed request', () => {
       setupResourceCollection()
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: true,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.trace_id).toBeDefined()
       expect(privateFields.span_id).toBeDefined()
@@ -321,14 +312,13 @@ describe('resourceCollection', () => {
 
     it('should not be processed from not sampled completed request', () => {
       setupResourceCollection()
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: false,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.trace_id).not.toBeDefined()
       expect(privateFields.span_id).not.toBeDefined()
@@ -342,14 +332,13 @@ describe('resourceCollection', () => {
       })!
       setupResourceCollection(config)
 
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: true,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0.6)
     })
@@ -361,14 +350,13 @@ describe('resourceCollection', () => {
       })!
       setupResourceCollection(config)
 
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: true,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toBeUndefined()
     })
@@ -381,14 +369,13 @@ describe('resourceCollection', () => {
       })!
       setupResourceCollection(config)
 
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: true,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0)
     })
@@ -397,7 +384,7 @@ describe('resourceCollection', () => {
   it('should collect handlingStack from completed fetch request', () => {
     setupResourceCollection()
     const response = new Response()
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
+    notifyRequest({ request: { type: RequestType.FETCH, response } })
     const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
 
     expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
@@ -406,7 +393,7 @@ describe('resourceCollection', () => {
   it('should collect handlingStack from completed XHR request', () => {
     setupResourceCollection()
     const xhr = new XMLHttpRequest()
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ xhr }))
+    notifyRequest({ request: { type: RequestType.XHR, xhr } })
 
     const domainContext = rawRumEvents[0].domainContext as RumXhrResourceEventDomainContext
 
@@ -433,19 +420,20 @@ describe('resourceCollection', () => {
       expect(rawRumEvents.length).toBe(index + 1)
     })
   })
-})
 
-function createCompletedRequest(details?: Partial<RequestCompleteEvent>): RequestCompleteEvent {
-  const request: Partial<RequestCompleteEvent> = {
-    duration: 100 as Duration,
-    method: 'GET',
-    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-    status: 200,
-    type: RequestType.XHR,
-    url: 'https://resource.com/valid',
-    handlingStack:
-      'Error: \n  at <anonymous> @ http://localhost/foo.js:1:2\n    at <anonymous> @ http://localhost/vendor.js:1:2',
-    ...details,
+  function notifyRequest(options: { request?: Partial<RequestCompleteEvent> } = {}) {
+    const requestCompleteEvent = {
+      duration: 100 as Duration,
+      method: 'GET',
+      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      status: 200,
+      type: RequestType.XHR,
+      url: 'https://resource.com/valid',
+      handlingStack:
+        'Error: \n  at <anonymous> @ http://localhost/foo.js:1:2\n    at <anonymous> @ http://localhost/vendor.js:1:2',
+      ...options.request,
+    } satisfies Partial<RequestCompleteEvent> as RequestCompleteEvent
+
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, requestCompleteEvent)
   }
-  return request as RequestCompleteEvent
-}
+})
