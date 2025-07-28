@@ -14,7 +14,7 @@ See the dedicated [Datadog Browser RUM Collection documentation][18] to learn ho
 
 ### API Reference
 
-For detailed API information and comprehensive guides, see the [Datadog Browser SDK API Reference][71].
+For detailed API information, see the [Datadog Browser SDK API Reference][71].
 
 ## npm packages
 
