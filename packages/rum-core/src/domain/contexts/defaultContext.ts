@@ -27,13 +27,14 @@ export function startDefaultContext(
         },
         browser_sdk_version: __BUILD_ENV__SDK_VERSION__,
         sdk_name: sdkName,
-        ...(variant || version ? { variant, version } : {}),
+        ...(variant ? { variant } : {}),
+        ...(version ? { version } : {}),
       },
       application: {
         id: configuration.applicationId,
       },
       date: timeStampNow(),
-      source: source as DefaultRumEventAttributes['source'],
+      source,
     }
   })
 
