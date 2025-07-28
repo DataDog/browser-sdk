@@ -162,17 +162,12 @@ describe('endpointBuilder', () => {
       expect(endpoint).not.toContain('_dd.sdk_version=')
     })
 
-    it('should use source and variant when provided', () => {
-      const config = { ...initConfiguration, source: 'flutter' as const, variant: 'my-variant' }
+    it('should use sdk_version, source and variant when provided', () => {
+      const config = { ...initConfiguration, sdkVersion: '1.2.3', source: 'flutter' as const, variant: 'my-variant' }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=flutter')
-      expect(endpoint).toContain('_dd.variant=my-variant')
-    })
-
-    it('should include sdk_version when provided in additionalConfig', () => {
-      const config = { ...initConfiguration, sdkVersion: '1.2.3' }
-      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('_dd.sdk_version=1.2.3')
+      expect(endpoint).toContain('_dd.variant=my-variant')
     })
   })
 })
