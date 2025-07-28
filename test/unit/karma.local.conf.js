@@ -4,8 +4,7 @@ const karmaBaseConf = require('./karma.base.conf')
 
 const coverageReports = ['text-summary']
 
-const coverageReportDirectory = getCoverageReportDirectory()
-if (coverageReportDirectory) {
+if (process.env.CI) {
   coverageReports.push('clover')
 }
 
@@ -16,7 +15,7 @@ module.exports = function (config) {
     browsers: ['ChromeHeadlessNoSandbox'],
     coverageIstanbulReporter: {
       reports: coverageReports,
-      dir: coverageReportDirectory,
+      dir: getCoverageReportDirectory(),
     },
     customLaunchers: {
       ChromeHeadlessNoSandbox: {
