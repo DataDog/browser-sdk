@@ -12,6 +12,10 @@ See the dedicated [Datadog Browser Log Collection documentation][08] to learn ho
 
 See the dedicated [Datadog Browser RUM Collection documentation][18] to learn how to send RUM data from your browser application to Datadog.
 
+### API Reference
+
+For detailed API information and comprehensive guides, see the [Datadog Browser SDK API Reference][71].
+
 ## npm packages
 
 This repository contains several packages:
@@ -68,3 +72,4 @@ Datadog provides one CDN bundle per [site][70]:
 [63]: https://deno.bundlejs.com/badge?q=@datadog/browser-worker&treeshake=[*]
 [64]: https://bundlejs.com/?q=@datadog/browser-worker&treeshake=[*]
 [70]: https://docs.datadoghq.com/getting_started/site/
+[71]: https://datadoghq.dev/browser-sdk/
