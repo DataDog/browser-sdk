@@ -143,10 +143,6 @@ describe('resourceCollection', () => {
     expect(rawRumEvents[0].domainContext).toEqual({
       xhr,
       performanceEntry: jasmine.any(Object),
-      response: undefined,
-      requestInput: undefined,
-      requestInit: undefined,
-      error: undefined,
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
     })
@@ -262,7 +258,6 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       performanceEntry: jasmine.any(Object),
-      xhr: undefined,
       response,
       requestInput: 'https://resource.com/valid',
       requestInit: { headers: { foo: 'bar' } },
