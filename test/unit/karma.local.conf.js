@@ -1,5 +1,13 @@
 const path = require('path')
+const { getCoverageReportDirectory } = require('../envUtils')
 const karmaBaseConf = require('./karma.base.conf')
+
+const coverageReports = ['text-summary']
+
+const coverageReportDirectory = getCoverageReportDirectory()
+if (coverageReportDirectory) {
+  coverageReports.push('clover')
+}
 
 module.exports = function (config) {
   config.set({
@@ -7,8 +15,8 @@ module.exports = function (config) {
     reporters: ['coverage-istanbul', ...karmaBaseConf.reporters],
     browsers: ['ChromeHeadlessNoSandbox'],
     coverageIstanbulReporter: {
-      reports: ['html', 'text-summary', 'json'],
-      dir: path.join(__dirname, '../../coverage'),
+      reports: coverageReports,
+      dir: coverageReportDirectory,
     },
     customLaunchers: {
       ChromeHeadlessNoSandbox: {

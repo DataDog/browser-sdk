@@ -38,9 +38,16 @@ function getTestReportDirectory() {
   }
 }
 
+function getCoverageReportDirectory() {
+  if (process.env.CI_JOB_NAME) {
+    return `coverage/${process.env.CI_JOB_NAME}`
+  }
+}
+
 module.exports = {
   getRunId,
   getBuildInfos,
   getIp,
   getTestReportDirectory,
+  getCoverageReportDirectory,
 }
