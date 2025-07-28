@@ -106,7 +106,7 @@ describe('resourceCollection', () => {
       request: {
         duration: 100 as Duration,
         method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
         type: RequestType.XHR,
         url: 'https://resource.com/valid',
@@ -115,7 +115,7 @@ describe('resourceCollection', () => {
       },
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -123,10 +123,17 @@ describe('resourceCollection', () => {
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
-        delivery_type: undefined,
-        protocol: undefined,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
         type: ResourceType.XHR,
         url: 'https://resource.com/valid',
+        render_blocking_status: 'non-blocking',
+        size: undefined,
+        encoded_body_size: undefined,
+        decoded_body_size: undefined,
+        transfer_size: undefined,
+        download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
+        first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -135,7 +142,7 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       xhr,
-      performanceEntry: undefined,
+      performanceEntry: jasmine.any(Object),
       response: undefined,
       requestInput: undefined,
       requestInit: undefined,
@@ -200,7 +207,10 @@ describe('resourceCollection', () => {
     setupResourceCollection()
     wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
-    notifyRequest()
+    notifyRequest({
+      // For now, this behavior only happens when there is no performance entry matching the request
+      notifyPerformanceEntry: false,
+    })
 
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
@@ -213,7 +223,7 @@ describe('resourceCollection', () => {
       request: {
         duration: 100 as Duration,
         method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
         type: RequestType.FETCH,
         url: 'https://resource.com/valid',
@@ -224,7 +234,7 @@ describe('resourceCollection', () => {
       },
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -232,9 +242,17 @@ describe('resourceCollection', () => {
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
-        delivery_type: undefined,
-        protocol: undefined,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
         type: ResourceType.FETCH,
+
+        render_blocking_status: 'non-blocking',
+        size: undefined,
+        encoded_body_size: undefined,
+        decoded_body_size: undefined,
+        transfer_size: undefined,
+        download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
+        first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         url: 'https://resource.com/valid',
       },
       type: RumEventType.RESOURCE,
@@ -243,7 +261,7 @@ describe('resourceCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: undefined,
+      performanceEntry: jasmine.any(Object),
       xhr: undefined,
       response,
       requestInput: 'https://resource.com/valid',
@@ -430,11 +448,11 @@ describe('resourceCollection', () => {
     taskQueuePushSpy.calls.reset()
   }
 
-  function notifyRequest(options: { request?: Partial<RequestCompleteEvent> } = {}) {
+  function notifyRequest(options: { request?: Partial<RequestCompleteEvent>; notifyPerformanceEntry?: boolean } = {}) {
     const requestCompleteEvent = {
       duration: 100 as Duration,
       method: 'GET',
-      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       status: 200,
       type: RequestType.XHR,
       url: 'https://resource.com/valid',
@@ -444,6 +462,14 @@ describe('resourceCollection', () => {
     } satisfies Partial<RequestCompleteEvent> as RequestCompleteEvent
 
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, requestCompleteEvent)
+
+    if (options.notifyPerformanceEntry !== false) {
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          initiatorType: requestCompleteEvent.type === RequestType.FETCH ? 'fetch' : 'xmlhttprequest',
+        }),
+      ])
+    }
 
     runTasks()
   }
