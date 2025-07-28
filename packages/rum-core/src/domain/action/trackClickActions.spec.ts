@@ -472,7 +472,7 @@ describe('trackClickActions', () => {
 
       expect(events.length).toBe(1)
       expect(events[0].name).toBe('Masked Element')
-      expect(events[0].nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
+      expect(events[0].nameSource).toBe(ActionNameSource.TEXT_CONTENT)
     })
 
     it('should not mask action name when defaultPrivacyLevel is allow', () => {
@@ -515,7 +515,7 @@ describe('trackClickActions', () => {
 
       expect(events.length).toBe(1)
       expect(events[0].name).toBe('Masked Element')
-      expect(events[0].nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
+      expect(events[0].nameSource).toBe(ActionNameSource.TEXT_CONTENT)
     })
 
     it('should not use allowlist masking when defaultPrivacyLevel is mask-unless-allowlisted but node privacy level is mask', () => {

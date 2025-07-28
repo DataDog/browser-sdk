@@ -1,13 +1,15 @@
-import { DefaultPrivacyLevel, safeTruncate } from '@datadog/browser-core'
+import { safeTruncate } from '@datadog/browser-core'
 import { NodePrivacyLevel, getPrivacySelector } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
-import { maskDisallowedActionName } from './privacy/maskWithAllowlist'
+import { isAllowlistMaskEnabled, maskDisallowedTextContent } from './privacy/maskWithAllowlist'
 import {
   ActionNameSource,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
   ACTION_NAME_PLACEHOLDER,
+  ACTION_NAME_TRUNCATION_LENGTH,
 } from './actionNameConstants'
 import type { ActionName } from './actionNameConstants'
+import { getNodePrivacyLevel, getTextContent } from '../privacy'
 
 export function getActionNameFromElement(
   element: Element,
@@ -31,21 +33,21 @@ export function getActionNameFromElement(
     return { name: ACTION_NAME_PLACEHOLDER, nameSource: ActionNameSource.MASK_PLACEHOLDER }
   }
 
+  const enableAllowlistMask = isAllowlistMaskEnabled(defaultPrivacyLevel, nodePrivacyLevel)
+
   return (
     getActionNameFromElementForStrategies(
       element,
       userProgrammaticAttribute,
       priorityStrategies,
-      defaultPrivacyLevel,
-      nodePrivacyLevel,
+      enableAllowlistMask,
       enablePrivacyForActionName
     ) ||
     getActionNameFromElementForStrategies(
       element,
       userProgrammaticAttribute,
       fallbackStrategies,
-      defaultPrivacyLevel,
-      nodePrivacyLevel,
+      enableAllowlistMask,
       enablePrivacyForActionName
     ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
@@ -65,36 +67,50 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
+  allowlistMaskEnabled: boolean,
   userProgrammaticAttribute: string | undefined,
   privacyEnabledActionName?: boolean
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, userProgrammaticAttribute) => {
+  (element, allowlistMaskEnabled, userProgrammaticAttribute, privacyEnabledActionName) => {
     if ('labels' in element && element.labels && element.labels.length > 0) {
-      return getActionNameFromTextualContent(element.labels[0], userProgrammaticAttribute)
+      return getActionNameFromTextualContent(
+        element.labels[0],
+        userProgrammaticAttribute,
+        allowlistMaskEnabled,
+        privacyEnabledActionName
+      )
     }
   },
   // INPUT button (and associated) value
-  (element) => {
+  (element, allowlistMaskEnabled) => {
     if (element.nodeName === 'INPUT') {
       const input = element as HTMLInputElement
       const type = input.getAttribute('type')
       if (type === 'button' || type === 'submit' || type === 'reset') {
-        return { name: input.value, nameSource: ActionNameSource.TEXT_CONTENT }
+        return {
+          name: allowlistMaskEnabled ? maskDisallowedTextContent(input.value, ACTION_NAME_PLACEHOLDER) : input.value,
+          nameSource: ActionNameSource.TEXT_CONTENT,
+        }
       }
     }
   },
   // BUTTON, LABEL or button-like element text
-  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
+  (element, allowlistMaskEnabled, userProgrammaticAttribute, privacyEnabledActionName) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
-      return getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
+      return getActionNameFromTextualContent(
+        element,
+        userProgrammaticAttribute,
+        allowlistMaskEnabled,
+        privacyEnabledActionName
+      )
     }
   },
-  (element) => getActionNameFromStandardAttribute(element, 'aria-label'),
+  (element, allowlistMaskEnabled) => getActionNameFromStandardAttribute(element, 'aria-label', allowlistMaskEnabled),
   // associated element text designated by the aria-labelledby attribute
-  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
+  (element, allowlistMaskEnabled, userProgrammaticAttribute, privacyEnabledActionName) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       return {
@@ -102,27 +118,34 @@ const priorityStrategies: NameStrategy[] = [
           .split(/\s+/)
           .map((id) => getElementById(element, id))
           .filter((label): label is HTMLElement => Boolean(label))
-          .map((element) => getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName))
+          .map((element) =>
+            getTextualContent(element, userProgrammaticAttribute, allowlistMaskEnabled, privacyEnabledActionName)
+          )
           .join(' '),
         nameSource: ActionNameSource.TEXT_CONTENT,
       }
     }
   },
-  (element) => getActionNameFromStandardAttribute(element, 'alt'),
-  (element) => getActionNameFromStandardAttribute(element, 'name'),
-  (element) => getActionNameFromStandardAttribute(element, 'title'),
-  (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
+  (element, allowlistMaskEnabled) => getActionNameFromStandardAttribute(element, 'alt', allowlistMaskEnabled),
+  (element, allowlistMaskEnabled) => getActionNameFromStandardAttribute(element, 'name', allowlistMaskEnabled),
+  (element, allowlistMaskEnabled) => getActionNameFromStandardAttribute(element, 'title', allowlistMaskEnabled),
+  (element, allowlistMaskEnabled) => getActionNameFromStandardAttribute(element, 'placeholder', allowlistMaskEnabled),
   // SELECT first OPTION text
-  (element, userProgrammaticAttribute) => {
+  (element, allowlistMaskEnabled, userProgrammaticAttribute, privacyEnabledActionName) => {
     if ('options' in element && element.options.length > 0) {
-      return getActionNameFromTextualContent(element.options[0], userProgrammaticAttribute)
+      return getActionNameFromTextualContent(
+        element.options[0],
+        userProgrammaticAttribute,
+        allowlistMaskEnabled,
+        privacyEnabledActionName
+      )
     }
   },
 ]
 
 const fallbackStrategies: NameStrategy[] = [
-  (element, userProgrammaticAttribute, privacyEnabledActionName) =>
-    getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName),
+  (element, allowlistMaskEnabled, userProgrammaticAttribute, privacyEnabledActionName) =>
+    getActionNameFromTextualContent(element, userProgrammaticAttribute, allowlistMaskEnabled, privacyEnabledActionName),
 ]
 
 /**
@@ -134,8 +157,7 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
-  defaultPrivacyLevel: DefaultPrivacyLevel,
-  nodeSelfPrivacy?: NodePrivacyLevel,
+  allowlistMaskEnabled: boolean,
   privacyEnabledActionName?: boolean
 ) {
   let element: Element | null = targetElement
@@ -148,14 +170,9 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
+      const actionName = strategy(element, allowlistMaskEnabled, userProgrammaticAttribute, privacyEnabledActionName)
       if (actionName) {
-        const { name, nameSource } =
-          (defaultPrivacyLevel === DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
-            nodeSelfPrivacy !== NodePrivacyLevel.ALLOW) ||
-          nodeSelfPrivacy === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
-            ? maskDisallowedActionName(actionName)
-            : actionName
+        const { name, nameSource } = actionName
         const trimmedName = name && name.trim()
         if (trimmedName) {
           return { name: truncate(normalizeWhitespace(trimmedName)), nameSource }
@@ -177,7 +194,7 @@ function normalizeWhitespace(s: string) {
 }
 
 function truncate(s: string) {
-  return s.length > 100 ? `${safeTruncate(s, 100)} [...]` : s
+  return s.length > ACTION_NAME_TRUNCATION_LENGTH ? `${safeTruncate(s, ACTION_NAME_TRUNCATION_LENGTH)} [...]` : s
 }
 
 function getElementById(refElement: Element, id: string) {
@@ -186,9 +203,15 @@ function getElementById(refElement: Element, id: string) {
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
 
-function getActionNameFromStandardAttribute(element: Element | HTMLElement, attribute: string): ActionName {
+function getActionNameFromStandardAttribute(
+  element: Element | HTMLElement,
+  attribute: string,
+  allowlistMaskEnabled: boolean
+): ActionName {
   return {
-    name: element.getAttribute(attribute) || '',
+    name: allowlistMaskEnabled
+      ? maskDisallowedTextContent(element.getAttribute(attribute) || '', ACTION_NAME_PLACEHOLDER)
+      : element.getAttribute(attribute) || '',
     nameSource: ActionNameSource.STANDARD_ATTRIBUTE,
   }
 }
@@ -196,55 +219,78 @@ function getActionNameFromStandardAttribute(element: Element | HTMLElement, attr
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
+  allowlistMaskEnabled: boolean,
   privacyEnabledActionName?: boolean
 ): ActionName {
   return {
-    name: getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName) || '',
+    name: getTextualContent(element, userProgrammaticAttribute, allowlistMaskEnabled, privacyEnabledActionName) || '',
     nameSource: ActionNameSource.TEXT_CONTENT,
   }
 }
 
+/**
+ * TODO: we should fix this logic in next major version
+ * In certain cases, the masked strings will be removed even from places where they shouldn't be masked,
+ * which leaks information about the private information that was masked. Example:
+ * <fieldset>
+ * <legend>Gender (Female, Male, Non-binary):</legend>
+ * <div>
+ * Currently selected gender: <span data-dd-privacy="mask">Female</span>
+ * </div>
+ * <button type="button">Update gender...</button>
+ * </fieldset>
+ * Here the customer has marked all of the gender <input>s as hidden, but if they click on the <fieldset> itself,
+ * the gender the user chose will be leaked, because it will be removed from the text of the <legend> element as well.
+ *
+ * We should use node traversal to append the wanted node text directly
+ */
 function getTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
+  allowlistMaskEnabled: boolean,
   privacyEnabledActionName?: boolean
 ) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
 
-  if ('innerText' in element) {
-    let text = element.innerText
+  const exclusionSelectors = [`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`]
+  if (userProgrammaticAttribute) {
+    exclusionSelectors.push(`[${userProgrammaticAttribute}]`)
+  }
+  if (privacyEnabledActionName) {
+    exclusionSelectors.push(
+      `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
+    )
+  }
+  const exclusionSelector = exclusionSelectors.join(', ')
 
-    const removeTextFromElements = (query: string) => {
-      const list = element.querySelectorAll<Element | HTMLElement>(query)
-      for (let index = 0; index < list.length; index += 1) {
-        const element = list[index]
-        if ('innerText' in element) {
-          const textToReplace = element.innerText
-          if (textToReplace && textToReplace.trim().length > 0) {
-            text = text.replace(textToReplace, '')
-          }
-        }
-      }
+  const allowedTexts: string[] = []
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
+  let node: Node | null
+  let length = 0
+
+  while ((node = walker.nextNode())) {
+    if (length > ACTION_NAME_TRUNCATION_LENGTH) {
+      break
     }
 
-    // remove the text of elements with programmatic attribute value
-    removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`)
-
-    if (userProgrammaticAttribute) {
-      removeTextFromElements(`[${userProgrammaticAttribute}]`)
+    if (node.parentElement && node.parentElement.closest(exclusionSelector)) {
+      continue
     }
 
-    if (privacyEnabledActionName) {
-      // remove the text of elements with privacy override
-      removeTextFromElements(
-        `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
-      )
+    const nodeText = getTextContent(node, false, NodePrivacyLevel.ALLOW)
+    if(!nodeText) {
+      continue
     }
 
-    return text
+    if (allowlistMaskEnabled) {
+      allowedTexts.push(maskDisallowedTextContent(nodeText, ACTION_NAME_PLACEHOLDER))
+    } else {
+      allowedTexts.push(nodeText)
+    }
+    length += nodeText.length
   }
 
-  return element.textContent
+  return allowedTexts.join(' ')
 }

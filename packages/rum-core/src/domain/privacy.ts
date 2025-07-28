@@ -1,5 +1,5 @@
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
-import { maskTextContent } from './action/privacy/maskWithAllowlist'
+import { maskDisallowedTextContent } from './action/privacy/maskWithAllowlist'
 import {
   NodePrivacyLevel,
   FORM_PRIVATE_TAG_NAMES,
@@ -204,7 +204,7 @@ export function getTextContent(
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
     } else if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
-      textContent = maskTextContent(textContent).maskedText
+      textContent = maskDisallowedTextContent(textContent)
     } else {
       textContent = censorText(textContent)
     }

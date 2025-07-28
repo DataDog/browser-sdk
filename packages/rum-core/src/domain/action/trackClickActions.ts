@@ -29,6 +29,7 @@ import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
+import { isAllowlistMaskEnabled } from './privacy/maskWithAllowlist'
 
 interface ActionCounts {
   errorCount: number
@@ -153,13 +154,11 @@ function processPointerDown(
   // if we use configuration.defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED as a check
   // then when we set defaultPrivacyLevel to ALLOW, and override the node privacy level to MASK_UNLESS_ALLOWLISTED
 
-  const nodePrivacyLevel =
-    configuration.defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED ||
-    nodeSelfPrivacy === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+  const nodePrivacyLevel = isAllowlistMaskEnabled(configuration.defaultPrivacyLevel, nodeSelfPrivacy)
+    ? nodeSelfPrivacy
+    : configuration.enablePrivacyForActionName
       ? nodeSelfPrivacy
-      : configuration.enablePrivacyForActionName
-        ? nodeSelfPrivacy
-        : NodePrivacyLevel.ALLOW
+      : NodePrivacyLevel.ALLOW
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return undefined

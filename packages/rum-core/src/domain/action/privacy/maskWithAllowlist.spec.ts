@@ -1,7 +1,7 @@
 import { ActionType } from '../../../rawRumEvent.types'
-import { ActionNameSource } from '../actionNameConstants'
+import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../actionNameConstants'
 import type { ClickActionBase } from '../trackClickActions'
-import { maskDisallowedActionName } from './maskWithAllowlist'
+import { maskDisallowedTextContent } from './maskWithAllowlist'
 
 const TEST_STRINGS = {
   COMPLEX_MIXED: 'test-team-name:💥$$$',
@@ -12,7 +12,7 @@ describe('maskWithAllowlist', () => {
   const clickActionBase: ClickActionBase = {
     type: ActionType.CLICK,
     name: '',
-    nameSource: ActionNameSource.MASK_DISALLOWED,
+    nameSource: ActionNameSource.TEXT_CONTENT,
     target: {
       selector: 'button',
       width: 100,
@@ -31,28 +31,23 @@ describe('maskWithAllowlist', () => {
 
   it('should fail close if $DD_ALLOW is not defined', () => {
     window.$DD_ALLOW = undefined as any
-    clickActionBase.name = 'mask-feature-on'
-    const testString = maskDisallowedActionName(clickActionBase)
-    expect(testString.name).toBe('Masked Element')
-    expect(testString.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
+    const testString = maskDisallowedTextContent('mask-feature-on', ACTION_NAME_PLACEHOLDER)
+    expect(testString).toBe('Masked Element')
   })
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
     clickActionBase.name = 'This is an action name in allowlist'
-    const testString1 = maskDisallowedActionName(clickActionBase)
-    expect(testString1.name).toBe('Masked Element')
-    expect(testString1.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
+    const testString1 = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_PLACEHOLDER)
+    expect(testString1).toBe('Masked Element')
 
     clickActionBase.name = 'any unallowed string'
-    const testString2 = maskDisallowedActionName(clickActionBase)
-    expect(testString2.name).toBe('Masked Element')
-    expect(testString2.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
+    const testString2 = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_PLACEHOLDER)
+    expect(testString2).toBe('Masked Element')
   })
 
   it('handles empty string', () => {
     clickActionBase.name = ''
-    const result = maskDisallowedActionName(clickActionBase)
-    expect(result.name).toBe('')
-    expect(result.nameSource).toBe(ActionNameSource.MASK_DISALLOWED)
+    const result = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_PLACEHOLDER)
+    expect(result).toBe('')
   })
 })

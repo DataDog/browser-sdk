@@ -1,6 +1,5 @@
-import { TEXT_MASKING_CHAR } from '../../privacyConstants'
-import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../actionNameConstants'
-import type { ActionName } from '../actionNameConstants'
+import { DefaultPrivacyLevel } from '@datadog/browser-core'
+import { NodePrivacyLevel, TEXT_MASKING_CHAR } from '../../privacyConstants'
 
 declare global {
   interface Window {
@@ -8,32 +7,24 @@ declare global {
   }
 }
 
-export function maskTextContent(text: string, fixedMask?: string): { maskedText: string; hasBeenMasked: boolean } {
+export function maskDisallowedTextContent(text: string, fixedMask?: string): string {
   if (!text.trim()) {
-    return { maskedText: text, hasBeenMasked: false }
+    return text
   }
   // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
   if (window.$DD_ALLOW && window.$DD_ALLOW.has(text.toLocaleLowerCase())) {
-    return { maskedText: text, hasBeenMasked: false }
+    return text
   }
-  return { maskedText: fixedMask || text.replace(/\S/g, TEXT_MASKING_CHAR), hasBeenMasked: true }
+  return fixedMask || text.replace(/\S/g, TEXT_MASKING_CHAR)
 }
 
-export function maskDisallowedActionName(actionName: ActionName): ActionName {
-  const { name, nameSource } = actionName
-  if (!window.$DD_ALLOW || !window.$DD_ALLOW.size) {
-    // always fail close if $DD_ALLOW is not defined
-    return {
-      ...actionName,
-      name: name ? ACTION_NAME_PLACEHOLDER : '',
-      nameSource: name ? ActionNameSource.MASK_DISALLOWED : nameSource,
-    }
-  }
-  const maskedName = maskTextContent(name, ACTION_NAME_PLACEHOLDER)
-
-  return {
-    ...actionName,
-    name: maskedName.maskedText,
-    nameSource: maskedName.hasBeenMasked ? ActionNameSource.MASK_DISALLOWED : nameSource,
-  }
+export function isAllowlistMaskEnabled(
+  defaultPrivacyLevel: NodePrivacyLevel,
+  nodePrivacyLevel?: NodePrivacyLevel
+): boolean {
+  return (
+    (defaultPrivacyLevel === DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
+      nodePrivacyLevel !== NodePrivacyLevel.ALLOW) ||
+    nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+  )
 }

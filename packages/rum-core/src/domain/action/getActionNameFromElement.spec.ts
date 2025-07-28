@@ -686,7 +686,7 @@ describe('getActionNameFromElement', () => {
           NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
         )
         expect(name).toBe('Masked Element')
-        expect(nameSource).toBe('mask_disallowed')
+        expect(nameSource).toBe('text_content')
       })
 
       it('preserves allowlisted text when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
@@ -739,7 +739,7 @@ describe('getActionNameFromElement', () => {
           NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
         )
         expect(name).toBe('Masked Element')
-        expect(nameSource).toBe('mask_disallowed')
+        expect(nameSource).toBe('text_content')
       })
 
       it('handles undefined allowlist with MASK_UNLESS_ALLOWLISTED privacy level', () => {
@@ -753,7 +753,7 @@ describe('getActionNameFromElement', () => {
           NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
         )
         expect(name).toBe('Masked Element')
-        expect(nameSource).toBe('mask_disallowed')
+        expect(nameSource).toBe('text_content')
       })
 
       it('applies masking to input button values when not allowlisted', () => {
@@ -766,7 +766,7 @@ describe('getActionNameFromElement', () => {
           NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
         )
         expect(name).toBe('Masked Element')
-        expect(nameSource).toBe('mask_disallowed')
+        expect(nameSource).toBe('text_content')
       })
 
       it('preserves input button values when allowlisted', () => {
@@ -792,7 +792,7 @@ describe('getActionNameFromElement', () => {
           NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
         )
         expect(name).toBe('Masked Element')
-        expect(nameSource).toBe('mask_disallowed')
+        expect(nameSource).toBe('standard_attribute')
       })
 
       it('preserves aria-label when allowlisted', () => {
@@ -828,7 +828,7 @@ describe('getActionNameFromElement', () => {
           NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
         )
         expect(name).toBe('Masked Element')
-        expect(nameSource).toBe('mask_disallowed')
+        expect(nameSource).toBe('text_content')
       })
     })
   })
