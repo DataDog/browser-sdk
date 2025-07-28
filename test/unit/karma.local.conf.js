@@ -16,7 +16,7 @@ module.exports = function (config) {
     browsers: ['ChromeHeadlessNoSandbox'],
     coverageIstanbulReporter: {
       reports: coverageReports,
-      dir: coverageReportDirectory,
+      dir: coverageReportDirectory ?? '',
     },
     customLaunchers: {
       ChromeHeadlessNoSandbox: {

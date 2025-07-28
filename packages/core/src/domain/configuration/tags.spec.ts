@@ -1,3 +1,4 @@
+import { ignoreConsoleLogs } from '../../../test'
 import { display } from '../../tools/display'
 import type { Configuration } from './configuration'
 import { buildTag, buildTags, supportUnicodePropertyEscapes, TAG_SIZE_LIMIT } from './tags'
