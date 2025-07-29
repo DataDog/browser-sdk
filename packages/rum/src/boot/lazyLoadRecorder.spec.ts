@@ -1,8 +1,9 @@
-import type { DeflateWorker, RawTelemetryEvent } from '@datadog/browser-core'
-import { display, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
+import type { DeflateWorker } from '@datadog/browser-core'
+import { display, resetTelemetry } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
-import { registerCleanupTask, wait } from '@datadog/browser-core/test'
+import type { MockTelemetry } from '@datadog/browser-core/test'
+import { registerCleanupTask, startMockTelemetry, wait } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
@@ -14,7 +15,7 @@ import { lazyLoadRecorder } from './lazyLoadRecorder'
 
 describe('lazyLoadRecorder', () => {
   let displaySpy: jasmine.Spy
-  let telemetryEvents: RawTelemetryEvent[]
+  let telemetry: MockTelemetry
   let lifeCycle: LifeCycle
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy
@@ -33,7 +34,7 @@ describe('lazyLoadRecorder', () => {
     sessionManager?: RumSessionManager
     startSessionReplayRecordingManually?: boolean
   } = {}) {
-    telemetryEvents = startFakeTelemetry()
+    telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
     displaySpy = spyOn(display, 'error')
@@ -85,7 +86,7 @@ describe('lazyLoadRecorder', () => {
 
     expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Recorder failed to start'), loadRecorderError)
     expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
-    expect(telemetryEvents.length).toBe(0)
+    expect(await telemetry.hasEvents()).toBe(false)
   })
 
   it('should report an error but no telemetry if importing fails for non-CSP reasons', async () => {
@@ -101,6 +102,6 @@ describe('lazyLoadRecorder', () => {
     await wait(0)
 
     expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Recorder failed to start'), loadRecorderError)
-    expect(telemetryEvents.length).toBe(0)
+    expect(await telemetry.hasEvents()).toBe(false)
   })
 })

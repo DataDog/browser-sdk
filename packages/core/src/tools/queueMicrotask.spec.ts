@@ -1,5 +1,4 @@
-import { waitNextMicrotask } from '../../test'
-import { startFakeTelemetry } from '../domain/telemetry'
+import { startMockTelemetry, waitNextMicrotask } from '../../test'
 import { queueMicrotask } from './queueMicrotask'
 
 describe('queueMicrotask', () => {
@@ -14,12 +13,12 @@ describe('queueMicrotask', () => {
   })
 
   it('monitors the callback', async () => {
-    const telemetryEvents = startFakeTelemetry()
+    const telemetry = startMockTelemetry()
     queueMicrotask(() => {
       throw new Error('test error')
     })
     await waitNextMicrotask()
 
-    expect(telemetryEvents).toEqual([])
+    expect(await telemetry.hasEvents()).toBe(true)
   })
 })
