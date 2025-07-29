@@ -26,7 +26,7 @@ export interface RumSdkConfig {
     /**
      * The version for this application
      */
-    version?: string
+    version?: DynamicOption
     /**
      * The percentage of sessions tracked
      */
@@ -83,5 +83,24 @@ export interface RumSdkConfig {
      * Whether to track sessions across subdomains
      */
     trackSessionAcrossSubdomains?: boolean
+    user?: {
+      id?: DynamicOption
+      name?: DynamicOption
+      email?: DynamicOption
+      additionals?: Array<{ key: string; value: DynamicOption }>
+    }
+    context?: {
+      additionals: Array<{ key: string; value: DynamicOption }>
+    }
+  }
+}
+
+type DynamicOption = {
+  rcSerializedType: 'dynamic'
+  strategy: 'cookie'
+  name: string
+  extractor?: {
+    rcSerializedType: 'regex'
+    value: string
   }
 }
