@@ -28,7 +28,7 @@ async function createStaticSandboxApp(): Promise<express.Application> {
   app.use(express.static(sandboxPath))
   for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig, flaggingConfig]) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    app.use(middleware(webpack(config(null, { mode: 'development' }))))
+    app.use(middleware(webpack(config(null, { mode: 'development' }))!))
   }
 
   // Redirect suffixed files
@@ -67,7 +67,7 @@ async function createReactApp(): Promise<express.Application> {
           plugins: [new HtmlWebpackPlugin({ publicPath: '/react-app/' })],
           mode: 'development',
         })
-      )
+      )!
     )
   )
 
