@@ -147,9 +147,7 @@ describe('endpointBuilder', () => {
 
   describe('source and variant configuration', () => {
     it('should use the default source when no configuration is provided', () => {
-      const config = { ...initConfiguration, source: 'browser' as const }
-
-      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      const endpoint = createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=browser')
       expect(endpoint).not.toContain('_dd.variant=')
       expect(endpoint).not.toContain('_dd.sdk_version=')
