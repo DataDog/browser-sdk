@@ -233,9 +233,9 @@ export default tseslint.config(
       'jsdoc/sort-tags': [
         'error',
         {
+          linesBetween: 0,
           tagSequence: [
             {
-              linesBetween: 0,
               tags: [
                 'category',
                 'packageDocumentation',
