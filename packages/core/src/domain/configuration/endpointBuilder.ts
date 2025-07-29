@@ -81,7 +81,7 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, sdkVersion, source, variant }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, sdkVersion, source = 'browser', variant }: InitConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload
