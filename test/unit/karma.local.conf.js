@@ -2,7 +2,7 @@ const path = require('path')
 const { getCoverageReportDirectory } = require('../envUtils')
 const karmaBaseConf = require('./karma.base.conf')
 
-const coverageReports = ['text-summary']
+const coverageReports = ['text-summary', 'html']
 
 if (process.env.CI) {
   coverageReports.push('clover')
