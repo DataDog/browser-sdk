@@ -70,6 +70,7 @@ function getStoreExpiration() {
 
 function resetSessionInStore() {
   sessionStoreStrategy.expireSession()
+  sessionStoreStrategy.expireSession.calls.reset()
 }
 
 function setSessionInStore(sessionState: SessionState) {
@@ -211,6 +212,7 @@ describe('session store', () => {
         computeTrackingType,
         sessionStoreStrategy
       )
+      sessionStoreStrategy.persistSession.calls.reset()
       sessionStoreManager.expireObservable.subscribe(expireSpy)
       sessionStoreManager.renewObservable.subscribe(renewSpy)
     }
@@ -535,6 +537,29 @@ describe('session store', () => {
             if (useExperimentalFeature) {
               expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
             }
+          })
+
+          it('when session in store is expired first and then get updated by another tab, should expire session in cache and not touch the store', () => {
+            setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+            resetSessionInStore()
+
+            // Simulate a new session being written to the store by another tab during the watch
+            // when the experimental feature is enabled, watch is reading the cookie twice so we need to plan the write of the cookie at the right index
+            sessionStoreStrategy.planRetrieveSession(
+              useExperimentalFeature ? 1 : 0,
+              createSessionState(FakeTrackingType.TRACKED, SECOND_ID)
+            )
+
+            clock.tick(STORAGE_POLL_DELAY)
+
+            // expires session in cache
+            expect(sessionStoreManager.getSession().id).toBeUndefined()
+            expect(expireSpy).toHaveBeenCalled()
+
+            // Does not touch the store
+            // The two calls to persist session are for the lock management, these can be ignored
+            expect(sessionStoreStrategy.persistSession).toHaveBeenCalledTimes(2)
+            expect(sessionStoreStrategy.expireSession).not.toHaveBeenCalled()
           })
 
           it('when session type in cache is different than session type in store, should expire session and not touch the store', () => {
