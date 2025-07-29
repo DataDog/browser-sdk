@@ -40,8 +40,8 @@ export function startRUMInternalContext(hooks: Hooks) {
 
     return {
       application: { id: internalContext.application_id },
-      view: { id: internalContext.view?.id },
-      action: { id: internalContext.user_action?.id as string },
+      view: { id: internalContext.view && internalContext.view.id },
+      action: { id: internalContext.user_action && (internalContext.user_action.id as string) },
     }
   })
 

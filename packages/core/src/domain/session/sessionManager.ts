@@ -174,8 +174,8 @@ async function reportUnexpectedSessionState() {
   addTelemetryDebug('Unexpected session state', {
     session: rawSession,
     isSyntheticsTest: isSyntheticsTest(),
-    createdTimestamp: rawSession?.created,
-    expireTimestamp: rawSession?.expire,
+    createdTimestamp: rawSession && rawSession.created,
+    expireTimestamp: rawSession && rawSession.expire,
     cookie: {
       count: sessionCookies.length,
       domain: getCurrentSite(),

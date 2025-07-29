@@ -94,7 +94,7 @@ export function fetchKeepAliveStrategy(
     const fetchUrl = endpointBuilder.build('fetch-keepalive', payload)
 
     fetch(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' })
-      .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
+      .then(monitor((response: Response) => onResponse && onResponse({ status: response.status, type: response.type })))
       .catch(monitor(() => fetchStrategy(endpointBuilder, payload, onResponse)))
   } else {
     fetchStrategy(endpointBuilder, payload, onResponse)
@@ -109,8 +109,8 @@ export function fetchStrategy(
   const fetchUrl = endpointBuilder.build('fetch', payload)
 
   fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
-    .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
-    .catch(monitor(() => onResponse?.({ status: 0 })))
+    .then(monitor((response: Response) => onResponse && onResponse({ status: response.status, type: response.type })))
+    .catch(monitor(() => onResponse && onResponse({ status: 0 })))
 }
 
 function isKeepAliveSupported() {

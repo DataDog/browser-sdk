@@ -124,8 +124,8 @@ function buildStack(
           {
             func: '?',
             url: sourceFile,
-            line: lineNumber ?? undefined,
-            column: columnNumber ?? undefined,
+            line: lineNumber !== null && lineNumber !== undefined ? lineNumber : undefined,
+            column: columnNumber !== null && columnNumber !== undefined ? columnNumber : undefined,
           },
         ],
       })

@@ -327,18 +327,46 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
-    sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
-    telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
-    telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
-    telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-    service: initConfiguration.service ?? undefined,
-    env: initConfiguration.env ?? undefined,
-    version: initConfiguration.version ?? undefined,
-    datacenter: initConfiguration.datacenter ?? undefined,
+    sessionSampleRate:
+      initConfiguration.sessionSampleRate !== null && initConfiguration.sessionSampleRate !== undefined
+        ? initConfiguration.sessionSampleRate
+        : 100,
+    telemetrySampleRate:
+      initConfiguration.telemetrySampleRate !== null && initConfiguration.telemetrySampleRate !== undefined
+        ? initConfiguration.telemetrySampleRate
+        : 20,
+    telemetryConfigurationSampleRate:
+      initConfiguration.telemetryConfigurationSampleRate !== null &&
+      initConfiguration.telemetryConfigurationSampleRate !== undefined
+        ? initConfiguration.telemetryConfigurationSampleRate
+        : 5,
+    telemetryUsageSampleRate:
+      initConfiguration.telemetryUsageSampleRate !== null && initConfiguration.telemetryUsageSampleRate !== undefined
+        ? initConfiguration.telemetryUsageSampleRate
+        : 5,
+    service:
+      initConfiguration.service !== null && initConfiguration.service !== undefined
+        ? initConfiguration.service
+        : undefined,
+    env: initConfiguration.env !== null && initConfiguration.env !== undefined ? initConfiguration.env : undefined,
+    version:
+      initConfiguration.version !== null && initConfiguration.version !== undefined
+        ? initConfiguration.version
+        : undefined,
+    datacenter:
+      initConfiguration.datacenter !== null && initConfiguration.datacenter !== undefined
+        ? initConfiguration.datacenter
+        : undefined,
     silentMultipleInit: !!initConfiguration.silentMultipleInit,
     allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
-    trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
-    trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
+    trackingConsent:
+      initConfiguration.trackingConsent !== null && initConfiguration.trackingConsent !== undefined
+        ? initConfiguration.trackingConsent
+        : TrackingConsent.GRANTED,
+    trackAnonymousUser:
+      initConfiguration.trackAnonymousUser !== null && initConfiguration.trackAnonymousUser !== undefined
+        ? initConfiguration.trackAnonymousUser
+        : true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     /**
      * beacon payload max queue size implementation is 64kb

@@ -122,7 +122,11 @@ export function createRumProfiler(
         mayStoreLongTaskIdForProfilerCorrelation(data)
       })
 
-      cleanupTasks.push(() => observer?.disconnect())
+      cleanupTasks.push(() => {
+        if (observer) {
+          observer.disconnect()
+        }
+      })
       cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
     }
 
@@ -209,7 +213,9 @@ export function createRumProfiler(
     }
 
     // Empty the performance observer buffer
-    handleLongTaskEntries(lastInstance.observer?.takeRecords() ?? [])
+    handleLongTaskEntries(
+      lastInstance.observer && lastInstance.observer.takeRecords ? lastInstance.observer.takeRecords() : []
+    )
 
     // Cleanup instance
     clearTimeout(lastInstance.timeoutId)
@@ -279,7 +285,8 @@ export function createRumProfiler(
 
   function handleProfilerTrace(trace: RumProfilerTrace): void {
     // Find current session to assign it to the Profile.
-    const sessionId = session.findTrackedSession()?.id
+    const trackedSession = session.findTrackedSession()
+    const sessionId = trackedSession && trackedSession.id
 
     // Send JSON Profile to intake.
     transport.sendProfile(trace, configuration, sessionId).catch(monitorError)

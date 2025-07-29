@@ -31,7 +31,7 @@ export function startConsoleCollection(configuration: LogsConfiguration, lifeCyc
         error: log.error && createErrorFieldFromRawError(log.error),
         status: LogStatusForApi[log.api],
       },
-      messageContext: log.error?.context,
+      messageContext: log.error && log.error.context,
       domainContext: {
         handlingStack: log.handlingStack,
       },

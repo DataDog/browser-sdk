@@ -61,7 +61,7 @@ function computeMessage(
 ) {
   // Favor stackTrace message only if tracekit has really been able to extract something meaningful (message + name)
   // TODO rework tracekit integration to avoid scattering error building logic
-  return stackTrace?.message && stackTrace?.name
+  return stackTrace && stackTrace.message && stackTrace && stackTrace.name
     ? stackTrace.message
     : !isErrorInstance
       ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
@@ -79,7 +79,8 @@ export function tryToGetErrorContext(originalError: unknown) {
 }
 
 export function getFileFromStackTraceString(stack: string) {
-  return /@ (.+)/.exec(stack)?.[1]
+  const match = /@ (.+)/.exec(stack)
+  return match && match[1]
 }
 
 export function isError(error: unknown): error is Error {
@@ -89,12 +90,12 @@ export function isError(error: unknown): error is Error {
 export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
   let currentError = error
   const causes: RawErrorCause[] = []
-  while (isError(currentError?.cause) && causes.length < 10) {
+  while (currentError && isError(currentError.cause) && causes.length < 10) {
     const stackTrace = computeStackTrace(currentError.cause)
     causes.push({
       message: currentError.cause.message,
       source: parentSource,
-      type: stackTrace?.name,
+      type: stackTrace && stackTrace.name,
       stack: stackTrace && toStackTraceString(stackTrace),
     })
     currentError = currentError.cause

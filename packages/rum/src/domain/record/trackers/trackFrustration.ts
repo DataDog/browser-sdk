@@ -16,7 +16,9 @@ export function trackFrustration(
     if (
       data.rawRumEvent.type === RumEventType.ACTION &&
       data.rawRumEvent.action.type === ActionType.CLICK &&
-      data.rawRumEvent.action.frustration?.type?.length &&
+      data.rawRumEvent.action.frustration &&
+      data.rawRumEvent.action.frustration.type &&
+      data.rawRumEvent.action.frustration.type.length &&
       'events' in data.domainContext &&
       data.domainContext.events &&
       data.domainContext.events.length

@@ -150,7 +150,8 @@ function shouldSend(
     }
   }
 
-  const rateLimitReached = eventRateLimiters[event.type]?.isLimitReached()
+  const eventRateLimiter = eventRateLimiters[event.type]
+  const rateLimitReached = eventRateLimiter && eventRateLimiter.isLimitReached()
 
   return !rateLimitReached
 }

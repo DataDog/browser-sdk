@@ -2,7 +2,6 @@
 
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
-// @ts-expect-error no types available
 import importPlugin from 'eslint-plugin-import'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
@@ -366,6 +365,14 @@ export default tseslint.config(
         {
           selector: 'TSEnumDeclaration:not([const=true])',
           message: 'When possible, use `const enum` as it produces less code when transpiled.',
+        },
+        {
+          selector: 'ChainExpression',
+          message: 'Optional chaining (?.) is not allowed. Use classic conditional checks instead.',
+        },
+        {
+          selector: 'LogicalExpression[operator="??"]',
+          message: 'Nullish coalescing (??) is not allowed. Use classic conditional checks instead.',
         },
       ],
     },

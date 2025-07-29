@@ -224,10 +224,10 @@ function newView(
   const contextManager = createContextManager()
 
   let sessionIsActive = true
-  let name = viewOptions?.name
-  const service = viewOptions?.service || configuration.service
-  const version = viewOptions?.version || configuration.version
-  const context = viewOptions?.context
+  let name = viewOptions && viewOptions.name
+  const service = (viewOptions && viewOptions.service) || configuration.service
+  const version = (viewOptions && viewOptions.version) || configuration.version
+  const context = viewOptions && viewOptions.context
 
   if (context) {
     contextManager.setContext(context)
@@ -346,8 +346,9 @@ function newView(
         // view already ended
         return
       }
-      endClocks = options.endClocks ?? clocksNow()
-      sessionIsActive = options.sessionIsActive ?? true
+      endClocks = options.endClocks !== null && options.endClocks !== undefined ? options.endClocks : clocksNow()
+      sessionIsActive =
+        options.sessionIsActive !== null && options.sessionIsActive !== undefined ? options.sessionIsActive : true
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })

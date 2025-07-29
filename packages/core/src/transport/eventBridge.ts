@@ -25,10 +25,12 @@ export function getEventBridge<T, E>() {
 
   return {
     getCapabilities() {
-      return JSON.parse(eventBridgeGlobal.getCapabilities?.() || '[]') as BridgeCapability[]
+      return JSON.parse(
+        (eventBridgeGlobal.getCapabilities && eventBridgeGlobal.getCapabilities()) || '[]'
+      ) as BridgeCapability[]
     },
     getPrivacyLevel() {
-      return eventBridgeGlobal.getPrivacyLevel?.()
+      return eventBridgeGlobal.getPrivacyLevel && eventBridgeGlobal.getPrivacyLevel()
     },
     getAllowedWebViewHosts() {
       return JSON.parse(eventBridgeGlobal.getAllowedWebViewHosts()) as string[]
@@ -45,7 +47,9 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
   return !!bridge && bridge.getCapabilities().includes(capability)
 }
 
-export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {
+export function canUseEventBridge(
+  currentHost = getGlobalObject<Window>().location && getGlobalObject<Window>().location.hostname
+): boolean {
   const bridge = getEventBridge()
   return (
     !!bridge &&

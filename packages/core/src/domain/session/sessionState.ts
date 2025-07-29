@@ -24,8 +24,8 @@ export function getExpiredSessionState(
     isExpired: EXPIRED,
   }
   if (configuration.trackAnonymousUser) {
-    if (previousSessionState?.anonymousId) {
-      expiredSessionState.anonymousId = previousSessionState?.anonymousId
+    if (previousSessionState && previousSessionState.anonymousId) {
+      expiredSessionState.anonymousId = previousSessionState && previousSessionState.anonymousId
     } else {
       expiredSessionState.anonymousId = generateUUID()
     }
