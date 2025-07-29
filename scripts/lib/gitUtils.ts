@@ -23,7 +23,7 @@ interface GitHubReleaseParams {
   body: string
 }
 
-async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
+export async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
   const pr = await callGitHubApi<GitHubPR[]>('GET', `pulls?head=DataDog:${localBranch}`)
   if (pr && pr.length > 1) {
     throw new Error('Multiple pull requests found for the branch')
@@ -38,7 +38,7 @@ async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
  * @param params.version - The version to create a release for.
  * @param params.body - The body of the release.
  */
-async function createGitHubRelease({ version, body }: GitHubReleaseParams): Promise<GitHubRelease> {
+export async function createGitHubRelease({ version, body }: GitHubReleaseParams): Promise<GitHubRelease> {
   try {
     await callGitHubApi('GET', `releases/tags/${version}`)
     throw new Error(`Release ${version} already exists`)
@@ -67,7 +67,7 @@ async function callGitHubApi<T>(method: string, path: string, body?: any): Promi
   return response.json() as Promise<T>
 }
 
-function getLastCommonCommit(baseBranch: string): string {
+export function getLastCommonCommit(baseBranch: string): string {
   try {
     command`git fetch --depth=100 origin ${baseBranch}`.run()
     const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
@@ -78,7 +78,7 @@ function getLastCommonCommit(baseBranch: string): string {
   }
 }
 
-function initGitConfig(repository: string): void {
+export function initGitConfig(repository: string): void {
   const homedir = os.homedir()
 
   // ssh-add expects a new line at the end of the PEM-formatted private key
@@ -92,7 +92,5 @@ function initGitConfig(repository: string): void {
   command`git config user.name ci.browser-sdk`.run()
   command`git remote set-url origin ${repository}`.run()
 }
-
-export { initGitConfig, fetchPR, getLastCommonCommit, createGitHubRelease }
 
 export const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME

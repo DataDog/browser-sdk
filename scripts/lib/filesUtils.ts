@@ -3,15 +3,18 @@ import path from 'path'
 import fsPromises from 'fs/promises'
 import { command } from './command.ts'
 
-const CI_FILE = '.gitlab-ci.yml'
+export const CI_FILE = '.gitlab-ci.yml'
 
-function readCiFileVariable(variableName: string): string | undefined {
+export function readCiFileVariable(variableName: string): string | undefined {
   const regexp = new RegExp(`${variableName}: (.*)`)
   const ciFileContent = fs.readFileSync(CI_FILE, { encoding: 'utf-8' })
   return regexp.exec(ciFileContent)?.[1]
 }
 
-async function forEachFile(directoryPath: string, callback: (filePath: string) => Promise<void> | void): Promise<void> {
+export async function forEachFile(
+  directoryPath: string,
+  callback: (filePath: string) => Promise<void> | void
+): Promise<void> {
   for (const entry of fs.readdirSync(directoryPath, { withFileTypes: true })) {
     const entryPath = `${directoryPath}/${entry.name}`
     if (entry.isFile()) {
@@ -22,7 +25,7 @@ async function forEachFile(directoryPath: string, callback: (filePath: string) =
   }
 }
 
-async function replaceCiFileVariable(variableName: string, value: string): Promise<void> {
+export async function replaceCiFileVariable(variableName: string, value: string): Promise<void> {
   await modifyFile(CI_FILE, (content) =>
     content.replace(new RegExp(`${variableName}: .*`), `${variableName}: ${value}`)
   )
@@ -34,7 +37,10 @@ async function replaceCiFileVariable(variableName: string, value: string): Promi
  * @param filePath - {string}
  * @param modifier - {(content: string) => string | Promise<string>}
  */
-async function modifyFile(filePath: string, modifier: (content: string) => string | Promise<string>): Promise<boolean> {
+export async function modifyFile(
+  filePath: string,
+  modifier: (content: string) => string | Promise<string>
+): Promise<boolean> {
   const content = await fsPromises.readFile(filePath, { encoding: 'utf-8' })
   const modifiedContent = await modifier(content)
   if (content !== modifiedContent) {
@@ -50,7 +56,7 @@ interface PackageJsonInfo {
   content: any
 }
 
-function findBrowserSdkPackageJsonFiles(): PackageJsonInfo[] {
+export function findBrowserSdkPackageJsonFiles(): PackageJsonInfo[] {
   const manifestPaths = command`git ls-files -- package.json */package.json`.run()
   return manifestPaths
     .trim()
@@ -64,5 +70,3 @@ function findBrowserSdkPackageJsonFiles(): PackageJsonInfo[] {
       }
     })
 }
-
-export { CI_FILE, readCiFileVariable, replaceCiFileVariable, modifyFile, findBrowserSdkPackageJsonFiles, forEachFile }

@@ -1,44 +1,44 @@
 import { command } from './command.ts'
 
-function getGithubDeployKey(): string {
+export function getGithubDeployKey(): string {
   return getSecretKey('ci.browser-sdk.github_deploy_key')
 }
 
-function getGithubAccessToken(): string {
+export function getGithubAccessToken(): string {
   return getSecretKey('ci.browser-sdk.github_access_token')
 }
 
-function getOrg2ApiKey(): string {
+export function getOrg2ApiKey(): string {
   return getSecretKey('ci.browser-sdk.datadog_ci_api_key')
 }
 
-function getOrg2AppKey(): string {
+export function getOrg2AppKey(): string {
   return getSecretKey('ci.browser-sdk.datadog_ci_application_key')
 }
 
-function getTelemetryOrgApiKey(site: string): string {
+export function getTelemetryOrgApiKey(site: string): string {
   const normalizedSite = site.replaceAll('.', '-')
   return getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
 }
 
-function getTelemetryOrgApplicationKey(site: string): string {
+export function getTelemetryOrgApplicationKey(site: string): string {
   const normalizedSite = site.replaceAll('.', '-')
   return getSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
 }
 
-function getNpmToken(): string {
+export function getNpmToken(): string {
   return getSecretKey('ci.browser-sdk.npm_token')
 }
 
-function getChromeWebStoreClientId(): string {
+export function getChromeWebStoreClientId(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.client_id')
 }
 
-function getChromeWebStoreClientSecret(): string {
+export function getChromeWebStoreClientSecret(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.client_secret')
 }
 
-function getChromeWebStoreRefreshToken(): string {
+export function getChromeWebStoreRefreshToken(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.refresh_token')
 }
 
@@ -48,17 +48,4 @@ function getSecretKey(name: string): string {
   `
     .run()
     .trim()
-}
-
-export {
-  getChromeWebStoreClientId,
-  getChromeWebStoreClientSecret,
-  getChromeWebStoreRefreshToken,
-  getGithubDeployKey,
-  getGithubAccessToken,
-  getNpmToken,
-  getOrg2ApiKey,
-  getOrg2AppKey,
-  getTelemetryOrgApiKey,
-  getTelemetryOrgApplicationKey,
 }

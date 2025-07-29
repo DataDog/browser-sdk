@@ -28,7 +28,7 @@ interface CommandBuilder {
  *
  * [0]: https://matklad.github.io/2021/07/30/shell-injection.html
  */
-function command(...templateArguments: [TemplateStringsArray, ...any[]]): CommandBuilder {
+export function command(...templateArguments: [TemplateStringsArray, ...any[]]): CommandBuilder {
   const [commandName, ...commandArguments] = parseCommandTemplateArguments(...templateArguments)
 
   let input = ''
@@ -154,5 +154,3 @@ function parseCommandTemplateArguments(templateStrings: TemplateStringsArray, ..
   }
   return parsedArguments
 }
-
-export { command }
