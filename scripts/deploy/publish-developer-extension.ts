@@ -1,4 +1,3 @@
-// chrome-webstore-upload only support ESM syntax.
 import fs from 'node:fs'
 import chromeWebstoreUpload from 'chrome-webstore-upload'
 import { printLog, runMain } from '../lib/executionUtils.ts'
