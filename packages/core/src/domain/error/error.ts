@@ -80,7 +80,7 @@ export function tryToGetErrorContext(originalError: unknown) {
 
 export function getFileFromStackTraceString(stack: string) {
   const match = /@ (.+)/.exec(stack)
-  return match && match[1]
+  return match ? match[1] : undefined
 }
 
 export function isError(error: unknown): error is Error {
