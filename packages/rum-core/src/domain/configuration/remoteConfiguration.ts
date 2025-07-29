@@ -1,8 +1,9 @@
 import { display, addEventListener, buildEndpointHost } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
-import type { RumSdkConfig } from './remoteConfig.types'
+import type { RumSdkConfig } from './remoteConfiguration.types'
 
-type RumRemoteConfiguration = Exclude<RumSdkConfig['rum'], undefined>
+export type RemoteConfiguration = RumSdkConfig
+type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
 const REMOTE_CONFIGURATION_VERSION = 'v1'
 const STATIC_OPTIONS: Array<keyof RumInitConfiguration> = [
   'applicationId',
@@ -48,7 +49,7 @@ export function fetchRemoteConfiguration(
 
   addEventListener(configuration, xhr, 'load', function () {
     if (xhr.status === 200) {
-      const remoteConfiguration = JSON.parse(xhr.responseText) as RumSdkConfig
+      const remoteConfiguration = JSON.parse(xhr.responseText) as RemoteConfiguration
       if (remoteConfiguration.rum) {
         callback(remoteConfiguration.rum)
       } else {
@@ -68,6 +69,9 @@ export function fetchRemoteConfiguration(
 }
 
 export function buildEndpoint(configuration: RumInitConfiguration) {
+  if (configuration.remoteConfigurationProxy) {
+    return configuration.remoteConfigurationProxy
+  }
   return `https://sdk-configuration.${buildEndpointHost('rum', configuration)}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(configuration.remoteConfigurationId!)}.json`
 }
 
