@@ -1,3 +1,4 @@
+import { waitNextMicrotask } from '../../test'
 import { startFakeTelemetry } from '../domain/telemetry'
 import { queueMicrotask } from './queueMicrotask'
 
@@ -8,7 +9,7 @@ describe('queueMicrotask', () => {
       called = true
     })
     expect(called).toBe(false)
-    await Promise.resolve() // wait for the microtask to execute
+    await waitNextMicrotask()
     expect(called).toBe(true)
   })
 
@@ -17,7 +18,7 @@ describe('queueMicrotask', () => {
     queueMicrotask(() => {
       throw new Error('test error')
     })
-    await Promise.resolve() // wait for the microtask to execute
+    await waitNextMicrotask()
 
     expect(telemetryEvents).toEqual([])
   })
