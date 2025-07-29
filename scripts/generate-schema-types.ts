@@ -9,7 +9,7 @@ const prettierConfigPath = path.join(import.meta.dirname, '../.prettierrc.yml')
 
 runMain(async () => {
   await generateRumEventsFormatTypes(path.join(import.meta.dirname, '../rum-events-format/schemas'))
-  await generateRemoteConfigTypes(path.join(import.meta.dirname, '../remote-config'))
+  await generateRemoteConfigurationTypes(path.join(import.meta.dirname, '../remote-configuration'))
 })
 
 async function generateRumEventsFormatTypes(schemasDirectoryPath: string): Promise<void> {
@@ -31,9 +31,9 @@ async function generateRumEventsFormatTypes(schemasDirectoryPath: string): Promi
   )
 }
 
-async function generateRemoteConfigTypes(schemasDirectoryPath: string): Promise<void> {
+async function generateRemoteConfigurationTypes(schemasDirectoryPath: string): Promise<void> {
   await generateTypesFromSchema(
-    path.join(import.meta.dirname, '../packages/rum-core/src/domain/configuration/remoteConfig.types.ts'),
+    path.join(import.meta.dirname, '../packages/rum-core/src/domain/configuration/remoteConfiguration.types.ts'),
     schemasDirectoryPath,
     'rum-sdk-config.json'
   )

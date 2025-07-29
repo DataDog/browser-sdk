@@ -38,11 +38,14 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Build SDK
+        run: yarn build
+
       - name: Build documentation
         run: yarn build:docs:html
 
       - name: Setup Pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
