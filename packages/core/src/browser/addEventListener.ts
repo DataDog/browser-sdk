@@ -1,5 +1,6 @@
 import { monitor } from '../tools/monitor'
 import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
+import { globalVar } from '../tools/getGlobalObject'
 import type { CookieStore, CookieStoreEventMap, VisualViewport, VisualViewportEventMap } from './browser.types'
 
 export type TrustableEvent<E extends Event = Event> = E & { __ddIsTrusted?: boolean }
@@ -127,9 +128,9 @@ export function addEventListeners<Target extends EventTarget, EventName extends 
 
   const options = passive ? { capture, passive } : capture
 
-  // Use the window.EventTarget.prototype when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
+  // Use the window.EventTarget when possible to avoid wrong overrides (e.g: https://github.com/salesforce/lwc/issues/1824)
   const listenerTarget =
-    window.EventTarget && eventTarget instanceof EventTarget ? window.EventTarget.prototype : eventTarget
+    globalVar.EventTarget && eventTarget instanceof EventTarget ? globalVar.EventTarget.prototype : eventTarget
 
   const add = getZoneJsOriginalValue(listenerTarget, 'addEventListener')
   eventNames.forEach((eventName) => add.call(eventTarget, eventName, listenerWithMonitor, options))

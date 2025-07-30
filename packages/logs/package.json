@@ -5,6 +5,16 @@
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
+  "exports": {
+    ".": {
+      "require": "./cjs/entries/main.js",
+      "import": "./esm/entries/main.js"
+    },
+    "./sw": {
+      "require": "./cjs/entries/sw.js",
+      "import": "./esm/entries/sw.js"
+    }
+  },
   "scripts": {
     "pack": "yarn pack",
     "build": "run-p build:cjs build:esm build:bundle",

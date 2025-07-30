@@ -12,6 +12,7 @@ import {
   tryToClone,
   isServerError,
   isIntakeUrl,
+  globalVar,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
@@ -24,16 +25,22 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     return { stop: noop }
   }
 
-  const xhrSubscription = initXhrObservable(configuration).subscribe((context) => {
-    if (context.state === 'complete') {
-      handleResponse(RequestType.XHR, context)
-    }
-  })
+  const subscriptions: Array<{ unsubscribe: () => void }> = []
+
+  if (typeof globalVar.XMLHttpRequest !== 'undefined') {
+    const xhrSub = initXhrObservable(configuration).subscribe((context) => {
+      if (context.state === 'complete') {
+        handleResponse(RequestType.XHR, context)
+      }
+    })
+    subscriptions.push(xhrSub)
+  }
   const fetchSubscription = initFetchObservable().subscribe((context) => {
     if (context.state === 'resolve') {
       handleResponse(RequestType.FETCH, context)
     }
   })
+  subscriptions.push(fetchSubscription)
 
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
     if (!isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
@@ -76,8 +83,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
 
   return {
     stop: () => {
-      xhrSubscription.unsubscribe()
-      fetchSubscription.unsubscribe()
+      subscriptions.forEach((s) => s.unsubscribe())
     },
   }
 }
@@ -116,7 +122,7 @@ export function computeFetchResponseText(
   if (!clonedResponse || !clonedResponse.body) {
     // if the clone failed or if the body is null, let's not try to read it.
     callback()
-  } else if (!window.TextDecoder) {
+  } else if (!globalVar.TextDecoder) {
     // If the browser doesn't support TextDecoder, let's read the whole response then truncate it.
     //
     // This should only be the case on early versions of Edge (before they migrated to Chromium).

@@ -10,6 +10,7 @@ import {
   TelemetryService,
   createIdentityEncoder,
   startUserContext,
+  isServiceWorkerContext,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -65,9 +66,9 @@ export function startLogs(
   cleanupTasks.push(telemetry.stop)
 
   const session =
-    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration, trackingConsentState)
-      : startLogsSessionManagerStub(configuration)
+    isServiceWorkerContext() || !configuration.sessionStoreStrategyType || canUseEventBridge() || willSyntheticsInjectRum()
+      ? startLogsSessionManagerStub(configuration)
+      : startLogsSessionManager(configuration, trackingConsentState)
 
   startTrackingConsentContext(hooks, trackingConsentState)
   // Start user and account context first to allow overrides from global context

@@ -6,6 +6,8 @@ import {
   getSyntheticsResultId,
   HookNames,
   SKIPPED,
+  isServiceWorkerContext,
+  globalVar,
 } from '@datadog/browser-core'
 import type { Hooks } from '../hooks'
 
@@ -19,7 +21,12 @@ interface BrowserWindow {
 }
 
 export function startRUMInternalContext(hooks: Hooks) {
-  const browserWindow = window as BrowserWindow
+  if (isServiceWorkerContext()) {
+    // No RUM in Service Worker; return stub with no-op stop
+    return { stop: () => undefined }
+  }
+
+  const browserWindow = globalVar as unknown as BrowserWindow
   let logsSentBeforeRumInjectionTelemetryAdded = false
 
   hooks.register(HookNames.Assemble, ({ startTime }) => {

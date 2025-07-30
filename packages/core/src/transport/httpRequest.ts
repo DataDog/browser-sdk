@@ -3,6 +3,7 @@ import type { Context } from '../tools/serialisation/context'
 import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
+import { globalVar } from '../tools/getGlobalObject'
 
 /**
  * Use POST request without content type to:
@@ -56,11 +57,13 @@ export function createHttpRequest(
 }
 
 function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, payload: Payload) {
-  const canUseBeacon = !!navigator.sendBeacon && payload.bytesCount < bytesLimit
+  const nav = globalVar.navigator as Partial<Navigator> & { sendBeacon?: typeof navigator.sendBeacon }
+  const canUseBeacon = !!nav?.sendBeacon && payload.bytesCount < bytesLimit
+
   if (canUseBeacon) {
     try {
       const beaconUrl = endpointBuilder.build('beacon', payload)
-      const isQueued = navigator.sendBeacon(beaconUrl, payload.data)
+      const isQueued = nav.sendBeacon!(beaconUrl, payload.data)
 
       if (isQueued) {
         return
@@ -116,7 +119,7 @@ export function fetchStrategy(
 function isKeepAliveSupported() {
   // Request can throw, cf https://developer.mozilla.org/en-US/docs/Web/API/Request/Request#errors
   try {
-    return window.Request && 'keepalive' in new Request('http://a')
+    return globalVar.Request && 'keepalive' in new globalVar.Request('http://a')
   } catch {
     return false
   }

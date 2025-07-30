@@ -265,6 +265,7 @@ export interface Strategy {
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
+  console.log('makeLogsPublicApi12')
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
 
