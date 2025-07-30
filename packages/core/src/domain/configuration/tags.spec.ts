@@ -13,7 +13,14 @@ describe('buildTags', () => {
         version: 'baz',
         datacenter: 'us1.prod.dog',
       } as Configuration)
-    ).toEqual(['sdk_version:test', 'env:bar', 'service:foo', 'version:baz', 'datacenter:us1.prod.dog'])
+    ).toEqual([
+      'browser_sdk_version:test',
+      'sdk_version:test',
+      'env:bar',
+      'service:foo',
+      'version:baz',
+      'datacenter:us1.prod.dog',
+    ])
   })
 })
 
