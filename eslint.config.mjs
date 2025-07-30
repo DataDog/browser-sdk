@@ -2,7 +2,6 @@
 
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
-// @ts-expect-error no types available
 import importPlugin from 'eslint-plugin-import'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
