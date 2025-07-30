@@ -87,7 +87,7 @@ export const THROTTLE_VIEW_UPDATE_PERIOD = 3000
 export const SESSION_KEEP_ALIVE_INTERVAL = 5 * ONE_MINUTE
 
 // Some events or metrics can be captured after the end of the view. To avoid missing those;
-// an arbitrary delay is added for stopping their tracking after the view ends.
+// an arbitrary delay is added for stopping their tracking after the end of the view.
 //
 // Ideally, we would not stop and keep tracking events or metrics until the end of the session.
 // But this might have a small performance impact if there are many many views.
@@ -346,9 +346,8 @@ function newView(
         // view already ended
         return
       }
-      endClocks = options.endClocks !== null && options.endClocks !== undefined ? options.endClocks : clocksNow()
-      sessionIsActive =
-        options.sessionIsActive !== null && options.sessionIsActive !== undefined ? options.sessionIsActive : true
+      endClocks = options.endClocks || clocksNow()
+      sessionIsActive = options.sessionIsActive !== undefined ? options.sessionIsActive : true
 
       lifeCycle.notify(LifeCycleEventType.VIEW_ENDED, { endClocks })
       lifeCycle.notify(LifeCycleEventType.AFTER_VIEW_ENDED, { endClocks })

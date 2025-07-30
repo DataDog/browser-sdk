@@ -257,12 +257,7 @@ function overrideInitConfigurationForBridge(initConfiguration: RumInitConfigurat
     clientToken: 'empty',
     sessionSampleRate: 100,
     defaultPrivacyLevel:
-      initConfiguration.defaultPrivacyLevel !== null && initConfiguration.defaultPrivacyLevel !== undefined
-        ? initConfiguration.defaultPrivacyLevel
-        : (() => {
-            const bridge = getEventBridge()
-            return bridge && bridge.getPrivacyLevel()
-          })(),
+      initConfiguration.defaultPrivacyLevel || (getEventBridge() && getEventBridge()!.getPrivacyLevel()),
   }
 }
 

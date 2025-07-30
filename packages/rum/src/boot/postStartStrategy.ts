@@ -102,10 +102,8 @@ export function createPostStartStrategy(
   }
 
   function stop() {
-    if (status === RecorderStatus.Started) {
-      if (stopRecording) {
-        stopRecording()
-      }
+    if (status === RecorderStatus.Started && stopRecording) {
+      stopRecording()
     }
 
     status = RecorderStatus.Stopped

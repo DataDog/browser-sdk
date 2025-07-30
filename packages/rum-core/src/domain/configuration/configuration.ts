@@ -282,9 +282,7 @@ export function validateAndBuildRumConfiguration(
   }
 
   const sessionReplaySampleRate =
-    initConfiguration.sessionReplaySampleRate !== null && initConfiguration.sessionReplaySampleRate !== undefined
-      ? initConfiguration.sessionReplaySampleRate
-      : 0
+    initConfiguration.sessionReplaySampleRate !== undefined ? initConfiguration.sessionReplaySampleRate : 0
 
   return {
     applicationId: initConfiguration.applicationId,
@@ -294,29 +292,16 @@ export function validateAndBuildRumConfiguration(
       initConfiguration.startSessionReplayRecordingManually !== undefined
         ? !!initConfiguration.startSessionReplayRecordingManually
         : sessionReplaySampleRate === 0,
-    traceSampleRate:
-      initConfiguration.traceSampleRate !== null && initConfiguration.traceSampleRate !== undefined
-        ? initConfiguration.traceSampleRate
-        : 100,
+    traceSampleRate: initConfiguration.traceSampleRate !== undefined ? initConfiguration.traceSampleRate : 100,
     rulePsr: isNumber(initConfiguration.traceSampleRate) ? initConfiguration.traceSampleRate / 100 : undefined,
     allowedTracingUrls,
-    excludedActivityUrls:
-      initConfiguration.excludedActivityUrls !== null && initConfiguration.excludedActivityUrls !== undefined
-        ? initConfiguration.excludedActivityUrls
-        : [],
+    excludedActivityUrls: initConfiguration.excludedActivityUrls || [],
     workerUrl: initConfiguration.workerUrl,
     compressIntakeRequests: !!initConfiguration.compressIntakeRequests,
-    trackUserInteractions: !!(initConfiguration.trackUserInteractions !== null &&
-    initConfiguration.trackUserInteractions !== undefined
-      ? initConfiguration.trackUserInteractions
-      : true),
+    trackUserInteractions: initConfiguration.trackUserInteractions !== false,
     trackViewsManually: !!initConfiguration.trackViewsManually,
-    trackResources: !!(initConfiguration.trackResources !== null && initConfiguration.trackResources !== undefined
-      ? initConfiguration.trackResources
-      : true),
-    trackLongTasks: !!(initConfiguration.trackLongTasks !== null && initConfiguration.trackLongTasks !== undefined
-      ? initConfiguration.trackLongTasks
-      : true),
+    trackResources: initConfiguration.trackResources !== false,
+    trackLongTasks: initConfiguration.trackLongTasks !== false,
     trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
@@ -330,9 +315,7 @@ export function validateAndBuildRumConfiguration(
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     profilingSampleRate:
-      initConfiguration.profilingSampleRate !== null && initConfiguration.profilingSampleRate !== undefined
-        ? initConfiguration.profilingSampleRate
-        : 0,
+      initConfiguration.profilingSampleRate !== undefined ? initConfiguration.profilingSampleRate : 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     ...baseConfiguration,
   }
@@ -414,12 +397,10 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
     track_bfcache_views: configuration.trackBfcacheViews,
-    plugins:
-      configuration.plugins &&
-      configuration.plugins.map((plugin) => ({
-        name: plugin.name,
-        ...(plugin.getConfigurationTelemetry && plugin.getConfigurationTelemetry()),
-      })),
+    plugins: (configuration.plugins || []).map((plugin) => ({
+      name: plugin.name,
+      ...(plugin.getConfigurationTelemetry && plugin.getConfigurationTelemetry()),
+    })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration

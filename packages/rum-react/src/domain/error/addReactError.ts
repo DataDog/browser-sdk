@@ -20,8 +20,7 @@ export function addReactError(error: Error, info: ErrorInfo) {
       const rawError = computeRawError({
         originalError: error,
         handlingStack,
-        componentStack:
-          info.componentStack !== null && info.componentStack !== undefined ? info.componentStack : undefined,
+        componentStack: info.componentStack || undefined,
         startClocks,
         source: ErrorSource.CUSTOM,
         handling: ErrorHandling.HANDLED,

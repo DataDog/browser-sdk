@@ -61,7 +61,7 @@ function computeMessage(
 ) {
   // Favor stackTrace message only if tracekit has really been able to extract something meaningful (message + name)
   // TODO rework tracekit integration to avoid scattering error building logic
-  return stackTrace && stackTrace.message && stackTrace && stackTrace.name
+  return stackTrace && stackTrace.message && stackTrace.name
     ? stackTrace.message
     : !isErrorInstance
       ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`

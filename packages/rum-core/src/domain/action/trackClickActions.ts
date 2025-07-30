@@ -347,7 +347,7 @@ function newClick(
           errorCount,
           longTaskCount,
         },
-        events: domEvents !== null && domEvents !== undefined ? domEvents : [startEvent],
+        events: domEvents || [startEvent],
         event: startEvent,
         ...clickActionBase,
       }
