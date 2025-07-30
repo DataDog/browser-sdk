@@ -81,7 +81,7 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, sdkVersion, source = 'browser', variant }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: InitConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload
@@ -96,14 +96,6 @@ function buildEndpointParameters(
 
   if (encoding) {
     parameters.push(`dd-evp-encoding=${encoding}`)
-  }
-
-  if (sdkVersion) {
-    parameters.push(`_dd.sdk_version=${sdkVersion}`)
-  }
-
-  if (variant) {
-    parameters.push(`_dd.variant=${variant}`)
   }
 
   if (trackType === 'rum') {
