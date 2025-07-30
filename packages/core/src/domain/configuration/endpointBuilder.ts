@@ -2,7 +2,7 @@ import type { Payload } from '../../transport'
 import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
-import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_STAGING, INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from '../intakeSites'
+import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from '../intakeSites'
 import type { InitConfiguration } from './configuration'
 
 // replaced at build time
@@ -61,10 +61,6 @@ export function buildEndpointHost(
 
   if (trackType === 'logs' && initConfiguration.usePciIntake && site === INTAKE_SITE_US1) {
     return PCI_INTAKE_HOST_US1
-  }
-
-  if (trackType === 'exposures' && site === INTAKE_SITE_STAGING) {
-    return `event-platform-intake.${site}`
   }
 
   if (internalAnalyticsSubdomain && site === INTAKE_SITE_US1) {
