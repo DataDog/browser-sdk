@@ -80,7 +80,7 @@ export function startTracer(
         userContext,
         accountContext,
         (tracingHeaders: TracingHeaders) => {
-          if (context.input instanceof Request && !(context.init && context.init.headers)) {
+          if (context.input instanceof Request && !(context.init || {}).headers) {
             context.input = new Request(context.input)
             Object.keys(tracingHeaders).forEach((key) => {
               ;(context.input as Request).headers.append(key, tracingHeaders[key])

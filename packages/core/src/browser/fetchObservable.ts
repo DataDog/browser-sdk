@@ -117,7 +117,7 @@ function afterSend(
       reportFetch({
         status: 0,
         isAborted:
-          (context.init && context.init.signal && context.init.signal.aborted) ||
+          ((context.init || {}).signal || {}).aborted ||
           (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
         error,
       })

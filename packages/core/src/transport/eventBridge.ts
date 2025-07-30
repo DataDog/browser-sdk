@@ -47,9 +47,7 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
   return !!bridge && bridge.getCapabilities().includes(capability)
 }
 
-export function canUseEventBridge(
-  currentHost = getGlobalObject<Window>().location && getGlobalObject<Window>().location.hostname
-): boolean {
+export function canUseEventBridge(currentHost = (getGlobalObject<Window>().location || {}).hostname): boolean {
   const bridge = getEventBridge()
   return (
     !!bridge &&

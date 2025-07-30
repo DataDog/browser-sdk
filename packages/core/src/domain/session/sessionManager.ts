@@ -181,6 +181,6 @@ async function reportUnexpectedSessionState() {
       domain: getCurrentSite(),
       ...sessionCookies,
     },
-    currentDomain: `${window.location.protocol}//${window.location.hostname}`,
+    currentDomain: `${location.protocol}//${location.hostname}`,
   })
 }

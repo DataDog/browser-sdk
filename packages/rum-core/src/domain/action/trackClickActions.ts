@@ -185,7 +185,7 @@ function startClickAction(
   const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
 
-  const selector = clickActionBase && clickActionBase.target && clickActionBase.target.selector
+  const selector = ((clickActionBase && clickActionBase.target) || {}).selector
   if (selector) {
     updateInteractionSelector(startEvent.timeStamp, selector)
   }
