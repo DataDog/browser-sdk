@@ -1,24 +1,27 @@
 import type { BandwidthStats, Context, HttpRequestEvent, Observable, Telemetry } from '@datadog/browser-core'
-import { performDraw, addTelemetryDebug, noop } from '@datadog/browser-core'
+import { performDraw, addTelemetryMetrics, noop } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { ReplayPayload } from './buildReplayPayload'
 
 const SEGMENT_METRICS_TELEMETRY_NAME = 'Segment network request metrics'
 
 interface SegmentMetrics extends Context {
-  result: 'failure' | 'queue-full' | 'success'
+  cssText: {
+    count: number
+    max: number
+    sum: number
+  }
   isFullSnapshot: boolean
-
+  ongoingRequests: {
+    count: number
+    totalSize: number
+  }
   recordCount: number
-  compressedSize: number
-  rawSize: number
-
-  cssTextCount: number
-  cssTextSizeMax: number
-  cssTextSizeSum: number
-
-  ongoingByteCount: number
-  ongoingRequestCount: number
+  result: 'failure' | 'queue-full' | 'success'
+  size: {
+    compressed: number
+    raw: number
+  }
 }
 
 export function startSegmentTelemetry(
@@ -31,15 +34,14 @@ export function startSegmentTelemetry(
     return { stop: noop }
   }
 
-  const { unsubscribe } = requestObservable.subscribe((event) => {
-    const payload = event.payload
+  const { unsubscribe } = requestObservable.subscribe((requestEvent) => {
     if (
-      event.type === 'failure' ||
-      event.type === 'queue-full' ||
-      (event.type === 'success' && payload.isFullSnapshot)
+      requestEvent.type === 'failure' ||
+      requestEvent.type === 'queue-full' ||
+      (requestEvent.type === 'success' && requestEvent.payload.isFullSnapshot)
     ) {
-      const metrics = createSegmentMetrics(event.type, event.bandwidth, payload)
-      addTelemetryDebug(SEGMENT_METRICS_TELEMETRY_NAME, metrics)
+      const metrics = createSegmentMetrics(requestEvent.type, requestEvent.bandwidth, requestEvent.payload)
+      addTelemetryMetrics(SEGMENT_METRICS_TELEMETRY_NAME, { metrics })
     }
   })
 
@@ -54,15 +56,21 @@ function createSegmentMetrics(
   payload: ReplayPayload
 ): SegmentMetrics {
   return {
-    result,
+    cssText: {
+      count: payload.cssText.count,
+      max: payload.cssText.max,
+      sum: payload.cssText.sum,
+    },
     isFullSnapshot: payload.isFullSnapshot,
-    cssTextCount: payload.cssText.count,
+    ongoingRequests: {
+      count: bandwidthStats.ongoingRequestCount,
+      totalSize: bandwidthStats.ongoingByteCount,
+    },
     recordCount: payload.recordCount,
-    compressedSize: payload.bytesCount,
-    cssTextSizeMax: payload.cssText.max,
-    cssTextSizeSum: payload.cssText.sum,
-    rawSize: payload.rawSize,
-    ongoingByteCount: bandwidthStats.ongoingByteCount,
-    ongoingRequestCount: bandwidthStats.ongoingRequestCount,
+    result,
+    size: {
+      compressed: payload.bytesCount,
+      raw: payload.rawSize,
+    },
   }
 }

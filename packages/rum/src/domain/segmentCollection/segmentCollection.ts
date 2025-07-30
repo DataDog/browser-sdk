@@ -41,7 +41,7 @@ export let SEGMENT_BYTES_LIMIT = 60_000
 // To help investigate session replays issues, each segment is created with a "creation reason",
 // indicating why the session has been created.
 
-export interface SegmentCollector {
+interface SegmentCollector {
   addRecord(this: void, record: BrowserRecord, stats?: SerializationStats): void
   stop(this: void): void
 }

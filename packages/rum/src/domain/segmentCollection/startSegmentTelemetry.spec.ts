@@ -67,16 +67,24 @@ describe('segmentTelemetry', () => {
           type: 'log',
           status: 'debug',
           message: 'Segment network request metrics',
-          result,
-          isFullSnapshot: true,
-          cssTextCount: 2,
-          recordCount: 3,
-          compressedSize: 1000,
-          cssTextSizeMax: 300,
-          cssTextSizeSum: 500,
-          rawSize: 2000,
-          ongoingByteCount: 3000,
-          ongoingRequestCount: 2,
+          metrics: {
+            cssText: {
+              count: 2,
+              max: 300,
+              sum: 500,
+            },
+            isFullSnapshot: true,
+            ongoingRequests: {
+              count: 2,
+              totalSize: 3000,
+            },
+            recordCount: 3,
+            result,
+            size: {
+              compressed: 1000,
+              raw: 2000,
+            },
+          },
         })
       )
 
@@ -96,16 +104,24 @@ describe('segmentTelemetry', () => {
           type: 'log',
           status: 'debug',
           message: 'Segment network request metrics',
-          result,
-          isFullSnapshot: false,
-          cssTextCount: 2,
-          recordCount: 3,
-          compressedSize: 1000,
-          cssTextSizeMax: 300,
-          cssTextSizeSum: 500,
-          rawSize: 2000,
-          ongoingByteCount: 3000,
-          ongoingRequestCount: 2,
+          metrics: {
+            cssText: {
+              count: 2,
+              max: 300,
+              sum: 500,
+            },
+            isFullSnapshot: false,
+            ongoingRequests: {
+              count: 2,
+              totalSize: 3000,
+            },
+            recordCount: 3,
+            result,
+            size: {
+              compressed: 1000,
+              raw: 2000,
+            },
+          },
         })
       )
 
