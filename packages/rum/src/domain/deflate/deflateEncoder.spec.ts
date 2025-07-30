@@ -1,7 +1,8 @@
-import type { RawTelemetryEvent, EncoderResult } from '@datadog/browser-core'
+import type { EncoderResult } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { noop, startFakeTelemetry, DeflateEncoderStreamId } from '@datadog/browser-core'
+import { noop, DeflateEncoderStreamId } from '@datadog/browser-core'
 import { MockWorker } from '../../../test'
+import { startMockTelemetry, type MockTelemetry } from '../../../../core/test'
 import { createDeflateEncoder } from './deflateEncoder'
 
 const OTHER_STREAM_ID = 10 as DeflateEncoderStreamId
@@ -9,7 +10,7 @@ const OTHER_STREAM_ID = 10 as DeflateEncoderStreamId
 describe('createDeflateEncoder', () => {
   const configuration = {} as RumConfiguration
   let worker: MockWorker
-  let telemetryEvents: RawTelemetryEvent[]
+  let telemetry: MockTelemetry
 
   const ENCODED_FOO = [102, 111, 111]
   const ENCODED_BAR = [98, 97, 114]
@@ -17,7 +18,7 @@ describe('createDeflateEncoder', () => {
 
   beforeEach(() => {
     worker = new MockWorker()
-    telemetryEvents = startFakeTelemetry()
+    telemetry = startMockTelemetry()
   })
 
   describe('write()', () => {
@@ -195,7 +196,7 @@ describe('createDeflateEncoder', () => {
     expect(writeCallbackSpy).not.toHaveBeenCalled()
   })
 
-  it('unsubscribes from the worker responses come out of order', () => {
+  it('unsubscribes from the worker responses come out of order', async () => {
     const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     encoder.write('foo', noop)
     encoder.write('bar', noop)
@@ -204,7 +205,7 @@ describe('createDeflateEncoder', () => {
     worker.processAllMessages()
 
     expect(worker.messageListenersCount).toBe(0)
-    expect(telemetryEvents).toEqual([
+    expect(await telemetry.getEvents()).toEqual([
       {
         type: 'log',
         message: 'Worker responses received out of order.',

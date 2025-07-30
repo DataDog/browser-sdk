@@ -4,7 +4,7 @@ import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
-import { setNavigatorOnLine, setNavigatorConnection, createHooks } from '../../../test'
+import { setNavigatorOnLine, setNavigatorConnection, createHooks, waitNextMicrotask } from '../../../test'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
@@ -30,8 +30,8 @@ const PERFORMANCE_METRICS_KIND = 'Performance metrics'
 function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
   const observable = new Observable<TelemetryEvent & Context>()
 
-  const notifySpy = jasmine.createSpy('notified')
-  observable.subscribe(notifySpy)
+  const events: TelemetryEvent[] = []
+  observable.subscribe((event) => events.push(event))
   const hooks = createHooks()
   const telemetry = startTelemetryCollection(
     TelemetryService.RUM,
@@ -46,7 +46,10 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
   )
 
   return {
-    notifySpy,
+    getTelemetryEvents: async () => {
+      await waitNextMicrotask()
+      return events
+    },
     telemetry,
     hooks,
   }
@@ -57,20 +60,20 @@ describe('telemetry', () => {
     resetTelemetry()
   })
 
-  it('collects "monitor" errors', () => {
-    const { notifySpy } = startAndSpyTelemetry()
+  it('collects "monitor" errors', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')
     })
-    expect(notifySpy).toHaveBeenCalledTimes(1)
-    expect(notifySpy.calls.mostRecent().args[0]).toEqual(
+
+    expect(await getTelemetryEvents()).toEqual([
       jasmine.objectContaining({
         telemetry: jasmine.objectContaining({
           type: TelemetryType.LOG,
           status: StatusType.error,
         }),
-      })
-    )
+      }),
+    ])
   })
 
   describe('addTelemetryConfiguration', () => {
@@ -78,149 +81,155 @@ describe('telemetry', () => {
       resetExperimentalFeatures()
     })
 
-    it('should collects configuration when sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 100 })
+    it('should collects configuration when sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({
+        telemetrySampleRate: 100,
+        telemetryConfigurationSampleRate: 100,
+      })
 
       addTelemetryConfiguration({})
 
-      expect(notifySpy).toHaveBeenCalled()
-      expect(notifySpy.calls.mostRecent().args[0]).toEqual(
+      expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
           telemetry: jasmine.objectContaining({
             type: TelemetryType.CONFIGURATION,
             configuration: jasmine.anything(),
           }),
-        })
-      )
+        }),
+      ])
     })
 
-    it('should not notify configuration when not sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryConfigurationSampleRate: 0 })
+    it('should not notify configuration when not sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({
+        telemetrySampleRate: 100,
+        telemetryConfigurationSampleRate: 0,
+      })
 
       addTelemetryConfiguration({})
 
-      expect(notifySpy).not.toHaveBeenCalled()
+      expect(await getTelemetryEvents()).toEqual([])
     })
 
-    it('should not notify configuration when telemetrySampleRate is 0', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryConfigurationSampleRate: 100 })
+    it('should not notify configuration when telemetrySampleRate is 0', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({
+        telemetrySampleRate: 0,
+        telemetryConfigurationSampleRate: 100,
+      })
 
       addTelemetryConfiguration({})
 
-      expect(notifySpy).not.toHaveBeenCalled()
+      expect(await getTelemetryEvents()).toEqual([])
     })
   })
 
   describe('addTelemetryUsage', () => {
-    it('should collects usage when sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
+    it('should collects usage when sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
 
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
-      expect(notifySpy).toHaveBeenCalled()
-      expect(notifySpy.calls.mostRecent().args[0]).toEqual(
+      expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
           telemetry: jasmine.objectContaining({
             type: TelemetryType.USAGE,
             usage: jasmine.anything(),
           }),
-        })
-      )
+        }),
+      ])
     })
 
-    it('should not notify usage when not sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 0 })
+    it('should not notify usage when not sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 0 })
 
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
-      expect(notifySpy).not.toHaveBeenCalled()
+      expect(await getTelemetryEvents()).toEqual([])
     })
 
-    it('should not notify usage when telemetrySampleRate is 0', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryUsageSampleRate: 100 })
+    it('should not notify usage when telemetrySampleRate is 0', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 0, telemetryUsageSampleRate: 100 })
 
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
-      expect(notifySpy).not.toHaveBeenCalled()
+      expect(await getTelemetryEvents()).toEqual([])
     })
   })
 
   describe('addTelemetryMetrics', () => {
-    it('should collect metrics when sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100 })
+    it('should collect metrics when sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100 })
 
       addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
 
-      expect(notifySpy).toHaveBeenCalled()
-      expect(notifySpy.calls.mostRecent().args[0]).toEqual(
+      expect(await getTelemetryEvents()).toEqual([
         jasmine.objectContaining({
           telemetry: jasmine.objectContaining({
             type: TelemetryType.LOG,
             message: PERFORMANCE_METRICS_KIND,
             status: StatusType.debug,
           }),
-        })
-      )
+        }),
+      ])
     })
 
-    it('should not notify metrics when not sampled', () => {
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 0 })
+    it('should not notify metrics when not sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 0 })
 
       addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
 
-      expect(notifySpy).not.toHaveBeenCalled()
+      expect(await getTelemetryEvents()).toEqual([])
     })
   })
 
-  it('should contains feature flags', () => {
+  it('should contains feature flags', async () => {
     addExperimentalFeatures(['foo' as ExperimentalFeature])
-    const { notifySpy } = startAndSpyTelemetry()
+    const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')
     })
 
-    expect(notifySpy.calls.mostRecent().args[0].experimental_features).toEqual(['foo'])
+    expect((await getTelemetryEvents())[0].experimental_features).toEqual(['foo'])
   })
 
-  it('should contains runtime env', () => {
-    const { notifySpy } = startAndSpyTelemetry()
+  it('should contains runtime env', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')
     })
 
-    expect(notifySpy.calls.mostRecent().args[0].telemetry.runtime_env).toEqual({
+    expect((await getTelemetryEvents())[0].telemetry.runtime_env).toEqual({
       is_local_file: jasmine.any(Boolean),
       is_worker: jasmine.any(Boolean),
     })
   })
 
-  it('should contain connectivity information', () => {
+  it('should contain connectivity information', async () => {
     setNavigatorOnLine(false)
     setNavigatorConnection({ type: 'wifi', effectiveType: '4g' })
 
-    const { notifySpy } = startAndSpyTelemetry()
+    const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')
     })
 
-    expect(notifySpy.calls.mostRecent().args[0].telemetry.connectivity).toEqual({
+    expect((await getTelemetryEvents())[0].telemetry.connectivity).toEqual({
       status: 'not_connected',
       interfaces: ['wifi'],
       effective_type: '4g',
     })
   })
 
-  it('should collect pre start events', () => {
+  it('should collect pre start events', async () => {
     addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
-    const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
+    const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100, telemetryUsageSampleRate: 100 })
 
-    expect(notifySpy).toHaveBeenCalled()
+    expect((await getTelemetryEvents()).length).toBe(1)
   })
 
   describe('assemble telemetry hook', () => {
-    it('should add default telemetry event attributes', () => {
-      const { notifySpy, hooks } = startAndSpyTelemetry()
+    it('should add default telemetry event attributes', async () => {
+      const { getTelemetryEvents, hooks } = startAndSpyTelemetry()
 
       hooks.register(HookNames.AssembleTelemetry, () => ({ foo: 'bar' }))
 
@@ -228,11 +237,11 @@ describe('telemetry', () => {
         throw new Error('foo')
       })
 
-      expect(notifySpy.calls.mostRecent().args[0].foo).toEqual('bar')
+      expect((await getTelemetryEvents())[0].foo).toEqual('bar')
     })
 
-    it('should add context progressively', () => {
-      const { hooks, notifySpy } = startAndSpyTelemetry()
+    it('should add context progressively', async () => {
+      const { hooks, getTelemetryEvents } = startAndSpyTelemetry()
       hooks.register(HookNames.AssembleTelemetry, () => ({
         application: {
           id: 'bar',
@@ -250,39 +259,55 @@ describe('telemetry', () => {
         throw new Error('bar')
       })
 
-      expect(notifySpy.calls.argsFor(0)[0].application.id).toEqual('bar')
-      expect(notifySpy.calls.argsFor(1)[0].application.id).toEqual('bar')
-      expect(notifySpy.calls.argsFor(1)[0].session.id).toEqual('123')
+      const events = await getTelemetryEvents()
+      expect(events[0].application!.id).toEqual('bar')
+      expect(events[1].application!.id).toEqual('bar')
+      expect(events[1].session!.id).toEqual('123')
+    })
+
+    it('should apply telemetry hook on events collected before telemetry is started', async () => {
+      addTelemetryDebug('debug 1')
+
+      const { hooks, getTelemetryEvents } = startAndSpyTelemetry()
+
+      hooks.register(HookNames.AssembleTelemetry, () => ({
+        application: {
+          id: 'bar',
+        },
+      }))
+
+      const events = await getTelemetryEvents()
+      expect(events[0].application!.id).toEqual('bar')
     })
   })
 
   describe('sampling', () => {
-    it('should notify when sampled', () => {
+    it('should notify when sampled', async () => {
       spyOn(Math, 'random').and.callFake(() => 0)
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
 
       callMonitored(() => {
         throw new Error('message')
       })
 
-      expect(notifySpy).toHaveBeenCalled()
+      expect((await getTelemetryEvents()).length).toBe(1)
     })
 
-    it('should not notify when not sampled', () => {
+    it('should not notify when not sampled', async () => {
       spyOn(Math, 'random').and.callFake(() => 1)
-      const { notifySpy } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
+      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
 
       callMonitored(() => {
         throw new Error('message')
       })
 
-      expect(notifySpy).not.toHaveBeenCalled()
+      expect(await getTelemetryEvents()).toEqual([])
     })
   })
 
   describe('deduplicating', () => {
-    it('should discard already sent telemetry', () => {
-      const { notifySpy } = startAndSpyTelemetry()
+    it('should discard already sent telemetry', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry()
       const fooError = new Error('foo')
       const barError = new Error('bar')
 
@@ -290,39 +315,42 @@ describe('telemetry', () => {
       addTelemetryError(fooError)
       addTelemetryError(barError)
 
-      expect(notifySpy).toHaveBeenCalledTimes(2)
-      expect(notifySpy.calls.argsFor(0)[0].telemetry.message).toEqual('foo')
-      expect(notifySpy.calls.argsFor(1)[0].telemetry.message).toEqual('bar')
+      const events = await getTelemetryEvents()
+      expect(events.length).toBe(2)
+      expect(events[0].telemetry.message).toEqual('foo')
+      expect(events[1].telemetry.message).toEqual('bar')
     })
 
-    it('should not consider a discarded event for the maxTelemetryEventsPerPage', () => {
-      const { notifySpy } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+    it('should not consider a discarded event for the maxTelemetryEventsPerPage', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
 
       addTelemetryUsage({ feature: 'stop-session' })
       addTelemetryUsage({ feature: 'stop-session' })
       addTelemetryUsage({ feature: 'start-session-replay-recording' })
 
-      expect(notifySpy).toHaveBeenCalledTimes(2)
-      expect(notifySpy.calls.argsFor(0)[0].telemetry.usage.feature).toEqual('stop-session')
-      expect(notifySpy.calls.argsFor(1)[0].telemetry.usage.feature).toEqual('start-session-replay-recording')
+      const events = await getTelemetryEvents()
+      expect(events.length).toBe(2)
+      expect((events[0].telemetry.usage as any).feature).toEqual('stop-session')
+      expect((events[1].telemetry.usage as any).feature).toEqual('start-session-replay-recording')
     })
   })
 
   describe('maxTelemetryEventsPerPage', () => {
-    it('should be enforced', () => {
-      const { notifySpy } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+    it('should be enforced', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
 
       addTelemetryUsage({ feature: 'stop-session' })
       addTelemetryUsage({ feature: 'start-session-replay-recording' })
       addTelemetryUsage({ feature: 'start-view' })
 
-      expect(notifySpy).toHaveBeenCalledTimes(2)
-      expect(notifySpy.calls.argsFor(0)[0].telemetry.usage.feature).toEqual('stop-session')
-      expect(notifySpy.calls.argsFor(1)[0].telemetry.usage.feature).toEqual('start-session-replay-recording')
+      const events = await getTelemetryEvents()
+      expect(events.length).toBe(2)
+      expect((events[0].telemetry.usage as any).feature).toEqual('stop-session')
+      expect((events[1].telemetry.usage as any).feature).toEqual('start-session-replay-recording')
     })
 
-    it('should be enforced separately for different kinds of telemetry', () => {
-      const { notifySpy } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+    it('should be enforced separately for different kinds of telemetry', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
 
       // Group 1. These are all distinct kinds of telemetry, so these should all be sent.
       addTelemetryDebug('debug 1')
@@ -346,7 +374,7 @@ describe('telemetry', () => {
       addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { latency: 500 })
       addTelemetryUsage({ feature: 'start-view' })
 
-      expect(notifySpy.calls.all().map((call) => call.args[0].telemetry as TelemetryEvent['telemetry'])).toEqual([
+      expect((await getTelemetryEvents()).map((event) => event.telemetry)).toEqual([
         // Group 1.
         jasmine.objectContaining({ message: 'debug 1' }),
         jasmine.objectContaining({ message: 'error 1' }),
@@ -369,17 +397,18 @@ describe('telemetry', () => {
       { site: INTAKE_SITE_US1_FED, enabled: false },
       { site: INTAKE_SITE_US1, enabled: true },
     ].forEach(({ site, enabled }) => {
-      it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, () => {
-        const { notifySpy } = startAndSpyTelemetry({ site })
+      it(`should be ${enabled ? 'enabled' : 'disabled'} on ${site}`, async () => {
+        const { getTelemetryEvents } = startAndSpyTelemetry({ site })
 
         callMonitored(() => {
           throw new Error('message')
         })
 
+        const events = await getTelemetryEvents()
         if (enabled) {
-          expect(notifySpy).toHaveBeenCalled()
+          expect(events.length).toBe(1)
         } else {
-          expect(notifySpy).not.toHaveBeenCalled()
+          expect(events.length).toBe(0)
         }
       })
     })
