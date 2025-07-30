@@ -22,7 +22,7 @@ describe('remoteConfiguration', () => {
   describe('fetchRemoteConfiguration', () => {
     const configuration = { remoteConfigurationId: 'xxx' } as RumInitConfiguration
 
-    it('should fetch the remote configuration', (done) => {
+    it('should fetch the remote configuration', async () => {
       interceptor.withFetch(() =>
         Promise.resolve({
           ok: true,
@@ -38,46 +38,43 @@ describe('remoteConfiguration', () => {
         })
       )
 
-      fetchRemoteConfiguration(configuration)
-        .then((remoteConfiguration) => {
-          expect(remoteConfiguration).toEqual({
-            applicationId: 'xxx',
-            sessionSampleRate: 50,
-            sessionReplaySampleRate: 50,
-            defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-          })
-          done()
-        })
-        .catch(done.fail)
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: true,
+        value: {
+          applicationId: 'xxx',
+          sessionSampleRate: 50,
+          sessionReplaySampleRate: 50,
+          defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+        },
+      })
     })
 
-    it('should throw an error if the fetching fails with a server error', (done) => {
+    it('should return an error if the fetching fails with a server error', async () => {
       interceptor.withFetch(() => Promise.reject(new Error('Server error')))
 
-      fetchRemoteConfiguration(configuration)
-        .then(() => done.fail())
-        .catch((error) => {
-          expect(error.message).toEqual('Error fetching the remote configuration.')
-          done()
-        })
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: false,
+        error: new Error('Error fetching the remote configuration.'),
+      })
     })
 
-    it('should throw an error if the fetching fails with a client error', (done) => {
+    it('should throw an error if the fetching fails with a client error', async () => {
       interceptor.withFetch(() =>
         Promise.resolve({
           ok: false,
         })
       )
 
-      fetchRemoteConfiguration(configuration)
-        .then(() => done.fail())
-        .catch((error) => {
-          expect(error.message).toEqual('Error fetching the remote configuration.')
-          done()
-        })
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: false,
+        error: new Error('Error fetching the remote configuration.'),
+      })
     })
 
-    it('should throw an error if the remote config does not contain rum config', (done) => {
+    it('should throw an error if the remote config does not contain rum config', async () => {
       interceptor.withFetch(() =>
         Promise.resolve({
           ok: true,
@@ -85,12 +82,11 @@ describe('remoteConfiguration', () => {
         })
       )
 
-      fetchRemoteConfiguration(configuration)
-        .then(() => done.fail())
-        .catch((error) => {
-          expect(error.message).toEqual('No remote configuration for RUM.')
-          done()
-        })
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: false,
+        error: new Error('No remote configuration for RUM.'),
+      })
     })
   })
 

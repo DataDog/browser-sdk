@@ -17,14 +17,12 @@ const STATIC_OPTIONS: Array<keyof RumInitConfiguration> = [
 ]
 
 export async function fetchAndApplyRemoteConfiguration(initConfiguration: RumInitConfiguration) {
-  let remoteInitConfiguration: RumRemoteConfiguration
-  try {
-    remoteInitConfiguration = await fetchRemoteConfiguration(initConfiguration)
-  } catch (error) {
-    display.error(error)
+  const fetchResult = await fetchRemoteConfiguration(initConfiguration)
+  if (!fetchResult.ok) {
+    display.error(fetchResult.error)
     return
   }
-  return applyRemoteConfiguration(initConfiguration, remoteInitConfiguration)
+  return applyRemoteConfiguration(initConfiguration, fetchResult.value)
 }
 
 export function applyRemoteConfiguration(
@@ -43,22 +41,34 @@ export function applyRemoteConfiguration(
   return appliedConfiguration
 }
 
-export async function fetchRemoteConfiguration(configuration: RumInitConfiguration) {
-  const FETCHING_ERROR_MESSAGE = 'Error fetching the remote configuration.'
-  let response: Response
+type FetchRemoteConfigurationResult = { ok: true; value: RumRemoteConfiguration } | { ok: false; error: Error }
+
+export async function fetchRemoteConfiguration(
+  configuration: RumInitConfiguration
+): Promise<FetchRemoteConfigurationResult> {
+  let response: Response | undefined
   try {
     response = await fetch(buildEndpoint(configuration))
   } catch {
-    throw new Error(FETCHING_ERROR_MESSAGE)
+    response = undefined
   }
-  if (!response.ok) {
-    throw new Error(FETCHING_ERROR_MESSAGE)
+  if (!response || !response.ok) {
+    return {
+      ok: false,
+      error: new Error('Error fetching the remote configuration.'),
+    }
   }
   const remoteConfiguration: RemoteConfiguration = await response.json()
   if (remoteConfiguration.rum) {
-    return remoteConfiguration.rum
+    return {
+      ok: true,
+      value: remoteConfiguration.rum,
+    }
   }
-  throw new Error('No remote configuration for RUM.')
+  return {
+    ok: false,
+    error: new Error('No remote configuration for RUM.'),
+  }
 }
 
 export function buildEndpoint(configuration: RumInitConfiguration) {
