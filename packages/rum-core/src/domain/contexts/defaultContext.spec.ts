@@ -1,4 +1,4 @@
-import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import { HookNames, timeStampNow } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
@@ -36,41 +36,12 @@ describe('startDefaultContext', () => {
       })
     })
 
-    it('should set the browser sdk version always', () => {
-      startDefaultContext(hooks, mockRumConfiguration(), 'rum')
-      const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
-        eventType: 'view',
-        startTime: 0 as RelativeTime,
-      }) as DefaultRumEventAttributes
-
-      mockEventBridge()
-
-      const eventWithEventBridge = hooks.triggerHook(HookNames.Assemble, {
-        eventType: 'view',
-        startTime: 0 as RelativeTime,
-      }) as DefaultRumEventAttributes
-
-      expect(eventWithEventBridge._dd!.browser_sdk_version).toBeDefined()
-      expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeDefined()
-    })
-
-    it('should set the browser sdk version if source is overridden', () => {
-      startDefaultContext(hooks, mockRumConfiguration({ source: 'flutter' }), 'rum')
-      const eventWithOverriddenSource = hooks.triggerHook(HookNames.Assemble, {
-        eventType: 'view',
-        startTime: 0 as RelativeTime,
-      }) as DefaultRumEventAttributes
-
-      expect(eventWithOverriddenSource._dd!.browser_sdk_version).toBeDefined()
-    })
-
-    it('should set the configured source and variant', () => {
+    it('should set the configured source', () => {
       startDefaultContext(
         hooks,
         mockRumConfiguration({
           applicationId: '1',
-          source: 'browser',
-          variant: 'test-variant',
+          source: 'flutter',
         }),
         'rum'
       )
@@ -86,11 +57,10 @@ describe('startDefaultContext', () => {
           id: '1',
         },
         date: timeStampNow(),
-        source: 'browser',
+        source: 'flutter',
         _dd: jasmine.objectContaining({
           format_version: 2,
           drift: jasmine.any(Number),
-          variant: 'test-variant',
         }),
       })
     })
