@@ -1,3 +1,4 @@
+import type { createContextManager } from '@datadog/browser-core'
 import { display, buildEndpointHost, mapValues, getCookie } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig } from './remoteConfiguration.types'
@@ -34,19 +35,31 @@ type DynamicOption = {
     value: string
   }
 }
+const SUPPORTED_CONTEXTS = ['user', 'context']
+type SupportedContexts = 'user' | 'context'
 
-export async function fetchAndApplyRemoteConfiguration(initConfiguration: RumInitConfiguration) {
+interface SupportedContextManagers {
+  user: ReturnType<typeof createContextManager>
+  context: ReturnType<typeof createContextManager>
+  [key: string]: ReturnType<typeof createContextManager>
+}
+
+export async function fetchAndApplyRemoteConfiguration(
+  initConfiguration: RumInitConfiguration,
+  supportedContextManagers: SupportedContextManagers
+) {
   const fetchResult = await fetchRemoteConfiguration(initConfiguration)
   if (!fetchResult.ok) {
     display.error(fetchResult.error)
     return
   }
-  return applyRemoteConfiguration(initConfiguration, fetchResult.value)
+  return applyRemoteConfiguration(initConfiguration, fetchResult.value, supportedContextManagers)
 }
 
 export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
-  rumRemoteConfiguration: RumRemoteConfiguration & { [key: string]: unknown }
+  rumRemoteConfiguration: RumRemoteConfiguration & { [key: string]: unknown },
+  supportedContextManagers: SupportedContextManagers
 ): RumInitConfiguration {
   // intents:
   // - explicitly set each supported field to limit risk in case an attacker can create configurations
@@ -55,6 +68,14 @@ export function applyRemoteConfiguration(
   SUPPORTED_FIELDS.forEach((option: string) => {
     if (option in rumRemoteConfiguration) {
       appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
+    }
+  })
+  SUPPORTED_CONTEXTS.forEach((context) => {
+    if (context in rumRemoteConfiguration && rumRemoteConfiguration[context] !== undefined) {
+      resolveContextProperty(
+        supportedContextManagers[context],
+        rumRemoteConfiguration[context] as Exclude<RumRemoteConfiguration[SupportedContexts], undefined>
+      )
     }
   })
   return appliedConfiguration
@@ -98,6 +119,21 @@ function resolveRegex(pattern: string): RegExp | undefined {
   } catch {
     display.error(`Invalid regex in the remote configuration: '${pattern}'`)
   }
+}
+
+function resolveContextProperty(
+  contextManager: ReturnType<typeof createContextManager>,
+  contextConfiguration: RumRemoteConfiguration[SupportedContexts] & { [key: string]: unknown }
+) {
+  Object.keys(contextConfiguration).forEach((key) => {
+    if (key === 'additionals') {
+      contextConfiguration[key]?.forEach((additional) => {
+        contextManager.setContextProperty(additional.key, resolveConfigurationProperty(additional.value))
+      })
+    } else {
+      contextManager.setContextProperty(key, resolveConfigurationProperty(contextConfiguration[key]))
+    }
+  })
 }
 
 function resolveDynamicOption(property: DynamicOption) {

@@ -5,6 +5,7 @@ import {
   setCookie,
   deleteCookie,
   ONE_MINUTE,
+  createContextManager,
 } from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
@@ -98,9 +99,14 @@ describe('remoteConfiguration', () => {
 
   describe('applyRemoteConfiguration', () => {
     let displaySpy: jasmine.Spy
+    let supportedContextManagers: {
+      user: ReturnType<typeof createContextManager>
+      context: ReturnType<typeof createContextManager>
+    }
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
+      supportedContextManagers = { user: createContextManager(), context: createContextManager() }
     })
 
     it('should override the initConfiguration options with the ones from the remote configuration', () => {
@@ -126,7 +132,9 @@ describe('remoteConfiguration', () => {
         ],
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+      expect(
+        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+      ).toEqual({
         applicationId: 'yyy',
         clientToken: 'xxx',
         service: 'xxx',
@@ -148,7 +156,9 @@ describe('remoteConfiguration', () => {
         applicationId: 'yyy',
         allowedTrackingOrigins: [{ rcSerializedType: 'regex', value: 'Hello(?|!)' }],
       }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+      expect(
+        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+      ).toEqual({
         ...DEFAULT_INIT_CONFIGURATION,
         applicationId: 'yyy',
         allowedTrackingOrigins: [undefined as any],
@@ -161,7 +171,9 @@ describe('remoteConfiguration', () => {
         applicationId: 'yyy',
         allowedTrackingOrigins: [{ rcSerializedType: 'foo' as any, value: 'bar' }],
       }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+      expect(
+        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+      ).toEqual({
         ...DEFAULT_INIT_CONFIGURATION,
         applicationId: 'yyy',
         allowedTrackingOrigins: [undefined as any],
@@ -174,7 +186,9 @@ describe('remoteConfiguration', () => {
         applicationId: 'yyy',
         version: { rcSerializedType: 'dynamic', strategy: 'foo' as any } as any,
       }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+      expect(
+        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+      ).toEqual({
         ...DEFAULT_INIT_CONFIGURATION,
         applicationId: 'yyy',
         version: undefined,
@@ -199,7 +213,9 @@ describe('remoteConfiguration', () => {
           version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME },
         }
 
-        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        expect(
+          applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        ).toEqual({
           ...DEFAULT_INIT_CONFIGURATION,
           applicationId: 'yyy',
           version: 'my-version',
@@ -212,7 +228,9 @@ describe('remoteConfiguration', () => {
           version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME },
         }
         deleteCookie(COOKIE_NAME)
-        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        expect(
+          applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        ).toEqual({
           ...DEFAULT_INIT_CONFIGURATION,
           applicationId: 'yyy',
           version: undefined,
@@ -241,7 +259,9 @@ describe('remoteConfiguration', () => {
             extractor: { rcSerializedType: 'regex', value: '\\d+' },
           },
         }
-        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        expect(
+          applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        ).toEqual({
           ...DEFAULT_INIT_CONFIGURATION,
           applicationId: 'yyy',
           version: '123',
@@ -258,7 +278,9 @@ describe('remoteConfiguration', () => {
             extractor: { rcSerializedType: 'regex', value: 'my-version-(\\d+)' },
           },
         }
-        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        expect(
+          applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        ).toEqual({
           ...DEFAULT_INIT_CONFIGURATION,
           applicationId: 'yyy',
           version: '123',
@@ -275,7 +297,9 @@ describe('remoteConfiguration', () => {
             extractor: { rcSerializedType: 'regex', value: 'foo' },
           },
         }
-        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        expect(
+          applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        ).toEqual({
           ...DEFAULT_INIT_CONFIGURATION,
           applicationId: 'yyy',
           version: undefined,
@@ -292,12 +316,88 @@ describe('remoteConfiguration', () => {
             extractor: { rcSerializedType: 'regex', value: 'Hello(?|!)' },
           },
         }
-        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        expect(
+          applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        ).toEqual({
           ...DEFAULT_INIT_CONFIGURATION,
           applicationId: 'yyy',
           version: undefined,
         })
         expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
+      })
+    })
+
+    describe('supported contexts', () => {
+      const COOKIE_NAME = 'unit_rc'
+
+      beforeEach(() => {
+        setCookie(COOKIE_NAME, 'first.second', ONE_MINUTE)
+      })
+
+      afterEach(() => {
+        deleteCookie(COOKIE_NAME)
+      })
+
+      it('should be resolved from the provided configuration', () => {
+        const rumRemoteConfiguration: RumRemoteConfiguration = {
+          applicationId: 'yyy',
+          user: {
+            id: {
+              rcSerializedType: 'dynamic',
+              strategy: 'cookie',
+              name: COOKIE_NAME,
+              extractor: { rcSerializedType: 'regex', value: '(\\w+)\\.\\w+' },
+            },
+            additionals: [
+              {
+                key: 'bar',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'cookie',
+                  name: COOKIE_NAME,
+                  extractor: { rcSerializedType: 'regex', value: '\\w+\\.(\\w+)' },
+                },
+              },
+            ],
+          },
+        }
+        expect(
+          applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        ).toEqual({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'yyy',
+        })
+        expect(supportedContextManagers.user.getContext()).toEqual({
+          id: 'first',
+          bar: 'second',
+        })
+      })
+
+      it('unresolved property should be set to undefined', () => {
+        const rumRemoteConfiguration: RumRemoteConfiguration = {
+          applicationId: 'yyy',
+          context: {
+            additionals: [
+              {
+                key: 'foo',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'cookie',
+                  name: 'missing-cookie',
+                },
+              },
+            ],
+          },
+        }
+        expect(
+          applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        ).toEqual({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'yyy',
+        })
+        expect(supportedContextManagers.context.getContext()).toEqual({
+          foo: undefined,
+        })
       })
     })
   })
