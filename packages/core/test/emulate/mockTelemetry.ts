@@ -5,6 +5,7 @@ import {
   resetTelemetry,
   type RawTelemetryEvent,
 } from '../../src/domain/telemetry'
+import { registerCleanupTask } from '../registerCleanupTask'
 
 export interface MockTelemetry {
   getEvents: () => Promise<RawTelemetryEvent[]>
@@ -17,12 +18,17 @@ export function startMockTelemetry() {
   const events: RawTelemetryEvent[] = []
 
   const telemetryObservable = getTelemetryObservable()
-  telemetryObservable.subscribe(({ rawEvent }) => {
+  const subscription = telemetryObservable.subscribe(({ rawEvent }) => {
     events.push(rawEvent)
   })
   telemetryObservable.unbuffer()
 
   startMonitorErrorCollection(addTelemetryError)
+
+  registerCleanupTask(() => {
+    subscription.unsubscribe()
+    resetTelemetry()
+  })
 
   function getEvents() {
     // Using a Promise to ensure the consumer waits after the next microtask so events are collected
