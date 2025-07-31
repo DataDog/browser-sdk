@@ -1,4 +1,11 @@
-import { DefaultPrivacyLevel, INTAKE_SITE_US1, display } from '@datadog/browser-core'
+import {
+  DefaultPrivacyLevel,
+  INTAKE_SITE_US1,
+  display,
+  setCookie,
+  deleteCookie,
+  ONE_MINUTE,
+} from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import type { RumRemoteConfiguration } from './remoteConfiguration'
@@ -13,14 +20,13 @@ const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
 }
 
 describe('remoteConfiguration', () => {
-  let interceptor: ReturnType<typeof interceptRequests>
-
-  beforeEach(() => {
-    interceptor = interceptRequests()
-  })
-
   describe('fetchRemoteConfiguration', () => {
     const configuration = { remoteConfigurationId: 'xxx' } as RumInitConfiguration
+    let interceptor: ReturnType<typeof interceptRequests>
+
+    beforeEach(() => {
+      interceptor = interceptRequests()
+    })
 
     it('should fetch the remote configuration', async () => {
       interceptor.withFetch(() =>
@@ -161,6 +167,138 @@ describe('remoteConfiguration', () => {
         allowedTrackingOrigins: [undefined as any],
       })
       expect(displaySpy).toHaveBeenCalledWith('Unsupported remote configuration: "rcSerializedType": "foo"')
+    })
+
+    it('should display an error if an unsupported `strategy` is provided', () => {
+      const rumRemoteConfiguration: RumRemoteConfiguration = {
+        applicationId: 'yyy',
+        version: { rcSerializedType: 'dynamic', strategy: 'foo' as any } as any,
+      }
+      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        ...DEFAULT_INIT_CONFIGURATION,
+        applicationId: 'yyy',
+        version: undefined,
+      })
+      expect(displaySpy).toHaveBeenCalledWith('Unsupported remote configuration: "strategy": "foo"')
+    })
+
+    describe('cookie strategy', () => {
+      const COOKIE_NAME = 'unit_rc'
+
+      beforeEach(() => {
+        setCookie(COOKIE_NAME, 'my-version', ONE_MINUTE)
+      })
+
+      afterEach(() => {
+        deleteCookie(COOKIE_NAME)
+      })
+
+      it('should resolve a configuration value from a cookie', () => {
+        const rumRemoteConfiguration: RumRemoteConfiguration = {
+          applicationId: 'yyy',
+          version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME },
+        }
+
+        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'yyy',
+          version: 'my-version',
+        })
+      })
+
+      it('should resolve to undefined if the cookie is missing', () => {
+        const rumRemoteConfiguration: RumRemoteConfiguration = {
+          applicationId: 'yyy',
+          version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME },
+        }
+        deleteCookie(COOKIE_NAME)
+        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'yyy',
+          version: undefined,
+        })
+      })
+    })
+
+    describe('with extractor', () => {
+      const COOKIE_NAME = 'unit_rc'
+
+      beforeEach(() => {
+        setCookie(COOKIE_NAME, 'my-version-123', ONE_MINUTE)
+      })
+
+      afterEach(() => {
+        deleteCookie(COOKIE_NAME)
+      })
+
+      it('should resolve to the match on the value', () => {
+        const rumRemoteConfiguration: RumRemoteConfiguration = {
+          applicationId: 'yyy',
+          version: {
+            rcSerializedType: 'dynamic',
+            strategy: 'cookie',
+            name: COOKIE_NAME,
+            extractor: { rcSerializedType: 'regex', value: '\\d+' },
+          },
+        }
+        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'yyy',
+          version: '123',
+        })
+      })
+
+      it('should resolve to the capture group on the value', () => {
+        const rumRemoteConfiguration: RumRemoteConfiguration = {
+          applicationId: 'yyy',
+          version: {
+            rcSerializedType: 'dynamic',
+            strategy: 'cookie',
+            name: COOKIE_NAME,
+            extractor: { rcSerializedType: 'regex', value: 'my-version-(\\d+)' },
+          },
+        }
+        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'yyy',
+          version: '123',
+        })
+      })
+
+      it("should resolve to undefined if the value don't match", () => {
+        const rumRemoteConfiguration: RumRemoteConfiguration = {
+          applicationId: 'yyy',
+          version: {
+            rcSerializedType: 'dynamic',
+            strategy: 'cookie',
+            name: COOKIE_NAME,
+            extractor: { rcSerializedType: 'regex', value: 'foo' },
+          },
+        }
+        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'yyy',
+          version: undefined,
+        })
+      })
+
+      it('should display an error if the extractor is not a valid regex', () => {
+        const rumRemoteConfiguration: RumRemoteConfiguration = {
+          applicationId: 'yyy',
+          version: {
+            rcSerializedType: 'dynamic',
+            strategy: 'cookie',
+            name: COOKIE_NAME,
+            extractor: { rcSerializedType: 'regex', value: 'Hello(?|!)' },
+          },
+        }
+        expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+          ...DEFAULT_INIT_CONFIGURATION,
+          applicationId: 'yyy',
+          version: undefined,
+        })
+        expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
+      })
     })
   })
 
