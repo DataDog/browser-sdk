@@ -4,7 +4,7 @@ import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
-import { serializeDocument, SerializationContextStatus } from '../serialization'
+import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { InputCallback } from './trackInput'
@@ -25,6 +25,7 @@ describe('trackInput', () => {
     input = appendElement('<div><input target /></div>') as HTMLInputElement
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
+      serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),

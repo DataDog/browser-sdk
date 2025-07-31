@@ -1,4 +1,6 @@
 export { record } from './record'
+export type { SerializationMetric, SerializationStats } from './serialization'
+export { createSerializationStats, aggregateSerializationStats } from './serialization'
 export { serializeNodeWithId, serializeDocument, SerializationContextStatus } from './serialization'
 export { createElementsScrollPositions } from './elementsScrollPositions'
 export type { ShadowRootsController } from './shadowRootsController'

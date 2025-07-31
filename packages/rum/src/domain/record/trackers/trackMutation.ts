@@ -25,7 +25,7 @@ import type {
   TextMutation,
   BrowserIncrementalSnapshotRecord,
 } from '../../../types'
-import type { NodeWithSerializedNode } from '../serialization'
+import type { NodeWithSerializedNode, SerializationContext, SerializationStats } from '../serialization'
 import {
   getElementInputValue,
   getSerializedNodeId,
@@ -34,13 +34,17 @@ import {
   serializeNodeWithId,
   SerializationContextStatus,
   serializeAttribute,
+  createSerializationStats,
 } from '../serialization'
 import { createMutationBatch } from '../mutationBatch'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
 import { assembleIncrementalSnapshot } from '../assembly'
 import type { Tracker } from './tracker.types'
 
-export type MutationCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
+export type MutationCallBack = (
+  incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord,
+  stats?: SerializationStats
+) => void
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 
@@ -119,11 +123,14 @@ function processMutations(
         NodePrivacyLevel.HIDDEN
   )
 
+  const serializationStats = createSerializationStats()
+
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
     ),
     configuration,
+    serializationStats,
     shadowRootsController,
     nodePrivacyLevelCache
   )
@@ -151,13 +158,15 @@ function processMutations(
   }
 
   mutationCallback(
-    assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, { adds, removes, texts, attributes })
+    assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, { adds, removes, texts, attributes }),
+    serializationStats
   )
 }
 
 function processChildListMutations(
   mutations: Array<WithSerializedTarget<RumChildListMutationRecord>>,
   configuration: RumConfiguration,
+  serializationStats: SerializationStats,
   shadowRootsController: ShadowRootsController,
   nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
@@ -203,6 +212,12 @@ function processChildListMutations(
   // node ids in a set to be able to skip subsequent related mutations.
   const serializedNodeIds = new Set<number>()
 
+  const serializationContext: SerializationContext = {
+    status: SerializationContextStatus.MUTATION,
+    serializationStats,
+    shadowRootsController,
+  }
+
   const addedNodeMutations: AddedNodeMutation[] = []
   for (const node of sortedAddedAndMovedNodes) {
     if (hasBeenSerialized(node)) {
@@ -221,7 +236,7 @@ function processChildListMutations(
     const serializedNode = serializeNodeWithId(node, {
       serializedNodeIds,
       parentNodePrivacyLevel,
-      serializationContext: { status: SerializationContextStatus.MUTATION, shadowRootsController },
+      serializationContext,
       configuration,
     })
     if (!serializedNode) {

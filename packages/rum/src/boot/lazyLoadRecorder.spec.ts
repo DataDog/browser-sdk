@@ -1,4 +1,4 @@
-import type { DeflateWorker } from '@datadog/browser-core'
+import type { DeflateWorker, Telemetry } from '@datadog/browser-core'
 import { display, resetTelemetry } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
@@ -61,7 +61,8 @@ describe('lazyLoadRecorder', () => {
         mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
-        worker
+        worker,
+        { enabled: true } as Telemetry
       )
     }
 
