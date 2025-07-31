@@ -1,8 +1,8 @@
 import type { Clock } from '../../../test'
-import { expireCookie, mockClock, getSessionState } from '../../../test'
-import { setCookie } from '../../browser/cookie'
+import { mockClock, createFakeSessionStoreStrategy, mockExperimentalFeatures } from '../../../test'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
+import { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import {
@@ -11,14 +11,13 @@ import {
   SESSION_TIME_OUT_DELAY,
   SessionPersistence,
 } from './sessionConstants'
-import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
+import type { SessionState } from './sessionState'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',
   NOT_TRACKED = SESSION_NOT_TRACKED,
 }
 
-const DURATION = 123456
 const PRODUCT_KEY = 'product'
 const FIRST_ID = 'first'
 const SECOND_ID = 'second'
@@ -26,40 +25,57 @@ const IS_EXPIRED = '1'
 const DEFAULT_INIT_CONFIGURATION: InitConfiguration = { clientToken: 'abc' }
 const DEFAULT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
 
-function setSessionInStore(trackingType: FakeTrackingType = FakeTrackingType.TRACKED, id?: string, expire?: number) {
-  setCookie(
-    SESSION_STORE_KEY,
-    `${id ? `id=${id}&` : ''}${PRODUCT_KEY}=${trackingType}&created=${Date.now()}&expire=${
-      expire || Date.now() + SESSION_EXPIRATION_DELAY
-    }`,
-    DURATION
-  )
+const EMPTY_SESSION_STATE: SessionState = {}
+
+function createSessionState(
+  trackingType: FakeTrackingType = FakeTrackingType.TRACKED,
+  id?: string,
+  expire?: number
+): SessionState {
+  return {
+    [PRODUCT_KEY]: trackingType,
+    created: `${Date.now()}`,
+    expire: `${expire || Date.now() + SESSION_EXPIRATION_DELAY}`,
+    ...(id ? { id } : {}),
+  }
+}
+
+let sessionStoreStrategy: ReturnType<typeof createFakeSessionStoreStrategy>
+
+function getSessionStoreState(): SessionState {
+  return sessionStoreStrategy.retrieveSession()
 }
 
 function expectTrackedSessionToBeInStore(id?: string) {
-  expect(getSessionState(SESSION_STORE_KEY).id).toEqual(id ? id : jasmine.any(String))
-  expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
-  expect(getSessionState(SESSION_STORE_KEY)[PRODUCT_KEY]).toEqual(FakeTrackingType.TRACKED)
+  expect(getSessionStoreState().id).toEqual(id ? id : jasmine.any(String))
+  expect(getSessionStoreState().isExpired).toBeUndefined()
+  expect(getSessionStoreState()[PRODUCT_KEY]).toEqual(FakeTrackingType.TRACKED)
 }
 
 function expectNotTrackedSessionToBeInStore() {
-  expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
-  expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
-  expect(getSessionState(SESSION_STORE_KEY)[PRODUCT_KEY]).toEqual(FakeTrackingType.NOT_TRACKED)
+  expect(getSessionStoreState().id).toBeUndefined()
+  expect(getSessionStoreState().isExpired).toBeUndefined()
+  expect(getSessionStoreState()[PRODUCT_KEY]).toEqual(FakeTrackingType.NOT_TRACKED)
 }
 
 function expectSessionToBeExpiredInStore() {
-  expect(getSessionState(SESSION_STORE_KEY).isExpired).toEqual(IS_EXPIRED)
-  expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
-  expect(getSessionState(SESSION_STORE_KEY)[PRODUCT_KEY]).toBeUndefined()
+  expect(getSessionStoreState().isExpired).toEqual(IS_EXPIRED)
+  expect(getSessionStoreState().id).toBeUndefined()
+  expect(getSessionStoreState()[PRODUCT_KEY]).toBeUndefined()
 }
 
 function getStoreExpiration() {
-  return getSessionState(SESSION_STORE_KEY).expire
+  return getSessionStoreState().expire
 }
 
 function resetSessionInStore() {
-  expireCookie()
+  sessionStoreStrategy.expireSession()
+  sessionStoreStrategy.expireSession.calls.reset()
+}
+
+function setSessionInStore(sessionState: SessionState) {
+  sessionStoreStrategy.persistSession(sessionState)
+  sessionStoreStrategy.persistSession.calls.reset()
 }
 
 describe('session store', () => {
@@ -178,6 +194,7 @@ describe('session store', () => {
     let clock: Clock
 
     function setupSessionStore(
+      initialState: SessionState = {},
       computeTrackingType: (rawTrackingType?: string) => FakeTrackingType = () => FakeTrackingType.TRACKED
     ) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
@@ -185,12 +202,17 @@ describe('session store', () => {
         fail('Unable to initialize cookie storage')
         return
       }
+
+      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })
+
       sessionStoreManager = startSessionStore(
         sessionStoreStrategyType,
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
-        computeTrackingType
+        computeTrackingType,
+        sessionStoreStrategy
       )
+      sessionStoreStrategy.persistSession.calls.reset()
       sessionStoreManager.expireObservable.subscribe(expireSpy)
       sessionStoreManager.renewObservable.subscribe(renewSpy)
     }
@@ -214,8 +236,7 @@ describe('session store', () => {
       })
 
       it('when tracked session in store, should do nothing ', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
+        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
@@ -223,8 +244,7 @@ describe('session store', () => {
       })
 
       it('when not tracked session in store, should do nothing ', () => {
-        setSessionInStore(FakeTrackingType.NOT_TRACKED)
-        setupSessionStore()
+        setupSessionStore(createSessionState(FakeTrackingType.NOT_TRACKED))
 
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
@@ -252,7 +272,7 @@ describe('session store', () => {
         'when session not in cache, session not in store and new session not tracked, ' +
           'should store not tracked session and trigger renew session',
         () => {
-          setupSessionStore(() => FakeTrackingType.NOT_TRACKED)
+          setupSessionStore(EMPTY_SESSION_STATE, () => FakeTrackingType.NOT_TRACKED)
 
           sessionStoreManager.expandOrRenewSession()
 
@@ -265,7 +285,7 @@ describe('session store', () => {
 
       it('when session not in cache and session in store, should expand session and trigger renew session', () => {
         setupSessionStore()
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+        setSessionInStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
         sessionStoreManager.expandOrRenewSession()
 
@@ -279,8 +299,7 @@ describe('session store', () => {
         'when session in cache, session not in store and new session tracked, ' +
           'should expire session, create a new one and trigger renew session',
         () => {
-          setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-          setupSessionStore()
+          setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -298,8 +317,7 @@ describe('session store', () => {
         'when session in cache, session not in store and new session not tracked, ' +
           'should expire session, store not tracked session and trigger renew session',
         () => {
-          setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-          setupSessionStore(() => FakeTrackingType.NOT_TRACKED)
+          setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), () => FakeTrackingType.NOT_TRACKED)
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -316,8 +334,7 @@ describe('session store', () => {
         'when session not tracked in cache, session not in store and new session not tracked, ' +
           'should expire session, store not tracked session and trigger renew session',
         () => {
-          setSessionInStore(FakeTrackingType.NOT_TRACKED)
-          setupSessionStore(() => FakeTrackingType.NOT_TRACKED)
+          setupSessionStore(createSessionState(FakeTrackingType.NOT_TRACKED), () => FakeTrackingType.NOT_TRACKED)
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -331,8 +348,7 @@ describe('session store', () => {
       )
 
       it('when session in cache is same session than in store, should expand session', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
+        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
         clock.tick(10)
         sessionStoreManager.expandOrRenewSession()
@@ -348,9 +364,8 @@ describe('session store', () => {
         'when session in cache is different session than in store and store session is tracked, ' +
           'should expire session, expand store session and trigger renew',
         () => {
-          setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-          setupSessionStore()
-          setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
+          setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+          setSessionInStore(createSessionState(FakeTrackingType.TRACKED, SECOND_ID))
 
           sessionStoreManager.expandOrRenewSession()
 
@@ -365,11 +380,10 @@ describe('session store', () => {
         'when session in cache is different session than in store and store session is not tracked, ' +
           'should expire session, store not tracked session and trigger renew',
         () => {
-          setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-          setupSessionStore((rawTrackingType) =>
+          setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), (rawTrackingType) =>
             rawTrackingType === FakeTrackingType.TRACKED ? FakeTrackingType.TRACKED : FakeTrackingType.NOT_TRACKED
           )
-          setSessionInStore(FakeTrackingType.NOT_TRACKED, '')
+          setSessionInStore(createSessionState(FakeTrackingType.NOT_TRACKED, ''))
 
           sessionStoreManager.expandOrRenewSession()
 
@@ -381,8 +395,7 @@ describe('session store', () => {
       )
 
       it('when throttled, expandOrRenewSession() should not renew the session if expire() is called right after', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
+        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
         // The first call is not throttled (leading execution)
         sessionStoreManager.expandOrRenewSession()
@@ -410,7 +423,7 @@ describe('session store', () => {
 
       it('when session not in cache and session in store, should do nothing', () => {
         setupSessionStore()
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+        setSessionInStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
         sessionStoreManager.expandSession()
 
@@ -419,8 +432,7 @@ describe('session store', () => {
       })
 
       it('when session in cache and session not in store, should expire session', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
+        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
         resetSessionInStore()
 
         sessionStoreManager.expandSession()
@@ -431,8 +443,7 @@ describe('session store', () => {
       })
 
       it('when session in cache is same session than in store, should expand session', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
+        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
         clock.tick(10)
         sessionStoreManager.expandSession()
@@ -443,9 +454,8 @@ describe('session store', () => {
       })
 
       it('when session in cache is different session than in store, should expire session', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
-        setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
+        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+        setSessionInStore(createSessionState(FakeTrackingType.TRACKED, SECOND_ID))
 
         sessionStoreManager.expandSession()
 
@@ -456,70 +466,115 @@ describe('session store', () => {
     })
 
     describe('regular watch', () => {
-      it('when session not in cache and session not in store, should do nothing', () => {
-        setupSessionStore()
+      ;[true, false].forEach((useExperimentalFeature) => {
+        describe(`when 'watch_cookie_without_lock' experimental feature is ${useExperimentalFeature}`, () => {
+          beforeEach(() => {
+            if (useExperimentalFeature) {
+              mockExperimentalFeatures([ExperimentalFeature.WATCH_COOKIE_WITHOUT_LOCK])
+            }
+          })
 
-        clock.tick(STORAGE_POLL_DELAY)
+          it('when session not in cache and session not in store, should store the expired session', () => {
+            setupSessionStore()
 
-        expectSessionToBeExpiredInStore()
-        expect(sessionStoreManager.getSession().id).toBeUndefined()
-        expect(expireSpy).not.toHaveBeenCalled()
-      })
+            clock.tick(STORAGE_POLL_DELAY)
 
-      it('when session not in cache and session in store, should do nothing', () => {
-        setupSessionStore()
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+            expectSessionToBeExpiredInStore()
+            expect(sessionStoreManager.getSession().id).toBeUndefined()
+            expect(expireSpy).not.toHaveBeenCalled()
+            expect(sessionStoreStrategy.persistSession).toHaveBeenCalled()
+          })
 
-        clock.tick(STORAGE_POLL_DELAY)
+          it('when session in cache and session not in store, should expire session', () => {
+            setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+            resetSessionInStore()
 
-        expect(sessionStoreManager.getSession().id).toBeUndefined()
-        expect(expireSpy).not.toHaveBeenCalled()
-      })
+            clock.tick(STORAGE_POLL_DELAY)
 
-      it('when session in cache and session not in store, should expire session', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
-        resetSessionInStore()
+            expect(sessionStoreManager.getSession().id).toBeUndefined()
+            expectSessionToBeExpiredInStore()
+            expect(expireSpy).toHaveBeenCalled()
+            expect(sessionStoreStrategy.persistSession).toHaveBeenCalled()
+          })
 
-        clock.tick(STORAGE_POLL_DELAY)
+          it('when session not in cache and session in store, should do nothing', () => {
+            setupSessionStore()
+            setSessionInStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
-        expect(sessionStoreManager.getSession().id).toBeUndefined()
-        expectSessionToBeExpiredInStore()
-        expect(expireSpy).toHaveBeenCalled()
-      })
+            clock.tick(STORAGE_POLL_DELAY)
 
-      it('when session in cache is same session than in store, should synchronize session', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID, Date.now() + SESSION_TIME_OUT_DELAY + 10)
+            expect(sessionStoreManager.getSession().id).toBeUndefined()
+            expect(expireSpy).not.toHaveBeenCalled()
+            if (useExperimentalFeature) {
+              expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
+            }
+          })
 
-        clock.tick(STORAGE_POLL_DELAY)
+          it('when session in cache is same session than in store, should synchronize session', () => {
+            setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+            setSessionInStore(
+              createSessionState(FakeTrackingType.TRACKED, FIRST_ID, Date.now() + SESSION_TIME_OUT_DELAY + 10)
+            )
 
-        expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
-        expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
-        expect(expireSpy).not.toHaveBeenCalled()
-      })
+            clock.tick(STORAGE_POLL_DELAY)
 
-      it('when session id in cache is different than session id in store, should expire session', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
-        setSessionInStore(FakeTrackingType.TRACKED, SECOND_ID)
+            expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
+            expect(sessionStoreManager.getSession().expire).toBe(getStoreExpiration())
+            expect(expireSpy).not.toHaveBeenCalled()
+            if (useExperimentalFeature) {
+              expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
+            }
+          })
 
-        clock.tick(STORAGE_POLL_DELAY)
+          it('when session id in cache is different than session id in store, should expire session and not touch the store', () => {
+            setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+            setSessionInStore(createSessionState(FakeTrackingType.TRACKED, SECOND_ID))
 
-        expect(sessionStoreManager.getSession().id).toBeUndefined()
-        expect(expireSpy).toHaveBeenCalled()
-      })
+            clock.tick(STORAGE_POLL_DELAY)
 
-      it('when session type in cache is different than session type in store, should expire session', () => {
-        setSessionInStore(FakeTrackingType.NOT_TRACKED, FIRST_ID)
-        setupSessionStore()
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
+            expect(sessionStoreManager.getSession().id).toBeUndefined()
+            expect(expireSpy).toHaveBeenCalled()
+            if (useExperimentalFeature) {
+              expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
+            }
+          })
 
-        clock.tick(STORAGE_POLL_DELAY)
+          it('when session in store is expired first and then get updated by another tab, should expire session in cache and not touch the store', () => {
+            setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+            resetSessionInStore()
 
-        expect(sessionStoreManager.getSession().id).toBeUndefined()
-        expect(expireSpy).toHaveBeenCalled()
+            // Simulate a new session being written to the store by another tab during the watch
+            // when the experimental feature is enabled, watch is reading the cookie twice so we need to plan the write of the cookie at the right index
+            sessionStoreStrategy.planRetrieveSession(
+              useExperimentalFeature ? 1 : 0,
+              createSessionState(FakeTrackingType.TRACKED, SECOND_ID)
+            )
+
+            clock.tick(STORAGE_POLL_DELAY)
+
+            // expires session in cache
+            expect(sessionStoreManager.getSession().id).toBeUndefined()
+            expect(expireSpy).toHaveBeenCalled()
+
+            // Does not touch the store
+            // The two calls to persist session are for the lock management, these can be ignored
+            expect(sessionStoreStrategy.persistSession).toHaveBeenCalledTimes(2)
+            expect(sessionStoreStrategy.expireSession).not.toHaveBeenCalled()
+          })
+
+          it('when session type in cache is different than session type in store, should expire session and not touch the store', () => {
+            setupSessionStore(createSessionState(FakeTrackingType.NOT_TRACKED, FIRST_ID))
+            setSessionInStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+
+            clock.tick(STORAGE_POLL_DELAY)
+
+            expect(sessionStoreManager.getSession().id).toBeUndefined()
+            expect(expireSpy).toHaveBeenCalled()
+            if (useExperimentalFeature) {
+              expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
+            }
+          })
+        })
       })
     })
 
@@ -534,8 +589,7 @@ describe('session store', () => {
       })
 
       it('when session in store, should do nothing', () => {
-        setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-        setupSessionStore()
+        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
 
         sessionStoreManager.restartSession()
 
@@ -550,15 +604,18 @@ describe('session store', () => {
     let otherUpdateSpy: jasmine.Spy<jasmine.Func>
     let clock: Clock
 
-    function setupSessionStore(updateSpy: () => void) {
+    function setupSessionStore(initialState: SessionState = {}, updateSpy: () => void) {
       const computeTrackingType: (rawTrackingType?: string) => FakeTrackingType = () => FakeTrackingType.TRACKED
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
+
+      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })
 
       const sessionStoreManager = startSessionStore(
         sessionStoreStrategyType!,
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
-        computeTrackingType
+        computeTrackingType,
+        sessionStoreStrategy
       )
       sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpy)
 
@@ -581,10 +638,9 @@ describe('session store', () => {
     })
 
     it('should synchronise all stores and notify update observables of all stores', () => {
-      setSessionInStore(FakeTrackingType.TRACKED, FIRST_ID)
-
-      sessionStoreManager = setupSessionStore(updateSpy)
-      otherSessionStoreManager = setupSessionStore(otherUpdateSpy)
+      const initialState = createSessionState(FakeTrackingType.TRACKED, FIRST_ID)
+      sessionStoreManager = setupSessionStore(initialState, updateSpy)
+      otherSessionStoreManager = setupSessionStore(initialState, otherUpdateSpy)
 
       sessionStoreManager.updateSessionState({ extra: 'extra' })
 

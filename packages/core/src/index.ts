@@ -45,7 +45,6 @@ export {
   startTelemetry,
   addTelemetryDebug,
   addTelemetryError,
-  startFakeTelemetry,
   resetTelemetry,
   TelemetryService,
   isTelemetryReplicationAllowed,
