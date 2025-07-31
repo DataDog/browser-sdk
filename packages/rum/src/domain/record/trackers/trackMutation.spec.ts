@@ -11,7 +11,7 @@ import {
 import { createMutationPayloadValidator } from '../../../../test'
 import type { AttributeMutation, Attributes, BrowserMutationPayload } from '../../../types'
 import { NodeType } from '../../../types'
-import { serializeDocument, SerializationContextStatus } from '../serialization'
+import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { appendElement, appendText } from '../../../../../rum-core/test'
@@ -56,6 +56,7 @@ describe('trackMutation', () => {
         defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
       } as RumConfiguration,
       {
+        serializationStats: createSerializationStats(),
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
         elementsScrollPositions: createElementsScrollPositions(),
@@ -89,6 +90,35 @@ describe('trackMutation', () => {
             node: expectNewNode({ type: NodeType.Element, tagName: 'div' }),
           },
         ],
+      })
+    })
+
+    it('emits serialization stats with mutations', () => {
+      const serializedDocument = serializeDocumentWithDefaults()
+      const { mutationCallbackSpy, getLatestMutationPayload } = startMutationCollection()
+
+      const cssText = 'body { width: 100%; }'
+      appendElement(`<style>${cssText}</style>`, sandbox)
+      mutationTracker.flush()
+
+      expect(mutationCallbackSpy).toHaveBeenCalledTimes(1)
+
+      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      validate(getLatestMutationPayload(), {
+        adds: [
+          {
+            parent: expectInitialNode({ idAttribute: 'sandbox' }),
+            node: expectNewNode({
+              type: NodeType.Element,
+              tagName: 'style',
+              attributes: { _cssText: cssText },
+            }),
+          },
+        ],
+      })
+
+      expect(mutationCallbackSpy.calls.mostRecent().args[1]).toEqual({
+        cssText: { count: 1, max: 21, sum: 21 },
       })
     })
 
