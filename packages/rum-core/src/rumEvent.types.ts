@@ -1239,15 +1239,11 @@ export type RumVitalEvent = CommonProperties &
       /**
        * Type of the vital
        */
-      readonly type: 'duration' | 'step'
+      readonly type: 'duration'
       /**
        * UUID of the vital
        */
       readonly id: string
-      /**
-       * UUID for linking the step vital to the parent event, if applicable
-       */
-      readonly parent_id?: string
       /**
        * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
        */
@@ -1266,14 +1262,6 @@ export type RumVitalEvent = CommonProperties &
       readonly custom?: {
         [k: string]: number
       }
-      /**
-       * Type of the step that triggered the vital, if applicable
-       */
-      readonly step_type?: 'start' | 'update' | 'retry' | 'end'
-      /**
-       * Reason for the failure of the step, if applicable
-       */
-      readonly failure_reason?: 'error' | 'abandoned' | 'other'
       [k: string]: unknown
     }
     /**
