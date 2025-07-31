@@ -5,6 +5,7 @@ import {
   setCookie,
   deleteCookie,
   ONE_MINUTE,
+  createContextManager,
 } from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
@@ -98,6 +99,10 @@ describe('remoteConfiguration', () => {
 
   describe('applyRemoteConfiguration', () => {
     let displaySpy: jasmine.Spy
+    let supportedContextManagers: {
+      user: ReturnType<typeof createContextManager>
+      context: ReturnType<typeof createContextManager>
+    }
 
     function expectAppliedRemoteConfigurationToBe(
       actual: Partial<RumRemoteConfiguration>,
@@ -107,7 +112,9 @@ describe('remoteConfiguration', () => {
         applicationId: 'yyy',
         ...actual,
       }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+      expect(
+        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+      ).toEqual({
         ...DEFAULT_INIT_CONFIGURATION,
         applicationId: 'yyy',
         ...expected,
@@ -116,6 +123,7 @@ describe('remoteConfiguration', () => {
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
+      supportedContextManagers = { user: createContextManager(), context: createContextManager() }
     })
 
     it('should override the initConfiguration options with the ones from the remote configuration', () => {
@@ -141,7 +149,9 @@ describe('remoteConfiguration', () => {
         ],
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+      expect(
+        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+      ).toEqual({
         applicationId: 'yyy',
         clientToken: 'xxx',
         service: 'xxx',
@@ -275,6 +285,72 @@ describe('remoteConfiguration', () => {
           { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
+      })
+    })
+
+    describe('supported contexts', () => {
+      const COOKIE_NAME = 'unit_rc'
+
+      beforeEach(() => {
+        setCookie(COOKIE_NAME, 'first.second', ONE_MINUTE)
+      })
+
+      afterEach(() => {
+        deleteCookie(COOKIE_NAME)
+      })
+
+      it('should be resolved from the provided configuration', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            user: {
+              id: {
+                rcSerializedType: 'dynamic',
+                strategy: 'cookie',
+                name: COOKIE_NAME,
+                extractor: { rcSerializedType: 'regex', value: '(\\w+)\\.\\w+' },
+              },
+              additionals: [
+                {
+                  key: 'bar',
+                  value: {
+                    rcSerializedType: 'dynamic',
+                    strategy: 'cookie',
+                    name: COOKIE_NAME,
+                    extractor: { rcSerializedType: 'regex', value: '\\w+\\.(\\w+)' },
+                  },
+                },
+              ],
+            },
+          },
+          {}
+        )
+        expect(supportedContextManagers.user.getContext()).toEqual({
+          id: 'first',
+          bar: 'second',
+        })
+      })
+
+      it('unresolved property should be set to undefined', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            context: {
+              additionals: [
+                {
+                  key: 'foo',
+                  value: {
+                    rcSerializedType: 'dynamic',
+                    strategy: 'cookie',
+                    name: 'missing-cookie',
+                  },
+                },
+              ],
+            },
+          },
+          {}
+        )
+        expect(supportedContextManagers.context.getContext()).toEqual({
+          foo: undefined,
+        })
       })
     })
   })
