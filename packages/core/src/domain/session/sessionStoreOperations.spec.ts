@@ -32,7 +32,7 @@ describe('sessionStoreOperations', () => {
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-      expect(processSpy).toHaveBeenCalledWith(initialSession, jasmine.any(Number))
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
       const expectedSession = { ...otherSession, expire: jasmine.any(String) }
       expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
       expect(afterSpy).toHaveBeenCalledWith(expectedSession)
@@ -44,7 +44,7 @@ describe('sessionStoreOperations', () => {
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-      expect(processSpy).toHaveBeenCalledWith(initialSession, jasmine.any(Number))
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
       expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
       expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
     })
@@ -55,7 +55,7 @@ describe('sessionStoreOperations', () => {
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-      expect(processSpy).toHaveBeenCalledWith(initialSession, jasmine.any(Number))
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
       expect(sessionStoreStrategy.retrieveSession()).toEqual(initialSession)
       expect(afterSpy).toHaveBeenCalledWith(initialSession)
     })
@@ -66,7 +66,7 @@ describe('sessionStoreOperations', () => {
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy, LOCK_MAX_TRIES)
 
-      expect(processSpy).toHaveBeenCalledWith(initialSession, jasmine.any(Number))
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
       const expectedSession = { ...otherSession, expire: jasmine.any(String) }
       expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
       expect(afterSpy).toHaveBeenCalledWith(expectedSession)
@@ -80,7 +80,7 @@ describe('sessionStoreOperations', () => {
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-      expect(processSpy).toHaveBeenCalledWith(initialSession, jasmine.any(Number))
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
       const expectedSession = { ...otherSession, expire: jasmine.any(String) }
       expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
       expect(afterSpy).toHaveBeenCalledWith(expectedSession)
@@ -92,7 +92,7 @@ describe('sessionStoreOperations', () => {
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-      expect(processSpy).toHaveBeenCalledWith(initialSession, jasmine.any(Number))
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
 
       expect(sessionStoreStrategy.retrieveSession()).toEqual(EXPIRED_SESSION)
       expect(afterSpy).toHaveBeenCalledWith(EXPIRED_SESSION)
@@ -104,7 +104,7 @@ describe('sessionStoreOperations', () => {
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
-      expect(processSpy).toHaveBeenCalledWith(initialSession, jasmine.any(Number))
+      expect(processSpy).toHaveBeenCalledWith(initialSession)
       expect(sessionStoreStrategy.retrieveSession()).toEqual(initialSession)
       expect(afterSpy).toHaveBeenCalledWith(initialSession)
     })
@@ -144,14 +144,11 @@ describe('sessionStoreOperations', () => {
             process: processSpy,
             after: (afterSession) => {
               // session with 'other' value on process
-              expect(processSpy).toHaveBeenCalledWith(
-                {
-                  ...initialSession,
-                  other: 'other',
-                  expire: jasmine.any(String),
-                },
-                jasmine.any(Number)
-              )
+              expect(processSpy).toHaveBeenCalledWith({
+                ...initialSession,
+                other: 'other',
+                expire: jasmine.any(String),
+              })
 
               // end state with session 'other' and 'processed' value
               const expectedSession = {
