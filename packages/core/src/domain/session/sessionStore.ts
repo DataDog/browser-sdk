@@ -136,20 +136,13 @@ export function startSessionStore<TrackingType extends string>(
    * - if the session is not active, clear the session store and expire the session cache
    */
   function watchSession() {
-    const sessionStoreOperation = (beforeProcessSessionState?: SessionState, beforeProcessTimeStamp?: number) => ({
-      process: (sessionState: SessionState, retryCount: number) => {
+    const sessionStoreOperation = {
+      process: (sessionState: SessionState) => {
         const isExpired = isSessionInExpiredState(sessionState)
 
         if (!isExpired) {
           if (isExperimentalFeatureEnabled(ExperimentalFeature.WATCH_COOKIE_WITHOUT_LOCK)) {
-            addTelemetryDebug('session in store is no longer expired', {
-              beforeProcessTimeStamp,
-              beforeProcessSessionState,
-              processSessionStateTimeStamp: dateNow(),
-              processSessionState: sessionState,
-              retryCount,
-              sessionCache,
-            })
+            addTelemetryDebug('session in store is no longer expired', { sessionState })
           }
           return
         }
@@ -157,17 +150,17 @@ export function startSessionStore<TrackingType extends string>(
         return getExpiredSessionState(sessionState, configuration)
       },
       after: synchronizeSession,
-    })
+    } as const
 
     if (isExperimentalFeatureEnabled(ExperimentalFeature.WATCH_COOKIE_WITHOUT_LOCK)) {
       const sessionState = sessionStoreStrategy.retrieveSession()
       if (isSessionInExpiredState(sessionState)) {
-        processSessionStoreOperations(sessionStoreOperation(sessionState, dateNow()), sessionStoreStrategy)
+        processSessionStoreOperations(sessionStoreOperation, sessionStoreStrategy)
       } else {
         synchronizeSession(sessionState)
       }
     } else {
-      processSessionStoreOperations(sessionStoreOperation(), sessionStoreStrategy)
+      processSessionStoreOperations(sessionStoreOperation, sessionStoreStrategy)
     }
   }
 
