@@ -1,6 +1,7 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { objectValues } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceEntry } from '../../src/browser/performanceObservable'
+import { mockGlobalPerformanceBuffer } from './mockGlobalPerformanceBuffer'
 
 export function mockPerformanceObserver({
   typeSupported = true,
@@ -9,7 +10,8 @@ export function mockPerformanceObserver({
 } = {}) {
   const originalPerformanceObserver = window.PerformanceObserver
   const instances = new Set<MockPerformanceObserver>()
-  let bufferedEntries: RumPerformanceEntry[] = []
+
+  const { addPerformanceEntry } = mockGlobalPerformanceBuffer([])
 
   class MockPerformanceObserver {
     static supportedEntryTypes = supportedEntryTypes
@@ -32,7 +34,10 @@ export function mockPerformanceObserver({
       this.entryTypes = entryTypes || (type ? [type] : [])
       instances.add(this)
       if (buffered) {
-        notify(this, bufferedEntries)
+        notify(
+          this,
+          this.entryTypes.flatMap((entryType) => performance.getEntriesByType(entryType) as RumPerformanceEntry[])
+        )
       }
     }
 
@@ -46,7 +51,6 @@ export function mockPerformanceObserver({
   registerCleanupTask(() => {
     window.PerformanceObserver = originalPerformanceObserver
     instances.clear()
-    bufferedEntries = []
   })
 
   function notify(observer: MockPerformanceObserver, entries: RumPerformanceEntry[]) {
@@ -66,7 +70,9 @@ export function mockPerformanceObserver({
 
   return {
     notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => {
-      bufferedEntries.push(...entries)
+      for (const entry of entries) {
+        addPerformanceEntry(entry as PerformanceEntry)
+      }
       instances.forEach((instance) => notify(instance, entries))
     },
   }

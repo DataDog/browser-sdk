@@ -39,10 +39,10 @@ describe('endpointBuilder', () => {
     })
 
     it('should not start with ddsource for internal analytics mode', () => {
-      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo' }, 'rum').build(
-        'fetch',
-        DEFAULT_PAYLOAD
-      )
+      const url = createEndpointBuilder(
+        { ...initConfiguration, internalAnalyticsSubdomain: 'foo', source: 'browser' },
+        'rum'
+      ).build('fetch', DEFAULT_PAYLOAD)
       expect(url).not.toContain('/rum?ddsource')
       expect(url).toContain('ddsource=browser')
     })
@@ -142,6 +142,25 @@ describe('endpointBuilder', () => {
       expect(createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
         'https://pci.browser-intake-datadoghq.com'
       )
+    })
+  })
+
+  describe('source and variant configuration', () => {
+    it('should use the default source when no configuration is provided', () => {
+      const config = { ...initConfiguration, source: 'browser' as const }
+
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=browser')
+      expect(endpoint).not.toContain('_dd.variant=')
+      expect(endpoint).not.toContain('_dd.sdk_version=')
+    })
+
+    it('should use sdk_version, source and variant when provided', () => {
+      const config = { ...initConfiguration, sdkVersion: '1.2.3', source: 'flutter' as const, variant: 'my-variant' }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=flutter')
+      expect(endpoint).toContain('_dd.sdk_version=1.2.3')
+      expect(endpoint).toContain('_dd.variant=my-variant')
     })
   })
 })
