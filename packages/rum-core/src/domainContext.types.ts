@@ -28,20 +28,20 @@ export interface RumActionEventDomainContext {
 }
 
 export interface RumFetchResourceEventDomainContext {
-  requestInit?: RequestInit
+  requestInit: RequestInit | undefined
   requestInput: RequestInfo
-  response?: Response
-  error?: Error
-  performanceEntry?: PerformanceEntry
+  response: Response | undefined
+  error: Error | undefined
+  performanceEntry: PerformanceEntry | undefined
   isAborted: boolean
-  handlingStack?: string
+  handlingStack: string | undefined
 }
 
 export interface RumXhrResourceEventDomainContext {
   xhr: XMLHttpRequest
-  performanceEntry?: PerformanceEntry
+  performanceEntry: PerformanceEntry | undefined
   isAborted: boolean
-  handlingStack?: string
+  handlingStack: string | undefined
 }
 
 export interface RumOtherResourceEventDomainContext {
