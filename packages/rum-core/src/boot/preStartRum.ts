@@ -16,16 +16,18 @@ import {
   buildAccountContextManager,
   buildGlobalContextManager,
   buildUserContextManager,
+  monitorError,
 } from '@datadog/browser-core'
 import {
   validateAndBuildRumConfiguration,
   type RumConfiguration,
   type RumInitConfiguration,
+  fetchAndApplyRemoteConfiguration,
+  serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
-import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -170,7 +172,13 @@ export function createPreStartStrategy(
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
       if (initConfiguration.remoteConfigurationId) {
-        fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
+        fetchAndApplyRemoteConfiguration(initConfiguration)
+          .then((initConfiguration) => {
+            if (initConfiguration) {
+              doInit(initConfiguration)
+            }
+          })
+          .catch(monitorError)
       } else {
         doInit(initConfiguration)
       }

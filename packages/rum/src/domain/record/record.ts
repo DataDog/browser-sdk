@@ -22,9 +22,10 @@ import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
 import { initRecordIds } from './recordIds'
+import type { SerializationStats } from './serialization'
 
 export interface RecordOptions {
-  emit?: (record: BrowserRecord) => void
+  emit?: (record: BrowserRecord, stats?: SerializationStats) => void
   configuration: RumConfiguration
   lifeCycle: LifeCycle
   viewHistory: ViewHistory
@@ -43,8 +44,8 @@ export function record(options: RecordOptions): RecordAPI {
     throw new Error('emit function is required')
   }
 
-  const emitAndComputeStats = (record: BrowserRecord) => {
-    emit(record)
+  const emitAndComputeStats = (record: BrowserRecord, stats?: SerializationStats) => {
+    emit(record, stats)
     sendToExtension('record', { record })
     const view = options.viewHistory.findView()!
     replayStats.addRecord(view.id)
@@ -60,7 +61,7 @@ export function record(options: RecordOptions): RecordAPI {
     lifeCycle,
     configuration,
     flushMutations,
-    (records) => records.forEach((record) => emitAndComputeStats(record))
+    emitAndComputeStats
   )
 
   function flushMutations() {

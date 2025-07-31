@@ -33,6 +33,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   userContext: {} as any,
   accountContext: {} as any,
   hooks: {} as any,
+  telemetry: {} as any,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker

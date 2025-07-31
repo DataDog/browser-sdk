@@ -1,4 +1,4 @@
-export type { HttpRequest, Payload, RetryInfo } from './httpRequest'
+export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, RetryInfo } from './httpRequest'
 export { createHttpRequest } from './httpRequest'
 export type { BrowserWindowWithEventBridge, DatadogEventBridge } from './eventBridge'
 export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } from './eventBridge'
