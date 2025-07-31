@@ -6,7 +6,6 @@ import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
-import { addTelemetryDebug } from '../telemetry'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -137,18 +136,8 @@ export function startSessionStore<TrackingType extends string>(
    */
   function watchSession() {
     const sessionStoreOperation = {
-      process: (sessionState: SessionState) => {
-        const isExpired = isSessionInExpiredState(sessionState)
-
-        if (!isExpired) {
-          if (isExperimentalFeatureEnabled(ExperimentalFeature.WATCH_COOKIE_WITHOUT_LOCK)) {
-            addTelemetryDebug('session in store is no longer expired', { sessionState })
-          }
-          return
-        }
-
-        return getExpiredSessionState(sessionState, configuration)
-      },
+      process: (sessionState: SessionState) =>
+        isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
       after: synchronizeSession,
     } as const
 
