@@ -1,4 +1,11 @@
-import { DefaultPrivacyLevel, INTAKE_SITE_US1, display } from '@datadog/browser-core'
+import {
+  DefaultPrivacyLevel,
+  INTAKE_SITE_US1,
+  display,
+  setCookie,
+  deleteCookie,
+  ONE_MINUTE,
+} from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import type { RumRemoteConfiguration } from './remoteConfiguration'
@@ -13,14 +20,13 @@ const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
 }
 
 describe('remoteConfiguration', () => {
-  let interceptor: ReturnType<typeof interceptRequests>
-
-  beforeEach(() => {
-    interceptor = interceptRequests()
-  })
-
   describe('fetchRemoteConfiguration', () => {
     const configuration = { remoteConfigurationId: 'xxx' } as RumInitConfiguration
+    let interceptor: ReturnType<typeof interceptRequests>
+
+    beforeEach(() => {
+      interceptor = interceptRequests()
+    })
 
     it('should fetch the remote configuration', async () => {
       interceptor.withFetch(() =>
@@ -93,6 +99,21 @@ describe('remoteConfiguration', () => {
   describe('applyRemoteConfiguration', () => {
     let displaySpy: jasmine.Spy
 
+    function expectAppliedRemoteConfigurationToBe(
+      actual: Partial<RumRemoteConfiguration>,
+      expected: Partial<RumInitConfiguration>
+    ) {
+      const rumRemoteConfiguration: RumRemoteConfiguration = {
+        applicationId: 'yyy',
+        ...actual,
+      }
+      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        ...DEFAULT_INIT_CONFIGURATION,
+        applicationId: 'yyy',
+        ...expected,
+      })
+    }
+
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
     })
@@ -138,29 +159,123 @@ describe('remoteConfiguration', () => {
     })
 
     it('should display an error if the remote config contains invalid regex', () => {
-      const rumRemoteConfiguration: RumRemoteConfiguration = {
-        applicationId: 'yyy',
-        allowedTrackingOrigins: [{ rcSerializedType: 'regex', value: 'Hello(?|!)' }],
-      }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
-        ...DEFAULT_INIT_CONFIGURATION,
-        applicationId: 'yyy',
-        allowedTrackingOrigins: [undefined as any],
-      })
+      expectAppliedRemoteConfigurationToBe(
+        { allowedTrackingOrigins: [{ rcSerializedType: 'regex', value: 'Hello(?|!)' }] },
+        { allowedTrackingOrigins: [undefined as any] }
+      )
       expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
     })
 
     it('should display an error if an unsupported `rcSerializedType` is provided', () => {
-      const rumRemoteConfiguration: RumRemoteConfiguration = {
-        applicationId: 'yyy',
-        allowedTrackingOrigins: [{ rcSerializedType: 'foo' as any, value: 'bar' }],
-      }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
-        ...DEFAULT_INIT_CONFIGURATION,
-        applicationId: 'yyy',
-        allowedTrackingOrigins: [undefined as any],
-      })
+      expectAppliedRemoteConfigurationToBe(
+        { allowedTrackingOrigins: [{ rcSerializedType: 'foo' as any, value: 'bar' }] },
+        { allowedTrackingOrigins: [undefined as any] }
+      )
       expect(displaySpy).toHaveBeenCalledWith('Unsupported remote configuration: "rcSerializedType": "foo"')
+    })
+
+    it('should display an error if an unsupported `strategy` is provided', () => {
+      expectAppliedRemoteConfigurationToBe(
+        { version: { rcSerializedType: 'dynamic', strategy: 'foo' as any } as any },
+        { version: undefined }
+      )
+      expect(displaySpy).toHaveBeenCalledWith('Unsupported remote configuration: "strategy": "foo"')
+    })
+
+    describe('cookie strategy', () => {
+      const COOKIE_NAME = 'unit_rc'
+
+      beforeEach(() => {
+        setCookie(COOKIE_NAME, 'my-version', ONE_MINUTE)
+      })
+
+      afterEach(() => {
+        deleteCookie(COOKIE_NAME)
+      })
+
+      it('should resolve a configuration value from a cookie', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
+          { version: 'my-version' }
+        )
+      })
+
+      it('should resolve to undefined if the cookie is missing', () => {
+        deleteCookie(COOKIE_NAME)
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
+          { version: undefined }
+        )
+      })
+    })
+
+    describe('with extractor', () => {
+      const COOKIE_NAME = 'unit_rc'
+
+      beforeEach(() => {
+        setCookie(COOKIE_NAME, 'my-version-123', ONE_MINUTE)
+      })
+
+      afterEach(() => {
+        deleteCookie(COOKIE_NAME)
+      })
+
+      it('should resolve to the match on the value', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'cookie',
+              name: COOKIE_NAME,
+              extractor: { rcSerializedType: 'regex', value: '\\d+' },
+            },
+          },
+          { version: '123' }
+        )
+      })
+
+      it('should resolve to the capture group on the value', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'cookie',
+              name: COOKIE_NAME,
+              extractor: { rcSerializedType: 'regex', value: 'my-version-(\\d+)' },
+            },
+          },
+          { version: '123' }
+        )
+      })
+
+      it("should resolve to undefined if the value don't match", () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'cookie',
+              name: COOKIE_NAME,
+              extractor: { rcSerializedType: 'regex', value: 'foo' },
+            },
+          },
+          { version: undefined }
+        )
+      })
+
+      it('should display an error if the extractor is not a valid regex', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'cookie',
+              name: COOKIE_NAME,
+              extractor: { rcSerializedType: 'regex', value: 'Hello(?|!)' },
+            },
+          },
+          { version: undefined }
+        )
+        expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
+      })
     })
   })
 
