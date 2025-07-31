@@ -1,9 +1,10 @@
 import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
-import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
+import { startMockTelemetry } from '../../../../core/test'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
 
@@ -47,6 +48,7 @@ describe('segmentTelemetry', () => {
   function setupSegmentTelemetryCollection(partialConfig: Partial<RumConfiguration> = config) {
     const configuration = mockRumConfiguration(partialConfig)
     requestObservable = new Observable()
+    telemetry = startMockTelemetry()
     ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry(
       configuration,
       { enabled: true } as Telemetry,
@@ -55,23 +57,13 @@ describe('segmentTelemetry', () => {
     registerCleanupTask(stopSegmentTelemetry)
   }
 
-  beforeAll(() => {
-    telemetry = startMockTelemetry()
-  })
-
-  beforeEach(() => {
-    telemetry.reset()
-  })
-
   it('should collect segment telemetry for all full snapshots', async () => {
     setupSegmentTelemetryCollection()
 
     for (const result of ['failure', 'queue-full', 'success'] as const) {
       generateReplayRequest({ result, isFullSnapshot: true })
 
-      const telemetryEvents = await telemetry.getEvents()
-      expect(telemetryEvents.length).toEqual(1)
-      expect(telemetryEvents[0]).toEqual(
+      expect(await telemetry.getEvents()).toEqual([
         jasmine.objectContaining({
           type: 'log',
           status: 'debug',
@@ -94,10 +86,10 @@ describe('segmentTelemetry', () => {
               raw: 2000,
             },
           },
-        })
-      )
+        }),
+      ])
 
-      telemetryEvents.length = 0
+      telemetry.reset()
     }
   })
 
@@ -107,9 +99,7 @@ describe('segmentTelemetry', () => {
     for (const result of ['failure', 'queue-full'] as const) {
       generateReplayRequest({ result, isFullSnapshot: false })
 
-      const telemetryEvents = await telemetry.getEvents()
-      expect(telemetryEvents.length).toEqual(1)
-      expect(telemetryEvents[0]).toEqual(
+      expect(await telemetry.getEvents()).toEqual([
         jasmine.objectContaining({
           type: 'log',
           status: 'debug',
@@ -132,17 +122,17 @@ describe('segmentTelemetry', () => {
               raw: 2000,
             },
           },
-        })
-      )
+        }),
+      ])
 
-      telemetryEvents.length = 0
+      telemetry.reset()
     }
   })
 
   it('should not collect segment telemetry for successful incremental mutation requests', async () => {
     setupSegmentTelemetryCollection()
     generateReplayRequest({ result: 'success', isFullSnapshot: false })
-    expect(await telemetry.hasEvents()).toBeFalse()
+    expect(await telemetry.hasEvents()).toBe(false)
   })
 
   it('should not collect segment when telemetry disabled', async () => {
@@ -151,6 +141,6 @@ describe('segmentTelemetry', () => {
       segmentTelemetrySampleRate: 0,
     })
     generateReplayRequest({ result: 'success', isFullSnapshot: true })
-    expect(await telemetry.hasEvents()).toBeFalse()
+    expect(await telemetry.hasEvents()).toBe(false)
   })
 })
