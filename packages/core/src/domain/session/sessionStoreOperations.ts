@@ -8,7 +8,7 @@ import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
 interface Operations {
-  process: (sessionState: SessionState) => SessionState | undefined
+  process: (sessionState: SessionState, retryCount: number) => SessionState | undefined
   after?: (sessionState: SessionState) => void
 }
 
@@ -70,7 +70,7 @@ export function processSessionStoreOperations(
       return
     }
   }
-  let processedSession = operations.process(currentStore.session)
+  let processedSession = operations.process(currentStore.session, numberOfRetries)
   if (isLockEnabled) {
     // if lock corrupted after process, retry later
     currentStore = retrieveStore()
