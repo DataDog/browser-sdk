@@ -2,7 +2,6 @@
 
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
-// @ts-expect-error no types available
 import importPlugin from 'eslint-plugin-import'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
@@ -31,6 +30,7 @@ export default tseslint.config(
       'rum-events-format',
       '.yarn',
       'playwright-report',
+      'docs',
     ],
   },
 
@@ -48,6 +48,7 @@ export default tseslint.config(
           './tsconfig.json',
           './test/apps/**/tsconfig.json',
           './test/e2e/tsconfig.json',
+          './scripts/tsconfig.json',
           './developer-extension/tsconfig.json',
           './performances/tsconfig.json',
         ],
@@ -232,9 +233,9 @@ export default tseslint.config(
       'jsdoc/sort-tags': [
         'error',
         {
+          linesBetween: 0,
           tagSequence: [
             {
-              linesBetween: 0,
               tags: [
                 'category',
                 'packageDocumentation',
@@ -294,6 +295,13 @@ export default tseslint.config(
           format: ['UPPER_CASE'],
         },
       ],
+    },
+  },
+
+  {
+    files: ['scripts/**'],
+    rules: {
+      'import/extensions': ['error', 'ignorePackages'],
     },
   },
 

@@ -113,6 +113,7 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CUSTOM,
+      context: { foo: 'bar' },
     })
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
@@ -126,7 +127,9 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
+      context: { foo: 'bar' },
     })
+
     expect(rawRumEvents[0].domainContext).toEqual({ handlingStack: undefined })
   })
   it('should not set the loading time field of the action', () => {

@@ -1,8 +1,8 @@
-import { DefaultPrivacyLevel, display, INTAKE_SITE_US1 } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, INTAKE_SITE_US1 } from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
+import type { RemoteConfiguration } from './remoteConfiguration'
 import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
-import type { RumSdkConfig } from './remoteConfig.types'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',
@@ -13,77 +13,92 @@ const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
 }
 
 describe('remoteConfiguration', () => {
-  let displayErrorSpy: jasmine.Spy<typeof display.error>
   let interceptor: ReturnType<typeof interceptRequests>
 
   beforeEach(() => {
     interceptor = interceptRequests()
-    displayErrorSpy = spyOn(display, 'error')
   })
 
   describe('fetchRemoteConfiguration', () => {
     const configuration = { remoteConfigurationId: 'xxx' } as RumInitConfiguration
-    let remoteConfigurationCallback: jasmine.Spy
 
-    beforeEach(() => {
-      remoteConfigurationCallback = jasmine.createSpy()
-    })
+    it('should fetch the remote configuration', async () => {
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              rum: {
+                applicationId: 'xxx',
+                sessionSampleRate: 50,
+                sessionReplaySampleRate: 50,
+                defaultPrivacyLevel: 'allow',
+              },
+            }),
+        })
+      )
 
-    it('should fetch the remote configuration', (done) => {
-      interceptor.withMockXhr((xhr) => {
-        xhr.complete(200, '{"rum":{"sessionSampleRate":50,"sessionReplaySampleRate":50,"defaultPrivacyLevel":"allow"}}')
-
-        expect(remoteConfigurationCallback).toHaveBeenCalledWith({
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: true,
+        value: {
+          applicationId: 'xxx',
           sessionSampleRate: 50,
           sessionReplaySampleRate: 50,
           defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+        },
+      })
+    })
+
+    it('should return an error if the fetching fails with a server error', async () => {
+      interceptor.withFetch(() => Promise.reject(new Error('Server error')))
+
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: false,
+        error: new Error('Error fetching the remote configuration.'),
+      })
+    })
+
+    it('should throw an error if the fetching fails with a client error', async () => {
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: false,
         })
+      )
 
-        done()
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: false,
+        error: new Error('Error fetching the remote configuration.'),
       })
-      fetchRemoteConfiguration(configuration, remoteConfigurationCallback)
     })
 
-    it('should print an error if the fetching fails with a server error', (done) => {
-      interceptor.withMockXhr((xhr) => {
-        xhr.complete(500)
-        expect(remoteConfigurationCallback).not.toHaveBeenCalled()
-        expect(displayErrorSpy).toHaveBeenCalledOnceWith('Error fetching the remote configuration.')
-        done()
-      })
-      fetchRemoteConfiguration(configuration, remoteConfigurationCallback)
-    })
+    it('should throw an error if the remote config does not contain rum config', async () => {
+      interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({}),
+        })
+      )
 
-    it('should print an error if the fetching fails with a client error', (done) => {
-      interceptor.withMockXhr((xhr) => {
-        xhr.complete(404)
-        expect(remoteConfigurationCallback).not.toHaveBeenCalled()
-        expect(displayErrorSpy).toHaveBeenCalledOnceWith('Error fetching the remote configuration.')
-        done()
+      const fetchResult = await fetchRemoteConfiguration(configuration)
+      expect(fetchResult).toEqual({
+        ok: false,
+        error: new Error('No remote configuration for RUM.'),
       })
-      fetchRemoteConfiguration(configuration, remoteConfigurationCallback)
-    })
-
-    it('should print an error if the remote config does not contain rum config', (done) => {
-      interceptor.withMockXhr((xhr) => {
-        xhr.complete(200, '{}')
-        expect(remoteConfigurationCallback).not.toHaveBeenCalled()
-        expect(displayErrorSpy).toHaveBeenCalledOnceWith('No remote configuration for RUM.')
-        done()
-      })
-      fetchRemoteConfiguration(configuration, remoteConfigurationCallback)
     })
   })
 
   describe('applyRemoteConfiguration', () => {
     it('should override the initConfiguration options with the ones from the remote configuration', () => {
-      const remoteConfiguration: RumSdkConfig['rum'] = {
+      const rumRemoteConfiguration: RemoteConfiguration['rum'] = {
         applicationId: 'yyy',
         sessionSampleRate: 1,
         sessionReplaySampleRate: 1,
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
-      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, remoteConfiguration)).toEqual({
+      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
         applicationId: 'yyy',
         clientToken: 'xxx',
         service: 'xxx',
@@ -100,6 +115,10 @@ describe('remoteConfiguration', () => {
       expect(buildEndpoint({ site: INTAKE_SITE_US1, remoteConfigurationId } as RumInitConfiguration)).toEqual(
         `https://sdk-configuration.browser-intake-datadoghq.com/v1/${remoteConfigurationId}.json`
       )
+    })
+
+    it('should return the remote configuration proxy', () => {
+      expect(buildEndpoint({ remoteConfigurationProxy: '/config' } as RumInitConfiguration)).toEqual('/config')
     })
   })
 })

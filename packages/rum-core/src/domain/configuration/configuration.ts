@@ -78,10 +78,20 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Custom Behavior
    */
   compressIntakeRequests?: boolean | undefined
+
   /**
+   * [Internal option] Id of the remote configuration
+   *
    * @internal
    */
   remoteConfigurationId?: string | undefined
+
+  /**
+   * [Internal option] set a proxy URL for the remote configuration
+   *
+   * @internal
+   */
+  remoteConfigurationProxy?: string | undefined
 
   // tracing options
   /**
@@ -237,6 +247,7 @@ export interface RumConfiguration extends Configuration {
   trackBfcacheViews: boolean
   subdomain?: string
   customerDataTelemetrySampleRate: number
+  segmentTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
@@ -308,6 +319,7 @@ export function validateAndBuildRumConfiguration(
       : DefaultPrivacyLevel.MASK,
     enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
     customerDataTelemetrySampleRate: 1,
+    segmentTelemetrySampleRate: 1,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,

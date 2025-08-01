@@ -1,8 +1,0 @@
-# https://docs.codecov.io/docs/codecovyml-reference
-codecov:
-  notify:
-    require_ci_to_pass: no
-    wait_for_ci: no
-
-comment:
-  require_changes: yes

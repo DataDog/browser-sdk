@@ -231,6 +231,7 @@ export function startRum(
     globalContext,
     userContext,
     accountContext,
+    telemetry,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },

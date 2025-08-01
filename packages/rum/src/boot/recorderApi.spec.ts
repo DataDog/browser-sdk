@@ -1,4 +1,4 @@
-import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction } from '@datadog/browser-core'
+import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction, Telemetry } from '@datadog/browser-core'
 import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
@@ -31,6 +31,7 @@ describe('makeRecorderApi', () => {
     sessionManager,
     startSessionReplayRecordingManually,
   }: { sessionManager?: RumSessionManager; startSessionReplayRecordingManually?: boolean } = {}) {
+    const mockTelemetry = { enabled: true } as Telemetry
     mockWorker = new MockWorker()
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
     spyOn(display, 'error')
@@ -54,7 +55,8 @@ describe('makeRecorderApi', () => {
         mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
-        worker
+        worker,
+        mockTelemetry
       )
     }
 
