@@ -54,6 +54,7 @@ test.describe('telemetry', () => {
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
+      expect(event.session!.id).toEqual(expect.any(String))
     })
 
   createTest('send init configuration for RUM')
@@ -66,6 +67,7 @@ test.describe('telemetry', () => {
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
+      expect(event.application!.id).toEqual(expect.any(String))
     })
 
   createTest('send usage telemetry for RUM')
