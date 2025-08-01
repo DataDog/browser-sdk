@@ -474,6 +474,7 @@ staging-reset-scheduled-failure:
 
 merge-into-staging:
   stage: pre-deploy
+  allow_failure: true
   extends:
     - .base-configuration
     - .main
@@ -485,6 +486,7 @@ merge-into-staging:
 
 merge-into-next-major:
   stage: pre-deploy
+  allow_failure: true
   extends:
     - .base-configuration
   only:
