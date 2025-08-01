@@ -228,24 +228,8 @@ function getActionNameFromTextualContent(
   }
 }
 
-/**
- * TODO: we should fix this logic in next major version
- * In certain cases, the masked strings will be removed even from places where they shouldn't be masked,
- * which leaks information about the private information that was masked. Example:
- * <fieldset>
- * <legend>Gender (Female, Male, Non-binary):</legend>
- * <div>
- * Currently selected gender: <span data-dd-privacy="mask">Female</span>
- * </div>
- * <button type="button">Update gender...</button>
- * </fieldset>
- * Here the customer has marked all of the gender <input>s as hidden, but if they click on the <fieldset> itself,
- * the gender the user chose will be leaked, because it will be removed from the text of the <legend> element as well.
- *
- * We should use node traversal to append the wanted node text directly
- */
 function getTextualContent(
-  element: Element | HTMLElement,
+  element: Element,
   userProgrammaticAttribute: string | undefined,
   allowlistMaskEnabled: boolean,
   privacyEnabledActionName?: boolean
@@ -265,32 +249,57 @@ function getTextualContent(
   }
   const exclusionSelector = exclusionSelectors.join(', ')
 
-  const allowedTexts: string[] = []
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT)
-  let node: Node | null
-  let length = 0
-
-  while ((node = walker.nextNode())) {
-    if (length > ACTION_NAME_TRUNCATION_LENGTH) {
-      break
+  const rejectInvisibleOrMaskedElementsFilter = (node: Node | Element) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return NodeFilter.FILTER_ACCEPT
     }
+    if ((node as HTMLElement).hasAttribute(`data-dd-mask`) || (node as HTMLElement).closest(exclusionSelector)) {
+      return NodeFilter.FILTER_REJECT
+    }
+    const style = getComputedStyle(node as Element)
+    if (style.visibility !== 'visible' || style.display === 'none') {
+      return NodeFilter.FILTER_REJECT
+    }
+    return NodeFilter.FILTER_ACCEPT
+  }
 
-    if (node.parentElement && node.parentElement.closest(exclusionSelector)) {
+  const walker = document.createTreeWalker(
+    element,
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    rejectInvisibleOrMaskedElementsFilter
+  )
+
+  let text = ''
+  let lastSubstringEndedWithWhiteSpace = false
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode
+    if (node.nodeType !== Node.TEXT_NODE) {
       continue
     }
 
-    const nodeText = getTextContent(node, false, NodePrivacyLevel.ALLOW)
-    if(!nodeText) {
+    const nodeText = node.textContent
+    if (!nodeText) {
+      continue
+    }
+    const startsWithWhiteSpace = /^\s/.test(nodeText)
+    const endsWithWhiteSpace = /\s$/.test(nodeText)
+
+    let trimmedNodeText = nodeText.trim()
+    if (trimmedNodeText.length === 0) {
       continue
     }
 
     if (allowlistMaskEnabled) {
-      allowedTexts.push(maskDisallowedTextContent(nodeText, ACTION_NAME_PLACEHOLDER))
-    } else {
-      allowedTexts.push(nodeText)
+      trimmedNodeText = maskDisallowedTextContent(trimmedNodeText, ACTION_NAME_PLACEHOLDER)
     }
-    length += nodeText.length
+    if (startsWithWhiteSpace || lastSubstringEndedWithWhiteSpace) {
+      text += ' '
+    }
+
+    text += trimmedNodeText
+    lastSubstringEndedWithWhiteSpace = endsWithWhiteSpace
   }
 
-  return allowedTexts.join(' ')
+  return text
 }
