@@ -1,6 +1,6 @@
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { SerializationContextStatus, serializeDocument } from '../serialization'
+import { createSerializationStats, SerializationContextStatus, serializeDocument } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { MousemoveCallBack } from './trackMove'
@@ -16,6 +16,7 @@ describe('trackMove', () => {
   beforeEach(() => {
     configuration = {} as RumConfiguration
     serializeDocument(document, DEFAULT_CONFIGURATION, {
+      serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),

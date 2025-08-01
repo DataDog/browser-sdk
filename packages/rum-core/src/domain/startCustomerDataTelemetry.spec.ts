@@ -1,7 +1,7 @@
-import type { FlushEvent, Context, Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
-import { Observable, resetExperimentalFeatures, startFakeTelemetry } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import type { FlushEvent, Context, Telemetry } from '@datadog/browser-core'
+import { Observable, resetExperimentalFeatures } from '@datadog/browser-core'
+import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
+import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumEvent } from '../rumEvent.types'
@@ -12,7 +12,7 @@ import type { RumConfiguration } from './configuration'
 describe('customerDataTelemetry', () => {
   let clock: Clock
   let batchFlushObservable: Observable<FlushEvent>
-  let telemetryEvents: RawTelemetryEvent[]
+  let telemetry: MockTelemetry
   let fakeContextBytesCount: number
   let lifeCycle: LifeCycle
   const viewEvent = { type: RumEventType.VIEW } as RumEvent & Context
@@ -52,7 +52,7 @@ describe('customerDataTelemetry', () => {
     lifeCycle = new LifeCycle()
     fakeContextBytesCount = 1
 
-    telemetryEvents = startFakeTelemetry()
+    telemetry = startMockTelemetry()
 
     startCustomerDataTelemetry(configuration, { enabled: true } as Telemetry, lifeCycle, batchFlushObservable)
   }
@@ -65,14 +65,14 @@ describe('customerDataTelemetry', () => {
     resetExperimentalFeatures()
   })
 
-  it('should collect customer data telemetry', () => {
+  it('should collect customer data telemetry', async () => {
     setupCustomerTelemetryCollection()
 
     generateBatch({ eventNumber: 10, contextBytesCount: 10, batchBytesCount: 10 })
     generateBatch({ eventNumber: 1, contextBytesCount: 1, batchBytesCount: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
 
-    expect(telemetryEvents[0]).toEqual(
+    expect(await telemetry.getEvents()).toEqual([
       jasmine.objectContaining({
         type: 'log',
         status: 'debug',
@@ -80,24 +80,24 @@ describe('customerDataTelemetry', () => {
         batchCount: 2,
         batchBytesCount: { min: 1, max: 10, sum: 11 },
         batchMessagesCount: { min: 1, max: 10, sum: 11 },
-      })
-    )
+      }),
+    ])
   })
 
-  it('should collect customer data only if batches contains rum events, no just telemetry', () => {
+  it('should collect customer data only if batches contains rum events, no just telemetry', async () => {
     setupCustomerTelemetryCollection()
 
     // Generate an initial batch with no RUM events. We should not generate any customer
     // data telemetry.
     batchFlushObservable.notify({ reason: 'duration_limit', bytesCount: 1, messagesCount: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
-    expect(telemetryEvents.length).toEqual(0)
+    expect(await telemetry.hasEvents()).toBe(false)
 
     // Generate a batch with RUM events. We should generate customer data telemetry for
     // this batch.
     generateBatch({ eventNumber: 10, contextBytesCount: 10, batchBytesCount: 10 })
     clock.tick(MEASURES_PERIOD_DURATION)
-    expect(telemetryEvents[0]).toEqual(
+    expect(await telemetry.getEvents()).toEqual([
       jasmine.objectContaining({
         type: 'log',
         status: 'debug',
@@ -105,18 +105,18 @@ describe('customerDataTelemetry', () => {
         batchCount: 1,
         batchBytesCount: { min: 10, max: 10, sum: 10 },
         batchMessagesCount: { min: 10, max: 10, sum: 10 },
-      })
-    )
-    telemetryEvents.length = 0
+      }),
+    ])
+    telemetry.reset()
 
     // Generate another batch with no RUM events. We should not generate any customer data
     // telemetry.
     batchFlushObservable.notify({ reason: 'duration_limit', bytesCount: 1, messagesCount: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
-    expect(telemetryEvents.length).toEqual(0)
+    expect(await telemetry.hasEvents()).toBe(false)
   })
 
-  it('should not collect contexts telemetry of a unfinished batches', () => {
+  it('should not collect contexts telemetry of a unfinished batches', async () => {
     setupCustomerTelemetryCollection()
 
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
@@ -124,10 +124,14 @@ describe('customerDataTelemetry', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, viewEvent)
     clock.tick(MEASURES_PERIOD_DURATION)
 
-    expect(telemetryEvents[0].batchMessagesCount).toEqual(jasmine.objectContaining({ sum: 1 }))
+    expect(await telemetry.getEvents()).toEqual([
+      jasmine.objectContaining({
+        batchMessagesCount: jasmine.objectContaining({ sum: 1 }),
+      }),
+    ])
   })
 
-  it('should not collect customer data telemetry when telemetry disabled', () => {
+  it('should not collect customer data telemetry when telemetry disabled', async () => {
     setupCustomerTelemetryCollection({
       telemetrySampleRate: 100,
       customerDataTelemetrySampleRate: 0,
@@ -136,6 +140,6 @@ describe('customerDataTelemetry', () => {
     generateBatch({ eventNumber: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)
 
-    expect(telemetryEvents.length).toEqual(0)
+    expect(await telemetry.hasEvents()).toBe(false)
   })
 })
