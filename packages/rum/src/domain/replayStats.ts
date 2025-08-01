@@ -20,7 +20,7 @@ export function addWroteData(viewId: string, additionalBytesCount: number) {
 }
 
 export function getReplayStats(viewId: string) {
-  return statsPerView?.get(viewId)
+  return statsPerView && statsPerView.get(viewId)
 }
 
 export function resetReplayStats() {

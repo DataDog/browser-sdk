@@ -39,7 +39,7 @@ export function instrumentOnError(callback: UnhandledErrorCallback) {
     if (!isError(errorObj)) {
       stackTrace = computeStackTraceFromOnErrorMessage(messageObj, url, line, column)
     }
-    callback(errorObj ?? messageObj, stackTrace)
+    callback(errorObj !== null && errorObj !== undefined ? errorObj : messageObj, stackTrace)
   })
 }
 

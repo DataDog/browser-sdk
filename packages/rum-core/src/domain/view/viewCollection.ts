@@ -51,14 +51,14 @@ export function startViewCollection(
     }
   })
 
-  hooks.register(
-    HookNames.AssembleTelemetry,
-    ({ startTime }): DefaultTelemetryEventAttributes => ({
+  hooks.register(HookNames.AssembleTelemetry, ({ startTime }): DefaultTelemetryEventAttributes => {
+    const foundView = viewHistory.findView(startTime)
+    return {
       view: {
-        id: viewHistory.findView(startTime)?.id,
+        id: foundView && foundView.id,
       },
-    })
-  )
+    }
+  })
 
   return trackViews(
     location,
@@ -78,7 +78,13 @@ function processViewUpdate(
   recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
-  const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
+  const cls = view.commonViewMetrics.cumulativeLayoutShift
+  const inp = view.commonViewMetrics.interactionToNextPaint
+  const firstInput = view.initialViewMetrics.firstInput
+  const lcp = view.initialViewMetrics.largestContentfulPaint
+  const navTimings = view.initialViewMetrics.navigationTimings
+  const clsDevicePixelRatio = cls && cls.devicePixelRatio
+
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
@@ -101,28 +107,28 @@ function processViewUpdate(
       frustration: {
         count: view.eventCounts.frustrationCount,
       },
-      cumulative_layout_shift: view.commonViewMetrics.cumulativeLayoutShift?.value,
-      cumulative_layout_shift_time: toServerDuration(view.commonViewMetrics.cumulativeLayoutShift?.time),
-      cumulative_layout_shift_target_selector: view.commonViewMetrics.cumulativeLayoutShift?.targetSelector,
-      first_byte: toServerDuration(view.initialViewMetrics.navigationTimings?.firstByte),
-      dom_complete: toServerDuration(view.initialViewMetrics.navigationTimings?.domComplete),
-      dom_content_loaded: toServerDuration(view.initialViewMetrics.navigationTimings?.domContentLoaded),
-      dom_interactive: toServerDuration(view.initialViewMetrics.navigationTimings?.domInteractive),
+      cumulative_layout_shift: cls && cls.value,
+      cumulative_layout_shift_time: toServerDuration(cls && cls.time),
+      cumulative_layout_shift_target_selector: cls && cls.targetSelector,
+      first_byte: toServerDuration(navTimings && navTimings.firstByte),
+      dom_complete: toServerDuration(navTimings && navTimings.domComplete),
+      dom_content_loaded: toServerDuration(navTimings && navTimings.domContentLoaded),
+      dom_interactive: toServerDuration(navTimings && navTimings.domInteractive),
       error: {
         count: view.eventCounts.errorCount,
       },
       first_contentful_paint: toServerDuration(view.initialViewMetrics.firstContentfulPaint),
-      first_input_delay: toServerDuration(view.initialViewMetrics.firstInput?.delay),
-      first_input_time: toServerDuration(view.initialViewMetrics.firstInput?.time),
-      first_input_target_selector: view.initialViewMetrics.firstInput?.targetSelector,
-      interaction_to_next_paint: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.value),
-      interaction_to_next_paint_time: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.time),
-      interaction_to_next_paint_target_selector: view.commonViewMetrics.interactionToNextPaint?.targetSelector,
+      first_input_delay: toServerDuration(firstInput && firstInput.delay),
+      first_input_time: toServerDuration(firstInput && firstInput.time),
+      first_input_target_selector: firstInput && firstInput.targetSelector,
+      interaction_to_next_paint: toServerDuration(inp && inp.value),
+      interaction_to_next_paint_time: toServerDuration(inp && inp.time),
+      interaction_to_next_paint_target_selector: inp && inp.targetSelector,
       is_active: view.isActive,
       name: view.name,
-      largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint?.value),
-      largest_contentful_paint_target_selector: view.initialViewMetrics.largestContentfulPaint?.targetSelector,
-      load_event: toServerDuration(view.initialViewMetrics.navigationTimings?.loadEvent),
+      largest_contentful_paint: toServerDuration(lcp && lcp.value),
+      largest_contentful_paint_target_selector: lcp && lcp.targetSelector,
+      load_event: toServerDuration(navTimings && navTimings.loadEvent),
       loading_time: discardNegativeDuration(toServerDuration(view.commonViewMetrics.loadingTime)),
       loading_type: view.loadingType,
       long_task: {

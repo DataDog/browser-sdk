@@ -91,14 +91,17 @@ export function makeRecorderApi(
 
     function getOrCreateDeflateEncoder() {
       if (!cachedDeflateEncoder) {
-        worker ??= startDeflateWorker(
-          configuration,
-          'Datadog Session Replay',
-          () => {
-            strategy.stop()
-          },
-          createDeflateWorkerImpl
-        )
+        worker =
+          worker !== null && worker !== undefined
+            ? worker
+            : startDeflateWorker(
+                configuration,
+                'Datadog Session Replay',
+                () => {
+                  strategy.stop()
+                },
+                createDeflateWorkerImpl
+              )
 
         if (worker) {
           cachedDeflateEncoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
