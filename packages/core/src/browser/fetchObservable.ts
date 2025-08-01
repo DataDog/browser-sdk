@@ -45,11 +45,11 @@ export function resetFetchObservable() {
 
 function createFetchObservable() {
   return new Observable<FetchContext>((observable) => {
-    if (!window.fetch) {
+    if (!globalThis.fetch) {
       return
     }
 
-    const { stop } = instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable), {
+    const { stop } = instrumentMethod(globalThis, 'fetch', (call) => beforeSend(call, observable), {
       computeHandlingStack: true,
     })
 
@@ -58,7 +58,7 @@ function createFetchObservable() {
 }
 
 function beforeSend(
-  { parameters, onPostCall, handlingStack }: InstrumentedMethodCall<Window, 'fetch'>,
+  { parameters, onPostCall, handlingStack }: InstrumentedMethodCall<typeof globalThis, 'fetch'>,
   observable: Observable<FetchContext>
 ) {
   const [input, init] = parameters

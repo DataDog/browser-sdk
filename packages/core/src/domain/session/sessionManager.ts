@@ -15,6 +15,7 @@ import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
 import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
+import { isServiceWorkerContext } from '../../tools/isServiceWorkerContext'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -130,6 +131,9 @@ export function stopSessionManager() {
 }
 
 function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {
+  if (isServiceWorkerContext()) {
+    return
+  }
   const { stop } = addEventListeners(
     configuration,
     window,
@@ -141,6 +145,9 @@ function trackActivity(configuration: Configuration, expandOrRenewSession: () =>
 }
 
 function trackVisibility(configuration: Configuration, expandSession: () => void) {
+  if (isServiceWorkerContext()) {
+    return
+  }
   const expandSessionWhenVisible = () => {
     if (document.visibilityState === 'visible') {
       expandSession()
@@ -157,6 +164,9 @@ function trackVisibility(configuration: Configuration, expandSession: () => void
 }
 
 function trackResume(configuration: Configuration, cb: () => void) {
+  if (isServiceWorkerContext()) {
+    return
+  }
   const { stop } = addEventListener(configuration, window, DOM_EVENT.RESUME, cb, { capture: true })
   stopCallbacks.push(stop)
 }
