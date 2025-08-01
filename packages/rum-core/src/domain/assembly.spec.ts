@@ -407,9 +407,7 @@ describe('rum assembly', () => {
         rawRumEvent: createRawRumEvent(RumEventType.VIEW),
       })
 
-      expect(serverRumEvents[0].ddtags).toEqual(
-        'browser_sdk_version:test,sdk_version:test,service:default-service,version:default-version'
-      )
+      expect(serverRumEvents[0].ddtags).toEqual('sdk_version:test,service:default-service,version:default-version')
     })
   })
 
