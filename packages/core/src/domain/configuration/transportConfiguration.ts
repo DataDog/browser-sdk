@@ -9,6 +9,7 @@ export interface TransportConfiguration {
   rumEndpointBuilder: EndpointBuilder
   sessionReplayEndpointBuilder: EndpointBuilder
   profilingEndpointBuilder: EndpointBuilder
+  exposuresEndpointBuilder: EndpointBuilder
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
@@ -39,6 +40,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration) {
     rumEndpointBuilder: createEndpointBuilder(initConfiguration, 'rum'),
     profilingEndpointBuilder: createEndpointBuilder(initConfiguration, 'profile'),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'replay'),
+    exposuresEndpointBuilder: createEndpointBuilder(initConfiguration, 'exposures'),
   }
 }
 

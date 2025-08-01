@@ -15,17 +15,17 @@ module.exports = {
           n.expression.callee.name === 'runMain'
       )
 
-      // Check if the file has `if (require.main === module)` wrapping `runMain()`
+      // Check if the file has `if (!process.env.NODE_TEST_CONTEXT)` wrapping `runMain()`
       const hasRequireMainCheck = node.body.some(
         (n) =>
           n.type === 'IfStatement' &&
-          n.test.type === 'BinaryExpression' &&
-          n.test.operator === '===' &&
-          n.test.left.type === 'MemberExpression' &&
-          n.test.left.object.name === 'require' &&
-          n.test.left.property.name === 'main' &&
-          n.test.right.type === 'Identifier' &&
-          n.test.right.name === 'module' &&
+          n.test.type === 'UnaryExpression' &&
+          n.test.operator === '!' &&
+          n.test.argument.type === 'MemberExpression' &&
+          n.test.argument.object.type === 'MemberExpression' &&
+          n.test.argument.object.object.name === 'process' &&
+          n.test.argument.object.property.name === 'env' &&
+          n.test.argument.property.name === 'NODE_TEST_CONTEXT' &&
           n.consequent.body.some(
             (innerNode) =>
               innerNode.type === 'ExpressionStatement' &&

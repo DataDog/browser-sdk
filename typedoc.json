@@ -12,6 +12,8 @@
   },
   "visibilityFilters": {}, // disable all visibility filters
   "customCss": "./typedoc.css",
+  "hideGenerator": true,
+  "includeHierarchySummary": true,
   "navigation": {
     "includeCategories": true
   },

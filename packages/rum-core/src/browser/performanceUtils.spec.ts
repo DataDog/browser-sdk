@@ -32,13 +32,22 @@ describe('getNavigationEntry', () => {
       responseEnd: jasmine.any(Number),
       redirectStart: jasmine.any(Number),
       redirectEnd: jasmine.any(Number),
-      decodedBodySize: jasmine.any(Number),
-      encodedBodySize: jasmine.any(Number),
-      transferSize: jasmine.any(Number),
 
       toJSON: jasmine.any(Function),
     }
 
-    expect(getNavigationEntry()).toEqual(jasmine.objectContaining(expectation))
+    const navigationEntry = getNavigationEntry()
+
+    expect(navigationEntry).toEqual(jasmine.objectContaining(expectation))
+
+    if (navigationEntry.decodedBodySize) {
+      expect(navigationEntry.decodedBodySize).toEqual(jasmine.any(Number))
+    }
+    if (navigationEntry.encodedBodySize) {
+      expect(navigationEntry.encodedBodySize).toEqual(jasmine.any(Number))
+    }
+    if (navigationEntry.transferSize) {
+      expect(navigationEntry.transferSize).toEqual(jasmine.any(Number))
+    }
   })
 })

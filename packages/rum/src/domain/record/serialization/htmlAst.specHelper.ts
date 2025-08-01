@@ -2,7 +2,12 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import { display, noop, objectValues } from '@datadog/browser-core'
 import type { SerializedNodeWithId } from '../../../types'
-import { serializeNodeWithId, SerializationContextStatus, createElementsScrollPositions } from '..'
+import {
+  serializeNodeWithId,
+  SerializationContextStatus,
+  createElementsScrollPositions,
+  createSerializationStats,
+} from '..'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {
@@ -39,6 +44,7 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
     serializeNodeWithId(newDoc, {
       parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
       serializationContext: {
+        serializationStats: createSerializationStats(),
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
         status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
         elementsScrollPositions: createElementsScrollPositions(),

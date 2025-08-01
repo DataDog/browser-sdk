@@ -1,5 +1,5 @@
-import type { ClocksState, HttpRequest, TimeStamp } from '@datadog/browser-core'
-import { DeflateEncoderStreamId, PageExitReason } from '@datadog/browser-core'
+import type { ClocksState, HttpRequest, HttpRequestEvent, TimeStamp } from '@datadog/browser-core'
+import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/browser-core'
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -15,6 +15,7 @@ import {
   SEGMENT_BYTES_LIMIT,
   SEGMENT_DURATION_LIMIT,
 } from './segmentCollection'
+import type { ReplayPayload } from './buildReplayPayload'
 
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp }
@@ -34,8 +35,9 @@ describe('startSegmentCollection', () => {
   let lifeCycle: LifeCycle
   let worker: MockWorker
   let httpRequestSpy: {
-    sendOnExit: jasmine.Spy<HttpRequest['sendOnExit']>
-    send: jasmine.Spy<HttpRequest['send']>
+    observable: Observable<HttpRequestEvent<ReplayPayload>>
+    sendOnExit: jasmine.Spy<HttpRequest<ReplayPayload>['sendOnExit']>
+    send: jasmine.Spy<HttpRequest<ReplayPayload>['send']>
   }
   let addRecord: (record: BrowserRecord) => void
   let context: SegmentContext | undefined
@@ -62,6 +64,7 @@ describe('startSegmentCollection', () => {
     lifeCycle = new LifeCycle()
     worker = new MockWorker()
     httpRequestSpy = {
+      observable: new Observable<HttpRequestEvent<ReplayPayload>>(),
       sendOnExit: jasmine.createSpy(),
       send: jasmine.createSpy(),
     }
@@ -107,6 +110,18 @@ describe('startSegmentCollection', () => {
     worker.processAllMessages()
     expect(httpRequestSpy.send).not.toHaveBeenCalled()
     expect(httpRequestSpy.sendOnExit).not.toHaveBeenCalled()
+  })
+
+  it('includes metadata for segment telemetry in the segment payload', () => {
+    addRecordAndFlushSegment()
+    expect(httpRequestSpy.sendOnExit.calls.mostRecent().args[0]).toEqual({
+      data: jasmine.anything(),
+      bytesCount: jasmine.anything(),
+      cssText: jasmine.anything(),
+      isFullSnapshot: jasmine.anything(),
+      rawSize: jasmine.anything(),
+      recordCount: jasmine.anything(),
+    })
   })
 
   describe('segment flush strategy', () => {

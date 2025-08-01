@@ -1,6 +1,7 @@
 **/dist/**
 yarn.lock
 .yarn/releases
+docs
 
 # code import
 packages/worker/src/domain/deflate.js
