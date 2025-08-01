@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.
  */
