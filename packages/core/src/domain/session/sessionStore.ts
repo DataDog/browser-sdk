@@ -6,7 +6,6 @@ import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
-import { addTelemetryDebug } from '../telemetry'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -136,38 +135,21 @@ export function startSessionStore<TrackingType extends string>(
    * - if the session is not active, clear the session store and expire the session cache
    */
   function watchSession() {
-    const sessionStoreOperation = (beforeProcessSessionState?: SessionState, beforeProcessTimeStamp?: number) => ({
-      process: (sessionState: SessionState, retryCount: number) => {
-        const isExpired = isSessionInExpiredState(sessionState)
-
-        if (!isExpired) {
-          if (isExperimentalFeatureEnabled(ExperimentalFeature.WATCH_COOKIE_WITHOUT_LOCK)) {
-            addTelemetryDebug('session in store is no longer expired', {
-              beforeProcessTimeStamp,
-              beforeProcessSessionState,
-              processSessionStateTimeStamp: dateNow(),
-              processSessionState: sessionState,
-              retryCount,
-              sessionCache,
-            })
-          }
-          return
-        }
-
-        return getExpiredSessionState(sessionState, configuration)
-      },
+    const sessionStoreOperation = {
+      process: (sessionState: SessionState) =>
+        isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
       after: synchronizeSession,
-    })
+    } as const
 
     if (isExperimentalFeatureEnabled(ExperimentalFeature.WATCH_COOKIE_WITHOUT_LOCK)) {
       const sessionState = sessionStoreStrategy.retrieveSession()
       if (isSessionInExpiredState(sessionState)) {
-        processSessionStoreOperations(sessionStoreOperation(sessionState, dateNow()), sessionStoreStrategy)
+        processSessionStoreOperations(sessionStoreOperation, sessionStoreStrategy)
       } else {
         synchronizeSession(sessionState)
       }
     } else {
-      processSessionStoreOperations(sessionStoreOperation(), sessionStoreStrategy)
+      processSessionStoreOperations(sessionStoreOperation, sessionStoreStrategy)
     }
   }
 
