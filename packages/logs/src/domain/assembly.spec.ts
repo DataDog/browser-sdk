@@ -235,9 +235,7 @@ describe('startLogsAssembly', () => {
   describe('ddtags', () => {
     it('should contain and format the default tags', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-      expect(serverLogs[0].ddtags).toEqual(
-        'browser_sdk_version:test,sdk_version:test,env:test,service:service,version:1.0.0'
-      )
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0')
     })
 
     it('should append custom tags', () => {
@@ -245,9 +243,7 @@ describe('startLogsAssembly', () => {
         rawLogsEvent: DEFAULT_MESSAGE,
         ddtags: ['foo:bar'],
       })
-      expect(serverLogs[0].ddtags).toEqual(
-        'browser_sdk_version:test,sdk_version:test,env:test,service:service,version:1.0.0,foo:bar'
-      )
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0,foo:bar')
     })
   })
 
