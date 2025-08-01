@@ -9,7 +9,6 @@ import {
   ACTION_NAME_TRUNCATION_LENGTH,
 } from './actionNameConstants'
 import type { ActionName } from './actionNameConstants'
-import { getNodePrivacyLevel, getTextContent } from '../privacy'
 
 export function getActionNameFromElement(
   element: Element,
@@ -253,7 +252,7 @@ function getTextualContent(
     if (node.nodeType === Node.TEXT_NODE) {
       return NodeFilter.FILTER_ACCEPT
     }
-    if ((node as HTMLElement).hasAttribute(`data-dd-mask`) || (node as HTMLElement).closest(exclusionSelector)) {
+    if ((node as HTMLElement).closest(exclusionSelector)) {
       return NodeFilter.FILTER_REJECT
     }
     const style = getComputedStyle(node as Element)
@@ -265,6 +264,7 @@ function getTextualContent(
 
   const walker = document.createTreeWalker(
     element,
+    // eslint-disable-next-line no-bitwise
     NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
     rejectInvisibleOrMaskedElementsFilter
   )
