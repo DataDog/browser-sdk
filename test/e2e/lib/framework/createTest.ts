@@ -16,7 +16,7 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import { DEFAULT_SETUPS, npmSetup, reactSetup, reactV7Setup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
@@ -124,6 +124,11 @@ class TestBuilder {
     return this
   }
 
+  withReactV7() {
+    this.setups = [{ factory: reactV7Setup }]
+    return this
+  }
+
   withBasePath(newBasePath: string) {
     this.basePath = newBasePath
     return this
@@ -163,7 +168,9 @@ class TestBuilder {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
+          this.setups.filter(
+            (setup) => setup.factory !== npmSetup && setup.factory !== reactSetup && setup.factory !== reactV7Setup
+          ),
           { ...setupOptions, useRumSlim: true },
           runner
         )

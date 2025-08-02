@@ -1,4 +1,4 @@
-import * as path from 'path'
+import path from 'path'
 
 const ROOT = path.join(__dirname, '../../../..')
 
@@ -10,6 +10,7 @@ export function getTestAppBundlePath(appName: string, originalUrl: string) {
   const appNameMapping: Record<string, string> = {
     app: 'apps/vanilla',
     'react-app': 'apps/react',
+    'react-app-v7': 'apps/react-v7',
   }
 
   const targetAppPath = appNameMapping[appName] || appName

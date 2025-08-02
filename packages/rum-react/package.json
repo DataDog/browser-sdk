@@ -18,6 +18,7 @@
   },
   "peerDependencies": {
     "react": "18 || 19",
+    "react-router": "7",
     "react-router-dom": "6 || 7"
   },
   "peerDependenciesMeta": {
@@ -30,6 +31,9 @@
     "react": {
       "optional": true
     },
+    "react-router": {
+      "optional": true
+    },
     "react-router-dom": {
       "optional": true
     }
@@ -39,6 +43,7 @@
     "@types/react-dom": "19.1.6",
     "react": "19.1.1",
     "react-dom": "19.1.1",
+    "react-router": "7.7.1",
     "react-router-dom": "7.7.1",
     "react-router-dom-6": "npm:react-router-dom@6.30.1"
   },

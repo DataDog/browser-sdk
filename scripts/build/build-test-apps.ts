@@ -21,6 +21,7 @@ runMain(async () => {
 
   buildApp('test/apps/vanilla')
   buildApp('test/apps/react')
+  buildApp('test/apps/react-v7')
   await buildExtensions()
 
   printLog('Test apps and extensions built successfully.')
