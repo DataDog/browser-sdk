@@ -1,6 +1,7 @@
+import type { Uint8ArrayBuffer } from './utils/byteUtils'
 import { computeBytesCount } from './utils/byteUtils'
 
-export interface Encoder<Output extends string | Uint8Array = string | Uint8Array> {
+export interface Encoder<Output extends string | Uint8ArrayBuffer = string | Uint8ArrayBuffer> {
   /**
    * Whether this encoder might call the provided callbacks asynchronously
    */
@@ -43,7 +44,7 @@ export interface Encoder<Output extends string | Uint8Array = string | Uint8Arra
   estimateEncodedBytesCount(data: string): number
 }
 
-export interface EncoderResult<Output extends string | Uint8Array = string | Uint8Array> {
+export interface EncoderResult<Output extends string | Uint8ArrayBuffer = string | Uint8ArrayBuffer> {
   output: Output
   outputBytesCount: number
 
