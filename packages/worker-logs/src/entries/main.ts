@@ -12,7 +12,6 @@ import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
 import { startLogs } from '../boot/startLogs'
 
-export type { InternalContext } from '../domain/contexts/internalContext'
 export type { LogsMessage } from '../domain/logger'
 export { Logger, HandlerType } from '../domain/logger'
 export { StatusType } from '../domain/logger/isAuthorized'

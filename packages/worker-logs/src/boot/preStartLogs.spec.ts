@@ -175,11 +175,4 @@ describe('worker-logs preStartLogs', () => {
       expect(getLoggedMessage(0).message.context!.foo).toEqual('bar')
     })
   })
-
-  describe('worker-logs internal context', () => {
-    it('should return undefined if not initialized', () => {
-      const strategy = createPreStartStrategy(getCommonContextSpy, doStartLogsSpy)
-      expect(strategy.getInternalContext()).toBeUndefined()
-    })
-  })
 })

@@ -21,7 +21,6 @@ import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startLoggerCollection } from '../domain/logger/loggerCollection'
 import { startLogsBatch } from '../transport/startLogsBatch'
 import { startLogsBridge } from '../transport/startLogsBridge'
-import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
@@ -84,11 +83,8 @@ export function startLogs(
     startLogsBridge(lifeCycle)
   }
 
-  const internalContext = startInternalContext(session)
-
   return {
     handleLog,
-    getInternalContext: internalContext.get,
     accountContext,
     globalContext,
     userContext,

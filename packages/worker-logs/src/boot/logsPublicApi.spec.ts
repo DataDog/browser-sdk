@@ -10,9 +10,6 @@ import type { StartLogs } from './startLogs'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
-const mockSessionId = 'some-session-id'
-const getInternalContext = () => ({ session_id: mockSessionId })
-
 describe('worker-logs logs entry', () => {
   let handleLogSpy: jasmine.Spy<
     (
@@ -31,7 +28,7 @@ describe('worker-logs logs entry', () => {
 
   beforeEach(() => {
     handleLogSpy = jasmine.createSpy()
-    startLogs = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext }))
+    startLogs = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy }))
   })
 
   it('should add a `_setDebug` that works', () => {
@@ -167,22 +164,12 @@ describe('worker-logs logs entry', () => {
       })
     })
 
-    describe('worker-logs internal context', () => {
-      it('should get the internal context', () => {
-        const LOGS = makeLogsPublicApi(startLogs)
-        LOGS.init(DEFAULT_INIT_CONFIGURATION)
-        expect(LOGS.getInternalContext()?.session_id).toEqual(mockSessionId)
-      })
-    })
-
     describe('worker-logs user', () => {
       let logsPublicApi: LogsPublicApi
       let userContext: ContextManager
       beforeEach(() => {
         userContext = createContextManager('mock')
-        startLogs = jasmine
-          .createSpy()
-          .and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext, userContext }))
+        startLogs = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, userContext }))
 
         logsPublicApi = makeLogsPublicApi(startLogs)
 
@@ -221,7 +208,6 @@ describe('worker-logs logs entry', () => {
         accountContext = createContextManager('mock')
         startLogs = jasmine.createSpy().and.callFake(() => ({
           handleLog: handleLogSpy,
-          getInternalContext,
           accountContext,
         }))
 

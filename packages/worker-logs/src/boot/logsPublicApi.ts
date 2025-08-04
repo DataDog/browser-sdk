@@ -15,7 +15,6 @@ import type { HandlerType } from '../domain/logger'
 import type { StatusType } from '../domain/logger/isAuthorized'
 import { Logger } from '../domain/logger'
 import { buildCommonContext } from '../domain/contexts/commonContext'
-import type { InternalContext } from '../domain/contexts/internalContext'
 import type { StartLogs, StartLogsResult } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
 
@@ -224,15 +223,6 @@ export interface LogsPublicApi extends PublicApi {
    * @returns The init configuration
    */
   getInitConfiguration: () => LogsInitConfiguration | undefined
-
-  /**
-   * [Internal API] Get the internal SDK context
-   *
-   * See [Access internal context](https://docs.datadoghq.com/logs/log_collection/javascript/#access-internal-context) for further information.
-   *
-   * @internal
-   */
-  getInternalContext: (startTime?: number) => InternalContext | undefined
 }
 
 export interface Strategy {
@@ -241,7 +231,6 @@ export interface Strategy {
   globalContext: ContextManager
   accountContext: ContextManager
   userContext: ContextManager
-  getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']
 }
 
@@ -310,8 +299,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     getLogger: monitor((name) => customLoggers[name]),
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
-
-    getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     setUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.setContext),
 
