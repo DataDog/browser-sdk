@@ -10,37 +10,9 @@ interface ExtensionConfig {
   initParameter: string
 }
 
-interface ReactAppConfig {
-  targetDir: string
-  appName: string
-  routerVersion: string
-  routerPackage: string
-  routerDependency: string
-  outputFilename: string
-}
-
 const EXTRA_EXTENSIONS: ExtensionConfig[] = [
   { name: 'allowed-tracking-origin', initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],' },
   { name: 'invalid-tracking-origin', initParameter: "allowedTrackingOrigins: ['https://app.example.com']," },
-]
-
-const REACT_APPS: ReactAppConfig[] = [
-  {
-    targetDir: 'test/apps/react',
-    appName: 'react-app',
-    routerVersion: 'react-router-v6',
-    routerPackage: 'react-router-dom',
-    routerDependency: ',\n    "react-router-dom": "6.30.0"',
-    outputFilename: 'react-app.js',
-  },
-  {
-    targetDir: 'test/apps/react-v7',
-    appName: 'react-app-v7',
-    routerVersion: 'react-router-v7',
-    routerPackage: 'react-router',
-    routerDependency: ',\n    "react-router": "7.0.2"',
-    outputFilename: 'react-app-v7.js',
-  },
 ]
 
 runMain(async () => {
@@ -48,7 +20,8 @@ runMain(async () => {
   command`yarn lerna run pack`.run()
 
   buildApp('test/apps/vanilla')
-  await buildReactApps()
+  buildApp('test/apps/react')
+  await buildReactRouterv7App()
   await buildExtensions()
 
   printLog('Test apps and extensions built successfully.')
@@ -60,36 +33,29 @@ function buildApp(appPath: string) {
   command`yarn build`.withCurrentWorkingDirectory(appPath).run()
 }
 
-async function buildReactApps(): Promise<void> {
-  const baseReactDir = 'test/apps/base-react'
+async function buildReactRouterv7App() {
+  const baseAppPath = 'test/apps/react'
+  const appPath = 'test/apps/react-router-v7'
+  fs.rmSync(appPath, { recursive: true, force: true })
+  fs.cpSync(baseAppPath, appPath, { recursive: true })
 
-  for (const { targetDir, appName, routerVersion, routerPackage, routerDependency, outputFilename } of REACT_APPS) {
-    printLog(`Generating React app at ${targetDir}...`)
+  await modifyFile(path.join(appPath, 'package.json'), (content: string) =>
+    content
+      .replace(/"name": "react-app"/, '"name": "react-app-v7"')
+      .replace(/"react-router-dom": "[^"]*"/, '"react-router": "7.0.2"')
+  )
 
-    fs.rmSync(targetDir, { recursive: true, force: true })
-    fs.cpSync(baseReactDir, targetDir, { recursive: true })
+  await modifyFile(path.join(appPath, 'app.tsx'), (content: string) =>
+    content
+      .replace('@datadog/browser-rum-react/react-router-v6', '@datadog/browser-rum-react/react-router-v7')
+      .replace("from 'react-router-dom'", "from 'react-router'")
+  )
 
-    const appTsxPath = path.join(targetDir, 'app.tsx')
-    await modifyFile(appTsxPath, (content: string) =>
-      content
-        .replace(/\/\* REACT_ROUTER_VERSION \*\//g, routerVersion)
-        .replace(/\/\* REACT_ROUTER_PACKAGE \*\//g, routerPackage)
-    )
+  await modifyFile(path.join(appPath, 'webpack.config.js'), (content: string) =>
+    content.replace('react-app.js', 'react-app-v7.js').replace('react-app.js', 'react-app-v7.js')
+  )
 
-    const packageJsonPath = path.join(targetDir, 'package.json')
-    await modifyFile(packageJsonPath, (content: string) =>
-      content
-        .replace(/\/\* REACT_APP_NAME \*\//g, appName)
-        .replace(/\/\* REACT_ROUTER_DEPENDENCY \*\//g, routerDependency)
-    )
-
-    const webpackConfigPath = path.join(targetDir, 'webpack.config.js')
-    await modifyFile(webpackConfigPath, (content: string) =>
-      content.replace(/\/\* REACT_OUTPUT_FILENAME \*\//g, outputFilename)
-    )
-
-    buildApp(targetDir)
-  }
+  buildApp(appPath)
 }
 
 async function buildExtensions(): Promise<void> {

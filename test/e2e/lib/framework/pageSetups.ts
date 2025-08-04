@@ -176,7 +176,7 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
     `
   }
 
-  const jsFileName = appName === 'react-v7' ? 'react-app-v7.js' : 'react-app.js'
+  const jsFileName = appName === 'react-router-v7' ? 'react-app-v7.js' : 'react-app.js'
   body += html` <script type="text/javascript" src="./${jsFileName}"></script> `
 
   return basePage({

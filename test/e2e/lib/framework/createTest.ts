@@ -123,10 +123,6 @@ class TestBuilder {
     return this.withReactApp('react')
   }
 
-  withReactV7() {
-    return this.withReactApp('react-v7')
-  }
-
   withReactApp(appName: string) {
     this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
     return this

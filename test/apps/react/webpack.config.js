@@ -20,7 +20,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: '/* REACT_OUTPUT_FILENAME */',
-    chunkFilename: 'chunks/[name]-[contenthash]-/* REACT_OUTPUT_FILENAME */',
+    filename: 'react-app.js',
+    chunkFilename: 'chunks/[name]-[contenthash]-react-app.js',
   },
 }

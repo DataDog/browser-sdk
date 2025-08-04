@@ -1,5 +1,5 @@
 {
-  "name": "/* REACT_APP_NAME */",
+  "name": "react-app",
   "version": "0.0.0",
   "scripts": {
     "build": "webpack"
@@ -8,7 +8,8 @@
     "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
     "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz",
     "react": "19.1.0",
-    "react-dom": "19.1.0"
+    "react-dom": "19.1.0",
+    "react-router-dom": "6.30.0"
   },
   "resolutions": {
     "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
