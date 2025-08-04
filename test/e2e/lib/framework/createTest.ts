@@ -119,10 +119,6 @@ class TestBuilder {
     return this
   }
 
-  withReact() {
-    return this.withReactApp('react')
-  }
-
   withReactApp(appName: string) {
     this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
     return this

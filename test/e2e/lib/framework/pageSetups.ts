@@ -159,7 +159,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
-export function reactSetup(options: SetupOptions, servers: Servers, appName: string = 'react') {
+export function reactSetup(options: SetupOptions, servers: Servers, appName: string) {
   let header = options.head || ''
   let body = options.body || ''
 
@@ -176,8 +176,7 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
     `
   }
 
-  const jsFileName = appName === 'react-router-v7' ? 'react-app-v7.js' : 'react-app.js'
-  body += html` <script type="text/javascript" src="./${jsFileName}"></script> `
+  body += html` <script type="text/javascript" src="./${appName}.js"></script> `
 
   return basePage({
     header,

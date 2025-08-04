@@ -9,8 +9,8 @@ export function getSdkBundlePath(packageName: string, originalUrl: string) {
 export function getTestAppBundlePath(appName: string, originalUrl: string) {
   const appNameMapping: Record<string, string> = {
     app: 'apps/vanilla',
-    'react-app': 'apps/react',
-    'react-app-v7': 'apps/react-router-v7',
+    'react-router-v6-app': 'apps/react-router-v6-app',
+    'react-router-v7-app': 'apps/react-router-v7-app',
   }
 
   const targetAppPath = appNameMapping[appName] || appName

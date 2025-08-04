@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
 const reactApps = [
-  { appName: 'react', description: 'React Router v6' },
-  { appName: 'react-router-v7', description: 'React Router v7' },
+  { appName: 'react-router-v6-app', description: 'React Router v6' },
+  { appName: 'react-router-v7-app', description: 'React Router v7' },
 ]
 
 test.describe('react plugin', () => {
