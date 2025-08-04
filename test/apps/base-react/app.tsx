@@ -1,5 +1,5 @@
-import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
-import { RouterProvider, Link, useParams, Outlet } from 'react-router'
+import { createBrowserRouter } from '@datadog/browser-rum-react//* REACT_ROUTER_VERSION */'
+import { RouterProvider, Link, useParams, Outlet } from '/* REACT_ROUTER_PACKAGE */'
 import React, { useState } from 'react'
 import ReactDOM from 'react-dom/client'
 import { datadogRum } from '@datadog/browser-rum'
@@ -131,4 +131,4 @@ root.render(
   <React.StrictMode>
     <RouterProvider router={router} />
   </React.StrictMode>
-)
+) 

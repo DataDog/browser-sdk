@@ -16,7 +16,7 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { DEFAULT_SETUPS, npmSetup, reactSetup, reactV7Setup } from './pageSetups'
+import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
@@ -120,12 +120,15 @@ class TestBuilder {
   }
 
   withReact() {
-    this.setups = [{ factory: reactSetup }]
-    return this
+    return this.withReactApp('react')
   }
 
   withReactV7() {
-    this.setups = [{ factory: reactV7Setup }]
+    return this.withReactApp('react-v7')
+  }
+
+  withReactApp(appName: string) {
+    this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
     return this
   }
 
@@ -168,9 +171,7 @@ class TestBuilder {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
-          this.setups.filter(
-            (setup) => setup.factory !== npmSetup && setup.factory !== reactSetup && setup.factory !== reactV7Setup
-          ),
+          this.setups.filter((setup) => setup.factory !== npmSetup && setup.factory !== reactSetup),
           { ...setupOptions, useRumSlim: true },
           runner
         )

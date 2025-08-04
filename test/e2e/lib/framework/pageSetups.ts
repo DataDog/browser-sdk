@@ -159,7 +159,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
-export function reactSetup(options: SetupOptions, servers: Servers) {
+export function reactSetup(options: SetupOptions, servers: Servers, appName: string = 'react') {
   let header = options.head || ''
   let body = options.body || ''
 
@@ -176,32 +176,8 @@ export function reactSetup(options: SetupOptions, servers: Servers) {
     `
   }
 
-  body += html` <script type="text/javascript" src="./react-app.js"></script> `
-
-  return basePage({
-    header,
-    body,
-  })
-}
-
-export function reactV7Setup(options: SetupOptions, servers: Servers) {
-  let header = options.head || ''
-  let body = options.body || ''
-
-  if (options.eventBridge) {
-    header += setupEventBridge(servers)
-  }
-
-  if (options.rum) {
-    header += html`
-      <script type="text/javascript">
-        window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
-        window.RUM_CONTEXT = ${JSON.stringify(options.context)}
-      </script>
-    `
-  }
-
-  body += html` <script type="text/javascript" src="./react-app-v7.js"></script> `
+  const jsFileName = appName === 'react-v7' ? 'react-app-v7.js' : 'react-app.js'
+  body += html` <script type="text/javascript" src="./${jsFileName}"></script> `
 
   return basePage({
     header,

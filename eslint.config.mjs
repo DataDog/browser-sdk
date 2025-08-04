@@ -31,6 +31,7 @@ export default tseslint.config(
       '.yarn',
       'playwright-report',
       'docs',
+      'test/apps/base-react',
     ],
   },
 

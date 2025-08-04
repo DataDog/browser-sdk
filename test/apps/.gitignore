@@ -1,2 +1,7 @@
 allowed-tracking-origin/
 invalid-tracking-origin/
+base-react/dist/
+base-react/node_modules/
+base-react/.yarn/
+react/
+react-v7/
