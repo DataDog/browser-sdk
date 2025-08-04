@@ -13,7 +13,7 @@ const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const mockSessionId = 'some-session-id'
 const getInternalContext = () => ({ session_id: mockSessionId })
 
-describe('logs entry', () => {
+describe('worker-logs logs entry', () => {
   let handleLogSpy: jasmine.Spy<
     (
       logsMessage: LogsMessage,
@@ -79,14 +79,14 @@ describe('logs entry', () => {
       const getCommonContext = startLogs.calls.mostRecent().args[1]
       expect(getCommonContext()).toEqual({
         view: {
-          referrer: document.referrer,
+          referrer: '',
           url: window.location.href,
         },
       })
     })
   })
 
-  describe('post start API usages', () => {
+  describe('worker-logs post start API usages', () => {
     let LOGS: LogsPublicApi
 
     beforeEach(() => {
@@ -109,7 +109,7 @@ describe('logs entry', () => {
       expect(LOGS.getInitConfiguration()).not.toBe(DEFAULT_INIT_CONFIGURATION)
     })
 
-    describe('custom loggers', () => {
+    describe('worker-logs custom loggers', () => {
       it('logs a message', () => {
         const logger = LOGS.createLogger('foo')
         logger.log('message')
@@ -167,7 +167,7 @@ describe('logs entry', () => {
       })
     })
 
-    describe('internal context', () => {
+    describe('worker-logs internal context', () => {
       it('should get the internal context', () => {
         const LOGS = makeLogsPublicApi(startLogs)
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
@@ -175,7 +175,7 @@ describe('logs entry', () => {
       })
     })
 
-    describe('user', () => {
+    describe('worker-logs user', () => {
       let logsPublicApi: LogsPublicApi
       let userContext: ContextManager
       beforeEach(() => {
@@ -214,7 +214,7 @@ describe('logs entry', () => {
       })
     })
 
-    describe('account', () => {
+    describe('worker-logs account', () => {
       let logsPublicApi: LogsPublicApi
       let accountContext: ContextManager
       beforeEach(() => {

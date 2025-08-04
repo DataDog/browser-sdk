@@ -38,7 +38,7 @@ const RAW_ERROR: RawError = {
   message: 'error!',
 }
 
-describe('runtime error collection', () => {
+describe('worker-logs runtime error collection', () => {
   let onErrorSpy: jasmine.Spy
   let originalOnErrorHandler: OnErrorEventHandler
 

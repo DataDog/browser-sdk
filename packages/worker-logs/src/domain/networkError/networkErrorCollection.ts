@@ -1,7 +1,6 @@
 import type { FetchResolveContext } from '@datadog/browser-core'
 import {
   ErrorSource,
-  RequestType,
   initFetchObservable,
   computeStackTrace,
   toStackTraceString,
@@ -26,11 +25,11 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
 
   const fetchSubscription = initFetchObservable().subscribe((context) => {
     if (context.state === 'resolve') {
-      handleResponse(RequestType.FETCH, context)
+      handleResponse(context)
     }
   })
 
-  function handleResponse(type: RequestType, request: FetchResolveContext) {
+  function handleResponse(request: FetchResolveContext) {
     if (!isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
       if (request.response) {
         computeFetchResponseText(request.response, configuration, onResponseDataAvailable)

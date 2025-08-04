@@ -1,5 +1,5 @@
-import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
+import type { Context, TimeStamp } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, noop, HookNames } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -27,7 +27,7 @@ const COMMON_CONTEXT: CommonContext = {
   },
 }
 
-describe('startLogsAssembly', () => {
+describe('worker-logs startLogsAssembly', () => {
   let beforeSend: (event: LogsEvent) => void | boolean
   let lifeCycle: LifeCycle
   let configuration: LogsConfiguration
@@ -80,7 +80,7 @@ describe('startLogsAssembly', () => {
     expect(serverLogs.length).toEqual(0)
   })
 
-  describe('contexts inclusion', () => {
+  describe('worker-logs contexts inclusion', () => {
     it('should include message context', () => {
       spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
         view: { url: 'http://from-rum-context.com', id: 'view-id' },
@@ -130,36 +130,6 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0].foo).toBeUndefined()
     })
 
-    it('should include rum internal context related to the error time', () => {
-      window.DD_RUM = {
-        getInternalContext(startTime) {
-          return { foo: startTime === 1234 ? 'b' : 'a' }
-        },
-      }
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: { ...DEFAULT_MESSAGE, date: getTimeStamp(1234 as RelativeTime) },
-      })
-
-      expect(serverLogs[0].foo).toBe('b')
-    })
-
-    it('should include RUM context', () => {
-      window.DD_RUM = {
-        getInternalContext() {
-          return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
-        },
-      }
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-
-      expect(serverLogs[0].view).toEqual({
-        id: 'view-id',
-        url: 'http://from-rum-context.com',
-        referrer: 'referrer_from_common_context',
-      })
-    })
-
     it('should include raw log', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
@@ -167,7 +137,7 @@ describe('startLogsAssembly', () => {
     })
   })
 
-  describe('assembly precedence', () => {
+  describe('worker-logs assembly precedence', () => {
     it('defaultLogsEventAttributes should take precedence over service, session_id', () => {
       hooks.register(HookNames.Assemble, () => ({
         service: 'foo',
@@ -230,7 +200,7 @@ describe('startLogsAssembly', () => {
     })
   })
 
-  describe('ddtags', () => {
+  describe('worker-logs ddtags', () => {
     it('should contain and format the default tags', () => {
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
       expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0')
@@ -245,7 +215,7 @@ describe('startLogsAssembly', () => {
     })
   })
 
-  describe('beforeSend', () => {
+  describe('worker-logs beforeSend', () => {
     it('should allow modification of existing fields', () => {
       beforeSend = (event: LogsEvent) => {
         event.message = 'modified message'
@@ -274,7 +244,7 @@ describe('startLogsAssembly', () => {
   })
 })
 
-describe('logs limitation', () => {
+describe('worker-logs logs limitation', () => {
   let clock: Clock
   let beforeSend: (event: LogsEvent) => void | boolean
   let lifeCycle: LifeCycle

@@ -7,19 +7,14 @@ import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 
-import {
-  computeFetchErrorText,
-  computeFetchResponseText,
-  computeXhrResponseData,
-  startNetworkErrorCollection,
-} from './networkErrorCollection'
+import { computeFetchErrorText, computeFetchResponseText, startNetworkErrorCollection } from './networkErrorCollection'
 
 const CONFIGURATION = {
   requestErrorResponseLengthLimit: 64,
   ...SPEC_ENDPOINTS,
 } as LogsConfiguration
 
-describe('network error collection', () => {
+describe('worker-logs network error collection', () => {
   let fetch: MockFetch
   let mockFetchManager: MockFetchManager
   let lifeCycle: LifeCycle
@@ -151,33 +146,7 @@ describe('network error collection', () => {
   })
 })
 
-describe('computeXhrResponseData', () => {
-  it('computes response text from XHR', (done) => {
-    const xhr = { response: 'foo' } as XMLHttpRequest
-    computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
-      expect(responseData).toBe('foo')
-      done()
-    })
-  })
-
-  it('return the response value directly if it is not a string', (done) => {
-    const xhr = { response: { foo: 'bar' } } as XMLHttpRequest
-    computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
-      expect(responseData).toEqual({ foo: 'bar' })
-      done()
-    })
-  })
-
-  it('truncates xhr response text', (done) => {
-    const xhr = { response: 'Lorem ipsum dolor sit amet orci aliquam.' } as XMLHttpRequest
-    computeXhrResponseData(xhr, { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 }, (responseData) => {
-      expect(responseData).toBe('Lorem ipsum dolor sit amet orci ...')
-      done()
-    })
-  })
-})
-
-describe('computeFetchResponseText', () => {
+describe('worker-logs computeFetchResponseText', () => {
   it('computes response text from Response objects', (done) => {
     computeFetchResponseText(new MockResponse({ responseText: 'foo' }), CONFIGURATION, (responseText) => {
       expect(responseText).toBe('foo')
@@ -254,7 +223,7 @@ describe('computeFetchResponseText', () => {
   })
 })
 
-describe('computeFetchErrorText', () => {
+describe('worker-logs computeFetchErrorText', () => {
   it('computes response text from requests ending as an error', (done) => {
     computeFetchErrorText(new Error('fetch error'), CONFIGURATION, (errorText) => {
       expect(errorText).toContain('Error: fetch error')

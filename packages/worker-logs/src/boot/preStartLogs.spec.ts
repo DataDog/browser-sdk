@@ -1,12 +1,6 @@
-import { callbackAddsInstrumentation, type Clock, mockClock, mockEventBridge } from '@datadog/browser-core/test'
-import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  TrackingConsent,
-  createTrackingConsentState,
-  display,
-  resetFetchObservable,
-} from '@datadog/browser-core'
+import { type Clock, mockClock, mockEventBridge } from '@datadog/browser-core/test'
+import type { TimeStamp } from '@datadog/browser-core'
+import { ONE_SECOND, display, resetFetchObservable } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
@@ -18,7 +12,7 @@ import type { StartLogsResult } from './startLogs'
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
 
-describe('preStartLogs', () => {
+describe('worker-logs preStartLogs', () => {
   let doStartLogsSpy: jasmine.Spy<
     (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
   >
@@ -38,7 +32,7 @@ describe('preStartLogs', () => {
       handleLog: handleLogSpy,
     } as unknown as StartLogsResult)
     getCommonContextSpy = jasmine.createSpy()
-    strategy = createPreStartStrategy(getCommonContextSpy, createTrackingConsentState(), doStartLogsSpy)
+    strategy = createPreStartStrategy(getCommonContextSpy, doStartLogsSpy)
     clock = mockClock()
   })
 
@@ -46,7 +40,7 @@ describe('preStartLogs', () => {
     resetFetchObservable()
   })
 
-  describe('configuration validation', () => {
+  describe('worker-logs configuration validation', () => {
     let displaySpy: jasmine.Spy
 
     beforeEach(() => {
@@ -135,7 +129,7 @@ describe('preStartLogs', () => {
     expect(strategy.initConfiguration).toBeUndefined()
   })
 
-  describe('save context when submitting a log', () => {
+  describe('worker-logs save context when submitting a log', () => {
     it('saves the date', () => {
       strategy.handleLog(
         {
@@ -182,70 +176,10 @@ describe('preStartLogs', () => {
     })
   })
 
-  describe('internal context', () => {
+  describe('worker-logs internal context', () => {
     it('should return undefined if not initialized', () => {
-      const strategy = createPreStartStrategy(getCommonContextSpy, createTrackingConsentState(), doStartLogsSpy)
+      const strategy = createPreStartStrategy(getCommonContextSpy, doStartLogsSpy)
       expect(strategy.getInternalContext()).toBeUndefined()
-    })
-  })
-
-  describe('tracking consent', () => {
-    let strategy: Strategy
-    let trackingConsentState: TrackingConsentState
-
-    beforeEach(() => {
-      trackingConsentState = createTrackingConsentState()
-      strategy = createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy)
-    })
-
-    describe('basic methods instrumentation', () => {
-      it('should instrument fetch even if tracking consent is not granted', () => {
-        expect(
-          callbackAddsInstrumentation(() => {
-            strategy.init({
-              ...DEFAULT_INIT_CONFIGURATION,
-              trackingConsent: TrackingConsent.NOT_GRANTED,
-            })
-          })
-            .toMethod(window, 'fetch')
-            .whenCalled()
-        ).toBeTrue()
-      })
-    })
-
-    it('does not start logs if tracking consent is not granted at init', () => {
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.NOT_GRANTED,
-      })
-      expect(doStartLogsSpy).not.toHaveBeenCalled()
-    })
-
-    it('starts logs if tracking consent is granted before init', () => {
-      trackingConsentState.update(TrackingConsent.GRANTED)
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.NOT_GRANTED,
-      })
-      expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
-    })
-
-    it('does not start logs if tracking consent is not withdrawn before init', () => {
-      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-      strategy.init({
-        ...DEFAULT_INIT_CONFIGURATION,
-        trackingConsent: TrackingConsent.GRANTED,
-      })
-      expect(doStartLogsSpy).not.toHaveBeenCalled()
-    })
-
-    it('do not call startLogs when tracking consent state is updated after init', () => {
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
-      doStartLogsSpy.calls.reset()
-
-      trackingConsentState.update(TrackingConsent.GRANTED)
-
-      expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
   })
 })

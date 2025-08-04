@@ -25,7 +25,6 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
 import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
-import { startSessionContext } from '../domain/contexts/sessionContext'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -59,7 +58,6 @@ export function startLogs(
   const session = startLogsSessionManagerStub(configuration)
 
   // Start user and account context first to allow overrides from global context
-  startSessionContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)

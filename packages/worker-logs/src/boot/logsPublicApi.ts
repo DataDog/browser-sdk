@@ -248,19 +248,12 @@ export interface Strategy {
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const bufferedDataObservable = startBufferingData().observable
 
-  let strategy = createPreStartStrategy(
-    buildCommonContext,
-    (initConfiguration, configuration) => {
-      const startLogsResult = startLogsImpl(
-        configuration,
-        buildCommonContext,
-        bufferedDataObservable
-      )
+  let strategy = createPreStartStrategy(buildCommonContext, (initConfiguration, configuration) => {
+    const startLogsResult = startLogsImpl(configuration, buildCommonContext, bufferedDataObservable)
 
-      strategy = createPostStartStrategy(initConfiguration, startLogsResult)
-      return startLogsResult
-    }
-  )
+    strategy = createPostStartStrategy(initConfiguration, startLogsResult)
+    return startLogsResult
+  })
 
   const getStrategy = () => strategy
 

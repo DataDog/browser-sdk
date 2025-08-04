@@ -5,7 +5,7 @@ import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'
 
-describe('Logger', () => {
+describe('worker-logs Logger', () => {
   let logger: Logger
   let handleLogSpy: jasmine.Spy<(message: LogsMessage, logger: Logger, handlingStack?: string) => void>
 
@@ -26,7 +26,7 @@ describe('Logger', () => {
     logger = new Logger(handleLogSpy)
   })
 
-  describe('log methods', () => {
+  describe('worker-logs log methods', () => {
     beforeEach(() => {
       logger.setLevel(StatusType.ok)
     })
@@ -188,7 +188,7 @@ describe('Logger', () => {
     })
   })
 
-  describe('tags', () => {
+  describe('worker-logs tags', () => {
     let displaySpy: jasmine.Spy<typeof display.warn>
     function expectWarning() {
       if (supportUnicodePropertyEscapes()) {
@@ -258,7 +258,7 @@ describe('Logger', () => {
     })
   })
 
-  describe('context methods', () => {
+  describe('worker-logs context methods', () => {
     beforeEach(() => {
       const loggerContext = { foo: 'bar' }
       logger = new Logger(handleLogSpy, undefined, HandlerType.http, StatusType.debug, loggerContext)
@@ -289,7 +289,7 @@ describe('Logger', () => {
     })
   })
 
-  describe('contexts', () => {
+  describe('worker-logs contexts', () => {
     it('logger context should be deep copied', () => {
       const loggerContext = { foo: 'bar' }
       logger = new Logger(handleLogSpy, undefined, HandlerType.http, StatusType.debug, loggerContext)
@@ -307,7 +307,7 @@ describe('Logger', () => {
     })
   })
 
-  describe('level', () => {
+  describe('worker-logs level', () => {
     it('should be debug by default', () => {
       expect(logger.getLevel()).toEqual(StatusType.debug)
     })
@@ -319,7 +319,7 @@ describe('Logger', () => {
     })
   })
 
-  describe('error handling in logImplementation', () => {
+  describe('worker-logs error handling in logImplementation', () => {
     it('should compute stackTrace when error is an instance of Error', () => {
       const error = new Error('Test error')
       logger.log('Test message', undefined, StatusType.error, error)
@@ -360,7 +360,7 @@ describe('Logger', () => {
     })
   })
 
-  describe('handler type', () => {
+  describe('worker-logs handler type', () => {
     it('should be "http" by default', () => {
       logger.debug('message')
 

@@ -47,6 +47,7 @@ export function startLogsAssembly(
       const log = combine(
         {
           view: commonContext.view,
+          service: configuration.service,
         },
         defaultLogsEventAttributes,
         rawLogsEvent,

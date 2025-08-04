@@ -1,7 +1,7 @@
 import { createLogsSessionManagerMock } from '../../../test/mockLogsSessionManager'
 import { startInternalContext } from './internalContext'
 
-describe('internal context', () => {
+describe('worker-logs internal context', () => {
   it('should return undefined if session is not tracked', () => {
     const sessionManagerMock = createLogsSessionManagerMock().setNotTracked()
     expect(startInternalContext(sessionManagerMock).get()).toEqual(undefined)

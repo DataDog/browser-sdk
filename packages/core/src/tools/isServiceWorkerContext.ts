@@ -1,4 +1,5 @@
 import { getGlobalObject, globalVar } from './getGlobalObject'
+import { dateNow } from './utils/timeUtils'
 
 /**
  * Detect if the current execution context is a Service Worker.
@@ -15,9 +16,9 @@ export function isServiceWorkerContext(): boolean {
     typeof global !== 'undefined' &&
     'clients' in global &&
     'registration' in global &&
-    typeof (global as any).skipWaiting === 'function'
+    typeof global.skipWaiting === 'function'
   )
-} 
+}
 
 /**
  * Ensure that code assuming `window` and `document` globals does not crash when
@@ -57,8 +58,8 @@ export function ensureServiceWorkerGlobals(): void {
   }
 
   // Ensure `performance.timing.navigationStart` is defined so timeUtils works.
-  if (!g.performance.timing) {
-    const navStart = Date.now() - g.performance.now()
-    g.performance.timing = { navigationStart: navStart } as any
+  if (!(g.performance as Performance & { timing?: any }).timing) {
+    const navStart = dateNow() - (g.performance as Performance).now()
+    ;(g.performance as Performance & { timing?: any }).timing = { navigationStart: navStart } as any
   }
-} 
+}

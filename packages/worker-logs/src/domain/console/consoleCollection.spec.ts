@@ -6,7 +6,7 @@ import type { RawLogsEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { startConsoleCollection, LogStatusForApi } from './consoleCollection'
 
-describe('console collection', () => {
+describe('worker-logs console collection', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let consoleSpies: { [key: string]: jasmine.Spy }
   let stopConsoleCollection: () => void

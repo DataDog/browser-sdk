@@ -8,7 +8,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 import { startReportCollection } from './reportCollection'
 
-describe('reports', () => {
+describe('worker-logs reports', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
   let reportingObserver: MockReportingObserver
   let stopReportCollection: () => void

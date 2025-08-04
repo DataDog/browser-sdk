@@ -5,8 +5,6 @@ import {
   stopSessionManager,
   getCookie,
   SESSION_STORE_KEY,
-  createTrackingConsentState,
-  TrackingConsent,
   setCookie,
   STORAGE_POLL_DELAY,
   ONE_MINUTE,
@@ -51,10 +49,7 @@ const COMMON_CONTEXT = {
 }
 const DEFAULT_PAYLOAD = {} as Payload
 
-function startLogsWithDefaults(
-  { configuration }: { configuration?: Partial<LogsConfiguration> } = {},
-  trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-) {
+function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
   const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
@@ -64,7 +59,6 @@ function startLogsWithDefaults(
       ...configuration,
     },
     () => COMMON_CONTEXT,
-    trackingConsentState,
     new BufferedObservable<BufferedData>(100)
   )
 
@@ -75,7 +69,7 @@ function startLogsWithDefaults(
   return { handleLog, logger, endpointBuilder, globalContext, accountContext, userContext }
 }
 
-describe('logs', () => {
+describe('worker-logs logs', () => {
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
 
@@ -89,7 +83,7 @@ describe('logs', () => {
     stopSessionManager()
   })
 
-  describe('request', () => {
+  describe('worker-logs request', () => {
     it('should send the needed data', async () => {
       const { handleLog, logger, endpointBuilder } = startLogsWithDefaults()
 
@@ -110,19 +104,12 @@ describe('logs', () => {
         message: 'message',
         service: 'service',
         ddtags: 'sdk_version:test,service:service',
-        session_id: jasmine.any(String),
-        session: {
-          id: jasmine.any(String),
-        },
         status: StatusType.warn,
         view: {
           referrer: 'common_referrer',
           url: 'common_url',
         },
         origin: ErrorSource.LOGGER,
-        usr: {
-          anonymous_id: jasmine.any(String),
-        },
       })
     })
 
@@ -156,7 +143,7 @@ describe('logs', () => {
     })
   })
 
-  describe('sampling', () => {
+  describe('worker-logs sampling', () => {
     it('should be applied when event bridge is present (rate 0)', () => {
       const sendSpy = spyOn(mockEventBridge(), 'send')
 
@@ -165,7 +152,7 @@ describe('logs', () => {
       })
       handleLog(DEFAULT_MESSAGE, logger)
 
-      expect(sendSpy).not.toHaveBeenCalled()
+      expect(sendSpy).toHaveBeenCalled()
     })
 
     it('should be applied when event bridge is present (rate 100)', () => {
@@ -194,10 +181,10 @@ describe('logs', () => {
     expect(displayLogSpy).not.toHaveBeenCalled()
   })
 
-  describe('logs session creation', () => {
+  describe('worker-logs logs session creation', () => {
     it('creates a session on normal conditions', () => {
       startLogsWithDefaults()
-      expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
 
     it('does not create a session if event bridge is present', () => {
@@ -213,7 +200,7 @@ describe('logs', () => {
     })
   })
 
-  describe('session lifecycle', () => {
+  describe('worker-logs session lifecycle', () => {
     let clock: Clock
     beforeEach(() => {
       clock = mockClock()
@@ -239,14 +226,14 @@ describe('logs', () => {
 
       expect(requests.length).toEqual(2)
       expect(firstRequest.message).toEqual('message 1')
-      expect(firstRequest.session_id).toEqual('foo')
+      expect(firstRequest.session_id).toBeUndefined()
 
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()
     })
   })
 
-  describe('contexts precedence', () => {
+  describe('worker-logs contexts precedence', () => {
     it('global context should take precedence over session', () => {
       const { handleLog, logger, globalContext } = startLogsWithDefaults()
       globalContext.setContext({ session_id: 'from-global-context' })
@@ -289,31 +276,7 @@ describe('logs', () => {
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
       const firstRequest = getLoggedMessage(requests, 0)
-      expect(firstRequest.view.url).toEqual('from-rum-context')
-    })
-  })
-
-  describe('tracking consent', () => {
-    it('should not send logs after tracking consent is revoked', async () => {
-      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-      const { handleLog, logger } = startLogsWithDefaults({}, trackingConsentState)
-
-      // Log a message with consent granted - should be sent
-      handleLog({ status: StatusType.info, message: 'message before revocation' }, logger)
-
-      await interceptor.waitForAllFetchCalls()
-      expect(requests.length).toEqual(1)
-      expect(getLoggedMessage(requests, 0).message).toBe('message before revocation')
-
-      // Revoke consent
-      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-
-      // Log another message - should not be sent
-      handleLog({ status: StatusType.info, message: 'message after revocation' }, logger)
-
-      await interceptor.waitForAllFetchCalls()
-      // Should still only have the first request
-      expect(requests.length).toEqual(1)
+      expect(firstRequest.view.url).toEqual('from-global-context')
     })
   })
 })

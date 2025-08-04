@@ -12,7 +12,7 @@ const HANDLING_STACK = 'handlingStack'
 const COMMON_CONTEXT = {} as CommonContext
 const FAKE_DATE = 1234 as TimeStamp
 
-describe('logger collection', () => {
+describe('worker-logs logger collection', () => {
   let lifeCycle: LifeCycle
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
   let logger: Logger
@@ -30,7 +30,7 @@ describe('logger collection', () => {
     mockClock()
   })
 
-  describe('when handle type is set to "console"', () => {
+  describe('worker-logs when handle type is set to "console"', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.console)
       spyOn(originalConsoleMethods, 'debug')
@@ -93,7 +93,7 @@ describe('logger collection', () => {
     })
   })
 
-  describe('when handle type is set to "http"', () => {
+  describe('worker-logs when handle type is set to "http"', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.http)
     })
@@ -147,7 +147,7 @@ describe('logger collection', () => {
     })
   })
 
-  describe('ddtags', () => {
+  describe('worker-logs ddtags', () => {
     beforeEach(() => {
       logger.setHandler(HandlerType.http)
     })

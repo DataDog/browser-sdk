@@ -1,7 +1,6 @@
 import type { InitConfiguration } from '@datadog/browser-core'
 import { display } from '@datadog/browser-core'
 import {
-  EXHAUSTIVE_INIT_CONFIGURATION,
   type CamelToSnakeCase,
   type ExtractTelemetryConfiguration,
   type MapInitConfigurationKey,
@@ -16,7 +15,34 @@ import {
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
-describe('validateAndBuildLogsConfiguration', () => {
+const EXHAUSTIVE_INIT_CONFIGURATION: Required<LogsInitConfiguration> = {
+  clientToken: 'yes',
+  beforeSend: () => true,
+  sessionSampleRate: 50,
+  telemetrySampleRate: 60,
+  silentMultipleInit: true,
+  allowUntrustedEvents: true,
+  proxy: 'proxy',
+  site: 'datadoghq.com',
+  service: 'service',
+  env: 'env',
+  version: 'version',
+  enableExperimentalFeatures: ['foo'],
+  replica: {
+    clientToken: 'yes',
+  },
+  datacenter: 'datacenter',
+  internalAnalyticsSubdomain: 'internal-analytics-subdomain.com',
+  telemetryConfigurationSampleRate: 70,
+  telemetryUsageSampleRate: 80,
+  allowedTrackingOrigins: ['chrome-extension://example'],
+  forwardErrorsToLogs: true,
+  forwardConsoleLogs: 'all',
+  forwardReports: 'all',
+  usePciIntake: false,
+}
+
+describe('worker-logs validateAndBuildLogsConfiguration', () => {
   describe('forwardErrorsToLogs', () => {
     it('defaults to true if the option is not provided', () => {
       expect(validateAndBuildLogsConfiguration(DEFAULT_INIT_CONFIGURATION)!.forwardErrorsToLogs).toBeTrue()
@@ -94,7 +120,7 @@ describe('validateAndBuildLogsConfiguration', () => {
   })
 })
 
-describe('validateAndBuildForwardOption', () => {
+describe('worker-logs validateAndBuildForwardOption', () => {
   let displaySpy: jasmine.Spy<typeof display.error>
   const allowedValues = ['foo', 'bar']
   const label = 'Label'
@@ -129,7 +155,7 @@ describe('validateAndBuildForwardOption', () => {
   })
 })
 
-describe('serializeLogsConfiguration', () => {
+describe('worker-logs serializeLogsConfiguration', () => {
   it('should serialize the configuration', () => {
     const exhaustiveLogsInitConfiguration: Required<LogsInitConfiguration> = {
       ...EXHAUSTIVE_INIT_CONFIGURATION,
@@ -150,8 +176,19 @@ describe('serializeLogsConfiguration', () => {
       MapLogsInitConfigurationKey<keyof LogsInitConfiguration>
     > = serializeLogsConfiguration(exhaustiveLogsInitConfiguration)
 
+    // Remove properties excluded from worker-logs InitConfiguration
+    const coreExpected = { ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION }
+    delete (coreExpected as any).session_persistence
+    delete (coreExpected as any).use_partitioned_cross_site_session_cookie
+    delete (coreExpected as any).use_secure_session_cookie
+    delete (coreExpected as any).track_session_across_subdomains
+    delete (coreExpected as any).allow_fallback_to_local_storage
+    delete (coreExpected as any).store_contexts_across_pages
+    delete (coreExpected as any).tracking_consent
+    delete (coreExpected as any).track_anonymous_user
+
     expect(serializedConfiguration).toEqual({
-      ...SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION,
+      ...coreExpected,
       forward_errors_to_logs: true,
       forward_console_logs: 'all',
       forward_reports: 'all',

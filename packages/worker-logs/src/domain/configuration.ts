@@ -26,7 +26,19 @@ import type { LogsEventDomainContext } from '../domainContext.types'
  * })
  * ```
  */
-export interface LogsInitConfiguration extends InitConfiguration {
+
+type ExcludedInitConfigProps =
+  | 'sessionPersistence'
+  | 'allowFallbackToLocalStorage'
+  | 'storeContextsAcrossPages'
+  | 'trackingConsent'
+  | 'usePartitionedCrossSiteSessionCookie'
+  | 'useSecureSessionCookie'
+  | 'trackSessionAcrossSubdomains'
+  | 'trackAnonymousUser'
+
+// TODO: I could also use PICK
+export interface LogsInitConfiguration extends Omit<InitConfiguration, ExcludedInitConfigProps> {
   /**
    * Access to every logs collected by the Logs SDK before they are sent to Datadog.
    * It allows:
@@ -131,11 +143,25 @@ export function validateAndBuildForwardOption<T>(
 export function serializeLogsConfiguration(configuration: LogsInitConfiguration) {
   const baseSerializedInitConfiguration = serializeConfiguration(configuration)
 
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  const {
+    session_persistence: _sessionPersistence,
+    allow_fallback_to_local_storage: _allowFallbackToLocalStorage,
+    store_contexts_across_pages: _storeContextsAcrossPages,
+    tracking_consent: _trackingConsent,
+    use_partitioned_cross_site_session_cookie: _usePartitionedCrossSiteSessionCookie,
+    use_secure_session_cookie: _useSecureSessionCookie,
+    track_session_across_subdomains: _trackSessionAcrossSubdomains,
+    track_anonymous_user: _trackAnonymousUser,
+    ...rest
+  } = baseSerializedInitConfiguration
+  /* eslint-enable @typescript-eslint/no-unused-vars */
+
   return {
     forward_errors_to_logs: configuration.forwardErrorsToLogs,
     forward_console_logs: configuration.forwardConsoleLogs,
     forward_reports: configuration.forwardReports,
     use_pci_intake: configuration.usePciIntake,
-    ...baseSerializedInitConfiguration,
+    ...rest,
   } satisfies RawTelemetryConfiguration
 }

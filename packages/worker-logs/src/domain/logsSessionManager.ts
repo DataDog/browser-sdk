@@ -1,5 +1,5 @@
-import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
-import { Observable, performDraw, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
+import { Observable, performDraw, SESSION_NOT_TRACKED } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 
 export const LOGS_SESSION_KEY = 'logs'
@@ -17,30 +17,6 @@ export interface LogsSession {
 export const enum LoggerTrackingType {
   NOT_TRACKED = SESSION_NOT_TRACKED,
   TRACKED = '1',
-}
-
-export function startLogsSessionManager(
-  configuration: LogsConfiguration,
-  trackingConsentState: TrackingConsentState
-): LogsSessionManager {
-  const sessionManager = startSessionManager(
-    configuration,
-    LOGS_SESSION_KEY,
-    (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
-    trackingConsentState
-  )
-  return {
-    findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
-      const session = sessionManager.findSession(startTime, options)
-      return session && session.trackingType === LoggerTrackingType.TRACKED
-        ? {
-            id: session.id,
-            anonymousId: session.anonymousId,
-          }
-        : undefined
-    },
-    expireObservable: sessionManager.expireObservable,
-  }
 }
 
 export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {

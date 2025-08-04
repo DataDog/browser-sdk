@@ -3,8 +3,8 @@ import type { Context } from '../tools/serialisation/context'
 import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
 import { Observable } from '../tools/observable'
-import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 import { globalVar } from '../tools/getGlobalObject'
+import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
 
 /**
  * Use POST request without content type to:

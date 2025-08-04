@@ -11,11 +11,11 @@ import { addTelemetryDebug } from '../telemetry'
 import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
 import type { CookieStore } from '../../browser/browser.types'
 import { getCurrentSite } from '../../browser/cookie'
+import { isServiceWorkerContext } from '../../tools/isServiceWorkerContext'
 import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
 import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
-import { isServiceWorkerContext } from '../../tools/isServiceWorkerContext'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (

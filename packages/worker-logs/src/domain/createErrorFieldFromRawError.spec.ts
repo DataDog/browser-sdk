@@ -1,7 +1,7 @@
 import { ErrorHandling, ErrorSource, type RawError, type RelativeTime, type TimeStamp } from '@datadog/browser-core'
 import { createErrorFieldFromRawError } from './createErrorFieldFromRawError'
 
-describe('createErrorFieldFromRawError', () => {
+describe('worker-logs createErrorFieldFromRawError', () => {
   const exhaustiveRawError: Required<RawError> = {
     startClocks: {
       relative: 0 as RelativeTime,

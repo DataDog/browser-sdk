@@ -7,11 +7,10 @@
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 
-import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
+import { defineGlobal, getGlobalObject, ensureServiceWorkerGlobals } from '@datadog/browser-core'
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
 import { startLogs } from '../boot/startLogs'
-import { ensureServiceWorkerGlobals } from '@datadog/browser-core'
 
 export type { InternalContext } from '../domain/contexts/internalContext'
 export type { LogsMessage } from '../domain/logger'
@@ -36,8 +35,6 @@ export type {
   User,
   Account,
   TraceContextInjection,
-  SessionPersistence,
-  TrackingConsent,
   MatchOption,
   ProxyFn,
   Site,
@@ -52,11 +49,14 @@ export type {
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 
+// eslint-disable-next-line local-rules/disallow-side-effects
 ensureServiceWorkerGlobals()
 
+// eslint-disable-next-line local-rules/disallow-side-effects
 export const datadogLogs = makeLogsPublicApi(startLogs)
 
 interface BrowserWindow extends Window {
   DD_LOGS?: LogsPublicApi
 }
+// eslint-disable-next-line local-rules/disallow-side-effects
 defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_LOGS', datadogLogs)

@@ -37,5 +37,6 @@ export function getGlobalObject<T = typeof globalThis>(): T {
  * Using `Window & typeof globalThis` keeps typing mostly compatible with
  * existing browser code while still compiling in non-DOM environments.
  */
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+
+// eslint-disable-next-line local-rules/disallow-side-effects
 export const globalVar = getGlobalObject<Window & typeof globalThis>()
