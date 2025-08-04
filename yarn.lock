@@ -225,7 +225,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.16.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
+"@datadog/browser-core@npm:6.17.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   languageName: unknown
@@ -235,11 +235,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-flagging@workspace:packages/flagging"
   dependencies:
-    "@datadog/browser-core": "npm:6.16.0"
+    "@datadog/browser-core": "npm:6.17.0"
     npm-run-all: "npm:4.1.5"
     webpack: "npm:5.101.0"
   peerDependencies:
-    "@datadog/browser-rum": 6.16.0
+    "@datadog/browser-rum": 6.17.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
@@ -250,20 +250,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
-    "@datadog/browser-core": "npm:6.16.0"
+    "@datadog/browser-core": "npm:6.17.0"
   peerDependencies:
-    "@datadog/browser-rum": 6.16.0
+    "@datadog/browser-rum": 6.17.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@npm:6.16.0, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@npm:6.17.0, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
-    "@datadog/browser-core": "npm:6.16.0"
+    "@datadog/browser-core": "npm:6.17.0"
     ajv: "npm:8.17.1"
   languageName: unknown
   linkType: soft
@@ -272,8 +272,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"
   dependencies:
-    "@datadog/browser-core": "npm:6.16.0"
-    "@datadog/browser-rum-core": "npm:6.16.0"
+    "@datadog/browser-core": "npm:6.17.0"
+    "@datadog/browser-rum-core": "npm:6.17.0"
     "@types/react": "npm:19.1.9"
     "@types/react-dom": "npm:19.1.7"
     react: "npm:19.1.1"
@@ -299,10 +299,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
   dependencies:
-    "@datadog/browser-core": "npm:6.16.0"
-    "@datadog/browser-rum-core": "npm:6.16.0"
+    "@datadog/browser-core": "npm:6.17.0"
+    "@datadog/browser-rum-core": "npm:6.17.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.16.0
+    "@datadog/browser-logs": 6.17.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -313,12 +313,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
-    "@datadog/browser-core": "npm:6.16.0"
-    "@datadog/browser-rum-core": "npm:6.16.0"
+    "@datadog/browser-core": "npm:6.17.0"
+    "@datadog/browser-rum-core": "npm:6.17.0"
     "@types/pako": "npm:2.0.3"
     pako: "npm:2.1.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.16.0
+    "@datadog/browser-logs": 6.17.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -361,7 +361,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/worker"
   dependencies:
-    "@datadog/browser-core": "npm:6.16.0"
+    "@datadog/browser-core": "npm:6.17.0"
     webpack: "npm:5.101.0"
   languageName: unknown
   linkType: soft
@@ -3378,7 +3378,7 @@ __metadata:
     eslint-module-utils: "npm:2.12.1"
     eslint-plugin-import: "npm:2.32.0"
     eslint-plugin-jasmine: "npm:4.2.2"
-    eslint-plugin-jsdoc: "npm:51.4.1"
+    eslint-plugin-jsdoc: "npm:52.0.2"
     eslint-plugin-unicorn: "npm:60.0.0"
     express: "npm:5.1.0"
     glob: "npm:11.0.3"
@@ -5353,9 +5353,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-jsdoc@npm:51.4.1":
-  version: 51.4.1
-  resolution: "eslint-plugin-jsdoc@npm:51.4.1"
+"eslint-plugin-jsdoc@npm:52.0.2":
+  version: 52.0.2
+  resolution: "eslint-plugin-jsdoc@npm:52.0.2"
   dependencies:
     "@es-joy/jsdoccomment": "npm:~0.52.0"
     are-docs-informative: "npm:^0.0.2"
@@ -5369,7 +5369,7 @@ __metadata:
     spdx-expression-parse: "npm:^4.0.0"
   peerDependencies:
     eslint: ^7.0.0 || ^8.0.0 || ^9.0.0
-  checksum: 10c0/2dc8063f810984bca1ec2cbe4fa4cfa6948a4e6340bfc817c30d603fd7a85bc11375c0a45d6a1825fa28f1bf1c454f98aed74041b16bc6b5c7077ea58c05ff0a
+  checksum: 10c0/e36d8c75a5a100f71f4f5287ce12ffdf15474194b2877dbe1e06c3c24a1c0c0c7f13c2d92cb289a80515b6fe1e43c4c0b19814b5c5b22a46ac2ca7df23ab55ad
   languageName: node
   linkType: hard
 
