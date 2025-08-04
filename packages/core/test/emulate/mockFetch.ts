@@ -1,3 +1,4 @@
+import type { Uint8ArrayBuffer } from '../../src'
 import { noop } from '../../src'
 import { registerCleanupTask } from '../registerCleanupTask'
 
@@ -55,7 +56,7 @@ export function mockFetch() {
 }
 
 export class MockResponse implements Response {
-  private _body: ReadableStream<Uint8Array> | undefined
+  private _body: ReadableStream<Uint8ArrayBuffer> | undefined
 
   constructor(private options: Readonly<MockResponseOptions>) {
     if (this.options.bodyUsed) {
@@ -155,7 +156,7 @@ export interface MockResponseOptions {
   type?: ResponseType
   responseText?: string
   responseTextError?: Error
-  body?: ReadableStream<Uint8Array>
+  body?: ReadableStream<Uint8ArrayBuffer>
   bodyUsed?: boolean
   bodyDisturbed?: boolean
 }

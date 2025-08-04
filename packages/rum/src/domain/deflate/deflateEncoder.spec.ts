@@ -1,6 +1,6 @@
-import type { EncoderResult } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-core'
 import { noop, DeflateEncoderStreamId } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { MockWorker } from '../../../test'
 import { startMockTelemetry, type MockTelemetry } from '../../../../core/test'
 import { createDeflateEncoder } from './deflateEncoder'
@@ -47,7 +47,7 @@ describe('createDeflateEncoder', () => {
   describe('finish()', () => {
     it('invokes the callback with the encoded data', () => {
       const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.write('bar')
       encoder.finish(finishCallbackSpy)
@@ -64,7 +64,7 @@ describe('createDeflateEncoder', () => {
 
     it('invokes the callback even if nothing has been written', () => {
       const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.finish(finishCallbackSpy)
 
       expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
@@ -96,7 +96,7 @@ describe('createDeflateEncoder', () => {
 
     it('supports calling finish() while another finish() call is pending', () => {
       const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.finish(finishCallbackSpy)
       encoder.write('bar')
@@ -164,7 +164,7 @@ describe('createDeflateEncoder', () => {
 
     it('supports calling finishSync() while another finish() call is pending', () => {
       const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.finish(finishCallbackSpy)
       encoder.write('bar')
