@@ -5,6 +5,23 @@
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
+  "exports": {
+    ".": {
+      "types": "./cjs/entries/main.d.ts",
+      "import": "./esm/entries/main.js",
+      "require": "./cjs/entries/main.js"
+    },
+    "./react-router-v6": {
+      "types": "./cjs/entries/reactRouter.d.ts",
+      "import": "./esm/entries/reactRouter.js",
+      "require": "./cjs/entries/reactRouter.js"
+    },
+    "./react-router-v7": {
+      "types": "./cjs/entries/reactRouterV7.d.ts",
+      "import": "./esm/entries/reactRouterV7.js",
+      "require": "./cjs/entries/reactRouterV7.js"
+    }
+  },
   "scripts": {
     "pack": "yarn pack",
     "build": "run-p build:cjs build:esm",
@@ -18,6 +35,7 @@
   },
   "peerDependencies": {
     "react": "18 || 19",
+    "react-router": "7",
     "react-router-dom": "6 || 7"
   },
   "peerDependenciesMeta": {
@@ -28,6 +46,9 @@
       "optional": true
     },
     "react": {
+      "optional": true
+    },
+    "react-router": {
       "optional": true
     },
     "react-router-dom": {
