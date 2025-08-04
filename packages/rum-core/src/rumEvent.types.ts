@@ -1261,12 +1261,6 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly duration?: number
       /**
-       * User custom vital.
-       */
-      readonly custom?: {
-        [k: string]: number
-      }
-      /**
        * Type of the step that triggered the vital, if applicable
        */
       readonly step_type?: 'start' | 'update' | 'retry' | 'end'
@@ -1971,5 +1965,9 @@ export interface ViewAccessibilityProperties {
    * Indicates whether the text-to-speech selection feature is enabled.
    */
   readonly speak_selection_enabled?: boolean
+  /**
+   * Indicates whether the right-to-left support is enabled.
+   */
+  readonly rtl_enabled?: boolean
   [k: string]: unknown
 }
