@@ -204,8 +204,25 @@ function getActionNameFromTextualContent(
   }
 }
 
+function shouldExcludeNode(
+  node: Node,
+  userProgrammaticAttribute: string | undefined,
+  privacyEnabledActionName?: boolean
+) {
+  const exclusionSelectors = [`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`]
+  if (userProgrammaticAttribute) {
+    exclusionSelectors.push(`[${userProgrammaticAttribute}]`)
+  }
+  if (privacyEnabledActionName) {
+    exclusionSelectors.push(
+      `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
+    )
+  }
+  return (node as HTMLElement).closest(exclusionSelectors.join(','))
+}
+
 function getTextualContent(
-  element: Element | HTMLElement,
+  element: Element,
   userProgrammaticAttribute: string | undefined,
   privacyEnabledActionName?: boolean
 ) {
@@ -213,38 +230,65 @@ function getTextualContent(
     return
   }
 
-  if ('innerText' in element) {
-    let text = element.innerText
-
-    const removeTextFromElements = (query: string) => {
-      const list = element.querySelectorAll<Element | HTMLElement>(query)
-      for (let index = 0; index < list.length; index += 1) {
-        const element = list[index]
-        if ('innerText' in element) {
-          const textToReplace = element.innerText
-          if (textToReplace && textToReplace.trim().length > 0) {
-            text = text.replace(textToReplace, '')
-          }
-        }
-      }
+  const rejectInvisibleOrMaskedElementsFilter = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      return NodeFilter.FILTER_ACCEPT
     }
-
-    // remove the text of elements with programmatic attribute value
-    removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`)
-
-    if (userProgrammaticAttribute) {
-      removeTextFromElements(`[${userProgrammaticAttribute}]`)
+    if (shouldExcludeNode(node, userProgrammaticAttribute, privacyEnabledActionName)) {
+      return NodeFilter.FILTER_REJECT
     }
-
-    if (privacyEnabledActionName) {
-      // remove the text of elements with privacy override
-      removeTextFromElements(
-        `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
-      )
+    const style = getComputedStyle(node as Element)
+    if (style.visibility !== 'visible' || style.display === 'none') {
+      return NodeFilter.FILTER_REJECT
     }
-
-    return text
+    return NodeFilter.FILTER_ACCEPT
   }
 
-  return element.textContent
+  const walker = document.createTreeWalker(
+    element,
+    // eslint-disable-next-line no-bitwise
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    rejectInvisibleOrMaskedElementsFilter
+  )
+
+  let text = ''
+  let lastSubstringEndedWithWhiteSpace = false
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode
+    if (node.nodeType !== Node.TEXT_NODE) {
+      if (node.nodeType === Node.ELEMENT_NODE && (node as Element).nodeName === 'BR') {
+        // innerText will preserve <br> tags, but it makes more sense to add a space for action names.
+        if (!lastSubstringEndedWithWhiteSpace) {
+          text += ' '
+        }
+        lastSubstringEndedWithWhiteSpace = true
+      }
+      continue
+    }
+
+    const nodeText = node.textContent
+    if (!nodeText) {
+      continue
+    }
+    const startsWithWhiteSpace = /^\s/.test(nodeText)
+    const endsWithWhiteSpace = /\s$/.test(nodeText)
+
+    const trimmedNodeText = nodeText.trim()
+    if (trimmedNodeText.length === 0) {
+      if (startsWithWhiteSpace || endsWithWhiteSpace) {
+        lastSubstringEndedWithWhiteSpace = true
+      }
+      continue
+    }
+
+    if ((startsWithWhiteSpace || lastSubstringEndedWithWhiteSpace) && text[text.length - 1] !== ' ') {
+      text += ' '
+    }
+
+    text += trimmedNodeText
+    lastSubstringEndedWithWhiteSpace = endsWithWhiteSpace
+  }
+
+  return text
 }

@@ -96,6 +96,14 @@ describe('getActionNameFromElement', () => {
     expect(nameSource).toBe('text_content')
   })
 
+  it('should correctly compute the name for a complex case', () => {
+    const element = appendElement(
+      '<div> <span> hello</span> \n <span>world</span> <div><span>!</span></div><br><span>another</span>-<span>one</span> '
+    )
+    const { name } = getActionNameFromElement(element, defaultConfiguration)
+    expect(name).toBe('hello world ! another-one')
+  })
+
   it('ignores the inline script textual content', () => {
     const { name, nameSource } = getActionNameFromElement(
       appendElement("<div><script>console.log('toto')</script>b</div>"),
@@ -418,13 +426,22 @@ describe('getActionNameFromElement', () => {
       expect(nameSource).toBe('custom_attribute')
     })
 
-    it('remove children with programmatic action name in textual content', () => {
+    it('removes children with programmatic action name in textual content', () => {
       const { name, nameSource } = getActionNameFromElement(
         appendElement('<div>Foo <div data-dd-action-name="custom action">bar<div></div>'),
         defaultConfiguration
       )
 
       expect(name).toBe('Foo')
+      expect(nameSource).toBe('text_content')
+    })
+
+    it('removes only the child with programmatic action name in textual content', () => {
+      const { name, nameSource } = getActionNameFromElement(
+        appendElement('<div>Foobar <div data-dd-action-name="custom action">bar<div></div>'),
+        defaultConfiguration
+      )
+      expect(name).toBe('Foobar')
       expect(nameSource).toBe('text_content')
     })
 
