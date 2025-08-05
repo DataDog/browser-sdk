@@ -1,6 +1,7 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
 import { monitor } from '../tools/monitor'
+import { globalVar } from '../tools/getGlobalObject'
 import { Observable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
@@ -45,11 +46,11 @@ export function resetFetchObservable() {
 
 function createFetchObservable() {
   return new Observable<FetchContext>((observable) => {
-    if (!globalThis.fetch) {
+    if (!globalVar.fetch) {
       return
     }
 
-    const { stop } = instrumentMethod(globalThis, 'fetch', (call) => beforeSend(call, observable), {
+    const { stop } = instrumentMethod(globalVar, 'fetch', (call) => beforeSend(call, observable), {
       computeHandlingStack: true,
     })
 
