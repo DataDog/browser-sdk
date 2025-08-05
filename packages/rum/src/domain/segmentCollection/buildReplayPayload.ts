@@ -1,4 +1,4 @@
-import type { Payload } from '@datadog/browser-core'
+import type { Payload, Uint8ArrayBuffer } from '@datadog/browser-core'
 import type { BrowserSegmentMetadata } from '../../types'
 import type { SerializationMetric, SerializationStats } from '../record'
 
@@ -15,7 +15,7 @@ export type ReplayPayload = Payload & {
 }
 
 export function buildReplayPayload(
-  data: Uint8Array,
+  data: Uint8ArrayBuffer,
   metadata: BrowserSegmentMetadata,
   stats: SerializationStats,
   rawSegmentBytesCount: number

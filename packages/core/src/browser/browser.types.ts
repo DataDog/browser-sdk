@@ -51,8 +51,6 @@ export interface WeakRefConstructor {
   new <T extends object>(target: T): WeakRef<T>
 }
 
-// Those are native API types that are not official supported by TypeScript yet
-
 export interface CookieStore extends EventTarget {
   get(name: string): Promise<unknown>
   getAll(name?: string): Promise<
