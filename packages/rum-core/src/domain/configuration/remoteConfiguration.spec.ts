@@ -7,7 +7,7 @@ import {
   ONE_MINUTE,
   createContextManager,
 } from '@datadog/browser-core'
-import { interceptRequests } from '@datadog/browser-core/test'
+import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
 import type { RumRemoteConfiguration } from './remoteConfiguration'
 import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
@@ -214,6 +214,88 @@ describe('remoteConfiguration', () => {
         deleteCookie(COOKIE_NAME)
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
+          { version: undefined }
+        )
+      })
+    })
+
+    describe('dom strategy', () => {
+      beforeEach(() => {
+        const div = document.createElement('div')
+        document.body.appendChild(div)
+
+        const span1 = document.createElement('span')
+        span1.id = 'version1'
+        span1.classList.add('version')
+        span1.innerText = 'version-123'
+        div.appendChild(span1)
+
+        const span2 = document.createElement('span')
+        span2.id = 'version2'
+        span2.classList.add('version')
+        span2.setAttribute('data-version', 'version-456')
+        div.appendChild(span2)
+
+        registerCleanupTask(() => {
+          document.body.removeChild(div)
+        })
+      })
+
+      it('should resolve a configuration value from an element text content', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version1' } },
+          { version: 'version-123' }
+        )
+      })
+
+      it('should resolve a configuration value from an element text content and an extractor', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'dom',
+              selector: '#version1',
+              extractor: { rcSerializedType: 'regex', value: '\\d+' },
+            },
+          },
+          { version: '123' }
+        )
+      })
+
+      it('should resolve a configuration value from the first element matching the selector', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '.version' } },
+          { version: 'version-123' }
+        )
+      })
+
+      it('should resolve to undefined and display an error if the selector is invalid', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '' } },
+          { version: undefined }
+        )
+        expect(displaySpy).toHaveBeenCalledWith("Invalid selector in the remote configuration: ''")
+      })
+
+      it('should resolve to undefined if the element is missing', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#missing' } },
+          { version: undefined }
+        )
+      })
+
+      it('should resolve a configuration value from an element attribute', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version2', attribute: 'data-version' },
+          },
+          { version: 'version-456' }
+        )
+      })
+
+      it('should resolve to undefined if the element attribute is missing', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version2', attribute: 'missing' } },
           { version: undefined }
         )
       })

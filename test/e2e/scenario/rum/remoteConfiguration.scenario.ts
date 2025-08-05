@@ -32,6 +32,35 @@ test.describe('remote configuration', () => {
       expect(initConfiguration.version).toBe('my-version')
     })
 
+  createTest('should resolve an option value from an element content')
+    .withRum({
+      remoteConfigurationId: 'e2e',
+    })
+    .withRemoteConfiguration({
+      rum: { applicationId: 'e2e', version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version' } },
+    })
+    .withBody(html`<span id="version">123</span>`)
+    .run(async ({ page }) => {
+      const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+      expect(initConfiguration.version).toBe('123')
+    })
+
+  createTest('should resolve an option value from an element attribute')
+    .withRum({
+      remoteConfigurationId: 'e2e',
+    })
+    .withRemoteConfiguration({
+      rum: {
+        applicationId: 'e2e',
+        version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version', attribute: 'data-version' },
+      },
+    })
+    .withBody(html`<span id="version" data-version="123"></span>`)
+    .run(async ({ page }) => {
+      const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+      expect(initConfiguration.version).toBe('123')
+    })
+
   createTest('should resolve user context')
     .withRum({
       remoteConfigurationId: 'e2e',

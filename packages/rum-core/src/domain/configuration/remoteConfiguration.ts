@@ -132,6 +132,8 @@ function resolveDynamicOption(property: DynamicOption) {
   switch (strategy) {
     case 'cookie':
       return resolveCookieValue(property)
+    case 'dom':
+      return resolveDomValue(property)
     default:
       display.error(`Unsupported remote configuration: "strategy": "${strategy as string}"`)
       return
@@ -144,6 +146,32 @@ function resolveCookieValue({ name, extractor }: { name: string; extractor?: Ser
     return extractValue(extractor, cookieValue)
   }
   return cookieValue
+}
+
+function resolveDomValue({
+  selector,
+  attribute,
+  extractor,
+}: {
+  selector: string
+  attribute?: string
+  extractor?: SerializedRegex
+}) {
+  let element: Element | null
+  try {
+    element = document.querySelector(selector)
+  } catch {
+    element = null
+    display.error(`Invalid selector in the remote configuration: '${selector}'`)
+  }
+  if (element === null) {
+    return
+  }
+  const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
+  if (extractor !== undefined && domValue !== null) {
+    return extractValue(extractor, domValue)
+  }
+  return domValue ?? undefined
 }
 
 function extractValue(extractor: SerializedRegex, candidate: string) {
