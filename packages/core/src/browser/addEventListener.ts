@@ -75,7 +75,9 @@ type EventMapFor<T> = T extends Window
                 ? WorkerEventMap
                 : T extends CookieStore
                   ? CookieStoreEventMap
-                  : Record<never, never>
+                  : T extends WorkerGlobalScope
+                    ? WindowEventMap
+                    : Record<never, never>
 
 /**
  * Add an event listener to an event target object (Window, Element, mock object...).  This provides
