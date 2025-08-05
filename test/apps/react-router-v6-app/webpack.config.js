@@ -20,7 +20,7 @@ module.exports = {
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'react-app.js',
-    chunkFilename: 'chunks/[name]-[contenthash]-react-app.js',
+    filename: 'react-router-v6-app.js',
+    chunkFilename: 'chunks/[name]-[contenthash]-react-router-v6-app.js',
   },
 }
