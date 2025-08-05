@@ -100,8 +100,18 @@ describe('getActionNameFromElement', () => {
     const element = appendElement(
       '<div> <span> hello</span> \n <span>world</span> <div><span>!</span></div><br><span>another</span>-<span>one</span> '
     )
-    const { name } = getActionNameFromElement(element, defaultConfiguration)
+    const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
     expect(name).toBe('hello world ! another-one')
+    expect(nameSource).toBe('text_content')
+  })
+
+  it('should correctly compute with display elements block, grid, flex, list-item, table, table-caption', () => {
+    const element = appendElement(
+      '<div><div style="display: block;">hello</div><div style="display: grid;">world</div><div style="display: flex;">!<div style="display: table-caption;">!</div></div></div>'
+    )
+    const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
+    expect(name).toBe('hello world ! !')
+    expect(nameSource).toBe('text_content')
   })
 
   it('ignores the inline script textual content', () => {
