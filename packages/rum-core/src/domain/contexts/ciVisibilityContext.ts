@@ -19,8 +19,9 @@ export function startCiVisibilityContext(
   hooks: Hooks,
   cookieObservable = createCookieObservable(configuration, CI_VISIBILITY_TEST_ID_COOKIE_NAME)
 ) {
+  const cypressWindow = (window as CiTestWindow).Cypress
   let testExecutionId =
-    getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || (window as CiTestWindow).Cypress?.env('traceId')
+    getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || (cypressWindow && cypressWindow.env('traceId'))
 
   const cookieObservableSubscription = cookieObservable.subscribe((value) => {
     testExecutionId = value

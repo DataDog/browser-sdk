@@ -374,6 +374,14 @@ export default tseslint.config(
           selector: 'TSEnumDeclaration:not([const=true])',
           message: 'When possible, use `const enum` as it produces less code when transpiled.',
         },
+        {
+          selector: 'ChainExpression',
+          message: 'Optional chaining (?.) is not allowed. Use classic conditional checks instead.',
+        },
+        {
+          selector: 'LogicalExpression[operator="??"]',
+          message: 'Nullish coalescing (??) is not allowed. Use classic conditional checks instead.',
+        },
       ],
     },
   },
