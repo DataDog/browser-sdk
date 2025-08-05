@@ -27,10 +27,6 @@ export function isServiceWorkerContext(): boolean {
  */
 
 export function ensureServiceWorkerGlobals(): void {
-  if (!isServiceWorkerContext()) {
-    return
-  }
-
   const g = globalVar as any
 
   // Alias `window` to the global scope if missing.
@@ -61,5 +57,11 @@ export function ensureServiceWorkerGlobals(): void {
   if (!(g.performance as Performance & { timing?: any }).timing) {
     const navStart = dateNow() - (g.performance as Performance).now()
     ;(g.performance as Performance & { timing?: any }).timing = { navigationStart: navStart } as any
+  }
+
+  /* eslint-disable local-rules/disallow-zone-js-patched-values */
+  if (typeof self.addEventListener !== 'function') {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    self.addEventListener = () => {}
   }
 }
