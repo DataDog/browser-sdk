@@ -225,6 +225,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@datadog/browser-core@npm:6.16.0":
+  version: 6.16.0
+  resolution: "@datadog/browser-core@npm:6.16.0"
+  checksum: 10c0/9438867b342f6d9db78575a632da3f97159cf2ffcec869a0e3a306261d01e3048b098155c75addbfae7909572a1ded46beed60ea2938eb166fc7a8250e683a66
+  languageName: node
+  linkType: hard
+
 "@datadog/browser-core@npm:6.17.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
