@@ -4,9 +4,10 @@ import type {
   DeflateEncoderStreamId,
   DeflateWorker,
   EncoderResult,
+  Uint8ArrayBuffer,
 } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 export function createDeflateEncoder(
   configuration: RumConfiguration,
@@ -14,8 +15,8 @@ export function createDeflateEncoder(
   streamId: DeflateEncoderStreamId
 ): DeflateEncoder {
   let rawBytesCount = 0
-  let compressedData: Uint8Array[] = []
-  let compressedDataTrailer: Uint8Array
+  let compressedData: Uint8ArrayBuffer[] = []
+  let compressedDataTrailer: Uint8ArrayBuffer
 
   let nextWriteActionId = 0
   const pendingWriteActions: Array<{
@@ -52,10 +53,10 @@ export function createDeflateEncoder(
     }
   )
 
-  function consumeResult(): EncoderResult<Uint8Array> {
+  function consumeResult(): EncoderResult<Uint8ArrayBuffer> {
     const output =
       compressedData.length === 0 ? new Uint8Array(0) : concatBuffers(compressedData.concat(compressedDataTrailer))
-    const result: EncoderResult<Uint8Array> = {
+    const result: EncoderResult<Uint8ArrayBuffer> = {
       rawBytesCount,
       output,
       outputBytesCount: output.byteLength,

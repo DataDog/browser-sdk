@@ -1,4 +1,4 @@
-import type { DeflateEncoder, TimeStamp } from '@datadog/browser-core'
+import type { DeflateEncoder, TimeStamp, Uint8ArrayBuffer } from '@datadog/browser-core'
 import { noop, setDebugMode, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
@@ -103,7 +103,7 @@ describe('Segment', () => {
       },
       RECORD_STATS,
       {
-        output: jasmine.any(Uint8Array) as unknown as Uint8Array,
+        output: jasmine.any(Uint8Array) as unknown as Uint8ArrayBuffer,
         outputBytesCount:
           ENCODED_SEGMENT_HEADER_BYTES_COUNT +
           ENCODED_RECORD_BYTES_COUNT +

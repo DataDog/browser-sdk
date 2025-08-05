@@ -1,3 +1,4 @@
+import { waitNextMicrotask } from '../../test'
 import { BufferedObservable, mergeObservables, Observable } from './observable'
 
 describe('observable', () => {
@@ -129,7 +130,7 @@ describe('BufferedObservable', () => {
     const observer = jasmine.createSpy('observer')
     observable.subscribe(observer)
 
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     expect(observer).toHaveBeenCalledTimes(2)
   })
@@ -143,7 +144,7 @@ describe('BufferedObservable', () => {
 
     expect(observer).not.toHaveBeenCalled()
 
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     expect(observer).toHaveBeenCalledWith('first')
   })
@@ -156,7 +157,7 @@ describe('BufferedObservable', () => {
 
     observable.notify('first')
 
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     observable.notify('second')
 
@@ -174,7 +175,7 @@ describe('BufferedObservable', () => {
     const observer = jasmine.createSpy('observer')
     observable.subscribe(observer)
 
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     expect(observer).toHaveBeenCalledTimes(2)
     expect(observer).toHaveBeenCalledWith('second')
@@ -191,7 +192,7 @@ describe('BufferedObservable', () => {
     })
     const subscription = observable.subscribe(observer)
 
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     expect(observer).toHaveBeenCalledTimes(1)
   })
@@ -205,7 +206,7 @@ describe('BufferedObservable', () => {
 
     subscription.unsubscribe()
 
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     expect(observer).not.toHaveBeenCalled()
   })
@@ -216,7 +217,7 @@ describe('BufferedObservable', () => {
     const observer = jasmine.createSpy('observer')
     const subscription = observable.subscribe(observer)
 
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     subscription.unsubscribe()
 
@@ -231,11 +232,11 @@ describe('BufferedObservable', () => {
     observable.notify('second')
 
     observable.unbuffer()
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     const observer = jasmine.createSpy('observer')
     observable.subscribe(observer)
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     expect(observer).not.toHaveBeenCalled()
   })
@@ -249,14 +250,10 @@ describe('BufferedObservable', () => {
     observable.subscribe(observer)
 
     observable.unbuffer()
-    await nextMicrotask()
+    await waitNextMicrotask()
 
     expect(observer).toHaveBeenCalledTimes(2)
     expect(observer).toHaveBeenCalledWith('first')
     expect(observer).toHaveBeenCalledWith('second')
   })
 })
-
-function nextMicrotask() {
-  return Promise.resolve()
-}
