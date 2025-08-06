@@ -43,5 +43,45 @@ export interface RumSdkConfig {
      * Privacy control for action name
      */
     enablePrivacyForActionName?: boolean
+    /**
+     * URLs where tracing is allowed
+     */
+    allowedTracingUrls?: {
+      match: {
+        /**
+         * Remote config serialized type of match
+         */
+        rcSerializedType: 'string' | 'regex'
+        /**
+         * Match value
+         */
+        value: string
+      }
+      /**
+       * List of propagator types
+       */
+      propagatorTypes: ('datadog' | 'b3' | 'b3multi' | 'tracecontext')[]
+    }[]
+    /**
+     * Origins where tracking is allowed
+     */
+    allowedTrackingOrigins?: {
+      /**
+       * Remote config serialized type of match
+       */
+      rcSerializedType: 'string' | 'regex'
+      /**
+       * Match value
+       */
+      value: string
+    }[]
+    /**
+     * The percentage of traces sampled
+     */
+    traceSampleRate?: number
+    /**
+     * Whether to track sessions across subdomains
+     */
+    trackSessionAcrossSubdomains?: boolean
   }
 }
