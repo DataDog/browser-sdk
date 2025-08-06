@@ -97,21 +97,53 @@ describe('getActionNameFromElement', () => {
   })
 
   it('should correctly compute the name for a complex case', () => {
-    const element = appendElement(
-      '<div> <span> hello</span> \n <span>world</span> <div><span>!</span></div><br><span>another</span>-<span>one</span> '
-    )
-    const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
-    expect(name).toBe('hello world ! another-one')
-    expect(nameSource).toBe('text_content')
+    const testCases = [
+      { element: appendElement('<div>hello<br/>world</div>'), expected: 'hello world' },
+      { element: appendElement('<div>hello<p>world</p></div>'), expected: 'hello world' },
+      { element: appendElement('<div>hello<p>world<br/>!</p></div>'), expected: 'hello world !' },
+      { element: appendElement('<div>hello world<br/>!<p>!</p></div>'), expected: 'hello world ! !' },
+    ]
+    testCases.forEach(({ element, expected }) => {
+      const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
+      expect(name).toBe(expected)
+      expect(nameSource).toBe('text_content')
+    })
   })
 
-  it('should correctly compute with display elements block, grid, flex, list-item, table, table-caption', () => {
-    const element = appendElement(
-      '<div><div style="display: block;">hello</div><div style="display: grid;">world</div><div style="display: flex;">!<div style="display: table-caption;">!</div></div></div>'
-    )
-    const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
-    expect(name).toBe('hello world ! !')
-    expect(nameSource).toBe('text_content')
+  it('should introduce whitespace for block-level display values', () => {
+    const testCases = [
+      { display: 'block', expected: 'space' },
+      { display: 'inline-block', expected: 'no-space' },
+      { display: 'flex', expected: 'space' },
+      { display: 'inline-flex', expected: 'no-space' },
+      { display: 'grid', expected: 'space' },
+      { display: 'inline-grid', expected: 'no-space' },
+      { display: 'list-item', expected: 'space' },
+      { display: 'table', expected: 'space' },
+      { display: 'table-caption', expected: 'space' },
+      { display: 'inline', expected: 'no-space' },
+      { display: 'none', expected: 'nothing' },
+    ]
+    testCases.forEach(({ display, expected }) => {
+      const element = appendElement(
+        `<div><div style="display: ${display}">foo</div><div style="display: ${display}">bar</div></div>`
+      )
+      const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
+      switch (expected) {
+        case 'space':
+          expect(name).toBe('foo bar')
+          expect(nameSource).toBe('text_content')
+          break
+        case 'no-space':
+          expect(name).toBe('foobar')
+          expect(nameSource).toBe('text_content')
+          break
+        case 'nothing':
+          expect(name).toBe('')
+          expect(nameSource).toBe('blank')
+          break
+      }
+    })
   })
 
   it('ignores the inline script textual content', () => {
@@ -666,6 +698,30 @@ describe('getActionNameFromElement', () => {
           )
         ).toEqual({ name: 'foo', nameSource: ActionNameSource.TEXT_CONTENT })
       })
+
+      it('inherit privacy level and remove only the masked child', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div class="dd-privacy-allow" target>
+                bar secret
+                <div>
+                  foo 
+                  <div class="dd-privacy-mask">
+                    <span>secret</span>
+                  </div>
+                </div>
+              </div>
+        `),
+            {
+              ...defaultConfiguration,
+              enablePrivacyForActionName: true,
+            },
+            NodePrivacyLevel.ALLOW
+          )
+        ).toEqual({ name: 'bar secret foo', nameSource: ActionNameSource.TEXT_CONTENT })
+      })
+
       it('fallback to children but not the masked one with class names', () => {
         expect(
           getActionNameFromElement(

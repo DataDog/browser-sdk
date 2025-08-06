@@ -1,6 +1,7 @@
 import { safeTruncate } from '@datadog/browser-core'
 import { getNodeSelfPrivacyLevel, NodePrivacyLevel, shouldMaskNode } from '../privacy'
 import type { RumConfiguration } from '../configuration'
+import { isElementNode } from '../../browser/htmlDomUtils'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -23,7 +24,7 @@ interface ActionName {
 export function getActionNameFromElement(
   element: Element,
   { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
-  nodePrivacyLevel?: NodePrivacyLevel
+  nodePrivacyLevel: NodePrivacyLevel = NodePrivacyLevel.ALLOW
 ): ActionName {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
@@ -75,8 +76,8 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean,
-  nodePrivacyLevel?: NodePrivacyLevel
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
@@ -161,8 +162,8 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
-  privacyEnabledActionName?: boolean,
-  nodePrivacyLevel?: NodePrivacyLevel
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -217,8 +218,8 @@ function getActionNameFromStandardAttribute(element: Element | HTMLElement, attr
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean,
-  nodePrivacyLevel?: NodePrivacyLevel
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
 ): ActionName {
   return {
     name: getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) || '',
@@ -229,40 +230,35 @@ function getActionNameFromTextualContent(
 function getTextualContent(
   element: Element,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean,
-  nodePrivacyLevel?: NodePrivacyLevel
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
 ) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
-  if (nodePrivacyLevel && privacyEnabledActionName && shouldMaskNode(element, nodePrivacyLevel)) {
+  if (privacyEnabledActionName && shouldMaskNode(element, nodePrivacyLevel)) {
     return
   }
 
   const rejectInvisibleOrMaskedElementsFilter = (node: Node) => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      return NodeFilter.FILTER_ACCEPT
-    }
-    if (node instanceof HTMLElement && node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE)) {
-      return NodeFilter.FILTER_REJECT
-    }
-    if (userProgrammaticAttribute && node instanceof HTMLElement && node.hasAttribute(userProgrammaticAttribute)) {
-      return NodeFilter.FILTER_REJECT
-    }
-    if (
-      nodePrivacyLevel &&
-      privacyEnabledActionName &&
-      shouldMaskNode(node as Element, getNodeSelfPrivacyLevel(node as Element) || nodePrivacyLevel)
-    ) {
-      return NodeFilter.FILTER_REJECT
-    }
-    const style = getComputedStyle(node as Element)
-    if (style.visibility !== 'visible' || style.display === 'none') {
-      return NodeFilter.FILTER_REJECT
-    }
-    if (style.contentVisibility && style.contentVisibility !== 'visible') {
-      // contentVisibility is not supported in all browsers, so we need to check it
-      return NodeFilter.FILTER_REJECT
+    if (isElementNode(node)) {
+      if (node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE)) {
+        return NodeFilter.FILTER_REJECT
+      }
+      if (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) {
+        return NodeFilter.FILTER_REJECT
+      }
+      if (privacyEnabledActionName && shouldMaskNode(node, getNodeSelfPrivacyLevel(node) || nodePrivacyLevel)) {
+        return NodeFilter.FILTER_REJECT
+      }
+      const style = getComputedStyle(node)
+      if (style.visibility !== 'visible' || style.display === 'none') {
+        return NodeFilter.FILTER_REJECT
+      }
+      if (style.contentVisibility && style.contentVisibility !== 'visible') {
+        // contentVisibility is not supported in all browsers, so we need to check it
+        return NodeFilter.FILTER_REJECT
+      }
     }
     return NodeFilter.FILTER_ACCEPT
   }
@@ -274,22 +270,24 @@ function getTextualContent(
     rejectInvisibleOrMaskedElementsFilter
   )
 
+  return getTextualContentFromTreeWalker(walker)
+}
+
+function getTextualContentFromTreeWalker(walker: TreeWalker) {
   let text = ''
   let lastSubstringEndedWithWhiteSpace = false
 
   while (walker.nextNode()) {
     const node = walker.currentNode
-    if (node.nodeType !== Node.TEXT_NODE) {
+    if (isElementNode(node)) {
       if (
-        node.nodeType === Node.ELEMENT_NODE &&
-        (node.nodeName === 'BR' ||
-          ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].includes(
-            getComputedStyle(node as Element).display
-          ))
+        node.nodeName === 'BR' ||
+        node.nodeName === 'P' ||
+        ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].includes(getComputedStyle(node).display)
       ) {
         lastSubstringEndedWithWhiteSpace = true
       }
-      continue
+      continue // skip element nodes
     }
 
     const nodeText = node.textContent || ''
@@ -302,7 +300,7 @@ function getTextualContent(
       if (startsWithWhiteSpace || endsWithWhiteSpace) {
         lastSubstringEndedWithWhiteSpace = true
       }
-      continue
+      continue // skip empty nodes
     }
 
     if (startsWithWhiteSpace || lastSubstringEndedWithWhiteSpace) {
