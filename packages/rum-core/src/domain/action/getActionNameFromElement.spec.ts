@@ -480,10 +480,10 @@ describe('getActionNameFromElement', () => {
 
     it('removes only the child with programmatic action name in textual content', () => {
       const { name, nameSource } = getActionNameFromElement(
-        appendElement('<div>Foobar <div data-dd-action-name="custom action">bar<div></div>'),
+        appendElement('<div>Foobar Baz<div data-dd-action-name="custom action">bar<div></div>'),
         defaultConfiguration
       )
-      expect(name).toBe('Foobar')
+      expect(name).toBe('Foobar Baz')
       expect(nameSource).toBe('text_content')
     })
 
