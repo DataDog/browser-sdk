@@ -10,9 +10,10 @@ export function startDefaultContext(
   configuration: RumConfiguration,
   sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
-  hooks.register(
-    HookNames.Assemble,
-    ({ eventType }): DefaultRumEventAttributes => ({
+  hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
+    const source = configuration.source
+
+    return {
       type: eventType,
       _dd: {
         format_version: 2,
@@ -29,9 +30,9 @@ export function startDefaultContext(
         id: configuration.applicationId,
       },
       date: timeStampNow(),
-      source: 'browser',
-    })
-  )
+      source,
+    }
+  })
 
   hooks.register(
     HookNames.AssembleTelemetry,

@@ -32,6 +32,7 @@ describe('getIntakeUrlForEvent', () => {
           rum: {
             config: {
               clientToken: 'client-token',
+              source: 'browser',
             },
             version: '1.2.3',
           },
@@ -57,6 +58,7 @@ describe('getIntakeUrlForEvent', () => {
           rum: {
             config: {
               clientToken: 'client-token',
+              source: 'browser',
             },
             version: '1.2.3&4',
           },
@@ -75,6 +77,7 @@ describe('getIntakeUrlForEvent', () => {
           rum: {
             config: {
               clientToken: 'client-token',
+              source: 'browser',
             },
             version: '1.2.3',
           },
@@ -93,6 +96,7 @@ describe('getIntakeUrlForEvent', () => {
           logs: {
             config: {
               clientToken: 'client-token',
+              source: 'browser',
             },
             version: '1.2.3',
           },
