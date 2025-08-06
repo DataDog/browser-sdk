@@ -113,34 +113,30 @@ function resolveContextProperty(contextManager: ReturnType<typeof createContextM
 
 function resolveDynamicOption(property: DynamicOption) {
   const strategy = property.strategy
+  let resolvedValue: undefined | string
   switch (strategy) {
     case 'cookie':
-      return resolveCookieValue(property)
+      resolvedValue = resolveCookieValue(property)
+      break
     case 'dom':
-      return resolveDomValue(property)
+      resolvedValue = resolveDomValue(property)
+      break
     default:
       display.error(`Unsupported remote configuration: "strategy": "${strategy as string}"`)
       return
   }
-}
-
-function resolveCookieValue({ name, extractor }: { name: string; extractor?: SerializedRegex }) {
-  const cookieValue = getCookie(name)
-  if (extractor !== undefined && cookieValue !== undefined) {
-    return extractValue(extractor, cookieValue)
+  const extractor = property.extractor
+  if (extractor !== undefined && resolvedValue !== undefined) {
+    return extractValue(extractor, resolvedValue)
   }
-  return cookieValue
+  return resolvedValue
 }
 
-function resolveDomValue({
-  selector,
-  attribute,
-  extractor,
-}: {
-  selector: string
-  attribute?: string
-  extractor?: SerializedRegex
-}) {
+function resolveCookieValue({ name }: { name: string }) {
+  return getCookie(name)
+}
+
+function resolveDomValue({ selector, attribute }: { selector: string; attribute?: string }) {
   let element: Element | null
   try {
     element = document.querySelector(selector)
@@ -152,9 +148,6 @@ function resolveDomValue({
     return
   }
   const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
-  if (extractor !== undefined && domValue !== null) {
-    return extractValue(extractor, domValue)
-  }
   return domValue ?? undefined
 }
 
