@@ -3,6 +3,7 @@ import { monitor } from '../../tools/monitor'
 import { mergeObservables, Observable } from '../../tools/observable'
 import { addEventListener, DOM_EVENT } from '../../browser/addEventListener'
 import { safeTruncate } from '../../tools/utils/stringUtils'
+import { isServiceWorkerContext } from '../../tools/isServiceWorkerContext'
 import type { Configuration } from '../configuration'
 import type { RawError } from '../error/error.types'
 import { ErrorHandling, ErrorSource } from '../error/error.types'
@@ -60,7 +61,13 @@ function createReportObservable(reportTypes: ReportType[]) {
 
 function createCspViolationReportObservable(configuration: Configuration) {
   return new Observable<RawReportError>((observable) => {
-    const { stop } = addEventListener(configuration, document, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
+    const eventTarget = isServiceWorkerContext() ? self : document
+
+    if (!eventTarget) {
+      return
+    }
+
+    const { stop } = addEventListener(configuration, eventTarget, DOM_EVENT.SECURITY_POLICY_VIOLATION, (event) => {
       observable.notify(buildRawReportErrorFromCspViolation(event))
     })
 
