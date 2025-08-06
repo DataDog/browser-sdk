@@ -96,6 +96,56 @@ describe('getActionNameFromElement', () => {
     expect(nameSource).toBe('text_content')
   })
 
+  it('should correctly compute whitespace for <br> and <p> elements', () => {
+    const testCases = [
+      { element: appendElement('<div>hello<br/>world</div>'), expected: 'hello world' },
+      { element: appendElement('<div>hello<p>world</p></div>'), expected: 'hello world' },
+      { element: appendElement('<div>hello<p>world<br/>!</p></div>'), expected: 'hello world !' },
+      { element: appendElement('<div>hello world<br/>!<p>!</p></div>'), expected: 'hello world ! !' },
+    ]
+    testCases.forEach(({ element, expected }) => {
+      const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
+      expect(name).toBe(expected)
+      expect(nameSource).toBe('text_content')
+    })
+  })
+
+  it('should introduce whitespace for block-level display values', () => {
+    const testCases = [
+      { display: 'block', expected: 'space' },
+      { display: 'inline-block', expected: 'no-space' },
+      { display: 'flex', expected: 'space' },
+      { display: 'inline-flex', expected: 'no-space' },
+      { display: 'grid', expected: 'space' },
+      { display: 'inline-grid', expected: 'no-space' },
+      { display: 'list-item', expected: 'space' },
+      { display: 'table', expected: 'space' },
+      { display: 'table-caption', expected: 'space' },
+      { display: 'inline', expected: 'no-space' },
+      { display: 'none', expected: 'nothing' },
+    ]
+    testCases.forEach(({ display, expected }) => {
+      const element = appendElement(
+        `<div><div style="display: ${display}">foo</div><div style="display: ${display}">bar</div></div>`
+      )
+      const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
+      switch (expected) {
+        case 'space':
+          expect(name).toBe('foo bar')
+          expect(nameSource).toBe('text_content')
+          break
+        case 'no-space':
+          expect(name).toBe('foobar')
+          expect(nameSource).toBe('text_content')
+          break
+        case 'nothing':
+          expect(name).toBe('')
+          expect(nameSource).toBe('blank')
+          break
+      }
+    })
+  })
+
   it('ignores the inline script textual content', () => {
     const { name, nameSource } = getActionNameFromElement(
       appendElement("<div><script>console.log('toto')</script>b</div>"),
@@ -418,13 +468,22 @@ describe('getActionNameFromElement', () => {
       expect(nameSource).toBe('custom_attribute')
     })
 
-    it('remove children with programmatic action name in textual content', () => {
+    it('removes children with programmatic action name in textual content', () => {
       const { name, nameSource } = getActionNameFromElement(
         appendElement('<div>Foo <div data-dd-action-name="custom action">bar<div></div>'),
         defaultConfiguration
       )
 
       expect(name).toBe('Foo')
+      expect(nameSource).toBe('text_content')
+    })
+
+    it('removes only the child with programmatic action name in textual content', () => {
+      const { name, nameSource } = getActionNameFromElement(
+        appendElement('<div>Foobar Baz<div data-dd-action-name="custom action">bar<div></div>'),
+        defaultConfiguration
+      )
+      expect(name).toBe('Foobar Baz')
       expect(nameSource).toBe('text_content')
     })
 
@@ -639,6 +698,30 @@ describe('getActionNameFromElement', () => {
           )
         ).toEqual({ name: 'foo', nameSource: ActionNameSource.TEXT_CONTENT })
       })
+
+      it('inherit privacy level and remove only the masked child', () => {
+        expect(
+          getActionNameFromElement(
+            appendElement(`
+              <div class="dd-privacy-allow" target>
+                bar secret
+                <div>
+                  foo 
+                  <div class="dd-privacy-mask">
+                    <span>secret</span>
+                  </div>
+                </div>
+              </div>
+        `),
+            {
+              ...defaultConfiguration,
+              enablePrivacyForActionName: true,
+            },
+            NodePrivacyLevel.ALLOW
+          )
+        ).toEqual({ name: 'bar secret foo', nameSource: ActionNameSource.TEXT_CONTENT })
+      })
+
       it('fallback to children but not the masked one with class names', () => {
         expect(
           getActionNameFromElement(
