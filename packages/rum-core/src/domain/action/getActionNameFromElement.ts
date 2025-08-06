@@ -236,27 +236,23 @@ function getTextualContent(
   if ((element as HTMLElement).isContentEditable) {
     return
   }
-  if (privacyEnabledActionName && shouldMaskNode(element, nodePrivacyLevel)) {
-    return
-  }
 
   const rejectInvisibleOrMaskedElementsFilter = (node: Node) => {
     if (isElementNode(node)) {
-      if (node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE)) {
-        return NodeFilter.FILTER_REJECT
-      }
-      if (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) {
-        return NodeFilter.FILTER_REJECT
-      }
-      if (privacyEnabledActionName && shouldMaskNode(node, getNodeSelfPrivacyLevel(node) || nodePrivacyLevel)) {
+      if (
+        node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
+        (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
+        (privacyEnabledActionName && shouldMaskNode(node, getNodeSelfPrivacyLevel(node) || nodePrivacyLevel))
+      ) {
         return NodeFilter.FILTER_REJECT
       }
       const style = getComputedStyle(node)
-      if (style.visibility !== 'visible' || style.display === 'none') {
-        return NodeFilter.FILTER_REJECT
-      }
-      if (style.contentVisibility && style.contentVisibility !== 'visible') {
+      if (
+        style.visibility !== 'visible' ||
+        style.display === 'none' ||
+        (style.contentVisibility && style.contentVisibility !== 'visible')
         // contentVisibility is not supported in all browsers, so we need to check it
+      ) {
         return NodeFilter.FILTER_REJECT
       }
     }
@@ -270,10 +266,6 @@ function getTextualContent(
     rejectInvisibleOrMaskedElementsFilter
   )
 
-  return getTextualContentFromTreeWalker(walker)
-}
-
-function getTextualContentFromTreeWalker(walker: TreeWalker) {
   let text = ''
   let lastSubstringEndedWithWhiteSpace = false
 

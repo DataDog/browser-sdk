@@ -96,7 +96,7 @@ describe('getActionNameFromElement', () => {
     expect(nameSource).toBe('text_content')
   })
 
-  it('should correctly compute the name for a complex case', () => {
+  it('should correctly compute whitespace for <br> and <p> elements', () => {
     const testCases = [
       { element: appendElement('<div>hello<br/>world</div>'), expected: 'hello world' },
       { element: appendElement('<div>hello<p>world</p></div>'), expected: 'hello world' },
