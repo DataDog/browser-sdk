@@ -198,10 +198,12 @@ function startTelemetryTransport(
         endpoint: configuration.rumEndpointBuilder,
         encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
       },
-      configuration.replica && {
-        endpoint: configuration.replica.rumEndpointBuilder,
-        encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY_REPLICA),
-      },
+      configuration.replica && isTelemetryReplicationAllowed(configuration)
+        ? {
+            endpoint: configuration.replica.rumEndpointBuilder,
+            encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY_REPLICA),
+          }
+        : undefined,
       reportError,
       pageMayExitObservable,
 
@@ -211,7 +213,7 @@ function startTelemetryTransport(
     )
     cleanupTasks.push(() => telemetryBatch.stop())
     const telemetrySubscription = telemetryObservable.subscribe((event) => {
-      telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
+      telemetryBatch.add(event)
     })
     cleanupTasks.push(() => telemetrySubscription.unsubscribe())
   }

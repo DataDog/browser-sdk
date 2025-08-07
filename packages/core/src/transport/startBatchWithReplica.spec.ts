@@ -71,21 +71,6 @@ describe('startBatchWithReplica', () => {
     expect(batchFactoryAddSpy).toHaveBeenCalledTimes(1)
   })
 
-  it("does not add a message to the replica if it shouldn't be replicated", () => {
-    const batch = startBatchWithReplica(
-      DEFAULT_CONFIGURATION,
-      batchConfiguration,
-      batchConfiguration,
-      reportError,
-      pageMayExitObservable,
-      sessionExpireObservable,
-      batchFactoryFakeImpl
-    )
-
-    batch.add({ foo: true }, false)
-    expect(batchFactoryAddSpy).toHaveBeenCalledTimes(1)
-  })
-
   it('upserts a message to a batch and its replica', () => {
     const batch = startBatchWithReplica(
       DEFAULT_CONFIGURATION,

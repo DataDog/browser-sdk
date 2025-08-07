@@ -47,9 +47,9 @@ export function startBatchWithReplica<T extends Context>(
   return {
     flushObservable: primaryBatch.flushController.flushObservable,
 
-    add(message: T, replicated = true) {
+    add(message: T) {
       primaryBatch.add(message)
-      if (replicaBatch && replicated) {
+      if (replicaBatch) {
         replicaBatch.add(replica.transformMessage ? replica.transformMessage(message) : message)
       }
     },
