@@ -13,9 +13,11 @@ import type { ActionName } from './actionNameConstants'
 
 export function getActionNameFromElement(
   element: Element,
-  { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute, defaultPrivacyLevel }: RumConfiguration,
+  rumConfiguration: RumConfiguration,
   nodePrivacyLevel: NodePrivacyLevel = NodePrivacyLevel.ALLOW
 ): ActionName {
+  const { actionNameAttribute: userProgrammaticAttribute } = rumConfiguration
+
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
   // * then, if privacy is set to mask, return a placeholder for the undefined.
@@ -33,23 +35,17 @@ export function getActionNameFromElement(
     return { name: ACTION_NAME_PLACEHOLDER, nameSource: ActionNameSource.MASK_PLACEHOLDER }
   }
 
-  const enableAllowlistMask = isAllowlistMaskEnabled(defaultPrivacyLevel, nodePrivacyLevel)
-
   return (
     getActionNameFromElementForStrategies(
       element,
-      userProgrammaticAttribute,
       priorityStrategies,
-      enableAllowlistMask,
-      enablePrivacyForActionName,
+      rumConfiguration,
       nodePrivacyLevel
     ) ||
     getActionNameFromElementForStrategies(
       element,
-      userProgrammaticAttribute,
       fallbackStrategies,
-      enableAllowlistMask,
-      enablePrivacyForActionName,
+      rumConfiguration,
       nodePrivacyLevel
     ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
@@ -69,21 +65,17 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
-  userProgrammaticAttribute: string | undefined,
-  enableAllowlistMask: boolean,
-  privacyEnabledActionName: boolean,
+  rumConfiguration: RumConfiguration,
   nodePrivacyLevel: NodePrivacyLevel
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, userProgrammaticAttribute, enableAllowlistMask, privacyEnabledActionName, nodePrivacyLevel) => {
+  (element, rumConfiguration, nodePrivacyLevel) => {
     if ('labels' in element && element.labels && element.labels.length > 0) {
       return getActionNameFromTextualContent(
         element.labels[0],
-        userProgrammaticAttribute,
-        enableAllowlistMask,
-        privacyEnabledActionName,
+        rumConfiguration,
         nodePrivacyLevel
       )
     }
@@ -99,20 +91,18 @@ const priorityStrategies: NameStrategy[] = [
     }
   },
   // BUTTON, LABEL or button-like element text
-  (element, userProgrammaticAttribute, enableAllowlistMask, privacyEnabledActionName, nodePrivacyLevel) => {
+  (element, rumConfiguration, nodePrivacyLevel) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
       return getActionNameFromTextualContent(
         element,
-        userProgrammaticAttribute,
-        enableAllowlistMask,
-        privacyEnabledActionName,
+        rumConfiguration,
         nodePrivacyLevel
       )
     }
   },
   (element) => getActionNameFromStandardAttribute(element, 'aria-label'),
   // associated element text designated by the aria-labelledby attribute
-  (element, userProgrammaticAttribute, enableAllowlistMask, privacyEnabledActionName, nodePrivacyLevel) => {
+  (element, rumConfiguration, nodePrivacyLevel) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       return {
@@ -123,9 +113,7 @@ const priorityStrategies: NameStrategy[] = [
           .map((element) =>
             getTextualContent(
               element,
-              userProgrammaticAttribute,
-              enableAllowlistMask,
-              privacyEnabledActionName,
+              rumConfiguration,
               nodePrivacyLevel
             )
           )
@@ -139,13 +127,11 @@ const priorityStrategies: NameStrategy[] = [
   (element) => getActionNameFromStandardAttribute(element, 'title'),
   (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
   // SELECT first OPTION text
-  (element, userProgrammaticAttribute, enableAllowlistMask, privacyEnabledActionName, nodePrivacyLevel) => {
+  (element, rumConfiguration, nodePrivacyLevel) => {
     if ('options' in element && element.options.length > 0) {
       return getActionNameFromTextualContent(
         element.options[0],
-        userProgrammaticAttribute,
-        enableAllowlistMask,
-        privacyEnabledActionName,
+        rumConfiguration,
         nodePrivacyLevel
       )
     }
@@ -153,12 +139,10 @@ const priorityStrategies: NameStrategy[] = [
 ]
 
 const fallbackStrategies: NameStrategy[] = [
-  (element, userProgrammaticAttribute, enableAllowlistMask, privacyEnabledActionName, nodePrivacyLevel) =>
+  (element, rumConfiguration, nodePrivacyLevel) =>
     getActionNameFromTextualContent(
       element,
-      userProgrammaticAttribute,
-      enableAllowlistMask,
-      privacyEnabledActionName,
+      rumConfiguration,
       nodePrivacyLevel
     ),
 ]
@@ -170,10 +154,8 @@ const fallbackStrategies: NameStrategy[] = [
 const MAX_PARENTS_TO_CONSIDER = 10
 function getActionNameFromElementForStrategies(
   targetElement: Element,
-  userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
-  enableAllowlistMask: boolean,
-  privacyEnabledActionName: boolean,
+  rumConfiguration: RumConfiguration,
   nodePrivacyLevel: NodePrivacyLevel
 ) {
   let element: Element | null = targetElement
@@ -188,9 +170,7 @@ function getActionNameFromElementForStrategies(
     for (const strategy of strategies) {
       const actionName = strategy(
         element,
-        userProgrammaticAttribute,
-        enableAllowlistMask,
-        privacyEnabledActionName,
+        rumConfiguration,
         nodePrivacyLevel
       )
       if (actionName) {
@@ -234,18 +214,14 @@ function getActionNameFromStandardAttribute(element: Element | HTMLElement, attr
 
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
-  userProgrammaticAttribute: string | undefined,
-  enableAllowlistMask: boolean,
-  privacyEnabledActionName: boolean,
+  rumConfiguration: RumConfiguration,
   nodePrivacyLevel: NodePrivacyLevel
 ): ActionName {
   return {
     name:
       getTextualContent(
         element,
-        userProgrammaticAttribute,
-        enableAllowlistMask,
-        privacyEnabledActionName,
+        rumConfiguration,
         nodePrivacyLevel
       ) || '',
     nameSource: ActionNameSource.TEXT_CONTENT,
@@ -254,11 +230,12 @@ function getActionNameFromTextualContent(
 
 function getTextualContent(
   element: Element,
-  userProgrammaticAttribute: string | undefined,
-  enableAllowlistMask: boolean,
-  privacyEnabledActionName: boolean,
+  rumConfiguration: RumConfiguration,
   nodePrivacyLevel: NodePrivacyLevel
 ) {
+  const { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute, defaultPrivacyLevel } = rumConfiguration
+  const enableAllowlistMask = isAllowlistMaskEnabled(defaultPrivacyLevel, nodePrivacyLevel)
+
   if ((element as HTMLElement).isContentEditable) {
     return
   }
@@ -268,7 +245,7 @@ function getTextualContent(
       if (
         node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
         (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
-        (privacyEnabledActionName && shouldMaskNode(node, getNodeSelfPrivacyLevel(node) || nodePrivacyLevel))
+        (enablePrivacyForActionName && shouldMaskNode(node, getNodeSelfPrivacyLevel(node) || nodePrivacyLevel))
       ) {
         return NodeFilter.FILTER_REJECT
       }
