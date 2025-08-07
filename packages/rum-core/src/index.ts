@@ -48,12 +48,13 @@ export type {
   FeatureFlagsForEvents,
   RemoteConfiguration,
 } from './domain/configuration'
-export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/getActionNameFromElement'
+export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/actionNameConstants'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'
 export { getSessionReplayUrl } from './domain/getSessionReplayUrl'
 export { sanitizeIfLongDataUrl } from './domain/resource/resourceUtils'
 export * from './domain/privacy'
+export * from './domain/privacyConstants'
 export { SessionReplayState } from './domain/rumSessionManager'
 export type { RumPlugin, OnRumStartOptions } from './domain/plugins'
 export type { MouseEventOnElement } from './domain/action/listenActionEvents'
