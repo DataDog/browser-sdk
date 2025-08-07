@@ -16,3 +16,18 @@ export function isUnsupportedExtensionEnvironment(windowLocation: string, stack 
   // then an extension is injecting RUM.
   return !containsExtensionUrl(windowLocation) && containsExtensionUrl(stack || '')
 }
+
+export function extractExtensionUrlFromStack(stack?: string): string | undefined {
+  if (!stack) {
+    return undefined
+  }
+
+  for (const prefix of EXTENSION_PREFIXES) {
+    if (stack.includes(prefix)) {
+      const match = stack.match(new RegExp(`${prefix}[^/]+`))
+      return match ? match[0] : undefined
+    }
+  }
+
+  return undefined
+}
