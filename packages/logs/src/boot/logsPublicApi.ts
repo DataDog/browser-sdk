@@ -267,6 +267,7 @@ export interface Strategy {
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
+  const errorStack = new Error().stack
 
   let strategy = createPreStartStrategy(
     buildCommonContext,
@@ -281,7 +282,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)
       return startLogsResult
-    }
+    },
+    errorStack
   )
 
   const getStrategy = () => strategy
