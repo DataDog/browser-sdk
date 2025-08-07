@@ -17,16 +17,19 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { trackEventCounts } from '../trackEventCounts'
 import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPageActivityEnd'
 import { getSelectorFromElement } from '../getSelectorFromElement'
-import { getNodePrivacyLevel, NodePrivacyLevel } from '../privacy'
+import { getNodePrivacyLevel } from '../privacy'
+import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import type { ActionNameSource } from './actionNameConstants'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
+import { isAllowlistMaskEnabled } from './privacy/maskWithAllowlist'
 
 interface ActionCounts {
   errorCount: number
@@ -38,7 +41,7 @@ export interface ClickAction {
   type: typeof ActionType.CLICK
   id: string
   name: string
-  nameSource: string
+  nameSource: ActionNameSource
   target?: {
     selector: string | undefined
     width: number
@@ -141,9 +144,21 @@ function processPointerDown(
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
-  const nodePrivacyLevel = configuration.enablePrivacyForActionName
-    ? getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-    : NodePrivacyLevel.ALLOW
+  const nodeSelfPrivacy = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+  // If the node privacy level is MASK_UNLESS_ALLOWLISTED, we use the default privacy level
+  // If the enablePrivacyForActionName is true, we use the node privacy level
+  // Otherwise, we use the allow level
+  // TODO: we should make enablePrivacyForActionName true by default for the next major version
+
+  // this won't work because there would always be a case when we set the nodeSelfPrivacy to ALLOW
+  // if we use configuration.defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED as a check
+  // then when we set defaultPrivacyLevel to ALLOW, and override the node privacy level to MASK_UNLESS_ALLOWLISTED
+
+  const nodePrivacyLevel = isAllowlistMaskEnabled(configuration.defaultPrivacyLevel, nodeSelfPrivacy)
+    ? nodeSelfPrivacy
+    : configuration.enablePrivacyForActionName
+      ? nodeSelfPrivacy
+      : NodePrivacyLevel.ALLOW
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return undefined
@@ -231,7 +246,7 @@ function startClickAction(
   })
 }
 
-type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
+export type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
 
 function computeClickActionBase(
   event: MouseEventOnElement,
@@ -243,7 +258,8 @@ function computeClickActionBase(
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
-  const actionName = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+
+  const { name, nameSource } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
@@ -257,8 +273,8 @@ function computeClickActionBase(
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: actionName.name,
-    nameSource: actionName.nameSource,
+    name,
+    nameSource,
   }
 }
 
