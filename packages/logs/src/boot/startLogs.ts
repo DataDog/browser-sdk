@@ -14,18 +14,21 @@ import {
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
-import { startConsoleCollection } from '../domain/console/consoleCollection'
-import { startReportCollection } from '../domain/report/reportCollection'
-import { startNetworkErrorCollection } from '../domain/networkError/networkErrorCollection'
-import { startRuntimeErrorCollection } from '../domain/runtimeError/runtimeErrorCollection'
-import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { startLoggerCollection } from '../domain/logger/loggerCollection'
-import { startLogsBatch } from '../transport/startLogsBatch'
-import { startLogsBridge } from '../transport/startLogsBridge'
+import { 
+  startConsoleCollection,
+  startReportCollection,
+  startNetworkErrorCollection,
+  startRuntimeErrorCollection,
+  LifeCycle, 
+  LifeCycleEventType,
+  buildLoggerCollection,
+  startLogsBatch,
+  startLogsBridge
+} from '@datadog/browser-logs-core'
 import { startInternalContext } from '../domain/contexts/internalContext'
-import { startReportError } from '../domain/reportError'
-import type { CommonContext } from '../rawLogsEvent.types'
-import { createHooks } from '../domain/hooks'
+import { reportError } from '@datadog/browser-logs-core'
+import type { CommonContext } from '@datadog/browser-logs-core'
+import { LogsHooks } from '@datadog/browser-logs-core'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
@@ -46,12 +49,10 @@ export function startLogs(
   bufferedDataObservable: BufferedObservable<BufferedData>
 ) {
   const lifeCycle = new LifeCycle()
-  const hooks = createHooks()
+  const hooks = new LogsHooks()
   const cleanupTasks: Array<() => void> = []
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
-
-  const reportError = startReportError(lifeCycle)
   const pageMayExitObservable = createPageMayExitObservable(configuration)
 
   const telemetry = startTelemetry(
@@ -82,7 +83,7 @@ export function startLogs(
   bufferedDataObservable.unbuffer()
   startConsoleCollection(configuration, lifeCycle)
   startReportCollection(configuration, lifeCycle)
-  const { handleLog } = startLoggerCollection(lifeCycle)
+  const { handleLog } = buildLoggerCollection(lifeCycle)
 
   startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
 

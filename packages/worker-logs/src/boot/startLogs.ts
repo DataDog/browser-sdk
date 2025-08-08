@@ -13,17 +13,20 @@ import {
 import { startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
-import { startConsoleCollection } from '../domain/console/consoleCollection'
-import { startReportCollection } from '../domain/report/reportCollection'
-import { startNetworkErrorCollection } from '../domain/networkError/networkErrorCollection'
-import { startRuntimeErrorCollection } from '../domain/runtimeError/runtimeErrorCollection'
-import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { startLoggerCollection } from '../domain/logger/loggerCollection'
-import { startLogsBatch } from '../transport/startLogsBatch'
-import { startLogsBridge } from '../transport/startLogsBridge'
-import { startReportError } from '../domain/reportError'
-import type { CommonContext } from '../rawLogsEvent.types'
-import { createHooks } from '../domain/hooks'
+import { 
+  startConsoleCollection,
+  startReportCollection,
+  startNetworkErrorCollection,
+  startRuntimeErrorCollection,
+  LifeCycle, 
+  LifeCycleEventType,
+  buildLoggerCollection,
+  startLogsBatch,
+  startLogsBridge,
+  reportError,
+  LogsHooks
+} from '@datadog/browser-logs-core'
+import type { CommonContext } from '@datadog/browser-logs-core'
 
 const LOGS_STORAGE_KEY = 'logs'
 

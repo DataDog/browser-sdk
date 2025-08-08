@@ -14,7 +14,8 @@
     "replace-build-env": "node ../../scripts/build/replace-build-env.ts"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.17.0"
+    "@datadog/browser-core": "6.17.0",
+    "@datadog/browser-logs-core": "6.17.0"
   },
   "peerDependencies": {
     "@datadog/browser-rum": "6.17.0"

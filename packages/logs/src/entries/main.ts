@@ -13,18 +13,19 @@ import { makeLogsPublicApi } from '../boot/logsPublicApi'
 import { startLogs } from '../boot/startLogs'
 
 export type { InternalContext } from '../domain/contexts/internalContext'
-export type { LogsMessage } from '../domain/logger'
-export { Logger, HandlerType } from '../domain/logger'
-export { StatusType } from '../domain/logger/isAuthorized'
-export type { LoggerConfiguration, LogsPublicApi as LogsGlobal } from '../boot/logsPublicApi'
-export type { LogsInitConfiguration } from '../domain/configuration'
-export type { LogsEvent } from '../logsEvent.types'
-export type {
+export type { 
+  LogsMessage,
+  Logger, 
+  HandlerType,
+  StatusType,
+  LogsEvent,
   LogsEventDomainContext,
   NetworkLogsEventDomainContext,
   ConsoleLogsEventDomainContext,
   LoggerLogsEventDomainContext,
-} from '../domainContext.types'
+} from '@datadog/browser-logs-core'
+export type { LoggerConfiguration, LogsPublicApi as LogsGlobal } from '../boot/logsPublicApi'
+export type { LogsInitConfiguration } from '../domain/configuration'
 
 export type {
   InitConfiguration,

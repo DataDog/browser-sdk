@@ -9,8 +9,7 @@ import {
   RawReportType,
   objectValues,
 } from '@datadog/browser-core'
-import type { LogsEvent } from '../logsEvent.types'
-import type { LogsEventDomainContext } from '../domainContext.types'
+import type { LogsEvent, LogsEventDomainContext, LogsCoreConfiguration } from '@datadog/browser-logs-core'
 
 /**
  * Init Configuration for the Logs browser SDK.
@@ -59,7 +58,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
-export interface LogsConfiguration extends Configuration {
+export interface LogsConfiguration extends LogsCoreConfiguration {
   forwardErrorsToLogs: boolean
   forwardConsoleLogs: ConsoleApiName[]
   forwardReports: RawReportType[]

@@ -11,9 +11,7 @@ import {
   startBufferingData,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
-import type { HandlerType } from '../domain/logger'
-import type { StatusType } from '../domain/logger/isAuthorized'
-import { Logger } from '../domain/logger'
+import type { HandlerType, StatusType, Logger } from '@datadog/browser-logs-core'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { StartLogs, StartLogsResult } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
