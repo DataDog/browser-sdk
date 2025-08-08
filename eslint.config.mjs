@@ -50,7 +50,6 @@ export default tseslint.config(
           './test/e2e/tsconfig.json',
           './scripts/tsconfig.json',
           './developer-extension/tsconfig.json',
-          './performances/tsconfig.json',
         ],
         sourceType: 'module',
 

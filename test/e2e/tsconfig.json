@@ -12,8 +12,5 @@
     "types": ["node", "ajv"],
     "allowJs": true,
     "noEmit": true
-  },
-  "ts-node": {
-    "files": true
   }
 }
