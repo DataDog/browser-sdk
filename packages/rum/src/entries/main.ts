@@ -15,6 +15,8 @@ import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
 import { makeProfilerApi } from '../boot/profilerApi'
 
+export { createStreamPlugin } from '@datadog/browser-rum-core'
+
 export type {
   User,
   Account,
