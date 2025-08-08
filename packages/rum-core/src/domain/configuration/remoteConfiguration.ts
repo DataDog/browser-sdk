@@ -164,7 +164,7 @@ function resolveDomValue({
     element = null
     display.error(`Invalid selector in the remote configuration: '${selector}'`)
   }
-  if (element === null) {
+  if (element === null || isForbidden(element, attribute)) {
     return
   }
   const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
@@ -172,6 +172,10 @@ function resolveDomValue({
     return extractValue(extractor, domValue)
   }
   return domValue ?? undefined
+}
+
+function isForbidden(element: Element, attribute: string | undefined) {
+  return element.getAttribute('type') === 'password' && attribute === 'value'
 }
 
 function extractValue(extractor: SerializedRegex, candidate: string) {

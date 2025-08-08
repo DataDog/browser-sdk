@@ -220,24 +220,25 @@ describe('remoteConfiguration', () => {
     })
 
     describe('dom strategy', () => {
+      let sandbox: HTMLDivElement
       beforeEach(() => {
-        const div = document.createElement('div')
-        document.body.appendChild(div)
+        sandbox = document.createElement('div')
+        document.body.appendChild(sandbox)
 
         const span1 = document.createElement('span')
         span1.id = 'version1'
         span1.classList.add('version')
         span1.innerText = 'version-123'
-        div.appendChild(span1)
+        sandbox.appendChild(span1)
 
         const span2 = document.createElement('span')
         span2.id = 'version2'
         span2.classList.add('version')
         span2.setAttribute('data-version', 'version-456')
-        div.appendChild(span2)
+        sandbox.appendChild(span2)
 
         registerCleanupTask(() => {
-          document.body.removeChild(div)
+          document.body.removeChild(sandbox)
         })
       })
 
@@ -296,6 +297,19 @@ describe('remoteConfiguration', () => {
       it('should resolve to undefined if the element attribute is missing', () => {
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version2', attribute: 'missing' } },
+          { version: undefined }
+        )
+      })
+
+      it('should resolve to undefined if trying to access a password input value attribute', () => {
+        const passwordInput = document.createElement('input')
+        passwordInput.id = 'pwd'
+        passwordInput.type = 'password'
+        passwordInput.setAttribute('value', 'foo')
+        sandbox.appendChild(passwordInput)
+
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#pwd', attribute: 'value' } },
           { version: undefined }
         )
       })
