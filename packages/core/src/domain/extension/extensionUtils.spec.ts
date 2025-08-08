@@ -1,4 +1,9 @@
-import { containsExtensionUrl, EXTENSION_PREFIXES, isUnsupportedExtensionEnvironment } from './extensionUtils'
+import {
+  containsExtensionUrl,
+  EXTENSION_PREFIXES,
+  extractExtensionUrlFromStack,
+  isUnsupportedExtensionEnvironment,
+} from './extensionUtils'
 
 describe('containsExtensionUrl', () => {
   it('should return true if string contains an extension URL', () => {
@@ -60,5 +65,20 @@ describe('testIsUnsupportedExtensionEnvironment', () => {
     spyOn(window, 'Error').and.returnValue(mockError)
 
     expect(isUnsupportedExtensionEnvironment('https://example.com')).toBe(true)
+  })
+})
+
+describe('extractExtensionUrlFromStack', () => {
+  it('should extract extension URL from stack trace', () => {
+    const stack = `Error
+    at foo (<anonymous>:549:44)
+    at bar (<anonymous>:701:91)
+    at e.init (chrome-extension://boceobohkgenpcpogecpjlnmnfbdigda/content-script-main.js:1:1009)`
+    expect(extractExtensionUrlFromStack(stack)).toBe('chrome-extension://boceobohkgenpcpogecpjlnmnfbdigda')
+  })
+
+  it('should return undefined when no extension URL found', () => {
+    const stack = 'Error at https://example.com/script.js:10:15'
+    expect(extractExtensionUrlFromStack(stack)).toBeUndefined()
   })
 })
