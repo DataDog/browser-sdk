@@ -17,11 +17,7 @@ export function isUnsupportedExtensionEnvironment(windowLocation: string, stack 
   return !containsExtensionUrl(windowLocation) && containsExtensionUrl(stack || '')
 }
 
-export function extractExtensionUrlFromStack(stack?: string): string | undefined {
-  if (!stack) {
-    return undefined
-  }
-
+export function extractExtensionUrlFromStack(stack: string): string | undefined {
   for (const prefix of EXTENSION_PREFIXES) {
     if (stack.includes(prefix)) {
       const match = stack.match(new RegExp(`${prefix}[^/]+`))
