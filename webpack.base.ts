@@ -1,12 +1,18 @@
-const path = require('path')
-const webpack = require('webpack')
-const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin')
-const TerserPlugin = require('terser-webpack-plugin')
-const { buildEnvKeys, getBuildEnvValue } = require('./scripts/lib/buildEnv.ts')
+import path from 'path'
+import webpack from 'webpack'
+import TsconfigPathsPlugin from 'tsconfig-paths-webpack-plugin'
+import TerserPlugin from 'terser-webpack-plugin'
+import { buildEnvKeys, getBuildEnvValue } from './scripts/lib/buildEnv.ts'
 
-const tsconfigPath = path.join(__dirname, 'tsconfig.webpack.json')
+const tsconfigPath = path.join(import.meta.dirname, 'tsconfig.webpack.json')
 
-module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins }) => ({
+export default ({ entry, mode, filename, plugins,  types, keepBuildEnvVariables }:
+  Pick<webpack.Configuration, 'entry' | 'mode' | 'plugins'> &
+  {
+    filename: string
+    types?: string[]
+    keepBuildEnvVariables?: string[]
+  }) => ({
   entry,
   mode,
   output: {
@@ -86,7 +92,7 @@ module.exports = ({ entry, mode, filename, types, keepBuildEnvVariables, plugins
   ],
 })
 
-function createDefinePlugin({ keepBuildEnvVariables } = {}) {
+export function createDefinePlugin({ keepBuildEnvVariables }: { keepBuildEnvVariables?: string[] } = {}) {
   return new webpack.DefinePlugin(
     Object.fromEntries(
       buildEnvKeys
@@ -99,4 +105,3 @@ function createDefinePlugin({ keepBuildEnvVariables } = {}) {
   )
 }
 
-module.exports.createDefinePlugin = createDefinePlugin
