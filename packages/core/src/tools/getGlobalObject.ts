@@ -29,3 +29,14 @@ export function getGlobalObject<T = typeof globalThis>(): T {
   }
   return globalObject as T
 }
+
+/**
+ * Cached reference to the global object so it can be imported and re-used without
+ * re-evaluating the heavyweight fallback logic in `getGlobalObject()`.
+ *
+ * Using `Window & typeof globalThis` keeps typing mostly compatible with
+ * existing browser code while still compiling in non-DOM environments.
+ */
+
+// eslint-disable-next-line local-rules/disallow-side-effects
+export const globalVar = getGlobalObject<Window & typeof globalThis>()

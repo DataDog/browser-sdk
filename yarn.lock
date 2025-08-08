@@ -246,11 +246,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-logs-core@npm:6.17.0, @datadog/browser-logs-core@workspace:packages/logs-core":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-logs-core@workspace:packages/logs-core"
+  dependencies:
+    "@datadog/browser-core": "npm:6.17.0"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
     "@datadog/browser-core": "npm:6.17.0"
+    "@datadog/browser-logs-core": "npm:6.17.0"
   peerDependencies:
     "@datadog/browser-rum": 6.17.0
   peerDependenciesMeta:
@@ -358,6 +367,20 @@ __metadata:
     webpack: "npm:5.101.0"
     webpack-cli: "npm:^6.0.0"
     webpack-dev-server: "npm:^5.0.4"
+  languageName: unknown
+  linkType: soft
+
+"@datadog/browser-worker-logs@workspace:packages/worker-logs":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-worker-logs@workspace:packages/worker-logs"
+  dependencies:
+    "@datadog/browser-core": "npm:6.17.0"
+    "@datadog/browser-logs-core": "npm:6.17.0"
+  peerDependencies:
+    "@datadog/browser-rum": 6.17.0
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
   languageName: unknown
   linkType: soft
 

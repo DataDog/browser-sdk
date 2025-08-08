@@ -1,8 +1,7 @@
-import type { TrackingConsentState, BufferedObservable, BufferedData } from '@datadog/browser-core'
+import type { BufferedObservable, BufferedData } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
-  willSyntheticsInjectRum,
   canUseEventBridge,
   startAccountContext,
   startGlobalContext,
@@ -11,7 +10,7 @@ import {
   createIdentityEncoder,
   startUserContext,
 } from '@datadog/browser-core'
-import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import { startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { 
@@ -23,15 +22,11 @@ import {
   LifeCycleEventType,
   buildLoggerCollection,
   startLogsBatch,
-  startLogsBridge
+  startLogsBridge,
+  reportError,
+  LogsHooks
 } from '@datadog/browser-logs-core'
-import { startInternalContext } from '../domain/contexts/internalContext'
-import { reportError } from '@datadog/browser-logs-core'
 import type { CommonContext } from '@datadog/browser-logs-core'
-import { LogsHooks } from '@datadog/browser-logs-core'
-import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
-import { startSessionContext } from '../domain/contexts/sessionContext'
-import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -41,18 +36,15 @@ export type StartLogsResult = ReturnType<StartLogs>
 export function startLogs(
   configuration: LogsConfiguration,
   getCommonContext: () => CommonContext,
-
-  // `startLogs` and its subcomponents assume tracking consent is granted initially and starts
-  // collecting logs unconditionally. As such, `startLogs` should be called with a
-  // `trackingConsentState` set to "granted".
-  trackingConsentState: TrackingConsentState,
   bufferedDataObservable: BufferedObservable<BufferedData>
 ) {
   const lifeCycle = new LifeCycle()
-  const hooks = new LogsHooks()
+  const hooks = createHooks()
   const cleanupTasks: Array<() => void> = []
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
+
+  const reportError = startReportError(lifeCycle)
   const pageMayExitObservable = createPageMayExitObservable(configuration)
 
   const telemetry = startTelemetry(
@@ -65,25 +57,19 @@ export function startLogs(
   )
   cleanupTasks.push(telemetry.stop)
 
-  const session =
-    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration, trackingConsentState)
-      : startLogsSessionManagerStub(configuration)
+  const session = startLogsSessionManagerStub(configuration)
 
-  startTrackingConsentContext(hooks, trackingConsentState)
   // Start user and account context first to allow overrides from global context
-  startSessionContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
-  const { stop } = startRUMInternalContext(hooks)
 
   startNetworkErrorCollection(configuration, lifeCycle)
   startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
   bufferedDataObservable.unbuffer()
   startConsoleCollection(configuration, lifeCycle)
   startReportCollection(configuration, lifeCycle)
-  const { handleLog } = buildLoggerCollection(lifeCycle)
+  const { handleLog } = startLoggerCollection(lifeCycle)
 
   startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
 
@@ -100,11 +86,8 @@ export function startLogs(
     startLogsBridge(lifeCycle)
   }
 
-  const internalContext = startInternalContext(session)
-
   return {
     handleLog,
-    getInternalContext: internalContext.get,
     accountContext,
     globalContext,
     userContext,

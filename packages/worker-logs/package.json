@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-logs",
+  "name": "@datadog/browser-worker-logs",
   "version": "6.17.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -28,7 +28,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/logs"
+    "directory": "packages/worker-logs"
   },
   "volta": {
     "extends": "../../package.json"

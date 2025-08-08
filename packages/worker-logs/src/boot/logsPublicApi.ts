@@ -1,21 +1,18 @@
-import type { TrackingConsent, PublicApi, ContextManager, Account, Context, User } from '@datadog/browser-core'
+import type { PublicApi, ContextManager, Account, Context, User } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
   CustomerContextKey,
-  addTelemetryUsage,
   makePublicApi,
   monitor,
   sanitize,
   displayAlreadyInitializedError,
   deepClone,
-  createTrackingConsentState,
   defineContextMethod,
   startBufferingData,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType, StatusType, Logger } from '@datadog/browser-logs-core'
 import { buildCommonContext } from '../domain/contexts/commonContext'
-import type { InternalContext } from '../domain/contexts/internalContext'
 import type { StartLogs, StartLogsResult } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
 
@@ -49,23 +46,6 @@ export interface LogsPublicApi extends PublicApi {
    * @param initConfiguration - Configuration options of the SDK
    */
   init: (initConfiguration: LogsInitConfiguration) => void
-
-  /**
-   * Set the tracking consent of the current user.
-   *
-   * Logs will be sent only if it is set to "granted". This value won't be stored by the library
-   * across page loads: you will need to call this method or set the appropriate `trackingConsent`
-   * field in the init() method at each page load.
-   *
-   * If this method is called before the init() method, the provided value will take precedence
-   * over the one provided as initialization parameter.
-   *
-   * See [User tracking consent](https://docs.datadoghq.com/logs/log_collection/javascript/#user-tracking-consent) for further information.
-   *
-   * @category Tracking Consent
-   * @param trackingConsent - The user tracking consent
-   */
-  setTrackingConsent: (trackingConsent: TrackingConsent) => void
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -241,15 +221,6 @@ export interface LogsPublicApi extends PublicApi {
    * @returns The init configuration
    */
   getInitConfiguration: () => LogsInitConfiguration | undefined
-
-  /**
-   * [Internal API] Get the internal SDK context
-   *
-   * See [Access internal context](https://docs.datadoghq.com/logs/log_collection/javascript/#access-internal-context) for further information.
-   *
-   * @internal
-   */
-  getInternalContext: (startTime?: number) => InternalContext | undefined
 }
 
 export interface Strategy {
@@ -258,29 +229,18 @@ export interface Strategy {
   globalContext: ContextManager
   accountContext: ContextManager
   userContext: ContextManager
-  getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
-  const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
 
-  let strategy = createPreStartStrategy(
-    buildCommonContext,
-    trackingConsentState,
-    (initConfiguration, configuration) => {
-      const startLogsResult = startLogsImpl(
-        configuration,
-        buildCommonContext,
-        trackingConsentState,
-        bufferedDataObservable
-      )
+  let strategy = createPreStartStrategy(buildCommonContext, (initConfiguration, configuration) => {
+    const startLogsResult = startLogsImpl(configuration, buildCommonContext, bufferedDataObservable)
 
-      strategy = createPostStartStrategy(initConfiguration, startLogsResult)
-      return startLogsResult
-    }
-  )
+    strategy = createPostStartStrategy(initConfiguration, startLogsResult)
+    return startLogsResult
+  })
 
   const getStrategy = () => strategy
 
@@ -292,11 +252,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     logger: mainLogger,
 
     init: monitor((initConfiguration) => strategy.init(initConfiguration)),
-
-    setTrackingConsent: monitor((trackingConsent) => {
-      trackingConsentState.update(trackingConsent)
-      addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
-    }),
 
     getGlobalContext: defineContextMethod(
       getStrategy,
@@ -342,8 +297,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     getLogger: monitor((name) => customLoggers[name]),
 
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
-
-    getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
     setUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.setContext),
 

@@ -1,0 +1,7 @@
+*
+!/bundle/**/*.js
+!/cjs/**/*
+!/esm/**/*
+!/src/**/*
+/src/**/*.spec.ts
+/src/**/*.specHelper.ts
