@@ -1,6 +1,6 @@
 import type { Context, ClocksState } from '@datadog/browser-core'
 import { timeStampNow, ErrorSource, getFileFromStackTraceString, initReportObservable } from '@datadog/browser-core'
-import type { LogsCoreConfiguration } from '../configuration.types'
+import type { LogsConfiguration } from '../configuration.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
@@ -13,7 +13,7 @@ export interface ProvidedError {
   handlingStack: string
 }
 
-export function startReportCollection(configuration: LogsCoreConfiguration, lifeCycle: LifeCycle) {
+export function startReportCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   const reportSubscription = initReportObservable(configuration, configuration.forwardReports).subscribe((rawError) => {
     let message = rawError.message
     let error

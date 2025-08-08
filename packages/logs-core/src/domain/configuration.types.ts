@@ -5,7 +5,7 @@ import { objectValues, removeDuplicates, display, ConsoleApiName, RawReportType 
  * Base configuration interface for logs core functionality
  * Contains only the configuration properties needed by core collection logic
  */
-export interface LogsCoreConfiguration extends Configuration {
+export interface LogsConfiguration extends Configuration {
   forwardConsoleLogs: ConsoleApiName[]
   forwardErrorsToLogs: boolean
   forwardReports: RawReportType[]

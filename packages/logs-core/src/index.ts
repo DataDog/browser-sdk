@@ -6,13 +6,10 @@ export type {
   LoggerLogsEventDomainContext,
 } from './types/domainContext.types'
 export type { LogsEvent } from './types/logsEvent.types'
-export type {
-  RawLogsEvent,
-  CommonContext,
-} from './types/rawLogsEvent.types'
+export type { RawLogsEvent, CommonContext } from './types/rawLogsEvent.types'
 
 // Configuration exports
-export type { LogsCoreConfiguration } from './domain/configuration.types'
+export type { LogsConfiguration } from './domain/configuration.types'
 export { resolveForwardConsoleLogs, resolveForwardReports } from './domain/configuration.types'
 export type { LogsSessionManager } from './domain/sessionManager.interface'
 

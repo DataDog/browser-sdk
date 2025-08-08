@@ -13,13 +13,13 @@ import {
   isServerError,
   isIntakeUrl,
 } from '@datadog/browser-core'
-import type { LogsCoreConfiguration } from '../configuration.types'
+import type { LogsConfiguration } from '../configuration.types'
 import type { LifeCycle } from '../lifeCycle'
 import type { LogsEventDomainContext } from '../../types/domainContext.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 
-export function startNetworkErrorCollection(configuration: LogsCoreConfiguration, lifeCycle: LifeCycle) {
+export function startNetworkErrorCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   if (!configuration.forwardErrorsToLogs) {
     return { stop: noop }
   }
@@ -89,7 +89,7 @@ export function startNetworkErrorCollection(configuration: LogsCoreConfiguration
 // as it could be a breaking change.
 export function computeXhrResponseData(
   xhr: XMLHttpRequest,
-  configuration: LogsCoreConfiguration,
+  configuration: LogsConfiguration,
   callback: (responseData: unknown) => void
 ) {
   if (typeof xhr.response === 'string') {
@@ -101,7 +101,7 @@ export function computeXhrResponseData(
 
 export function computeFetchErrorText(
   error: Error,
-  configuration: LogsCoreConfiguration,
+  configuration: LogsConfiguration,
   callback: (errorText: string) => void
 ) {
   callback(truncateResponseText(toStackTraceString(computeStackTrace(error)), configuration))
@@ -109,7 +109,7 @@ export function computeFetchErrorText(
 
 export function computeFetchResponseText(
   response: Response,
-  configuration: LogsCoreConfiguration,
+  configuration: LogsConfiguration,
   callback: (responseText?: string) => void
 ) {
   const clonedResponse = tryToClone(response)
@@ -167,7 +167,7 @@ function isRejected(request: { status: number; responseType?: string }) {
   return request.status === 0 && request.responseType !== 'opaque'
 }
 
-function truncateResponseText(responseText: string, configuration: LogsCoreConfiguration) {
+function truncateResponseText(responseText: string, configuration: LogsConfiguration) {
   if (responseText.length > configuration.requestErrorResponseLengthLimit) {
     return `${responseText.substring(0, configuration.requestErrorResponseLengthLimit)}...`
   }

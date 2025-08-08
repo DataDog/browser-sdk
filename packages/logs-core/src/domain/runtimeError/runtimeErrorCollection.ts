@@ -1,6 +1,6 @@
 import type { Context, ClocksState, Observable, BufferedData } from '@datadog/browser-core'
 import { noop, ErrorSource, BufferedDataType } from '@datadog/browser-core'
-import type { LogsCoreConfiguration } from '../configuration.types'
+import type { LogsConfiguration } from '../configuration.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
@@ -14,7 +14,7 @@ export interface ProvidedError {
 }
 
 export function startRuntimeErrorCollection(
-  configuration: LogsCoreConfiguration,
+  configuration: LogsConfiguration,
   lifeCycle: LifeCycle,
   bufferedDataObservable: Observable<BufferedData>
 ) {

@@ -5,7 +5,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { StatusType } from '../logger/isAuthorized'
 import type { RawLogsEvent } from '../../types/rawLogsEvent.types'
 import { createErrorFieldFromRawError } from '../createErrorFieldFromRawError'
-import type { LogsCoreConfiguration } from '../configuration.types'
+import type { LogsConfiguration } from '../configuration.types'
 
 export interface ProvidedError {
   startClocks: ClocksState
@@ -21,7 +21,7 @@ export const LogStatusForApi = {
   [ConsoleApiName.warn]: StatusType.warn,
   [ConsoleApiName.error]: StatusType.error,
 }
-export function startConsoleCollection(configuration: LogsCoreConfiguration, lifeCycle: LifeCycle) {
+export function startConsoleCollection(configuration: LogsConfiguration, lifeCycle: LifeCycle) {
   const consoleSubscription = initConsoleObservable(configuration.forwardConsoleLogs).subscribe((log: ConsoleLog) => {
     const collectedData: RawLogsEventCollectedData<RawLogsEvent> = {
       rawLogsEvent: {
