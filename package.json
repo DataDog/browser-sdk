@@ -85,7 +85,6 @@
     "swc-loader": "0.2.6",
     "terser-webpack-plugin": "5.3.14",
     "ts-loader": "9.5.2",
-    "ts-node": "10.9.2",
     "tsconfig-paths-webpack-plugin": "4.2.0",
     "typedoc": "0.28.9",
     "typescript": "5.9.2",
