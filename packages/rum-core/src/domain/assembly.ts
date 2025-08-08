@@ -86,6 +86,11 @@ export function startRumAssembly(
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
+    [RumEventType.STREAM]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
   }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
@@ -109,7 +114,7 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-        eventType: rawRumEvent.type,
+        eventType: rawRumEvent.type === 'stream' ? 'view' : rawRumEvent.type,
         startTime,
         duration,
       })!
@@ -126,6 +131,11 @@ export function startRumAssembly(
         if (isEmptyObject(serverRumEvent.context!)) {
           delete serverRumEvent.context
         }
+
+        if (rawRumEvent.type === 'stream') {
+          serverRumEvent.type = 'view'
+        }
+
         lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
       }
     }

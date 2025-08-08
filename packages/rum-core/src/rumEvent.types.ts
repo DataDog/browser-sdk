@@ -826,7 +826,8 @@ export type RumResourceEvent = CommonProperties &
  * Schema of all properties of a View event
  */
 export type RumViewEvent = CommonProperties &
-  ViewContainerSchema & {
+  ViewContainerSchema &
+  StreamSchema & {
     /**
      * RUM event type
      */
@@ -1239,7 +1240,7 @@ export type RumVitalEvent = CommonProperties &
       /**
        * Type of the vital
        */
-      readonly type: 'duration' | 'operation_step'
+      readonly type: 'duration' | 'step'
       /**
        * UUID of the vital
        */
@@ -1247,7 +1248,7 @@ export type RumVitalEvent = CommonProperties &
       /**
        * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
        */
-      readonly operation_key?: string
+      readonly parent_id?: string
       /**
        * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
        */
@@ -1644,6 +1645,16 @@ export interface CommonProperties {
   context?: {
     [k: string]: unknown
   }
+  /**
+   * Stream properties
+   */
+  stream?: {
+    /**
+     * UUID of the stream
+     */
+    readonly id: string
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**
@@ -1725,6 +1736,46 @@ export interface ProfilingInternalContextSchema {
     | 'failed-to-lazy-load'
     | 'missing-document-policy-header'
     | 'unexpected-exception'
+  [k: string]: unknown
+}
+/**
+ * Stream schema for media streaming properties
+ */
+export interface StreamSchema {
+  /**
+   * Stream properties
+   */
+  readonly stream?: {
+    /**
+     * current bitrate at the time of collection
+     */
+    bitrate?: number
+    /**
+     * How long is the content (VOD only)
+     */
+    readonly duration?: number
+    /**
+     * Stream format
+     */
+    readonly format?: string
+    /**
+     * current frames per second at the time of collection
+     */
+    fps?: number
+    /**
+     * Stream resolution
+     */
+    readonly resolution?: string
+    /**
+     * current timestamp at the time of collection
+     */
+    timestamp?: number
+    /**
+     * how much did the media progress since the last context update
+     */
+    watch_time?: number
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**
