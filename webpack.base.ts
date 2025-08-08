@@ -6,13 +6,18 @@ import { buildEnvKeys, getBuildEnvValue } from './scripts/lib/buildEnv.ts'
 
 const tsconfigPath = path.join(import.meta.dirname, 'tsconfig.webpack.json')
 
-export default ({ entry, mode, filename, plugins,  types, keepBuildEnvVariables }:
-  Pick<webpack.Configuration, 'entry' | 'mode' | 'plugins'> &
-  {
-    filename: string
-    types?: string[]
-    keepBuildEnvVariables?: string[]
-  }) => ({
+export default ({
+  entry,
+  mode,
+  filename,
+  plugins,
+  types,
+  keepBuildEnvVariables,
+}: Pick<webpack.Configuration, 'entry' | 'mode' | 'plugins'> & {
+  filename: string
+  types?: string[]
+  keepBuildEnvVariables?: string[]
+}) => ({
   entry,
   mode,
   output: {
@@ -104,4 +109,3 @@ export function createDefinePlugin({ keepBuildEnvVariables }: { keepBuildEnvVari
     )
   )
 }
-

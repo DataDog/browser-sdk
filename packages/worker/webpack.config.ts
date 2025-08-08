@@ -8,4 +8,3 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
     entry: path.resolve(import.meta.dirname, 'src/entries/main.ts'),
     filename: 'worker.js',
   })
-

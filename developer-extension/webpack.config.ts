@@ -1,12 +1,10 @@
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import WebextensionPlugin from '@webextension-toolbox/webpack-webextension-plugin'
+import { WebextensionPlugin } from '@webextension-toolbox/webpack-webextension-plugin'
 import CopyPlugin from 'copy-webpack-plugin'
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin'
-import type webpack from 'webpack'
-
-// Keep CommonJS import for compatibility with current export style in webpack.base
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { createDefinePlugin } = require('../webpack.base') as { createDefinePlugin: (opts?: { keepBuildEnvVariables?: string[] }) => webpack.WebpackPluginInstance }
+import webpack from 'webpack'
+import fs from 'fs'
+import { createDefinePlugin } from '../webpack.base.ts'
 
 export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) => {
   const isDevelopment = argv.mode === 'development'
@@ -36,8 +34,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
               to: 'manifest.json',
               transform(content: Buffer) {
                 const manifest = JSON.parse(content.toString())
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
-                const packageJson = require('./package.json')
+                const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'))
 
                 manifest.version = packageJson.version
                 manifest.version_name = packageJson.version
@@ -89,7 +86,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
         new HtmlWebpackPlugin({
           filename: 'panel.html',
           inject: false,
-          templateContent: ({ isDevelopment }: { isDevelopment: boolean }) => `
+          templateContent: () => `
             <!doctype html>
             <html>
             <head>
@@ -110,7 +107,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
           templateParameters: { isDevelopment },
         }),
         createDefinePlugin(),
-        ...(isDevelopment ? [new (require('webpack').HotModuleReplacementPlugin)(), new ReactRefreshWebpackPlugin()] : []),
+        ...(isDevelopment ? [new webpack.HotModuleReplacementPlugin(), new ReactRefreshWebpackPlugin()] : []),
       ],
     }),
     baseConfig({
@@ -153,7 +150,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
     output?: webpack.Configuration['output']
     plugins?: webpack.Configuration['plugins']
     devServer?: any
-  }): webpack.Configuration {
+  }): webpack.Configuration & { devServer?: any } {
     return {
       name,
       entry,
@@ -170,8 +167,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
               onlyCompileBundledFiles: true,
               ...(isDevelopment && {
                 getCustomTransformers: () => ({
-                  // eslint-disable-next-line @typescript-eslint/no-var-requires
-                  before: [require('react-refresh-typescript').default()],
+                  before: [new ReactRefreshWebpackPlugin()],
                 }),
                 transpileOnly: true,
               }),
@@ -204,12 +200,10 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
 }
 
 function getVersion() {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const version = require('./package.json').version as string
+  const version = JSON.parse(fs.readFileSync('./package.json', 'utf8')).version
 
   return {
     version: version.replace(/-(alpha|beta)/, ''),
     version_name: version,
   }
 }
-
