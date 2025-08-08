@@ -2,6 +2,7 @@ import type { createContextManager } from '@datadog/browser-core'
 import { display, buildEndpointHost, mapValues, getCookie } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption } from './remoteConfiguration.types'
+import { parseJsonPath } from './jsonPathParser'
 
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
@@ -129,34 +130,33 @@ function resolveContextProperty(
 
 function resolveDynamicOption(property: DynamicOption) {
   const strategy = property.strategy
+  let resolvedValue: unknown
   switch (strategy) {
     case 'cookie':
-      return resolveCookieValue(property)
+      resolvedValue = resolveCookieValue(property)
+      break
     case 'dom':
-      return resolveDomValue(property)
+      resolvedValue = resolveDomValue(property)
+      break
+    case 'js':
+      resolvedValue = resolveJsValue(property)
+      break
     default:
       display.error(`Unsupported remote configuration: "strategy": "${strategy as string}"`)
       return
   }
-}
-
-function resolveCookieValue({ name, extractor }: { name: string; extractor?: SerializedRegex }) {
-  const cookieValue = getCookie(name)
-  if (extractor !== undefined && cookieValue !== undefined) {
-    return extractValue(extractor, cookieValue)
+  const extractor = property.extractor
+  if (extractor !== undefined && typeof resolvedValue === 'string') {
+    return extractValue(extractor, resolvedValue)
   }
-  return cookieValue
+  return resolvedValue
 }
 
-function resolveDomValue({
-  selector,
-  attribute,
-  extractor,
-}: {
-  selector: string
-  attribute?: string
-  extractor?: SerializedRegex
-}) {
+function resolveCookieValue({ name }: { name: string }) {
+  return getCookie(name)
+}
+
+function resolveDomValue({ selector, attribute }: { selector: string; attribute?: string }) {
   let element: Element | null
   try {
     element = document.querySelector(selector)
@@ -168,10 +168,30 @@ function resolveDomValue({
     return
   }
   const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
-  if (extractor !== undefined && domValue !== null) {
-    return extractValue(extractor, domValue)
-  }
   return domValue ?? undefined
+}
+
+function resolveJsValue({ path }: { path: string }): unknown {
+  let current = window as unknown as { [key: string]: unknown }
+
+  const pathParts = parseJsonPath(path)
+  if (pathParts.length === 0) {
+    display.error(`Invalid JSON path in the remote configuration: '${path}'`)
+    return
+  }
+  for (const pathPart of pathParts) {
+    if (!(pathPart in current)) {
+      return
+    }
+    try {
+      current = current[pathPart] as { [key: string]: unknown }
+    } catch (e) {
+      display.error(`Error when accessing to: '${path}'`, e)
+      return
+    }
+  }
+
+  return current as unknown
 }
 
 function extractValue(extractor: SerializedRegex, candidate: string) {
