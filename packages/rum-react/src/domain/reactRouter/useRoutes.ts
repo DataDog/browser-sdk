@@ -13,7 +13,8 @@ export function wrapUseRoutes<T extends AnyUseRoute<any>>({
 }): T {
   return ((routes, locationArg) => {
     const location = useLocation()
-    const pathname = typeof locationArg === 'string' ? locationArg : locationArg?.pathname || location.pathname
+    const pathname =
+      typeof locationArg === 'string' ? locationArg : (locationArg && locationArg.pathname) || location.pathname
     const pathnameRef = useRef<string | null>(null)
 
     if (pathnameRef.current !== pathname) {

@@ -107,7 +107,9 @@ export function processSessionStoreOperations(
   }
   // call after even if session is not persisted in order to perform operations on
   // up-to-date session state value => the value could have been modified by another tab
-  operations.after?.(processedSession || currentStore.session)
+  if (operations.after) {
+    operations.after(processedSession || currentStore.session)
+  }
   next(sessionStoreStrategy)
 }
 
