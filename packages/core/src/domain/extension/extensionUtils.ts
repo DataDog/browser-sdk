@@ -11,10 +11,10 @@ export function containsExtensionUrl(str: string): boolean {
  * @param stack - The error stack to check for extension URLs
  * @returns true if running in an unsupported browser extension environment
  */
-export function isUnsupportedExtensionEnvironment(windowLocation: string, errorStack: string = '') {
+export function isUnsupportedExtensionEnvironment(windowLocation: string, stack: string = '') {
   // If we're on a regular web page but the error stack shows extension URLs,
   // then an extension is injecting RUM.
-  return !containsExtensionUrl(windowLocation) && containsExtensionUrl(errorStack)
+  return !containsExtensionUrl(windowLocation) && containsExtensionUrl(stack)
 }
 
 export function extractExtensionUrlFromStack(stack: string = ''): string | undefined {
