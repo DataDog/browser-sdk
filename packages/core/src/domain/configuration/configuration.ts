@@ -219,16 +219,22 @@ export interface InitConfiguration {
 
   /**
    * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
    */
   source?: 'browser' | 'flutter' | undefined
 
   /**
    * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
    */
   sdkVersion?: string | undefined
 
   /**
    * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
    */
   variant?: string | undefined
 }
