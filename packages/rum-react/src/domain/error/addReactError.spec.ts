@@ -39,4 +39,43 @@ describe('addReactError', () => {
       }
     )
   })
+
+  it('include dd_context if exists', () => {
+    const addEventSpy = jasmine.createSpy()
+    initializeReactPlugin({
+      addEvent: addEventSpy,
+    })
+    const originalError = new Error('error message')
+    originalError.name = 'CustomError'
+    ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
+
+    addReactError(originalError, { componentStack: 'at ComponentSpy toto.js' })
+
+    expect(addEventSpy).toHaveBeenCalledOnceWith(
+      jasmine.any(Number),
+      {
+        type: RumEventType.ERROR,
+        date: jasmine.any(Number),
+        error: jasmine.objectContaining({
+          id: jasmine.any(String),
+          type: originalError.name,
+          message: originalError.message,
+          stack: toStackTraceString(computeStackTrace(originalError)),
+          handling_stack: jasmine.any(String),
+          component_stack: jasmine.stringContaining('at ComponentSpy'),
+          source_type: 'browser',
+          handling: 'handled',
+        }),
+        context: {
+          framework: 'react',
+          component: 'Menu',
+          param: 123,
+        },
+      },
+      {
+        error: originalError,
+        handlingStack: jasmine.any(String),
+      }
+    )
+  })
 })
