@@ -1239,15 +1239,15 @@ export type RumVitalEvent = CommonProperties &
       /**
        * Type of the vital
        */
-      readonly type: 'duration' | 'step'
+      readonly type: 'duration' | 'operation_step'
       /**
        * UUID of the vital
        */
       readonly id: string
       /**
-       * UUID for linking the step vital to the parent event, if applicable
+       * UUID for distinguishing the active operations in parallel, if applicable
        */
-      readonly parent_id?: string
+      readonly operation_key?: string
       /**
        * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
        */
