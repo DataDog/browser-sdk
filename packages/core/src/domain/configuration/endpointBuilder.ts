@@ -87,7 +87,7 @@ function buildEndpointParameters(
   { retry, encoding }: Payload
 ) {
   const parameters = [
-    `ddsource=${source}`,
+    `ddsource=${source === 'flutter' ? 'flutter' : 'browser'}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
