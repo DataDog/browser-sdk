@@ -128,12 +128,17 @@ export function createRumProfiler(
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-      // Note: `view.name` is only filled when users use manual view creation via `startView` method.
-      collectViewEntry({
+      const viewEntry = {
         viewId: view.id,
+        // Note: `viewName` is only filled when users use manual view creation via `startView` method.
         viewName: getCustomOrDefaultViewName(view.name, document.location.pathname),
         startClocks: view.startClocks,
-      })
+      }
+
+      collectViewEntry(viewEntry)
+
+      // Update last view entry
+      lastViewEntry = viewEntry
     })
     cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
