@@ -1,6 +1,7 @@
 import { safeTruncate } from '@datadog/browser-core'
-import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
+import { getNodeSelfPrivacyLevel, NodePrivacyLevel, shouldMaskNode } from '../privacy'
 import type { RumConfiguration } from '../configuration'
+import { isElementNode } from '../../browser/htmlDomUtils'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -23,7 +24,7 @@ interface ActionName {
 export function getActionNameFromElement(
   element: Element,
   { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
-  nodePrivacyLevel?: NodePrivacyLevel
+  nodePrivacyLevel: NodePrivacyLevel = NodePrivacyLevel.ALLOW
 ): ActionName {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
@@ -47,13 +48,15 @@ export function getActionNameFromElement(
       element,
       userProgrammaticAttribute,
       priorityStrategies,
-      enablePrivacyForActionName
+      enablePrivacyForActionName,
+      nodePrivacyLevel
     ) ||
     getActionNameFromElementForStrategies(
       element,
       userProgrammaticAttribute,
       fallbackStrategies,
-      enablePrivacyForActionName
+      enablePrivacyForActionName,
+      nodePrivacyLevel
     ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
 }
@@ -73,14 +76,20 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, userProgrammaticAttribute) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) => {
     if ('labels' in element && element.labels && element.labels.length > 0) {
-      return getActionNameFromTextualContent(element.labels[0], userProgrammaticAttribute)
+      return getActionNameFromTextualContent(
+        element.labels[0],
+        userProgrammaticAttribute,
+        privacyEnabledActionName,
+        nodePrivacyLevel
+      )
     }
   },
   // INPUT button (and associated) value
@@ -94,14 +103,19 @@ const priorityStrategies: NameStrategy[] = [
     }
   },
   // BUTTON, LABEL or button-like element text
-  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
-      return getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
+      return getActionNameFromTextualContent(
+        element,
+        userProgrammaticAttribute,
+        privacyEnabledActionName,
+        nodePrivacyLevel
+      )
     }
   },
   (element) => getActionNameFromStandardAttribute(element, 'aria-label'),
   // associated element text designated by the aria-labelledby attribute
-  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       return {
@@ -109,7 +123,9 @@ const priorityStrategies: NameStrategy[] = [
           .split(/\s+/)
           .map((id) => getElementById(element, id))
           .filter((label): label is HTMLElement => Boolean(label))
-          .map((element) => getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName))
+          .map((element) =>
+            getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel)
+          )
           .join(' '),
         nameSource: ActionNameSource.TEXT_CONTENT,
       }
@@ -120,16 +136,21 @@ const priorityStrategies: NameStrategy[] = [
   (element) => getActionNameFromStandardAttribute(element, 'title'),
   (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
   // SELECT first OPTION text
-  (element, userProgrammaticAttribute) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) => {
     if ('options' in element && element.options.length > 0) {
-      return getActionNameFromTextualContent(element.options[0], userProgrammaticAttribute)
+      return getActionNameFromTextualContent(
+        element.options[0],
+        userProgrammaticAttribute,
+        privacyEnabledActionName,
+        nodePrivacyLevel
+      )
     }
   },
 ]
 
 const fallbackStrategies: NameStrategy[] = [
-  (element, userProgrammaticAttribute, privacyEnabledActionName) =>
-    getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName),
+  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) =>
+    getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel),
 ]
 
 /**
@@ -141,7 +162,8 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
-  privacyEnabledActionName?: boolean
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -153,7 +175,7 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
+      const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel)
       if (actionName) {
         const { name, nameSource } = actionName
         const trimmedName = name && name.trim()
@@ -196,55 +218,90 @@ function getActionNameFromStandardAttribute(element: Element | HTMLElement, attr
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
 ): ActionName {
   return {
-    name: getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName) || '',
+    name: getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) || '',
     nameSource: ActionNameSource.TEXT_CONTENT,
   }
 }
 
 function getTextualContent(
-  element: Element | HTMLElement,
+  element: Element,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
 ) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
 
-  if ('innerText' in element) {
-    let text = element.innerText
-
-    const removeTextFromElements = (query: string) => {
-      const list = element.querySelectorAll<Element | HTMLElement>(query)
-      for (let index = 0; index < list.length; index += 1) {
-        const element = list[index]
-        if ('innerText' in element) {
-          const textToReplace = element.innerText
-          if (textToReplace && textToReplace.trim().length > 0) {
-            text = text.replace(textToReplace, '')
-          }
-        }
+  const rejectInvisibleOrMaskedElementsFilter = (node: Node) => {
+    if (isElementNode(node)) {
+      if (
+        node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
+        (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
+        (privacyEnabledActionName && shouldMaskNode(node, getNodeSelfPrivacyLevel(node) || nodePrivacyLevel))
+      ) {
+        return NodeFilter.FILTER_REJECT
+      }
+      const style = getComputedStyle(node)
+      if (
+        style.visibility !== 'visible' ||
+        style.display === 'none' ||
+        (style.contentVisibility && style.contentVisibility !== 'visible')
+        // contentVisibility is not supported in all browsers, so we need to check it
+      ) {
+        return NodeFilter.FILTER_REJECT
       }
     }
-
-    // remove the text of elements with programmatic attribute value
-    removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`)
-
-    if (userProgrammaticAttribute) {
-      removeTextFromElements(`[${userProgrammaticAttribute}]`)
-    }
-
-    if (privacyEnabledActionName) {
-      // remove the text of elements with privacy override
-      removeTextFromElements(
-        `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
-      )
-    }
-
-    return text
+    return NodeFilter.FILTER_ACCEPT
   }
 
-  return element.textContent
+  const walker = document.createTreeWalker(
+    element,
+    // eslint-disable-next-line no-bitwise
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    rejectInvisibleOrMaskedElementsFilter
+  )
+
+  let text = ''
+  let lastSubstringEndedWithWhiteSpace = false
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode
+    if (isElementNode(node)) {
+      if (
+        node.nodeName === 'BR' ||
+        node.nodeName === 'P' ||
+        ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].includes(getComputedStyle(node).display)
+      ) {
+        lastSubstringEndedWithWhiteSpace = true
+      }
+      continue // skip element nodes
+    }
+
+    const nodeText = node.textContent || ''
+
+    const startsWithWhiteSpace = /^\s/.test(nodeText)
+    const endsWithWhiteSpace = /\s$/.test(nodeText)
+
+    const trimmedNodeText = nodeText.trim()
+    if (trimmedNodeText.length === 0) {
+      if (startsWithWhiteSpace || endsWithWhiteSpace) {
+        lastSubstringEndedWithWhiteSpace = true
+      }
+      continue // skip empty nodes
+    }
+
+    if (startsWithWhiteSpace || lastSubstringEndedWithWhiteSpace) {
+      text += ' '
+    }
+
+    text += trimmedNodeText
+    lastSubstringEndedWithWhiteSpace = endsWithWhiteSpace
+  }
+
+  return text
 }
