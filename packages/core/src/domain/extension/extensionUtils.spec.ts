@@ -18,7 +18,7 @@ describe('containsExtensionUrl', () => {
   })
 })
 
-describe('testIsUnsupportedExtensionEnvironment', () => {
+describe('isUnsupportedExtensionEnvironment', () => {
   it('should return true when window location is a regular URL and error stack contains extension URL', () => {
     expect(
       isUnsupportedExtensionEnvironment('https://example.com', 'Error: at chrome-extension://abcdefg/content.js:10:15')
@@ -51,20 +51,14 @@ describe('testIsUnsupportedExtensionEnvironment', () => {
     })
   })
 
-  it('should handle case when Error.stack is undefined', () => {
-    const mockError = new Error()
-    mockError.stack = undefined
-    spyOn(window, 'Error').and.returnValue(mockError)
-
+  it('should handle case when stack trace is undefined', () => {
     expect(isUnsupportedExtensionEnvironment('https://example.com')).toBe(false)
   })
 
   it('should handle extension stack trace', () => {
-    const mockError = new Error()
-    mockError.stack = 'Error: at chrome-extension://abcdefg/content.js:10:15'
-    spyOn(window, 'Error').and.returnValue(mockError)
-
-    expect(isUnsupportedExtensionEnvironment('https://example.com')).toBe(true)
+    expect(
+      isUnsupportedExtensionEnvironment('https://example.com', 'Error: at chrome-extension://abcdefg/content.js:10:15')
+    ).toBe(true)
   })
 })
 
