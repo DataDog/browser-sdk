@@ -1,5 +1,5 @@
-import { safeTruncate } from '@datadog/browser-core'
-import { getNodeSelfPrivacyLevel, NodePrivacyLevel, shouldMaskNode } from '../privacy'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
+import { getNodeSelfPrivacyLevel, getPrivacySelector, NodePrivacyLevel, shouldMaskNode } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 import { isElementNode } from '../../browser/htmlDomUtils'
 
@@ -237,6 +237,57 @@ function getTextualContent(
     return
   }
 
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
+    return getTextualContentWithTreeWalker(
+      element,
+      userProgrammaticAttribute,
+      privacyEnabledActionName,
+      nodePrivacyLevel
+    )
+  }
+
+  if ('innerText' in element) {
+    let text = (element as HTMLElement).innerText
+
+    const removeTextFromElements = (query: string) => {
+      const list = element.querySelectorAll<Element | HTMLElement>(query)
+      for (let index = 0; index < list.length; index += 1) {
+        const element = list[index]
+        if ('innerText' in element) {
+          const textToReplace = element.innerText
+          if (textToReplace && textToReplace.trim().length > 0) {
+            text = text.replace(textToReplace, '')
+          }
+        }
+      }
+    }
+
+    // remove the text of elements with programmatic attribute value
+    removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`)
+
+    if (userProgrammaticAttribute) {
+      removeTextFromElements(`[${userProgrammaticAttribute}]`)
+    }
+
+    if (privacyEnabledActionName) {
+      // remove the text of elements with privacy override
+      removeTextFromElements(
+        `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
+      )
+    }
+
+    return text
+  }
+
+  return element.textContent
+}
+
+function getTextualContentWithTreeWalker(
+  element: Element,
+  userProgrammaticAttribute: string | undefined,
+  privacyEnabledActionName: boolean,
+  nodePrivacyLevel: NodePrivacyLevel
+) {
   const rejectInvisibleOrMaskedElementsFilter = (node: Node) => {
     if (isElementNode(node)) {
       if (

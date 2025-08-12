@@ -17,6 +17,7 @@ export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   WATCH_COOKIE_WITHOUT_LOCK = 'watch_cookie_without_lock',
+  USE_TREE_WALKER_FOR_ACTION_NAME = 'use_tree_walker_for_action_name',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
