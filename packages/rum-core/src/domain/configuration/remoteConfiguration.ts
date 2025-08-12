@@ -26,13 +26,9 @@ const SUPPORTED_FIELDS: Array<keyof RumInitConfiguration> = [
 type SerializedRegex = { rcSerializedType: 'regex'; value: string }
 type SerializedOption = { rcSerializedType: 'string'; value: string } | SerializedRegex | DynamicOption
 
-const enum SupportedContexts {
-  user = 'user',
-  context = 'context',
-}
-
-type SupportedContextManagers = {
-  [key in SupportedContexts]: ReturnType<typeof createContextManager>
+interface SupportedContextManagers {
+  user: ReturnType<typeof createContextManager>
+  context: ReturnType<typeof createContextManager>
 }
 
 export async function fetchAndApplyRemoteConfiguration(
@@ -111,7 +107,7 @@ function resolveRegex(pattern: string): RegExp | undefined {
 
 function resolveContextProperty(
   contextManager: ReturnType<typeof createContextManager>,
-  contextConfiguration: RumRemoteConfiguration[SupportedContexts] & { [key: string]: unknown }
+  contextConfiguration: RumRemoteConfiguration[keyof SupportedContextManagers] & { [key: string]: unknown }
 ) {
   Object.keys(contextConfiguration).forEach((key) => {
     if (key === 'additionals') {
