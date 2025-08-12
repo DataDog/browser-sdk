@@ -46,7 +46,9 @@ export function deleteCookie(name: string, options?: CookieOptions) {
 }
 
 export function areCookiesAuthorized(options: CookieOptions): boolean {
-  if (document.cookie === undefined || document.cookie === null) {
+  const isSW = typeof self !== 'undefined' && 'serviceWorker' in self
+
+  if (isSW || document.cookie === undefined || document.cookie === null) {
     return false
   }
   try {

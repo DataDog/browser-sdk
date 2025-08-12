@@ -280,6 +280,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
       )
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)
+      console.log('>>>', { strategy })
       return startLogsResult
     }
   )
