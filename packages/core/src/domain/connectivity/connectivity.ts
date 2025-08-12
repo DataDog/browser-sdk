@@ -19,7 +19,8 @@ export interface Connectivity {
 }
 
 export function getConnectivity(): Connectivity {
-  const navigator = window.navigator as BrowserNavigator
+  const container = typeof self !== 'undefined' ? self : window
+  const navigator = container.navigator as BrowserNavigator
   return {
     status: navigator.onLine ? 'connected' : 'not_connected',
     interfaces: navigator.connection && navigator.connection.type ? [navigator.connection.type] : undefined,
