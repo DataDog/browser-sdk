@@ -18,6 +18,22 @@
 
 ---
 
+## v6.18.0
+
+**Public Changes:**
+
+- ✨[RUM-10960][Remote config] add support for new static fields ([#3731](https://github.com/DataDog/browser-sdk/pull/3731)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM-REACT] Fix react V7 import and add E2E test ([#3758](https://github.com/DataDog/browser-sdk/pull/3758)) [RUM-REACT]
+- 🐛 [RUM Profiler] Fix discrepancy on view-id correlation ([#3776](https://github.com/DataDog/browser-sdk/pull/3776)) [RUM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3771](https://github.com/DataDog/browser-sdk/pull/3771)) [RUM-REACT]
+- 👷 remove watch_cookie_without_lock experimental feature flag ([#3773](https://github.com/DataDog/browser-sdk/pull/3773)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Bump chrome to 139.0.7258.66-1 ([#3764](https://github.com/DataDog/browser-sdk/pull/3764))
+- 👷 Update all non-major dependencies ([#3753](https://github.com/DataDog/browser-sdk/pull/3753)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🔊 Add Url Extension Telemetry ([#3768](https://github.com/DataDog/browser-sdk/pull/3768)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.17.0
 
 **Public Changes:**
