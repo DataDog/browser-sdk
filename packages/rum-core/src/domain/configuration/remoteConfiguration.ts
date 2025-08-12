@@ -26,13 +26,13 @@ const SUPPORTED_FIELDS: Array<keyof RumInitConfiguration> = [
 type SerializedRegex = { rcSerializedType: 'regex'; value: string }
 type SerializedOption = { rcSerializedType: 'string'; value: string } | SerializedRegex | DynamicOption
 
-const SUPPORTED_CONTEXTS = ['user', 'context']
-type SupportedContexts = 'user' | 'context'
+const enum SupportedContexts {
+  user = 'user',
+  context = 'context',
+}
 
-interface SupportedContextManagers {
-  user: ReturnType<typeof createContextManager>
-  context: ReturnType<typeof createContextManager>
-  [key: string]: ReturnType<typeof createContextManager>
+type SupportedContextManagers = {
+  [key in SupportedContexts]: ReturnType<typeof createContextManager>
 }
 
 export async function fetchAndApplyRemoteConfiguration(
@@ -61,12 +61,9 @@ export function applyRemoteConfiguration(
       appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
     }
   })
-  SUPPORTED_CONTEXTS.forEach((context) => {
-    if (context in rumRemoteConfiguration && rumRemoteConfiguration[context] !== undefined) {
-      resolveContextProperty(
-        supportedContextManagers[context],
-        rumRemoteConfiguration[context] as Exclude<RumRemoteConfiguration[SupportedContexts], undefined>
-      )
+  ;(Object.keys(supportedContextManagers) as Array<keyof SupportedContextManagers>).forEach((context) => {
+    if (rumRemoteConfiguration[context] !== undefined) {
+      resolveContextProperty(supportedContextManagers[context], rumRemoteConfiguration[context])
     }
   })
   return appliedConfiguration
