@@ -50,6 +50,7 @@ export function callMonitored<T extends (...args: any[]) => any>(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return fn.apply(context, args)
   } catch (e) {
+    console.log('>>>ERROR', e)
     monitorError(e)
   }
 }
