@@ -196,6 +196,8 @@ function declareTestsForSetups(
     })
   } else if (setups.length === 1) {
     declareTest(title, setupOptions, setups[0].factory, runner)
+  } else {
+    console.warn('no setup available for', title)
   }
 }
 
