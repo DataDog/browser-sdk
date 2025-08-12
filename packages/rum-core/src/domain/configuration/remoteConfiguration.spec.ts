@@ -8,6 +8,7 @@ import {
   createContextManager,
 } from '@datadog/browser-core'
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
+import { appendElement } from '../../../test'
 import type { RumInitConfiguration } from './configuration'
 import type { RumRemoteConfiguration } from './remoteConfiguration'
 import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
@@ -195,15 +196,9 @@ describe('remoteConfiguration', () => {
     describe('cookie strategy', () => {
       const COOKIE_NAME = 'unit_rc'
 
-      beforeEach(() => {
-        setCookie(COOKIE_NAME, 'my-version', ONE_MINUTE)
-      })
-
-      afterEach(() => {
-        deleteCookie(COOKIE_NAME)
-      })
-
       it('should resolve a configuration value from a cookie', () => {
+        setCookie(COOKIE_NAME, 'my-version', ONE_MINUTE)
+        registerCleanupTask(() => deleteCookie(COOKIE_NAME))
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
           { version: 'my-version' }
@@ -211,7 +206,6 @@ describe('remoteConfiguration', () => {
       })
 
       it('should resolve to undefined if the cookie is missing', () => {
-        deleteCookie(COOKIE_NAME)
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
           { version: undefined }
@@ -220,26 +214,11 @@ describe('remoteConfiguration', () => {
     })
 
     describe('dom strategy', () => {
-      let sandbox: HTMLDivElement
       beforeEach(() => {
-        sandbox = document.createElement('div')
-        document.body.appendChild(sandbox)
-
-        const span1 = document.createElement('span')
-        span1.id = 'version1'
-        span1.classList.add('version')
-        span1.innerText = 'version-123'
-        sandbox.appendChild(span1)
-
-        const span2 = document.createElement('span')
-        span2.id = 'version2'
-        span2.classList.add('version')
-        span2.setAttribute('data-version', 'version-456')
-        sandbox.appendChild(span2)
-
-        registerCleanupTask(() => {
-          document.body.removeChild(sandbox)
-        })
+        appendElement(`<div>
+            <span id="version1" class="version">version-123</span>
+            <span id="version2" class="version" data-version="version-456"></span>
+          </div>`)
       })
 
       it('should resolve a configuration value from an element text content', () => {
@@ -302,12 +281,7 @@ describe('remoteConfiguration', () => {
       })
 
       it('should resolve to undefined if trying to access a password input value attribute', () => {
-        const passwordInput = document.createElement('input')
-        passwordInput.id = 'pwd'
-        passwordInput.type = 'password'
-        passwordInput.setAttribute('value', 'foo')
-        sandbox.appendChild(passwordInput)
-
+        appendElement('<input id="pwd" type="password" value="foo" />')
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#pwd', attribute: 'value' } },
           { version: undefined }
