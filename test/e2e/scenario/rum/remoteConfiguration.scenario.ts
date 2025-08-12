@@ -1,5 +1,8 @@
+import type { Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
+
+const RC_APP_ID = 'e2e'
 
 test.describe('remote configuration', () => {
   createTest('should be fetched and applied')
@@ -8,9 +11,10 @@ test.describe('remote configuration', () => {
       remoteConfigurationId: 'e2e',
     })
     .withRemoteConfiguration({
-      rum: { applicationId: 'e2e', sessionSampleRate: 1 },
+      rum: { applicationId: RC_APP_ID, sessionSampleRate: 1 },
     })
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.sessionSampleRate).toBe(1)
     })
@@ -20,7 +24,7 @@ test.describe('remote configuration', () => {
       remoteConfigurationId: 'e2e',
     })
     .withRemoteConfiguration({
-      rum: { applicationId: 'e2e', version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'e2e_rc' } },
+      rum: { applicationId: RC_APP_ID, version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'e2e_rc' } },
     })
     .withBody(html`
       <script>
@@ -28,6 +32,7 @@ test.describe('remote configuration', () => {
       </script>
     `)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.version).toBe('my-version')
     })
@@ -37,10 +42,14 @@ test.describe('remote configuration', () => {
       remoteConfigurationId: 'e2e',
     })
     .withRemoteConfiguration({
-      rum: { applicationId: 'e2e', version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version' } },
+      rum: {
+        applicationId: RC_APP_ID,
+        version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version' },
+      },
     })
     .withBody(html`<span id="version">123</span>`)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.version).toBe('123')
     })
@@ -51,12 +60,13 @@ test.describe('remote configuration', () => {
     })
     .withRemoteConfiguration({
       rum: {
-        applicationId: 'e2e',
+        applicationId: RC_APP_ID,
         version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version', attribute: 'data-version' },
       },
     })
     .withBody(html`<span id="version" data-version="123"></span>`)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.version).toBe('123')
     })
@@ -67,7 +77,7 @@ test.describe('remote configuration', () => {
     })
     .withRemoteConfiguration({
       rum: {
-        applicationId: 'e2e',
+        applicationId: RC_APP_ID,
         user: {
           id: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'e2e_rc' },
         },
@@ -79,6 +89,7 @@ test.describe('remote configuration', () => {
       </script>
     `)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const user = await page.evaluate(() => window.DD_RUM!.getUser())
       expect(user.id).toBe('my-user-id')
     })
@@ -89,7 +100,7 @@ test.describe('remote configuration', () => {
     })
     .withRemoteConfiguration({
       rum: {
-        applicationId: 'e2e',
+        applicationId: RC_APP_ID,
         context: {
           additionals: [
             {
@@ -106,7 +117,19 @@ test.describe('remote configuration', () => {
       </script>
     `)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const globalContext = await page.evaluate(() => window.DD_RUM!.getGlobalContext())
       expect(globalContext.foo).toEqual('bar')
     })
 })
+
+async function waitForRemoteConfigurationToBeApplied(page: Page) {
+  for (let i = 0; i < 20; i++) {
+    const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+    if (initConfiguration.applicationId === RC_APP_ID) {
+      break
+    }
+    console.log('wait for remote configuration to be applied')
+    await page.waitForTimeout(100)
+  }
+}
