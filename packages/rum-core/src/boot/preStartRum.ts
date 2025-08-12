@@ -40,7 +40,8 @@ export function createPreStartStrategy(
     configuration: RumConfiguration,
     deflateWorker: DeflateWorker | undefined,
     initialViewOptions?: ViewOptions
-  ) => StartRumResult
+  ) => StartRumResult,
+  errorStack?: string
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
 
@@ -109,7 +110,7 @@ export function createPreStartStrategy(
       return
     }
 
-    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    const configuration = validateAndBuildRumConfiguration(initConfiguration, errorStack)
     if (!configuration) {
       return
     }
