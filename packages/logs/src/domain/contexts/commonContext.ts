@@ -7,7 +7,7 @@ export function buildCommonContext(): CommonContext {
     return {
       view: {
         referrer: '',
-        url: self.serviceWorker ? self.serviceWorker.scriptURL : '',
+        url: 'serviceWorker' in self ? (self.serviceWorker as { scriptURL: string })?.scriptURL : '',
       },
     }
   }
