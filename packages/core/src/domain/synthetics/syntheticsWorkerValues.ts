@@ -11,8 +11,12 @@ export interface BrowserWindow extends Window {
 }
 
 export function willSyntheticsInjectRum(): boolean {
+  const isSW = typeof self !== 'undefined'
+  const container = isSW ? self : window
+
   return Boolean(
-    (window as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM || getInitCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME)
+    (container as BrowserWindow)._DATADOG_SYNTHETICS_INJECTS_RUM ||
+      (!isSW && getInitCookie(SYNTHETICS_INJECTS_RUM_COOKIE_NAME))
   )
 }
 

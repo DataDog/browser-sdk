@@ -5,7 +5,8 @@ interface BrowserWindow {
 type ExtensionMessageType = 'logs' | 'record' | 'rum' | 'telemetry'
 
 export function sendToExtension(type: ExtensionMessageType, payload: unknown) {
-  const callback = (window as BrowserWindow).__ddBrowserSdkExtensionCallback
+  const container = typeof self !== 'undefined' ? self : window
+  const callback = (container as BrowserWindow).__ddBrowserSdkExtensionCallback
   if (callback) {
     callback({ type, payload })
   }

@@ -1,7 +1,7 @@
 import { monitor } from './monitor'
 
 export function queueMicrotask(callback: () => void) {
-  const nativeImplementation = window.queueMicrotask
+  const nativeImplementation = typeof self !== 'undefined' ? globalThis.queueMicrotask : window.queueMicrotask
   if (typeof nativeImplementation === 'function') {
     nativeImplementation(monitor(callback))
   } else {

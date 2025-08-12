@@ -1,5 +1,6 @@
-import type { TrackingConsentState, BufferedObservable, BufferedData } from '@datadog/browser-core'
+import type { TrackingConsentState, BufferedObservable, BufferedData, PageMayExitEvent } from '@datadog/browser-core'
 import {
+  Observable,
   sendToExtension,
   createPageMayExitObservable,
   willSyntheticsInjectRum,
@@ -50,9 +51,10 @@ export function startLogs(
   const cleanupTasks: Array<() => void> = []
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
+  const isSW = typeof self !== 'undefined' && 'serviceWorker' in self
 
   const reportError = startReportError(lifeCycle)
-  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitObservable = isSW ? new Observable<PageMayExitEvent>() : createPageMayExitObservable(configuration)
 
   const telemetry = startTelemetry(
     TelemetryService.LOGS,

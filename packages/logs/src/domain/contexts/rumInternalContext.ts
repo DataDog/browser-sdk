@@ -19,7 +19,7 @@ interface BrowserWindow {
 }
 
 export function startRUMInternalContext(hooks: Hooks) {
-  const browserWindow = window as BrowserWindow
+  const browserWindow = (typeof self !== 'undefined' ? globalThis : window) as BrowserWindow
   let logsSentBeforeRumInjectionTelemetryAdded = false
 
   hooks.register(HookNames.Assemble, ({ startTime }) => {

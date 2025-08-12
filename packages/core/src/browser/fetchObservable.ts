@@ -45,11 +45,12 @@ export function resetFetchObservable() {
 
 function createFetchObservable() {
   return new Observable<FetchContext>((observable) => {
-    if (!window.fetch) {
+    if (!globalThis.fetch) {
       return
     }
 
-    const { stop } = instrumentMethod(window, 'fetch', (call) => beforeSend(call, observable), {
+    // @ts-expect-error test
+    const { stop } = instrumentMethod(globalThis, 'fetch', (call) => beforeSend(call, observable), {
       computeHandlingStack: true,
     })
 
