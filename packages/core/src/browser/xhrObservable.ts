@@ -35,7 +35,7 @@ const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
 export function initXhrObservable(configuration: Configuration) {
   if (!xhrObservable) {
-    xhrObservable = createXhrObservable(configuration)
+    xhrObservable = typeof self !== 'undefined' ? new Observable() : createXhrObservable(configuration)
   }
   return xhrObservable
 }

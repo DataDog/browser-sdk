@@ -38,6 +38,8 @@ export function startLogsAssembly(
         startTime,
       })
 
+      console.log('>>>', { defaultLogsEventAttributes })
+
       if (defaultLogsEventAttributes === DISCARDED) {
         return
       }

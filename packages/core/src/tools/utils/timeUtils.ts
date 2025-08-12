@@ -108,6 +108,10 @@ let navigationStart: TimeStamp | undefined
  * - It is not supported in Safari <15
  */
 function getNavigationStart() {
+  if (typeof self !== 'undefined') {
+    return 0 as TimeStamp
+  }
+
   if (navigationStart === undefined) {
     navigationStart = performance.timing.navigationStart as TimeStamp
   }

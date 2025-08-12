@@ -22,6 +22,7 @@ export function startLoggerCollection(lifeCycle: LifeCycle) {
     savedCommonContext?: CommonContext,
     savedDate?: TimeStamp
   ) {
+    console.log('>>>', 'log', logsMessage)
     const messageContext = combine(logger.getContext(), logsMessage.context)
 
     if (isAuthorized(logsMessage.status, HandlerType.console, logger)) {
