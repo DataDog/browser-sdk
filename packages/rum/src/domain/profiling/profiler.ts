@@ -1,4 +1,14 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type {
+  Context,
+  DeflateEncoderStreamId,
+  Duration,
+  Encoder,
+  EncoderResult,
+  Payload,
+  RawError,
+  RelativeTime,
+  Uint8ArrayBuffer,
+} from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -11,9 +21,18 @@ import {
   clocksOrigin,
   clocksNow,
   elapsed,
+  createHttpRequest,
+  addTelemetryDebug,
+  jsonStringify,
 } from '@datadog/browser-core'
 
-import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
+import type {
+  LifeCycle,
+  RumConfiguration,
+  RumEvent,
+  RumSessionManager,
+  ViewHistoryEntry,
+} from '@datadog/browser-rum-core'
 import { LifeCycleEventType, RumPerformanceEntryType, supportPerformanceTimingEvent } from '@datadog/browser-rum-core'
 import type {
   RumProfilerTrace,
@@ -26,7 +45,8 @@ import type {
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
-import { transport } from './transport/transport'
+import type { ProfileEvent } from './transport/transport'
+import { transport as _transport } from './transport/transport'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 
@@ -37,11 +57,86 @@ export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   minNumberOfSamples: 50, // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
 }
 
+const encode = (encoder: Encoder, data: string): Promise<EncoderResult<string | Uint8ArrayBuffer>> =>
+  new Promise((resolve) => {
+    encoder.write(data)
+
+    encoder.finish((encoderResult) => {
+      resolve(encoderResult)
+    })
+  })
+
+type Event =
+  | {
+      event: ProfileEvent
+      attachements: Record<string, Context>
+    }
+  | RumEvent
+
+function createTransport<T extends Event>(
+  configuration: RumConfiguration,
+  lifeCycle: LifeCycle,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+) {
+  const reportError = (error: RawError) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
+  }
+
+  const httpRequest = createHttpRequest(
+    configuration.profilingEndpointBuilder,
+    configuration.batchBytesLimit,
+    reportError
+  )
+
+  const encoder = createEncoder(6) // TODO: get rid of streamId
+
+  return {
+    async send(data: T) {
+      if ('attachements' in data) {
+        const formData = new FormData()
+        const serializedEvent = jsonStringify(data.event)
+
+        if (!serializedEvent) {
+          throw new Error('Failed to serialize event')
+        }
+
+        formData.append('event', new Blob([serializedEvent], { type: 'application/json' }), 'event.json')
+
+        let bytesCount = serializedEvent.length
+
+        for (const [key, value] of Object.entries(data.attachements!)) {
+          const serializedValue = jsonStringify(value)
+          if (!serializedValue) {
+            throw new Error('Failed to serialize attachment')
+          }
+
+          const encodedValue = await encode(encoder, serializedValue)
+
+          bytesCount += encodedValue.outputBytesCount
+          const mimeType = encodedValue.encoding === 'deflate' ? 'application/octet-stream' : 'application/json'
+          const fileName = key
+
+          formData.append(key, new Blob([encodedValue.output], { type: mimeType }), fileName)
+        }
+
+        const payload: Payload = {
+          data: formData,
+          bytesCount,
+        }
+
+        httpRequest.send(payload)
+      }
+    },
+  }
+}
+
 export function createRumProfiler(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   session: RumSessionManager,
   profilingContextManager: ProfilingContextManager,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
@@ -52,6 +147,8 @@ export function createRumProfiler(
   const globalCleanupTasks: Array<() => void> = []
 
   let instance: RumProfilerInstance = { state: 'stopped' }
+
+  const transport = createTransport(configuration, lifeCycle, createEncoder)
 
   function start(viewEntry: ViewHistoryEntry | undefined): void {
     if (instance.state === 'running') {
@@ -280,9 +377,9 @@ export function createRumProfiler(
   function handleProfilerTrace(trace: RumProfilerTrace): void {
     // Find current session to assign it to the Profile.
     const sessionId = session.findTrackedSession()?.id
+    const payload = _transport.assembleProfilingPayload(trace, configuration, sessionId)
 
-    // Send JSON Profile to intake.
-    transport.sendProfile(trace, configuration, sessionId).catch(monitorError)
+    transport.send(payload)
   }
 
   function handleSampleBufferFull(): void {

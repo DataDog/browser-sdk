@@ -27,11 +27,11 @@ import { startProfilingContext } from './profilingContext'
 describe('profiler', () => {
   // Store the original pathname
   const originalPathname = document.location.pathname
-  let sendProfileSpy: jasmine.Spy<typeof transport.sendProfile>
+  let sendProfileSpy: jasmine.Spy<typeof transport.assembleProfilingPayload>
 
   beforeEach(() => {
-    // Spy on transport.sendProfile to avoid sending data to the server, and check what's sent.
-    sendProfileSpy = spyOn(transport, 'sendProfile')
+    // Spy on transport.assembleProfilingPayload to avoid sending data to the server, and check what's sent.
+    sendProfileSpy = spyOn(transport, 'assembleProfilingPayload')
   })
 
   afterEach(() => {
