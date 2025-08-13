@@ -37,6 +37,7 @@ const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
 export function initXhrObservable(configuration: Configuration) {
   if (!xhrObservable) {
+    // ServiceWorker environment does not support XMLHttpRequest, so we create an empty observable.
     xhrObservable = isSW ? new Observable() : createXhrObservable(configuration)
   }
   return xhrObservable
