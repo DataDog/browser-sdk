@@ -5,6 +5,7 @@ import { Observable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
+import { globalObject } from '../tools/globalObject'
 
 interface FetchContextBase {
   method: string
@@ -45,12 +46,11 @@ export function resetFetchObservable() {
 
 function createFetchObservable() {
   return new Observable<FetchContext>((observable) => {
-    if (!globalThis.fetch) {
+    if (!globalObject.fetch) {
       return
     }
 
-    // @ts-expect-error test
-    const { stop } = instrumentMethod(globalThis, 'fetch', (call) => beforeSend(call, observable), {
+    const { stop } = instrumentMethod(globalObject, 'fetch', (call) => beforeSend(call, observable), {
       computeHandlingStack: true,
     })
 
@@ -59,7 +59,7 @@ function createFetchObservable() {
 }
 
 function beforeSend(
-  { parameters, onPostCall, handlingStack }: InstrumentedMethodCall<Window, 'fetch'>,
+  { parameters, onPostCall, handlingStack }: InstrumentedMethodCall<Window | WorkerGlobalScope, 'fetch'>,
   observable: Observable<FetchContext>
 ) {
   const [input, init] = parameters
