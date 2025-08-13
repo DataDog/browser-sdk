@@ -14,7 +14,7 @@
     "skipLibCheck": true,
 
     "types": [],
-    "lib": ["ES2020", "DOM"],
+    "lib": ["ES2020", "DOM", "WebWorker"],
 
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
