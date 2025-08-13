@@ -48,15 +48,13 @@ export function getActionNameFromElement(
       element,
       userProgrammaticAttribute,
       priorityStrategies,
-      enablePrivacyForActionName,
-      nodePrivacyLevel
+      enablePrivacyForActionName
     ) ||
     getActionNameFromElementForStrategies(
       element,
       userProgrammaticAttribute,
       fallbackStrategies,
-      enablePrivacyForActionName,
-      nodePrivacyLevel
+      enablePrivacyForActionName
     ) || { name: '', nameSource: ActionNameSource.BLANK }
   )
 }
@@ -76,20 +74,14 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName: boolean,
-  nodePrivacyLevel: NodePrivacyLevel
+  privacyEnabledActionName: boolean
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     if ('labels' in element && element.labels && element.labels.length > 0) {
-      return getActionNameFromTextualContent(
-        element.labels[0],
-        userProgrammaticAttribute,
-        privacyEnabledActionName,
-        nodePrivacyLevel
-      )
+      return getActionNameFromTextualContent(element.labels[0], userProgrammaticAttribute, privacyEnabledActionName)
     }
   },
   // INPUT button (and associated) value
@@ -103,19 +95,14 @@ const priorityStrategies: NameStrategy[] = [
     }
   },
   // BUTTON, LABEL or button-like element text
-  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
-      return getActionNameFromTextualContent(
-        element,
-        userProgrammaticAttribute,
-        privacyEnabledActionName,
-        nodePrivacyLevel
-      )
+      return getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName)
     }
   },
   (element) => getActionNameFromStandardAttribute(element, 'aria-label'),
   // associated element text designated by the aria-labelledby attribute
-  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       return {
@@ -123,9 +110,7 @@ const priorityStrategies: NameStrategy[] = [
           .split(/\s+/)
           .map((id) => getElementById(element, id))
           .filter((label): label is HTMLElement => Boolean(label))
-          .map((element) =>
-            getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel)
-          )
+          .map((element) => getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName))
           .join(' '),
         nameSource: ActionNameSource.TEXT_CONTENT,
       }
@@ -136,21 +121,16 @@ const priorityStrategies: NameStrategy[] = [
   (element) => getActionNameFromStandardAttribute(element, 'title'),
   (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
   // SELECT first OPTION text
-  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     if ('options' in element && element.options.length > 0) {
-      return getActionNameFromTextualContent(
-        element.options[0],
-        userProgrammaticAttribute,
-        privacyEnabledActionName,
-        nodePrivacyLevel
-      )
+      return getActionNameFromTextualContent(element.options[0], userProgrammaticAttribute, privacyEnabledActionName)
     }
   },
 ]
 
 const fallbackStrategies: NameStrategy[] = [
-  (element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) =>
-    getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel),
+  (element, userProgrammaticAttribute, privacyEnabledActionName) =>
+    getActionNameFromTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName),
 ]
 
 /**
@@ -162,8 +142,7 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
-  privacyEnabledActionName: boolean,
-  nodePrivacyLevel: NodePrivacyLevel
+  privacyEnabledActionName: boolean
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -175,7 +154,7 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel)
+      const actionName = strategy(element, userProgrammaticAttribute, privacyEnabledActionName)
       if (actionName) {
         const { name, nameSource } = actionName
         const trimmedName = name && name.trim()
@@ -218,11 +197,10 @@ function getActionNameFromStandardAttribute(element: Element | HTMLElement, attr
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName: boolean,
-  nodePrivacyLevel: NodePrivacyLevel
+  privacyEnabledActionName: boolean
 ): ActionName {
   return {
-    name: getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName, nodePrivacyLevel) || '',
+    name: getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName) || '',
     nameSource: ActionNameSource.TEXT_CONTENT,
   }
 }
@@ -230,20 +208,14 @@ function getActionNameFromTextualContent(
 function getTextualContent(
   element: Element,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName: boolean,
-  nodePrivacyLevel: NodePrivacyLevel
+  privacyEnabledActionName: boolean
 ) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
 
   if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
-    return getTextualContentWithTreeWalker(
-      element,
-      userProgrammaticAttribute,
-      privacyEnabledActionName,
-      nodePrivacyLevel
-    )
+    return getTextualContentWithTreeWalker(element, userProgrammaticAttribute, privacyEnabledActionName)
   }
 
   if ('innerText' in element) {
@@ -285,15 +257,43 @@ function getTextualContent(
 function getTextualContentWithTreeWalker(
   element: Element,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName: boolean,
-  nodePrivacyLevel: NodePrivacyLevel
+  privacyEnabledActionName: boolean
 ) {
-  const rejectInvisibleOrMaskedElementsFilter = (node: Node) => {
+  const walker = document.createTreeWalker(
+    element,
+    // eslint-disable-next-line no-bitwise
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    rejectInvisibleOrMaskedElementsFilter
+  )
+
+  let text = ''
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode
     if (isElementNode(node)) {
+      if (
+        // Following InnerText rendering spec https://html.spec.whatwg.org/multipage/dom.html#rendered-text-collection-steps
+        node.nodeName === 'BR' ||
+        node.nodeName === 'P' ||
+        ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].includes(getComputedStyle(node).display)
+      ) {
+        text += ' '
+      }
+      continue // skip element nodes
+    }
+
+    text += node.textContent || ''
+  }
+
+  return text.replace(/\s+/g, ' ').trim()
+
+  function rejectInvisibleOrMaskedElementsFilter(node: Node) {
+    if (isElementNode(node)) {
+      const nodeSelfPrivacyLevel = getNodeSelfPrivacyLevel(node)
       if (
         node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
         (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
-        (privacyEnabledActionName && shouldMaskNode(node, getNodeSelfPrivacyLevel(node) || nodePrivacyLevel))
+        (privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel))
       ) {
         return NodeFilter.FILTER_REJECT
       }
@@ -309,50 +309,4 @@ function getTextualContentWithTreeWalker(
     }
     return NodeFilter.FILTER_ACCEPT
   }
-
-  const walker = document.createTreeWalker(
-    element,
-    // eslint-disable-next-line no-bitwise
-    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
-    rejectInvisibleOrMaskedElementsFilter
-  )
-
-  let text = ''
-  let lastSubstringEndedWithWhiteSpace = false
-
-  while (walker.nextNode()) {
-    const node = walker.currentNode
-    if (isElementNode(node)) {
-      if (
-        node.nodeName === 'BR' ||
-        node.nodeName === 'P' ||
-        ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].includes(getComputedStyle(node).display)
-      ) {
-        lastSubstringEndedWithWhiteSpace = true
-      }
-      continue // skip element nodes
-    }
-
-    const nodeText = node.textContent || ''
-
-    const startsWithWhiteSpace = /^\s/.test(nodeText)
-    const endsWithWhiteSpace = /\s$/.test(nodeText)
-
-    const trimmedNodeText = nodeText.trim()
-    if (trimmedNodeText.length === 0) {
-      if (startsWithWhiteSpace || endsWithWhiteSpace) {
-        lastSubstringEndedWithWhiteSpace = true
-      }
-      continue // skip empty nodes
-    }
-
-    if (startsWithWhiteSpace || lastSubstringEndedWithWhiteSpace) {
-      text += ' '
-    }
-
-    text += trimmedNodeText
-    lastSubstringEndedWithWhiteSpace = endsWithWhiteSpace
-  }
-
-  return text
 }
