@@ -71,30 +71,113 @@ export function applyRemoteConfiguration(
     }
   })
   return appliedConfiguration
-}
 
-function resolveConfigurationProperty(property: unknown): unknown {
-  if (Array.isArray(property)) {
-    return property.map(resolveConfigurationProperty)
+  // share context to access metrics
+
+  function resolveConfigurationProperty(property: unknown): unknown {
+    if (Array.isArray(property)) {
+      return property.map(resolveConfigurationProperty)
+    }
+    if (isObject(property)) {
+      if (isSerializedOption(property)) {
+        const type = property.rcSerializedType
+        switch (type) {
+          case 'string':
+            return property.value
+          case 'regex':
+            return resolveRegex(property.value)
+          case 'dynamic':
+            return resolveDynamicOption(property)
+          default:
+            display.error(`Unsupported remote configuration: "rcSerializedType": "${type as string}"`)
+            return
+        }
+      }
+      return mapValues(property, resolveConfigurationProperty)
+    }
+    return property
   }
-  if (isObject(property)) {
-    if (isSerializedOption(property)) {
-      const type = property.rcSerializedType
-      switch (type) {
-        case 'string':
-          return property.value
-        case 'regex':
-          return resolveRegex(property.value)
-        case 'dynamic':
-          return resolveDynamicOption(property)
-        default:
-          display.error(`Unsupported remote configuration: "rcSerializedType": "${type as string}"`)
-          return
+
+  function resolveContextProperty(
+    contextManager: ReturnType<typeof createContextManager>,
+    contextConfiguration: RumRemoteConfiguration[SupportedContexts] & { [key: string]: unknown }
+  ) {
+    Object.keys(contextConfiguration).forEach((key) => {
+      if (key === 'additionals') {
+        contextConfiguration[key]?.forEach((additional) => {
+          contextManager.setContextProperty(additional.key, resolveConfigurationProperty(additional.value))
+        })
+      } else {
+        contextManager.setContextProperty(key, resolveConfigurationProperty(contextConfiguration[key]))
+      }
+    })
+  }
+
+  function resolveDynamicOption(property: DynamicOption) {
+    const strategy = property.strategy
+    let resolvedValue: unknown
+    switch (strategy) {
+      case 'cookie':
+        resolvedValue = resolveCookieValue(property)
+        break
+      case 'dom':
+        resolvedValue = resolveDomValue(property)
+        break
+      case 'js':
+        resolvedValue = resolveJsValue(property)
+        break
+      default:
+        display.error(`Unsupported remote configuration: "strategy": "${strategy as string}"`)
+        return
+    }
+    const extractor = property.extractor
+    if (extractor !== undefined && typeof resolvedValue === 'string') {
+      return extractValue(extractor, resolvedValue)
+    }
+    return resolvedValue
+  }
+
+  function resolveCookieValue({ name }: { name: string }) {
+    return getCookie(name)
+  }
+
+  function resolveDomValue({ selector, attribute }: { selector: string; attribute?: string }) {
+    let element: Element | null
+    try {
+      element = document.querySelector(selector)
+    } catch {
+      element = null
+      display.error(`Invalid selector in the remote configuration: '${selector}'`)
+    }
+    if (element === null) {
+      return
+    }
+    const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
+    return domValue ?? undefined
+  }
+
+  function resolveJsValue({ path }: { path: string }): unknown {
+    let current = window as unknown as { [key: string]: unknown }
+
+    const pathParts = parseJsonPath(path)
+    if (pathParts.length === 0) {
+      display.error(`Invalid JSON path in the remote configuration: '${path}'`)
+      return
+    }
+    for (const pathPart of pathParts) {
+      if (!(pathPart in current)) {
+        return
+      }
+      try {
+        current = current[pathPart] as { [key: string]: unknown }
+      } catch (e) {
+        display.error(`Error when accessing to: '${path}'`, e)
+        return
       }
     }
-    return mapValues(property, resolveConfigurationProperty)
+
+    return current as unknown
   }
-  return property
 }
 
 function isObject(property: unknown): property is { [key: string]: unknown } {
@@ -111,87 +194,6 @@ function resolveRegex(pattern: string): RegExp | undefined {
   } catch {
     display.error(`Invalid regex in the remote configuration: '${pattern}'`)
   }
-}
-
-function resolveContextProperty(
-  contextManager: ReturnType<typeof createContextManager>,
-  contextConfiguration: RumRemoteConfiguration[SupportedContexts] & { [key: string]: unknown }
-) {
-  Object.keys(contextConfiguration).forEach((key) => {
-    if (key === 'additionals') {
-      contextConfiguration[key]?.forEach((additional) => {
-        contextManager.setContextProperty(additional.key, resolveConfigurationProperty(additional.value))
-      })
-    } else {
-      contextManager.setContextProperty(key, resolveConfigurationProperty(contextConfiguration[key]))
-    }
-  })
-}
-
-function resolveDynamicOption(property: DynamicOption) {
-  const strategy = property.strategy
-  let resolvedValue: unknown
-  switch (strategy) {
-    case 'cookie':
-      resolvedValue = resolveCookieValue(property)
-      break
-    case 'dom':
-      resolvedValue = resolveDomValue(property)
-      break
-    case 'js':
-      resolvedValue = resolveJsValue(property)
-      break
-    default:
-      display.error(`Unsupported remote configuration: "strategy": "${strategy as string}"`)
-      return
-  }
-  const extractor = property.extractor
-  if (extractor !== undefined && typeof resolvedValue === 'string') {
-    return extractValue(extractor, resolvedValue)
-  }
-  return resolvedValue
-}
-
-function resolveCookieValue({ name }: { name: string }) {
-  return getCookie(name)
-}
-
-function resolveDomValue({ selector, attribute }: { selector: string; attribute?: string }) {
-  let element: Element | null
-  try {
-    element = document.querySelector(selector)
-  } catch {
-    element = null
-    display.error(`Invalid selector in the remote configuration: '${selector}'`)
-  }
-  if (element === null) {
-    return
-  }
-  const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
-  return domValue ?? undefined
-}
-
-function resolveJsValue({ path }: { path: string }): unknown {
-  let current = window as unknown as { [key: string]: unknown }
-
-  const pathParts = parseJsonPath(path)
-  if (pathParts.length === 0) {
-    display.error(`Invalid JSON path in the remote configuration: '${path}'`)
-    return
-  }
-  for (const pathPart of pathParts) {
-    if (!(pathPart in current)) {
-      return
-    }
-    try {
-      current = current[pathPart] as { [key: string]: unknown }
-    } catch (e) {
-      display.error(`Error when accessing to: '${path}'`, e)
-      return
-    }
-  }
-
-  return current as unknown
 }
 
 function extractValue(extractor: SerializedRegex, candidate: string) {
