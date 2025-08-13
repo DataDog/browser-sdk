@@ -45,7 +45,7 @@ export function getPristineWindow() {
       document.body.appendChild(iframe)
       pristineWindow = iframe.contentWindow as Window & typeof globalThis
     } catch {
-      pristineWindow = globalObject as Window
+      pristineWindow = globalObject as unknown as Window & typeof globalThis
     }
     getPristineGlobalObjectCache = {
       URL: pristineWindow.URL,
