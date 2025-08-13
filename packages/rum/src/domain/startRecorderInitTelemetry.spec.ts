@@ -2,28 +2,22 @@ import type { Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
 import type { RecorderInitEvent } from '../boot/postStartStrategy'
-import type { RecorderInitMetrics } from './startRecorderInitTelemetry'
-import { startRecorderInitTelemetry } from './startRecorderInitTelemetry'
+import {
+  type RecorderInitMetrics,
+  RECORDER_INIT_METRICS_TELEMETRY_NAME,
+  startRecorderInitTelemetry,
+} from './startRecorderInitTelemetry'
 
 describe('startRecorderInitTelemetry', () => {
   let observable: Observable<RecorderInitEvent>
   let telemetry: MockTelemetry
 
-  const config: Partial<RumConfiguration> = {
-    replayTelemetrySampleRate: 100,
-    telemetrySampleRate: 100,
-  }
-
-  function startRecorderInitTelemetryCollection(partialConfig: Partial<RumConfiguration> = config) {
-    const configuration = mockRumConfiguration(partialConfig)
+  function startRecorderInitTelemetryCollection(telemetryEnabled: boolean = true) {
     observable = new Observable<RecorderInitEvent>()
     telemetry = startMockTelemetry()
     const { stop: stopRecorderInitTelemetry } = startRecorderInitTelemetry(
-      configuration,
-      { enabled: true } as Telemetry,
+      { enabledMetrics: { [RECORDER_INIT_METRICS_TELEMETRY_NAME]: telemetryEnabled } } as unknown as Telemetry,
       observable
     )
     registerCleanupTask(stopRecorderInitTelemetry)
@@ -139,10 +133,7 @@ describe('startRecorderInitTelemetry', () => {
   })
 
   it('should not collect recorder init metrics telemetry when telemetry is disabled', async () => {
-    startRecorderInitTelemetryCollection({
-      telemetrySampleRate: 100,
-      initialViewMetricsTelemetrySampleRate: 0,
-    })
+    startRecorderInitTelemetryCollection(false)
     observable.notify({ type: 'start', forced: false })
     observable.notify({ type: 'recorder-settled' })
     observable.notify({ type: 'document-ready' })

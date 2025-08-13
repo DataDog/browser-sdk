@@ -40,6 +40,7 @@ export type {
   TelemetryUsageEvent,
   RawTelemetryUsage,
   RawTelemetryUsageFeature,
+  SampleRateByMetric,
 } from './domain/telemetry'
 export {
   startTelemetry,
