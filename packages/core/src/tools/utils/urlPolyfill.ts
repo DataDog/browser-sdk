@@ -1,4 +1,5 @@
 import { jsonStringify } from '../serialisation/jsonStringify'
+import { globalObject } from '../globalObject'
 
 export function normalizeUrl(url: string) {
   return buildUrl(url, location.href).href
@@ -44,7 +45,7 @@ export function getPristineWindow() {
       document.body.appendChild(iframe)
       pristineWindow = iframe.contentWindow as Window & typeof globalThis
     } catch {
-      pristineWindow = typeof self !== 'undefined' ? self : window
+      pristineWindow = globalObject as Window
     }
     getPristineGlobalObjectCache = {
       URL: pristineWindow.URL,

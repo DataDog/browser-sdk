@@ -1,3 +1,5 @@
+import { globalObject } from '../../tools/globalObject'
+
 export type NetworkInterface = 'bluetooth' | 'cellular' | 'ethernet' | 'none' | 'wifi' | 'wimax' | 'other' | 'unknown'
 export type EffectiveType = 'slow-2g' | '2g' | '3g' | '4g'
 
@@ -19,8 +21,8 @@ export interface Connectivity {
 }
 
 export function getConnectivity(): Connectivity {
-  const container = typeof self !== 'undefined' ? self : window
-  const navigator = container.navigator as BrowserNavigator
+  const navigator = globalObject.navigator as BrowserNavigator
+
   return {
     status: navigator.onLine ? 'connected' : 'not_connected',
     interfaces: navigator.connection && navigator.connection.type ? [navigator.connection.type] : undefined,

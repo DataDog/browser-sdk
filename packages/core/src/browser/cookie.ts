@@ -1,6 +1,7 @@
 import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from '../tools/utils/stringUtils'
+import { globalObject } from '../tools/globalObject'
 
 export interface CookieOptions {
   secure?: boolean
@@ -46,11 +47,16 @@ export function deleteCookie(name: string, options?: CookieOptions) {
 }
 
 export function areCookiesAuthorized(options: CookieOptions): boolean {
-  const isSW = typeof self !== 'undefined' && 'serviceWorker' in self
+  const isSW = !('document' in globalObject)
 
-  if (isSW || document.cookie === undefined || document.cookie === null) {
+  if (isSW) {
     return false
   }
+
+  if (globalObject.document?.cookie === undefined || globalObject.document?.cookie === null) {
+    return false
+  }
+
   try {
     // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
     // the test cookie lifetime
