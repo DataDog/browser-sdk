@@ -412,6 +412,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
+    remote_configuration_id: configuration.remoteConfigurationId,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
