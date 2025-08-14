@@ -26,7 +26,7 @@ describe('httpRequest', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
   })
 
   describe('send', () => {
@@ -89,6 +89,24 @@ describe('httpRequest', () => {
 
       await interceptor.waitForAllFetchCalls()
       await collectAsyncCalls(fetchSpy, 2)
+    })
+
+    it('sends the payload to multiple endpoints', async () => {
+      const endpointBuilder2 = mockEndpointBuilder('http://my.website2')
+
+      request = createHttpRequest([endpointBuilder, endpointBuilder2], BATCH_BYTES_LIMIT, noop)
+
+      interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+
+      const payloadData = '{"foo":"bar1"}\n{"foo":"bar2"}'
+      request.send({ data: payloadData, bytesCount: 10 })
+
+      await interceptor.waitForAllFetchCalls()
+      expect(requests.length).toEqual(2)
+      expect(requests[0].url).toContain('http://my.website')
+      expect(requests[0].body).toEqual(payloadData)
+      expect(requests[1].url).toContain('http://my.website2')
+      expect(requests[1].body).toEqual(payloadData)
     })
   })
 
@@ -313,7 +331,7 @@ describe('httpRequest intake parameters', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = createEndpointBuilder({ clientToken }, 'logs')
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
   })
 
   it('should have a unique request id', async () => {
