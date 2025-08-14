@@ -16,6 +16,7 @@ import { objectHasValue } from './utils/objectUtils'
 export enum ExperimentalFeature {
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
+  EARLY_REQUEST_COLLECTION = 'early_request_collection',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
