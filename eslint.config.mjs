@@ -387,6 +387,14 @@ export default tseslint.config(
   },
 
   {
+    files: ['packages/*/src/**/*.ts'],
+    ignores: [SPEC_FILES],
+    rules: {
+      'local-rules/disallow-inline-type-import': 'error',
+    },
+  },
+
+  {
     files: ['packages/{rum,logs,flagging,rum-slim}/src/entries/*.ts'],
     rules: {
       'local-rules/disallow-enum-exports': 'error',
