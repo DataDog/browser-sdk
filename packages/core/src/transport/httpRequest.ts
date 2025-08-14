@@ -63,33 +63,35 @@ export interface RetryInfo {
 }
 
 export function createHttpRequest<Body extends Payload = Payload>(
-  endpointBuilder: EndpointBuilder,
+  endpointBuilders: EndpointBuilder[],
   bytesLimit: number,
   reportError: (error: RawError) => void
 ): HttpRequest<Body> {
   const observable = new Observable<HttpRequestEvent<Body>>()
   const retryState = newRetryState<Body>()
-  const sendStrategyForRetry = (payload: Body, onResponse: (r: HttpResponse) => void) =>
-    fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
 
   return {
     observable,
     send: (payload: Body) => {
-      sendWithRetryStrategy(
-        payload,
-        retryState,
-        sendStrategyForRetry,
-        endpointBuilder.trackType,
-        reportError,
-        observable
-      )
+      for (const endpointBuilder of endpointBuilders) {
+        sendWithRetryStrategy(
+          payload,
+          retryState,
+          (payload, onResponse) => fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse),
+          endpointBuilder.trackType,
+          reportError,
+          observable
+        )
+      }
     },
     /**
      * Since fetch keepalive behaves like regular fetch on Firefox,
      * keep using sendBeaconStrategy on exit
      */
     sendOnExit: (payload: Body) => {
-      sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
+      for (const endpointBuilder of endpointBuilders) {
+        sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
+      }
     },
   }
 }

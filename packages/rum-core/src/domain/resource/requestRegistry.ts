@@ -1,6 +1,7 @@
 import { addTelemetryDebug } from '@datadog/browser-core'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
-import { LifeCycleEventType, type LifeCycle } from '../lifeCycle'
+import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 
 export interface RequestRegistry {

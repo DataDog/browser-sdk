@@ -1,6 +1,7 @@
 import { DOM_EVENT, addEventListeners, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { RecordType, type FocusRecord } from '../../../types'
+import type { FocusRecord } from '../../../types'
+import { RecordType } from '../../../types'
 import type { Tracker } from './tracker.types'
 
 export type FocusCallback = (data: FocusRecord) => void
