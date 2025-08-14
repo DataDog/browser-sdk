@@ -1,6 +1,8 @@
 import type { RumPublicApi, Strategy } from '../boot/rumPublicApi'
 import type { StartRumResult } from '../boot/startRum'
+import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from '../rumEvent.types'
 import type { RumInitConfiguration } from './configuration'
+import type { EventCounts } from './trackEventCounts'
 
 /**
  * onRumStart plugin API options.
@@ -16,6 +18,14 @@ export interface OnRumStartOptions {
    * Add an event to the RUM browser SDK.
    */
   addEvent?: StartRumResult['addEvent']
+
+  /**
+   * Track event counts.
+   */
+  trackEventCounts: (
+    isChildEvent: (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean,
+    onChange?: () => void
+  ) => { stop: () => void; eventCounts: EventCounts }
 }
 
 /**

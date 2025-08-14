@@ -48,6 +48,8 @@ import type {
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
+import { trackEventCounts } from '../domain/trackEventCounts'
+import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from '../rumEvent.types'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -547,6 +549,8 @@ export function makeRumPublicApi(
       callPluginsMethod(configuration.plugins, 'onRumStart', {
         strategy, // TODO: remove this in the next major release
         addEvent: startRumResult.addEvent,
+        trackEventCounts: (isChildEvent, onChange) =>
+          trackEventCounts({ lifeCycle: startRumResult.lifeCycle, isChildEvent, onChange }),
       })
 
       return startRumResult
