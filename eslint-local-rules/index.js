@@ -10,7 +10,6 @@ module.exports = {
   'disallow-side-effects': require('./disallowSideEffects'),
   'disallow-enum-exports': require('./disallowEnumExports'),
   'disallow-spec-import': require('./disallowSpecImport'),
-  'disallow-inline-type-import': require('./disallowInlineTypeImport'),
   'disallow-protected-directory-import': require('./disallowProtectedDirectoryImport'),
   'disallow-test-import-export-from-src': require('./disallowTestImportExportFromSrc'),
   'disallow-zone-js-patched-values': require('./disallowZoneJsPatchedValues'),

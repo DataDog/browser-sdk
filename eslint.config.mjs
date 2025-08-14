@@ -390,7 +390,7 @@ export default tseslint.config(
     files: ['packages/*/src/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
-      'local-rules/disallow-inline-type-import': 'error',
+      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
     },
   },
 
