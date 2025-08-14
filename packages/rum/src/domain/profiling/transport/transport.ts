@@ -1,4 +1,5 @@
-import { addTelemetryDebug, buildTags, currentDrift, type Payload } from '@datadog/browser-core'
+import type { Payload } from '@datadog/browser-core'
+import { addTelemetryDebug, buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace } from '../types'
 

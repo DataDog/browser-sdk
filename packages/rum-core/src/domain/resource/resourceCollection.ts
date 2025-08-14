@@ -11,11 +11,8 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import {
-  RumPerformanceEntryType,
-  createPerformanceObservable,
-  type RumPerformanceResourceTiming,
-} from '../../browser/performanceObservable'
+import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
+import { RumPerformanceEntryType, createPerformanceObservable } from '../../browser/performanceObservable'
 import type {
   RumXhrResourceEventDomainContext,
   RumFetchResourceEventDomainContext,
@@ -23,8 +20,8 @@ import type {
 } from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
 import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
