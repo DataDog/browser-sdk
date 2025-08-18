@@ -7,7 +7,8 @@ import type {
   RumSession,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
-import { asyncRunOnReadyState, monitorError, type DeflateEncoder } from '@datadog/browser-core'
+import { asyncRunOnReadyState, monitorError } from '@datadog/browser-core'
+import type { Telemetry, DeflateEncoder } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import type { startRecording } from './startRecording'
 
@@ -38,7 +39,8 @@ export function createPostStartStrategy(
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   loadRecorder: () => Promise<StartRecording | undefined>,
-  getOrCreateDeflateEncoder: () => DeflateEncoder | undefined
+  getOrCreateDeflateEncoder: () => DeflateEncoder | undefined,
+  telemetry: Telemetry
 ): Strategy {
   let status = RecorderStatus.Stopped
   let stopRecording: () => void
@@ -74,7 +76,8 @@ export function createPostStartStrategy(
       configuration,
       sessionManager,
       viewHistory,
-      deflateEncoder
+      deflateEncoder,
+      telemetry
     ))
 
     status = RecorderStatus.Started

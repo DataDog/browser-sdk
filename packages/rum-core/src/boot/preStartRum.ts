@@ -16,17 +16,17 @@ import {
   buildAccountContextManager,
   buildGlobalContextManager,
   buildUserContextManager,
-  setTimeout,
+  monitorError,
 } from '@datadog/browser-core'
+import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
   validateAndBuildRumConfiguration,
-  type RumConfiguration,
-  type RumInitConfiguration,
+  fetchAndApplyRemoteConfiguration,
+  serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
-import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -101,10 +101,7 @@ export function createPreStartStrategy(
 
     // Update the exposed initConfiguration to reflect the bridge and remote configuration overrides
     cachedInitConfiguration = initConfiguration
-    // FIXME temporary hack to avoid sending configuration without all the context data
-    setTimeout(() => {
-      addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
-    })
+    addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
     if (cachedConfiguration) {
       displayAlreadyInitializedError('DD_RUM', initConfiguration)
@@ -174,7 +171,13 @@ export function createPreStartStrategy(
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
       if (initConfiguration.remoteConfigurationId) {
-        fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
+        fetchAndApplyRemoteConfiguration(initConfiguration)
+          .then((initConfiguration) => {
+            if (initConfiguration) {
+              doInit(initConfiguration)
+            }
+          })
+          .catch(monitorError)
       } else {
         doInit(initConfiguration)
       }

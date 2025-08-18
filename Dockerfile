@@ -1,4 +1,4 @@
-FROM node:24.4.0-bookworm-slim
+FROM node:24.5.0-bookworm-slim
 
 ARG CHROME_PACKAGE_VERSION
 
@@ -69,18 +69,5 @@ RUN apt-get -y install procps
 RUN set -o pipefail \
   && curl -sSfL https://git.io/getwoke | bash -s -- -b /usr/local/bin v0.17.1
 
-# Codecov https://docs.codecov.com/docs/codecov-uploader
-RUN apt-get -y install gnupg coreutils \
-  && set -o pipefail && curl https://keybase.io/codecovsecurity/pgp_keys.asc | gpg --no-default-keyring --keyring trustedkeys.gpg --import \
-  && CODECOV_UPLOADER_VERSION=v0.1.15 \
-  && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov \
-  && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov.SHA256SUM \
-  && curl -Os https://uploader.codecov.io/${CODECOV_UPLOADER_VERSION}/linux/codecov.SHA256SUM.sig \
-  && gpgv codecov.SHA256SUM.sig codecov.SHA256SUM \
-  && shasum -a 256 -c codecov.SHA256SUM \
-  && chmod +x codecov \
-  && mv codecov /usr/local/bin \
-  && rm codecov.*
-
 # Install authanywhere for pull request commenter token
-RUN if [ $(uname -m) = x86_64 ]; then AAA="amd64"; else AAA="arm64"; fi; curl -OL "binaries.ddbuild.io/dd-source/authanywhere/LATEST/authanywhere-linux-${AAA}" && mv "authanywhere-linux-${AAA}" /bin/authanywhere && chmod +x /bin/authanywhere 
+RUN if [ $(uname -m) = x86_64 ]; then AAA="amd64"; else AAA="arm64"; fi; curl -OL "binaries.ddbuild.io/dd-source/authanywhere/LATEST/authanywhere-linux-${AAA}" && mv "authanywhere-linux-${AAA}" /bin/authanywhere && chmod +x /bin/authanywhere

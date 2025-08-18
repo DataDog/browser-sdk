@@ -45,10 +45,8 @@ export {
   startTelemetry,
   addTelemetryDebug,
   addTelemetryError,
-  startFakeTelemetry,
   resetTelemetry,
   TelemetryService,
-  isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
@@ -63,14 +61,14 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { HttpRequest, Payload, FlushEvent, FlushReason } from './transport'
+export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
   getEventBridge,
   bridgeSupports,
   BridgeCapability,
-  startBatchWithReplica,
+  createBatch,
   createFlushController,
 } from './transport'
 export * from './tools/display'

@@ -10,6 +10,7 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { addTelemetryDebug } from '../telemetry'
 import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
 import type { CookieStore } from '../../browser/browser.types'
+import { getCurrentSite } from '../../browser/cookie'
 import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -165,7 +166,7 @@ async function reportUnexpectedSessionState() {
   let sessionCookies: string[] | Awaited<ReturnType<CookieStore['getAll']>> = []
 
   if ('cookieStore' in window) {
-    sessionCookies = await (window as Window & { cookieStore: CookieStore }).cookieStore.getAll('_dd_s')
+    sessionCookies = await (window as { cookieStore: CookieStore }).cookieStore.getAll('_dd_s')
   } else {
     sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith('_dd_s'))
   }
@@ -177,7 +178,9 @@ async function reportUnexpectedSessionState() {
     expireTimestamp: rawSession?.expire,
     cookie: {
       count: sessionCookies.length,
+      domain: getCurrentSite(),
       ...sessionCookies,
     },
+    currentDomain: `${window.location.protocol}//${window.location.hostname}`,
   })
 }

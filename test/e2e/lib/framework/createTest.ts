@@ -1,5 +1,5 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
@@ -69,6 +69,7 @@ class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
   private alsoRunWithRumSlim = false
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
+  private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
   private body = ''
   private basePath = ''
@@ -118,8 +119,8 @@ class TestBuilder {
     return this
   }
 
-  withReact() {
-    this.setups = [{ factory: reactSetup }]
+  withReactApp(appName: string) {
+    this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
     return this
   }
 
@@ -133,12 +134,18 @@ class TestBuilder {
     return this
   }
 
+  withRemoteConfiguration(remoteConfiguration: RemoteConfiguration) {
+    this.remoteConfiguration = remoteConfiguration
+    return this
+  }
+
   run(runner: TestRunner) {
     const setupOptions: SetupOptions = {
       body: this.body,
       head: this.head,
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
+      remoteConfiguration: this.remoteConfiguration,
       rumInit: this.rumInit,
       logsInit: this.logsInit,
       useRumSlim: false,
@@ -209,7 +216,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(createMockServerApp(servers, setup))
+    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(browserLogs, testContext)

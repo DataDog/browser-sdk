@@ -107,7 +107,7 @@ export function startRumAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({ startTime, duration, rawRumEvent, domainContext, customerContext }) => {
+    ({ startTime, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: rawRumEvent.type,
         startTime,
@@ -118,16 +118,9 @@ export function startRumAssembly(
         return
       }
 
-      const serverRumEvent = combine(
-        defaultRumEventAttributes,
-        {
-          context: customerContext,
-        },
-        rawRumEvent,
-        {
-          ddtags: buildTags(configuration).join(','),
-        }
-      ) as RumEvent & Context
+      const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, {
+        ddtags: buildTags(configuration).join(','),
+      }) as RumEvent & Context
 
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
         if (isEmptyObject(serverRumEvent.context!)) {
