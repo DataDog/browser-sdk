@@ -22,8 +22,8 @@ export function getGithubReadToken(): string {
   return command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.read`.run().trim()
 }
 
-export function revokeGithubToken(): string {
-  return command`dd-octo-sts revoke`.run().trim()
+export function revokeGithubToken(token: string): string {
+  return command`dd-octo-sts revoke --token ${token}`.run().trim()
 }
 
 export function getOrg2ApiKey(): string {

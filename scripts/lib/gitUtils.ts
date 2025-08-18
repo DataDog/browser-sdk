@@ -72,12 +72,13 @@ export async function getPrComments(prNumber: number): Promise<Array<{ id: numbe
 }
 
 export function createPullRequest(mainBranch: string) {
+  const token = getGithubPullRequestToken()
   try {
-    command`gh auth login --with-token`.withInput(getGithubPullRequestToken()).run()
+    command`gh auth login --with-token`.withInput(token).run()
     const pullRequestUrl = command`gh pr create --fill --base ${mainBranch}`.run()
     return pullRequestUrl.trim()
   } finally {
-    revokeGithubToken()
+    revokeGithubToken(token)
   }
 }
 
@@ -120,6 +121,6 @@ async function callGitHubApi<T>(method: string, path: string, token: string, bod
     })
     return (await response.json()) as Promise<T>
   } finally {
-    revokeGithubToken()
+    revokeGithubToken(token)
   }
 }
