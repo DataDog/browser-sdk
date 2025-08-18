@@ -45,10 +45,8 @@ export {
   startTelemetry,
   addTelemetryDebug,
   addTelemetryError,
-  startFakeTelemetry,
   resetTelemetry,
   TelemetryService,
-  isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
@@ -70,7 +68,7 @@ export {
   getEventBridge,
   bridgeSupports,
   BridgeCapability,
-  startBatchWithReplica,
+  createBatch,
   createFlushController,
 } from './transport'
 export * from './tools/display'

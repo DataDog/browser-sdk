@@ -39,7 +39,7 @@ describe('toPaddedHexadecimalString', () => {
 
 function mockRandomValues(cb: (buffer: Uint8Array) => void) {
   spyOn(window.crypto, 'getRandomValues').and.callFake((bufferView) => {
-    cb(new Uint8Array(bufferView!.buffer))
+    cb(new Uint8Array(bufferView.buffer))
     return bufferView
   })
 }

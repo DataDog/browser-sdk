@@ -1,14 +1,15 @@
-import type { Encoder, EncoderResult } from '@datadog/browser-core'
+import type { Encoder, EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-core'
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
-import { aggregateSerializationStats, createSerializationStats, type SerializationStats } from '../record'
+import type { SerializationStats } from '../record'
+import { aggregateSerializationStats, createSerializationStats } from '../record'
 
 export type FlushReason = Exclude<CreationReason, 'init'> | 'stop'
 export type FlushCallback = (
   metadata: BrowserSegmentMetadata,
   stats: SerializationStats,
-  encoderResult: EncoderResult<Uint8Array>
+  encoderResult: EncoderResult<Uint8ArrayBuffer>
 ) => void
 export type AddRecordCallback = (encodedBytesCount: number) => void
 
@@ -24,7 +25,7 @@ export function createSegment({
 }: {
   context: SegmentContext
   creationReason: CreationReason
-  encoder: Encoder<Uint8Array>
+  encoder: Encoder<Uint8ArrayBuffer>
 }): Segment {
   let encodedBytesCount = 0
   const viewId = context.view.id

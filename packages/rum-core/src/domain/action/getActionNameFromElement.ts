@@ -1,5 +1,5 @@
-import { safeTruncate } from '@datadog/browser-core'
-import { NodePrivacyLevel } from '../privacyConstants'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
+import { getPrivacySelector, NodePrivacyLevel } from '../privacyConstants'
 import { getNodeSelfPrivacyLevel, shouldMaskNode } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 import { isElementNode } from '../../browser/htmlDomUtils'
@@ -233,19 +233,94 @@ function getTextualContent(
   rumConfiguration: RumConfiguration,
   nodePrivacyLevel: NodePrivacyLevel
 ) {
-  const { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute, defaultPrivacyLevel } = rumConfiguration
-  const enableAllowlistMask = isAllowlistMaskEnabled(defaultPrivacyLevel, nodePrivacyLevel)
-
   if ((element as HTMLElement).isContentEditable) {
     return
   }
 
-  const rejectInvisibleOrMaskedElementsFilter = (node: Node) => {
+  const { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute, defaultPrivacyLevel } = rumConfiguration
+  const enableAllowlistMask = isAllowlistMaskEnabled(defaultPrivacyLevel, nodePrivacyLevel)
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
+    return getTextualContentWithTreeWalker(element, userProgrammaticAttribute, enableAllowlistMask, enablePrivacyForActionName)
+  }
+
+  if ('innerText' in element) {
+    let text = (element as HTMLElement).innerText
+
+    const removeTextFromElements = (query: string) => {
+      const list = element.querySelectorAll<Element | HTMLElement>(query)
+      for (let index = 0; index < list.length; index += 1) {
+        const element = list[index]
+        if ('innerText' in element) {
+          const textToReplace = element.innerText
+          if (textToReplace && textToReplace.trim().length > 0) {
+            text = text.replace(textToReplace, '')
+          }
+        }
+      }
+    }
+
+    // remove the text of elements with programmatic attribute value
+    removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`)
+
+    if (userProgrammaticAttribute) {
+      removeTextFromElements(`[${userProgrammaticAttribute}]`)
+    }
+
+    if (enablePrivacyForActionName) {
+      // remove the text of elements with privacy override
+      removeTextFromElements(
+        `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
+      )
+    }
+
+    return text
+  }
+
+  return element.textContent
+}
+
+function getTextualContentWithTreeWalker(
+  element: Element,
+  userProgrammaticAttribute: string | undefined,
+  allowlistMaskEnabled: boolean,
+  privacyEnabledActionName: boolean
+) {
+  const walker = document.createTreeWalker(
+    element,
+    // eslint-disable-next-line no-bitwise
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    rejectInvisibleOrMaskedElementsFilter
+  )
+
+  let text = ''
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode
     if (isElementNode(node)) {
+      if (
+        // Following InnerText rendering spec https://html.spec.whatwg.org/multipage/dom.html#rendered-text-collection-steps
+        node.nodeName === 'BR' ||
+        node.nodeName === 'P' ||
+        ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].includes(getComputedStyle(node).display)
+      ) {
+        text += ' '
+      }
+      continue // skip element nodes
+    }
+
+    text += allowlistMaskEnabled ? maskDisallowedTextContent(node.textContent || '', 'xxx') : node.textContent || ''
+  }
+
+  return text.replace(/\s+/g, ' ').trim()
+
+  function rejectInvisibleOrMaskedElementsFilter(node: Node) {
+    if (isElementNode(node)) {
+      const nodeSelfPrivacyLevel = getNodeSelfPrivacyLevel(node)
       if (
         node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
         (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
-        (enablePrivacyForActionName && shouldMaskNode(node, getNodeSelfPrivacyLevel(node) || nodePrivacyLevel))
+        (privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel))
       ) {
         return NodeFilter.FILTER_REJECT
       }
@@ -261,50 +336,4 @@ function getTextualContent(
     }
     return NodeFilter.FILTER_ACCEPT
   }
-
-  const walker = document.createTreeWalker(
-    element,
-    // eslint-disable-next-line no-bitwise
-    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
-    rejectInvisibleOrMaskedElementsFilter
-  )
-
-  let text = ''
-  let lastSubstringEndedWithWhiteSpace = false
-
-  while (walker.nextNode()) {
-    const node = walker.currentNode
-    if (isElementNode(node)) {
-      if (
-        node.nodeName === 'BR' ||
-        node.nodeName === 'P' ||
-        ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].includes(getComputedStyle(node).display)
-      ) {
-        lastSubstringEndedWithWhiteSpace = true
-      }
-      continue // skip element nodes
-    }
-
-    const nodeText = node.textContent || ''
-
-    const startsWithWhiteSpace = /^\s/.test(nodeText)
-    const endsWithWhiteSpace = /\s$/.test(nodeText)
-
-    const trimmedNodeText = nodeText.trim()
-    if (trimmedNodeText.length === 0) {
-      if (startsWithWhiteSpace || endsWithWhiteSpace) {
-        lastSubstringEndedWithWhiteSpace = true
-      }
-      continue // skip empty nodes
-    }
-
-    if (startsWithWhiteSpace || lastSubstringEndedWithWhiteSpace) {
-      text += ' '
-    }
-
-    text += enableAllowlistMask ? maskDisallowedTextContent(trimmedNodeText, ACTION_NAME_PLACEHOLDER) : trimmedNodeText
-    lastSubstringEndedWithWhiteSpace = endsWithWhiteSpace
-  }
-
-  return text
 }
