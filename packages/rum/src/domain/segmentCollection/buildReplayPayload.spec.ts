@@ -25,6 +25,11 @@ describe('buildReplayPayload', () => {
       max: 1000,
       sum: 1500,
     },
+    serializationDuration: {
+      count: 3,
+      max: 76,
+      sum: 103,
+    },
   }
   const METADATA_AND_SEGMENT_SIZES = {
     ...METADATA,
@@ -63,5 +68,6 @@ describe('buildReplayPayload', () => {
     expect(payload.isFullSnapshot).toBe(false)
     expect(payload.rawSize).toBe(13)
     expect(payload.recordCount).toBe(10)
+    expect(payload.serializationDuration).toEqual({ count: 3, max: 76, sum: 103 })
   })
 })
