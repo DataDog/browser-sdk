@@ -1,4 +1,4 @@
-import * as http from 'http'
+import * as http from 'node:http'
 import type { AddressInfo } from 'net'
 import { getIp } from '../../../envUtils'
 
@@ -66,7 +66,7 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
       }
       return serverApp
     },
-    url: `http://${address}:${port}`,
+    url: `http://localhost:${port}`,
     waitForIdle: createServerIdleWaiter(server),
   }
 }
@@ -92,7 +92,7 @@ function instantiateServerOnPort(port: number): Promise<http.Server> {
   return new Promise((resolve, reject) => {
     const server = http.createServer()
     server.on('error', reject)
-    server.listen(port, getIp(), () => {
+    server.listen(port, () => {
       resolve(server)
     })
   })
