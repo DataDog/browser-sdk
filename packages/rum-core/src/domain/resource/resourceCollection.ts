@@ -194,6 +194,9 @@ function getResourceDomainContext(
     }
   }
   return {
+    // Currently, at least one of `entry` or `request` must be defined when calling this function.
+    // So `entry` is guaranteed to be defined here. In the future, when `entry` is required, we can
+    // remove the `!` assertion.
     performanceEntry: entry!,
   }
 }
