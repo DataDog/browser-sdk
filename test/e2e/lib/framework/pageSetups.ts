@@ -2,6 +2,7 @@ import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
+import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 import type { Servers } from './httpServers'
 
 export interface SetupOptions {
@@ -204,6 +205,22 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
   })
 }
 
+export function workerSetup(servers: Servers) {
+  return js`
+    import '/datadog-logs.js';
+
+    // Initialize DD_LOGS in service worker
+    DD_LOGS.init(${formatConfiguration(DEFAULT_LOGS_CONFIGURATION, servers)})
+
+    // Handle messages from main thread
+    self.addEventListener('message', (event) => {
+      const message = event.data;
+
+      DD_LOGS.logger.log(message);
+    });
+  `
+}
+
 export function basePage({ header, body }: { header?: string; body?: string }) {
   return html`
     <!doctype html>
@@ -220,6 +237,10 @@ export function basePage({ header, body }: { header?: string; body?: string }) {
 
 // html is a simple template string tag to allow prettier to format various setups as HTML
 export function html(parts: readonly string[], ...vars: string[]) {
+  return parts.reduce((full, part, index) => full + vars[index - 1] + part)
+}
+
+function js(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 

@@ -1,13 +1,12 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
-import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
-import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
+import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { IntakeRegistry } from './intakeRegistry'
@@ -19,29 +18,6 @@ import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
-
-export const DEFAULT_RUM_CONFIGURATION = {
-  applicationId: APPLICATION_ID,
-  clientToken: CLIENT_TOKEN,
-  defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-  trackResources: true,
-  trackLongTasks: true,
-  enableExperimentalFeatures: [],
-  allowUntrustedEvents: true,
-  // Force All sample rates to 100% to avoid flakiness
-  sessionReplaySampleRate: 100,
-  telemetrySampleRate: 100,
-  telemetryUsageSampleRate: 100,
-  telemetryConfigurationSampleRate: 100,
-}
-
-export const DEFAULT_LOGS_CONFIGURATION = {
-  clientToken: CLIENT_TOKEN,
-  // Force All sample rates to 100% to avoid flakiness
-  telemetrySampleRate: 100,
-  telemetryUsageSampleRate: 100,
-  telemetryConfigurationSampleRate: 100,
-}
 
 export function createTest(title: string) {
   return new TestBuilder(title)
