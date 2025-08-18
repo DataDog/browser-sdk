@@ -491,7 +491,10 @@ describe('resourceCollection', () => {
     taskQueuePushSpy.calls.reset()
   }
 
-  function notifyRequest(options: { request?: Partial<RequestCompleteEvent>; notifyPerformanceEntry?: boolean } = {}) {
+  function notifyRequest({
+    request,
+    notifyPerformanceEntry = true,
+  }: { request?: Partial<RequestCompleteEvent>; notifyPerformanceEntry?: boolean } = {}) {
     const requestCompleteEvent = {
       duration: 100 as Duration,
       method: 'GET',
@@ -501,12 +504,12 @@ describe('resourceCollection', () => {
       url: 'https://resource.com/valid',
       handlingStack:
         'Error: \n  at <anonymous> @ http://localhost/foo.js:1:2\n    at <anonymous> @ http://localhost/vendor.js:1:2',
-      ...options.request,
+      ...request,
     } satisfies Partial<RequestCompleteEvent> as RequestCompleteEvent
 
     lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, requestCompleteEvent)
 
-    if (options.notifyPerformanceEntry !== false) {
+    if (notifyPerformanceEntry) {
       notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
           initiatorType: requestCompleteEvent.type === RequestType.FETCH ? 'fetch' : 'xmlhttprequest',
