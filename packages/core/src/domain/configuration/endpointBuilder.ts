@@ -92,7 +92,7 @@ function buildEndpointParameters(
   extraParameters: string[] = []
 ) {
   const parameters = [
-    `ddsource=${source === 'flutter' ? 'flutter' : 'browser'}`,
+    `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',

@@ -390,7 +390,6 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     /**
      * The source of the SDK, used for support plugins purposes.
      */
-    source: initConfiguration?.source === 'flutter' ? 'flutter' : 'browser',
     variant: initConfiguration?.variant,
     sdkVersion: initConfiguration?.sdkVersion,
 
