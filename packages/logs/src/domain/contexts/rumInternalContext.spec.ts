@@ -1,6 +1,6 @@
-import type { RelativeTime, RawTelemetryEvent } from '@datadog/browser-core'
-import { HookNames, startFakeTelemetry } from '@datadog/browser-core'
-import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
+import type { RelativeTime } from '@datadog/browser-core'
+import { HookNames } from '@datadog/browser-core'
+import { mockSyntheticsWorkerValues, startMockTelemetry } from '@datadog/browser-core/test'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startRUMInternalContext } from './rumInternalContext'
@@ -48,11 +48,8 @@ describe('startRUMInternalContext', () => {
     })
 
     describe('when RUM is injected by Synthetics', () => {
-      let telemetryEvents: RawTelemetryEvent[]
-
       beforeEach(() => {
         mockSyntheticsWorkerValues({ injectsRum: true, publicId: 'test-id', resultId: 'result-id' })
-        telemetryEvents = startFakeTelemetry()
       })
 
       it('uses the global variable created when the synthetics worker is injecting RUM', () => {
@@ -65,29 +62,31 @@ describe('startRUMInternalContext', () => {
         expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
       })
 
-      it('adds a telemetry debug event when RUM has not been injected yet', () => {
+      it('adds a telemetry debug event when RUM has not been injected yet', async () => {
+        const telemetry = startMockTelemetry()
         hooks.triggerHook(HookNames.Assemble, {
           startTime: 0 as RelativeTime,
         })
-        expect(telemetryEvents[0]).toEqual(
+        expect(await telemetry.getEvents()).toEqual([
           jasmine.objectContaining({
             message: 'Logs sent before RUM is injected by the synthetics worker',
             status: 'debug',
             type: 'log',
             testId: 'test-id',
             resultId: 'result-id',
-          })
-        )
+          }),
+        ])
       })
 
-      it('adds the telemetry debug event only once', () => {
+      it('adds the telemetry debug event only once', async () => {
+        const telemetry = startMockTelemetry()
         hooks.triggerHook(HookNames.Assemble, {
           startTime: 0 as RelativeTime,
         })
         hooks.triggerHook(HookNames.Assemble, {
           startTime: 0 as RelativeTime,
         })
-        expect(telemetryEvents.length).toEqual(1)
+        expect((await telemetry.getEvents()).length).toEqual(1)
       })
     })
   })

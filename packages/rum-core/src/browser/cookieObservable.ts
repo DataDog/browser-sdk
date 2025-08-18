@@ -9,7 +9,7 @@ import {
   DOM_EVENT,
 } from '@datadog/browser-core'
 
-export interface CookieStoreWindow extends Window {
+export interface CookieStoreWindow {
   cookieStore?: CookieStore
 }
 

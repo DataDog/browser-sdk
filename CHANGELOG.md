@@ -18,6 +18,58 @@
 
 ---
 
+## v6.18.0
+
+**Public Changes:**
+
+- ✨[RUM-10960][Remote config] add support for new static fields ([#3731](https://github.com/DataDog/browser-sdk/pull/3731)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM-REACT] Fix react V7 import and add E2E test ([#3758](https://github.com/DataDog/browser-sdk/pull/3758)) [RUM-REACT]
+- 🐛 [RUM Profiler] Fix discrepancy on view-id correlation ([#3776](https://github.com/DataDog/browser-sdk/pull/3776)) [RUM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3771](https://github.com/DataDog/browser-sdk/pull/3771)) [RUM-REACT]
+- 👷 remove watch_cookie_without_lock experimental feature flag ([#3773](https://github.com/DataDog/browser-sdk/pull/3773)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Bump chrome to 139.0.7258.66-1 ([#3764](https://github.com/DataDog/browser-sdk/pull/3764))
+- 👷 Update all non-major dependencies ([#3753](https://github.com/DataDog/browser-sdk/pull/3753)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🔊 Add Url Extension Telemetry ([#3768](https://github.com/DataDog/browser-sdk/pull/3768)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.17.0
+
+**Public Changes:**
+
+- ✨ don't write lock to cookie for read only operation ([#3728](https://github.com/DataDog/browser-sdk/pull/3728)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [FFL-450] Add support for exposures track ([#3738](https://github.com/DataDog/browser-sdk/pull/3738)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨[RUM-10825] Add hot-reload to developer-extension ([#3687](https://github.com/DataDog/browser-sdk/pull/3687))
+- 📝 Reference the api reference ([#3739](https://github.com/DataDog/browser-sdk/pull/3739))
+- 📝 Typedoc setup and theme ([#3676](https://github.com/DataDog/browser-sdk/pull/3676))
+
+**Internal Changes:**
+
+- 👷 Update dependency eslint-plugin-jsdoc to v52 ([#3755](https://github.com/DataDog/browser-sdk/pull/3755))
+- 👷 Lock file maintenance ([#3757](https://github.com/DataDog/browser-sdk/pull/3757))
+- 👷 Allow `merge-into-stating` CI job to fail ([#3750](https://github.com/DataDog/browser-sdk/pull/3750))
+- 👷 🏷️ `scripts/` TS migration ([#3732](https://github.com/DataDog/browser-sdk/pull/3732)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 add a stale issue workflow ([#3707](https://github.com/DataDog/browser-sdk/pull/3707))
+- 👷 Update dependency eslint-plugin-unicorn to v60 ([#3734](https://github.com/DataDog/browser-sdk/pull/3734))
+- 👷 Update all non-major dependencies ([#3704](https://github.com/DataDog/browser-sdk/pull/3704)) [FLAGGING] [RUM-REACT] [WORKER]
+- 👷add back html coverage ([#3741](https://github.com/DataDog/browser-sdk/pull/3741))
+- 👷 Update actions/configure-pages action to v5 ([#3733](https://github.com/DataDog/browser-sdk/pull/3733))
+- 👷 hide tag sanitization console warning in unit tests ([#3736](https://github.com/DataDog/browser-sdk/pull/3736)) [LOGS]
+- 👷 Update dependency webpack-cli to v6 ([#3735](https://github.com/DataDog/browser-sdk/pull/3735))
+- 👷 Lock file maintenance ([#3705](https://github.com/DataDog/browser-sdk/pull/3705))
+- 👷 First deploy for api reference + fix yaml ([#3727](https://github.com/DataDog/browser-sdk/pull/3727))
+- 👷 fix coverage report directory ([#3737](https://github.com/DataDog/browser-sdk/pull/3737))
+- Revert "👷 hide tag sanitization console warning in unit tests" [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 hide tag sanitization console warning in unit tests [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 upload code coverage report to datadog ([#3710](https://github.com/DataDog/browser-sdk/pull/3710))
+- 👷 Add more telemetry debug for cookie configuration ([#3709](https://github.com/DataDog/browser-sdk/pull/3709)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ [Remote config] add a remote config e2e scenario ([#3721](https://github.com/DataDog/browser-sdk/pull/3721)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊 [RUM-11144] Apply telemetry context to early telemetry message ([#3745](https://github.com/DataDog/browser-sdk/pull/3745)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗ [PANA-3411] Add telemetry for session replay reliability ([#3688](https://github.com/DataDog/browser-sdk/pull/3688)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ use fetch to retrieve remote configuration ([#3723](https://github.com/DataDog/browser-sdk/pull/3723)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ Move customer context from assembly to collection ([#3681](https://github.com/DataDog/browser-sdk/pull/3681)) [RUM] [RUM-REACT] [RUM-SLIM]
+
 ## v6.16.0
 
 **Public Changes:**

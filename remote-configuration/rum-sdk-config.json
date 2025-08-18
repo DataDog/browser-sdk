@@ -46,6 +46,71 @@
         "enablePrivacyForActionName": {
           "type": "boolean",
           "description": "Privacy control for action name"
+        },
+        "allowedTracingUrls": {
+          "type": "array",
+          "description": "URLs where tracing is allowed",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["match", "propagatorTypes"],
+            "properties": {
+              "match": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["rcSerializedType", "value"],
+                "properties": {
+                  "rcSerializedType": {
+                    "type": "string",
+                    "enum": ["string", "regex"],
+                    "description": "Remote config serialized type of match"
+                  },
+                  "value": {
+                    "type": "string",
+                    "description": "Match value"
+                  }
+                }
+              },
+              "propagatorTypes": {
+                "type": "array",
+                "description": "List of propagator types",
+                "items": {
+                  "type": "string",
+                  "enum": ["datadog", "b3", "b3multi", "tracecontext"]
+                }
+              }
+            }
+          }
+        },
+        "allowedTrackingOrigins": {
+          "type": "array",
+          "description": "Origins where tracking is allowed",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["rcSerializedType", "value"],
+            "properties": {
+              "rcSerializedType": {
+                "type": "string",
+                "enum": ["string", "regex"],
+                "description": "Remote config serialized type of match"
+              },
+              "value": {
+                "type": "string",
+                "description": "Match value"
+              }
+            }
+          }
+        },
+        "traceSampleRate": {
+          "type": "number",
+          "description": "The percentage of traces sampled",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "trackSessionAcrossSubdomains": {
+          "type": "boolean",
+          "description": "Whether to track sessions across subdomains"
         }
       }
     }

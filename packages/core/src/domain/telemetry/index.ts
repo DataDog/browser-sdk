@@ -3,13 +3,12 @@ export {
   TelemetryService,
   addTelemetryDebug,
   addTelemetryError,
-  startFakeTelemetry,
   resetTelemetry,
   startTelemetry,
-  isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
+  getTelemetryObservable,
 } from './telemetry'
 
 export * from './rawTelemetryEvent.types'

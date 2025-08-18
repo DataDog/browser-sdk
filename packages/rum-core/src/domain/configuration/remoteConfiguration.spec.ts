@@ -1,7 +1,7 @@
-import { DefaultPrivacyLevel, INTAKE_SITE_US1 } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, INTAKE_SITE_US1, display } from '@datadog/browser-core'
 import { interceptRequests } from '@datadog/browser-core/test'
 import type { RumInitConfiguration } from './configuration'
-import type { RemoteConfiguration } from './remoteConfiguration'
+import type { RumRemoteConfiguration } from './remoteConfiguration'
 import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
@@ -91,11 +91,33 @@ describe('remoteConfiguration', () => {
   })
 
   describe('applyRemoteConfiguration', () => {
+    let displaySpy: jasmine.Spy
+
+    beforeEach(() => {
+      displaySpy = spyOn(display, 'error')
+    })
+
     it('should override the initConfiguration options with the ones from the remote configuration', () => {
-      const rumRemoteConfiguration: RemoteConfiguration['rum'] = {
+      const rumRemoteConfiguration: RumRemoteConfiguration = {
         applicationId: 'yyy',
         sessionSampleRate: 1,
         sessionReplaySampleRate: 1,
+        traceSampleRate: 1,
+        trackSessionAcrossSubdomains: true,
+        allowedTrackingOrigins: [
+          { rcSerializedType: 'string', value: 'https://example.com' },
+          { rcSerializedType: 'regex', value: '^https:\\/\\/app-\\w+\\.datadoghq\\.com' },
+        ],
+        allowedTracingUrls: [
+          {
+            match: { rcSerializedType: 'string', value: 'https://example.com' },
+            propagatorTypes: ['b3', 'tracecontext'],
+          },
+          {
+            match: { rcSerializedType: 'regex', value: '^https:\\/\\/app-\\w+\\.datadoghq\\.com' },
+            propagatorTypes: ['datadog', 'b3multi'],
+          },
+        ],
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
       expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
@@ -104,8 +126,41 @@ describe('remoteConfiguration', () => {
         service: 'xxx',
         sessionSampleRate: 1,
         sessionReplaySampleRate: 1,
+        traceSampleRate: 1,
+        trackSessionAcrossSubdomains: true,
+        allowedTrackingOrigins: ['https://example.com', /^https:\/\/app-\w+\.datadoghq\.com/],
+        allowedTracingUrls: [
+          { match: 'https://example.com', propagatorTypes: ['b3', 'tracecontext'] },
+          { match: /^https:\/\/app-\w+\.datadoghq\.com/, propagatorTypes: ['datadog', 'b3multi'] },
+        ],
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       })
+    })
+
+    it('should display an error if the remote config contains invalid regex', () => {
+      const rumRemoteConfiguration: RumRemoteConfiguration = {
+        applicationId: 'yyy',
+        allowedTrackingOrigins: [{ rcSerializedType: 'regex', value: 'Hello(?|!)' }],
+      }
+      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        ...DEFAULT_INIT_CONFIGURATION,
+        applicationId: 'yyy',
+        allowedTrackingOrigins: [undefined as any],
+      })
+      expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
+    })
+
+    it('should display an error if an unsupported `rcSerializedType` is provided', () => {
+      const rumRemoteConfiguration: RumRemoteConfiguration = {
+        applicationId: 'yyy',
+        allowedTrackingOrigins: [{ rcSerializedType: 'foo' as any, value: 'bar' }],
+      }
+      expect(applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration)).toEqual({
+        ...DEFAULT_INIT_CONFIGURATION,
+        applicationId: 'yyy',
+        allowedTrackingOrigins: [undefined as any],
+      })
+      expect(displaySpy).toHaveBeenCalledWith('Unsupported remote configuration: "rcSerializedType": "foo"')
     })
   })
 

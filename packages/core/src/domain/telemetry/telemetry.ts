@@ -5,7 +5,7 @@ import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../intakeSites'
-import { Observable } from '../../tools/observable'
+import { BufferedObservable, Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/utils/timeUtils'
 import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
@@ -17,8 +17,13 @@ import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { getConnectivity } from '../connectivity'
-import { createBoundedBuffer } from '../../tools/boundedBuffer'
-import { canUseEventBridge, getEventBridge, startBatchWithReplica } from '../../transport'
+import {
+  canUseEventBridge,
+  createFlushController,
+  createHttpRequest,
+  getEventBridge,
+  createBatch,
+} from '../../transport'
 import type { Encoder } from '../../tools/encoder'
 import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
@@ -58,10 +63,13 @@ export interface Telemetry {
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
-// eslint-disable-next-line local-rules/disallow-side-effects
-let preStartTelemetryBuffer = createBoundedBuffer()
-let onRawTelemetryEventCollected = (event: RawTelemetryEvent, kind: string) => {
-  preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event, kind))
+let telemetryObservable: BufferedObservable<{ rawEvent: RawTelemetryEvent; kind: string }> | undefined
+
+export function getTelemetryObservable() {
+  if (!telemetryObservable) {
+    telemetryObservable = new BufferedObservable(100)
+  }
+  return telemetryObservable
 }
 
 export function startTelemetry(
@@ -102,7 +110,8 @@ export function startTelemetryCollection(
   }
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
-  onRawTelemetryEventCollected = (rawEvent: RawTelemetryEvent, kind: string) => {
+  const telemetryObservable = getTelemetryObservable()
+  telemetryObservable.subscribe(({ rawEvent, kind }) => {
     if (!telemetryEnabledPerType[rawEvent.type!]) {
       return
     }
@@ -138,9 +147,9 @@ export function startTelemetryCollection(
     observable.notify(event)
     sendToExtension('telemetry', event)
     alreadySentEvents.add(stringifiedEvent)
-  }
-  // need to be called after telemetry context is provided and observers are registered
-  preStartTelemetryBuffer.drain()
+  })
+  telemetryObservable.unbuffer()
+
   startMonitorErrorCollection(addTelemetryError)
 
   return {
@@ -187,30 +196,30 @@ function startTelemetryTransport(
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
     const telemetrySubscription = telemetryObservable.subscribe((event) => bridge.send('internal_telemetry', event))
-    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
+    cleanupTasks.push(telemetrySubscription.unsubscribe)
   } else {
-    const telemetryBatch = startBatchWithReplica(
-      configuration,
-      {
-        endpoint: configuration.rumEndpointBuilder,
-        encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
-      },
-      configuration.replica && {
-        endpoint: configuration.replica.rumEndpointBuilder,
-        encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY_REPLICA),
-      },
-      reportError,
-      pageMayExitObservable,
+    const endpoints = [configuration.rumEndpointBuilder]
+    if (configuration.replica && isTelemetryReplicationAllowed(configuration)) {
+      endpoints.push(configuration.replica.rumEndpointBuilder)
+    }
+    const telemetryBatch = createBatch({
+      encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
+      request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
+      flushController: createFlushController({
+        messagesLimit: configuration.batchMessagesLimit,
+        bytesLimit: configuration.batchBytesLimit,
+        durationLimit: configuration.flushTimeout,
+        pageMayExitObservable,
 
-      // We don't use an actual session expire observable here, to make telemetry collection
-      // independent of the session. This allows to start and send telemetry events ealier.
-      new Observable()
-    )
-    cleanupTasks.push(() => telemetryBatch.stop())
-    const telemetrySubscription = telemetryObservable.subscribe((event) => {
-      telemetryBatch.add(event, isTelemetryReplicationAllowed(configuration))
+        // We don't use an actual session expire observable here, to make telemetry collection
+        // independent of the session. This allows to start and send telemetry events earlier.
+        sessionExpireObservable: new Observable(),
+      }),
+      messageBytesLimit: configuration.messageBytesLimit,
     })
-    cleanupTasks.push(() => telemetrySubscription.unsubscribe())
+    cleanupTasks.push(telemetryBatch.stop)
+    const telemetrySubscription = telemetryObservable.subscribe(telemetryBatch.add)
+    cleanupTasks.push(telemetrySubscription.unsubscribe)
   }
 
   return {
@@ -225,86 +234,73 @@ function getRuntimeEnvInfo(): RuntimeEnvInfo {
   }
 }
 
-export function startFakeTelemetry() {
-  const events: RawTelemetryEvent[] = []
-
-  onRawTelemetryEventCollected = (event: RawTelemetryEvent) => {
-    events.push(event)
-  }
-
-  return events
-}
-
 export function resetTelemetry() {
-  preStartTelemetryBuffer = createBoundedBuffer()
-  onRawTelemetryEventCollected = (event: RawTelemetryEvent, kind: string) => {
-    preStartTelemetryBuffer.add(() => onRawTelemetryEventCollected(event, kind))
-  }
+  telemetryObservable = undefined
 }
 
 /**
  * Avoid mixing telemetry events from different data centers
  * but keep replicating staging events for reliability
  */
-export function isTelemetryReplicationAllowed(configuration: Configuration) {
+function isTelemetryReplicationAllowed(configuration: Configuration) {
   return configuration.site === INTAKE_SITE_STAGING
 }
 
 export function addTelemetryDebug(message: string, context?: Context) {
   displayIfDebugEnabled(ConsoleApiName.debug, message, context)
-  onRawTelemetryEventCollected(
-    {
+  getTelemetryObservable().notify({
+    rawEvent: {
       type: TelemetryType.LOG,
       message,
       status: StatusType.debug,
       ...context,
     },
-    StatusType.debug
-  )
+    kind: StatusType.debug,
+  })
 }
 
 export function addTelemetryError(e: unknown, context?: Context) {
-  onRawTelemetryEventCollected(
-    {
+  getTelemetryObservable().notify({
+    rawEvent: {
       type: TelemetryType.LOG,
       status: StatusType.error,
       ...formatError(e),
       ...context,
     },
-    StatusType.error
-  )
+    kind: StatusType.error,
+  })
 }
 
 export function addTelemetryConfiguration(configuration: RawTelemetryConfiguration) {
-  onRawTelemetryEventCollected(
-    {
+  getTelemetryObservable().notify({
+    rawEvent: {
       type: TelemetryType.CONFIGURATION,
       configuration,
     },
-    TelemetryType.CONFIGURATION
-  )
+    kind: TelemetryType.CONFIGURATION,
+  })
 }
 
 export function addTelemetryMetrics(kind: string, context?: Context) {
-  onRawTelemetryEventCollected(
-    {
+  getTelemetryObservable().notify({
+    rawEvent: {
       type: TelemetryType.LOG,
       message: kind,
       status: StatusType.debug,
       ...context,
     },
-    kind
-  )
+    kind,
+  })
 }
 
 export function addTelemetryUsage(usage: RawTelemetryUsage) {
-  onRawTelemetryEventCollected(
-    {
+  getTelemetryObservable().notify({
+    rawEvent: {
       type: TelemetryType.USAGE,
       usage,
     },
-    TelemetryType.USAGE
-  )
+    kind: TelemetryType.USAGE,
+  })
 }
 
 export function formatError(e: unknown) {

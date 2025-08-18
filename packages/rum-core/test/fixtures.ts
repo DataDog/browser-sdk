@@ -267,6 +267,14 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
       }
       break
 
+    case RumPerformanceEntryType.VISIBILITY_STATE:
+      entry = {
+        entryType: RumPerformanceEntryType.VISIBILITY_STATE,
+        name: 'visible',
+        startTime: 0 as RelativeTime,
+      }
+      break
+
     default:
       throw new Error(`Unsupported entryType fixture: ${entryType}`)
   }

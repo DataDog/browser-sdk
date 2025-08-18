@@ -5,7 +5,6 @@ import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
-import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -135,21 +134,19 @@ export function startSessionStore<TrackingType extends string>(
    * - if the session is not active, clear the session store and expire the session cache
    */
   function watchSession() {
-    const sessionStoreOperation = {
-      process: (sessionState: SessionState) =>
-        isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
-      after: synchronizeSession,
-    } as const
+    const sessionState = sessionStoreStrategy.retrieveSession()
 
-    if (isExperimentalFeatureEnabled(ExperimentalFeature.WATCH_COOKIE_WITHOUT_LOCK)) {
-      const sessionState = sessionStoreStrategy.retrieveSession()
-      if (isSessionInExpiredState(sessionState)) {
-        processSessionStoreOperations(sessionStoreOperation, sessionStoreStrategy)
-      } else {
-        synchronizeSession(sessionState)
-      }
+    if (isSessionInExpiredState(sessionState)) {
+      processSessionStoreOperations(
+        {
+          process: (sessionState: SessionState) =>
+            isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
+          after: synchronizeSession,
+        },
+        sessionStoreStrategy
+      )
     } else {
-      processSessionStoreOperations(sessionStoreOperation, sessionStoreStrategy)
+      synchronizeSession(sessionState)
     }
   }
 
