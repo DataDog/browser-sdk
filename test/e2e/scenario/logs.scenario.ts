@@ -5,7 +5,41 @@ import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
+declare global {
+  interface Window {
+    myServiceWorker: ServiceWorkerRegistration
+  }
+}
+
 test.describe('logs', () => {
+  createTest('real service worker with worker logs')
+    .withBody(
+      `
+      <script>
+        // Register service worker using served URL
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js', { type: 'module'})
+            .then(registration => {
+              console.log('Service worker registered successfully');
+              window.myServiceWorker = registration;
+            });
+        }
+      </script>
+    `
+    )
+    .run(async ({ flushEvents, page, intakeRegistry }) => {
+      // Send a message to the service worker
+      await page.evaluate(`
+        window.myServiceWorker.active.postMessage("Some message");
+      `)
+
+      await page.waitForTimeout(5000)
+
+      await flushEvents()
+
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+    })
+
   createTest('send logs')
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
