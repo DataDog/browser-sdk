@@ -23,6 +23,10 @@ export interface SetupOptions {
   testFixture: typeof test
 }
 
+export interface WorkerOptions {
+  importScripts?: boolean
+}
+
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 
 const isBrowserStack = process.env.BROWSER_STACK
@@ -185,20 +189,20 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
   })
 }
 
-export function workerSetup(servers: Servers) {
+export function workerSetup(options: WorkerOptions, servers: Servers) {
   return js`
-    import '/datadog-logs.js';
+      ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
+      
+      // Initialize DD_LOGS in service worker
+      DD_LOGS.init(${formatConfiguration(DEFAULT_LOGS_CONFIGURATION, servers)})
 
-    // Initialize DD_LOGS in service worker
-    DD_LOGS.init(${formatConfiguration(DEFAULT_LOGS_CONFIGURATION, servers)})
+      // Handle messages from main thread
+      self.addEventListener('message', (event) => {
+        const message = event.data;
 
-    // Handle messages from main thread
-    self.addEventListener('message', (event) => {
-      const message = event.data;
-
-      DD_LOGS.logger.log(message);
-    });
-  `
+        DD_LOGS.logger.log(message);
+      });
+    `
 }
 
 export function basePage({ header, body }: { header?: string; body?: string }) {

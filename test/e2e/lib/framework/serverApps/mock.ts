@@ -45,9 +45,13 @@ export function createMockServerApp(
     generateLargeResponse(res, chunkText)
   })
 
-  app.get('/sw.js', (_req, res) => {
-    res.contentType('application/javascript').send(workerSetup(servers))
-  })
+  app
+    .get('/sw.js', (_req, res) => {
+      res.contentType('application/javascript').send(workerSetup({ importScripts: false }, servers))
+    })
+    .get('/sw-import-scripts.js', (_req, res) => {
+      res.contentType('application/javascript').send(workerSetup({ importScripts: true }, servers))
+    })
 
   function generateLargeResponse(res: ServerResponse, chunkText: string) {
     let bytesWritten = 0
