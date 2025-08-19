@@ -20,4 +20,17 @@ test.describe('vital collection', () => {
       expect(intakeRegistry.rumVitalEvents[0].vital.name).toEqual('foo')
       expect(intakeRegistry.rumVitalEvents[0].vital.duration).toEqual(expect.any(Number))
     })
+
+  createTest('send operation step vital')
+    .withRum()
+    .run(async ({ flushEvents, intakeRegistry, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startOperationStepVital('foo')
+      })
+      await flushEvents()
+
+      expect(intakeRegistry.rumVitalEvents).toHaveLength(1)
+      expect(intakeRegistry.rumVitalEvents[0].vital.name).toEqual('foo')
+      expect(intakeRegistry.rumVitalEvents[0].vital.step_type).toEqual('start')
+    })
 })

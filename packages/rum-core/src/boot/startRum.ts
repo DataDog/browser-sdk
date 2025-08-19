@@ -228,6 +228,7 @@ export function startRum(
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
+    addOperationStepVital: vitalCollection.addOperationStepVital,
     globalContext,
     userContext,
     accountContext,

@@ -1,5 +1,5 @@
 import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
+import { clocksNow, combine, elapsed, generateUUID, sanitize, toServerDuration } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -30,13 +30,23 @@ export interface DurationVitalStart {
   description?: string
 }
 
-export interface DurationVital {
+interface BaseVital {
   name: string
-  type: typeof VitalType.DURATION
   startClocks: ClocksState
-  duration: Duration
   description?: string
   context?: Context
+}
+
+export interface DurationVital extends BaseVital {
+  type: typeof VitalType.DURATION
+  duration: Duration
+}
+
+export interface OperationStepVital extends BaseVital {
+  type: typeof VitalType.OPERATION_STEP
+  stepType: 'start' | 'end'
+  operationKey?: string
+  failureReason?: string
 }
 
 export interface CustomVitalsState {
@@ -65,7 +75,28 @@ export function startVitalCollection(
     }
   }
 
+  function addOperationStepVital(
+    name: string,
+    stepType: 'start' | 'end',
+    operationKey?: string,
+    failureReason?: string,
+    options?: Partial<OperationStepVital>
+  ) {
+    const vital: OperationStepVital = {
+      name,
+      type: VitalType.OPERATION_STEP,
+      startClocks: clocksNow(),
+      operationKey,
+      stepType,
+      failureReason: sanitize(failureReason) as string | undefined,
+      context: sanitize(options?.context) as Context,
+      description: sanitize(options?.description) as string | undefined,
+    }
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
+  }
+
   return {
+    addOperationStepVital,
     addDurationVital,
     startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
       startDurationVital(customVitalsState, name, options),
@@ -135,32 +166,35 @@ function buildDurationVital(
   }
 }
 
-function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRumEventCollectedData<RawRumVitalEvent> {
-  const rawRumEvent: RawRumVitalEvent = {
-    date: vital.startClocks.timeStamp,
-    vital: {
-      id: generateUUID(),
-      type: vital.type,
-      name: vital.name,
-      duration: toServerDuration(vital.duration),
-      description: vital.description,
-    },
-    type: RumEventType.VITAL,
-    context: vital.context,
-  }
-
-  if (valueComputedBySdk) {
-    rawRumEvent._dd = {
-      vital: {
-        computed_value: true,
-      },
-    }
+function processVital(
+  vital: DurationVital | OperationStepVital,
+  valueComputedBySdk: boolean
+): RawRumEventCollectedData<RawRumVitalEvent> {
+  const { startClocks, type, name, description, context } = vital
+  const vitalData = {
+    id: generateUUID(),
+    type,
+    name,
+    description,
+    ...(type === VitalType.DURATION
+      ? { duration: toServerDuration(vital.duration) }
+      : {
+          step_type: vital.stepType,
+          operation_key: vital.operationKey,
+          failure_reason: vital.failureReason,
+        }),
   }
 
   return {
-    rawRumEvent,
-    startTime: vital.startClocks.relative,
-    duration: vital.duration,
+    rawRumEvent: {
+      date: startClocks.timeStamp,
+      vital: vitalData,
+      type: RumEventType.VITAL,
+      context,
+      ...(valueComputedBySdk && { _dd: { vital: { computed_value: true } } }),
+    },
+    startTime: startClocks.relative,
+    duration: type === VitalType.DURATION ? vital.duration : undefined,
     domainContext: {},
   }
 }

@@ -44,6 +44,7 @@ import type {
   AddDurationVitalOptions,
   DurationVitalOptions,
   DurationVitalReference,
+  OperationStepVital,
 } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
@@ -427,6 +428,22 @@ export interface RumPublicApi extends PublicApi {
    * @param options - Options for the custom vital (context, description)
    */
   stopDurationVital: (nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions) => void
+
+  /**
+   * Add an operation step vital
+   *
+   * @category Vital
+   * @param name - Name of the operation step
+   * @param options - Options for the operation step (context, description)
+   */
+  startOperationStepVital: (name: string, operationKey?: string, options?: Partial<OperationStepVital>) => void
+  succeedOperationStepVital: (name: string, operationKey?: string, options?: Partial<OperationStepVital>) => void
+  failOperationStepVital: (
+    name: string,
+    operationKey?: string,
+    failureReason?: string,
+    options?: Partial<OperationStepVital>
+  ) => void
 }
 
 export interface RecorderApi {
@@ -494,6 +511,7 @@ export interface Strategy {
   startDurationVital: StartRumResult['startDurationVital']
   stopDurationVital: StartRumResult['stopDurationVital']
   addDurationVital: StartRumResult['addDurationVital']
+  addOperationStepVital: StartRumResult['addOperationStepVital']
 }
 
 export function makeRumPublicApi(
@@ -770,6 +788,18 @@ export function makeRumPublicApi(
         context: sanitize(options && options.context) as Context,
         description: sanitize(options && options.description) as string | undefined,
       })
+    }),
+
+    startOperationStepVital: monitor((name, operationKey, options) => {
+      strategy.addOperationStepVital(name, 'start', operationKey, undefined, options)
+    }),
+
+    succeedOperationStepVital: monitor((name, operationKey, options) => {
+      strategy.addOperationStepVital(name, 'end', operationKey, undefined, options)
+    }),
+
+    failOperationStepVital: monitor((name, operationKey, failureReason, options) => {
+      strategy.addOperationStepVital(name, 'end', operationKey, failureReason, options)
     }),
   })
 
