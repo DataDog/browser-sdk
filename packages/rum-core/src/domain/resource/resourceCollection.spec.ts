@@ -5,7 +5,6 @@ import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainConte
 import {
   collectAndValidateRawRumEvents,
   createPerformanceEntry,
-  mockPageStateHistory,
   mockPerformanceObserver,
   mockRumConfiguration,
 } from '../../../test'
@@ -24,11 +23,9 @@ import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocument
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
 const baseConfiguration = mockRumConfiguration()
-const pageStateHistory = mockPageStateHistory()
 
 describe('resourceCollection', () => {
   let lifeCycle: LifeCycle
-  let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
@@ -39,7 +36,7 @@ describe('resourceCollection', () => {
     const taskQueue = createTaskQueue()
     replaceMockable(createTaskQueue, () => taskQueue)
     taskQueuePushSpy = spyOn(taskQueue, 'push')
-    const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig }, pageStateHistory)
+    const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig })
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
@@ -50,7 +47,6 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
   })
 
   it('should create resource from performance entry', () => {
@@ -406,19 +402,6 @@ describe('resourceCollection', () => {
     })
   })
 
-  it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
-    setupResourceCollection()
-    wasInPageStateDuringPeriodSpy.and.returnValue(true)
-
-    notifyRequest({
-      // For now, this behavior only happens when there is no performance entry matching the request
-      notifyPerformanceEntry: false,
-    })
-
-    const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-    expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
-  })
-
   it('should create resource from completed fetch request', () => {
     setupResourceCollection()
     const response = new Response()
@@ -679,6 +662,7 @@ describe('resourceCollection', () => {
       notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
           initiatorType: requestCompleteEvent.type === RequestType.FETCH ? 'fetch' : 'xmlhttprequest',
+          name: requestCompleteEvent.url,
           ...performanceEntryOverrides,
         }),
       ])
