@@ -4,8 +4,26 @@ export function getGithubDeployKey(): string {
   return getSecretKey('ci.browser-sdk.github_deploy_key')
 }
 
-export function getGithubAccessToken(): string {
-  return getSecretKey('ci.browser-sdk.github_access_token')
+/**
+ * This token is scoped to main branch only.
+ */
+export function getGithubPullRequestToken(): string {
+  return command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.pull_request`.run().trim()
+}
+
+/**
+ * This token is scoped to tags only.
+ */
+export function getGithubReleaseToken(): string {
+  return command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.release`.run().trim()
+}
+
+export function getGithubReadToken(): string {
+  return command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.read`.run().trim()
+}
+
+export function revokeGithubToken(token: string): string {
+  return command`dd-octo-sts revoke --token ${token}`.run().trim()
 }
 
 export function getOrg2ApiKey(): string {

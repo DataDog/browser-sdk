@@ -2,8 +2,7 @@ import fs from 'node:fs'
 import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { CI_FILE, replaceCiFileVariable } from '../lib/filesUtils.ts'
-import { initGitConfig } from '../lib/gitUtils.ts'
-import { getGithubAccessToken } from '../lib/secrets.ts'
+import { initGitConfig, createPullRequest } from '../lib/gitUtils.ts'
 
 const REPOSITORY = process.env.GIT_REPOSITORY
 const MAIN_BRANCH = process.env.MAIN_BRANCH
@@ -56,7 +55,7 @@ runMain(async () => {
 
   printLog('Create PR...')
 
-  const pullRequestUrl = createPullRequest()
+  const pullRequestUrl = createPullRequest(MAIN_BRANCH)
   printLog(`Chrome version bump PR created (from ${CURRENT_PACKAGE_VERSION} to ${packageVersion}).`)
 
   // used to share the pull request url to the notification jobs
@@ -76,10 +75,4 @@ function getMajor(version: string): number {
   const major = majorMatches ? majorMatches[1] : null
 
   return Number(major)
-}
-
-function createPullRequest(): string {
-  command`gh auth login --with-token`.withInput(getGithubAccessToken()).run()
-  const pullRequestUrl = command`gh pr create --fill --base ${MAIN_BRANCH}`.run()
-  return pullRequestUrl.trim()
 }
