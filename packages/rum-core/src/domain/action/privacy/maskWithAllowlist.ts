@@ -12,6 +12,7 @@ export function maskDisallowedTextContent(text: string, fixedMask?: string): str
     return text
   }
   // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
+  // so we need to do the same here
   if (window.$DD_ALLOW && window.$DD_ALLOW.has(text.toLocaleLowerCase())) {
     return text
   }
@@ -20,11 +21,11 @@ export function maskDisallowedTextContent(text: string, fixedMask?: string): str
 
 export function isAllowlistMaskEnabled(
   defaultPrivacyLevel: NodePrivacyLevel,
-  nodePrivacyLevel?: NodePrivacyLevel
+  nodeSelfPrivacyLevel?: NodePrivacyLevel
 ): boolean {
   return (
     (defaultPrivacyLevel === DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
-      nodePrivacyLevel !== NodePrivacyLevel.ALLOW) ||
-    nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+      nodeSelfPrivacyLevel !== NodePrivacyLevel.ALLOW) ||
+    nodeSelfPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
   )
 }

@@ -22,7 +22,7 @@ import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
-import { ActionNameSource } from './actionNameConstants'
+import { ACTION_NAME_MASK, ActionNameSource } from './actionNameConstants'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -473,7 +473,7 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
 
       expect(events.length).toBe(1)
-      expect(events[0].name).toBe('xxx')
+      expect(events[0].name).toBe(ACTION_NAME_MASK)
       expect(events[0].nameSource).toBe(ActionNameSource.TEXT_CONTENT)
     })
 
@@ -517,7 +517,7 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
 
       expect(events.length).toBe(1)
-      expect(events[0].name).toBe('xxx')
+      expect(events[0].name).toBe(ACTION_NAME_MASK)
       expect(events[0].nameSource).toBe(ActionNameSource.TEXT_CONTENT)
     })
 

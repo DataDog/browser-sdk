@@ -4,6 +4,7 @@
  */
 export const DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE = 'data-dd-action-name'
 export const ACTION_NAME_PLACEHOLDER = 'Masked Element'
+export const ACTION_NAME_MASK = 'xxx'
 
 export const enum ActionNameSource {
   CUSTOM_ATTRIBUTE = 'custom_attribute',

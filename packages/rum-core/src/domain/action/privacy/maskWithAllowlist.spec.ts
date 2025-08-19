@@ -1,5 +1,5 @@
 import { ActionType } from '../../../rawRumEvent.types'
-import { ACTION_NAME_PLACEHOLDER, ActionNameSource } from '../actionNameConstants'
+import { ACTION_NAME_MASK, ActionNameSource } from '../actionNameConstants'
 import type { ClickActionBase } from '../trackClickActions'
 import { maskDisallowedTextContent } from './maskWithAllowlist'
 
@@ -31,23 +31,23 @@ describe('maskWithAllowlist', () => {
 
   it('should fail close if $DD_ALLOW is not defined', () => {
     window.$DD_ALLOW = undefined as any
-    const testString = maskDisallowedTextContent('mask-feature-on', ACTION_NAME_PLACEHOLDER)
-    expect(testString).toBe('Masked Element')
+    const testString = maskDisallowedTextContent('mask-feature-on', ACTION_NAME_MASK)
+    expect(testString).toBe(ACTION_NAME_MASK)
   })
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
     clickActionBase.name = 'This is an action name in allowlist'
-    const testString1 = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_PLACEHOLDER)
-    expect(testString1).toBe('Masked Element')
+    const testString1 = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_MASK)
+    expect(testString1).toBe(ACTION_NAME_MASK)
 
     clickActionBase.name = 'any unallowed string'
-    const testString2 = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_PLACEHOLDER)
-    expect(testString2).toBe('Masked Element')
+    const testString2 = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_MASK)
+    expect(testString2).toBe(ACTION_NAME_MASK)
   })
 
   it('handles empty string', () => {
     clickActionBase.name = ''
-    const result = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_PLACEHOLDER)
+    const result = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_MASK)
     expect(result).toBe('')
   })
 })
