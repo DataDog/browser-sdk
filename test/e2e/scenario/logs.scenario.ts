@@ -45,7 +45,7 @@ test.describe('logs', () => {
       <script>
         // Register service worker using served URL
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw-import-scripts.js', { type: 'module'})
+          navigator.serviceWorker.register('/sw-import-scripts.js')
             .then(registration => {
               console.log('Service worker registered successfully');
               window.myServiceWorker = registration;
