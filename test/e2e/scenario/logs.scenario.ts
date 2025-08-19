@@ -12,13 +12,40 @@ declare global {
 }
 
 test.describe('logs', () => {
-  createTest('service worker with worker logs')
+  createTest('service worker with worker logs - esm')
     .withBody(
       `
       <script>
         // Register service worker using served URL
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('/sw.js', { type: 'module'})
+            .then(registration => {
+              console.log('Service worker registered successfully');
+              window.myServiceWorker = registration;
+            });
+        }
+      </script>
+    `
+    )
+    .run(async ({ flushEvents, page, intakeRegistry, browserName }) => {
+      test.skip(browserName === 'firefox', 'Firefox do not support ES modules in Service Workers')
+      // Send a message to the service worker
+      await page.evaluate(`
+        window.myServiceWorker.active.postMessage("Some message");
+      `)
+
+      await flushEvents()
+
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+    })
+
+  createTest('service worker with worker logs - importScripts')
+    .withBody(
+      `
+      <script>
+        // Register service worker using served URL
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw-import-scripts.js', { type: 'module'})
             .then(registration => {
               console.log('Service worker registered successfully');
               window.myServiceWorker = registration;
