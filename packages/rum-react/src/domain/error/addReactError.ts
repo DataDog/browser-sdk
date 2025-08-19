@@ -15,6 +15,7 @@ import { onRumStart } from '../reactPlugin'
 export function addReactError(error: Error, info: ErrorInfo) {
   const handlingStack = createHandlingStack('react error')
   const startClocks = clocksNow()
+
   onRumStart((addEvent) => {
     callMonitored(() => {
       const rawError = computeRawError({
@@ -45,7 +46,7 @@ export function addReactError(error: Error, info: ErrorInfo) {
             source_type: 'browser',
             csp: rawError.csp,
           },
-          context: { framework: 'react' },
+          context: { framework: 'react', ...('dd_context' in error && error.dd_context ? error.dd_context : {}) },
         },
         {
           error: rawError.originalError,
