@@ -37,14 +37,14 @@ export interface RumFetchResourceEventDomainContext {
   requestInput: RequestInfo
   response: Response | undefined
   error: Error | undefined
-  performanceEntry: PerformanceEntry | undefined
+  performanceEntry: PerformanceEntry
   isAborted: boolean
   handlingStack: string | undefined
 }
 
 export interface RumXhrResourceEventDomainContext {
   xhr: XMLHttpRequest
-  performanceEntry: PerformanceEntry | undefined
+  performanceEntry: PerformanceEntry
   isAborted: boolean
   handlingStack: string | undefined
 }
