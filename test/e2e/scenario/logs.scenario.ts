@@ -12,7 +12,7 @@ declare global {
 }
 
 test.describe('logs', () => {
-  createTest('real service worker with worker logs')
+  createTest('service worker with worker logs')
     .withBody(
       `
       <script>
@@ -32,8 +32,6 @@ test.describe('logs', () => {
       await page.evaluate(`
         window.myServiceWorker.active.postMessage("Some message");
       `)
-
-      await page.waitForTimeout(5000)
 
       await flushEvents()
 

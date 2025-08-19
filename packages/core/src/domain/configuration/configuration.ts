@@ -13,6 +13,7 @@ import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import type { Site } from '../intakeSites'
+import { isSW } from '../../tools/globalObject'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -385,7 +386,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     /**
      * Logs intake limit
      */
-    batchMessagesLimit: 50,
+    batchMessagesLimit: isSW ? 1 : 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
 
     /**
