@@ -230,7 +230,7 @@ function startTelemetryTransport(
 
 function getRuntimeEnvInfo(): RuntimeEnvInfo {
   return {
-    is_local_file: globalObject.location.protocol === 'file:',
+    is_local_file: globalObject.location?.protocol === 'file:',
     is_worker: 'WorkerGlobalScope' in self,
   }
 }
