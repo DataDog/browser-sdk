@@ -29,6 +29,7 @@ import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
 import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
 import { HookNames, DISCARDED } from '../../tools/abstractHooks'
+import { globalObject } from '../../tools/globalObject'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -229,7 +230,7 @@ function startTelemetryTransport(
 
 function getRuntimeEnvInfo(): RuntimeEnvInfo {
   return {
-    is_local_file: typeof window !== 'undefined' && window.location.protocol === 'file:',
+    is_local_file: globalObject.location.protocol === 'file:',
     is_worker: 'WorkerGlobalScope' in self,
   }
 }

@@ -2,6 +2,7 @@ import type { Clock } from '../../../test'
 import { mockClock, createFakeSessionStoreStrategy } from '../../../test'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
+import * as globalObjectModule from '../../tools/globalObject'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
 import {
@@ -128,6 +129,14 @@ describe('session store', () => {
       })
       expect(sessionStoreStrategyType).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
+    })
+
+    describe('service worker environment', () => {
+      it('should default to local storage strategy in service worker environment', () => {
+        spyOnProperty(globalObjectModule, 'isSW', 'get').and.returnValue(true)
+        const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+      })
     })
 
     describe('allowFallbackToLocalStorage (deprecated)', () => {
