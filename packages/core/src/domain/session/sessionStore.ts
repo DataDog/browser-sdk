@@ -5,6 +5,7 @@ import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
+import { isSW } from '../../tools/globalObject'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -53,7 +54,7 @@ export function selectSessionStoreStrategyType(
       return selectLocalStorageStrategy()
 
     case undefined: {
-      let sessionStoreStrategyType = selectCookieStrategy(initConfiguration)
+      let sessionStoreStrategyType = isSW ? selectLocalStorageStrategy() : selectCookieStrategy(initConfiguration)
       if (!sessionStoreStrategyType && initConfiguration.allowFallbackToLocalStorage) {
         sessionStoreStrategyType = selectLocalStorageStrategy()
       }
