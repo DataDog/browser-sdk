@@ -73,9 +73,7 @@ test.describe('rum resources', () => {
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')
       expect(resourceEvent).toBeDefined()
-      expect(resourceEvent!.resource.url).toMatch(
-        new RegExp(`${baseUrl}/|${baseUrl.replace('localhost', 'bs-local.com')}`)
-      )
+      expect(resourceEvent!.resource.url).toBe(`${baseUrl}/`)
       expectToHaveValidTimings(resourceEvent!)
     })
 
