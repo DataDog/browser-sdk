@@ -390,8 +390,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     /**
      * The source of the SDK, used for support plugins purposes.
      */
-    variant: initConfiguration?.variant,
-    sdkVersion: initConfiguration?.sdkVersion,
+    variant: initConfiguration.variant,
+    sdkVersion: initConfiguration.sdkVersion,
 
     ...computeTransportConfiguration(initConfiguration),
   }
