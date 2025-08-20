@@ -1,4 +1,4 @@
-import { monitor, noop } from '@datadog/browser-core'
+import { elapsed, monitor, noop, timeStampNow } from '@datadog/browser-core'
 import type {
   RumConfiguration,
   NodePrivacyLevelCache,
@@ -35,6 +35,7 @@ import {
   SerializationContextStatus,
   serializeAttribute,
   createSerializationStats,
+  updateSerializationStats,
 } from '../serialization'
 import { createMutationBatch } from '../mutationBatch'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
@@ -233,12 +234,14 @@ function processChildListMutations(
       continue
     }
 
+    const serializationStart = timeStampNow()
     const serializedNode = serializeNodeWithId(node, {
       serializedNodeIds,
       parentNodePrivacyLevel,
       serializationContext,
       configuration,
     })
+    updateSerializationStats(serializationStats, 'serializationDuration', elapsed(serializationStart, timeStampNow()))
     if (!serializedNode) {
       continue
     }

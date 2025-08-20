@@ -18,6 +18,11 @@ interface SegmentMetrics extends Context {
   }
   recordCount: number
   result: 'failure' | 'queue-full' | 'success'
+  serializationDuration: {
+    count: number
+    max: number
+    sum: number
+  }
   size: {
     compressed: number
     raw: number
@@ -68,6 +73,11 @@ function createSegmentMetrics(
     },
     recordCount: payload.recordCount,
     result,
+    serializationDuration: {
+      count: payload.serializationDuration.count,
+      max: payload.serializationDuration.max,
+      sum: payload.serializationDuration.sum,
+    },
     size: {
       compressed: payload.bytesCount,
       raw: payload.rawSize,
