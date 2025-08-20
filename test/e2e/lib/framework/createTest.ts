@@ -229,8 +229,11 @@ function createTestContext(
   browserName: TestContext['browserName'],
   { basePath }: SetupOptions
 ): TestContext {
+  const isBrowserStack = Boolean(process.env.CI)
+  const isSafari = browserName === 'webkit'
+
   return {
-    baseUrl: servers.base.url + basePath,
+    baseUrl: servers.base.url.replace('localhost', isSafari && isBrowserStack ? 'bs-loca.com' : 'localhost') + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
