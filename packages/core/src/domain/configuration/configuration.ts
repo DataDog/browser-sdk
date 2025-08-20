@@ -284,9 +284,9 @@ export interface Configuration extends TransportConfiguration {
   messageBytesLimit: number
 
   // internal
-  sdkVersion?: string | undefined
+  sdkVersion: string | undefined
   source: 'browser' | 'flutter'
-  variant?: string | undefined
+  variant: string | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
