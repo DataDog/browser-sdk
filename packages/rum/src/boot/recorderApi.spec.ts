@@ -1,8 +1,15 @@
-import type { DeflateEncoder, DeflateWorker, DeflateWorkerAction, Telemetry } from '@datadog/browser-core'
+import type {
+  DeflateEncoder,
+  DeflateWorker,
+  DeflateWorkerAction,
+  RawTelemetryEvent,
+  Telemetry,
+} from '@datadog/browser-core'
 import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import { collectAsyncCalls, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
+import type { MockTelemetry } from '@datadog/browser-core/test'
+import { collectAsyncCalls, mockEventBridge, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import {
   createRumSessionManagerMock,
@@ -14,6 +21,7 @@ import type { CreateDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
 import * as replayStats from '../domain/replayStats'
+import type { RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
 
@@ -26,12 +34,13 @@ describe('makeRecorderApi', () => {
   let mockWorker: MockWorker
   let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
   let rumInit: (options?: { worker?: DeflateWorker }) => void
+  let telemetry: MockTelemetry
 
   function setupRecorderApi({
     sessionManager,
     startSessionReplayRecordingManually,
   }: { sessionManager?: RumSessionManager; startSessionReplayRecordingManually?: boolean } = {}) {
-    const mockTelemetry = { enabled: true } as Telemetry
+    telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
     spyOn(display, 'error')
@@ -48,15 +57,21 @@ describe('makeRecorderApi', () => {
       }
     })
 
+    const configuration = mockRumConfiguration({
+      startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
+      recorderInitTelemetrySampleRate: 100,
+      telemetrySampleRate: 100,
+    })
+
     recorderApi = makeRecorderApi(loadRecorderSpy, createDeflateWorkerSpy)
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
-        mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
+        configuration,
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
         worker,
-        mockTelemetry
+        { enabled: true } as Telemetry
       )
     }
 
@@ -72,9 +87,11 @@ describe('makeRecorderApi', () => {
         setupRecorderApi()
         expect(loadRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(await telemetry.hasEvents()).toEqual(false)
         rumInit()
         await collectAsyncCalls(startRecordingSpy, 1)
         expect(startRecordingSpy).toHaveBeenCalled()
+        expect(await telemetry.getEvents()).toEqual([expectedRecorderInitTelemetry()])
       })
 
       it('starts recording after the DOM is loaded', async () => {
@@ -84,32 +101,39 @@ describe('makeRecorderApi', () => {
 
         expect(loadRecorderSpy).toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(await telemetry.hasEvents()).toEqual(false)
+
         triggerOnDomLoaded()
         await collectAsyncCalls(startRecordingSpy, 1)
 
         expect(startRecordingSpy).toHaveBeenCalled()
+        expect(await telemetry.getEvents()).toEqual([expectedRecorderInitTelemetry()])
       })
     })
 
     describe('with manual start', () => {
-      it('does not start recording when init() is called', () => {
+      it('does not start recording when init() is called', async () => {
         setupRecorderApi({ startSessionReplayRecordingManually: true })
         expect(loadRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(await telemetry.hasEvents()).toEqual(false)
         rumInit()
         expect(loadRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(await telemetry.hasEvents()).toEqual(false)
       })
 
-      it('does not start recording after the DOM is loaded', () => {
+      it('does not start recording after the DOM is loaded', async () => {
         setupRecorderApi({ startSessionReplayRecordingManually: true })
         const { triggerOnDomLoaded } = mockDocumentReadyState()
         rumInit()
         expect(loadRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(await telemetry.hasEvents()).toEqual(false)
         triggerOnDomLoaded()
         expect(loadRecorderSpy).not.toHaveBeenCalled()
         expect(startRecordingSpy).not.toHaveBeenCalled()
+        expect(await telemetry.hasEvents()).toEqual(false)
       })
     })
   })
@@ -178,6 +202,7 @@ describe('makeRecorderApi', () => {
 
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
       expect(setForcedReplaySpy).toHaveBeenCalledTimes(1)
+      expect(await telemetry.getEvents()).toEqual([expectedRecorderInitTelemetry({ forced: true })])
     })
 
     it('uses the previously created worker if available', async () => {
@@ -201,6 +226,13 @@ describe('makeRecorderApi', () => {
       await collectAsyncCalls(createDeflateWorkerSpy, 1)
 
       expect(startRecordingSpy).not.toHaveBeenCalled()
+      const events = await telemetry.getEvents()
+      expect(events).toEqual([
+        jasmine.objectContaining({
+          error: jasmine.anything(),
+        }),
+        expectedRecorderInitTelemetry({ result: 'deflate-encoder-load-failed' }),
+      ])
     })
 
     it('stops recording if worker initialization fails', async () => {
@@ -630,3 +662,19 @@ describe('makeRecorderApi', () => {
     })
   })
 })
+
+function expectedRecorderInitTelemetry(overrides: Partial<RecorderInitMetrics> = {}): RawTelemetryEvent {
+  return {
+    type: 'log',
+    status: 'debug',
+    message: 'Recorder init metrics',
+    metrics: {
+      forced: false,
+      loadRecorderModuleDuration: jasmine.any(Number),
+      recorderInitDuration: jasmine.any(Number),
+      result: 'succeeded',
+      waitForDocReadyDuration: jasmine.any(Number),
+      ...overrides,
+    },
+  }
+}
