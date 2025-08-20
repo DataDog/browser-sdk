@@ -41,6 +41,11 @@ describe('segmentTelemetry', () => {
       isFullSnapshot,
       rawSize: 2000,
       recordCount: 3,
+      serializationDuration: {
+        count: 3,
+        max: 65,
+        sum: 105,
+      },
     }
     requestObservable.notify({ type: result, bandwidth, payload })
   }
@@ -85,6 +90,11 @@ describe('segmentTelemetry', () => {
               compressed: 1000,
               raw: 2000,
             },
+            serializationDuration: {
+              count: 3,
+              max: 65,
+              sum: 105,
+            },
           },
         }),
       ])
@@ -120,6 +130,11 @@ describe('segmentTelemetry', () => {
             size: {
               compressed: 1000,
               raw: 2000,
+            },
+            serializationDuration: {
+              count: 3,
+              max: 65,
+              sum: 105,
             },
           },
         }),

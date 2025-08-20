@@ -4,7 +4,7 @@ import { getElementInputValue, switchToAbsoluteUrl, getValidTagName } from './se
 import type { SerializeOptions } from './serialization.types'
 import { SerializationContextStatus } from './serialization.types'
 import { serializeAttribute } from './serializeAttribute'
-import { updateCssTextSerializationStats } from './serializationStats'
+import { updateSerializationStats } from './serializationStats'
 
 export function serializeAttributes(
   element: Element,
@@ -53,7 +53,7 @@ export function serializeAttributes(
     const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
     const cssText = getCssRulesString(stylesheet)
     if (cssText && stylesheet) {
-      updateCssTextSerializationStats(options.serializationContext.serializationStats, cssText.length)
+      updateSerializationStats(options.serializationContext.serializationStats, 'cssText', cssText.length)
       safeAttrs._cssText = cssText
     }
   }
@@ -62,7 +62,7 @@ export function serializeAttributes(
   if (tagName === 'style' && (element as HTMLStyleElement).sheet) {
     const cssText = getCssRulesString((element as HTMLStyleElement).sheet)
     if (cssText) {
-      updateCssTextSerializationStats(options.serializationContext.serializationStats, cssText.length)
+      updateSerializationStats(options.serializationContext.serializationStats, 'cssText', cssText.length)
       safeAttrs._cssText = cssText
     }
   }
