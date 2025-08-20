@@ -112,12 +112,14 @@ export function createMockServerApp(
   })
 
   app.get('/', (_req, res) => {
+    const isWebkit = (_req.headers['user-agent'] ?? '').includes('WebKit')
+
     res.header(
       'Content-Security-Policy',
       [
         `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
         `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.url}`,
-        "worker-src blob: 'self'",
+        isWebkit ? 'worker-src blob:' : "worker-src blob: 'self'",
       ].join(';')
     )
     res.send(setup)
