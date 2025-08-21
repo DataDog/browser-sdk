@@ -12,11 +12,13 @@ declare global {
 }
 
 test.describe('logs', () => {
-  createTest('service worker with worker logs - esm')
-    .withBody(
-      `
-      <script>
-        // Register service worker using served URL
+  createTest('service worker with worker logs - esm').run(
+    async ({ flushEvents, page, intakeRegistry, browserName, baseUrl }) => {
+      test.skip(browserName === 'firefox', 'Firefox do not support ES modules in Service Workers')
+      await page.goto(baseUrl.replace(/http:\/\/[^:]+:/, 'http://localhost:'))
+
+      // Inject the service worker script
+      await page.evaluate(`
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('/sw.js', { type: 'module'})
             .then(registration => {
@@ -24,12 +26,8 @@ test.describe('logs', () => {
               window.myServiceWorker = registration;
             });
         }
-      </script>
-    `
-    )
-    .run(async ({ flushEvents, page, intakeRegistry, browserName, baseUrl }) => {
-      await page.goto(baseUrl.replace(/http:\/\/[^:]+:/, 'http://localhost:'))
-      test.skip(browserName === 'firefox', 'Firefox do not support ES modules in Service Workers')
+      `)
+
       // Send a message to the service worker
       await page.evaluate(`
         window.myServiceWorker.active.postMessage("Some message");
@@ -38,13 +36,15 @@ test.describe('logs', () => {
       await flushEvents()
 
       expect(intakeRegistry.logsRequests).toHaveLength(1)
-    })
+    }
+  )
 
-  createTest('service worker with worker logs - importScripts')
-    .withBody(
-      `
-      <script>
-        // Register service worker using served URL
+  createTest('service worker with worker logs - importScripts').run(
+    async ({ flushEvents, page, intakeRegistry, baseUrl }) => {
+      await page.goto(baseUrl.replace(/http:\/\/[^:]+:/, 'http://localhost:'))
+
+      // Inject the service worker script
+      await page.evaluate(`
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.register('/sw-import-scripts.js')
             .then(registration => {
@@ -52,10 +52,8 @@ test.describe('logs', () => {
               window.myServiceWorker = registration;
             });
         }
-      </script>
-    `
-    )
-    .run(async ({ flushEvents, page, intakeRegistry }) => {
+      `)
+
       // Send a message to the service worker
       await page.evaluate(`
         window.myServiceWorker.active.postMessage("Some message");
@@ -64,7 +62,8 @@ test.describe('logs', () => {
       await flushEvents()
 
       expect(intakeRegistry.logsRequests).toHaveLength(1)
-    })
+    }
+  )
 
   createTest('send logs')
     .withLogs()
