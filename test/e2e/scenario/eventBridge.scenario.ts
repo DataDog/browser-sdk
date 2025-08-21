@@ -22,6 +22,7 @@ test.describe('bridge present', () => {
       await flushEvents()
 
       expect(intakeRegistry.rumActionEvents).toHaveLength(1)
+      console.log('>>>', intakeRegistry)
       expect(intakeRegistry.hasOnlyBridgeRequests).toBe(true)
     })
 
