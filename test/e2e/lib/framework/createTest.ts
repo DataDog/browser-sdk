@@ -233,7 +233,8 @@ function createTestContext(
   const isSafari = browserName === 'webkit'
 
   return {
-    baseUrl: servers.base.url.replace('localhost', isSafari && isBrowserStack ? 'bs-loca.com' : 'localhost') + basePath,
+    baseUrl:
+      servers.base.url.replace('localhost', isSafari && isBrowserStack ? 'bs-local.com' : 'localhost') + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
