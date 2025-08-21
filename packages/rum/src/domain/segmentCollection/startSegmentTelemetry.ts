@@ -34,7 +34,7 @@ export function startSegmentTelemetry(
   telemetry: Telemetry,
   requestObservable: Observable<HttpRequestEvent<ReplayPayload>>
 ) {
-  const segmentTelemetryEnabled = telemetry.enabled && performDraw(configuration.segmentTelemetrySampleRate)
+  const segmentTelemetryEnabled = telemetry.enabled && performDraw(configuration.replayTelemetrySampleRate)
   if (!segmentTelemetryEnabled) {
     return { stop: noop }
   }

@@ -248,8 +248,7 @@ export interface RumConfiguration extends Configuration {
   subdomain?: string
   customerDataTelemetrySampleRate: number
   initialViewMetricsTelemetrySampleRate: number
-  recorderInitTelemetrySampleRate: number
-  segmentTelemetrySampleRate: number
+  replayTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
@@ -322,8 +321,7 @@ export function validateAndBuildRumConfiguration(
     enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
     customerDataTelemetrySampleRate: 1,
     initialViewMetricsTelemetrySampleRate: 1,
-    recorderInitTelemetrySampleRate: 1,
-    segmentTelemetrySampleRate: 1,
+    replayTelemetrySampleRate: 1,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,

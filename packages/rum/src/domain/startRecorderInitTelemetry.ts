@@ -20,7 +20,7 @@ export function startRecorderInitTelemetry(
   telemetry: Telemetry,
   observable: Observable<RecorderInitEvent>
 ) {
-  const recorderInitTelemetryEnabled = telemetry.enabled && performDraw(configuration.recorderInitTelemetrySampleRate)
+  const recorderInitTelemetryEnabled = telemetry.enabled && performDraw(configuration.replayTelemetrySampleRate)
   if (!recorderInitTelemetryEnabled) {
     return { stop: noop }
   }

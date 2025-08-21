@@ -13,7 +13,7 @@ describe('startRecorderInitTelemetry', () => {
   let telemetry: MockTelemetry
 
   const config: Partial<RumConfiguration> = {
-    recorderInitTelemetrySampleRate: 100,
+    replayTelemetrySampleRate: 100,
     telemetrySampleRate: 100,
   }
 
