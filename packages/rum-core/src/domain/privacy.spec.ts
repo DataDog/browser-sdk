@@ -11,17 +11,17 @@ describe('getNodePrivacyLevel', () => {
   it('returns the element privacy mode if it has one', () => {
     const node = document.createElement('div')
     node.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
-    expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false)).toBe(NodePrivacyLevel.MASK)
   })
 
   it('fallbacks to the default privacy mode if the element has none', () => {
     const node = document.createElement('div')
-    expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
-    expect(getNodePrivacyLevel(node, NodePrivacyLevel.IGNORE)).toBe(NodePrivacyLevel.IGNORE)
-    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK)).toBe(NodePrivacyLevel.MASK)
-    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_USER_INPUT)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
-    expect(getNodePrivacyLevel(node, NodePrivacyLevel.HIDDEN)).toBe(NodePrivacyLevel.HIDDEN)
-    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe(
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false)).toBe(NodePrivacyLevel.ALLOW)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.IGNORE, false)).toBe(NodePrivacyLevel.IGNORE)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK, false)).toBe(NodePrivacyLevel.MASK)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_USER_INPUT, false)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.HIDDEN, false)).toBe(NodePrivacyLevel.HIDDEN)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED, false)).toBe(
       NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
     )
   })
@@ -32,14 +32,14 @@ describe('getNodePrivacyLevel', () => {
       const node = document.createElement('div')
       ancestor.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
       ancestor.appendChild(node)
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false)).toBe(NodePrivacyLevel.MASK)
     })
 
     it('fallbacks to the default privacy mode if no ancestor has one', () => {
       const ancestor = document.createElement('div')
       const node = document.createElement('div')
       ancestor.appendChild(node)
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.ALLOW)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false)).toBe(NodePrivacyLevel.ALLOW)
     })
 
     it('overrides the ancestor privacy mode', () => {
@@ -48,7 +48,7 @@ describe('getNodePrivacyLevel', () => {
       const node = document.createElement('div')
       node.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
       ancestor.appendChild(node)
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
     })
 
     it('does not override the ancestor privacy mode if it is HIDDEN', () => {
@@ -57,7 +57,7 @@ describe('getNodePrivacyLevel', () => {
       const node = document.createElement('div')
       node.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
       ancestor.appendChild(node)
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.HIDDEN)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false)).toBe(NodePrivacyLevel.HIDDEN)
     })
 
     it('overrides the ancestor privacy mode if the element should be IGNORE', () => {
@@ -65,7 +65,7 @@ describe('getNodePrivacyLevel', () => {
       ancestor.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
       const node = document.createElement('script')
       ancestor.appendChild(node)
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.IGNORE)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false)).toBe(NodePrivacyLevel.IGNORE)
     })
 
     it('returns an ancestor privacy mode if the element has none and cross shadow DOM', () => {
@@ -74,7 +74,7 @@ describe('getNodePrivacyLevel', () => {
       const node = document.createElement('div')
       ancestor.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
       ancestor.shadowRoot!.appendChild(node)
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW)).toBe(NodePrivacyLevel.MASK)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false)).toBe(NodePrivacyLevel.MASK)
     })
   })
 
@@ -86,7 +86,7 @@ describe('getNodePrivacyLevel', () => {
       ancestor.appendChild(node)
 
       const cache = new Map()
-      getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)
+      getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false, cache)
 
       expect(cache.get(node)).toBe(NodePrivacyLevel.MASK)
     })
@@ -99,7 +99,7 @@ describe('getNodePrivacyLevel', () => {
       const cache = new Map()
       cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
 
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
+      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false, cache)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
     })
 
     it('does not recurse on ancestors if the node is already in the cache', () => {
@@ -112,7 +112,7 @@ describe('getNodePrivacyLevel', () => {
       const cache = new Map()
       cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
 
-      getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)
+      getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, false, cache)
 
       expect(parentNodeGetterSpy).not.toHaveBeenCalled()
     })
@@ -285,7 +285,7 @@ describe('getNodeSelfPrivacyLevel', () => {
     it(`returns ${String(expected)} when the node ${msg}`, () => {
       const el = document.createElement('div')
       el.innerHTML = html
-      expect(getNodeSelfPrivacyLevel(el.childNodes[0])).toBe(expected)
+      expect(getNodeSelfPrivacyLevel(el.childNodes[0], false)).toBe(expected)
     })
   })
 })

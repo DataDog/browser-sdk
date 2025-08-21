@@ -133,7 +133,7 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
 
   // For performance reason, we don't use getNodePrivacyLevel directly: we leverage the
   // parentNodePrivacyLevel option to avoid iterating over all parents
-  const nodePrivacyLevel = reducePrivacyLevel(getNodeSelfPrivacyLevel(element), options.parentNodePrivacyLevel)
+  const nodePrivacyLevel = reducePrivacyLevel(getNodeSelfPrivacyLevel(element, false), options.parentNodePrivacyLevel)
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     const { width, height } = element.getBoundingClientRect()

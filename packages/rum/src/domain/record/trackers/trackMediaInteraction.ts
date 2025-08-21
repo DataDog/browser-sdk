@@ -22,7 +22,7 @@ export function trackMediaInteraction(
       const target = getEventTarget(event)
       if (
         !target ||
-        getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+        getNodePrivacyLevel(target, configuration.defaultPrivacyLevel, false) === NodePrivacyLevel.HIDDEN ||
         !hasSerializedNode(target)
       ) {
         return

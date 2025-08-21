@@ -41,7 +41,7 @@ export function trackMouseInteraction(
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
     if (
-      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel, false) === NodePrivacyLevel.HIDDEN ||
       !hasSerializedNode(target)
     ) {
       return

@@ -18,14 +18,3 @@ export function maskDisallowedTextContent(text: string, fixedMask?: string): str
   }
   return fixedMask || censorText(text)
 }
-
-export function isAllowlistMaskEnabled(
-  defaultPrivacyLevel: NodePrivacyLevel,
-  nodeSelfPrivacyLevel?: NodePrivacyLevel
-): boolean {
-  return (
-    (defaultPrivacyLevel === DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
-      nodeSelfPrivacyLevel !== NodePrivacyLevel.ALLOW) ||
-    nodeSelfPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
-  )
-}

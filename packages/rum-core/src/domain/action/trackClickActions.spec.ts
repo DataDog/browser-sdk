@@ -267,7 +267,7 @@ describe('trackClickActions', () => {
       window.$DD_ALLOW = undefined
     })
 
-    it('extracts action name when default privacy level is mask', () => {
+    fit('extracts action name when default privacy level is mask', () => {
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
         enablePrivacyForActionName: false,

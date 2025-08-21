@@ -67,7 +67,7 @@ export function trackInput(
   }
 
   function onElementChange(target: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) {
-    const nodePrivacyLevel = getNodePrivacyLevel(target, defaultPrivacyLevel)
+    const nodePrivacyLevel = getNodePrivacyLevel(target, defaultPrivacyLevel, false)
     if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
       return
     }

@@ -19,6 +19,7 @@ export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
 export function getNodePrivacyLevel(
   node: Node,
   defaultPrivacyLevel: NodePrivacyLevel,
+  ignoreMaskAndStricterLevels: boolean,
   cache?: NodePrivacyLevelCache
 ): NodePrivacyLevel {
   if (cache && cache.has(node)) {
@@ -26,14 +27,26 @@ export function getNodePrivacyLevel(
   }
   const parentNode = getParentNode(node)
   const parentNodePrivacyLevel = parentNode
-    ? getNodePrivacyLevel(parentNode, defaultPrivacyLevel, cache)
-    : defaultPrivacyLevel
-  const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
+    ? getNodePrivacyLevel(parentNode, defaultPrivacyLevel, ignoreMaskAndStricterLevels, cache)
+    : clampPrivacyLevel(defaultPrivacyLevel, ignoreMaskAndStricterLevels)
+  const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node, ignoreMaskAndStricterLevels)
   const nodePrivacyLevel = reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
   if (cache) {
     cache.set(node, nodePrivacyLevel)
   }
   return nodePrivacyLevel
+}
+
+function clampPrivacyLevel(privacyLevel: NodePrivacyLevel, ignoreMaskAndStricterLevels: boolean): NodePrivacyLevel {
+  if (
+    ignoreMaskAndStricterLevels &&
+    (privacyLevel === NodePrivacyLevel.MASK ||
+      privacyLevel === NodePrivacyLevel.HIDDEN ||
+      privacyLevel === NodePrivacyLevel.IGNORE)
+  ) {
+    return NodePrivacyLevel.ALLOW
+  }
+  return privacyLevel
 }
 
 /**
@@ -65,7 +78,10 @@ export function reducePrivacyLevel(
 /**
  * Determines the node's own privacy level without checking for ancestors.
  */
-export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefined {
+export function getNodeSelfPrivacyLevel(
+  node: Node,
+  ignoreMaskAndStricterLevels: boolean
+): NodePrivacyLevel | undefined {
   // Only Element types can have a privacy level set
   if (!isElementNode(node)) {
     return
@@ -77,7 +93,7 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
   }
 
   // Overrules to enforce end-user protection
-  if (node.tagName === 'INPUT') {
+  if (node.tagName === 'INPUT' && !ignoreMaskAndStricterLevels) {
     const inputElement = node as HTMLInputElement
     if (inputElement.type === 'password' || inputElement.type === 'email' || inputElement.type === 'tel') {
       return NodePrivacyLevel.MASK
@@ -93,12 +109,14 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
   }
 
   // Check HTML privacy attributes and classes
-  if (node.matches(getPrivacySelector(NodePrivacyLevel.HIDDEN))) {
-    return NodePrivacyLevel.HIDDEN
-  }
+  if (!ignoreMaskAndStricterLevels) {
+    if (node.matches(getPrivacySelector(NodePrivacyLevel.HIDDEN))) {
+      return NodePrivacyLevel.HIDDEN
+    }
 
-  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK))) {
-    return NodePrivacyLevel.MASK
+    if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK))) {
+      return NodePrivacyLevel.MASK
+    }
   }
 
   if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
@@ -113,7 +131,7 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     return NodePrivacyLevel.ALLOW
   }
 
-  if (shouldIgnoreElement(node)) {
+  if (!ignoreMaskAndStricterLevels && shouldIgnoreElement(node)) {
     return NodePrivacyLevel.IGNORE
   }
 }

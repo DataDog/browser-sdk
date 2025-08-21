@@ -23,7 +23,7 @@ export function trackScroll(
     const target = getEventTarget(event) as HTMLElement | Document
     if (
       !target ||
-      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
+      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel, false) === NodePrivacyLevel.HIDDEN ||
       !hasSerializedNode(target)
     ) {
       return
