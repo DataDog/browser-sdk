@@ -141,10 +141,12 @@ function processPointerDown(
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
-  const nodePrivacyLevel = configuration.enablePrivacyForActionName
-    ? getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-    : NodePrivacyLevel.ALLOW
-
+  const nodePrivacyLevel = getNodePrivacyLevel(
+    pointerDownEvent.target,
+    configuration.defaultPrivacyLevel,
+    undefined,
+    !configuration.enablePrivacyForActionName
+  )
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return undefined
   }

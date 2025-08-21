@@ -78,44 +78,103 @@ describe('getNodePrivacyLevel', () => {
     })
   })
 
-  describe('cache', () => {
-    it('fills the cache', () => {
-      const ancestor = document.createElement('div')
-      const node = document.createElement('div')
-      ancestor.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
-      ancestor.appendChild(node)
+  describe('with ignoreMaskLevel=true', () => {
+    const tests = [
+      {
+        parent: NodePrivacyLevel.MASK,
+        child: NodePrivacyLevel.MASK_USER_INPUT,
+        expected: NodePrivacyLevel.MASK_USER_INPUT,
+        msg: 'MASK_USER_INPUT is preserved regardless of parent level',
+      },
+      {
+        parent: NodePrivacyLevel.MASK,
+        child: NodePrivacyLevel.MASK,
+        expected: NodePrivacyLevel.MASK,
+        msg: 'MASK collapses to parent MASK',
+      },
+      {
+        parent: NodePrivacyLevel.HIDDEN,
+        child: NodePrivacyLevel.MASK,
+        expected: NodePrivacyLevel.HIDDEN,
+        msg: 'MASK collapses to parent HIDDEN',
+      },
+      {
+        parent: NodePrivacyLevel.IGNORE,
+        child: NodePrivacyLevel.MASK,
+        expected: NodePrivacyLevel.IGNORE,
+        msg: 'MASK collapses to parent IGNORE',
+      },
+      {
+        parent: NodePrivacyLevel.ALLOW,
+        child: NodePrivacyLevel.MASK_USER_INPUT,
+        expected: NodePrivacyLevel.MASK_USER_INPUT,
+        msg: 'MASK_USER_INPUT is preserved with ALLOW parent',
+      },
+      {
+        parent: NodePrivacyLevel.HIDDEN,
+        child: NodePrivacyLevel.HIDDEN,
+        expected: NodePrivacyLevel.HIDDEN,
+        msg: 'HIDDEN collapses to parent HIDDEN',
+      },
+      {
+        parent: NodePrivacyLevel.IGNORE,
+        child: NodePrivacyLevel.IGNORE,
+        expected: NodePrivacyLevel.IGNORE,
+        msg: 'IGNORE collapses to parent IGNORE',
+      },
+      {
+        parent: NodePrivacyLevel.ALLOW,
+        child: NodePrivacyLevel.ALLOW,
+        expected: NodePrivacyLevel.ALLOW,
+        msg: 'ALLOW is preserved',
+      },
+    ]
 
-      const cache = new Map()
-      getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)
-
-      expect(cache.get(node)).toBe(NodePrivacyLevel.MASK)
+    tests.forEach(({ parent, child, expected, msg }) => {
+      it(`${msg}: parent(${parent}) to child(${child}) should be (${expected})`, () => {
+        expect(reducePrivacyLevel(child as NodePrivacyLevel, parent as NodePrivacyLevel, true)).toBe(expected)
+      })
     })
+  })
+})
 
-    it('uses the cache', () => {
-      const ancestor = document.createElement('div')
-      const node = document.createElement('div')
-      ancestor.appendChild(node)
+describe('cache', () => {
+  it('fills the cache', () => {
+    const ancestor = document.createElement('div')
+    const node = document.createElement('div')
+    ancestor.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
+    ancestor.appendChild(node)
 
-      const cache = new Map()
-      cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
+    const cache = new Map()
+    getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)
 
-      expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
-    })
+    expect(cache.get(node)).toBe(NodePrivacyLevel.MASK)
+  })
 
-    it('does not recurse on ancestors if the node is already in the cache', () => {
-      const ancestor = document.createElement('div')
-      const node = document.createElement('div')
-      ancestor.appendChild(node)
+  it('uses the cache', () => {
+    const ancestor = document.createElement('div')
+    const node = document.createElement('div')
+    ancestor.appendChild(node)
 
-      const parentNodeGetterSpy = spyOnProperty(node, 'parentNode').and.returnValue(ancestor)
+    const cache = new Map()
+    cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
 
-      const cache = new Map()
-      cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
+  })
 
-      getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)
+  it('does not recurse on ancestors if the node is already in the cache', () => {
+    const ancestor = document.createElement('div')
+    const node = document.createElement('div')
+    ancestor.appendChild(node)
 
-      expect(parentNodeGetterSpy).not.toHaveBeenCalled()
-    })
+    const parentNodeGetterSpy = spyOnProperty(node, 'parentNode').and.returnValue(ancestor)
+
+    const cache = new Map()
+    cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
+
+    getNodePrivacyLevel(node, NodePrivacyLevel.ALLOW, cache)
+
+    expect(parentNodeGetterSpy).not.toHaveBeenCalled()
   })
 })
 
@@ -286,66 +345,6 @@ describe('getNodeSelfPrivacyLevel', () => {
       const el = document.createElement('div')
       el.innerHTML = html
       expect(getNodeSelfPrivacyLevel(el.childNodes[0])).toBe(expected)
-    })
-  })
-})
-
-describe('derivePrivacyLevelGivenParent', () => {
-  const tests = [
-    {
-      parent: 'CORRUPTED',
-      child: NodePrivacyLevel.ALLOW,
-      expected: NodePrivacyLevel.ALLOW,
-      msg: 'Robust against parent invalid',
-    },
-    {
-      parent: NodePrivacyLevel.ALLOW,
-      child: 'CORRUPTED',
-      expected: NodePrivacyLevel.ALLOW,
-      msg: 'Robust against child invalid',
-    },
-    {
-      parent: 'CORRUPTED_PARENT',
-      child: 'CORRUPTED_CHILD',
-      expected: 'CORRUPTED_PARENT',
-      msg: 'Fallback to parent if child is invalid',
-    },
-    {
-      parent: NodePrivacyLevel.MASK,
-      child: NodePrivacyLevel.ALLOW,
-      expected: NodePrivacyLevel.ALLOW,
-      msg: 'Override mask',
-    },
-    {
-      parent: NodePrivacyLevel.ALLOW,
-      child: NodePrivacyLevel.MASK,
-      expected: NodePrivacyLevel.MASK,
-      msg: 'Override allow',
-    },
-    {
-      parent: NodePrivacyLevel.ALLOW,
-      child: NodePrivacyLevel.HIDDEN,
-      expected: NodePrivacyLevel.HIDDEN,
-      msg: 'Override allow (for hidden)',
-    },
-    {
-      parent: NodePrivacyLevel.MASK_USER_INPUT,
-      child: NodePrivacyLevel.ALLOW,
-      expected: NodePrivacyLevel.ALLOW,
-      msg: 'Override mask-user-input',
-    },
-
-    {
-      parent: NodePrivacyLevel.HIDDEN,
-      child: NodePrivacyLevel.MASK,
-      expected: NodePrivacyLevel.HIDDEN,
-      msg: 'Hidden is final',
-    },
-  ]
-
-  tests.forEach(({ parent, child, expected, msg }) => {
-    it(`${msg}: parent(${parent}) to child(${child}) should be (${expected})`, () => {
-      expect(reducePrivacyLevel(child as NodePrivacyLevel, parent as NodePrivacyLevel)).toBe(expected)
     })
   })
 })

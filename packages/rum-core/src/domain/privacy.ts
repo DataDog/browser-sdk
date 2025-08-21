@@ -48,17 +48,20 @@ export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
 export function getNodePrivacyLevel(
   node: Node,
   defaultPrivacyLevel: NodePrivacyLevel,
-  cache?: NodePrivacyLevelCache
+  cache?: NodePrivacyLevelCache,
+  ignoreMaskLevel = false
 ): NodePrivacyLevel {
   if (cache && cache.has(node)) {
     return cache.get(node)!
   }
   const parentNode = getParentNode(node)
   const parentNodePrivacyLevel = parentNode
-    ? getNodePrivacyLevel(parentNode, defaultPrivacyLevel, cache)
-    : defaultPrivacyLevel
+    ? getNodePrivacyLevel(parentNode, defaultPrivacyLevel, cache, ignoreMaskLevel)
+    : ignoreMaskLevel
+      ? NodePrivacyLevel.ALLOW
+      : defaultPrivacyLevel
   const selfNodePrivacyLevel = getNodeSelfPrivacyLevel(node)
-  const nodePrivacyLevel = reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel)
+  const nodePrivacyLevel = reducePrivacyLevel(selfNodePrivacyLevel, parentNodePrivacyLevel, ignoreMaskLevel)
   if (cache) {
     cache.set(node, nodePrivacyLevel)
   }
@@ -70,14 +73,33 @@ export function getNodePrivacyLevel(
  */
 export function reducePrivacyLevel(
   childPrivacyLevel: NodePrivacyLevel | undefined,
-  parentNodePrivacyLevel: NodePrivacyLevel
+  parentNodePrivacyLevel: NodePrivacyLevel,
+  ignoreMaskLevel = false
 ): NodePrivacyLevel {
+  // When ignoreMaskLevel is true:
+  // - ALLOW and MASK_USER_INPUT are always preserved
+  // - MASK/HIDDEN/IGNORE collapse to parent level
+  if (ignoreMaskLevel) {
+    switch (childPrivacyLevel) {
+      case NodePrivacyLevel.ALLOW:
+      case NodePrivacyLevel.MASK_USER_INPUT:
+        return childPrivacyLevel
+      case NodePrivacyLevel.MASK:
+      case NodePrivacyLevel.HIDDEN:
+      case NodePrivacyLevel.IGNORE:
+        return parentNodePrivacyLevel
+      default:
+        return parentNodePrivacyLevel
+    }
+  }
+
   switch (parentNodePrivacyLevel) {
     // These values cannot be overridden
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return parentNodePrivacyLevel
   }
+
   switch (childPrivacyLevel) {
     case NodePrivacyLevel.ALLOW:
     case NodePrivacyLevel.MASK:
