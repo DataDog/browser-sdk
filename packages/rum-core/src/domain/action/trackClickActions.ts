@@ -145,18 +145,15 @@ function processPointerDown(
   windowOpenObservable: Observable<void>
 ) {
   const nodeSelfPrivacy = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-  // If the node privacy level is MASK_UNLESS_ALLOWLISTED, we use the default privacy level
-  // If the enablePrivacyForActionName is true, we use the node privacy level
-  // Otherwise, we use the allow level
-  // TODO: we should make enablePrivacyForActionName true by default for the next major version
 
-  // this won't work because there would always be a case when we set the nodeSelfPrivacy to ALLOW
-  // if we use configuration.defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED as a check
-  // then when we set defaultPrivacyLevel to ALLOW, and override the node privacy level to MASK_UNLESS_ALLOWLISTED
-
-  const nodePrivacyLevel = isAllowlistMaskEnabled(configuration.defaultPrivacyLevel, nodeSelfPrivacy)
-    ? nodeSelfPrivacy
-    : configuration.enablePrivacyForActionName
+  const nodePrivacyLevel =
+    // We should check for Allowlist at node level here instead of using defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+    // Because if we set defaultPrivacyLevel to ALLOW, and override the child node privacy level to MASK_UNLESS_ALLOWLISTED
+    // we will not  use the allowlist masking if we check the defaultPrivacyLevel only
+    // TODO: we should make enablePrivacyForActionName true by default for the next major version
+    // So that we can remove all the checks and overriding nodePrivacyLevel to ALLOW here
+    isAllowlistMaskEnabled(configuration.defaultPrivacyLevel, nodeSelfPrivacy) ||
+    configuration.enablePrivacyForActionName
       ? nodeSelfPrivacy
       : NodePrivacyLevel.ALLOW
 
@@ -246,7 +243,7 @@ function startClickAction(
   })
 }
 
-export type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
+type ClickActionBase = Pick<ClickAction, 'type' | 'name' | 'nameSource' | 'target' | 'position'>
 
 function computeClickActionBase(
   event: MouseEventOnElement,

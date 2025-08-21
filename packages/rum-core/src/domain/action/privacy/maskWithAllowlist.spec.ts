@@ -1,6 +1,4 @@
-import { ActionType } from '../../../rawRumEvent.types'
-import { ACTION_NAME_MASK, ActionNameSource } from '../actionNameConstants'
-import type { ClickActionBase } from '../trackClickActions'
+import { ACTION_NAME_MASK } from '../actionNameConstants'
 import { maskDisallowedTextContent } from './maskWithAllowlist'
 
 const TEST_STRINGS = {
@@ -9,18 +7,6 @@ const TEST_STRINGS = {
 }
 
 describe('maskWithAllowlist', () => {
-  const clickActionBase: ClickActionBase = {
-    type: ActionType.CLICK,
-    name: '',
-    nameSource: ActionNameSource.TEXT_CONTENT,
-    target: {
-      selector: 'button',
-      width: 100,
-      height: 100,
-    },
-    position: { x: 0, y: 0 },
-  }
-
   beforeEach(() => {
     window.$DD_ALLOW = new Set([TEST_STRINGS.PARAGRAPH_MIXED])
   })
@@ -36,18 +22,15 @@ describe('maskWithAllowlist', () => {
   })
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
-    clickActionBase.name = 'This is an action name in allowlist'
-    const testString1 = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_MASK)
+    const testString1 = maskDisallowedTextContent('This is an action name in allowlist', ACTION_NAME_MASK)
     expect(testString1).toBe(ACTION_NAME_MASK)
 
-    clickActionBase.name = 'any unallowed string'
-    const testString2 = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_MASK)
+    const testString2 = maskDisallowedTextContent('any unallowed string', ACTION_NAME_MASK)
     expect(testString2).toBe(ACTION_NAME_MASK)
   })
 
   it('handles empty string', () => {
-    clickActionBase.name = ''
-    const result = maskDisallowedTextContent(clickActionBase.name, ACTION_NAME_MASK)
+    const result = maskDisallowedTextContent('', ACTION_NAME_MASK)
     expect(result).toBe('')
   })
 })

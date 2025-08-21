@@ -1,5 +1,5 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
-import { NodePrivacyLevel, TEXT_MASKING_CHAR } from '../../privacyConstants'
+import { censorText, NodePrivacyLevel } from '../../privacyConstants'
 
 declare global {
   interface Window {
@@ -16,7 +16,7 @@ export function maskDisallowedTextContent(text: string, fixedMask?: string): str
   if (window.$DD_ALLOW && window.$DD_ALLOW.has(text.toLocaleLowerCase())) {
     return text
   }
-  return fixedMask || text.replace(/\S/g, TEXT_MASKING_CHAR)
+  return fixedMask || censorText(text)
 }
 
 export function isAllowlistMaskEnabled(

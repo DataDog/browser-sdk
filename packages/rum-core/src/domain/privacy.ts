@@ -3,9 +3,9 @@ import { maskDisallowedTextContent } from './action/privacy/maskWithAllowlist'
 import {
   NodePrivacyLevel,
   FORM_PRIVATE_TAG_NAMES,
-  TEXT_MASKING_CHAR,
   CENSORED_STRING_MARK,
   getPrivacySelector,
+  censorText,
 } from './privacyConstants'
 
 export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
@@ -159,12 +159,6 @@ function isFormElement(node: Node | null): boolean {
   }
   return !!FORM_PRIVATE_TAG_NAMES[element.tagName]
 }
-
-/**
- * Text censoring non-destructively maintains whitespace characters in order to preserve text shape
- * during replay.
- */
-export const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
 
 export function getTextContent(
   textNode: Node,

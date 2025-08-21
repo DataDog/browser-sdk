@@ -1022,12 +1022,6 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
   describe('for privacy tag `mask-unless-allowlisted`, a DOM tree', function testMaskUnlessAllowlistedDomTree() {
     it('is serialized correctly when no allowlist is provided', () => {
-      // Without allowlist, should behave like mask mode
-      window.$DD_ALLOW = undefined
-      registerCleanupTask(() => {
-        window.$DD_ALLOW = undefined
-      })
-
       const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
       expect(toJSONObj(serializedDoc)).toEqual(AST_MASK_UNLESS_ALLOWLISTED)
     })

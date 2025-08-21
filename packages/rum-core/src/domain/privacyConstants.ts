@@ -41,3 +41,9 @@ export const TEXT_MASKING_CHAR = 'x'
 export function getPrivacySelector(privacyLevel: string) {
   return `[${PRIVACY_ATTR_NAME}="${privacyLevel}"], .${PRIVACY_CLASS_PREFIX}${privacyLevel}`
 }
+
+/**
+ * Text censoring non-destructively maintains whitespace characters in order to preserve text shape
+ * during replay.
+ */
+export const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)

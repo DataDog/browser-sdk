@@ -1,6 +1,6 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
 import { getPrivacySelector, NodePrivacyLevel } from '../privacyConstants'
-import { getNodeSelfPrivacyLevel, shouldMaskNode } from '../privacy'
+import { getNodePrivacyLevel, getNodeSelfPrivacyLevel, shouldMaskNode } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 import { isElementNode } from '../../browser/htmlDomUtils'
 import { isAllowlistMaskEnabled, maskDisallowedTextContent } from './privacy/maskWithAllowlist'
@@ -197,13 +197,12 @@ function getTextualContent(element: Element, rumConfiguration: RumConfiguration)
     actionNameAttribute: userProgrammaticAttribute,
     defaultPrivacyLevel,
   } = rumConfiguration
-  const enableAllowlistMask = isAllowlistMaskEnabled(defaultPrivacyLevel, getNodeSelfPrivacyLevel(element))
 
   if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
     return getTextualContentWithTreeWalker(
       element,
       userProgrammaticAttribute,
-      enableAllowlistMask,
+      defaultPrivacyLevel,
       enablePrivacyForActionName
     )
   }
@@ -247,7 +246,7 @@ function getTextualContent(element: Element, rumConfiguration: RumConfiguration)
 function getTextualContentWithTreeWalker(
   element: Element,
   userProgrammaticAttribute: string | undefined,
-  allowlistMaskEnabled: boolean,
+  defaultPrivacyLevel: NodePrivacyLevel,
   privacyEnabledActionName: boolean
 ) {
   const walker = document.createTreeWalker(
@@ -255,6 +254,10 @@ function getTextualContentWithTreeWalker(
     // eslint-disable-next-line no-bitwise
     NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
     rejectInvisibleOrMaskedElementsFilter
+  )
+  const allowlistMaskEnabled = isAllowlistMaskEnabled(
+    defaultPrivacyLevel,
+    getNodePrivacyLevel(element, defaultPrivacyLevel)
   )
 
   let text = ''
