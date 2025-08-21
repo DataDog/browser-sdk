@@ -1,5 +1,6 @@
-import * as http from 'node:http'
+import * as http from 'http'
 import type { AddressInfo } from 'net'
+import { getIp } from '../../../envUtils'
 
 const MAX_SERVER_CREATION_RETRY = 5
 // Not all port are available with BrowserStack, see https://www.browserstack.com/question/664
@@ -46,6 +47,7 @@ export async function waitForServersIdle() {
 
 async function createServer<App extends ServerApp>(): Promise<Server<App>> {
   const server = await instantiateServer()
+  const address = getIp()
   const { port } = server.address() as AddressInfo
   let serverApp: App | undefined
 
@@ -65,7 +67,7 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
       }
       return serverApp
     },
-    url: `http://localhost:${port}`,
+    url: `http://${address}:${port}`,
     waitForIdle: createServerIdleWaiter(server),
   }
 }
