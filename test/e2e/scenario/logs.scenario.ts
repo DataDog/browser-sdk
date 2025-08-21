@@ -27,7 +27,8 @@ test.describe('logs', () => {
       </script>
     `
     )
-    .run(async ({ flushEvents, page, intakeRegistry, browserName }) => {
+    .run(async ({ flushEvents, page, intakeRegistry, browserName, baseUrl }) => {
+      await page.goto(baseUrl.replace(/http:\/\/[^:]+:/, 'http://localhost:'))
       test.skip(browserName === 'firefox', 'Firefox do not support ES modules in Service Workers')
       // Send a message to the service worker
       await page.evaluate(`
