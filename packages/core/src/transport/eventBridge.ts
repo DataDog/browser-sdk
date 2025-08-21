@@ -47,6 +47,16 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
 
 export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {
   const bridge = getEventBridge()
+
+  console.log(
+    '>>>',
+    currentHost,
+    !!bridge &&
+      bridge
+        .getAllowedWebViewHosts()
+        .some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`))
+  )
+
   return (
     !!bridge &&
     bridge
