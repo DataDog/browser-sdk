@@ -19,13 +19,13 @@ describe('domMutationObservable', () => {
 
       let counter = 0
       const domMutationSubscription = domMutationObservable.subscribe(() => (counter += 1))
+      registerCleanupTask(domMutationSubscription.unsubscribe)
 
       mutate(root)
 
       setTimeout(() => {
         expect(counter).toBe(expectedMutations)
         root.parentNode!.removeChild(root)
-        domMutationSubscription.unsubscribe()
         done()
       }, DOM_MUTATION_OBSERVABLE_DURATION)
     }
