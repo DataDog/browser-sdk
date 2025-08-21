@@ -112,15 +112,12 @@ export function createMockServerApp(
   })
 
   app.get('/', (_req, res) => {
-    const ua = _req.headers['user-agent'] ?? ''
-    const isSafari = ua.includes('WebKit') && !ua.includes('Chrome')
-
     res.header(
       'Content-Security-Policy',
       [
         `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
         `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.url}`,
-        isSafari ? 'worker-src blob:' : "worker-src blob: 'self'",
+        "worker-src blob: 'self'",
       ].join(';')
     )
     res.send(setup)
