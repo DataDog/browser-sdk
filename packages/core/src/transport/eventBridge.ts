@@ -48,6 +48,7 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
 export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {
   const bridge = getEventBridge()
 
+  // eslint-disable-next-line no-console
   console.log(
     '>>>',
     currentHost,
