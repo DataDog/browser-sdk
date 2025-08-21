@@ -1,5 +1,6 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { censorText, NodePrivacyLevel } from '../../privacyConstants'
+import { getParentNode } from '../../../browser/htmlDomUtils'
+import { getNodeSelfPrivacyLevel } from '../../privacy'
 
 declare global {
   interface Window {
@@ -19,13 +20,19 @@ export function maskDisallowedTextContent(text: string, fixedMask?: string): str
   return fixedMask || censorText(text)
 }
 
-export function isAllowlistMaskEnabled(
-  defaultPrivacyLevel: NodePrivacyLevel,
-  nodeSelfPrivacyLevel?: NodePrivacyLevel
-): boolean {
-  return (
-    (defaultPrivacyLevel === DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED &&
-      nodeSelfPrivacyLevel !== NodePrivacyLevel.ALLOW) ||
-    nodeSelfPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
-  )
+// Check whether the "mask unless allowlisted" privacy level is used anywhere on the node or its
+// ancestors. This indicates that the user intended to use the allowlist feature. In this case, we
+// should respect their intention.
+export function isAllowlistMaskEnabled(node: Node, defaultPrivacyLevel: NodePrivacyLevel): boolean {
+  if (
+    defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED ||
+    getNodeSelfPrivacyLevel(node) === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+  ) {
+    return true
+  }
+  const parentNode = getParentNode(node)
+  if (parentNode) {
+    return isAllowlistMaskEnabled(parentNode, defaultPrivacyLevel)
+  }
+  return false
 }
