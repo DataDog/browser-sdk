@@ -1,9 +1,9 @@
+import fs from 'fs'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import { WebextensionPlugin } from '@webextension-toolbox/webpack-webextension-plugin'
 import CopyPlugin from 'copy-webpack-plugin'
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin'
 import webpack from 'webpack'
-import fs from 'fs'
 import { createDefinePlugin } from '../webpack.base.ts'
 
 export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) => {
@@ -164,13 +164,14 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
             loader: 'ts-loader',
             exclude: /node_modules/,
             options: {
+              configFile: 'tsconfig.webpack.json',
               onlyCompileBundledFiles: true,
               ...(isDevelopment && {
                 getCustomTransformers: () => ({
                   before: [new ReactRefreshWebpackPlugin()],
                 }),
-                transpileOnly: true,
               }),
+              transpileOnly: true,
             },
           },
           {

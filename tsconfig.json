@@ -2,7 +2,8 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["jasmine"]
+    "types": ["jasmine"],
+    "allowImportingTsExtensions": true
   },
   "exclude": [
     // Generated files
