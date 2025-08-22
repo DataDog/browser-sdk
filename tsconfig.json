@@ -3,6 +3,8 @@
   "references": [
     { "path": "./tsconfig.default.json" },
     { "path": "./tsconfig.scripts.json" },
-    { "path": "./developer-extension/tsconfig.webpack.json" }
+    { "path": "./developer-extension/tsconfig.webpack.json" },
+    { "path": "./test/e2e/tsconfig.json" },
+    { "path": "./performances/tsconfig.json" }
   ]
 }
