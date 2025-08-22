@@ -17,7 +17,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { trackEventCounts } from '../trackEventCounts'
 import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPageActivityEnd'
 import { getSelectorFromElement } from '../getSelectorFromElement'
-import { getNodePrivacyLevel } from '../privacy'
+import { getNodePrivacyLevel, isAllowlistMaskEnabled } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
@@ -29,7 +29,6 @@ import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
-import { isAllowlistMaskEnabled } from './privacy/maskWithAllowlist'
 
 interface ActionCounts {
   errorCount: number
@@ -144,18 +143,16 @@ function processPointerDown(
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
-  const nodeSelfPrivacy = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+  let nodePrivacyLevel: NodePrivacyLevel
 
-  const nodePrivacyLevel =
-    // We should check for Allowlist at node level here instead of using defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
-    // Because if we set defaultPrivacyLevel to ALLOW, and override the child node privacy level to MASK_UNLESS_ALLOWLISTED
-    // we will not  use the allowlist masking if we check the defaultPrivacyLevel only
-    // TODO: we should make enablePrivacyForActionName true by default for the next major version
-    // So that we can remove all the checks and overriding nodePrivacyLevel to ALLOW here
-    isAllowlistMaskEnabled(configuration.defaultPrivacyLevel, nodeSelfPrivacy) ||
-    configuration.enablePrivacyForActionName
-      ? nodeSelfPrivacy
-      : NodePrivacyLevel.ALLOW
+  if (
+    configuration.enablePrivacyForActionName ||
+    isAllowlistMaskEnabled(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+  ) {
+    nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+  } else {
+    nodePrivacyLevel = NodePrivacyLevel.ALLOW
+  }
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return undefined
