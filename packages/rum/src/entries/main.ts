@@ -9,7 +9,8 @@
 // Keep the following in sync with packages/rum-slim/src/entries/main.ts
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
+import { createStreamPlugin, makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
+import { createStream } from '@datadog/browser-rum-core/src/domain/stream/stream'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
@@ -83,6 +84,8 @@ export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
   createDeflateEncoder,
   sdkName: 'rum',
 })
+// @ts-expect-error TBF
+datadogRum.createStreamPlugin = createStreamPlugin
 
 interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi
