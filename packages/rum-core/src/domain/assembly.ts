@@ -133,6 +133,7 @@ export function startRumAssembly(
         }
 
         if (rawRumEvent.type === 'stream') {
+          // @ts-expect-error TBF
           serverRumEvent.type = 'view'
         }
 
