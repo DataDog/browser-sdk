@@ -1,3 +1,4 @@
+// This file is used to typecheck Node.js scripts and webpack config files.
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
