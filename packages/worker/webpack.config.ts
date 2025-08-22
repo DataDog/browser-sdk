@@ -1,5 +1,5 @@
 import path from 'path'
-import webpack from 'webpack'
+import type webpack from 'webpack'
 import webpackBase from '../../webpack.base.ts'
 
 export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =>

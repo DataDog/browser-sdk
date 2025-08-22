@@ -45,12 +45,13 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         project: [
-          './tsconfig.json',
-          './test/apps/**/tsconfig.json',
+          './tsconfig.default.json',
+          './tsconfig.scripts.json',
+          './developer-extension/tsconfig.webpack.json',
           './test/e2e/tsconfig.json',
-          './scripts/tsconfig.json',
-          './developer-extension/tsconfig.json',
           './performances/tsconfig.json',
+
+          './test/apps/**/tsconfig.json',
         ],
         sourceType: 'module',
 
@@ -396,7 +397,6 @@ export default tseslint.config(
   {
     // Files executed by nodejs
     files: [
-      '**/webpack.*.js',
       'scripts/**',
       'test/**/*.js',
       'eslint-local-rules/**/*.js',
@@ -408,6 +408,14 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+
+  {
+    files: ['**/webpack.*.ts'],
+    rules: {
+      // Webpack configuration files are expected to use a default export.
+      'import/no-default-export': 'off',
     },
   },
 

@@ -201,7 +201,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
 }
 
 function getVersion() {
-  const version = JSON.parse(fs.readFileSync('./package.json', 'utf8')).version
+  const version: string = JSON.parse(fs.readFileSync('./package.json', 'utf8')).version
 
   return {
     version: version.replace(/-(alpha|beta)/, ''),
