@@ -67,8 +67,8 @@ describe('lazyLoadRecorder', () => {
     })
 
     const configuration = mockRumConfiguration({
+      replayTelemetrySampleRate: 100,
       startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
-      recorderInitTelemetrySampleRate: 100,
       telemetrySampleRate: 100,
     })
 
