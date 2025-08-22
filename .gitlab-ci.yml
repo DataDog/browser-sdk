@@ -129,7 +129,9 @@ ci-image:
 ########################################################################################################################
 
 .test-check-monitor:
-  stage: test
+  extends:
+    - .base-configuration
+    - .test-allowed-branches
   script:
     - export BUILD_MODE=release
     - VERSION=$(node -p -e "require('./lerna.json').version")
