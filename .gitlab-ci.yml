@@ -128,17 +128,17 @@ ci-image:
 # Tests
 ########################################################################################################################
 
-.test-check-monitor:
-  stage: test
+test-check-monitor:
   extends:
     - .base-configuration
     - .test-allowed-branches
+  interruptible: true
   script:
     - export BUILD_MODE=release
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/test-check-monitors.ts us3,us5,ap1,ap2
+    - node ./scripts/test-check-monitors.ts v${VERSION%%.*} us3,us5,ap1,ap2 true
 
 format:
   extends:
