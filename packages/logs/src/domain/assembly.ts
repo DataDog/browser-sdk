@@ -57,9 +57,9 @@ export function startLogsAssembly(
       ) as LogsEvent & Context
 
       if (
-        configuration.beforeSend?.(log, domainContext) === false ||
+        (configuration.beforeSend && configuration.beforeSend(log, domainContext) === false) ||
         (log.origin !== ErrorSource.AGENT &&
-          (logRateLimiters[log.status] ?? logRateLimiters['custom']).isLimitReached())
+          (logRateLimiters[log.status] || logRateLimiters['custom']).isLimitReached())
       ) {
         return
       }

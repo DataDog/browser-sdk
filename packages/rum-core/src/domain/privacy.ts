@@ -196,7 +196,7 @@ export function getTextContent(
 ): string | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
-  const parentTagName = textNode.parentElement?.tagName
+  const parentTagName = textNode.parentElement && textNode.parentElement.tagName
   let textContent = textNode.textContent || ''
 
   if (ignoreWhiteSpace && !textContent.trim()) {

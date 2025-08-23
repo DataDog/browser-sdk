@@ -161,7 +161,8 @@ export function instrumentSetter<TARGET extends { [key: string]: any }, PROPERTY
 
   return {
     stop: () => {
-      if (Object.getOwnPropertyDescriptor(targetPrototype, property)?.set === instrumentationWrapper) {
+      const descriptor = Object.getOwnPropertyDescriptor(targetPrototype, property)
+      if (descriptor && descriptor.set === instrumentationWrapper) {
         Object.defineProperty(targetPrototype, property, originalDescriptor)
       }
       instrumentation = stoppedInstrumentation

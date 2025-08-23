@@ -353,18 +353,23 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
-    sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
-    telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
-    telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
-    telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-    service: initConfiguration.service ?? undefined,
-    env: initConfiguration.env ?? undefined,
-    version: initConfiguration.version ?? undefined,
-    datacenter: initConfiguration.datacenter ?? undefined,
+    sessionSampleRate: initConfiguration.sessionSampleRate !== undefined ? initConfiguration.sessionSampleRate : 100,
+    telemetrySampleRate:
+      initConfiguration.telemetrySampleRate !== undefined ? initConfiguration.telemetrySampleRate : 20,
+    telemetryConfigurationSampleRate:
+      initConfiguration.telemetryConfigurationSampleRate !== undefined
+        ? initConfiguration.telemetryConfigurationSampleRate
+        : 5,
+    telemetryUsageSampleRate:
+      initConfiguration.telemetryUsageSampleRate !== undefined ? initConfiguration.telemetryUsageSampleRate : 5,
+    service: initConfiguration.service || undefined,
+    env: initConfiguration.env || undefined,
+    version: initConfiguration.version || undefined,
+    datacenter: initConfiguration.datacenter || undefined,
     silentMultipleInit: !!initConfiguration.silentMultipleInit,
     allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
-    trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
-    trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
+    trackingConsent: initConfiguration.trackingConsent || TrackingConsent.GRANTED,
+    trackAnonymousUser: initConfiguration.trackAnonymousUser !== false,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     /**
      * beacon payload max queue size implementation is 64kb

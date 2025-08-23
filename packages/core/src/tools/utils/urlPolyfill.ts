@@ -49,7 +49,9 @@ export function getPristineWindow() {
     getPristineGlobalObjectCache = {
       URL: pristineWindow.URL,
     }
-    iframe?.remove()
+    if (iframe) {
+      iframe.remove()
+    }
   }
 
   return getPristineGlobalObjectCache

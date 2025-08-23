@@ -296,7 +296,9 @@ function manageResourceTimingBufferFull(configuration: RumConfiguration) {
     })
   }
   return () => {
-    resourceTimingBufferFullListener?.stop()
+    if (resourceTimingBufferFullListener) {
+      resourceTimingBufferFullListener.stop()
+    }
   }
 }
 
