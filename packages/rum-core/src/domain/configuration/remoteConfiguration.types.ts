@@ -3,6 +3,39 @@
  * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.
  */
 
+export type MatchOption =
+  | {
+      /**
+       * string type
+       */
+      rcSerializedType: 'string'
+      /**
+       * string value
+       */
+      value: string
+    }
+  | SerializedRegex
+export type DynamicOption =
+  | {
+      rcSerializedType: 'dynamic'
+      strategy: 'js'
+      path: string
+      extractor?: SerializedRegex
+    }
+  | {
+      rcSerializedType: 'dynamic'
+      strategy: 'cookie'
+      name: string
+      extractor?: SerializedRegex
+    }
+  | {
+      rcSerializedType: 'dynamic'
+      strategy: 'dom'
+      selector: string
+      attribute?: string
+      extractor?: SerializedRegex
+    }
+
 /**
  * RUM Browser & Mobile SDKs Remote Configuration properties
  */
@@ -26,7 +59,26 @@ export interface RumSdkConfig {
     /**
      * The version for this application
      */
-    version?: string
+    version?:
+      | {
+          rcSerializedType: 'dynamic'
+          strategy: 'js'
+          path: string
+          extractor?: SerializedRegex
+        }
+      | {
+          rcSerializedType: 'dynamic'
+          strategy: 'cookie'
+          name: string
+          extractor?: SerializedRegex
+        }
+      | {
+          rcSerializedType: 'dynamic'
+          strategy: 'dom'
+          selector: string
+          attribute?: string
+          extractor?: SerializedRegex
+        }
     /**
      * The percentage of sessions tracked
      */
@@ -47,34 +99,16 @@ export interface RumSdkConfig {
      * URLs where tracing is allowed
      */
     allowedTracingUrls?: {
-      match: {
-        /**
-         * Remote config serialized type of match
-         */
-        rcSerializedType: 'string' | 'regex'
-        /**
-         * Match value
-         */
-        value: string
-      }
+      match: MatchOption
       /**
        * List of propagator types
        */
-      propagatorTypes: ('datadog' | 'b3' | 'b3multi' | 'tracecontext')[]
+      propagatorTypes?: ('datadog' | 'b3' | 'b3multi' | 'tracecontext')[] | null
     }[]
     /**
      * Origins where tracking is allowed
      */
-    allowedTrackingOrigins?: {
-      /**
-       * Remote config serialized type of match
-       */
-      rcSerializedType: 'string' | 'regex'
-      /**
-       * Match value
-       */
-      value: string
-    }[]
+    allowedTrackingOrigins?: MatchOption[]
     /**
      * The percentage of traces sampled
      */
@@ -83,5 +117,30 @@ export interface RumSdkConfig {
      * Whether to track sessions across subdomains
      */
     trackSessionAcrossSubdomains?: boolean
+    user?: {
+      id: DynamicOption
+      name?: DynamicOption
+      email?: DynamicOption
+      additionals?: {
+        key: string
+        value: DynamicOption
+      }[]
+    }
+    context?: {
+      additionals?: {
+        key: string
+        value: DynamicOption
+      }[]
+    }
   }
+}
+export interface SerializedRegex {
+  /**
+   * regex type
+   */
+  rcSerializedType: 'regex'
+  /**
+   * regex pattern
+   */
+  value: string
 }

@@ -171,7 +171,7 @@ export function createPreStartStrategy(
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
       if (initConfiguration.remoteConfigurationId) {
-        fetchAndApplyRemoteConfiguration(initConfiguration)
+        fetchAndApplyRemoteConfiguration(initConfiguration, { user: userContext, context: globalContext })
           .then((initConfiguration) => {
             if (initConfiguration) {
               doInit(initConfiguration)
