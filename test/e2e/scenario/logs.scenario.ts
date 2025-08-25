@@ -5,7 +5,66 @@ import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
+declare global {
+  interface Window {
+    myServiceWorker: ServiceWorkerRegistration
+  }
+}
+
 test.describe('logs', () => {
+  createTest('service worker with worker logs - esm').run(
+    async ({ flushEvents, page, intakeRegistry, browserName, baseUrl }) => {
+      test.skip(browserName === 'firefox', 'Firefox do not support ES modules in Service Workers')
+      await page.goto(baseUrl.replace(/http:\/\/[^:]+:/, 'http://localhost:'))
+
+      // Inject the service worker script
+      await page.evaluate(`
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js', { type: 'module'})
+            .then(registration => {
+              console.log('Service worker registered successfully');
+              window.myServiceWorker = registration;
+            });
+        }
+      `)
+
+      // Send a message to the service worker
+      await page.evaluate(`
+        window.myServiceWorker.active.postMessage("Some message");
+      `)
+
+      await flushEvents()
+
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+    }
+  )
+
+  createTest('service worker with worker logs - importScripts').run(
+    async ({ flushEvents, page, intakeRegistry, baseUrl }) => {
+      await page.goto(baseUrl.replace(/http:\/\/[^:]+:/, 'http://localhost:'))
+
+      // Inject the service worker script
+      await page.evaluate(`
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw-import-scripts.js')
+            .then(registration => {
+              console.log('Service worker registered successfully');
+              window.myServiceWorker = registration;
+            });
+        }
+      `)
+
+      // Send a message to the service worker
+      await page.evaluate(`
+        window.myServiceWorker.active.postMessage("Some message");
+      `)
+
+      await flushEvents()
+
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+    }
+  )
+
   createTest('send logs')
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
