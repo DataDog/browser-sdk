@@ -4,7 +4,7 @@ import {
   FORM_PRIVATE_TAG_NAMES,
   CENSORED_STRING_MARK,
   getPrivacySelector,
-  censorText,
+  TEXT_MASKING_CHAR,
 } from './privacyConstants'
 
 export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
@@ -159,6 +159,12 @@ function isFormElement(node: Node | null): boolean {
   return !!FORM_PRIVATE_TAG_NAMES[element.tagName]
 }
 
+/**
+ * Text censoring non-destructively maintains whitespace characters in order to preserve text shape
+ * during replay.
+ */
+const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
+
 export function getTextContent(
   textNode: Node,
   ignoreWhiteSpace: boolean,
@@ -278,10 +284,8 @@ export function shouldIgnoreElement(element: Element): boolean {
   return false
 }
 
-declare global {
-  interface Window {
-    $DD_ALLOW?: Set<string>
-  }
+export interface BrowserWindow extends Window {
+  $DD_ALLOW?: Set<string>
 }
 
 export function maskDisallowedTextContent(text: string, fixedMask?: string): string {
@@ -290,7 +294,8 @@ export function maskDisallowedTextContent(text: string, fixedMask?: string): str
   }
   // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
   // so we need to do the same here
-  if (window.$DD_ALLOW && window.$DD_ALLOW.has(text.toLocaleLowerCase())) {
+  const allowList = (window as BrowserWindow).$DD_ALLOW
+  if (allowList && allowList.has(text.toLocaleLowerCase())) {
     return text
   }
   return fixedMask || censorText(text)

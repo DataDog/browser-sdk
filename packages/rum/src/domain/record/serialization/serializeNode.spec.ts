@@ -1,5 +1,5 @@
 import { noop } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration, BrowserWindow } from '@datadog/browser-rum-core'
 import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
 import {
   NodePrivacyLevel,
@@ -448,11 +448,11 @@ describe('serializeNodeWithId', () => {
 
     describe('input privacy mode mask-unless-allowlisted', () => {
       beforeEach(() => {
-        window.$DD_ALLOW = new Set(['allowlisted value', 'hello'])
+        ;(window as BrowserWindow).$DD_ALLOW = new Set(['allowlisted value', 'hello'])
       })
 
       afterEach(() => {
-        window.$DD_ALLOW = undefined
+        ;(window as BrowserWindow).$DD_ALLOW = undefined
       })
 
       it('should behave like mask-user-input', () => {
@@ -869,11 +869,11 @@ describe('serializeNodeWithId', () => {
 
     describe('for privacy tag `mask-unless-allowlisted`, a DOM tree', () => {
       beforeEach(() => {
-        window.$DD_ALLOW = new Set(['private title', 'hello private world'])
+        ;(window as BrowserWindow).$DD_ALLOW = new Set(['private title', 'hello private world'])
       })
 
       afterEach(() => {
-        window.$DD_ALLOW = undefined
+        ;(window as BrowserWindow).$DD_ALLOW = undefined
       })
 
       it('obfuscates text content not in allowlist', () => {
@@ -901,7 +901,7 @@ describe('serializeNodeWithId', () => {
       })
 
       it('fails close when allowlist is empty', () => {
-        window.$DD_ALLOW = new Set()
+        ;(window as BrowserWindow).$DD_ALLOW = new Set()
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
 
         // All text content should be masked
@@ -914,7 +914,7 @@ describe('serializeNodeWithId', () => {
       })
 
       it('fails close when allowlist is undefined', () => {
-        window.$DD_ALLOW = undefined
+        ;(window as BrowserWindow).$DD_ALLOW = undefined
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
 
         // All text content should be masked

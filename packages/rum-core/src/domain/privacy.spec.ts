@@ -438,16 +438,20 @@ const TEST_STRINGS = {
 }
 
 describe('maskWithAllowlist', () => {
+  interface BrowserWindow extends Window {
+    $DD_ALLOW?: Set<string>
+  }
+
   beforeEach(() => {
-    window.$DD_ALLOW = new Set([TEST_STRINGS.PARAGRAPH_MIXED])
+    ;(window as BrowserWindow).$DD_ALLOW = new Set([TEST_STRINGS.PARAGRAPH_MIXED])
   })
 
   afterEach(() => {
-    window.$DD_ALLOW = undefined
+    ;(window as BrowserWindow).$DD_ALLOW = undefined
   })
 
   it('should fail close if $DD_ALLOW is not defined', () => {
-    window.$DD_ALLOW = undefined as any
+    ;(window as BrowserWindow).$DD_ALLOW = undefined
     const testString = maskDisallowedTextContent('mask-feature-on', ACTION_NAME_MASK)
     expect(testString).toBe(ACTION_NAME_MASK)
   })

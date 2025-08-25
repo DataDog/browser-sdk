@@ -16,6 +16,7 @@ import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
+import type { BrowserWindow } from '../privacy'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
@@ -264,7 +265,7 @@ describe('trackClickActions', () => {
 
   describe('with enablePrivacyForActionName false', () => {
     beforeAll(() => {
-      window.$DD_ALLOW = undefined
+      ;(window as BrowserWindow).$DD_ALLOW = undefined
     })
 
     it('extracts action name when default privacy level is mask', () => {
@@ -455,11 +456,11 @@ describe('trackClickActions', () => {
 
   describe('NodePrivacyLevel masking', () => {
     beforeAll(() => {
-      window.$DD_ALLOW = new Set(['foo-bar'])
+      ;(window as BrowserWindow).$DD_ALLOW = new Set(['foo-bar'])
     })
 
     afterAll(() => {
-      window.$DD_ALLOW = undefined
+      ;(window as BrowserWindow).$DD_ALLOW = undefined
     })
 
     it('should mask action name when defaultPrivacyLevel is mask_unless_allowlisted and not in allowlist', () => {
