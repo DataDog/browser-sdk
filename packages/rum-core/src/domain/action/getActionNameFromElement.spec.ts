@@ -1,8 +1,9 @@
 import { ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '../../../../core/test'
 import { appendElement, mockRumConfiguration } from '../../../test'
-import { NodePrivacyLevel } from '../privacy'
-import { ActionNameSource, getActionNameFromElement } from './getActionNameFromElement'
+import { NodePrivacyLevel } from '../privacyConstants'
+import { getActionNameFromElement } from './getActionNameFromElement'
+import { ActionNameSource } from './actionNameConstants'
 
 const defaultConfiguration = mockRumConfiguration()
 
@@ -501,6 +502,43 @@ describe('getActionNameFromElement', () => {
         undefined
       )
       expect(name).toBe('Foo')
+      expect(nameSource).toBe('text_content')
+    })
+  })
+  describe('with mask-unless-allowlisted', () => {
+    it('preserves privacy level of the element when defaultPrivacyLevel is mask-unless-allowlisted', () => {
+      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      const { name, nameSource } = getActionNameFromElement(
+        appendElement(`
+        <div data-dd-privacy="mask">
+          <span target>bar</span>
+        </div>
+      `),
+        {
+          ...defaultConfiguration,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+        },
+        NodePrivacyLevel.MASK
+      )
+      expect(name).toBe('Masked Element')
+      expect(nameSource).toBe('mask_placeholder')
+    })
+
+    it('preserves privacy level of the element when node privacy level is mask-unless-allowlisted', () => {
+      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      const { name, nameSource } = getActionNameFromElement(
+        appendElement(`
+          <div data-dd-privacy="mask-unless-allowlisted">
+            <span target>foo</span>
+            <div data-dd-privacy="mask">
+              <span target>bar</span>
+            </div>
+          </div>
+        `),
+        defaultConfiguration,
+        NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+      )
+      expect(name).toBe('xxx')
       expect(nameSource).toBe('text_content')
     })
   })
