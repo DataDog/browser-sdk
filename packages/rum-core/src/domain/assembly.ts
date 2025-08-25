@@ -12,7 +12,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
+import type { RumEvent, RumViewEvent, RumVitalEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
@@ -133,11 +133,28 @@ export function startRumAssembly(
         }
 
         if (rawRumEvent.type === 'stream') {
-          // @ts-expect-error TBF
-          serverRumEvent.type = 'view'
-        }
+          const streamEvent = {
+            ...(serverRumEvent as RumViewEvent),
+            view: {
+              ...serverRumEvent.view,
+              id: serverRumEvent.stream?.id,
+              action: {
+                count: 0,
+              },
+              error: {
+                count: 0,
+              },
+              resource: {
+                count: 0,
+              },
+            },
+            type: 'view',
+          }
 
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, streamEvent as RumEvent & Context)
+        } else {
+          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+        }
       }
     }
   )

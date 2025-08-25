@@ -1,19 +1,41 @@
-// eslint-disable-next-line no-restricted-syntax
-abstract class Metric {
-  constructor(private name: string) {}
+export function createWeightAverageMetric() {
+  let lastUpdate = 0
+  let weight = 0
+  let value: number | undefined
 
-  update(value: number, weight?: number): void {
-    // This method is a placeholder for metric updates.
+  return {
+    get value() {
+      console.log('>>>', value)
+      return value
+    },
+    update(newLastUpdate: number, newValue: number) {
+      if (newLastUpdate <= lastUpdate) {
+        return
+      }
+
+      const newWeight = newLastUpdate - lastUpdate
+      value = ((value ?? 0) * weight + newValue * newWeight) / (weight + newWeight)
+      weight += newWeight
+      lastUpdate = newLastUpdate
+    },
   }
 }
 
-// eslint-disable-next-line no-restricted-syntax
-export class WeightAverageMetric extends Metric {
-  private average: number = 0
-  private weight: number = 0
+export function createLastMetric() {
+  let lastUpdate = 0
+  let value: number | undefined
 
-  update(value: number, weight: number): void {
-    this.average = (this.average * this.weight + value * weight) / (this.weight + weight)
-    this.weight += weight
+  return {
+    get value() {
+      return value
+    },
+    update(newLastUpdate: number, newValue: number) {
+      if (newLastUpdate <= lastUpdate) {
+        return
+      }
+
+      value = newValue
+      lastUpdate = newLastUpdate
+    },
   }
 }

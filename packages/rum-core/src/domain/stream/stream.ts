@@ -1,13 +1,11 @@
 import { clocksNow, generateUUID } from '@datadog/browser-core'
 import type { StartRumResult } from '../..'
-import type { WeightAverageMetric } from './metric'
+import { createLastMetric, createWeightAverageMetric } from './metric'
 import { createTimer } from './timer'
 
 export interface API {
   addEvent: AddEvent
 }
-
-export type AddEvent = StartRumResult['addEvent']
 
 interface Meta {
   duration?: number
@@ -15,12 +13,7 @@ interface Meta {
   resolution?: string
 }
 
-interface Metrics {
-  bitrate: WeightAverageMetric
-  fps: WeightAverageMetric
-  timestamp: number
-  watchTime: number
-}
+export type AddEvent = StartRumResult['addEvent']
 
 type Transition = 'end' | 'error' | 'pause' | 'play' | 'preload' | 'quit' | 'rebuff' | 'seek' | 'start'
 
@@ -28,9 +21,50 @@ export function createStream(api: API) {
   const id = generateUUID()
   const origin = clocksNow()
   const timer = createTimer()
+  const meta: Meta = {}
+  const metrics = {
+    bitrate: createWeightAverageMetric(),
+    fps: createWeightAverageMetric(),
+    timestamp: createLastMetric(),
+    watchTime: createLastMetric(),
+  }
+
+  function sendStreamEvent() {
+    const now = clocksNow()
+
+    api.addEvent(
+      now.relative,
+      {
+        date: now.timeStamp,
+        type: 'stream',
+        stream: {
+          id,
+          bitrate: metrics.bitrate.value,
+          duration: meta.duration,
+          format: meta.format,
+          fps: metrics.fps.value,
+          resolution: meta.resolution,
+          timestamp: metrics.timestamp.value,
+          watch_time: metrics.watchTime.value,
+        },
+      },
+      {}
+    )
+  }
 
   return {
-    interaction(id: string): void {},
+    interaction(id: string): void {
+      console.log('>>>', 'interaction', id)
+    },
+    set<K extends keyof Meta>(key: K, value: Meta[K]): void {
+      if (meta[key] !== undefined) {
+        return
+      }
+
+      meta[key] = value
+
+      sendStreamEvent()
+    },
     transition(state: Transition, context: any): void {
       if (state === 'play') {
         timer.start()
@@ -53,20 +87,10 @@ export function createStream(api: API) {
         context
       )
     },
-    update(key: string, value: any): void {
-      const now = clocksNow()
+    update(key: keyof typeof metrics, value: number): void {
+      metrics[key].update(timer.value, value)
 
-      api.addEvent(
-        now.relative,
-        {
-          date: now.timeStamp,
-          type: 'stream',
-          stream: {
-            id: generateUUID(),
-          },
-        },
-        {}
-      )
+      sendStreamEvent()
     },
   }
 }
