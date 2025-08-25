@@ -46,6 +46,13 @@ describe('endpointBuilder', () => {
       expect(url).not.toContain('/rum?ddsource')
       expect(url).toContain('ddsource=browser')
     })
+
+    it('accepts extra parameters', () => {
+      const extraParameters = ['application.id=1234', 'application.version=1.0.0']
+      const url = createEndpointBuilder(initConfiguration, 'rum', extraParameters).build('fetch', DEFAULT_PAYLOAD)
+      expect(url).toContain('application.id=1234')
+      expect(url).toContain('application.version=1.0.0')
+    })
   })
 
   describe('proxy configuration', () => {
@@ -142,6 +149,19 @@ describe('endpointBuilder', () => {
       expect(createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
         'https://pci.browser-intake-datadoghq.com'
       )
+    })
+  })
+
+  describe('source configuration', () => {
+    it('should use the default source when no configuration is provided', () => {
+      const endpoint = createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=browser')
+    })
+
+    it('should source when provided', () => {
+      const config = { ...initConfiguration, source: 'flutter' as const }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=flutter')
     })
   })
 })

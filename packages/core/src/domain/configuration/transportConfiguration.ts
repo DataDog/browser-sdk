@@ -13,23 +13,25 @@ export interface TransportConfiguration {
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
+  source: 'browser' | 'flutter'
 }
 
 export interface ReplicaConfiguration {
-  applicationId?: string
   logsEndpointBuilder: EndpointBuilder
   rumEndpointBuilder: EndpointBuilder
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
   const site = initConfiguration.site || INTAKE_SITE_US1
+  const source = initConfiguration.source === 'flutter' ? 'flutter' : 'browser'
 
-  const endpointBuilders = computeEndpointBuilders(initConfiguration)
-  const replicaConfiguration = computeReplicaConfiguration(initConfiguration)
+  const endpointBuilders = computeEndpointBuilders({ ...initConfiguration, site, source })
+  const replicaConfiguration = computeReplicaConfiguration({ ...initConfiguration, site, source })
 
   return {
     replica: replicaConfiguration,
     site,
+    source,
     ...endpointBuilders,
   }
 }
@@ -55,12 +57,12 @@ function computeReplicaConfiguration(initConfiguration: InitConfiguration): Repl
     clientToken: initConfiguration.replica.clientToken,
   }
 
-  const replicaEndpointBuilders = {
+  return {
     logsEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'logs'),
-    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum'),
+    rumEndpointBuilder: createEndpointBuilder(replicaConfiguration, 'rum', [
+      `application.id=${initConfiguration.replica.applicationId}`,
+    ]),
   }
-
-  return { applicationId: initConfiguration.replica.applicationId, ...replicaEndpointBuilders }
 }
 
 export function isIntakeUrl(url: string): boolean {

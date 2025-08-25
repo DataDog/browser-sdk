@@ -1,10 +1,7 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { getRelativeTime, isNumber } from '@datadog/browser-core'
-import {
-  RumPerformanceEntryType,
-  supportPerformanceTimingEvent,
-  type RumPerformanceNavigationTiming,
-} from './performanceObservable'
+import type { RumPerformanceNavigationTiming } from './performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
 
 export function getNavigationEntry(): RumPerformanceNavigationTiming {
   if (supportPerformanceTimingEvent(RumPerformanceEntryType.NAVIGATION)) {

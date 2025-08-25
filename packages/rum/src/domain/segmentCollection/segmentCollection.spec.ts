@@ -121,6 +121,7 @@ describe('startSegmentCollection', () => {
       isFullSnapshot: jasmine.anything(),
       rawSize: jasmine.anything(),
       recordCount: jasmine.anything(),
+      serializationDuration: jasmine.anything(),
     })
   })
 

@@ -388,6 +388,14 @@ export default tseslint.config(
   },
 
   {
+    files: ['packages/*/src/**/*.ts'],
+    ignores: [SPEC_FILES],
+    rules: {
+      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
+    },
+  },
+
+  {
     files: ['packages/{rum,logs,flagging,rum-slim}/src/entries/*.ts'],
     rules: {
       'local-rules/disallow-enum-exports': 'error',

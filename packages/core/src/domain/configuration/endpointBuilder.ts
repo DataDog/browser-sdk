@@ -19,12 +19,16 @@ export type ApiType =
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
-export function createEndpointBuilder(initConfiguration: InitConfiguration, trackType: TrackType) {
+export function createEndpointBuilder(
+  initConfiguration: InitConfiguration,
+  trackType: TrackType,
+  extraParameters?: string[]
+) {
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
 
   return {
     build(api: ApiType, payload: Payload) {
-      const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload)
+      const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload, extraParameters)
       return buildUrlWithParameters(parameters)
     },
     trackType,
@@ -81,18 +85,19 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: InitConfiguration,
   trackType: TrackType,
   api: ApiType,
-  { retry, encoding }: Payload
+  { retry, encoding }: Payload,
+  extraParameters: string[] = []
 ) {
   const parameters = [
-    'ddsource=browser',
+    `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
     `dd-request-id=${generateUUID()}`,
-  ]
+  ].concat(extraParameters)
 
   if (encoding) {
     parameters.push(`dd-evp-encoding=${encoding}`)

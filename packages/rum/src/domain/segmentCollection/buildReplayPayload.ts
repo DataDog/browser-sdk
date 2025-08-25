@@ -12,6 +12,7 @@ export type ReplayPayload = Payload & {
   isFullSnapshot: boolean
   rawSize: number
   recordCount: number
+  serializationDuration: SerializationMetric
 }
 
 export function buildReplayPayload(
@@ -46,5 +47,6 @@ export function buildReplayPayload(
     isFullSnapshot: metadata.index_in_view === 0,
     rawSize: rawSegmentBytesCount,
     recordCount: metadata.records_count,
+    serializationDuration: stats.serializationDuration,
   }
 }
