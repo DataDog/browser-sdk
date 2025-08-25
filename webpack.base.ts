@@ -14,10 +14,10 @@ export default ({
   types,
   keepBuildEnvVariables,
 }: Pick<webpack.Configuration, 'entry' | 'mode' | 'plugins'> & {
-  filename: string
+  filename?: string
   types?: string[]
   keepBuildEnvVariables?: string[]
-}) => ({
+}): webpack.Configuration => ({
   entry,
   mode,
   output: {
