@@ -1,10 +1,10 @@
-import fs from 'fs'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import { WebextensionPlugin } from '@webextension-toolbox/webpack-webextension-plugin'
 import CopyPlugin from 'copy-webpack-plugin'
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin'
 import webpack from 'webpack'
 import { createDefinePlugin } from '../webpack.base.ts'
+import packageJson from './package.json' with { type: 'json' }
 
 export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) => {
   const isDevelopment = argv.mode === 'development'
@@ -34,8 +34,6 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
               to: 'manifest.json',
               transform(content: Buffer) {
                 const manifest = JSON.parse(content.toString())
-                const packageJson = JSON.parse(fs.readFileSync('./package.json', 'utf8'))
-
                 manifest.version = packageJson.version
                 manifest.version_name = packageJson.version
 
@@ -201,7 +199,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
 }
 
 function getVersion() {
-  const version: string = JSON.parse(fs.readFileSync('./package.json', 'utf8')).version
+  const version: string = packageJson.version
 
   return {
     version: version.replace(/-(alpha|beta)/, ''),
