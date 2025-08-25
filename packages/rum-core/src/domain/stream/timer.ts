@@ -2,21 +2,33 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { relativeNow } from '@datadog/browser-core'
 
 export function createTimer() {
-  let start: RelativeTime
-  let count = 0
+  let counter = 0
+  let start: RelativeTime = 0 as RelativeTime
+  let stopped = true
 
   return {
-    start(): number {
-      start = relativeNow()
+    get value() {
+      if (stopped) {
+        return counter
+      }
 
-      return count
+      return relativeNow() - start
     },
-    stop(): number {
-      const duration = relativeNow() - start
+    start(): void {
+      if (!stopped) {
+        return
+      }
 
-      count += duration
+      start = relativeNow()
+      stopped = false
+    },
+    stop(): void {
+      if (stopped) {
+        return
+      }
 
-      return count
+      counter = relativeNow() - start
+      stopped = true
     },
   }
 }

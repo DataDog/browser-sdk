@@ -13,7 +13,6 @@ export function createStreamPlugin(): { plugin: RumPlugin; createStream: () => R
 
   const api: API = {
     get addEvent() {
-      console.log('>>>', 'getter addEvent', addEvent)
       return addEvent ?? store
     },
   }
