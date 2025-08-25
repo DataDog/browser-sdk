@@ -27,7 +27,7 @@ export async function startNetworkProfiling(options: ProfilingOptions, client: C
   client.on('Network.loadingFinished', loadingFinishedListener)
   return () => {
     client.off('Network.requestWillBeSent', requestListener)
-    client.off('Network.loadingFinishedListener', loadingFinishedListener)
+    client.off('Network.loadingFinished', loadingFinishedListener)
 
     return {
       upload: options.proxy.stats.getStatsByHost(),

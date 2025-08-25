@@ -1,0 +1,33 @@
+// This tsconfig used as a default for typechecking files that are not included in any other
+// tsconfig.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["jasmine"],
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "exclude": [
+    // Generated files
+    "packages/*/cjs",
+    "packages/*/esm",
+    "packages/*/bundle",
+
+    // Files included in ./tsconfig.scripts.json
+    "**/webpack.*.ts",
+    "scripts",
+
+    // Files included in ./test/e2e/tsconfig.json
+    "test/e2e",
+
+    // Files included in ./developer-extension/tsconfig.webpack.json
+    "developer-extension",
+
+    // Files included in ./performances/tsconfig.json
+    "performances",
+
+    // Skip typechecking for these folders for now
+    "rum-events-format",
+    "test/apps"
+  ]
+}

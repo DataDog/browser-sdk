@@ -1,25 +1,10 @@
-// This tsconfig is only used for tooling (ex: typecheck in code editors / lint)
 {
-  "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "types": ["jasmine"]
-  },
-  "exclude": [
-    // Generated files
-    "packages/*/cjs",
-    "packages/*/esm",
-    "packages/*/bundle",
-
-    // Those folders have their own tsconfig.json
-    "scripts",
-    "test/e2e",
-    "test/apps",
-    "developer-extension",
-    "rum-events-format",
-
-    // Excluded for now, because this pulls in the Node.js types which conflict with the browser
-    // types. We should revisit this using "references" tsconfig files like vite does:
-    // https://github.com/vitejs/vite/blob/4b77d008aca457944f583ba8a1ff530d5df87cc1/packages/create-vite/template-react-ts/tsconfig.json
-    "performances"
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.default.json" },
+    { "path": "./tsconfig.scripts.json" },
+    { "path": "./developer-extension/tsconfig.webpack.json" },
+    { "path": "./test/e2e/tsconfig.json" },
+    { "path": "./performances/tsconfig.json" }
   ]
 }
