@@ -255,8 +255,8 @@ function getTextualContent(
         userProgrammaticAttribute,
         privacyEnabledActionName
       )
-      if (treeWalkerText !== text.replace(/\s+/g, ' ').trim()) {
-        addTelemetryDebug('tree-walker-text-diff', { text, treeWalkerText })
+      if (treeWalkerText.toLowerCase() !== text.replace(/\s+/g, ' ').trim().toLowerCase()) {
+        addTelemetryDebug('tree-walker-text-diff', { text, treeWalkerText, selector: element.outerHTML })
       }
       return treeWalkerText
     }
