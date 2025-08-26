@@ -151,4 +151,17 @@ describe('endpointBuilder', () => {
       )
     })
   })
+
+  describe('source configuration', () => {
+    it('should use the default source when no configuration is provided', () => {
+      const endpoint = createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=browser')
+    })
+
+    it('should source when provided', () => {
+      const config = { ...initConfiguration, source: 'flutter' as const }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=flutter')
+    })
+  })
 })

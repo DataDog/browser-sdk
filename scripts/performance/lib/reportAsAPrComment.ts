@@ -1,8 +1,7 @@
 import { command } from '../../lib/command.ts'
 import { formatSize } from '../../lib/computeBundleSize.ts'
 import { fetchHandlingError } from '../../lib/executionUtils.ts'
-import { LOCAL_BRANCH, getLastCommonCommit, fetchPR } from '../../lib/gitUtils.ts'
-import { getGithubAccessToken } from '../../lib/secrets.ts'
+import { LOCAL_BRANCH, getLastCommonCommit, fetchPR, getPrComments } from '../../lib/gitUtils.ts'
 import { fetchPerformanceMetrics } from './fetchPerformanceMetrics.ts'
 
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
@@ -104,16 +103,8 @@ function compare(
 }
 
 async function retrieveExistingCommentId(prNumber: number): Promise<number | undefined> {
-  const response = await fetchHandlingError(
-    `https://api.github.com/repos/DataDog/browser-sdk/issues/${prNumber}/comments`,
-    {
-      method: 'GET',
-      headers: {
-        Authorization: `token ${getGithubAccessToken()}`,
-      },
-    }
-  )
-  const comments = (await response.json()) as Array<{ id: number; body: string }>
+  const comments = await getPrComments(prNumber)
+
   const targetComment = comments.find((comment) => comment.body.startsWith(`## ${PR_COMMENT_HEADER}`))
   if (targetComment !== undefined) {
     return targetComment.id

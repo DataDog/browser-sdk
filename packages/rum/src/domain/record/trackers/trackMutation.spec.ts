@@ -119,6 +119,7 @@ describe('trackMutation', () => {
 
       expect(mutationCallbackSpy.calls.mostRecent().args[1]).toEqual({
         cssText: { count: 1, max: 21, sum: 21 },
+        serializationDuration: jasmine.anything(),
       })
     })
 

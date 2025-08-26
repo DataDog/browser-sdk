@@ -45,7 +45,7 @@ export function addReactError(error: Error, info: ErrorInfo) {
             source_type: 'browser',
             csp: rawError.csp,
           },
-          context: { framework: 'react' },
+          context: { framework: 'react', ...rawError.context },
         },
         {
           error: rawError.originalError,

@@ -18,6 +18,31 @@
 
 ---
 
+## v6.18.1
+
+**Public Changes:**
+
+- 🐛 Support error.dd_context for addReactError API ([#3791](https://github.com/DataDog/browser-sdk/pull/3791)) [RUM-REACT]
+
+**Internal Changes:**
+
+- ✨⚗️ [RUM-10146] implement early request collection ([#3740](https://github.com/DataDog/browser-sdk/pull/3740)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 [RUM-11361] Replace github PAT by using dd octo ([#3725](https://github.com/DataDog/browser-sdk/pull/3725))
+- 👷 [RUM-11361] Fix read octo policy ([#3789](https://github.com/DataDog/browser-sdk/pull/3789))
+- 👷 [RUM-11361] Add octo policies ([#3787](https://github.com/DataDog/browser-sdk/pull/3787))
+- 👷‍♀️ [RUM-11139] Improve textual content extraction for action names ([#3759](https://github.com/DataDog/browser-sdk/pull/3759)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 add `consistent-type-specifier-style: 'prefer-top-level'` eslint rule ([#3780](https://github.com/DataDog/browser-sdk/pull/3780)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 Lock file maintenance ([#3772](https://github.com/DataDog/browser-sdk/pull/3772))
+- 🔧 Rename state.yml to stale.yml ([#3781](https://github.com/DataDog/browser-sdk/pull/3781))
+- 🎨 [PANA-3877] Consolidate sample rates for replay telemetry ([#3795](https://github.com/DataDog/browser-sdk/pull/3795)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✅ [RUM-10146] mock global performance buffer when mocking PerformanceObserver ([#3752](https://github.com/DataDog/browser-sdk/pull/3752)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊[PANA-3819] Add telemetry for recorder initialization ([#3793](https://github.com/DataDog/browser-sdk/pull/3793)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊[PANA-3818] Add telemetry for DOM serialization performance ([#3792](https://github.com/DataDog/browser-sdk/pull/3792)) [RUM]
+- 🔊[PANA-3817] Add telemetry for initial view metrics ([#3788](https://github.com/DataDog/browser-sdk/pull/3788)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ⚡♻️ simplify replica ([#3552](https://github.com/DataDog/browser-sdk/pull/3552)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ use exclicit resource management for octo tokens ([#3790](https://github.com/DataDog/browser-sdk/pull/3790))
+- Pin GitHub Actions ([#3786](https://github.com/DataDog/browser-sdk/pull/3786))
+
 ## v6.18.0
 
 **Public Changes:**

@@ -1,7 +1,7 @@
 variables:
-  CURRENT_STAGING: staging-33
+  CURRENT_STAGING: staging-35
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 87
+  CURRENT_CI_IMAGE: 88
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -33,6 +33,9 @@ stages:
   tags:
     - 'arch:amd64'
   image: $CI_IMAGE
+  id_tokens:
+    DDOCTOSTS_ID_TOKEN:
+      aud: dd-octo-sts
   retry:
     max: 2
     when:

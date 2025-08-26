@@ -56,6 +56,7 @@ import { startTrackingConsentContext } from '../domain/contexts/trackingConsentC
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
+import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -179,6 +180,13 @@ export function startRum(
   )
 
   cleanupTasks.push(stopViewCollection)
+
+  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(
+    configuration,
+    lifeCycle,
+    telemetry
+  )
+  cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)

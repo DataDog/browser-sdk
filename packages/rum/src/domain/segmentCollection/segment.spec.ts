@@ -14,7 +14,10 @@ import { createSegment } from './segment'
 const CONTEXT: SegmentContext = { application: { id: 'a' }, view: { id: 'b' }, session: { id: 'c' } }
 const RECORD_TIMESTAMP = 10 as TimeStamp
 const RECORD: BrowserRecord = { type: RecordType.ViewEnd, timestamp: RECORD_TIMESTAMP }
-const RECORD_STATS = { cssText: { count: 0, max: 0, sum: 0 } }
+const RECORD_STATS: SerializationStats = {
+  cssText: { count: 0, max: 0, sum: 0 },
+  serializationDuration: { count: 0, max: 0, sum: 0 },
+}
 const FULL_SNAPSHOT_RECORD: BrowserRecord = {
   type: RecordType.FullSnapshot,
   timestamp: RECORD_TIMESTAMP,
@@ -119,12 +122,18 @@ describe('Segment', () => {
     const flushCallbackSpy = jasmine.createSpy<FlushCallback>()
 
     const segment1 = createTestSegment({ creationReason: 'init' })
-    const stats1 = { cssText: { count: 1, max: 100, sum: 150 } }
+    const stats1: SerializationStats = {
+      cssText: { count: 1, max: 100, sum: 150 },
+      serializationDuration: { count: 1, max: 50, sum: 75 },
+    }
     segment1.addRecord(RECORD, stats1, noop)
     segment1.flush(flushCallbackSpy)
 
     const segment2 = createTestSegment({ creationReason: 'segment_duration_limit' })
-    const stats2 = { cssText: { count: 2, max: 200, sum: 275 } }
+    const stats2: SerializationStats = {
+      cssText: { count: 2, max: 200, sum: 275 },
+      serializationDuration: { count: 2, max: 200, sum: 300 },
+    }
     segment2.addRecord(FULL_SNAPSHOT_RECORD, stats2, noop)
     segment2.flush(flushCallbackSpy)
 
@@ -238,6 +247,7 @@ describe('Segment', () => {
           { type: RecordType.ViewEnd, timestamp: 10 as TimeStamp },
           {
             cssText: { count: 1, max: 50, sum: 50 },
+            serializationDuration: { count: 1, max: 20, sum: 20 },
           },
           noop
         )
@@ -245,6 +255,7 @@ describe('Segment', () => {
           { type: RecordType.ViewEnd, timestamp: 15 as TimeStamp },
           {
             cssText: { count: 2, max: 150, sum: 250 },
+            serializationDuration: { count: 3, max: 35, sum: 65 },
           },
           noop
         )
@@ -253,6 +264,7 @@ describe('Segment', () => {
       it('aggregates stats', () => {
         expect(flushAndGetSerializationStats(segment)).toEqual({
           cssText: { count: 3, max: 150, sum: 300 },
+          serializationDuration: { count: 4, max: 35, sum: 85 },
         })
       })
 
@@ -260,6 +272,7 @@ describe('Segment', () => {
         segment.addRecord({ type: RecordType.ViewEnd, timestamp: 5 as TimeStamp }, undefined, noop)
         expect(flushAndGetSerializationStats(segment)).toEqual({
           cssText: { count: 3, max: 150, sum: 300 },
+          serializationDuration: { count: 4, max: 35, sum: 85 },
         })
       })
     })

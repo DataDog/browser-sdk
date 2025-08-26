@@ -15,7 +15,7 @@ describe('segmentTelemetry', () => {
 
   const config: Partial<RumConfiguration> = {
     maxTelemetryEventsPerPage: 2,
-    segmentTelemetrySampleRate: 100,
+    replayTelemetrySampleRate: 100,
     telemetrySampleRate: 100,
   }
 
@@ -41,6 +41,11 @@ describe('segmentTelemetry', () => {
       isFullSnapshot,
       rawSize: 2000,
       recordCount: 3,
+      serializationDuration: {
+        count: 3,
+        max: 65,
+        sum: 105,
+      },
     }
     requestObservable.notify({ type: result, bandwidth, payload })
   }
@@ -85,6 +90,11 @@ describe('segmentTelemetry', () => {
               compressed: 1000,
               raw: 2000,
             },
+            serializationDuration: {
+              count: 3,
+              max: 65,
+              sum: 105,
+            },
           },
         }),
       ])
@@ -121,6 +131,11 @@ describe('segmentTelemetry', () => {
               compressed: 1000,
               raw: 2000,
             },
+            serializationDuration: {
+              count: 3,
+              max: 65,
+              sum: 105,
+            },
           },
         }),
       ])
@@ -137,8 +152,8 @@ describe('segmentTelemetry', () => {
 
   it('should not collect segment when telemetry disabled', async () => {
     setupSegmentTelemetryCollection({
+      replayTelemetrySampleRate: 0,
       telemetrySampleRate: 100,
-      segmentTelemetrySampleRate: 0,
     })
     generateReplayRequest({ result: 'success', isFullSnapshot: true })
     expect(await telemetry.hasEvents()).toBe(false)

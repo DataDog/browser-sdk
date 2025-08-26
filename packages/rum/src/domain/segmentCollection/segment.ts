@@ -2,7 +2,8 @@ import type { Encoder, EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-
 import type { BrowserRecord, BrowserSegmentMetadata, CreationReason, SegmentContext } from '../../types'
 import { RecordType } from '../../types'
 import * as replayStats from '../replayStats'
-import { aggregateSerializationStats, createSerializationStats, type SerializationStats } from '../record'
+import type { SerializationStats } from '../record'
+import { aggregateSerializationStats, createSerializationStats } from '../record'
 
 export type FlushReason = Exclude<CreationReason, 'init'> | 'stop'
 export type FlushCallback = (

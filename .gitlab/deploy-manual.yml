@@ -6,6 +6,9 @@ stages:
 .base-configuration:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
+  id_tokens:
+    DDOCTOSTS_ID_TOKEN:
+      aud: dd-octo-sts
 
 .deploy-prod:
   stage: deploy
