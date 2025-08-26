@@ -300,20 +300,3 @@ export function maskDisallowedTextContent(text: string, fixedMask?: string): str
   }
   return fixedMask || censorText(text)
 }
-
-// Check whether the "mask unless allowlisted" privacy level is used anywhere on the node or its
-// ancestors. This indicates that the user intended to use the allowlist feature. In this case, we
-// should respect their intention.
-export function isAllowlistMaskEnabled(node: Node, defaultPrivacyLevel: NodePrivacyLevel): boolean {
-  if (
-    defaultPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED ||
-    getNodeSelfPrivacyLevel(node) === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
-  ) {
-    return true
-  }
-  const parentNode = getParentNode(node)
-  if (parentNode) {
-    return isAllowlistMaskEnabled(parentNode, defaultPrivacyLevel)
-  }
-  return false
-}

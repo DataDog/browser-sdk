@@ -454,7 +454,7 @@ describe('trackClickActions', () => {
     })
   })
 
-  describe('NodePrivacyLevel masking', () => {
+  describe('NodePrivacyLevel masking when enablePrivacyForActionName is true', () => {
     beforeAll(() => {
       ;(window as BrowserWindow).$DD_ALLOW = new Set(['foo-bar'])
     })
@@ -467,6 +467,7 @@ describe('trackClickActions', () => {
       mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+        enablePrivacyForActionName: true,
       })
 
       emulateClick({ activity: {} })
@@ -481,6 +482,7 @@ describe('trackClickActions', () => {
     it('should not mask action name when defaultPrivacyLevel is allow', () => {
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+        enablePrivacyForActionName: true,
       })
 
       emulateClick({ activity: {} })
@@ -511,6 +513,7 @@ describe('trackClickActions', () => {
       button.setAttribute('data-dd-privacy', 'mask-unless-allowlisted')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+        enablePrivacyForActionName: true,
       })
 
       emulateClick({ activity: {} })
@@ -526,6 +529,7 @@ describe('trackClickActions', () => {
       button.setAttribute('data-dd-privacy', 'mask')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+        enablePrivacyForActionName: true,
       })
 
       emulateClick({ activity: {} })
@@ -541,6 +545,7 @@ describe('trackClickActions', () => {
       button.setAttribute('data-dd-privacy', 'allow')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+        enablePrivacyForActionName: true,
       })
 
       emulateClick({ activity: {} })
@@ -549,29 +554,6 @@ describe('trackClickActions', () => {
 
       expect(events.length).toBe(1)
       expect(events[0].name).toBe('Click me')
-    })
-
-    it('should preserve mask levels when defaultPrivacyLevel is allow and node privacy level is mask-unless-allowlisted', () => {
-      const div = document.createElement('div')
-      div.setAttribute('data-dd-privacy', 'mask-unless-allowlisted')
-      div.appendChild(button)
-      button.setAttribute('data-dd-privacy', 'mask')
-      document.body.appendChild(div)
-
-      startClickActionsTracking({
-        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-      })
-
-      emulateClick({ activity: {} })
-      expect(findActionId()).not.toBeUndefined()
-      clock.tick(EXPIRE_DELAY)
-
-      expect(events.length).toBe(1)
-      expect(events[0].name).toBe('Masked Element')
-      expect(events[0].nameSource).toBe(ActionNameSource.MASK_PLACEHOLDER)
-
-      // cleanup
-      div.parentNode!.removeChild(div)
     })
   })
 

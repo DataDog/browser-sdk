@@ -17,7 +17,7 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { trackEventCounts } from '../trackEventCounts'
 import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPageActivityEnd'
 import { getSelectorFromElement } from '../getSelectorFromElement'
-import { getNodePrivacyLevel, isAllowlistMaskEnabled } from '../privacy'
+import { getNodePrivacyLevel } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
@@ -145,10 +145,7 @@ function processPointerDown(
 ) {
   let nodePrivacyLevel: NodePrivacyLevel
 
-  if (
-    configuration.enablePrivacyForActionName ||
-    isAllowlistMaskEnabled(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-  ) {
+  if (configuration.enablePrivacyForActionName) {
     nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
   } else {
     nodePrivacyLevel = NodePrivacyLevel.ALLOW
