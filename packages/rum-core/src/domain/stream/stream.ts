@@ -65,7 +65,7 @@ export function createStream(api: API) {
 
       sendStreamEvent()
     },
-    transition(state: Transition, context: any): void {
+    transition(state: Transition): void {
       if (state === 'play') {
         timer.start()
       }
@@ -84,7 +84,7 @@ export function createStream(api: API) {
           action: { id: generateUUID(), type: 'custom', target: { name: state } },
           stream: { id },
         },
-        context
+        {}
       )
     },
     update(key: keyof typeof metrics, value: number): void {
