@@ -17,6 +17,7 @@ import {
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
+import { startSessionRenewTelemetry } from './startSessionRenewTelemetry'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -87,6 +88,7 @@ export function startSessionStore<TrackingType extends string>(
   computeTrackingType: (rawTrackingType?: string) => TrackingType,
   sessionStoreStrategy: SessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, configuration)
 ): SessionStore {
+  const sessionRenewTelemetry = startSessionRenewTelemetry()
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
   const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
@@ -209,6 +211,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function renewSessionInCache(sessionState: SessionState) {
+    sessionRenewTelemetry.onRenew(sessionCache, sessionState)
     sessionCache = sessionState
     renewObservable.notify()
   }
