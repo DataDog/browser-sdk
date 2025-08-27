@@ -1,5 +1,4 @@
 import { getCookie } from '../../browser/cookie'
-import type { TimeStamp } from '../../tools/utils/timeUtils'
 import { elapsed, ONE_SECOND, timeStampNow } from '../../tools/utils/timeUtils'
 import { addTelemetryDebug } from '../telemetry'
 import type { SessionState } from './sessionState'
