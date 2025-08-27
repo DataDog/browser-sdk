@@ -5,7 +5,6 @@ export function createWeightAverageMetric() {
 
   return {
     get value() {
-      console.log('>>>', value)
       return value
     },
     update(newLastUpdate: number, newValue: number) {
