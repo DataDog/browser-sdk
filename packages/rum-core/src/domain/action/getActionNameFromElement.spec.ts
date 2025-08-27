@@ -112,6 +112,20 @@ describe('getActionNameFromElement', () => {
     })
   })
 
+  it('should reject never-rendered elements', () => {
+    const testCases = [
+      { element: appendElement('<div><title>foo</title></div>'), expected: 'blank' },
+      { element: appendElement('<div><script>foo</script></div>'), expected: 'blank' },
+      { element: appendElement('<div><style>foo</style></div>'), expected: 'blank' },
+      { element: appendElement('<div><svg><title>foo</title></svg></div>'), expected: 'blank' },
+    ]
+    testCases.forEach(({ element, expected }) => {
+      const { name, nameSource } = getActionNameFromElement(element, defaultConfiguration)
+      expect(name).toBe('')
+      expect(nameSource).toBe(expected)
+    })
+  })
+
   it('should introduce whitespace for block-level display values', () => {
     mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
     const testCases = [

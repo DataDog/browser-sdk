@@ -306,6 +306,11 @@ function getTextualContentWithTreeWalker(
       ) {
         return NodeFilter.FILTER_REJECT
       }
+      // reject if the element is never-rendered element https://www.w3.org/TR/SVG2/render.html#TermNeverRenderedElement
+      const neverRenderedElements = ['clipPath', 'defs', 'desc', 'linearGradient', 'marker', 'mask', 'metadata', 'pattern', 'radialGradient', 'script', 'style', 'title', 'symbol']
+      if (neverRenderedElements.includes(node.nodeName.toLowerCase())) {
+        return NodeFilter.FILTER_REJECT
+      }
     }
     return NodeFilter.FILTER_ACCEPT
   }
