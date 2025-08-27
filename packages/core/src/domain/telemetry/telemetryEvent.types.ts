@@ -495,6 +495,7 @@ export type TelemetryCommonFeaturesUsage =
   | RemoveAccountProperty
   | ClearAccount
   | AddFeatureFlagEvaluation
+  | AddOperationStepVital
 /**
  * Schema of browser specific features usage
  */
@@ -808,6 +809,17 @@ export interface AddFeatureFlagEvaluation {
    * addFeatureFlagEvaluation API
    */
   feature: 'add-feature-flag-evaluation'
+  [k: string]: unknown
+}
+export interface AddOperationStepVital {
+  /**
+   * addOperationStepVital API
+   */
+  feature: 'add-operation-step-vital'
+  /**
+   * Feature operations action type
+   */
+  action_type: 'start' | 'succeed' | 'fail'
   [k: string]: unknown
 }
 export interface StartSessionReplayRecording {
