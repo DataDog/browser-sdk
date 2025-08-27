@@ -372,25 +372,26 @@ describe('remoteConfiguration', () => {
       it('should be resolved from the provided configuration', () => {
         expectAppliedRemoteConfigurationToBe(
           {
-            user: {
-              id: {
-                rcSerializedType: 'dynamic',
-                strategy: 'cookie',
-                name: COOKIE_NAME,
-                extractor: { rcSerializedType: 'regex', value: '(\\w+)\\.\\w+' },
-              },
-              additionals: [
-                {
-                  key: 'bar',
-                  value: {
-                    rcSerializedType: 'dynamic',
-                    strategy: 'cookie',
-                    name: COOKIE_NAME,
-                    extractor: { rcSerializedType: 'regex', value: '\\w+\\.(\\w+)' },
-                  },
+            user: [
+              {
+                key: 'id',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'cookie',
+                  name: COOKIE_NAME,
+                  extractor: { rcSerializedType: 'regex', value: '(\\w+)\\.\\w+' },
                 },
-              ],
-            },
+              },
+              {
+                key: 'bar',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'cookie',
+                  name: COOKIE_NAME,
+                  extractor: { rcSerializedType: 'regex', value: '\\w+\\.(\\w+)' },
+                },
+              },
+            ],
           },
           {}
         )
@@ -403,18 +404,16 @@ describe('remoteConfiguration', () => {
       it('unresolved property should be set to undefined', () => {
         expectAppliedRemoteConfigurationToBe(
           {
-            context: {
-              additionals: [
-                {
-                  key: 'foo',
-                  value: {
-                    rcSerializedType: 'dynamic',
-                    strategy: 'cookie',
-                    name: 'missing-cookie',
-                  },
+            context: [
+              {
+                key: 'foo',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'cookie',
+                  name: 'missing-cookie',
                 },
-              ],
-            },
+              },
+            ],
           },
           {}
         )

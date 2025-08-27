@@ -112,6 +112,19 @@
           }
         }
       ]
+    },
+    "ContextItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/DynamicOption"
+        }
+      }
     }
   },
   "properties": {
@@ -198,57 +211,22 @@
           "description": "Whether to track sessions across subdomains"
         },
         "user": {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["id"],
-          "properties": {
-            "id": {
-              "$ref": "#/$defs/DynamicOption"
-            },
-            "name": {
-              "$ref": "#/$defs/DynamicOption"
-            },
-            "email": {
-              "$ref": "#/$defs/DynamicOption"
-            },
-            "additionals": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["key", "value"],
-                "properties": {
-                  "key": {
-                    "type": "string"
-                  },
-                  "value": {
-                    "$ref": "#/$defs/DynamicOption"
-                  }
-                }
+          "type": "array",
+          "contains": {
+            "properties": {
+              "key": {
+                "const": "id"
               }
             }
+          },
+          "items": {
+            "$ref": "#/$defs/ContextItem"
           }
         },
         "context": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "additionals": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "required": ["key", "value"],
-                "properties": {
-                  "key": {
-                    "type": "string"
-                  },
-                  "value": {
-                    "$ref": "#/$defs/DynamicOption"
-                  }
-                }
-              }
-            }
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContextItem"
           }
         }
       }

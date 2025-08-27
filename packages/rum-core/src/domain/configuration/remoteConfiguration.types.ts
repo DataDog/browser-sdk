@@ -117,21 +117,8 @@ export interface RumSdkConfig {
      * Whether to track sessions across subdomains
      */
     trackSessionAcrossSubdomains?: boolean
-    user?: {
-      id: DynamicOption
-      name?: DynamicOption
-      email?: DynamicOption
-      additionals?: {
-        key: string
-        value: DynamicOption
-      }[]
-    }
-    context?: {
-      additionals?: {
-        key: string
-        value: DynamicOption
-      }[]
-    }
+    user?: ContextItem[]
+    context?: ContextItem[]
   }
 }
 export interface SerializedRegex {
@@ -143,4 +130,8 @@ export interface SerializedRegex {
    * regex pattern
    */
   value: string
+}
+export interface ContextItem {
+  key: string
+  value: DynamicOption
 }

@@ -1,7 +1,7 @@
 import type { createContextManager } from '@datadog/browser-core'
 import { display, buildEndpointHost, mapValues, getCookie } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
-import type { RumSdkConfig, DynamicOption } from './remoteConfiguration.types'
+import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
@@ -105,18 +105,9 @@ function resolveRegex(pattern: string): RegExp | undefined {
   }
 }
 
-function resolveContextProperty(
-  contextManager: ReturnType<typeof createContextManager>,
-  contextConfiguration: RumRemoteConfiguration[keyof SupportedContextManagers] & { [key: string]: unknown }
-) {
-  Object.keys(contextConfiguration).forEach((key) => {
-    if (key === 'additionals') {
-      contextConfiguration[key]?.forEach((additional) => {
-        contextManager.setContextProperty(additional.key, resolveConfigurationProperty(additional.value))
-      })
-    } else {
-      contextManager.setContextProperty(key, resolveConfigurationProperty(contextConfiguration[key]))
-    }
+function resolveContextProperty(contextManager: ReturnType<typeof createContextManager>, contextItems: ContextItem[]) {
+  contextItems.forEach(({ key, value }) => {
+    contextManager.setContextProperty(key, resolveConfigurationProperty(value))
   })
 }
 

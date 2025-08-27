@@ -78,9 +78,7 @@ test.describe('remote configuration', () => {
     .withRemoteConfiguration({
       rum: {
         applicationId: RC_APP_ID,
-        user: {
-          id: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'e2e_rc' },
-        },
+        user: [{ key: 'id', value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'e2e_rc' } }],
       },
     })
     .withBody(html`
@@ -101,14 +99,12 @@ test.describe('remote configuration', () => {
     .withRemoteConfiguration({
       rum: {
         applicationId: RC_APP_ID,
-        context: {
-          additionals: [
-            {
-              key: 'foo',
-              value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'e2e_rc' },
-            },
-          ],
-        },
+        context: [
+          {
+            key: 'foo',
+            value: { rcSerializedType: 'dynamic', strategy: 'cookie', name: 'e2e_rc' },
+          },
+        ],
       },
     })
     .withBody(html`
