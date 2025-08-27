@@ -879,7 +879,12 @@ describe('serializeNodeWithId', () => {
       it('obfuscates text content not in allowlist', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
         // Most text should be masked with 'x' characters
-        expect(JSON.stringify(serializedDoc)).toContain('xxxxx')
+        const textContents = getAllTextContents(serializedDoc)
+        for (const textContent of textContents) {
+          if (textContent.trim() && !allowlist.contains(textContent)) {
+            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
+          }
+        }
       })
 
       it('preserves text content in allowlist', () => {
