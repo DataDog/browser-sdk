@@ -1,4 +1,9 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
+import {
+  addTelemetryDebug,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+  safeTruncate,
+} from '@datadog/browser-core'
 import { getNodeSelfPrivacyLevel, getPrivacySelector, NodePrivacyLevel, shouldMaskNode } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 import { isElementNode } from '../../browser/htmlDomUtils'
@@ -214,10 +219,6 @@ function getTextualContent(
     return
   }
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
-    return getTextualContentWithTreeWalker(element, userProgrammaticAttribute, privacyEnabledActionName)
-  }
-
   if ('innerText' in element) {
     let text = (element as HTMLElement).innerText
 
@@ -246,6 +247,18 @@ function getTextualContent(
       removeTextFromElements(
         `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
       )
+    }
+
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
+      const treeWalkerText = getTextualContentWithTreeWalker(
+        element,
+        userProgrammaticAttribute,
+        privacyEnabledActionName
+      )
+      if (treeWalkerText.toLowerCase() !== text.replace(/\s+/g, ' ').trim().toLowerCase()) {
+        addTelemetryDebug('tree-walker-text-diff', { text, treeWalkerText, selector: element.outerHTML })
+      }
+      return treeWalkerText
     }
 
     return text
