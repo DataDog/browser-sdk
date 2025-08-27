@@ -135,6 +135,14 @@ export function startRumAssembly(
         if (rawRumEvent.type === 'stream') {
           const streamEvent = {
             ...(serverRumEvent as RumViewEvent),
+            _dd: {
+              ...serverRumEvent._dd,
+              document_version: serverRumEvent.stream?.document_version,
+            },
+            stream: {
+              ...serverRumEvent.stream,
+              time_spent: undefined,
+            },
             view: {
               ...serverRumEvent.view,
               id: serverRumEvent.stream?.id,
@@ -147,6 +155,7 @@ export function startRumAssembly(
               resource: {
                 count: 0,
               },
+              time_spent: serverRumEvent.stream?.time_spent,
             },
             type: 'view',
           }

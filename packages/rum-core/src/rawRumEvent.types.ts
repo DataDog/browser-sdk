@@ -363,10 +363,12 @@ export interface RawRumStreamEvent {
   stream: {
     id: string
     bitrate?: number
+    document_version: number
     duration?: number
     format?: string
     fps?: number
     resolution?: string
+    time_spent: number
     timestamp?: number
     watch_time?: number
   }

@@ -1,4 +1,4 @@
-import { clocksNow, generateUUID } from '@datadog/browser-core'
+import { clocksNow, generateUUID, ONE_SECOND } from '@datadog/browser-core'
 import type { StartRumResult } from '../..'
 import { createLastMetric, createWeightAverageMetric } from './metric'
 import { createTimer } from './timer'
@@ -26,8 +26,8 @@ export function createStream(api: API) {
     bitrate: createWeightAverageMetric(),
     fps: createWeightAverageMetric(),
     timestamp: createLastMetric(),
-    watchTime: createLastMetric(),
   }
+  let documentVersion = 0
 
   function sendStreamEvent() {
     const now = clocksNow()
@@ -41,15 +41,19 @@ export function createStream(api: API) {
           id,
           bitrate: metrics.bitrate.value,
           duration: meta.duration,
+          document_version: documentVersion,
           format: meta.format,
           fps: metrics.fps.value,
           resolution: meta.resolution,
           timestamp: metrics.timestamp.value,
-          watch_time: metrics.watchTime.value,
+          time_spent: (now.relative - origin.relative) * ONE_SECOND,
+          watch_time: timer.value * ONE_SECOND,
         },
       },
       {}
     )
+
+    documentVersion += 1
   }
 
   return {
