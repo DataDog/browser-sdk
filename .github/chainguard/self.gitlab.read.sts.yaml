@@ -1,0 +1,9 @@
+issuer: https://gitlab.ddbuild.io
+
+subject_pattern: 'project_path:DataDog/browser-sdk:.*'
+
+claim_pattern:
+  project_path: 'DataDog/browser-sdk'
+
+permissions:
+  contents: read

@@ -108,6 +108,7 @@ describe('startFullSnapshots', () => {
     const fullSnapshotEmits = emitCallback.calls.allArgs().filter((args) => args[0].type === RecordType.FullSnapshot)
     expect(fullSnapshotEmits[0][1]).toEqual({
       cssText: { count: 1, max: 21, sum: 21 },
+      serializationDuration: jasmine.anything(),
     })
   })
 })

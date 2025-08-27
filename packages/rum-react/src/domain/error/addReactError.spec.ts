@@ -39,4 +39,26 @@ describe('addReactError', () => {
       }
     )
   })
+
+  it('should merge dd_context from the original error with react error context', () => {
+    const addEventSpy = jasmine.createSpy()
+    initializeReactPlugin({
+      addEvent: addEventSpy,
+    })
+    const originalError = new Error('error message')
+    originalError.name = 'CustomError'
+    ;(originalError as any).dd_context = { component: 'Menu', param: 123 }
+
+    addReactError(originalError, {})
+
+    expect(addEventSpy.calls.mostRecent().args[1]).toEqual(
+      jasmine.objectContaining({
+        context: {
+          framework: 'react',
+          component: 'Menu',
+          param: 123,
+        },
+      })
+    )
+  })
 })

@@ -553,7 +553,6 @@ describe('serializeRumConfiguration', () => {
           : Key extends
                 | 'applicationId'
                 | 'subdomain'
-                | 'remoteConfigurationId'
                 | 'remoteConfigurationProxy'
                 | 'profilingSampleRate'
                 | 'propagateTraceBaggage'
@@ -586,6 +585,7 @@ describe('serializeRumConfiguration', () => {
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
+      remote_configuration_id: '123',
     })
   })
 })
