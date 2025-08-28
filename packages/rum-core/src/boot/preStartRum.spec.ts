@@ -742,6 +742,17 @@ describe('preStartRum', () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addDurationVitalSpy).toHaveBeenCalledOnceWith(vitalAdd)
     })
+
+    it('addOperationStepVital', () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        addOperationStepVital: addOperationStepVitalSpy,
+      } as unknown as StartRumResult)
+
+      strategy.addOperationStepVital('foo', 'start')
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(addOperationStepVitalSpy).toHaveBeenCalledOnceWith('foo', 'start', undefined, undefined, undefined)
+    })
   })
 
   describe('tracking consent', () => {
