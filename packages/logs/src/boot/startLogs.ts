@@ -11,7 +11,7 @@ import {
   TelemetryService,
   createIdentityEncoder,
   startUserContext,
-  isSW,
+  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -54,7 +54,9 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
-  const pageMayExitObservable = isSW ? new Observable<PageMayExitEvent>() : createPageMayExitObservable(configuration)
+  const pageMayExitObservable = isWorkerEnvironment
+    ? new Observable<PageMayExitEvent>()
+    : createPageMayExitObservable(configuration)
 
   const telemetry = startTelemetry(
     TelemetryService.LOGS,

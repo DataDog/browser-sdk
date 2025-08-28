@@ -1,4 +1,4 @@
-import { getGlobalObject } from './getGlobalObject'
+import { getGlobalObject } from './globalObject'
 
 export interface BrowserWindowWithZoneJs extends Window {
   Zone?: {
