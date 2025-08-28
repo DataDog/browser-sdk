@@ -1,11 +1,15 @@
-import { globalObject } from '@datadog/browser-core'
+import { isWorkerEnvironment } from '@datadog/browser-core'
 import type { CommonContext } from '../../rawLogsEvent.types'
 
 export function buildCommonContext(): CommonContext {
+  if (isWorkerEnvironment) {
+    return {}
+  }
+
   return {
     view: {
-      referrer: globalObject.document?.referrer ?? '',
-      url: globalObject.location.href,
+      referrer: document.referrer,
+      url: window.location.href,
     },
   }
 }
