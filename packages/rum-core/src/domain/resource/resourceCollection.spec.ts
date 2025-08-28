@@ -152,9 +152,7 @@ describe('resourceCollection', () => {
   it('should enrich resource with GraphQL metadata when the URL matches allowedGraphQlUrls', () => {
     setupResourceCollection({
       trackResources: true,
-      allowedGraphQlUrls: [
-        { match: 'https://api.example.com/graphql', trackPayload: true },
-      ],
+      allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: true }],
     })
 
     const requestBody = JSON.stringify({
@@ -193,7 +191,7 @@ describe('resourceCollection', () => {
   it('should not enrich resource with GraphQL metadata when URL does not match', () => {
     setupResourceCollection({
       trackResources: true,
-              allowedGraphQlUrls: [{ match: '/graphql', trackPayload: false }],
+      allowedGraphQlUrls: [{ match: '/graphql', trackPayload: false }],
     })
 
     const requestBody = JSON.stringify({
@@ -220,9 +218,7 @@ describe('resourceCollection', () => {
   it('should not include payload when trackPayload is false', () => {
     setupResourceCollection({
       trackResources: true,
-      allowedGraphQlUrls: [
-        { match: 'https://api.example.com/graphql', trackPayload: false },
-      ],
+      allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: false }],
     })
 
     const requestBody = JSON.stringify({
