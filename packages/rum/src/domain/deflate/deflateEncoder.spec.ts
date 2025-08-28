@@ -213,4 +213,44 @@ describe('createDeflateEncoder', () => {
       },
     ])
   })
+
+  it('do not notify data twice when calling finishSync() then finish()', () => {
+    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
+
+    encoder.write('foo')
+    encoder.finishSync()
+
+    encoder.write('bar')
+    encoder.finish(finishCallbackSpy)
+
+    worker.processAllMessages()
+
+    expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
+      rawBytesCount: 3,
+      output: new Uint8Array([...ENCODED_BAR, ...TRAILER]),
+      outputBytesCount: 4,
+      encoding: 'deflate',
+    })
+  })
+
+  it('do not notify data twice when calling finishSync() then finishSync()', () => {
+    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+
+    encoder.write('foo')
+    encoder.finishSync()
+
+    encoder.write('bar')
+    expect(encoder.finishSync().pendingData).toBe('bar')
+  })
+
+  it('does not unsubscribe when there is no pending action', () => {
+    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+
+    encoder.write('foo')
+    encoder.finishSync()
+    worker.processAllMessages()
+
+    expect(worker.messageListenersCount).toBe(1)
+  })
 })
