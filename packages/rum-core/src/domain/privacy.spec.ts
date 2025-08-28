@@ -450,18 +450,15 @@ describe('maskWithAllowlist', () => {
     ;(window as BrowserWindow).$DD_ALLOW = undefined
   })
 
-  it('should fail close if $DD_ALLOW is not defined', () => {
+  it('should fail closed if $DD_ALLOW is not defined', () => {
     ;(window as BrowserWindow).$DD_ALLOW = undefined
     const testString = maskDisallowedTextContent('mask-feature-on', ACTION_NAME_MASK)
     expect(testString).toBe(ACTION_NAME_MASK)
   })
 
   it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
-    const testString1 = maskDisallowedTextContent('This is an action name in allowlist', ACTION_NAME_MASK)
-    expect(testString1).toBe(ACTION_NAME_MASK)
-
-    const testString2 = maskDisallowedTextContent('any unallowed string', ACTION_NAME_MASK)
-    expect(testString2).toBe(ACTION_NAME_MASK)
+    const testString = maskDisallowedTextContent('any unallowed string', ACTION_NAME_MASK)
+    expect(testString).toBe(ACTION_NAME_MASK)
   })
 
   it('handles empty string', () => {

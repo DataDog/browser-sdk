@@ -9,6 +9,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
   PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED,
+  isAllowListed,
 } from '@datadog/browser-rum-core'
 import type { ElementNode, SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
@@ -878,10 +879,9 @@ describe('serializeNodeWithId', () => {
 
       it('obfuscates text content not in allowlist', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
-        // Most text should be masked with 'x' characters
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
-          if (textContent.trim() && !allowlist.contains(textContent)) {
+          if (textContent.trim() && !isAllowListed(textContent)) {
             expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }
@@ -901,11 +901,15 @@ describe('serializeNodeWithId', () => {
 
       it('obfuscates attributes and non-allowlisted text content', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
-        // Check that non-allowlisted private content is masked
-        expect(JSON.stringify(serializedDoc)).toContain('xxxx') // Some content should be masked
+        const textContents = getAllTextContents(serializedDoc)
+        for (const textContent of textContents) {
+          if (textContent.trim() && !isAllowListed(textContent)) {
+            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
+          }
+        }
       })
 
-      it('fails close when allowlist is empty', () => {
+      it('fails closed when allowlist is empty', () => {
         ;(window as BrowserWindow).$DD_ALLOW = new Set()
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
 
@@ -918,7 +922,7 @@ describe('serializeNodeWithId', () => {
         }
       })
 
-      it('fails close when allowlist is undefined', () => {
+      it('fails closed when allowlist is undefined', () => {
         ;(window as BrowserWindow).$DD_ALLOW = undefined
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
 

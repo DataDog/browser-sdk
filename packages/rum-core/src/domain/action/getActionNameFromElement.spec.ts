@@ -505,7 +505,11 @@ describe('getActionNameFromElement', () => {
       expect(nameSource).toBe('text_content')
     })
   })
-  describe('with mask-unless-allowlisted', () => {
+  describe('with allowlist and enablePrivacyForActionName is true', () => {
+    interface BrowserWindow extends Window {
+      $DD_ALLOW?: Set<string>
+    }
+
     it('preserves privacy level of the element when defaultPrivacyLevel is mask-unless-allowlisted', () => {
       mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       const { name, nameSource } = getActionNameFromElement(
@@ -517,6 +521,7 @@ describe('getActionNameFromElement', () => {
         {
           ...defaultConfiguration,
           defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          enablePrivacyForActionName: true,
         },
         NodePrivacyLevel.MASK
       )
@@ -525,21 +530,143 @@ describe('getActionNameFromElement', () => {
     })
 
     it('preserves privacy level of the element when node privacy level is mask-unless-allowlisted', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
-      const { name, nameSource } = getActionNameFromElement(
-        appendElement(`
-          <div data-dd-privacy="mask-unless-allowlisted">
-            <span target>foo</span>
+      const testCases = [
+        {
+          html: `
+           <div data-dd-privacy="mask-unless-allowlisted" target>
+            <span>foo</span>
             <div data-dd-privacy="mask">
-              <span target>bar</span>
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
             </div>
           </div>
-        `),
-        defaultConfiguration,
-        NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          nodePrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: '',
+          expectedNameSource: 'blank',
+        },
+        {
+          html: `
+           <div data-dd-privacy="mask-unless-allowlisted" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          nodePrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          allowlist: ['foo'],
+          expectedName: 'foo',
+          expectedNameSource: 'text_content',
+        },
+        {
+          html: `
+           <div data-dd-privacy="mask-unless-allowlisted" target>
+            <span>foo</span>
+            <div data-dd-privacy="allow">
+              <span>baz</span>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          nodePrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: 'baz',
+          expectedNameSource: 'text_content',
+        },
+        {
+          html: `
+          <div data-dd-privacy="mask" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask-unless-allowlisted">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          nodePrivacyLevel: NodePrivacyLevel.MASK,
+          expectedName: 'Masked Element',
+          expectedNameSource: 'mask_placeholder',
+        },
+        {
+          html: `
+          <div data-dd-privacy="allow" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask-unless-allowlisted">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          nodePrivacyLevel: NodePrivacyLevel.ALLOW,
+          expectedName: 'foo baz',
+          expectedNameSource: 'text_content',
+        },
+        {
+          html: `
+          <div data-dd-privacy="allow" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask-unless-allowlisted">
+              <span>bar</span>
+              <div data-dd-privacy="mask">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          nodePrivacyLevel: NodePrivacyLevel.ALLOW,
+          expectedName: 'foo',
+          expectedNameSource: 'text_content',
+        },
+        {
+          html: `
+          <div data-dd-privacy="allow" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask-unless-allowlisted">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          nodePrivacyLevel: NodePrivacyLevel.ALLOW,
+          allowlist: ['bar'],
+          expectedName: 'foo bar baz',
+          expectedNameSource: 'text_content',
+        },
+      ]
+      testCases.forEach(
+        ({ html, defaultPrivacyLevel, nodePrivacyLevel, allowlist, expectedName, expectedNameSource }) => {
+          mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+          ;(window as BrowserWindow).$DD_ALLOW = new Set(allowlist)
+          const { name, nameSource } = getActionNameFromElement(
+            appendElement(html),
+            {
+              ...defaultConfiguration,
+              defaultPrivacyLevel,
+              enablePrivacyForActionName: true,
+            },
+            nodePrivacyLevel
+          )
+          expect(name).toBe(expectedName)
+          expect(nameSource).toBe(expectedNameSource)
+        }
       )
-      expect(name).toBe('xxx')
-      expect(nameSource).toBe('text_content')
     })
   })
 

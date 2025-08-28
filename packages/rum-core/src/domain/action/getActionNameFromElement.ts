@@ -1,13 +1,13 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
 import { getPrivacySelector, NodePrivacyLevel } from '../privacyConstants'
-import { getNodeSelfPrivacyLevel, shouldMaskNode, maskDisallowedTextContent } from '../privacy'
+import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
+import type { NodePrivacyLevelCache } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 import { isElementNode } from '../../browser/htmlDomUtils'
 import {
   ActionNameSource,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
   ACTION_NAME_PLACEHOLDER,
-  ACTION_NAME_MASK,
 } from './actionNameConstants'
 import type { ActionName } from './actionNameConstants'
 
@@ -248,13 +248,14 @@ function getTextualContentWithTreeWalker(
   privacyEnabledActionName: boolean,
   nodePrivacyLevel: NodePrivacyLevel
 ) {
+  const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
+
   const walker = document.createTreeWalker(
     element,
     // eslint-disable-next-line no-bitwise
     NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
     rejectInvisibleOrMaskedElementsFilter
   )
-  const allowlistMaskEnabled = nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
 
   let text = ''
 
@@ -272,20 +273,21 @@ function getTextualContentWithTreeWalker(
       continue // skip element nodes
     }
 
-    text += allowlistMaskEnabled
-      ? maskDisallowedTextContent(node.textContent || '', ACTION_NAME_MASK)
-      : node.textContent || ''
+    text += node.textContent || ''
   }
 
   return text.replace(/\s+/g, ' ').trim()
 
   function rejectInvisibleOrMaskedElementsFilter(node: Node) {
+    const nodeSelfPrivacyLevel = getNodePrivacyLevel(node, nodePrivacyLevel, nodePrivacyLevelCache)
+    const shouldRejectMaskedNode =
+      privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel)
+
     if (isElementNode(node)) {
-      const nodeSelfPrivacyLevel = getNodeSelfPrivacyLevel(node)
       if (
         node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
         (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
-        (privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel))
+        (nodeSelfPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED ? false : shouldRejectMaskedNode)
       ) {
         return NodeFilter.FILTER_REJECT
       }
@@ -298,7 +300,10 @@ function getTextualContentWithTreeWalker(
       ) {
         return NodeFilter.FILTER_REJECT
       }
+    } else if (shouldRejectMaskedNode) {
+      return NodeFilter.FILTER_REJECT
     }
+
     return NodeFilter.FILTER_ACCEPT
   }
 }
