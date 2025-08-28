@@ -39,7 +39,7 @@ test.describe('logs', () => {
     })
 
   createTest('service worker console forwarding')
-    .withWorker({ nativeLog: true })
+    .withWorker({ importScript: true, nativeLog: true })
     .run(async ({ flushEvents, intakeRegistry, withWorker }) => {
       await withWorker((worker) => {
         worker.postMessage('SW console log test')
