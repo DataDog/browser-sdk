@@ -301,19 +301,20 @@ async function setUpTest(
   await waitForServersIdle()
 
   if (setupOptions.logsWorker) {
-    const logsWorkerOptions = setupOptions.logsWorker
+    const { importScript, nativeLog } = setupOptions.logsWorker
+    const isModule = !importScript
 
     const params = []
-    if (logsWorkerOptions.importScripts) {
+    if (importScript) {
       params.push('importScripts=true')
     }
-    if (logsWorkerOptions.nativeLog) {
+    if (nativeLog) {
       params.push('nativeLog=true')
     }
 
     await page.evaluate(`
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js${params.length > 0 ? `?${params.join('&')}` : ''}', { type: 'module'})
+        navigator.serviceWorker.register('/sw.js${params.length > 0 ? `?${params.join('&')}` : ''}', ${isModule ? '{ type: "module" }' : '{}'})
           .then(registration => {
             window.myServiceWorker = registration;
           });
