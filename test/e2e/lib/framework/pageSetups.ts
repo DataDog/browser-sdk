@@ -216,7 +216,7 @@ export function workerSetup(options: WorkerOptions, servers: Servers) {
       ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
       
       // Initialize DD_LOGS in service worker
-      DD_LOGS.init(${formatConfiguration(DEFAULT_LOGS_CONFIGURATION, servers)})
+      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true }, servers)})
 
       // Handle messages from main thread
       self.addEventListener('message', (event) => {
