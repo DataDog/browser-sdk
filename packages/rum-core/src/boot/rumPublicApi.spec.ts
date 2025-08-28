@@ -34,6 +34,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   accountContext: {} as any,
   hooks: {} as any,
   telemetry: {} as any,
+  addOperationStepVital: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -781,6 +782,66 @@ describe('rum public api', () => {
         description: 'description-value',
         type: VitalType.DURATION,
       })
+    })
+  })
+
+  describe('startFeatureOperation', () => {
+    it('should call addOperationStepVital on the startRum result with start status', () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), addOperationStepVital: addOperationStepVitalSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startFeatureOperation('foo', '00000000-0000-0000-0000-000000000000')
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        'start',
+        '00000000-0000-0000-0000-000000000000',
+        undefined,
+        undefined
+      )
+    })
+  })
+
+  describe('succeedFeatureOperation', () => {
+    it('should call addOperationStepVital on the startRum result with end status', () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), addOperationStepVital: addOperationStepVitalSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.succeedFeatureOperation('foo', '00000000-0000-0000-0000-000000000000')
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        'end',
+        '00000000-0000-0000-0000-000000000000',
+        undefined,
+        undefined
+      )
+    })
+  })
+
+  describe('failFeatureOperation', () => {
+    it('should call addOperationStepVital on the startRum result with end status and failure reason', () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), addOperationStepVital: addOperationStepVitalSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.failFeatureOperation('foo', '00000000-0000-0000-0000-000000000000', 'page not found')
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        'end',
+        '00000000-0000-0000-0000-000000000000',
+        'page not found',
+        undefined
+      )
     })
   })
 
