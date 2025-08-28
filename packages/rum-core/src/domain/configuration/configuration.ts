@@ -404,7 +404,6 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
 
 /**
  * Build GraphQL options from configuration
- * More lenient than tracing URLs: no service dependency, always returns array
  */
 function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration): GraphQlUrlOption[] {
   if (!initConfiguration.allowedGraphQlUrls) {
