@@ -3,8 +3,8 @@
   "version": "6.18.1",
   "private": true,
   "scripts": {
-    "build": "rm -rf dist && webpack --mode production",
-    "dev": "rm -rf dist && webpack --mode development && webpack serve --mode development --config-name=panel --hot"
+    "build": "rm -rf dist && webpack --disable-interpret --mode production",
+    "dev": "rm -rf dist && webpack --disable-interpret --mode development && webpack serve --mode development --config-name=panel --hot"
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.0",

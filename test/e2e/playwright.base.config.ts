@@ -21,6 +21,7 @@ if (testReportDirectory) {
 export const config: Config = {
   testDir: './scenario',
   testMatch: ['**/*.scenario.ts'],
+  tsconfig: './tsconfig.json',
   fullyParallel: true,
   forbidOnly: isCi,
   retries: isCi ? 2 : 0,

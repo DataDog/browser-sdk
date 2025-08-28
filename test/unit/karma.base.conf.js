@@ -1,5 +1,5 @@
 const { parseArgs } = require('util')
-const webpackConfig = require('../../webpack.base')({
+const webpackConfig = require('../../webpack.base.ts').default({
   mode: 'development',
   types: ['jasmine', 'chrome'],
   // do not replace some build env variables in unit test in order to test different build behaviors

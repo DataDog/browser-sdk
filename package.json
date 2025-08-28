@@ -16,7 +16,7 @@
     "build:docs:html": "typedoc --out ./docs",
     "format": "prettier --check .",
     "lint": "scripts/cli lint .",
-    "typecheck": "scripts/cli typecheck . && scripts/cli typecheck developer-extension && scripts/cli typecheck scripts",
+    "typecheck": "tsc -b --noEmit true",
     "dev": "node scripts/dev-server.ts",
     "release": "scripts/cli release",
     "version": "scripts/cli version",
