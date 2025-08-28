@@ -37,6 +37,7 @@ interface TestContext {
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
+  withWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -52,6 +53,7 @@ class TestBuilder {
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
+  private useServiceWorker: { nativeLog: boolean; importScript: boolean } | undefined = undefined
 
   constructor(private title: string) {}
 
@@ -115,6 +117,11 @@ class TestBuilder {
     return this
   }
 
+  withWorker(options: { nativeLog?: boolean; importScript?: boolean } = {}) {
+    this.useServiceWorker = { nativeLog: options.nativeLog ?? false, importScript: options.importScript ?? false }
+    return this
+  }
+
   run(runner: TestRunner) {
     const setupOptions: SetupOptions = {
       body: this.body,
@@ -132,6 +139,7 @@ class TestBuilder {
         test_name: '<PLACEHOLDER>',
       },
       testFixture: this.testFixture,
+      useServiceWorker: this.useServiceWorker !== undefined,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -197,7 +205,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
-    await setUpTest(browserLogs, testContext)
+    await setUpTest(browserLogs, testContext, setupOptions)
 
     try {
       await runner(testContext)
@@ -214,10 +222,12 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath }: SetupOptions
+  { basePath, useServiceWorker }: SetupOptions
 ): TestContext {
+  const url = servers.base.url
+
   return {
-    baseUrl: servers.base.url + basePath,
+    baseUrl: (useServiceWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url) + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
@@ -230,6 +240,9 @@ function createTestContext(
       } finally {
         browserLogsManager.clear()
       }
+    },
+    withWorker: async (cb: (worker: ServiceWorker) => void) => {
+      await page.evaluate(`(${cb.toString()})(window.myServiceWorker.active)`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
     flushEvents: () => flushEvents(page),
@@ -247,7 +260,11 @@ function createTestContext(
   }
 }
 
-async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
+async function setUpTest(
+  browserLogsManager: BrowserLogsManager,
+  { baseUrl, page, browserContext }: TestContext,
+  setupOptions: SetupOptions
+) {
   browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],
@@ -268,6 +285,17 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
 
   await page.goto(baseUrl)
   await waitForServersIdle()
+
+  if (setupOptions.useServiceWorker) {
+    await page.evaluate(`
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js', { type: 'module'})
+          .then(registration => {
+            window.myServiceWorker = registration;
+          });
+      }
+    `)
+  }
 }
 
 function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {

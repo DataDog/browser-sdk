@@ -21,10 +21,12 @@ export interface SetupOptions {
     test_name: string
   }
   testFixture: typeof test
+  useServiceWorker: boolean
 }
 
 export interface WorkerOptions {
   importScripts?: boolean
+  nativeLog?: boolean
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -199,8 +201,8 @@ export function workerSetup(options: WorkerOptions, servers: Servers) {
       // Handle messages from main thread
       self.addEventListener('message', (event) => {
         const message = event.data;
-
-        DD_LOGS.logger.log(message);
+        
+        ${options.nativeLog ? js`console.log(message);` : js`DD_LOGS.logger.log(message);`}
       });
     `
 }
