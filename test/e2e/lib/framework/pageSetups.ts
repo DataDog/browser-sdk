@@ -21,7 +21,7 @@ export interface SetupOptions {
     test_name: string
   }
   testFixture: typeof test
-  useServiceWorker: boolean
+  logsWorker?: { importScripts?: boolean; nativeLog?: boolean }
 }
 
 export interface WorkerOptions {
