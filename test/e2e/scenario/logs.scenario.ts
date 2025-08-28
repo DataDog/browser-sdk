@@ -15,7 +15,8 @@ test.describe('logs', () => {
   createTest('service worker with worker logs - esm')
     .withWorker()
     .run(async ({ flushEvents, intakeRegistry, browserName, withWorker }) => {
-      test.skip(browserName === 'firefox', 'Firefox do not support ES modules in Service Workers')
+      console.log('>>>', browserName)
+      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
       await withWorker((worker) => {
         worker.postMessage('Some message')
