@@ -1,4 +1,4 @@
-import { getGlobalObject } from '../tools/getGlobalObject'
+import { getGlobalObject } from '../tools/globalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
 export interface BrowserWindowWithEventBridge extends Window {

@@ -6,7 +6,6 @@ import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import { shallowClone } from '../tools/utils/objectUtils'
 import type { Configuration } from '../domain/configuration'
-import { isSW } from '../tools/globalObject'
 import { addEventListener } from './addEventListener'
 
 export interface XhrOpenContext {
@@ -37,8 +36,7 @@ const xhrContexts = new WeakMap<XMLHttpRequest, XhrContext>()
 
 export function initXhrObservable(configuration: Configuration) {
   if (!xhrObservable) {
-    // ServiceWorker environment does not support XMLHttpRequest, so we create an empty observable.
-    xhrObservable = isSW ? new Observable() : createXhrObservable(configuration)
+    xhrObservable = createXhrObservable(configuration)
   }
   return xhrObservable
 }
