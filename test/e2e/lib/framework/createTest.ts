@@ -57,7 +57,7 @@ class TestBuilder {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   } = {}
-  private useServiceWorker: { nativeLog: boolean; importScript: boolean } | undefined = undefined
+  private logsWorker: { nativeLog: boolean; importScript: boolean } | undefined = undefined
 
   constructor(private title: string) {}
 
@@ -130,7 +130,7 @@ class TestBuilder {
   }
 
   withWorker(options: { nativeLog?: boolean; importScript?: boolean } = {}) {
-    this.useServiceWorker = { nativeLog: options.nativeLog ?? false, importScript: options.importScript ?? false }
+    this.logsWorker = { nativeLog: options.nativeLog ?? false, importScript: options.importScript ?? false }
     return this
   }
 
@@ -151,6 +151,7 @@ class TestBuilder {
         test_name: '<PLACEHOLDER>',
       },
       testFixture: this.testFixture,
+      logsWorker: this.logsWorker,
       extension: this.extension,
       useServiceWorker: this.useServiceWorker !== undefined,
     }
@@ -235,12 +236,12 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath, useServiceWorker }: SetupOptions
+  { basePath, logsWorker }: SetupOptions
 ): TestContext {
   const url = servers.base.url
 
   return {
-    baseUrl: (useServiceWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url) + basePath,
+    baseUrl: (logsWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url) + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
@@ -299,10 +300,20 @@ async function setUpTest(
   await page.goto(baseUrl)
   await waitForServersIdle()
 
-  if (setupOptions.useServiceWorker) {
+  if (setupOptions.logsWorker) {
+    const logsWorkerOptions = setupOptions.logsWorker
+
+    const params = []
+    if (logsWorkerOptions.importScripts) {
+      params.push('importScripts=true')
+    }
+    if (logsWorkerOptions.nativeLog) {
+      params.push('nativeLog=true')
+    }
+
     await page.evaluate(`
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js', { type: 'module'})
+        navigator.serviceWorker.register('/sw.js${params.length > 0 ? `?${params.join('&')}` : ''}', { type: 'module'})
           .then(registration => {
             window.myServiceWorker = registration;
           });
