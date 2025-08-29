@@ -10,6 +10,7 @@ import {
   DefaultPrivacyLevel,
   resetExperimentalFeatures,
   resetFetchObservable,
+  stopSessionManager,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -25,6 +26,7 @@ import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { CustomAction } from '../domain/action/actionCollection'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { RumPublicApi, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import { createPreStartStrategy } from './preStartRum'
@@ -40,6 +42,7 @@ describe('preStartRum', () => {
   let doStartRumSpy: jasmine.Spy<
     (
       configuration: RumConfiguration,
+      sessionManager: RumSessionManager,
       deflateWorker: DeflateWorker | undefined,
       initialViewOptions?: ViewOptions
     ) => StartRumResult
@@ -51,6 +54,7 @@ describe('preStartRum', () => {
 
   afterEach(() => {
     resetFetchObservable()
+    stopSessionManager()
   })
 
   describe('configuration validation', () => {
@@ -247,7 +251,7 @@ describe('preStartRum', () => {
           strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
-          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[1]
+          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
           expect(worker).toBeUndefined()
         })
       })
@@ -263,7 +267,7 @@ describe('preStartRum', () => {
           )
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
-          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[1]
+          const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
           expect(worker).toBeDefined()
         })
 
@@ -358,7 +362,7 @@ describe('preStartRum', () => {
 
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).not.toHaveBeenCalled()
         })
@@ -393,7 +397,7 @@ describe('preStartRum', () => {
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
 
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).toHaveBeenCalledOnceWith({ name: 'bar' }, relativeToClocks(clock.relative(20)))
         })
@@ -405,7 +409,7 @@ describe('preStartRum', () => {
 
           strategy.startView({ name: 'foo' })
           expect(doStartRumSpy).toHaveBeenCalled()
-          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[2]
+          const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).not.toHaveBeenCalled()
         })

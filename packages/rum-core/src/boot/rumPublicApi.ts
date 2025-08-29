@@ -510,9 +510,10 @@ export function makeRumPublicApi(
     options,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions) => {
+    (configuration, sessionManager, deflateWorker, initialViewOptions) => {
       const startRumResult = startRumImpl(
         configuration,
+        sessionManager,
         recorderApi,
         profilerApi,
         initialViewOptions,
@@ -528,7 +529,7 @@ export function makeRumPublicApi(
       recorderApi.onRumStart(
         startRumResult.lifeCycle,
         configuration,
-        startRumResult.session,
+        sessionManager,
         startRumResult.viewHistory,
         deflateWorker,
         startRumResult.telemetry
@@ -538,7 +539,7 @@ export function makeRumPublicApi(
         startRumResult.lifeCycle,
         startRumResult.hooks,
         configuration,
-        startRumResult.session,
+        sessionManager,
         startRumResult.viewHistory
       )
 
