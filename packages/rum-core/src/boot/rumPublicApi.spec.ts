@@ -1,5 +1,5 @@
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks } from '@datadog/browser-core'
+import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks, stopSessionManager } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
@@ -24,7 +24,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   lifeCycle: {} as any,
   viewHistory: {} as any,
   longTaskContexts: {} as any,
-  session: {} as any,
+  sessionManager: {} as any,
   stopSession: () => undefined,
   startDurationVital: () => ({}) as DurationVitalReference,
   stopDurationVital: () => undefined,
@@ -41,6 +41,10 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
+  afterEach(() => {
+    stopSessionManager()
+  })
+
   describe('init', () => {
     let startRumSpy: jasmine.Spy<StartRum>
 
@@ -945,7 +949,7 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      const sdkName = startRumSpy.calls.argsFor(0)[8]
+      const sdkName = startRumSpy.calls.argsFor(0)[9]
       expect(sdkName).toBe('rum-slim')
     })
   })

@@ -1,7 +1,6 @@
 import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
 import {
   Observable,
-  stopSessionManager,
   toServerDuration,
   ONE_SECOND,
   findLast,
@@ -162,6 +161,7 @@ describe('view events', () => {
   function setupViewCollectionTest() {
     const startResult = startRum(
       mockRumConfiguration(),
+      createRumSessionManagerMock(),
       noopRecorderApi,
       noopProfilerApi,
       undefined,
@@ -181,7 +181,6 @@ describe('view events', () => {
 
     registerCleanupTask(() => {
       stop()
-      stopSessionManager()
     })
   })
 
