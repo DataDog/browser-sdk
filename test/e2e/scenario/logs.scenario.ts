@@ -24,18 +24,20 @@ test.describe('logs', () => {
       await flushEvents()
 
       expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('Some message')
     })
 
   createTest('service worker with worker logs - importScripts')
     .withWorker({ importScript: true })
     .run(async ({ flushEvents, intakeRegistry, withWorker }) => {
       await withWorker((worker) => {
-        worker.postMessage('Some message')
+        worker.postMessage('Other message')
       })
 
       await flushEvents()
 
       expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('Other message')
     })
 
   createTest('service worker console forwarding')
@@ -49,6 +51,7 @@ test.describe('logs', () => {
 
       // Expect logs for console, error, and report events from service worker
       expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('SW console log test')
     })
 
   createTest('send logs')
