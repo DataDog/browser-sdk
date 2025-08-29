@@ -1,5 +1,5 @@
 import type { ContextManager, TimeStamp } from '@datadog/browser-core'
-import { monitor, display, createContextManager } from '@datadog/browser-core'
+import { monitor, display, createContextManager, stopSessionManager } from '@datadog/browser-core'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
@@ -32,6 +32,10 @@ describe('logs entry', () => {
   beforeEach(() => {
     handleLogSpy = jasmine.createSpy()
     startLogs = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext }))
+  })
+
+  afterEach(() => {
+    stopSessionManager()
   })
 
   it('should add a `_setDebug` that works', () => {
@@ -76,7 +80,7 @@ describe('logs entry', () => {
     it('should have the current date, view and global context', () => {
       LOGS.setGlobalContextProperty('foo', 'bar')
 
-      const getCommonContext = startLogs.calls.mostRecent().args[1]
+      const getCommonContext = startLogs.calls.mostRecent().args[2]
       expect(getCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
