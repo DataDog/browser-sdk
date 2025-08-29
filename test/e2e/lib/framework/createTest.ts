@@ -15,9 +15,14 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
+
+interface LogsWorkerOptions {
+  importScript?: boolean
+  nativeLog?: boolean
+}
 
 export function createTest(title: string) {
   return new TestBuilder(title)
@@ -53,7 +58,7 @@ class TestBuilder {
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
-  private logsWorker: { nativeLog: boolean; importScript: boolean } | undefined = undefined
+  private useServiceWorker: boolean = false
 
   constructor(private title: string) {}
 
@@ -117,8 +122,36 @@ class TestBuilder {
     return this
   }
 
-  withWorker(options: { nativeLog?: boolean; importScript?: boolean } = {}) {
-    this.logsWorker = { nativeLog: options.nativeLog ?? false, importScript: options.importScript ?? false }
+  withWorker({ importScript = false, nativeLog = false }: LogsWorkerOptions = {}) {
+    if (!this.useServiceWorker) {
+      this.useServiceWorker = true
+
+      const isModule = !importScript
+
+      const params = []
+      if (importScript) {
+        params.push('importScripts=true')
+      }
+      if (nativeLog) {
+        params.push('nativeLog=true')
+      }
+
+      const query = params.length > 0 ? `?${params.join('&')}` : ''
+      const url = `/sw.js${query}`
+
+      const options = isModule ? '{ type: "module" }' : '{}'
+
+      this.withBody(html`
+        <script>
+          if (!window.myServiceWorker && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.register('${url}', ${options}).then((registration) => {
+              window.myServiceWorker = registration
+            })
+          }
+        </script>
+      `)
+    }
+
     return this
   }
 
@@ -139,7 +172,7 @@ class TestBuilder {
         test_name: '<PLACEHOLDER>',
       },
       testFixture: this.testFixture,
-      logsWorker: this.logsWorker,
+      useServiceWorker: this.useServiceWorker,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -205,7 +238,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
-    await setUpTest(browserLogs, testContext, setupOptions)
+    await setUpTest(browserLogs, testContext)
 
     try {
       await runner(testContext)
@@ -222,12 +255,12 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath, logsWorker }: SetupOptions
+  { basePath, useServiceWorker }: SetupOptions
 ): TestContext {
   const url = servers.base.url
 
   return {
-    baseUrl: (logsWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url) + basePath,
+    baseUrl: (useServiceWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url) + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
@@ -260,11 +293,7 @@ function createTestContext(
   }
 }
 
-async function setUpTest(
-  browserLogsManager: BrowserLogsManager,
-  { baseUrl, page, browserContext }: TestContext,
-  setupOptions: SetupOptions
-) {
+async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
   browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],
@@ -285,28 +314,6 @@ async function setUpTest(
 
   await page.goto(baseUrl)
   await waitForServersIdle()
-
-  if (setupOptions.logsWorker) {
-    const { importScript, nativeLog } = setupOptions.logsWorker
-    const isModule = !importScript
-
-    const params = []
-    if (importScript) {
-      params.push('importScripts=true')
-    }
-    if (nativeLog) {
-      params.push('nativeLog=true')
-    }
-
-    await page.evaluate(`
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js${params.length > 0 ? `?${params.join('&')}` : ''}', ${isModule ? '{ type: "module" }' : '{}'})
-          .then(registration => {
-            window.myServiceWorker = registration;
-          });
-      }
-    `)
-  }
 }
 
 function tearDownPassedTest({ intakeRegistry, withBrowserLogs }: TestContext) {
