@@ -21,15 +21,16 @@ export const enum LoggerTrackingType {
 
 export function startLogsSessionManager(
   configuration: LogsConfiguration,
-  trackingConsentState: TrackingConsentState
-): LogsSessionManager {
+  trackingConsentState: TrackingConsentState,
+  onReady: (sessionManager: LogsSessionManager) => void
+) {
   const sessionManager = startSessionManager(
     configuration,
     LOGS_SESSION_KEY,
     (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
     trackingConsentState
   )
-  return {
+  onReady({
     findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
       const session = sessionManager.findSession(startTime, options)
       return session && session.trackingType === LoggerTrackingType.TRACKED
@@ -40,7 +41,7 @@ export function startLogsSessionManager(
         : undefined
     },
     expireObservable: sessionManager.expireObservable,
-  }
+  })
 }
 
 export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {

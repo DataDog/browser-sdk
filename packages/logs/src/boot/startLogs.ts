@@ -11,7 +11,7 @@ import {
   createIdentityEncoder,
   startUserContext,
 } from '@datadog/browser-core'
-import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'
@@ -37,6 +37,7 @@ export type StartLogsResult = ReturnType<StartLogs>
 
 export function startLogs(
   configuration: LogsConfiguration,
+  sessionManager: LogsSessionManager,
   getCommonContext: () => CommonContext,
 
   // `startLogs` and its subcomponents assume tracking consent is granted initially and starts
@@ -64,16 +65,11 @@ export function startLogs(
   )
   cleanupTasks.push(telemetry.stop)
 
-  const session =
-    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
-      ? startLogsSessionManager(configuration, trackingConsentState)
-      : startLogsSessionManagerStub(configuration)
-
   startTrackingConsentContext(hooks, trackingConsentState)
   // Start user and account context first to allow overrides from global context
-  startSessionContext(hooks, configuration, session)
+  startSessionContext(hooks, configuration, sessionManager)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
-  const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
+  const userContext = startUserContext(hooks, configuration, sessionManager, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
   const { stop } = startRUMInternalContext(hooks)
 
@@ -92,14 +88,14 @@ export function startLogs(
       lifeCycle,
       reportError,
       pageMayExitObservable,
-      session
+      sessionManager
     )
     cleanupTasks.push(() => stopLogsBatch())
   } else {
     startLogsBridge(lifeCycle)
   }
 
-  const internalContext = startInternalContext(session)
+  const internalContext = startInternalContext(sessionManager)
 
   return {
     handleLog,

@@ -2,14 +2,11 @@ import type { BufferedData, Payload } from '@datadog/browser-core'
 import {
   ErrorSource,
   display,
-  stopSessionManager,
   getCookie,
   SESSION_STORE_KEY,
   createTrackingConsentState,
   TrackingConsent,
-  setCookie,
   STORAGE_POLL_DELAY,
-  ONE_MINUTE,
   BufferedObservable,
 } from '@datadog/browser-core'
 import type { Clock, Request } from '@datadog/browser-core/test'
@@ -20,7 +17,6 @@ import {
   mockSyntheticsWorkerValues,
   registerCleanupTask,
   mockClock,
-  expireCookie,
   DEFAULT_FETCH_MOCK,
 } from '@datadog/browser-core/test'
 
@@ -29,6 +25,7 @@ import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { LogsEvent } from '../logsEvent.types'
+import { createLogsSessionManagerMock } from '../../test/mockLogsSessionManager'
 import { startLogs } from './startLogs'
 
 function getLoggedMessage(requests: Request[], index: number) {
@@ -56,6 +53,7 @@ function startLogsWithDefaults(
   trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
 ) {
   const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
+  const sessionManager = createLogsSessionManagerMock()
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
@@ -63,6 +61,7 @@ function startLogsWithDefaults(
       batchMessagesLimit: 1,
       ...configuration,
     },
+    sessionManager,
     () => COMMON_CONTEXT,
     trackingConsentState,
     new BufferedObservable<BufferedData>(100)
@@ -72,7 +71,7 @@ function startLogsWithDefaults(
 
   const logger = new Logger(handleLog)
 
-  return { handleLog, logger, endpointBuilder, globalContext, accountContext, userContext }
+  return { handleLog, logger, endpointBuilder, globalContext, accountContext, userContext, sessionManager }
 }
 
 describe('logs', () => {
@@ -86,7 +85,6 @@ describe('logs', () => {
 
   afterEach(() => {
     delete window.DD_RUM
-    stopSessionManager()
   })
 
   describe('request', () => {
@@ -156,30 +154,6 @@ describe('logs', () => {
     })
   })
 
-  describe('sampling', () => {
-    it('should be applied when event bridge is present (rate 0)', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
-
-      const { handleLog, logger } = startLogsWithDefaults({
-        configuration: { sessionSampleRate: 0 },
-      })
-      handleLog(DEFAULT_MESSAGE, logger)
-
-      expect(sendSpy).not.toHaveBeenCalled()
-    })
-
-    it('should be applied when event bridge is present (rate 100)', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
-
-      const { handleLog, logger } = startLogsWithDefaults({
-        configuration: { sessionSampleRate: 100 },
-      })
-      handleLog(DEFAULT_MESSAGE, logger)
-
-      expect(sendSpy).toHaveBeenCalled()
-    })
-  })
-
   it('should not print the log twice when console handler is enabled', () => {
     const consoleLogSpy = spyOn(console, 'log')
     const displayLogSpy = spyOn(display, 'log')
@@ -194,25 +168,6 @@ describe('logs', () => {
     expect(displayLogSpy).not.toHaveBeenCalled()
   })
 
-  describe('logs session creation', () => {
-    it('creates a session on normal conditions', () => {
-      startLogsWithDefaults()
-      expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
-    })
-
-    it('does not create a session if event bridge is present', () => {
-      mockEventBridge()
-      startLogsWithDefaults()
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
-    })
-
-    it('does not create a session if synthetics worker will inject RUM', () => {
-      mockSyntheticsWorkerValues({ injectsRum: true })
-      startLogsWithDefaults()
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
-    })
-  })
-
   describe('session lifecycle', () => {
     let clock: Clock
     beforeEach(() => {
@@ -220,14 +175,13 @@ describe('logs', () => {
     })
 
     it('sends logs without session id when the session expires ', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
-      const { handleLog, logger } = startLogsWithDefaults()
+      const { handleLog, logger, sessionManager } = startLogsWithDefaults()
 
       interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
-      expireCookie()
+      sessionManager.expire()
       clock.tick(STORAGE_POLL_DELAY * 2)
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)
@@ -239,7 +193,7 @@ describe('logs', () => {
 
       expect(requests.length).toEqual(2)
       expect(firstRequest.message).toEqual('message 1')
-      expect(firstRequest.session_id).toEqual('foo')
+      expect(firstRequest.session_id).toEqual('session-id')
 
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()
