@@ -1,4 +1,3 @@
-import { isWorkerEnvironment } from '../globalObject'
 import { isNumber, round } from './numberUtils'
 
 export const ONE_SECOND = 1000
@@ -110,7 +109,7 @@ let navigationStart: TimeStamp | undefined
  */
 function getNavigationStart() {
   if (navigationStart === undefined) {
-    navigationStart = (isWorkerEnvironment ? performance.timeOrigin : performance.timing.navigationStart) as TimeStamp
+    navigationStart = (performance.timing?.navigationStart ?? performance.timeOrigin) as TimeStamp
   }
 
   return navigationStart
