@@ -52,10 +52,7 @@ export function canUseEventBridge(currentHost = getGlobalObject<Window>().locati
     !!bridge &&
     bridge
       .getAllowedWebViewHosts()
-      .some(
-        (allowedHost) =>
-          currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`) || currentHost === 'localhost'
-      )
+      .some((allowedHost) => currentHost === allowedHost || currentHost.endsWith(`.${allowedHost}`))
   )
 }
 
