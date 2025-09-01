@@ -11,6 +11,7 @@ export const SESSION_NOT_TRACKED = '0'
 export const SessionPersistence = {
   COOKIE: 'cookie',
   LOCAL_STORAGE: 'local-storage',
+  NONE: 'none',
 } as const
 
 /**
