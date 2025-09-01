@@ -1,4 +1,4 @@
-FROM node:24.5.0-bookworm-slim
+FROM node:24.7.0-bookworm-slim
 
 ARG CHROME_PACKAGE_VERSION
 
