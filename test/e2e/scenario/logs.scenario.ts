@@ -29,7 +29,12 @@ test.describe('logs', () => {
 
   createTest('service worker with worker logs - importScripts')
     .withWorker({ importScript: true })
-    .run(async ({ flushEvents, intakeRegistry, withWorker }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName, withWorker }) => {
+      test.skip(
+        browserName !== 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
       await withWorker((worker) => {
         worker.postMessage('Other message')
       })

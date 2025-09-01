@@ -384,7 +384,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     flushTimeout: (30 * ONE_SECOND) as Duration,
 
     /**
-     * Logs intake limit
+     * Logs intake limit. When using the SDK in a Worker Environment, we
+     * limit the batch size to 1 to ensure it can be sent in a single event.
      */
     batchMessagesLimit: isWorkerEnvironment ? 1 : 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
