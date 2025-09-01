@@ -1245,7 +1245,7 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly id: string
       /**
-       * UUID for distinguishing the active operations in parallel, if applicable
+       * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
        */
       readonly operation_key?: string
       /**

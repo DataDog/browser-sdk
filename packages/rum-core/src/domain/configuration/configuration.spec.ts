@@ -577,6 +577,7 @@ describe('serializeRumConfiguration', () => {
       workerUrl: './worker.js',
       compressIntakeRequests: true,
       allowedTracingUrls: ['foo'],
+      allowedGraphQlUrls: ['bar'],
       traceSampleRate: 50,
       traceContextInjection: TraceContextInjection.ALL,
       defaultPrivacyLevel: 'allow',
@@ -600,7 +601,7 @@ describe('serializeRumConfiguration', () => {
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
       ? MapInitConfigurationKey<Key>
-      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls'
+      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls' | 'allowedGraphQlUrls'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // oops
@@ -616,7 +617,9 @@ describe('serializeRumConfiguration', () => {
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
     const serializedConfiguration: ExtractTelemetryConfiguration<
-      MapRumInitConfigurationKey<keyof RumInitConfiguration> | 'selected_tracing_propagators'
+      | MapRumInitConfigurationKey<keyof RumInitConfiguration>
+      | 'selected_tracing_propagators'
+      | 'use_track_graph_ql_payload'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
@@ -625,6 +628,8 @@ describe('serializeRumConfiguration', () => {
       trace_sample_rate: 50,
       trace_context_injection: TraceContextInjection.ALL,
       use_allowed_tracing_urls: true,
+      use_allowed_graph_ql_urls: true,
+      use_track_graph_ql_payload: false,
       selected_tracing_propagators: ['tracecontext', 'datadog'],
       use_excluded_activity_urls: true,
       track_user_interactions: true,

@@ -442,6 +442,16 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     action_name_attribute: configuration.actionNameAttribute,
     use_allowed_tracing_urls:
       Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
+    use_allowed_graph_ql_urls:
+      Array.isArray(configuration.allowedGraphQlUrls) && configuration.allowedGraphQlUrls.length > 0,
+    use_track_graph_ql_payload:
+      Array.isArray(configuration.allowedGraphQlUrls) &&
+      configuration.allowedGraphQlUrls.some((option) => {
+        if (typeof option === 'object' && 'trackPayload' in option) {
+          return option.trackPayload === true
+        }
+        return false
+      }),
     selected_tracing_propagators: getSelectedTracingPropagators(configuration),
     default_privacy_level: configuration.defaultPrivacyLevel,
     enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
