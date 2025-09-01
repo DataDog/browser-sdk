@@ -24,24 +24,26 @@ export function startLogsSessionManager(
   trackingConsentState: TrackingConsentState,
   onReady: (sessionManager: LogsSessionManager) => void
 ) {
-  const sessionManager = startSessionManager(
+  startSessionManager(
     configuration,
     LOGS_SESSION_KEY,
     (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
-    trackingConsentState
+    trackingConsentState,
+    (sessionManager) => {
+      onReady({
+        findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
+          const session = sessionManager.findSession(startTime, options)
+          return session && session.trackingType === LoggerTrackingType.TRACKED
+            ? {
+                id: session.id,
+                anonymousId: session.anonymousId,
+              }
+            : undefined
+        },
+        expireObservable: sessionManager.expireObservable,
+      })
+    }
   )
-  onReady({
-    findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
-      const session = sessionManager.findSession(startTime, options)
-      return session && session.trackingType === LoggerTrackingType.TRACKED
-        ? {
-            id: session.id,
-            anonymousId: session.anonymousId,
-          }
-        : undefined
-    },
-    expireObservable: sessionManager.expireObservable,
-  })
 }
 
 export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {

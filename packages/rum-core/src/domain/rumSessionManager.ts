@@ -49,44 +49,45 @@ export function startRumSessionManager(
   trackingConsentState: TrackingConsentState,
   onReady: (sessionManager: RumSessionManager) => void
 ) {
-  const sessionManager = startSessionManager(
+  startSessionManager(
     configuration,
     RUM_SESSION_KEY,
     (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
-    trackingConsentState
-  )
+    trackingConsentState,
+    (sessionManager) => {
+      sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
+        if (!previousState.forcedReplay && newState.forcedReplay) {
+          const sessionEntity = sessionManager.findSession()
+          if (sessionEntity) {
+            sessionEntity.isReplayForced = true
+          }
+        }
+      })
 
-  sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
-    if (!previousState.forcedReplay && newState.forcedReplay) {
-      const sessionEntity = sessionManager.findSession()
-      if (sessionEntity) {
-        sessionEntity.isReplayForced = true
-      }
+      onReady({
+        findTrackedSession: (startTime) => {
+          const session = sessionManager.findSession(startTime)
+          if (!session || session.trackingType === RumTrackingType.NOT_TRACKED) {
+            return
+          }
+          return {
+            id: session.id,
+            sessionReplay:
+              session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
+                ? SessionReplayState.SAMPLED
+                : session.isReplayForced
+                  ? SessionReplayState.FORCED
+                  : SessionReplayState.OFF,
+            anonymousId: session.anonymousId,
+          }
+        },
+        expire: sessionManager.expire,
+        expireObservable: sessionManager.expireObservable,
+        renewObservable: sessionManager.renewObservable,
+        setForcedReplay: () => sessionManager.updateSessionState({ forcedReplay: '1' }),
+      })
     }
-  })
-
-  onReady({
-    findTrackedSession: (startTime) => {
-      const session = sessionManager.findSession(startTime)
-      if (!session || session.trackingType === RumTrackingType.NOT_TRACKED) {
-        return
-      }
-      return {
-        id: session.id,
-        sessionReplay:
-          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
-            ? SessionReplayState.SAMPLED
-            : session.isReplayForced
-              ? SessionReplayState.FORCED
-              : SessionReplayState.OFF,
-        anonymousId: session.anonymousId,
-      }
-    },
-    expire: sessionManager.expire,
-    expireObservable: sessionManager.expireObservable,
-    renewObservable: sessionManager.renewObservable,
-    setForcedReplay: () => sessionManager.updateSessionState({ forcedReplay: '1' }),
-  })
+  )
 }
 
 /**
