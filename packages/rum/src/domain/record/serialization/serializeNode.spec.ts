@@ -9,7 +9,7 @@ import {
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
   PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED,
-  isAllowListed,
+  isAllowlisted,
 } from '@datadog/browser-rum-core'
 import type { ElementNode, SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
@@ -881,7 +881,7 @@ describe('serializeNodeWithId', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
-          if (textContent.trim() && !isAllowListed(textContent)) {
+          if (textContent.trim() && !isAllowlisted(textContent)) {
             expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }
@@ -903,7 +903,7 @@ describe('serializeNodeWithId', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
-          if (textContent.trim() && !isAllowListed(textContent)) {
+          if (textContent.trim() && !isAllowlisted(textContent)) {
             expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }

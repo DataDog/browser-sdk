@@ -135,7 +135,14 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
     case NodePrivacyLevel.IGNORE:
       return true
     case NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED:
-      return isTextNode(node) ? !isAllowListed(node.textContent || '') : true
+      if (isTextNode(node)) {
+        // Always return true if our parent is a form element, like MASK_USER_INPUT.
+        // Otherwise, decide whether to mask based on the allowlist.
+        return isFormElement(node.parentNode) ? true : !isAllowlisted(node.textContent || '')
+      }
+      // Always return true if we're a form element, like MASK_USER_INPUT.
+      // Otherwise, return false; MASK_UNLESS_ALLOWLISTED only directly masks text nodes.
+      return isFormElement(node)
     case NodePrivacyLevel.MASK_USER_INPUT:
       return isTextNode(node) ? isFormElement(node.parentNode) : isFormElement(node)
     default:
@@ -289,7 +296,7 @@ export interface BrowserWindow extends Window {
   $DD_ALLOW?: Set<string>
 }
 
-export function isAllowListed(text: string): boolean {
+export function isAllowlisted(text: string): boolean {
   return (window as BrowserWindow).$DD_ALLOW?.has(text.toLocaleLowerCase()) || false
 }
 
@@ -299,7 +306,7 @@ export function maskDisallowedTextContent(text: string, fixedMask?: string): str
   }
   // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
   // so we need to do the same here
-  if (isAllowListed(text)) {
+  if (isAllowlisted(text)) {
     return text
   }
   return fixedMask || censorText(text)

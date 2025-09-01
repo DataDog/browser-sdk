@@ -287,7 +287,7 @@ function getTextualContentWithTreeWalker(
       if (
         node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
         (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
-        (nodeSelfPrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED ? false : shouldRejectMaskedNode)
+        shouldRejectMaskedNode
       ) {
         return NodeFilter.FILTER_REJECT
       }

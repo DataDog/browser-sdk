@@ -422,12 +422,11 @@ describe('shouldMaskNode', () => {
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK_USER_INPUT)).toBeFalse()
     })
 
-    it('returns true if the privacy level is not ALLOW nor MASK_USER_INPUT', () => {
+    it('returns true if the privacy level is not ALLOW nor MASK_USER_INPUT or MASK_UNLESS_ALLOWLISTED', () => {
       const element = document.createElement('div')
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.HIDDEN)).toBeTrue()
-      expect(shouldMaskNode(element, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
     })
   })
 })
