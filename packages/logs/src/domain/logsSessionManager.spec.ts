@@ -12,13 +12,19 @@ import {
   SessionPersistence,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, expireCookie, getSessionState, mockClock } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  expireCookie,
+  getSessionState,
+  mockClock,
+  waitSessionOperations,
+} from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
+import type { LogsSessionManager } from './logsSessionManager'
 import {
   LOGS_SESSION_KEY,
   LoggerTrackingType,
-  LogsSessionManager,
   startLogsSessionManager,
   startLogsSessionManagerStub,
 } from './logsSessionManager'
@@ -78,6 +84,8 @@ describe('logs session manager', () => {
 
     document.body.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
+    await waitSessionOperations()
+
     expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]+/)
     expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
   })
@@ -101,6 +109,9 @@ describe('logs session manager', () => {
       clock.tick(10 * ONE_SECOND)
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
+
+      await waitSessionOperations()
+
       expect(logsSessionManager.findTrackedSession()).toBeUndefined()
     })
 
@@ -108,6 +119,7 @@ describe('logs session manager', () => {
       const logsSessionManager = await startLogsSessionManagerWithDefaults()
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
+      await waitSessionOperations()
       expect(logsSessionManager.findTrackedSession(relativeNow(), { returnInactive: true })).toBeDefined()
     })
 
@@ -119,6 +131,7 @@ describe('logs session manager', () => {
       // simulate a click to renew the session
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
       clock.tick(STORAGE_POLL_DELAY)
+      await waitSessionOperations()
       expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toEqual('foo')
       expect(logsSessionManager.findTrackedSession()!.id).toEqual('bar')
     })

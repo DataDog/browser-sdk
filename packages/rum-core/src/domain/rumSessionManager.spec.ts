@@ -18,6 +18,7 @@ import {
   mockEventBridge,
   mockClock,
   registerCleanupTask,
+  waitSessionOperations,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import type { RumConfiguration } from './configuration'
@@ -113,12 +114,15 @@ describe('rum session manager', () => {
       })
 
       expireCookie()
+
       expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       clock.tick(STORAGE_POLL_DELAY)
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
+
+      await waitSessionOperations()
 
       expect(expireSessionSpy).toHaveBeenCalled()
       expect(renewSessionSpy).toHaveBeenCalled()
@@ -144,6 +148,7 @@ describe('rum session manager', () => {
       const rumSessionManager = await startRumSessionManagerWithDefaults()
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
+      await waitSessionOperations()
       expect(rumSessionManager.findTrackedSession()).toBe(undefined)
     })
 
@@ -153,6 +158,7 @@ describe('rum session manager', () => {
       clock.tick(10 * ONE_SECOND)
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
+      await waitSessionOperations()
       expect(rumSessionManager.findTrackedSession()).toBeUndefined()
       expect(rumSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('abcdef')
     })
@@ -173,6 +179,7 @@ describe('rum session manager', () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&rum=2', DURATION)
       const rumSessionManager = await startRumSessionManagerWithDefaults()
       rumSessionManager.setForcedReplay()
+      await waitSessionOperations()
 
       expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.FORCED)
     })
