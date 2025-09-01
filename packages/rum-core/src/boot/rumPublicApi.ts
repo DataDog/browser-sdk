@@ -44,7 +44,7 @@ import type {
   AddDurationVitalOptions,
   DurationVitalReference,
   DurationVitalOptions,
-  VitalOptions,
+  OperationStepVitalOptions,
 } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
@@ -437,7 +437,7 @@ export interface RumPublicApi extends PublicApi {
    * @param operationKey - Key of the operation step
    * @param options - Options for the operation step (context, description)
    */
-  startFeatureOperation: (name: string, operationKey?: string, options?: VitalOptions) => void
+  startFeatureOperation: (name: string, options?: OperationStepVitalOptions) => void
 
   /**
    * [Experimental] succeed a feature operation
@@ -447,7 +447,7 @@ export interface RumPublicApi extends PublicApi {
    * @param operationKey - Key of the operation step
    * @param options - Options for the operation step (context, description)
    */
-  succeedFeatureOperation: (name: string, operationKey?: string, options?: VitalOptions) => void
+  succeedFeatureOperation: (name: string, options?: OperationStepVitalOptions) => void
 
   /**
    * [Experimental] fail a feature operation
@@ -457,7 +457,7 @@ export interface RumPublicApi extends PublicApi {
    * @param operationKey - Key of the operation step
    * @param options - Options for the operation step (context, description)
    */
-  failFeatureOperation: (name: string, operationKey?: string, failureReason?: string, options?: VitalOptions) => void
+  failFeatureOperation: (name: string, options?: OperationStepVitalOptions) => void
 }
 
 export interface RecorderApi {
@@ -804,19 +804,19 @@ export function makeRumPublicApi(
       })
     }),
 
-    startFeatureOperation: monitor((name, operationKey, options) => {
+    startFeatureOperation: monitor((name, options) => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
-      strategy.addOperationStepVital(name, 'start', operationKey, undefined, options)
+      strategy.addOperationStepVital(name, 'start', options)
     }),
 
-    succeedFeatureOperation: monitor((name, operationKey, options) => {
+    succeedFeatureOperation: monitor((name, options) => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
-      strategy.addOperationStepVital(name, 'end', operationKey, undefined, options)
+      strategy.addOperationStepVital(name, 'end', options)
     }),
 
-    failFeatureOperation: monitor((name, operationKey, failureReason, options) => {
+    failFeatureOperation: monitor((name, options) => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
-      strategy.addOperationStepVital(name, 'end', operationKey, failureReason, options)
+      strategy.addOperationStepVital(name, 'end', options)
     }),
   })
 

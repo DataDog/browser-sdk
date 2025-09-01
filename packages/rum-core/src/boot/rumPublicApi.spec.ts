@@ -794,14 +794,10 @@ describe('rum public api', () => {
         noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startFeatureOperation('foo', '00000000-0000-0000-0000-000000000000')
-      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
-        'foo',
-        'start',
-        '00000000-0000-0000-0000-000000000000',
-        undefined,
-        undefined
-      )
+      rumPublicApi.startFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'start', {
+        operationKey: '00000000-0000-0000-0000-000000000000',
+      })
     })
   })
 
@@ -814,14 +810,10 @@ describe('rum public api', () => {
         noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.succeedFeatureOperation('foo', '00000000-0000-0000-0000-000000000000')
-      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
-        'foo',
-        'end',
-        '00000000-0000-0000-0000-000000000000',
-        undefined,
-        undefined
-      )
+      rumPublicApi.succeedFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'end', {
+        operationKey: '00000000-0000-0000-0000-000000000000',
+      })
     })
   })
 
@@ -834,14 +826,8 @@ describe('rum public api', () => {
         noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.failFeatureOperation('foo', '00000000-0000-0000-0000-000000000000', 'page not found')
-      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
-        'foo',
-        'end',
-        '00000000-0000-0000-0000-000000000000',
-        'page not found',
-        undefined
-      )
+      rumPublicApi.failFeatureOperation('foo', { failureReason: 'page not found' })
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'end', { failureReason: 'page not found' })
     })
   })
 

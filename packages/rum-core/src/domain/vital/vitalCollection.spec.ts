@@ -274,7 +274,9 @@ describe('vitalCollection', () => {
 
       it('should create a operation step vital from add API', () => {
         mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
-        vitalCollection.addOperationStepVital('foo', 'end', '00000000-0000-0000-0000-000000000000', 'error', {
+        vitalCollection.addOperationStepVital('foo', 'end', {
+          operationKey: '00000000-0000-0000-0000-000000000000',
+          failureReason: 'error',
           context: { foo: 'bar' },
           description: 'baz',
         })

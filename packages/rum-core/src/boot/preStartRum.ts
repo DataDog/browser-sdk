@@ -17,6 +17,7 @@ import {
   buildGlobalContextManager,
   buildUserContextManager,
   monitorError,
+  sanitize,
 } from '@datadog/browser-core'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
@@ -25,7 +26,7 @@ import {
   serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { DurationVital, CustomVitalsState, VitalOptions } from '../domain/vital/vitalCollection'
+import type { DurationVital, CustomVitalsState, OperationStepVitalOptions } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
@@ -148,15 +149,9 @@ export function createPreStartStrategy(
     bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
   }
 
-  const addOperationStepVital = (
-    name: string,
-    stepType: 'start' | 'end',
-    operationKey?: string,
-    failureReason?: string,
-    options?: VitalOptions
-  ) => {
+  const addOperationStepVital = (name: string, stepType: 'start' | 'end', options?: OperationStepVitalOptions) => {
     bufferApiCalls.add((startRumResult) =>
-      startRumResult.addOperationStepVital(name, stepType, operationKey, failureReason, options)
+      startRumResult.addOperationStepVital(name, stepType, sanitize(options) as OperationStepVitalOptions)
     )
   }
 

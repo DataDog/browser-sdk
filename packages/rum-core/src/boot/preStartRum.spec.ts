@@ -751,7 +751,7 @@ describe('preStartRum', () => {
 
       strategy.addOperationStepVital('foo', 'start')
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(addOperationStepVitalSpy).toHaveBeenCalledOnceWith('foo', 'start', undefined, undefined, undefined)
+      expect(addOperationStepVitalSpy).toHaveBeenCalledOnceWith('foo', 'start', undefined)
     })
   })
 

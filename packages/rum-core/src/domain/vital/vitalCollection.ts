@@ -1,4 +1,4 @@
-import type { ClocksState, Context, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
 import {
   clocksNow,
   combine,
@@ -21,6 +21,10 @@ export interface VitalOptions {
   description?: string
 }
 export type DurationVitalOptions = VitalOptions
+export interface OperationStepVitalOptions extends VitalOptions {
+  operationKey?: string
+  failureReason?: string
+}
 export interface AddDurationVitalOptions extends DurationVitalOptions {
   startTime: number
   duration: number
@@ -77,26 +81,22 @@ export function startVitalCollection(
     }
   }
 
-  function addOperationStepVital(
-    name: string,
-    stepType: 'start' | 'end',
-    operationKey?: string,
-    failureReason?: string,
-    options?: VitalOptions
-  ) {
+  function addOperationStepVital(name: string, stepType: 'start' | 'end', options?: OperationStepVitalOptions) {
     if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_OPERATION_VITAL)) {
       return
     }
 
+    const { operationKey, failureReason, context, description } = options || {}
+
     const vital: OperationStepVital = {
       name: sanitize(name)!,
       type: VitalType.OPERATION_STEP,
-      operationKey: sanitize(operationKey) as string | undefined,
+      operationKey,
+      failureReason,
       stepType,
-      failureReason: sanitize(failureReason) as string | undefined,
       startClocks: clocksNow(),
-      context: sanitize(options && options.context) as Context,
-      description: sanitize(options && options.description) as string | undefined,
+      context: sanitize(context),
+      description,
     }
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
   }
