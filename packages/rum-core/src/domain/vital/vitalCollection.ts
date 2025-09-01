@@ -89,14 +89,14 @@ export function startVitalCollection(
     }
 
     const vital: OperationStepVital = {
-      name: sanitize(name) as string,
+      name: sanitize(name)!,
       type: VitalType.OPERATION_STEP,
       operationKey: sanitize(operationKey) as string | undefined,
       stepType,
       failureReason: sanitize(failureReason) as string | undefined,
       startClocks: clocksNow(),
-      context: sanitize(options?.context) as Context,
-      description: sanitize(options?.description) as string | undefined,
+      context: sanitize(options && options.context) as Context,
+      description: sanitize(options && options.description) as string | undefined,
     }
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
   }
