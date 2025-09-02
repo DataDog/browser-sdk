@@ -3,31 +3,29 @@ import middleware from 'webpack-dev-middleware'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import webpack from 'webpack'
 import cors from 'cors'
+import webpackBase from '../webpack.base.ts'
+import logsConfig from '../packages/logs/webpack.config.ts'
+import rumSlimConfig from '../packages/rum-slim/webpack.config.ts'
+import rumConfig from '../packages/rum/webpack.config.ts'
+import flaggingConfig from '../packages/flagging/webpack.config.ts'
+import workerConfig from '../packages/worker/webpack.config.ts'
 import { printLog, runMain } from './lib/executionUtils.ts'
 
 const sandboxPath = './sandbox'
 const port = 8080
 
-runMain(async () => {
+runMain(() => {
   const app = express()
-  app.use(await createStaticSandboxApp())
-  app.use('/react-app', await createReactApp())
+  app.use(createStaticSandboxApp())
+  app.use('/react-app', createReactApp())
   app.listen(port, () => printLog(`Server listening on port ${port}.`))
 })
 
-async function createStaticSandboxApp(): Promise<express.Application> {
-  // TODO: use normal imports when converting those files to typescript
-  const logsConfig = (await import('../packages/logs/webpack.config.js' as string)).default
-  const rumSlimConfig = (await import('../packages/rum-slim/webpack.config.js' as string)).default
-  const rumConfig = (await import('../packages/rum/webpack.config.js' as string)).default
-  const flaggingConfig = (await import('../packages/flagging/webpack.config.js' as string)).default
-  const workerConfig = (await import('../packages/worker/webpack.config.js' as string)).default
-
+function createStaticSandboxApp(): express.Application {
   const app = express()
   app.use(cors())
   app.use(express.static(sandboxPath))
-  for (const config of [rumConfig, logsConfig, rumSlimConfig, workerConfig, flaggingConfig]) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+  for (const config of [rumConfig, rumSlimConfig, logsConfig, flaggingConfig, workerConfig]) {
     app.use(middleware(webpack(config(null, { mode: 'development' }))!))
   }
 
@@ -44,10 +42,7 @@ async function createStaticSandboxApp(): Promise<express.Application> {
   return app
 }
 
-async function createReactApp(): Promise<express.Application> {
-  // TODO: use normal imports when converting those files to typescript
-  const webpackBase = (await import('../webpack.base.js' as string)).default
-
+function createReactApp(): express.Application {
   const app = express()
 
   // Redirect requests to the "index.html" file, so that the React app can handle routing
@@ -61,7 +56,6 @@ async function createReactApp(): Promise<express.Application> {
   app.use(
     middleware(
       webpack(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call
         webpackBase({
           entry: `${sandboxPath}/react-app/main.tsx`,
           plugins: [new HtmlWebpackPlugin({ publicPath: '/react-app/' })],

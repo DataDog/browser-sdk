@@ -18,10 +18,9 @@ import {
   buildUserContextManager,
   monitorError,
 } from '@datadog/browser-core'
+import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
   validateAndBuildRumConfiguration,
-  type RumConfiguration,
-  type RumInitConfiguration,
   fetchAndApplyRemoteConfiguration,
   serializeRumConfiguration,
 } from '../domain/configuration'

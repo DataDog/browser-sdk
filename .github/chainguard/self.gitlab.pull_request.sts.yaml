@@ -1,0 +1,11 @@
+issuer: https://gitlab.ddbuild.io
+
+subject_pattern: 'project_path:DataDog/browser-sdk:refs/heads/main'
+
+claim_pattern:
+  project_path: 'DataDog/browser-sdk'
+  ref: 'main'
+  ref_path: 'refs/heads/main'
+
+permissions:
+  pull_requests: write

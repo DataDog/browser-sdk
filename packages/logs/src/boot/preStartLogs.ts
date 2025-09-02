@@ -15,12 +15,8 @@ import {
   buildGlobalContextManager,
   buildUserContextManager,
 } from '@datadog/browser-core'
-import {
-  serializeLogsConfiguration,
-  validateAndBuildLogsConfiguration,
-  type LogsConfiguration,
-  type LogsInitConfiguration,
-} from '../domain/configuration'
+import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'

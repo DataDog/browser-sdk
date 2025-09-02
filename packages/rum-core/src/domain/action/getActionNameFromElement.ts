@@ -1,6 +1,7 @@
-import { safeTruncate } from '@datadog/browser-core'
-import { NodePrivacyLevel, getPrivacySelector } from '../privacy'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
+import { getNodeSelfPrivacyLevel, getPrivacySelector, NodePrivacyLevel, shouldMaskNode } from '../privacy'
 import type { RumConfiguration } from '../configuration'
+import { isElementNode } from '../../browser/htmlDomUtils'
 
 /**
  * Get the action name from the attribute 'data-dd-action-name' on the element or any of its parent.
@@ -23,7 +24,7 @@ interface ActionName {
 export function getActionNameFromElement(
   element: Element,
   { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute }: RumConfiguration,
-  nodePrivacyLevel?: NodePrivacyLevel
+  nodePrivacyLevel: NodePrivacyLevel = NodePrivacyLevel.ALLOW
 ): ActionName {
   // Proceed to get the action name in two steps:
   // * first, get the name programmatically, explicitly defined by the user.
@@ -73,14 +74,14 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean
+  privacyEnabledActionName: boolean
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, userProgrammaticAttribute) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     if ('labels' in element && element.labels && element.labels.length > 0) {
-      return getActionNameFromTextualContent(element.labels[0], userProgrammaticAttribute)
+      return getActionNameFromTextualContent(element.labels[0], userProgrammaticAttribute, privacyEnabledActionName)
     }
   },
   // INPUT button (and associated) value
@@ -120,9 +121,9 @@ const priorityStrategies: NameStrategy[] = [
   (element) => getActionNameFromStandardAttribute(element, 'title'),
   (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
   // SELECT first OPTION text
-  (element, userProgrammaticAttribute) => {
+  (element, userProgrammaticAttribute, privacyEnabledActionName) => {
     if ('options' in element && element.options.length > 0) {
-      return getActionNameFromTextualContent(element.options[0], userProgrammaticAttribute)
+      return getActionNameFromTextualContent(element.options[0], userProgrammaticAttribute, privacyEnabledActionName)
     }
   },
 ]
@@ -141,7 +142,7 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   userProgrammaticAttribute: string | undefined,
   strategies: NameStrategy[],
-  privacyEnabledActionName?: boolean
+  privacyEnabledActionName: boolean
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -196,7 +197,7 @@ function getActionNameFromStandardAttribute(element: Element | HTMLElement, attr
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean
+  privacyEnabledActionName: boolean
 ): ActionName {
   return {
     name: getTextualContent(element, userProgrammaticAttribute, privacyEnabledActionName) || '',
@@ -205,16 +206,20 @@ function getActionNameFromTextualContent(
 }
 
 function getTextualContent(
-  element: Element | HTMLElement,
+  element: Element,
   userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName?: boolean
+  privacyEnabledActionName: boolean
 ) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
 
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
+    return getTextualContentWithTreeWalker(element, userProgrammaticAttribute, privacyEnabledActionName)
+  }
+
   if ('innerText' in element) {
-    let text = element.innerText
+    let text = (element as HTMLElement).innerText
 
     const removeTextFromElements = (query: string) => {
       const list = element.querySelectorAll<Element | HTMLElement>(query)
@@ -247,4 +252,61 @@ function getTextualContent(
   }
 
   return element.textContent
+}
+
+function getTextualContentWithTreeWalker(
+  element: Element,
+  userProgrammaticAttribute: string | undefined,
+  privacyEnabledActionName: boolean
+) {
+  const walker = document.createTreeWalker(
+    element,
+    // eslint-disable-next-line no-bitwise
+    NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+    rejectInvisibleOrMaskedElementsFilter
+  )
+
+  let text = ''
+
+  while (walker.nextNode()) {
+    const node = walker.currentNode
+    if (isElementNode(node)) {
+      if (
+        // Following InnerText rendering spec https://html.spec.whatwg.org/multipage/dom.html#rendered-text-collection-steps
+        node.nodeName === 'BR' ||
+        node.nodeName === 'P' ||
+        ['block', 'flex', 'grid', 'list-item', 'table', 'table-caption'].includes(getComputedStyle(node).display)
+      ) {
+        text += ' '
+      }
+      continue // skip element nodes
+    }
+
+    text += node.textContent || ''
+  }
+
+  return text.replace(/\s+/g, ' ').trim()
+
+  function rejectInvisibleOrMaskedElementsFilter(node: Node) {
+    if (isElementNode(node)) {
+      const nodeSelfPrivacyLevel = getNodeSelfPrivacyLevel(node)
+      if (
+        node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
+        (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
+        (privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel))
+      ) {
+        return NodeFilter.FILTER_REJECT
+      }
+      const style = getComputedStyle(node)
+      if (
+        style.visibility !== 'visible' ||
+        style.display === 'none' ||
+        (style.contentVisibility && style.contentVisibility !== 'visible')
+        // contentVisibility is not supported in all browsers, so we need to check it
+      ) {
+        return NodeFilter.FILTER_REJECT
+      }
+    }
+    return NodeFilter.FILTER_ACCEPT
+  }
 }

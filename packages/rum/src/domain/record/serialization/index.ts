@@ -10,9 +10,5 @@ export type { SerializationContext } from './serialization.types'
 export { serializeDocument } from './serializeDocument'
 export { serializeNodeWithId } from './serializeNode'
 export { serializeAttribute } from './serializeAttribute'
-export {
-  createSerializationStats,
-  updateCssTextSerializationStats,
-  aggregateSerializationStats,
-} from './serializationStats'
+export { createSerializationStats, updateSerializationStats, aggregateSerializationStats } from './serializationStats'
 export type { SerializationMetric, SerializationStats } from './serializationStats'

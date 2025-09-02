@@ -247,7 +247,8 @@ export interface RumConfiguration extends Configuration {
   trackBfcacheViews: boolean
   subdomain?: string
   customerDataTelemetrySampleRate: number
-  segmentTelemetrySampleRate: number
+  initialViewMetricsTelemetrySampleRate: number
+  replayTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
@@ -320,7 +321,8 @@ export function validateAndBuildRumConfiguration(
       : DefaultPrivacyLevel.MASK,
     enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
     customerDataTelemetrySampleRate: 1,
-    segmentTelemetrySampleRate: 1,
+    initialViewMetricsTelemetrySampleRate: 1,
+    replayTelemetrySampleRate: 1,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,
@@ -413,6 +415,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
+    remote_configuration_id: configuration.remoteConfigurationId,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
