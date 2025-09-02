@@ -1,5 +1,6 @@
 import type { InitConfiguration } from '@datadog/browser-core'
 import { display } from '@datadog/browser-core'
+import { WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN } from '../../../core/src/domain/allowedTrackingOrigins'
 import {
   EXHAUSTIVE_INIT_CONFIGURATION,
   type CamelToSnakeCase,
@@ -91,6 +92,19 @@ describe('validateAndBuildLogsConfiguration', () => {
         'PCI compliance for Logs is only available for Datadog organizations in the US1 site. Default intake will be used.'
       )
     })
+  })
+})
+
+describe('validateAndBuildLogsConfiguration errorStack threading', () => {
+  it('uses provided errorStack to detect extension context and warn', () => {
+    const warnSpy = spyOn(display, 'warn')
+
+    const initConfiguration = { clientToken: 't' } as any
+    const errorStack = 'Error: at chrome-extension://abcdefgh/content.js:10:15'
+
+    validateAndBuildLogsConfiguration(initConfiguration, errorStack)
+
+    expect(warnSpy).toHaveBeenCalledWith(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
   })
 })
 

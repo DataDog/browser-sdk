@@ -6,6 +6,7 @@ import type {
   MapInitConfigurationKey,
 } from '@datadog/browser-core/test'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '@datadog/browser-core/test'
+import { WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN } from '../../../../core/src/domain/allowedTrackingOrigins'
 import type { RumInitConfiguration } from './configuration'
 import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRumConfiguration } from './configuration'
 
@@ -510,6 +511,19 @@ describe('validateAndBuildRumConfiguration', () => {
       })!
       expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackFeatureFlagsForEvents should be an array')
     })
+  })
+})
+
+describe('validateAndBuildRumConfiguration errorStack threading', () => {
+  it('uses provided errorStack to detect extension context and warn', () => {
+    const warnSpy = spyOn(display, 'warn')
+
+    const initConfiguration = { clientToken: 't', applicationId: 'app' } as any
+    const errorStack = 'Error: at chrome-extension://abcdefgh/content.js:10:15'
+
+    validateAndBuildRumConfiguration(initConfiguration, errorStack)
+
+    expect(warnSpy).toHaveBeenCalledWith(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
   })
 })
 
