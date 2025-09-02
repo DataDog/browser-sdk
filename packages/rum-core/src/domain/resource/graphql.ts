@@ -1,6 +1,9 @@
-import { matchList, ONE_KIBI_BYTE } from '@datadog/browser-core'
+import { matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
 import type { RumConfiguration, GraphQlUrlOption } from '../configuration'
 
+/**
+ * arbitrary value, byte precision not needed
+ */
 const GRAPHQL_PAYLOAD_LIMIT = 32 * ONE_KIBI_BYTE
 
 export interface GraphQlMetadata {
@@ -10,21 +13,24 @@ export interface GraphQlMetadata {
   payload?: string
 }
 
-export function isGraphQlRequest(url: string, configuration: RumConfiguration): GraphQlUrlOption | false {
+export function findGraphQlConfiguration(url: string, configuration: RumConfiguration): GraphQlUrlOption | undefined {
   for (const graphQlOption of configuration.allowedGraphQlUrls) {
     if (matchList([graphQlOption.match], url)) {
       return graphQlOption
     }
   }
-  return false
+  return undefined
 }
 
-export function extractGraphQlMetadata(requestBody: string | undefined): GraphQlMetadata | undefined {
+export function extractGraphQlMetadata(
+  requestBody: unknown,
+  trackPayload: boolean = false
+): GraphQlMetadata | undefined {
   if (!requestBody || typeof requestBody !== 'string') {
     return undefined
   }
 
-  let graphqlBody: { query?: string; operationName?: string; variables?: string } | undefined
+  let graphqlBody: { query?: string; operationName?: string; variables?: unknown }
 
   try {
     graphqlBody = JSON.parse(requestBody)
@@ -50,7 +56,7 @@ export function extractGraphQlMetadata(requestBody: string | undefined): GraphQl
     operationType,
     operationName,
     variables,
-    payload: truncatePayload(query, GRAPHQL_PAYLOAD_LIMIT),
+    payload: trackPayload ? safeTruncate(query, GRAPHQL_PAYLOAD_LIMIT, '...') : undefined,
   }
 }
 
@@ -64,11 +70,4 @@ function getOperationType(query: string): 'query' | 'mutation' | 'subscription' 
   }
 
   return 'query'
-}
-
-function truncatePayload(payload: string, limit: number): string {
-  if (payload.length > limit) {
-    return `${payload.substring(0, limit)}...`
-  }
-  return payload
 }

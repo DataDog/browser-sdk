@@ -1,8 +1,8 @@
 import { mockRumConfiguration } from '../../../test'
-import { extractGraphQlMetadata, isGraphQlRequest } from './graphql'
+import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
 
 describe('GraphQL detection and metadata extraction', () => {
-  describe('isGraphQlRequest', () => {
+  describe('findGraphQlConfiguration', () => {
     it('should detect GraphQL requests matching string URLs', () => {
       const configuration = mockRumConfiguration({
         allowedGraphQlUrls: [
@@ -11,8 +11,8 @@ describe('GraphQL detection and metadata extraction', () => {
         ],
       })
 
-      expect(isGraphQlRequest('https://api.example.com/graphql', configuration)).toBeTruthy()
-      expect(isGraphQlRequest('http://localhost/api', configuration)).toBe(false)
+      expect(findGraphQlConfiguration('https://api.example.com/graphql', configuration)).toBeTruthy()
+      expect(findGraphQlConfiguration('http://localhost/api', configuration)).toBeUndefined()
     })
 
     it('should detect GraphQL requests matching regex patterns', () => {
@@ -20,8 +20,8 @@ describe('GraphQL detection and metadata extraction', () => {
         allowedGraphQlUrls: [{ match: /\/graphql$/i, trackPayload: false }],
       })
 
-      expect(isGraphQlRequest('/api/graphql', configuration)).toBeTruthy()
-      expect(isGraphQlRequest('/graphql/admin', configuration)).toBe(false)
+      expect(findGraphQlConfiguration('/api/graphql', configuration)).toBeTruthy()
+      expect(findGraphQlConfiguration('/graphql/admin', configuration)).toBeUndefined()
     })
 
     it('should detect GraphQL requests matching function matchers', () => {
@@ -29,9 +29,9 @@ describe('GraphQL detection and metadata extraction', () => {
         allowedGraphQlUrls: [{ match: (url: string) => url.includes('gql'), trackPayload: false }],
       })
 
-      expect(isGraphQlRequest('/api/gql', configuration)).toBeTruthy()
-      expect(isGraphQlRequest('/gql-endpoint', configuration)).toBeTruthy()
-      expect(isGraphQlRequest('/api/rest', configuration)).toBe(false)
+      expect(findGraphQlConfiguration('/api/gql', configuration)).toBeTruthy()
+      expect(findGraphQlConfiguration('/gql-endpoint', configuration)).toBeTruthy()
+      expect(findGraphQlConfiguration('/api/rest', configuration)).toBeUndefined()
     })
   })
 
@@ -43,7 +43,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: { id: '123' },
       })
 
-      const result = extractGraphQlMetadata(requestBody)
+      const result = extractGraphQlMetadata(requestBody, true)
 
       expect(result).toEqual({
         operationType: 'query',
@@ -60,7 +60,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: {},
       })
 
-      const result = extractGraphQlMetadata(requestBody)
+      const result = extractGraphQlMetadata(requestBody, true)
 
       expect(result).toEqual({
         operationType: 'query',
@@ -77,7 +77,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: null,
       })
 
-      const result = extractGraphQlMetadata(requestBody)
+      const result = extractGraphQlMetadata(requestBody, true)
 
       expect(result).toEqual({
         operationType: 'query',
@@ -88,13 +88,13 @@ describe('GraphQL detection and metadata extraction', () => {
     })
 
     it('should return undefined for invalid JSON', () => {
-      const result = extractGraphQlMetadata('not valid json')
+      const result = extractGraphQlMetadata('not valid json', true)
       expect(result).toBeUndefined()
     })
 
     it('should return undefined for non-GraphQL request body', () => {
       const requestBody = JSON.stringify({ data: 'some data' })
-      const result = extractGraphQlMetadata(requestBody)
+      const result = extractGraphQlMetadata(requestBody, true)
       expect(result).toBeUndefined()
     })
   })
@@ -106,7 +106,7 @@ describe('GraphQL detection and metadata extraction', () => {
         query: shortQuery,
       })
 
-      const result = extractGraphQlMetadata(requestBody)
+      const result = extractGraphQlMetadata(requestBody, true)
 
       expect(result?.payload).toBe(shortQuery)
     })
@@ -117,11 +117,28 @@ describe('GraphQL detection and metadata extraction', () => {
         query: longQuery,
       })
 
-      const result = extractGraphQlMetadata(requestBody)
+      const result = extractGraphQlMetadata(requestBody, true)
 
       expect(result?.payload?.length).toBe(32768 + 3)
       expect(result?.payload?.endsWith('...')).toBe(true)
       expect(result?.payload?.startsWith('query LongQuery {')).toBe(true)
+    })
+
+    it('should not include payload when trackPayload is false', () => {
+      const requestBody = JSON.stringify({
+        query: 'query GetUser { user { id name } }',
+        operationName: 'GetUser',
+        variables: { id: '123' },
+      })
+
+      const result = extractGraphQlMetadata(requestBody, false)
+
+      expect(result).toEqual({
+        operationType: 'query',
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: undefined,
+      })
     })
   })
 })

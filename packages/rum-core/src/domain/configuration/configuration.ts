@@ -423,7 +423,7 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
     } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
       graphQlOptions.push({
         match: option.match,
-        trackPayload: option.trackPayload ?? false,
+        trackPayload: !!option.trackPayload,
       })
     }
   })
