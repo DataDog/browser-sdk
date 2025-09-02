@@ -31,7 +31,7 @@ test.describe('logs', () => {
     .withWorker({ importScript: true })
     .run(async ({ flushEvents, intakeRegistry, browserName, withWorker }) => {
       test.skip(
-        browserName !== 'webkit',
+        browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
 
