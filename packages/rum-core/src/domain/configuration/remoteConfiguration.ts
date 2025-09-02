@@ -2,6 +2,7 @@ import type { createContextManager } from '@datadog/browser-core'
 import { display, buildEndpointHost, mapValues, getCookie } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
+import { parseJsonPath } from './jsonPathParser'
 
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
@@ -113,7 +114,7 @@ function resolveContextProperty(contextManager: ReturnType<typeof createContextM
 
 function resolveDynamicOption(property: DynamicOption) {
   const strategy = property.strategy
-  let resolvedValue: undefined | string
+  let resolvedValue: unknown
   switch (strategy) {
     case 'cookie':
       resolvedValue = resolveCookieValue(property)
@@ -121,12 +122,15 @@ function resolveDynamicOption(property: DynamicOption) {
     case 'dom':
       resolvedValue = resolveDomValue(property)
       break
+    case 'js':
+      resolvedValue = resolveJsValue(property)
+      break
     default:
       display.error(`Unsupported remote configuration: "strategy": "${strategy as string}"`)
       return
   }
   const extractor = property.extractor
-  if (extractor !== undefined && resolvedValue !== undefined) {
+  if (extractor !== undefined && typeof resolvedValue === 'string') {
     return extractValue(extractor, resolvedValue)
   }
   return resolvedValue
@@ -153,6 +157,29 @@ function resolveDomValue({ selector, attribute }: { selector: string; attribute?
 
 function isForbidden(element: Element, attribute: string | undefined) {
   return element.getAttribute('type') === 'password' && attribute === 'value'
+}
+
+function resolveJsValue({ path }: { path: string }): unknown {
+  let current = window as unknown as { [key: string]: unknown }
+
+  const pathParts = parseJsonPath(path)
+  if (pathParts.length === 0) {
+    display.error(`Invalid JSON path in the remote configuration: '${path}'`)
+    return
+  }
+  for (const pathPart of pathParts) {
+    if (!(pathPart in current)) {
+      return
+    }
+    try {
+      current = current[pathPart] as { [key: string]: unknown }
+    } catch (e) {
+      display.error(`Error accessing: '${path}'`, e)
+      return
+    }
+  }
+
+  return current as unknown
 }
 
 function extractValue(extractor: SerializedRegex, candidate: string) {
