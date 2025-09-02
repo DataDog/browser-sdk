@@ -158,10 +158,6 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_resources?: boolean
       /**
-       * Whether early requests are tracked
-       */
-      track_early_requests?: boolean
-      /**
        * Whether long tasks are tracked
        */
       track_long_task?: boolean
