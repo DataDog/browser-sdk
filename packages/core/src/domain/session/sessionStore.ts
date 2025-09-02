@@ -16,7 +16,6 @@ import {
   isSessionStarted,
 } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
-import { initMockStrategy, selectMockStrategy } from './storeStrategies/sessionInMock'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
 
@@ -54,12 +53,9 @@ export function selectSessionStoreStrategyType(
     case SessionPersistence.LOCAL_STORAGE:
       return selectLocalStorageStrategy()
 
-    case SessionPersistence.NONE:
-      return selectMockStrategy()
-
     case undefined: {
       let sessionStoreStrategyType = isWorkerEnvironment
-        ? selectMockStrategy()
+        ? selectLocalStorageStrategy()
         : selectCookieStrategy(initConfiguration)
       if (!sessionStoreStrategyType && initConfiguration.allowFallbackToLocalStorage) {
         sessionStoreStrategyType = selectLocalStorageStrategy()
@@ -76,17 +72,9 @@ export function getSessionStoreStrategy(
   sessionStoreStrategyType: SessionStoreStrategyType,
   configuration: Configuration
 ) {
-  switch (sessionStoreStrategyType.type) {
-    case SessionPersistence.COOKIE:
-      return initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
-
-    case SessionPersistence.NONE:
-      return initMockStrategy()
-
-    case SessionPersistence.LOCAL_STORAGE:
-    default:
-      return initLocalStorageStrategy(configuration)
-  }
+  return sessionStoreStrategyType.type === SessionPersistence.COOKIE
+    ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
+    : initLocalStorageStrategy(configuration)
 }
 
 /**
