@@ -47,7 +47,12 @@ test.describe('logs', () => {
 
   createTest('service worker console forwarding')
     .withWorker({ importScript: true, nativeLog: true })
-    .run(async ({ flushEvents, intakeRegistry, withWorker }) => {
+    .run(async ({ flushEvents, intakeRegistry, withWorker, browserName }) => {
+      test.skip(
+        browserName === 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
       await withWorker((worker) => {
         worker.postMessage('SW console log test')
       })
