@@ -26,7 +26,7 @@ import {
   serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { DurationVital, CustomVitalsState, OperationStepVitalOptions } from '../domain/vital/vitalCollection'
+import type { DurationVital, CustomVitalsState, FullFeatureOperationOptions } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
@@ -149,9 +149,13 @@ export function createPreStartStrategy(
     bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
   }
 
-  const addOperationStepVital = (name: string, stepType: 'start' | 'end', options?: OperationStepVitalOptions) => {
+  const addOperationStepVital = (
+    name: string,
+    stepType: 'start' | 'end',
+    options?: Partial<FullFeatureOperationOptions>
+  ) => {
     bufferApiCalls.add((startRumResult) =>
-      startRumResult.addOperationStepVital(name, stepType, sanitize(options) as OperationStepVitalOptions)
+      startRumResult.addOperationStepVital(name, stepType, sanitize(options) as FullFeatureOperationOptions)
     )
   }
 

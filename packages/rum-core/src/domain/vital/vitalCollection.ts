@@ -21,8 +21,10 @@ export interface VitalOptions {
   description?: string
 }
 export type DurationVitalOptions = VitalOptions
-export interface OperationStepVitalOptions extends VitalOptions {
+export interface FeatureOperationOptions extends VitalOptions {
   operationKey?: string
+}
+export interface FullFeatureOperationOptions extends FeatureOperationOptions {
   failureReason?: string
 }
 export interface AddDurationVitalOptions extends DurationVitalOptions {
@@ -81,7 +83,11 @@ export function startVitalCollection(
     }
   }
 
-  function addOperationStepVital(name: string, stepType: 'start' | 'end', options?: OperationStepVitalOptions) {
+  function addOperationStepVital(
+    name: string,
+    stepType: 'start' | 'end',
+    options?: Partial<FullFeatureOperationOptions>
+  ) {
     if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_OPERATION_VITAL)) {
       return
     }

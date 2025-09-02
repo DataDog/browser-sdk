@@ -44,7 +44,8 @@ import type {
   AddDurationVitalOptions,
   DurationVitalReference,
   DurationVitalOptions,
-  OperationStepVitalOptions,
+  FeatureOperationOptions,
+  FullFeatureOperationOptions,
 } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
@@ -425,7 +426,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Vital
    * @param nameOrRef - Name or reference of the custom vital
-   * @param options - Options for the custom vital (context, description)
+   * @param options - Options for the custom vital (operationKey, context, description)
    */
   stopDurationVital: (nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions) => void
 
@@ -434,30 +435,27 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Vital
    * @param name - Name of the operation step
-   * @param operationKey - Key of the operation step
-   * @param options - Options for the operation step (context, description)
+   * @param options - Options for the operation step (operationKey, context, description)
    */
-  startFeatureOperation: (name: string, options?: OperationStepVitalOptions) => void
+  startFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
 
   /**
    * [Experimental] succeed a feature operation
    *
    * @category Vital
    * @param name - Name of the operation step
-   * @param operationKey - Key of the operation step
-   * @param options - Options for the operation step (context, description)
+   * @param options - Options for the operation step (operationKey, context, description)
    */
-  succeedFeatureOperation: (name: string, options?: OperationStepVitalOptions) => void
+  succeedFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
 
   /**
    * [Experimental] fail a feature operation
    *
    * @category Vital
    * @param name - Name of the operation step
-   * @param operationKey - Key of the operation step
-   * @param options - Options for the operation step (context, description)
+   * @param options - Options for the operation step (operationKey, failureReason, context, description)
    */
-  failFeatureOperation: (name: string, options?: OperationStepVitalOptions) => void
+  failFeatureOperation: (name: string, options?: FullFeatureOperationOptions) => void
 }
 
 export interface RecorderApi {
