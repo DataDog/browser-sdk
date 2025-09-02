@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import type { PlaywrightWorkerOptions } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { getBuildInfos } from '../../../envUtils'
@@ -22,6 +24,7 @@ export function getEncodedCapabilities(configuration: BrowserConfiguration) {
 
 // see: https://www.browserstack.com/docs/automate/playwright/playwright-capabilities
 function getCapabilities(configuration: BrowserConfiguration) {
+  const playwrightVersion = getLocalPlaywrightVersion()
   return {
     os: configuration.os,
     os_version: configuration.osVersion,
@@ -33,11 +36,25 @@ function getCapabilities(configuration: BrowserConfiguration) {
     build: getBuildInfos(),
     name: configuration.sessionName,
     'browserstack.local': true,
-    'browserstack.playwrightVersion': '1.53.0',
-    'client.playwrightVersion': '1.53.0',
+    'browserstack.playwrightVersion': playwrightVersion,
+    'client.playwrightVersion': playwrightVersion,
     'browserstack.debug': false,
     'browserstack.console': 'info',
     'browserstack.networkLogs': false,
     'browserstack.interactiveDebugging': false,
+  }
+}
+
+function getLocalPlaywrightVersion(): string {
+  try {
+    const pkgPath = path.resolve(process.cwd(), 'package.json')
+    const content = fs.readFileSync(pkgPath, 'utf-8')
+    const pkg = JSON.parse(content) as {
+      devDependencies?: Record<string, string>
+      dependencies?: Record<string, string>
+    }
+    return pkg.devDependencies?.['@playwright/test'] || pkg.dependencies?.['@playwright/test'] || '1.latest'
+  } catch {
+    return '1.latest'
   }
 }
