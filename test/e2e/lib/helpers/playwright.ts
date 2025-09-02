@@ -1,8 +1,7 @@
-import fs from 'fs'
-import path from 'path'
 import type { PlaywrightWorkerOptions } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { getBuildInfos } from '../../../envUtils'
+import packageJson from '../../../../package.json'
 
 export const DEV_SERVER_BASE_URL = 'http://localhost:8080'
 
@@ -24,7 +23,7 @@ export function getEncodedCapabilities(configuration: BrowserConfiguration) {
 
 // see: https://www.browserstack.com/docs/automate/playwright/playwright-capabilities
 function getCapabilities(configuration: BrowserConfiguration) {
-  const playwrightVersion = getLocalPlaywrightVersion()
+  const playwrightVersion = resolvePlaywrightVersionFromPackageJson()
   return {
     os: configuration.os,
     os_version: configuration.osVersion,
@@ -45,16 +44,14 @@ function getCapabilities(configuration: BrowserConfiguration) {
   }
 }
 
-function getLocalPlaywrightVersion(): string {
-  try {
-    const pkgPath = path.resolve(process.cwd(), 'package.json')
-    const content = fs.readFileSync(pkgPath, 'utf-8')
-    const pkg = JSON.parse(content) as {
-      devDependencies?: Record<string, string>
-      dependencies?: Record<string, string>
-    }
-    return pkg.devDependencies?.['@playwright/test'] || pkg.dependencies?.['@playwright/test'] || '1.latest'
-  } catch {
-    return '1.latest'
+function resolvePlaywrightVersionFromPackageJson(): string {
+  const rootPkg = packageJson as unknown as {
+    devDependencies?: Record<string, string>
+    dependencies?: Record<string, string>
   }
+  const version = rootPkg.devDependencies?.['@playwright/test'] || rootPkg.dependencies?.['@playwright/test']
+  if (!version) {
+    throw new Error('Unable to resolve @playwright/test version from package.json')
+  }
+  return version
 }
