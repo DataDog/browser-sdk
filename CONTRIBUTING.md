@@ -5,6 +5,46 @@ First of all, thanks for contributing!
 This document provides some basic guidelines for contributing to this repository. To propose
 improvements, feel free to submit a pull request.
 
+## Getting Started
+
+### Download the Repository
+
+You can use either Git or GitHub CLI:
+
+```bash
+# Using Git
+git clone git@github.com:DataDog/browser-sdk.git
+
+# Using GitHub CLI
+gh repo clone DataDog/browser-sdk
+```
+
+## Install Dependencies
+
+Run the following command to install the necessary dependencies:
+
+```bash
+yarn
+```
+
+## Install Browser Extension
+
+Follow [this link][3] to download the browser extension. This extension will help you track
+all the information collected by the SDK.
+
+## Running the Project
+
+To run the project, use:
+
+```bash
+yarn dev
+```
+
+Then, go to [http://localhost:8080/react-app/](http://localhost:8080/react-app/). Open the developer
+tools and navigate to the `Browser SDK` tab to view all the information sent by the SDK.
+
+Alternatively, you can debug your application by using the option to override the SDK within your application.
+
 ## Submitting issues
 
 Github issues are welcome, feel free to submit error reports and feature requests! Make sure to add
@@ -65,3 +105,4 @@ label our Commit messages and Pull Request titles:
 
 [1]: https://docs.datadoghq.com/help/
 [2]: https://gitmoji.carloscuesta.me/
+[3]: https://chromewebstore.google.com/detail/datadog-browser-sdk-devel/boceobohkgenpcpogecpjlnmnfbdigda
