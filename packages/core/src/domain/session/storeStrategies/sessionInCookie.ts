@@ -11,8 +11,12 @@ import {
 } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
+import { timeStampNow } from '../../../tools/utils/timeUtils'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
+
+let cookieValue: string | undefined | null = null
+let hasError = false
 
 export function selectCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategyType | undefined {
   const cookieOptions = buildCookieOptions(initConfiguration)
@@ -25,7 +29,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
      * Lock strategy allows mitigating issues due to concurrent access to cookie.
      * This issue concerns only chromium browsers and enabling this on firefox increases cookie write failures.
      */
-    isLockEnabled: isChromium(),
+    isLockEnabled: true,
     persistSession: (sessionState: SessionState) =>
       storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
     retrieveSession: retrieveSessionCookie,
@@ -49,6 +53,10 @@ function storeSessionCookie(
   sessionState: SessionState,
   defaultTimeout: number
 ) {
+  // @ts-ignore
+  window.log('COOKIE::storeSessionCookie', sessionState)
+
+  cookieValue = null
   setCookie(
     SESSION_STORE_KEY,
     toSessionString(sessionState),
@@ -57,8 +65,26 @@ function storeSessionCookie(
   )
 }
 
-export function retrieveSessionCookie(): SessionState {
-  const sessionString = getCookie(SESSION_STORE_KEY)
+export function retrieveSessionCookie(retryable: boolean = true): SessionState {
+  // @ts-ignore
+  window.log('COOKIE::retrieveSessionCookie', retryable, cookieValue)
+
+  if (cookieValue === null && !hasError && retryable) {
+    navigator.locks
+      .request('session', () => {
+        if ('cookieStore' in window) {
+          return cookieStore.get(SESSION_STORE_KEY).then((cookie) => (cookieValue = cookie?.value))
+        }
+        cookieValue = getCookie(SESSION_STORE_KEY)
+        return
+      })
+      .catch(() => (hasError = true))
+
+    return { lock: `__waiting__--${timeStampNow()}` }
+  }
+
+  const sessionString = retryable ? cookieValue : getCookie(SESSION_STORE_KEY)
+
   const sessionState = toSessionState(sessionString)
   return sessionState
 }
