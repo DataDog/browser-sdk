@@ -1,30 +1,40 @@
 import { ONE_SECOND } from '@datadog/browser-core'
 import { FrustrationType } from '../../rawRumEvent.types'
 import type { Click } from './trackClickActions'
+import { ClickIgnoreFlag, getIgnoredForElement } from './clickIgnore'
 
 const MIN_CLICKS_PER_SECOND_TO_CONSIDER_RAGE = 3
 
 export function computeFrustration(clicks: Click[], rageClick: Click) {
   if (isRage(clicks)) {
-    rageClick.addFrustration(FrustrationType.RAGE_CLICK)
-    if (clicks.some(isDead)) {
-      rageClick.addFrustration(FrustrationType.DEAD_CLICK)
+    const chainIgnoredMask = clicks.reduce((acc, c) => acc | getIgnoredForElement(c.event.target), 0)
+    const rageIgnored = (chainIgnoredMask & ClickIgnoreFlag.RAGE) !== 0
+    if (!rageIgnored) {
+      rageClick.addFrustration(FrustrationType.RAGE_CLICK)
+      const hasDeadNotIgnored = clicks.some((c) => isDead(c) && (getIgnoredForElement(c.event.target) & ClickIgnoreFlag.DEAD) === 0)
+      if (hasDeadNotIgnored) {
+        rageClick.addFrustration(FrustrationType.DEAD_CLICK)
+      }
+      const errorIgnored = (getIgnoredForElement(rageClick.event.target) & ClickIgnoreFlag.ERROR) !== 0
+      if (rageClick.hasError && !errorIgnored) {
+        rageClick.addFrustration(FrustrationType.ERROR_CLICK)
+      }
+      return { isRage: true }
     }
-    if (rageClick.hasError) {
-      rageClick.addFrustration(FrustrationType.ERROR_CLICK)
-    }
-    return { isRage: true }
   }
 
   const hasSelectionChanged = clicks.some((click) => click.getUserActivity().selection)
   clicks.forEach((click) => {
     if (click.hasError) {
-      click.addFrustration(FrustrationType.ERROR_CLICK)
+      if ((getIgnoredForElement(click.event.target) & ClickIgnoreFlag.ERROR) === 0) {
+        click.addFrustration(FrustrationType.ERROR_CLICK)
+      }
     }
     if (
       isDead(click) &&
       // Avoid considering clicks part of a double-click or triple-click selections as dead clicks
-      !hasSelectionChanged
+      !hasSelectionChanged &&
+      (getIgnoredForElement(click.event.target) & ClickIgnoreFlag.DEAD) === 0
     ) {
       click.addFrustration(FrustrationType.DEAD_CLICK)
     }
