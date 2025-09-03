@@ -19,6 +19,7 @@ export enum ExperimentalFeature {
   EARLY_REQUEST_COLLECTION = 'early_request_collection',
   WATCH_COOKIE_WITHOUT_LOCK = 'watch_cookie_without_lock',
   USE_TREE_WALKER_FOR_ACTION_NAME = 'use_tree_walker_for_action_name',
+  SHORT_SESSION_INVESTIGATION = 'short_session_investigation',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
