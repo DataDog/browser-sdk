@@ -13,4 +13,7 @@ export interface SessionStoreStrategy {
   persistSession: (session: SessionState) => void
   retrieveSession: () => SessionState
   expireSession: (previousSessionState: SessionState) => void
+  AsyncPersistSession: (session: SessionState) => Promise<void>
+  AsyncRetrieveSession: () => Promise<SessionState>
+  AsyncExpireSession: (previousSessionState: SessionState) => Promise<void>
 }
