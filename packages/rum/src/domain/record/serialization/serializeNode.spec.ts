@@ -571,6 +571,7 @@ describe('serializeNodeWithId', () => {
         })
         expect(options.serializationContext.serializationStats).toEqual({
           cssText: { count: 1, max: 21, sum: 21 },
+          serializationDuration: jasmine.anything(),
         })
       })
 
@@ -588,6 +589,7 @@ describe('serializeNodeWithId', () => {
         })
         expect(options.serializationContext.serializationStats).toEqual({
           cssText: { count: 1, max: 21, sum: 21 },
+          serializationDuration: jasmine.anything(),
         })
       })
 
@@ -606,6 +608,7 @@ describe('serializeNodeWithId', () => {
         })
         expect(options.serializationContext.serializationStats).toEqual({
           cssText: { count: 1, max: 41, sum: 41 },
+          serializationDuration: jasmine.anything(),
         })
       })
 
@@ -646,6 +649,7 @@ describe('serializeNodeWithId', () => {
         })
         expect(options.serializationContext.serializationStats).toEqual({
           cssText: { count: 2, max: 33, sum: 54 },
+          serializationDuration: jasmine.anything(),
         })
       })
     })
@@ -673,6 +677,7 @@ describe('serializeNodeWithId', () => {
         })
         expect(options.serializationContext.serializationStats).toEqual({
           cssText: { count: 0, max: 0, sum: 0 },
+          serializationDuration: jasmine.anything(),
         })
       })
 
@@ -706,6 +711,7 @@ describe('serializeNodeWithId', () => {
         })
         expect(options.serializationContext.serializationStats).toEqual({
           cssText: { count: 1, max: 21, sum: 21 },
+          serializationDuration: jasmine.anything(),
         })
       })
 
@@ -741,6 +747,7 @@ describe('serializeNodeWithId', () => {
         })
         expect(options.serializationContext.serializationStats).toEqual({
           cssText: { count: 0, max: 0, sum: 0 },
+          serializationDuration: jasmine.anything(),
         })
       })
     })

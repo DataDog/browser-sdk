@@ -1,11 +1,12 @@
-const HtmlWebpackPlugin = require('html-webpack-plugin')
-const { default: WebextensionPlugin } = require('@webextension-toolbox/webpack-webextension-plugin')
-const CopyPlugin = require('copy-webpack-plugin')
-const { HotModuleReplacementPlugin } = require('webpack')
-const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin')
-const { createDefinePlugin } = require('../webpack.base')
+import HtmlWebpackPlugin from 'html-webpack-plugin'
+import { WebextensionPlugin } from '@webextension-toolbox/webpack-webextension-plugin'
+import CopyPlugin from 'copy-webpack-plugin'
+import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin'
+import webpack from 'webpack'
+import { createDefinePlugin } from '../webpack.base.ts'
+import packageJson from './package.json' with { type: 'json' }
 
-module.exports = (_env, argv) => {
+export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) => {
   const isDevelopment = argv.mode === 'development'
 
   return [
@@ -31,16 +32,12 @@ module.exports = (_env, argv) => {
             {
               from: './manifest.json',
               to: 'manifest.json',
-              transform(content) {
+              transform(content: Buffer) {
                 const manifest = JSON.parse(content.toString())
-                const packageJson = require('./package.json')
-
-                // Add required fields
                 manifest.version = packageJson.version
                 manifest.version_name = packageJson.version
 
                 if (isDevelopment) {
-                  // Inject dev CSP
                   manifest.content_security_policy = {
                     extension_pages: "script-src 'self' http://localhost:3001; object-src 'self'",
                   }
@@ -72,11 +69,10 @@ module.exports = (_env, argv) => {
                 errors: true,
                 warnings: false,
               },
-              // Disable webpack hot client injection to avoid CSP issues
               webSocketTransport: 'ws',
             },
             devMiddleware: {
-              writeToDisk: (filePath) => filePath.endsWith('panel.html'),
+              writeToDisk: (filePath: string) => filePath.endsWith('panel.html'),
             },
           }
         : undefined,
@@ -87,8 +83,8 @@ module.exports = (_env, argv) => {
       plugins: [
         new HtmlWebpackPlugin({
           filename: 'panel.html',
-          inject: false, // Disable auto script injection - we handle it manually
-          templateContent: ({ isDevelopment }) => `
+          inject: false,
+          templateContent: () => `
             <!doctype html>
             <html>
             <head>
@@ -109,7 +105,7 @@ module.exports = (_env, argv) => {
           templateParameters: { isDevelopment },
         }),
         createDefinePlugin(),
-        ...(isDevelopment ? [new HotModuleReplacementPlugin(), new ReactRefreshWebpackPlugin()] : []),
+        ...(isDevelopment ? [new webpack.HotModuleReplacementPlugin(), new ReactRefreshWebpackPlugin()] : []),
       ],
     }),
     baseConfig({
@@ -140,15 +136,25 @@ module.exports = (_env, argv) => {
     }),
   ]
 
-  function baseConfig({ name, entry, output, plugins, devServer }) {
+  function baseConfig({
+    name,
+    entry,
+    output,
+    plugins,
+    devServer,
+  }: {
+    name: string
+    entry: string
+    output?: webpack.Configuration['output']
+    plugins?: webpack.Configuration['plugins']
+    devServer?: any
+  }): webpack.Configuration & { devServer?: any } {
     return {
       name,
       entry,
       output,
-      // Use source-map instead of eval-based devtools for CSP compatibility
       devtool: isDevelopment ? 'source-map' : false,
       devServer,
-
       module: {
         rules: [
           {
@@ -156,13 +162,14 @@ module.exports = (_env, argv) => {
             loader: 'ts-loader',
             exclude: /node_modules/,
             options: {
+              configFile: 'tsconfig.webpack.json',
               onlyCompileBundledFiles: true,
               ...(isDevelopment && {
                 getCustomTransformers: () => ({
-                  before: [require('react-refresh-typescript').default()],
+                  before: [new ReactRefreshWebpackPlugin()],
                 }),
-                transpileOnly: true,
               }),
+              transpileOnly: true,
             },
           },
           {
@@ -183,18 +190,16 @@ module.exports = (_env, argv) => {
           },
         ],
       },
-
       resolve: {
         extensions: ['.ts', '.tsx', '.js'],
       },
-
       plugins,
     }
   }
 }
 
 function getVersion() {
-  const version = require('./package.json').version
+  const version: string = packageJson.version
 
   return {
     version: version.replace(/-(alpha|beta)/, ''),

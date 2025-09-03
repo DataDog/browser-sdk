@@ -1,7 +1,13 @@
 import os from 'os'
 import fs from 'fs'
 import { command } from './command.ts'
-import { getGithubDeployKey, getGithubAccessToken } from './secrets.ts'
+import {
+  getGithubDeployKey,
+  getGithubReadToken,
+  getGithubReleaseToken,
+  getGithubPullRequestToken,
+  type OctoStsToken,
+} from './secrets.ts'
 import { fetchHandlingError } from './executionUtils.ts'
 
 interface GitHubPR {
@@ -24,7 +30,8 @@ interface GitHubReleaseParams {
 }
 
 export async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
-  const pr = await callGitHubApi<GitHubPR[]>('GET', `pulls?head=DataDog:${localBranch}`)
+  using readToken = getGithubReadToken()
+  const pr = await callGitHubApi<GitHubPR[]>('GET', `pulls?head=DataDog:${localBranch}`, readToken)
   if (pr && pr.length > 1) {
     throw new Error('Multiple pull requests found for the branch')
   }
@@ -39,8 +46,9 @@ export async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
  * @param params.body - The body of the release.
  */
 export async function createGitHubRelease({ version, body }: GitHubReleaseParams): Promise<GitHubRelease> {
+  using readToken = getGithubReadToken()
   try {
-    await callGitHubApi('GET', `releases/tags/${version}`)
+    await callGitHubApi('GET', `releases/tags/${version}`, readToken)
     throw new Error(`Release ${version} already exists`)
   } catch (error) {
     if ((error as any).status !== 404) {
@@ -48,23 +56,30 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
     }
   }
 
-  return callGitHubApi('POST', 'releases', {
+  // content write
+  using releaseToken = getGithubReleaseToken()
+  return callGitHubApi<GitHubRelease>('POST', 'releases', releaseToken, {
     tag_name: version,
     name: version,
     body,
   })
 }
 
-async function callGitHubApi<T>(method: string, path: string, body?: any): Promise<T> {
-  const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
-    method,
-    headers: {
-      Authorization: `token ${getGithubAccessToken()}`,
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  return response.json() as Promise<T>
+export async function getPrComments(prNumber: number): Promise<Array<{ id: number; body: string }>> {
+  using readToken = getGithubReadToken()
+  const response = await callGitHubApi<Array<{ id: number; body: string }>>(
+    'GET',
+    `issues/${prNumber}/comments`,
+    readToken
+  )
+  return response
+}
+
+export function createPullRequest(mainBranch: string) {
+  using token = getGithubPullRequestToken()
+  command`gh auth login --with-token`.withInput(token.value).run()
+  const pullRequestUrl = command`gh pr create --fill --base ${mainBranch}`.run()
+  return pullRequestUrl.trim()
 }
 
 export function getLastCommonCommit(baseBranch: string): string {
@@ -92,5 +107,16 @@ export function initGitConfig(repository: string): void {
   command`git config user.name ci.browser-sdk`.run()
   command`git remote set-url origin ${repository}`.run()
 }
-
 export const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
+
+async function callGitHubApi<T>(method: string, path: string, token: OctoStsToken, body?: any): Promise<T> {
+  const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
+    method,
+    headers: {
+      Authorization: `token ${token.value}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  return (await response.json()) as Promise<T>
+}

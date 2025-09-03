@@ -10,7 +10,7 @@ import type { Payload, HttpRequestEvent, HttpResponse, BandwidthStats } from './
 
 export const MAX_ONGOING_BYTES_COUNT = 80 * ONE_KIBI_BYTE
 export const MAX_ONGOING_REQUESTS = 32
-export const MAX_QUEUE_BYTES_COUNT = 3 * ONE_MEBI_BYTE
+export const MAX_QUEUE_BYTES_COUNT = 20 * ONE_MEBI_BYTE
 export const MAX_BACKOFF_TIME = ONE_MINUTE
 export const INITIAL_BACKOFF_TIME = ONE_SECOND
 

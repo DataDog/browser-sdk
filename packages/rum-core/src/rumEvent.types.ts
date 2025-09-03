@@ -1239,11 +1239,15 @@ export type RumVitalEvent = CommonProperties &
       /**
        * Type of the vital
        */
-      readonly type: 'duration'
+      readonly type: 'duration' | 'operation_step'
       /**
        * UUID of the vital
        */
       readonly id: string
+      /**
+       * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
+       */
+      readonly operation_key?: string
       /**
        * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
        */
@@ -1257,11 +1261,13 @@ export type RumVitalEvent = CommonProperties &
        */
       readonly duration?: number
       /**
-       * User custom vital.
+       * Type of the step that triggered the vital, if applicable
        */
-      readonly custom?: {
-        [k: string]: number
-      }
+      readonly step_type?: 'start' | 'update' | 'retry' | 'end'
+      /**
+       * Reason for the failure of the step, if applicable
+       */
+      readonly failure_reason?: 'error' | 'abandoned' | 'other'
       [k: string]: unknown
     }
     /**
@@ -1959,5 +1965,9 @@ export interface ViewAccessibilityProperties {
    * Indicates whether the text-to-speech selection feature is enabled.
    */
   readonly speak_selection_enabled?: boolean
+  /**
+   * Indicates whether the right-to-left support is enabled.
+   */
+  readonly rtl_enabled?: boolean
   [k: string]: unknown
 }

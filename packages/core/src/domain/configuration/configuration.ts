@@ -217,6 +217,27 @@ export interface InitConfiguration {
    * @defaultValue 5
    */
   telemetryUsageSampleRate?: number
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
+   */
+  source?: 'browser' | 'flutter' | undefined
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
+   */
+  sdkVersion?: string | undefined
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
+   */
+  variant?: string | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -262,6 +283,11 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
+
+  // internal
+  sdkVersion: string | undefined
+  source: 'browser' | 'flutter'
+  variant: string | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -361,6 +387,13 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
      */
     batchMessagesLimit: 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
+
+    /**
+     * The source of the SDK, used for support plugins purposes.
+     */
+    variant: initConfiguration.variant,
+    sdkVersion: initConfiguration.sdkVersion,
+
     ...computeTransportConfiguration(initConfiguration),
   }
 }
@@ -384,5 +417,8 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
+    source: initConfiguration.source,
+    sdk_version: initConfiguration.sdkVersion,
+    variant: initConfiguration.variant,
   } satisfies RawTelemetryConfiguration
 }

@@ -4,8 +4,34 @@ export function getGithubDeployKey(): string {
   return getSecretKey('ci.browser-sdk.github_deploy_key')
 }
 
-export function getGithubAccessToken(): string {
-  return getSecretKey('ci.browser-sdk.github_access_token')
+export class OctoStsToken {
+  readonly value: string
+
+  constructor(name: string) {
+    this.value = command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.${name}`.run().trim()
+  }
+
+  [Symbol.dispose]() {
+    command`dd-octo-sts revoke --token ${this.value}`.run()
+  }
+}
+
+/**
+ * This token is scoped to main branch only.
+ */
+export function getGithubPullRequestToken() {
+  return new OctoStsToken('pull_request')
+}
+
+/**
+ * This token is scoped to tags only.
+ */
+export function getGithubReleaseToken() {
+  return new OctoStsToken('release')
+}
+
+export function getGithubReadToken() {
+  return new OctoStsToken('read')
 }
 
 export function getOrg2ApiKey(): string {
