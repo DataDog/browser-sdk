@@ -19,6 +19,7 @@ import {
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
+  waitSessionOperations,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -66,8 +67,9 @@ describe('preStartRum', () => {
       strategy = createPreStartStrategy({}, createTrackingConsentState(), createCustomVitalsState(), doStartRumSpy)
     })
 
-    it('should start when the configuration is valid', () => {
+    it('should start when the configuration is valid', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(displaySpy).not.toHaveBeenCalled()
       expect(doStartRumSpy).toHaveBeenCalled()
     })
@@ -78,22 +80,25 @@ describe('preStartRum', () => {
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
-    it('should not start when the configuration is invalid', () => {
+    it('should not start when the configuration is invalid', async () => {
       strategy.init(INVALID_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(displaySpy).toHaveBeenCalled()
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
     describe('multiple init', () => {
-      it('should log an error if init is called several times', () => {
+      it('should log an error if init is called several times', async () => {
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        await waitSessionOperations()
         expect(displaySpy).toHaveBeenCalledTimes(0)
 
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        await waitSessionOperations()
         expect(displaySpy).toHaveBeenCalledTimes(1)
       })
 
-      it('should not log an error if init is called several times and silentMultipleInit is true', () => {
+      it('should not log an error if init is called several times and silentMultipleInit is true', async () => {
         strategy.init(
           {
             ...DEFAULT_INIT_CONFIGURATION,
@@ -101,6 +106,7 @@ describe('preStartRum', () => {
           },
           PUBLIC_API
         )
+        await waitSessionOperations()
         expect(displaySpy).toHaveBeenCalledTimes(0)
 
         strategy.init(
@@ -110,63 +116,70 @@ describe('preStartRum', () => {
           },
           PUBLIC_API
         )
+        await waitSessionOperations()
         expect(displaySpy).toHaveBeenCalledTimes(0)
       })
     })
 
     describe('if event bridge present', () => {
-      it('init should accept empty application id and client token', () => {
+      it('init should accept empty application id and client token', async () => {
         mockEventBridge()
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
+        await waitSessionOperations()
         expect(display.error).not.toHaveBeenCalled()
       })
 
-      it('should force session sample rate to 100', () => {
+      it('should force session sample rate to 100', async () => {
         mockEventBridge()
         const invalidConfiguration: HybridInitConfiguration = { sessionSampleRate: 50 }
         strategy.init(invalidConfiguration as RumInitConfiguration, PUBLIC_API)
+        await waitSessionOperations()
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(100)
       })
 
-      it('should set the default privacy level received from the bridge if the not provided in the init configuration', () => {
+      it('should set the default privacy level received from the bridge if the not provided in the init configuration', async () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
+        await waitSessionOperations()
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           DefaultPrivacyLevel.ALLOW
         )
       })
 
-      it('should set the default privacy level from the init configuration if provided', () => {
+      it('should set the default privacy level from the init configuration if provided', async () => {
         mockEventBridge({ privacyLevel: DefaultPrivacyLevel.ALLOW })
         const hybridInitConfiguration: HybridInitConfiguration = { defaultPrivacyLevel: DefaultPrivacyLevel.MASK }
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
+        await waitSessionOperations()
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           hybridInitConfiguration.defaultPrivacyLevel
         )
       })
 
-      it('should set the default privacy level to "mask" if not provided in init configuration nor the bridge', () => {
+      it('should set the default privacy level to "mask" if not provided in init configuration nor the bridge', async () => {
         mockEventBridge({ privacyLevel: undefined })
         const hybridInitConfiguration: HybridInitConfiguration = {}
         strategy.init(hybridInitConfiguration as RumInitConfiguration, PUBLIC_API)
+        await waitSessionOperations()
         expect((strategy.initConfiguration as RumInitConfiguration)?.defaultPrivacyLevel).toEqual(
           DefaultPrivacyLevel.MASK
         )
       })
 
-      it('should initialize even if session cannot be handled', () => {
+      it('should initialize even if session cannot be handled', async () => {
         mockEventBridge()
         spyOnProperty(document, 'cookie', 'get').and.returnValue('')
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        await waitSessionOperations()
         expect(doStartRumSpy).toHaveBeenCalled()
       })
     })
   })
 
   describe('init', () => {
-    it('should not initialize if session cannot be handled and bridge is not present', () => {
+    it('should not initialize if session cannot be handled and bridge is not present', async () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const displaySpy = spyOn(display, 'warn')
       const strategy = createPreStartStrategy(
@@ -176,12 +189,13 @@ describe('preStartRum', () => {
         doStartRumSpy
       )
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(doStartRumSpy).not.toHaveBeenCalled()
       expect(displaySpy).toHaveBeenCalled()
     })
 
     describe('skipInitIfSyntheticsWillInjectRum option', () => {
-      it('when true, ignores init() call if Synthetics will inject its own instance of RUM', () => {
+      it('when true, ignores init() call if Synthetics will inject its own instance of RUM', async () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
 
         const strategy = createPreStartStrategy(
@@ -193,11 +207,12 @@ describe('preStartRum', () => {
           doStartRumSpy
         )
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        await waitSessionOperations()
 
         expect(doStartRumSpy).not.toHaveBeenCalled()
       })
 
-      it('when undefined, ignores init() call if Synthetics will inject its own instance of RUM', () => {
+      it('when undefined, ignores init() call if Synthetics will inject its own instance of RUM', async () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
 
         const strategy = createPreStartStrategy(
@@ -207,11 +222,12 @@ describe('preStartRum', () => {
           doStartRumSpy
         )
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        await waitSessionOperations()
 
         expect(doStartRumSpy).not.toHaveBeenCalled()
       })
 
-      it('when false, does not ignore init() call even if Synthetics will inject its own instance of RUM', () => {
+      it('when false, does not ignore init() call even if Synthetics will inject its own instance of RUM', async () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
 
         const strategy = createPreStartStrategy(
@@ -223,6 +239,7 @@ describe('preStartRum', () => {
           doStartRumSpy
         )
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+        await waitSessionOperations()
 
         expect(doStartRumSpy).toHaveBeenCalled()
       })
@@ -247,8 +264,9 @@ describe('preStartRum', () => {
       })
 
       describe('with compressIntakeRequests: false', () => {
-        it('does not create a deflate worker', () => {
+        it('does not create a deflate worker', async () => {
           strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+          await waitSessionOperations()
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
@@ -257,7 +275,7 @@ describe('preStartRum', () => {
       })
 
       describe('with compressIntakeRequests: true', () => {
-        it('creates a deflate worker instance', () => {
+        it('creates a deflate worker instance', async () => {
           strategy.init(
             {
               ...DEFAULT_INIT_CONFIGURATION,
@@ -265,13 +283,14 @@ describe('preStartRum', () => {
             },
             PUBLIC_API
           )
+          await waitSessionOperations()
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
           const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
           expect(worker).toBeDefined()
         })
 
-        it('aborts the initialization if it fails to create a deflate worker', () => {
+        it('aborts the initialization if it fails to create a deflate worker', async () => {
           startDeflateWorkerSpy.and.returnValue(undefined)
 
           strategy.init(
@@ -281,11 +300,12 @@ describe('preStartRum', () => {
             },
             PUBLIC_API
           )
+          await waitSessionOperations()
 
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
 
-        it('if message bridge is present, does not create a deflate worker instance', () => {
+        it('if message bridge is present, does not create a deflate worker instance', async () => {
           mockEventBridge()
 
           strategy.init(
@@ -295,6 +315,7 @@ describe('preStartRum', () => {
             },
             PUBLIC_API
           )
+          await waitSessionOperations()
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           expect(doStartRumSpy).toHaveBeenCalledTimes(1)
@@ -322,13 +343,14 @@ describe('preStartRum', () => {
       })
 
       describe('when auto', () => {
-        it('should start rum at init', () => {
+        it('should start rum at init', async () => {
           strategy.init(AUTO_CONFIGURATION, PUBLIC_API)
+          await waitSessionOperations()
 
           expect(doStartRumSpy).toHaveBeenCalled()
         })
 
-        it('before init startView should be handled after init', () => {
+        it('before init startView should be handled after init', async () => {
           clock = mockClock()
 
           clock.tick(10)
@@ -338,6 +360,7 @@ describe('preStartRum', () => {
 
           clock.tick(20)
           strategy.init(AUTO_CONFIGURATION, PUBLIC_API)
+          await waitSessionOperations()
 
           expect(startViewSpy).toHaveBeenCalled()
           expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
@@ -349,25 +372,27 @@ describe('preStartRum', () => {
       })
 
       describe('when views are tracked manually', () => {
-        it('should not start rum at init', () => {
+        it('should not start rum at init', async () => {
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
+          await waitSessionOperations()
 
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
 
-        it('calling startView then init should start rum', () => {
+        it('calling startView then init should start rum', async () => {
           strategy.startView({ name: 'foo' })
           expect(doStartRumSpy).not.toHaveBeenCalled()
           expect(startViewSpy).not.toHaveBeenCalled()
 
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
+          await waitSessionOperations()
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
           expect(startViewSpy).not.toHaveBeenCalled()
         })
 
-        it('calling startView then init does not start rum if tracking consent is not granted', () => {
+        it('calling startView then init does not start rum if tracking consent is not granted', async () => {
           const strategy = createPreStartStrategy(
             {},
             createTrackingConsentState(),
@@ -382,10 +407,11 @@ describe('preStartRum', () => {
             },
             PUBLIC_API
           )
+          await waitSessionOperations()
           expect(doStartRumSpy).not.toHaveBeenCalled()
         })
 
-        it('calling startView twice before init should start rum and create a new view', () => {
+        it('calling startView twice before init should start rum and create a new view', async () => {
           clock = mockClock()
           clock.tick(10)
           strategy.startView({ name: 'foo' })
@@ -395,6 +421,7 @@ describe('preStartRum', () => {
 
           clock.tick(10)
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
+          await waitSessionOperations()
 
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
@@ -402,8 +429,9 @@ describe('preStartRum', () => {
           expect(startViewSpy).toHaveBeenCalledOnceWith({ name: 'bar' }, relativeToClocks(clock.relative(20)))
         })
 
-        it('calling init then startView should start rum', () => {
+        it('calling init then startView should start rum', async () => {
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
+          await waitSessionOperations()
           expect(doStartRumSpy).not.toHaveBeenCalled()
           expect(startViewSpy).not.toHaveBeenCalled()
 
@@ -414,7 +442,7 @@ describe('preStartRum', () => {
           expect(startViewSpy).not.toHaveBeenCalled()
         })
 
-        it('API calls should be handled in order', () => {
+        it('API calls should be handled in order', async () => {
           clock = mockClock()
 
           clock.tick(10)
@@ -428,6 +456,7 @@ describe('preStartRum', () => {
 
           clock.tick(10)
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
+          await waitSessionOperations()
 
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
 
@@ -448,6 +477,7 @@ describe('preStartRum', () => {
       })
 
       it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
+        // TODO
         interceptor.withFetch(() =>
           Promise.resolve({
             ok: true,
@@ -475,7 +505,7 @@ describe('preStartRum', () => {
     })
 
     describe('plugins', () => {
-      it('calls the onInit method on provided plugins', () => {
+      it('calls the onInit method on provided plugins', async () => {
         const plugin = { name: 'a', onInit: jasmine.createSpy() }
         const strategy = createPreStartStrategy(
           {},
@@ -485,6 +515,7 @@ describe('preStartRum', () => {
         )
         const initConfiguration: RumInitConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
         strategy.init(initConfiguration, PUBLIC_API)
+        await waitSessionOperations()
 
         expect(plugin.onInit).toHaveBeenCalledWith({
           initConfiguration,
@@ -492,7 +523,7 @@ describe('preStartRum', () => {
         })
       })
 
-      it('plugins can edit the init configuration prior to validation', () => {
+      it('plugins can edit the init configuration prior to validation', async () => {
         const plugin: RumPlugin = {
           name: 'a',
           onInit: ({ initConfiguration }) => {
@@ -512,6 +543,7 @@ describe('preStartRum', () => {
           } as RumInitConfiguration,
           PUBLIC_API
         )
+        await waitSessionOperations()
 
         expect(doStartRumSpy).toHaveBeenCalled()
         expect(doStartRumSpy.calls.mostRecent().args[0].applicationId).toBe('application-id')
@@ -544,7 +576,7 @@ describe('preStartRum', () => {
   })
 
   describe('stopSession', () => {
-    it('does not buffer the call before starting RUM', () => {
+    it('does not buffer the call before starting RUM', async () => {
       const strategy = createPreStartStrategy(
         {},
         createTrackingConsentState(),
@@ -556,6 +588,7 @@ describe('preStartRum', () => {
 
       strategy.stopSession()
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(stopSessionSpy).not.toHaveBeenCalled()
     })
   })
@@ -579,13 +612,14 @@ describe('preStartRum', () => {
       expect(strategy.initConfiguration).toBe(undefined)
     })
 
-    it('returns the user configuration after init', () => {
+    it('returns the user configuration after init', async () => {
       strategy.init(initConfiguration, PUBLIC_API)
+      await waitSessionOperations()
 
       expect(strategy.initConfiguration).toEqual(initConfiguration)
     })
 
-    it('returns the user configuration even if skipInitIfSyntheticsWillInjectRum is true', () => {
+    it('returns the user configuration even if skipInitIfSyntheticsWillInjectRum is true', async () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
 
       const strategy = createPreStartStrategy(
@@ -597,6 +631,7 @@ describe('preStartRum', () => {
         doStartRumSpy
       )
       strategy.init(initConfiguration, PUBLIC_API)
+      await waitSessionOperations()
 
       expect(strategy.initConfiguration).toEqual(initConfiguration)
     })
@@ -630,7 +665,7 @@ describe('preStartRum', () => {
       strategy = createPreStartStrategy({}, createTrackingConsentState(), createCustomVitalsState(), doStartRumSpy)
     })
 
-    it('addAction', () => {
+    it('addAction', async () => {
       const addActionSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
 
@@ -641,10 +676,11 @@ describe('preStartRum', () => {
       }
       strategy.addAction(customAction)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(addActionSpy).toHaveBeenCalledOnceWith(customAction)
     })
 
-    it('addError', () => {
+    it('addError', async () => {
       const addErrorSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ addError: addErrorSpy } as unknown as StartRumResult)
 
@@ -656,10 +692,11 @@ describe('preStartRum', () => {
       }
       strategy.addError(error)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(addErrorSpy).toHaveBeenCalledOnceWith(error)
     })
 
-    it('startView', () => {
+    it('startView', async () => {
       const startViewSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ startView: startViewSpy } as unknown as StartRumResult)
 
@@ -667,10 +704,11 @@ describe('preStartRum', () => {
       const clockState = clocksNow()
       strategy.startView(options, clockState)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(startViewSpy).toHaveBeenCalledOnceWith(options, clockState)
     })
 
-    it('addTiming', () => {
+    it('addTiming', async () => {
       const addTimingSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ addTiming: addTimingSpy } as unknown as StartRumResult)
 
@@ -678,38 +716,42 @@ describe('preStartRum', () => {
       const time = 123 as TimeStamp
       strategy.addTiming(name, time)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(addTimingSpy).toHaveBeenCalledOnceWith(name, time)
     })
 
-    it('setViewContext', () => {
+    it('setViewContext', async () => {
       const setViewContextSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ setViewContext: setViewContextSpy } as unknown as StartRumResult)
 
       strategy.setViewContext({ foo: 'bar' })
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(setViewContextSpy).toHaveBeenCalledOnceWith({ foo: 'bar' })
     })
 
-    it('setViewContextProperty', () => {
+    it('setViewContextProperty', async () => {
       const setViewContextPropertySpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ setViewContextProperty: setViewContextPropertySpy } as unknown as StartRumResult)
 
       strategy.setViewContextProperty('foo', 'bar')
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(setViewContextPropertySpy).toHaveBeenCalledOnceWith('foo', 'bar')
     })
 
-    it('setViewName', () => {
+    it('setViewName', async () => {
       const setViewNameSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ setViewName: setViewNameSpy } as unknown as StartRumResult)
 
       const name = 'foo'
       strategy.setViewName(name)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(setViewNameSpy).toHaveBeenCalledOnceWith(name)
     })
 
-    it('addFeatureFlagEvaluation', () => {
+    it('addFeatureFlagEvaluation', async () => {
       const addFeatureFlagEvaluationSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({
         addFeatureFlagEvaluation: addFeatureFlagEvaluationSpy,
@@ -719,10 +761,11 @@ describe('preStartRum', () => {
       const value = 'bar'
       strategy.addFeatureFlagEvaluation(key, value)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(addFeatureFlagEvaluationSpy).toHaveBeenCalledOnceWith(key, value)
     })
 
-    it('startDurationVital', () => {
+    it('startDurationVital', async () => {
       const addDurationVitalSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({
         addDurationVital: addDurationVitalSpy,
@@ -732,10 +775,11 @@ describe('preStartRum', () => {
       strategy.stopDurationVital('timing')
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(addDurationVitalSpy).toHaveBeenCalled()
     })
 
-    it('addDurationVital', () => {
+    it('addDurationVital', async () => {
       const addDurationVitalSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({
         addDurationVital: addDurationVitalSpy,
@@ -744,6 +788,7 @@ describe('preStartRum', () => {
       const vitalAdd = { name: 'timing', type: VitalType.DURATION, startClocks: clocksNow(), duration: 100 as Duration }
       strategy.addDurationVital(vitalAdd)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       expect(addDurationVitalSpy).toHaveBeenCalledOnceWith(vitalAdd)
     })
   })
@@ -775,7 +820,7 @@ describe('preStartRum', () => {
       })
     })
 
-    it('does not start rum if tracking consent is not granted at init', () => {
+    it('does not start rum if tracking consent is not granted at init', async () => {
       strategy.init(
         {
           ...DEFAULT_INIT_CONFIGURATION,
@@ -783,10 +828,11 @@ describe('preStartRum', () => {
         },
         PUBLIC_API
       )
+      await waitSessionOperations()
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
-    it('starts rum if tracking consent is granted before init', () => {
+    it('starts rum if tracking consent is granted before init', async () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
       strategy.init(
         {
@@ -795,10 +841,11 @@ describe('preStartRum', () => {
         },
         PUBLIC_API
       )
+      await waitSessionOperations()
       expect(doStartRumSpy).toHaveBeenCalledTimes(1)
     })
 
-    it('does not start rum if tracking consent is withdrawn before init', () => {
+    it('does not start rum if tracking consent is withdrawn before init', async () => {
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
       strategy.init(
         {
@@ -807,10 +854,11 @@ describe('preStartRum', () => {
         },
         PUBLIC_API
       )
+      await waitSessionOperations()
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
-    it('does not start rum if no view is started', () => {
+    it('does not start rum if no view is started', async () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
       strategy.init(
         {
@@ -819,11 +867,13 @@ describe('preStartRum', () => {
         },
         PUBLIC_API
       )
+      await waitSessionOperations()
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
 
-    it('do not call startRum when tracking consent state is updated after init', () => {
+    it('do not call startRum when tracking consent state is updated after init', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      await waitSessionOperations()
       doStartRumSpy.calls.reset()
 
       trackingConsentState.update(TrackingConsent.GRANTED)

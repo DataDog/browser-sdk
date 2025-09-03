@@ -229,7 +229,10 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   return {
-    expandOrRenewSession: throttledExpandOrRenewSession,
+    expandOrRenewSession: (cb) => {
+      console.trace('exand or renew')
+      throttledExpandOrRenewSession(cb)
+    },
     expandSession,
     getSession: () => sessionCache,
     renewObservable,

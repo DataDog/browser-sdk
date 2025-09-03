@@ -6,6 +6,7 @@ import { addTelemetryDebug } from '../telemetry'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
+import { monitorError } from '../../tools/monitor'
 
 interface Operations {
   process: (sessionState: SessionState) => SessionState | undefined
@@ -14,6 +15,7 @@ interface Operations {
 
 export const LOCK_RETRY_DELAY = 10
 export const LOCK_MAX_TRIES = 100
+export const LOCK_NAME = 'dd_session_lock'
 
 // Locks should be hold for a few milliseconds top, just the time it takes to read and write a
 // cookie. Using one second should be enough in most situations.
@@ -23,7 +25,33 @@ const LOCK_SEPARATOR = '--'
 const bufferedOperations: Operations[] = []
 let ongoingOperations: Operations | undefined
 
-export function processSessionStoreOperations(
+export function processSessionStoreOperations(operations: Operations, sessionStoreStrategy: SessionStoreStrategy) {
+  //legacyProcessSessionStoreOperations(operations, sessionStoreStrategy)
+  futureProcessSessionStoreOperations(operations, sessionStoreStrategy)
+}
+
+export function futureProcessSessionStoreOperations(
+  operations: Operations,
+  { persistSession, expireSession, retrieveSession }: SessionStoreStrategy
+) {
+  navigator.locks
+    .request(LOCK_NAME, () => {
+      const originalSessionState = retrieveSession()
+      const processedSessionState = operations.process(originalSessionState)
+      if (processedSessionState) {
+        if (isSessionInExpiredState(processedSessionState)) {
+          expireSession(processedSessionState)
+        } else {
+          expandSessionState(processedSessionState)
+          persistSession(processedSessionState)
+        }
+      }
+      operations.after?.(processedSessionState || originalSessionState)
+    })
+    .catch(monitorError)
+}
+
+export function legacyProcessSessionStoreOperations(
   operations: Operations,
   sessionStoreStrategy: SessionStoreStrategy,
   numberOfRetries = 0
@@ -79,6 +107,7 @@ export function processSessionStoreOperations(
       return
     }
   }
+  console.log('processedSession', processedSession)
   if (processedSession) {
     if (isSessionInExpiredState(processedSession)) {
       expireSession(processedSession)
@@ -113,7 +142,7 @@ export function processSessionStoreOperations(
 
 function retryLater(operations: Operations, sessionStore: SessionStoreStrategy, currentNumberOfRetries: number) {
   setTimeout(() => {
-    processSessionStoreOperations(operations, sessionStore, currentNumberOfRetries + 1)
+    legacyProcessSessionStoreOperations(operations, sessionStore, currentNumberOfRetries + 1)
   }, LOCK_RETRY_DELAY)
 }
 

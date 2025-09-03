@@ -4,6 +4,7 @@ import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { CommonContext } from '../rawLogsEvent.types'
+import { waitSessionOperations } from '../../../core/test'
 import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs } from './startLogs'
@@ -72,9 +73,10 @@ describe('logs entry', () => {
   describe('common context', () => {
     let LOGS: LogsPublicApi
 
-    beforeEach(() => {
+    beforeEach(async () => {
       LOGS = makeLogsPublicApi(startLogs)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
+      await waitSessionOperations()
     })
 
     it('should have the current date, view and global context', () => {
@@ -93,9 +95,10 @@ describe('logs entry', () => {
   describe('post start API usages', () => {
     let LOGS: LogsPublicApi
 
-    beforeEach(() => {
+    beforeEach(async () => {
       LOGS = makeLogsPublicApi(startLogs)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
+      await waitSessionOperations()
     })
 
     it('main logger logs a message', () => {
@@ -172,9 +175,10 @@ describe('logs entry', () => {
     })
 
     describe('internal context', () => {
-      it('should get the internal context', () => {
+      it('should get the internal context', async () => {
         const LOGS = makeLogsPublicApi(startLogs)
         LOGS.init(DEFAULT_INIT_CONFIGURATION)
+        await waitSessionOperations()
         expect(LOGS.getInternalContext()?.session_id).toEqual(mockSessionId)
       })
     })
@@ -182,7 +186,7 @@ describe('logs entry', () => {
     describe('user', () => {
       let logsPublicApi: LogsPublicApi
       let userContext: ContextManager
-      beforeEach(() => {
+      beforeEach(async () => {
         userContext = createContextManager('mock')
         startLogs = jasmine
           .createSpy()
@@ -191,6 +195,8 @@ describe('logs entry', () => {
         logsPublicApi = makeLogsPublicApi(startLogs)
 
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        await waitSessionOperations()
       })
 
       it('should call setContext', () => {
@@ -221,7 +227,7 @@ describe('logs entry', () => {
     describe('account', () => {
       let logsPublicApi: LogsPublicApi
       let accountContext: ContextManager
-      beforeEach(() => {
+      beforeEach(async () => {
         accountContext = createContextManager('mock')
         startLogs = jasmine.createSpy().and.callFake(() => ({
           handleLog: handleLogSpy,
@@ -232,6 +238,7 @@ describe('logs entry', () => {
         logsPublicApi = makeLogsPublicApi(startLogs)
 
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        await waitSessionOperations()
       })
 
       it('should call setContext', () => {
