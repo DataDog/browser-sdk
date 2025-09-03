@@ -129,6 +129,7 @@ function processViewUpdate(
         count: view.eventCounts.longTaskCount,
       },
       performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
+      not_restored_reasons: view.initialViewMetrics.navigationTimings?.notRestoredReasons,
       resource: {
         count: view.eventCounts.resourceCount,
       },
