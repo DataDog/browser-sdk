@@ -40,6 +40,8 @@ import {
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
+import type { GraphQlMetadata } from './graphql'
+import { findGraphQlConfiguration, extractGraphQlMetadata } from './graphql'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
@@ -133,6 +135,8 @@ function assembleResource(
     ? computeResourceEntryDuration(entry)
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
+  const { graphql } = computeGraphQlData(request, configuration)
+
   const resourceEvent = combine(
     {
       date: startClocks.timeStamp,
@@ -150,6 +154,7 @@ function assembleResource(
         url: request ? sanitizeIfLongDataUrl(request.url) : entry!.name,
         protocol: entry && computeResourceEntryProtocol(entry),
         delivery_type: entry && computeResourceEntryDeliveryType(entry),
+        graphql,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -165,6 +170,29 @@ function assembleResource(
     duration,
     rawRumEvent: resourceEvent,
     domainContext: getResourceDomainContext(entry, request),
+  }
+}
+
+function computeGraphQlData(
+  request: RequestCompleteEvent | undefined,
+  configuration: RumConfiguration
+): { graphql?: GraphQlMetadata } {
+  if (!request || request.type !== RequestType.FETCH) {
+    return {}
+  }
+
+  const graphQlConfig = findGraphQlConfiguration(request.url, configuration)
+  if (!graphQlConfig) {
+    return {}
+  }
+
+  const graphqlMetadata = extractGraphQlMetadata(request.init?.body, graphQlConfig.trackPayload)
+  if (!graphqlMetadata) {
+    return {}
+  }
+
+  return {
+    graphql: graphqlMetadata,
   }
 }
 
