@@ -6,7 +6,7 @@ export function containsExtensionUrl(str: string): boolean {
 
 /**
  * Utility function to detect if the SDK is being initialized in an unsupported browser extension environment.
- * Note: Because we check error stack, this will not work if the error stack is too long as Chrome truncates it.
+ * Note: Because we check error stack, this will not work if the error stack is too long as Browsers truncates it.
  *
  * @param windowLocation - The current window location to check
  * @param stack - The error stack to check for extension URLs

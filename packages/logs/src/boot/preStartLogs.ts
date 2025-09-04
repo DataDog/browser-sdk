@@ -25,7 +25,7 @@ export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
   doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult,
-  errorStack?: string
+  getErrorStack?: () => string | undefined
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
@@ -76,7 +76,7 @@ export function createPreStartStrategy(
         return
       }
 
-      const configuration = validateAndBuildLogsConfiguration(initConfiguration, errorStack)
+      const configuration = validateAndBuildLogsConfiguration(initConfiguration, getErrorStack?.())
       if (!configuration) {
         return
       }

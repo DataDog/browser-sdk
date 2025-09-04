@@ -339,7 +339,7 @@ export function validateAndBuildConfiguration(
     !isString(initConfiguration.version, 'Version') ||
     !isString(initConfiguration.env, 'Env') ||
     !isString(initConfiguration.service, 'Service') ||
-    !isAllowedTrackingOrigins(initConfiguration, undefined, errorStack)
+    !isAllowedTrackingOrigins(initConfiguration, errorStack!, undefined)
   ) {
     return
   }

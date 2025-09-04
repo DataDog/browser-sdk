@@ -505,8 +505,7 @@ export function makeRumPublicApi(
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
   const bufferedDataObservable = startBufferingData().observable
-  const errorStack = new Error().stack
-
+  let initErrorStackProvider: (() => string | undefined) | undefined
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
@@ -552,7 +551,7 @@ export function makeRumPublicApi(
 
       return startRumResult
     },
-    errorStack
+    () => initErrorStackProvider?.()
   )
   const getStrategy = () => strategy
 
@@ -567,6 +566,7 @@ export function makeRumPublicApi(
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: monitor((initConfiguration) => {
+      initErrorStackProvider = () => new Error().stack
       strategy.init(initConfiguration, rumPublicApi)
     }),
 
