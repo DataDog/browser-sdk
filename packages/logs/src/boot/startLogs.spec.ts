@@ -2,8 +2,6 @@ import type { BufferedData, Payload } from '@datadog/browser-core'
 import {
   ErrorSource,
   display,
-  getCookie,
-  SESSION_STORE_KEY,
   createTrackingConsentState,
   TrackingConsent,
   STORAGE_POLL_DELAY,
@@ -14,7 +12,6 @@ import {
   interceptRequests,
   mockEndpointBuilder,
   mockEventBridge,
-  mockSyntheticsWorkerValues,
   registerCleanupTask,
   mockClock,
   DEFAULT_FETCH_MOCK,
