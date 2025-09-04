@@ -1,6 +1,7 @@
 import type { PlaywrightWorkerOptions } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { getBuildInfos } from '../../../envUtils'
+import packageJson from '../../../../package.json'
 
 export const DEV_SERVER_BASE_URL = 'http://localhost:8080'
 
@@ -22,6 +23,7 @@ export function getEncodedCapabilities(configuration: BrowserConfiguration) {
 
 // see: https://www.browserstack.com/docs/automate/playwright/playwright-capabilities
 function getCapabilities(configuration: BrowserConfiguration) {
+  const playwrightVersion = resolvePlaywrightVersionFromPackageJson()
   return {
     os: configuration.os,
     os_version: configuration.osVersion,
@@ -33,11 +35,23 @@ function getCapabilities(configuration: BrowserConfiguration) {
     build: getBuildInfos(),
     name: configuration.sessionName,
     'browserstack.local': true,
-    'browserstack.playwrightVersion': '1.latest',
-    'client.playwrightVersion': '1.latest',
+    'browserstack.playwrightVersion': playwrightVersion,
+    'client.playwrightVersion': playwrightVersion,
     'browserstack.debug': false,
     'browserstack.console': 'info',
     'browserstack.networkLogs': false,
     'browserstack.interactiveDebugging': false,
   }
+}
+
+function resolvePlaywrightVersionFromPackageJson(): string {
+  const rootPkg = packageJson as unknown as {
+    devDependencies?: Record<string, string>
+    dependencies?: Record<string, string>
+  }
+  const version = rootPkg.devDependencies?.['@playwright/test'] || rootPkg.dependencies?.['@playwright/test']
+  if (!version) {
+    throw new Error('Unable to resolve @playwright/test version from package.json')
+  }
+  return version
 }
