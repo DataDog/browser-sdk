@@ -7,9 +7,6 @@
     <script src="http://localhost:8080/datadog-logs.js"></script>
     <script src="http://localhost:8080/datadog-flagging.js"></script>
     <script>
-      const plugin = DD_RUM.createStreamPlugin()
-      window.stream = plugin.createStream()
-
       DD_RUM.init({
         clientToken: 'xxx',
         applicationId: 'xxx',
@@ -20,7 +17,6 @@
         telemetryConfigurationSampleRate: 100,
         telemetryUsageSampleRate: 100,
         enableExperimentalFeatures: [],
-        plugins: [plugin.plugin]
       })
       DD_LOGS.init({
         clientToken: 'xxx',
@@ -30,8 +26,6 @@
         enableExperimentalFeatures: [],
       })
       DD_FLAGGING.init()
-
-
     </script>
   </head>
 
