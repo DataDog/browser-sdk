@@ -1,19 +1,15 @@
 import { Link, Outlet, RouterProvider, useParams } from 'react-router-dom'
 import React, { useEffect, useState } from 'react'
 import ReactDOM from 'react-dom/client'
-import { datadogRum, createStreamPlugin } from '@datadog/browser-rum'
+import { datadogRum } from '@datadog/browser-rum'
 import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
 import { reactPlugin, ErrorBoundary, UNSTABLE_ReactComponentTracker } from '@datadog/browser-rum-react'
 import { datadogFlagging } from '@datadog/browser-flagging'
 
-const stream = createStreamPlugin()
-// @ts-ignore
-window.stream = stream.createStream()
-
 datadogRum.init({
   applicationId: 'xxx',
   clientToken: 'xxx',
-  plugins: [reactPlugin({ router: true }), stream.plugin],
+  plugins: [reactPlugin({ router: true })],
 })
 
 datadogFlagging.init({})
