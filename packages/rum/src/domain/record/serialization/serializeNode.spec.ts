@@ -886,12 +886,12 @@ describe('serializeNodeWithId', () => {
 
       it('obfuscates text content not in allowlist', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
-        const textContents = getAllTextContents(serializedDoc)
-        for (const textContent of textContents) {
-          if (textContent && isAllowlisted(textContent)) {
-            expect(textContent).not.toEqual(jasmine.stringMatching(/^[x\s*]*$/))
+        const attributeValues = getAllAttributeValues(serializedDoc)
+        for (const attributeValue of attributeValues) {
+          if (isAllowlisted(attributeValue)) {
+            expect(attributeValue).not.toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           } else {
-            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
+            expect(attributeValue).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }
       })
@@ -912,7 +912,9 @@ describe('serializeNodeWithId', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
-          if (textContent.trim() && !isAllowlisted(textContent)) {
+          if (isAllowlisted(textContent)) {
+            expect(textContent).not.toEqual(jasmine.stringMatching(/^[x*]+$/))
+          } else {
             expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }
@@ -960,6 +962,13 @@ describe('serializeNodeWithId', () => {
           (result, child) => result.concat(getAllTextContents(child)),
           []
         )
+      }
+      return []
+    }
+
+    function getAllAttributeValues(serializedNode: SerializedNodeWithId): string[] {
+      if (serializedNode.type === NodeType.Element) {
+        return Object.values(serializedNode.attributes as Record<string, string>)
       }
       return []
     }

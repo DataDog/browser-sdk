@@ -297,9 +297,12 @@ export interface BrowserWindow extends Window {
 }
 
 export function isAllowlisted(text: string): boolean {
+  if (!text || !text.trim()) {
+    return true
+  }
   // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
   // so we need to do the same here
-  return !text.trim() || (window as BrowserWindow).$DD_ALLOW?.has(text.toLocaleLowerCase()) || false
+  return (window as BrowserWindow).$DD_ALLOW?.has(text.toLocaleLowerCase()) || false
 }
 
 export function maskDisallowedTextContent(text: string, fixedMask?: string): string {

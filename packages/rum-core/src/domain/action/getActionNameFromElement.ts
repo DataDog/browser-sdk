@@ -36,8 +36,8 @@ export function getActionNameFromElement(
   }
 
   return (
-    getActionNameFromElementForStrategies(element, priorityStrategies, rumConfiguration, nodePrivacyLevel) ||
-    getActionNameFromElementForStrategies(element, fallbackStrategies, rumConfiguration, nodePrivacyLevel) || {
+    getActionNameFromElementForStrategies(element, priorityStrategies, rumConfiguration) ||
+    getActionNameFromElementForStrategies(element, fallbackStrategies, rumConfiguration) || {
       name: '',
       nameSource: ActionNameSource.BLANK,
     }
@@ -59,7 +59,6 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
   rumConfiguration: RumConfiguration,
-  nodePrivacyLevel: NodePrivacyLevel
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
@@ -126,7 +125,6 @@ function getActionNameFromElementForStrategies(
   targetElement: Element,
   strategies: NameStrategy[],
   rumConfiguration: RumConfiguration,
-  nodePrivacyLevel: NodePrivacyLevel
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0
@@ -138,7 +136,7 @@ function getActionNameFromElementForStrategies(
     element.nodeName !== 'HEAD'
   ) {
     for (const strategy of strategies) {
-      const actionName = strategy(element, rumConfiguration, nodePrivacyLevel)
+      const actionName = strategy(element, rumConfiguration)
       if (actionName) {
         const { name, nameSource } = actionName
         const trimmedName = name && name.trim()
