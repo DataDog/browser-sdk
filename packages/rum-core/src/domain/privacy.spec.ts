@@ -422,11 +422,69 @@ describe('shouldMaskNode', () => {
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK_USER_INPUT)).toBeFalse()
     })
 
-    it('returns true if the privacy level is not ALLOW nor MASK_USER_INPUT or MASK_UNLESS_ALLOWLISTED', () => {
+    it('returns true if the privacy level is not ALLOW nor MASK_USER_INPUT nor MASK_UNLESS_ALLOWLISTED', () => {
       const element = document.createElement('div')
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.HIDDEN)).toBeTrue()
+    })
+
+    describe('when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
+      beforeEach(() => {
+        // Reset allowlist before each test
+        delete (window as any).$DD_ALLOW
+      })
+
+      describe('for text nodes', () => {
+        let textNode: Text
+
+        beforeEach(() => {
+          textNode = document.createTextNode('')
+        })
+
+        it('returns false for allowlisted text content', () => {
+          const allowedText = 'allowed text'
+          textNode.textContent = allowedText
+          ;(window as any).$DD_ALLOW = new Set([allowedText.toLocaleLowerCase()])
+          expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
+        })
+
+        it('returns false for whitespace-only text content', () => {
+          textNode.textContent = '   \n\t  '
+          expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
+        })
+
+        it('returns true for non-allowlisted, non-whitespace text content', () => {
+          textNode.textContent = 'some text'
+          expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
+        })
+
+        it('returns true if text node is child of a form element regardless of allowlist', () => {
+          const input = document.createElement('input')
+          textNode.textContent = 'some text'
+          input.appendChild(textNode)
+          ;(window as any).$DD_ALLOW = new Set(['some text'])
+          expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
+        })
+      })
+
+      describe('for non-text nodes', () => {
+        it('returns true for form elements', () => {
+          const input = document.createElement('input')
+          expect(shouldMaskNode(input, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
+
+          const textarea = document.createElement('textarea')
+          expect(shouldMaskNode(textarea, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
+        })
+
+        it('returns false for non-form elements', () => {
+          const div = document.createElement('div')
+          expect(shouldMaskNode(div, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
+
+          const span = document.createElement('span')
+          expect(shouldMaskNode(span, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
+        })
+      })
     })
   })
 })
@@ -455,13 +513,23 @@ describe('maskWithAllowlist', () => {
     expect(testString).toBe(ACTION_NAME_MASK)
   })
 
-  it('masks words not in allowlist (with dictionary from $DD_ALLOW)', () => {
+  it('masks text content not in allowlist (with dictionary from $DD_ALLOW)', () => {
     const testString = maskDisallowedTextContent('any unallowed string', ACTION_NAME_MASK)
     expect(testString).toBe(ACTION_NAME_MASK)
+  })
+
+  it('does not mask text content if it is in allowlist', () => {
+    const testString = maskDisallowedTextContent(TEST_STRINGS.COMPLEX_MIXED, ACTION_NAME_MASK)
+    expect(testString).toBe('xxx')
   })
 
   it('handles empty string', () => {
     const result = maskDisallowedTextContent('', ACTION_NAME_MASK)
     expect(result).toBe('')
+  })
+
+  it('handles whitespace-only string', () => {
+    const result = maskDisallowedTextContent('   \n\t  ', ACTION_NAME_MASK)
+    expect(result).toBe('   \n\t  ')
   })
 })

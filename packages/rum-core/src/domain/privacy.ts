@@ -100,12 +100,12 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     return NodePrivacyLevel.MASK
   }
 
-  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
-    return NodePrivacyLevel.MASK_USER_INPUT
-  }
-
   if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED))) {
     return NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+  }
+
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
+    return NodePrivacyLevel.MASK_USER_INPUT
   }
 
   if (node.matches(getPrivacySelector(NodePrivacyLevel.ALLOW))) {
@@ -297,15 +297,12 @@ export interface BrowserWindow extends Window {
 }
 
 export function isAllowlisted(text: string): boolean {
-  return (window as BrowserWindow).$DD_ALLOW?.has(text.toLocaleLowerCase()) || false
+  // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
+  // so we need to do the same here
+  return !text.trim() || (window as BrowserWindow).$DD_ALLOW?.has(text.toLocaleLowerCase()) || false
 }
 
 export function maskDisallowedTextContent(text: string, fixedMask?: string): string {
-  if (!text.trim()) {
-    return text
-  }
-  // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
-  // so we need to do the same here
   if (isAllowlisted(text)) {
     return text
   }

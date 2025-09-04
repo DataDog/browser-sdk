@@ -2,6 +2,7 @@ import { ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '../../../../core/test'
 import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacyConstants'
+import { getNodeSelfPrivacyLevel } from '../privacy'
 import { getActionNameFromElement } from './getActionNameFromElement'
 import { ActionNameSource } from './actionNameConstants'
 
@@ -544,7 +545,6 @@ describe('getActionNameFromElement', () => {
           </div>
           `,
           defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
-          nodePrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
           expectedName: '',
           expectedNameSource: 'blank',
         },
@@ -561,7 +561,6 @@ describe('getActionNameFromElement', () => {
           </div>
           `,
           defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
-          nodePrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
           allowlist: ['foo'],
           expectedName: 'foo',
           expectedNameSource: 'text_content',
@@ -576,7 +575,6 @@ describe('getActionNameFromElement', () => {
           </div>
           `,
           defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
-          nodePrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
           expectedName: 'baz',
           expectedNameSource: 'text_content',
         },
@@ -593,7 +591,6 @@ describe('getActionNameFromElement', () => {
           </div>
           `,
           defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
-          nodePrivacyLevel: NodePrivacyLevel.MASK,
           expectedName: 'Masked Element',
           expectedNameSource: 'mask_placeholder',
         },
@@ -610,7 +607,6 @@ describe('getActionNameFromElement', () => {
           </div>
           `,
           defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
-          nodePrivacyLevel: NodePrivacyLevel.ALLOW,
           expectedName: 'foo baz',
           expectedNameSource: 'text_content',
         },
@@ -627,7 +623,6 @@ describe('getActionNameFromElement', () => {
           </div>
           `,
           defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
-          nodePrivacyLevel: NodePrivacyLevel.ALLOW,
           expectedName: 'foo',
           expectedNameSource: 'text_content',
         },
@@ -644,29 +639,27 @@ describe('getActionNameFromElement', () => {
           </div>
           `,
           defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
-          nodePrivacyLevel: NodePrivacyLevel.ALLOW,
           allowlist: ['bar'],
           expectedName: 'foo bar baz',
           expectedNameSource: 'text_content',
         },
       ]
-      testCases.forEach(
-        ({ html, defaultPrivacyLevel, nodePrivacyLevel, allowlist, expectedName, expectedNameSource }) => {
-          mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
-          ;(window as BrowserWindow).$DD_ALLOW = new Set(allowlist)
-          const { name, nameSource } = getActionNameFromElement(
-            appendElement(html),
-            {
-              ...defaultConfiguration,
-              defaultPrivacyLevel,
-              enablePrivacyForActionName: true,
-            },
-            nodePrivacyLevel
-          )
-          expect(name).toBe(expectedName)
-          expect(nameSource).toBe(expectedNameSource)
-        }
-      )
+      testCases.forEach(({ html, defaultPrivacyLevel, allowlist, expectedName, expectedNameSource }) => {
+        mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+        ;(window as BrowserWindow).$DD_ALLOW = new Set(allowlist)
+        const target = appendElement(html)
+        const { name, nameSource } = getActionNameFromElement(
+          target,
+          {
+            ...defaultConfiguration,
+            defaultPrivacyLevel,
+            enablePrivacyForActionName: true,
+          },
+          getNodeSelfPrivacyLevel(target)
+        )
+        expect(name).toBe(expectedName)
+        expect(nameSource).toBe(expectedNameSource)
+      })
     })
   })
 

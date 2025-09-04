@@ -64,9 +64,9 @@ type NameStrategy = (
 
 const priorityStrategies: NameStrategy[] = [
   // associated LABEL text
-  (element, rumConfiguration, nodePrivacyLevel) => {
+  (element, rumConfiguration) => {
     if ('labels' in element && element.labels && element.labels.length > 0) {
-      return getActionNameFromTextualContent(element.labels[0], rumConfiguration, nodePrivacyLevel)
+      return getActionNameFromTextualContent(element.labels[0], rumConfiguration)
     }
   },
   // INPUT button (and associated) value
@@ -80,14 +80,14 @@ const priorityStrategies: NameStrategy[] = [
     }
   },
   // BUTTON, LABEL or button-like element text
-  (element, rumConfiguration, nodePrivacyLevel) => {
+  (element, rumConfiguration) => {
     if (element.nodeName === 'BUTTON' || element.nodeName === 'LABEL' || element.getAttribute('role') === 'button') {
-      return getActionNameFromTextualContent(element, rumConfiguration, nodePrivacyLevel)
+      return getActionNameFromTextualContent(element, rumConfiguration)
     }
   },
   (element) => getActionNameFromStandardAttribute(element, 'aria-label'),
   // associated element text designated by the aria-labelledby attribute
-  (element, rumConfiguration, nodePrivacyLevel) => {
+  (element, rumConfiguration) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
     if (labelledByAttribute) {
       return {
@@ -95,7 +95,7 @@ const priorityStrategies: NameStrategy[] = [
           .split(/\s+/)
           .map((id) => getElementById(element, id))
           .filter((label): label is HTMLElement => Boolean(label))
-          .map((element) => getTextualContent(element, rumConfiguration, nodePrivacyLevel))
+          .map((element) => getTextualContent(element, rumConfiguration))
           .join(' '),
         nameSource: ActionNameSource.TEXT_CONTENT,
       }
@@ -106,16 +106,15 @@ const priorityStrategies: NameStrategy[] = [
   (element) => getActionNameFromStandardAttribute(element, 'title'),
   (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
   // SELECT first OPTION text
-  (element, rumConfiguration, nodePrivacyLevel) => {
+  (element, rumConfiguration) => {
     if ('options' in element && element.options.length > 0) {
-      return getActionNameFromTextualContent(element.options[0], rumConfiguration, nodePrivacyLevel)
+      return getActionNameFromTextualContent(element.options[0], rumConfiguration)
     }
   },
 ]
 
 const fallbackStrategies: NameStrategy[] = [
-  (element, rumConfiguration, nodePrivacyLevel) =>
-    getActionNameFromTextualContent(element, rumConfiguration, nodePrivacyLevel),
+  (element, rumConfiguration) => getActionNameFromTextualContent(element, rumConfiguration),
 ]
 
 /**
@@ -181,28 +180,31 @@ function getActionNameFromStandardAttribute(element: Element | HTMLElement, attr
 
 function getActionNameFromTextualContent(
   element: Element | HTMLElement,
-  rumConfiguration: RumConfiguration,
-  nodePrivacyLevel: NodePrivacyLevel
+  rumConfiguration: RumConfiguration
 ): ActionName {
   return {
-    name: getTextualContent(element, rumConfiguration, nodePrivacyLevel) || '',
+    name: getTextualContent(element, rumConfiguration) || '',
     nameSource: ActionNameSource.TEXT_CONTENT,
   }
 }
 
-function getTextualContent(element: Element, rumConfiguration: RumConfiguration, nodePrivacyLevel: NodePrivacyLevel) {
+function getTextualContent(element: Element, rumConfiguration: RumConfiguration) {
   if ((element as HTMLElement).isContentEditable) {
     return
   }
 
-  const { enablePrivacyForActionName, actionNameAttribute: userProgrammaticAttribute } = rumConfiguration
+  const {
+    enablePrivacyForActionName,
+    actionNameAttribute: userProgrammaticAttribute,
+    defaultPrivacyLevel,
+  } = rumConfiguration
 
   if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
     return getTextualContentWithTreeWalker(
       element,
       userProgrammaticAttribute,
       enablePrivacyForActionName,
-      nodePrivacyLevel
+      defaultPrivacyLevel
     )
   }
 
@@ -246,7 +248,7 @@ function getTextualContentWithTreeWalker(
   element: Element,
   userProgrammaticAttribute: string | undefined,
   privacyEnabledActionName: boolean,
-  nodePrivacyLevel: NodePrivacyLevel
+  defaultPrivacyLevel: NodePrivacyLevel
 ) {
   const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
 
@@ -279,15 +281,14 @@ function getTextualContentWithTreeWalker(
   return text.replace(/\s+/g, ' ').trim()
 
   function rejectInvisibleOrMaskedElementsFilter(node: Node) {
-    const nodeSelfPrivacyLevel = getNodePrivacyLevel(node, nodePrivacyLevel, nodePrivacyLevelCache)
-    const shouldRejectMaskedNode =
-      privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel)
-
+    const nodeSelfPrivacyLevel = getNodePrivacyLevel(node, defaultPrivacyLevel, nodePrivacyLevelCache)
+    if (privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel)) {
+      return NodeFilter.FILTER_REJECT
+    }
     if (isElementNode(node)) {
       if (
         node.hasAttribute(DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE) ||
-        (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute)) ||
-        shouldRejectMaskedNode
+        (userProgrammaticAttribute && node.hasAttribute(userProgrammaticAttribute))
       ) {
         return NodeFilter.FILTER_REJECT
       }
@@ -300,8 +301,6 @@ function getTextualContentWithTreeWalker(
       ) {
         return NodeFilter.FILTER_REJECT
       }
-    } else if (shouldRejectMaskedNode) {
-      return NodeFilter.FILTER_REJECT
     }
 
     return NodeFilter.FILTER_ACCEPT

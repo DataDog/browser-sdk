@@ -888,7 +888,9 @@ describe('serializeNodeWithId', () => {
         const serializedDoc = generateLeanSerializedDoc(HTML, 'mask-unless-allowlisted')
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
-          if (textContent.trim() && !isAllowlisted(textContent)) {
+          if (textContent && isAllowlisted(textContent)) {
+            expect(textContent).not.toEqual(jasmine.stringMatching(/^[x\s*]*$/))
+          } else {
             expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }
@@ -936,7 +938,9 @@ describe('serializeNodeWithId', () => {
         // All text content should be masked
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
-          if (textContent.trim()) {
+          if (textContent && isAllowlisted(textContent)) {
+            expect(textContent).not.toEqual(jasmine.stringMatching(/^[x*]*$/))
+          } else {
             expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
           }
         }
