@@ -271,9 +271,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (initConfiguration, configuration) => {
+    (initConfiguration, configuration, logsSessionManager) => {
       const startLogsResult = startLogsImpl(
         configuration,
+        logsSessionManager,
         buildCommonContext,
         trackingConsentState,
         bufferedDataObservable
