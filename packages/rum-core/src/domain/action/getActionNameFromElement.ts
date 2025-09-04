@@ -58,7 +58,7 @@ function getActionNameFromElementProgrammatically(targetElement: Element, progra
 
 type NameStrategy = (
   element: Element | HTMLElement | HTMLInputElement | HTMLSelectElement,
-  rumConfiguration: RumConfiguration,
+  rumConfiguration: RumConfiguration
 ) => ActionName | undefined | null
 
 const priorityStrategies: NameStrategy[] = [
@@ -124,7 +124,7 @@ const MAX_PARENTS_TO_CONSIDER = 10
 function getActionNameFromElementForStrategies(
   targetElement: Element,
   strategies: NameStrategy[],
-  rumConfiguration: RumConfiguration,
+  rumConfiguration: RumConfiguration
 ) {
   let element: Element | null = targetElement
   let recursionCounter = 0

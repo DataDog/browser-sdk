@@ -968,7 +968,16 @@ describe('serializeNodeWithId', () => {
 
     function getAllAttributeValues(serializedNode: SerializedNodeWithId): string[] {
       if (serializedNode.type === NodeType.Element) {
-        return Object.values(serializedNode.attributes as Record<string, string>)
+        // Exclude attributes that are privacy tags
+        return Object.entries(serializedNode.attributes)
+          .filter(([key]) => !key.startsWith(PRIVACY_ATTR_NAME))
+          .map(([, value]) => String(value))
+      }
+      if ('childNodes' in serializedNode) {
+        return serializedNode.childNodes.reduce<string[]>(
+          (result, child) => result.concat(getAllAttributeValues(child)),
+          []
+        )
       }
       return []
     }
