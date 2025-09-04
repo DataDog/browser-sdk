@@ -2,7 +2,6 @@ import type { TrackingConsentState, BufferedObservable, BufferedData } from '@da
 import {
   sendToExtension,
   createPageMayExitObservable,
-  willSyntheticsInjectRum,
   canUseEventBridge,
   startAccountContext,
   startGlobalContext,
@@ -11,7 +10,7 @@ import {
   createIdentityEncoder,
   startUserContext,
 } from '@datadog/browser-core'
-import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'
