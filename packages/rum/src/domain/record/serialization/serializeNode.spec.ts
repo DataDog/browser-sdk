@@ -938,11 +938,7 @@ describe('serializeNodeWithId', () => {
         // All text content should be masked
         const textContents = getAllTextContents(serializedDoc)
         for (const textContent of textContents) {
-          if (textContent && isAllowlisted(textContent)) {
-            expect(textContent).not.toEqual(jasmine.stringMatching(/^[x*]*$/))
-          } else {
-            expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
-          }
+          expect(textContent).toEqual(jasmine.stringMatching(/^[x\s*]*$/))
         }
       })
     })
