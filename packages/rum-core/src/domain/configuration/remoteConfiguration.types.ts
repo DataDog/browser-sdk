@@ -3,30 +3,20 @@
  * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.
  */
 
-export type MatchOption =
-  | {
-      /**
-       * string type
-       */
-      rcSerializedType: 'string'
-      /**
-       * string value
-       */
-      value: string
-    }
-  | SerializedRegex
 export type DynamicOption =
   | {
       rcSerializedType: 'dynamic'
       strategy: 'js'
       path: string
       extractor?: SerializedRegex
+      [k: string]: unknown
     }
   | {
       rcSerializedType: 'dynamic'
       strategy: 'cookie'
       name: string
       extractor?: SerializedRegex
+      [k: string]: unknown
     }
   | {
       rcSerializedType: 'dynamic'
@@ -34,6 +24,7 @@ export type DynamicOption =
       selector: string
       attribute?: string
       extractor?: SerializedRegex
+      [k: string]: unknown
     }
 
 /**
@@ -65,12 +56,14 @@ export interface RumSdkConfig {
           strategy: 'js'
           path: string
           extractor?: SerializedRegex
+          [k: string]: unknown
         }
       | {
           rcSerializedType: 'dynamic'
           strategy: 'cookie'
           name: string
           extractor?: SerializedRegex
+          [k: string]: unknown
         }
       | {
           rcSerializedType: 'dynamic'
@@ -78,6 +71,7 @@ export interface RumSdkConfig {
           selector: string
           attribute?: string
           extractor?: SerializedRegex
+          [k: string]: unknown
         }
     /**
      * The percentage of sessions tracked
@@ -117,17 +111,33 @@ export interface RumSdkConfig {
      * Whether to track sessions across subdomains
      */
     trackSessionAcrossSubdomains?: boolean
+    /**
+     * Function to define user information
+     */
     user?: ContextItem[]
+    /**
+     * Function to define global context
+     */
     context?: ContextItem[]
   }
 }
 export interface SerializedRegex {
   /**
-   * regex type
+   * Remote config serialized type for regex extraction
    */
   rcSerializedType: 'regex'
   /**
-   * regex pattern
+   * Regex pattern for value extraction
+   */
+  value: string
+}
+export interface MatchOption {
+  /**
+   * Remote config serialized type of match
+   */
+  rcSerializedType: 'string' | 'regex'
+  /**
+   * Match value
    */
   value: string
 }

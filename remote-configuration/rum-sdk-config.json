@@ -4,6 +4,22 @@
   "additionalProperties": false,
   "description": "RUM Browser & Mobile SDKs Remote Configuration properties",
   "$defs": {
+    "MatchOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rcSerializedType", "value"],
+      "properties": {
+        "rcSerializedType": {
+          "type": "string",
+          "enum": ["string", "regex"],
+          "description": "Remote config serialized type of match"
+        },
+        "value": {
+          "type": "string",
+          "description": "Match value"
+        }
+      }
+    },
     "SerializedRegex": {
       "type": "object",
       "additionalProperties": false,
@@ -12,42 +28,18 @@
         "rcSerializedType": {
           "type": "string",
           "const": "regex",
-          "description": "regex type"
+          "description": "Remote config serialized type for regex extraction"
         },
         "value": {
           "type": "string",
-          "description": "regex pattern"
+          "description": "Regex pattern for value extraction"
         }
       }
     },
-    "MatchOption": {
-      "oneOf": [
-        {
-          "type": "object",
-          "additionalProperties": false,
-          "required": ["rcSerializedType", "value"],
-          "properties": {
-            "rcSerializedType": {
-              "type": "string",
-              "const": "string",
-              "description": "string type"
-            },
-            "value": {
-              "type": "string",
-              "description": "string value"
-            }
-          }
-        },
-        {
-          "$ref": "#/$defs/SerializedRegex"
-        }
-      ]
-    },
     "DynamicOption": {
-      "oneOf": [
+      "anyOf": [
         {
           "type": "object",
-          "additionalProperties": false,
           "required": ["rcSerializedType", "strategy", "path"],
           "properties": {
             "rcSerializedType": {
@@ -68,7 +60,6 @@
         },
         {
           "type": "object",
-          "additionalProperties": false,
           "required": ["rcSerializedType", "strategy", "name"],
           "properties": {
             "rcSerializedType": {
@@ -89,7 +80,6 @@
         },
         {
           "type": "object",
-          "additionalProperties": false,
           "required": ["rcSerializedType", "strategy", "selector"],
           "properties": {
             "rcSerializedType": {
@@ -148,8 +138,8 @@
           "description": "The environment for this application"
         },
         "version": {
-          "description": "The version for this application",
-          "$ref": "#/$defs/DynamicOption"
+          "$ref": "#/$defs/DynamicOption",
+          "description": "The version for this application"
         },
         "sessionSampleRate": {
           "type": "number",
@@ -212,10 +202,17 @@
         },
         "user": {
           "type": "array",
+          "description": "Function to define user information",
           "contains": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "value"],
             "properties": {
               "key": {
                 "const": "id"
+              },
+              "value": {
+                "$ref": "#/$defs/DynamicOption"
               }
             }
           },
@@ -225,6 +222,7 @@
         },
         "context": {
           "type": "array",
+          "description": "Function to define global context",
           "items": {
             "$ref": "#/$defs/ContextItem"
           }
