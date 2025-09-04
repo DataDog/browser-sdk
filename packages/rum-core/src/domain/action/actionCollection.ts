@@ -31,8 +31,11 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+  const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
+    LifeCycleEventType.AUTO_ACTION_COMPLETED,
+    (action) => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    }
   )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
@@ -79,7 +82,10 @@ export function startActionCollection(
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
     },
     actionContexts,
-    stop,
+    stop: () => {
+      unsubscribeAutoAction()
+      stop()
+    },
   }
 }
 
