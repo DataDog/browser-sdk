@@ -9,8 +9,6 @@ import {
   startSessionManager,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
-import type { LifeCycle } from './lifeCycle'
-import { LifeCycleEventType } from './lifeCycle'
 
 export const enum SessionType {
   SYNTHETICS = 'synthetics',
@@ -24,6 +22,7 @@ export interface RumSessionManager {
   findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined
   expire: () => void
   expireObservable: Observable<void>
+  renewObservable: Observable<void>
   setForcedReplay: () => void
 }
 
@@ -47,53 +46,48 @@ export const enum SessionReplayState {
 
 export function startRumSessionManager(
   configuration: RumConfiguration,
-  lifeCycle: LifeCycle,
-  trackingConsentState: TrackingConsentState
-): RumSessionManager {
-  const sessionManager = startSessionManager(
+  trackingConsentState: TrackingConsentState,
+  onReady: (sessionManager: RumSessionManager) => void
+) {
+  startSessionManager(
     configuration,
     RUM_SESSION_KEY,
     (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
-    trackingConsentState
-  )
+    trackingConsentState,
+    (sessionManager) => {
+      sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
+        if (!previousState.forcedReplay && newState.forcedReplay) {
+          const sessionEntity = sessionManager.findSession()
+          if (sessionEntity) {
+            sessionEntity.isReplayForced = true
+          }
+        }
+      })
 
-  sessionManager.expireObservable.subscribe(() => {
-    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-  })
-
-  sessionManager.renewObservable.subscribe(() => {
-    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-  })
-
-  sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
-    if (!previousState.forcedReplay && newState.forcedReplay) {
-      const sessionEntity = sessionManager.findSession()
-      if (sessionEntity) {
-        sessionEntity.isReplayForced = true
-      }
+      onReady({
+        findTrackedSession: (startTime) => {
+          const session = sessionManager.findSession(startTime)
+          if (!session || session.trackingType === RumTrackingType.NOT_TRACKED) {
+            return
+          }
+          return {
+            id: session.id,
+            sessionReplay:
+              session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
+                ? SessionReplayState.SAMPLED
+                : session.isReplayForced
+                  ? SessionReplayState.FORCED
+                  : SessionReplayState.OFF,
+            anonymousId: session.anonymousId,
+          }
+        },
+        expire: sessionManager.expire,
+        expireObservable: sessionManager.expireObservable,
+        renewObservable: sessionManager.renewObservable,
+        setForcedReplay: () => sessionManager.updateSessionState({ forcedReplay: '1' }),
+      })
     }
-  })
-  return {
-    findTrackedSession: (startTime) => {
-      const session = sessionManager.findSession(startTime)
-      if (!session || session.trackingType === RumTrackingType.NOT_TRACKED) {
-        return
-      }
-      return {
-        id: session.id,
-        sessionReplay:
-          session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
-            ? SessionReplayState.SAMPLED
-            : session.isReplayForced
-              ? SessionReplayState.FORCED
-              : SessionReplayState.OFF,
-        anonymousId: session.anonymousId,
-      }
-    },
-    expire: sessionManager.expire,
-    expireObservable: sessionManager.expireObservable,
-    setForcedReplay: () => sessionManager.updateSessionState({ forcedReplay: '1' }),
-  }
+  )
 }
 
 /**
@@ -108,6 +102,7 @@ export function startRumSessionManagerStub(): RumSessionManager {
     findTrackedSession: () => session,
     expire: noop,
     expireObservable: new Observable(),
+    renewObservable: new Observable(),
     setForcedReplay: noop,
   }
 }

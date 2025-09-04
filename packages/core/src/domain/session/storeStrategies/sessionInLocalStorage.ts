@@ -27,6 +27,11 @@ export function initLocalStorageStrategy(configuration: Configuration): SessionS
     persistSession: persistInLocalStorage,
     retrieveSession: retrieveSessionFromLocalStorage,
     expireSession: (sessionState: SessionState) => expireSessionFromLocalStorage(sessionState, configuration),
+    AsyncPersistSession: (sessionState: SessionState) =>
+      new Promise((resolve) => resolve(persistInLocalStorage(sessionState))),
+    AsyncRetrieveSession: () => new Promise((resolve) => resolve(retrieveSessionFromLocalStorage())),
+    AsyncExpireSession: (sessionState: SessionState) =>
+      new Promise((resolve) => resolve(expireSessionFromLocalStorage(sessionState, configuration))),
   }
 }
 

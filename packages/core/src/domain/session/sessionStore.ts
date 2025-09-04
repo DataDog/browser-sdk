@@ -5,6 +5,7 @@ import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -15,11 +16,14 @@ import {
   isSessionStarted,
 } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
-import { processSessionStoreOperations } from './sessionStoreOperations'
+import {
+  processSessionStoreOperations as _processSessionStoreOperations,
+  processSessionStoreOperationsWithNativeLock,
+} from './sessionStoreOperations'
 import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
 
 export interface SessionStore {
-  expandOrRenewSession: () => void
+  expandOrRenewSession: (callback?: () => void) => void
   expandSession: () => void
   getSession: () => SessionState
   restartSession: () => void
@@ -94,30 +98,39 @@ export function startSessionStore<TrackingType extends string>(
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState
 
+  const processSessionStoreOperations =
+    isExperimentalFeatureEnabled(ExperimentalFeature.NATIVE_LOCK_API) && 'locks' in navigator
+      ? processSessionStoreOperationsWithNativeLock
+      : _processSessionStoreOperations
+
+  const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(
+    (callback?: () => void) => {
+      processSessionStoreOperations(
+        {
+          process: (sessionState) => {
+            if (isSessionInNotStartedState(sessionState)) {
+              return
+            }
+
+            const synchronizedSession = synchronizeSession(sessionState)
+            expandOrRenewSessionState(synchronizedSession)
+            return synchronizedSession
+          },
+          after: (sessionState) => {
+            if (isSessionStarted(sessionState) && !hasSessionInCache()) {
+              renewSessionInCache(sessionState)
+            }
+            sessionCache = sessionState
+            callback?.()
+          },
+        },
+        sessionStoreStrategy
+      )
+    },
+    STORAGE_POLL_DELAY
+  )
+
   startSession()
-
-  const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(() => {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => {
-          if (isSessionInNotStartedState(sessionState)) {
-            return
-          }
-
-          const synchronizedSession = synchronizeSession(sessionState)
-          expandOrRenewSessionState(synchronizedSession)
-          return synchronizedSession
-        },
-        after: (sessionState) => {
-          if (isSessionStarted(sessionState) && !hasSessionInCache()) {
-            renewSessionInCache(sessionState)
-          }
-          sessionCache = sessionState
-        },
-      },
-      sessionStoreStrategy
-    )
-  }, STORAGE_POLL_DELAY)
 
   function expandSession() {
     processSessionStoreOperations(
@@ -165,7 +178,7 @@ export function startSessionStore<TrackingType extends string>(
     return sessionState
   }
 
-  function startSession() {
+  function startSession(callback?: () => void) {
     processSessionStoreOperations(
       {
         process: (sessionState) => {
@@ -175,6 +188,7 @@ export function startSessionStore<TrackingType extends string>(
         },
         after: (sessionState) => {
           sessionCache = sessionState
+          callback?.()
         },
       },
       sessionStoreStrategy

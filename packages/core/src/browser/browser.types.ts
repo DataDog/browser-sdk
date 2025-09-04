@@ -51,8 +51,20 @@ export interface WeakRefConstructor {
   new <T extends object>(target: T): WeakRef<T>
 }
 
+export interface Cookie {
+  name: string
+  value: string
+  domain?: string
+  path?: string
+  expires?: number
+  secure?: boolean
+  sameSite?: 'strict' | 'lax' | 'none'
+  partitioned?: boolean
+}
+
 export interface CookieStore extends EventTarget {
-  get(name: string): Promise<unknown>
+  set(cookie: Cookie): Promise<void>
+  get(name: string): Promise<Cookie>
   getAll(name?: string): Promise<
     Array<{
       name: string

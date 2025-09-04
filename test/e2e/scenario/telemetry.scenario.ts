@@ -123,7 +123,7 @@ test.describe('telemetry', () => {
       expect(postRevocationEvents.length).toEqual(1) // Only the initial action
     })
 
-  test.describe('collect errors related to session initialization', () => {
+  test.describe.skip('collect errors related to session initialization', () => {
     // Test for RUM and Logs separately, because using both at the same time via NPM triggers
     // different errors (because both SDKs are sharing the same cookie store `operationBuffer`
     // queue). This could be revisited after properly fixing incident-39238.

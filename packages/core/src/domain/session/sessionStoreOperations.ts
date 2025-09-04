@@ -2,7 +2,7 @@ import { setTimeout } from '../../tools/timer'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { TimeStamp } from '../../tools/utils/timeUtils'
 import { elapsed, ONE_SECOND, timeStampNow } from '../../tools/utils/timeUtils'
-import { addTelemetryDebug } from '../telemetry'
+import { addTelemetryDebug, addTelemetryError } from '../telemetry'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
@@ -132,4 +132,28 @@ export function createLock(): string {
 function isLockExpired(lock: string) {
   const [, timeStamp] = lock.split(LOCK_SEPARATOR)
   return !timeStamp || elapsed(Number(timeStamp) as TimeStamp, timeStampNow()) > LOCK_EXPIRATION_DELAY
+}
+
+const LOCK_NAME = 'dd-session-store-lock'
+
+export function processSessionStoreOperationsWithNativeLock(
+  operations: Operations,
+  sessionStoreStrategy: SessionStoreStrategy
+) {
+  navigator.locks
+    .request(LOCK_NAME, async () => {
+      const sessionState = await sessionStoreStrategy.AsyncRetrieveSession()
+      const processedSession = operations.process(sessionState)
+
+      if (processedSession) {
+        if (isSessionInExpiredState(processedSession)) {
+          await sessionStoreStrategy.AsyncExpireSession(processedSession)
+        } else {
+          expandSessionState(processedSession)
+          await sessionStoreStrategy.AsyncPersistSession(processedSession)
+        }
+      }
+      operations.after?.(processedSession || sessionState)
+    })
+    .catch((err) => addTelemetryError(err))
 }

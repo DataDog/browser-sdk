@@ -31,5 +31,10 @@ export function createFakeSessionStoreStrategy({
     planRetrieveSession: (index: number, fakeSession: SessionState) => {
       plannedRetrieveSessions[index] = fakeSession
     },
+
+    // TODO: Async methods are not supported by fake session store strategy yet
+    AsyncRetrieveSession: jasmine.createSpy<() => Promise<SessionState>>('AsyncRetrieveSession'),
+    AsyncPersistSession: jasmine.createSpy('AsyncPersistSession'),
+    AsyncExpireSession: jasmine.createSpy('AsyncExpireSession'),
   }
 }
