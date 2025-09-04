@@ -453,7 +453,8 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Vital
    * @param name - Name of the operation step
-   * @param options - Options for the operation step (operationKey, failureReason, context, description)
+   * @param failureReason
+   * @param options - Options for the operation step (operationKey, context, description)
    */
   failFeatureOperation: (name: string, failureReaon: FailureReason, options?: FeatureOperationOptions) => void
 }
