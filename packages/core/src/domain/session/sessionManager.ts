@@ -2,18 +2,20 @@ import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { clocksOrigin, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
+import { clocksOrigin, dateNow, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { addTelemetryDebug } from '../telemetry'
 import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
-import type { CookieStore } from '../../browser/browser.types'
+import type { CookieChangeEvent, CookieStore } from '../../browser/browser.types'
 import { getCurrentSite } from '../../browser/cookie'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
+import { toSessionState } from './sessionState'
 import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
 
 export interface SessionManager<TrackingType extends string> {
@@ -76,6 +78,12 @@ export function startSessionManager<TrackingType extends string>(
     })
 
     sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.SHORT_SESSION_INVESTIGATION)) {
+      const session = sessionStore.getSession()
+      if (session) {
+        detectSessionIdChange(session)
+      }
+    }
 
     trackingConsentState.observable.subscribe(() => {
       if (trackingConsentState.isGranted()) {
@@ -185,4 +193,43 @@ async function reportUnexpectedSessionState() {
     },
     currentDomain: `${window.location.protocol}//${window.location.hostname}`,
   })
+}
+
+function detectSessionIdChange(initialSessionState: SessionState) {
+  if (!cookieStore) {
+    return
+  }
+
+  const sessionStart = Number(initialSessionState.created!)
+  const startTime = dateNow()
+
+  // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
+  cookieStore.addEventListener('change', listener)
+  stopCallbacks.push(stop)
+
+  function listener(event: CookieChangeEvent) {
+    for (const changed of event.changed) {
+      if (changed.name === '_dd_s') {
+        const newSessionState = toSessionState(changed.value)
+        const sessionAge = dateNow() - sessionStart
+        if (sessionAge > 14 * ONE_MINUTE) {
+          // The session might have expired just because it's too old or lack activity
+          stop()
+        } else if (newSessionState.id !== initialSessionState.id) {
+          addTelemetryDebug('Session cookie changed', {
+            time: dateNow() - startTime,
+            session_age: sessionAge,
+            old: initialSessionState,
+            new: newSessionState,
+          })
+          stop()
+        }
+      }
+    }
+  }
+
+  function stop() {
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
+    cookieStore.removeEventListener('change', listener)
+  }
 }

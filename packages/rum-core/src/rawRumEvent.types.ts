@@ -10,7 +10,9 @@ import type {
   Csp,
   Context,
 } from '@datadog/browser-core'
+import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
+import type { RumNotRestoredReasons } from './browser/performanceObservable'
 
 export const RumEventType = {
   ACTION: 'action',
@@ -54,6 +56,7 @@ export interface RawRumResourceEvent {
     download?: ResourceEntryDetailsElement
     protocol?: string
     delivery_type?: DeliveryType
+    graphql?: GraphQlMetadata
   }
   _dd: {
     trace_id?: string
@@ -127,6 +130,7 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     performance?: ViewPerformanceData
+    not_restored_reasons?: RumNotRestoredReasons | null
   }
   display?: ViewDisplay
   privacy?: {
