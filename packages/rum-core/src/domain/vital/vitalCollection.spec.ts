@@ -220,11 +220,6 @@ describe('vitalCollection', () => {
           },
           context: undefined,
           type: RumEventType.VITAL,
-          _dd: {
-            vital: {
-              computed_value: true,
-            },
-          },
         })
         expect(rawRumEvents[0].domainContext).toEqual({})
       })
@@ -247,11 +242,6 @@ describe('vitalCollection', () => {
           },
           context: undefined,
           type: RumEventType.VITAL,
-          _dd: {
-            vital: {
-              computed_value: true,
-            },
-          },
         })
         expect(rawRumEvents[0].domainContext).toEqual({})
       })

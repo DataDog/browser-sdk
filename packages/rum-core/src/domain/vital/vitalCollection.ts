@@ -78,7 +78,7 @@ export function startVitalCollection(
 
   function addDurationVital(vital: DurationVital) {
     if (isValid(vital)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
     }
   }
 
@@ -104,7 +104,7 @@ export function startVitalCollection(
       context: sanitize(context),
       description,
     }
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
   }
 
   return {
@@ -177,10 +177,7 @@ function buildDurationVital(
   }
 }
 
-function processVital(
-  vital: DurationVital | OperationStepVital,
-  valueComputedBySdk: boolean
-): RawRumEventCollectedData<RawRumVitalEvent> {
+function processVital(vital: DurationVital | OperationStepVital): RawRumEventCollectedData<RawRumVitalEvent> {
   const { startClocks, type, name, description, context } = vital
   const vitalData = {
     id: generateUUID(),
@@ -202,7 +199,6 @@ function processVital(
       vital: vitalData,
       type: RumEventType.VITAL,
       context,
-      ...(valueComputedBySdk && { _dd: { vital: { computed_value: true } } }),
     },
     startTime: startClocks.relative,
     duration: type === VitalType.DURATION ? vital.duration : undefined,
