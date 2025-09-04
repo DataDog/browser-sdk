@@ -274,12 +274,16 @@ describe('vitalCollection', () => {
 
       it('should create a operation step vital from add API', () => {
         mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
-        vitalCollection.addOperationStepVital('foo', 'end', {
-          operationKey: '00000000-0000-0000-0000-000000000000',
-          failureReason: 'error',
-          context: { foo: 'bar' },
-          description: 'baz',
-        })
+        vitalCollection.addOperationStepVital(
+          'foo',
+          'end',
+          {
+            operationKey: '00000000-0000-0000-0000-000000000000',
+            context: { foo: 'bar' },
+            description: 'baz',
+          },
+          'error'
+        )
 
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.step_type).toBe('end')

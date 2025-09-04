@@ -826,8 +826,13 @@ describe('rum public api', () => {
         noopProfilerApi
       )
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.failFeatureOperation('foo', { failureReason: 'page not found' })
-      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'end', { failureReason: 'page not found' })
+      rumPublicApi.failFeatureOperation('foo', 'error', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        'end',
+        { operationKey: '00000000-0000-0000-0000-000000000000' },
+        'error'
+      )
     })
   })
 

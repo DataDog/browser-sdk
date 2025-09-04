@@ -45,7 +45,7 @@ import type {
   DurationVitalReference,
   DurationVitalOptions,
   FeatureOperationOptions,
-  FullFeatureOperationOptions,
+  FailureReason,
 } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
@@ -455,7 +455,7 @@ export interface RumPublicApi extends PublicApi {
    * @param name - Name of the operation step
    * @param options - Options for the operation step (operationKey, failureReason, context, description)
    */
-  failFeatureOperation: (name: string, options?: FullFeatureOperationOptions) => void
+  failFeatureOperation: (name: string, failureReaon: FailureReason, options?: FeatureOperationOptions) => void
 }
 
 export interface RecorderApi {
@@ -812,9 +812,9 @@ export function makeRumPublicApi(
       strategy.addOperationStepVital(name, 'end', options)
     }),
 
-    failFeatureOperation: monitor((name, options) => {
+    failFeatureOperation: monitor((name, failureReason, options) => {
       addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
-      strategy.addOperationStepVital(name, 'end', options)
+      strategy.addOperationStepVital(name, 'end', options, failureReason)
     }),
   })
 
