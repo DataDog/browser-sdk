@@ -160,6 +160,7 @@ describe('viewCollection', () => {
         long_task: {
           count: 10,
         },
+        not_restored_reasons: undefined,
         performance: {
           cls: {
             score: 1,
