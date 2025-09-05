@@ -81,8 +81,6 @@ export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
   createDeflateEncoder,
   sdkName: 'rum',
 })
-// @ts-expect-error TBF
-datadogRum.createStreamPlugin = createStreamPlugin
 
 interface BrowserWindow extends Window {
   DD_RUM?: RumPublicApi
