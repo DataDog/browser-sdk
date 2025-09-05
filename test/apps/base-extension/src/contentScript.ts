@@ -1,17 +1,18 @@
 import { datadogRum } from '@datadog/browser-rum'
 import { datadogLogs } from '@datadog/browser-logs'
 
-// NOTE: RUM and Logs data produced during E2E tests are not sent to the E2E intake, because it's
-// not using the E2E init configuration including the `proxy` configuration.
-// This could be changed in the future.
+if (window.RUM_CONFIGURATION) {
+  datadogRum.init({ ...window.RUM_CONFIGURATION })
 
-datadogRum.init({
-  applicationId: '1234',
-  clientToken: 'abcd',
-  /* EXTENSION_INIT_PARAMETER */
-})
+  if (window.RUM_CONTEXT) {
+    datadogRum.setGlobalContext(window.RUM_CONTEXT)
+  }
+}
 
-datadogLogs.init({
-  clientToken: 'abcd',
-  /* EXTENSION_INIT_PARAMETER */
-})
+if (window.LOGS_CONFIGURATION) {
+  datadogLogs.init({ ...window.LOGS_CONFIGURATION })
+
+  if (window.LOGS_CONTEXT) {
+    datadogLogs.setGlobalContext(window.LOGS_CONTEXT)
+  }
+}
