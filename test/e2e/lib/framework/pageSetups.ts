@@ -184,6 +184,42 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
   })
 }
 
+export function extensionSetup(options: SetupOptions, servers: Servers) {
+  let header = options.head || ''
+  const body = options.body || ''
+
+  if (options.eventBridge) {
+    header += setupEventBridge(servers)
+  }
+
+  const { rumScriptUrl, logsScriptUrl } = createCrossOriginScriptUrls(servers, options)
+
+  if (options.rum) {
+    header += html`
+      <script type="text/javascript">
+        window.RUM_BUNDLE_URL = '${rumScriptUrl}'
+        window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+        window.RUM_CONTEXT = ${JSON.stringify(options.context)}
+      </script>
+    `
+  }
+
+  if (options.logs) {
+    header += html`
+      <script type="text/javascript">
+        window.LOGS_BUNDLE_URL = ${logsScriptUrl}
+        window.LOGS_CONFIGURATION = ${formatConfiguration(options.logs, servers)}
+        window.LOGS_CONTEXT = ${JSON.stringify(options.context)}
+      </script>
+    `
+  }
+
+  return basePage({
+    header,
+    body,
+  })
+}
+
 export function basePage({ header, body }: { header?: string; body?: string }) {
   return html`
     <!doctype html>

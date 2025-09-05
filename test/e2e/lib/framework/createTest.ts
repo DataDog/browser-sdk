@@ -16,7 +16,7 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import { DEFAULT_SETUPS, extensionSetup, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 
@@ -131,6 +131,7 @@ class TestBuilder {
 
   withExtension(extensionPath: string) {
     this.testFixture = createExtensionTest(extensionPath)
+    this.setups = [{ factory: (options, servers) => extensionSetup(options, servers) }]
     return this
   }
 
