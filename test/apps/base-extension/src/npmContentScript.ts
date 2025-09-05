@@ -1,5 +1,17 @@
 import { datadogRum } from '@datadog/browser-rum'
 import { datadogLogs } from '@datadog/browser-logs'
+import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { Context } from '@datadog/browser-core'
+
+declare global {
+  interface Window {
+    RUM_CONFIGURATION?: RumInitConfiguration
+    RUM_CONTEXT?: Context
+    LOGS_CONFIGURATION?: LogsInitConfiguration
+    LOGS_CONTEXT?: Context
+  }
+}
 
 if (window.RUM_CONFIGURATION) {
   datadogRum.init({ ...window.RUM_CONFIGURATION })

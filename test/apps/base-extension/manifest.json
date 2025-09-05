@@ -8,7 +8,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["dist/content-script.js"],
+      "js": ["dist/npm-content-script.js"],
       "run_at": "document_end",
       "world": "MAIN"
     }

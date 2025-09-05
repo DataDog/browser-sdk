@@ -5,16 +5,6 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
 
-interface ExtensionConfig {
-  name: string
-  initParameter: string
-}
-
-const EXTRA_EXTENSIONS: ExtensionConfig[] = [
-  { name: 'allowed-tracking-origin', initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],' },
-  { name: 'invalid-tracking-origin', initParameter: "allowedTrackingOrigins: ['https://app.example.com']," },
-]
-
 runMain(async () => {
   printLog('Packing packages...')
   command`yarn lerna run pack`.run()
@@ -66,17 +56,14 @@ async function buildExtensions(): Promise<void> {
 
   buildApp(baseExtDir)
 
-  for (const { name, initParameter } of EXTRA_EXTENSIONS) {
-    const targetDir = path.join('test/apps', name)
+  const cdnExtDir = 'test/apps/cdn-extension'
+  fs.rmSync(cdnExtDir, { recursive: true, force: true })
+  fs.cpSync(baseExtDir, cdnExtDir, { recursive: true })
 
-    fs.rmSync(targetDir, { recursive: true, force: true })
-    fs.cpSync(baseExtDir, targetDir, { recursive: true })
+  const manifestPath = path.join(cdnExtDir, 'manifest.json')
+  await modifyFile(manifestPath, (content: string) =>
+    content.replace('dist/npm-content-script.js', 'dist/cdn-content-script.js')
+  )
 
-    const contentScriptPath = path.join(targetDir, 'src/contentScript.ts')
-    await modifyFile(contentScriptPath, (content: string) =>
-      content.replace(/\/\* EXTENSION_INIT_PARAMETER \*\//g, initParameter)
-    )
-
-    buildApp(targetDir)
-  }
+  buildApp(cdnExtDir)
 }
