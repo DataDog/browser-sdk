@@ -1,4 +1,4 @@
-import { getGlobalObject } from '../tools/getGlobalObject'
+import { getGlobalObject } from '../tools/globalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
 export interface BrowserWindowWithEventBridge extends Window {
@@ -47,6 +47,7 @@ export function bridgeSupports(capability: BridgeCapability): boolean {
 
 export function canUseEventBridge(currentHost = getGlobalObject<Window>().location?.hostname): boolean {
   const bridge = getEventBridge()
+
   return (
     !!bridge &&
     bridge

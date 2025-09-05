@@ -5,7 +5,65 @@ import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
+declare global {
+  interface Window {
+    myServiceWorker: ServiceWorkerRegistration
+  }
+}
+
 test.describe('logs', () => {
+  createTest('service worker with worker logs - esm')
+    .withWorker()
+    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
+      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
+
+      await interactWithWorker((worker) => {
+        worker.postMessage('Some message')
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('Some message')
+    })
+
+  createTest('service worker with worker logs - importScripts')
+    .withWorker({ importScript: true })
+    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
+      test.skip(
+        browserName === 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
+      await interactWithWorker((worker) => {
+        worker.postMessage('Other message')
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('Other message')
+    })
+
+  createTest('service worker console forwarding')
+    .withWorker({ importScript: true, nativeLog: true })
+    .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
+      test.skip(
+        browserName === 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
+      await interactWithWorker((worker) => {
+        worker.postMessage('SW console log test')
+      })
+
+      await flushEvents()
+
+      // Expect logs for console, error, and report events from service worker
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('SW console log test')
+    })
+
   createTest('send logs')
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
