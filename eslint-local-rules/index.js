@@ -17,5 +17,6 @@ module.exports = {
   'disallow-generic-utils': require('./disallowGenericUtils'),
   'disallow-non-scripts': require('./disallowNonScripts'),
   'enforce-prod-deps-imports': require('./enforceProdDepsImports.js'),
+  'enforce-monitor-until-comment': require('./enforceMonitorUntilComment'),
   'secure-command-execution': require('./secureCommandExecution'),
 }
