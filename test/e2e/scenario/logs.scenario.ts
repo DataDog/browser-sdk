@@ -14,10 +14,10 @@ declare global {
 test.describe('logs', () => {
   createTest('service worker with worker logs - esm')
     .withWorker()
-    .run(async ({ flushEvents, intakeRegistry, browserName, withWorker }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
       test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
-      await withWorker((worker) => {
+      await interactWithWorker((worker) => {
         worker.postMessage('Some message')
       })
 
@@ -29,13 +29,13 @@ test.describe('logs', () => {
 
   createTest('service worker with worker logs - importScripts')
     .withWorker({ importScript: true })
-    .run(async ({ flushEvents, intakeRegistry, browserName, withWorker }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
 
-      await withWorker((worker) => {
+      await interactWithWorker((worker) => {
         worker.postMessage('Other message')
       })
 
@@ -47,13 +47,13 @@ test.describe('logs', () => {
 
   createTest('service worker console forwarding')
     .withWorker({ importScript: true, nativeLog: true })
-    .run(async ({ flushEvents, intakeRegistry, withWorker, browserName }) => {
+    .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
 
-      await withWorker((worker) => {
+      await interactWithWorker((worker) => {
         worker.postMessage('SW console log test')
       })
 
