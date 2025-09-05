@@ -618,6 +618,8 @@ describe('rum assembly', () => {
       expect(serverRumEvents.length).toBe(1)
       const resultEvent = serverRumEvents[0] as any
 
+      expect(resultEvent.stream).toBeDefined()
+
       // Check _dd.document_version is set from stream.document_version
       expect(resultEvent._dd.document_version).toBe(25)
 
