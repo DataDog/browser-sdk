@@ -579,62 +579,63 @@ describe('rum assembly', () => {
   describe('STREAM event processing', () => {
     it('should convert STREAM events to VIEW events', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({})
-      
+
       const streamData = {
         id: 'stream-id-123',
         document_version: 42,
         time_spent: 5000000000, // 5 seconds in nanoseconds
       }
-      
+
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.STREAM, { 
+        rawRumEvent: createRawRumEvent(RumEventType.STREAM, {
           stream: streamData,
-          view: { id: 'original-view-id', url: '/test' }
+          view: { id: 'original-view-id', url: '/test' },
         }),
       })
-      
+
       expect(serverRumEvents.length).toBe(1)
       const resultEvent = serverRumEvents[0]
-      
+
       expect(resultEvent.type).toBe('view')
     })
 
     it('should map stream properties correctly in converted VIEW event', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({})
-      
+
       const streamData = {
         id: 'stream-id-456',
         document_version: 25,
         time_spent: 3000000000, // 3 seconds in nanoseconds
       }
-      
+
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.STREAM, { 
+        rawRumEvent: createRawRumEvent(RumEventType.STREAM, {
           stream: streamData,
-          view: { id: 'original-view-id', url: '/test-page' }
+          view: { id: 'original-view-id', url: '/test-page' },
         }),
       })
-      
+
       expect(serverRumEvents.length).toBe(1)
       const resultEvent = serverRumEvents[0] as any
-      
+
       // Check _dd.document_version is set from stream.document_version
       expect(resultEvent._dd.document_version).toBe(25)
-      
+
       // Check view.id is set from stream.id
       expect(resultEvent.view.id).toBe('stream-id-456')
-      
+
       // Check view.time_spent is set from stream.time_spent
       expect(resultEvent.view.time_spent).toBe(3000000000)
-      
+
       // Check stream.time_spent is undefined in the stream object
       expect(resultEvent.stream.time_spent).toBeUndefined()
-      
+
       // Check action/error/resource counts are set to 0
       expect(resultEvent.view.action.count).toBe(0)
       expect(resultEvent.view.error.count).toBe(0)
       expect(resultEvent.view.resource.count).toBe(0)
     })
+  })
 })
 
 function notifyRawRumEvent<E extends RawRumEvent>(
