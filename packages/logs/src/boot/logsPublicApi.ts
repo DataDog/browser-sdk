@@ -255,7 +255,7 @@ export interface LogsPublicApi extends PublicApi {
 }
 
 export interface Strategy {
-  init: (initConfiguration: LogsInitConfiguration) => void
+  init: (initConfiguration: LogsInitConfiguration, errorStack?: string) => void
   initConfiguration: LogsInitConfiguration | undefined
   globalContext: ContextManager
   accountContext: ContextManager
@@ -293,7 +293,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   return makePublicApi<LogsPublicApi>({
     logger: mainLogger,
 
-    init: monitor((initConfiguration) => strategy.init(initConfiguration)),
+    init: monitor((initConfiguration) => {
+      const errorStack = new Error().stack
+      strategy.init(initConfiguration, errorStack)
+    }),
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)

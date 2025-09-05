@@ -257,7 +257,8 @@ export interface RumConfiguration extends Configuration {
 }
 
 export function validateAndBuildRumConfiguration(
-  initConfiguration: RumInitConfiguration
+  initConfiguration: RumInitConfiguration,
+  errorStack?: string
 ): RumConfiguration | undefined {
   if (
     initConfiguration.trackFeatureFlagsForEvents !== undefined &&
@@ -288,7 +289,7 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
   if (!baseConfiguration) {
     return
   }

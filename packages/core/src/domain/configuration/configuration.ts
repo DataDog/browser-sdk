@@ -314,7 +314,7 @@ export function isSampleRate(sampleRate: unknown, name: string) {
   return true
 }
 
-export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
+export function validateAndBuildConfiguration(initConfiguration: InitConfiguration, errorStack?: string): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
     display.error('Client Token is not configured, we will not send any data.')
     return
@@ -337,7 +337,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isString(initConfiguration.version, 'Version') ||
     !isString(initConfiguration.env, 'Env') ||
     !isString(initConfiguration.service, 'Service') ||
-    !isAllowedTrackingOrigins(initConfiguration)
+    !isAllowedTrackingOrigins(initConfiguration, errorStack!, undefined)
   ) {
     return
   }
