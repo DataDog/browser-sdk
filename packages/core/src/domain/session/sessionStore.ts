@@ -97,6 +97,9 @@ export function startSessionStore<TrackingType extends string>(
   startSession()
 
   const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(() => {
+    // @ts-ignore
+    window.log('='.repeat(60), 'STORE::throttle')
+
     processSessionStoreOperations(
       {
         process: (sessionState) => {
@@ -115,16 +118,22 @@ export function startSessionStore<TrackingType extends string>(
           sessionCache = sessionState
         },
       },
-      sessionStoreStrategy
+      sessionStoreStrategy,
+      0,
+      true
     )
   }, STORAGE_POLL_DELAY)
 
   function expandSession() {
+    // @ts-ignore
+    window.log('='.repeat(60), 'STORE::expandSession')
     processSessionStoreOperations(
       {
         process: (sessionState) => (hasSessionInCache() ? synchronizeSession(sessionState) : undefined),
       },
-      sessionStoreStrategy
+      sessionStoreStrategy,
+      0,
+      true
     )
   }
 
@@ -134,6 +143,9 @@ export function startSessionStore<TrackingType extends string>(
    * - if the session is not active, clear the session store and expire the session cache
    */
   function watchSession() {
+    // @ts-ignore
+    window.log('='.repeat(60), 'STORE::watchSession')
+
     const sessionState = sessionStoreStrategy.retrieveSession()
 
     if (isSessionInExpiredState(sessionState)) {
@@ -151,6 +163,9 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function synchronizeSession(sessionState: SessionState) {
+    // @ts-ignore
+    window.log('='.repeat(60), 'STORE::synchronizeSession', sessionState)
+
     if (isSessionInExpiredState(sessionState)) {
       sessionState = getExpiredSessionState(sessionState, configuration)
     }
@@ -166,6 +181,9 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function startSession() {
+    // @ts-ignore
+    window.log('='.repeat(60), 'STORE::startSession')
+
     processSessionStoreOperations(
       {
         process: (sessionState) => {
@@ -204,11 +222,17 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function expireSessionInCache() {
+    // @ts-ignore
+    window.log('='.repeat(60), 'STORE::expireSessionInCache')
+
     sessionCache = getExpiredSessionState(sessionCache, configuration)
     expireObservable.notify()
   }
 
   function renewSessionInCache(sessionState: SessionState) {
+    // @ts-ignore
+    window.log('='.repeat(60), 'STORE::renewSessionInCache', sessionState)
+
     sessionCache = sessionState
     renewObservable.notify()
   }
@@ -219,7 +243,9 @@ export function startSessionStore<TrackingType extends string>(
         process: (sessionState) => ({ ...sessionState, ...partialSessionState }),
         after: synchronizeSession,
       },
-      sessionStoreStrategy
+      sessionStoreStrategy,
+      0,
+      true
     )
   }
 
