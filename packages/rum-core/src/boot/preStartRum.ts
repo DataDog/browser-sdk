@@ -27,6 +27,8 @@ import {
 import type { ViewOptions } from '../domain/view/trackViews'
 import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
+import type { RumSessionManager } from '../domain/rumSessionManager'
+import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
@@ -37,6 +39,7 @@ export function createPreStartStrategy(
   customVitalsState: CustomVitalsState,
   doStartRum: (
     configuration: RumConfiguration,
+    sessionManager: RumSessionManager,
     deflateWorker: DeflateWorker | undefined,
     initialViewOptions?: ViewOptions
   ) => StartRumResult
@@ -60,17 +63,14 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
-
-  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
+  let sessionManager: RumSessionManager | undefined
 
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !sessionManager) {
       return
     }
-
-    trackingConsentStateSubscription.unsubscribe()
 
     let initialViewOptions: ViewOptions | undefined
 
@@ -88,7 +88,7 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions)
+    const startRumResult = doStartRum(cachedConfiguration, sessionManager, deflateWorker, initialViewOptions)
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -141,7 +141,18 @@ export function createPreStartStrategy(
     initFetchObservable().subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
-    tryStartRum()
+
+    trackingConsentState.onGrantedOnce(() => {
+      if (canUseEventBridge()) {
+        sessionManager = startRumSessionManagerStub()
+        tryStartRum()
+      } else {
+        startRumSessionManager(configuration, trackingConsentState, (newSessionManager) => {
+          sessionManager = newSessionManager
+          tryStartRum()
+        })
+      }
+    })
   }
 
   const addDurationVital = (vital: DurationVital) => {
