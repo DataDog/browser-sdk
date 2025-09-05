@@ -22,7 +22,7 @@ export function getDocumentTraceId(document: Document): string | undefined {
 export function getDocumentTraceDataFromMeta(document: Document): DocumentTraceData | undefined {
   const traceIdMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-id]')
   const traceTimeMeta = document.querySelector<HTMLMetaElement>('meta[name=dd-trace-time]')
-  return createDocumentTraceData(traceIdMeta && traceIdMeta.content, traceTimeMeta && traceTimeMeta.content)
+  return createDocumentTraceData((traceIdMeta || {}).content, (traceTimeMeta || {}).content)
 }
 
 export function getDocumentTraceDataFromComment(document: Document): DocumentTraceData | undefined {

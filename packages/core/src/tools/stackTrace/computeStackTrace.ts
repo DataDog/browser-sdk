@@ -58,13 +58,13 @@ export function computeStackTrace(ex: unknown): StackTrace {
       (currentPrototype = Object.getPrototypeOf(currentPrototype)) &&
       isNonNativeClassPrototype(currentPrototype)
     ) {
-      const constructorName = currentPrototype.constructor?.name || UNKNOWN_FUNCTION
+      const constructorName = (currentPrototype.constructor && currentPrototype.constructor.name) || UNKNOWN_FUNCTION
       constructors.push(constructorName)
     }
 
     // traverse the stacktrace in reverse order because the stacktrace starts with the last inherited constructor
     // we check constructor names to ensure we remove the correct frame (and there isn't a weird unsupported environment behavior)
-    for (let i = constructors.length - 1; i >= 0 && stack[0]?.func === constructors[i]; i--) {
+    for (let i = constructors.length - 1; i >= 0 && stack[0] && stack[0].func === constructors[i]; i--) {
       // if the first stack frame is the custom error constructor
       // null stack frames may represent frames that failed to be parsed because the error class did not have a constructor
       stack.shift() // remove it

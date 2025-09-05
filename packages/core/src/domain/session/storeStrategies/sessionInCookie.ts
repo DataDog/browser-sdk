@@ -65,11 +65,11 @@ export function retrieveSessionCookie(): SessionState {
 
 export function buildCookieOptions(initConfiguration: InitConfiguration) {
   const cookieOptions: CookieOptions = {}
+  const partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
 
-  cookieOptions.secure =
-    !!initConfiguration.useSecureSessionCookie || !!initConfiguration.usePartitionedCrossSiteSessionCookie
-  cookieOptions.crossSite = !!initConfiguration.usePartitionedCrossSiteSessionCookie
-  cookieOptions.partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
+  cookieOptions.secure = !!initConfiguration.useSecureSessionCookie || partitioned
+  cookieOptions.crossSite = partitioned
+  cookieOptions.partitioned = partitioned
 
   if (initConfiguration.trackSessionAcrossSubdomains) {
     cookieOptions.domain = getCurrentSite()

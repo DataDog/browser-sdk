@@ -82,25 +82,25 @@ export function trackCumulativeLayoutShift(
       if (isMaxValue) {
         const attribution = getTopImpactedElement(entry.sources)
         biggestShift = {
-          target: attribution?.node ? new WeakRef(attribution.node) : undefined,
+          target: attribution && attribution.node ? new WeakRef(attribution.node) : undefined,
           time: elapsed(viewStart, entry.startTime),
-          previousRect: attribution?.previousRect,
-          currentRect: attribution?.currentRect,
+          previousRect: attribution && attribution.previousRect,
+          currentRect: attribution && attribution.currentRect,
           devicePixelRatio: window.devicePixelRatio,
         }
       }
 
       if (cumulatedValue > maxClsValue) {
         maxClsValue = cumulatedValue
-        const target = biggestShift?.target?.deref()
+        const target = biggestShift && biggestShift.target && biggestShift.target.deref()
 
         callback({
           value: round(maxClsValue, 4),
           targetSelector: target && getSelectorFromElement(target, configuration.actionNameAttribute),
-          time: biggestShift?.time,
-          previousRect: biggestShift?.previousRect ? asRumRect(biggestShift.previousRect) : undefined,
-          currentRect: biggestShift?.currentRect ? asRumRect(biggestShift.currentRect) : undefined,
-          devicePixelRatio: biggestShift?.devicePixelRatio,
+          time: biggestShift && biggestShift.time,
+          previousRect: biggestShift && biggestShift.previousRect ? asRumRect(biggestShift.previousRect) : undefined,
+          currentRect: biggestShift && biggestShift.currentRect ? asRumRect(biggestShift.currentRect) : undefined,
+          devicePixelRatio: biggestShift && biggestShift.devicePixelRatio,
         })
       }
     }
