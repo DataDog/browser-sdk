@@ -1,0 +1,96 @@
+import type { BufferedObservable, BufferedData } from '@datadog/browser-core'
+import {
+  sendToExtension,
+  createPageMayExitObservable,
+  canUseEventBridge,
+  startAccountContext,
+  startGlobalContext,
+  startTelemetry,
+  TelemetryService,
+  createIdentityEncoder,
+  startUserContext,
+} from '@datadog/browser-core'
+import { startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import type { LogsConfiguration } from '../domain/configuration'
+import { startLogsAssembly } from '../domain/assembly'
+import { startConsoleCollection } from '../domain/console/consoleCollection'
+import { startReportCollection } from '../domain/report/reportCollection'
+import { startNetworkErrorCollection } from '../domain/networkError/networkErrorCollection'
+import { startRuntimeErrorCollection } from '../domain/runtimeError/runtimeErrorCollection'
+import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
+import { startLoggerCollection } from '../domain/logger/loggerCollection'
+import { startLogsBatch } from '../transport/startLogsBatch'
+import { startLogsBridge } from '../transport/startLogsBridge'
+import { startReportError } from '../domain/reportError'
+import type { CommonContext } from '../rawLogsEvent.types'
+import { createHooks } from '../domain/hooks'
+
+const LOGS_STORAGE_KEY = 'logs'
+
+export type StartLogs = typeof startLogs
+export type StartLogsResult = ReturnType<StartLogs>
+
+export function startLogs(
+  configuration: LogsConfiguration,
+  getCommonContext: () => CommonContext,
+  bufferedDataObservable: BufferedObservable<BufferedData>
+) {
+  const lifeCycle = new LifeCycle()
+  const hooks = createHooks()
+  const cleanupTasks: Array<() => void> = []
+
+  lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
+
+  const reportError = startReportError(lifeCycle)
+  const pageMayExitObservable = createPageMayExitObservable(configuration)
+
+  const telemetry = startTelemetry(
+    TelemetryService.LOGS,
+    configuration,
+    hooks,
+    reportError,
+    pageMayExitObservable,
+    createIdentityEncoder
+  )
+  cleanupTasks.push(telemetry.stop)
+
+  const session = startLogsSessionManagerStub(configuration)
+
+  // Start user and account context first to allow overrides from global context
+  const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
+  const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
+  const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
+
+  startNetworkErrorCollection(configuration, lifeCycle)
+  startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
+  bufferedDataObservable.unbuffer()
+  startConsoleCollection(configuration, lifeCycle)
+  startReportCollection(configuration, lifeCycle)
+  const { handleLog } = startLoggerCollection(lifeCycle)
+
+  startLogsAssembly(configuration, lifeCycle, hooks, getCommonContext, reportError)
+
+  if (!canUseEventBridge()) {
+    const { stop: stopLogsBatch } = startLogsBatch(
+      configuration,
+      lifeCycle,
+      reportError,
+      pageMayExitObservable,
+      session
+    )
+    cleanupTasks.push(() => stopLogsBatch())
+  } else {
+    startLogsBridge(lifeCycle)
+  }
+
+  return {
+    handleLog,
+    accountContext,
+    globalContext,
+    userContext,
+    stop: () => {
+      cleanupTasks.forEach((task) => task())
+      stop()
+    },
+  }
+}
