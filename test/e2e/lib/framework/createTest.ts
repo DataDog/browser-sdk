@@ -42,7 +42,7 @@ interface TestContext {
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
-  withWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
+  interactWithWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -274,7 +274,7 @@ function createTestContext(
         browserLogsManager.clear()
       }
     },
-    withWorker: async (cb: (worker: ServiceWorker) => void) => {
+    interactWithWorker: async (cb: (worker: ServiceWorker) => void) => {
       await page.evaluate(`(${cb.toString()})(window.myServiceWorker.active)`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
