@@ -1240,7 +1240,7 @@ export type RumVitalEvent = CommonProperties &
       /**
        * Type of the vital
        */
-      readonly type: 'duration' | 'step'
+      readonly type: 'duration' | 'operation_step'
       /**
        * UUID of the vital
        */
@@ -1248,7 +1248,7 @@ export type RumVitalEvent = CommonProperties &
       /**
        * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
        */
-      readonly parent_id?: string
+      readonly operation_key?: string
       /**
        * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
        */
