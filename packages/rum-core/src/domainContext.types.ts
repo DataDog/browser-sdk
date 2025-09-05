@@ -17,7 +17,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
           : T extends typeof RumEventType.VITAL
             ? RumVitalEventDomainContext
             : T extends typeof RumEventType.STREAM
-              ? { streamId: string }
+              ? RumStreamEventDomainContext
               : never
 
 export interface RumViewEventDomainContext {
@@ -62,4 +62,5 @@ export interface RumLongTaskEventDomainContext {
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RumVitalEventDomainContext {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface RumStreamEventDomainContext {}

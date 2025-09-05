@@ -34,16 +34,8 @@ import type {
 } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
-import { createStreamPlugin } from '../domain/stream'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
-
-declare global {
-  interface Window {
-    DD_STREAM_PLUGIN: ReturnType<typeof createStreamPlugin>
-    DD_STREAM: ReturnType<ReturnType<typeof createStreamPlugin>['createStream']>
-  }
-}
 
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
@@ -188,10 +180,6 @@ export function createPreStartStrategy(
       initFeatureFlags(initConfiguration.enableExperimentalFeatures)
 
       // Expose the initial configuration regardless of initialization success.
-      window.DD_STREAM_PLUGIN = createStreamPlugin()
-      window.DD_STREAM = window.DD_STREAM_PLUGIN.createStream()
-
-      initConfiguration.plugins = (initConfiguration.plugins ?? []).concat([window.DD_STREAM_PLUGIN.plugin])
       cachedInitConfiguration = initConfiguration
 
       // If we are in a Synthetics test configured to automatically inject a RUM instance, we want

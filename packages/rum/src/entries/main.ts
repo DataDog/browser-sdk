@@ -9,14 +9,11 @@
 // Keep the following in sync with packages/rum-slim/src/entries/main.ts
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { createStreamPlugin, makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
-import { createStream } from '@datadog/browser-rum-core/src/domain/stream/stream'
+import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
 import { makeProfilerApi } from '../boot/profilerApi'
-
-export { createStreamPlugin } from '@datadog/browser-rum-core'
 
 export type {
   User,
