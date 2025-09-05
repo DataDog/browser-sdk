@@ -101,7 +101,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           allowedTrackingOrigins: ['https://different.com'],
         },
         'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
-        'https://example.com',
+        'https://example.com'
       )
       expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
       expect(result).toBe(false)

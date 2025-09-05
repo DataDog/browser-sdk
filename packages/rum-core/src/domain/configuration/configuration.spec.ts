@@ -1,5 +1,10 @@
 import type { InitConfiguration } from '@datadog/browser-core'
-import { DefaultPrivacyLevel, display, TraceContextInjection, WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN } from '@datadog/browser-core'
+import {
+  DefaultPrivacyLevel,
+  display,
+  TraceContextInjection,
+  WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
+} from '@datadog/browser-core'
 import type {
   ExtractTelemetryConfiguration,
   CamelToSnakeCase,
