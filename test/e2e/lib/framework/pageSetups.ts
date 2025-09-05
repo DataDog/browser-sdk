@@ -60,6 +60,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     body += html`
       <script type="text/javascript">
         DD_LOGS_URL = '${logsScriptUrl}'
+        window.DD_PROXY_URL = '${servers.intake.url}'
       </script>
       <script>
         ${formatSnippet(logsScriptUrl, 'DD_LOGS')}
@@ -75,6 +76,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
     body += html`
       <script type="text/javascript">
         DD_RUM_URL = '${rumScriptUrl}'
+        window.DD_PROXY_URL = '${servers.intake.url}'
       </script>
       <script type="text/javascript">
         ${formatSnippet(rumScriptUrl, 'DD_RUM')}

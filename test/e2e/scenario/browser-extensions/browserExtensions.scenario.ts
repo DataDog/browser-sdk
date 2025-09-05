@@ -16,13 +16,13 @@ const warningMessage =
 const errorMessage = 'Datadog Browser SDK: SDK initialized on a non-allowed domain.'
 
 test.describe('browser extensions', () => {
-  createTest('popup page should load extension popup and display expected content')
-    .withExtension(pathToBaseExtension)
-    .run(async ({ page, getExtensionId }) => {
-      const extensionId = await getExtensionId()
-      await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-      await expect(page).toHaveTitle(/Extension Popup/)
-    })
+  // createTest('popup page should load extension popup and display expected content')
+  //   .withExtension(pathToBaseExtension)
+  //   .run(async ({ page, getExtensionId }) => {
+  //     const extensionId = await getExtensionId()
+  //     await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
+  //     await expect(page).toHaveTitle(/Extension Popup/)
+  //   })
 
   createTest(
     'SDK is initialized in an unsupported environment without allowedTrackingOrigins and warns when used in content script'

@@ -8,10 +8,15 @@ import { modifyFile } from '../lib/filesUtils.ts'
 interface ExtensionConfig {
   name: string
   initParameter: string
+  world?: 'MAIN' | 'ISOLATED'
 }
 
 const EXTRA_EXTENSIONS: ExtensionConfig[] = [
-  { name: 'allowed-tracking-origin', initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],' },
+  {
+    name: 'allowed-tracking-origin',
+    initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],',
+    world: 'ISOLATED',
+  },
   { name: 'invalid-tracking-origin', initParameter: "allowedTrackingOrigins: ['https://app.example.com']," },
 ]
 
@@ -67,7 +72,7 @@ async function buildExtensions(): Promise<void> {
 
   buildApp(baseExtDir)
 
-  for (const { name, initParameter } of EXTRA_EXTENSIONS) {
+  for (const { name, initParameter, world } of EXTRA_EXTENSIONS) {
     const targetDir = path.join('test/apps', name)
 
     fs.rmSync(targetDir, { recursive: true, force: true })
@@ -77,6 +82,15 @@ async function buildExtensions(): Promise<void> {
     await modifyFile(contentScriptPath, (content: string) =>
       content.replace(/\/\* EXTENSION_INIT_PARAMETER \*\//g, initParameter)
     )
+    const manifestPath = path.join(targetDir, 'manifest.json')
+    await modifyFile(manifestPath, (c: string) => {
+      const manifest = JSON.parse(c)
+      const cs = manifest.content_scripts?.[0]
+      if (cs) {
+        cs.world = world ?? 'MAIN'
+      }
+      return `${JSON.stringify(manifest, null, 2)}\n`
+    })
 
     buildApp(targetDir)
   }
