@@ -135,6 +135,11 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
             resource: { count: 0 },
             time_spent: 0 as ServerDuration,
           },
+          stream: {
+            id: generateUUID(),
+            document_version: 0,
+            time_spent: 0 as ServerDuration,
+          },
         },
         overrides
       )
