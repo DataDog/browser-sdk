@@ -1288,44 +1288,7 @@ export type RumVitalEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'vital'
-    /**
-     * Vital properties
-     */
-    readonly vital: {
-      /**
-       * Type of the vital
-       */
-      readonly type: 'duration' | 'step'
-      /**
-       * UUID of the vital
-       */
-      readonly id: string
-      /**
-       * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
-       */
-      readonly parent_id?: string
-      /**
-       * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
-       */
-      readonly name?: string
-      /**
-       * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
-       */
-      readonly description?: string
-      /**
-       * Duration of the vital in nanoseconds
-       */
-      readonly duration?: number
-      /**
-       * Type of the step that triggered the vital, if applicable
-       */
-      readonly step_type?: 'start' | 'update' | 'retry' | 'end'
-      /**
-       * Reason for the failure of the step, if applicable
-       */
-      readonly failure_reason?: 'error' | 'abandoned' | 'other'
-      [k: string]: unknown
-    }
+    readonly vital: DurationProperties | AppLaunchProperties | FeatureOperationProperties
     /**
      * Internal properties
      */
@@ -1344,6 +1307,90 @@ export type RumVitalEvent = CommonProperties &
     }
     [k: string]: unknown
   }
+/**
+ * Duration properties of a Vital event
+ */
+export type DurationProperties = VitalCommonProperties & {
+  /**
+   * Type of the vital.
+   */
+  readonly type: 'duration'
+  /**
+   * Duration of the vital in nanoseconds.
+   */
+  readonly duration: number
+  [k: string]: unknown
+}
+/**
+ * Schema of common properties for a Vital event
+ */
+export type VitalCommonProperties = {
+  /**
+   * UUID of the vital
+   */
+  readonly id: string
+  /**
+   * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
+   */
+  readonly name?: string
+  /**
+   * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
+   */
+  readonly description?: string
+  [k: string]: unknown
+}
+/**
+ * Schema for app launch metrics.
+ */
+export type AppLaunchProperties = VitalCommonProperties & {
+  /**
+   * Type of the vital.
+   */
+  readonly type: 'app_launch'
+  /**
+   * The metric of the app launch.
+   */
+  readonly app_launch_metric: 'ttid' | 'ttfd'
+  /**
+   * Duration of the vital in nanoseconds.
+   */
+  readonly duration: number
+  /**
+   * The type of the app launch.
+   */
+  readonly startup_type?: 'cold_start' | 'warm_start'
+  /**
+   * Whether the app launch was prewarmed.
+   */
+  readonly is_prewarmed?: boolean
+  /**
+   * If the app launch had a saved instance state bundle.
+   */
+  readonly has_saved_instance_state_bundle?: boolean
+  [k: string]: unknown
+}
+/**
+ * Schema for a feature operation.
+ */
+export type FeatureOperationProperties = VitalCommonProperties & {
+  /**
+   * Type of the vital.
+   */
+  readonly type: 'operation_step'
+  /**
+   * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
+   */
+  readonly operation_key?: string
+  /**
+   * Type of the step that triggered the vital, if applicable
+   */
+  readonly step_type?: 'start' | 'update' | 'retry' | 'end'
+  /**
+   * Reason for the failure of the step, if applicable
+   */
+  readonly failure_reason?: 'error' | 'abandoned' | 'other'
+  [k: string]: unknown
+}
 
 /**
  * Schema of common properties of RUM events
@@ -1806,7 +1853,7 @@ export interface StreamSchema {
      */
     bitrate?: number
     /**
-     * How long is the content (VOD only)
+     * How long is the content (VOD only) (in ms)
      */
     readonly duration?: number
     /**
@@ -1826,7 +1873,7 @@ export interface StreamSchema {
      */
     timestamp?: number
     /**
-     * how much did the media progress since the last context update
+     * how much did the media progress since the last context update (in ms)
      */
     watch_time?: number
     [k: string]: unknown
