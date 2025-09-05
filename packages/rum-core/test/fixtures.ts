@@ -119,6 +119,25 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         },
         overrides
       )
+    case RumEventType.STREAM:
+      return combine(
+        {
+          type,
+          _dd: {
+            document_version: 0,
+          },
+          date: 0 as TimeStamp,
+          view: {
+            id: generateUUID(),
+            action: { count: 0 },
+            error: { count: 0 },
+            long_task: { count: 0 },
+            resource: { count: 0 },
+            time_spent: 0 as ServerDuration,
+          },
+        },
+        overrides
+      )
   }
 }
 

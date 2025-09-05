@@ -12,7 +12,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent, RumViewEvent, RumVitalEvent } from '../rumEvent.types'
+import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'

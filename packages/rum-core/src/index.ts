@@ -71,4 +71,3 @@ export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes 
 export { createHooks } from './domain/hooks'
 export { isSampled } from './domain/sampler/sampler'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'
-export { createStreamPlugin } from './domain/stream'
