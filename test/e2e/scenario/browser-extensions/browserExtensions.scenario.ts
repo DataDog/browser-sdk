@@ -9,6 +9,8 @@ const pathToAllowedTrackingOriginExtension = path.join(__dirname, '../../../../t
 // Contains allowedTrackingOrigins parameter with app.example.com origin
 const pathToInvalidTrackingOriginExtension = path.join(__dirname, '../../../../test/apps/invalid-tracking-origin')
 
+const pathToCdnExtension = path.join(__dirname, '../../../../test/apps/cdn-extension')
+
 const warningMessage =
   'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
 const errorMessage = 'Datadog Browser SDK: SDK initialized on a non-allowed domain.'
@@ -28,23 +30,8 @@ test.describe('browser extensions', () => {
     .withExtension(pathToBaseExtension)
     .withRum()
     .withLogs()
-    .run(async ({ page, baseUrl, getExtensionId, withBrowserLogs }) => {
-      const extensionId = await getExtensionId()
-
-      await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-
-      const rumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
-      const logsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
-      expect(rumResult?.applicationId).toBe('1234')
-      expect(logsResult?.clientToken).toBe('abcd')
-
-      await page.goto(baseUrl)
-
-      const pageRumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
-      const pageLogsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
-
-      expect(pageRumResult?.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
-      expect(pageLogsResult?.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
+    .run(async ({ withBrowserLogs, flushEvents }) => {
+      await flushEvents()
 
       // Check for warnings in console messages - should have one from RUM and one from Logs
       // But since we also go to the base url, we can have more than 2 logs
@@ -126,6 +113,38 @@ test.describe('browser extensions', () => {
           expect.objectContaining({
             level: 'error',
             message: errorMessage,
+          })
+        )
+      })
+    })
+
+  createTest('SDK should not warn if extension is not being used')
+    .withRum()
+    .withLogs()
+    .run(async ({ withBrowserLogs, flushEvents }) => {
+      await flushEvents()
+
+      withBrowserLogs((logs) => {
+        expect(logs).not.toContainEqual(
+          expect.objectContaining({
+            level: 'warning',
+            message: warningMessage,
+          })
+        )
+      })
+    })
+
+  createTest('SDK should warn in CDN extension')
+    .withExtension(pathToCdnExtension)
+    .withRum()
+    .run(async ({ withBrowserLogs, flushEvents }) => {
+      await flushEvents()
+
+      withBrowserLogs((logs) => {
+        expect(logs).toContainEqual(
+          expect.objectContaining({
+            level: 'warning',
+            message: warningMessage,
           })
         )
       })

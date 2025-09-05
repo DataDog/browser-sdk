@@ -472,7 +472,7 @@ export interface RumPublicApiOptions {
 }
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
+  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi, errorStack?: string) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
@@ -505,7 +505,6 @@ export function makeRumPublicApi(
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
   const bufferedDataObservable = startBufferingData().observable
-  let initErrorStackProvider: (() => string | undefined) | undefined
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
@@ -550,8 +549,7 @@ export function makeRumPublicApi(
       })
 
       return startRumResult
-    },
-    () => initErrorStackProvider?.()
+    }
   )
   const getStrategy = () => strategy
 
@@ -566,8 +564,8 @@ export function makeRumPublicApi(
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: monitor((initConfiguration) => {
-      initErrorStackProvider = () => new Error().stack
-      strategy.init(initConfiguration, rumPublicApi)
+      const errorStack = new Error().stack
+      strategy.init(initConfiguration, rumPublicApi, errorStack)
     }),
 
     setTrackingConsent: monitor((trackingConsent) => {

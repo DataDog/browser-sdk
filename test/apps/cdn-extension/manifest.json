@@ -14,7 +14,7 @@
       "matches": ["<all_urls>"],
       "js": ["dist/content-script.js"],
       "run_at": "document_start",
-      "world": "ISOLATED"
+      "world": "MAIN"
     }
   ],
   "action": {

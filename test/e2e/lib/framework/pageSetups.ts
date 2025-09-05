@@ -58,6 +58,9 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 
   if (options.logs) {
     body += html`
+      <script type="text/javascript">
+        DD_LOGS_URL = '${logsScriptUrl}'
+      </script>
       <script>
         ${formatSnippet(logsScriptUrl, 'DD_LOGS')}
         DD_LOGS.onReady(function () {
@@ -70,6 +73,9 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
 
   if (options.rum) {
     body += html`
+      <script type="text/javascript">
+        DD_RUM_URL = '${rumScriptUrl}'
+      </script>
       <script type="text/javascript">
         ${formatSnippet(rumScriptUrl, 'DD_RUM')}
         DD_RUM.onReady(function () {
@@ -99,6 +105,8 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += html`
       <script type="text/javascript" src="${logsScriptUrl}"></script>
       <script type="text/javascript">
+        DD_LOGS_URL = '${logsScriptUrl}'
+        window.DD_PROXY_URL = '${servers.intake.url}'
         DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
       </script>
@@ -109,6 +117,8 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += html`
       <script type="text/javascript" src="${rumScriptUrl}"></script>
       <script type="text/javascript">
+        DD_RUM_URL = '${rumScriptUrl}'
+        window.DD_PROXY_URL = '${servers.intake.url}'
         DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
         ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
       </script>

@@ -8,10 +8,12 @@ import { datadogLogs } from '@datadog/browser-logs'
 datadogRum.init({
   applicationId: '1234',
   clientToken: 'abcd',
+  proxy: (window as any).DD_PROXY_URL,
   /* EXTENSION_INIT_PARAMETER */
 })
 
 datadogLogs.init({
   clientToken: 'abcd',
+  proxy: (window as any).DD_PROXY_URL,
   /* EXTENSION_INIT_PARAMETER */
 })

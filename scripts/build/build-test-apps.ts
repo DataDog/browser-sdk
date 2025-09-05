@@ -21,6 +21,7 @@ runMain(async () => {
 
   buildApp('test/apps/vanilla')
   buildApp('test/apps/react-router-v6-app')
+  buildApp('test/apps/cdn-extension')
   await buildReactRouterv7App()
   await buildExtensions()
 
