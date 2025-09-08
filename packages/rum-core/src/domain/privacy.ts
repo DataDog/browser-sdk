@@ -1,41 +1,11 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { isElementNode, getParentNode, isTextNode } from '../browser/htmlDomUtils'
-
-export const NodePrivacyLevel = {
-  IGNORE: 'ignore',
-  HIDDEN: 'hidden',
-  ALLOW: DefaultPrivacyLevel.ALLOW,
-  MASK: DefaultPrivacyLevel.MASK,
-  MASK_USER_INPUT: DefaultPrivacyLevel.MASK_USER_INPUT,
-} as const
-export type NodePrivacyLevel = (typeof NodePrivacyLevel)[keyof typeof NodePrivacyLevel]
-
-export const PRIVACY_ATTR_NAME = 'data-dd-privacy'
-
-// Privacy Attrs
-export const PRIVACY_ATTR_VALUE_ALLOW = 'allow'
-export const PRIVACY_ATTR_VALUE_MASK = 'mask'
-export const PRIVACY_ATTR_VALUE_MASK_USER_INPUT = 'mask-user-input'
-export const PRIVACY_ATTR_VALUE_HIDDEN = 'hidden'
-
-// Privacy Classes - not all customers can set plain HTML attributes, so support classes too
-export const PRIVACY_CLASS_PREFIX = 'dd-privacy-'
-
-// Private Replacement Templates
-export const CENSORED_STRING_MARK = '***'
-export const CENSORED_IMG_MARK = 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=='
-
-export const FORM_PRIVATE_TAG_NAMES: { [tagName: string]: true } = {
-  INPUT: true,
-  OUTPUT: true,
-  TEXTAREA: true,
-  SELECT: true,
-  OPTION: true,
-  DATALIST: true,
-  OPTGROUP: true,
-}
-
-const TEXT_MASKING_CHAR = 'x'
+import {
+  NodePrivacyLevel,
+  FORM_PRIVATE_TAG_NAMES,
+  CENSORED_STRING_MARK,
+  getPrivacySelector,
+  TEXT_MASKING_CHAR,
+} from './privacyConstants'
 
 export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
 
@@ -82,6 +52,7 @@ export function reducePrivacyLevel(
     case NodePrivacyLevel.ALLOW:
     case NodePrivacyLevel.MASK:
     case NodePrivacyLevel.MASK_USER_INPUT:
+    case NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED:
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return childPrivacyLevel
@@ -129,6 +100,10 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
     return NodePrivacyLevel.MASK
   }
 
+  if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED))) {
+    return NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+  }
+
   if (node.matches(getPrivacySelector(NodePrivacyLevel.MASK_USER_INPUT))) {
     return NodePrivacyLevel.MASK_USER_INPUT
   }
@@ -159,6 +134,15 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return true
+    case NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED:
+      if (isTextNode(node)) {
+        // Always return true if our parent is a form element, like MASK_USER_INPUT.
+        // Otherwise, decide whether to mask based on the allowlist.
+        return isFormElement(node.parentNode) ? true : !isAllowlisted(node.textContent || '')
+      }
+      // Always return true if we're a form element, like MASK_USER_INPUT.
+      // Otherwise, return false; MASK_UNLESS_ALLOWLISTED only directly masks text nodes.
+      return isFormElement(node)
     case NodePrivacyLevel.MASK_USER_INPUT:
       return isTextNode(node) ? isFormElement(node.parentNode) : isFormElement(node)
     default:
@@ -187,7 +171,7 @@ function isFormElement(node: Node | null): boolean {
  * Text censoring non-destructively maintains whitespace characters in order to preserve text shape
  * during replay.
  */
-export const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
+const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
 
 export function getTextContent(
   textNode: Node,
@@ -226,6 +210,8 @@ export function getTextContent(
     } else if (parentTagName === 'OPTION') {
       // <Option> has low entropy in charset + text length, so use `CENSORED_STRING_MARK` when masked
       textContent = CENSORED_STRING_MARK
+    } else if (nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
+      textContent = maskDisallowedTextContent(textContent)
     } else {
       textContent = censorText(textContent)
     }
@@ -306,6 +292,22 @@ export function shouldIgnoreElement(element: Element): boolean {
   return false
 }
 
-export function getPrivacySelector(privacyLevel: string) {
-  return `[${PRIVACY_ATTR_NAME}="${privacyLevel}"], .${PRIVACY_CLASS_PREFIX}${privacyLevel}`
+export interface BrowserWindow extends Window {
+  $DD_ALLOW?: Set<string>
+}
+
+export function isAllowlisted(text: string): boolean {
+  if (!text || !text.trim()) {
+    return true
+  }
+  // We are using toLocaleLowerCase when adding to the allowlist to avoid case sensitivity
+  // so we need to do the same here
+  return (window as BrowserWindow).$DD_ALLOW?.has(text.toLocaleLowerCase()) || false
+}
+
+export function maskDisallowedTextContent(text: string, fixedMask?: string): string {
+  if (isAllowlisted(text)) {
+    return text
+  }
+  return fixedMask || censorText(text)
 }

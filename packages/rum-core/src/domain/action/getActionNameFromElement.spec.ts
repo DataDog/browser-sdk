@@ -1,8 +1,10 @@
 import { ExperimentalFeature } from '@datadog/browser-core'
 import { mockExperimentalFeatures } from '../../../../core/test'
 import { appendElement, mockRumConfiguration } from '../../../test'
-import { NodePrivacyLevel } from '../privacy'
-import { ActionNameSource, getActionNameFromElement } from './getActionNameFromElement'
+import { NodePrivacyLevel } from '../privacyConstants'
+import { getNodeSelfPrivacyLevel } from '../privacy'
+import { getActionNameFromElement } from './getActionNameFromElement'
+import { ActionNameSource } from './actionNameConstants'
 
 const defaultConfiguration = mockRumConfiguration()
 
@@ -502,6 +504,162 @@ describe('getActionNameFromElement', () => {
       )
       expect(name).toBe('Foo')
       expect(nameSource).toBe('text_content')
+    })
+  })
+  describe('with allowlist and enablePrivacyForActionName is true', () => {
+    interface BrowserWindow extends Window {
+      $DD_ALLOW?: Set<string>
+    }
+
+    it('preserves privacy level of the element when defaultPrivacyLevel is mask-unless-allowlisted', () => {
+      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      const { name, nameSource } = getActionNameFromElement(
+        appendElement(`
+        <div data-dd-privacy="mask">
+          <span target>bar</span>
+        </div>
+      `),
+        {
+          ...defaultConfiguration,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          enablePrivacyForActionName: true,
+        },
+        NodePrivacyLevel.MASK
+      )
+      expect(name).toBe('Masked Element')
+      expect(nameSource).toBe('mask_placeholder')
+    })
+
+    it('preserves privacy level of the element when node privacy level is mask-unless-allowlisted', () => {
+      const testCases = [
+        {
+          html: `
+           <div data-dd-privacy="mask-unless-allowlisted" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: '',
+          expectedNameSource: 'blank',
+        },
+        {
+          html: `
+           <div data-dd-privacy="mask-unless-allowlisted" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          allowlist: ['foo'],
+          expectedName: 'foo',
+          expectedNameSource: 'text_content',
+        },
+        {
+          html: `
+           <div data-dd-privacy="mask-unless-allowlisted" target>
+            <span>foo</span>
+            <div data-dd-privacy="allow">
+              <span>baz</span>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: 'baz',
+          expectedNameSource: 'text_content',
+        },
+        {
+          html: `
+          <div data-dd-privacy="mask" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask-unless-allowlisted">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: 'Masked Element',
+          expectedNameSource: 'mask_placeholder',
+        },
+        {
+          html: `
+          <div data-dd-privacy="allow" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask-unless-allowlisted">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: 'foo baz',
+          expectedNameSource: 'text_content',
+        },
+        {
+          html: `
+          <div data-dd-privacy="allow" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask-unless-allowlisted">
+              <span>bar</span>
+              <div data-dd-privacy="mask">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: 'foo',
+          expectedNameSource: 'text_content',
+        },
+        {
+          html: `
+          <div data-dd-privacy="allow" target>
+            <span>foo</span>
+            <div data-dd-privacy="mask-unless-allowlisted">
+              <span>bar</span>
+              <div data-dd-privacy="allow">
+                <span>baz</span>
+              </div>
+            </div>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          allowlist: ['bar'],
+          expectedName: 'foo bar baz',
+          expectedNameSource: 'text_content',
+        },
+      ]
+      testCases.forEach(({ html, defaultPrivacyLevel, allowlist, expectedName, expectedNameSource }) => {
+        mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+        ;(window as BrowserWindow).$DD_ALLOW = new Set(allowlist)
+        const target = appendElement(html)
+        const { name, nameSource } = getActionNameFromElement(
+          target,
+          {
+            ...defaultConfiguration,
+            defaultPrivacyLevel,
+            enablePrivacyForActionName: true,
+          },
+          getNodeSelfPrivacyLevel(target)
+        )
+        expect(name).toBe(expectedName)
+        expect(nameSource).toBe(expectedNameSource)
+      })
     })
   })
 

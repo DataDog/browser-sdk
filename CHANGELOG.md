@@ -18,6 +18,26 @@
 
 ---
 
+## v6.19.0
+
+**Public Changes:**
+
+- ✨[RUM-10962][Remote config] support dynamic options ([#3743](https://github.com/DataDog/browser-sdk/pull/3743)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [PANA-3960] Allow more queued request data for better session replay reliability ([#3807](https://github.com/DataDog/browser-sdk/pull/3807)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-11439] Fix deflate encoder sending data twice in some cases ([#3806](https://github.com/DataDog/browser-sdk/pull/3806)) [RUM]
+
+**Internal Changes:**
+
+- ✨ [RUM-10044] Support for overriding the source ([#3659](https://github.com/DataDog/browser-sdk/pull/3659)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Fix playwright version in BrowserStack to match package.json ([#3810](https://github.com/DataDog/browser-sdk/pull/3810))
+- 👷 Lock file maintenance ([#3785](https://github.com/DataDog/browser-sdk/pull/3785))
+- 👷 Update all non-major dependencies ([#3782](https://github.com/DataDog/browser-sdk/pull/3782)) [FLAGGING] [RUM-REACT] [RUM] [WORKER]
+- 👷 Update actions/checkout action to v5 ([#3783](https://github.com/DataDog/browser-sdk/pull/3783))
+- 👷 Update dependency eslint-plugin-jsdoc to v54 ([#3784](https://github.com/DataDog/browser-sdk/pull/3784))
+- 👷 Fix create-github-release job ([#3799](https://github.com/DataDog/browser-sdk/pull/3799))
+- 🔧 👷 convert webpack configuration files to TS, improve overall TS config ([#3797](https://github.com/DataDog/browser-sdk/pull/3797)) [FLAGGING] [LOGS] [RUM-SLIM] [RUM] [WORKER]
+- 🔊[RUM-11233] add `remote_configuration_id` to configuration telemetry ([#3778](https://github.com/DataDog/browser-sdk/pull/3778)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.18.1
 
 **Public Changes:**

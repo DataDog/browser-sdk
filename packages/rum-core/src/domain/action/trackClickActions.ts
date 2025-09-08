@@ -17,12 +17,14 @@ import { LifeCycleEventType } from '../lifeCycle'
 import { trackEventCounts } from '../trackEventCounts'
 import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPageActivityEnd'
 import { getSelectorFromElement } from '../getSelectorFromElement'
-import { getNodePrivacyLevel, NodePrivacyLevel } from '../privacy'
+import { getNodePrivacyLevel } from '../privacy'
+import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
+import type { ActionNameSource } from './actionNameConstants'
 import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
@@ -38,7 +40,7 @@ export interface ClickAction {
   type: typeof ActionType.CLICK
   id: string
   name: string
-  nameSource: string
+  nameSource: ActionNameSource
   target?: {
     selector: string | undefined
     width: number
@@ -141,9 +143,13 @@ function processPointerDown(
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
-  const nodePrivacyLevel = configuration.enablePrivacyForActionName
-    ? getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
-    : NodePrivacyLevel.ALLOW
+  let nodePrivacyLevel: NodePrivacyLevel
+
+  if (configuration.enablePrivacyForActionName) {
+    nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+  } else {
+    nodePrivacyLevel = NodePrivacyLevel.ALLOW
+  }
 
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return undefined
@@ -243,7 +249,8 @@ function computeClickActionBase(
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
-  const actionName = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+
+  const { name, nameSource } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
@@ -257,8 +264,8 @@ function computeClickActionBase(
       x: Math.round(event.clientX - rect.left),
       y: Math.round(event.clientY - rect.top),
     },
-    name: actionName.name,
-    nameSource: actionName.nameSource,
+    name,
+    nameSource,
   }
 }
 
