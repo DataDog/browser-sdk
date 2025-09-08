@@ -8,7 +8,10 @@ const pathToCdnExtension = path.join(__dirname, '../../../../test/apps/cdn-exten
 // TODO: the recorder is lazy loaded and does not works in an browser extension content script
 const DISABLE_SESSION_REPLAY_CONFIGURATION = { sessionReplaySampleRate: 0 }
 
-interface Ext { name: string; path: string }
+interface Ext {
+  name: string
+  path: string
+}
 
 const EXTENSIONS: Ext[] = [
   { name: 'bundle', path: pathToBundleExtension },
