@@ -151,109 +151,128 @@ describe('resourceCollection', () => {
     })
   })
 
-  it('should enrich resource with GraphQL metadata when the URL matches allowedGraphQlUrls', () => {
-    setupResourceCollection({
-      trackResources: true,
-      allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: true }],
-    })
+  describe('GraphQL metadata enrichment', () => {
+    interface TestCase {
+      requestType: RequestType
+      name: string
+    }
 
-    const requestBody = JSON.stringify({
-      query: 'query GetUser($id: ID!) { user(id: $id) { name email } }',
-      operationName: 'GetUser',
-      variables: { id: '123' },
-    })
+    const testCases: TestCase[] = [
+      { requestType: RequestType.FETCH, name: 'FETCH' },
+      { requestType: RequestType.XHR, name: 'XHR' },
+    ]
 
-    notifyRequest({
-      request: {
-        type: RequestType.FETCH,
-        url: 'https://api.example.com/graphql',
-        method: 'POST',
-        init: {
-          method: 'POST',
-          body: requestBody,
-        },
-        input: 'https://api.example.com/graphql',
-      },
-    })
+    testCases.forEach(({ requestType, name }) => {
+      describe(`for ${name} requests`, () => {
+        function createRequest(requestType: RequestType, url: string, body: string) {
+          const baseRequest = {
+            type: requestType,
+            url,
+            method: 'POST' as const,
+          }
 
-    expect(rawRumEvents[0].rawRumEvent).toEqual(
-      jasmine.objectContaining({
-        resource: jasmine.objectContaining({
-          graphql: {
-            operationType: 'query',
+          if (requestType === RequestType.FETCH) {
+            return {
+              ...baseRequest,
+              init: {
+                method: 'POST' as const,
+                body,
+              },
+              input: url,
+            }
+          }
+          {
+            // XHR
+            return {
+              ...baseRequest,
+              body,
+              status: 200,
+              duration: 100 as Duration,
+              startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+              isAborted: false,
+            }
+          }
+        }
+
+        it('should enrich resource with GraphQL metadata when the URL matches allowedGraphQlUrls', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: true }],
+          })
+
+          const requestBody = JSON.stringify({
+            query: 'query GetUser($id: ID!) { user(id: $id) { name email } }',
             operationName: 'GetUser',
-            variables: '{"id":"123"}',
-            payload: 'query GetUser($id: ID!) { user(id: $id) { name email } }',
-          },
-        }),
-      })
-    )
-  })
+            variables: { id: '123' },
+          })
 
-  it('should not enrich resource with GraphQL metadata when URL does not match', () => {
-    setupResourceCollection({
-      trackResources: true,
-      allowedGraphQlUrls: [{ match: '/graphql', trackPayload: false }],
-    })
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/graphql', requestBody),
+          })
 
-    const requestBody = JSON.stringify({
-      query: 'query GetUser { user { name } }',
-    })
+          expect(rawRumEvents[0].rawRumEvent).toEqual(
+            jasmine.objectContaining({
+              resource: jasmine.objectContaining({
+                graphql: {
+                  operationType: 'query',
+                  operationName: 'GetUser',
+                  variables: '{"id":"123"}',
+                  payload: 'query GetUser($id: ID!) { user(id: $id) { name email } }',
+                },
+              }),
+            })
+          )
+        })
 
-    notifyRequest({
-      request: {
-        type: RequestType.FETCH,
-        url: 'https://api.example.com/api/rest',
-        method: 'POST',
-        init: {
-          method: 'POST',
-          body: requestBody,
-        },
-        input: 'https://api.example.com/api/rest',
-      },
-    })
+        it('should not enrich resource with GraphQL metadata when URL does not match', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: '/graphql', trackPayload: false }],
+          })
 
-    const resourceEvent = rawRumEvents[0].rawRumEvent as any
-    expect(resourceEvent.resource.graphql).toBeUndefined()
-  })
+          const requestBody = JSON.stringify({
+            query: 'query GetUser { user { name } }',
+          })
 
-  it('should not include payload when trackPayload is false', () => {
-    setupResourceCollection({
-      trackResources: true,
-      allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: false }],
-    })
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/api/rest', requestBody),
+          })
 
-    const requestBody = JSON.stringify({
-      query: 'mutation CreateUser { createUser { id } }',
-      operationName: 'CreateUser',
-      variables: { name: 'John' },
-    })
+          const resourceEvent = rawRumEvents[0].rawRumEvent as any
+          expect(resourceEvent.resource.graphql).toBeUndefined()
+        })
 
-    notifyRequest({
-      request: {
-        type: RequestType.FETCH,
-        url: 'https://api.example.com/graphql',
-        method: 'POST',
-        init: {
-          method: 'POST',
-          body: requestBody,
-        },
-        input: 'https://api.example.com/graphql',
-      },
-    })
+        it('should not include payload when trackPayload is false', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: false }],
+          })
 
-    expect(rawRumEvents[0].rawRumEvent).toEqual(
-      jasmine.objectContaining({
-        resource: jasmine.objectContaining({
-          graphql: {
-            operationType: 'mutation',
+          const requestBody = JSON.stringify({
+            query: 'mutation CreateUser { createUser { id } }',
             operationName: 'CreateUser',
-            variables: '{"name":"John"}',
-            payload: undefined,
-          },
-        }),
+            variables: { name: 'John' },
+          })
+
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/graphql', requestBody),
+          })
+
+          expect(rawRumEvents[0].rawRumEvent).toEqual(
+            jasmine.objectContaining({
+              resource: jasmine.objectContaining({
+                graphql: {
+                  operationType: 'mutation',
+                  operationName: 'CreateUser',
+                  variables: '{"name":"John"}',
+                  payload: undefined,
+                },
+              }),
+            })
+          )
+        })
       })
-    )
+    })
   })
 
   describe('with EARLY_REQUEST_COLLECTION enabled', () => {

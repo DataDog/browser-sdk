@@ -20,6 +20,7 @@ export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
   isAborted: boolean
   xhr: XMLHttpRequest
   handlingStack?: string
+  body?: unknown
 }
 
 export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
@@ -72,7 +73,7 @@ function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodC
 }
 
 function sendXhr(
-  { target: xhr, handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
+  { target: xhr, parameters, handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
   configuration: Configuration,
   observable: Observable<XhrContext>
 ) {
@@ -87,6 +88,7 @@ function sendXhr(
   startContext.isAborted = false
   startContext.xhr = xhr
   startContext.handlingStack = handlingStack
+  startContext.body = parameters[0]
 
   let hasBeenReported = false
 

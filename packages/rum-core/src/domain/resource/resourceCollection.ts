@@ -177,7 +177,7 @@ function computeGraphQlData(
   request: RequestCompleteEvent | undefined,
   configuration: RumConfiguration
 ): GraphQlMetadata | undefined {
-  if (!request || request.type !== RequestType.FETCH) {
+  if (!request) {
     return undefined
   }
 
@@ -186,7 +186,15 @@ function computeGraphQlData(
     return undefined
   }
 
-  const graphqlMetadata = extractGraphQlMetadata(request.init?.body, graphQlConfig.trackPayload)
+  // Get request body based on request type
+  let requestBody: unknown
+  if (request.type === RequestType.FETCH) {
+    requestBody = request.init?.body
+  } else if (request.type === RequestType.XHR) {
+    requestBody = request.body
+  }
+
+  const graphqlMetadata = extractGraphQlMetadata(requestBody, graphQlConfig.trackPayload)
   if (!graphqlMetadata) {
     return undefined
   }
