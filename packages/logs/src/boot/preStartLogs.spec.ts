@@ -1,16 +1,26 @@
-import { callbackAddsInstrumentation, type Clock, mockClock, mockEventBridge } from '@datadog/browser-core/test'
+import {
+  callbackAddsInstrumentation,
+  type Clock,
+  mockClock,
+  mockEventBridge,
+  mockSyntheticsWorkerValues,
+} from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   ONE_SECOND,
+  SESSION_STORE_KEY,
   TrackingConsent,
   createTrackingConsentState,
   display,
+  getCookie,
   resetFetchObservable,
+  stopSessionManager,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { Strategy } from './logsPublicApi'
 import { createPreStartStrategy } from './preStartLogs'
 import type { StartLogsResult } from './startLogs'
@@ -20,7 +30,11 @@ const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
 
 describe('preStartLogs', () => {
   let doStartLogsSpy: jasmine.Spy<
-    (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
+    (
+      initConfiguration: LogsInitConfiguration,
+      configuration: LogsConfiguration,
+      sessionManager: LogsSessionManager
+    ) => StartLogsResult
   >
   let handleLogSpy: jasmine.Spy<StartLogsResult['handleLog']>
   let getCommonContextSpy: jasmine.Spy<() => CommonContext>
@@ -44,6 +58,7 @@ describe('preStartLogs', () => {
 
   afterEach(() => {
     resetFetchObservable()
+    stopSessionManager()
   })
 
   describe('configuration validation', () => {
@@ -246,6 +261,43 @@ describe('preStartLogs', () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
 
       expect(doStartLogsSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('sampling', () => {
+    it('should be applied when event bridge is present (rate 0)', () => {
+      mockEventBridge()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, sessionSampleRate: 0 })
+      const sessionManager = doStartLogsSpy.calls.mostRecent().args[2]
+      expect(sessionManager.findTrackedSession()).toBeUndefined()
+    })
+
+    it('should be applied when event bridge is present (rate 100)', () => {
+      mockEventBridge()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, sessionSampleRate: 100 })
+      const sessionManager = doStartLogsSpy.calls.mostRecent().args[2]
+      expect(sessionManager.findTrackedSession()).toBeTruthy()
+    })
+  })
+
+  describe('logs session creation', () => {
+    it('creates a session on normal conditions', () => {
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
+    })
+
+    it('does not create a session if event bridge is present', () => {
+      mockEventBridge()
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
+    })
+
+    it('does not create a session if synthetics worker will inject RUM', () => {
+      mockSyntheticsWorkerValues({ injectsRum: true })
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
     })
   })
 })

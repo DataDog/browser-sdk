@@ -29,7 +29,6 @@ import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
-import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
@@ -57,6 +56,7 @@ import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
+import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -64,6 +64,7 @@ export type StartRumResult = ReturnType<StartRum>
 
 export function startRum(
   configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
@@ -82,6 +83,8 @@ export function startRum(
   const hooks = createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
+
+  sessionManager.expireObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED))
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
@@ -104,17 +107,13 @@ export function startRum(
   )
   cleanupTasks.push(telemetry.stop)
 
-  const session = !canUseEventBridge()
-    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
-    : startRumSessionManagerStub()
-
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
       lifeCycle,
       reportError,
       pageMayExitObservable,
-      session.expireObservable,
+      sessionManager.expireObservable,
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
@@ -135,11 +134,11 @@ export function startRum(
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  startSessionContext(hooks, session, recorderApi, viewHistory)
+  startSessionContext(hooks, sessionManager, recorderApi, viewHistory)
   startConnectivityContext(hooks)
   startTrackingConsentContext(hooks, trackingConsentState)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(hooks, configuration, session, 'rum')
+  const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
   const {
@@ -203,12 +202,12 @@ export function startRum(
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
   bufferedDataObservable.unbuffer()
 
-  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
+  startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
   const internalContext = startInternalContext(
     configuration.applicationId,
-    session,
+    sessionManager,
     viewHistory,
     actionContexts,
     urlContexts
@@ -230,8 +229,8 @@ export function startRum(
     setViewName,
     lifeCycle,
     viewHistory,
-    session,
-    stopSession: () => session.expire(),
+    sessionManager,
+    stopSession: () => sessionManager.expire(),
     getInternalContext: internalContext.get,
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
