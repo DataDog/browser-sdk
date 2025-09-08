@@ -826,7 +826,8 @@ export type RumResourceEvent = CommonProperties &
  * Schema of all properties of a View event
  */
 export type RumViewEvent = CommonProperties &
-  ViewContainerSchema & {
+  ViewContainerSchema &
+  StreamSchema & {
     /**
      * RUM event type
      */
@@ -1644,6 +1645,16 @@ export interface CommonProperties {
   context?: {
     [k: string]: unknown
   }
+  /**
+   * Stream properties
+   */
+  stream?: {
+    /**
+     * UUID of the stream
+     */
+    readonly id: string
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**
@@ -1725,6 +1736,46 @@ export interface ProfilingInternalContextSchema {
     | 'failed-to-lazy-load'
     | 'missing-document-policy-header'
     | 'unexpected-exception'
+  [k: string]: unknown
+}
+/**
+ * Stream schema for media streaming properties
+ */
+export interface StreamSchema {
+  /**
+   * Stream properties
+   */
+  readonly stream?: {
+    /**
+     * current bitrate at the time of collection
+     */
+    bitrate?: number
+    /**
+     * How long is the content (VOD only) (in ms)
+     */
+    readonly duration?: number
+    /**
+     * Stream format
+     */
+    readonly format?: string
+    /**
+     * current frames per second at the time of collection
+     */
+    fps?: number
+    /**
+     * Stream resolution
+     */
+    readonly resolution?: string
+    /**
+     * current timestamp at the time of collection
+     */
+    timestamp?: number
+    /**
+     * how much did the media progress since the last context update (in ms)
+     */
+    watch_time?: number
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**

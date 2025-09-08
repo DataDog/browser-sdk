@@ -43,7 +43,7 @@ export function extractGraphQlMetadata(
     return undefined
   }
 
-  const query = graphqlBody.query.trim()
+  const query = graphqlBody.query
   const operationType = getOperationType(query)
   const operationName = graphqlBody.operationName
 
