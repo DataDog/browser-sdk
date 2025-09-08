@@ -390,7 +390,7 @@ deploy-auto:
 # Notify
 ########################################################################################################################
 
-include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
+include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v3-sdm/template.yml'
 
 notify-feature-branch-failure:
   extends:
