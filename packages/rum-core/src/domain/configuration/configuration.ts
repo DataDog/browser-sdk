@@ -448,7 +448,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       Array.isArray(configuration.allowedGraphQlUrls) &&
       configuration.allowedGraphQlUrls.some((option) => {
         if (typeof option === 'object' && 'trackPayload' in option) {
-          return option.trackPayload === true
+          return !!option.trackPayload
         }
         return false
       }),

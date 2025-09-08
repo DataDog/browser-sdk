@@ -135,7 +135,7 @@ function assembleResource(
     ? computeResourceEntryDuration(entry)
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
-  const { graphql } = computeGraphQlData(request, configuration)
+  const graphql = computeGraphQlData(request, configuration)
 
   const resourceEvent = combine(
     {
@@ -176,24 +176,22 @@ function assembleResource(
 function computeGraphQlData(
   request: RequestCompleteEvent | undefined,
   configuration: RumConfiguration
-): { graphql?: GraphQlMetadata } {
+): GraphQlMetadata | undefined {
   if (!request || request.type !== RequestType.FETCH) {
-    return {}
+    return undefined
   }
 
   const graphQlConfig = findGraphQlConfiguration(request.url, configuration)
   if (!graphQlConfig) {
-    return {}
+    return undefined
   }
 
   const graphqlMetadata = extractGraphQlMetadata(request.init?.body, graphQlConfig.trackPayload)
   if (!graphqlMetadata) {
-    return {}
+    return undefined
   }
 
-  return {
-    graphql: graphqlMetadata,
-  }
+  return graphqlMetadata
 }
 
 function getResourceDomainContext(
