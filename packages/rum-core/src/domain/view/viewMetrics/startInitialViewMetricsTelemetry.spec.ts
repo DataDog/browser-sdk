@@ -1,4 +1,5 @@
-import type { Telemetry, RelativeTime, Duration, RawTelemetryEvent } from '@datadog/browser-core'
+import type { Telemetry, RelativeTime, Duration, RawTelemetryEvent, PageMayExitEvent } from '@datadog/browser-core'
+import { PageExitReason } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
@@ -39,6 +40,18 @@ const TELEMETRY_FOR_VIEW_METRICS: RawTelemetryEvent = {
   },
 }
 
+const TELEMETRY_FOR_EARLY_PAGE_UNLOAD: RawTelemetryEvent = {
+  type: 'log',
+  status: 'debug',
+  message: 'Initial view metrics',
+  metrics: {
+    earlyPageUnload: {
+      domContentLoaded: jasmine.anything(),
+      timestamp: jasmine.anything(),
+    },
+  },
+}
+
 describe('startInitialViewMetricsTelemetry', () => {
   const lifeCycle = new LifeCycle()
   let telemetry: MockTelemetry
@@ -47,6 +60,10 @@ describe('startInitialViewMetricsTelemetry', () => {
     maxTelemetryEventsPerPage: 2,
     initialViewMetricsTelemetrySampleRate: 100,
     telemetrySampleRate: 100,
+  }
+
+  function generatePageMayExit(reason: PageExitReason) {
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason } as PageMayExitEvent)
   }
 
   function generateViewUpdateWithInitialViewMetrics(initialViewMetrics: Partial<InitialViewMetrics>) {
@@ -72,6 +89,12 @@ describe('startInitialViewMetricsTelemetry', () => {
     expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
   })
 
+  it('should collect minimal initial view metrics telemetry if page unloads early', async () => {
+    startInitialViewMetricsTelemetryCollection()
+    generatePageMayExit(PageExitReason.UNLOADING)
+    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_EARLY_PAGE_UNLOAD)])
+  })
+
   it('should not collect initial view metrics telemetry twice', async () => {
     startInitialViewMetricsTelemetryCollection()
 
@@ -86,6 +109,36 @@ describe('startInitialViewMetricsTelemetry', () => {
       },
     })
     expect(await telemetry.hasEvents()).toBe(false)
+  })
+
+  it('should not collect early page unload telemetry if page is not unloading', async () => {
+    startInitialViewMetricsTelemetryCollection()
+    generatePageMayExit(PageExitReason.FROZEN)
+    generatePageMayExit(PageExitReason.HIDDEN)
+    generatePageMayExit(PageExitReason.PAGEHIDE)
+    expect(await telemetry.hasEvents()).toBe(false)
+  })
+
+  it('should not collect early page unload telemetry if initial view metrics were already collected', async () => {
+    startInitialViewMetricsTelemetryCollection()
+
+    generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
+    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    telemetry.reset()
+
+    generatePageMayExit(PageExitReason.UNLOADING)
+    expect(await telemetry.hasEvents()).toBe(false)
+  })
+
+  it('should collect initial view metrics even if page unload telemetry was already collected', async () => {
+    startInitialViewMetricsTelemetryCollection()
+
+    generatePageMayExit(PageExitReason.UNLOADING)
+    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_EARLY_PAGE_UNLOAD)])
+    telemetry.reset()
+
+    generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
+    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
   })
 
   it('should not collect initial view metrics telemetry until LCP is known', async () => {
@@ -122,6 +175,8 @@ describe('startInitialViewMetricsTelemetry', () => {
       initialViewMetricsTelemetrySampleRate: 0,
     })
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
+    expect(await telemetry.hasEvents()).toBe(false)
+    generatePageMayExit(PageExitReason.UNLOADING)
     expect(await telemetry.hasEvents()).toBe(false)
   })
 })
