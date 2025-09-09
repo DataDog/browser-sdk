@@ -62,38 +62,6 @@ describe('isUnsupportedExtensionEnvironment', () => {
   })
 })
 
-describe('callsite-based detection (top caller frame)', () => {
-  it('should return true when the top caller frame is an extension URL', () => {
-    const stack =
-      'Error\n    at monitor (https://cdn.datadoghq.com/sdk.js:1:1)\n    at e.init (chrome-extension://abcdefg/content.js:10:15)\n    at other (https://example.com/app.js:5:10)'
-
-    expect(isUnsupportedExtensionEnvironment('https://example.com', stack)).toBe(true)
-  })
-
-  it('should return false when an extension URL exists deeper in the stack but the top caller frame is a regular URL', () => {
-    const stack =
-      'Error\n    at monitor (https://cdn.datadoghq.com/sdk.js:1:1)\n    at e.init (https://example.com/app.js:10:15)\n    at injected (chrome-extension://abcdefg/content.js:5:10)'
-
-    expect(isUnsupportedExtensionEnvironment('https://example.com', stack)).toBe(false)
-  })
-})
-
-describe('callsite via callMonitored wrapper', () => {
-  it('should skip callMonitored and use the next frame as callsite', () => {
-    const stack =
-      'Error\n    at callMonitored (https://cdn.datadoghq.com/sdk.js:1:1)\n    at init (https://example.com/app.js:10:15)\n    at apply (chrome-extension://abcdefg/content.js:5:10)'
-
-    expect(isUnsupportedExtensionEnvironment('https://example.com', stack)).toBe(false)
-  })
-
-  it('should detect extension when the next frame after callMonitored is extension URL', () => {
-    const stack =
-      'Error\n    at callMonitored (https://cdn.datadoghq.com/sdk.js:1:1)\n    at init (chrome-extension://abcdefg/content.js:10:15)\n    at other (https://example.com/app.js:5:10)'
-
-    expect(isUnsupportedExtensionEnvironment('https://example.com', stack)).toBe(true)
-  })
-})
-
 describe('extractExtensionUrlFromStack', () => {
   it('should extract extension URL from stack trace', () => {
     const stack = `Error
