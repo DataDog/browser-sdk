@@ -4,8 +4,9 @@ module.exports = {
   mode: 'production',
   target: ['web', 'es2018'],
   entry: {
-    'npm-content-script': './src/npmContentScript.ts',
-    'cdn-content-script': './src/cdnContentScript.ts',
+    base: './src/base.ts',
+    cdn: './src/cdn.ts',
+    appendChild: './src/appendChild.ts',
   },
   module: {
     rules: [

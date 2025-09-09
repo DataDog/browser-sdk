@@ -6,9 +6,9 @@ declare global {
   interface Window {
     RUM_BUNDLE_URL?: string
     LOGS_BUNDLE_URL?: string
-    RUM_CONFIGURATION?: RumInitConfiguration
+    EXT_RUM_CONFIGURATION?: RumInitConfiguration
     RUM_CONTEXT?: Context
-    LOGS_CONFIGURATION?: LogsInitConfiguration
+    EXT_LOGS_CONFIGURATION?: LogsInitConfiguration
     LOGS_CONTEXT?: Context
     DD_RUM?: RumPublicApi
     DD_LOGS?: LogsGlobal
@@ -38,10 +38,10 @@ function load<T extends 'DD_RUM' | 'DD_LOGS'>(
   document.documentElement.appendChild(script)
 }
 
-if (window.RUM_BUNDLE_URL && window.RUM_CONFIGURATION) {
-  load('DD_RUM', window.RUM_BUNDLE_URL, window.RUM_CONFIGURATION, window.RUM_CONTEXT)
+if (window.RUM_BUNDLE_URL && window.EXT_RUM_CONFIGURATION) {
+  load('DD_RUM', window.RUM_BUNDLE_URL, window.EXT_RUM_CONFIGURATION, window.RUM_CONTEXT)
 }
 
-if (window.LOGS_BUNDLE_URL && window.LOGS_CONFIGURATION) {
-  load('DD_LOGS', window.LOGS_BUNDLE_URL, window.LOGS_CONFIGURATION, window.LOGS_CONTEXT)
+if (window.LOGS_BUNDLE_URL && window.EXT_LOGS_CONFIGURATION) {
+  load('DD_LOGS', window.LOGS_BUNDLE_URL, window.EXT_LOGS_CONFIGURATION, window.LOGS_CONTEXT)
 }

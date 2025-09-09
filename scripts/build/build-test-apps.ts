@@ -5,6 +5,11 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
 
+const OTHER_EXTENSIONS: Array<{ name: string; options?: { runAt?: string } }> = [
+  { name: 'cdn' },
+  { name: 'appendChild', options: { runAt: 'document_start' } },
+]
+
 runMain(async () => {
   printLog('Packing packages...')
   command`yarn lerna run pack`.run()
@@ -56,14 +61,20 @@ async function buildExtensions(): Promise<void> {
 
   buildApp(baseExtDir)
 
-  const cdnExtDir = 'test/apps/cdn-extension'
-  fs.rmSync(cdnExtDir, { recursive: true, force: true })
-  fs.cpSync(baseExtDir, cdnExtDir, { recursive: true })
+  for (const { name, options } of OTHER_EXTENSIONS) {
+    const targetDir = path.join('test/apps', `${name}-extension`)
 
-  const manifestPath = path.join(cdnExtDir, 'manifest.json')
-  await modifyFile(manifestPath, (content: string) =>
-    content.replace('dist/npm-content-script.js', 'dist/cdn-content-script.js')
-  )
+    fs.rmSync(targetDir, { recursive: true, force: true })
+    fs.cpSync(baseExtDir, targetDir, { recursive: true })
 
-  buildApp(cdnExtDir)
+    const manifestPath = path.join(targetDir, 'manifest.json')
+    await modifyFile(manifestPath, (originalContent: string) => {
+      let content = originalContent.replace('dist/base.js', `dist/${name}.js`)
+
+      if (options?.runAt) {
+        content = content.replace('document_end', options.runAt)
+      }
+      return content
+    })
+  }
 }

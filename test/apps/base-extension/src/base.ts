@@ -6,23 +6,23 @@ import type { Context } from '@datadog/browser-core'
 
 declare global {
   interface Window {
-    RUM_CONFIGURATION?: RumInitConfiguration
+    EXT_RUM_CONFIGURATION?: RumInitConfiguration
     RUM_CONTEXT?: Context
-    LOGS_CONFIGURATION?: LogsInitConfiguration
+    EXT_LOGS_CONFIGURATION?: LogsInitConfiguration
     LOGS_CONTEXT?: Context
   }
 }
 
-if (window.RUM_CONFIGURATION) {
-  datadogRum.init(window.RUM_CONFIGURATION)
+if (window.EXT_RUM_CONFIGURATION) {
+  datadogRum.init(window.EXT_RUM_CONFIGURATION)
 
   if (window.RUM_CONTEXT) {
     datadogRum.setGlobalContext(window.RUM_CONTEXT)
   }
 }
 
-if (window.LOGS_CONFIGURATION) {
-  datadogLogs.init(window.LOGS_CONFIGURATION)
+if (window.EXT_LOGS_CONFIGURATION) {
+  datadogLogs.init(window.EXT_LOGS_CONFIGURATION)
 
   if (window.LOGS_CONTEXT) {
     datadogLogs.setGlobalContext(window.LOGS_CONTEXT)

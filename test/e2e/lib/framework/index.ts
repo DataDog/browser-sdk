@@ -1,5 +1,6 @@
 export { createTest, DEFAULT_RUM_CONFIGURATION, DEFAULT_LOGS_CONFIGURATION } from './createTest'
-export { bundleSetup, html, npmSetup, reactSetup } from './pageSetups'
+export { createExtension } from './createExtension'
+export { bundleSetup, html, npmSetup, reactSetup, formatConfiguration, createCrossOriginScriptUrls } from './pageSetups'
 export { IntakeRegistry } from './intakeRegistry'
 export { getTestServers, waitForServersIdle } from './httpServers'
 export { flushEvents } from './flushEvents'

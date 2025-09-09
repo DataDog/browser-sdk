@@ -1,0 +1,45 @@
+import path from 'path'
+import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type test from '@playwright/test'
+import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import { createExtensionTest } from '../helpers/extensionFixture'
+import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from './createTest'
+
+export function createExtension(name: string) {
+  return new Extension(name)
+}
+
+// TODO: the recorder is lazy loaded and does not works in an browser extension content script
+const DISABLE_SESSION_REPLAY_CONFIGURATION = { sessionReplaySampleRate: 0 }
+
+export class Extension {
+  public fixture: typeof test
+  public rumConfiguration: RumInitConfiguration | undefined
+  public logsConfiguration: LogsInitConfiguration | undefined
+
+  constructor(name: string) {
+    this.fixture = createExtensionTest(path.join(__dirname, '../../../../test/apps/', `${name}-extension`))
+
+    return this
+  }
+
+  withRum(rumInitConfiguration: Partial<RumInitConfiguration> = {}) {
+    this.rumConfiguration = {
+      ...DEFAULT_RUM_CONFIGURATION,
+      ...DISABLE_SESSION_REPLAY_CONFIGURATION,
+      ...rumInitConfiguration,
+    }
+
+    return this
+  }
+
+  withLogs(logsInitConfiguration: Partial<LogsInitConfiguration> = {}) {
+    this.logsConfiguration = {
+      ...DEFAULT_LOGS_CONFIGURATION,
+      ...DISABLE_SESSION_REPLAY_CONFIGURATION,
+      ...logsInitConfiguration,
+    }
+
+    return this
+  }
+}
