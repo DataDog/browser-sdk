@@ -1,6 +1,5 @@
-export {}
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
+import type { LogsInitConfiguration, LogsGlobal } from '@datadog/browser-logs'
 import type { Context } from '@datadog/browser-core'
 
 declare global {
@@ -11,36 +10,39 @@ declare global {
     RUM_CONTEXT?: Context
     LOGS_CONFIGURATION?: LogsInitConfiguration
     LOGS_CONTEXT?: Context
-    DD_RUM?: {
-      init: (config: Record<string, unknown>) => void
-      setGlobalContext: (ctx: Record<string, unknown>) => void
-    }
-    DD_LOGS?: {
-      init: (config: Record<string, unknown>) => void
-      setGlobalContext: (ctx: Record<string, unknown>) => void
-    }
+    DD_RUM?: RumPublicApi
+    DD_LOGS?: LogsGlobal
   }
 }
 
-const scriptUrl = window.RUM_BUNDLE_URL || window.LOGS_BUNDLE_URL
-if (scriptUrl) {
+function load<T extends 'DD_RUM' | 'DD_LOGS'>(
+  sdk: T,
+  url: string,
+  initConfig: T extends 'DD_RUM' ? RumInitConfiguration : LogsInitConfiguration,
+  globalContext?: Context
+) {
   const script = document.createElement('script')
-  script.src = scriptUrl
+  script.src = url
   script.async = true
   script.onload = () => {
-    if (window.RUM_CONFIGURATION && window.DD_RUM) {
-      window.DD_RUM.init({ ...window.RUM_CONFIGURATION })
-      if (window.RUM_CONTEXT) {
-        window.DD_RUM.setGlobalContext(window.RUM_CONTEXT)
-      }
+    if (!window[sdk]) {
+      console.error(`${sdk} is not loaded`)
+      return
     }
 
-    if (window.LOGS_CONFIGURATION && window.DD_LOGS) {
-      window.DD_LOGS.init({ ...window.LOGS_CONFIGURATION })
-      if (window.LOGS_CONTEXT) {
-        window.DD_LOGS.setGlobalContext(window.LOGS_CONTEXT)
-      }
+    window[sdk].init(initConfig as any)
+    if (globalContext) {
+      window[sdk].setGlobalContext(globalContext)
     }
   }
+
   document.documentElement.appendChild(script)
+}
+
+if (window.RUM_BUNDLE_URL && window.RUM_CONFIGURATION) {
+  load('DD_RUM', window.RUM_BUNDLE_URL, window.RUM_CONFIGURATION, window.RUM_CONTEXT)
+}
+
+if (window.LOGS_BUNDLE_URL && window.LOGS_CONFIGURATION) {
+  load('DD_LOGS', window.LOGS_BUNDLE_URL, window.LOGS_CONFIGURATION, window.LOGS_CONTEXT)
 }
