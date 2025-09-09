@@ -75,4 +75,41 @@ describe('extractExtensionUrlFromStack', () => {
     const stack = 'Error at https://example.com/script.js:10:15'
     expect(extractExtensionUrlFromStack(stack)).toBeUndefined()
   })
+
+  describe('isUnsupportedExtensionEnvironment caller-frame', () => {
+    it('should return true when caller frame is an extension URL', () => {
+      const stack = [
+        'Error',
+        '    at callMonitored (https://cdn.datadoghq.com/rum.js:10:10)',
+        '    at Object.init (https://cdn.datadoghq.com/rum.js:9:5)',
+        '    at chrome-extension://abc123/script.js:10:15',
+        '    at https://app.example.com/app.js:200:30',
+      ].join('\n')
+      expect(isUnsupportedExtensionEnvironment('https://example.com', stack)).toBe(true)
+    })
+
+    it('returns false when extension frames exist but the init caller is not an extension', () => {
+      const stack = [
+        'Error',
+        '    at callMonitored (https://cdn.datadoghq.com/rum.js:10:10)',
+        '    at Object.init (https://cdn.datadoghq.com/rum.js:9:5)',
+        '    at https://app.example.com/app.js:3:59',
+        '    at Object.apply (chrome-extension://random-extension-id/WXkqOoBd.js:10:4624)',
+        '    at https://app.example.com/app.js:200:30',
+      ].join('\n')
+
+      expect(isUnsupportedExtensionEnvironment('https://app.example.com', stack)).toBeFalse()
+    })
+
+    it('falls back to first non-SDK frame if init frame not found', () => {
+      const stack = [
+        'Error',
+        '    at someInternal (https://cdn.datadoghq.com/rum.js:10:10)',
+        '    at otherInternal (https://cdn.datadoghq.com/rum.js:9:5)',
+        '    at chrome-extension://abc123/script.js:10:15',
+      ].join('\n')
+
+      expect(isUnsupportedExtensionEnvironment('https://app.example.com', stack)).toBeTrue()
+    })
+  })
 })
