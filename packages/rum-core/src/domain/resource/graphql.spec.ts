@@ -97,6 +97,23 @@ describe('GraphQL detection and metadata extraction', () => {
       const result = extractGraphQlMetadata(requestBody, true)
       expect(result).toBeUndefined()
     })
+
+    it('should handle GraphQL queries with leading and trailing whitespace', () => {
+      const requestBody = JSON.stringify({
+        query: '  \n  query GetUser { user { id name } }  \n  ',
+        operationName: 'GetUser',
+        variables: { id: '123' },
+      })
+
+      const result = extractGraphQlMetadata(requestBody, true)
+
+      expect(result).toEqual({
+        operationType: 'query',
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: 'query GetUser { user { id name } }',
+      })
+    })
   })
 
   describe('payload truncation', () => {

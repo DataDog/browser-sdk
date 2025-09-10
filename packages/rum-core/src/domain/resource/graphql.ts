@@ -43,7 +43,7 @@ export function extractGraphQlMetadata(
     return undefined
   }
 
-  const query = graphqlBody.query
+  const query = graphqlBody.query.trim()
   const operationType = getOperationType(query)
   const operationName = graphqlBody.operationName
 
@@ -61,11 +61,9 @@ export function extractGraphQlMetadata(
 }
 
 function getOperationType(query: string): 'query' | 'mutation' | 'subscription' {
-  const trimmedQuery = query.trim()
-
-  if (trimmedQuery.startsWith('mutation')) {
+  if (query.startsWith('mutation')) {
     return 'mutation'
-  } else if (trimmedQuery.startsWith('subscription')) {
+  } else if (query.startsWith('subscription')) {
     return 'subscription'
   }
 
