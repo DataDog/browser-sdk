@@ -1,5 +1,6 @@
 import path from 'path'
 import { test, expect } from '@playwright/test'
+import type { BrowserLog } from '../../lib/framework'
 import { createTest, createExtension, createCrossOriginScriptUrls, formatConfiguration } from '../../lib/framework'
 
 const WARNING_MESSAGE =
@@ -8,6 +9,11 @@ const ERROR_MESSAGE = 'Datadog Browser SDK: SDK initialized on a non-allowed dom
 
 const BASE_PATH = path.join(process.cwd(), 'test/apps')
 const EXTENSIONS = ['base-extension', 'cdn-extension']
+
+// NOTE: logs might contain a warning about the SDK being loaded twice when using the npm config
+// because the SDK is loaded even though it's not initialized.
+// We ignore it here because it's not relevant to the test.
+const isNotSdkLoadedMoreThanOnce = (log: BrowserLog) => !log.message.includes('SDK is loaded more than once')
 
 test.describe('browser extensions', () => {
   for (const name of EXTENSIONS) {
@@ -20,9 +26,11 @@ test.describe('browser extensions', () => {
           expect(intakeRegistry.rumViewEvents).toHaveLength(1)
 
           withBrowserLogs((logs) => {
+            const filteredLogs = logs.filter(isNotSdkLoadedMoreThanOnce)
+
             // Two warnings, one for RUM and one for LOGS SDK
-            expect(logs).toHaveLength(2)
-            logs.forEach((log) => {
+            expect(filteredLogs).toHaveLength(2)
+            filteredLogs.forEach((log) => {
               expect(log).toMatchObject({
                 level: 'warning',
                 message: WARNING_MESSAGE,
@@ -43,9 +51,6 @@ test.describe('browser extensions', () => {
           expect(intakeRegistry.rumViewEvents).toHaveLength(1)
 
           withBrowserLogs((logs) =>
-            // NOTE: logs might contain a warning about the SDK being loaded twice when using the npm config
-            // because the SDK is loaded even though it's not initialized.
-            // We ignore it here because it's not relevant to the test.
             expect(logs).not.toContainEqual(
               expect.objectContaining({
                 level: 'warning',
@@ -67,9 +72,10 @@ test.describe('browser extensions', () => {
           expect(intakeRegistry.rumViewEvents).toHaveLength(0)
 
           withBrowserLogs((logs) => {
+            const filteredLogs = logs.filter(isNotSdkLoadedMoreThanOnce)
             // Two errors, one for RUM and one for LOGS SDK
-            expect(logs).toHaveLength(2)
-            logs.forEach((log) => {
+            expect(filteredLogs).toHaveLength(2)
+            filteredLogs.forEach((log) => {
               expect(log).toMatchObject({
                 level: 'error',
                 message: ERROR_MESSAGE,
