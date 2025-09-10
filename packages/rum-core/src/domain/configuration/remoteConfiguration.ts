@@ -179,7 +179,7 @@ function resolveJsValue({ path }: { path: string }): unknown {
     }
   }
 
-  return current as unknown
+  return current
 }
 
 function extractValue(extractor: SerializedRegex, candidate: string) {
