@@ -111,23 +111,22 @@ const QUOTE_CHAR = '\'"'
 
 const TOKEN_PREDICATE: { [token in Token]: (char: string, quoteContext?: string) => boolean } = {
   // no char should match to START or END
-  [Token.START]: (_: string) => false,
-  [Token.END]: (_: string) => false,
+  [Token.START]: () => false,
+  [Token.END]: () => false,
 
-  [Token.VARIABLE_FIRST_CHAR]: (char: string) => VARIABLE_FIRST_CHAR.test(char),
-  [Token.VARIABLE_CHAR]: (char: string) => VARIABLE_CHAR.test(char),
-  [Token.DOT]: (char: string) => char === '.',
+  [Token.VARIABLE_FIRST_CHAR]: (char) => VARIABLE_FIRST_CHAR.test(char),
+  [Token.VARIABLE_CHAR]: (char) => VARIABLE_CHAR.test(char),
+  [Token.DOT]: (char) => char === '.',
 
-  [Token.BRACKET_START]: (char: string) => char === '[',
-  [Token.BRACKET_END]: (char: string) => char === ']',
-  [Token.DIGIT]: (char: string) => DIGIT.test(char),
+  [Token.BRACKET_START]: (char) => char === '[',
+  [Token.BRACKET_END]: (char) => char === ']',
+  [Token.DIGIT]: (char) => DIGIT.test(char),
 
-  [Token.QUOTE_START]: (char: string) => QUOTE_CHAR.includes(char),
-  [Token.QUOTE_END]: (char: string, quoteContext?: string) => char === quoteContext,
-  [Token.QUOTE_PROPERTY_CHAR]: (_: string) => true, // any char can be used in property
-  [Token.QUOTE_ESCAPE]: (char: string) => char === '\\',
-  [Token.QUOTE_ESCAPABLE_CHAR]: (char: string, quoteContext?: string) =>
-    `${quoteContext}${QUOTE_ESCAPABLE_CHARS}`.includes(char),
+  [Token.QUOTE_START]: (char) => QUOTE_CHAR.includes(char),
+  [Token.QUOTE_END]: (char, quoteContext) => char === quoteContext,
+  [Token.QUOTE_PROPERTY_CHAR]: () => true, // any char can be used in property
+  [Token.QUOTE_ESCAPE]: (char) => char === '\\',
+  [Token.QUOTE_ESCAPABLE_CHAR]: (char, quoteContext) => `${quoteContext}${QUOTE_ESCAPABLE_CHARS}`.includes(char),
 }
 
 const ALLOWED_NEXT_TOKENS: { [token in Token]: Token[] } = {
