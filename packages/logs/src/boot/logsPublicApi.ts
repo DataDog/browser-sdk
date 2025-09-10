@@ -11,6 +11,7 @@ import {
   createTrackingConsentState,
   defineContextMethod,
   startBufferingData,
+  callMonitored,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -293,10 +294,10 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   return makePublicApi<LogsPublicApi>({
     logger: mainLogger,
 
-    init: monitor((initConfiguration) => {
+    init: (initConfiguration) => {
       const errorStack = new Error().stack
-      strategy.init(initConfiguration, errorStack)
-    }),
+      callMonitored(() => strategy.init(initConfiguration, errorStack))
+    },
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)

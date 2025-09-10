@@ -564,10 +564,10 @@ export function makeRumPublicApi(
   })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: monitor((initConfiguration) => {
+    init: (initConfiguration) => {
       const errorStack = new Error().stack
-      strategy.init(initConfiguration, rumPublicApi, errorStack)
-    }),
+      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack))
+    },
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)
