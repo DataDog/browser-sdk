@@ -58,6 +58,31 @@ export function parseJsonPath(path: string): string[] {
   return pathParts
 }
 
+/**
+ * List of all tokens in the path
+ *
+ * @example                        foo.bar['qu\'x'][0]
+ *                                |   |   |        |  |
+ * Token sequence:                |   |   |        |  |
+ * 1. START (before first char) <-+   |   |        |  |
+ * 2. VARIABLE_FIRST_LETTER: f        |   |        |  |
+ * 3. VARIABLE_LETTER: oo             |   |        |  |
+ * 4. DOT: . <------------------------+   |        |  |
+ * 5. VARIABLE_FIRST_LETTER: b            |        |  |
+ * 6. VARIABLE_LETTER: ar                 |        |  |
+ * 7. BRACKET_START: [ <------------------+        |  |
+ * 8. QUOTE_START: '                               |  |
+ * 9. QUOTE_PROPERTY_LETTER: qu                    |  |
+ * 10. QUOTE_ESCAPE: \                             |  |
+ * 11. QUOTE_ESCAPABLE_LETTER: '                   |  |
+ * 12. QUOTE_PROPERTY_LETTER: x                    |  |
+ * 13. QUOTE_END: '                                |  |
+ * 14. BRACKET_END: ]                              |  |
+ * 15. BRACKET_START: [ <--------------------------+  |
+ * 16. NUMBER_LETTER: 0                               |
+ * 17. BRACKET_END: ]                                 |
+ * 18. END (after last char) <------------------------+
+ */
 const enum Token {
   START,
   END,
@@ -80,6 +105,7 @@ const enum Token {
 const VARIABLE_FIRST_LETTER = /[a-zA-Z_$]/
 const VARIABLE_LETTER = /[a-zA-Z0-9_$]/
 const NUMBER_CHAR = /[0-9]/
+// see https://www.rfc-editor.org/rfc/rfc9535.html#name-semantics-3
 const QUOTE_ESCAPABLE_LETTERS = '/\\bfnrtu'
 const QUOTE_CHAR = '\'"'
 
