@@ -1,6 +1,6 @@
 import type { Duration, TimeoutId } from '@datadog/browser-core'
 import { setTimeout, relativeNow, runOnReadyState, clearTimeout } from '@datadog/browser-core'
-import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
+import type { RumPerformanceNavigationTiming, RumNotRestoredReasons } from '../../../browser/performanceObservable'
 import type { RumConfiguration } from '../../configuration'
 import { getNavigationEntry } from '../../../browser/performanceUtils'
 
@@ -10,13 +10,19 @@ export interface NavigationTimings {
   domInteractive: Duration
   loadEvent: Duration
   firstByte: Duration | undefined
+  notRestoredReasons?: RumNotRestoredReasons | null
 }
 
 // This is a subset of "RumPerformanceNavigationTiming" that only contains the relevant fields for
 // computing navigation timings. This is useful to mock the navigation entry in tests.
 export type RelevantNavigationTiming = Pick<
   RumPerformanceNavigationTiming,
-  'domComplete' | 'domContentLoadedEventEnd' | 'domInteractive' | 'loadEventEnd' | 'responseStart'
+  | 'domComplete'
+  | 'domContentLoadedEventEnd'
+  | 'domInteractive'
+  | 'loadEventEnd'
+  | 'responseStart'
+  | 'notRestoredReasons'
 >
 
 export function trackNavigationTimings(
@@ -44,6 +50,7 @@ function processNavigationEntry(entry: RelevantNavigationTiming): NavigationTimi
     // https://github.com/GoogleChrome/web-vitals/issues/137
     // https://github.com/GoogleChrome/web-vitals/issues/162
     firstByte: entry.responseStart >= 0 && entry.responseStart <= relativeNow() ? entry.responseStart : undefined,
+    notRestoredReasons: entry.notRestoredReasons,
   }
 }
 

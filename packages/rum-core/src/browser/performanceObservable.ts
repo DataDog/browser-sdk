@@ -75,6 +75,19 @@ export interface RumPerformancePaintTiming {
   toJSON(): Omit<RumPerformancePaintTiming, 'toJSON'>
 }
 
+export interface RumNotRestoredReasonDetails {
+  reason: string
+}
+
+export interface RumNotRestoredReasons {
+  children: RumNotRestoredReasons[]
+  id: string | null
+  name: string | null
+  reasons: RumNotRestoredReasonDetails[] | null
+  src: string | null
+  url: string | null
+}
+
 export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResourceTiming, 'entryType'> {
   entryType: RumPerformanceEntryType.NAVIGATION
   initiatorType: 'navigation'
@@ -84,6 +97,7 @@ export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResou
   domContentLoadedEventEnd: RelativeTime
   domInteractive: RelativeTime
   loadEventEnd: RelativeTime
+  notRestoredReasons?: RumNotRestoredReasons | null
 
   toJSON(): Omit<RumPerformanceNavigationTiming, 'toJSON'>
 }

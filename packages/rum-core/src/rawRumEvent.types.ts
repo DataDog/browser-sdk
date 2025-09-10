@@ -11,6 +11,7 @@ import type {
   Context,
 } from '@datadog/browser-core'
 import type { PageState } from './domain/contexts/pageStateHistory'
+import type { RumNotRestoredReasons } from './browser/performanceObservable'
 
 export const RumEventType = {
   ACTION: 'action',
@@ -127,6 +128,7 @@ export interface RawRumViewEvent {
     resource: Count
     frustration: Count
     performance?: ViewPerformanceData
+    not_restored_reasons?: RumNotRestoredReasons | null
   }
   display?: ViewDisplay
   privacy?: {
