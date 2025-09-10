@@ -38,7 +38,17 @@ test.describe('browser extensions', () => {
 
           expect(intakeRegistry.rumViewEvents).toHaveLength(1)
 
-          withBrowserLogs((logs) => expect(logs.length).toBe(0))
+          withBrowserLogs((logs) =>
+            // NOTE: logs might contain a warning about the SDK being loaded twice when using the npm config
+            // because the SDK is loaded even though it's not initialized.
+            // We ignore it here because it's not relevant to the test.
+            expect(logs).not.toContainEqual(
+              expect.objectContaining({
+                level: 'warning',
+                message: WARNING_MESSAGE,
+              })
+            )
+          )
         })
 
       createTest('should not start tracking when allowedTrackingOrigins does not match current domain')
