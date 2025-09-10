@@ -511,6 +511,60 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackFeatureFlagsForEvents should be an array')
     })
   })
+
+  describe('allowedGraphQlUrls', () => {
+    it('defaults to an empty array', () => {
+      const configuration = validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!
+      expect(configuration.allowedGraphQlUrls).toEqual([])
+    })
+
+    it('should accept string URLs', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        allowedGraphQlUrls: ['https://api.example.com/graphql', '/graphql'],
+      })!
+      expect(configuration.allowedGraphQlUrls).toEqual([
+        { match: 'https://api.example.com/graphql', trackPayload: false },
+        { match: '/graphql', trackPayload: false },
+      ])
+    })
+
+    it('should accept MatchOption objects', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        allowedGraphQlUrls: [{ match: /\/graphql$/i }, { match: 'https://api.example.com/graphql' }],
+      })!
+      expect(configuration.allowedGraphQlUrls).toEqual([
+        { match: /\/graphql$/i, trackPayload: false },
+        { match: 'https://api.example.com/graphql', trackPayload: false },
+      ])
+    })
+
+    it('should accept function matchers', () => {
+      const customMatcher = (url: string) => url.includes('graphql')
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        allowedGraphQlUrls: [{ match: customMatcher }],
+      })!
+      expect(configuration.allowedGraphQlUrls).toEqual([{ match: customMatcher, trackPayload: false }])
+    })
+
+    it('should accept GraphQL options with trackPayload', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        allowedGraphQlUrls: [{ match: '/graphql', trackPayload: true }],
+      })!
+      expect(configuration.allowedGraphQlUrls).toEqual([{ match: '/graphql', trackPayload: true }])
+    })
+
+    it('should reject invalid values', () => {
+      validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        allowedGraphQlUrls: 'not-an-array' as any,
+      })
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith('allowedGraphQlUrls should be an array')
+    })
+  })
 })
 
 describe('serializeRumConfiguration', () => {
@@ -523,6 +577,7 @@ describe('serializeRumConfiguration', () => {
       workerUrl: './worker.js',
       compressIntakeRequests: true,
       allowedTracingUrls: ['foo'],
+      allowedGraphQlUrls: ['bar'],
       traceSampleRate: 50,
       traceContextInjection: TraceContextInjection.ALL,
       defaultPrivacyLevel: 'allow',
@@ -546,7 +601,7 @@ describe('serializeRumConfiguration', () => {
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
       ? MapInitConfigurationKey<Key>
-      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls'
+      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls' | 'allowedGraphQlUrls'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // oops
@@ -561,7 +616,9 @@ describe('serializeRumConfiguration', () => {
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
     // object containing all expected properties.
     const serializedConfiguration: ExtractTelemetryConfiguration<
-      MapRumInitConfigurationKey<keyof RumInitConfiguration> | 'selected_tracing_propagators'
+      | MapRumInitConfigurationKey<keyof RumInitConfiguration>
+      | 'selected_tracing_propagators'
+      | 'use_track_graph_ql_payload'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
@@ -570,6 +627,8 @@ describe('serializeRumConfiguration', () => {
       trace_sample_rate: 50,
       trace_context_injection: TraceContextInjection.ALL,
       use_allowed_tracing_urls: true,
+      use_allowed_graph_ql_urls: true,
+      use_track_graph_ql_payload: false,
       selected_tracing_propagators: ['tracecontext', 'datadog'],
       use_excluded_activity_urls: true,
       track_user_interactions: true,

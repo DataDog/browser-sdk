@@ -10,6 +10,7 @@ import type {
   Csp,
   Context,
 } from '@datadog/browser-core'
+import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
 
 export const RumEventType = {
@@ -54,6 +55,7 @@ export interface RawRumResourceEvent {
     download?: ResourceEntryDetailsElement
     protocol?: string
     delivery_type?: DeliveryType
+    graphql?: GraphQlMetadata
   }
   _dd: {
     trace_id?: string
