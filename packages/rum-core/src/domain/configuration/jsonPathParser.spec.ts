@@ -1,30 +1,30 @@
 import { parseJsonPath } from './jsonPathParser'
 
 describe('parseJsonPath', () => {
-  it('should parse variable names with dot notation', () => {
+  it('should extract selectors from dot notation', () => {
     expect(parseJsonPath('a')).toEqual(['a'])
     expect(parseJsonPath('foo.bar')).toEqual(['foo', 'bar'])
     expect(parseJsonPath('foo.bar.qux')).toEqual(['foo', 'bar', 'qux'])
   })
 
-  it('should parse property names with bracket notation', () => {
+  it('should parse extract selectors from bracket notation', () => {
     expect(parseJsonPath(String.raw`['a']`)).toEqual(['a'])
     expect(parseJsonPath(String.raw`["a"]`)).toEqual(['a'])
     expect(parseJsonPath(String.raw`['foo']["bar"]`)).toEqual(['foo', 'bar'])
     expect(parseJsonPath(String.raw`['foo']["bar"]['qux']`)).toEqual(['foo', 'bar', 'qux'])
   })
 
-  it('should parse variable and property names mixed', () => {
+  it('should extract selectors from mixed notations', () => {
     expect(parseJsonPath(String.raw`['foo'].bar['qux']`)).toEqual(['foo', 'bar', 'qux'])
   })
 
-  it('should parse array indexes', () => {
+  it('should extract name and index selectors', () => {
     expect(parseJsonPath('[0]')).toEqual(['0'])
     expect(parseJsonPath('foo[12]')).toEqual(['foo', '12'])
     expect(parseJsonPath(String.raw`['foo'][12]`)).toEqual(['foo', '12'])
   })
 
-  it('should parse property names with unsupported variable name characters', () => {
+  it('should extract name selectors containing characters not supported in name shorthands', () => {
     expect(parseJsonPath(String.raw`['foo\n']`)).toEqual([String.raw`foo\n`])
     expect(parseJsonPath(String.raw`['foo\'']`)).toEqual([String.raw`foo\'`])
     expect(parseJsonPath(String.raw`["foo\""]`)).toEqual([String.raw`foo\"`])
