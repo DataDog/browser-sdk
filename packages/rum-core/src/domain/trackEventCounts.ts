@@ -30,7 +30,7 @@ export function trackEventCounts({
   }
 
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event): void => {
-    if (event.type === 'view' || event.type === 'vital' || !isChildEvent(event) || ['stream'].includes(event.type)) {
+    if (event.type === RumEventType.VIEW || event.type === RumEventType.VITAL || !isChildEvent(event)) {
       return
     }
     switch (event.type) {

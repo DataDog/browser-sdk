@@ -12,13 +12,14 @@ import {
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent, RumViewEvent } from '../rumEvent.types'
+import type { RumEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { Hooks } from './hooks'
+import { mapStreamToView } from './streamToView'
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -114,7 +115,7 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-        eventType: rawRumEvent.type === 'stream' ? 'view' : rawRumEvent.type,
+        eventType: rawRumEvent.type === RumEventType.STREAM ? RumEventType.VIEW : rawRumEvent.type,
         startTime,
         duration,
       })!
@@ -132,35 +133,10 @@ export function startRumAssembly(
           delete serverRumEvent.context
         }
 
-        if (rawRumEvent.type === 'stream') {
-          const streamEvent = {
-            ...(serverRumEvent as RumViewEvent),
-            _dd: {
-              ...serverRumEvent._dd,
-              document_version: serverRumEvent.stream?.document_version,
-            },
-            stream: {
-              ...serverRumEvent.stream,
-              time_spent: undefined,
-            },
-            view: {
-              ...serverRumEvent.view,
-              id: serverRumEvent.stream?.id,
-              action: {
-                count: 0,
-              },
-              error: {
-                count: 0,
-              },
-              resource: {
-                count: 0,
-              },
-              time_spent: serverRumEvent.stream?.time_spent,
-            },
-            type: 'view',
-          }
+        if (rawRumEvent.type === RumEventType.STREAM) {
+          const streamEvent = mapStreamToView(serverRumEvent)
 
-          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, streamEvent as RumEvent & Context)
+          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, streamEvent)
         } else {
           lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
         }
