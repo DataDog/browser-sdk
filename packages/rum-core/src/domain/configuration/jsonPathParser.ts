@@ -27,16 +27,16 @@ export function parseJsonPath(path: string): string[] {
   let currentPathPart = ''
   for (const char of path) {
     // find which kind of token is this char
-    currentToken = findInSet(ALLOWED_NEXT_TOKENS[previousToken], (token) => TOKEN_PREDICATE[token](char, quoteContext))
+    currentToken = ALLOWED_NEXT_TOKENS[previousToken].find((token) => TOKEN_PREDICATE[token](char, quoteContext))
     if (!currentToken) {
       return []
     }
-    if (ALLOWED_PATH_PART_TOKENS.has(currentToken)) {
+    if (ALLOWED_PATH_PART_TOKENS.includes(currentToken)) {
       // buffer the char if it belongs to the path part
       // ex: foo['bar']
       //      ^    ^
       currentPathPart += char
-    } else if (ALLOWED_PATH_PART_DELIMITER_TOKENS.has(currentToken) && currentPathPart !== '') {
+    } else if (ALLOWED_PATH_PART_DELIMITER_TOKENS.includes(currentToken) && currentPathPart !== '') {
       // close the current path part if we have reach a path part delimiter
       // ex: foo.bar['qux']
       //        ^   ^     ^
@@ -49,7 +49,7 @@ export function parseJsonPath(path: string): string[] {
     }
     previousToken = currentToken
   }
-  if (!ALLOWED_NEXT_TOKENS[previousToken].has(Token.END)) {
+  if (!ALLOWED_NEXT_TOKENS[previousToken].includes(Token.END)) {
     return []
   }
   if (currentPathPart !== '') {
@@ -130,28 +130,28 @@ const TOKEN_PREDICATE: { [token in Token]: (char: string, quoteContext?: string)
     `${quoteContext}${QUOTE_ESCAPABLE_LETTERS}`.includes(char),
 }
 
-const ALLOWED_NEXT_TOKENS: { [token in Token]: Set<Token> } = {
-  [Token.START]: new Set([Token.VARIABLE_FIRST_LETTER, Token.BRACKET_START]),
-  [Token.END]: new Set([]),
+const ALLOWED_NEXT_TOKENS: { [token in Token]: Token[] } = {
+  [Token.START]: [Token.VARIABLE_FIRST_LETTER, Token.BRACKET_START],
+  [Token.END]: [],
 
-  [Token.VARIABLE_FIRST_LETTER]: new Set([Token.VARIABLE_LETTER, Token.DOT, Token.BRACKET_START, Token.END]),
-  [Token.VARIABLE_LETTER]: new Set([Token.VARIABLE_LETTER, Token.DOT, Token.BRACKET_START, Token.END]),
-  [Token.DOT]: new Set([Token.VARIABLE_FIRST_LETTER]),
+  [Token.VARIABLE_FIRST_LETTER]: [Token.VARIABLE_LETTER, Token.DOT, Token.BRACKET_START, Token.END],
+  [Token.VARIABLE_LETTER]: [Token.VARIABLE_LETTER, Token.DOT, Token.BRACKET_START, Token.END],
+  [Token.DOT]: [Token.VARIABLE_FIRST_LETTER],
 
-  [Token.BRACKET_START]: new Set([Token.QUOTE_START, Token.NUMBER_LETTER]),
-  [Token.BRACKET_END]: new Set([Token.DOT, Token.BRACKET_START, Token.END]),
-  [Token.NUMBER_LETTER]: new Set([Token.NUMBER_LETTER, Token.BRACKET_END]),
+  [Token.BRACKET_START]: [Token.QUOTE_START, Token.NUMBER_LETTER],
+  [Token.BRACKET_END]: [Token.DOT, Token.BRACKET_START, Token.END],
+  [Token.NUMBER_LETTER]: [Token.NUMBER_LETTER, Token.BRACKET_END],
 
-  [Token.QUOTE_START]: new Set([Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER]),
-  [Token.QUOTE_END]: new Set([Token.BRACKET_END]),
-  [Token.QUOTE_PROPERTY_LETTER]: new Set([Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER]),
-  [Token.QUOTE_ESCAPE]: new Set([Token.QUOTE_ESCAPABLE_LETTER]),
-  [Token.QUOTE_ESCAPABLE_LETTER]: new Set([Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER]),
+  [Token.QUOTE_START]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER],
+  [Token.QUOTE_END]: [Token.BRACKET_END],
+  [Token.QUOTE_PROPERTY_LETTER]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER],
+  [Token.QUOTE_ESCAPE]: [Token.QUOTE_ESCAPABLE_LETTER],
+  [Token.QUOTE_ESCAPABLE_LETTER]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER],
 }
 
 // foo['bar\n'][12]
 // ^^    ^ ^^   ^
-const ALLOWED_PATH_PART_TOKENS = new Set([
+const ALLOWED_PATH_PART_TOKENS = [
   Token.VARIABLE_FIRST_LETTER,
   Token.VARIABLE_LETTER,
   Token.NUMBER_LETTER,
@@ -159,16 +159,8 @@ const ALLOWED_PATH_PART_TOKENS = new Set([
   Token.QUOTE_PROPERTY_LETTER,
   Token.QUOTE_ESCAPE,
   Token.QUOTE_ESCAPABLE_LETTER,
-])
+]
 
 // foo.bar['qux']
 //    ^   ^     ^
-const ALLOWED_PATH_PART_DELIMITER_TOKENS = new Set([Token.DOT, Token.BRACKET_START, Token.BRACKET_END])
-
-function findInSet<T>(set: Set<T>, predicate: (item: T) => boolean): T | undefined {
-  for (const item of set) {
-    if (predicate(item)) {
-      return item
-    }
-  }
-}
+const ALLOWED_PATH_PART_DELIMITER_TOKENS = [Token.DOT, Token.BRACKET_START, Token.BRACKET_END]
