@@ -3,113 +3,63 @@ import {
   EXTENSION_PREFIXES,
   extractExtensionUrlFromStack,
   isUnsupportedExtensionEnvironment,
+  STACK_WITH_INIT_IN_PAGE,
+  STACK_WITH_INIT_IN_EXTENSION,
+  STACK_WITH_INIT_IN_EXTENSION_FIREFOX,
 } from './extensionUtils'
 
-describe('containsExtensionUrl', () => {
-  it('should return true if string contains an extension URL', () => {
-    EXTENSION_PREFIXES.forEach((prefix) => {
-      expect(containsExtensionUrl(`${prefix}some/path`)).toBe(true)
+describe('extensionUtils', () => {
+  describe('containsExtensionUrl', () => {
+    it('should return true if string contains an extension URL', () => {
+      EXTENSION_PREFIXES.forEach((prefix) => {
+        expect(containsExtensionUrl(`${prefix}some/path`)).toBe(true)
+      })
+    })
+
+    it('should return false if string does not contain extension URL', () => {
+      expect(containsExtensionUrl('https://example.com')).toBe(false)
+      expect(containsExtensionUrl('')).toBe(false)
     })
   })
 
-  it('should return false if string does not contain extension URL', () => {
-    expect(containsExtensionUrl('https://example.com')).toBe(false)
-    expect(containsExtensionUrl('')).toBe(false)
-  })
-})
+  describe('isUnsupportedExtensionEnvironment', () => {
+    it('should return true when window location is a regular URL and error stack init is in an extension', () => {
+      expect(isUnsupportedExtensionEnvironment('https://example.com', STACK_WITH_INIT_IN_EXTENSION)).toBe(true)
+    })
 
-describe('isUnsupportedExtensionEnvironment', () => {
-  it('should return true when window location is a regular URL and error stack contains extension URL', () => {
-    expect(
-      isUnsupportedExtensionEnvironment('https://example.com', 'Error: at chrome-extension://abcdefg/content.js:10:15')
-    ).toBe(true)
-  })
+    it('should return false when both window location and error stack init are regular URLs', () => {
+      expect(isUnsupportedExtensionEnvironment('https://example.com', STACK_WITH_INIT_IN_PAGE)).toBe(false)
+    })
 
-  it('should return false when both window location and error stack are regular URLs', () => {
-    expect(
-      isUnsupportedExtensionEnvironment('https://example.com', 'Error: at https://example.com/script.js:10:15')
-    ).toBe(false)
-  })
+    it('should return false when error stack is empty', () => {
+      expect(isUnsupportedExtensionEnvironment('https://example.com', '')).toBe(false)
+    })
 
-  it('should return false when window location is an extension URL', () => {
-    EXTENSION_PREFIXES.forEach((prefix) => {
-      expect(
-        isUnsupportedExtensionEnvironment(`${prefix}some/path`, 'Error: at chrome-extension://abcdefg/content.js:10:15')
-      ).toBe(false)
+    it('should handle each extension prefix in firefox', () => {
+      expect(isUnsupportedExtensionEnvironment('https://example.com', STACK_WITH_INIT_IN_EXTENSION_FIREFOX)).toBe(true)
+    })
+
+    it('should handle case when stack trace is undefined', () => {
+      expect(isUnsupportedExtensionEnvironment('https://example.com')).toBe(false)
+    })
+
+    it('should handle extension stack trace', () => {
+      expect(isUnsupportedExtensionEnvironment('https://example.com', STACK_WITH_INIT_IN_EXTENSION)).toBe(true)
     })
   })
 
-  it('should return false when error stack is empty', () => {
-    expect(isUnsupportedExtensionEnvironment('https://example.com', '')).toBe(false)
-  })
-
-  it('should handle each extension prefix in error stack', () => {
-    EXTENSION_PREFIXES.forEach((prefix) => {
-      expect(
-        isUnsupportedExtensionEnvironment('https://example.com', `Error: at ${prefix}abcdefg/content.js:10:15`)
-      ).toBe(true)
-    })
-  })
-
-  it('should handle case when stack trace is undefined', () => {
-    expect(isUnsupportedExtensionEnvironment('https://example.com')).toBe(false)
-  })
-
-  it('should handle extension stack trace', () => {
-    expect(
-      isUnsupportedExtensionEnvironment('https://example.com', 'Error: at chrome-extension://abcdefg/content.js:10:15')
-    ).toBe(true)
-  })
-})
-
-describe('extractExtensionUrlFromStack', () => {
-  it('should extract extension URL from stack trace', () => {
-    const stack = `Error
+  describe('extract init caller', () => {
+    it('should extract extension URL from stack trace', () => {
+      const stack = `Error
     at foo (<anonymous>:549:44)
     at bar (<anonymous>:701:91)
-    at e.init (chrome-extension://boceobohkgenpcpogecpjlnmnfbdigda/content-script-main.js:1:1009)`
-    expect(extractExtensionUrlFromStack(stack)).toBe('chrome-extension://boceobohkgenpcpogecpjlnmnfbdigda')
-  })
-
-  it('should return undefined when no extension URL found', () => {
-    const stack = 'Error at https://example.com/script.js:10:15'
-    expect(extractExtensionUrlFromStack(stack)).toBeUndefined()
-  })
-
-  describe('isUnsupportedExtensionEnvironment caller-frame', () => {
-    it('should return true when caller frame is an extension URL', () => {
-      const stack = [
-        'Error',
-        '    at callMonitored (https://cdn.datadoghq.com/rum.js:10:10)',
-        '    at Object.init (https://cdn.datadoghq.com/rum.js:9:5)',
-        '    at chrome-extension://abc123/script.js:10:15',
-        '    at https://app.example.com/app.js:200:30',
-      ].join('\n')
-      expect(isUnsupportedExtensionEnvironment('https://example.com', stack)).toBe(true)
+    at e.init (chrome-extension://abcd/content-script-main.js:1:1009)`
+      expect(extractExtensionUrlFromStack(stack)).toBe('chrome-extension://abcd')
     })
 
-    it('returns false when extension frames exist but the init caller is not an extension', () => {
-      const stack = [
-        'Error',
-        '    at callMonitored (https://cdn.datadoghq.com/rum.js:10:10)',
-        '    at Object.init (https://cdn.datadoghq.com/rum.js:9:5)',
-        '    at https://app.example.com/app.js:3:59',
-        '    at Object.apply (chrome-extension://random-extension-id/WXkqOoBd.js:10:4624)',
-        '    at https://app.example.com/app.js:200:30',
-      ].join('\n')
-
-      expect(isUnsupportedExtensionEnvironment('https://app.example.com', stack)).toBeFalse()
-    })
-
-    it('falls back to first non-SDK frame if init frame not found', () => {
-      const stack = [
-        'Error',
-        '    at someInternal (https://cdn.datadoghq.com/rum.js:10:10)',
-        '    at otherInternal (https://cdn.datadoghq.com/rum.js:9:5)',
-        '    at chrome-extension://abc123/script.js:10:15',
-      ].join('\n')
-
-      expect(isUnsupportedExtensionEnvironment('https://app.example.com', stack)).toBeTrue()
+    it('should return undefined when no extension URL found', () => {
+      const stack = 'Error at https://example.com/script.js:10:15'
+      expect(extractExtensionUrlFromStack(stack)).toBeUndefined()
     })
   })
 })

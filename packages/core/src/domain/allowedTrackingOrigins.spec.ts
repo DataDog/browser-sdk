@@ -4,6 +4,7 @@ import {
   WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
   ERROR_NOT_ALLOWED_TRACKING_ORIGIN,
 } from './allowedTrackingOrigins'
+import { STACK_WITH_INIT_IN_EXTENSION } from './extension/extensionUtils'
 
 const DEFAULT_CONFIG = {
   applicationId: 'xxx',
@@ -184,7 +185,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: undefined,
         },
-        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
+        STACK_WITH_INIT_IN_EXTENSION,
         'https://example.com'
       )
       expect(displayWarnSpy).toHaveBeenCalledWith(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)

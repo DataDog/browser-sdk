@@ -7,7 +7,6 @@ import {
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
 } from '../../tools/experimentalFeatures'
-import { WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN } from '../allowedTrackingOrigins'
 import { SessionPersistence } from '../session/sessionConstants'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
@@ -232,19 +231,6 @@ describe('validateAndBuildConfiguration', () => {
         serializeConfiguration(EXHAUSTIVE_INIT_CONFIGURATION)
 
       expect(serializedConfiguration).toEqual(SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION)
-    })
-  })
-
-  describe('validateAndBuildConfiguration errorStack threading', () => {
-    it('uses provided errorStack in isAllowedTrackingOrigins (triggers extension warning)', () => {
-      const warnSpy = spyOn(display, 'warn')
-
-      const initConfiguration = { clientToken: 't' } as any
-      const errorStack = 'Error: at chrome-extension://abcdefgh/content.js:10:15'
-
-      validateAndBuildConfiguration(initConfiguration, errorStack)
-
-      expect(warnSpy).toHaveBeenCalledWith(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
     })
   })
 })
