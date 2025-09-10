@@ -13,25 +13,29 @@ test.describe('browser extensions', () => {
   for (const name of EXTENSIONS) {
     test.describe(`with ${name} extension`, () => {
       createTest('should warn and start tracking when SDK is initialized in an unsupported environment')
-        .withExtension(createExtension(path.join(BASE_PATH, name)).withRum())
+        .withExtension(createExtension(path.join(BASE_PATH, name)).withRum().withLogs())
         .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
           await flushEvents()
 
           expect(intakeRegistry.rumViewEvents).toHaveLength(1)
 
           withBrowserLogs((logs) => {
-            expect(logs).toContainEqual(
-              expect.objectContaining({
+            // Two warnings, one for RUM and one for LOGS SDK
+            expect(logs).toHaveLength(2)
+            logs.forEach((log) => {
+              expect(log).toMatchObject({
                 level: 'warning',
                 message: WARNING_MESSAGE,
               })
-            )
+            })
           })
         })
 
       createTest('should start tracking when allowedTrackingOrigins matches current domain')
         .withExtension(
-          createExtension(path.join(BASE_PATH, name)).withRum({ allowedTrackingOrigins: ['LOCATION_ORIGIN'] })
+          createExtension(path.join(BASE_PATH, name))
+            .withRum({ allowedTrackingOrigins: ['LOCATION_ORIGIN'] })
+            .withLogs({ allowedTrackingOrigins: ['LOCATION_ORIGIN'] })
         )
         .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
           await flushEvents()
@@ -53,7 +57,9 @@ test.describe('browser extensions', () => {
 
       createTest('should not start tracking when allowedTrackingOrigins does not match current domain')
         .withExtension(
-          createExtension(path.join(BASE_PATH, name)).withRum({ allowedTrackingOrigins: ['https://app.example.com'] })
+          createExtension(path.join(BASE_PATH, name))
+            .withRum({ allowedTrackingOrigins: ['https://app.example.com'] })
+            .withLogs({ allowedTrackingOrigins: ['https://app.example.com'] })
         )
         .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
           await flushEvents()
@@ -61,12 +67,14 @@ test.describe('browser extensions', () => {
           expect(intakeRegistry.rumViewEvents).toHaveLength(0)
 
           withBrowserLogs((logs) => {
-            expect(logs).toContainEqual(
-              expect.objectContaining({
+            // Two errors, one for RUM and one for LOGS SDK
+            expect(logs).toHaveLength(2)
+            logs.forEach((log) => {
+              expect(log).toMatchObject({
                 level: 'error',
                 message: ERROR_MESSAGE,
               })
-            )
+            })
           })
         })
     })
@@ -79,13 +87,15 @@ test.describe('browser extensions', () => {
   createTest('should not warn - edge case simulating NextJs with an extension that override `appendChild`')
     .withExtension(createExtension(path.join(BASE_PATH, 'appendChild-extension')))
     .withRum()
+    .withLogs()
     .withSetup((options, servers) => {
-      const { rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+      const { rumScriptUrl, logsScriptUrl } = createCrossOriginScriptUrls(servers, options)
       return `
           <script src="${rumScriptUrl}"></script>
+          <script src="${logsScriptUrl}"></script>
           <script>
             const script = document.createElement('script')
-            script.innerHTML = 'window.DD_RUM.init(${formatConfiguration(options.rum!, servers)})'
+            script.innerHTML = 'window.DD_RUM.init(${formatConfiguration(options.rum!, servers)}); window.DD_LOGS.init(${formatConfiguration(options.logs!, servers)})'
             document.head.appendChild(script)
           </script>
         `

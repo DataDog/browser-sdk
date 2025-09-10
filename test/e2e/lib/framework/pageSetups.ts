@@ -275,7 +275,7 @@ function setupExtension(options: SetupOptions, servers: Servers) {
   if (options.extension?.logsConfiguration) {
     header += html`
       <script type="text/javascript">
-        window.LOGS_BUNDLE_URL = ${logsScriptUrl}
+        window.LOGS_BUNDLE_URL = '${logsScriptUrl}'
         window.LOGS_CONTEXT = ${JSON.stringify(options.context)}
         window.EXT_LOGS_CONFIGURATION = ${formatConfiguration(options.extension.logsConfiguration, servers)}
       </script>
