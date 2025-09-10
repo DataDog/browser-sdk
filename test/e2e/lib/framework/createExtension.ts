@@ -1,12 +1,11 @@
-import path from 'path'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import { createExtensionTest } from '../helpers/extensionFixture'
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from './createTest'
 
-export function createExtension(name: string) {
-  return new Extension(name)
+export function createExtension(path: string) {
+  return new Extension(path)
 }
 
 // TODO: the recorder is lazy loaded and does not works in an browser extension content script
@@ -17,8 +16,8 @@ export class Extension {
   public rumConfiguration: RumInitConfiguration | undefined
   public logsConfiguration: LogsInitConfiguration | undefined
 
-  constructor(name: string) {
-    this.fixture = createExtensionTest(path.join(__dirname, '../../../../test/apps/', `${name}-extension`))
+  constructor(path: string) {
+    this.fixture = createExtensionTest(path)
 
     return this
   }
