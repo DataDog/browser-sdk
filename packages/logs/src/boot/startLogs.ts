@@ -1,5 +1,6 @@
-import type { TrackingConsentState, BufferedObservable, BufferedData } from '@datadog/browser-core'
+import type { TrackingConsentState, BufferedObservable, BufferedData, PageMayExitEvent } from '@datadog/browser-core'
 import {
+  Observable,
   sendToExtension,
   createPageMayExitObservable,
   willSyntheticsInjectRum,
@@ -10,6 +11,7 @@ import {
   TelemetryService,
   createIdentityEncoder,
   startUserContext,
+  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -52,7 +54,9 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
-  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  const pageMayExitObservable = isWorkerEnvironment
+    ? new Observable<PageMayExitEvent>()
+    : createPageMayExitObservable(configuration)
 
   const telemetry = startTelemetry(
     TelemetryService.LOGS,
@@ -65,7 +69,7 @@ export function startLogs(
   cleanupTasks.push(telemetry.stop)
 
   const session =
-    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
+    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum() && !isWorkerEnvironment
       ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 

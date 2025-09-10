@@ -109,7 +109,8 @@ let navigationStart: TimeStamp | undefined
  */
 function getNavigationStart() {
   if (navigationStart === undefined) {
-    navigationStart = performance.timing.navigationStart as TimeStamp
+    navigationStart = (performance.timing?.navigationStart ?? performance.timeOrigin) as TimeStamp
   }
+
   return navigationStart
 }

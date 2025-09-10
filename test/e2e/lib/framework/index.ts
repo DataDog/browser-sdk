@@ -1,4 +1,5 @@
-export { createTest, DEFAULT_RUM_CONFIGURATION, DEFAULT_LOGS_CONFIGURATION } from './createTest'
+export { createTest } from './createTest'
+export { DEFAULT_RUM_CONFIGURATION, DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 export { bundleSetup, html, npmSetup, reactSetup } from './pageSetups'
 export { IntakeRegistry } from './intakeRegistry'
 export { getTestServers, waitForServersIdle } from './httpServers'

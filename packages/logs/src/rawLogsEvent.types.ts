@@ -62,7 +62,7 @@ export interface RawAgentLogsEvent extends CommonRawLogsEvent {
 }
 
 export interface CommonContext {
-  view: {
+  view?: {
     referrer: string
     url: string
   }
