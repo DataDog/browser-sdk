@@ -65,21 +65,21 @@ export function parseJsonPath(path: string): string[] {
  *                                |   |   |        |  |
  * Token sequence:                |   |   |        |  |
  * 1. START (before first char) <-+   |   |        |  |
- * 2. VARIABLE_FIRST_LETTER: f        |   |        |  |
- * 3. VARIABLE_LETTER: oo             |   |        |  |
+ * 2. VARIABLE_FIRST_CHAR: f          |   |        |  |
+ * 3. VARIABLE_CHAR: oo               |   |        |  |
  * 4. DOT: . <------------------------+   |        |  |
- * 5. VARIABLE_FIRST_LETTER: b            |        |  |
- * 6. VARIABLE_LETTER: ar                 |        |  |
+ * 5. VARIABLE_FIRST_CHAR: b              |        |  |
+ * 6. VARIABLE_CHAR: ar                   |        |  |
  * 7. BRACKET_START: [ <------------------+        |  |
  * 8. QUOTE_START: '                               |  |
- * 9. QUOTE_PROPERTY_LETTER: qu                    |  |
+ * 9. QUOTE_PROPERTY_CHAR: qu                      |  |
  * 10. QUOTE_ESCAPE: \                             |  |
- * 11. QUOTE_ESCAPABLE_LETTER: '                   |  |
- * 12. QUOTE_PROPERTY_LETTER: x                    |  |
+ * 11. QUOTE_ESCAPABLE_CHAR: '                     |  |
+ * 12. QUOTE_PROPERTY_CHAR: x                      |  |
  * 13. QUOTE_END: '                                |  |
  * 14. BRACKET_END: ]                              |  |
  * 15. BRACKET_START: [ <--------------------------+  |
- * 16. NUMBER_LETTER: 0                               |
+ * 16. DIGIT: 0                                       |
  * 17. BRACKET_END: ]                                 |
  * 18. END (after last char) <------------------------+
  */
@@ -87,26 +87,26 @@ const enum Token {
   START,
   END,
 
-  VARIABLE_FIRST_LETTER,
-  VARIABLE_LETTER,
+  VARIABLE_FIRST_CHAR,
+  VARIABLE_CHAR,
   DOT,
 
   BRACKET_START,
   BRACKET_END,
-  NUMBER_LETTER,
+  DIGIT,
 
   QUOTE_START,
   QUOTE_END,
-  QUOTE_PROPERTY_LETTER,
+  QUOTE_PROPERTY_CHAR,
   QUOTE_ESCAPE,
-  QUOTE_ESCAPABLE_LETTER,
+  QUOTE_ESCAPABLE_CHAR,
 }
 
-const VARIABLE_FIRST_LETTER = /[a-zA-Z_$]/
-const VARIABLE_LETTER = /[a-zA-Z0-9_$]/
-const NUMBER_CHAR = /[0-9]/
+const VARIABLE_FIRST_CHAR = /[a-zA-Z_$]/
+const VARIABLE_CHAR = /[a-zA-Z0-9_$]/
+const DIGIT = /[0-9]/
 // see https://www.rfc-editor.org/rfc/rfc9535.html#name-semantics-3
-const QUOTE_ESCAPABLE_LETTERS = '/\\bfnrtu'
+const QUOTE_ESCAPABLE_CHARS = '/\\bfnrtu'
 const QUOTE_CHAR = '\'"'
 
 const TOKEN_PREDICATE: { [token in Token]: (char: string, quoteContext?: string) => boolean } = {
@@ -114,51 +114,51 @@ const TOKEN_PREDICATE: { [token in Token]: (char: string, quoteContext?: string)
   [Token.START]: (_: string) => false,
   [Token.END]: (_: string) => false,
 
-  [Token.VARIABLE_FIRST_LETTER]: (char: string) => VARIABLE_FIRST_LETTER.test(char),
-  [Token.VARIABLE_LETTER]: (char: string) => VARIABLE_LETTER.test(char),
+  [Token.VARIABLE_FIRST_CHAR]: (char: string) => VARIABLE_FIRST_CHAR.test(char),
+  [Token.VARIABLE_CHAR]: (char: string) => VARIABLE_CHAR.test(char),
   [Token.DOT]: (char: string) => char === '.',
 
   [Token.BRACKET_START]: (char: string) => char === '[',
   [Token.BRACKET_END]: (char: string) => char === ']',
-  [Token.NUMBER_LETTER]: (char: string) => NUMBER_CHAR.test(char),
+  [Token.DIGIT]: (char: string) => DIGIT.test(char),
 
   [Token.QUOTE_START]: (char: string) => QUOTE_CHAR.includes(char),
   [Token.QUOTE_END]: (char: string, quoteContext?: string) => char === quoteContext,
-  [Token.QUOTE_PROPERTY_LETTER]: (_: string) => true, // any char can be used in property
+  [Token.QUOTE_PROPERTY_CHAR]: (_: string) => true, // any char can be used in property
   [Token.QUOTE_ESCAPE]: (char: string) => char === '\\',
-  [Token.QUOTE_ESCAPABLE_LETTER]: (char: string, quoteContext?: string) =>
-    `${quoteContext}${QUOTE_ESCAPABLE_LETTERS}`.includes(char),
+  [Token.QUOTE_ESCAPABLE_CHAR]: (char: string, quoteContext?: string) =>
+    `${quoteContext}${QUOTE_ESCAPABLE_CHARS}`.includes(char),
 }
 
 const ALLOWED_NEXT_TOKENS: { [token in Token]: Token[] } = {
-  [Token.START]: [Token.VARIABLE_FIRST_LETTER, Token.BRACKET_START],
+  [Token.START]: [Token.VARIABLE_FIRST_CHAR, Token.BRACKET_START],
   [Token.END]: [],
 
-  [Token.VARIABLE_FIRST_LETTER]: [Token.VARIABLE_LETTER, Token.DOT, Token.BRACKET_START, Token.END],
-  [Token.VARIABLE_LETTER]: [Token.VARIABLE_LETTER, Token.DOT, Token.BRACKET_START, Token.END],
-  [Token.DOT]: [Token.VARIABLE_FIRST_LETTER],
+  [Token.VARIABLE_FIRST_CHAR]: [Token.VARIABLE_CHAR, Token.DOT, Token.BRACKET_START, Token.END],
+  [Token.VARIABLE_CHAR]: [Token.VARIABLE_CHAR, Token.DOT, Token.BRACKET_START, Token.END],
+  [Token.DOT]: [Token.VARIABLE_FIRST_CHAR],
 
-  [Token.BRACKET_START]: [Token.QUOTE_START, Token.NUMBER_LETTER],
+  [Token.BRACKET_START]: [Token.QUOTE_START, Token.DIGIT],
   [Token.BRACKET_END]: [Token.DOT, Token.BRACKET_START, Token.END],
-  [Token.NUMBER_LETTER]: [Token.NUMBER_LETTER, Token.BRACKET_END],
+  [Token.DIGIT]: [Token.DIGIT, Token.BRACKET_END],
 
-  [Token.QUOTE_START]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER],
+  [Token.QUOTE_START]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_CHAR],
   [Token.QUOTE_END]: [Token.BRACKET_END],
-  [Token.QUOTE_PROPERTY_LETTER]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER],
-  [Token.QUOTE_ESCAPE]: [Token.QUOTE_ESCAPABLE_LETTER],
-  [Token.QUOTE_ESCAPABLE_LETTER]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_LETTER],
+  [Token.QUOTE_PROPERTY_CHAR]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_CHAR],
+  [Token.QUOTE_ESCAPE]: [Token.QUOTE_ESCAPABLE_CHAR],
+  [Token.QUOTE_ESCAPABLE_CHAR]: [Token.QUOTE_ESCAPE, Token.QUOTE_END, Token.QUOTE_PROPERTY_CHAR],
 }
 
 // foo['bar\n'][12]
 // ^^    ^ ^^   ^
 const ALLOWED_PATH_PART_TOKENS = [
-  Token.VARIABLE_FIRST_LETTER,
-  Token.VARIABLE_LETTER,
-  Token.NUMBER_LETTER,
+  Token.VARIABLE_FIRST_CHAR,
+  Token.VARIABLE_CHAR,
+  Token.DIGIT,
 
-  Token.QUOTE_PROPERTY_LETTER,
+  Token.QUOTE_PROPERTY_CHAR,
   Token.QUOTE_ESCAPE,
-  Token.QUOTE_ESCAPABLE_LETTER,
+  Token.QUOTE_ESCAPABLE_CHAR,
 ]
 
 // foo.bar['qux']
