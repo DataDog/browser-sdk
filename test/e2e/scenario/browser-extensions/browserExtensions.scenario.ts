@@ -64,9 +64,9 @@ test.describe('browser extensions', () => {
 
   /**
    * This test is reconstruction of an edge case that happens when using some extension that override `appendChild` and
-   * the sync installation method using NextJs\'s `<Script>` component.
+   * the sync installation method using NextJs `<Script>` component.
    */
-  createTest('should not warn - edge case simulating nextJs')
+  createTest('should not warn - edge case simulating NextJs with an extension that override `appendChild`')
     .withExtension(createExtension(path.join(BASE_PATH, 'appendChild-extension')))
     .withRum()
     .withSetup((options, servers) => {

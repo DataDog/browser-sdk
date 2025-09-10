@@ -15,7 +15,7 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { asyncSetup, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
@@ -140,7 +140,6 @@ class TestBuilder {
 
   withExtension(extension: Extension) {
     this.testFixture = extension.fixture
-    this.setups = [{ factory: asyncSetup, name: 'async' }]
     this.extension.rumConfiguration = extension.rumConfiguration
     this.extension.logsConfiguration = extension.logsConfiguration
 
