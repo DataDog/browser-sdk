@@ -349,6 +349,19 @@ describe('remoteConfiguration', () => {
         )
       })
 
+      it('should resolve a value from an object property containing an escapable character', () => {
+        root.foo = { 'bar\nqux': '123' }
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: "foo['bar\\nqux']" },
+          },
+          { version: '123' }
+        )
+      })
+
       it('should not apply the extractor to a non string value', () => {
         root.foo = 23
         registerCleanupTask(() => {

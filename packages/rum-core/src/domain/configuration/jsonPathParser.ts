@@ -11,6 +11,11 @@
  * - https://github.com/jsonpath-standard
  */
 
+interface ParsingContext {
+  quote: string | undefined
+  escapeSequence: string | undefined
+}
+
 /**
  * Extract selectors from a simple JSON path expression, return [] for an invalid path
  *
@@ -30,13 +35,20 @@ export function parseJsonPath(path: string): string[] {
   const selectors: string[] = []
   let previousToken = Token.START
   let currentToken: Token | undefined
-  let quoteContext: string | undefined
+  const parsingContext: ParsingContext = { quote: undefined, escapeSequence: undefined }
   let currentSelector = ''
   for (const char of path) {
     // find which kind of token is this char
-    currentToken = ALLOWED_NEXT_TOKENS[previousToken].find((token) => TOKEN_PREDICATE[token](char, quoteContext))
+    currentToken = ALLOWED_NEXT_TOKENS[previousToken].find((token) => TOKEN_PREDICATE[token](char, parsingContext))
     if (!currentToken) {
       return []
+    }
+    if (parsingContext.escapeSequence !== undefined && currentToken !== Token.ESCAPE_SEQUENCE_CHAR) {
+      if (!isValidEscapeSequence(parsingContext.escapeSequence)) {
+        return []
+      }
+      currentSelector += resolveEscapeSequence(parsingContext.escapeSequence)
+      parsingContext.escapeSequence = undefined
     }
     if (ALLOWED_SELECTOR_TOKENS.includes(currentToken)) {
       // buffer the char if it belongs to the selector
@@ -49,10 +61,12 @@ export function parseJsonPath(path: string): string[] {
       //        ^   ^     ^
       selectors.push(currentSelector)
       currentSelector = ''
+    } else if (currentToken === Token.ESCAPE_SEQUENCE_CHAR) {
+      parsingContext.escapeSequence = parsingContext.escapeSequence ? `${parsingContext.escapeSequence}${char}` : char
     } else if (currentToken === Token.QUOTE_START) {
-      quoteContext = char
+      parsingContext.quote = char
     } else if (currentToken === Token.QUOTE_END) {
-      quoteContext = undefined
+      parsingContext.quote = undefined
     }
     previousToken = currentToken
   }
@@ -106,16 +120,16 @@ const enum Token {
   QUOTE_END,
   NAME_SELECTOR_CHAR,
   ESCAPE,
-  ESCAPABLE_CHAR,
+  ESCAPE_SEQUENCE_CHAR,
 }
 
 const NAME_SHORTHAND_FIRST_CHAR_REGEX = /[a-zA-Z_$]/
 const NAME_SHORTHAND_CHAR_REGEX = /[a-zA-Z0-9_$]/
 const DIGIT_REGEX = /[0-9]/
-const ESCAPABLE_CHARS = '/\\bfnrtu' // see https://www.rfc-editor.org/rfc/rfc9535.html#name-semantics-3
+const UNICODE_CHAR_REGEX = /[a-fA-F0-9]/
 const QUOTE_CHARS = '\'"'
 
-const TOKEN_PREDICATE: { [token in Token]: (char: string, quoteContext?: string) => boolean } = {
+const TOKEN_PREDICATE: { [token in Token]: (char: string, parsingContext: ParsingContext) => boolean } = {
   // no char should match to START or END
   [Token.START]: () => false,
   [Token.END]: () => false,
@@ -129,10 +143,18 @@ const TOKEN_PREDICATE: { [token in Token]: (char: string, quoteContext?: string)
   [Token.DIGIT]: (char) => DIGIT_REGEX.test(char),
 
   [Token.QUOTE_START]: (char) => QUOTE_CHARS.includes(char),
-  [Token.QUOTE_END]: (char, quoteContext) => char === quoteContext,
+  [Token.QUOTE_END]: (char, parsingContext) => char === parsingContext.quote,
   [Token.NAME_SELECTOR_CHAR]: () => true, // any char can be used in name selector
   [Token.ESCAPE]: (char) => char === '\\',
-  [Token.ESCAPABLE_CHAR]: (char, quoteContext) => `${quoteContext}${ESCAPABLE_CHARS}`.includes(char),
+  [Token.ESCAPE_SEQUENCE_CHAR]: (char, parsingContext) => {
+    if (parsingContext.escapeSequence === undefined) {
+      // see https://www.rfc-editor.org/rfc/rfc9535.html#name-semantics-3
+      return `${parsingContext.quote}/\\bfnrtu`.includes(char)
+    } else if (parsingContext.escapeSequence.startsWith('u') && parsingContext.escapeSequence.length < 5) {
+      return UNICODE_CHAR_REGEX.test(char)
+    }
+    return false
+  },
 }
 
 const ALLOWED_NEXT_TOKENS: { [token in Token]: Token[] } = {
@@ -150,8 +172,8 @@ const ALLOWED_NEXT_TOKENS: { [token in Token]: Token[] } = {
   [Token.QUOTE_START]: [Token.ESCAPE, Token.QUOTE_END, Token.NAME_SELECTOR_CHAR],
   [Token.QUOTE_END]: [Token.BRACKET_END],
   [Token.NAME_SELECTOR_CHAR]: [Token.ESCAPE, Token.QUOTE_END, Token.NAME_SELECTOR_CHAR],
-  [Token.ESCAPE]: [Token.ESCAPABLE_CHAR],
-  [Token.ESCAPABLE_CHAR]: [Token.ESCAPE, Token.QUOTE_END, Token.NAME_SELECTOR_CHAR],
+  [Token.ESCAPE]: [Token.ESCAPE_SEQUENCE_CHAR],
+  [Token.ESCAPE_SEQUENCE_CHAR]: [Token.ESCAPE_SEQUENCE_CHAR, Token.ESCAPE, Token.QUOTE_END, Token.NAME_SELECTOR_CHAR],
 }
 
 // foo['bar\n'][12]
@@ -160,12 +182,33 @@ const ALLOWED_SELECTOR_TOKENS = [
   Token.NAME_SHORTHAND_FIRST_CHAR,
   Token.NAME_SHORTHAND_CHAR,
   Token.DIGIT,
-
   Token.NAME_SELECTOR_CHAR,
-  Token.ESCAPE,
-  Token.ESCAPABLE_CHAR,
 ]
 
 // foo.bar['qux']
 //    ^   ^     ^
 const ALLOWED_SELECTOR_DELIMITER_TOKENS = [Token.DOT, Token.BRACKET_START, Token.BRACKET_END]
+
+function isValidEscapeSequence(escapeSequence: string): boolean {
+  return '"\'/\\bfnrt'.includes(escapeSequence) || (escapeSequence.startsWith('u') && escapeSequence.length === 5)
+}
+
+const ESCAPED_CHARS: { [key: string]: string } = {
+  '"': '"',
+  "'": "'",
+  '/': '/',
+  '\\': '\\',
+  b: '\b',
+  f: '\f',
+  n: '\n',
+  r: '\r',
+  t: '\t',
+}
+
+function resolveEscapeSequence(escapeSequence: string): string {
+  if (escapeSequence.startsWith('u')) {
+    // build Unicode char from code
+    return String.fromCharCode(parseInt(escapeSequence.slice(1), 16))
+  }
+  return ESCAPED_CHARS[escapeSequence]
+}
