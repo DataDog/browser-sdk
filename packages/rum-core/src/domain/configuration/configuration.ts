@@ -220,11 +220,23 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue 0
    */
   profilingSampleRate?: number | undefined
+
+  /**
+   * A list of GraphQL endpoint URLs to track and enrich with GraphQL-specific metadata.
+   *
+   * @category Data Collection
+   */
+  allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
+
+export interface GraphQlUrlOption {
+  match: MatchOption
+  trackPayload?: boolean
+}
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
@@ -254,6 +266,7 @@ export interface RumConfiguration extends Configuration {
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
   propagateTraceBaggage: boolean
+  allowedGraphQlUrls: GraphQlUrlOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -287,6 +300,8 @@ export function validateAndBuildRumConfiguration(
   if (!allowedTracingUrls) {
     return
   }
+
+  const allowedGraphQlUrls = validateAndBuildGraphQlOptions(initConfiguration)
 
   const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
   if (!baseConfiguration) {
@@ -329,6 +344,7 @@ export function validateAndBuildRumConfiguration(
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
+    allowedGraphQlUrls,
     ...baseConfiguration,
   }
 }
@@ -386,6 +402,35 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
   return Array.from(usedTracingPropagators)
 }
 
+/**
+ * Build GraphQL options from configuration
+ */
+function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration): GraphQlUrlOption[] {
+  if (!initConfiguration.allowedGraphQlUrls) {
+    return []
+  }
+
+  if (!Array.isArray(initConfiguration.allowedGraphQlUrls)) {
+    display.warn('allowedGraphQlUrls should be an array')
+    return []
+  }
+
+  const graphQlOptions: GraphQlUrlOption[] = []
+
+  initConfiguration.allowedGraphQlUrls.forEach((option) => {
+    if (isMatchOption(option)) {
+      graphQlOptions.push({ match: option, trackPayload: false })
+    } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
+      graphQlOptions.push({
+        match: option.match,
+        trackPayload: !!option.trackPayload,
+      })
+    }
+  })
+
+  return graphQlOptions
+}
+
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
@@ -398,6 +443,16 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     action_name_attribute: configuration.actionNameAttribute,
     use_allowed_tracing_urls:
       Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
+    use_allowed_graph_ql_urls:
+      Array.isArray(configuration.allowedGraphQlUrls) && configuration.allowedGraphQlUrls.length > 0,
+    use_track_graph_ql_payload:
+      Array.isArray(configuration.allowedGraphQlUrls) &&
+      configuration.allowedGraphQlUrls.some((option) => {
+        if (typeof option === 'object' && 'trackPayload' in option) {
+          return option.trackPayload === true
+        }
+        return false
+      }),
     selected_tracing_propagators: getSelectedTracingPropagators(configuration),
     default_privacy_level: configuration.defaultPrivacyLevel,
     enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
