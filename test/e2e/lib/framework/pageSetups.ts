@@ -2,6 +2,7 @@ import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
+import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
 export interface SetupOptions {
@@ -24,12 +25,10 @@ export interface SetupOptions {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   }
+  hostName?: string
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
-
-const isBrowserStack = process.env.BROWSER_STACK
-const isContinuousIntegration = Boolean(process.env.CI)
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
 // developer laptop) or with Browser Stack (to limit flakiness).

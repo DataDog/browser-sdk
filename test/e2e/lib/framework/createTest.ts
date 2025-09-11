@@ -19,6 +19,7 @@ import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
+import { isBrowserStack } from './environment'
 
 export const DEFAULT_RUM_CONFIGURATION = {
   applicationId: APPLICATION_ID,
@@ -79,6 +80,7 @@ class TestBuilder {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   } = {}
+  private hostName?: string
 
   constructor(private title: string) {}
 
@@ -150,6 +152,11 @@ class TestBuilder {
     return this
   }
 
+  withHostName(hostName: string) {
+    this.hostName = hostName
+    return this
+  }
+
   run(runner: TestRunner) {
     const setupOptions: SetupOptions = {
       body: this.body,
@@ -168,6 +175,7 @@ class TestBuilder {
       },
       testFixture: this.testFixture,
       extension: this.extension,
+      hostName: this.hostName,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -220,6 +228,20 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
 
+    test.skip(
+      !!setupOptions.hostName && isBrowserStack,
+      // Skip those tests on BrowserStack because it doesn't support localhost subdomains. As a
+      // workaround we could use normal domains and use either:
+      // * the BrowserStack proxy capabilities -> not tried, but this sounds more complex because
+      //   we also want to run tests outside of BrowserStack
+      // * the Playwright proxy capabilities -> tried and it seems to fail because of mismatch
+      //   version between Playwright local and BrowserStack versions
+      // * a "ngrok-like" service -> not tried yet (it sounds more complex)
+      //
+      // See https://www.browserstack.com/support/faq/local-testing/local-exceptions/i-face-issues-while-testing-localhost-urls-or-private-servers-in-safari-on-macos-os-x-and-ios
+      "On BrowserStack, the test doesn't support using a different hostname."
+    )
+
     const title = test.info().titlePath.join(' > ')
     setupOptions.context.test_name = title
 
@@ -250,10 +272,14 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath }: SetupOptions
+  { basePath, hostName }: SetupOptions
 ): TestContext {
+  const baseUrl = new URL(basePath, servers.base.origin)
+  if (hostName) {
+    baseUrl.hostname = hostName
+  }
   return {
-    baseUrl: new URL(basePath, servers.base.origin).href,
+    baseUrl: baseUrl.href,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,
