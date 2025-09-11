@@ -4,7 +4,7 @@ import {
   WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
   ERROR_NOT_ALLOWED_TRACKING_ORIGIN,
 } from './allowedTrackingOrigins'
-import { STACK_WITH_INIT_IN_EXTENSION } from './extension/extensionUtils'
+import { STACK_WITH_INIT_IN_EXTENSION, STACK_WITH_INIT_IN_PAGE } from './extension/extensionUtils'
 
 const DEFAULT_CONFIG = {
   applicationId: 'xxx',
@@ -22,11 +22,7 @@ describe('checkForAllowedTrackingOrigins', () => {
   })
 
   it('should not warn if not in extension environment', () => {
-    const result = isAllowedTrackingOrigins(
-      DEFAULT_CONFIG,
-      'Error: at https://example.com/script.js:1:1',
-      'https://app.example.com'
-    )
+    const result = isAllowedTrackingOrigins(DEFAULT_CONFIG, STACK_WITH_INIT_IN_PAGE, 'https://app.example.com')
     expect(displayWarnSpy).not.toHaveBeenCalled()
     expect(displayErrorSpy).not.toHaveBeenCalled()
     expect(result).toBe(true)
@@ -39,7 +35,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: ['https://app.example.com'],
         },
-        'Error: at https://example.com/script.js:1:1',
+        STACK_WITH_INIT_IN_PAGE,
         'https://app.example.com'
       )
       expect(displayWarnSpy).not.toHaveBeenCalled()
@@ -53,7 +49,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [/^https:\/\/.*\.example\.com$/],
         },
-        'Error: at https://example.com/script.js:1:1',
+        STACK_WITH_INIT_IN_PAGE,
         'https://app.example.com'
       )
       expect(displayWarnSpy).not.toHaveBeenCalled()
@@ -67,7 +63,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [(origin: string) => origin.includes('example.com')],
         },
-        'Error: at https://example.com/script.js:1:1',
+        STACK_WITH_INIT_IN_PAGE,
         'https://app.example.com'
       )
       expect(displayWarnSpy).not.toHaveBeenCalled()
@@ -85,7 +81,7 @@ describe('checkForAllowedTrackingOrigins', () => {
             (origin: string) => origin.startsWith('https://app.'),
           ],
         },
-        'Error: at https://example.com/script.js:1:1',
+        STACK_WITH_INIT_IN_PAGE,
         'https://app.example.com'
       )
       expect(displayWarnSpy).not.toHaveBeenCalled()
@@ -101,7 +97,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: ['https://different.com'],
         },
-        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
+        STACK_WITH_INIT_IN_EXTENSION,
         'https://example.com'
       )
       expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
@@ -114,7 +110,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [/^https:\/\/specific-[a-z]+\.com$/],
         },
-        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
+        STACK_WITH_INIT_IN_EXTENSION,
         'https://example.com'
       )
       expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
@@ -127,7 +123,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [(origin: string) => origin.includes('specific-id')],
         },
-        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
+        STACK_WITH_INIT_IN_EXTENSION,
         'https://example.com'
       )
       expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
@@ -144,7 +140,7 @@ describe('checkForAllowedTrackingOrigins', () => {
             (origin: string) => origin.includes('specific-id'),
           ],
         },
-        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
+        STACK_WITH_INIT_IN_EXTENSION,
         'https://example.com'
       )
       expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
@@ -157,7 +153,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: ['https://example.com'],
         },
-        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
+        STACK_WITH_INIT_IN_EXTENSION,
         'https://example.com.extra.com'
       )
       expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
@@ -170,7 +166,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [/^chrome-extension:\/\//],
         },
-        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
+        STACK_WITH_INIT_IN_EXTENSION,
         'chrome-extension://abcdefghijklmno'
       )
       expect(displayErrorSpy).not.toHaveBeenCalled()
@@ -198,7 +194,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: [],
         },
-        'Error: at chrome-extension://abcdefghijklmno/content.js:10:15',
+        STACK_WITH_INIT_IN_EXTENSION,
         'https://example.com'
       )
       expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_NOT_ALLOWED_TRACKING_ORIGIN)
@@ -211,7 +207,7 @@ describe('checkForAllowedTrackingOrigins', () => {
           ...DEFAULT_CONFIG,
           allowedTrackingOrigins: undefined,
         },
-        'Error: at https://example.com/script.js:10:15',
+        STACK_WITH_INIT_IN_PAGE,
         'https://example.com'
       )
       expect(displayWarnSpy).not.toHaveBeenCalled()
