@@ -20,6 +20,7 @@ export interface SetupOptions {
     test_name: string
   }
   testFixture: typeof test
+  hostName?: string
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string

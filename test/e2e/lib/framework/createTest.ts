@@ -75,6 +75,7 @@ class TestBuilder {
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
+  private hostName?: string
 
   constructor(private title: string) {}
 
@@ -138,6 +139,11 @@ class TestBuilder {
     return this
   }
 
+  withHostName(hostName: string) {
+    this.hostName = hostName
+    return this
+  }
+
   run(runner: TestRunner) {
     const setupOptions: SetupOptions = {
       body: this.body,
@@ -155,6 +161,7 @@ class TestBuilder {
         test_name: '<PLACEHOLDER>',
       },
       testFixture: this.testFixture,
+      hostName: this.hostName,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -237,10 +244,14 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath }: SetupOptions
+  { basePath, hostName }: SetupOptions
 ): TestContext {
+  const baseUrl = new URL(basePath, servers.base.origin)
+  if (hostName) {
+    baseUrl.hostname = hostName
+  }
   return {
-    baseUrl: new URL(basePath, servers.base.origin).href,
+    baseUrl: baseUrl.href,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,

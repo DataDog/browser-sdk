@@ -32,6 +32,30 @@ test.describe('Session Stores', () => {
         expect(logsContext).not.toBeUndefined()
         expect(rumContext).toBeUndefined()
       })
+
+    createTest('stores the cookie on the full host name')
+      .withRum()
+      .withHostName('foo.bar.localhost')
+      .run(async ({ browserContext }) => {
+        const [cookie] = await browserContext.cookies()
+        expect(cookie).toEqual(
+          expect.objectContaining({
+            domain: 'foo.bar.localhost',
+          })
+        )
+      })
+
+    createTest('with `trackSessionAcrossSubdomains: true`, stores the cookie on the eTLD+1')
+      .withRum({ trackSessionAcrossSubdomains: true })
+      .withHostName('foo.bar.localhost')
+      .run(async ({ browserContext }) => {
+        const [cookie] = await browserContext.cookies()
+        expect(cookie).toEqual(
+          expect.objectContaining({
+            domain: '.bar.localhost',
+          })
+        )
+      })
   })
 
   test.describe('Local Storage', () => {
