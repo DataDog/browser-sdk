@@ -3,6 +3,7 @@ import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
+import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
 export interface SetupOptions {
@@ -25,7 +26,7 @@ export interface SetupOptions {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   }
-  useServiceWorker: boolean
+  hostName?: string
 }
 
 export interface WorkerOptions {
@@ -34,9 +35,6 @@ export interface WorkerOptions {
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
-
-const isBrowserStack = process.env.BROWSER_STACK
-const isContinuousIntegration = Boolean(process.env.CI)
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
 // developer laptop) or with Browser Stack (to limit flakiness).
