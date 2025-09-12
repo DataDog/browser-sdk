@@ -49,7 +49,6 @@ export function createTest(title: string) {
 
 interface TestContext {
   baseUrl: string
-  crossOriginUrl: string
   intakeRegistry: IntakeRegistry
   servers: Servers
   page: Page
@@ -242,7 +241,6 @@ function createTestContext(
 ): TestContext {
   return {
     baseUrl: servers.base.origin + basePath,
-    crossOriginUrl: servers.crossOrigin.origin,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,
