@@ -101,8 +101,8 @@ export function createMockServerApp(
     res.header(
       'Content-Security-Policy',
       [
-        `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.url}`,
+        `connect-src ${servers.intake.origin} ${servers.base.origin} ${servers.crossOrigin.origin}`,
+        `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
         'worker-src blob:',
       ].join(';')
     )
@@ -114,8 +114,8 @@ export function createMockServerApp(
     res.header(
       'Content-Security-Policy',
       [
-        `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.url}`,
+        `connect-src ${servers.intake.origin} ${servers.base.origin} ${servers.crossOrigin.origin}`,
+        `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
       ].join(';')
     )
     res.send(setup)

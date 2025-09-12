@@ -241,8 +241,8 @@ function createTestContext(
   { basePath }: SetupOptions
 ): TestContext {
   return {
-    baseUrl: servers.base.url + basePath,
-    crossOriginUrl: servers.crossOrigin.url,
+    baseUrl: servers.base.origin + basePath,
+    crossOriginUrl: servers.crossOrigin.origin,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,
