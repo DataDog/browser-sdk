@@ -31,6 +31,7 @@ const RUM_EVENT_TYPE_COLOR = {
   error: 'red',
   long_task: 'yellow',
   view: 'blue',
+  transition: 'blue',
   resource: 'cyan',
   telemetry: 'teal',
   vital: 'orange',
@@ -380,7 +381,7 @@ function VitalDescription({ event }: { event: RumVitalEvent }) {
         {vitalName}
         {vitalDescription && ` - ${vitalDescription}`}
       </Emphasis>
-      {vitalValue !== undefined && (
+      {typeof vitalValue === 'number' && (
         <>
           {' '}
           of <Emphasis>{formatDuration(vitalValue)}</Emphasis>

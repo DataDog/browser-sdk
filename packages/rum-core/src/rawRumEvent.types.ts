@@ -19,6 +19,8 @@ export const RumEventType = {
   VIEW: 'view',
   RESOURCE: 'resource',
   VITAL: 'vital',
+  STREAM: 'stream',
+  TRANSITION: 'transition',
 } as const
 
 export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
@@ -311,6 +313,9 @@ export interface RawRumActionEvent {
       pointer_up_delay?: Duration
     }
   }
+  stream?: {
+    id: string
+  }
   context?: Context
 }
 
@@ -353,6 +358,38 @@ export const VitalType = {
 
 export type VitalType = (typeof VitalType)[keyof typeof VitalType]
 
+export interface RawRumStreamEvent {
+  date: TimeStamp
+  type: typeof RumEventType.STREAM
+  stream: {
+    id: string
+    bitrate?: number
+    document_version: number
+    duration?: number
+    format?: string
+    fps?: number
+    resolution?: string
+    time_spent: number
+    timestamp?: number
+    watch_time?: number
+  }
+}
+
+export interface RawRumTransitionEvent {
+  date: TimeStamp
+  type: typeof RumEventType.TRANSITION
+  transition: {
+    type: string
+    id?: string
+    timestamp?: number
+    buffer_starrvation_duration?: number
+    media_start_delay?: number
+    error_code?: number
+    duration?: number
+    [k: string]: unknown
+  }
+}
+
 export type RawRumEvent =
   | RawRumErrorEvent
   | RawRumResourceEvent
@@ -361,3 +398,5 @@ export type RawRumEvent =
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
+  | RawRumStreamEvent
+  | RawRumTransitionEvent

@@ -19,6 +19,7 @@ import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
 import type { Hooks } from './hooks'
+import { mapStreamToView } from './streamToView'
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -86,6 +87,16 @@ export function startRumAssembly(
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
+    [RumEventType.STREAM]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.TRANSITION]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
   }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(
@@ -109,7 +120,7 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-        eventType: rawRumEvent.type,
+        eventType: rawRumEvent.type === RumEventType.STREAM ? RumEventType.VIEW : rawRumEvent.type,
         startTime,
         duration,
       })!
@@ -126,7 +137,14 @@ export function startRumAssembly(
         if (isEmptyObject(serverRumEvent.context!)) {
           delete serverRumEvent.context
         }
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+
+        if (rawRumEvent.type === RumEventType.STREAM) {
+          const streamEvent = mapStreamToView(serverRumEvent)
+
+          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, streamEvent)
+        } else {
+          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+        }
       }
     }
   )
