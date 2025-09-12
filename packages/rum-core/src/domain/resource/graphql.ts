@@ -14,12 +14,7 @@ export interface GraphQlMetadata {
 }
 
 export function findGraphQlConfiguration(url: string, configuration: RumConfiguration): GraphQlUrlOption | undefined {
-  for (const graphQlOption of configuration.allowedGraphQlUrls) {
-    if (matchList([graphQlOption.match], url)) {
-      return graphQlOption
-    }
-  }
-  return undefined
+  return configuration.allowedGraphQlUrls.find((graphQlOption) => matchList([graphQlOption.match], url))
 }
 
 export function extractGraphQlMetadata(
@@ -47,8 +42,12 @@ export function extractGraphQlMetadata(
   const operationType = getOperationType(query)
   const operationName = graphqlBody.operationName
 
+  if (!operationType) {
+    return undefined
+  }
+
   let variables: string | undefined
-  if (graphqlBody.variables !== null && graphqlBody.variables !== undefined) {
+  if (graphqlBody.variables) {
     variables = JSON.stringify(graphqlBody.variables)
   }
 
@@ -60,12 +59,6 @@ export function extractGraphQlMetadata(
   }
 }
 
-function getOperationType(query: string): 'query' | 'mutation' | 'subscription' {
-  if (query.startsWith('mutation')) {
-    return 'mutation'
-  } else if (query.startsWith('subscription')) {
-    return 'subscription'
-  }
-
-  return 'query'
+function getOperationType(query: string) {
+  return query.match(/^\s*(query|mutation|subscription)\b/i)?.[1] as 'query' | 'mutation' | 'subscription' | undefined
 }
