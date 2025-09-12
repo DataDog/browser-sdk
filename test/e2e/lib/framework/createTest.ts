@@ -274,7 +274,7 @@ function createTestContext(
 
   return {
     // Service workers require HTTPS or localhost due to browser security restrictions
-    baseUrl: hostname + basePath,
+    baseUrl: new URL(basePath, hostname).href,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,
