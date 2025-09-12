@@ -5,14 +5,9 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
 
-interface ExtensionConfig {
-  name: string
-  initParameter: string
-}
-
-const EXTRA_EXTENSIONS: ExtensionConfig[] = [
-  { name: 'allowed-tracking-origin', initParameter: 'allowedTrackingOrigins: [/^chrome-extension:\\/\\//],' },
-  { name: 'invalid-tracking-origin', initParameter: "allowedTrackingOrigins: ['https://app.example.com']," },
+const OTHER_EXTENSIONS: Array<{ name: string; options?: { runAt?: string } }> = [
+  { name: 'cdn' },
+  { name: 'appendChild', options: { runAt: 'document_start' } },
 ]
 
 runMain(async () => {
@@ -66,17 +61,20 @@ async function buildExtensions(): Promise<void> {
 
   buildApp(baseExtDir)
 
-  for (const { name, initParameter } of EXTRA_EXTENSIONS) {
-    const targetDir = path.join('test/apps', name)
+  for (const { name, options } of OTHER_EXTENSIONS) {
+    const targetDir = path.join('test/apps', `${name}-extension`)
 
     fs.rmSync(targetDir, { recursive: true, force: true })
     fs.cpSync(baseExtDir, targetDir, { recursive: true })
 
-    const contentScriptPath = path.join(targetDir, 'src/contentScript.ts')
-    await modifyFile(contentScriptPath, (content: string) =>
-      content.replace(/\/\* EXTENSION_INIT_PARAMETER \*\//g, initParameter)
-    )
+    const manifestPath = path.join(targetDir, 'manifest.json')
+    await modifyFile(manifestPath, (originalContent: string) => {
+      let content = originalContent.replace('dist/base.js', `dist/${name}.js`)
 
-    buildApp(targetDir)
+      if (options?.runAt) {
+        content = content.replace('document_end', options.runAt)
+      }
+      return content
+    })
   }
 }

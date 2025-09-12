@@ -1,133 +1,118 @@
 import path from 'path'
 import { test, expect } from '@playwright/test'
-import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION, createTest } from '../../lib/framework'
+import type { BrowserLog } from '../../lib/framework'
+import { createTest, createExtension, createCrossOriginScriptUrls, formatConfiguration } from '../../lib/framework'
 
-// Different extension build paths for different configurations
-const pathToBaseExtension = path.join(__dirname, '../../../../test/apps/base-extension')
-// Contains allowedTrackingOrigins parameter with chrome-extension origin
-const pathToAllowedTrackingOriginExtension = path.join(__dirname, '../../../../test/apps/allowed-tracking-origin')
-// Contains allowedTrackingOrigins parameter with app.example.com origin
-const pathToInvalidTrackingOriginExtension = path.join(__dirname, '../../../../test/apps/invalid-tracking-origin')
-
-const warningMessage =
+const WARNING_MESSAGE =
   'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
-const errorMessage = 'Datadog Browser SDK: SDK initialized on a non-allowed domain.'
+const ERROR_MESSAGE = 'Datadog Browser SDK: SDK initialized on a non-allowed domain.'
+
+const BASE_PATH = path.join(process.cwd(), 'test/apps')
+const EXTENSIONS = ['base-extension', 'cdn-extension']
+
+// NOTE: logs might contain a warning about the SDK being loaded twice when using the npm config
+// because the SDK is loaded even though it's not initialized.
+// We ignore it here because it's not relevant to the test.
+const isNotSdkLoadedMoreThanOnce = (log: BrowserLog) => !log.message.includes('SDK is loaded more than once')
 
 test.describe('browser extensions', () => {
-  createTest('popup page should load extension popup and display expected content')
-    .withExtension(pathToBaseExtension)
-    .run(async ({ page, getExtensionId }) => {
-      const extensionId = await getExtensionId()
-      await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-      await expect(page).toHaveTitle(/Extension Popup/)
-    })
+  for (const name of EXTENSIONS) {
+    test.describe(`with ${name} extension`, () => {
+      createTest('should warn and start tracking when SDK is initialized in an unsupported environment')
+        .withExtension(createExtension(path.join(BASE_PATH, name)).withRum().withLogs())
+        .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
+          await flushEvents()
 
-  createTest(
-    'SDK is initialized in an unsupported environment without allowedTrackingOrigins and warns when used in content script'
-  )
-    .withExtension(pathToBaseExtension)
+          expect(intakeRegistry.rumViewEvents).toHaveLength(1)
+
+          withBrowserLogs((logs) => {
+            const filteredLogs = logs.filter(isNotSdkLoadedMoreThanOnce)
+
+            // Two warnings, one for RUM and one for LOGS SDK
+            expect(filteredLogs).toHaveLength(2)
+            filteredLogs.forEach((log) => {
+              expect(log).toMatchObject({
+                level: 'warning',
+                message: WARNING_MESSAGE,
+              })
+            })
+          })
+        })
+
+      createTest('should start tracking when allowedTrackingOrigins matches current domain')
+        .withExtension(
+          createExtension(path.join(BASE_PATH, name))
+            .withRum({ allowedTrackingOrigins: ['LOCATION_ORIGIN'] })
+            .withLogs({ allowedTrackingOrigins: ['LOCATION_ORIGIN'] })
+        )
+        .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
+          await flushEvents()
+
+          expect(intakeRegistry.rumViewEvents).toHaveLength(1)
+
+          withBrowserLogs((logs) =>
+            expect(logs).not.toContainEqual(
+              expect.objectContaining({
+                level: 'warning',
+                message: WARNING_MESSAGE,
+              })
+            )
+          )
+        })
+
+      createTest('should not start tracking when allowedTrackingOrigins does not match current domain')
+        .withExtension(
+          createExtension(path.join(BASE_PATH, name))
+            .withRum({ allowedTrackingOrigins: ['https://app.example.com'] })
+            .withLogs({ allowedTrackingOrigins: ['https://app.example.com'] })
+        )
+        .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
+          await flushEvents()
+
+          expect(intakeRegistry.rumViewEvents).toHaveLength(0)
+
+          withBrowserLogs((logs) => {
+            const filteredLogs = logs.filter(isNotSdkLoadedMoreThanOnce)
+            // Two errors, one for RUM and one for LOGS SDK
+            expect(filteredLogs).toHaveLength(2)
+            filteredLogs.forEach((log) => {
+              expect(log).toMatchObject({
+                level: 'error',
+                message: ERROR_MESSAGE,
+              })
+            })
+          })
+        })
+    })
+  }
+
+  /**
+   * This test is reconstruction of an edge case that happens when using some extension that override `appendChild` and
+   * the sync installation method using NextJs `<Script>` component.
+   */
+  createTest('should not warn - edge case simulating NextJs with an extension that override `appendChild`')
+    .withExtension(createExtension(path.join(BASE_PATH, 'appendChild-extension')))
     .withRum()
     .withLogs()
-    .run(async ({ page, baseUrl, getExtensionId, withBrowserLogs }) => {
-      const extensionId = await getExtensionId()
-
-      await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-
-      const rumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
-      const logsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
-      expect(rumResult?.applicationId).toBe('1234')
-      expect(logsResult?.clientToken).toBe('abcd')
-
-      await page.goto(baseUrl)
-
-      const pageRumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
-      const pageLogsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
-
-      expect(pageRumResult?.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
-      expect(pageLogsResult?.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
-
-      // Check for warnings in console messages - should have one from RUM and one from Logs
-      // But since we also go to the base url, we can have more than 2 logs
-      withBrowserLogs((logs) => {
-        expect(logs.length).toBeGreaterThanOrEqual(2)
-        expect(logs).toContainEqual(
-          expect.objectContaining({
-            level: 'warning',
-            message: warningMessage,
-          })
-        )
-      })
+    .withSetup((options, servers) => {
+      const { rumScriptUrl, logsScriptUrl } = createCrossOriginScriptUrls(servers, options)
+      return `
+          <script src="${rumScriptUrl}"></script>
+          <script src="${logsScriptUrl}"></script>
+          <script>
+            const script = document.createElement('script')
+            script.innerHTML = 'window.DD_RUM.init(${formatConfiguration(options.rum!, servers)}); window.DD_LOGS.init(${formatConfiguration(options.logs!, servers)})'
+            document.head.appendChild(script)
+          </script>
+        `
     })
+    .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
+      test.fail() // TODO: remove this once the issue is fixed
 
-  createTest('SDK with correct allowedTrackingOrigins parameter works correctly for both RUM and Logs')
-    .withExtension(pathToAllowedTrackingOriginExtension)
-    .run(async ({ page, getExtensionId, flushBrowserLogs }) => {
-      const extensionId = await getExtensionId()
-      const expectedOriginPattern = /^chrome-extension:\/\//
-      const extensionLogs: any[] = []
+      await flushEvents()
 
-      // Listen for console events and filter for extension page only
-      // Because the test also goes to the base url, we need to filter for the extension page only
-      page.on('console', (msg) => {
-        const url = msg.location().url
-        if (url && url.startsWith(`chrome-extension://${extensionId}`)) {
-          extensionLogs.push({
-            level: msg.type(),
-            message: msg.text(),
-            source: 'console',
-            url,
-          })
-        }
-      })
+      expect(intakeRegistry.rumViewEvents).toHaveLength(1)
 
-      await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-
-      const rumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
-      const logsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
-
-      expect(rumResult?.applicationId).toBe('1234')
-      expect(rumResult?.allowedTrackingOrigins).toEqual([expectedOriginPattern])
-      expect(logsResult?.clientToken).toBe('abcd')
-      expect(logsResult?.allowedTrackingOrigins).toEqual([expectedOriginPattern])
-
-      expect(extensionLogs).toEqual([])
-
-      flushBrowserLogs()
-    })
-
-  createTest('SDK with incorrect allowedTrackingOrigins shows error message for both RUM and Logs')
-    .withExtension(pathToInvalidTrackingOriginExtension)
-    .withRum()
-    .withLogs()
-    .run(async ({ page, baseUrl, getExtensionId, withBrowserLogs }) => {
-      const extensionId = await getExtensionId()
-
-      await page.goto(`chrome-extension://${extensionId}/src/popup.html`)
-
-      const rumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
-      const logsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
-
-      expect(rumResult?.applicationId).toBe('1234')
-      expect(rumResult?.allowedTrackingOrigins).toEqual(['https://app.example.com'])
-      expect(logsResult?.clientToken).toBe('abcd')
-      expect(logsResult?.allowedTrackingOrigins).toEqual(['https://app.example.com'])
-
-      await page.goto(baseUrl)
-
-      const pageRumResult = await page.evaluate(() => window.DD_RUM?.getInitConfiguration())
-      const pageLogsResult = await page.evaluate(() => window.DD_LOGS?.getInitConfiguration())
-
-      expect(pageRumResult?.applicationId).toBe(DEFAULT_RUM_CONFIGURATION.applicationId)
-      expect(pageLogsResult?.clientToken).toBe(DEFAULT_LOGS_CONFIGURATION.clientToken)
-
-      withBrowserLogs((logs) => {
-        expect(logs.length).toBeGreaterThanOrEqual(2)
-        expect(logs).toContainEqual(
-          expect.objectContaining({
-            level: 'error',
-            message: errorMessage,
-          })
-        )
-      })
+      withBrowserLogs((logs) => expect(logs.length).toBe(0))
     })
 })

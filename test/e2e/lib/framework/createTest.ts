@@ -3,7 +3,6 @@ import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser
 import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
-import { createExtensionTest } from '../helpers/extensionFixture'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
@@ -19,6 +18,7 @@ import type { SetupFactory, SetupOptions } from './pageSetups'
 import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
+import type { Extension } from './createExtension'
 
 export const DEFAULT_RUM_CONFIGURATION = {
   applicationId: APPLICATION_ID,
@@ -76,6 +76,10 @@ class TestBuilder {
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
   private testFixture: typeof test = test
+  private extension: {
+    rumConfiguration?: RumInitConfiguration
+    logsConfiguration?: LogsInitConfiguration
+  } = {}
 
   constructor(private title: string) {}
 
@@ -129,8 +133,16 @@ class TestBuilder {
     return this
   }
 
-  withExtension(extensionPath: string) {
-    this.testFixture = createExtensionTest(extensionPath)
+  withSetup(setup: SetupFactory) {
+    this.setups = [{ factory: setup }]
+    return this
+  }
+
+  withExtension(extension: Extension) {
+    this.testFixture = extension.fixture
+    this.extension.rumConfiguration = extension.rumConfiguration
+    this.extension.logsConfiguration = extension.logsConfiguration
+
     return this
   }
 
@@ -156,6 +168,7 @@ class TestBuilder {
         test_name: '<PLACEHOLDER>',
       },
       testFixture: this.testFixture,
+      extension: this.extension,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -202,7 +215,7 @@ function declareTestsForSetups(
 }
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  const testFixture = setupOptions.testFixture
+  const testFixture = setupOptions.testFixture ?? test
   testFixture(title, async ({ page, context }) => {
     const browserName = getBrowserName(test.info().project.name)
     addTag('test.browserName', browserName)
