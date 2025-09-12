@@ -71,6 +71,28 @@ test.describe('remote configuration', () => {
       expect(initConfiguration.version).toBe('123')
     })
 
+  createTest('should resolve an option value from js variable')
+    .withRum({
+      remoteConfigurationId: 'e2e',
+    })
+    .withRemoteConfiguration({
+      rum: {
+        applicationId: 'e2e',
+        version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'dataLayer.version' },
+      },
+    })
+    .withBody(html`
+      <script>
+        dataLayer = {
+          version: 'js-version',
+        }
+      </script>
+    `)
+    .run(async ({ page }) => {
+      const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+      expect(initConfiguration.version).toBe('js-version')
+    })
+
   createTest('should resolve user context')
     .withRum({
       remoteConfigurationId: 'e2e',

@@ -289,6 +289,176 @@ describe('remoteConfiguration', () => {
       })
     })
 
+    describe('js strategy', () => {
+      const root = window as any
+
+      it('should resolve a value from a variable content', () => {
+        root.foo = 'bar'
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo' },
+          },
+          { version: 'bar' }
+        )
+      })
+
+      it('should resolve a value from an object property', () => {
+        root.foo = { bar: { qux: '123' } }
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo.bar.qux' },
+          },
+          { version: '123' }
+        )
+      })
+
+      it('should resolve a string value with an extractor', () => {
+        root.foo = 'version-123'
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'js',
+              path: 'foo',
+              extractor: { rcSerializedType: 'regex', value: '\\d+' },
+            },
+          },
+          { version: '123' }
+        )
+      })
+
+      it('should resolve to a non string value', () => {
+        root.foo = 23
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo' },
+          },
+          { version: 23 as any }
+        )
+      })
+
+      it('should resolve a value from an object property containing an escapable character', () => {
+        root.foo = { 'bar\nqux': '123' }
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: "foo['bar\\nqux']" },
+          },
+          { version: '123' }
+        )
+      })
+
+      it('should not apply the extractor to a non string value', () => {
+        root.foo = 23
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'js',
+              path: 'foo',
+              extractor: { rcSerializedType: 'regex', value: '\\d+' },
+            },
+          },
+          { version: 23 as any }
+        )
+      })
+
+      it('should resolve a value from an array item', () => {
+        root.foo = { bar: [{ qux: '123' }] }
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo.bar[0].qux' },
+          },
+          { version: '123' }
+        )
+      })
+
+      it('should resolve to undefined and display an error if the JSON path is invalid', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: '.' },
+          },
+          { version: undefined }
+        )
+        expect(displaySpy).toHaveBeenCalledWith("Invalid JSON path in the remote configuration: '.'")
+      })
+
+      it('should resolve to undefined and display an error if the variable access throws', () => {
+        root.foo = {
+          get bar() {
+            throw new Error('foo')
+          },
+        }
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo.bar' },
+          },
+          { version: undefined }
+        )
+        expect(displaySpy).toHaveBeenCalledWith("Error accessing: 'foo.bar'", new Error('foo'))
+      })
+
+      it('should resolve to undefined if the variable does not exist', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'missing' },
+          },
+          { version: undefined }
+        )
+      })
+
+      it('should resolve to undefined if the property does not exist', () => {
+        root.foo = {}
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo.missing' },
+          },
+          { version: undefined }
+        )
+      })
+
+      it('should resolve to undefined if the array index does not exist', () => {
+        root.foo = []
+        registerCleanupTask(() => {
+          delete root.foo
+        })
+
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo[0]' },
+          },
+          { version: undefined }
+        )
+      })
+    })
+
     describe('with extractor', () => {
       const COOKIE_NAME = 'unit_rc'
 
