@@ -8,6 +8,7 @@
  */
 export type RumEvent =
   | RumActionEvent
+  | RumTransitionEvent
   | RumErrorEvent
   | RumLongTaskEvent
   | RumResourceEvent
@@ -166,6 +167,60 @@ export type RumActionEvent = CommonProperties &
     }
     [k: string]: unknown
   }
+/**
+ * Schema of all properties of an Transition event
+ */
+export type RumTransitionEvent = CommonProperties & {
+  /**
+   * RUM event type
+   */
+  readonly type: 'transition'
+  /**
+   * Stream properties
+   */
+  readonly stream: {
+    /**
+     * UUID of the stream
+     */
+    readonly id: string
+    [k: string]: unknown
+  }
+  /**
+   * Transition properties
+   */
+  readonly transition: {
+    /**
+     * Type of the transition
+     */
+    readonly type: string
+    /**
+     * UUID of the transition
+     */
+    readonly id?: string
+    /**
+     * The player's current timestamp in milliseconds
+     */
+    readonly timestamp?: number
+    /**
+     * Buffer starvation duration, the amount of time spent rebuffering in milliseconds
+     */
+    readonly buffer_starvation_duration?: number
+    /**
+     * Media start delay, the amount of time spent loading before playing in milliseconds
+     */
+    readonly media_start_delay?: number
+    /**
+     * Error code, as reported by the player
+     */
+    readonly error_code?: number
+    /**
+     * Duration of the event in milliseconds
+     */
+    readonly duration?: number
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
 /**
  * Schema of all properties of an Error event
  */
@@ -1233,44 +1288,7 @@ export type RumVitalEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'vital'
-    /**
-     * Vital properties
-     */
-    readonly vital: {
-      /**
-       * Type of the vital
-       */
-      readonly type: 'duration' | 'operation_step'
-      /**
-       * UUID of the vital
-       */
-      readonly id: string
-      /**
-       * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
-       */
-      readonly operation_key?: string
-      /**
-       * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
-       */
-      readonly name?: string
-      /**
-       * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
-       */
-      readonly description?: string
-      /**
-       * Duration of the vital in nanoseconds
-       */
-      readonly duration?: number
-      /**
-       * Type of the step that triggered the vital, if applicable
-       */
-      readonly step_type?: 'start' | 'update' | 'retry' | 'end'
-      /**
-       * Reason for the failure of the step, if applicable
-       */
-      readonly failure_reason?: 'error' | 'abandoned' | 'other'
-      [k: string]: unknown
-    }
+    readonly vital: DurationProperties | AppLaunchProperties | FeatureOperationProperties
     /**
      * Internal properties
      */
@@ -1289,6 +1307,90 @@ export type RumVitalEvent = CommonProperties &
     }
     [k: string]: unknown
   }
+/**
+ * Duration properties of a Vital event
+ */
+export type DurationProperties = VitalCommonProperties & {
+  /**
+   * Type of the vital.
+   */
+  readonly type: 'duration'
+  /**
+   * Duration of the vital in nanoseconds.
+   */
+  readonly duration: number
+  [k: string]: unknown
+}
+/**
+ * Schema of common properties for a Vital event
+ */
+export type VitalCommonProperties = {
+  /**
+   * UUID of the vital
+   */
+  readonly id: string
+  /**
+   * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
+   */
+  readonly name?: string
+  /**
+   * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
+   */
+  readonly description?: string
+  [k: string]: unknown
+}
+/**
+ * Schema for app launch metrics.
+ */
+export type AppLaunchProperties = VitalCommonProperties & {
+  /**
+   * Type of the vital.
+   */
+  readonly type: 'app_launch'
+  /**
+   * The metric of the app launch.
+   */
+  readonly app_launch_metric: 'ttid' | 'ttfd'
+  /**
+   * Duration of the vital in nanoseconds.
+   */
+  readonly duration: number
+  /**
+   * The type of the app launch.
+   */
+  readonly startup_type?: 'cold_start' | 'warm_start'
+  /**
+   * Whether the app launch was prewarmed.
+   */
+  readonly is_prewarmed?: boolean
+  /**
+   * If the app launch had a saved instance state bundle.
+   */
+  readonly has_saved_instance_state_bundle?: boolean
+  [k: string]: unknown
+}
+/**
+ * Schema for a feature operation.
+ */
+export type FeatureOperationProperties = VitalCommonProperties & {
+  /**
+   * Type of the vital.
+   */
+  readonly type: 'operation_step'
+  /**
+   * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
+   */
+  readonly operation_key?: string
+  /**
+   * Type of the step that triggered the vital, if applicable
+   */
+  readonly step_type?: 'start' | 'update' | 'retry' | 'end'
+  /**
+   * Reason for the failure of the step, if applicable
+   */
+  readonly failure_reason?: 'error' | 'abandoned' | 'other'
+  [k: string]: unknown
+}
 
 /**
  * Schema of common properties of RUM events
