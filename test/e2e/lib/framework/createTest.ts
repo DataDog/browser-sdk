@@ -270,13 +270,13 @@ function createTestContext(
   browserName: TestContext['browserName'],
   { basePath, useServiceWorker }: SetupOptions
 ): TestContext {
-  const url = servers.base.url
-  const hostname = useServiceWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url
+  const origin = servers.base.origin
+  const hostname = useServiceWorker ? origin.replace(/http:\/\/[^:]+:/, 'http://localhost:') : origin
 
   return {
     // Service workers require HTTPS or localhost due to browser security restrictions
     baseUrl: hostname + basePath,
-    crossOriginUrl: servers.crossOrigin.url,
+    crossOriginUrl: servers.crossOrigin.origin,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,

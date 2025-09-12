@@ -251,12 +251,12 @@ function js(parts: readonly string[], ...vars: string[]) {
 }
 
 function setupEventBridge(servers: Servers) {
-  const baseHostname = new URL(servers.base.url).hostname
+  const baseHostname = new URL(servers.base.origin).hostname
 
   // Send EventBridge events to the intake so we can inspect them in our E2E test cases. The URL
   // needs to be similar to the normal Datadog intake (through proxy) to make the SDK completely
   // ignore them.
-  const eventBridgeIntake = `${servers.intake.url}/?${new URLSearchParams({
+  const eventBridgeIntake = `${servers.intake.origin}/?${new URLSearchParams({
     ddforward: `/api/v2/rum?${INTAKE_URL_PARAMETERS.join('&')}`,
     bridge: 'true',
   }).toString()}`
@@ -318,8 +318,8 @@ export function formatConfiguration(initConfiguration: LogsInitConfiguration | R
   let result = JSON.stringify(
     {
       ...initConfiguration,
-      proxy: servers.intake.url,
-      remoteConfigurationProxy: `${servers.base.url}/config`,
+      proxy: servers.intake.origin,
+      remoteConfigurationProxy: `${servers.base.origin}/config`,
     },
     (_key, value) => {
       if (typeof value === 'function') {
@@ -345,7 +345,7 @@ export function formatConfiguration(initConfiguration: LogsInitConfiguration | R
 
 export function createCrossOriginScriptUrls(servers: Servers, options: SetupOptions) {
   return {
-    logsScriptUrl: `${servers.crossOrigin.url}/datadog-logs.js`,
-    rumScriptUrl: `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`,
+    logsScriptUrl: `${servers.crossOrigin.origin}/datadog-logs.js`,
+    rumScriptUrl: `${servers.crossOrigin.origin}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`,
   }
 }
