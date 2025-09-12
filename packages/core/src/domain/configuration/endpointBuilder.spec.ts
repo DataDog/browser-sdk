@@ -158,10 +158,16 @@ describe('endpointBuilder', () => {
       expect(endpoint).toContain('ddsource=browser')
     })
 
-    it('should source when provided', () => {
+    it('should use flutter source when provided', () => {
       const config = { ...initConfiguration, source: 'flutter' as const }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=flutter')
+    })
+
+    it('should use unity source when provided', () => {
+      const config = { ...initConfiguration, source: 'unity' as const }
+      const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(endpoint).toContain('ddsource=unity')
     })
   })
 })
