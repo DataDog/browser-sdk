@@ -20,6 +20,7 @@ export const MAX_EXECUTION_TIME_ON_TIMEOUT = 30
 
 export interface TaskQueue {
   push(task: Task): void
+  stop(): void
 }
 
 type Task = () => void
@@ -54,6 +55,9 @@ export function createTaskQueue(): TaskQueue {
       if (pendingTasks.push(task) === 1) {
         scheduleNextRun()
       }
+    },
+    stop() {
+      pendingTasks.length = 0
     },
   }
 }

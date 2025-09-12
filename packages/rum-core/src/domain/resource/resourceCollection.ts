@@ -85,6 +85,7 @@ export function startResourceCollection(
 
   return {
     stop: () => {
+      taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
     },
   }
