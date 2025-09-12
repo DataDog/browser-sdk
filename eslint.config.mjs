@@ -375,6 +375,11 @@ export default tseslint.config(
           selector: 'TSEnumDeclaration:not([const=true])',
           message: 'When possible, use `const enum` as it produces less code when transpiled.',
         },
+
+        {
+          selector: 'TSModuleDeclaration[kind=global]',
+          message: 'Never declare global types as it will leak to the user app global scope.',
+        },
       ],
     },
   },
