@@ -11,6 +11,7 @@ import type {
   RawRumResourceEvent,
   RawRumVitalEvent,
   RawRumStreamEvent,
+  RawRumTransitionEvent,
 } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 
@@ -21,6 +22,7 @@ const allowedEventTypes = [
   RumEventType.RESOURCE,
   RumEventType.STREAM,
   RumEventType.VITAL,
+  RumEventType.TRANSITION,
 ] as const
 
 export type AllowedRawRumEvent = (
@@ -31,6 +33,7 @@ export type AllowedRawRumEvent = (
   | RawRumActionEvent
   | RawRumVitalEvent
   | RawRumStreamEvent
+  | RawRumTransitionEvent
 ) & { context?: Context }
 
 export function startEventCollection(lifeCycle: LifeCycle) {
