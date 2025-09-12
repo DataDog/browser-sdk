@@ -13,7 +13,7 @@ export interface TransportConfiguration {
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
-  source: 'browser' | 'flutter'
+  source: 'browser' | 'flutter' | 'unity'
 }
 
 export interface ReplicaConfiguration {
@@ -23,7 +23,7 @@ export interface ReplicaConfiguration {
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
   const site = initConfiguration.site || INTAKE_SITE_US1
-  const source = initConfiguration.source === 'flutter' ? 'flutter' : 'browser'
+  const source = valiidateSource(initConfiguration.source)
 
   const endpointBuilders = computeEndpointBuilders({ ...initConfiguration, site, source })
   const replicaConfiguration = computeReplicaConfiguration({ ...initConfiguration, site, source })
@@ -34,6 +34,13 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
     source,
     ...endpointBuilders,
   }
+}
+
+function valiidateSource(source: string | undefined) {
+  if (source === 'flutter' || source === 'unity') {
+    return source
+  }
+  return 'browser'
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration) {
