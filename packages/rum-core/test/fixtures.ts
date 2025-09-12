@@ -143,6 +143,15 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         },
         overrides
       )
+    case RumEventType.TRANSITION:
+      return combine(
+        {
+          type,
+          date: 0 as TimeStamp,
+          transition: { type: 'play' },
+        },
+        overrides
+      )
   }
 }
 

@@ -7,17 +7,17 @@ __metadata:
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=react-router-v6-app%40workspace%3A.":
   version: 6.19.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=c8e335&locator=react-router-v6-app%40workspace%3A."
-  checksum: 10c0/e98c1c4d1dc900848961a233c9cc28fb442219bd45bae226f9a48f6b7282c6ed743a6be9a14477c12affb948184db28a9f9d5c7cd8ce4cf08f6141cbd8bc4679
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=d1e2e4&locator=react-router-v6-app%40workspace%3A."
+  checksum: 10c0/892d4bb9a2253ee657d9da7f40f934182b64bf482ee07fd8aa4370f9a1b661dd714b02c958dd051e84132edec1dfb0a82ac9ff67bd371e8f3eb55ddb84509834
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=react-router-v6-app%40workspace%3A.":
   version: 6.19.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=c25ad6&locator=react-router-v6-app%40workspace%3A."
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=f8ec7c&locator=react-router-v6-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.19.0"
-  checksum: 10c0/0b46745d5dd37acb24a715b013622ed35ab01e482a0dfed56aca95cde24cfb907cb1f9deba304f8c7f49885519b2238cdc59bf3a5df0eb90e2d756aea02d346d
+  checksum: 10c0/ef2709ac044eb75e1324278470c26142403de6afd6ac40c7f86e035cd7ce4d85b232b8ced15d4fa10efd8c52f622b8cefb28f21d00cb26742424f33e763acfc0
   languageName: node
   linkType: hard
 
@@ -48,7 +48,7 @@ __metadata:
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=react-router-v6-app%40workspace%3A.":
   version: 6.19.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=603883&locator=react-router-v6-app%40workspace%3A."
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=958dd6&locator=react-router-v6-app%40workspace%3A."
   dependencies:
     "@datadog/browser-core": "npm:6.19.0"
     "@datadog/browser-rum-core": "npm:6.19.0"
@@ -57,7 +57,7 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/0d05abf96a68f5c709c21e04b6cce6708f1a5e63d146efe4d42276b36d64abdeaccee39858bc0279a5011ab529d4d0d4430b344e34d0a01eed9b913649acb072
+  checksum: 10c0/75a805a99cc4bf8453fa95ab084c4ea23d545bd410990941cda76efcdbd4d26900f11e166de6b761dcf657977d2dd179091c1b2e57247f0d2e4ff9198cbc9f54
   languageName: node
   linkType: hard
 

@@ -11,7 +11,7 @@ import {
   PageExitReason,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
-import { ActionType } from '../../rawRumEvent.types'
+import { ActionType, RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { trackEventCounts } from '../trackEventCounts'
@@ -292,9 +292,13 @@ function newClick(
   const historyEntry = history.add(id, startClocks.relative)
   const eventCountsSubscription = trackEventCounts({
     lifeCycle,
-    isChildEvent: (event) =>
-      event.action !== undefined &&
-      (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
+    isChildEvent: (event) => {
+      if (event.type === RumEventType.ACTION) {
+        return false
+      }
+      const actionId = (event as any).action?.id as string | string[] | undefined
+      return !!actionId && (Array.isArray(actionId) ? actionId.includes(id) : actionId === id)
+    },
   })
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp

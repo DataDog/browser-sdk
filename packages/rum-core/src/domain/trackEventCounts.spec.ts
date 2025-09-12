@@ -27,7 +27,7 @@ describe('trackEventCounts', () => {
     notifyCollectedRawRumEvent({ type: RumEventType.LONG_TASK })
     expect(eventCounts.longTaskCount).toBe(1)
   })
-  ;[RumEventType.VIEW, RumEventType.VITAL].forEach((eventType) => {
+  ;[RumEventType.VIEW, RumEventType.VITAL, RumEventType.TRANSITION].forEach((eventType) => {
     it(`doesn't track ${eventType} events`, () => {
       const { eventCounts } = trackEventCounts({ lifeCycle, isChildEvent: () => true })
       notifyCollectedRawRumEvent({ type: eventType })

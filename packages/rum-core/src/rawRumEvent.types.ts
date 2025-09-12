@@ -20,6 +20,7 @@ export const RumEventType = {
   RESOURCE: 'resource',
   VITAL: 'vital',
   STREAM: 'stream',
+  TRANSITION: 'transition',
 } as const
 
 export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
@@ -374,6 +375,21 @@ export interface RawRumStreamEvent {
   }
 }
 
+export interface RawRumTransitionEvent {
+  date: TimeStamp
+  type: typeof RumEventType.TRANSITION
+  transition: {
+    type: string
+    id?: string
+    timestamp?: number
+    buffer_starrvation_duration?: number
+    media_start_delay?: number
+    error_code?: number
+    duration?: number
+    [k: string]: unknown
+  }
+}
+
 export type RawRumEvent =
   | RawRumErrorEvent
   | RawRumResourceEvent
@@ -383,3 +399,4 @@ export type RawRumEvent =
   | RawRumActionEvent
   | RawRumVitalEvent
   | RawRumStreamEvent
+  | RawRumTransitionEvent

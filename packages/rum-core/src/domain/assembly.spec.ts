@@ -638,6 +638,24 @@ describe('rum assembly', () => {
       expect(resultEvent.view.resource.count).toBe(0)
     })
   })
+
+  describe('TRANSITION event processing', () => {
+    it('should forward TRANSITION events', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({})
+
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.TRANSITION, {
+          transition: { type: 'play', timestamp: 1234 },
+        }),
+      })
+
+      expect(serverRumEvents.length).toBe(1)
+      const resultEvent = serverRumEvents[0] as any
+      expect(resultEvent.type).toBe('transition')
+      expect(resultEvent.transition).toBeDefined()
+      expect(resultEvent.transition.type).toBe('play')
+    })
+  })
 })
 
 function notifyRawRumEvent<E extends RawRumEvent>(
