@@ -240,7 +240,7 @@ function createTestContext(
   { basePath }: SetupOptions
 ): TestContext {
   return {
-    baseUrl: servers.base.origin + basePath,
+    baseUrl: new URL(basePath, servers.base.origin).href,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,
