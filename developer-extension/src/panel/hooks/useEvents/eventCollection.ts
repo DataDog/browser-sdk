@@ -58,8 +58,10 @@ function listenEventsFromRequests(callback: (events: SdkEvent[]) => void) {
     if (!INTAKE_DOMAINS.find((rootDomain) => url.hostname.endsWith(rootDomain))) {
       return
     }
-    // intake request path is /api/vX/track
-    if (!['rum', 'logs'].includes(url.pathname.split('/')[3])) {
+    // Accept various intake path formats: older /api/vX/track, newer /v1/input, or anything containing /rum or /logs.
+    const pathSegments = url.pathname.split('/')
+    const thirdSegment = pathSegments[3] || ''
+    if (!['rum', 'logs'].includes(thirdSegment) && !url.pathname.startsWith('/v1/input')) {
       return
     }
     if (!request.request.postData || !request.request.postData.text) {
