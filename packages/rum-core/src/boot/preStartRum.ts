@@ -93,7 +93,7 @@ export function createPreStartStrategy(
     bufferApiCalls.drain(startRumResult)
   }
 
-  function doInit(initConfiguration: RumInitConfiguration) {
+  function doInit(initConfiguration: RumInitConfiguration, errorStack?: string) {
     const eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
@@ -108,7 +108,7 @@ export function createPreStartStrategy(
       return
     }
 
-    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    const configuration = validateAndBuildRumConfiguration(initConfiguration, errorStack)
     if (!configuration) {
       return
     }
@@ -149,7 +149,7 @@ export function createPreStartStrategy(
   }
 
   const strategy: Strategy = {
-    init(initConfiguration, publicApi) {
+    init(initConfiguration, publicApi, errorStack) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -174,12 +174,12 @@ export function createPreStartStrategy(
         fetchAndApplyRemoteConfiguration(initConfiguration, { user: userContext, context: globalContext })
           .then((initConfiguration) => {
             if (initConfiguration) {
-              doInit(initConfiguration)
+              doInit(initConfiguration, errorStack)
             }
           })
           .catch(monitorError)
       } else {
-        doInit(initConfiguration)
+        doInit(initConfiguration, errorStack)
       }
     },
 

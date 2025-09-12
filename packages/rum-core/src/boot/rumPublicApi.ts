@@ -472,7 +472,7 @@ export interface RumPublicApiOptions {
 }
 
 export interface Strategy {
-  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi) => void
+  init: (initConfiguration: RumInitConfiguration, publicApi: RumPublicApi, errorStack?: string) => void
   initConfiguration: RumInitConfiguration | undefined
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
@@ -564,9 +564,10 @@ export function makeRumPublicApi(
   })
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
-    init: monitor((initConfiguration) => {
-      strategy.init(initConfiguration, rumPublicApi)
-    }),
+    init: (initConfiguration) => {
+      const errorStack = new Error().stack
+      callMonitored(() => strategy.init(initConfiguration, rumPublicApi, errorStack))
+    },
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)

@@ -54,7 +54,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration) {
+    init(initConfiguration, errorStack) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -75,7 +75,7 @@ export function createPreStartStrategy(
         return
       }
 
-      const configuration = validateAndBuildLogsConfiguration(initConfiguration)
+      const configuration = validateAndBuildLogsConfiguration(initConfiguration, errorStack)
       if (!configuration) {
         return
       }
