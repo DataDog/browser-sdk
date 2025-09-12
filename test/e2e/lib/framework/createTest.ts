@@ -30,7 +30,6 @@ export function createTest(title: string) {
 
 interface TestContext {
   baseUrl: string
-  crossOriginUrl: string
   intakeRegistry: IntakeRegistry
   servers: Servers
   page: Page
@@ -276,7 +275,6 @@ function createTestContext(
   return {
     // Service workers require HTTPS or localhost due to browser security restrictions
     baseUrl: hostname + basePath,
-    crossOriginUrl: servers.crossOrigin.origin,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,
