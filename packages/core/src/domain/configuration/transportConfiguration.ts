@@ -23,7 +23,7 @@ export interface ReplicaConfiguration {
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
   const site = initConfiguration.site || INTAKE_SITE_US1
-  const source = valiidateSource(initConfiguration.source)
+  const source = validateSource(initConfiguration.source)
 
   const endpointBuilders = computeEndpointBuilders({ ...initConfiguration, site, source })
   const replicaConfiguration = computeReplicaConfiguration({ ...initConfiguration, site, source })
