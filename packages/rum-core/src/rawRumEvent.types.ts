@@ -338,8 +338,11 @@ export interface RawRumVitalEvent {
     id: string
     name: string
     type: VitalType
+    step_type?: string
+    operation_key?: string
+    failure_reason?: string
     description?: string
-    duration: number
+    duration?: number
   }
   _dd?: {
     vital: {
@@ -351,6 +354,7 @@ export interface RawRumVitalEvent {
 
 export const VitalType = {
   DURATION: 'duration',
+  OPERATION_STEP: 'operation_step',
 } as const
 
 export type VitalType = (typeof VitalType)[keyof typeof VitalType]

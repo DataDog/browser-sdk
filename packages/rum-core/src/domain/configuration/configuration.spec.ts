@@ -595,22 +595,23 @@ describe('serializeRumConfiguration', () => {
       remoteConfigurationProxy: 'config',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
       trackFeatureFlagsForEvents: ['vital'],
-      profilingSampleRate: 0,
+      profilingSampleRate: 42,
       propagateTraceBaggage: true,
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
       ? MapInitConfigurationKey<Key>
-      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls' | 'allowedGraphQlUrls'
+      : Key extends
+            | 'workerUrl'
+            | 'allowedTracingUrls'
+            | 'excludedActivityUrls'
+            | 'remoteConfigurationProxy'
+            | 'allowedGraphQlUrls'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // oops
-          : Key extends
-                | 'applicationId'
-                | 'subdomain'
-                | 'remoteConfigurationProxy'
-                | 'profilingSampleRate'
-                | 'propagateTraceBaggage'
+          : // The following options are not reported as telemetry. Please avoid adding more of them.
+            Key extends 'applicationId' | 'subdomain'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
@@ -626,6 +627,7 @@ describe('serializeRumConfiguration', () => {
       session_replay_sample_rate: 60,
       trace_sample_rate: 50,
       trace_context_injection: TraceContextInjection.ALL,
+      propagate_trace_baggage: true,
       use_allowed_tracing_urls: true,
       use_allowed_graph_ql_urls: true,
       use_track_graph_ql_payload: false,
@@ -645,6 +647,8 @@ describe('serializeRumConfiguration', () => {
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
       remote_configuration_id: '123',
+      use_remote_configuration_proxy: true,
+      profiling_sample_rate: 42,
     })
   })
 })

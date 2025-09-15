@@ -20,6 +20,10 @@ export interface SetupOptions {
     test_name: string
   }
   testFixture: typeof test
+  extension?: {
+    rumConfiguration?: RumInitConfiguration
+    logsConfiguration?: LogsInitConfiguration
+  }
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -44,6 +48,10 @@ export function asyncSetup(options: SetupOptions, servers: Servers) {
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
+  }
+
+  if (options.extension) {
+    header += setupExtension(options, servers)
   }
 
   function formatSnippet(url: string, globalName: string) {
@@ -93,6 +101,10 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += setupEventBridge(servers)
   }
 
+  if (options.extension) {
+    header += setupExtension(options, servers)
+  }
+
   const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
@@ -127,6 +139,10 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
+  }
+
+  if (options.extension) {
+    header += setupExtension(options, servers)
   }
 
   if (options.logs) {
@@ -165,6 +181,10 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
+  }
+
+  if (options.extension) {
+    header += setupExtension(options, servers)
   }
 
   if (options.rum) {
@@ -237,7 +257,35 @@ function setupEventBridge(servers: Servers) {
   `
 }
 
-function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
+function setupExtension(options: SetupOptions, servers: Servers) {
+  let header = ''
+
+  const { rumScriptUrl, logsScriptUrl } = createCrossOriginScriptUrls(servers, { ...options, useRumSlim: false })
+
+  if (options.extension?.rumConfiguration) {
+    header += html`
+      <script type="text/javascript">
+        window.RUM_BUNDLE_URL = '${rumScriptUrl}'
+        window.RUM_CONTEXT = ${JSON.stringify(options.context)}
+        window.EXT_RUM_CONFIGURATION = ${formatConfiguration(options.extension.rumConfiguration, servers)}
+      </script>
+    `
+  }
+
+  if (options.extension?.logsConfiguration) {
+    header += html`
+      <script type="text/javascript">
+        window.LOGS_BUNDLE_URL = '${logsScriptUrl}'
+        window.LOGS_CONTEXT = ${JSON.stringify(options.context)}
+        window.EXT_LOGS_CONFIGURATION = ${formatConfiguration(options.extension.logsConfiguration, servers)}
+      </script>
+    `
+  }
+
+  return header
+}
+
+export function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
   const fns = new Map<string, () => void>()
 
   let result = JSON.stringify(
@@ -268,7 +316,7 @@ function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitC
   return result
 }
 
-function createCrossOriginScriptUrls(servers: Servers, options: SetupOptions) {
+export function createCrossOriginScriptUrls(servers: Servers, options: SetupOptions) {
   return {
     logsScriptUrl: `${servers.crossOrigin.url}/datadog-logs.js`,
     rumScriptUrl: `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`,

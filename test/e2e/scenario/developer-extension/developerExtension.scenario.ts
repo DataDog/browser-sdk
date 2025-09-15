@@ -1,9 +1,11 @@
 import path from 'path'
 import { expect } from '@playwright/test'
-import { createTest } from '../../lib/framework'
+import { createExtension, createTest } from '../../lib/framework'
+
+const developerExtensionPath = path.join(process.cwd(), 'developer-extension', 'dist')
 
 createTest('should switch between tabs')
-  .withExtension(path.join(process.cwd(), 'developer-extension', 'dist'))
+  .withExtension(createExtension(developerExtensionPath))
   .run(async ({ page, getExtensionId, flushBrowserLogs }) => {
     const extensionId = await getExtensionId()
 

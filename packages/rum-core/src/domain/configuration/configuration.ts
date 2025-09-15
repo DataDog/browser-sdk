@@ -440,6 +440,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
     trace_sample_rate: configuration.traceSampleRate,
     trace_context_injection: configuration.traceContextInjection,
+    propagate_trace_baggage: configuration.propagateTraceBaggage,
     action_name_attribute: configuration.actionNameAttribute,
     use_allowed_tracing_urls: isNonEmptyArray(configuration.allowedTracingUrls),
     use_allowed_graph_ql_urls: isNonEmptyArray(configuration.allowedGraphQlUrls),
@@ -468,6 +469,8 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     remote_configuration_id: configuration.remoteConfigurationId,
+    profiling_sample_rate: configuration.profilingSampleRate,
+    use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
