@@ -184,7 +184,6 @@ class TestBuilder {
         test_name: '<PLACEHOLDER>',
       },
       testFixture: this.testFixture,
-      useServiceWorker: this.useServiceWorker,
       extension: this.extension,
       useServiceWorker: this.useServiceWorker !== undefined,
     }
