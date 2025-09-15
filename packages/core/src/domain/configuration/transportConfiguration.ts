@@ -36,7 +36,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   }
 }
 
-function valiidateSource(source: string | undefined) {
+function validateSource(source: string | undefined) {
   if (source === 'flutter' || source === 'unity') {
     return source
   }
