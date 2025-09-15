@@ -1,5 +1,6 @@
-import { matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
+import { display, matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
 import type { RumConfiguration, GraphQlUrlOption } from '../configuration'
+import type { RequestCompleteEvent } from '../requestCollection'
 
 /**
  * arbitrary value, byte precision not needed
@@ -19,9 +20,14 @@ export function findGraphQlConfiguration(url: string, configuration: RumConfigur
 
 export function extractGraphQlMetadata(
   requestBody: unknown,
-  trackPayload: boolean = false
+  trackPayload: boolean = false,
+  request?: RequestCompleteEvent
 ): GraphQlMetadata | undefined {
   if (!requestBody || typeof requestBody !== 'string') {
+    // Check if we have a Request object with a body that we couldn't access (stream)
+    if (request?.input && typeof request.input === 'object' && 'body' in request.input) {
+      display.warn('GraphQL tracking does not support Request objects with body streams.')
+    }
     return undefined
   }
 

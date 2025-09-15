@@ -72,4 +72,35 @@ test.describe('GraphQL tracking', () => {
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.graphql).toBeUndefined()
     })
+
+  createTest('should warn when using Request object with body stream')
+    .withRum({ allowedGraphQlUrls: [{ match: (url: string) => url.includes('graphql'), trackPayload: true }] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const consoleMessages: string[] = []
+      page.on('console', (msg) => {
+        consoleMessages.push(msg.text())
+      })
+
+      await page.evaluate(() => {
+        const request = new Request('/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: 'query GetUser { user { name } }',
+            operationName: 'GetUser',
+          }),
+        })
+
+        return window.fetch(request)
+      })
+
+      await flushEvents()
+      expect(consoleMessages).toContain(
+        'Datadog Browser SDK: GraphQL tracking does not support Request objects with body streams.'
+      )
+
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/graphql'))!
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent.resource.graphql).toBeUndefined()
+    })
 })

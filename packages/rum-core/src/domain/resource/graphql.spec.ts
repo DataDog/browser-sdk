@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
 import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
 
@@ -156,6 +157,23 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: '{"id":"123"}',
         payload: undefined,
       })
+    })
+
+    it('should warn when Request object body cannot be read', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+
+      const mockRequest = {
+        type: 'FETCH',
+        input: { body: new ReadableStream() }, // Mock Request object with ReadableStream body
+        init: undefined,
+      }
+
+      const result = extractGraphQlMetadata(null, true, mockRequest as any)
+
+      expect(result).toBeUndefined()
+      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        'GraphQL tracking does not support Request objects with body streams.'
+      )
     })
   })
 })
