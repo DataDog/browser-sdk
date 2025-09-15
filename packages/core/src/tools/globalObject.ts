@@ -3,10 +3,8 @@
  */
 
 // Extend/Create the WorkerGlobalScope interface to avoid issues when used in a non-browser tsconfig environment
-declare global {
-  interface WorkerGlobalScope {
-    empty: never
-  }
+interface WorkerGlobalScope {
+  empty: never
 }
 
 // Utility type to enforce that exactly one of the two types is used
