@@ -1,4 +1,4 @@
-export type { Telemetry } from './telemetry'
+export type { Telemetry, SampleRateByMetric } from './telemetry'
 export {
   TelemetryService,
   addTelemetryDebug,
