@@ -181,6 +181,10 @@ function computeGraphQlMetaData(
     return undefined
   }
 
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.GRAPHQL_TRACKING)) {
+    return undefined
+  }
+
   const graphQlConfig = findGraphQlConfiguration(request.url, configuration)
   if (!graphQlConfig) {
     return undefined
