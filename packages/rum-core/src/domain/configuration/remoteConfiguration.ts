@@ -1,11 +1,19 @@
-import type { createContextManager } from '@datadog/browser-core'
-import { display, buildEndpointHost, mapValues, getCookie } from '@datadog/browser-core'
+import type { createContextManager, Context } from '@datadog/browser-core'
+import {
+  display,
+  buildEndpointHost,
+  mapValues,
+  getCookie,
+  addTelemetryMetrics,
+  Observable,
+} from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
 
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
+export const REMOTE_CONFIGURATION_METRIC_NAME = 'remote configuration metrics'
 const REMOTE_CONFIGURATION_VERSION = 'v1'
 const SUPPORTED_FIELDS: Array<keyof RumInitConfiguration> = [
   'applicationId',
@@ -32,23 +40,52 @@ interface SupportedContextManagers {
   context: ReturnType<typeof createContextManager>
 }
 
+export interface RemoteConfigurationMetrics {
+  fetch: RemoteConfigurationMetricCounters
+  cookie?: RemoteConfigurationMetricCounters
+  dom?: RemoteConfigurationMetricCounters
+  js?: RemoteConfigurationMetricCounters
+}
+
+interface RemoteConfigurationMetricCounters {
+  success?: number
+  missing?: number
+  failure?: number
+}
+
+type ResolveEvent = [DynamicOption['strategy'], keyof RemoteConfigurationMetricCounters]
+
 export async function fetchAndApplyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   supportedContextManagers: SupportedContextManagers
 ) {
+  let rumInitConfiguration: RumInitConfiguration | undefined
+  const metrics: RemoteConfigurationMetrics = { fetch: {} }
   const fetchResult = await fetchRemoteConfiguration(initConfiguration)
   if (!fetchResult.ok) {
+    metrics.fetch.failure = 1
     display.error(fetchResult.error)
-    return
+  } else {
+    metrics.fetch.success = 1
+    rumInitConfiguration = applyRemoteConfiguration(
+      initConfiguration,
+      fetchResult.value,
+      supportedContextManagers,
+      metrics
+    )
   }
-  return applyRemoteConfiguration(initConfiguration, fetchResult.value, supportedContextManagers)
+  addTelemetryMetrics(REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics as unknown as Context })
+  return rumInitConfiguration
 }
 
 export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   rumRemoteConfiguration: RumRemoteConfiguration & { [key: string]: unknown },
-  supportedContextManagers: SupportedContextManagers
+  supportedContextManagers: SupportedContextManagers,
+  metrics: RemoteConfigurationMetrics
 ): RumInitConfiguration {
+  const resolveEventObservable = new Observable<ResolveEvent>()
+  resolveEventObservable.subscribe(incrementMetrics)
   // intents:
   // - explicitly set each supported field to limit risk in case an attacker can create configurations
   // - check the existence in the remote config to avoid clearing a provided init field
@@ -125,22 +162,41 @@ export function applyRemoteConfiguration(
   }
 
   function resolveCookieValue({ name }: { name: string }) {
-    return getCookie(name)
+    const value = getCookie(name)
+    resolveEventObservable.notify(['cookie', value !== undefined ? 'success' : 'missing'])
+    return value
   }
 
   function resolveDomValue({ selector, attribute }: { selector: string; attribute?: string }) {
     let element: Element | null
+    let missing = false
+    let failure = false
+    let value: string | undefined
     try {
       element = document.querySelector(selector)
     } catch {
       element = null
+      failure = true
       display.error(`Invalid selector in the remote configuration: '${selector}'`)
     }
-    if (element === null || isForbidden(element, attribute)) {
-      return
+    if (element === null && !failure) {
+      missing = true
     }
-    const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
-    return domValue ?? undefined
+    if (element && isForbidden(element, attribute)) {
+      failure = true
+      element = null
+      display.error(`Forbidden element selected by the remote configuration: '${selector}'`)
+    }
+    if (element) {
+      const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
+      if (domValue === null) {
+        missing = true
+      } else {
+        value = domValue
+      }
+    }
+    resolveEventObservable.notify(['dom', failure ? 'failure' : missing ? 'missing' : 'success'])
+    return value
   }
 
   function isForbidden(element: Element, attribute: string | undefined) {
@@ -149,24 +205,40 @@ export function applyRemoteConfiguration(
 
   function resolveJsValue({ path }: { path: string }): unknown {
     let current = window as unknown as { [key: string]: unknown }
+    let missing = false
+    let failure = false
 
     const pathParts = parseJsonPath(path)
     if (pathParts.length === 0) {
+      failure = true
       display.error(`Invalid JSON path in the remote configuration: '${path}'`)
-      return
-    }
-    for (const pathPart of pathParts) {
-      if (!(pathPart in current)) {
-        return
+    } else {
+      for (const pathPart of pathParts) {
+        if (!(pathPart in current)) {
+          missing = true
+          break
+        }
+        try {
+          current = current[pathPart] as { [key: string]: unknown }
+        } catch (e) {
+          failure = true
+          display.error(`Error accessing: '${path}'`, e)
+          break
+        }
       }
-      try {
-        current = current[pathPart] as { [key: string]: unknown }
-      } catch (e) {
-        display.error(`Error accessing: '${path}'`, e)
-        return
-      }
     }
-    return current
+    resolveEventObservable.notify(['js', failure ? 'failure' : missing ? 'missing' : 'success'])
+    return !missing && !failure ? current : undefined
+  }
+
+  function incrementMetrics([strategy, type]: ResolveEvent) {
+    if (!metrics[strategy]) {
+      metrics[strategy] = {}
+    }
+    if (!metrics[strategy][type]) {
+      metrics[strategy][type] = 0
+    }
+    metrics[strategy][type] = metrics[strategy][type] + 1
   }
 }
 

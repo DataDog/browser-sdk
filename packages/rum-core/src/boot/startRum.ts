@@ -35,6 +35,7 @@ import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
+import { REMOTE_CONFIGURATION_METRIC_NAME } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
 import { startCustomerDataTelemetry, CUSTOMER_DATA_METRIC_NAME } from '../domain/startCustomerDataTelemetry'
@@ -96,6 +97,7 @@ export function startRum(
 
   const sampleRateByMetric = {
     [CUSTOMER_DATA_METRIC_NAME]: configuration.customerDataTelemetrySampleRate,
+    [REMOTE_CONFIGURATION_METRIC_NAME]: configuration.remoteConfigurationTelemetrySampleRate,
     ...recorderApi.getTelemetrySampleRateByMetric(configuration),
   }
 
