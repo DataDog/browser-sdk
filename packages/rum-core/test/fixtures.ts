@@ -143,6 +143,21 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
         },
         overrides
       )
+    case RumEventType.TRANSITION:
+      return combine(
+        {
+          type,
+          date: 0 as TimeStamp,
+          stream: {
+            id: generateUUID(),
+          },
+          transition: {
+            id: generateUUID(),
+            type: 'MEDIA_PLAYER_PLAY',
+          }
+        },
+        overrides
+      )
   }
 }
 

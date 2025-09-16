@@ -20,6 +20,8 @@ const allowedEventTypes = [
   RumEventType.LONG_TASK,
   RumEventType.RESOURCE,
   RumEventType.STREAM,
+  RumEventType.STREAM,
+  RumEventType.TRANSITION,
   RumEventType.VITAL,
 ] as const
 
