@@ -161,6 +161,22 @@ describe('GraphQL detection and metadata extraction', () => {
         'GraphQL tracking does not support body type: FormData. Only string bodies are supported.'
       )
     })
+
+    it('should warn for Request API objects with body streams', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+      const mockRequest = {
+        input: {
+          body: new ReadableStream(),
+        },
+      }
+
+      const result = extractGraphQlMetadata(null, true, mockRequest as any)
+
+      expect(result).toBeUndefined()
+      expect(displayWarnSpy).toHaveBeenCalledWith(
+        'GraphQL tracking does not support Request objects with body streams.'
+      )
+    })
   })
 
   describe('payload truncation', () => {
