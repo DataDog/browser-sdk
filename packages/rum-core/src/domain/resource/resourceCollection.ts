@@ -136,7 +136,7 @@ function assembleResource(
     ? computeResourceEntryDuration(entry)
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
-  const graphql = computeGraphQlMetaData(request, configuration)
+  const graphql = request && computeGraphQlMetaData(request, configuration)
 
   const resourceEvent = combine(
     {
@@ -175,13 +175,9 @@ function assembleResource(
 }
 
 function computeGraphQlMetaData(
-  request: RequestCompleteEvent | undefined,
+  request: RequestCompleteEvent,
   configuration: RumConfiguration
 ): GraphQlMetadata | undefined {
-  if (!request) {
-    return undefined
-  }
-
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.GRAPHQL_TRACKING)) {
     return undefined
   }
@@ -191,13 +187,7 @@ function computeGraphQlMetaData(
     return undefined
   }
 
-  // Get request body based on request type
-  let requestBody: unknown
-  if (request.type === RequestType.FETCH) {
-    requestBody = request.init?.body
-  } else if (request.type === RequestType.XHR) {
-    requestBody = request.body
-  }
+  const requestBody = request.body
 
   return extractGraphQlMetadata(requestBody, graphQlConfig.trackPayload, request)
 }

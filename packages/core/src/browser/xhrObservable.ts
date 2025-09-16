@@ -73,7 +73,7 @@ function openXhr({ target: xhr, parameters: [method, url] }: InstrumentedMethodC
 }
 
 function sendXhr(
-  { target: xhr, parameters, handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
+  { target: xhr, parameters: [body], handlingStack }: InstrumentedMethodCall<XMLHttpRequest, 'send'>,
   configuration: Configuration,
   observable: Observable<XhrContext>
 ) {
@@ -88,7 +88,7 @@ function sendXhr(
   startContext.isAborted = false
   startContext.xhr = xhr
   startContext.handlingStack = handlingStack
-  startContext.body = parameters[0]
+  startContext.body = body
 
   let hasBeenReported = false
 

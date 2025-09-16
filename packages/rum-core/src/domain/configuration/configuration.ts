@@ -432,6 +432,18 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
   return graphQlOptions
 }
 
+function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
+  return (
+    isNonEmptyArray(allowedGraphQlUrls) &&
+    allowedGraphQlUrls.some((option) => {
+      if (typeof option === 'object' && 'trackPayload' in option) {
+        return !!option.trackPayload
+      }
+      return false
+    })
+  )
+}
+
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
@@ -444,14 +456,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     action_name_attribute: configuration.actionNameAttribute,
     use_allowed_tracing_urls: isNonEmptyArray(configuration.allowedTracingUrls),
     use_allowed_graph_ql_urls: isNonEmptyArray(configuration.allowedGraphQlUrls),
-    use_track_graph_ql_payload:
-      isNonEmptyArray(configuration.allowedGraphQlUrls) &&
-      configuration.allowedGraphQlUrls.some((option) => {
-        if (typeof option === 'object' && 'trackPayload' in option) {
-          return !!option.trackPayload
-        }
-        return false
-      }),
+    use_track_graph_ql_payload: hasGraphQlPayloadTracking(configuration.allowedGraphQlUrls),
     selected_tracing_propagators: getSelectedTracingPropagators(configuration),
     default_privacy_level: configuration.defaultPrivacyLevel,
     enable_privacy_for_action_name: configuration.enablePrivacyForActionName,

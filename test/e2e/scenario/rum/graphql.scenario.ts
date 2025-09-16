@@ -1,12 +1,16 @@
 import { test, expect } from '@playwright/test'
 import { createTest } from '../../lib/framework'
 
+function buildGraphQlConfig({ trackPayload = false }: { trackPayload?: boolean } = {}) {
+  return {
+    allowedGraphQlUrls: [{ match: (url: string) => url.includes('graphql'), trackPayload }],
+    enableExperimentalFeatures: ['graphql_tracking'],
+  }
+}
+
 test.describe('GraphQL tracking', () => {
   createTest('track GraphQL query via XHR and include payload')
-    .withRum({
-      allowedGraphQlUrls: [{ match: (url: string) => url.includes('graphql'), trackPayload: true }],
-      enableExperimentalFeatures: ['graphql_tracking'],
-    })
+    .withRum(buildGraphQlConfig({ trackPayload: true }))
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         const xhr = new XMLHttpRequest()
@@ -34,10 +38,7 @@ test.describe('GraphQL tracking', () => {
     })
 
   createTest('track GraphQL mutation via fetch without payload')
-    .withRum({
-      allowedGraphQlUrls: [{ match: (url: string) => url.includes('graphql'), trackPayload: false }],
-      enableExperimentalFeatures: ['graphql_tracking'],
-    })
+    .withRum(buildGraphQlConfig())
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() =>
         window.fetch('/graphql', {
@@ -64,10 +65,7 @@ test.describe('GraphQL tracking', () => {
     })
 
   createTest('should not track GraphQL for non-matching URLs')
-    .withRum({
-      allowedGraphQlUrls: [{ match: (url: string) => url.includes('graphql'), trackPayload: true }],
-      enableExperimentalFeatures: ['graphql_tracking'],
-    })
+    .withRum(buildGraphQlConfig({ trackPayload: true }))
     .run(async ({ intakeRegistry, flushEvents, page }) => {
       await page.evaluate(() => {
         const xhr = new XMLHttpRequest()
@@ -83,10 +81,7 @@ test.describe('GraphQL tracking', () => {
     })
 
   createTest('should warn when using Request object with body stream')
-    .withRum({
-      allowedGraphQlUrls: [{ match: (url: string) => url.includes('graphql'), trackPayload: true }],
-      enableExperimentalFeatures: ['graphql_tracking'],
-    })
+    .withRum(buildGraphQlConfig({ trackPayload: true }))
     .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, browserName }) => {
       await page.evaluate(() => {
         const request = new Request('/graphql', {

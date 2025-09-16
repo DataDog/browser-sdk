@@ -155,6 +155,7 @@ export function trackFetch(lifeCycle: LifeCycle, tracer: Tracer) {
             input: context.input,
             isAborted: context.isAborted,
             handlingStack: context.handlingStack,
+            body: context.init?.body,
           })
         })
         break
