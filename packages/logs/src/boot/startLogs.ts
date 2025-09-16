@@ -54,6 +54,7 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
+  // Page exit is not observable in worker environments (no window/document events)
   const pageMayExitObservable = isWorkerEnvironment
     ? new Observable<PageMayExitEvent>()
     : createPageMayExitObservable(configuration)

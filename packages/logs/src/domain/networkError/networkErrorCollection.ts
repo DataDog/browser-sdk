@@ -26,7 +26,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     return { stop: noop }
   }
 
-  // XHR is not available in web workers
+  // XHR is not available in web workers, so we use an empty observable that never emits
   const xhrSubscription = (
     isWorkerEnvironment ? new Observable<XhrCompleteContext>() : initXhrObservable(configuration)
   ).subscribe((context) => {
