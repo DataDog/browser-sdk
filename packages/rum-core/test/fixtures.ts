@@ -154,7 +154,7 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           transition: {
             id: generateUUID(),
             type: 'MEDIA_PLAYER_PLAY',
-          }
+          },
         },
         overrides
       )
