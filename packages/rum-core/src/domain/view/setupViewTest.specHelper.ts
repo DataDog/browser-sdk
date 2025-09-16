@@ -1,7 +1,7 @@
 import { Observable, deepClone } from '@datadog/browser-core'
+import { registerCleanupTask } from '../../../../core/test'
 import { mockRumConfiguration, setupLocationObserver } from '../../../test'
-import type { LifeCycle } from '../lifeCycle'
-import { LifeCycleEventType } from '../lifeCycle'
+import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ViewCreatedEvent, ViewEvent, ViewOptions, ViewEndedEvent } from './trackViews'
@@ -9,16 +9,14 @@ import { trackViews } from './trackViews'
 
 export type ViewTest = ReturnType<typeof setupViewTest>
 
-interface ViewTrackingContext {
-  lifeCycle: LifeCycle
+interface ViewTestOptions {
   initialLocation?: string
   partialConfig?: Partial<RumConfiguration>
+  initialViewOptions?: ViewOptions
 }
 
-export function setupViewTest(
-  { lifeCycle, initialLocation, partialConfig }: ViewTrackingContext,
-  initialViewOptions?: ViewOptions
-) {
+export function setupViewTest({ initialLocation, partialConfig, initialViewOptions }: ViewTestOptions = {}) {
+  const lifeCycle = new LifeCycle()
   const domMutationObservable = new Observable<RumMutationRecord[]>()
   const windowOpenObservable = new Observable<void>()
   const configuration = mockRumConfiguration(partialConfig)
@@ -56,8 +54,11 @@ export function setupViewTest(
       !configuration.trackViewsManually,
       initialViewOptions
     )
+
+  registerCleanupTask(stop)
+
   return {
-    stop,
+    lifeCycle,
     startView,
     setViewContext,
     setViewContextProperty,
@@ -71,9 +72,6 @@ export function setupViewTest(
     getViewCreateCount,
     getViewEnd,
     getViewEndCount,
-    getLatestViewContext: () => ({
-      id: getViewCreate(getViewCreateCount() - 1).id,
-    }),
   }
 }
 
