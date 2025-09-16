@@ -80,7 +80,7 @@ test.describe('GraphQL tracking', () => {
       expect(resourceEvent.resource.graphql).toBeUndefined()
     })
 
-  createTest('should warn when using Request object with body stream')
+  createTest('should warn when using Request object')
     .withRum(buildGraphQlConfig({ trackPayload: true }))
     .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, browserName }) => {
       await page.evaluate(() => {
@@ -100,11 +100,11 @@ test.describe('GraphQL tracking', () => {
 
       withBrowserLogs((logs) => {
         if (browserName === 'firefox' || browserName === 'msedge') {
-          // These browsers don’t surface the warning in logs
+          // These browsers don't surface the warning in logs
           expect(logs).toHaveLength(0)
         } else {
           const warningLog = logs.find((log) =>
-            log.message.includes('GraphQL tracking does not support Request objects with body streams.')
+            log.message.includes('GraphQL tracking does not yet support Request objects.')
           )
           expect(warningLog).toBeDefined()
         }
