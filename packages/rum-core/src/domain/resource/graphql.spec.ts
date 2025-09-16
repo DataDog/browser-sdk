@@ -174,9 +174,7 @@ describe('GraphQL detection and metadata extraction', () => {
       const result = extractGraphQlMetadata(null, true, mockRequest as any)
 
       expect(result).toBeUndefined()
-      expect(displayWarnSpy).toHaveBeenCalledWith(
-        'GraphQL tracking does not yet support Request objects.'
-      )
+      expect(displayWarnSpy).toHaveBeenCalledWith('GraphQL tracking does not yet support Request objects.')
     })
   })
 
