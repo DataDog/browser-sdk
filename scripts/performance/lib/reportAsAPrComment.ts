@@ -141,9 +141,9 @@ export function createMessage(
     const baseSize = formatSize(baseBundleSizes[index].value)
     const localSize = formatSize(localBundleSizes[diff.name])
     const diffSize = formatSize(diff.change)
-    const sign = typeof diff.percentageChange === 'number' && diff.percentageChange > 0 ? '+' : ''
+    const sign = (diff.percentageChange as number) > 0 ? '+' : ''
     let status = '✅'
-    if (typeof diff.percentageChange === 'number' && diff.percentageChange > SIZE_INCREASE_THRESHOLD) {
+    if ((diff.percentageChange as number) > SIZE_INCREASE_THRESHOLD) {
       status = '⚠️'
       highIncreaseDetected = true
     }
