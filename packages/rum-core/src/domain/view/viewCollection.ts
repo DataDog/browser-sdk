@@ -4,6 +4,7 @@ import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
+import type { RumNotRestoredReasons } from '../../browser/performanceObservable'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
@@ -129,6 +130,7 @@ function processViewUpdate(
         count: view.eventCounts.longTaskCount,
       },
       performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
+      not_restored_reasons: mapNotRestoredReasons(view.initialViewMetrics.navigationTimings?.notRestoredReasons),
       resource: {
         count: view.eventCounts.resourceCount,
       },
@@ -169,6 +171,26 @@ function processViewUpdate(
       location: view.location,
     },
   }
+}
+
+function mapNotRestoredReasons(
+  notRestoredReasons: RumNotRestoredReasons | null | undefined
+): RumNotRestoredReasons | undefined {
+  if (!notRestoredReasons) {
+    return undefined
+  }
+
+  function mapObject(reasonObject: RumNotRestoredReasons): RumNotRestoredReasons {
+    return {
+      src: reasonObject.src,
+      id: reasonObject.id,
+      url: reasonObject.url,
+      name: reasonObject.name,
+      reasons: reasonObject.reasons ? reasonObject.reasons.map((r) => ({ reason: r.reason })) : null,
+      children: reasonObject.children ? reasonObject.children.map(mapObject) : [],
+    }
+  }
+  return mapObject(notRestoredReasons)
 }
 
 function computeViewPerformanceData(

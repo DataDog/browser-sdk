@@ -1,6 +1,7 @@
 import { relativeNow, type Duration, type RelativeTime } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { RumNotRestoredReasons } from '../../../browser/performanceObservable'
 import { mockDocumentReadyState, mockRumConfiguration } from '../../../../test'
 import type { NavigationTimings, RelevantNavigationTiming } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
@@ -19,6 +20,15 @@ const FAKE_INCOMPLETE_NAVIGATION_ENTRY: RelevantNavigationTiming = {
   domInteractive: 0 as RelativeTime,
   loadEventEnd: 0 as RelativeTime,
   responseStart: 0 as RelativeTime,
+}
+
+const FAKE_NOT_RESTORED_REASONS: RumNotRestoredReasons = {
+  children: [],
+  id: null,
+  name: null,
+  reasons: [{ reason: 'unload-listener' }],
+  src: null,
+  url: 'https://example.com/',
 }
 
 describe('trackNavigationTimings', () => {
@@ -46,6 +56,7 @@ describe('trackNavigationTimings', () => {
       domContentLoaded: 345 as Duration,
       domInteractive: 234 as Duration,
       loadEvent: 567 as Duration,
+      notRestoredReasons: undefined,
     })
   })
 
@@ -90,5 +101,78 @@ describe('trackNavigationTimings', () => {
     clock.tick(0)
 
     expect(navigationTimingsCallback).not.toHaveBeenCalled()
+  })
+
+  it('includes notRestoredReasons when present', () => {
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback, () => ({
+      ...FAKE_NAVIGATION_ENTRY,
+      notRestoredReasons: FAKE_NOT_RESTORED_REASONS,
+    })))
+
+    clock.tick(0)
+
+    expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
+      firstByte: 123 as Duration,
+      domComplete: 456 as Duration,
+      domContentLoaded: 345 as Duration,
+      domInteractive: 234 as Duration,
+      loadEvent: 567 as Duration,
+      notRestoredReasons: FAKE_NOT_RESTORED_REASONS,
+    })
+  })
+
+  it('handles null notRestoredReasons', () => {
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback, () => ({
+      ...FAKE_NAVIGATION_ENTRY,
+      notRestoredReasons: null,
+    })))
+
+    clock.tick(0)
+
+    expect(navigationTimingsCallback).toHaveBeenCalledOnceWith({
+      firstByte: 123 as Duration,
+      domComplete: 456 as Duration,
+      domContentLoaded: 345 as Duration,
+      domInteractive: 234 as Duration,
+      loadEvent: 567 as Duration,
+      notRestoredReasons: null,
+    })
+  })
+
+  it('handles notRestoredReasons with nested iframes', () => {
+    const complexNotRestoredReasons: RumNotRestoredReasons = {
+      children: [
+        {
+          children: [],
+          id: 'iframe-1',
+          name: 'myFrame',
+          reasons: null,
+          src: './frame.html',
+          url: 'https://example.com/frame.html',
+        },
+        {
+          children: [],
+          id: 'iframe-2',
+          name: 'anotherFrame',
+          reasons: [{ reason: 'response-cache-control-no-store' }],
+          src: './another.html',
+          url: 'https://example.com/another.html',
+        },
+      ],
+      id: null,
+      name: null,
+      reasons: [],
+      src: null,
+      url: 'https://example.com/',
+    }
+
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback, () => ({
+      ...FAKE_NAVIGATION_ENTRY,
+      notRestoredReasons: complexNotRestoredReasons,
+    })))
+
+    clock.tick(0)
+
+    expect(navigationTimingsCallback.calls.mostRecent().args[0].notRestoredReasons).toEqual(complexNotRestoredReasons)
   })
 })
