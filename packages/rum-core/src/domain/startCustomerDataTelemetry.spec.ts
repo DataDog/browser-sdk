@@ -2,8 +2,8 @@ import type { FlushEvent, Context, Telemetry } from '@datadog/browser-core'
 import { Observable, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
+import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import {
   MEASURES_PERIOD_DURATION,
@@ -17,7 +17,7 @@ describe('customerDataTelemetry', () => {
   let telemetry: MockTelemetry
   let fakeContextBytesCount: number
   let lifeCycle: LifeCycle
-  const viewEvent = { type: RumEventType.VIEW } as RumEvent & Context
+  const viewEvent = { type: RumEventType.VIEW } as AssembledRumEvent
 
   function generateBatch({
     eventNumber,

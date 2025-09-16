@@ -1,4 +1,4 @@
-import type { Context, Duration } from '@datadog/browser-core'
+import type { Duration } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -11,8 +11,8 @@ import {
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
+import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
-import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
@@ -177,7 +177,7 @@ describe('trackClickActions', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       action: { id: 'unrelated-action-id' },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(EXPIRE_DELAY)
 
@@ -602,7 +602,7 @@ describe('trackClickActions', () => {
   }
 
   function createFakeErrorEvent() {
-    return { type: RumEventType.ERROR, action: { id: findActionId() } } as RumEvent & Context
+    return { type: RumEventType.ERROR, action: { id: findActionId() } } as AssembledRumEvent
   }
 })
 

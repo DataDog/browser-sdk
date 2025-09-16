@@ -1,4 +1,4 @@
-import type { Context, RawError, EventRateLimiter } from '@datadog/browser-core'
+import type { RawError, EventRateLimiter } from '@datadog/browser-core'
 import {
   combine,
   isEmptyObject,
@@ -11,8 +11,8 @@ import {
   buildTags,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
+import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
@@ -120,7 +120,7 @@ export function startRumAssembly(
 
       const serverRumEvent = combine(defaultRumEventAttributes, rawRumEvent, {
         ddtags: buildTags(configuration).join(','),
-      }) as RumEvent & Context
+      }) as AssembledRumEvent
 
       if (shouldSend(serverRumEvent, configuration.beforeSend, domainContext, eventRateLimiters)) {
         if (isEmptyObject(serverRumEvent.context!)) {
@@ -133,7 +133,7 @@ export function startRumAssembly(
 }
 
 function shouldSend(
-  event: RumEvent & Context,
+  event: AssembledRumEvent,
   beforeSend: RumConfiguration['beforeSend'],
   domainContext: RumEventDomainContext,
   eventRateLimiters: { [key in RumEventType]?: EventRateLimiter }

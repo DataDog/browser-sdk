@@ -8,6 +8,7 @@
  */
 export type RumEvent =
   | RumActionEvent
+  | RumTransitionEvent
   | RumErrorEvent
   | RumLongTaskEvent
   | RumResourceEvent
@@ -166,6 +167,60 @@ export type RumActionEvent = CommonProperties &
     }
     [k: string]: unknown
   }
+/**
+ * Schema of all properties of an Transition event
+ */
+export type RumTransitionEvent = CommonProperties & {
+  /**
+   * RUM event type
+   */
+  readonly type: 'transition'
+  /**
+   * Stream properties
+   */
+  readonly stream: {
+    /**
+     * UUID of the stream
+     */
+    readonly id: string
+    [k: string]: unknown
+  }
+  /**
+   * Transition properties
+   */
+  readonly transition: {
+    /**
+     * Type of the transition
+     */
+    readonly type: string
+    /**
+     * UUID of the transition
+     */
+    readonly id?: string
+    /**
+     * The player's current timestamp in milliseconds
+     */
+    readonly timestamp?: number
+    /**
+     * Buffer starvation duration, the amount of time spent rebuffering in milliseconds
+     */
+    readonly buffer_starvation_duration?: number
+    /**
+     * Media start delay, the amount of time spent loading before playing in milliseconds
+     */
+    readonly media_start_delay?: number
+    /**
+     * Error code, as reported by the player
+     */
+    readonly error_code?: number
+    /**
+     * Duration of the event in milliseconds
+     */
+    readonly duration?: number
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
 /**
  * Schema of all properties of an Error event
  */
