@@ -89,6 +89,7 @@ describe('resourceCollection', () => {
         delivery_type: 'cache',
         render_blocking_status: 'blocking',
         method: undefined,
+        graphql: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -135,6 +136,7 @@ describe('resourceCollection', () => {
         transfer_size: undefined,
         download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
+        graphql: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -147,6 +149,162 @@ describe('resourceCollection', () => {
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
     })
+  })
+
+  describe('GraphQL metadata enrichment', () => {
+    beforeEach(() => {
+      mockExperimentalFeatures([ExperimentalFeature.GRAPHQL_TRACKING])
+    })
+    interface TestCase {
+      requestType: RequestType
+      name: string
+    }
+
+    const testCases: TestCase[] = [
+      { requestType: RequestType.FETCH, name: 'FETCH' },
+      { requestType: RequestType.XHR, name: 'XHR' },
+    ]
+
+    testCases.forEach(({ requestType, name }) => {
+      describe(`for ${name} requests`, () => {
+        function createRequest(requestType: RequestType, url: string, body: string) {
+          const baseRequest = {
+            type: requestType,
+            url,
+            method: 'POST' as const,
+          }
+
+          if (requestType === RequestType.FETCH) {
+            return {
+              ...baseRequest,
+              init: {
+                method: 'POST' as const,
+                body,
+              },
+              input: url,
+              body,
+            }
+          }
+          {
+            // XHR
+            return {
+              ...baseRequest,
+              body,
+              status: 200,
+              duration: 100 as Duration,
+              startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+              isAborted: false,
+            }
+          }
+        }
+
+        it('should enrich resource with GraphQL metadata when the URL matches allowedGraphQlUrls', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: true }],
+          })
+
+          const requestBody = JSON.stringify({
+            query: 'query GetUser($id: ID!) { user(id: $id) { name email } }',
+            operationName: 'GetUser',
+            variables: { id: '123' },
+          })
+
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/graphql', requestBody),
+          })
+
+          expect(rawRumEvents[0].rawRumEvent).toEqual(
+            jasmine.objectContaining({
+              resource: jasmine.objectContaining({
+                graphql: {
+                  operationType: 'query',
+                  operationName: 'GetUser',
+                  variables: '{"id":"123"}',
+                  payload: 'query GetUser($id: ID!) { user(id: $id) { name email } }',
+                },
+              }),
+            })
+          )
+        })
+
+        it('should not enrich resource with GraphQL metadata when URL does not match', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: '/graphql', trackPayload: false }],
+          })
+
+          const requestBody = JSON.stringify({
+            query: 'query GetUser { user { name } }',
+          })
+
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/api/rest', requestBody),
+          })
+
+          const resourceEvent = rawRumEvents[0].rawRumEvent as any
+          expect(resourceEvent.resource.graphql).toBeUndefined()
+        })
+
+        it('should not include payload when trackPayload is false', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: false }],
+          })
+
+          const requestBody = JSON.stringify({
+            query: 'mutation CreateUser { createUser { id } }',
+            operationName: 'CreateUser',
+            variables: { name: 'John' },
+          })
+
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/graphql', requestBody),
+          })
+
+          expect(rawRumEvents[0].rawRumEvent).toEqual(
+            jasmine.objectContaining({
+              resource: jasmine.objectContaining({
+                graphql: {
+                  operationType: 'mutation',
+                  operationName: 'CreateUser',
+                  variables: '{"name":"John"}',
+                  payload: undefined,
+                },
+              }),
+            })
+          )
+        })
+      })
+    })
+  })
+
+  it('should not track GraphQL when feature flag is disabled', () => {
+    mockExperimentalFeatures([])
+    setupResourceCollection({
+      trackResources: true,
+      allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: true }],
+    })
+
+    const requestBody = JSON.stringify({
+      query: 'query GetUser { user { name } }',
+    })
+
+    notifyRequest({
+      request: {
+        type: RequestType.FETCH,
+        url: 'https://api.example.com/graphql',
+        method: 'POST' as const,
+        init: {
+          method: 'POST' as const,
+          body: requestBody,
+        },
+        input: 'https://api.example.com/graphql',
+      },
+    })
+
+    const resourceEvent = rawRumEvents[0].rawRumEvent as any
+    expect(resourceEvent.resource.graphql).toBeUndefined()
   })
 
   describe('with EARLY_REQUEST_COLLECTION enabled', () => {
@@ -184,6 +342,7 @@ describe('resourceCollection', () => {
           transfer_size: undefined,
           download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
           first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
+          graphql: undefined,
         },
         type: RumEventType.RESOURCE,
         _dd: {
@@ -298,6 +457,7 @@ describe('resourceCollection', () => {
         download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
         first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         url: 'https://resource.com/valid',
+        graphql: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {

@@ -10,6 +10,7 @@ import {
   validateAndBuildConfiguration,
   isSampleRate,
   isNumber,
+  isNonEmptyArray,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -220,11 +221,23 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue 0
    */
   profilingSampleRate?: number | undefined
+
+  /**
+   * A list of GraphQL endpoint URLs to track and enrich with GraphQL-specific metadata.
+   *
+   * @category Data Collection
+   */
+  allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
+
+export interface GraphQlUrlOption {
+  match: MatchOption
+  trackPayload?: boolean
+}
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
@@ -254,6 +267,7 @@ export interface RumConfiguration extends Configuration {
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
   propagateTraceBaggage: boolean
+  allowedGraphQlUrls: GraphQlUrlOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -287,6 +301,8 @@ export function validateAndBuildRumConfiguration(
   if (!allowedTracingUrls) {
     return
   }
+
+  const allowedGraphQlUrls = validateAndBuildGraphQlOptions(initConfiguration)
 
   const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
   if (!baseConfiguration) {
@@ -329,6 +345,7 @@ export function validateAndBuildRumConfiguration(
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
+    allowedGraphQlUrls,
     ...baseConfiguration,
   }
 }
@@ -372,7 +389,7 @@ function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration)
 function getSelectedTracingPropagators(configuration: RumInitConfiguration): PropagatorType[] {
   const usedTracingPropagators = new Set<PropagatorType>()
 
-  if (Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0) {
+  if (isNonEmptyArray(configuration.allowedTracingUrls)) {
     configuration.allowedTracingUrls.forEach((option) => {
       if (isMatchOption(option)) {
         DEFAULT_PROPAGATOR_TYPES.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))
@@ -386,6 +403,47 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
   return Array.from(usedTracingPropagators)
 }
 
+/**
+ * Build GraphQL options from configuration
+ */
+function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration): GraphQlUrlOption[] {
+  if (!initConfiguration.allowedGraphQlUrls) {
+    return []
+  }
+
+  if (!Array.isArray(initConfiguration.allowedGraphQlUrls)) {
+    display.warn('allowedGraphQlUrls should be an array')
+    return []
+  }
+
+  const graphQlOptions: GraphQlUrlOption[] = []
+
+  initConfiguration.allowedGraphQlUrls.forEach((option) => {
+    if (isMatchOption(option)) {
+      graphQlOptions.push({ match: option, trackPayload: false })
+    } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
+      graphQlOptions.push({
+        match: option.match,
+        trackPayload: !!option.trackPayload,
+      })
+    }
+  })
+
+  return graphQlOptions
+}
+
+function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
+  return (
+    isNonEmptyArray(allowedGraphQlUrls) &&
+    allowedGraphQlUrls.some((option) => {
+      if (typeof option === 'object' && 'trackPayload' in option) {
+        return !!option.trackPayload
+      }
+      return false
+    })
+  )
+}
+
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
@@ -396,13 +454,13 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     trace_context_injection: configuration.traceContextInjection,
     propagate_trace_baggage: configuration.propagateTraceBaggage,
     action_name_attribute: configuration.actionNameAttribute,
-    use_allowed_tracing_urls:
-      Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
+    use_allowed_tracing_urls: isNonEmptyArray(configuration.allowedTracingUrls),
+    use_allowed_graph_ql_urls: isNonEmptyArray(configuration.allowedGraphQlUrls),
+    use_track_graph_ql_payload: hasGraphQlPayloadTracking(configuration.allowedGraphQlUrls),
     selected_tracing_propagators: getSelectedTracingPropagators(configuration),
     default_privacy_level: configuration.defaultPrivacyLevel,
     enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
-    use_excluded_activity_urls:
-      Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
+    use_excluded_activity_urls: isNonEmptyArray(configuration.excludedActivityUrls),
     use_worker_url: !!configuration.workerUrl,
     compress_intake_requests: configuration.compressIntakeRequests,
     track_views_manually: configuration.trackViewsManually,

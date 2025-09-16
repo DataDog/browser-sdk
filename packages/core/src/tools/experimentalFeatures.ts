@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
   EARLY_REQUEST_COLLECTION = 'early_request_collection',
   USE_TREE_WALKER_FOR_ACTION_NAME = 'use_tree_walker_for_action_name',
+  GRAPHQL_TRACKING = 'graphql_tracking',
   FEATURE_OPERATION_VITAL = 'feature_operation_vital',
   SHORT_SESSION_INVESTIGATION = 'short_session_investigation',
 }
