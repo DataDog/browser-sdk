@@ -262,6 +262,7 @@ export interface RumConfiguration extends Configuration {
   customerDataTelemetrySampleRate: number
   initialViewMetricsTelemetrySampleRate: number
   replayTelemetrySampleRate: number
+  remoteConfigurationTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
@@ -338,6 +339,7 @@ export function validateAndBuildRumConfiguration(
     customerDataTelemetrySampleRate: 1,
     initialViewMetricsTelemetrySampleRate: 1,
     replayTelemetrySampleRate: 1,
+    remoteConfigurationTelemetrySampleRate: 1,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,

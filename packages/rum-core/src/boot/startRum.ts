@@ -35,9 +35,10 @@ import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { createLocationChangeObservable } from '../browser/locationChangeObservable'
 import type { RumConfiguration } from '../domain/configuration'
+import { REMOTE_CONFIGURATION_METRIC_NAME } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { startFeatureFlagContexts } from '../domain/contexts/featureFlagContext'
-import { startCustomerDataTelemetry } from '../domain/startCustomerDataTelemetry'
+import { startCustomerDataTelemetry, CUSTOMER_DATA_METRIC_NAME } from '../domain/startCustomerDataTelemetry'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startPageStateHistory } from '../domain/contexts/pageStateHistory'
 import { startDisplayContext } from '../domain/contexts/displayContext'
@@ -94,13 +95,20 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
+  const sampleRateByMetric = {
+    [CUSTOMER_DATA_METRIC_NAME]: configuration.customerDataTelemetrySampleRate,
+    [REMOTE_CONFIGURATION_METRIC_NAME]: configuration.remoteConfigurationTelemetrySampleRate,
+    ...recorderApi.getTelemetrySampleRateByMetric(configuration),
+  }
+
   const telemetry = startTelemetry(
     TelemetryService.RUM,
     configuration,
     hooks,
     reportError,
     pageMayExitObservable,
-    createEncoder
+    createEncoder,
+    sampleRateByMetric
   )
   cleanupTasks.push(telemetry.stop)
 
@@ -118,7 +126,7 @@ export function startRum(
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushController.flushObservable)
+    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }
