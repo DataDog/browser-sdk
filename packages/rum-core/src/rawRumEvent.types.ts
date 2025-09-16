@@ -29,7 +29,6 @@ export const RumEventType = {
   RESOURCE: 'resource',
   VITAL: 'vital',
   STREAM: 'stream',
-  TRANSITION: 'transition',
 } as const
 
 export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
