@@ -273,6 +273,7 @@ function createTestContext(
   const url = servers.base.url
 
   return {
+    // Service workers require HTTPS or localhost due to browser security restrictions
     baseUrl: (useServiceWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url) + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
