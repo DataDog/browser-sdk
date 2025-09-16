@@ -79,39 +79,4 @@ test.describe('GraphQL tracking', () => {
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.graphql).toBeUndefined()
     })
-
-  createTest('should warn when using Request object')
-    .withRum(buildGraphQlConfig({ trackPayload: true }))
-    .run(async ({ intakeRegistry, flushEvents, page, withBrowserLogs, browserName }) => {
-      await page.evaluate(() => {
-        const request = new Request('/graphql', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: 'query GetUser { user { name } }',
-            operationName: 'GetUser',
-          }),
-        })
-
-        return window.fetch(request)
-      })
-
-      await flushEvents()
-
-      withBrowserLogs((logs) => {
-        if (browserName === 'firefox' || browserName === 'msedge') {
-          // These browsers don't surface the warning in logs
-          expect(logs).toHaveLength(0)
-        } else {
-          const warningLog = logs.find((log) =>
-            log.message.includes('GraphQL tracking does not yet support Request objects.')
-          )
-          expect(warningLog).toBeDefined()
-        }
-      })
-
-      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/graphql'))!
-      expect(resourceEvent).toBeDefined()
-      expect(resourceEvent.resource.graphql).toBeUndefined()
-    })
 })

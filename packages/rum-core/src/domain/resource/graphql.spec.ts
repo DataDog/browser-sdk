@@ -1,4 +1,3 @@
-import { display } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
 import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
 
@@ -136,45 +135,6 @@ describe('GraphQL detection and metadata extraction', () => {
 
       const result = extractGraphQlMetadata(requestBody, true)
       expect(result).toBeUndefined()
-    })
-
-    it('should warn for non-string body types', () => {
-      const displayWarnSpy = spyOn(display, 'warn')
-      const arrayBufferBody = new ArrayBuffer(8)
-
-      const result = extractGraphQlMetadata(arrayBufferBody, true)
-
-      expect(result).toBeUndefined()
-      expect(displayWarnSpy).toHaveBeenCalledWith(
-        'GraphQL tracking does not support body type: ArrayBuffer. Only string bodies are currently supported.'
-      )
-    })
-
-    it('should warn for FormData body type', () => {
-      const displayWarnSpy = spyOn(display, 'warn')
-      const formDataBody = new FormData()
-
-      const result = extractGraphQlMetadata(formDataBody, true)
-
-      expect(result).toBeUndefined()
-      expect(displayWarnSpy).toHaveBeenCalledWith(
-        'GraphQL tracking does not support body type: FormData. Only string bodies are currently supported.'
-      )
-    })
-
-    it('should warn for Request API objects', () => {
-      const displayWarnSpy = spyOn(display, 'warn')
-      const mockRequest = {
-        input: new Request('http://example.com', {
-          method: 'POST',
-          body: JSON.stringify({ query: 'query { test }' }),
-        }),
-      }
-
-      const result = extractGraphQlMetadata(null, true, mockRequest as any)
-
-      expect(result).toBeUndefined()
-      expect(displayWarnSpy).toHaveBeenCalledWith('GraphQL tracking does not yet support Request objects.')
     })
   })
 

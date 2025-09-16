@@ -189,7 +189,7 @@ function computeGraphQlMetaData(
 
   const requestBody = request.body
 
-  return extractGraphQlMetadata(requestBody, graphQlConfig.trackPayload, request)
+  return extractGraphQlMetadata(requestBody, graphQlConfig.trackPayload)
 }
 
 function getResourceDomainContext(
