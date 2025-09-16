@@ -27,6 +27,7 @@ export const RumEventType = {
   LONG_TASK: 'long_task',
   VIEW: 'view',
   RESOURCE: 'resource',
+  TRANSITION: 'transition',
   VITAL: 'vital',
 } as const
 
