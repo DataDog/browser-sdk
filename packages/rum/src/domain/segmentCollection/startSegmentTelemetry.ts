@@ -1,8 +1,7 @@
 import type { BandwidthStats, Context, HttpRequestEvent, Observable, Telemetry } from '@datadog/browser-core'
 import { addTelemetryMetrics, noop } from '@datadog/browser-core'
+import { SEGMENT_METRICS_TELEMETRY_NAME } from '../replayTelemetryConstants'
 import type { ReplayPayload } from './buildReplayPayload'
-
-export const SEGMENT_METRICS_TELEMETRY_NAME = 'Segment network request metrics'
 
 interface SegmentMetrics extends Context {
   cssText: {

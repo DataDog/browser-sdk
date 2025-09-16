@@ -1,8 +1,7 @@
 import type { Context, Duration, Telemetry, Observable, TimeStamp } from '@datadog/browser-core'
 import { addTelemetryMetrics, noop, timeStampNow, elapsed } from '@datadog/browser-core'
 import type { RecorderInitEvent } from '../boot/postStartStrategy'
-
-export const RECORDER_INIT_METRICS_TELEMETRY_NAME = 'Recorder init metrics'
+import { RECORDER_INIT_METRICS_TELEMETRY_NAME } from './replayTelemetryConstants'
 
 type RecorderInitResult = 'aborted' | 'deflate-encoder-load-failed' | 'recorder-load-failed' | 'succeeded'
 

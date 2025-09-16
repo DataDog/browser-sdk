@@ -22,8 +22,10 @@ import {
   getDeflateWorkerStatus,
   startDeflateWorker,
 } from '../domain/deflate'
-import { SEGMENT_METRICS_TELEMETRY_NAME } from '../domain/segmentCollection'
-import { RECORDER_INIT_METRICS_TELEMETRY_NAME } from '../domain/startRecorderInitTelemetry'
+import {
+  RECORDER_INIT_METRICS_TELEMETRY_NAME,
+  SEGMENT_METRICS_TELEMETRY_NAME,
+} from '../domain/replayTelemetryConstants'
 import { isBrowserSupported } from './isBrowserSupported'
 import type { StartRecording } from './postStartStrategy'
 import { createPostStartStrategy } from './postStartStrategy'

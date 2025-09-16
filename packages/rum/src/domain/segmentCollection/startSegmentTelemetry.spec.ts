@@ -3,7 +3,8 @@ import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { startMockTelemetry } from '../../../../core/test'
-import { startSegmentTelemetry, SEGMENT_METRICS_TELEMETRY_NAME } from './startSegmentTelemetry'
+import { SEGMENT_METRICS_TELEMETRY_NAME } from '../replayTelemetryConstants'
+import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
 
 describe('segmentTelemetry', () => {
