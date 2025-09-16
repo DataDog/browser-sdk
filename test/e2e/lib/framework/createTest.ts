@@ -185,7 +185,7 @@ class TestBuilder {
       },
       testFixture: this.testFixture,
       extension: this.extension,
-      useServiceWorker: this.useServiceWorker !== undefined,
+      useServiceWorker: this.useServiceWorker,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -271,10 +271,11 @@ function createTestContext(
   { basePath, useServiceWorker }: SetupOptions
 ): TestContext {
   const url = servers.base.url
+  const hostname = useServiceWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url
 
   return {
     // Service workers require HTTPS or localhost due to browser security restrictions
-    baseUrl: (useServiceWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url) + basePath,
+    baseUrl: hostname + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
