@@ -24,9 +24,11 @@ export function extractGraphQlMetadata(
   request?: RequestCompleteEvent
 ): GraphQlMetadata | undefined {
   if (!requestBody || typeof requestBody !== 'string') {
-    // Check if we have a Request object with a body that we couldn't access (stream)
     if (request?.input && typeof request.input === 'object' && 'body' in request.input) {
       display.warn('GraphQL tracking does not support Request objects with body streams.')
+    } else if (requestBody !== null && requestBody !== undefined) {
+      const bodyType = requestBody.constructor.name || typeof requestBody
+      display.warn(`GraphQL tracking does not support body type: ${bodyType}. Only string bodies are supported.`)
     }
     return undefined
   }

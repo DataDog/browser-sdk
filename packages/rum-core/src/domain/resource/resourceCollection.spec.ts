@@ -182,6 +182,7 @@ describe('resourceCollection', () => {
                 body,
               },
               input: url,
+              body,
             }
           }
           {

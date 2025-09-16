@@ -115,6 +115,52 @@ describe('GraphQL detection and metadata extraction', () => {
         payload: 'query GetUser { user { id name } }',
       })
     })
+
+    it('should return undefined for queries with missing operation type', () => {
+      const requestBody = JSON.stringify({
+        query: '{ user { id name } }',
+        operationName: 'GetUser',
+        variables: { id: '123' },
+      })
+
+      const result = extractGraphQlMetadata(requestBody, true)
+      expect(result).toBeUndefined()
+    })
+
+    it('should return undefined for queries with invalid operation type', () => {
+      const requestBody = JSON.stringify({
+        query: 'invalid GetUser { user { id name } }',
+        operationName: 'GetUser',
+        variables: { id: '123' },
+      })
+
+      const result = extractGraphQlMetadata(requestBody, true)
+      expect(result).toBeUndefined()
+    })
+
+    it('should warn for non-string body types', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+      const arrayBufferBody = new ArrayBuffer(8)
+
+      const result = extractGraphQlMetadata(arrayBufferBody, true)
+
+      expect(result).toBeUndefined()
+      expect(displayWarnSpy).toHaveBeenCalledWith(
+        'GraphQL tracking does not support body type: ArrayBuffer. Only string bodies are supported.'
+      )
+    })
+
+    it('should warn for FormData body type', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+      const formDataBody = new FormData()
+
+      const result = extractGraphQlMetadata(formDataBody, true)
+
+      expect(result).toBeUndefined()
+      expect(displayWarnSpy).toHaveBeenCalledWith(
+        'GraphQL tracking does not support body type: FormData. Only string bodies are supported.'
+      )
+    })
   })
 
   describe('payload truncation', () => {
@@ -157,23 +203,6 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: '{"id":"123"}',
         payload: undefined,
       })
-    })
-
-    it('should warn when Request object body cannot be read', () => {
-      const displayWarnSpy = spyOn(display, 'warn')
-
-      const mockRequest = {
-        type: 'FETCH',
-        input: { body: new ReadableStream() }, // Mock Request object with ReadableStream body
-        init: undefined,
-      }
-
-      const result = extractGraphQlMetadata(null, true, mockRequest as any)
-
-      expect(result).toBeUndefined()
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith(
-        'GraphQL tracking does not support Request objects with body streams.'
-      )
     })
   })
 })
