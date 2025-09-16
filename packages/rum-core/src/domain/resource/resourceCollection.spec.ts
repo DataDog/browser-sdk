@@ -307,13 +307,9 @@ describe('resourceCollection', () => {
     expect(resourceEvent.resource.graphql).toBeUndefined()
   })
 
-  describe('with EARLY_REQUEST_COLLECTION enabled', () => {
-    beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.EARLY_REQUEST_COLLECTION])
-    })
-
+  describe('with trackEarlyRequests enabled', () => {
     it('creates a resource from a performance entry without a matching request', () => {
-      setupResourceCollection({ trackResources: true })
+      setupResourceCollection({ trackResources: true, trackEarlyRequests: true })
 
       notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
