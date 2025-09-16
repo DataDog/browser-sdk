@@ -23,14 +23,18 @@ export function extractGraphQlMetadata(
   trackPayload: boolean = false,
   request?: RequestCompleteEvent
 ): GraphQlMetadata | undefined {
-  if (!requestBody || typeof requestBody !== 'string') {
-    if (request?.input && typeof request.input === 'object' && 'body' in request.input) {
-      display.warn('GraphQL tracking does not support Request objects with body streams.')
-    } else if (requestBody !== null && requestBody !== undefined) {
-      const bodyType = requestBody.constructor.name || typeof requestBody
-      display.warn(`GraphQL tracking does not support body type: ${bodyType}. Only string bodies are supported.`)
+  if (!requestBody) {
+    if (request?.input instanceof Request) {
+      display.warn('GraphQL tracking does not yet support Request objects.')
     }
-    return undefined
+    return
+  }
+  if (typeof requestBody !== 'string') {
+    const bodyType = requestBody.constructor.name || typeof requestBody
+    display.warn(
+      `GraphQL tracking does not support body type: ${bodyType}. Only string bodies are currently supported.`
+    )
+    return
   }
 
   let graphqlBody: { query?: string; operationName?: string; variables?: unknown }
@@ -39,11 +43,11 @@ export function extractGraphQlMetadata(
     graphqlBody = JSON.parse(requestBody)
   } catch {
     // Not valid JSON
-    return undefined
+    return
   }
 
   if (!graphqlBody || !graphqlBody.query) {
-    return undefined
+    return
   }
 
   const query = graphqlBody.query.trim()
@@ -51,7 +55,7 @@ export function extractGraphQlMetadata(
   const operationName = graphqlBody.operationName
 
   if (!operationType) {
-    return undefined
+    return
   }
 
   let variables: string | undefined

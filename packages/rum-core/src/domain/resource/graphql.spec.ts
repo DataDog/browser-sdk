@@ -146,7 +146,7 @@ describe('GraphQL detection and metadata extraction', () => {
 
       expect(result).toBeUndefined()
       expect(displayWarnSpy).toHaveBeenCalledWith(
-        'GraphQL tracking does not support body type: ArrayBuffer. Only string bodies are supported.'
+        'GraphQL tracking does not support body type: ArrayBuffer. Only string bodies are currently supported.'
       )
     })
 
@@ -158,23 +158,24 @@ describe('GraphQL detection and metadata extraction', () => {
 
       expect(result).toBeUndefined()
       expect(displayWarnSpy).toHaveBeenCalledWith(
-        'GraphQL tracking does not support body type: FormData. Only string bodies are supported.'
+        'GraphQL tracking does not support body type: FormData. Only string bodies are currently supported.'
       )
     })
 
-    it('should warn for Request API objects with body streams', () => {
+    it('should warn for Request API objects', () => {
       const displayWarnSpy = spyOn(display, 'warn')
       const mockRequest = {
-        input: {
-          body: new ReadableStream(),
-        },
+        input: new Request('http://example.com', {
+          method: 'POST',
+          body: JSON.stringify({ query: 'query { test }' }),
+        }),
       }
 
       const result = extractGraphQlMetadata(null, true, mockRequest as any)
 
       expect(result).toBeUndefined()
       expect(displayWarnSpy).toHaveBeenCalledWith(
-        'GraphQL tracking does not support Request objects with body streams.'
+        'GraphQL tracking does not yet support Request objects.'
       )
     })
   })

@@ -179,12 +179,12 @@ function computeGraphQlMetaData(
   configuration: RumConfiguration
 ): GraphQlMetadata | undefined {
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.GRAPHQL_TRACKING)) {
-    return undefined
+    return
   }
 
   const graphQlConfig = findGraphQlConfiguration(request.url, configuration)
   if (!graphQlConfig) {
-    return undefined
+    return
   }
 
   const requestBody = request.body
