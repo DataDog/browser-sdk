@@ -52,12 +52,8 @@ export async function reportAsPrComment(
   const cpuBasePerformance = await fetchPerformanceMetrics('cpu', testNames, lastCommonCommit)
   const cpuLocalPerformance = await fetchPerformanceMetrics('cpu', testNames, LOCAL_COMMIT_SHA || '')
   const memoryBasePerformance = await fetchPerformanceMetrics('memory', testNames, lastCommonCommit)
-  const differenceBundle = compare(baseBundleSizes, localBundleSizes)
-  const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   const commentId = await retrieveExistingCommentId(pr.number)
   const message = createMessage(
-    differenceBundle,
-    differenceCpu,
     baseBundleSizes,
     localBundleSizes,
     memoryBasePerformance,
@@ -129,9 +125,7 @@ async function updateOrAddComment(message: string, prNumber: number, commentId: 
   })
 }
 
-function createMessage(
-  differenceBundle: PerformanceDifference[],
-  differenceCpu: PerformanceDifference[],
+export function createMessage(
   baseBundleSizes: PerformanceMetric[],
   localBundleSizes: BundleSizes,
   memoryBasePerformance: PerformanceMetric[],
@@ -140,6 +134,8 @@ function createMessage(
   cpuLocalPerformance: PerformanceMetric[],
   prNumber: number
 ): string {
+  const differenceBundle = compare(baseBundleSizes, localBundleSizes)
+  const differenceCpu = compare(cpuBasePerformance, cpuLocalPerformance)
   let highIncreaseDetected = false
   const bundleRows = differenceBundle.map((diff, index) => {
     const baseSize = formatSize(baseBundleSizes[index].value)
