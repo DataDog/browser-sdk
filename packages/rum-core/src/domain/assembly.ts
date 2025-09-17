@@ -152,6 +152,7 @@ export function startRumAssembly(
             view: {
               ...serverRumEvent.view,
               id: serverRumEvent.stream?.id,
+              is_active: true,
               action: {
                 count: 0,
               },
