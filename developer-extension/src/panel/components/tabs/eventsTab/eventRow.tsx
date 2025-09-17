@@ -34,7 +34,6 @@ const RUM_EVENT_TYPE_COLOR = {
   view: 'blue',
   resource: 'cyan',
   telemetry: 'teal',
-  transition: 'black',
   vital: 'orange',
   transition: 'green',
 }
