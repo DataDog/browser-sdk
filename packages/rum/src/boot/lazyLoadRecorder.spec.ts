@@ -6,9 +6,10 @@ import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry, wait } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
-import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
+import { MockWorker } from '../../test'
 import * as replayStats from '../domain/replayStats'
+import { RECORDER_INIT_METRICS_TELEMETRY_NAME } from '../domain/startRecorderInitTelemetry'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
 import { lazyLoadRecorder } from './lazyLoadRecorder'
@@ -67,9 +68,7 @@ describe('lazyLoadRecorder', () => {
     })
 
     const configuration = mockRumConfiguration({
-      replayTelemetrySampleRate: 100,
       startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
-      telemetrySampleRate: 100,
     })
 
     recorderApi = makeRecorderApi(loadRecorderSpy, createDeflateWorkerSpy)
@@ -80,7 +79,7 @@ describe('lazyLoadRecorder', () => {
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
         worker,
-        { enabled: true } as Telemetry
+        { enabled: true, enabledMetrics: { [RECORDER_INIT_METRICS_TELEMETRY_NAME]: true } } as unknown as Telemetry
       )
     }
 
