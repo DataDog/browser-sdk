@@ -12,6 +12,14 @@ import type {
 } from '@datadog/browser-core'
 import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
+import type {
+  RumActionEvent,
+  RumErrorEvent,
+  RumLongTaskEvent,
+  RumResourceEvent,
+  RumViewEvent,
+  RumVitalEvent,
+} from './rumEvent.types'
 
 export const RumEventType = {
   ACTION: 'action',
@@ -23,6 +31,16 @@ export const RumEventType = {
 } as const
 
 export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
+
+export type AssembledRumEvent = (
+  | RumViewEvent
+  | RumActionEvent
+  | RumResourceEvent
+  | RumErrorEvent
+  | RumVitalEvent
+  | RumLongTaskEvent
+) &
+  Context
 
 export const RumLongTaskEntryType = {
   LONG_TASK: 'long-task',

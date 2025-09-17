@@ -1,8 +1,7 @@
 import type { Context, Duration, PageMayExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
-import type { RawRumEvent } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
+import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
 import type { RequestCompleteEvent, RequestStartEvent } from './requestCollection'
 import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
@@ -85,7 +84,7 @@ export interface LifeCycleEventMap {
   [LifeCycleEventTypeAsConst.SESSION_RENEWED]: void
   [LifeCycleEventTypeAsConst.PAGE_MAY_EXIT]: PageMayExitEvent
   [LifeCycleEventTypeAsConst.RAW_RUM_EVENT_COLLECTED]: RawRumEventCollectedData
-  [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: RumEvent & Context
+  [LifeCycleEventTypeAsConst.RUM_EVENT_COLLECTED]: AssembledRumEvent
   [LifeCycleEventTypeAsConst.RAW_ERROR_COLLECTED]: {
     error: RawError
     customerContext?: Context
