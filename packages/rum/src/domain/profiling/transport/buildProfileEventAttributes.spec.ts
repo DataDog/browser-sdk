@@ -268,7 +268,7 @@ describe('buildProfileEventAttributes', () => {
 
     it('should handle profiler trace with empty string view names consistently', () => {
       const views = [
-        createMockViewEntry({ viewId: 'view-123', viewName: '' }),
+        createMockViewEntry({ viewId: 'view-123', viewName: '' }), // will be ignored
         createMockViewEntry({ viewId: 'view-456', viewName: 'Valid Page' }),
       ]
       const profilerTrace = createMockProfilerTrace({ views })
@@ -277,7 +277,7 @@ describe('buildProfileEventAttributes', () => {
 
       expect(result.view).toEqual({
         id: ['view-123', 'view-456'],
-        name: ['', 'Valid Page'],
+        name: ['Valid Page'],
       })
     })
   })
