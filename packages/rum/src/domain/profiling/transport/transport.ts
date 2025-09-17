@@ -1,12 +1,12 @@
 import type { Payload } from '@datadog/browser-core'
 import { addTelemetryDebug, buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { RumProfilerTrace } from '../types'
+import type { RumProfilerTrace, RumViewEntry } from '../types'
 
 interface ProfileEventAttributes {
   application: { id: string }
   session?: { id: string }
-  view?: { id: string[] }
+  view?: { id: string[]; name: string[] }
   long_task?: { id: string[] }
 }
 interface ProfileEvent extends ProfileEventAttributes {
@@ -131,10 +131,15 @@ function buildProfileEventAttributes(
       id: sessionId,
     }
   }
-  const viewIds = Array.from(new Set(profilerTrace.views.map((viewEntry) => viewEntry.viewId)))
+
+  // Extract view ids and names from the profiler trace and add them as attributes of the profile event. 
+  // This will be used to filter the profiles by @view.id and/or @view.name.
+  const {viewIds, viewNames} = extractViewIdsAndNames(profilerTrace.views)
+
   if (viewIds.length) {
     attributes.view = {
       id: viewIds,
+      name: viewNames,
     }
   }
   const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
@@ -143,6 +148,10 @@ function buildProfileEventAttributes(
     attributes.long_task = { id: longTaskIds }
   }
   return attributes
+}
+
+function extractViewIdsAndNames(views: RumViewEntry[]): { viewIds: string[]; viewNames: string[] } {
+  return { viewIds: views.map((view) => view.viewId), viewNames: views.map((view) => view.viewName).filter((name) => name !== undefined) }
 }
 
 export const transport = {
