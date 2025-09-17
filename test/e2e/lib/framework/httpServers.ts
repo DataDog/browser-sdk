@@ -93,7 +93,7 @@ function instantiateServerOnPort(port: number): Promise<http.Server> {
   return new Promise((resolve, reject) => {
     const server = http.createServer()
     server.on('error', reject)
-    server.listen(server.address(), port, () => {
+    server.listen(port, () => {
       resolve(server)
     })
   })
