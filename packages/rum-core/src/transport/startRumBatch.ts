@@ -1,10 +1,10 @@
-import type { Context, Observable, RawError, PageMayExitEvent, Encoder } from '@datadog/browser-core'
+import type { Observable, RawError, PageMayExitEvent, Encoder } from '@datadog/browser-core'
 import { createBatch, createFlushController, createHttpRequest, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '../domain/configuration'
 import type { LifeCycle } from '../domain/lifeCycle'
 import { LifeCycleEventType } from '../domain/lifeCycle'
+import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
 
 export function startRumBatch(
   configuration: RumConfiguration,
@@ -32,7 +32,7 @@ export function startRumBatch(
     messageBytesLimit: configuration.messageBytesLimit,
   })
 
-  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: RumEvent & Context) => {
+  lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: AssembledRumEvent) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
       batch.upsert(serverRumEvent, serverRumEvent.view.id)
     } else {

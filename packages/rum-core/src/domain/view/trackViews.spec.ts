@@ -1,4 +1,4 @@
-import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   PageExitReason,
   timeStampNow,
@@ -11,8 +11,8 @@ import {
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
+import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
-import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -874,7 +874,7 @@ describe('view event count', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       view: { id: firstView.id },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -895,7 +895,7 @@ describe('view event count', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       view: { id: firstView.id },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -908,7 +908,7 @@ describe('view event count', () => {
       type: RumEventType.ACTION,
       action: {},
       view: viewTest.getLatestViewContext(),
-    } as RumEvent & Context
+    } as AssembledRumEvent
   }
 
   describe('view specific context', () => {

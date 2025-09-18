@@ -10,7 +10,16 @@ import type {
   Csp,
   Context,
 } from '@datadog/browser-core'
+import type { GraphQlMetadata } from './domain/resource/graphql'
 import type { PageState } from './domain/contexts/pageStateHistory'
+import type {
+  RumActionEvent,
+  RumErrorEvent,
+  RumLongTaskEvent,
+  RumResourceEvent,
+  RumViewEvent,
+  RumVitalEvent,
+} from './rumEvent.types'
 
 export const RumEventType = {
   ACTION: 'action',
@@ -22,6 +31,16 @@ export const RumEventType = {
 } as const
 
 export type RumEventType = (typeof RumEventType)[keyof typeof RumEventType]
+
+export type AssembledRumEvent = (
+  | RumViewEvent
+  | RumActionEvent
+  | RumResourceEvent
+  | RumErrorEvent
+  | RumVitalEvent
+  | RumLongTaskEvent
+) &
+  Context
 
 export const RumLongTaskEntryType = {
   LONG_TASK: 'long-task',
@@ -54,6 +73,7 @@ export interface RawRumResourceEvent {
     download?: ResourceEntryDetailsElement
     protocol?: string
     delivery_type?: DeliveryType
+    graphql?: GraphQlMetadata
   }
   _dd: {
     trace_id?: string
@@ -336,8 +356,11 @@ export interface RawRumVitalEvent {
     id: string
     name: string
     type: VitalType
+    step_type?: string
+    operation_key?: string
+    failure_reason?: string
     description?: string
-    duration: number
+    duration?: number
   }
   _dd?: {
     vital: {
@@ -349,6 +372,7 @@ export interface RawRumVitalEvent {
 
 export const VitalType = {
   DURATION: 'duration',
+  OPERATION_STEP: 'operation_step',
 } as const
 
 export type VitalType = (typeof VitalType)[keyof typeof VitalType]

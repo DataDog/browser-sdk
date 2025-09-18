@@ -43,8 +43,10 @@ import type { RumConfiguration, RumInitConfiguration } from '../domain/configura
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
   AddDurationVitalOptions,
-  DurationVitalOptions,
   DurationVitalReference,
+  DurationVitalOptions,
+  FeatureOperationOptions,
+  FailureReason,
 } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
@@ -425,9 +427,37 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Vital
    * @param nameOrRef - Name or reference of the custom vital
-   * @param options - Options for the custom vital (context, description)
+   * @param options - Options for the custom vital (operationKey, context, description)
    */
   stopDurationVital: (nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions) => void
+
+  /**
+   * [Experimental] start a feature operation
+   *
+   * @category Vital
+   * @param name - Name of the operation step
+   * @param options - Options for the operation step (operationKey, context, description)
+   */
+  startFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
+
+  /**
+   * [Experimental] succeed a feature operation
+   *
+   * @category Vital
+   * @param name - Name of the operation step
+   * @param options - Options for the operation step (operationKey, context, description)
+   */
+  succeedFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
+
+  /**
+   * [Experimental] fail a feature operation
+   *
+   * @category Vital
+   * @param name - Name of the operation step
+   * @param failureReason
+   * @param options - Options for the operation step (operationKey, context, description)
+   */
+  failFeatureOperation: (name: string, failureReaon: FailureReason, options?: FeatureOperationOptions) => void
 }
 
 export interface RecorderApi {
@@ -496,6 +526,7 @@ export interface Strategy {
   startDurationVital: StartRumResult['startDurationVital']
   stopDurationVital: StartRumResult['stopDurationVital']
   addDurationVital: StartRumResult['addDurationVital']
+  addOperationStepVital: StartRumResult['addOperationStepVital']
 }
 
 export function makeRumPublicApi(
@@ -772,6 +803,21 @@ export function makeRumPublicApi(
         context: sanitize(options && options.context) as Context,
         description: sanitize(options && options.description) as string | undefined,
       })
+    }),
+
+    startFeatureOperation: monitor((name, options) => {
+      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'start' })
+      strategy.addOperationStepVital(name, 'start', options)
+    }),
+
+    succeedFeatureOperation: monitor((name, options) => {
+      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'succeed' })
+      strategy.addOperationStepVital(name, 'end', options)
+    }),
+
+    failFeatureOperation: monitor((name, failureReason, options) => {
+      addTelemetryUsage({ feature: 'add-operation-step-vital', action_type: 'fail' })
+      strategy.addOperationStepVital(name, 'end', options, failureReason)
     }),
   })
 

@@ -18,6 +18,37 @@
 
 ---
 
+## v6.20.0
+
+**Public Changes:**
+
+- ✨ [RUM-11701] Add unity as a source override ([#3838](https://github.com/DataDog/browser-sdk/pull/3838)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨⚗️[RUM-11398] Add feature operation step vital APIs ([#3804](https://github.com/DataDog/browser-sdk/pull/3804)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨[RUM-10962][Remote config] support js strategy ([#3766](https://github.com/DataDog/browser-sdk/pull/3766)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 Update dependency eslint-plugin-jsdoc to v57 ([#3842](https://github.com/DataDog/browser-sdk/pull/3842))
+- 👷 Update all non-major dependencies ([#3840](https://github.com/DataDog/browser-sdk/pull/3840)) [RUM-REACT]
+- 👷 Lock file maintenance ([#3843](https://github.com/DataDog/browser-sdk/pull/3843))
+- 👷 Lock file maintenance ([#3831](https://github.com/DataDog/browser-sdk/pull/3831))
+- 👷 Update dependency eslint-plugin-unicorn to v61 ([#3830](https://github.com/DataDog/browser-sdk/pull/3830))
+- 👷 Update actions/upload-pages-artifact action to v4 ([#3829](https://github.com/DataDog/browser-sdk/pull/3829))
+- 👷 Update actions/stale action to v10 ([#3828](https://github.com/DataDog/browser-sdk/pull/3828))
+- 👷 Update actions/setup-node action to v5 ([#3827](https://github.com/DataDog/browser-sdk/pull/3827))
+- 👷 Update all non-major dependencies ([#3826](https://github.com/DataDog/browser-sdk/pull/3826))
+- 👷 Fix Octo release policy ([#3821](https://github.com/DataDog/browser-sdk/pull/3821))
+- ✅ fix flaky test ([#3837](https://github.com/DataDog/browser-sdk/pull/3837)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ improve format validation error output ([#3834](https://github.com/DataDog/browser-sdk/pull/3834)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊 add telemetry for unexpected session id changes ([#3815](https://github.com/DataDog/browser-sdk/pull/3815)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🏷️ update rum-events-format ([#3847](https://github.com/DataDog/browser-sdk/pull/3847)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗️ [RUM-11434] GraphQL support ([#3805](https://github.com/DataDog/browser-sdk/pull/3805)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ improve browser extension e2e tests ([#3823](https://github.com/DataDog/browser-sdk/pull/3823))
+- 🚨 add a lint rule to forbid `declare global` usage ([#3836](https://github.com/DataDog/browser-sdk/pull/3836))
+- 🔉 report missing configuration options ([#3832](https://github.com/DataDog/browser-sdk/pull/3832)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ci: bump slack-notifier to v3-sdm ([#3809](https://github.com/DataDog/browser-sdk/pull/3809))
+- [RUM-10415] [alt] add privacy allowlist support treewalker ([#3803](https://github.com/DataDog/browser-sdk/pull/3803)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.19.0
 
 **Public Changes:**
