@@ -110,13 +110,17 @@ export function initGitConfig(repository: string): void {
 export const LOCAL_BRANCH = process.env.CI_COMMIT_REF_NAME
 
 async function callGitHubApi<T>(method: string, path: string, token: OctoStsToken, body?: any): Promise<T> {
-  const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
-    method,
-    headers: {
-      Authorization: `token ${token.value}`,
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  })
-  return (await response.json()) as Promise<T>
+  try {
+    const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
+      method,
+      headers: {
+        Authorization: `token ${token.value}`,
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    })
+    return (await response.json()) as Promise<T>
+  } catch (error) {
+    throw new Error(`Failed to call GitHub API: ${method} ${path}`, { cause: error })
+  }
 }
