@@ -1,12 +1,5 @@
 import type { createContextManager, Context } from '@datadog/browser-core'
-import {
-  display,
-  buildEndpointHost,
-  mapValues,
-  getCookie,
-  addTelemetryMetrics,
-  Observable,
-} from '@datadog/browser-core'
+import { display, buildEndpointHost, mapValues, getCookie, addTelemetryMetrics } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
@@ -85,8 +78,6 @@ export function applyRemoteConfiguration(
   supportedContextManagers: SupportedContextManagers,
   metrics: RemoteConfigurationMetrics
 ): RumInitConfiguration {
-  const resolveEventObservable = new Observable<ResolveEvent>()
-  resolveEventObservable.subscribe(incrementMetrics)
   // intents:
   // - explicitly set each supported field to limit risk in case an attacker can create configurations
   // - check the existence in the remote config to avoid clearing a provided init field
@@ -164,7 +155,7 @@ export function applyRemoteConfiguration(
 
   function resolveCookieValue({ name }: { name: string }) {
     const value = getCookie(name)
-    resolveEventObservable.notify(['cookie', value !== undefined ? 'success' : 'missing'])
+    incrementMetrics(['cookie', value !== undefined ? 'success' : 'missing'])
     return value
   }
 
@@ -196,7 +187,7 @@ export function applyRemoteConfiguration(
         value = domValue
       }
     }
-    resolveEventObservable.notify(['dom', failure ? 'failure' : missing ? 'missing' : 'success'])
+    incrementMetrics(['dom', failure ? 'failure' : missing ? 'missing' : 'success'])
     return value
   }
 
@@ -206,7 +197,6 @@ export function applyRemoteConfiguration(
 
   function resolveJsValue({ path }: { path: string }): unknown {
     let current = window as unknown as { [key: string]: unknown }
-    let missing = false
     let failure = false
 
     const pathParts = parseJsonPath(path)
@@ -216,8 +206,8 @@ export function applyRemoteConfiguration(
     } else {
       for (const pathPart of pathParts) {
         if (!(pathPart in current)) {
-          missing = true
-          break
+          incrementMetrics(['js', 'missing'])
+          return
         }
         try {
           current = current[pathPart] as { [key: string]: unknown }
@@ -228,8 +218,8 @@ export function applyRemoteConfiguration(
         }
       }
     }
-    resolveEventObservable.notify(['js', failure ? 'failure' : missing ? 'missing' : 'success'])
-    return !missing && !failure ? current : undefined
+    incrementMetrics(['js', failure ? 'failure' : 'success'])
+    return !failure ? current : undefined
   }
 
   function incrementMetrics([strategy, type]: ResolveEvent) {
