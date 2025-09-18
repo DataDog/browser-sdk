@@ -25,6 +25,7 @@ interface GitHubRelease {
 }
 
 interface GitHubReleaseParams {
+  tag_name: string
   version: string
   body: string
 }
@@ -45,7 +46,7 @@ export async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
  * @param params.version - The version to create a release for.
  * @param params.body - The body of the release.
  */
-export async function createGitHubRelease({ version, body }: GitHubReleaseParams): Promise<GitHubRelease> {
+export async function createGitHubRelease({ version, body, tag_name }: GitHubReleaseParams): Promise<GitHubRelease> {
   using readToken = getGithubReadToken()
   try {
     await callGitHubApi('GET', `releases/tags/${version}`, readToken)
@@ -117,6 +118,7 @@ async function callGitHubApi<T>(method: string, path: string, token: OctoStsToke
     const response = await fetchHandlingError(`https://api.github.com/repos/DataDog/browser-sdk/${path}`, {
       method,
       headers: {
+        Accept: 'application/vnd.github+json',
         Authorization: `token ${token.value}`,
         'X-GitHub-Api-Version': '2022-11-28',
       },

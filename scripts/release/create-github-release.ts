@@ -7,6 +7,7 @@ interface GitHubReleaseResponse {
 
 runMain(async () => {
   const response = (await createGitHubRelease({
+    tag_name: 'test-octo-1',
     version: 'test-octo-1',
     body: 'This is a test release created from the GitLab pipeline.',
   })) as GitHubReleaseResponse
