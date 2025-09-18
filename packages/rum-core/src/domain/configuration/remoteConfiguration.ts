@@ -53,8 +53,6 @@ interface RemoteConfigurationMetricCounters {
   [key: string]: number | undefined
 }
 
-type ResolveEvent = [DynamicOption['strategy'], keyof RemoteConfigurationMetricCounters]
-
 export async function fetchAndApplyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   supportedContextManagers: SupportedContextManagers
@@ -161,7 +159,7 @@ export function applyRemoteConfiguration(
 
   function resolveCookieValue({ name }: { name: string }) {
     const value = getCookie(name)
-    incrementMetrics(['cookie', value !== undefined ? 'success' : 'missing'])
+    incrementMetrics('cookie', value !== undefined ? 'success' : 'missing')
     return value
   }
 
@@ -193,7 +191,7 @@ export function applyRemoteConfiguration(
         value = domValue
       }
     }
-    incrementMetrics(['dom', failure ? 'failure' : missing ? 'missing' : 'success'])
+    incrementMetrics('dom', failure ? 'failure' : missing ? 'missing' : 'success')
     return value
   }
 
@@ -212,7 +210,7 @@ export function applyRemoteConfiguration(
     } else {
       for (const pathPart of pathParts) {
         if (!(pathPart in current)) {
-          incrementMetrics(['js', 'missing'])
+          incrementMetrics('js', 'missing')
           return
         }
         try {
@@ -224,11 +222,11 @@ export function applyRemoteConfiguration(
         }
       }
     }
-    incrementMetrics(['js', failure ? 'failure' : 'success'])
+    incrementMetrics('js', failure ? 'failure' : 'success')
     return !failure ? current : undefined
   }
 
-  function incrementMetrics([strategy, type]: ResolveEvent) {
+  function incrementMetrics(strategy: DynamicOption['strategy'], type: keyof RemoteConfigurationMetricCounters) {
     if (!metrics[strategy]) {
       metrics[strategy] = {}
     }
