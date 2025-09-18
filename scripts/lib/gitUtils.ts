@@ -8,7 +8,7 @@ import {
   getGithubPullRequestToken,
   type OctoStsToken,
 } from './secrets.ts'
-import { fetchHandlingError } from './executionUtils.ts'
+import { FetchError, fetchHandlingError, findError } from './executionUtils.ts'
 
 interface GitHubPR {
   // eslint-disable-next-line id-denylist
@@ -51,7 +51,8 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
     await callGitHubApi('GET', `releases/tags/${version}`, readToken)
     throw new Error(`Release ${version} already exists`)
   } catch (error) {
-    if ((error as any).status !== 404) {
+    const fetchError = findError(error, FetchError)
+    if (!fetchError || fetchError.response.status !== 404) {
       throw error
     }
   }
