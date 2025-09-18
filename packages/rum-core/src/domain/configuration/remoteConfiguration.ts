@@ -165,34 +165,29 @@ export function applyRemoteConfiguration(
 
   function resolveDomValue({ selector, attribute }: { selector: string; attribute?: string }) {
     let element: Element | null
-    let missing = false
-    let failure = false
-    let value: string | undefined
     try {
       element = document.querySelector(selector)
     } catch {
-      element = null
-      failure = true
       display.error(`Invalid selector in the remote configuration: '${selector}'`)
+      metrics.increment('dom', 'failure')
+      return
     }
-    if (element === null && !failure) {
-      missing = true
+    if (!element) {
+      metrics.increment('dom', 'missing')
+      return
     }
-    if (element && isForbidden(element, attribute)) {
-      failure = true
-      element = null
+    if (isForbidden(element, attribute)) {
       display.error(`Forbidden element selected by the remote configuration: '${selector}'`)
+      metrics.increment('dom', 'failure')
+      return
     }
-    if (element) {
-      const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
-      if (domValue === null) {
-        missing = true
-      } else {
-        value = domValue
-      }
+    const domValue = attribute !== undefined ? element.getAttribute(attribute) : element.textContent
+    if (domValue === null) {
+      metrics.increment('dom', 'missing')
+      return
     }
-    metrics.increment('dom', failure ? 'failure' : missing ? 'missing' : 'success')
-    return value
+    metrics.increment('dom', 'success')
+    return domValue
   }
 
   function isForbidden(element: Element, attribute: string | undefined) {
@@ -201,29 +196,27 @@ export function applyRemoteConfiguration(
 
   function resolveJsValue({ path }: { path: string }): unknown {
     let current = window as unknown as { [key: string]: unknown }
-    let failure = false
-
     const pathParts = parseJsonPath(path)
     if (pathParts.length === 0) {
-      failure = true
       display.error(`Invalid JSON path in the remote configuration: '${path}'`)
-    } else {
-      for (const pathPart of pathParts) {
-        if (!(pathPart in current)) {
-          metrics.increment('js', 'missing')
-          return
-        }
-        try {
-          current = current[pathPart] as { [key: string]: unknown }
-        } catch (e) {
-          failure = true
-          display.error(`Error accessing: '${path}'`, e)
-          break
-        }
+      metrics.increment('js', 'failure')
+      return
+    }
+    for (const pathPart of pathParts) {
+      if (!(pathPart in current)) {
+        metrics.increment('js', 'missing')
+        return
+      }
+      try {
+        current = current[pathPart] as { [key: string]: unknown }
+      } catch (e) {
+        display.error(`Error accessing: '${path}'`, e)
+        metrics.increment('js', 'failure')
+        return
       }
     }
-    metrics.increment('js', failure ? 'failure' : 'success')
-    return !failure ? current : undefined
+    metrics.increment('js', 'success')
+    return current
   }
 }
 
