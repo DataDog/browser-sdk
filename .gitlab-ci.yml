@@ -146,10 +146,7 @@ test-acto-release:
 
   script:
     - export GITHUB_TOKEN=$(cat token.txt)
-    - gh release create ci-test-release \
-      -R DataDog/browser-sdk \
-      --title "CI Test Release" \
-      --notes "This is a test release created from the GitLab pipeline."
+    - gh release create test-octo-1 -R DataDog/browser-sdk --title "CI Test Release" --notes "This is a test release created from the GitLab pipeline."
     - gh release list -R DataDog/browser-sdk
     - echo "Done!"
 
