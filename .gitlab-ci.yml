@@ -147,17 +147,17 @@ test-acto-release:
   script:
     - export GITHUB_TOKEN=$(cat token.txt)
     - gh release create test-octo-1 -R DataDog/browser-sdk --title "CI Test Release" --notes "This is a test release created from the GitLab pipeline."
-    - |
-      curl -sS -X POST https://api.github.com/repos/DataDog/browser-sdk/releases \
-        -H "Authorization: token $GITHUB_TOKEN" \
-        -H "Accept: application/vnd.github+json" \
-        -H "X-GitHub-Api-Version: 2022-11-28" \
-        -d '{
-          "tag_name": "test-octo-1",
-          "name": "test-octo-1",
-          "body": "This is a test release created from the GitLab pipeline.",
-        }'
-    # - node scripts/release/create-github-release.ts
+    # - |
+    #   curl -sS -X POST https://api.github.com/repos/DataDog/browser-sdk/releases \
+    #     -H "Authorization: token $GITHUB_TOKEN" \
+    #     -H "Accept: application/vnd.github+json" \
+    #     -H "X-GitHub-Api-Version: 2022-11-28" \
+    #     -d '{
+    #       "tag_name": "test-octo-1",
+    #       "name": "test-octo-1",
+    #       "body": "This is a test release created from the GitLab pipeline.",
+    #     }'
+    - node scripts/release/create-github-release.ts
     - gh release list -R DataDog/browser-sdk
     - gh release delete test-octo-1 -R DataDog/browser-sdk --yes
     - echo "Done!"
