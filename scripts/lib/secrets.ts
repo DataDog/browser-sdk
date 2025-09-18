@@ -10,7 +10,7 @@ export class OctoStsToken {
 
   constructor(name: string) {
     printLog(command`dd-octo-sts debug --scope DataDog/browser-sdk --policy self.gitlab.${name}`.run().trim())
-    this.value = command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.${name}`.run()
+    this.value = command`dd-octo-sts token --scope DataDog/browser-sdk --policy self.gitlab.${name}`.run().trim()
   }
 
   [Symbol.dispose]() {
