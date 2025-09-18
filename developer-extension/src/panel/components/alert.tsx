@@ -7,15 +7,17 @@ export function Alert({
   title,
   message,
   button,
+  mt,
 }: {
   level: 'warning' | 'error'
   title?: string
   message: string
   button?: ReactNode
+  mt?: string
 }) {
   const color = level === 'warning' ? ('orange' as const) : ('red' as const)
   return (
-    <Center mt="xl" className="dd-privacy-allow">
+    <Center mt={mt || 'xl'} className="dd-privacy-allow">
       <MantineAlert color={color} title={title}>
         {message}
         {button && (

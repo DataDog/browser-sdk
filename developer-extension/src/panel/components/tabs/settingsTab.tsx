@@ -1,5 +1,6 @@
 import { Badge, Box, Checkbox, Code, Group, Space, Switch, Text, SegmentedControl, Accordion } from '@mantine/core'
-import React from 'react'
+import React, { useEffect } from 'react'
+import { Alert } from '../alert'
 import { DEV_LOGS_URL, DEV_REPLAY_SANDBOX_URL } from '../../../common/packagesUrlConstants'
 import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerStatus'
 import { useSettings } from '../../hooks/useSettings'
@@ -21,9 +22,25 @@ export function SettingsTab() {
       autoFlush,
       debugMode: debug,
       datadogMode,
+      sdkInjection,
     },
     setSetting,
   ] = useSettings()
+
+  useEffect(() => {
+    // When using CDN injection, we need to ensure certain settings are set
+    // to allow proper event collection from the CDN bundle
+    if (sdkInjection.enabled && sdkInjection.bundleSource === 'cdn') {
+      // For CDN bundles, we need to collect events from requests
+      // as the dev tools messaging may not work reliably
+      setSetting('eventCollectionStrategy', 'requests')
+      setSetting('autoFlush', true)
+    } else if (!sdkInjection.enabled) {
+      // Reset to default settings when SDK injection is completely disabled
+      setSetting('eventCollectionStrategy', 'sdk')
+      setSetting('autoFlush', false)
+    }
+  }, [sdkInjection.enabled, sdkInjection.bundleSource, setSetting])
 
   return (
     <TabBase>
@@ -55,7 +72,13 @@ export function SettingsTab() {
                   </Box>
 
                   <Space h="md" />
-
+                  {sdkInjection.enabled && (
+                    <Alert
+                      mt="sm"
+                      level="warning"
+                      message="⚠️ SDK injection is enabled. The override strategy is not available."
+                    />
+                  )}
                   <SettingItem
                     input={
                       <Group>
@@ -72,6 +95,7 @@ export function SettingsTab() {
                           onChange={(value) =>
                             setSetting('useDevBundles', value === 'off' ? false : (value as DevBundlesOverride))
                           }
+                          disabled={sdkInjection.enabled}
                         />
                       </Group>
                     }
