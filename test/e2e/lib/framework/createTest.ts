@@ -1,13 +1,12 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
-import { DefaultPrivacyLevel } from '@datadog/browser-rum'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
-import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
+import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { IntakeRegistry } from './intakeRegistry'
@@ -15,32 +14,14 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 
-export const DEFAULT_RUM_CONFIGURATION = {
-  applicationId: APPLICATION_ID,
-  clientToken: CLIENT_TOKEN,
-  defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-  trackResources: true,
-  trackLongTasks: true,
-  enableExperimentalFeatures: [],
-  allowUntrustedEvents: true,
-  // Force All sample rates to 100% to avoid flakiness
-  sessionReplaySampleRate: 100,
-  telemetrySampleRate: 100,
-  telemetryUsageSampleRate: 100,
-  telemetryConfigurationSampleRate: 100,
-}
-
-export const DEFAULT_LOGS_CONFIGURATION = {
-  clientToken: CLIENT_TOKEN,
-  // Force All sample rates to 100% to avoid flakiness
-  telemetrySampleRate: 100,
-  telemetryUsageSampleRate: 100,
-  telemetryConfigurationSampleRate: 100,
+interface LogsWorkerOptions {
+  importScript?: boolean
+  nativeLog?: boolean
 }
 
 export function createTest(title: string) {
@@ -61,6 +42,7 @@ interface TestContext {
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
+  interactWithWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -80,6 +62,7 @@ class TestBuilder {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   } = {}
+  private useServiceWorker: boolean = false
 
   constructor(private title: string) {}
 
@@ -151,6 +134,39 @@ class TestBuilder {
     return this
   }
 
+  withWorker({ importScript = false, nativeLog = false }: LogsWorkerOptions = {}) {
+    if (!this.useServiceWorker) {
+      this.useServiceWorker = true
+
+      const isModule = !importScript
+
+      const params = []
+      if (importScript) {
+        params.push('importScripts=true')
+      }
+      if (nativeLog) {
+        params.push('nativeLog=true')
+      }
+
+      const query = params.length > 0 ? `?${params.join('&')}` : ''
+      const url = `/sw.js${query}`
+
+      const options = isModule ? '{ type: "module" }' : '{}'
+
+      this.withBody(html`
+        <script>
+          if (!window.myServiceWorker && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.register('${url}', ${options}).then((registration) => {
+              window.myServiceWorker = registration
+            })
+          }
+        </script>
+      `)
+    }
+
+    return this
+  }
+
   run(runner: TestRunner) {
     const setupOptions: SetupOptions = {
       body: this.body,
@@ -169,6 +185,7 @@ class TestBuilder {
       },
       testFixture: this.testFixture,
       extension: this.extension,
+      useServiceWorker: this.useServiceWorker,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -251,10 +268,14 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath }: SetupOptions
+  { basePath, useServiceWorker }: SetupOptions
 ): TestContext {
+  const url = servers.base.url
+  const hostname = useServiceWorker ? url.replace(/http:\/\/[^:]+:/, 'http://localhost:') : url
+
   return {
-    baseUrl: servers.base.url + basePath,
+    // Service workers require HTTPS or localhost due to browser security restrictions
+    baseUrl: hostname + basePath,
     crossOriginUrl: servers.crossOrigin.url,
     intakeRegistry: new IntakeRegistry(),
     servers,
@@ -267,6 +288,9 @@ function createTestContext(
       } finally {
         browserLogsManager.clear()
       }
+    },
+    interactWithWorker: async (cb: (worker: ServiceWorker) => void) => {
+      await page.evaluate(`(${cb.toString()})(window.myServiceWorker.active)`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
     flushEvents: () => flushEvents(page),

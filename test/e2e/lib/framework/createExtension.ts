@@ -2,7 +2,7 @@ import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import { createExtensionTest } from '../helpers/extensionFixture'
-import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from './createTest'
+import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 
 export function createExtension(path: string) {
   return new Extension(path)

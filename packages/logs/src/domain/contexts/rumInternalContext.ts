@@ -1,5 +1,6 @@
 import type { RelativeTime, RumInternalContext } from '@datadog/browser-core'
 import {
+  globalObject,
   willSyntheticsInjectRum,
   addTelemetryDebug,
   getSyntheticsTestId,
@@ -19,7 +20,7 @@ interface BrowserWindow {
 }
 
 export function startRUMInternalContext(hooks: Hooks) {
-  const browserWindow = window as BrowserWindow
+  const browserWindow = globalObject as BrowserWindow
   let logsSentBeforeRumInjectionTelemetryAdded = false
 
   hooks.register(HookNames.Assemble, ({ startTime }) => {
