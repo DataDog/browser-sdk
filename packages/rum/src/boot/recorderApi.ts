@@ -22,6 +22,8 @@ import {
   getDeflateWorkerStatus,
   startDeflateWorker,
 } from '../domain/deflate'
+import { SEGMENT_METRICS_TELEMETRY_NAME } from '../domain/segmentCollection'
+import { RECORDER_INIT_METRICS_TELEMETRY_NAME } from '../domain/startRecorderInitTelemetry'
 import { isBrowserSupported } from './isBrowserSupported'
 import type { StartRecording } from './postStartStrategy'
 import { createPostStartStrategy } from './postStartStrategy'
@@ -39,6 +41,7 @@ export function makeRecorderApi(
       onRumStart: noop,
       isRecording: () => false,
       getSessionReplayLink: () => undefined,
+      getTelemetrySampleRateByMetric: () => undefined,
     }
   }
 
@@ -77,6 +80,11 @@ export function makeRecorderApi(
 
     getReplayStats: (viewId) =>
       getDeflateWorkerStatus() === DeflateWorkerStatus.Initialized ? getReplayStatsImpl(viewId) : undefined,
+
+    getTelemetrySampleRateByMetric: (configuration: RumConfiguration) => ({
+      [SEGMENT_METRICS_TELEMETRY_NAME]: configuration.replayTelemetrySampleRate,
+      [RECORDER_INIT_METRICS_TELEMETRY_NAME]: configuration.replayTelemetrySampleRate,
+    }),
   }
 
   function onRumStart(

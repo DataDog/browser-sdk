@@ -59,6 +59,11 @@ export const enum TelemetryService {
 export interface Telemetry {
   stop: () => void
   enabled: boolean
+  enabledMetrics: { [metricName: string]: boolean }
+}
+
+export interface SampleRateByMetric {
+  [metricName: string]: number
 }
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
@@ -78,17 +83,25 @@ export function startTelemetry(
   hooks: AbstractHooks,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  sampleRateByMetric: SampleRateByMetric = {}
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
 
   const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
 
-  const { enabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
+  const { enabled, enabledMetrics } = startTelemetryCollection(
+    telemetryService,
+    configuration,
+    hooks,
+    observable,
+    sampleRateByMetric
+  )
 
   return {
     stop,
     enabled,
+    enabledMetrics,
   }
 }
 
@@ -96,7 +109,8 @@ export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
   hooks: AbstractHooks,
-  observable: Observable<TelemetryEvent & Context>
+  observable: Observable<TelemetryEvent & Context>,
+  sampleRateByMetric: SampleRateByMetric
 ) {
   const alreadySentEventsByKind: Record<string, Set<string>> = {}
 
@@ -109,10 +123,18 @@ export function startTelemetryCollection(
     [TelemetryType.USAGE]: telemetryEnabled && performDraw(configuration.telemetryUsageSampleRate),
   }
 
+  const telemetryEnabledPerMetrics: { [metricName: string]: boolean } = {}
+  Object.keys(sampleRateByMetric).forEach((metricName) => {
+    telemetryEnabledPerMetrics[metricName] = telemetryEnabled && performDraw(sampleRateByMetric[metricName])
+  })
+
   const runtimeEnvInfo = getRuntimeEnvInfo()
   const telemetryObservable = getTelemetryObservable()
   telemetryObservable.subscribe(({ rawEvent, kind }) => {
-    if (!telemetryEnabledPerType[rawEvent.type!]) {
+    if (
+      !telemetryEnabledPerType[rawEvent.type!] ||
+      (kind in telemetryEnabledPerMetrics && !telemetryEnabledPerMetrics[kind])
+    ) {
       return
     }
 
@@ -154,6 +176,7 @@ export function startTelemetryCollection(
 
   return {
     enabled: telemetryEnabled,
+    enabledMetrics: telemetryEnabledPerMetrics,
   }
 
   function toTelemetryEvent(

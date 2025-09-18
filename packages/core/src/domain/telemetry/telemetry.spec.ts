@@ -20,6 +20,7 @@ import {
   startTelemetryCollection,
   addTelemetryMetrics,
   addTelemetryDebug,
+  type SampleRateByMetric,
 } from './telemetry'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
@@ -27,7 +28,7 @@ import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 const NETWORK_METRICS_KIND = 'Network metrics'
 const PERFORMANCE_METRICS_KIND = 'Performance metrics'
 
-function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
+function startAndSpyTelemetry(configuration?: Partial<Configuration>, sampleRateByMetric: SampleRateByMetric = {}) {
   const observable = new Observable<TelemetryEvent & Context>()
 
   const events: TelemetryEvent[] = []
@@ -42,7 +43,8 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>) {
       ...configuration,
     } as Configuration,
     hooks,
-    observable
+    observable,
+    sampleRateByMetric
   )
 
   return {
@@ -157,7 +159,10 @@ describe('telemetry', () => {
 
   describe('addTelemetryMetrics', () => {
     it('should collect metrics when sampled', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 100 })
+      const { getTelemetryEvents } = startAndSpyTelemetry(
+        { telemetrySampleRate: 100 },
+        { [PERFORMANCE_METRICS_KIND]: 100 }
+      )
 
       addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
 
@@ -172,8 +177,22 @@ describe('telemetry', () => {
       ])
     })
 
-    it('should not notify metrics when not sampled', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 0 })
+    it('should not notify metrics when telemetry not sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry(
+        { telemetrySampleRate: 0 },
+        { [PERFORMANCE_METRICS_KIND]: 100 }
+      )
+
+      addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
+
+      expect(await getTelemetryEvents()).toEqual([])
+    })
+
+    it('should not notify metrics when metric not sampled', async () => {
+      const { getTelemetryEvents } = startAndSpyTelemetry(
+        { telemetrySampleRate: 100 },
+        { [PERFORMANCE_METRICS_KIND]: 0 }
+      )
 
       addTelemetryMetrics(PERFORMANCE_METRICS_KIND, { speed: 1000 })
 

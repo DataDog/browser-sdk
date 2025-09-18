@@ -13,5 +13,6 @@ export function makeRecorderApiStub() {
     isRecording: () => false,
     getReplayStats: () => undefined,
     getSessionReplayLink: () => getSessionReplayLinkStrategy(),
+    getTelemetrySampleRateByMetric: () => undefined,
   }
 }
