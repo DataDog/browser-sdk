@@ -58,13 +58,13 @@ export async function fetchAndApplyRemoteConfiguration(
   supportedContextManagers: SupportedContextManagers
 ) {
   let rumInitConfiguration: RumInitConfiguration | undefined
-  const metrics: RemoteConfigurationMetrics = { fetch: {} }
+  const metrics = initMetrics()
   const fetchResult = await fetchRemoteConfiguration(initConfiguration)
   if (!fetchResult.ok) {
-    metrics.fetch.failure = 1
+    metrics.increment('fetch', 'failure')
     display.error(fetchResult.error)
   } else {
-    metrics.fetch.success = 1
+    metrics.increment('fetch', 'success')
     rumInitConfiguration = applyRemoteConfiguration(
       initConfiguration,
       fetchResult.value,
@@ -72,7 +72,7 @@ export async function fetchAndApplyRemoteConfiguration(
       metrics
     )
   }
-  addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics })
+  addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics.get() })
   return rumInitConfiguration
 }
 
@@ -80,7 +80,7 @@ export function applyRemoteConfiguration(
   initConfiguration: RumInitConfiguration,
   rumRemoteConfiguration: RumRemoteConfiguration & { [key: string]: unknown },
   supportedContextManagers: SupportedContextManagers,
-  metrics: RemoteConfigurationMetrics
+  metrics: ReturnType<typeof initMetrics>
 ): RumInitConfiguration {
   // intents:
   // - explicitly set each supported field to limit risk in case an attacker can create configurations
@@ -159,7 +159,7 @@ export function applyRemoteConfiguration(
 
   function resolveCookieValue({ name }: { name: string }) {
     const value = getCookie(name)
-    incrementMetrics('cookie', value !== undefined ? 'success' : 'missing')
+    metrics.increment('cookie', value !== undefined ? 'success' : 'missing')
     return value
   }
 
@@ -191,7 +191,7 @@ export function applyRemoteConfiguration(
         value = domValue
       }
     }
-    incrementMetrics('dom', failure ? 'failure' : missing ? 'missing' : 'success')
+    metrics.increment('dom', failure ? 'failure' : missing ? 'missing' : 'success')
     return value
   }
 
@@ -210,7 +210,7 @@ export function applyRemoteConfiguration(
     } else {
       for (const pathPart of pathParts) {
         if (!(pathPart in current)) {
-          incrementMetrics('js', 'missing')
+          metrics.increment('js', 'missing')
           return
         }
         try {
@@ -222,18 +222,24 @@ export function applyRemoteConfiguration(
         }
       }
     }
-    incrementMetrics('js', failure ? 'failure' : 'success')
+    metrics.increment('js', failure ? 'failure' : 'success')
     return !failure ? current : undefined
   }
+}
 
-  function incrementMetrics(strategy: DynamicOption['strategy'], type: keyof RemoteConfigurationMetricCounters) {
-    if (!metrics[strategy]) {
-      metrics[strategy] = {}
-    }
-    if (!metrics[strategy][type]) {
-      metrics[strategy][type] = 0
-    }
-    metrics[strategy][type] = metrics[strategy][type] + 1
+export function initMetrics() {
+  const metrics: RemoteConfigurationMetrics = { fetch: {} }
+  return {
+    get: () => metrics,
+    increment: (metricName: 'fetch' | DynamicOption['strategy'], type: keyof RemoteConfigurationMetricCounters) => {
+      if (!metrics[metricName]) {
+        metrics[metricName] = {}
+      }
+      if (!metrics[metricName][type]) {
+        metrics[metricName][type] = 0
+      }
+      metrics[metricName][type] = metrics[metricName][type] + 1
+    },
   }
 }
 

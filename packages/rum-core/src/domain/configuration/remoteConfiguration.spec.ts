@@ -10,8 +10,13 @@ import {
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../test'
 import type { RumInitConfiguration } from './configuration'
-import type { RumRemoteConfiguration, RemoteConfigurationMetrics } from './remoteConfiguration'
-import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
+import {
+  type RumRemoteConfiguration,
+  initMetrics,
+  applyRemoteConfiguration,
+  buildEndpoint,
+  fetchRemoteConfiguration,
+} from './remoteConfiguration'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',
@@ -107,7 +112,7 @@ describe('remoteConfiguration', () => {
       user: ReturnType<typeof createContextManager>
       context: ReturnType<typeof createContextManager>
     }
-    let metrics: RemoteConfigurationMetrics
+    let metrics: ReturnType<typeof initMetrics>
 
     function expectAppliedRemoteConfigurationToBe(
       actual: Partial<RumRemoteConfiguration>,
@@ -129,7 +134,7 @@ describe('remoteConfiguration', () => {
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
       supportedContextManagers = { user: createContextManager(), context: createContextManager() }
-      metrics = { fetch: {} }
+      metrics = initMetrics()
     })
 
     it('should override the initConfiguration options with the ones from the remote configuration', () => {
@@ -206,7 +211,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
           { version: 'my-version' }
         )
-        expect(metrics.cookie).toEqual({ success: 1 })
+        expect(metrics.get().cookie).toEqual({ success: 1 })
       })
 
       it('should resolve to undefined if the cookie is missing', () => {
@@ -214,7 +219,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
           { version: undefined }
         )
-        expect(metrics.cookie).toEqual({ missing: 1 })
+        expect(metrics.get().cookie).toEqual({ missing: 1 })
       })
     })
 
@@ -231,7 +236,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version1' } },
           { version: 'version-123' }
         )
-        expect(metrics.dom).toEqual({ success: 1 })
+        expect(metrics.get().dom).toEqual({ success: 1 })
       })
 
       it('should resolve a configuration value from an element text content and an extractor', () => {
@@ -261,7 +266,7 @@ describe('remoteConfiguration', () => {
           { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid selector in the remote configuration: ''")
-        expect(metrics.dom).toEqual({ failure: 1 })
+        expect(metrics.get().dom).toEqual({ failure: 1 })
       })
 
       it('should resolve to undefined if the element is missing', () => {
@@ -269,7 +274,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#missing' } },
           { version: undefined }
         )
-        expect(metrics.dom).toEqual({ missing: 1 })
+        expect(metrics.get().dom).toEqual({ missing: 1 })
       })
 
       it('should resolve a configuration value from an element attribute', () => {
@@ -286,7 +291,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version2', attribute: 'missing' } },
           { version: undefined }
         )
-        expect(metrics.dom).toEqual({ missing: 1 })
+        expect(metrics.get().dom).toEqual({ missing: 1 })
       })
 
       it('should resolve to undefined if trying to access a password input value attribute', () => {
@@ -311,7 +316,7 @@ describe('remoteConfiguration', () => {
           },
           { version: 'bar' }
         )
-        expect(metrics.js).toEqual({ success: 1 })
+        expect(metrics.get().js).toEqual({ success: 1 })
       })
 
       it('should resolve a value from an object property', () => {
@@ -410,7 +415,7 @@ describe('remoteConfiguration', () => {
           { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid JSON path in the remote configuration: '.'")
-        expect(metrics.js).toEqual({ failure: 1 })
+        expect(metrics.get().js).toEqual({ failure: 1 })
       })
 
       it('should resolve to undefined and display an error if the variable access throws', () => {
@@ -429,7 +434,7 @@ describe('remoteConfiguration', () => {
           { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Error accessing: 'foo.bar'", new Error('foo'))
-        expect(metrics.js).toEqual({ failure: 1 })
+        expect(metrics.get().js).toEqual({ failure: 1 })
       })
 
       it('should resolve to undefined if the variable does not exist', () => {
@@ -439,7 +444,7 @@ describe('remoteConfiguration', () => {
           },
           { version: undefined }
         )
-        expect(metrics.js).toEqual({ missing: 1 })
+        expect(metrics.get().js).toEqual({ missing: 1 })
       })
 
       it('should resolve to undefined if the property does not exist', () => {
@@ -454,7 +459,7 @@ describe('remoteConfiguration', () => {
           },
           { version: undefined }
         )
-        expect(metrics.js).toEqual({ missing: 1 })
+        expect(metrics.get().js).toEqual({ missing: 1 })
       })
 
       it('should resolve to undefined if the array index does not exist', () => {
@@ -469,7 +474,7 @@ describe('remoteConfiguration', () => {
           },
           { version: undefined }
         )
-        expect(metrics.js).toEqual({ missing: 1 })
+        expect(metrics.get().js).toEqual({ missing: 1 })
       })
     })
 
@@ -651,7 +656,7 @@ describe('remoteConfiguration', () => {
           },
           {}
         )
-        expect(metrics).toEqual(
+        expect(metrics.get()).toEqual(
           jasmine.objectContaining({
             cookie: { success: 2, missing: 1 },
             js: { success: 1 },
