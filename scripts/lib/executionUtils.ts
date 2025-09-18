@@ -46,7 +46,14 @@ interface FetchError extends Error {
 export async function fetchHandlingError(url: string, options?: RequestInit): Promise<Response> {
   const response = await fetch(url, options)
   if (!response.ok) {
-    const error = new Error(`HTTP Error Response: ${response.status} ${response.statusText}`) as FetchError
+    let cause: unknown
+    const body = await response.text()
+    try {
+      cause = JSON.parse(body)
+    } catch {
+      cause = body
+    }
+    const error = new Error(`HTTP Error Response: ${response.status} ${response.statusText}`, { cause }) as FetchError
     error.status = response.status
     throw error
   }
