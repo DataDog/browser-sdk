@@ -5,7 +5,7 @@ import type {
   RawTelemetryEvent,
   Telemetry,
 } from '@datadog/browser-core'
-import { BridgeCapability, display } from '@datadog/browser-core'
+import { BridgeCapability, display, TelemetryMetrics } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
@@ -22,7 +22,6 @@ import { resetDeflateWorkerState } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import * as replayStats from '../domain/replayStats'
 import { type RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
-import { RECORDER_INIT_METRICS_TELEMETRY_NAME } from '../domain/replayTelemetryConstants'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
 
@@ -70,7 +69,10 @@ describe('makeRecorderApi', () => {
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
         worker,
-        { enabled: true, enabledMetrics: { [RECORDER_INIT_METRICS_TELEMETRY_NAME]: true } } as unknown as Telemetry
+        {
+          enabled: true,
+          enabledMetrics: { [TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME]: true },
+        } as unknown as Telemetry
       )
     }
 

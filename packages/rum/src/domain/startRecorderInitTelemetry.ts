@@ -1,7 +1,6 @@
 import type { Context, Duration, Telemetry, Observable, TimeStamp } from '@datadog/browser-core'
-import { addTelemetryMetrics, noop, timeStampNow, elapsed } from '@datadog/browser-core'
+import { TelemetryMetrics, addTelemetryMetrics, noop, timeStampNow, elapsed } from '@datadog/browser-core'
 import type { RecorderInitEvent } from '../boot/postStartStrategy'
-import { RECORDER_INIT_METRICS_TELEMETRY_NAME } from './replayTelemetryConstants'
 
 type RecorderInitResult = 'aborted' | 'deflate-encoder-load-failed' | 'recorder-load-failed' | 'succeeded'
 
@@ -14,7 +13,7 @@ export interface RecorderInitMetrics extends Context {
 }
 
 export function startRecorderInitTelemetry(telemetry: Telemetry, observable: Observable<RecorderInitEvent>) {
-  const recorderInitTelemetryEnabled = telemetry.enabledMetrics[RECORDER_INIT_METRICS_TELEMETRY_NAME]
+  const recorderInitTelemetryEnabled = telemetry.enabledMetrics[TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME]
   if (!recorderInitTelemetryEnabled) {
     return { stop: noop }
   }
@@ -57,7 +56,7 @@ export function startRecorderInitTelemetry(telemetry: Telemetry, observable: Obs
         unsubscribe()
 
         if (startContext) {
-          addTelemetryMetrics(RECORDER_INIT_METRICS_TELEMETRY_NAME, {
+          addTelemetryMetrics(TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME, {
             metrics: createRecorderInitMetrics(
               startContext.forced,
               recorderSettledDuration,

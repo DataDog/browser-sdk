@@ -1,6 +1,5 @@
 import type { BandwidthStats, Context, HttpRequestEvent, Observable, Telemetry } from '@datadog/browser-core'
-import { addTelemetryMetrics, noop } from '@datadog/browser-core'
-import { SEGMENT_METRICS_TELEMETRY_NAME } from '../replayTelemetryConstants'
+import { TelemetryMetrics, addTelemetryMetrics, noop } from '@datadog/browser-core'
 import type { ReplayPayload } from './buildReplayPayload'
 
 interface SegmentMetrics extends Context {
@@ -31,7 +30,7 @@ export function startSegmentTelemetry(
   telemetry: Telemetry,
   requestObservable: Observable<HttpRequestEvent<ReplayPayload>>
 ) {
-  const segmentTelemetryEnabled = telemetry.enabledMetrics[SEGMENT_METRICS_TELEMETRY_NAME]
+  const segmentTelemetryEnabled = telemetry.enabledMetrics[TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME]
   if (!segmentTelemetryEnabled) {
     return { stop: noop }
   }
@@ -43,7 +42,7 @@ export function startSegmentTelemetry(
       (requestEvent.type === 'success' && requestEvent.payload.isFullSnapshot)
     ) {
       const metrics = createSegmentMetrics(requestEvent.type, requestEvent.bandwidth, requestEvent.payload)
-      addTelemetryMetrics(SEGMENT_METRICS_TELEMETRY_NAME, { metrics })
+      addTelemetryMetrics(TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, { metrics })
     }
   })
 

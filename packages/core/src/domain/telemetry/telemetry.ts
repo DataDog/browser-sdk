@@ -62,9 +62,16 @@ export interface Telemetry {
   enabledMetrics: { [metricName: string]: boolean }
 }
 
-export interface SampleRateByMetric {
-  [metricName: string]: number
+// eslint-disable-next-line no-restricted-syntax
+export enum TelemetryMetrics {
+  CUSTOMER_DATA_METRIC_NAME = 'Customer data measures',
+  REMOTE_CONFIGURATION_METRIC_NAME = 'remote configuration metrics',
+  RECORDER_INIT_METRICS_TELEMETRY_NAME = 'Recorder init metrics',
+  SEGMENT_METRICS_TELEMETRY_NAME = 'Segment network request metrics',
+  INITIAL_VIEW_METRICS_TELEMETRY_NAME = 'Initial view metrics',
 }
+
+const METRIC_SAMPLE_RATE = 1
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
@@ -83,20 +90,13 @@ export function startTelemetry(
   hooks: AbstractHooks,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-  sampleRateByMetric: SampleRateByMetric = {}
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
 
   const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
 
-  const { enabled, enabledMetrics } = startTelemetryCollection(
-    telemetryService,
-    configuration,
-    hooks,
-    observable,
-    sampleRateByMetric
-  )
+  const { enabled, enabledMetrics } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
 
   return {
     stop,
@@ -110,7 +110,7 @@ export function startTelemetryCollection(
   configuration: Configuration,
   hooks: AbstractHooks,
   observable: Observable<TelemetryEvent & Context>,
-  sampleRateByMetric: SampleRateByMetric
+  metricSampleRate = METRIC_SAMPLE_RATE
 ) {
   const alreadySentEventsByKind: Record<string, Set<string>> = {}
 
@@ -124,8 +124,8 @@ export function startTelemetryCollection(
   }
 
   const telemetryEnabledPerMetrics: { [metricName: string]: boolean } = {}
-  Object.keys(sampleRateByMetric).forEach((metricName) => {
-    telemetryEnabledPerMetrics[metricName] = telemetryEnabled && performDraw(sampleRateByMetric[metricName])
+  Object.values(TelemetryMetrics).forEach((metricName) => {
+    telemetryEnabledPerMetrics[metricName] = telemetryEnabled && performDraw(metricSampleRate)
   })
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
@@ -304,7 +304,7 @@ export function addTelemetryConfiguration(configuration: RawTelemetryConfigurati
   })
 }
 
-export function addTelemetryMetrics(kind: string, context?: Context) {
+export function addTelemetryMetrics(kind: TelemetryMetrics, context?: Context) {
   getTelemetryObservable().notify({
     rawEvent: {
       type: TelemetryType.LOG,

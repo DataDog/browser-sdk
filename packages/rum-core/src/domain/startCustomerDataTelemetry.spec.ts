@@ -1,15 +1,11 @@
 import type { FlushEvent, Context, Telemetry } from '@datadog/browser-core'
-import { Observable, resetExperimentalFeatures } from '@datadog/browser-core'
+import { Observable, resetExperimentalFeatures, TelemetryMetrics } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import {
-  MEASURES_PERIOD_DURATION,
-  startCustomerDataTelemetry,
-  CUSTOMER_DATA_METRIC_NAME,
-} from './startCustomerDataTelemetry'
+import { MEASURES_PERIOD_DURATION, startCustomerDataTelemetry } from './startCustomerDataTelemetry'
 
 describe('customerDataTelemetry', () => {
   let clock: Clock
@@ -50,7 +46,7 @@ describe('customerDataTelemetry', () => {
     telemetry = startMockTelemetry()
 
     startCustomerDataTelemetry(
-      { enabledMetrics: { [CUSTOMER_DATA_METRIC_NAME]: telemetryEnabled } } as unknown as Telemetry,
+      { enabledMetrics: { [TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME]: telemetryEnabled } } as unknown as Telemetry,
       lifeCycle,
       batchFlushObservable
     )

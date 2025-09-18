@@ -40,7 +40,6 @@ export type {
   TelemetryUsageEvent,
   RawTelemetryUsage,
   RawTelemetryUsageFeature,
-  SampleRateByMetric,
 } from './domain/telemetry'
 export {
   startTelemetry,
@@ -48,6 +47,7 @@ export {
   addTelemetryError,
   resetTelemetry,
   TelemetryService,
+  TelemetryMetrics,
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,

@@ -1,9 +1,8 @@
 import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
-import { Observable } from '@datadog/browser-core'
+import { Observable, TelemetryMetrics } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { startMockTelemetry } from '../../../../core/test'
-import { SEGMENT_METRICS_TELEMETRY_NAME } from '../replayTelemetryConstants'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
 
@@ -47,7 +46,9 @@ describe('segmentTelemetry', () => {
     requestObservable = new Observable()
     telemetry = startMockTelemetry()
     ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry(
-      { enabledMetrics: { [SEGMENT_METRICS_TELEMETRY_NAME]: telemetryEnabled } } as unknown as Telemetry,
+      {
+        enabledMetrics: { [TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME]: telemetryEnabled },
+      } as unknown as Telemetry,
       requestObservable
     ))
     registerCleanupTask(stopSegmentTelemetry)

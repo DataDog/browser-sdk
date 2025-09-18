@@ -8,5 +8,4 @@ export const noopRecorderApi: RecorderApi = {
   onRumStart: noop,
   getReplayStats: () => undefined,
   getSessionReplayLink: () => undefined,
-  getTelemetrySampleRateByMetric: () => undefined,
 }

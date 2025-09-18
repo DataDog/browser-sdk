@@ -1,12 +1,18 @@
 import type { createContextManager, Context } from '@datadog/browser-core'
-import { display, buildEndpointHost, mapValues, getCookie, addTelemetryMetrics } from '@datadog/browser-core'
+import {
+  display,
+  buildEndpointHost,
+  mapValues,
+  getCookie,
+  addTelemetryMetrics,
+  TelemetryMetrics,
+} from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
 
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
-export const REMOTE_CONFIGURATION_METRIC_NAME = 'remote configuration metrics'
 const REMOTE_CONFIGURATION_VERSION = 'v1'
 const SUPPORTED_FIELDS: Array<keyof RumInitConfiguration> = [
   'applicationId',
@@ -68,7 +74,7 @@ export async function fetchAndApplyRemoteConfiguration(
       metrics
     )
   }
-  addTelemetryMetrics(REMOTE_CONFIGURATION_METRIC_NAME, { metrics })
+  addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics })
   return rumInitConfiguration
 }
 

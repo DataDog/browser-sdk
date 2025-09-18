@@ -1,9 +1,8 @@
 import type { Telemetry, RelativeTime, Duration, RawTelemetryEvent } from '@datadog/browser-core'
+import { TelemetryMetrics } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
-import { mockRumConfiguration } from '../../../../test'
 import type { ViewEvent } from '../trackViews'
 import { startInitialViewMetricsTelemetry } from './startInitialViewMetricsTelemetry'
 import type { InitialViewMetrics } from './trackInitialViewMetrics'
@@ -43,26 +42,15 @@ describe('startInitialViewMetricsTelemetry', () => {
   const lifeCycle = new LifeCycle()
   let telemetry: MockTelemetry
 
-  const config: Partial<RumConfiguration> = {
-    maxTelemetryEventsPerPage: 2,
-    initialViewMetricsTelemetrySampleRate: 100,
-    telemetrySampleRate: 100,
-  }
-
   function generateViewUpdateWithInitialViewMetrics(initialViewMetrics: Partial<InitialViewMetrics>) {
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { initialViewMetrics } as ViewEvent)
   }
 
-  function startInitialViewMetricsTelemetryCollection(partialConfig: Partial<RumConfiguration> = config) {
-    const configuration = mockRumConfiguration(partialConfig)
+  function startInitialViewMetricsTelemetryCollection(telemetryEnabled = true) {
     telemetry = startMockTelemetry()
-    const { stop: stopInitialViewMetricsTelemetryCollection } = startInitialViewMetricsTelemetry(
-      configuration,
-      lifeCycle,
-      {
-        enabled: true,
-      } as Telemetry
-    )
+    const { stop: stopInitialViewMetricsTelemetryCollection } = startInitialViewMetricsTelemetry(lifeCycle, {
+      enabledMetrics: { [TelemetryMetrics.INITIAL_VIEW_METRICS_TELEMETRY_NAME]: telemetryEnabled },
+    } as unknown as Telemetry)
     registerCleanupTask(stopInitialViewMetricsTelemetryCollection)
   }
 
@@ -117,10 +105,7 @@ describe('startInitialViewMetricsTelemetry', () => {
   })
 
   it('should not collect initial view metrics telemetry when telemetry is disabled', async () => {
-    startInitialViewMetricsTelemetryCollection({
-      telemetrySampleRate: 100,
-      initialViewMetricsTelemetrySampleRate: 0,
-    })
+    startInitialViewMetricsTelemetryCollection(false)
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
     expect(await telemetry.hasEvents()).toBe(false)
   })

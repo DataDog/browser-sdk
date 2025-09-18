@@ -1,10 +1,9 @@
 import type { Context, FlushEvent, Observable, Telemetry } from '@datadog/browser-core'
-import { ONE_SECOND, addTelemetryMetrics, setInterval } from '@datadog/browser-core'
+import { ONE_SECOND, addTelemetryMetrics, setInterval, TelemetryMetrics } from '@datadog/browser-core'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
 export const MEASURES_PERIOD_DURATION = 10 * ONE_SECOND
-export const CUSTOMER_DATA_METRIC_NAME = 'Customer data measures'
 
 interface Measure extends Context {
   min: number
@@ -26,7 +25,7 @@ export function startCustomerDataTelemetry(
   lifeCycle: LifeCycle,
   batchFlushObservable: Observable<FlushEvent>
 ) {
-  const customerDataTelemetryEnabled = telemetry.enabledMetrics[CUSTOMER_DATA_METRIC_NAME]
+  const customerDataTelemetryEnabled = telemetry.enabledMetrics[TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME]
   if (!customerDataTelemetryEnabled) {
     return
   }
@@ -60,7 +59,7 @@ function sendCurrentPeriodMeasures() {
     return
   }
 
-  addTelemetryMetrics(CUSTOMER_DATA_METRIC_NAME, currentPeriodMeasures)
+  addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, currentPeriodMeasures)
   initCurrentPeriodMeasures()
 }
 
