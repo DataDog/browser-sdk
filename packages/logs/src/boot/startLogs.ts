@@ -70,7 +70,7 @@ export function startLogs(
   cleanupTasks.push(telemetry.stop)
 
   const session =
-    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum() && !isWorkerEnvironment
+    configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
       ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
