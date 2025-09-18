@@ -51,7 +51,7 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
     await callGitHubApi('GET', `releases/tags/${version}`, readToken)
     throw new Error(`Release ${version} already exists`)
   } catch (error) {
-    if ((error as any).status !== 404) {
+    if ((error as any).cause?.status !== 404) {
       throw error
     }
   }
