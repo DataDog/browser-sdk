@@ -40,7 +40,7 @@ interface SupportedContextManagers {
   context: ReturnType<typeof createContextManager>
 }
 
-export interface RemoteConfigurationMetrics {
+export interface RemoteConfigurationMetrics extends Context {
   fetch: RemoteConfigurationMetricCounters
   cookie?: RemoteConfigurationMetricCounters
   dom?: RemoteConfigurationMetricCounters
@@ -51,6 +51,7 @@ interface RemoteConfigurationMetricCounters {
   success?: number
   missing?: number
   failure?: number
+  [key: string]: number | undefined
 }
 
 type ResolveEvent = [DynamicOption['strategy'], keyof RemoteConfigurationMetricCounters]
@@ -74,7 +75,7 @@ export async function fetchAndApplyRemoteConfiguration(
       metrics
     )
   }
-  addTelemetryMetrics(REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics as unknown as Context })
+  addTelemetryMetrics(REMOTE_CONFIGURATION_METRIC_NAME, { metrics })
   return rumInitConfiguration
 }
 
