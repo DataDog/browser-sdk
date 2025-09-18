@@ -199,6 +199,14 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackLongTasks?: boolean | undefined
 
   /**
+   * Enables early request collection before resource timing entries are available.
+   *
+   * @category Data Collection
+   * @defaultValue false
+   */
+  trackEarlyRequests?: boolean | undefined
+
+  /**
    * List of plugins to enable. The plugins API is unstable and experimental, and may change without
    * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
    * using.
@@ -258,6 +266,7 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean
   trackLongTasks: boolean
   trackBfcacheViews: boolean
+  trackEarlyRequests: boolean
   subdomain?: string
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
@@ -327,6 +336,7 @@ export function validateAndBuildRumConfiguration(
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
     trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
+    trackEarlyRequests: !!initConfiguration.trackEarlyRequests,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
@@ -462,6 +472,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
     track_bfcache_views: configuration.trackBfcacheViews,
+    track_early_requests: configuration.trackEarlyRequests,
     plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),

@@ -51,7 +51,7 @@ export function startResourceCollection(
   retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
 ) {
   let requestRegistry: RequestRegistry | undefined
-  const isEarlyRequestCollectionEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.EARLY_REQUEST_COLLECTION)
+  const isEarlyRequestCollectionEnabled = configuration.trackEarlyRequests
 
   if (isEarlyRequestCollectionEnabled) {
     requestRegistry = createRequestRegistry(lifeCycle)
