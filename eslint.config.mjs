@@ -105,7 +105,6 @@ export default tseslint.config(
       'no-inner-declarations': 'error',
       'no-new-func': 'error',
       'no-new-wrappers': 'error',
-      'no-return-await': 'error',
       'no-sequences': 'error',
       'no-template-curly-in-string': 'error',
       'no-undef-init': 'error',

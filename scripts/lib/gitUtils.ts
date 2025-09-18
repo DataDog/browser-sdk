@@ -58,7 +58,7 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
 
   // content write
   using releaseToken = getGithubReleaseToken()
-  return callGitHubApi<GitHubRelease>('POST', 'releases', releaseToken, {
+  return await callGitHubApi<GitHubRelease>('POST', 'releases', releaseToken, {
     tag_name: version,
     name: version,
     body,
