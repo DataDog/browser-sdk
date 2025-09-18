@@ -25,7 +25,6 @@ interface GitHubRelease {
 }
 
 interface GitHubReleaseParams {
-  tag_name: string
   version: string
   body: string
 }
@@ -46,7 +45,7 @@ export async function fetchPR(localBranch: string): Promise<GitHubPR | null> {
  * @param params.version - The version to create a release for.
  * @param params.body - The body of the release.
  */
-export async function createGitHubRelease({ version, body, tag_name }: GitHubReleaseParams): Promise<GitHubRelease> {
+export async function createGitHubRelease({ version, body }: GitHubReleaseParams): Promise<GitHubRelease> {
   using readToken = getGithubReadToken()
   try {
     await callGitHubApi('GET', `releases/tags/${version}`, readToken)
