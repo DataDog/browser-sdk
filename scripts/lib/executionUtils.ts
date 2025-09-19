@@ -39,8 +39,29 @@ export function printLog(...params: any[]): void {
   console.log(greenColor, ...params, resetColor)
 }
 
-interface FetchError extends Error {
-  status?: number
+/**
+ * Find an error of type T in the provided error or its causes.
+ */
+export function findError<T>(error: unknown, type: new (...args: any[]) => T): T | undefined {
+  while (error) {
+    if (error instanceof type) {
+      return error
+    }
+    if (error instanceof Error && error.cause) {
+      error = error.cause
+    } else {
+      break
+    }
+  }
+}
+
+export class FetchError extends Error {
+  public readonly response: Response
+
+  constructor(response: Response, options?: ErrorOptions) {
+    super(`HTTP Error Response: ${response.status} ${response.statusText}`, options)
+    this.response = response
+  }
 }
 
 export async function fetchHandlingError(url: string, options?: RequestInit): Promise<Response> {
@@ -53,9 +74,7 @@ export async function fetchHandlingError(url: string, options?: RequestInit): Pr
     } catch {
       cause = body
     }
-    const error = new Error(`HTTP Error Response: ${response.status} ${response.statusText}`, { cause }) as FetchError
-    error.status = response.status
-    throw error
+    throw new FetchError(response, { cause })
   }
 
   return response

@@ -2,8 +2,8 @@ import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { createMessage } from './reportAsAPrComment.ts'
 
-void describe('reportAsAPrComment', () => {
-  void describe('createMessage', () => {
+describe('reportAsAPrComment', () => {
+  describe('createMessage', () => {
     const TEST_BUNDLE = 'test'
     const PR_NUMBER = 123
 
@@ -14,7 +14,7 @@ void describe('reportAsAPrComment', () => {
     const MEMORY_LOCAL_PERFORMANCE = [{ testProperty: TEST_BUNDLE, sdkMemoryBytes: 101, sdkMemoryPercentage: 10 }]
     const CPU_LOCAL_PERFORMANCE = [{ name: TEST_BUNDLE, value: 101 }]
 
-    void it('should generate a report with performance results', () => {
+    it('should generate a report with performance results', () => {
       const localBundleSizes = { test: 101 }
 
       const message = createMessage(
@@ -58,7 +58,7 @@ void describe('reportAsAPrComment', () => {
       )
     })
 
-    void it('should add a warning when the size increase is above the threshold', () => {
+    it('should add a warning when the size increase is above the threshold', () => {
       const localBundleSizes = { test: 150 }
 
       const message = createMessage(

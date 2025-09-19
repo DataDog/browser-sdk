@@ -105,7 +105,6 @@ export default tseslint.config(
       'no-inner-declarations': 'error',
       'no-new-func': 'error',
       'no-new-wrappers': 'error',
-      'no-return-await': 'error',
       'no-sequences': 'error',
       'no-template-curly-in-string': 'error',
       'no-undef-init': 'error',
@@ -202,6 +201,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'all', argsIgnorePattern: '^_', vars: 'all' }],
       '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' }] },
+      ],
 
       'import/no-cycle': 'error',
       'import/no-default-export': 'error',
