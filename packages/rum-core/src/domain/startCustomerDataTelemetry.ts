@@ -61,6 +61,7 @@ function sendCurrentPeriodMeasures() {
     return
   }
 
+  // monitor-until: forever
   addTelemetryMetrics('Customer data measures', currentPeriodMeasures)
   initCurrentPeriodMeasures()
 }

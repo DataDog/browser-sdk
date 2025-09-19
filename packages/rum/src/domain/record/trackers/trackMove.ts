@@ -1,4 +1,4 @@
-import { addEventListeners, addTelemetryDebug, DOM_EVENT, throttle } from '@datadog/browser-core'
+import { addEventListeners, DOM_EVENT, throttle } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import type { BrowserIncrementalSnapshotRecord, MousemoveData, MousePosition } from '../../../types'
@@ -69,9 +69,6 @@ export function tryToComputeCoordinates(event: MouseEvent | TouchEvent) {
     y = visualViewportY
   }
   if (!Number.isFinite(x) || !Number.isFinite(y)) {
-    if (event.isTrusted) {
-      addTelemetryDebug('mouse/touch event without x/y')
-    }
     return undefined
   }
   return { x, y }

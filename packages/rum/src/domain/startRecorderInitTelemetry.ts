@@ -63,6 +63,7 @@ export function startRecorderInitTelemetry(
         unsubscribe()
 
         if (startContext) {
+          // monitor-until: forever
           addTelemetryMetrics(RECORDER_INIT_METRICS_TELEMETRY_NAME, {
             metrics: createRecorderInitMetrics(
               startContext.forced,

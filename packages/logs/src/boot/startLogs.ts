@@ -80,7 +80,7 @@ export function startLogs(
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
   const userContext = startUserContext(hooks, configuration, session, LOGS_STORAGE_KEY)
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
-  const { stop } = startRUMInternalContext(hooks)
+  startRUMInternalContext(hooks)
 
   startNetworkErrorCollection(configuration, lifeCycle)
   startRuntimeErrorCollection(configuration, lifeCycle, bufferedDataObservable)
@@ -114,7 +114,6 @@ export function startLogs(
     userContext,
     stop: () => {
       cleanupTasks.forEach((task) => task())
-      stop()
     },
   }
 }
