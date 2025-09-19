@@ -35,7 +35,7 @@ export function startInitialViewMetricsTelemetry(lifeCycle: LifeCycle, telemetry
     // performance issues early in the page load process, and using LCP-at-page-load is a
     // good fit for that use case, but it's important to be aware that this is not
     // necessarily equivalent to the normal LCP metric.
-
+    // monitor-until: forever
     addTelemetryMetrics(TelemetryMetrics.INITIAL_VIEW_METRICS_TELEMETRY_NAME, {
       metrics: createCoreInitialViewMetrics(
         initialViewMetrics.largestContentfulPaint,

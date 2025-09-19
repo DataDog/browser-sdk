@@ -55,6 +55,7 @@ export function startRecorderInitTelemetry(telemetry: Telemetry, observable: Obs
         unsubscribe()
 
         if (startContext) {
+          // monitor-until: forever
           addTelemetryMetrics(TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME, {
             metrics: createRecorderInitMetrics(
               startContext.forced,
