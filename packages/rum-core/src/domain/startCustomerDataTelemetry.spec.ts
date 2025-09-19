@@ -45,7 +45,7 @@ describe('customerDataTelemetry', () => {
 
     telemetry = startMockTelemetry()
 
-    startCustomerDataTelemetry({ metricsEnabled } as unknown as Telemetry, lifeCycle, batchFlushObservable)
+    startCustomerDataTelemetry({ metricsEnabled } as Telemetry, lifeCycle, batchFlushObservable)
   }
 
   beforeEach(() => {

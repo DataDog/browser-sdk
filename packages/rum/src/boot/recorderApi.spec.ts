@@ -69,10 +69,7 @@ describe('makeRecorderApi', () => {
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
         worker,
-        {
-          enabled: true,
-          metricsEnabled: true,
-        } as unknown as Telemetry
+        { enabled: true, metricsEnabled: true } as Telemetry
       )
     }
 

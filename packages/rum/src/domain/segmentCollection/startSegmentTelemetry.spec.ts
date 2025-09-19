@@ -45,10 +45,7 @@ describe('segmentTelemetry', () => {
   function setupSegmentTelemetryCollection(metricsEnabled: boolean = true) {
     requestObservable = new Observable()
     telemetry = startMockTelemetry()
-    ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry(
-      { metricsEnabled } as unknown as Telemetry,
-      requestObservable
-    ))
+    ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry({ metricsEnabled } as Telemetry, requestObservable))
     registerCleanupTask(stopSegmentTelemetry)
   }
 

@@ -80,7 +80,7 @@ describe('lazyLoadRecorder', () => {
         {
           enabled: true,
           metricsEnabled: true,
-        } as unknown as Telemetry
+        } as Telemetry
       )
     }
 

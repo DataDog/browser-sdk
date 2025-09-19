@@ -12,10 +12,7 @@ describe('startRecorderInitTelemetry', () => {
   function startRecorderInitTelemetryCollection(metricsEnabled: boolean = true) {
     observable = new Observable<RecorderInitEvent>()
     telemetry = startMockTelemetry()
-    const { stop: stopRecorderInitTelemetry } = startRecorderInitTelemetry(
-      { metricsEnabled } as unknown as Telemetry,
-      observable
-    )
+    const { stop: stopRecorderInitTelemetry } = startRecorderInitTelemetry({ metricsEnabled } as Telemetry, observable)
     registerCleanupTask(stopRecorderInitTelemetry)
   }
 

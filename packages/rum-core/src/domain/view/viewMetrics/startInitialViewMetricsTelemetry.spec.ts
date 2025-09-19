@@ -49,7 +49,7 @@ describe('startInitialViewMetricsTelemetry', () => {
     telemetry = startMockTelemetry()
     const { stop: stopInitialViewMetricsTelemetryCollection } = startInitialViewMetricsTelemetry(lifeCycle, {
       metricsEnabled,
-    } as unknown as Telemetry)
+    } as Telemetry)
     registerCleanupTask(stopInitialViewMetricsTelemetryCollection)
   }
 
