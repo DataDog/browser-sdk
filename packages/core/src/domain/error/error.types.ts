@@ -14,7 +14,9 @@ export interface ErrorWithCause extends Omit<Error, 'cause'> {
   cause?: unknown
 }
 
-export interface RawErrorCause {
+export type RawErrorCause = unknown
+
+export interface RawFlatErrorCause {
   message: string
   source: ErrorSource
   type?: string

@@ -1,6 +1,7 @@
 import type { RelativeTime, TimeStamp, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
 import { FAKE_CSP_VIOLATION_EVENT } from '@datadog/browser-core/test'
+import type { RawFlatErrorCause } from '@datadog/browser-core/src/domain/error/error.types.ts'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumErrorEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -119,11 +120,12 @@ describe('error collection', () => {
       expect(error.message).toEqual('foo')
       expect(error.source).toEqual(ErrorSource.CUSTOM)
 
-      expect(error?.causes?.length).toEqual(2)
-      expect(error?.causes?.[0].message).toEqual('bar')
-      expect(error?.causes?.[0].source).toEqual(ErrorSource.CUSTOM)
-      expect(error?.causes?.[1].message).toEqual('biz')
-      expect(error?.causes?.[1].source).toEqual(ErrorSource.CUSTOM)
+      const causes = (error?.causes ?? []) as RawFlatErrorCause[]
+      expect(causes.length).toEqual(2)
+      expect(causes[0].message).toEqual('bar')
+      expect(causes[0].source).toEqual(ErrorSource.CUSTOM)
+      expect(causes[1].message).toEqual('biz')
+      expect(causes[1].source).toEqual(ErrorSource.CUSTOM)
     })
 
     it('should extract fingerprint from error', () => {
