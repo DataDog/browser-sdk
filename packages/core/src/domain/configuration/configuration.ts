@@ -13,6 +13,7 @@ import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import type { Site } from '../intakeSites'
+import { isWorkerEnvironment } from '../../tools/globalObject'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
 
@@ -353,7 +354,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   return {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
+    sessionStoreStrategyType: isWorkerEnvironment ? undefined : selectSessionStoreStrategyType(initConfiguration),
     sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
     telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
@@ -383,9 +384,10 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     flushTimeout: (30 * ONE_SECOND) as Duration,
 
     /**
-     * Logs intake limit
+     * Logs intake limit. When using the SDK in a Worker Environment, we
+     * limit the batch size to 1 to ensure it can be sent in a single event.
      */
-    batchMessagesLimit: 50,
+    batchMessagesLimit: isWorkerEnvironment ? 1 : 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
 
     /**

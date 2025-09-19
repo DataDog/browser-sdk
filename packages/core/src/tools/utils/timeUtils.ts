@@ -109,7 +109,9 @@ let navigationStart: TimeStamp | undefined
  */
 function getNavigationStart() {
   if (navigationStart === undefined) {
-    navigationStart = performance.timing.navigationStart as TimeStamp
+    // ServiceWorkers do not support navigationStart (it's deprecated), so we fallback to timeOrigin
+    navigationStart = (performance.timing?.navigationStart ?? performance.timeOrigin) as TimeStamp
   }
+
   return navigationStart
 }
