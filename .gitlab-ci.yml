@@ -586,3 +586,34 @@ bump-chrome-version-scheduled-failure:
     - postmessage "#browser-sdk-deploy" "$MESSAGE_TEXT"
   dependencies:
     - bump-chrome-version-scheduled
+
+########################################################################################################################
+# Check expired telemetry
+########################################################################################################################
+
+check-expired-telemetry-scheduled:
+  stage: task
+  extends: .base-configuration
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "check-expired-telemetry"
+  before_script:
+    - eval $(ssh-agent -s)
+  script:
+    - yarn
+    - MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL=error yarn lint
+  artifacts:
+    reports:
+      dotenv: build.env
+
+check-expired-telemetry-scheduled-failure:
+  extends: .prepare_notification
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "check-expired-telemetry"
+  when: on_failure
+  script:
+    - 'MESSAGE_TEXT=":fire: [*$CI_PROJECT_NAME*] <$BUILD_URL|Expired telemetry detected> :fire:"'
+    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
+  dependencies:
+    - check-expired-telemetry
