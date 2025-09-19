@@ -11,6 +11,7 @@ import globals from 'globals'
 import eslintLocalRules from './eslint-local-rules/index.js'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
+const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
 
 // eslint-disable-next-line import/no-default-export
 export default tseslint.config(
@@ -358,7 +359,7 @@ export default tseslint.config(
     ignores: [SPEC_FILES],
     rules: {
       'local-rules/enforce-monitor-until-comment': 'error',
-      'local-rules/monitor-until-comment-expired': 'warn',
+      'local-rules/monitor-until-comment-expired': MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL,
       'local-rules/disallow-side-effects': 'error',
       'local-rules/disallow-zone-js-patched-values': 'error',
       'local-rules/disallow-url-constructor-patched-values': 'error',
