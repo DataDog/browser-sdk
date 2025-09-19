@@ -5,10 +5,10 @@ import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
 import type { SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
+import type { ReplayPayload } from '../domain/segmentCollection'
 import { startSegmentCollection, SEGMENT_BYTES_LIMIT, startSegmentTelemetry } from '../domain/segmentCollection'
 import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
-import type { ReplayPayload } from '../domain/segmentCollection'
 
 export function startRecording(
   lifeCycle: LifeCycle,
@@ -43,7 +43,7 @@ export function startRecording(
     addRecord = segmentCollection.addRecord
     cleanupTasks.push(segmentCollection.stop)
 
-    const segmentTelemetry = startSegmentTelemetry(configuration, telemetry, replayRequest.observable)
+    const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
     cleanupTasks.push(segmentTelemetry.stop)
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))

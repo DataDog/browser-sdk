@@ -10,8 +10,13 @@ import {
 import { interceptRequests, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../test'
 import type { RumInitConfiguration } from './configuration'
-import type { RumRemoteConfiguration } from './remoteConfiguration'
-import { applyRemoteConfiguration, buildEndpoint, fetchRemoteConfiguration } from './remoteConfiguration'
+import {
+  type RumRemoteConfiguration,
+  initMetrics,
+  applyRemoteConfiguration,
+  buildEndpoint,
+  fetchRemoteConfiguration,
+} from './remoteConfiguration'
 
 const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   clientToken: 'xxx',
@@ -99,11 +104,15 @@ describe('remoteConfiguration', () => {
   })
 
   describe('applyRemoteConfiguration', () => {
+    const COOKIE_NAME = 'unit_rc'
+    const root = window as any
+
     let displaySpy: jasmine.Spy
     let supportedContextManagers: {
       user: ReturnType<typeof createContextManager>
       context: ReturnType<typeof createContextManager>
     }
+    let metrics: ReturnType<typeof initMetrics>
 
     function expectAppliedRemoteConfigurationToBe(
       actual: Partial<RumRemoteConfiguration>,
@@ -114,7 +123,7 @@ describe('remoteConfiguration', () => {
         ...actual,
       }
       expect(
-        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers, metrics)
       ).toEqual({
         ...DEFAULT_INIT_CONFIGURATION,
         applicationId: 'yyy',
@@ -125,6 +134,7 @@ describe('remoteConfiguration', () => {
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
       supportedContextManagers = { user: createContextManager(), context: createContextManager() }
+      metrics = initMetrics()
     })
 
     it('should override the initConfiguration options with the ones from the remote configuration', () => {
@@ -151,7 +161,7 @@ describe('remoteConfiguration', () => {
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
       }
       expect(
-        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers)
+        applyRemoteConfiguration(DEFAULT_INIT_CONFIGURATION, rumRemoteConfiguration, supportedContextManagers, metrics)
       ).toEqual({
         applicationId: 'yyy',
         clientToken: 'xxx',
@@ -194,8 +204,6 @@ describe('remoteConfiguration', () => {
     })
 
     describe('cookie strategy', () => {
-      const COOKIE_NAME = 'unit_rc'
-
       it('should resolve a configuration value from a cookie', () => {
         setCookie(COOKIE_NAME, 'my-version', ONE_MINUTE)
         registerCleanupTask(() => deleteCookie(COOKIE_NAME))
@@ -203,6 +211,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
           { version: 'my-version' }
         )
+        expect(metrics.get().cookie).toEqual({ success: 1 })
       })
 
       it('should resolve to undefined if the cookie is missing', () => {
@@ -210,6 +219,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
           { version: undefined }
         )
+        expect(metrics.get().cookie).toEqual({ missing: 1 })
       })
     })
 
@@ -226,6 +236,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version1' } },
           { version: 'version-123' }
         )
+        expect(metrics.get().dom).toEqual({ success: 1 })
       })
 
       it('should resolve a configuration value from an element text content and an extractor', () => {
@@ -255,6 +266,7 @@ describe('remoteConfiguration', () => {
           { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid selector in the remote configuration: ''")
+        expect(metrics.get().dom).toEqual({ failure: 1 })
       })
 
       it('should resolve to undefined if the element is missing', () => {
@@ -262,6 +274,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#missing' } },
           { version: undefined }
         )
+        expect(metrics.get().dom).toEqual({ missing: 1 })
       })
 
       it('should resolve a configuration value from an element attribute', () => {
@@ -278,6 +291,7 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version2', attribute: 'missing' } },
           { version: undefined }
         )
+        expect(metrics.get().dom).toEqual({ missing: 1 })
       })
 
       it('should resolve to undefined if trying to access a password input value attribute', () => {
@@ -286,12 +300,11 @@ describe('remoteConfiguration', () => {
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#pwd', attribute: 'value' } },
           { version: undefined }
         )
+        expect(displaySpy).toHaveBeenCalledWith("Forbidden element selected by the remote configuration: '#pwd'")
       })
     })
 
     describe('js strategy', () => {
-      const root = window as any
-
       it('should resolve a value from a variable content', () => {
         root.foo = 'bar'
         registerCleanupTask(() => {
@@ -303,6 +316,7 @@ describe('remoteConfiguration', () => {
           },
           { version: 'bar' }
         )
+        expect(metrics.get().js).toEqual({ success: 1 })
       })
 
       it('should resolve a value from an object property', () => {
@@ -401,6 +415,7 @@ describe('remoteConfiguration', () => {
           { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid JSON path in the remote configuration: '.'")
+        expect(metrics.get().js).toEqual({ failure: 1 })
       })
 
       it('should resolve to undefined and display an error if the variable access throws', () => {
@@ -419,6 +434,7 @@ describe('remoteConfiguration', () => {
           { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Error accessing: 'foo.bar'", new Error('foo'))
+        expect(metrics.get().js).toEqual({ failure: 1 })
       })
 
       it('should resolve to undefined if the variable does not exist', () => {
@@ -428,6 +444,7 @@ describe('remoteConfiguration', () => {
           },
           { version: undefined }
         )
+        expect(metrics.get().js).toEqual({ missing: 1 })
       })
 
       it('should resolve to undefined if the property does not exist', () => {
@@ -442,6 +459,7 @@ describe('remoteConfiguration', () => {
           },
           { version: undefined }
         )
+        expect(metrics.get().js).toEqual({ missing: 1 })
       })
 
       it('should resolve to undefined if the array index does not exist', () => {
@@ -456,12 +474,11 @@ describe('remoteConfiguration', () => {
           },
           { version: undefined }
         )
+        expect(metrics.get().js).toEqual({ missing: 1 })
       })
     })
 
     describe('with extractor', () => {
-      const COOKIE_NAME = 'unit_rc'
-
       beforeEach(() => {
         setCookie(COOKIE_NAME, 'my-version-123', ONE_MINUTE)
       })
@@ -529,8 +546,6 @@ describe('remoteConfiguration', () => {
     })
 
     describe('supported contexts', () => {
-      const COOKIE_NAME = 'unit_rc'
-
       beforeEach(() => {
         setCookie(COOKIE_NAME, 'first.second', ONE_MINUTE)
       })
@@ -590,6 +605,63 @@ describe('remoteConfiguration', () => {
         expect(supportedContextManagers.context.getContext()).toEqual({
           foo: undefined,
         })
+      })
+    })
+
+    describe('metrics', () => {
+      it('should report resolution stats', () => {
+        setCookie(COOKIE_NAME, 'my-version', ONE_MINUTE)
+        root.foo = '123'
+        registerCleanupTask(() => {
+          deleteCookie(COOKIE_NAME)
+          delete root.foo
+        })
+
+        expectAppliedRemoteConfigurationToBe(
+          {
+            context: [
+              {
+                key: 'missing-cookie',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'cookie',
+                  name: 'missing-cookie',
+                },
+              },
+              {
+                key: 'existing-cookie',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'cookie',
+                  name: COOKIE_NAME,
+                },
+              },
+              {
+                key: 'existing-cookie2',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'cookie',
+                  name: COOKIE_NAME,
+                },
+              },
+              {
+                key: 'existing-js',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'js',
+                  path: 'foo',
+                },
+              },
+            ],
+          },
+          {}
+        )
+        expect(metrics.get()).toEqual(
+          jasmine.objectContaining({
+            cookie: { success: 2, missing: 1 },
+            js: { success: 1 },
+          })
+        )
       })
     })
   })

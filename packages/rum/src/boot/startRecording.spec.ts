@@ -42,7 +42,7 @@ describe('startRecording', () => {
     const viewHistory = startViewHistory(lifeCycle)
     initialView(lifeCycle)
 
-    const mockTelemetry = { enabled: true } as Telemetry
+    const mockTelemetry = { enabled: true, metricsEnabled: true } as Telemetry
 
     const recording = startRecording(
       lifeCycle,

@@ -2,8 +2,6 @@ import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/brows
 import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { mockRumConfiguration } from '@datadog/browser-rum-core/test'
 import { startMockTelemetry } from '../../../../core/test'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
@@ -12,12 +10,6 @@ describe('segmentTelemetry', () => {
   let requestObservable: Observable<HttpRequestEvent<ReplayPayload>>
   let telemetry: MockTelemetry
   let stopSegmentTelemetry: (() => void) | undefined
-
-  const config: Partial<RumConfiguration> = {
-    maxTelemetryEventsPerPage: 2,
-    replayTelemetrySampleRate: 100,
-    telemetrySampleRate: 100,
-  }
 
   function generateReplayRequest({
     result,
@@ -50,15 +42,10 @@ describe('segmentTelemetry', () => {
     requestObservable.notify({ type: result, bandwidth, payload })
   }
 
-  function setupSegmentTelemetryCollection(partialConfig: Partial<RumConfiguration> = config) {
-    const configuration = mockRumConfiguration(partialConfig)
+  function setupSegmentTelemetryCollection(metricsEnabled: boolean = true) {
     requestObservable = new Observable()
     telemetry = startMockTelemetry()
-    ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry(
-      configuration,
-      { enabled: true } as Telemetry,
-      requestObservable
-    ))
+    ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry({ metricsEnabled } as Telemetry, requestObservable))
     registerCleanupTask(stopSegmentTelemetry)
   }
 
@@ -151,10 +138,7 @@ describe('segmentTelemetry', () => {
   })
 
   it('should not collect segment when telemetry disabled', async () => {
-    setupSegmentTelemetryCollection({
-      replayTelemetrySampleRate: 0,
-      telemetrySampleRate: 100,
-    })
+    setupSegmentTelemetryCollection(false)
     generateReplayRequest({ result: 'success', isFullSnapshot: true })
     expect(await telemetry.hasEvents()).toBe(false)
   })

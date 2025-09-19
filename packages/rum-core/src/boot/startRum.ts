@@ -118,7 +118,7 @@ export function startRum(
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushController.flushObservable)
+    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }
@@ -181,11 +181,7 @@ export function startRum(
 
   cleanupTasks.push(stopViewCollection)
 
-  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(
-    configuration,
-    lifeCycle,
-    telemetry
-  )
+  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
   cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
