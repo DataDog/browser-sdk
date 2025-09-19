@@ -615,6 +615,6 @@ check-expired-telemetry-scheduled-failure:
   when: on_failure
   script:
     - 'MESSAGE_TEXT="[TEST] :fire: [*$CI_PROJECT_NAME*] <$BUILD_URL|Expired telemetry detected> :fire:"'
-    - postmessage "#rum-browser-sdk-ops" "$MESSAGE_TEXT"
+    - postmessage "#sandbox-bastien_caudan" "$MESSAGE_TEXT"
   dependencies:
     - check-expired-telemetry-scheduled
