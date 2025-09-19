@@ -66,16 +66,6 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
   })
 }
 
-export async function getPrComments(prNumber: number): Promise<Array<{ id: number; body: string }>> {
-  using readToken = getGithubReadToken()
-  const response = await callGitHubApi<Array<{ id: number; body: string }>>(
-    'GET',
-    `issues/${prNumber}/comments`,
-    readToken
-  )
-  return response
-}
-
 export function createPullRequest(mainBranch: string) {
   using token = getGithubPullRequestToken()
   command`gh auth login --with-token`.withInput(token.value).run()
