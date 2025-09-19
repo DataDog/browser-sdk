@@ -2,13 +2,9 @@ import type { Payload } from '@datadog/browser-core'
 import { addTelemetryDebug, buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace } from '../types'
+import { buildProfileEventAttributes } from './buildProfileEventAttributes'
+import type { ProfileEventAttributes } from './buildProfileEventAttributes'
 
-interface ProfileEventAttributes {
-  application: { id: string }
-  session?: { id: string }
-  view?: { id: string[] }
-  long_task?: { id: string[] }
-}
 interface ProfileEvent extends ProfileEventAttributes {
   attachments: string[]
   start: string // ISO date
@@ -106,43 +102,6 @@ function buildProfilingPayload(profilerTrace: RumProfilerTrace, profileEvent: Pr
   formData.append('wall-time.json', profilerTraceBlob, 'wall-time.json')
 
   return { data: formData, bytesCount: 0 }
-}
-
-/**
- * Builds attributes for the Profile Event.
- *
- * @param profilerTrace - Profiler trace
- * @param applicationId - application id.
- * @param sessionId - session id.
- * @returns Additional attributes.
- */
-function buildProfileEventAttributes(
-  profilerTrace: RumProfilerTrace,
-  applicationId: string,
-  sessionId: string | undefined
-): ProfileEventAttributes {
-  const attributes: ProfileEventAttributes = {
-    application: {
-      id: applicationId,
-    },
-  }
-  if (sessionId) {
-    attributes.session = {
-      id: sessionId,
-    }
-  }
-  const viewIds = Array.from(new Set(profilerTrace.views.map((viewEntry) => viewEntry.viewId)))
-  if (viewIds.length) {
-    attributes.view = {
-      id: viewIds,
-    }
-  }
-  const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
-
-  if (longTaskIds.length) {
-    attributes.long_task = { id: longTaskIds }
-  }
-  return attributes
 }
 
 export const transport = {

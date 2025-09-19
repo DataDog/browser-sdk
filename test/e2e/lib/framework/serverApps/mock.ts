@@ -6,6 +6,7 @@ import type { RemoteConfiguration } from '@datadog/browser-rum-core'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
+import { workerSetup } from '../pageSetups'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
@@ -42,6 +43,14 @@ export function createMockServerApp(
   app.get('/large-response', (_req, res) => {
     const chunkText = 'foofoobarbar\n'.repeat(50)
     generateLargeResponse(res, chunkText)
+  })
+
+  app.get('/sw.js', (_req, res) => {
+    const query = _req.query
+
+    res
+      .contentType('application/javascript')
+      .send(workerSetup({ importScripts: Boolean(query.importScripts), nativeLog: Boolean(query.nativeLog) }, servers))
   })
 
   function generateLargeResponse(res: ServerResponse, chunkText: string) {
@@ -88,6 +97,11 @@ export function createMockServerApp(
     setTimeout(() => res.send('ok'), timeoutDuration)
   })
 
+  app.post('/graphql', (_req, res) => {
+    res.header('Content-Type', 'application/json')
+    res.json({ data: { result: 'success' } })
+  })
+
   app.get('/redirect', (req, res) => {
     const redirectUri = url.parse(req.originalUrl)
     res.redirect(`ok${redirectUri.search!}`)
@@ -103,7 +117,7 @@ export function createMockServerApp(
       [
         `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
         `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.url}`,
-        'worker-src blob:',
+        "worker-src blob: 'self'",
       ].join(';')
     )
     res.send(setup)

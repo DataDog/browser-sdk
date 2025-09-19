@@ -3,8 +3,8 @@ import { Observable, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
+import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
-import type { RumEvent } from '../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import { MEASURES_PERIOD_DURATION, startCustomerDataTelemetry } from './startCustomerDataTelemetry'
 import type { RumConfiguration } from './configuration'
@@ -15,7 +15,7 @@ describe('customerDataTelemetry', () => {
   let telemetry: MockTelemetry
   let fakeContextBytesCount: number
   let lifeCycle: LifeCycle
-  const viewEvent = { type: RumEventType.VIEW } as RumEvent & Context
+  const viewEvent = { type: RumEventType.VIEW } as AssembledRumEvent
 
   const config: Partial<RumConfiguration> = {
     telemetrySampleRate: 100,

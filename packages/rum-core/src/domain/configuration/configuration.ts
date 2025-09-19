@@ -10,6 +10,7 @@ import {
   validateAndBuildConfiguration,
   isSampleRate,
   isNumber,
+  isNonEmptyArray,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -198,6 +199,14 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackLongTasks?: boolean | undefined
 
   /**
+   * Enables early request collection before resource timing entries are available.
+   *
+   * @category Data Collection
+   * @defaultValue false
+   */
+  trackEarlyRequests?: boolean | undefined
+
+  /**
    * List of plugins to enable. The plugins API is unstable and experimental, and may change without
    * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
    * using.
@@ -220,11 +229,23 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue 0
    */
   profilingSampleRate?: number | undefined
+
+  /**
+   * A list of GraphQL endpoint URLs to track and enrich with GraphQL-specific metadata.
+   *
+   * @category Data Collection
+   */
+  allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
+
+export interface GraphQlUrlOption {
+  match: MatchOption
+  trackPayload?: boolean
+}
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
@@ -245,6 +266,7 @@ export interface RumConfiguration extends Configuration {
   trackResources: boolean
   trackLongTasks: boolean
   trackBfcacheViews: boolean
+  trackEarlyRequests: boolean
   subdomain?: string
   customerDataTelemetrySampleRate: number
   initialViewMetricsTelemetrySampleRate: number
@@ -254,6 +276,7 @@ export interface RumConfiguration extends Configuration {
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
   propagateTraceBaggage: boolean
+  allowedGraphQlUrls: GraphQlUrlOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -290,6 +313,9 @@ export function validateAndBuildRumConfiguration(
   }
 
   const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
+
+  const allowedGraphQlUrls = validateAndBuildGraphQlOptions(initConfiguration)
+
   if (!baseConfiguration) {
     return
   }
@@ -315,6 +341,7 @@ export function validateAndBuildRumConfiguration(
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
     trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
+    trackEarlyRequests: !!initConfiguration.trackEarlyRequests,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
@@ -330,6 +357,7 @@ export function validateAndBuildRumConfiguration(
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
+    allowedGraphQlUrls,
     ...baseConfiguration,
   }
 }
@@ -373,7 +401,7 @@ function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration)
 function getSelectedTracingPropagators(configuration: RumInitConfiguration): PropagatorType[] {
   const usedTracingPropagators = new Set<PropagatorType>()
 
-  if (Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0) {
+  if (isNonEmptyArray(configuration.allowedTracingUrls)) {
     configuration.allowedTracingUrls.forEach((option) => {
       if (isMatchOption(option)) {
         DEFAULT_PROPAGATOR_TYPES.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))
@@ -387,6 +415,47 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
   return Array.from(usedTracingPropagators)
 }
 
+/**
+ * Build GraphQL options from configuration
+ */
+function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration): GraphQlUrlOption[] {
+  if (!initConfiguration.allowedGraphQlUrls) {
+    return []
+  }
+
+  if (!Array.isArray(initConfiguration.allowedGraphQlUrls)) {
+    display.warn('allowedGraphQlUrls should be an array')
+    return []
+  }
+
+  const graphQlOptions: GraphQlUrlOption[] = []
+
+  initConfiguration.allowedGraphQlUrls.forEach((option) => {
+    if (isMatchOption(option)) {
+      graphQlOptions.push({ match: option, trackPayload: false })
+    } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
+      graphQlOptions.push({
+        match: option.match,
+        trackPayload: !!option.trackPayload,
+      })
+    }
+  })
+
+  return graphQlOptions
+}
+
+function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
+  return (
+    isNonEmptyArray(allowedGraphQlUrls) &&
+    allowedGraphQlUrls.some((option) => {
+      if (typeof option === 'object' && 'trackPayload' in option) {
+        return !!option.trackPayload
+      }
+      return false
+    })
+  )
+}
+
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
@@ -395,14 +464,15 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
     trace_sample_rate: configuration.traceSampleRate,
     trace_context_injection: configuration.traceContextInjection,
+    propagate_trace_baggage: configuration.propagateTraceBaggage,
     action_name_attribute: configuration.actionNameAttribute,
-    use_allowed_tracing_urls:
-      Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
+    use_allowed_tracing_urls: isNonEmptyArray(configuration.allowedTracingUrls),
+    use_allowed_graph_ql_urls: isNonEmptyArray(configuration.allowedGraphQlUrls),
+    use_track_graph_ql_payload: hasGraphQlPayloadTracking(configuration.allowedGraphQlUrls),
     selected_tracing_propagators: getSelectedTracingPropagators(configuration),
     default_privacy_level: configuration.defaultPrivacyLevel,
     enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
-    use_excluded_activity_urls:
-      Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
+    use_excluded_activity_urls: isNonEmptyArray(configuration.excludedActivityUrls),
     use_worker_url: !!configuration.workerUrl,
     compress_intake_requests: configuration.compressIntakeRequests,
     track_views_manually: configuration.trackViewsManually,
@@ -410,12 +480,15 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
     track_bfcache_views: configuration.trackBfcacheViews,
+    track_early_requests: configuration.trackEarlyRequests,
     plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
     remote_configuration_id: configuration.remoteConfigurationId,
+    profiling_sample_rate: configuration.profilingSampleRate,
+    use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

@@ -141,7 +141,7 @@ describe('startRecorderInitTelemetry', () => {
   it('should not collect recorder init metrics telemetry when telemetry is disabled', async () => {
     startRecorderInitTelemetryCollection({
       telemetrySampleRate: 100,
-      initialViewMetricsTelemetrySampleRate: 0,
+      replayTelemetrySampleRate: 0,
     })
     observable.notify({ type: 'start', forced: false })
     observable.notify({ type: 'recorder-settled' })
