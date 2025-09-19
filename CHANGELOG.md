@@ -24,7 +24,6 @@
 
 - ✨ [RUM-9181] Service Worker support for Logs ([#3769](https://github.com/DataDog/browser-sdk/pull/3769)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
 - ✨ [RUM-10146] implement `trackEarlyRequests` ([#3846](https://github.com/DataDog/browser-sdk/pull/3846)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
-- 🐛 [PANA-4236] Fix flaky startRecorderInitTelemetry test ([#3852](https://github.com/DataDog/browser-sdk/pull/3852)) [RUM]
 
 **Internal Changes:**
 
@@ -32,6 +31,7 @@
 - 👷 [Performance script] fix regression on size increase warnings ([#3845](https://github.com/DataDog/browser-sdk/pull/3845))
 - 🔧 configure renovate to wait 1 week before upgrading dependencies ([#3850](https://github.com/DataDog/browser-sdk/pull/3850))
 - 👷 [RUM Profiler] send view names as event attributes ([#3851](https://github.com/DataDog/browser-sdk/pull/3851)) [RUM]
+- 🐛 [PANA-4236] Fix flaky startRecorderInitTelemetry test ([#3852](https://github.com/DataDog/browser-sdk/pull/3852)) [RUM]
 
 ## v6.20.0
 
