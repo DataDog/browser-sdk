@@ -13,6 +13,7 @@ import type {
   Account,
   RumInternalContext,
   Telemetry,
+  SampleRateByMetric,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -473,6 +474,7 @@ export interface RecorderApi {
   isRecording: () => boolean
   getReplayStats: (viewId: string) => ReplayStats | undefined
   getSessionReplayLink: () => string | undefined
+  getTelemetrySampleRateByMetric: (configuration: RumConfiguration) => SampleRateByMetric | undefined
 }
 
 export interface ProfilerApi {

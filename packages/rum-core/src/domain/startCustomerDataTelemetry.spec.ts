@@ -2,12 +2,14 @@ import type { FlushEvent, Context, Telemetry } from '@datadog/browser-core'
 import { Observable, resetExperimentalFeatures } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
-import { mockRumConfiguration } from '../../test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
-import { MEASURES_PERIOD_DURATION, startCustomerDataTelemetry } from './startCustomerDataTelemetry'
-import type { RumConfiguration } from './configuration'
+import {
+  MEASURES_PERIOD_DURATION,
+  startCustomerDataTelemetry,
+  CUSTOMER_DATA_METRIC_NAME,
+} from './startCustomerDataTelemetry'
 
 describe('customerDataTelemetry', () => {
   let clock: Clock
@@ -16,12 +18,6 @@ describe('customerDataTelemetry', () => {
   let fakeContextBytesCount: number
   let lifeCycle: LifeCycle
   const viewEvent = { type: RumEventType.VIEW } as AssembledRumEvent
-
-  const config: Partial<RumConfiguration> = {
-    telemetrySampleRate: 100,
-    customerDataTelemetrySampleRate: 100,
-    maxTelemetryEventsPerPage: 2,
-  }
 
   function generateBatch({
     eventNumber,
@@ -46,15 +42,18 @@ describe('customerDataTelemetry', () => {
     })
   }
 
-  function setupCustomerTelemetryCollection(partialConfig: Partial<RumConfiguration> = config) {
-    const configuration = mockRumConfiguration(partialConfig)
+  function setupCustomerTelemetryCollection(telemetryEnabled: boolean = true) {
     batchFlushObservable = new Observable()
     lifeCycle = new LifeCycle()
     fakeContextBytesCount = 1
 
     telemetry = startMockTelemetry()
 
-    startCustomerDataTelemetry(configuration, { enabled: true } as Telemetry, lifeCycle, batchFlushObservable)
+    startCustomerDataTelemetry(
+      { enabledMetrics: { [CUSTOMER_DATA_METRIC_NAME]: telemetryEnabled } } as unknown as Telemetry,
+      lifeCycle,
+      batchFlushObservable
+    )
   }
 
   beforeEach(() => {
@@ -132,10 +131,7 @@ describe('customerDataTelemetry', () => {
   })
 
   it('should not collect customer data telemetry when telemetry disabled', async () => {
-    setupCustomerTelemetryCollection({
-      telemetrySampleRate: 100,
-      customerDataTelemetrySampleRate: 0,
-    })
+    setupCustomerTelemetryCollection(false)
 
     generateBatch({ eventNumber: 1 })
     clock.tick(MEASURES_PERIOD_DURATION)

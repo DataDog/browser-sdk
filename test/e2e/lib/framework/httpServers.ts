@@ -47,7 +47,8 @@ export async function waitForServersIdle() {
 
 async function createServer<App extends ServerApp>(): Promise<Server<App>> {
   const server = await instantiateServer()
-  const { address, port } = server.address() as AddressInfo
+  const address = getIp()
+  const { port } = server.address() as AddressInfo
   let serverApp: App | undefined
 
   server.on('request', (req: http.IncomingMessage, res: http.ServerResponse) => {
@@ -92,7 +93,7 @@ function instantiateServerOnPort(port: number): Promise<http.Server> {
   return new Promise((resolve, reject) => {
     const server = http.createServer()
     server.on('error', reject)
-    server.listen(port, getIp(), () => {
+    server.listen(port, () => {
       resolve(server)
     })
   })

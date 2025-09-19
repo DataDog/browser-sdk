@@ -2,6 +2,7 @@ import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
+import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 import type { Servers } from './httpServers'
 
 export interface SetupOptions {
@@ -24,6 +25,12 @@ export interface SetupOptions {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   }
+  useServiceWorker: boolean
+}
+
+export interface WorkerOptions {
+  importScripts?: boolean
+  nativeLog?: boolean
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -204,6 +211,22 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
   })
 }
 
+export function workerSetup(options: WorkerOptions, servers: Servers) {
+  return js`
+      ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
+      
+      // Initialize DD_LOGS in service worker
+      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true }, servers)})
+
+      // Handle messages from main thread
+      self.addEventListener('message', (event) => {
+        const message = event.data;
+        
+        ${options.nativeLog ? js`console.log(message);` : js`DD_LOGS.logger.log(message);`}
+      });
+    `
+}
+
 export function basePage({ header, body }: { header?: string; body?: string }) {
   return html`
     <!doctype html>
@@ -220,6 +243,10 @@ export function basePage({ header, body }: { header?: string; body?: string }) {
 
 // html is a simple template string tag to allow prettier to format various setups as HTML
 export function html(parts: readonly string[], ...vars: string[]) {
+  return parts.reduce((full, part, index) => full + vars[index - 1] + part)
+}
+
+function js(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 

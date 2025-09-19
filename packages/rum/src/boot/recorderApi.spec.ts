@@ -18,10 +18,10 @@ import {
   mockViewHistory,
 } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
-import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
+import { MockWorker } from '../../test'
 import * as replayStats from '../domain/replayStats'
-import type { RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
+import { type RecorderInitMetrics, RECORDER_INIT_METRICS_TELEMETRY_NAME } from '../domain/startRecorderInitTelemetry'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
 
@@ -58,9 +58,7 @@ describe('makeRecorderApi', () => {
     })
 
     const configuration = mockRumConfiguration({
-      replayTelemetrySampleRate: 100,
       startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
-      telemetrySampleRate: 100,
     })
 
     recorderApi = makeRecorderApi(loadRecorderSpy, createDeflateWorkerSpy)
@@ -71,7 +69,7 @@ describe('makeRecorderApi', () => {
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
         worker,
-        { enabled: true } as Telemetry
+        { enabled: true, enabledMetrics: { [RECORDER_INIT_METRICS_TELEMETRY_NAME]: true } } as unknown as Telemetry
       )
     }
 

@@ -1,7 +1,9 @@
 import { monitor } from './monitor'
+import { globalObject } from './globalObject'
 
 export function queueMicrotask(callback: () => void) {
-  const nativeImplementation = window.queueMicrotask
+  const nativeImplementation = globalObject.queueMicrotask?.bind(globalObject)
+
   if (typeof nativeImplementation === 'function') {
     nativeImplementation(monitor(callback))
   } else {

@@ -161,7 +161,7 @@ describe('preStartLogs', () => {
       )
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
-      expect(getLoggedMessage(0).savedCommonContext!.view.url).toEqual('url')
+      expect(getLoggedMessage(0).savedCommonContext!.view?.url).toEqual('url')
     })
 
     it('saves the log context', () => {
