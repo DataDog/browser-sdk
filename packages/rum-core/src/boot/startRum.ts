@@ -85,6 +85,7 @@ export function startRum(
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    // monitor-until: forever, to keep an eye on the errors reported to customers
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 

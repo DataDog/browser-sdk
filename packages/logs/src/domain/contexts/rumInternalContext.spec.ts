@@ -1,23 +1,21 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
-import { mockSyntheticsWorkerValues, startMockTelemetry } from '@datadog/browser-core/test'
+import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startRUMInternalContext } from './rumInternalContext'
 
 describe('startRUMInternalContext', () => {
   let hooks: Hooks
-  let stopRUMInternalContext: () => void
 
   beforeEach(() => {
     hooks = createHooks()
-    ;({ stop: stopRUMInternalContext } = startRUMInternalContext(hooks))
+    startRUMInternalContext(hooks)
   })
 
   afterEach(() => {
     delete window.DD_RUM
     delete window.DD_RUM_SYNTHETICS
-    stopRUMInternalContext()
   })
 
   describe('assemble hook', () => {
@@ -60,33 +58,6 @@ describe('startRUMInternalContext', () => {
           startTime: 0 as RelativeTime,
         })
         expect(defaultLogsEventAttributes).toEqual({ foo: 'bar' })
-      })
-
-      it('adds a telemetry debug event when RUM has not been injected yet', async () => {
-        const telemetry = startMockTelemetry()
-        hooks.triggerHook(HookNames.Assemble, {
-          startTime: 0 as RelativeTime,
-        })
-        expect(await telemetry.getEvents()).toEqual([
-          jasmine.objectContaining({
-            message: 'Logs sent before RUM is injected by the synthetics worker',
-            status: 'debug',
-            type: 'log',
-            testId: 'test-id',
-            resultId: 'result-id',
-          }),
-        ])
-      })
-
-      it('adds the telemetry debug event only once', async () => {
-        const telemetry = startMockTelemetry()
-        hooks.triggerHook(HookNames.Assemble, {
-          startTime: 0 as RelativeTime,
-        })
-        hooks.triggerHook(HookNames.Assemble, {
-          startTime: 0 as RelativeTime,
-        })
-        expect((await telemetry.getEvents()).length).toEqual(1)
       })
     })
   })

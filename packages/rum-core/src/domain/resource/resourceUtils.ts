@@ -1,6 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
-  addTelemetryDebug,
   elapsed,
   getPathName,
   isValidUrl,
@@ -50,7 +49,6 @@ const RESOURCE_TYPES: Array<[ResourceType, (initiatorType: string, path: string)
 export function computeResourceEntryType(entry: RumPerformanceResourceTiming) {
   const url = entry.name
   if (!isValidUrl(url)) {
-    addTelemetryDebug(`Failed to construct URL for "${entry.name}"`)
     return ResourceType.OTHER
   }
   const path = getPathName(url)

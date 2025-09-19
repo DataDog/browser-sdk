@@ -174,6 +174,7 @@ function trackResume(configuration: Configuration, cb: () => void) {
 
 async function reportUnexpectedSessionState() {
   const rawSession = retrieveSessionCookie()
+  // monitor-until: forever, could be handy to troubleshoot issues until session manager rework
   addTelemetryDebug('Unexpected session state', {
     session: rawSession,
     isSyntheticsTest: isSyntheticsTest(),
@@ -212,6 +213,7 @@ function detectSessionIdChange(configuration: Configuration, initialSessionState
         const time = dateNow() - sdkInitTime
         getSessionCookies()
           .then((cookie) => {
+            // monitor-until: 2025-10-01, after investigation done
             addTelemetryDebug('Session cookie changed', {
               time,
               session_age: sessionAge,

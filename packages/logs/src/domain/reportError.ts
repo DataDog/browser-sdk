@@ -14,6 +14,7 @@ export function startReportError(lifeCycle: LifeCycle) {
         status: StatusType.error,
       },
     })
+    // monitor-until: forever, to keep an eye on the errors reported to customers
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 }
