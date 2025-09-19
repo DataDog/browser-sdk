@@ -10,8 +10,8 @@ export const ERROR_NOT_ALLOWED_TRACKING_ORIGIN = 'SDK initialized on a non-allow
 
 export function isAllowedTrackingOrigins(
   configuration: InitConfiguration,
-  windowOrigin = typeof location !== 'undefined' ? location.origin : '',
-  errorStack = new Error().stack
+  errorStack: string,
+  windowOrigin = typeof location !== 'undefined' ? location.origin : ''
 ): boolean {
   const allowedTrackingOrigins = configuration.allowedTrackingOrigins
   if (!allowedTrackingOrigins) {
