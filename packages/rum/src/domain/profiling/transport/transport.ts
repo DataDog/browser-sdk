@@ -36,7 +36,7 @@ const sendProfile: SendProfileFunction = (profilerTrace, configuration, sessionI
   // Create URL, public profiling intake.
   const profilingIntakeURL = endpointBuilder.build('fetch', payload)
 
-  // monitor-until: 2026-01-01, reconsider after profiling GA
+  // monitor-until: 2025-01-01, reconsider after profiling GA
   addTelemetryDebug('Sending profile to public profiling intake', { profilingIntakeURL, applicationId, sessionId })
 
   // Send payload (event + profile as attachment).
