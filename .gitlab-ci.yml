@@ -601,6 +601,7 @@ check-expired-telemetry-scheduled:
     - eval $(ssh-agent -s)
   script:
     - yarn
+    - yarn build
     - MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL=error yarn lint
   artifacts:
     reports:
