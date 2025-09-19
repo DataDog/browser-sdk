@@ -1,5 +1,5 @@
 import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
-import { Observable, TelemetryMetrics } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { startMockTelemetry } from '../../../../core/test'
@@ -42,13 +42,11 @@ describe('segmentTelemetry', () => {
     requestObservable.notify({ type: result, bandwidth, payload })
   }
 
-  function setupSegmentTelemetryCollection(telemetryEnabled: boolean = true) {
+  function setupSegmentTelemetryCollection(metricsEnabled: boolean = true) {
     requestObservable = new Observable()
     telemetry = startMockTelemetry()
     ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry(
-      {
-        enabledMetrics: { [TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME]: telemetryEnabled },
-      } as unknown as Telemetry,
+      { metricsEnabled } as unknown as Telemetry,
       requestObservable
     ))
     registerCleanupTask(stopSegmentTelemetry)

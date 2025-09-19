@@ -1,10 +1,4 @@
-import {
-  type DeflateWorker,
-  type RawTelemetryEvent,
-  type Telemetry,
-  TelemetryMetrics,
-  display,
-} from '@datadog/browser-core'
+import { type DeflateWorker, type RawTelemetryEvent, type Telemetry, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
@@ -85,7 +79,7 @@ describe('lazyLoadRecorder', () => {
         worker,
         {
           enabled: true,
-          enabledMetrics: { [TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME]: true },
+          metricsEnabled: true,
         } as unknown as Telemetry
       )
     }

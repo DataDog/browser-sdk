@@ -19,9 +19,7 @@ interface CoreInitialViewMetrics extends Context {
 }
 
 export function startInitialViewMetricsTelemetry(lifeCycle: LifeCycle, telemetry: Telemetry) {
-  const initialViewMetricsTelemetryEnabled =
-    telemetry.enabledMetrics[TelemetryMetrics.INITIAL_VIEW_METRICS_TELEMETRY_NAME]
-  if (!initialViewMetricsTelemetryEnabled) {
+  if (!telemetry.metricsEnabled) {
     return { stop: noop }
   }
 

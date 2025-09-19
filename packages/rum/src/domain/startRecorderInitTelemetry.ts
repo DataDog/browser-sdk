@@ -13,8 +13,7 @@ export interface RecorderInitMetrics extends Context {
 }
 
 export function startRecorderInitTelemetry(telemetry: Telemetry, observable: Observable<RecorderInitEvent>) {
-  const recorderInitTelemetryEnabled = telemetry.enabledMetrics[TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME]
-  if (!recorderInitTelemetryEnabled) {
+  if (!telemetry.metricsEnabled) {
     return { stop: noop }
   }
 

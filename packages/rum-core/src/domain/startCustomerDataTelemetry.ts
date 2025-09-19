@@ -25,8 +25,7 @@ export function startCustomerDataTelemetry(
   lifeCycle: LifeCycle,
   batchFlushObservable: Observable<FlushEvent>
 ) {
-  const customerDataTelemetryEnabled = telemetry.enabledMetrics[TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME]
-  if (!customerDataTelemetryEnabled) {
+  if (!telemetry.metricsEnabled) {
     return
   }
 

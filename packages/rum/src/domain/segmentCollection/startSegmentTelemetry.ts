@@ -30,8 +30,7 @@ export function startSegmentTelemetry(
   telemetry: Telemetry,
   requestObservable: Observable<HttpRequestEvent<ReplayPayload>>
 ) {
-  const segmentTelemetryEnabled = telemetry.enabledMetrics[TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME]
-  if (!segmentTelemetryEnabled) {
+  if (!telemetry.metricsEnabled) {
     return { stop: noop }
   }
 

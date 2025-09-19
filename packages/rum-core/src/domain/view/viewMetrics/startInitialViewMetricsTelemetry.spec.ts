@@ -1,5 +1,4 @@
 import type { Telemetry, RelativeTime, Duration, RawTelemetryEvent } from '@datadog/browser-core'
-import { TelemetryMetrics } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../../lifeCycle'
@@ -46,10 +45,10 @@ describe('startInitialViewMetricsTelemetry', () => {
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { initialViewMetrics } as ViewEvent)
   }
 
-  function startInitialViewMetricsTelemetryCollection(telemetryEnabled = true) {
+  function startInitialViewMetricsTelemetryCollection(metricsEnabled: boolean = true) {
     telemetry = startMockTelemetry()
     const { stop: stopInitialViewMetricsTelemetryCollection } = startInitialViewMetricsTelemetry(lifeCycle, {
-      enabledMetrics: { [TelemetryMetrics.INITIAL_VIEW_METRICS_TELEMETRY_NAME]: telemetryEnabled },
+      metricsEnabled,
     } as unknown as Telemetry)
     registerCleanupTask(stopInitialViewMetricsTelemetryCollection)
   }

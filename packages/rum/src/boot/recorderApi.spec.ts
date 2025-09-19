@@ -5,7 +5,7 @@ import type {
   RawTelemetryEvent,
   Telemetry,
 } from '@datadog/browser-core'
-import { BridgeCapability, display, TelemetryMetrics } from '@datadog/browser-core'
+import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
@@ -71,7 +71,7 @@ describe('makeRecorderApi', () => {
         worker,
         {
           enabled: true,
-          enabledMetrics: { [TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME]: true },
+          metricsEnabled: true,
         } as unknown as Telemetry
       )
     }

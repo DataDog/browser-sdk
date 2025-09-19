@@ -1,5 +1,5 @@
 import type { Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
-import { Observable, TelemetryMetrics } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import type { RecorderInitEvent } from '../boot/postStartStrategy'
@@ -9,13 +9,11 @@ describe('startRecorderInitTelemetry', () => {
   let observable: Observable<RecorderInitEvent>
   let telemetry: MockTelemetry
 
-  function startRecorderInitTelemetryCollection(telemetryEnabled: boolean = true) {
+  function startRecorderInitTelemetryCollection(metricsEnabled: boolean = true) {
     observable = new Observable<RecorderInitEvent>()
     telemetry = startMockTelemetry()
     const { stop: stopRecorderInitTelemetry } = startRecorderInitTelemetry(
-      {
-        enabledMetrics: { [TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME]: telemetryEnabled },
-      } as unknown as Telemetry,
+      { metricsEnabled } as unknown as Telemetry,
       observable
     )
     registerCleanupTask(stopRecorderInitTelemetry)
