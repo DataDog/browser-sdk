@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, Encoder, RelativeTime } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -11,6 +11,7 @@ import {
   clocksOrigin,
   clocksNow,
   elapsed,
+  DeflateEncoderStreamId,
 } from '@datadog/browser-core'
 
 import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
@@ -26,9 +27,11 @@ import type {
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
-import { transport } from './transport/transport'
+import type { TransportPayload } from './transport/transport'
+import { createTransport } from './transport/transport'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
+import { assembleProfilingPayload } from './transport/assembly'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -42,8 +45,10 @@ export function createRumProfiler(
   lifeCycle: LifeCycle,
   session: RumSessionManager,
   profilingContextManager: ProfilingContextManager,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
+  const transport = createTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
   let lastViewEntry: RumViewEntry | undefined
@@ -285,9 +290,9 @@ export function createRumProfiler(
   function handleProfilerTrace(trace: RumProfilerTrace): void {
     // Find current session to assign it to the Profile.
     const sessionId = session.findTrackedSession()?.id
+    const payload = assembleProfilingPayload(trace, configuration, sessionId)
 
-    // Send JSON Profile to intake.
-    transport.sendProfile(trace, configuration, sessionId).catch(monitorError)
+    void transport.send(payload as unknown as TransportPayload)
   }
 
   function handleSampleBufferFull(): void {

@@ -6,8 +6,15 @@ import {
   createHooks,
 } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, deepClone, relativeNow, timeStampNow } from '@datadog/browser-core'
-import { setPageVisibility, restorePageVisibility, createNewEvent } from '@datadog/browser-core/test'
+import { clocksOrigin, createIdentityEncoder, deepClone, relativeNow, timeStampNow } from '@datadog/browser-core'
+import {
+  setPageVisibility,
+  restorePageVisibility,
+  createNewEvent,
+  interceptRequests,
+  DEFAULT_FETCH_MOCK,
+  readFormDataRequest,
+} from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from 'packages/rum-core/src/browser/performanceObservable'
 import {
   createPerformanceEntry,
@@ -18,20 +25,20 @@ import {
 } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import { mockedTrace } from './test-utils/mockedTrace'
-import { transport } from './transport/transport'
 import { createRumProfiler } from './profiler'
 import type { ProfilerTrace, RUMProfiler, RumProfilerTrace } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
+import type { ProfileEventPayload } from './transport/assembly'
 
 describe('profiler', () => {
   // Store the original pathname
   const originalPathname = document.location.pathname
-  let sendProfileSpy: jasmine.Spy<typeof transport.sendProfile>
+  let interceptor: ReturnType<typeof interceptRequests>
 
   beforeEach(() => {
-    // Spy on transport.sendProfile to avoid sending data to the server, and check what's sent.
-    sendProfileSpy = spyOn(transport, 'sendProfile')
+    interceptor = interceptRequests()
+    interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
   })
 
   afterEach(() => {
@@ -80,6 +87,7 @@ describe('profiler', () => {
       lifeCycle,
       sessionManager,
       profilingContextManager,
+      createIdentityEncoder,
       // Overrides default configuration for testing purpose.
       {
         sampleIntervalMs: 10,
@@ -118,10 +126,11 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    expect(sendProfileSpy).toHaveBeenCalledTimes(1)
+    expect(interceptor.requests.length).toBe(1)
 
-    // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(mockedRumProfilerTrace, jasmine.any(Object), 'session-id-1')
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    expect(request.event.session?.id).toBe('session-id-1')
+    expect(request['wall-time.json']).toEqual(mockedRumProfilerTrace)
   })
 
   it('should pause profiling collection on hidden visibility and restart on visible visibility', async () => {
@@ -150,7 +159,7 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Assert that the profiler has collected data on pause.
-    expect(sendProfileSpy).toHaveBeenCalledTimes(1)
+    expect(interceptor.requests.length).toBe(1)
 
     // Change back to visible
     setVisibilityState('visible')
@@ -167,10 +176,13 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isStopped())
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    expect(sendProfileSpy).toHaveBeenCalledTimes(2)
+    expect(interceptor.requests.length).toBe(2)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(mockedRumProfilerTrace, jasmine.any(Object), 'session-id-1')
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+
+    expect(request.event.session?.id).toBe('session-id-1')
+    expect(request['wall-time.json']).toEqual(mockedRumProfilerTrace)
   })
 
   it('should collect long task from core and then attach long task id to the Profiler trace', async () => {
@@ -221,11 +233,12 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0]
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const trace = request['wall-time.json']
 
-    expect(lastCall.longTasks.length).toBe(1)
-    expect(lastCall.longTasks[0].id).toBeDefined()
-    expect(lastCall.longTasks[0].startClocks.relative).toBe(12345 as RelativeTime)
+    expect(request.event.long_task?.id.length).toBe(1)
+    expect(trace.longTasks[0].id).toBeDefined()
+    expect(trace.longTasks[0].startClocks.relative).toBe(12345 as RelativeTime)
   })
 
   it('should collect views and set default view name in the Profile', async () => {
@@ -268,13 +281,14 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    const lastCall: RumProfilerTrace = sendProfileSpy.calls.mostRecent().args[0]
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const views = request['wall-time.json'].views
 
-    expect(lastCall.views.length).toBe(2)
-    expect(lastCall.views[0].viewId).toBe('view-user')
-    expect(lastCall.views[0].viewName).toBe('/user/?')
-    expect(lastCall.views[1].viewId).toBe('view-profile')
-    expect(lastCall.views[1].viewName).toBe('/v1/user/?/profile')
+    expect(views.length).toBe(2)
+    expect(views[0].viewId).toBe('view-user')
+    expect(views[0].viewName).toBe('/user/?')
+    expect(views[1].viewId).toBe('view-profile')
+    expect(views[1].viewName).toBe('/v1/user/?/profile')
   })
 
   it('should keep track of the latest view in the Profiler', async () => {
@@ -319,28 +333,22 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isPaused())
 
     // Assert that the profiler has collected data on pause.
-    expect(sendProfileSpy).toHaveBeenCalledTimes(1)
+    expect(interceptor.requests.length).toBe(1)
 
-    // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    expect(request.event.session?.id).toBe('session-id-1')
+    expect(request['wall-time.json'].views).toEqual([
       {
-        ...mockedRumProfilerTrace,
-        views: [
-          {
-            viewId: initialViewEntry.id,
-            viewName: initialViewEntry.name,
-            startClocks: initialViewEntry.startClocks,
-          },
-          {
-            viewId: nextViewEntry.id,
-            viewName: nextViewEntry.name,
-            startClocks: nextViewEntry.startClocks,
-          },
-        ],
+        viewId: initialViewEntry.id,
+        viewName: initialViewEntry.name,
+        startClocks: initialViewEntry.startClocks,
       },
-      jasmine.any(Object),
-      'session-id-1'
-    )
+      {
+        viewId: nextViewEntry.id,
+        viewName: nextViewEntry.name,
+        startClocks: nextViewEntry.startClocks,
+      },
+    ])
 
     // Change back to visible
     setVisibilityState('visible')
@@ -357,23 +365,12 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isStopped())
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
-    expect(sendProfileSpy).toHaveBeenCalledTimes(2)
+    expect(interceptor.requests.length).toBe(2)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(
-      {
-        ...mockedRumProfilerTrace,
-        views: [
-          {
-            viewId: nextViewEntry.id, // The view id should be the last one collected (in this case the "next" view)
-            viewName: nextViewEntry.name,
-            startClocks: nextViewEntry.startClocks,
-          },
-        ],
-      },
-      jasmine.any(Object),
-      'session-id-1'
-    )
+    const request2 = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+    expect(request2.event.session?.id).toBe('session-id-1')
+    expect(request2['wall-time.json']).toEqual(mockedRumProfilerTrace)
   })
 })
 
