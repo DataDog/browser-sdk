@@ -1,109 +1,86 @@
-import type { Payload } from '@datadog/browser-core'
-import { addTelemetryDebug, buildTags, currentDrift } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { RumProfilerTrace } from '../types'
-import { buildProfileEventAttributes } from './buildProfileEventAttributes'
-import type { ProfileEventAttributes } from './buildProfileEventAttributes'
+import type {
+  Uint8ArrayBuffer,
+  Encoder,
+  EncoderResult,
+  DeflateEncoderStreamId,
+  RawError,
+  Payload,
+  Context,
+} from '@datadog/browser-core'
+import { addTelemetryDebug, createHttpRequest, jsonStringify, objectEntries } from '@datadog/browser-core'
+import type { RumConfiguration, LifeCycle } from '@datadog/browser-rum-core'
+import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
-interface ProfileEvent extends ProfileEventAttributes {
-  attachments: string[]
-  start: string // ISO date
-  end: string // ISO date
-  family: 'chrome'
-  runtime: 'chrome'
-  format: 'json'
-  version: 4
-  tags_profiler: string
-  _dd: {
-    clock_drift: number
+export interface TransportPayload {
+  event: Context
+  [key: string]: Context
+}
+
+export interface Transport<T extends TransportPayload> {
+  send: (data: T) => Promise<void>
+}
+
+export function createTransport<T extends TransportPayload>(
+  configuration: RumConfiguration,
+  lifeCycle: LifeCycle,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  streamId: DeflateEncoderStreamId
+) {
+  const reportError = (error: RawError) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
-}
 
-export type SendProfileFunction = (
-  trace: RumProfilerTrace,
-  configuration: RumConfiguration,
-  sessionId: string | undefined
-) => Promise<unknown>
+  const httpRequest = createHttpRequest(
+    [configuration.profilingEndpointBuilder],
+    configuration.batchBytesLimit,
+    reportError
+  )
 
-/**
- * Send RUM profile as JSON to public profiling intake.
- */
-const sendProfile: SendProfileFunction = (profilerTrace, configuration, sessionId) => {
-  const { profilingEndpointBuilder: endpointBuilder, applicationId } = configuration
-  const event = buildProfileEvent(profilerTrace, configuration, sessionId)
-  const payload = buildProfilingPayload(profilerTrace, event)
+  const encoder = createEncoder(streamId)
 
-  // Create URL, public profiling intake.
-  const profilingIntakeURL = endpointBuilder.build('fetch', payload)
+  return {
+    async send({ event, ...attachments }: T) {
+      const formData = new FormData()
+      const serializedEvent = jsonStringify(event)
 
-  addTelemetryDebug('Sending profile to public profiling intake', { profilingIntakeURL, applicationId, sessionId })
+      if (!serializedEvent) {
+        throw new Error('Failed to serialize event')
+      }
 
-  // Send payload (event + profile as attachment).
-  return fetch(profilingIntakeURL, {
-    body: payload.data,
-    method: 'POST',
-  })
-}
+      formData.append('event', new Blob([serializedEvent], { type: 'application/json' }), 'event.json')
 
-function buildProfileEvent(
-  profilerTrace: RumProfilerTrace,
-  configuration: RumConfiguration,
-  sessionId: string | undefined
-): ProfileEvent {
-  const tags = buildTags(configuration) // TODO: get that from the tagContext hook
-  const profileAttributes = buildProfileEventAttributes(profilerTrace, configuration.applicationId, sessionId)
-  const profileEventTags = buildProfileEventTags(tags)
+      let bytesCount = serializedEvent.length
 
-  const profileEvent: ProfileEvent = {
-    ...profileAttributes,
-    attachments: ['wall-time.json'],
-    start: new Date(profilerTrace.startClocks.timeStamp).toISOString(),
-    end: new Date(profilerTrace.endClocks.timeStamp).toISOString(),
-    family: 'chrome',
-    runtime: 'chrome',
-    format: 'json',
-    version: 4, // Ingestion event version (not the version application tag)
-    tags_profiler: profileEventTags.join(','),
-    _dd: {
-      clock_drift: currentDrift(),
+      for (const [key, value] of objectEntries(attachments as Record<string, Context>)) {
+        const serializedValue = jsonStringify(value)
+
+        if (!serializedValue) {
+          throw new Error('Failed to serialize attachment')
+        }
+
+        const result = await encode(encoder, serializedValue)
+
+        bytesCount += result.outputBytesCount
+        formData.append(key, new Blob([result.output]), key)
+      }
+
+      const payload: Payload = {
+        data: formData,
+        bytesCount,
+      }
+
+      httpRequest.send(payload)
     },
   }
-
-  return profileEvent
 }
 
-/**
- * Builds tags for the Profile Event.
- *
- * @param tags - RUM tags
- * @returns Combined tags for the Profile Event.
- */
-function buildProfileEventTags(tags: string[]): string[] {
-  // Tags already contains the common tags for all events. (service, env, version, etc.)
-  // Here we are adding some specific-to-profiling tags.
-  const profileEventTags = tags.concat(['language:javascript', 'runtime:chrome', 'family:chrome', 'host:browser'])
+function encode<T extends string | Uint8ArrayBuffer>(encoder: Encoder<T>, data: string): Promise<EncoderResult<T>> {
+  return new Promise((resolve) => {
+    encoder.write(data)
 
-  return profileEventTags
-}
-
-/**
- * Builds payload for Profiling intake. It includes the profile event and the profiler trace as attachment.
- *
- * @param profilerTrace - Profiler trace
- * @param profileEvent - Profiling event.
- * @returns Payload to be sent to the intake.
- */
-function buildProfilingPayload(profilerTrace: RumProfilerTrace, profileEvent: ProfileEvent): Payload {
-  const profilerTraceBlob = new Blob([JSON.stringify(profilerTrace)], {
-    type: 'application/json',
+    encoder.finish((encoderResult) => {
+      resolve(encoderResult)
+    })
   })
-  const formData = new FormData()
-  formData.append('event', new Blob([JSON.stringify(profileEvent)], { type: 'application/json' }), 'event.json')
-  formData.append('wall-time.json', profilerTraceBlob, 'wall-time.json')
-
-  return { data: formData, bytesCount: 0 }
-}
-
-export const transport = {
-  sendProfile,
 }
