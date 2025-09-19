@@ -241,7 +241,8 @@ describe('flattenErrorCauses', () => {
     error.cause = nestedError
 
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
-    expect(errorCauses?.length).toEqual(undefined)
+    expect(errorCauses?.length).toEqual(1)
+    expect(errorCauses?.[0]).toEqual(jasmine.objectContaining({ biz: 'buz', cause: jasmine.any(Error) }))
   })
 
   it('should use error to extract stack trace', () => {
