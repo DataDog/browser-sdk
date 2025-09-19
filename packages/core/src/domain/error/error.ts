@@ -5,7 +5,15 @@ import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
-import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause, NonErrorPrefix } from './error.types'
+import type {
+  ErrorSource,
+  ErrorHandling,
+  RawError,
+  RawErrorCause,
+  ErrorWithCause,
+  NonErrorPrefix,
+  RawFlatErrorCause,
+} from './error.types'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
 
@@ -87,17 +95,26 @@ export function isError(error: unknown): error is Error {
 }
 
 export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
-  let currentError = error
   const causes: RawErrorCause[] = []
-  while (isError(currentError?.cause) && causes.length < 10) {
-    const stackTrace = computeStackTrace(currentError.cause)
-    causes.push({
-      message: currentError.cause.message,
-      source: parentSource,
-      type: stackTrace?.name,
-      stack: stackTrace && toStackTraceString(stackTrace),
-    })
-    currentError = currentError.cause
+
+  let currentCause = error.cause
+  while (currentCause !== undefined && currentCause !== null && causes.length < 10) {
+    if (isError(currentCause)) {
+      const stackTrace = computeStackTrace(currentCause)
+
+      causes.push({
+        message: currentCause.message,
+        source: parentSource,
+        type: stackTrace?.name,
+        stack: stackTrace && toStackTraceString(stackTrace),
+      } satisfies RawFlatErrorCause)
+
+      currentCause = (currentCause as ErrorWithCause).cause
+    } else {
+      causes.push(currentCause)
+
+      currentCause = undefined
+    }
   }
   return causes.length ? causes : undefined
 }

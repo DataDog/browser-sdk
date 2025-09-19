@@ -8,7 +8,7 @@ import {
   isError,
   NO_ERROR_STACK_PRESENT_MESSAGE,
 } from './error'
-import type { RawErrorCause, ErrorWithCause } from './error.types'
+import type { ErrorWithCause, RawFlatErrorCause } from './error.types'
 import { ErrorHandling, ErrorSource, NonErrorPrefix } from './error.types'
 
 describe('computeRawError', () => {
@@ -179,7 +179,7 @@ describe('computeRawError', () => {
     expect(formatted.causes!.length).toBe(2)
     expect(formatted.stack).toContain('Error: foo: bar')
 
-    const causes = formatted.causes as RawErrorCause[]
+    const causes = formatted.causes as RawFlatErrorCause[]
 
     expect(causes[0].message).toContain(nestedError.message)
     expect(causes[0].source).toContain(ErrorSource.SOURCE)
@@ -241,7 +241,8 @@ describe('flattenErrorCauses', () => {
     error.cause = nestedError
 
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
-    expect(errorCauses?.length).toEqual(undefined)
+    expect(errorCauses?.length).toEqual(1)
+    expect(errorCauses?.[0]).toEqual(jasmine.objectContaining({ biz: 'buz', cause: jasmine.any(Error) }))
   })
 
   it('should use error to extract stack trace', () => {
@@ -250,7 +251,7 @@ describe('flattenErrorCauses', () => {
     error.cause = new Error('bar')
 
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
-    expect(errorCauses?.[0].type).toEqual('Error')
+    expect((errorCauses?.[0] as RawFlatErrorCause).type).toEqual('Error')
   })
 
   it('should only return the first 10 errors if nested chain is longer', () => {
