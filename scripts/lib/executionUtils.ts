@@ -39,6 +39,25 @@ export function printLog(...params: any[]): void {
   console.log(greenColor, ...params, resetColor)
 }
 
+export function formatSize(bytes: number | null, { includeSign = false } = {}): string {
+  if (bytes === null) {
+    return 'N/A'
+  }
+
+  const sign = includeSign && bytes > 0 ? '+' : ''
+
+  if (bytes < 1024) {
+    return `${sign}${Math.round(bytes)} B`
+  }
+
+  return `${sign}${(bytes / 1024).toFixed(2)} KiB`
+}
+
+export function formatPercentage(percentage: number, { includeSign = false } = {}): string {
+  const sign = includeSign && percentage > 0 ? '+' : ''
+  return `${sign}${(percentage * 100).toFixed(2)}%`
+}
+
 /**
  * Find an error of type T in the provided error or its causes.
  */

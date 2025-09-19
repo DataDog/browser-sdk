@@ -3,22 +3,28 @@ import { fetchHandlingError } from '../../lib/executionUtils.ts'
 
 const ONE_DAY_IN_SECOND = 24 * 60 * 60
 
-interface Metric {
-  name: string
-  value: number | null
-}
-
 interface DatadogResponse {
   series?: Array<{
     pointlist?: Array<[number, number]>
   }>
 }
 
-export function fetchPerformanceMetrics(type: string, names: string[], commitId: string): Promise<Metric[]> {
-  return Promise.all(names.map((name) => fetchMetric(type, name, commitId)))
+export interface PerformanceMetric {
+  name: string
+  value: number
 }
 
-async function fetchMetric(type: string, name: string, commitId: string): Promise<Metric> {
+export async function fetchPerformanceMetrics(
+  type: string,
+  names: string[],
+  commitId: string
+): Promise<PerformanceMetric[]> {
+  return (await Promise.all(names.map((name) => fetchMetric(type, name, commitId)))).filter(
+    (metric): metric is PerformanceMetric => !!metric
+  )
+}
+
+async function fetchMetric(type: string, name: string, commitId: string): Promise<PerformanceMetric | undefined> {
   const now = Math.floor(Date.now() / 1000)
   const date = now - 30 * ONE_DAY_IN_SECOND
   let query = ''
@@ -49,9 +55,5 @@ async function fetchMetric(type: string, name: string, commitId: string): Promis
       name,
       value: data.series[0].pointlist[0][1],
     }
-  }
-  return {
-    name,
-    value: null,
   }
 }

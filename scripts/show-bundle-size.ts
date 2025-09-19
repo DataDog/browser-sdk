@@ -1,5 +1,5 @@
-import { calculateBundleSizes, formatSize } from './lib/computeBundleSize.ts'
-import { printLog, runMain } from './lib/executionUtils.ts'
+import { calculateBundleSizes } from './lib/computeBundleSize.ts'
+import { formatSize, printLog, runMain } from './lib/executionUtils.ts'
 
 const COL_WIDTH = 12
 
