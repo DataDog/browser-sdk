@@ -41,7 +41,7 @@
   "devDependencies": {
     "@eslint/js": "9.35.0",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
-    "@playwright/test": "1.53.0",
+    "@playwright/test": "1.55.0",
     "@swc/core": "1.13.5",
     "@types/chrome": "0.1.11",
     "@types/connect-busboy": "1.0.3",
