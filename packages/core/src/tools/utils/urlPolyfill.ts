@@ -1,4 +1,3 @@
-import { jsonStringify } from '../serialisation/jsonStringify'
 import { globalObject } from '../globalObject'
 
 export function normalizeUrl(url: string) {
@@ -24,7 +23,7 @@ export function buildUrl(url: string, base?: string) {
   try {
     return base !== undefined ? new URL(url, base) : new URL(url)
   } catch (error) {
-    throw new Error(`Failed to construct URL: ${String(error)} ${jsonStringify({ url, base })!}`)
+    throw new Error(`Failed to construct URL: ${String(error)}`)
   }
 }
 
