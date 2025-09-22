@@ -41,9 +41,9 @@ export function isUnsupportedExtensionEnvironment(windowLocation: string, stack:
     return false
   }
 
-  // Consider only the 1st frame line, which is the init caller.
+  // Since we generate the error on the init, we check the 2nd frame line.
   const frameLines = stack.split('\n').filter((l) => /^\s*at\s+/.test(l))
-  const target = frameLines[0] || ''
+  const target = frameLines[1] || ''
 
   return containsExtensionUrl(target)
 }
