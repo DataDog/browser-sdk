@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict'
 import { describe, it, mock } from 'node:test'
-import { PrComment } from './reportAsAPrComment.ts'
+import { Pr } from './reportAsAPrComment.ts'
 
 describe('PrComment', () => {
   it('should send a comment with performance results', async () => {
     const fetchMock = mock.method(globalThis, 'fetch')
     fetchMock.mock.mockImplementation(() => Promise.resolve({ ok: true } as Response))
 
-    const prComment = new PrComment(123)
+    const pr = new Pr(123, 'abc')
 
-    await prComment.setBundleSizes('RUM: 10KB')
+    await pr.setBundleSizes('RUM: 10KB')
 
     const [url, options] = fetchMock.mock.calls[0].arguments
     assert.equal(url, 'https://pr-commenter.us1.ddbuild.io/internal/cit/pr-comment')
