@@ -2,33 +2,34 @@ import { formatPercentage, formatSize } from '../../lib/executionUtils.ts'
 import { calculateBundleSizes } from '../../lib/computeBundleSize.ts'
 import type { PerformanceMetric } from './fetchPerformanceMetrics.ts'
 import { fetchPerformanceMetrics } from './fetchPerformanceMetrics.ts'
-import { markdownArray, type PrComment } from './reportAsAPrComment.ts'
+import { markdownArray, type Pr } from './reportAsAPrComment.ts'
 import { reportToDatadog } from './reportToDatadog.ts'
 
 // The value is set to 5% as it's around 10 times the average value for small PRs.
 const SIZE_INCREASE_THRESHOLD = 5
 
-export async function computeAndReportBundleSizes(lastCommonCommit: string, prComment: PrComment) {
-  let localBundleSizes: PerformanceMetric[]
-  let baseBundleSizes: PerformanceMetric[]
-  try {
-    localBundleSizes = extractUncompressedBundleSizes(calculateBundleSizes())
-    baseBundleSizes = await fetchPerformanceMetrics(
-      'bundle',
-      localBundleSizes.map((bundleSize) => bundleSize.name),
-      lastCommonCommit
-    )
-  } catch (e) {
-    await prComment.setBundleSizes('Error computing bundle sizes')
-    throw e
-  }
-
+export async function computeAndReportBundleSizes(pr?: Pr) {
+  const localBundleSizes = extractUncompressedBundleSizes(calculateBundleSizes())
   await reportToDatadog({
     message: 'Browser SDK bundles sizes',
     bundle_sizes: Object.fromEntries(localBundleSizes.map(({ name, value }) => [name, value])),
   })
+  if (!pr) {
+    return
+  }
+  let baseBundleSizes: PerformanceMetric[]
+  try {
+    baseBundleSizes = await fetchPerformanceMetrics(
+      'bundle',
+      localBundleSizes.map((bundleSize) => bundleSize.name),
+      pr.lastCommonCommit
+    )
+  } catch (e) {
+    await pr.setBundleSizes('Error fetching base bundle sizes')
+    throw e
+  }
 
-  await prComment.setBundleSizes(
+  await pr.setBundleSizes(
     formatBundleSizes({
       baseBundleSizes,
       localBundleSizes,
