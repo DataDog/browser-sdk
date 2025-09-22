@@ -49,7 +49,7 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'console',
-        handlingStack: ['HandlingStack: console error', `handler @ ${baseUrl}/:`],
+        handlingStack: ['HandlingStack: console error', `handler @ ${baseUrl}:`],
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
@@ -69,8 +69,8 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'Foo: Error: oh snap',
         source: 'console',
-        stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
-        handlingStack: ['HandlingStack: console error', `handler @ ${baseUrl}/:`],
+        stack: ['Error: oh snap', `at foo @ ${baseUrl}:`, `handler @ ${baseUrl}:`],
+        handlingStack: ['HandlingStack: console error', `handler @ ${baseUrl}:`],
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
@@ -90,7 +90,7 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
-        stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        stack: ['Error: oh snap', `at foo @ ${baseUrl}:`, `handler @ ${baseUrl}:`],
         handling: 'unhandled',
       })
       withBrowserLogs((browserLogs) => {
@@ -117,7 +117,7 @@ test.describe('rum errors', () => {
         message: 'oh snap',
         source: 'source',
         handling: 'unhandled',
-        stack: ['Error: oh snap', `at <anonymous> @ ${baseUrl}/:`],
+        stack: ['Error: oh snap', `at <anonymous> @ ${baseUrl}:`],
       })
       withBrowserLogs((browserLogs) => {
         expect(browserLogs).toHaveLength(1)
@@ -136,7 +136,7 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'source',
-        stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
+        stack: ['Error: oh snap', `at foo @ ${baseUrl}:`, `handler @ ${baseUrl}:`],
         handling: 'unhandled',
       })
       withBrowserLogs((browserLogs) => {
@@ -156,8 +156,8 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
-        stack: ['Error: oh snap', `at foo @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
-        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        stack: ['Error: oh snap', `at foo @ ${baseUrl}:`, `handler @ ${baseUrl}:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}:`],
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
@@ -178,8 +178,8 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
-        stack: ['Error: oh snap', `at customError @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
-        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        stack: ['Error: oh snap', `at customError @ ${baseUrl}:`, `handler @ ${baseUrl}:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}:`],
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
@@ -202,8 +202,8 @@ test.describe('rum errors', () => {
       expectError(intakeRegistry.rumErrorEvents[0].error, {
         message: 'oh snap',
         source: 'custom',
-        stack: ['CustomTestError3: oh snap', `at customErrorWithInheritance @ ${baseUrl}/:`, `handler @ ${baseUrl}/:`],
-        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}/:`],
+        stack: ['CustomTestError3: oh snap', `at customErrorWithInheritance @ ${baseUrl}:`, `handler @ ${baseUrl}:`],
+        handlingStack: ['HandlingStack: error', `handler @ ${baseUrl}:`],
         handling: 'handled',
       })
       withBrowserLogs((browserLogs) => {
@@ -232,7 +232,7 @@ test.describe('rum errors', () => {
         source: 'report',
         stack: [
           /^script-src(-elem)?: 'https:\/\/example\.com\/foo\.js' blocked by 'script-src(-elem)?' directive of the policy/,
-          `  at <anonymous> @ ${baseUrl}/:`,
+          `  at <anonymous> @ ${baseUrl}:`,
         ],
         handling: 'unhandled',
         csp: {

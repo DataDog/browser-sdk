@@ -16,7 +16,9 @@ import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
 export function selectCookieStrategy(initConfiguration: InitConfiguration): SessionStoreStrategyType | undefined {
   const cookieOptions = buildCookieOptions(initConfiguration)
-  return areCookiesAuthorized(cookieOptions) ? { type: SessionPersistence.COOKIE, cookieOptions } : undefined
+  return cookieOptions && areCookiesAuthorized(cookieOptions)
+    ? { type: SessionPersistence.COOKIE, cookieOptions }
+    : undefined
 }
 
 export function initCookieStrategy(configuration: Configuration, cookieOptions: CookieOptions): SessionStoreStrategy {
@@ -63,7 +65,7 @@ export function retrieveSessionCookie(): SessionState {
   return sessionState
 }
 
-export function buildCookieOptions(initConfiguration: InitConfiguration) {
+export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
   const cookieOptions: CookieOptions = {}
 
   cookieOptions.secure =
@@ -72,7 +74,11 @@ export function buildCookieOptions(initConfiguration: InitConfiguration) {
   cookieOptions.partitioned = !!initConfiguration.usePartitionedCrossSiteSessionCookie
 
   if (initConfiguration.trackSessionAcrossSubdomains) {
-    cookieOptions.domain = getCurrentSite()
+    const currentSite = getCurrentSite()
+    if (!currentSite) {
+      return
+    }
+    cookieOptions.domain = currentSite
   }
 
   return cookieOptions
