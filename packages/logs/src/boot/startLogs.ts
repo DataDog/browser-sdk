@@ -1,5 +1,6 @@
-import type { TrackingConsentState, BufferedObservable, BufferedData } from '@datadog/browser-core'
+import type { TrackingConsentState, BufferedObservable, BufferedData, PageMayExitEvent } from '@datadog/browser-core'
 import {
+  Observable,
   sendToExtension,
   createPageMayExitObservable,
   willSyntheticsInjectRum,
@@ -10,6 +11,7 @@ import {
   TelemetryService,
   createIdentityEncoder,
   startUserContext,
+  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -28,6 +30,7 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import { createHooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 import { startSessionContext } from '../domain/contexts/sessionContext'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -51,7 +54,10 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
-  const pageMayExitObservable = createPageMayExitObservable(configuration)
+  // Page exit is not observable in worker environments (no window/document events)
+  const pageMayExitObservable = isWorkerEnvironment
+    ? new Observable<PageMayExitEvent>()
+    : createPageMayExitObservable(configuration)
 
   const telemetry = startTelemetry(
     TelemetryService.LOGS,
@@ -68,6 +74,7 @@ export function startLogs(
       ? startLogsSessionManager(configuration, trackingConsentState)
       : startLogsSessionManagerStub(configuration)
 
+  startTrackingConsentContext(hooks, trackingConsentState)
   // Start user and account context first to allow overrides from global context
   startSessionContext(hooks, configuration, session)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)

@@ -2,7 +2,7 @@ import { Observable } from '../../tools/observable'
 import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
-import { clocksOrigin, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
+import { clocksOrigin, dateNow, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
 import { addEventListener, addEventListeners, DOM_EVENT } from '../../browser/addEventListener'
 import { clearInterval, setInterval } from '../../tools/timer'
 import type { Configuration } from '../configuration'
@@ -10,10 +10,16 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { addTelemetryDebug } from '../telemetry'
 import { isSyntheticsTest } from '../synthetics/syntheticsWorkerValues'
 import type { CookieStore } from '../../browser/browser.types'
+import { getCurrentSite } from '../../browser/cookie'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
+import { findLast } from '../../tools/utils/polyfills'
+import { monitorError } from '../../tools/monitor'
 import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
+import { toSessionState } from './sessionState'
 import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
+import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -74,6 +80,12 @@ export function startSessionManager<TrackingType extends string>(
   // manager is started.
   sessionStore.expandOrRenewSession()
   sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.SHORT_SESSION_INVESTIGATION)) {
+    const session = sessionStore.getSession()
+    if (session) {
+      detectSessionIdChange(configuration, session)
+    }
+  }
 
   trackingConsentState.observable.subscribe(() => {
     if (trackingConsentState.isGranted()) {
@@ -162,22 +174,69 @@ function trackResume(configuration: Configuration, cb: () => void) {
 
 async function reportUnexpectedSessionState() {
   const rawSession = retrieveSessionCookie()
-  let sessionCookies: string[] | Awaited<ReturnType<CookieStore['getAll']>> = []
-
-  if ('cookieStore' in window) {
-    sessionCookies = await (window as Window & { cookieStore: CookieStore }).cookieStore.getAll('_dd_s')
-  } else {
-    sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith('_dd_s'))
-  }
-
   addTelemetryDebug('Unexpected session state', {
     session: rawSession,
     isSyntheticsTest: isSyntheticsTest(),
     createdTimestamp: rawSession?.created,
     expireTimestamp: rawSession?.expire,
-    cookie: {
-      count: sessionCookies.length,
-      ...sessionCookies,
-    },
+    cookie: await getSessionCookies(),
+    currentDomain: `${window.location.protocol}//${window.location.hostname}`,
   })
+}
+
+function detectSessionIdChange(configuration: Configuration, initialSessionState: SessionState) {
+  if (!window.cookieStore || !initialSessionState.created) {
+    return
+  }
+
+  const sessionCreatedTime = Number(initialSessionState.created)
+  const sdkInitTime = dateNow()
+
+  const { stop } = addEventListener(configuration, cookieStore as CookieStore, DOM_EVENT.CHANGE, listener)
+  stopCallbacks.push(stop)
+
+  function listener(event: CookieChangeEvent) {
+    const changed = findLast(event.changed, (change): change is CookieListItem => change.name === SESSION_STORE_KEY)
+    if (!changed) {
+      return
+    }
+
+    const sessionAge = dateNow() - sessionCreatedTime
+    if (sessionAge > 14 * ONE_MINUTE) {
+      // The session might have expired just because it's too old or lack activity
+      stop()
+    } else {
+      const newSessionState = toSessionState(changed.value)
+      if (newSessionState.id && newSessionState.id !== initialSessionState.id) {
+        stop()
+        const time = dateNow() - sdkInitTime
+        getSessionCookies()
+          .then((cookie) => {
+            addTelemetryDebug('Session cookie changed', {
+              time,
+              session_age: sessionAge,
+              old: initialSessionState,
+              new: newSessionState,
+              cookie,
+            })
+          })
+          .catch(monitorError)
+      }
+    }
+  }
+}
+
+async function getSessionCookies(): Promise<{ count: number; domain: string }> {
+  let sessionCookies: string[] | Awaited<ReturnType<CookieStore['getAll']>>
+  if ('cookieStore' in window) {
+    sessionCookies = await (window as { cookieStore: CookieStore }).cookieStore.getAll(SESSION_STORE_KEY)
+  } else {
+    sessionCookies = document.cookie.split(/\s*;\s*/).filter((cookie) => cookie.startsWith(SESSION_STORE_KEY))
+  }
+
+  return {
+    count: sessionCookies.length,
+    domain: getCurrentSite(),
+    ...sessionCookies,
+  }
 }

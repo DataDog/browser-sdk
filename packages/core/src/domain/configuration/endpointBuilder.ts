@@ -8,7 +8,7 @@ import type { InitConfiguration } from './configuration'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export type TrackType = 'logs' | 'rum' | 'replay' | 'profile'
+export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures'
 export type ApiType =
   | 'fetch-keepalive'
   | 'fetch'
@@ -22,17 +22,15 @@ export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 export function createEndpointBuilder(
   initConfiguration: InitConfiguration,
   trackType: TrackType,
-  configurationTags: string[]
+  extraParameters?: string[]
 ) {
   const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
 
   return {
     build(api: ApiType, payload: Payload) {
-      const parameters = buildEndpointParameters(initConfiguration, trackType, configurationTags, api, payload)
+      const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload, extraParameters)
       return buildUrlWithParameters(parameters)
     },
-    tags: configurationTags,
-    urlPrefix: buildUrlWithParameters(''),
     trackType,
   }
 }
@@ -87,32 +85,30 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: InitConfiguration,
   trackType: TrackType,
-  configurationTags: string[],
   api: ApiType,
-  { retry, encoding }: Payload
+  { retry, encoding }: Payload,
+  extraParameters: string[] = []
 ) {
-  const tags = [`sdk_version:${__BUILD_ENV__SDK_VERSION__}`, `api:${api}`].concat(configurationTags)
-  if (retry) {
-    tags.push(`retry_count:${retry.count}`, `retry_after:${retry.lastFailureStatus}`)
-  }
-
   const parameters = [
-    'ddsource=browser',
-    `ddtags=${encodeURIComponent(tags.join(','))}`,
+    `ddsource=${source}`,
     `dd-api-key=${clientToken}`,
     `dd-evp-origin-version=${encodeURIComponent(__BUILD_ENV__SDK_VERSION__)}`,
     'dd-evp-origin=browser',
     `dd-request-id=${generateUUID()}`,
-  ]
+  ].concat(extraParameters)
 
   if (encoding) {
     parameters.push(`dd-evp-encoding=${encoding}`)
   }
 
   if (trackType === 'rum') {
-    parameters.push(`batch_time=${timeStampNow()}`)
+    parameters.push(`batch_time=${timeStampNow()}`, `_dd.api=${api}`)
+
+    if (retry) {
+      parameters.push(`_dd.retry_count=${retry.count}`, `_dd.retry_after=${retry.lastFailureStatus}`)
+    }
   }
 
   if (internalAnalyticsSubdomain) {

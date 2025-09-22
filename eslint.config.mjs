@@ -2,7 +2,6 @@
 
 import eslint from '@eslint/js'
 import tseslint from 'typescript-eslint'
-// @ts-expect-error no types available
 import importPlugin from 'eslint-plugin-import'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
@@ -19,7 +18,6 @@ export default tseslint.config(
   tseslint.configs.recommendedTypeChecked,
   importPlugin.flatConfigs.recommended,
   importPlugin.flatConfigs.typescript,
-
   {
     ignores: [
       'packages/*/bundle',
@@ -32,6 +30,7 @@ export default tseslint.config(
       'rum-events-format',
       '.yarn',
       'playwright-report',
+      'docs',
     ],
   },
 
@@ -46,11 +45,13 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         project: [
-          './tsconfig.json',
-          './test/apps/**/tsconfig.json',
+          './tsconfig.default.json',
+          './tsconfig.scripts.json',
+          './developer-extension/tsconfig.webpack.json',
           './test/e2e/tsconfig.json',
-          './developer-extension/tsconfig.json',
           './performances/tsconfig.json',
+
+          './test/apps/**/tsconfig.json',
         ],
         sourceType: 'module',
 
@@ -104,7 +105,6 @@ export default tseslint.config(
       'no-inner-declarations': 'error',
       'no-new-func': 'error',
       'no-new-wrappers': 'error',
-      'no-return-await': 'error',
       'no-sequences': 'error',
       'no-template-curly-in-string': 'error',
       'no-undef-init': 'error',
@@ -201,6 +201,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'all', argsIgnorePattern: '^_', vars: 'all' }],
       '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' }] },
+      ],
 
       'import/no-cycle': 'error',
       'import/no-default-export': 'error',
@@ -227,9 +231,40 @@ export default tseslint.config(
       'import/order': 'error',
 
       'jasmine/no-focused-tests': 'error',
-
       'jsdoc/check-alignment': 'error',
       'jsdoc/check-indentation': 'error',
+      'jsdoc/no-blank-blocks': 'error',
+      'jsdoc/sort-tags': [
+        'error',
+        {
+          linesBetween: 0,
+          tagSequence: [
+            {
+              tags: [
+                'category',
+                'packageDocumentation',
+                'internal',
+                'deprecated',
+                'experimental',
+                'defaultValue',
+                'param',
+                'return',
+                'returns',
+                'see',
+                'example',
+              ],
+            },
+          ],
+        },
+      ],
+      'jsdoc/require-description': 'error',
+      'jsdoc/require-param-description': 'error',
+      'jsdoc/require-hyphen-before-param-description': 'error',
+      'jsdoc/tag-lines': ['error', 'any', { startLines: 1 }],
+      'jsdoc/require-property-description': 'error',
+      'jsdoc/require-property-name': 'error',
+      'jsdoc/check-param-names': 'error',
+      'jsdoc/multiline-blocks': 'error',
 
       'local-rules/disallow-test-import-export-from-src': 'error',
       'local-rules/disallow-generic-utils': 'error',
@@ -268,6 +303,13 @@ export default tseslint.config(
   },
 
   {
+    files: ['scripts/**'],
+    rules: {
+      'import/extensions': ['error', 'ignorePackages'],
+    },
+  },
+
+  {
     files: ['scripts/**', 'packages/*/scripts/**'],
     ignores: ['**/lib/**'],
     rules: {
@@ -286,7 +328,7 @@ export default tseslint.config(
 
   {
     // JS files. Allow weaker typings since TS can't infer types as accurately as TS files.
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs'],
     rules: {
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
@@ -336,6 +378,11 @@ export default tseslint.config(
           selector: 'TSEnumDeclaration:not([const=true])',
           message: 'When possible, use `const enum` as it produces less code when transpiled.',
         },
+
+        {
+          selector: 'TSModuleDeclaration[kind=global]',
+          message: 'Never declare global types as it will leak to the user app global scope.',
+        },
       ],
     },
   },
@@ -344,6 +391,15 @@ export default tseslint.config(
     files: ['packages/**/*.ts'],
     rules: {
       'local-rules/disallow-spec-import': 'error',
+      'jsdoc/no-types': 'error',
+    },
+  },
+
+  {
+    files: ['packages/*/src/**/*.ts'],
+    ignores: [SPEC_FILES],
+    rules: {
+      'import/consistent-type-specifier-style': ['error', 'prefer-top-level'],
     },
   },
 
@@ -357,7 +413,6 @@ export default tseslint.config(
   {
     // Files executed by nodejs
     files: [
-      '**/webpack.*.js',
       'scripts/**',
       'test/**/*.js',
       'eslint-local-rules/**/*.js',
@@ -369,6 +424,14 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+
+  {
+    files: ['**/webpack.*.ts'],
+    rules: {
+      // Webpack configuration files are expected to use a default export.
+      'import/no-default-export': 'off',
     },
   },
 

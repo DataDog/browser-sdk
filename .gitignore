@@ -9,6 +9,8 @@ specs.log
 /test-report/
 browserstack.err
 package.tgz
+docs/
+*.tsbuildinfo
 
 # https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 .pnp.*

@@ -10,3 +10,6 @@ export function removeItem<T>(array: T[], item: T) {
     array.splice(index, 1)
   }
 }
+export function isNonEmptyArray<T>(value: unknown): value is T[] {
+  return Array.isArray(value) && value.length > 0
+}

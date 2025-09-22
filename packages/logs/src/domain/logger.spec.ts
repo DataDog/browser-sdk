@@ -1,5 +1,6 @@
 import type { ErrorWithCause } from '@datadog/browser-core'
-import { ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
+import { display, ErrorHandling, NO_ERROR_STACK_PRESENT_MESSAGE } from '@datadog/browser-core'
+import { supportUnicodePropertyEscapes } from '@datadog/browser-core/src/domain/configuration/tags'
 import type { LogsMessage } from './logger'
 import { HandlerType, Logger, STATUSES } from './logger'
 import { StatusType } from './logger/isAuthorized'
@@ -184,6 +185,76 @@ describe('Logger', () => {
           },
         })
       })
+    })
+  })
+
+  describe('tags', () => {
+    let displaySpy: jasmine.Spy<typeof display.warn>
+    function expectWarning() {
+      if (supportUnicodePropertyEscapes()) {
+        expect(displaySpy).toHaveBeenCalledOnceWith(
+          jasmine.stringMatching("Tag .* doesn't meet tag requirements and will be sanitized")
+        )
+      }
+    }
+
+    beforeEach(() => {
+      displaySpy = spyOn(display, 'warn')
+    })
+
+    it('should add a key:value tag', () => {
+      logger.addTag('foo', 'bar')
+      expect(logger.getTags()).toEqual(['foo:bar'])
+    })
+
+    it('should add a key only tag', () => {
+      logger.addTag('foo')
+      expect(logger.getTags()).toEqual(['foo'])
+    })
+
+    it('should sanitize a key with a comma', () => {
+      logger.addTag('foo,bar', 'baz')
+      expect(logger.getTags()).toEqual(['foo_bar:baz'])
+      expectWarning()
+    })
+
+    it('should sanitize a tag with a comma in the value', () => {
+      logger.addTag('foo', 'baz,qux')
+      expect(logger.getTags()).toEqual(['foo:baz_qux'])
+      expectWarning()
+    })
+
+    it('should remove tags with key', () => {
+      logger.addTag('foo', 'bar')
+      logger.addTag('foo', 'baz')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual([])
+    })
+
+    it('should remove key only tags', () => {
+      logger.addTag('foo')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual([])
+    })
+
+    it('should remove tag keys that were sanitized', () => {
+      logger.addTag('foo,bar', 'baz')
+      logger.removeTagsWithKey('foo,bar')
+      expect(logger.getTags()).toEqual([])
+      expectWarning()
+    })
+
+    it('should not remove tags starting with the key', () => {
+      logger.addTag('foo', 'bar')
+      logger.addTag('foo-bar', 'baz')
+      logger.removeTagsWithKey('foo')
+      expect(logger.getTags()).toEqual(['foo-bar:baz'])
+    })
+
+    it('should not be able to edit tags in place', () => {
+      const tags = logger.getTags()
+      tags.push('foo-bar:baz')
+      expect(logger.getTags()).toEqual([])
     })
   })
 

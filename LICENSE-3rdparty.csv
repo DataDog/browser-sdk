@@ -10,6 +10,7 @@ prod,@tabler/icons-react,MIT,Copyright (c) 2020-2023 Paweł Kuna
 prod,clsx,MIT,Copyright (c) Luke Edwards <luke.edwards05@gmail.com> (lukeed.com)
 prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
+dev,typedoc,Apache-2.0,TypeStrong
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
 dev,@playwright/test,Apache-2.0,Copyright Microsoft Corporation
@@ -73,3 +74,10 @@ dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,swc-loader,MIT,Copyright (c) SWC Contributors
+dev,@pmmmwh/react-refresh-webpack-plugin,MIT,Copyright (c) Michael Mok
+dev,@types/webpack-env,MIT,Copyright Microsoft Corporation
+dev,react-refresh,MIT,Copyright (c) Facebook, Inc. and its affiliates.
+dev,react-refresh-typescript,MIT,Copyright (c) Piotr Monwid-Olechnowicz
+dev,webpack-dev-server,MIT,Copyright JS Foundation and other contributors
+dev,http-server,MIT,Copyright http-party contributors
+dev,react-router,MIT,Copyright (c) React Training LLC 2015-2019 Copyright (c) Remix Software Inc. 2020-2021 Copyright (c) Shopify Inc. 2022-2023

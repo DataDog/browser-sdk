@@ -1,0 +1,181 @@
+/* 
+  Force the light theme 
+*/
+:root body {
+  /* Light - Datadog Theme */
+  --color-background: #faf9fc;
+  --color-background-secondary: #f5f4f7;
+  /* Not to be confused with [:active](https://developer.mozilla.org/en-US/docs/Web/CSS/:active) */
+  --color-background-active: #e8e6ec;
+  --color-background-warning: #fff3cd;
+  --color-warning-text: #856404;
+  --color-accent: #d1c7dd;
+  --color-active-menu-item: transparent;
+  --color-text: #2d2d2d;
+  --color-contrast-text: #632ca6;
+  --color-text-aside: #6c6c6c;
+
+  --color-icon-background: var(--color-background);
+  --color-icon-text: var(--color-text);
+
+  --color-comment-tag-text: var(--color-text);
+  --color-comment-tag: var(--color-background);
+
+  --color-link: #632ca6;
+  --color-focus-outline: #632ca6;
+
+  --color-ts-keyword: #632ca6;
+  --color-ts-project: #8e44ad;
+  --color-ts-module: var(--color-ts-project);
+  --color-ts-namespace: var(--color-ts-project);
+  --color-ts-enum: #9b59b6;
+  --color-ts-enum-member: var(--color-ts-enum);
+  --color-ts-variable: #3498db;
+  --color-ts-function: #632ca6;
+  --color-ts-class: #e74c3c;
+  --color-ts-interface: #27ae60;
+  --color-ts-constructor: var(--color-ts-class);
+  --color-ts-property: #8e44ad;
+  --color-ts-method: #8e44ad;
+  --color-ts-reference: #e91e63;
+  --color-ts-call-signature: var(--color-ts-method);
+  --color-ts-index-signature: var(--color-ts-property);
+  --color-ts-constructor-signature: var(--color-ts-constructor);
+  --color-ts-parameter: var(--color-ts-variable);
+
+  /* type literal not included as links will never be generated to it */
+  --color-ts-type-parameter: #d35400;
+  --color-ts-accessor: #c0392b;
+  --color-ts-get-signature: var(--color-ts-accessor);
+  --color-ts-set-signature: var(--color-ts-accessor);
+  --color-ts-type-alias: #632ca6;
+  /* reference not included as links will be colored with the kind that it points to */
+  --color-document: #2d2d2d;
+
+  --color-alert-note: #632ca6;
+  --color-alert-tip: #27ae60;
+  --color-alert-important: #8e44ad;
+  --color-alert-warning: #f39c12;
+  --color-alert-caution: #e74c3c;
+
+  --external-icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' width='10' height='10'><path fill-opacity='0' stroke='%23632ca6' stroke-width='10' d='m43,35H5v60h60V57M45,5v10l10,10-30,30 20,20 30-30 10,10h10V5z'/></svg>");
+  --color-scheme: light;
+
+  /* 
+    Highlight colors
+  */
+  --hl-0: var(--light-hl-0);
+  --hl-1: var(--light-hl-1);
+  --hl-2: var(--light-hl-2);
+  --hl-3: var(--light-hl-3);
+  --hl-4: var(--light-hl-4);
+  --hl-5: var(--light-hl-5);
+  --hl-6: var(--light-hl-6);
+  --hl-7: var(--light-hl-7);
+  --hl-8: var(--light-hl-8);
+  --hl-9: var(--light-hl-9);
+  --hl-10: var(--light-hl-10);
+  --hl-11: var(--light-hl-11);
+  --hl-12: var(--light-hl-12);
+  --code-background: var(--light-code-background);
+}
+
+body {
+  font-family: nationalweb, Helvetica, Arial, sans-serif;
+  font-weight: 200;
+}
+
+h1 {
+  font-size: 2.25rem;
+  font-weight: 600;
+}
+h2 {
+  font-size: 2rem;
+  font-weight: 200;
+}
+
+/*
+  Hide the index group
+*/
+.tsd-panel-group.tsd-index-group {
+  display: none;
+}
+
+/*
+  Hide the hierarchy panel
+*/
+.tsd-panel.tsd-hierarchy {
+  display: none;
+}
+
+/*
+  Hide the settings button
+*/
+.tsd-navigation.settings {
+  display: none;
+}
+
+/*
+  Remove bullet points from the Type declaration
+*/
+.tsd-type-declaration > .tsd-parameters {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+}
+
+/*
+  Customize the parameter list to be a table instead of a list
+*/
+.tsd-parameter-list {
+  display: table;
+  width: 100%;
+  list-style-type: none;
+  padding: 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tsd-parameter-list li {
+  display: table-row;
+  background-color: #fcfcfc;
+}
+
+.tsd-parameter-list li > * {
+  display: table-cell;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Hide empty table cells to avoid taking space */
+.tsd-parameter-list li > *:empty {
+  display: none;
+}
+
+/*
+  Customize the member panel to be a card
+*/
+.tsd-panel.tsd-member {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+  margin-bottom: 1rem;
+}
+
+/*
+ Active link in the left menu
+*/
+.tsd-navigation a.current,
+.tsd-page-navigation a.current {
+  .tsd-kind-icon ~ span {
+    color: var(--color-contrast-text);
+  }
+}

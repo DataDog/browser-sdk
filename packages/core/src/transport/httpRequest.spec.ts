@@ -5,13 +5,14 @@ import {
   DEFAULT_FETCH_MOCK,
   TOO_MANY_REQUESTS_FETCH_MOCK,
   NETWORK_ERROR_FETCH_MOCK,
+  wait,
 } from '../../test'
 import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
 import { createHttpRequest, fetchKeepAliveStrategy, fetchStrategy } from './httpRequest'
-import type { HttpRequest } from './httpRequest'
+import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 
 describe('httpRequest', () => {
   const BATCH_BYTES_LIMIT = 100
@@ -25,7 +26,7 @@ describe('httpRequest', () => {
     interceptor = interceptRequests()
     requests = interceptor.requests
     endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
   })
 
   describe('send', () => {
@@ -88,6 +89,24 @@ describe('httpRequest', () => {
 
       await interceptor.waitForAllFetchCalls()
       await collectAsyncCalls(fetchSpy, 2)
+    })
+
+    it('sends the payload to multiple endpoints', async () => {
+      const endpointBuilder2 = mockEndpointBuilder('http://my.website2')
+
+      request = createHttpRequest([endpointBuilder, endpointBuilder2], BATCH_BYTES_LIMIT, noop)
+
+      interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+
+      const payloadData = '{"foo":"bar1"}\n{"foo":"bar2"}'
+      request.send({ data: payloadData, bytesCount: 10 })
+
+      await interceptor.waitForAllFetchCalls()
+      expect(requests.length).toEqual(2)
+      expect(requests[0].url).toContain('http://my.website')
+      expect(requests[0].body).toEqual(payloadData)
+      expect(requests[1].url).toContain('http://my.website2')
+      expect(requests[1].body).toEqual(payloadData)
     })
   })
 
@@ -230,6 +249,74 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
   })
+
+  describe('HttpRequestEvent observable', () => {
+    const observedEvents: HttpRequestEvent[] = []
+
+    function latestEvents() {
+      const events = [...observedEvents]
+      observedEvents.length = 0
+      return events
+    }
+
+    beforeEach(() => {
+      request.observable.subscribe((event) => {
+        observedEvents.push(event)
+      })
+    })
+
+    afterEach(() => {
+      observedEvents.length = 0
+    })
+
+    it('should report success for successful requests', async () => {
+      interceptor.withFetch(DEFAULT_FETCH_MOCK)
+
+      const payload = { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }
+      request.send(payload)
+      await interceptor.waitForAllFetchCalls()
+      await wait(0)
+
+      expect(latestEvents()).toEqual([
+        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+      ])
+    })
+
+    it('should report failure for failing requests', async () => {
+      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+
+      const payload = { data: '{"foo":"barX"}\n{"foo":"barY"}', bytesCount: 10 }
+      request.send(payload)
+      await interceptor.waitForAllFetchCalls()
+      await wait(0)
+      await interceptor.waitForAllFetchCalls()
+      await wait(0)
+
+      expect(latestEvents()).toEqual([
+        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+      ])
+    })
+
+    it('should report multiple failures when requests are retried repeatedly', async () => {
+      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK, TOO_MANY_REQUESTS_FETCH_MOCK, DEFAULT_FETCH_MOCK)
+
+      const payload = { data: '{"foo":"barA"}\n{"foo":"barB"}', bytesCount: 10 }
+      request.send(payload)
+      await interceptor.waitForAllFetchCalls()
+      await wait(0)
+      await interceptor.waitForAllFetchCalls()
+      await wait(0)
+      await interceptor.waitForAllFetchCalls()
+      await wait(0)
+
+      expect(latestEvents()).toEqual([
+        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        { type: 'failure', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+        { type: 'success', bandwidth: { ongoingByteCount: 0, ongoingRequestCount: 0 }, payload },
+      ])
+    })
+  })
 })
 
 describe('httpRequest intake parameters', () => {
@@ -243,8 +330,8 @@ describe('httpRequest intake parameters', () => {
   beforeEach(() => {
     interceptor = interceptRequests()
     requests = interceptor.requests
-    endpointBuilder = createEndpointBuilder({ clientToken }, 'logs', [])
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    endpointBuilder = createEndpointBuilder({ clientToken }, 'logs')
+    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
   })
 
   it('should have a unique request id', async () => {

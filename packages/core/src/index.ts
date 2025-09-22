@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, EndpointBuilder } from './domain/configuration'
+export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn } from './domain/configuration'
 export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
@@ -7,6 +7,9 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
+  buildTags,
+  buildTag,
+  sanitizeTag,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -42,12 +45,12 @@ export {
   startTelemetry,
   addTelemetryDebug,
   addTelemetryError,
-  startFakeTelemetry,
   resetTelemetry,
   TelemetryService,
-  isTelemetryReplicationAllowed,
+  TelemetryMetrics,
   addTelemetryConfiguration,
   addTelemetryUsage,
+  addTelemetryMetrics,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
@@ -59,14 +62,14 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { HttpRequest, Payload, FlushEvent, FlushReason } from './transport'
+export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
   getEventBridge,
   bridgeSupports,
   BridgeCapability,
-  startBatchWithReplica,
+  createBatch,
   createFlushController,
 } from './transport'
 export * from './tools/display'
@@ -76,7 +79,7 @@ export * from './tools/utils/urlPolyfill'
 export * from './tools/utils/timeUtils'
 export * from './tools/utils/arrayUtils'
 export * from './tools/serialisation/sanitize'
-export * from './tools/getGlobalObject'
+export * from './tools/globalObject'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'

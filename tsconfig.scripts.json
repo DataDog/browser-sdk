@@ -1,0 +1,19 @@
+// This file is used to typecheck Node.js scripts and webpack config files.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "target": "ES2024",
+    "lib": ["ES2024"],
+    "types": ["node"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "rootDir": ".",
+    "allowJs": true,
+    "checkJs": false,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["scripts", "**/webpack.*.ts"]
+}

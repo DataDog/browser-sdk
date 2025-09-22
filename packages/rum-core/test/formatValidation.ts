@@ -76,6 +76,9 @@ function validateRumFormat(rumEvent: Context) {
         if (error.keyword === 'enum') {
           message += ` ${formatAllowedValues(error.params.allowedValues)}`
         }
+        if (error.keyword === 'additionalProperties') {
+          message += ` ${formatAllowedValues([error.params.additionalProperty])}`
+        }
         return `  event${error.instancePath || ''} ${message}`
       })
       .join('\n')

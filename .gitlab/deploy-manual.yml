@@ -6,6 +6,9 @@ stages:
 .base-configuration:
   tags: ['runner:main', 'size:large']
   image: $CI_IMAGE
+  id_tokens:
+    DDOCTOSTS_ID_TOKEN:
+      aud: dd-octo-sts
 
 .deploy-prod:
   stage: deploy
@@ -16,7 +19,7 @@ stages:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy-prod-dc.js v${VERSION%%.*} $UPLOAD_PATH false
+    - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $UPLOAD_PATH false
 
 step-1_deploy-prod-minor-dcs:
   extends:
@@ -54,7 +57,7 @@ step-5_publish-npm:
   allow_failure: false
   script:
     - yarn
-    - node ./scripts/deploy/publish-npm.js
+    - node ./scripts/deploy/publish-npm.ts
 
 step-6_publish-developer-extension:
   stage: deploy
@@ -64,7 +67,7 @@ step-6_publish-developer-extension:
   allow_failure: false
   script:
     - yarn
-    - node ./scripts/deploy/publish-developer-extension.js
+    - node ./scripts/deploy/publish-developer-extension.ts
 
 step-7_create-github-release:
   needs:
@@ -75,7 +78,7 @@ step-7_create-github-release:
   allow_failure: false
   script:
     - yarn
-    - node ./scripts/release/create-github-release.mjs
+    - node scripts/release/create-github-release.ts
 
 ########################################################################################################################
 # Notify

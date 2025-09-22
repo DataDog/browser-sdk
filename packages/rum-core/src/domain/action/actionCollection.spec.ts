@@ -11,6 +11,7 @@ import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
 import { startActionCollection } from './actionCollection'
+import { ActionNameSource } from './actionNameConstants'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -50,7 +51,7 @@ describe('actionCollection', () => {
       duration: 100 as Duration,
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
-      nameSource: 'text_content',
+      nameSource: ActionNameSource.TEXT_CONTENT,
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CLICK,
       event,
@@ -112,6 +113,7 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CUSTOM,
+      context: { foo: 'bar' },
     })
 
     expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
@@ -125,7 +127,9 @@ describe('actionCollection', () => {
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
+      context: { foo: 'bar' },
     })
+
     expect(rawRumEvents[0].domainContext).toEqual({ handlingStack: undefined })
   })
   it('should not set the loading time field of the action', () => {
@@ -142,7 +146,7 @@ describe('actionCollection', () => {
       frustrationTypes: [],
       id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       name: 'foo',
-      nameSource: 'text_content',
+      nameSource: ActionNameSource.TEXT_CONTENT,
       startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
       type: ActionType.CLICK,
     })

@@ -1,7 +1,8 @@
-import type { RawTelemetryEvent, EncoderResult } from '@datadog/browser-core'
+import type { EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-core'
+import { noop, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { noop, startFakeTelemetry, DeflateEncoderStreamId } from '@datadog/browser-core'
 import { MockWorker } from '../../../test'
+import { startMockTelemetry, type MockTelemetry } from '../../../../core/test'
 import { createDeflateEncoder } from './deflateEncoder'
 
 const OTHER_STREAM_ID = 10 as DeflateEncoderStreamId
@@ -9,7 +10,7 @@ const OTHER_STREAM_ID = 10 as DeflateEncoderStreamId
 describe('createDeflateEncoder', () => {
   const configuration = {} as RumConfiguration
   let worker: MockWorker
-  let telemetryEvents: RawTelemetryEvent[]
+  let telemetry: MockTelemetry
 
   const ENCODED_FOO = [102, 111, 111]
   const ENCODED_BAR = [98, 97, 114]
@@ -17,7 +18,7 @@ describe('createDeflateEncoder', () => {
 
   beforeEach(() => {
     worker = new MockWorker()
-    telemetryEvents = startFakeTelemetry()
+    telemetry = startMockTelemetry()
   })
 
   describe('write()', () => {
@@ -46,7 +47,7 @@ describe('createDeflateEncoder', () => {
   describe('finish()', () => {
     it('invokes the callback with the encoded data', () => {
       const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.write('bar')
       encoder.finish(finishCallbackSpy)
@@ -63,7 +64,7 @@ describe('createDeflateEncoder', () => {
 
     it('invokes the callback even if nothing has been written', () => {
       const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.finish(finishCallbackSpy)
 
       expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
@@ -95,7 +96,7 @@ describe('createDeflateEncoder', () => {
 
     it('supports calling finish() while another finish() call is pending', () => {
       const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.finish(finishCallbackSpy)
       encoder.write('bar')
@@ -163,7 +164,7 @@ describe('createDeflateEncoder', () => {
 
     it('supports calling finishSync() while another finish() call is pending', () => {
       const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
-      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8Array>) => void>()
+      const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
       encoder.write('foo')
       encoder.finish(finishCallbackSpy)
       encoder.write('bar')
@@ -195,7 +196,7 @@ describe('createDeflateEncoder', () => {
     expect(writeCallbackSpy).not.toHaveBeenCalled()
   })
 
-  it('unsubscribes from the worker responses come out of order', () => {
+  it('unsubscribes from the worker responses come out of order', async () => {
     const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     encoder.write('foo', noop)
     encoder.write('bar', noop)
@@ -204,12 +205,52 @@ describe('createDeflateEncoder', () => {
     worker.processAllMessages()
 
     expect(worker.messageListenersCount).toBe(0)
-    expect(telemetryEvents).toEqual([
+    expect(await telemetry.getEvents()).toEqual([
       {
         type: 'log',
         message: 'Worker responses received out of order.',
         status: 'debug',
       },
     ])
+  })
+
+  it('do not notify data twice when calling finishSync() then finish()', () => {
+    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+    const finishCallbackSpy = jasmine.createSpy<(result: EncoderResult<Uint8ArrayBuffer>) => void>()
+
+    encoder.write('foo')
+    encoder.finishSync()
+
+    encoder.write('bar')
+    encoder.finish(finishCallbackSpy)
+
+    worker.processAllMessages()
+
+    expect(finishCallbackSpy).toHaveBeenCalledOnceWith({
+      rawBytesCount: 3,
+      output: new Uint8Array([...ENCODED_BAR, ...TRAILER]),
+      outputBytesCount: 4,
+      encoding: 'deflate',
+    })
+  })
+
+  it('do not notify data twice when calling finishSync() then finishSync()', () => {
+    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+
+    encoder.write('foo')
+    encoder.finishSync()
+
+    encoder.write('bar')
+    expect(encoder.finishSync().pendingData).toBe('bar')
+  })
+
+  it('does not unsubscribe when there is no pending action', () => {
+    const encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
+
+    encoder.write('foo')
+    encoder.finishSync()
+    worker.processAllMessages()
+
+    expect(worker.messageListenersCount).toBe(1)
   })
 })

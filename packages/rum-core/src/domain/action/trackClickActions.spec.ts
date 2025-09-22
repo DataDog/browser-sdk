@@ -1,4 +1,4 @@
-import type { Context, Duration } from '@datadog/browser-core'
+import type { Duration } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -6,21 +6,24 @@ import {
   relativeNow,
   DefaultPrivacyLevel,
   Observable,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
+import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
-import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
+import type { BrowserWindow } from '../privacy'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
+import { ActionNameSource } from './actionNameConstants'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -117,7 +120,7 @@ describe('trackClickActions', () => {
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
         id: jasmine.any(String),
         name: 'Click me',
-        nameSource: 'text_content',
+        nameSource: ActionNameSource.TEXT_CONTENT,
         startClocks: {
           relative: addDuration(pointerDownClocks.relative, EMULATED_CLICK_DURATION),
           timeStamp: addDuration(pointerDownClocks.timeStamp, EMULATED_CLICK_DURATION),
@@ -174,7 +177,7 @@ describe('trackClickActions', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       action: { id: 'unrelated-action-id' },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(EXPIRE_DELAY)
 
@@ -447,6 +450,109 @@ describe('trackClickActions', () => {
     })
   })
 
+  describe('NodePrivacyLevel masking when enablePrivacyForActionName is true', () => {
+    beforeAll(() => {
+      ;(window as BrowserWindow).$DD_ALLOW = new Set(['foo-bar'])
+    })
+
+    afterAll(() => {
+      ;(window as BrowserWindow).$DD_ALLOW = undefined
+    })
+
+    it('should mask action name when defaultPrivacyLevel is mask_unless_allowlisted and not in allowlist', () => {
+      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+        enablePrivacyForActionName: true,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('')
+      expect(events[0].nameSource).toBe(ActionNameSource.BLANK)
+    })
+
+    it('should not mask action name when defaultPrivacyLevel is allow', () => {
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+        enablePrivacyForActionName: true,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Click me')
+    })
+
+    it('should not use allowlist masking when enablePrivacyForActionName is true and defaultPrivacyLevel is mask', () => {
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
+        enablePrivacyForActionName: true,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Masked Element')
+      expect(events[0].nameSource).toBe(ActionNameSource.MASK_PLACEHOLDER)
+    })
+
+    it('should use allowlist masking when defaultPrivacyLevel is allow and node privacy level is mask-unless-allowlisted', () => {
+      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
+      button.setAttribute('data-dd-privacy', 'mask-unless-allowlisted')
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
+        enablePrivacyForActionName: true,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('')
+      expect(events[0].nameSource).toBe(ActionNameSource.BLANK)
+    })
+
+    it('should preserve mask levels when defaultPrivacyLevel is mask-unless-allowlisted', () => {
+      button.setAttribute('data-dd-privacy', 'mask')
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+        enablePrivacyForActionName: true,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Masked Element')
+      expect(events[0].nameSource).toBe(ActionNameSource.MASK_PLACEHOLDER)
+    })
+
+    it('should not use allowlist masking when defaultPrivacyLevel is mask-unless-allowlisted but dd-privacy is allow', () => {
+      button.setAttribute('data-dd-privacy', 'allow')
+      startClickActionsTracking({
+        defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+        enablePrivacyForActionName: true,
+      })
+
+      emulateClick({ activity: {} })
+      expect(findActionId()).not.toBeUndefined()
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Click me')
+    })
+  })
+
   function emulateClick({
     target = button,
     activity,
@@ -496,7 +602,7 @@ describe('trackClickActions', () => {
   }
 
   function createFakeErrorEvent() {
-    return { type: RumEventType.ERROR, action: { id: findActionId() } } as RumEvent & Context
+    return { type: RumEventType.ERROR, action: { id: findActionId() } } as AssembledRumEvent
   }
 })
 

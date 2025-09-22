@@ -7,7 +7,7 @@ const DEFAULT_PAYLOAD = {} as Payload
 describe('transportConfiguration', () => {
   const clientToken = 'some_client_token'
   const internalAnalyticsSubdomain = 'ia-rum-intake'
-  const intakeParameters = 'ddsource=browser&ddtags=sdk_version'
+  const intakeParameters = 'ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
 
   describe('site', () => {
     it('should use US site by default', () => {
@@ -50,31 +50,18 @@ describe('transportConfiguration', () => {
     })
   })
 
-  describe('sdk_version, env, version and service', () => {
-    it('should not modify the logs and rum endpoints tags when not defined', () => {
-      const configuration = computeTransportConfiguration({ clientToken })
-      const rumEndpoint = decodeURIComponent(configuration.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
-      expect(rumEndpoint).not.toContain(',env:')
-      expect(rumEndpoint).not.toContain(',service:')
-      expect(rumEndpoint).not.toContain(',version:')
-      expect(rumEndpoint).not.toContain(',datacenter:')
-
-      const logsEndpoint = decodeURIComponent(configuration.logsEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
-      expect(logsEndpoint).not.toContain(',env:')
-      expect(logsEndpoint).not.toContain(',service:')
-      expect(logsEndpoint).not.toContain(',version:')
-      expect(logsEndpoint).not.toContain(',datacenter:')
+  it('adds the replica application id to the rum replica endpoint', () => {
+    const replicaApplicationId = 'replica-application-id'
+    const configuration = computeTransportConfiguration({
+      clientToken,
+      replica: {
+        clientToken: 'replica-client-token',
+        applicationId: replicaApplicationId,
+      },
     })
-
-    it('should be set as tags in the logs and rum endpoints', () => {
-      const configuration = computeTransportConfiguration({ clientToken, env: 'foo', service: 'bar', version: 'baz' })
-      expect(decodeURIComponent(configuration.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))).toContain(
-        'env:foo,service:bar,version:baz'
-      )
-      expect(decodeURIComponent(configuration.logsEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))).toContain(
-        'env:foo,service:bar,version:baz'
-      )
-    })
+    expect(configuration.replica!.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).toContain(
+      `application.id=${replicaApplicationId}`
+    )
   })
 
   describe('isIntakeUrl', () => {

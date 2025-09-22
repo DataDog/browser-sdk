@@ -1,17 +1,27 @@
+import { elapsed, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { SerializedNodeWithId } from '../../../types'
 import type { SerializationContext } from './serialization.types'
 import { serializeNodeWithId } from './serializeNode'
+import { updateSerializationStats } from './serializationStats'
 
 export function serializeDocument(
   document: Document,
   configuration: RumConfiguration,
   serializationContext: SerializationContext
 ): SerializedNodeWithId {
-  // We are sure that Documents are never ignored, so this function never returns null
-  return serializeNodeWithId(document, {
+  const serializationStart = timeStampNow()
+  const serializedNode = serializeNodeWithId(document, {
     serializationContext,
     parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
     configuration,
-  })!
+  })
+  updateSerializationStats(
+    serializationContext.serializationStats,
+    'serializationDuration',
+    elapsed(serializationStart, timeStampNow())
+  )
+
+  // We are sure that Documents are never ignored, so this function never returns null
+  return serializedNode!
 }

@@ -7,8 +7,10 @@ import type {
   RumSession,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
-import { asyncRunOnReadyState, monitorError, type DeflateEncoder } from '@datadog/browser-core'
+import type { Telemetry, DeflateEncoder } from '@datadog/browser-core'
+import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
+import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
 import type { startRecording } from './startRecording'
 
 export type StartRecording = typeof startRecording
@@ -25,6 +27,15 @@ export const enum RecorderStatus {
   Started,
 }
 
+export type RecorderInitEvent =
+  | { type: 'start'; forced: boolean }
+  | { type: 'document-ready' }
+  | { type: 'recorder-settled' }
+  | { type: 'aborted' }
+  | { type: 'deflate-encoder-load-failed' }
+  | { type: 'recorder-load-failed' }
+  | { type: 'succeeded' }
+
 export interface Strategy {
   start: (options?: StartRecordingOptions) => void
   stop: () => void
@@ -38,7 +49,8 @@ export function createPostStartStrategy(
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   loadRecorder: () => Promise<StartRecording | undefined>,
-  getOrCreateDeflateEncoder: () => DeflateEncoder | undefined
+  getOrCreateDeflateEncoder: () => DeflateEncoder | undefined,
+  telemetry: Telemetry
 ): Strategy {
   let status = RecorderStatus.Stopped
   let stopRecording: () => void
@@ -56,16 +68,32 @@ export function createPostStartStrategy(
     }
   })
 
-  const doStart = async () => {
-    const [startRecordingImpl] = await Promise.all([loadRecorder(), asyncRunOnReadyState(configuration, 'interactive')])
+  const observable = new Observable<RecorderInitEvent>()
+  startRecorderInitTelemetry(telemetry, observable)
+
+  const doStart = async (forced: boolean) => {
+    observable.notify({ type: 'start', forced })
+
+    const [startRecordingImpl] = await Promise.all([
+      notifyWhenSettled(observable, { type: 'recorder-settled' }, loadRecorder()),
+      notifyWhenSettled(observable, { type: 'document-ready' }, asyncRunOnReadyState(configuration, 'interactive')),
+    ])
 
     if (status !== RecorderStatus.Starting) {
+      observable.notify({ type: 'aborted' })
+      return
+    }
+
+    if (!startRecordingImpl) {
+      status = RecorderStatus.Stopped
+      observable.notify({ type: 'recorder-load-failed' })
       return
     }
 
     const deflateEncoder = getOrCreateDeflateEncoder()
-    if (!deflateEncoder || !startRecordingImpl) {
+    if (!deflateEncoder) {
       status = RecorderStatus.Stopped
+      observable.notify({ type: 'deflate-encoder-load-failed' })
       return
     }
 
@@ -74,10 +102,12 @@ export function createPostStartStrategy(
       configuration,
       sessionManager,
       viewHistory,
-      deflateEncoder
+      deflateEncoder,
+      telemetry
     ))
 
     status = RecorderStatus.Started
+    observable.notify({ type: 'succeeded' })
   }
 
   function start(options?: StartRecordingOptions) {
@@ -93,10 +123,12 @@ export function createPostStartStrategy(
 
     status = RecorderStatus.Starting
 
-    // Intentionally not awaiting doStart() to keep it asynchronous
-    doStart().catch(monitorError)
+    const forced = shouldForceReplay(session!, options) || false
 
-    if (shouldForceReplay(session!, options)) {
+    // Intentionally not awaiting doStart() to keep it asynchronous
+    doStart(forced).catch(monitorError)
+
+    if (forced) {
       sessionManager.setForcedReplay()
     }
   }
@@ -129,4 +161,16 @@ function isRecordingInProgress(status: RecorderStatus) {
 
 function shouldForceReplay(session: RumSession, options?: StartRecordingOptions) {
   return options && options.force && session.sessionReplay === SessionReplayState.OFF
+}
+
+async function notifyWhenSettled<Event, Result>(
+  observable: Observable<Event>,
+  event: Event,
+  promise: Promise<Result>
+): Promise<Result> {
+  try {
+    return await promise
+  } finally {
+    observable.notify(event)
+  }
 }

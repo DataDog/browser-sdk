@@ -18,6 +18,215 @@
 
 ---
 
+## v6.21.0
+
+**Public Changes:**
+
+- ✨ [RUM-9181] Service Worker support for Logs ([#3769](https://github.com/DataDog/browser-sdk/pull/3769)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-10146] implement `trackEarlyRequests` ([#3846](https://github.com/DataDog/browser-sdk/pull/3846)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 when a request fails, display the response error ([#3853](https://github.com/DataDog/browser-sdk/pull/3853))
+- 👷 [Performance script] fix regression on size increase warnings ([#3845](https://github.com/DataDog/browser-sdk/pull/3845))
+- 🔧 configure renovate to wait 1 week before upgrading dependencies ([#3850](https://github.com/DataDog/browser-sdk/pull/3850))
+- 👷 [RUM Profiler] send view names as event attributes ([#3851](https://github.com/DataDog/browser-sdk/pull/3851)) [RUM]
+- 🐛 [PANA-4236] Fix flaky startRecorderInitTelemetry test ([#3852](https://github.com/DataDog/browser-sdk/pull/3852)) [RUM]
+
+## v6.20.0
+
+**Public Changes:**
+
+- ✨ [RUM-11701] Add unity as a source override ([#3838](https://github.com/DataDog/browser-sdk/pull/3838)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨⚗️[RUM-11398] Add feature operation step vital APIs ([#3804](https://github.com/DataDog/browser-sdk/pull/3804)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨[RUM-10962][Remote config] support js strategy ([#3766](https://github.com/DataDog/browser-sdk/pull/3766)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 Update dependency eslint-plugin-jsdoc to v57 ([#3842](https://github.com/DataDog/browser-sdk/pull/3842))
+- 👷 Update all non-major dependencies ([#3840](https://github.com/DataDog/browser-sdk/pull/3840)) [RUM-REACT]
+- 👷 Lock file maintenance ([#3843](https://github.com/DataDog/browser-sdk/pull/3843))
+- 👷 Lock file maintenance ([#3831](https://github.com/DataDog/browser-sdk/pull/3831))
+- 👷 Update dependency eslint-plugin-unicorn to v61 ([#3830](https://github.com/DataDog/browser-sdk/pull/3830))
+- 👷 Update actions/upload-pages-artifact action to v4 ([#3829](https://github.com/DataDog/browser-sdk/pull/3829))
+- 👷 Update actions/stale action to v10 ([#3828](https://github.com/DataDog/browser-sdk/pull/3828))
+- 👷 Update actions/setup-node action to v5 ([#3827](https://github.com/DataDog/browser-sdk/pull/3827))
+- 👷 Update all non-major dependencies ([#3826](https://github.com/DataDog/browser-sdk/pull/3826))
+- 👷 Fix Octo release policy ([#3821](https://github.com/DataDog/browser-sdk/pull/3821))
+- ✅ fix flaky test ([#3837](https://github.com/DataDog/browser-sdk/pull/3837)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ improve format validation error output ([#3834](https://github.com/DataDog/browser-sdk/pull/3834)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊 add telemetry for unexpected session id changes ([#3815](https://github.com/DataDog/browser-sdk/pull/3815)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🏷️ update rum-events-format ([#3847](https://github.com/DataDog/browser-sdk/pull/3847)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗️ [RUM-11434] GraphQL support ([#3805](https://github.com/DataDog/browser-sdk/pull/3805)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ improve browser extension e2e tests ([#3823](https://github.com/DataDog/browser-sdk/pull/3823))
+- 🚨 add a lint rule to forbid `declare global` usage ([#3836](https://github.com/DataDog/browser-sdk/pull/3836))
+- 🔉 report missing configuration options ([#3832](https://github.com/DataDog/browser-sdk/pull/3832)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ci: bump slack-notifier to v3-sdm ([#3809](https://github.com/DataDog/browser-sdk/pull/3809))
+- [RUM-10415] [alt] add privacy allowlist support treewalker ([#3803](https://github.com/DataDog/browser-sdk/pull/3803)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.19.0
+
+**Public Changes:**
+
+- ✨[RUM-10962][Remote config] support dynamic options ([#3743](https://github.com/DataDog/browser-sdk/pull/3743)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [PANA-3960] Allow more queued request data for better session replay reliability ([#3807](https://github.com/DataDog/browser-sdk/pull/3807)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-11439] Fix deflate encoder sending data twice in some cases ([#3806](https://github.com/DataDog/browser-sdk/pull/3806)) [RUM]
+
+**Internal Changes:**
+
+- ✨ [RUM-10044] Support for overriding the source ([#3659](https://github.com/DataDog/browser-sdk/pull/3659)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Fix playwright version in BrowserStack to match package.json ([#3810](https://github.com/DataDog/browser-sdk/pull/3810))
+- 👷 Lock file maintenance ([#3785](https://github.com/DataDog/browser-sdk/pull/3785))
+- 👷 Update all non-major dependencies ([#3782](https://github.com/DataDog/browser-sdk/pull/3782)) [FLAGGING] [RUM-REACT] [RUM] [WORKER]
+- 👷 Update actions/checkout action to v5 ([#3783](https://github.com/DataDog/browser-sdk/pull/3783))
+- 👷 Update dependency eslint-plugin-jsdoc to v54 ([#3784](https://github.com/DataDog/browser-sdk/pull/3784))
+- 👷 Fix create-github-release job ([#3799](https://github.com/DataDog/browser-sdk/pull/3799))
+- 🔧 👷 convert webpack configuration files to TS, improve overall TS config ([#3797](https://github.com/DataDog/browser-sdk/pull/3797)) [FLAGGING] [LOGS] [RUM-SLIM] [RUM] [WORKER]
+- 🔊[RUM-11233] add `remote_configuration_id` to configuration telemetry ([#3778](https://github.com/DataDog/browser-sdk/pull/3778)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.18.1
+
+**Public Changes:**
+
+- 🐛 Support error.dd_context for addReactError API ([#3791](https://github.com/DataDog/browser-sdk/pull/3791)) [RUM-REACT]
+
+**Internal Changes:**
+
+- ✨⚗️ [RUM-10146] implement early request collection ([#3740](https://github.com/DataDog/browser-sdk/pull/3740)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 [RUM-11361] Replace github PAT by using dd octo ([#3725](https://github.com/DataDog/browser-sdk/pull/3725))
+- 👷 [RUM-11361] Fix read octo policy ([#3789](https://github.com/DataDog/browser-sdk/pull/3789))
+- 👷 [RUM-11361] Add octo policies ([#3787](https://github.com/DataDog/browser-sdk/pull/3787))
+- 👷‍♀️ [RUM-11139] Improve textual content extraction for action names ([#3759](https://github.com/DataDog/browser-sdk/pull/3759)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 add `consistent-type-specifier-style: 'prefer-top-level'` eslint rule ([#3780](https://github.com/DataDog/browser-sdk/pull/3780)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 Lock file maintenance ([#3772](https://github.com/DataDog/browser-sdk/pull/3772))
+- 🔧 Rename state.yml to stale.yml ([#3781](https://github.com/DataDog/browser-sdk/pull/3781))
+- 🎨 [PANA-3877] Consolidate sample rates for replay telemetry ([#3795](https://github.com/DataDog/browser-sdk/pull/3795)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✅ [RUM-10146] mock global performance buffer when mocking PerformanceObserver ([#3752](https://github.com/DataDog/browser-sdk/pull/3752)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊[PANA-3819] Add telemetry for recorder initialization ([#3793](https://github.com/DataDog/browser-sdk/pull/3793)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊[PANA-3818] Add telemetry for DOM serialization performance ([#3792](https://github.com/DataDog/browser-sdk/pull/3792)) [RUM]
+- 🔊[PANA-3817] Add telemetry for initial view metrics ([#3788](https://github.com/DataDog/browser-sdk/pull/3788)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ⚡♻️ simplify replica ([#3552](https://github.com/DataDog/browser-sdk/pull/3552)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ use exclicit resource management for octo tokens ([#3790](https://github.com/DataDog/browser-sdk/pull/3790))
+- Pin GitHub Actions ([#3786](https://github.com/DataDog/browser-sdk/pull/3786))
+
+## v6.18.0
+
+**Public Changes:**
+
+- ✨[RUM-10960][Remote config] add support for new static fields ([#3731](https://github.com/DataDog/browser-sdk/pull/3731)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM-REACT] Fix react V7 import and add E2E test ([#3758](https://github.com/DataDog/browser-sdk/pull/3758)) [RUM-REACT]
+- 🐛 [RUM Profiler] Fix discrepancy on view-id correlation ([#3776](https://github.com/DataDog/browser-sdk/pull/3776)) [RUM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#3771](https://github.com/DataDog/browser-sdk/pull/3771)) [RUM-REACT]
+- 👷 remove watch_cookie_without_lock experimental feature flag ([#3773](https://github.com/DataDog/browser-sdk/pull/3773)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Bump chrome to 139.0.7258.66-1 ([#3764](https://github.com/DataDog/browser-sdk/pull/3764))
+- 👷 Update all non-major dependencies ([#3753](https://github.com/DataDog/browser-sdk/pull/3753)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🔊 Add Url Extension Telemetry ([#3768](https://github.com/DataDog/browser-sdk/pull/3768)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.17.0
+
+**Public Changes:**
+
+- ✨ don't write lock to cookie for read only operation ([#3728](https://github.com/DataDog/browser-sdk/pull/3728)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [FFL-450] Add support for exposures track ([#3738](https://github.com/DataDog/browser-sdk/pull/3738)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨[RUM-10825] Add hot-reload to developer-extension ([#3687](https://github.com/DataDog/browser-sdk/pull/3687))
+- 📝 Reference the api reference ([#3739](https://github.com/DataDog/browser-sdk/pull/3739))
+- 📝 Typedoc setup and theme ([#3676](https://github.com/DataDog/browser-sdk/pull/3676))
+
+**Internal Changes:**
+
+- 👷 Update dependency eslint-plugin-jsdoc to v52 ([#3755](https://github.com/DataDog/browser-sdk/pull/3755))
+- 👷 Lock file maintenance ([#3757](https://github.com/DataDog/browser-sdk/pull/3757))
+- 👷 Allow `merge-into-stating` CI job to fail ([#3750](https://github.com/DataDog/browser-sdk/pull/3750))
+- 👷 🏷️ `scripts/` TS migration ([#3732](https://github.com/DataDog/browser-sdk/pull/3732)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 add a stale issue workflow ([#3707](https://github.com/DataDog/browser-sdk/pull/3707))
+- 👷 Update dependency eslint-plugin-unicorn to v60 ([#3734](https://github.com/DataDog/browser-sdk/pull/3734))
+- 👷 Update all non-major dependencies ([#3704](https://github.com/DataDog/browser-sdk/pull/3704)) [FLAGGING] [RUM-REACT] [WORKER]
+- 👷add back html coverage ([#3741](https://github.com/DataDog/browser-sdk/pull/3741))
+- 👷 Update actions/configure-pages action to v5 ([#3733](https://github.com/DataDog/browser-sdk/pull/3733))
+- 👷 hide tag sanitization console warning in unit tests ([#3736](https://github.com/DataDog/browser-sdk/pull/3736)) [LOGS]
+- 👷 Update dependency webpack-cli to v6 ([#3735](https://github.com/DataDog/browser-sdk/pull/3735))
+- 👷 Lock file maintenance ([#3705](https://github.com/DataDog/browser-sdk/pull/3705))
+- 👷 First deploy for api reference + fix yaml ([#3727](https://github.com/DataDog/browser-sdk/pull/3727))
+- 👷 fix coverage report directory ([#3737](https://github.com/DataDog/browser-sdk/pull/3737))
+- Revert "👷 hide tag sanitization console warning in unit tests" [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 hide tag sanitization console warning in unit tests [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 upload code coverage report to datadog ([#3710](https://github.com/DataDog/browser-sdk/pull/3710))
+- 👷 Add more telemetry debug for cookie configuration ([#3709](https://github.com/DataDog/browser-sdk/pull/3709)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ [Remote config] add a remote config e2e scenario ([#3721](https://github.com/DataDog/browser-sdk/pull/3721)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊 [RUM-11144] Apply telemetry context to early telemetry message ([#3745](https://github.com/DataDog/browser-sdk/pull/3745)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗ [PANA-3411] Add telemetry for session replay reliability ([#3688](https://github.com/DataDog/browser-sdk/pull/3688)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ use fetch to retrieve remote configuration ([#3723](https://github.com/DataDog/browser-sdk/pull/3723)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ Move customer context from assembly to collection ([#3681](https://github.com/DataDog/browser-sdk/pull/3681)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+## v6.16.0
+
+**Public Changes:**
+
+- Revert "✨ don't write lock to cookie for read only operation ([#3652](https://github.com/DataDog/browser-sdk/pull/3652))" ([#3719](https://github.com/DataDog/browser-sdk/pull/3719)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-8313] Remove URL polyfill and retrieve native URL constructor ([#3682](https://github.com/DataDog/browser-sdk/pull/3682)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 bump playwright to match browserStack version ([#3714](https://github.com/DataDog/browser-sdk/pull/3714))
+- Add telemetry to isUnsupportedExtensionEnvironment warning ([#3717](https://github.com/DataDog/browser-sdk/pull/3717)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump OS and device version, and fix the spec ([#3716](https://github.com/DataDog/browser-sdk/pull/3716)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+## v6.15.0
+
+**Public Changes:**
+
+- ✨ [PANA-3449] Apply separate event limits for different kinds of telemetry ([#3692](https://github.com/DataDog/browser-sdk/pull/3692)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-10006] add tagging capabilities to loggers in the Logs SDK ([#3616](https://github.com/DataDog/browser-sdk/pull/3616)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 prevent log reporting after consent revocation ([#3680](https://github.com/DataDog/browser-sdk/pull/3680)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 📝 [RUM-10899] Add API reference using typedoc ([#3677](https://github.com/DataDog/browser-sdk/pull/3677)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 reduce the number of concurrent workers used by playwright ([#3706](https://github.com/DataDog/browser-sdk/pull/3706))
+- 👷 simplify test apps build ([#3702](https://github.com/DataDog/browser-sdk/pull/3702))
+- 👷 use SIGKILL instead of SIGTERM to kill child jobs ([#3699](https://github.com/DataDog/browser-sdk/pull/3699))
+- 👷 use our own `deepClone` method instead of `structuredClone` ([#3700](https://github.com/DataDog/browser-sdk/pull/3700)) [RUM]
+- 👷 Add cookie options to telemetry debug ([#3693](https://github.com/DataDog/browser-sdk/pull/3693)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [Remote config] use types from JSON schema ([#3694](https://github.com/DataDog/browser-sdk/pull/3694)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump device version in unit tests ([#3703](https://github.com/DataDog/browser-sdk/pull/3703))
+- [RUM Profiler] fix unit test, remove RegExp lookbehind ([#3701](https://github.com/DataDog/browser-sdk/pull/3701)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+## v6.14.0
+
+**Public Changes:**
+
+- ✨ [RUM-10145] collect errors on module evaluation ([#3622](https://github.com/DataDog/browser-sdk/pull/3622)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ don't write lock to cookie for read only operation ([#3652](https://github.com/DataDog/browser-sdk/pull/3652)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-10223] Add locale and timezone data to view event ([#3598](https://github.com/DataDog/browser-sdk/pull/3598)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Allow service and version to be modifiable for long_task and vital events ([#3691](https://github.com/DataDog/browser-sdk/pull/3691)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [PANA-3447] Don't send customer data telemetry for any batch with no RUM events ([#3689](https://github.com/DataDog/browser-sdk/pull/3689)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🏷️ add ap2 site to TypeScript types ([#3672](https://github.com/DataDog/browser-sdk/pull/3672)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 simplify test apps build ([#3702](https://github.com/DataDog/browser-sdk/pull/3702))
+- 👷 use SIGKILL instead of SIGTERM to kill child jobs ([#3699](https://github.com/DataDog/browser-sdk/pull/3699))
+- 👷 use our own `deepClone` method instead of `structuredClone` ([#3700](https://github.com/DataDog/browser-sdk/pull/3700)) [RUM]
+- 👷 Add cookie options to telemetry debug ([#3693](https://github.com/DataDog/browser-sdk/pull/3693)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update all non-major dependencies ([#3673](https://github.com/DataDog/browser-sdk/pull/3673)) [FLAGGING] [WORKER]
+- 👷 Lock file maintenance ([#3675](https://github.com/DataDog/browser-sdk/pull/3675))
+- 👷 fix `yarn test` and `yarn test:unit:watch` commands ([#3684](https://github.com/DataDog/browser-sdk/pull/3684))
+- 👷 fix `yarn test` and `yarn test:unit:watch` commands ([#3683](https://github.com/DataDog/browser-sdk/pull/3683))
+- 👷 Update Node.js to v24 ([#3522](https://github.com/DataDog/browser-sdk/pull/3522)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷‍♀️ [devx] Add cursor rules to improve testing experience ([#3662](https://github.com/DataDog/browser-sdk/pull/3662))
+- 👷 add `--spec` option to `yarn test:unit` ([#3678](https://github.com/DataDog/browser-sdk/pull/3678))
+- 👷 add `step-7_` prefix to `create-github-release` ci job ([#3668](https://github.com/DataDog/browser-sdk/pull/3668))
+- 👷 ignore @playwright/test updates ([#3666](https://github.com/DataDog/browser-sdk/pull/3666))
+- ♻️ [Remote config] use types from JSON schema ([#3694](https://github.com/DataDog/browser-sdk/pull/3694)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Bump device version in unit tests ([#3703](https://github.com/DataDog/browser-sdk/pull/3703))
+- [RUM Profiler] fix unit test, remove RegExp lookbehind ([#3701](https://github.com/DataDog/browser-sdk/pull/3701)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ [RUM-10900] Introduce assemble telemetry hook ([#3685](https://github.com/DataDog/browser-sdk/pull/3685)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ Enforce using interface over type ([#3686](https://github.com/DataDog/browser-sdk/pull/3686)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [RUM Profiler] add default view names to profiles ([#3669](https://github.com/DataDog/browser-sdk/pull/3669)) [RUM]
+
 ## v6.13.0
 
 **Public Changes:**

@@ -1,5 +1,5 @@
 const { parseArgs } = require('util')
-const webpackConfig = require('../../webpack.base')({
+const webpackConfig = require('../../webpack.base.ts').default({
   mode: 'development',
   types: ['jasmine', 'chrome'],
   // do not replace some build env variables in unit test in order to test different build behaviors
@@ -112,7 +112,7 @@ function overrideTsLoaderRule(module) {
   // We use swc-loader to transpile some dependencies that are using syntax not compatible with browsers we use for testing
   module.rules.push({
     test: /\.m?js$/,
-    include: /node_modules\/(react-router-dom|turbo-stream)/,
+    include: /node_modules\/(react-router-dom|react-router|turbo-stream)/,
     use: {
       loader: 'swc-loader',
       options: {

@@ -121,12 +121,7 @@ describe('profiler', () => {
     expect(sendProfileSpy).toHaveBeenCalledTimes(1)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(
-      mockedRumProfilerTrace,
-      jasmine.any(Object),
-      jasmine.any(String),
-      'session-id-1'
-    )
+    expect(sendProfileSpy).toHaveBeenCalledWith(mockedRumProfilerTrace, jasmine.any(Object), 'session-id-1')
   })
 
   it('should pause profiling collection on hidden visibility and restart on visible visibility', async () => {
@@ -175,12 +170,7 @@ describe('profiler', () => {
     expect(sendProfileSpy).toHaveBeenCalledTimes(2)
 
     // Check the the sendProfilesSpy was called with the mocked trace
-    expect(sendProfileSpy).toHaveBeenCalledWith(
-      mockedRumProfilerTrace,
-      jasmine.any(Object),
-      jasmine.any(String),
-      'session-id-1'
-    )
+    expect(sendProfileSpy).toHaveBeenCalledWith(mockedRumProfilerTrace, jasmine.any(Object), 'session-id-1')
   })
 
   it('should collect long task from core and then attach long task id to the Profiler trace', async () => {
@@ -285,6 +275,105 @@ describe('profiler', () => {
     expect(lastCall.views[0].viewName).toBe('/user/?')
     expect(lastCall.views[1].viewId).toBe('view-profile')
     expect(lastCall.views[1].viewName).toBe('/v1/user/?/profile')
+  })
+
+  it('should keep track of the latest view in the Profiler', async () => {
+    const { profiler, profilingContextManager, mockedRumProfilerTrace } = setupProfiler()
+
+    // Navigate to the user view
+    history.pushState({}, '', '/user/123')
+
+    const initialViewEntry = {
+      id: 'view-initial',
+      name: 'view-initial',
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    }
+
+    profiler.start(initialViewEntry)
+
+    await waitForBoolean(() => profiler.isRunning())
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Navigate to a new profile view
+    history.pushState({}, '', '/v1/user/3A2/profile')
+
+    const nextViewEntry = {
+      id: 'view-next',
+      name: 'view-next',
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    }
+
+    // Emit a view created event
+    lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, nextViewEntry)
+
+    // Emulate visibility change to `hidden` state
+    setVisibilityState('hidden')
+
+    // Wait for profiler to pause
+    await waitForBoolean(() => profiler.isPaused())
+
+    // Assert that the profiler has collected data on pause.
+    expect(sendProfileSpy).toHaveBeenCalledTimes(1)
+
+    // Check the the sendProfilesSpy was called with the mocked trace
+    expect(sendProfileSpy).toHaveBeenCalledWith(
+      {
+        ...mockedRumProfilerTrace,
+        views: [
+          {
+            viewId: initialViewEntry.id,
+            viewName: initialViewEntry.name,
+            startClocks: initialViewEntry.startClocks,
+          },
+          {
+            viewId: nextViewEntry.id,
+            viewName: nextViewEntry.name,
+            startClocks: nextViewEntry.startClocks,
+          },
+        ],
+      },
+      jasmine.any(Object),
+      'session-id-1'
+    )
+
+    // Change back to visible
+    setVisibilityState('visible')
+    document.dispatchEvent(new Event('visibilitychange'))
+
+    // Wait for profiler to restart
+    await waitForBoolean(() => profiler.isRunning())
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Stop collection of profile.
+    await profiler.stop()
+
+    // Wait for stop of collection.
+    await waitForBoolean(() => profiler.isStopped())
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    expect(sendProfileSpy).toHaveBeenCalledTimes(2)
+
+    // Check the the sendProfilesSpy was called with the mocked trace
+    expect(sendProfileSpy).toHaveBeenCalledWith(
+      {
+        ...mockedRumProfilerTrace,
+        views: [
+          {
+            viewId: nextViewEntry.id, // The view id should be the last one collected (in this case the "next" view)
+            viewName: nextViewEntry.name,
+            startClocks: nextViewEntry.startClocks,
+          },
+        ],
+      },
+      jasmine.any(Object),
+      'session-id-1'
+    )
   })
 })
 

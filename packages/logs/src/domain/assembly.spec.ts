@@ -14,7 +14,7 @@ import type { Hooks } from './hooks'
 import { createHooks } from './hooks'
 import { startRUMInternalContext } from './contexts/rumInternalContext'
 
-const initConfiguration = { clientToken: 'xxx', service: 'service' }
+const initConfiguration = { clientToken: 'xxx', service: 'service', env: 'test', version: '1.0.0' }
 const DEFAULT_MESSAGE = {
   status: StatusType.info,
   message: 'message',
@@ -229,6 +229,21 @@ describe('startLogsAssembly', () => {
       })
 
       expect(serverLogs[0].message).toEqual('from-message-context')
+    })
+  })
+
+  describe('ddtags', () => {
+    it('should contain and format the default tags', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0')
+    })
+
+    it('should append custom tags', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+        ddtags: ['foo:bar'],
+      })
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0,foo:bar')
     })
   })
 

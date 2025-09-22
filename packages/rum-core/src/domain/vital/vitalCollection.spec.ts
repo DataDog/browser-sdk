@@ -1,6 +1,6 @@
 import type { Duration } from '@datadog/browser-core'
-import { mockClock, type Clock } from '@datadog/browser-core/test'
-import { clocksNow } from '@datadog/browser-core'
+import { mockClock, mockExperimentalFeatures, type Clock } from '@datadog/browser-core/test'
+import { clocksNow, ExperimentalFeature } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
@@ -172,7 +172,7 @@ describe('vitalCollection', () => {
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
       })
 
       it('should create a vital from start API using ref', () => {
@@ -188,7 +188,7 @@ describe('vitalCollection', () => {
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
       })
 
       it('should discard a vital for which a frozen state happened', () => {
@@ -218,17 +218,35 @@ describe('vitalCollection', () => {
             duration: 0,
             description: undefined,
           },
+          context: undefined,
           type: RumEventType.VITAL,
-          _dd: {
-            vital: {
-              computed_value: true,
-            },
-          },
         })
         expect(rawRumEvents[0].domainContext).toEqual({})
       })
 
-      it('should create a vital from add API', () => {
+      it('should collect raw rum event from operation step vital', () => {
+        mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+        vitalCollection.addOperationStepVital('foo', 'start')
+
+        expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
+        expect(rawRumEvents[0].rawRumEvent).toEqual({
+          date: jasmine.any(Number),
+          vital: {
+            id: jasmine.any(String),
+            type: VitalType.OPERATION_STEP,
+            name: 'foo',
+            step_type: 'start',
+            operation_key: undefined,
+            failure_reason: undefined,
+            description: undefined,
+          },
+          context: undefined,
+          type: RumEventType.VITAL,
+        })
+        expect(rawRumEvents[0].domainContext).toEqual({})
+      })
+
+      it('should create a duration vital from add API', () => {
         vitalCollection.addDurationVital({
           name: 'foo',
           type: VitalType.DURATION,
@@ -241,7 +259,30 @@ describe('vitalCollection', () => {
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.duration).toBe(100000000)
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
-        expect(rawRumEvents[0].customerContext).toEqual({ foo: 'bar' })
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
+      })
+
+      it('should create a operation step vital from add API', () => {
+        mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+        vitalCollection.addOperationStepVital(
+          'foo',
+          'end',
+          {
+            operationKey: '00000000-0000-0000-0000-000000000000',
+            context: { foo: 'bar' },
+            description: 'baz',
+          },
+          'error'
+        )
+
+        expect(rawRumEvents.length).toBe(1)
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.step_type).toBe('end')
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.operation_key).toBe(
+          '00000000-0000-0000-0000-000000000000'
+        )
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.failure_reason).toBe('error')
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).vital.description).toBe('baz')
+        expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
       })
     })
   })

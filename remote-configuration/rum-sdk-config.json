@@ -1,0 +1,233 @@
+{
+  "$id": "rum-sdk-config",
+  "type": "object",
+  "additionalProperties": false,
+  "description": "RUM Browser & Mobile SDKs Remote Configuration properties",
+  "$defs": {
+    "MatchOption": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rcSerializedType", "value"],
+      "properties": {
+        "rcSerializedType": {
+          "type": "string",
+          "enum": ["string", "regex"],
+          "description": "Remote config serialized type of match"
+        },
+        "value": {
+          "type": "string",
+          "description": "Match value"
+        }
+      }
+    },
+    "SerializedRegex": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rcSerializedType", "value"],
+      "properties": {
+        "rcSerializedType": {
+          "type": "string",
+          "const": "regex",
+          "description": "Remote config serialized type for regex extraction"
+        },
+        "value": {
+          "type": "string",
+          "description": "Regex pattern for value extraction"
+        }
+      }
+    },
+    "DynamicOption": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": ["rcSerializedType", "strategy", "path"],
+          "properties": {
+            "rcSerializedType": {
+              "type": "string",
+              "const": "dynamic"
+            },
+            "strategy": {
+              "type": "string",
+              "const": "js"
+            },
+            "path": {
+              "type": "string"
+            },
+            "extractor": {
+              "$ref": "#/$defs/SerializedRegex"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["rcSerializedType", "strategy", "name"],
+          "properties": {
+            "rcSerializedType": {
+              "type": "string",
+              "const": "dynamic"
+            },
+            "strategy": {
+              "type": "string",
+              "const": "cookie"
+            },
+            "name": {
+              "type": "string"
+            },
+            "extractor": {
+              "$ref": "#/$defs/SerializedRegex"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["rcSerializedType", "strategy", "selector"],
+          "properties": {
+            "rcSerializedType": {
+              "type": "string",
+              "const": "dynamic"
+            },
+            "strategy": {
+              "type": "string",
+              "const": "dom"
+            },
+            "selector": {
+              "type": "string"
+            },
+            "attribute": {
+              "type": "string"
+            },
+            "extractor": {
+              "$ref": "#/$defs/SerializedRegex"
+            }
+          }
+        }
+      ]
+    },
+    "ContextItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["key", "value"],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/DynamicOption"
+        }
+      }
+    }
+  },
+  "properties": {
+    "rum": {
+      "type": "object",
+      "description": "RUM feature Remote Configuration properties",
+      "additionalProperties": false,
+      "required": ["applicationId"],
+      "properties": {
+        "applicationId": {
+          "type": "string",
+          "description": "UUID of the application",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$"
+        },
+        "service": {
+          "type": "string",
+          "description": "The service name for this application"
+        },
+        "env": {
+          "type": "string",
+          "description": "The environment for this application"
+        },
+        "version": {
+          "$ref": "#/$defs/DynamicOption",
+          "description": "The version for this application"
+        },
+        "sessionSampleRate": {
+          "type": "number",
+          "description": "The percentage of sessions tracked",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "sessionReplaySampleRate": {
+          "type": "number",
+          "description": "The percentage of sessions with RUM & Session Replay pricing tracked",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "defaultPrivacyLevel": {
+          "type": "string",
+          "description": "Session replay default privacy level"
+        },
+        "enablePrivacyForActionName": {
+          "type": "boolean",
+          "description": "Privacy control for action name"
+        },
+        "allowedTracingUrls": {
+          "type": "array",
+          "description": "URLs where tracing is allowed",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["match"],
+            "properties": {
+              "match": {
+                "$ref": "#/$defs/MatchOption"
+              },
+              "propagatorTypes": {
+                "type": ["array", "null"],
+                "description": "List of propagator types",
+                "items": {
+                  "type": "string",
+                  "enum": ["datadog", "b3", "b3multi", "tracecontext"]
+                }
+              }
+            }
+          }
+        },
+        "allowedTrackingOrigins": {
+          "type": "array",
+          "description": "Origins where tracking is allowed",
+          "items": {
+            "$ref": "#/$defs/MatchOption"
+          }
+        },
+        "traceSampleRate": {
+          "type": "number",
+          "description": "The percentage of traces sampled",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "trackSessionAcrossSubdomains": {
+          "type": "boolean",
+          "description": "Whether to track sessions across subdomains"
+        },
+        "user": {
+          "type": "array",
+          "description": "Function to define user information",
+          "contains": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["key", "value"],
+            "properties": {
+              "key": {
+                "const": "id"
+              },
+              "value": {
+                "$ref": "#/$defs/DynamicOption"
+              }
+            }
+          },
+          "items": {
+            "$ref": "#/$defs/ContextItem"
+          }
+        },
+        "context": {
+          "type": "array",
+          "description": "Function to define global context",
+          "items": {
+            "$ref": "#/$defs/ContextItem"
+          }
+        }
+      }
+    }
+  }
+}

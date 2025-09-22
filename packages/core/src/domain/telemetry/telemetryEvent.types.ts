@@ -158,6 +158,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       track_resources?: boolean
       /**
+       * Whether early requests are tracked
+       */
+      track_early_requests?: boolean
+      /**
        * Whether long tasks are tracked
        */
       track_long_task?: boolean
@@ -205,6 +209,14 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the allowed tracing urls list is used
        */
       use_allowed_tracing_urls?: boolean
+      /**
+       * Whether the allowed GraphQL urls list is used
+       */
+      use_allowed_graph_ql_urls?: boolean
+      /**
+       * Whether GraphQL payload tracking is used for at least one GraphQL endpoint
+       */
+      use_track_graph_ql_payload?: boolean
       /**
        * A list of selected tracing propagators
        */
@@ -427,6 +439,34 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether a list of allowed origins is used to control SDK execution in browser extension contexts. When enabled, the SDK will check if the current origin matches the allowed origins list before running.
        */
       use_allowed_tracking_origins?: boolean
+      /**
+       * The version of the SDK that is running.
+       */
+      sdk_version?: string
+      /**
+       * The source of the SDK, e.g., 'browser', 'ios', 'android', 'flutter', 'react-native', 'unity', 'kotlin-multiplatform'.
+       */
+      source?: string
+      /**
+       * The variant of the SDK build (e.g., standard, lite, etc.).
+       */
+      variant?: string
+      /**
+       * The id of the remote configuration
+       */
+      remote_configuration_id?: string
+      /**
+       * Whether a proxy is used for remote configuration
+       */
+      use_remote_configuration_proxy?: boolean
+      /**
+       * The percentage of sessions with Profiling enabled
+       */
+      profiling_sample_rate?: number
+      /**
+       * Whether trace baggage is propagated to child spans
+       */
+      propagate_trace_baggage?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -479,6 +519,7 @@ export type TelemetryCommonFeaturesUsage =
   | RemoveAccountProperty
   | ClearAccount
   | AddFeatureFlagEvaluation
+  | AddOperationStepVital
 /**
  * Schema of browser specific features usage
  */
@@ -792,6 +833,17 @@ export interface AddFeatureFlagEvaluation {
    * addFeatureFlagEvaluation API
    */
   feature: 'add-feature-flag-evaluation'
+  [k: string]: unknown
+}
+export interface AddOperationStepVital {
+  /**
+   * addOperationStepVital API
+   */
+  feature: 'add-operation-step-vital'
+  /**
+   * Feature operations action type
+   */
+  action_type: 'start' | 'succeed' | 'fail'
   [k: string]: unknown
 }
 export interface StartSessionReplayRecording {

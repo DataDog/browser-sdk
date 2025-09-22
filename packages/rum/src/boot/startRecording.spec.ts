@@ -1,5 +1,5 @@
-import type { TimeStamp, HttpRequest } from '@datadog/browser-core'
-import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId } from '@datadog/browser-core'
+import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
+import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
 import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
@@ -8,6 +8,7 @@ import type { RumSessionManagerMock } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
 
 import { recordsPerFullSnapshot, readReplayPayload } from '../../test'
+import type { ReplayPayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
@@ -32,6 +33,7 @@ describe('startRecording', () => {
 
     requestSendSpy = jasmine.createSpy()
     const httpRequest = {
+      observable: new Observable<HttpRequestEvent<ReplayPayload>>(),
       send: requestSendSpy,
       sendOnExit: requestSendSpy,
     }
@@ -40,7 +42,17 @@ describe('startRecording', () => {
     const viewHistory = startViewHistory(lifeCycle)
     initialView(lifeCycle)
 
-    const recording = startRecording(lifeCycle, configuration, sessionManager, viewHistory, deflateEncoder, httpRequest)
+    const mockTelemetry = { enabled: true, metricsEnabled: true } as Telemetry
+
+    const recording = startRecording(
+      lifeCycle,
+      configuration,
+      sessionManager,
+      viewHistory,
+      deflateEncoder,
+      mockTelemetry,
+      httpRequest
+    )
     stopRecording = recording ? recording.stop : noop
 
     registerCleanupTask(() => {

@@ -2,7 +2,7 @@ import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
-import { serializeDocument, SerializationContextStatus } from '../serialization'
+import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, MediaInteractionType, RecordType } from '../../../types'
 import type { InputCallback } from './trackInput'
@@ -23,6 +23,7 @@ describe('trackMediaInteraction', () => {
     audio = appendElement('<audio controls autoplay target></audio>') as HTMLAudioElement
 
     serializeDocument(document, DEFAULT_CONFIGURATION, {
+      serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),

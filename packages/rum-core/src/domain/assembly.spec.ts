@@ -153,8 +153,7 @@ describe('rum assembly', () => {
           })
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-            customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { context: { foo: 'bar' } }),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -170,8 +169,7 @@ describe('rum assembly', () => {
           })
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-            customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { context: { foo: 'bar' } }),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -187,8 +185,7 @@ describe('rum assembly', () => {
           })
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-            customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { context: { foo: 'bar' } }),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -234,8 +231,7 @@ describe('rum assembly', () => {
           })
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-            customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { context: { foo: 'bar' } }),
           })
 
           expect(serverRumEvents[0].context!.foo).toBe('bar')
@@ -378,20 +374,8 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('customer context', () => {
-    it('should be merged with event attributes', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        customerContext: { foo: 'bar' },
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect((serverRumEvents[0].context as any).foo).toEqual('bar')
-    })
-  })
-
   describe('service and version', () => {
-    const extraConfigurationOptions = { service: 'default service', version: 'default version' }
+    const extraConfigurationOptions = { service: 'default-service', version: 'default-version' }
 
     Object.values(RumEventType).forEach((eventType) => {
       it(`should be modifiable for ${eventType}`, () => {
@@ -414,12 +398,23 @@ describe('rum assembly', () => {
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
       })
     })
+
+    it('should be added to the event as ddtags', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: extraConfigurationOptions,
+      })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].ddtags).toEqual('sdk_version:test,service:default-service,version:default-version')
+    })
   })
 
   describe('assemble hook', () => {
     it('should add and override common properties', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults({
-        partialConfiguration: { service: 'default service', version: 'default version' },
+        partialConfiguration: { service: 'default-service', version: 'default-version' },
       })
 
       hooks.register(HookNames.Assemble, ({ eventType }) => ({
@@ -446,8 +441,7 @@ describe('rum assembly', () => {
       }))
 
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        customerContext: { foo: 'customer context' },
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION, { context: { foo: 'customer context' } }),
       })
       expect(serverRumEvents[0].context).toEqual({ foo: 'customer context' })
     })

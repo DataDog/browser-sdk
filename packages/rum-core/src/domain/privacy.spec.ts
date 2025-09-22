@@ -4,11 +4,15 @@ import {
   PRIVACY_ATTR_VALUE_HIDDEN,
   PRIVACY_ATTR_VALUE_MASK,
   PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
+} from './privacyConstants'
+import {
   getNodeSelfPrivacyLevel,
   reducePrivacyLevel,
   getNodePrivacyLevel,
   shouldMaskNode,
+  maskDisallowedTextContent,
 } from './privacy'
+import { ACTION_NAME_MASK } from './action/actionNameConstants'
 
 describe('getNodePrivacyLevel', () => {
   it('returns the element privacy mode if it has one', () => {
@@ -24,6 +28,9 @@ describe('getNodePrivacyLevel', () => {
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK)).toBe(NodePrivacyLevel.MASK)
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_USER_INPUT)).toBe(NodePrivacyLevel.MASK_USER_INPUT)
     expect(getNodePrivacyLevel(node, NodePrivacyLevel.HIDDEN)).toBe(NodePrivacyLevel.HIDDEN)
+    expect(getNodePrivacyLevel(node, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBe(
+      NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED
+    )
   })
 
   describe('inheritance', () => {
@@ -341,6 +348,36 @@ describe('derivePrivacyLevelGivenParent', () => {
       expected: NodePrivacyLevel.HIDDEN,
       msg: 'Hidden is final',
     },
+    {
+      parent: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+      child: NodePrivacyLevel.ALLOW,
+      expected: NodePrivacyLevel.ALLOW,
+      msg: 'Override mask-unless-allowlisted (for allow)',
+    },
+    {
+      parent: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+      child: NodePrivacyLevel.MASK,
+      expected: NodePrivacyLevel.MASK,
+      msg: 'Override mask-unless-allowlisted (for mask)',
+    },
+    {
+      parent: NodePrivacyLevel.ALLOW,
+      child: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+      expected: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+      msg: 'Override allow (for mask-unless-allowlisted)',
+    },
+    {
+      parent: NodePrivacyLevel.MASK,
+      child: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+      expected: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+      msg: 'Override mask (for mask-unless-allowlisted)',
+    },
+    {
+      parent: NodePrivacyLevel.HIDDEN,
+      child: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+      expected: NodePrivacyLevel.HIDDEN,
+      msg: 'Hidden is final (for mask-unless-allowlisted)',
+    },
   ]
 
   tests.forEach(({ parent, child, expected, msg }) => {
@@ -363,16 +400,18 @@ describe('shouldMaskNode', () => {
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK_USER_INPUT)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.HIDDEN)).toBeTrue()
+      expect(shouldMaskNode(element, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
     })
   })
 
   describe('for text nodes contained in form elements', () => {
-    it('returns true if the privacy level is MASK or MASK_USER_INPUT', () => {
+    it('returns true if the privacy level is MASK or MASK_USER_INPUT or MASK_UNLESS_ALLOWLISTED', () => {
       const element = document.createElement('input')
       const text = document.createTextNode('foo')
       element.appendChild(text)
       expect(shouldMaskNode(text, NodePrivacyLevel.MASK)).toBeTrue()
       expect(shouldMaskNode(text, NodePrivacyLevel.MASK_USER_INPUT)).toBeTrue()
+      expect(shouldMaskNode(text, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
     })
   })
 
@@ -383,11 +422,114 @@ describe('shouldMaskNode', () => {
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK_USER_INPUT)).toBeFalse()
     })
 
-    it('returns true if the privacy level is not ALLOW nor MASK_USER_INPUT', () => {
+    it('returns true if the privacy level is not ALLOW nor MASK_USER_INPUT nor MASK_UNLESS_ALLOWLISTED', () => {
       const element = document.createElement('div')
       expect(shouldMaskNode(element, NodePrivacyLevel.MASK)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.IGNORE)).toBeTrue()
       expect(shouldMaskNode(element, NodePrivacyLevel.HIDDEN)).toBeTrue()
     })
+
+    describe('when privacy level is MASK_UNLESS_ALLOWLISTED', () => {
+      beforeEach(() => {
+        // Reset allowlist before each test
+        delete (window as any).$DD_ALLOW
+      })
+
+      describe('for text nodes', () => {
+        let textNode: Text
+
+        beforeEach(() => {
+          textNode = document.createTextNode('')
+        })
+
+        it('returns false for allowlisted text content', () => {
+          const allowedText = 'allowed text'
+          textNode.textContent = allowedText
+          ;(window as any).$DD_ALLOW = new Set([allowedText.toLocaleLowerCase()])
+          expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
+        })
+
+        it('returns false for whitespace-only text content', () => {
+          textNode.textContent = '   \n\t  '
+          expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
+        })
+
+        it('returns true for non-allowlisted, non-whitespace text content', () => {
+          textNode.textContent = 'some text'
+          expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
+        })
+
+        it('returns true if text node is child of a form element regardless of allowlist', () => {
+          const input = document.createElement('input')
+          textNode.textContent = 'some text'
+          input.appendChild(textNode)
+          ;(window as any).$DD_ALLOW = new Set(['some text'])
+          expect(shouldMaskNode(textNode, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
+        })
+      })
+
+      describe('for non-text nodes', () => {
+        it('returns true for form elements', () => {
+          const input = document.createElement('input')
+          expect(shouldMaskNode(input, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
+
+          const textarea = document.createElement('textarea')
+          expect(shouldMaskNode(textarea, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeTrue()
+        })
+
+        it('returns false for non-form elements', () => {
+          const div = document.createElement('div')
+          expect(shouldMaskNode(div, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
+
+          const span = document.createElement('span')
+          expect(shouldMaskNode(span, NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED)).toBeFalse()
+        })
+      })
+    })
+  })
+})
+
+const TEST_STRINGS = {
+  COMPLEX_MIXED: 'test-team-name:💥$$$',
+  PARAGRAPH_MIXED: '✅ This is an action name in allowlist',
+}
+
+describe('maskWithAllowlist', () => {
+  interface BrowserWindow extends Window {
+    $DD_ALLOW?: Set<string>
+  }
+
+  beforeEach(() => {
+    ;(window as BrowserWindow).$DD_ALLOW = new Set([TEST_STRINGS.PARAGRAPH_MIXED])
+  })
+
+  afterEach(() => {
+    ;(window as BrowserWindow).$DD_ALLOW = undefined
+  })
+
+  it('should fail closed if $DD_ALLOW is not defined', () => {
+    ;(window as BrowserWindow).$DD_ALLOW = undefined
+    const testString = maskDisallowedTextContent('mask-feature-on', ACTION_NAME_MASK)
+    expect(testString).toBe(ACTION_NAME_MASK)
+  })
+
+  it('masks text content not in allowlist (with dictionary from $DD_ALLOW)', () => {
+    const testString = maskDisallowedTextContent('any unallowed string', ACTION_NAME_MASK)
+    expect(testString).toBe(ACTION_NAME_MASK)
+  })
+
+  it('does not mask text content if it is in allowlist', () => {
+    const testString = maskDisallowedTextContent(TEST_STRINGS.COMPLEX_MIXED, ACTION_NAME_MASK)
+    expect(testString).toBe('xxx')
+  })
+
+  it('handles empty string', () => {
+    const result = maskDisallowedTextContent('', ACTION_NAME_MASK)
+    expect(result).toBe('')
+  })
+
+  it('handles whitespace-only string', () => {
+    const result = maskDisallowedTextContent('   \n\t  ', ACTION_NAME_MASK)
+    expect(result).toBe('   \n\t  ')
   })
 })

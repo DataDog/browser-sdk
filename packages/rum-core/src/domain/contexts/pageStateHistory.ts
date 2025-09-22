@@ -12,7 +12,8 @@ import {
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
-import { RumEventType, type PageStateServerEntry } from '../../rawRumEvent.types'
+import type { PageStateServerEntry } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 // Arbitrary value to cap number of element for memory consumption in the browser

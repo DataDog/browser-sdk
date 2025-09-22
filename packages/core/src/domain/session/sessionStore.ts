@@ -135,10 +135,12 @@ export function startSessionStore<TrackingType extends string>(
    */
   function watchSession() {
     const sessionState = sessionStoreStrategy.retrieveSession()
+
     if (isSessionInExpiredState(sessionState)) {
       processSessionStoreOperations(
         {
-          process: (sessionState) => getExpiredSessionState(sessionState, configuration),
+          process: (sessionState: SessionState) =>
+            isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
           after: synchronizeSession,
         },
         sessionStoreStrategy

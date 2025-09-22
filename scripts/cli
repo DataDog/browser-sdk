@@ -60,10 +60,6 @@ cmd_build_json2type () {
   set -e
 }
 
-cmd_build_testing_extensions () {
-  node ./scripts/extensions/build-testing-extensions.js
-}
-
 cmd_release () {
   [[ `git branch --show-current` != "main" ]] || fail 'please do not release from `main` branch'
   # We should publish all packages regardless of if there are changes in each.
@@ -73,8 +69,8 @@ cmd_release () {
 }
 
 cmd_version () {
-  node ./scripts/release/generate-changelog
-  node ./scripts/release/update-peer-dependency-versions.js
+  node ./scripts/release/generate-changelog/index.ts
+  node ./scripts/release/update-peer-dependency-versions.ts
   lerna run pack --stream
   # keep test apps lockfiles up to date
   for app_package_path in $(git ls-files test/apps/*/package.json); do

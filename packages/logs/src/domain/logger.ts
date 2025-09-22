@@ -10,6 +10,8 @@ import {
   sanitize,
   NonErrorPrefix,
   createHandlingStack,
+  buildTag,
+  sanitizeTag,
 } from '@datadog/browser-core'
 
 import { isAuthorized, StatusType } from './logger/isAuthorized'
@@ -35,6 +37,9 @@ export const STATUSES = Object.keys(StatusType) as StatusType[]
 export class Logger {
   private contextManager: ContextManager
 
+  // Tags are formatted as either `key:value` or `key_only`
+  private tags: string[]
+
   constructor(
     private handleLogStrategy: (logsMessage: LogsMessage, logger: Logger, handlingStack?: string) => void,
     name?: string,
@@ -43,6 +48,7 @@ export class Logger {
     loggerContext: object = {}
   ) {
     this.contextManager = createContextManager('logger')
+    this.tags = []
     this.contextManager.setContext(loggerContext as Context)
     if (name) {
       this.contextManager.setContextProperty('logger', { name })
@@ -119,6 +125,20 @@ export class Logger {
 
   clearContext() {
     this.contextManager.clearContext()
+  }
+
+  addTag(key: string, value?: string) {
+    this.tags.push(buildTag(key, value))
+  }
+
+  removeTagsWithKey(key: string) {
+    const sanitizedKey = sanitizeTag(key)
+
+    this.tags = this.tags.filter((tag) => tag !== sanitizedKey && !tag.startsWith(`${sanitizedKey}:`))
+  }
+
+  getTags() {
+    return this.tags.slice()
   }
 
   setHandler(handler: HandlerType | HandlerType[]) {

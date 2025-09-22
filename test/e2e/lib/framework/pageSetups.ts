@@ -1,7 +1,8 @@
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
+import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 import type { Servers } from './httpServers'
 
 export interface SetupOptions {
@@ -10,6 +11,7 @@ export interface SetupOptions {
   logs?: LogsInitConfiguration
   logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
+  remoteConfiguration?: RemoteConfiguration
   eventBridge: boolean
   head?: string
   body?: string
@@ -19,6 +21,16 @@ export interface SetupOptions {
     test_name: string
   }
   testFixture: typeof test
+  extension?: {
+    rumConfiguration?: RumInitConfiguration
+    logsConfiguration?: LogsInitConfiguration
+  }
+  useServiceWorker: boolean
+}
+
+export interface WorkerOptions {
+  importScripts?: boolean
+  nativeLog?: boolean
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -43,6 +55,10 @@ export function asyncSetup(options: SetupOptions, servers: Servers) {
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
+  }
+
+  if (options.extension) {
+    header += setupExtension(options, servers)
   }
 
   function formatSnippet(url: string, globalName: string) {
@@ -92,6 +108,10 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
     header += setupEventBridge(servers)
   }
 
+  if (options.extension) {
+    header += setupExtension(options, servers)
+  }
+
   const { logsScriptUrl, rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
 
   if (options.logs) {
@@ -128,6 +148,10 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
     header += setupEventBridge(servers)
   }
 
+  if (options.extension) {
+    header += setupExtension(options, servers)
+  }
+
   if (options.logs) {
     header += html`
       <script type="text/javascript">
@@ -158,12 +182,16 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
   })
 }
 
-export function reactSetup(options: SetupOptions, servers: Servers) {
+export function reactSetup(options: SetupOptions, servers: Servers, appName: string) {
   let header = options.head || ''
   let body = options.body || ''
 
   if (options.eventBridge) {
     header += setupEventBridge(servers)
+  }
+
+  if (options.extension) {
+    header += setupExtension(options, servers)
   }
 
   if (options.rum) {
@@ -175,12 +203,28 @@ export function reactSetup(options: SetupOptions, servers: Servers) {
     `
   }
 
-  body += html` <script type="text/javascript" src="./react-app.js"></script> `
+  body += html` <script type="text/javascript" src="./${appName}.js"></script> `
 
   return basePage({
     header,
     body,
   })
+}
+
+export function workerSetup(options: WorkerOptions, servers: Servers) {
+  return js`
+      ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
+      
+      // Initialize DD_LOGS in service worker
+      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true }, servers)})
+
+      // Handle messages from main thread
+      self.addEventListener('message', (event) => {
+        const message = event.data;
+        
+        ${options.nativeLog ? js`console.log(message);` : js`DD_LOGS.logger.log(message);`}
+      });
+    `
 }
 
 export function basePage({ header, body }: { header?: string; body?: string }) {
@@ -199,6 +243,10 @@ export function basePage({ header, body }: { header?: string; body?: string }) {
 
 // html is a simple template string tag to allow prettier to format various setups as HTML
 export function html(parts: readonly string[], ...vars: string[]) {
+  return parts.reduce((full, part, index) => full + vars[index - 1] + part)
+}
+
+function js(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
@@ -236,13 +284,42 @@ function setupEventBridge(servers: Servers) {
   `
 }
 
-function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
+function setupExtension(options: SetupOptions, servers: Servers) {
+  let header = ''
+
+  const { rumScriptUrl, logsScriptUrl } = createCrossOriginScriptUrls(servers, { ...options, useRumSlim: false })
+
+  if (options.extension?.rumConfiguration) {
+    header += html`
+      <script type="text/javascript">
+        window.RUM_BUNDLE_URL = '${rumScriptUrl}'
+        window.RUM_CONTEXT = ${JSON.stringify(options.context)}
+        window.EXT_RUM_CONFIGURATION = ${formatConfiguration(options.extension.rumConfiguration, servers)}
+      </script>
+    `
+  }
+
+  if (options.extension?.logsConfiguration) {
+    header += html`
+      <script type="text/javascript">
+        window.LOGS_BUNDLE_URL = '${logsScriptUrl}'
+        window.LOGS_CONTEXT = ${JSON.stringify(options.context)}
+        window.EXT_LOGS_CONFIGURATION = ${formatConfiguration(options.extension.logsConfiguration, servers)}
+      </script>
+    `
+  }
+
+  return header
+}
+
+export function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
   const fns = new Map<string, () => void>()
 
   let result = JSON.stringify(
     {
       ...initConfiguration,
       proxy: servers.intake.url,
+      remoteConfigurationProxy: `${servers.base.url}/config`,
     },
     (_key, value) => {
       if (typeof value === 'function') {
@@ -266,7 +343,7 @@ function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitC
   return result
 }
 
-function createCrossOriginScriptUrls(servers: Servers, options: SetupOptions) {
+export function createCrossOriginScriptUrls(servers: Servers, options: SetupOptions) {
   return {
     logsScriptUrl: `${servers.crossOrigin.url}/datadog-logs.js`,
     rumScriptUrl: `${servers.crossOrigin.url}/${options.useRumSlim ? 'datadog-rum-slim.js' : 'datadog-rum.js'}`,

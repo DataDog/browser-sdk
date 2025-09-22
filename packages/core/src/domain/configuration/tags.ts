@@ -1,11 +1,14 @@
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
-import type { InitConfiguration } from './configuration'
+import type { Configuration } from './configuration'
 
 export const TAG_SIZE_LIMIT = 200
 
-export function buildTags(configuration: InitConfiguration): string[] {
-  const { env, service, version, datacenter } = configuration
-  const tags = []
+// replaced at build time
+declare const __BUILD_ENV__SDK_VERSION__: string
+
+export function buildTags(configuration: Configuration): string[] {
+  const { env, service, version, datacenter, sdkVersion, variant } = configuration
+  const tags = [buildTag('sdk_version', sdkVersion ?? __BUILD_ENV__SDK_VERSION__)]
 
   if (env) {
     tags.push(buildTag('env', env))
@@ -20,26 +23,32 @@ export function buildTags(configuration: InitConfiguration): string[] {
     tags.push(buildTag('datacenter', datacenter))
   }
 
+  if (variant) {
+    tags.push(buildTag('variant', variant))
+  }
+
   return tags
 }
 
-export function buildTag(key: string, rawValue: string) {
+export function buildTag(key: string, rawValue?: string) {
   // See https://docs.datadoghq.com/getting_started/tagging/#defining-tags for tags syntax. Note
   // that the backend may not follow the exact same rules, so we only want to display an informal
   // warning.
-  const valueSizeLimit = TAG_SIZE_LIMIT - key.length - 1
+  const tag = rawValue ? `${key}:${rawValue}` : key
 
-  if (rawValue.length > valueSizeLimit || hasForbiddenCharacters(rawValue)) {
+  if (tag.length > TAG_SIZE_LIMIT || hasForbiddenCharacters(tag)) {
     display.warn(
-      `${key} value doesn't meet tag requirements and will be sanitized. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/tagging/#defining-tags`
+      `Tag ${tag} doesn't meet tag requirements and will be sanitized. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/tagging/#defining-tags`
     )
   }
 
   // Let the backend do most of the sanitization, but still make sure multiple tags can't be crafted
   // by forging a value containing commas.
-  const sanitizedValue = rawValue.replace(/,/g, '_')
+  return sanitizeTag(tag)
+}
 
-  return `${key}:${sanitizedValue}`
+export function sanitizeTag(tag: string) {
+  return tag.replace(/,/g, '_')
 }
 
 function hasForbiddenCharacters(rawValue: string) {
