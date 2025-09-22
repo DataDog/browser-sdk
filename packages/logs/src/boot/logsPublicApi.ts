@@ -256,7 +256,7 @@ export interface LogsPublicApi extends PublicApi {
 }
 
 export interface Strategy {
-  init: (initConfiguration: LogsInitConfiguration, errorStack: string) => void
+  init: (initConfiguration: LogsInitConfiguration, errorStack?: string) => void
   initConfiguration: LogsInitConfiguration | undefined
   globalContext: ContextManager
   accountContext: ContextManager
@@ -295,7 +295,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     logger: mainLogger,
 
     init: (initConfiguration) => {
-      const errorStack = new Error().stack || ''
+      const errorStack = new Error().stack
       callMonitored(() => strategy.init(initConfiguration, errorStack))
     },
 

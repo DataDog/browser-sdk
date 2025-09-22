@@ -73,7 +73,7 @@ export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
 
 export function validateAndBuildLogsConfiguration(
   initConfiguration: LogsInitConfiguration,
-  errorStack: string
+  errorStack?: string
 ): LogsConfiguration | undefined {
   if (initConfiguration.usePciIntake === true && initConfiguration.site && initConfiguration.site !== 'datadoghq.com') {
     display.warn(
