@@ -19,7 +19,7 @@ interface CommandDetail {
   env?: Record<string, string>
 }
 
-void describe('upload-source-maps', () => {
+describe('upload-source-maps', () => {
   const commandMock = mock.fn()
   let commands: CommandDetail[]
 
@@ -55,7 +55,7 @@ void describe('upload-source-maps', () => {
     }
   }
 
-  void it('should upload root packages source maps', async () => {
+  it('should upload root packages source maps', async () => {
     await uploadSourceMaps('v6', ['root'])
 
     forEachDatacenter((site) => {
@@ -106,7 +106,7 @@ void describe('upload-source-maps', () => {
     })
   })
 
-  void it('should upload datacenter packages source maps', async () => {
+  it('should upload datacenter packages source maps', async () => {
     await uploadSourceMaps('v6', ['us1'])
 
     assert.deepEqual(commands, [
@@ -128,7 +128,7 @@ void describe('upload-source-maps', () => {
     ])
   })
 
-  void it('should upload staging packages source maps', async () => {
+  it('should upload staging packages source maps', async () => {
     await uploadSourceMaps('staging', ['root'])
 
     // rename the files with the version suffix
@@ -189,7 +189,7 @@ void describe('upload-source-maps', () => {
     ])
   })
 
-  void it('should upload canary packages source maps', async () => {
+  it('should upload canary packages source maps', async () => {
     await uploadSourceMaps('canary', ['root'])
 
     // rename the files with the version suffix

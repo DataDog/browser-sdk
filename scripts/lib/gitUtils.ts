@@ -8,7 +8,7 @@ import {
   getGithubPullRequestToken,
   type OctoStsToken,
 } from './secrets.ts'
-import { fetchHandlingError } from './executionUtils.ts'
+import { FetchError, fetchHandlingError, findError } from './executionUtils.ts'
 
 interface GitHubPR {
   // eslint-disable-next-line id-denylist
@@ -51,28 +51,19 @@ export async function createGitHubRelease({ version, body }: GitHubReleaseParams
     await callGitHubApi('GET', `releases/tags/${version}`, readToken)
     throw new Error(`Release ${version} already exists`)
   } catch (error) {
-    if ((error as any).status !== 404) {
+    const fetchError = findError(error, FetchError)
+    if (!fetchError || fetchError.response.status !== 404) {
       throw error
     }
   }
 
   // content write
   using releaseToken = getGithubReleaseToken()
-  return callGitHubApi<GitHubRelease>('POST', 'releases', releaseToken, {
+  return await callGitHubApi<GitHubRelease>('POST', 'releases', releaseToken, {
     tag_name: version,
     name: version,
     body,
   })
-}
-
-export async function getPrComments(prNumber: number): Promise<Array<{ id: number; body: string }>> {
-  using readToken = getGithubReadToken()
-  const response = await callGitHubApi<Array<{ id: number; body: string }>>(
-    'GET',
-    `issues/${prNumber}/comments`,
-    readToken
-  )
-  return response
 }
 
 export function createPullRequest(mainBranch: string) {
