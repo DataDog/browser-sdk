@@ -99,7 +99,7 @@ export function createPreStartStrategy(
     bufferApiCalls.drain(startRumResult)
   }
 
-  function doInit(initConfiguration: RumInitConfiguration, errorStack?: string) {
+  function doInit(initConfiguration: RumInitConfiguration, errorStack: string) {
     const eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
