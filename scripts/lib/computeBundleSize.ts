@@ -79,15 +79,3 @@ export function calculateBundleSizes(): BundleSizes {
 
   return bundleSizes
 }
-
-export function formatSize(bytes: number | null): string {
-  if (bytes === null) {
-    return 'N/A'
-  }
-
-  if (bytes < 1024) {
-    return `${Math.round(bytes)} B`
-  }
-
-  return `${(bytes / 1024).toFixed(2)} KiB`
-}

@@ -44,7 +44,7 @@ export function startRecording(
     addRecord = segmentCollection.addRecord
     cleanupTasks.push(segmentCollection.stop)
 
-    const segmentTelemetry = startSegmentTelemetry(configuration, telemetry, replayRequest.observable)
+    const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
     cleanupTasks.push(segmentTelemetry.stop)
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))

@@ -1,9 +1,6 @@
 import type { BandwidthStats, Context, HttpRequestEvent, Observable, Telemetry } from '@datadog/browser-core'
-import { performDraw, addTelemetryMetrics, noop } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { TelemetryMetrics, addTelemetryMetrics, noop } from '@datadog/browser-core'
 import type { ReplayPayload } from './buildReplayPayload'
-
-const SEGMENT_METRICS_TELEMETRY_NAME = 'Segment network request metrics'
 
 interface SegmentMetrics extends Context {
   cssText: {
@@ -30,12 +27,10 @@ interface SegmentMetrics extends Context {
 }
 
 export function startSegmentTelemetry(
-  configuration: RumConfiguration,
   telemetry: Telemetry,
   requestObservable: Observable<HttpRequestEvent<ReplayPayload>>
 ) {
-  const segmentTelemetryEnabled = telemetry.enabled && performDraw(configuration.replayTelemetrySampleRate)
-  if (!segmentTelemetryEnabled) {
+  if (!telemetry.metricsEnabled) {
     return { stop: noop }
   }
 
@@ -46,8 +41,8 @@ export function startSegmentTelemetry(
       (requestEvent.type === 'success' && requestEvent.payload.isFullSnapshot)
     ) {
       const metrics = createSegmentMetrics(requestEvent.type, requestEvent.bandwidth, requestEvent.payload)
-      // monitor-until: forever
-      addTelemetryMetrics(SEGMENT_METRICS_TELEMETRY_NAME, { metrics })
+      // monitor-until: 2026-07-01
+      addTelemetryMetrics(TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, { metrics })
     }
   })
 

@@ -1,6 +1,5 @@
 import type { Context, FlushEvent, Observable, Telemetry } from '@datadog/browser-core'
-import { performDraw, ONE_SECOND, addTelemetryMetrics, setInterval } from '@datadog/browser-core'
-import type { RumConfiguration } from './configuration'
+import { ONE_SECOND, addTelemetryMetrics, setInterval, TelemetryMetrics } from '@datadog/browser-core'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 
@@ -22,13 +21,11 @@ let currentPeriodMeasures: CurrentPeriodMeasures
 let batchHasRumEvent: boolean
 
 export function startCustomerDataTelemetry(
-  configuration: RumConfiguration,
   telemetry: Telemetry,
   lifeCycle: LifeCycle,
   batchFlushObservable: Observable<FlushEvent>
 ) {
-  const customerDataTelemetryEnabled = telemetry.enabled && performDraw(configuration.customerDataTelemetrySampleRate)
-  if (!customerDataTelemetryEnabled) {
+  if (!telemetry.metricsEnabled) {
     return
   }
 
@@ -62,7 +59,7 @@ function sendCurrentPeriodMeasures() {
   }
 
   // monitor-until: forever
-  addTelemetryMetrics('Customer data measures', currentPeriodMeasures)
+  addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, currentPeriodMeasures)
   initCurrentPeriodMeasures()
 }
 
