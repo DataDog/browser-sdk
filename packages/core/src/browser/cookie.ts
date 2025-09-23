@@ -1,6 +1,7 @@
 import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from '../tools/utils/stringUtils'
+import { isBrowserEnvironment } from '../tools/globalObject'
 
 export interface CookieOptions {
   secure?: boolean
@@ -46,7 +47,7 @@ export function deleteCookie(name: string, options?: CookieOptions) {
 }
 
 export function areCookiesAuthorized(options: CookieOptions): boolean {
-  if (document.cookie === undefined || document.cookie === null) {
+  if (!isBrowserEnvironment || document.cookie === undefined || document.cookie === null) {
     return false
   }
   try {
