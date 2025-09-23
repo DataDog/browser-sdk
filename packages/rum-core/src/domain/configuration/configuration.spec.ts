@@ -612,7 +612,7 @@ describe('serializeRumConfiguration', () => {
         : Key extends 'trackLongTasks'
           ? 'track_long_task'
           : // The following options are not reported as telemetry. Please avoid adding more of them.
-            Key extends 'applicationId' | 'subdomain' | 'trackEarlyRequests'
+            Key extends 'applicationId' | 'subdomain'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
@@ -643,6 +643,7 @@ describe('serializeRumConfiguration', () => {
       track_resources: true,
       track_long_task: true,
       track_bfcache_views: true,
+      track_early_requests: true,
       use_worker_url: true,
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
