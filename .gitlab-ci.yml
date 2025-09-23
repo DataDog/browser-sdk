@@ -597,15 +597,10 @@ check-expired-telemetry-scheduled:
   only:
     variables:
       - $TARGET_TASK_NAME == "check-expired-telemetry"
-  before_script:
-    - eval $(ssh-agent -s)
   script:
     - yarn
     - yarn build
     - MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL=error yarn lint
-  artifacts:
-    reports:
-      dotenv: build.env
 
 check-expired-telemetry-scheduled-failure:
   extends: .prepare_notification
