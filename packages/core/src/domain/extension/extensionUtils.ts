@@ -18,7 +18,6 @@ export function isUnsupportedExtensionEnvironment(windowLocation: string, stack:
   }
 
   // Since we generate the error on the init, we check the 2nd frame line.
-  // Support both Chrome-style ("at ...") and Firefox-style ("fn@url" or "@url") frames.
   const frameLines = stack
     .split('\n')
     .map((l) => l.trim())
