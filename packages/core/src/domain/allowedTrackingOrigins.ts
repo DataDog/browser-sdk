@@ -19,6 +19,7 @@ export function isAllowedTrackingOrigins(
       display.warn(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
 
       const extensionUrl = extractExtensionUrlFromStack(errorStack)
+      // monitor-until: 2026-01-01
       addTelemetryDebug(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN, {
         extensionUrl: extensionUrl || 'unknown',
       })

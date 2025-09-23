@@ -41,6 +41,7 @@ export function startSegmentTelemetry(
       (requestEvent.type === 'success' && requestEvent.payload.isFullSnapshot)
     ) {
       const metrics = createSegmentMetrics(requestEvent.type, requestEvent.bandwidth, requestEvent.payload)
+      // monitor-until: 2026-07-01
       addTelemetryMetrics(TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, { metrics })
     }
   })
