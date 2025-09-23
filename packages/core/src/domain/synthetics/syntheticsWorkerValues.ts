@@ -1,5 +1,5 @@
 import { getInitCookie } from '../../browser/cookie'
-import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
+import { globalObject, isBrowserEnvironment } from '../../tools/globalObject'
 
 export const SYNTHETICS_TEST_ID_COOKIE_NAME = 'datadog-synthetics-public-id'
 export const SYNTHETICS_RESULT_ID_COOKIE_NAME = 'datadog-synthetics-result-id'
@@ -12,7 +12,7 @@ export interface BrowserWindow extends Window {
 }
 
 export function willSyntheticsInjectRum(): boolean {
-  if (isWorkerEnvironment) {
+  if (!isBrowserEnvironment) {
     // We don't expect to run synthetics tests in a worker environment
     return false
   }

@@ -1,8 +1,8 @@
-import { isWorkerEnvironment } from '@datadog/browser-core'
+import { isBrowserEnvironment } from '@datadog/browser-core'
 import type { CommonContext } from '../../rawLogsEvent.types'
 
 export function buildCommonContext(): CommonContext {
-  if (isWorkerEnvironment) {
+  if (!isBrowserEnvironment) {
     return {}
   }
 
