@@ -29,7 +29,6 @@ export function isUnsupportedExtensionEnvironment(windowLocation: string, stack:
 }
 
 export function extractExtensionUrlFromStack(stack: string = ''): string | undefined {
-  // Extract extension origin for both Chrome-style and Firefox-style frames
   for (const prefix of EXTENSION_PREFIXES) {
     const regex = new RegExp(`${prefix}[^/]+`)
     const match = stack.match(regex)
