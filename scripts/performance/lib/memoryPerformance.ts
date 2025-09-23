@@ -2,7 +2,7 @@ import type { Browser, CDPSession, Page, Protocol } from 'puppeteer'
 import puppeteer from 'puppeteer'
 import { fetchPR, LOCAL_BRANCH } from '../../lib/gitUtils.ts'
 import { formatSize, printLog } from '../../lib/executionUtils.ts'
-import { markdownArray, type PrComment } from './reportAsAPrComment.ts'
+import { markdownArray, type Pr } from './reportAsAPrComment.ts'
 import type { Test } from './constants.ts'
 import { TESTS } from './constants.ts'
 import type { PerformanceMetric } from './fetchPerformanceMetrics.ts'
@@ -17,27 +17,28 @@ interface TestRunResult {
   medianBytes: number
 }
 
-export async function computeAndReportMemoryPerformance(lastCommonCommit: string, prComment: PrComment) {
-  let localMemoryPerformances: PerformanceMetric[]
-  let baseMemoryPerformances: PerformanceMetric[]
-  try {
-    localMemoryPerformances = await computeMemoryPerformance()
-    baseMemoryPerformances = await fetchPerformanceMetrics(
-      'memory',
-      localMemoryPerformances.map((memoryPerformance) => memoryPerformance.name),
-      lastCommonCommit
-    )
-  } catch (error) {
-    await prComment.setMemoryPerformance('Error computing memory performance')
-    throw error
-  }
-
+export async function computeAndReportMemoryPerformance(pr?: Pr) {
+  const localMemoryPerformances = await computeMemoryPerformance()
   await reportToDatadog({
     message: 'Browser SDK memory consumption',
     ...Object.fromEntries(localMemoryPerformances.map(({ name, value }) => [name, { memory_bytes: value }])),
   })
+  if (!pr) {
+    return
+  }
+  let baseMemoryPerformances: PerformanceMetric[]
+  try {
+    baseMemoryPerformances = await fetchPerformanceMetrics(
+      'memory',
+      localMemoryPerformances.map((memoryPerformance) => memoryPerformance.name),
+      pr.lastCommonCommit
+    )
+  } catch (error) {
+    await pr.setMemoryPerformance('Error fetching base memory performance')
+    throw error
+  }
 
-  await prComment.setMemoryPerformance(
+  await pr.setMemoryPerformance(
     formatMemoryPerformance({
       baseMemoryPerformances,
       localMemoryPerformances,

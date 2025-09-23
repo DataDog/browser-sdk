@@ -1,7 +1,7 @@
 import { fetchHandlingError, formatPercentage, timeout } from '../../lib/executionUtils.ts'
 import { getOrg2ApiKey, getOrg2AppKey } from '../../lib/secrets.ts'
 import { fetchPR, LOCAL_BRANCH } from '../../lib/gitUtils.ts'
-import type { PrComment } from './reportAsAPrComment.ts'
+import type { Pr } from './reportAsAPrComment.ts'
 import { markdownArray } from './reportAsAPrComment.ts'
 import type { PerformanceMetric } from './fetchPerformanceMetrics.ts'
 import { fetchPerformanceMetrics } from './fetchPerformanceMetrics.ts'
@@ -25,22 +25,25 @@ interface SyntheticsTestStatus {
   status?: number
 }
 
-export async function computeAndReportCpuPerformance(lastCommonCommit: string, prComment: PrComment) {
+export async function computeAndReportCpuPerformance(pr?: Pr) {
+  const localCpuPerformances = await computeCpuPerformance()
+  // local metrics reported directly by synthetics tests
+  if (!pr) {
+    return
+  }
   let baseCpuPerformances: PerformanceMetric[]
-  let localCpuPerformances: PerformanceMetric[]
   try {
-    localCpuPerformances = await computeCpuPerformance()
     baseCpuPerformances = await fetchPerformanceMetrics(
       'cpu',
       localCpuPerformances.map((cpuPerformance) => cpuPerformance.name),
-      lastCommonCommit
+      pr.lastCommonCommit
     )
   } catch (error) {
-    await prComment.setCpuPerformance('Error computing CPU performance')
+    await pr.setCpuPerformance('Error fetching base CPU performance')
     throw error
   }
 
-  await prComment.setCpuPerformance(
+  await pr.setCpuPerformance(
     formatCpuPerformance({
       baseCpuPerformances,
       localCpuPerformances,

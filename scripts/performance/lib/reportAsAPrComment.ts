@@ -4,14 +4,16 @@ import { fetchHandlingError } from '../../lib/executionUtils.ts'
 const PR_COMMENT_HEADER = 'Bundles Sizes Evolution'
 const PR_COMMENTER_AUTH_TOKEN = command`authanywhere --raw`.run()
 
-export class PrComment {
+export class Pr {
   prNumber: number
+  lastCommonCommit: string
   bundleSizesSection: string = 'Pending...'
   memoryPerformanceSection: string = 'Pending...'
   cpuPerformanceSection: string = 'Pending...'
 
-  constructor(prNumber: number) {
+  constructor(prNumber: number, lastCommonCommit: string) {
     this.prNumber = prNumber
+    this.lastCommonCommit = lastCommonCommit
   }
 
   async setBundleSizes(newSection: string) {

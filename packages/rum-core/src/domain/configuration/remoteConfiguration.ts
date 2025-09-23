@@ -72,6 +72,7 @@ export async function fetchAndApplyRemoteConfiguration(
       metrics
     )
   }
+  // monitor-until: forever
   addTelemetryMetrics(TelemetryMetrics.REMOTE_CONFIGURATION_METRIC_NAME, { metrics: metrics.get() })
   return rumInitConfiguration
 }

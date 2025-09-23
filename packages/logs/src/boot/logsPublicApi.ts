@@ -65,7 +65,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User tracking consent](https://docs.datadoghq.com/logs/log_collection/javascript/#user-tracking-consent) for further information.
    *
-   * @category Tracking Consent
+   * @category Privacy
    * @param trackingConsent - The user tracking consent
    */
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
@@ -74,7 +74,7 @@ export interface LogsPublicApi extends PublicApi {
    * Set the global context information to all events, stored in `@context`
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    * @param context - Global context
    */
   setGlobalContext: (context: any) => void
@@ -84,7 +84,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   getGlobalContext: () => Context
 
@@ -93,7 +93,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    * @param key - Key of the property
    * @param value - Value of the property
    */
@@ -104,7 +104,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   removeGlobalContextProperty: (key: any) => void
 
@@ -113,7 +113,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   clearGlobalContext: () => void
 
@@ -122,7 +122,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    *
-   * @category User
+   * @category Context - User
    * @param newUser - User information
    */
   setUser(newUser: User & { id: string }): void
@@ -130,7 +130,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Set user information to all events, stored in `@usr`
    *
-   * @category User
+   * @category Context - User
    * @deprecated You must specify a user id, favor using {@link setUser} instead
    * @param newUser - User information with optional id
    */
@@ -141,7 +141,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    *
-   * @category User
+   * @category Context - User
    * @returns User information
    */
   getUser: () => Context
@@ -151,7 +151,7 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    *
-   * @category User
+   * @category Context - User
    * @param key - Key of the property
    * @param property - Value of the property
    */
@@ -160,7 +160,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Remove a user property
    *
-   * @category User
+   * @category Context - User
    * @param key - Key of the property to remove
    * @see [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    */
@@ -171,14 +171,14 @@ export interface LogsPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
    *
-   * @category User
+   * @category Context - User
    */
   clearUser: () => void
 
   /**
    * Set account information to all events, stored in `@account`
    *
-   * @category Account
+   * @category Context - Account
    * @param newAccount - Account information
    */
   setAccount: (newAccount: Account) => void
@@ -186,7 +186,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Get account information
    *
-   * @category Account
+   * @category Context - Account
    * @returns Account information
    */
   getAccount: () => Context
@@ -194,7 +194,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Set or update the account property, stored in `@account.<key>`
    *
-   * @category Account
+   * @category Context - Account
    * @param key - Key of the property
    * @param property - Value of the property
    */
@@ -203,7 +203,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Remove an account property
    *
-   * @category Account
+   * @category Context - Account
    * @param key - Key of the property to remove
    */
   removeAccountProperty: (key: string) => void
@@ -211,7 +211,7 @@ export interface LogsPublicApi extends PublicApi {
   /**
    * Clear all account information
    *
-   * @category Account
+   * @category Context - Account
    * @returns Clear all account information
    */
   clearAccount: () => void
