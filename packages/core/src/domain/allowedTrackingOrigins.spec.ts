@@ -1,10 +1,10 @@
+import { STACK_WITH_INIT_IN_EXTENSION, STACK_WITH_INIT_IN_PAGE } from '../../test'
 import { display } from '../tools/display'
 import {
   isAllowedTrackingOrigins,
   WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
   ERROR_NOT_ALLOWED_TRACKING_ORIGIN,
 } from './allowedTrackingOrigins'
-import { STACK_WITH_INIT_IN_EXTENSION, STACK_WITH_INIT_IN_PAGE } from './extension/extensionUtils'
 
 const DEFAULT_CONFIG = {
   applicationId: 'xxx',

@@ -1,11 +1,13 @@
 import {
+  STACK_WITH_INIT_IN_EXTENSION,
+  STACK_WITH_INIT_IN_EXTENSION_FIREFOX,
+  STACK_WITH_INIT_IN_PAGE,
+} from '../../../test'
+import {
   containsExtensionUrl,
   EXTENSION_PREFIXES,
   extractExtensionUrlFromStack,
   isUnsupportedExtensionEnvironment,
-  STACK_WITH_INIT_IN_PAGE,
-  STACK_WITH_INIT_IN_EXTENSION,
-  STACK_WITH_INIT_IN_EXTENSION_FIREFOX,
 } from './extensionUtils'
 
 describe('extensionUtils', () => {
