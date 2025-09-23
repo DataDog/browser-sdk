@@ -610,7 +610,7 @@ describe('serializeRumConfiguration', () => {
             | 'allowedGraphQlUrls'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
-          ? 'track_long_task'
+          ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             Key extends 'applicationId' | 'subdomain'
             ? never
