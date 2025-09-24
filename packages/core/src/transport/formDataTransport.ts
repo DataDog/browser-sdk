@@ -4,13 +4,15 @@ import type {
   EncoderResult,
   DeflateEncoderStreamId,
   RawError,
-  Payload,
   Context,
 } from '@datadog/browser-core'
 import { addTelemetryDebug, createHttpRequest, jsonStringify, objectEntries } from '@datadog/browser-core'
 import type { RumConfiguration, LifeCycle } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
+/**
+ * transport payload consist of an event and one or more attachments
+ */
 export interface TransportPayload {
   event: Context
   [key: string]: Context
@@ -20,7 +22,7 @@ export interface Transport<T extends TransportPayload> {
   send: (data: T) => Promise<void>
 }
 
-export function createTransport<T extends TransportPayload>(
+export function createFormDataTransport<T extends TransportPayload>(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
@@ -65,12 +67,10 @@ export function createTransport<T extends TransportPayload>(
         formData.append(key, new Blob([result.output]), key)
       }
 
-      const payload: Payload = {
+      httpRequest.send({
         data: formData,
         bytesCount,
-      }
-
-      httpRequest.send(payload)
+      })
     },
   }
 }
