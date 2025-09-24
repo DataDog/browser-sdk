@@ -107,8 +107,6 @@ test.describe('browser extensions', () => {
         `
     })
     .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
-      test.fail() // TODO: remove this once the issue is fixed
-
       await flushEvents()
 
       expect(intakeRegistry.rumViewEvents).toHaveLength(1)

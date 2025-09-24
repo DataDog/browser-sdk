@@ -1,4 +1,5 @@
 export * from './browserChecks'
+export * from './browserExtension'
 export type * from './buildEnv'
 export * from './collectAsyncCalls'
 export * from './cookie'
