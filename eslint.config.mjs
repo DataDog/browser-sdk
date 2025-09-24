@@ -11,6 +11,7 @@ import globals from 'globals'
 import eslintLocalRules from './eslint-local-rules/index.js'
 
 const SPEC_FILES = '**/*.{spec,specHelper}.{ts,tsx,js}'
+const MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL = process.env.MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL || 'warn'
 
 // eslint-disable-next-line import/no-default-export
 export default tseslint.config(
@@ -105,7 +106,6 @@ export default tseslint.config(
       'no-inner-declarations': 'error',
       'no-new-func': 'error',
       'no-new-wrappers': 'error',
-      'no-return-await': 'error',
       'no-sequences': 'error',
       'no-template-curly-in-string': 'error',
       'no-undef-init': 'error',
@@ -202,6 +202,10 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { args: 'all', argsIgnorePattern: '^_', vars: 'all' }],
       '@typescript-eslint/triple-slash-reference': ['error', { path: 'always', types: 'prefer-import', lib: 'always' }],
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        { allowForKnownSafeCalls: [{ from: 'package', name: ['describe', 'it', 'test'], package: 'node:test' }] },
+      ],
 
       'import/no-cycle': 'error',
       'import/no-default-export': 'error',
@@ -354,6 +358,8 @@ export default tseslint.config(
     files: ['packages/*/src/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
+      'local-rules/enforce-monitor-until-comment': 'error',
+      'local-rules/monitor-until-comment-expired': MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL,
       'local-rules/disallow-side-effects': 'error',
       'local-rules/disallow-zone-js-patched-values': 'error',
       'local-rules/disallow-url-constructor-patched-values': 'error',

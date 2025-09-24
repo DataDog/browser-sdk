@@ -104,7 +104,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-tracking-consent) for further information.
    *
-   * @category Tracking Consent
+   * @category Privacy
    * @param trackingConsent - The user tracking consent
    */
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
@@ -115,7 +115,7 @@ export interface RumPublicApi extends PublicApi {
    * Enable to manually change the name of the current view.
    * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
    *
-   * @category View
+   * @category Context - View
    * @param name - Name of the view
    */
   setViewName: (name: string) => void
@@ -125,7 +125,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * Enable to manually set the context of the current view.
    *
-   * @category View
+   * @category Context - View
    * @param context - Context of the view
    */
   setViewContext: (context: Context) => void
@@ -134,7 +134,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * Enable to manually set a property of the context of the current view.
    *
-   * @category View
+   * @category Context - View
    * @param key - key of the property
    * @param value - value of the property
    */
@@ -143,7 +143,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Get View Context.
    *
-   * @category View
+   * @category Context - View
    */
   getViewContext(): Context
 
@@ -166,7 +166,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
    *
-   * @category Custom Actions
+   * @category Data Collection
    * @param name - Name of the action
    * @param context - Context of the action
    */
@@ -177,7 +177,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
    *
-   * @category Custom Errors
+   * @category Data Collection
    * @param error - Error. Favor sending a [Javascript Error](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) to have a stack trace attached to the error event.
    * @param context - Context of the error
    */
@@ -191,7 +191,7 @@ export interface RumPublicApi extends PublicApi {
    * We currently don't provide a way to retrieve the view start time, so it can be challenging to provide a timing relative to the view start.
    * see https://github.com/DataDog/browser-sdk/issues/2552
    *
-   * @category Custom Timings
+   * @category Data Collection
    * @param name - Name of the custom timing
    * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
    */
@@ -201,7 +201,7 @@ export interface RumPublicApi extends PublicApi {
    * Set the global context information to all events, stored in `@context`
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    * @param context - Global context
    */
   setGlobalContext: (context: Context) => void
@@ -211,7 +211,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   getGlobalContext: () => Context
 
@@ -220,7 +220,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    * @param key - Key of the property
    * @param value - Value of the property
    */
@@ -231,7 +231,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   removeGlobalContextProperty: (key: any) => void
 
@@ -240,7 +240,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Global context](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#global-context) for further information.
    *
-   * @category Global Context
+   * @category Context - Global Context
    */
   clearGlobalContext(): void
 
@@ -249,7 +249,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    *
-   * @category User
+   * @category Context - User
    * @param newUser - User information
    */
   setUser(newUser: User & { id: string }): void
@@ -257,7 +257,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Set user information to all events, stored in `@usr`
    *
-   * @category User
+   * @category Context - User
    * @deprecated You must specify a user id, favor using {@link setUser} instead
    * @param newUser - User information with optional id
    */
@@ -268,7 +268,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    *
-   * @category User
+   * @category Context - User
    * @returns User information
    */
   getUser: () => Context
@@ -278,7 +278,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    *
-   * @category User
+   * @category Context - User
    * @param key - Key of the property
    * @param property - Value of the property
    */
@@ -287,7 +287,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Remove a user property
    *
-   * @category User
+   * @category Context - User
    * @param key - Key of the property to remove
    * @see [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    */
@@ -298,14 +298,14 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [User session](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#user-session) for further information.
    *
-   * @category User
+   * @category Context - User
    */
   clearUser: () => void
 
   /**
    * Set account information to all events, stored in `@account`
    *
-   * @category Account
+   * @category Context - Account
    * @param newAccount - Account information
    */
   setAccount: (newAccount: Account) => void
@@ -313,7 +313,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Get account information
    *
-   * @category Account
+   * @category Context - Account
    * @returns Account information
    */
   getAccount: () => Context
@@ -321,7 +321,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Set or update the account property, stored in `@account.<key>`
    *
-   * @category Account
+   * @category Context - Account
    * @param key - Key of the property
    * @param property - Value of the property
    */
@@ -330,7 +330,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Remove an account property
    *
-   * @category Account
+   * @category Context - Account
    * @param key - Key of the property to remove
    */
   removeAccountProperty: (key: string) => void
@@ -338,7 +338,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Clear all account information
    *
-   * @category Account
+   * @category Context - Account
    * @returns Clear all account information
    */
   clearAccount: () => void
@@ -348,7 +348,8 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/#override-default-rum-view-names) for further information.
    *
-   * @category View
+   * Context - @category Data Collection
+   *
    * @param nameOrOptions - Name or options (name, service, version) for the view
    */
   startView(nameOrOptions?: string | ViewOptions): void
@@ -368,6 +369,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * See [Feature Flag Tracking](https://docs.datadoghq.com/real_user_monitoring/feature_flag_tracking/) for further information.
    *
+   * @category Data Collection
    * @param key - The key of the feature flag.
    * @param value - The value of the feature flag.
    */
@@ -404,7 +406,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Add a custom duration vital
    *
-   * @category Vital
+   * @category Vital - Duration
    * @param name - Name of the custom vital
    * @param options - Options for the custom vital (startTime, duration, context, description)
    */
@@ -415,7 +417,7 @@ export interface RumPublicApi extends PublicApi {
    *
    * If you plan to have multiple durations for the same vital, you should use the reference returned by this method.
    *
-   * @category Vital
+   * @category Vital - Duration
    * @param name - Name of the custom vital
    * @param options - Options for the custom vital (context, description)
    * @returns reference to the custom vital
@@ -425,7 +427,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * Stop a custom duration vital
    *
-   * @category Vital
+   * @category Vital - Duration
    * @param nameOrRef - Name or reference of the custom vital
    * @param options - Options for the custom vital (operationKey, context, description)
    */
@@ -434,7 +436,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * [Experimental] start a feature operation
    *
-   * @category Vital
+   * @category Vital - Feature Operation
    * @param name - Name of the operation step
    * @param options - Options for the operation step (operationKey, context, description)
    */
@@ -443,7 +445,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * [Experimental] succeed a feature operation
    *
-   * @category Vital
+   * @category Vital - Feature Operation
    * @param name - Name of the operation step
    * @param options - Options for the operation step (operationKey, context, description)
    */
@@ -452,7 +454,7 @@ export interface RumPublicApi extends PublicApi {
   /**
    * [Experimental] fail a feature operation
    *
-   * @category Vital
+   * @category Vital - Feature Operation
    * @param name - Name of the operation step
    * @param failureReason
    * @param options - Options for the operation step (operationKey, context, description)

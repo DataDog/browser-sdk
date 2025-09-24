@@ -18,6 +18,39 @@
 
 ---
 
+## v6.21.1
+
+**Public Changes:**
+
+- 📝 adjust Public Api and Init configuration categories ([#3855](https://github.com/DataDog/browser-sdk/pull/3855)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷[RUM-11488] enforce specifying an expiration date for temporary telemetry ([#3825](https://github.com/DataDog/browser-sdk/pull/3825)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Lock file maintenance ([#3864](https://github.com/DataDog/browser-sdk/pull/3864))
+- 👷🐛[performance] fix reporting on main branch ([#3868](https://github.com/DataDog/browser-sdk/pull/3868))
+- 👷 [mob-session] make `test-performances` more resilient ([#3862](https://github.com/DataDog/browser-sdk/pull/3862))
+- 👷 Update dependency lerna to v8.2.4 ([#3863](https://github.com/DataDog/browser-sdk/pull/3863))
+- 👷🐛 fix `create-github-release` ([#3857](https://github.com/DataDog/browser-sdk/pull/3857))
+- 🔧 ignore internal Docker package ([#3865](https://github.com/DataDog/browser-sdk/pull/3865))
+- 🔊 [RUM-11233] collect remote configuration metrics ([#3779](https://github.com/DataDog/browser-sdk/pull/3779)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Remove extra url data collected in telemetry ([#3867](https://github.com/DataDog/browser-sdk/pull/3867)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.21.0
+
+**Public Changes:**
+
+- ✨ [RUM-9181] Service Worker support for Logs ([#3769](https://github.com/DataDog/browser-sdk/pull/3769)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-10146] implement `trackEarlyRequests` ([#3846](https://github.com/DataDog/browser-sdk/pull/3846)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 when a request fails, display the response error ([#3853](https://github.com/DataDog/browser-sdk/pull/3853))
+- 👷 [Performance script] fix regression on size increase warnings ([#3845](https://github.com/DataDog/browser-sdk/pull/3845))
+- 🔧 configure renovate to wait 1 week before upgrading dependencies ([#3850](https://github.com/DataDog/browser-sdk/pull/3850))
+- 👷 [RUM Profiler] send view names as event attributes ([#3851](https://github.com/DataDog/browser-sdk/pull/3851)) [RUM]
+- 🐛 [PANA-4236] Fix flaky startRecorderInitTelemetry test ([#3852](https://github.com/DataDog/browser-sdk/pull/3852)) [RUM]
+
 ## v6.20.0
 
 **Public Changes:**

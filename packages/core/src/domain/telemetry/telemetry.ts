@@ -29,6 +29,7 @@ import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
 import { DeflateEncoderStreamId } from '../deflate'
 import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
 import { HookNames, DISCARDED } from '../../tools/abstractHooks'
+import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -59,11 +60,22 @@ export const enum TelemetryService {
 export interface Telemetry {
   stop: () => void
   enabled: boolean
+  metricsEnabled: boolean
 }
+
+export const enum TelemetryMetrics {
+  CUSTOMER_DATA_METRIC_NAME = 'Customer data measures',
+  REMOTE_CONFIGURATION_METRIC_NAME = 'remote configuration metrics',
+  RECORDER_INIT_METRICS_TELEMETRY_NAME = 'Recorder init metrics',
+  SEGMENT_METRICS_TELEMETRY_NAME = 'Segment network request metrics',
+  INITIAL_VIEW_METRICS_TELEMETRY_NAME = 'Initial view metrics',
+}
+
+const METRIC_SAMPLE_RATE = 1
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
 
-let telemetryObservable: BufferedObservable<{ rawEvent: RawTelemetryEvent; kind: string }> | undefined
+let telemetryObservable: BufferedObservable<{ rawEvent: RawTelemetryEvent; metricName?: string }> | undefined
 
 export function getTelemetryObservable() {
   if (!telemetryObservable) {
@@ -84,11 +96,12 @@ export function startTelemetry(
 
   const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
 
-  const { enabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
+  const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
 
   return {
     stop,
     enabled,
+    metricsEnabled,
   }
 }
 
@@ -96,7 +109,8 @@ export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
   hooks: AbstractHooks,
-  observable: Observable<TelemetryEvent & Context>
+  observable: Observable<TelemetryEvent & Context>,
+  metricSampleRate = METRIC_SAMPLE_RATE
 ) {
   const alreadySentEventsByKind: Record<string, Set<string>> = {}
 
@@ -107,15 +121,18 @@ export function startTelemetryCollection(
     [TelemetryType.LOG]: telemetryEnabled,
     [TelemetryType.CONFIGURATION]: telemetryEnabled && performDraw(configuration.telemetryConfigurationSampleRate),
     [TelemetryType.USAGE]: telemetryEnabled && performDraw(configuration.telemetryUsageSampleRate),
+    // not an actual "type" but using a single draw for all metrics
+    metric: telemetryEnabled && performDraw(metricSampleRate),
   }
 
   const runtimeEnvInfo = getRuntimeEnvInfo()
   const telemetryObservable = getTelemetryObservable()
-  telemetryObservable.subscribe(({ rawEvent, kind }) => {
-    if (!telemetryEnabledPerType[rawEvent.type!]) {
+  telemetryObservable.subscribe(({ rawEvent, metricName }) => {
+    if ((metricName && !telemetryEnabledPerType['metric']) || !telemetryEnabledPerType[rawEvent.type!]) {
       return
     }
 
+    const kind = metricName || (rawEvent.status as string | undefined) || rawEvent.type!
     let alreadySentEvents = alreadySentEventsByKind[kind]
     if (!alreadySentEvents) {
       alreadySentEvents = alreadySentEventsByKind[kind] = new Set()
@@ -137,7 +154,6 @@ export function startTelemetryCollection(
     if (defaultTelemetryEventAttributes === DISCARDED) {
       return
     }
-
     const event = toTelemetryEvent(
       defaultTelemetryEventAttributes as RecursivePartial<TelemetryEvent>,
       telemetryService,
@@ -154,6 +170,7 @@ export function startTelemetryCollection(
 
   return {
     enabled: telemetryEnabled,
+    metricsEnabled: telemetryEnabledPerType['metric'],
   }
 
   function toTelemetryEvent(
@@ -229,8 +246,8 @@ function startTelemetryTransport(
 
 function getRuntimeEnvInfo(): RuntimeEnvInfo {
   return {
-    is_local_file: window.location.protocol === 'file:',
-    is_worker: 'WorkerGlobalScope' in self,
+    is_local_file: globalObject.location?.protocol === 'file:',
+    is_worker: isWorkerEnvironment,
   }
 }
 
@@ -255,7 +272,6 @@ export function addTelemetryDebug(message: string, context?: Context) {
       status: StatusType.debug,
       ...context,
     },
-    kind: StatusType.debug,
   })
 }
 
@@ -267,7 +283,6 @@ export function addTelemetryError(e: unknown, context?: Context) {
       ...formatError(e),
       ...context,
     },
-    kind: StatusType.error,
   })
 }
 
@@ -277,19 +292,18 @@ export function addTelemetryConfiguration(configuration: RawTelemetryConfigurati
       type: TelemetryType.CONFIGURATION,
       configuration,
     },
-    kind: TelemetryType.CONFIGURATION,
   })
 }
 
-export function addTelemetryMetrics(kind: string, context?: Context) {
+export function addTelemetryMetrics(metricName: TelemetryMetrics, context?: Context) {
   getTelemetryObservable().notify({
     rawEvent: {
       type: TelemetryType.LOG,
-      message: kind,
+      message: metricName,
       status: StatusType.debug,
       ...context,
     },
-    kind,
+    metricName,
   })
 }
 
@@ -299,7 +313,6 @@ export function addTelemetryUsage(usage: RawTelemetryUsage) {
       type: TelemetryType.USAGE,
       usage,
     },
-    kind: TelemetryType.USAGE,
   })
 }
 

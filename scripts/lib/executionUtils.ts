@@ -39,16 +39,61 @@ export function printLog(...params: any[]): void {
   console.log(greenColor, ...params, resetColor)
 }
 
-interface FetchError extends Error {
-  status?: number
+export function formatSize(bytes: number | null, { includeSign = false } = {}): string {
+  if (bytes === null) {
+    return 'N/A'
+  }
+
+  const sign = includeSign && bytes > 0 ? '+' : ''
+
+  if (bytes < 1024) {
+    return `${sign}${Math.round(bytes)} B`
+  }
+
+  return `${sign}${(bytes / 1024).toFixed(2)} KiB`
+}
+
+export function formatPercentage(percentage: number, { includeSign = false } = {}): string {
+  const sign = includeSign && percentage > 0 ? '+' : ''
+  return `${sign}${(percentage * 100).toFixed(2)}%`
+}
+
+/**
+ * Find an error of type T in the provided error or its causes.
+ */
+export function findError<T>(error: unknown, type: new (...args: any[]) => T): T | undefined {
+  while (error) {
+    if (error instanceof type) {
+      return error
+    }
+    if (error instanceof Error && error.cause) {
+      error = error.cause
+    } else {
+      break
+    }
+  }
+}
+
+export class FetchError extends Error {
+  public readonly response: Response
+
+  constructor(response: Response, options?: ErrorOptions) {
+    super(`HTTP Error Response: ${response.status} ${response.statusText}`, options)
+    this.response = response
+  }
 }
 
 export async function fetchHandlingError(url: string, options?: RequestInit): Promise<Response> {
   const response = await fetch(url, options)
   if (!response.ok) {
-    const error = new Error(`HTTP Error Response: ${response.status} ${response.statusText}`) as FetchError
-    error.status = response.status
-    throw error
+    let cause: unknown
+    const body = await response.text()
+    try {
+      cause = JSON.parse(body)
+    } catch {
+      cause = body
+    }
+    throw new FetchError(response, { cause })
   }
 
   return response

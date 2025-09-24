@@ -7,8 +7,8 @@ import type {
   RumSession,
 } from '@datadog/browser-rum-core'
 import { LifeCycleEventType, SessionReplayState } from '@datadog/browser-rum-core'
-import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
 import type { Telemetry, DeflateEncoder } from '@datadog/browser-core'
+import { asyncRunOnReadyState, monitorError, Observable } from '@datadog/browser-core'
 import { getSessionReplayLink } from '../domain/getSessionReplayLink'
 import { startRecorderInitTelemetry } from '../domain/startRecorderInitTelemetry'
 import type { startRecording } from './startRecording'
@@ -69,7 +69,7 @@ export function createPostStartStrategy(
   })
 
   const observable = new Observable<RecorderInitEvent>()
-  startRecorderInitTelemetry(configuration, telemetry, observable)
+  startRecorderInitTelemetry(telemetry, observable)
 
   const doStart = async (forced: boolean) => {
     observable.notify({ type: 'start', forced })

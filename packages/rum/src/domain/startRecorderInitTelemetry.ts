@@ -1,9 +1,6 @@
 import type { Context, Duration, Telemetry, Observable, TimeStamp } from '@datadog/browser-core'
-import { performDraw, addTelemetryMetrics, noop, timeStampNow, elapsed } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
+import { TelemetryMetrics, addTelemetryMetrics, noop, timeStampNow, elapsed } from '@datadog/browser-core'
 import type { RecorderInitEvent } from '../boot/postStartStrategy'
-
-const RECORDER_INIT_METRICS_TELEMETRY_NAME = 'Recorder init metrics'
 
 type RecorderInitResult = 'aborted' | 'deflate-encoder-load-failed' | 'recorder-load-failed' | 'succeeded'
 
@@ -15,13 +12,8 @@ export interface RecorderInitMetrics extends Context {
   waitForDocReadyDuration: number | undefined
 }
 
-export function startRecorderInitTelemetry(
-  configuration: RumConfiguration,
-  telemetry: Telemetry,
-  observable: Observable<RecorderInitEvent>
-) {
-  const recorderInitTelemetryEnabled = telemetry.enabled && performDraw(configuration.replayTelemetrySampleRate)
-  if (!recorderInitTelemetryEnabled) {
+export function startRecorderInitTelemetry(telemetry: Telemetry, observable: Observable<RecorderInitEvent>) {
+  if (!telemetry.metricsEnabled) {
     return { stop: noop }
   }
 
@@ -63,7 +55,8 @@ export function startRecorderInitTelemetry(
         unsubscribe()
 
         if (startContext) {
-          addTelemetryMetrics(RECORDER_INIT_METRICS_TELEMETRY_NAME, {
+          // monitor-until: 2026-07-01
+          addTelemetryMetrics(TelemetryMetrics.RECORDER_INIT_METRICS_TELEMETRY_NAME, {
             metrics: createRecorderInitMetrics(
               startContext.forced,
               recorderSettledDuration,

@@ -1,12 +1,5 @@
 import type { RelativeTime, RumInternalContext } from '@datadog/browser-core'
-import {
-  willSyntheticsInjectRum,
-  addTelemetryDebug,
-  getSyntheticsTestId,
-  getSyntheticsResultId,
-  HookNames,
-  SKIPPED,
-} from '@datadog/browser-core'
+import { globalObject, willSyntheticsInjectRum, HookNames, SKIPPED } from '@datadog/browser-core'
 import type { Hooks } from '../hooks'
 
 interface Rum {
@@ -19,8 +12,7 @@ interface BrowserWindow {
 }
 
 export function startRUMInternalContext(hooks: Hooks) {
-  const browserWindow = window as BrowserWindow
-  let logsSentBeforeRumInjectionTelemetryAdded = false
+  const browserWindow = globalObject as BrowserWindow
 
   hooks.register(HookNames.Assemble, ({ startTime }) => {
     const internalContext = getRUMInternalContext(startTime)
@@ -53,25 +45,11 @@ export function startRUMInternalContext(hooks: Hooks) {
     if (rumContext) {
       return rumContext
     }
-
-    if (willSyntheticsInjectRumResult && !logsSentBeforeRumInjectionTelemetryAdded) {
-      logsSentBeforeRumInjectionTelemetryAdded = true
-      addTelemetryDebug('Logs sent before RUM is injected by the synthetics worker', {
-        testId: getSyntheticsTestId(),
-        resultId: getSyntheticsResultId(),
-      })
-    }
   }
 
   function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): RumInternalContext | undefined {
     if (rumGlobal && rumGlobal.getInternalContext) {
       return rumGlobal.getInternalContext(startTime)
     }
-  }
-
-  return {
-    stop: () => {
-      logsSentBeforeRumInjectionTelemetryAdded = false
-    },
   }
 }

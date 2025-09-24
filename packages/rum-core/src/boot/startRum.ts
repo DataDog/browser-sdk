@@ -85,6 +85,7 @@ export function startRum(
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    // monitor-until: forever, to keep an eye on the errors reported to customers
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
@@ -118,7 +119,7 @@ export function startRum(
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushController.flushObservable)
+    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }
@@ -181,11 +182,7 @@ export function startRum(
 
   cleanupTasks.push(stopViewCollection)
 
-  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(
-    configuration,
-    lifeCycle,
-    telemetry
-  )
+  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
   cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
