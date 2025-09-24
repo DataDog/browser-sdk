@@ -18,6 +18,24 @@
 
 ---
 
+## v6.21.1
+
+**Public Changes:**
+
+- 📝 adjust Public Api and Init configuration categories ([#3855](https://github.com/DataDog/browser-sdk/pull/3855)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷[RUM-11488] enforce specifying an expiration date for temporary telemetry ([#3825](https://github.com/DataDog/browser-sdk/pull/3825)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Lock file maintenance ([#3864](https://github.com/DataDog/browser-sdk/pull/3864))
+- 👷🐛[performance] fix reporting on main branch ([#3868](https://github.com/DataDog/browser-sdk/pull/3868))
+- 👷 [mob-session] make `test-performances` more resilient ([#3862](https://github.com/DataDog/browser-sdk/pull/3862))
+- 👷 Update dependency lerna to v8.2.4 ([#3863](https://github.com/DataDog/browser-sdk/pull/3863))
+- 👷🐛 fix `create-github-release` ([#3857](https://github.com/DataDog/browser-sdk/pull/3857))
+- 🔧 ignore internal Docker package ([#3865](https://github.com/DataDog/browser-sdk/pull/3865))
+- 🔊 [RUM-11233] collect remote configuration metrics ([#3779](https://github.com/DataDog/browser-sdk/pull/3779)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Remove extra url data collected in telemetry ([#3867](https://github.com/DataDog/browser-sdk/pull/3867)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.21.0
 
 **Public Changes:**
