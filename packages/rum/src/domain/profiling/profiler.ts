@@ -14,8 +14,19 @@ import {
   DeflateEncoderStreamId,
 } from '@datadog/browser-core'
 
-import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
-import { LifeCycleEventType, RumPerformanceEntryType, supportPerformanceTimingEvent } from '@datadog/browser-rum-core'
+import type {
+  LifeCycle,
+  RumConfiguration,
+  RumSessionManager,
+  TransportPayload,
+  ViewHistoryEntry,
+} from '@datadog/browser-rum-core'
+import {
+  createFormDataTransport,
+  LifeCycleEventType,
+  RumPerformanceEntryType,
+  supportPerformanceTimingEvent,
+} from '@datadog/browser-rum-core'
 import type {
   RumProfilerTrace,
   RumProfilerInstance,
@@ -27,8 +38,6 @@ import type {
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
-import type { TransportPayload } from './transport/transport'
-import { createTransport } from './transport/transport'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { assembleProfilingPayload } from './transport/assembly'
@@ -48,7 +57,7 @@ export function createRumProfiler(
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
-  const transport = createTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
+  const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
   let lastViewEntry: RumViewEntry | undefined
