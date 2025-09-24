@@ -18,11 +18,10 @@ export function isUnsupportedExtensionEnvironment(windowLocation: string, stack:
   }
 
   // Since we generate the error on the init, we check the 2nd frame line.
-  const frameLines = stack
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-    .filter((l) => /^at\s+/.test(l) || /@/.test(l))
+  const frameLines = stack.split('\n').filter((line) => {
+    const trimmedLine = line.trim()
+    return trimmedLine.length && /^at\s+|@/.test(trimmedLine)
+  })
   const target = frameLines[1] || ''
 
   return containsExtensionUrl(target)
