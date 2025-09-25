@@ -33,25 +33,37 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * - Enrich your logs with additional context attributes
    * - Modify your logs to modify their content, or redact sensitive sequences (see the list of editable properties)
    * - Discard selected logs
+   *
+   * @category Data Collection
    */
   beforeSend?: ((event: LogsEvent, context: LogsEventDomainContext) => boolean) | undefined
+
   /**
    * Forward console.error logs, uncaught exceptions and network errors to Datadog.
    *
+   * @category Data Collection
    * @defaultValue true
    */
   forwardErrorsToLogs?: boolean | undefined
+
   /**
    * Forward logs from console.* to Datadog. Use "all" to forward everything or an array of console API names to forward only a subset.
+   *
+   * @category Data Collection
    */
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
+
   /**
    * Forward reports from the [Reporting API](https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API) to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
+   *
+   * @category Data Collection
    */
   forwardReports?: RawReportType[] | 'all' | undefined
+
   /**
    * Use PCI-compliant intake. See [PCI DSS Compliance](https://docs.datadoghq.com/data_security/pci_compliance/?tab=logmanagement) for further information.
    *
+   * @category Privacy
    * @defaultValue false
    */
   usePciIntake?: boolean
@@ -72,7 +84,8 @@ export interface LogsConfiguration extends Configuration {
 export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
 
 export function validateAndBuildLogsConfiguration(
-  initConfiguration: LogsInitConfiguration
+  initConfiguration: LogsInitConfiguration,
+  errorStack?: string
 ): LogsConfiguration | undefined {
   if (initConfiguration.usePciIntake === true && initConfiguration.site && initConfiguration.site !== 'datadoghq.com') {
     display.warn(
@@ -80,7 +93,7 @@ export function validateAndBuildLogsConfiguration(
     )
   }
 
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
 
   const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
     initConfiguration.forwardConsoleLogs,

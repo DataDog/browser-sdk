@@ -38,14 +38,19 @@ export interface RumInitConfiguration extends InitConfiguration {
   // global options
   /**
    * The RUM application ID.
+   *
+   * @category Authentication
    */
   applicationId: string
+
   /**
    * Whether to propagate user and account IDs in the baggage header of trace requests.
    *
+   * @category Tracing
    * @defaultValue false
    */
   propagateTraceBaggage?: boolean | undefined
+
   /**
    * Access to every event collected by the RUM SDK before they are sent to Datadog.
    * It allows:
@@ -55,28 +60,32 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Enrich And Control Browser RUM Data With beforeSend](https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data) for further information.
    *
+   * @category Data Collection
    * @param event - The RUM event
    * @param context - The RUM event domain context providing access to native browser data based on the event type (e.g. error, performance entry).
    * @returns true if the event should be sent to Datadog, false otherwise
    */
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => boolean) | undefined
+
   /**
    * A list of request origins ignored when computing the page activity.
    * See [How page activity is calculated](https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated) for further information.
    */
   excludedActivityUrls?: MatchOption[] | undefined
+
   /**
    * URL pointing to the Datadog Browser SDK Worker JavaScript file. The URL can be relative or absolute, but is required to have the same origin as the web application.
    * See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.
    *
-   * @category Privacy
+   * @category Transport
    */
   workerUrl?: string
+
   /**
    * Compress requests sent to the Datadog intake to reduce bandwidth usage when sending large amounts of data. The compression is done in a Worker thread.
    * See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.
    *
-   * @category Custom Behavior
+   * @category Transport
    */
   compressIntakeRequests?: boolean | undefined
 
@@ -99,6 +108,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * A list of request URLs used to inject tracing headers.
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
    *
+   * @category Tracing
    */
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
 
@@ -114,6 +124,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
    *
+   * @category Tracing
    * @defaultValue sampled
    */
   traceContextInjection?: TraceContextInjection | undefined
@@ -124,6 +135,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
    *
+   * @category Privacy
    * @defaultValue mask
    */
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
@@ -135,39 +147,48 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    */
   subdomain?: string
+
   /**
    * The percentage of tracked sessions with [Browser RUM & Session Replay pricing](https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay) features: 100 for all, 0 for none.
    *
    * See [Configure Your Setup For Browser RUM and Browser RUM & Session Replay Sampling](https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans) for further information.
    *
+   * @category Session Replay
    */
   sessionReplaySampleRate?: number | undefined
+
   /**
    * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false.
    *
    * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
    *
+   * @category Session Replay
    */
   startSessionReplayRecordingManually?: boolean | undefined
 
   /**
    * Enables privacy control for action names.
    *
+   * @category Privacy
    */
   enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
+
   /**
    * Enables automatic collection of users actions.
    *
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
    *
+   * @category Data Collection
    * @defaultValue true
    */
   trackUserInteractions?: boolean | undefined
+
   /**
    * Specify your own attribute to use to name actions.
    *
    * See [Declare a name for click actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions) for further information.
    *
+   * @category Data Collection
    */
   actionNameAttribute?: string | undefined
 
@@ -175,14 +196,18 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
    *
+   * @category Data Collection
    */
   trackViewsManually?: boolean | undefined
+
   /**
    * Enable the creation of dedicated views for pages restored from the Back-Forward cache.
    *
+   * @category Data Collection
    * @defaultValue false
    */
   trackBfcacheViews?: boolean | undefined
+
   /**
    * Enables collection of resource events.
    *
@@ -190,6 +215,7 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @defaultValue true
    */
   trackResources?: boolean | undefined
+
   /**
    * Enables collection of long task events.
    *
@@ -210,7 +236,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * List of plugins to enable. The plugins API is unstable and experimental, and may change without
    * notice. Please use only plugins provided by Datadog matching the version of the SDK you are
    * using.
-   *
    */
   plugins?: RumPlugin[] | undefined
 
@@ -225,7 +250,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    * The percentage of users profiled. A value between 0 and 100.
    *
    * @category Profiling
-   * @experimental Not ready for production.
    * @defaultValue 0
    */
   profilingSampleRate?: number | undefined
@@ -277,7 +301,8 @@ export interface RumConfiguration extends Configuration {
 }
 
 export function validateAndBuildRumConfiguration(
-  initConfiguration: RumInitConfiguration
+  initConfiguration: RumInitConfiguration,
+  errorStack?: string
 ): RumConfiguration | undefined {
   if (
     initConfiguration.trackFeatureFlagsForEvents !== undefined &&
@@ -308,9 +333,10 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
+
   const allowedGraphQlUrls = validateAndBuildGraphQlOptions(initConfiguration)
 
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
   if (!baseConfiguration) {
     return
   }

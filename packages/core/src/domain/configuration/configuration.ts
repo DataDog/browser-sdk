@@ -51,24 +51,34 @@ export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof 
 export interface InitConfiguration {
   /**
    * The client token for Datadog. Required for authenticating your application with Datadog.
+   *
+   * @category Authentication
    */
   clientToken: string
+
   /**
    * A callback function that can be used to modify events before they are sent to Datadog.
+   *
+   * @category Data Collection
    */
   beforeSend?: GenericBeforeSendCallback | undefined
+
   /**
    * The percentage of sessions tracked. A value between 0 and 100.
    *
+   * @category Data Collection
    * @defaultValue 100
    */
   sessionSampleRate?: number | undefined
+
   /**
    * The percentage of telemetry events sent. A value between 0 and 100.
    *
+   * @category Data Collection
    * @defaultValue 20
    */
   telemetrySampleRate?: number | undefined
+
   /**
    * Initialization fails silently if the RUM Browser SDK is already initialized on the page.
    *
@@ -81,6 +91,7 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
+   * @category Session Persistence
    * @defaultValue "cookie"
    */
   sessionPersistence?: SessionPersistence | undefined
@@ -91,6 +102,7 @@ export interface InitConfiguration {
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
    *
+   * @category Session Persistence
    * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
    */
   allowFallbackToLocalStorage?: boolean | undefined
@@ -101,6 +113,7 @@ export interface InitConfiguration {
    * @defaultValue false
    */
   allowUntrustedEvents?: boolean | undefined
+
   /**
    * Store global context and user context in localStorage to preserve them along the user navigation.
    * See [Contexts life cycle](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#contexts-life-cycle) for further information.
@@ -108,10 +121,12 @@ export interface InitConfiguration {
    * @defaultValue false
    */
   storeContextsAcrossPages?: boolean | undefined
+
   /**
    * Set the initial user tracking consent state.
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#user-tracking-consent) for further information.
    *
+   * @category Privacy
    * @defaultValue granted
    */
   trackingConsent?: TrackingConsent | undefined
@@ -127,11 +142,15 @@ export interface InitConfiguration {
   /**
    * Optional proxy URL, for example: https://www.proxy.com/path.
    * See [Proxy Your Browser RUM Data](https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data) for further information.
+   *
+   * @category Transport
    */
   proxy?: string | ProxyFn | undefined
+
   /**
    * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
    *
+   * @category Transport
    * @defaultValue datadoghq.com
    */
   site?: Site | undefined
@@ -139,15 +158,22 @@ export interface InitConfiguration {
   // tag and context options
   /**
    * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Data Collection
    */
   service?: string | undefined | null
+
   /**
    * The application’s environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
    *
+   * @category Data Collection
    */
   env?: string | undefined | null
+
   /**
    * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Data Collection
    */
   version?: string | undefined | null
 
@@ -157,31 +183,39 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
+   * @category Session Persistence
    * @defaultValue false
    */
   usePartitionedCrossSiteSessionCookie?: boolean | undefined
+
   /**
    * Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
+   * @category Session Persistence
    * @defaultValue false
    */
   useSecureSessionCookie?: boolean | undefined
+
   /**
    * Preserve the session across subdomains for the same site.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
+   * @category Session Persistence
    * @defaultValue false
    */
   trackSessionAcrossSubdomains?: boolean | undefined
+
   /**
    * Track anonymous user for the same site and extend cookie expiration date
    *
+   * @category Data Collection
    * @defaultValue true
    */
   trackAnonymousUser?: boolean | undefined
+
   // internal options
   /**
    * [Internal option] Enable experimental features
@@ -189,14 +223,21 @@ export interface InitConfiguration {
    * @internal
    */
   enableExperimentalFeatures?: string[] | undefined
+
   /**
    * [Internal option] Configure the dual shipping to another datacenter
+   *
+   * @internal
    */
   replica?: ReplicaUserConfiguration | undefined
+
   /**
    * [Internal option] Set the datacenter from where the data is dual shipped
+   *
+   * @internal
    */
   datacenter?: string
+
   /**
    * [Internal option] Datadog internal analytics subdomain
    *
@@ -204,6 +245,7 @@ export interface InitConfiguration {
    */
   // TODO next major: remove this option and replace usages by proxyFn
   internalAnalyticsSubdomain?: string
+
   /**
    * [Internal option] The percentage of telemetry configuration sent. A value between 0 and 100.
    *
@@ -211,6 +253,7 @@ export interface InitConfiguration {
    * @defaultValue 5
    */
   telemetryConfigurationSampleRate?: number
+
   /**
    * [Internal option] The percentage of telemetry usage sent. A value between 0 and 100.
    *
@@ -315,7 +358,10 @@ export function isSampleRate(sampleRate: unknown, name: string) {
   return true
 }
 
-export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
+export function validateAndBuildConfiguration(
+  initConfiguration: InitConfiguration,
+  errorStack?: string
+): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
     display.error('Client Token is not configured, we will not send any data.')
     return
@@ -338,7 +384,7 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isString(initConfiguration.version, 'Version') ||
     !isString(initConfiguration.env, 'Env') ||
     !isString(initConfiguration.service, 'Service') ||
-    !isAllowedTrackingOrigins(initConfiguration)
+    !isAllowedTrackingOrigins(initConfiguration, errorStack ?? '')
   ) {
     return
   }

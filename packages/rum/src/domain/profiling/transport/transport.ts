@@ -2,8 +2,8 @@ import type { Payload } from '@datadog/browser-core'
 import { addTelemetryDebug, buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace } from '../types'
-import { buildProfileEventAttributes } from './buildProfileEventAttributes'
 import type { ProfileEventAttributes } from './buildProfileEventAttributes'
+import { buildProfileEventAttributes } from './buildProfileEventAttributes'
 
 interface ProfileEvent extends ProfileEventAttributes {
   attachments: string[]
@@ -36,6 +36,7 @@ const sendProfile: SendProfileFunction = (profilerTrace, configuration, sessionI
   // Create URL, public profiling intake.
   const profilingIntakeURL = endpointBuilder.build('fetch', payload)
 
+  // monitor-until: 2026-01-01, reconsider after profiling GA
   addTelemetryDebug('Sending profile to public profiling intake', { profilingIntakeURL, applicationId, sessionId })
 
   // Send payload (event + profile as attachment).

@@ -1,4 +1,18 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src/entries/main.ts"]
+  "entryPoints": ["src/entries/main.ts"],
+
+  "categoryOrder": [
+    "Init",
+    "Authentication",
+    "Privacy",
+    "Data Collection",
+    "Session Replay",
+    "Tracing",
+    "Profiling",
+    "Session Persistence",
+    "Transport",
+    "*",
+    "Other"
+  ]
 }

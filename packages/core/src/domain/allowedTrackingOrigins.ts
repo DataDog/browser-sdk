@@ -10,8 +10,8 @@ export const ERROR_NOT_ALLOWED_TRACKING_ORIGIN = 'SDK initialized on a non-allow
 
 export function isAllowedTrackingOrigins(
   configuration: InitConfiguration,
-  windowOrigin = typeof location !== 'undefined' ? location.origin : '',
-  errorStack = new Error().stack
+  errorStack: string,
+  windowOrigin = typeof location !== 'undefined' ? location.origin : ''
 ): boolean {
   const allowedTrackingOrigins = configuration.allowedTrackingOrigins
   if (!allowedTrackingOrigins) {
@@ -19,6 +19,7 @@ export function isAllowedTrackingOrigins(
       display.warn(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
 
       const extensionUrl = extractExtensionUrlFromStack(errorStack)
+      // monitor-until: 2026-01-01
       addTelemetryDebug(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN, {
         extensionUrl: extensionUrl || 'unknown',
       })
