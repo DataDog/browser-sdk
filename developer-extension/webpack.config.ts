@@ -2,6 +2,7 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 import { WebextensionPlugin } from '@webextension-toolbox/webpack-webextension-plugin'
 import CopyPlugin from 'copy-webpack-plugin'
 import ReactRefreshWebpackPlugin from '@pmmmwh/react-refresh-webpack-plugin'
+import reactRefreshTypeScript from 'react-refresh-typescript'
 import webpack from 'webpack'
 import { createDefinePlugin } from '../webpack.base.ts'
 import packageJson from './package.json' with { type: 'json' }
@@ -166,7 +167,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
               onlyCompileBundledFiles: true,
               ...(isDevelopment && {
                 getCustomTransformers: () => ({
-                  before: [new ReactRefreshWebpackPlugin()],
+                  before: [reactRefreshTypeScript()],
                 }),
               }),
               transpileOnly: true,
