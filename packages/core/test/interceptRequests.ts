@@ -1,6 +1,7 @@
 import type { EndpointBuilder } from '../src'
 import { INTAKE_URL_PARAMETERS, noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
+import { readFormData } from './readFormData'
 import { registerCleanupTask } from './registerCleanupTask'
 
 const INTAKE_PARAMS = INTAKE_URL_PARAMETERS.join('&')
@@ -106,4 +107,7 @@ export function interceptRequests() {
       MockXhr.onSend = onSend
     },
   }
+}
+export function readFormDataRequest<T>(request: Request): Promise<T> {
+  return readFormData(request.body as unknown as FormData)
 }

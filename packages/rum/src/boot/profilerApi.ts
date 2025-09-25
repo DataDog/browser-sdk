@@ -6,6 +6,7 @@ import type {
   ProfilerApi,
   Hooks,
 } from '@datadog/browser-rum-core'
+import type { DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import { isSampled } from '@datadog/browser-rum-core'
 import { addTelemetryDebug, monitorError } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
@@ -21,7 +22,8 @@ export function makeProfilerApi(): ProfilerApi {
     hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    viewHistory: ViewHistory
+    viewHistory: ViewHistory,
+    createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) {
     const session = sessionManager.findTrackedSession() // Check if the session is tracked.
 
@@ -59,7 +61,7 @@ export function makeProfilerApi(): ProfilerApi {
           return
         }
 
-        profiler = createRumProfiler(configuration, lifeCycle, sessionManager, profilingContextManager)
+        profiler = createRumProfiler(configuration, lifeCycle, sessionManager, profilingContextManager, createEncoder)
         profiler.start(viewHistory.findView())
       })
       .catch(monitorError)

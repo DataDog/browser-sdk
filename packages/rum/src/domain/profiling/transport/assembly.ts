@@ -1,11 +1,10 @@
-import type { Payload } from '@datadog/browser-core'
-import { addTelemetryDebug, buildTags, currentDrift } from '@datadog/browser-core'
+import { buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace } from '../types'
-import type { ProfileEventAttributes } from './buildProfileEventAttributes'
 import { buildProfileEventAttributes } from './buildProfileEventAttributes'
+import type { ProfileEventAttributes } from './buildProfileEventAttributes'
 
-interface ProfileEvent extends ProfileEventAttributes {
+export interface ProfileEvent extends ProfileEventAttributes {
   attachments: string[]
   start: string // ISO date
   end: string // ISO date
@@ -19,31 +18,22 @@ interface ProfileEvent extends ProfileEventAttributes {
   }
 }
 
-export type SendProfileFunction = (
-  trace: RumProfilerTrace,
+export interface ProfileEventPayload {
+  event: ProfileEvent
+  'wall-time.json': RumProfilerTrace
+}
+
+export function assembleProfilingPayload(
+  profilerTrace: RumProfilerTrace,
   configuration: RumConfiguration,
   sessionId: string | undefined
-) => Promise<unknown>
-
-/**
- * Send RUM profile as JSON to public profiling intake.
- */
-const sendProfile: SendProfileFunction = (profilerTrace, configuration, sessionId) => {
-  const { profilingEndpointBuilder: endpointBuilder, applicationId } = configuration
+): ProfileEventPayload {
   const event = buildProfileEvent(profilerTrace, configuration, sessionId)
-  const payload = buildProfilingPayload(profilerTrace, event)
 
-  // Create URL, public profiling intake.
-  const profilingIntakeURL = endpointBuilder.build('fetch', payload)
-
-  // monitor-until: 2026-01-01, reconsider after profiling GA
-  addTelemetryDebug('Sending profile to public profiling intake', { profilingIntakeURL, applicationId, sessionId })
-
-  // Send payload (event + profile as attachment).
-  return fetch(profilingIntakeURL, {
-    body: payload.data,
-    method: 'POST',
-  })
+  return {
+    event,
+    'wall-time.json': profilerTrace,
+  }
 }
 
 function buildProfileEvent(
@@ -85,26 +75,4 @@ function buildProfileEventTags(tags: string[]): string[] {
   const profileEventTags = tags.concat(['language:javascript', 'runtime:chrome', 'family:chrome', 'host:browser'])
 
   return profileEventTags
-}
-
-/**
- * Builds payload for Profiling intake. It includes the profile event and the profiler trace as attachment.
- *
- * @param profilerTrace - Profiler trace
- * @param profileEvent - Profiling event.
- * @returns Payload to be sent to the intake.
- */
-function buildProfilingPayload(profilerTrace: RumProfilerTrace, profileEvent: ProfileEvent): Payload {
-  const profilerTraceBlob = new Blob([JSON.stringify(profilerTrace)], {
-    type: 'application/json',
-  })
-  const formData = new FormData()
-  formData.append('event', new Blob([JSON.stringify(profileEvent)], { type: 'application/json' }), 'event.json')
-  formData.append('wall-time.json', profilerTraceBlob, 'wall-time.json')
-
-  return { data: formData, bytesCount: 0 }
-}
-
-export const transport = {
-  sendProfile,
 }

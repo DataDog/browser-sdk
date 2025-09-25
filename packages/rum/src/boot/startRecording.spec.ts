@@ -76,7 +76,7 @@ describe('startRecording', () => {
 
     const requests = await readSentRequests(1)
     expect(requests[0].segment).toEqual(jasmine.any(Object))
-    expect(requests[0].metadata).toEqual({
+    expect(requests[0].event).toEqual({
       application: {
         id: 'appId',
       },
@@ -110,7 +110,7 @@ describe('startRecording', () => {
     }
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe(inputCount + recordsPerFullSnapshot())
+    expect(requests[0].event.records_count).toBe(inputCount + recordsPerFullSnapshot())
   })
 
   it('stops sending new segment when the session is expired', async () => {
@@ -125,7 +125,7 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe(1 + recordsPerFullSnapshot())
+    expect(requests[0].event.records_count).toBe(1 + recordsPerFullSnapshot())
   })
 
   it('restarts sending segments when the session is renewed', async () => {
@@ -141,8 +141,8 @@ describe('startRecording', () => {
     flushSegment(lifeCycle)
 
     const requests = await readSentRequests(1)
-    expect(requests[0].metadata.records_count).toBe(1)
-    expect(requests[0].metadata.session.id).toBe('new-session-id')
+    expect(requests[0].event.records_count).toBe(1)
+    expect(requests[0].event.session.id).toBe('new-session-id')
   })
 
   it('flushes pending mutations before ending the view', async () => {
@@ -195,7 +195,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       const requests = await readSentRequests(1)
-      expect(requests[0].metadata.records_count).toBe(1 + recordsPerFullSnapshot())
+      expect(requests[0].event.records_count).toBe(1 + recordsPerFullSnapshot())
     })
 
     it('stops taking full snapshots on view creation', async () => {
@@ -206,7 +206,7 @@ describe('startRecording', () => {
       flushSegment(lifeCycle)
 
       const requests = await readSentRequests(1)
-      expect(requests[0].metadata.records_count).toBe(recordsPerFullSnapshot())
+      expect(requests[0].event.records_count).toBe(recordsPerFullSnapshot())
     })
   })
 

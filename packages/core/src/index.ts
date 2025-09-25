@@ -62,7 +62,7 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
+export type { BandwidthStats, HttpRequest, HttpRequestEvent, FlushEvent, FlushReason } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
@@ -71,6 +71,7 @@ export {
   BridgeCapability,
   createBatch,
   createFlushController,
+  createFormDataTransport,
 } from './transport'
 export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'

@@ -5,3 +5,4 @@ export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } f
 export { createBatch } from './batch'
 export type { FlushController, FlushEvent, FlushReason } from './flushController'
 export { createFlushController } from './flushController'
+export { createFormDataTransport } from './formDataTransport'
