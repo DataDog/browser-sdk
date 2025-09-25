@@ -15,7 +15,7 @@ export type MockServerApp = ServerApp & {
 }
 
 export interface Server<App extends ServerApp> {
-  url: string
+  origin: string
   app: App
   bindServerApp(serverApp: App): void
   waitForIdle(): Promise<void>
@@ -67,7 +67,7 @@ async function createServer<App extends ServerApp>(): Promise<Server<App>> {
       }
       return serverApp
     },
-    url: `http://${address}:${port}`,
+    origin: `http://${address}:${port}`,
     waitForIdle: createServerIdleWaiter(server),
   }
 }

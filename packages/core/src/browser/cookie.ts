@@ -1,6 +1,7 @@
 import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from '../tools/utils/stringUtils'
+import { buildUrl } from '../tools/utils/urlPolyfill'
 
 export interface CookieOptions {
   secure?: boolean
@@ -70,21 +71,37 @@ export function areCookiesAuthorized(options: CookieOptions): boolean {
  * https://web.dev/same-site-same-origin/#site
  */
 let getCurrentSiteCache: string | undefined
-export function getCurrentSite() {
+export function getCurrentSite(hostname = location.hostname, referrer = document.referrer): string | undefined {
   if (getCurrentSiteCache === undefined) {
-    // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
-    // the test cookie lifetime
-    const testCookieName = `dd_site_test_${generateUUID()}`
-    const testCookieValue = 'test'
+    const defaultHostName = getCookieDefaultHostName(hostname, referrer)
+    if (defaultHostName) {
+      // Use a unique cookie name to avoid issues when the SDK is initialized multiple times during
+      // the test cookie lifetime
+      const testCookieName = `dd_site_test_${generateUUID()}`
+      const testCookieValue = 'test'
 
-    const domainLevels = window.location.hostname.split('.')
-    let candidateDomain = domainLevels.pop()!
-    while (domainLevels.length && !getCookie(testCookieName)) {
-      candidateDomain = `${domainLevels.pop()!}.${candidateDomain}`
-      setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+      const domainLevels = defaultHostName.split('.')
+      let candidateDomain = domainLevels.pop()!
+      while (domainLevels.length && !getCookie(testCookieName)) {
+        candidateDomain = `${domainLevels.pop()!}.${candidateDomain}`
+        setCookie(testCookieName, testCookieValue, ONE_SECOND, { domain: candidateDomain })
+      }
+      deleteCookie(testCookieName, { domain: candidateDomain })
+      getCurrentSiteCache = candidateDomain
     }
-    deleteCookie(testCookieName, { domain: candidateDomain })
-    getCurrentSiteCache = candidateDomain
   }
+
   return getCurrentSiteCache
+}
+
+function getCookieDefaultHostName(hostname: string, referrer: string) {
+  try {
+    return hostname || buildUrl(referrer).hostname
+  } catch {
+    // Ignore
+  }
+}
+
+export function resetGetCurrentSite() {
+  getCurrentSiteCache = undefined
 }

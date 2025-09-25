@@ -34,8 +34,8 @@ test.describe('rum resources', () => {
 
   createTest("don't track disallowed cross origin xhr timings")
     .withRum()
-    .run(async ({ crossOriginUrl, intakeRegistry, flushEvents, sendXhr }) => {
-      await sendXhr(`${crossOriginUrl}/ok?duration=${REQUEST_DURATION}`)
+    .run(async ({ servers, intakeRegistry, flushEvents, sendXhr }) => {
+      await sendXhr(`${servers.crossOrigin.origin}/ok?duration=${REQUEST_DURATION}`)
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
       expect(resourceEvent).toBeDefined()
@@ -47,8 +47,8 @@ test.describe('rum resources', () => {
 
   createTest('track allowed cross origin xhr timings')
     .withRum()
-    .run(async ({ crossOriginUrl, intakeRegistry, flushEvents, sendXhr }) => {
-      await sendXhr(`${crossOriginUrl}/ok?timing-allow-origin=true&duration=${REQUEST_DURATION}`)
+    .run(async ({ servers, intakeRegistry, flushEvents, sendXhr }) => {
+      await sendXhr(`${servers.crossOrigin.origin}/ok?timing-allow-origin=true&duration=${REQUEST_DURATION}`)
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
       expect(resourceEvent).not.toBeUndefined()
@@ -73,7 +73,7 @@ test.describe('rum resources', () => {
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')
       expect(resourceEvent).toBeDefined()
-      expect(resourceEvent!.resource.url).toBe(`${baseUrl}/`)
+      expect(resourceEvent!.resource.url).toBe(baseUrl)
       expectToHaveValidTimings(resourceEvent!)
     })
 
