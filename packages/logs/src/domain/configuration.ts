@@ -84,7 +84,8 @@ export interface LogsConfiguration extends Configuration {
 export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
 
 export function validateAndBuildLogsConfiguration(
-  initConfiguration: LogsInitConfiguration
+  initConfiguration: LogsInitConfiguration,
+  errorStack?: string
 ): LogsConfiguration | undefined {
   if (initConfiguration.usePciIntake === true && initConfiguration.site && initConfiguration.site !== 'datadoghq.com') {
     display.warn(
@@ -92,7 +93,7 @@ export function validateAndBuildLogsConfiguration(
     )
   }
 
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
 
   const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
     initConfiguration.forwardConsoleLogs,
