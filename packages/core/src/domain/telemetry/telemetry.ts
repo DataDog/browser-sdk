@@ -3,6 +3,7 @@ import { ConsoleApiName } from '../../tools/display'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
+import { buildTags } from '../configuration'
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../intakeSites'
 import { BufferedObservable, Observable } from '../../tools/observable'
@@ -195,6 +196,7 @@ export function startTelemetryCollection(
         connectivity: getConnectivity(),
         sdk_setup: __BUILD_ENV__SDK_SETUP__,
       }) as TelemetryEvent['telemetry'],
+      ddtags: buildTags(configuration).join(','),
       experimental_features: Array.from(getExperimentalFeatures()),
     }
 
