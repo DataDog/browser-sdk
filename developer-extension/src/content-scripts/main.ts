@@ -1,7 +1,8 @@
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
-import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
+import { CDN_BASE_URL, CDN_VERSION, DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
+import { createLogger } from '../common/logger'
 
 declare global {
   interface Window extends EventTarget {
@@ -10,6 +11,8 @@ declare global {
     __ddBrowserSdkExtensionCallback?: (message: unknown) => void
   }
 }
+
+const logger = createLogger('content-script-main')
 
 interface SdkPublicApi {
   [key: string]: (...args: any[]) => unknown
@@ -22,7 +25,6 @@ function main() {
   }
 
   sendEventsToExtension()
-
   const settings = getSettings()
 
   if (
@@ -47,9 +49,11 @@ function main() {
       overrideInitConfiguration(ddLogsGlobal, settings.logsConfigurationOverride)
     }
 
-    if (settings.useDevBundles === 'npm') {
+    if (settings.injectionVariant === 'local-dev' && settings.useDevBundles === 'npm') {
       injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
+    } else if (settings.injectionVariant === 'cdn') {
+      injectCdnBundle(settings)
     }
   }
 }
@@ -122,8 +126,7 @@ function loadSdkScriptFromURL(url: string) {
     xhr.open('GET', url, false) // `false` makes the request synchronous
     xhr.send()
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error(`[DD Browser SDK extension] Error while loading ${url}:`, error)
+    logger.error(`Error while loading ${url}:`, error)
     return
   }
   if (xhr.status === 200) {
@@ -179,4 +182,110 @@ function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
 
 function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
   Object.assign(target, root)
+}
+
+function injectCdnBundle(settings: Settings) {
+  const injectWhenReady = () => {
+    if (settings.sdkInjectionType === 'RUM' || settings.sdkInjectionType === 'BOTH') {
+      const rumSite = (settings.rumConfigurationOverride as any)?.site as string | undefined
+      const rumUrl = getRumBundleUrl(settings.useRumSlim ? 'rum-slim' : 'rum', rumSite)
+      const rumConfig =
+        settings.rumConfigurationOverride ||
+        (settings.datadogMode
+          ? {
+              applicationId: 'bd3472ea-efc2-45e1-8dff-be4cea9429b3',
+              clientToken: 'pub7216f8a2d1091e263c95c1205882474e',
+              site: 'datad0g.com',
+              allowedTrackingOrigins: [() => true],
+              sessionReplaySampleRate: 100,
+            }
+          : null)
+      injectAndInitializeSDK(rumUrl, 'DD_RUM', rumConfig as any)
+    }
+
+    if (settings.sdkInjectionType === 'LOGS' || settings.sdkInjectionType === 'BOTH') {
+      const logsSite = (settings.logsConfigurationOverride as any)?.site as string | undefined
+      const logsUrl = getLogsBundleUrl(logsSite)
+      const logsConfig =
+        settings.logsConfigurationOverride ||
+        (settings.datadogMode
+          ? {
+              clientToken: 'pub7216f8a2d1091e263c95c1205882474e',
+              site: 'datad0g.com',
+              allowedTrackingOrigins: [() => true],
+            }
+          : null)
+      injectAndInitializeSDK(logsUrl, 'DD_LOGS', logsConfig as any)
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectWhenReady, { once: true })
+  } else {
+    injectWhenReady()
+  }
+}
+
+function getRumBundleUrl(bundle: 'rum' | 'rum-slim', site?: string): string {
+  const region = getCdnRegion(site)
+  return `${CDN_BASE_URL}/${region}/${CDN_VERSION}/datadog-${bundle}.js`
+}
+
+function getLogsBundleUrl(site?: string) {
+  const region = getCdnRegion(site)
+  return `${CDN_BASE_URL}/${region}/${CDN_VERSION}/datadog-logs.js`
+}
+
+function getCdnRegion(site?: string) {
+  if (!site || site === 'datadoghq.com') {
+    return 'us1'
+  }
+  if (site === 'datadoghq.eu') {
+    return 'eu1'
+  }
+  if (site?.startsWith('us3.')) {
+    return 'us3'
+  }
+  if (site?.startsWith('us5.')) {
+    return 'us5'
+  }
+  if (site?.endsWith('datad0g.com')) {
+    return 'us3'
+  }
+
+  return 'us1'
+}
+
+function injectAndInitializeSDK(url: string, globalName: 'DD_RUM' | 'DD_LOGS', config: object | null) {
+  // If the SDK is already loaded, don't try to load it again
+  if (window[globalName]) {
+    logger.log(`${globalName} already exists, skipping injection`)
+    return
+  }
+
+  if (url.includes('datadoghq-browser-agent.com')) {
+    const script = document.createElement('script')
+    script.src = url
+    script.async = true
+    script.onload = () => {
+      if (config && window[globalName] && 'init' in window[globalName]) {
+        try {
+          window[globalName].init(config)
+        } catch (e) {
+          logger.error(`Error initializing ${globalName}:`, e)
+        }
+      } else {
+        logger.log(`${globalName} loaded. No init called (no config provided).`)
+      }
+    }
+    script.onerror = (e) => {
+      logger.error(`Error loading ${globalName} script:`, e)
+    }
+    try {
+      document.head.appendChild(script)
+    } catch (appendErr) {
+      logger.error('failed to append script to head, retrying on documentElement', appendErr)
+      document.documentElement.appendChild(script)
+    }
+  }
 }
