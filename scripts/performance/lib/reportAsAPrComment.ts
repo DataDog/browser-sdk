@@ -81,7 +81,10 @@ interface MarkdownArrayOptions {
 }
 
 export function markdownArray({ headers, rows }: MarkdownArrayOptions): string {
-  let markdown = `| ${headers.join(' | ')} |\n| ${new Array(headers.length).fill('---').join(' | ')} |\n`
+  let markdown = `| ${headers.join(' | ')} |\n`
+  // align the first column to the left and the rest to the right
+  markdown += `| --- | ${new Array(headers.length - 1).fill('---:').join(' | ')} |\n`
+
   rows.forEach((row) => {
     markdown += `| ${row.join(' | ')} |\n`
   })
