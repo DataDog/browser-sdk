@@ -76,17 +76,26 @@ async function updatePrComment(prNumber: number, message: string): Promise<void>
 }
 
 interface MarkdownArrayOptions {
-  headers: string[]
+  headers: Array<{ label: string; align: 'left' | 'right' | 'center' }>
   rows: string[][]
 }
 
 export function markdownArray({ headers, rows }: MarkdownArrayOptions): string {
-  let markdown = `| ${headers.join(' | ')} |\n`
-  // align the first column to the left and the rest to the right
-  markdown += `| --- | ${new Array(headers.length - 1).fill('---:').join(' | ')} |\n`
+  let markdown = `| ${headers.map((header) => header.label).join(' | ')} |\n`
+  markdown += `| ${headers.map((header) => align(header.align)).join(' | ')} |\n`
 
   rows.forEach((row) => {
     markdown += `| ${row.join(' | ')} |\n`
   })
   return markdown
+}
+
+function align(align: 'left' | 'right' | 'center') {
+  if (align === 'center') {
+    return ':---:'
+  } else if (align === 'right') {
+    return '---:'
+  }
+
+  return '---'
 }
