@@ -5,7 +5,12 @@ import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerSta
 import { useSettings } from '../../hooks/useSettings'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/extension.types'
+import type {
+  DevBundlesOverride,
+  EventCollectionStrategy,
+  InjectionVariant,
+  SdkInjectionType,
+} from '../../../common/extension.types'
 
 export function SettingsTab() {
   const sdkDevServerStatus = useDevServerStatus(DEV_LOGS_URL)
@@ -21,6 +26,8 @@ export function SettingsTab() {
       autoFlush,
       debugMode: debug,
       datadogMode,
+      injectionVariant,
+      sdkInjectionType,
     },
     setSetting,
   ] = useSettings()
@@ -55,6 +62,55 @@ export function SettingsTab() {
                   </Box>
 
                   <Space h="md" />
+
+                  {datadogMode && (
+                    <>
+                      <SettingItem
+                        input={
+                          <Group>
+                            <Text>Injection variant:</Text>
+                            <SegmentedControl
+                              color="violet"
+                              value={injectionVariant}
+                              size="xs"
+                              data={[
+                                { value: 'local-dev', label: 'Local Dev' },
+                                { value: 'cdn', label: 'CDN' },
+                              ]}
+                              onChange={(value) => {
+                                setSetting('injectionVariant', value as InjectionVariant)
+                              }}
+                            />
+                          </Group>
+                        }
+                        description={<></>}
+                      />
+
+                      {injectionVariant === 'cdn' && (
+                        <SettingItem
+                          input={
+                            <Group>
+                              <Text>SDK injection type:</Text>
+                              <SegmentedControl
+                                color="violet"
+                                value={sdkInjectionType}
+                                size="xs"
+                                data={[
+                                  { value: 'RUM', label: 'RUM' },
+                                  { value: 'LOGS', label: 'LOGS' },
+                                  { value: 'BOTH', label: 'BOTH' },
+                                ]}
+                                onChange={(value) => {
+                                  setSetting('sdkInjectionType', value as SdkInjectionType)
+                                }}
+                              />
+                            </Group>
+                          }
+                          description={<></>}
+                        />
+                      )}
+                    </>
+                  )}
 
                   <SettingItem
                     input={

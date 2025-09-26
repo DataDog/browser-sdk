@@ -45,6 +45,9 @@ export type SdkMessage =
 
 export type EventCollectionStrategy = 'sdk' | 'requests'
 
+export type InjectionVariant = 'local-dev' | 'cdn'
+
+export type SdkInjectionType = 'RUM' | 'LOGS' | 'BOTH'
 export interface Settings {
   useDevBundles: DevBundlesOverride
   useDevReplaySandbox: boolean
@@ -57,4 +60,6 @@ export interface Settings {
   logsConfigurationOverride: object | null
   debugMode: boolean
   datadogMode: boolean
+  injectionVariant: InjectionVariant
+  sdkInjectionType: SdkInjectionType
 }

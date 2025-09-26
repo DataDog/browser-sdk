@@ -19,6 +19,8 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   logsConfigurationOverride: null,
   debugMode: false,
   datadogMode: false,
+  injectionVariant: 'local-dev',
+  sdkInjectionType: 'BOTH',
 }
 
 let settings: Settings | undefined
