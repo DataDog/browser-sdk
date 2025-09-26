@@ -234,6 +234,18 @@ describe('telemetry', () => {
     expect((await getTelemetryEvents()).length).toBe(1)
   })
 
+  it('should collect ddtags', async () => {
+    const { getTelemetryEvents } = startAndSpyTelemetry({
+      service: 'foo',
+      env: 'bar',
+      version: '123',
+    })
+
+    addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
+
+    expect((await getTelemetryEvents())[0].ddtags).toEqual('sdk_version:test,env:bar,service:foo,version:123')
+  })
+
   describe('assemble telemetry hook', () => {
     it('should add default telemetry event attributes', async () => {
       const { getTelemetryEvents, hooks } = startAndSpyTelemetry()
