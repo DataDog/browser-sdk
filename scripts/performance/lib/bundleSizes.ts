@@ -50,7 +50,14 @@ export function formatBundleSizes({
 }) {
   let highIncreaseDetected = false
   let message = markdownArray({
-    headers: ['📦 Bundle Name', 'Base Size', 'Local Size', '𝚫', '𝚫%', 'Status'],
+    headers: [
+      { label: '📦 Bundle Name', align: 'left' },
+      { label: 'Base Size', align: 'right' },
+      { label: 'Local Size', align: 'right' },
+      { label: '𝚫', align: 'right' },
+      { label: '𝚫%', align: 'right' },
+      { label: 'Status', align: 'center' },
+    ],
     rows: localBundleSizes.map((localBundleSize) => {
       const baseBundleSize = baseBundleSizes.find((baseBundleSize) => baseBundleSize.name === localBundleSize.name)
 

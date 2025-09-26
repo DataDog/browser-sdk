@@ -169,7 +169,12 @@ function formatMemoryPerformance({
   localMemoryPerformances: PerformanceMetric[]
 }) {
   return markdownArray({
-    headers: ['Action Name', 'Base Memory Consumption', 'Local Memory Consumption', '𝚫'],
+    headers: [
+      { label: 'Action Name', align: 'left' },
+      { label: 'Base Memory Consumption', align: 'right' },
+      { label: 'Local Memory Consumption', align: 'right' },
+      { label: '𝚫', align: 'right' },
+    ],
     rows: localMemoryPerformances.map((localMemoryPerformance) => {
       const baseMemoryPerformance = baseMemoryPerformances.find(
         (baseMemoryPerformance) => baseMemoryPerformance.name === localMemoryPerformance.name

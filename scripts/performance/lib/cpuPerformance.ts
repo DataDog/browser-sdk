@@ -121,7 +121,12 @@ function formatCpuPerformance({
   localCpuPerformances: PerformanceMetric[]
 }) {
   return markdownArray({
-    headers: ['Action Name', 'Base CPU Time (ms)', 'Local CPU Time (ms)', '𝚫 (%)'],
+    headers: [
+      { label: 'Action Name', align: 'left' },
+      { label: 'Base CPU Time (ms)', align: 'right' },
+      { label: 'Local CPU Time (ms)', align: 'right' },
+      { label: '𝚫%', align: 'right' },
+    ],
     rows: localCpuPerformances.map((localCpuPerformance) => {
       const baseCpuPerformance = baseCpuPerformances.find(
         (baseCpuPerformance) => baseCpuPerformance.name === localCpuPerformance.name
