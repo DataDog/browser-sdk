@@ -238,7 +238,7 @@ async function getSessionCookies(): Promise<{ count: number; domain: string }> {
 
   return {
     count: sessionCookies.length,
-    domain: getCurrentSite(),
+    domain: getCurrentSite() || 'undefined',
     ...sessionCookies,
   }
 }
