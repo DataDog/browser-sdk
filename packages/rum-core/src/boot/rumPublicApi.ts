@@ -13,6 +13,7 @@ import type {
   Account,
   RumInternalContext,
   Telemetry,
+  Encoder,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -484,7 +485,8 @@ export interface ProfilerApi {
     hooks: Hooks,
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
-    viewHistory: ViewHistory
+    viewHistory: ViewHistory,
+    createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) => void
 }
 
@@ -544,14 +546,17 @@ export function makeRumPublicApi(
     trackingConsentState,
     customVitalsState,
     (configuration, deflateWorker, initialViewOptions) => {
+      const createEncoder =
+        deflateWorker && options.createDeflateEncoder
+          ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
+          : createIdentityEncoder
+
       const startRumResult = startRumImpl(
         configuration,
         recorderApi,
         profilerApi,
         initialViewOptions,
-        deflateWorker && options.createDeflateEncoder
-          ? (streamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
-          : createIdentityEncoder,
+        createEncoder,
         trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
@@ -572,7 +577,9 @@ export function makeRumPublicApi(
         startRumResult.hooks,
         configuration,
         startRumResult.session,
-        startRumResult.viewHistory
+        startRumResult.viewHistory,
+        createEncoder
+        // createIdentityEncoder // TODO: use `createEncoder` when evp supports zlib-wrapped deflate
       )
 
       strategy = createPostStartStrategy(strategy, startRumResult)

@@ -53,8 +53,8 @@ describe('buildReplayPayload', () => {
     expect(eventEntry.size).toBe(JSON.stringify(METADATA_AND_SEGMENT_SIZES).length)
     expect(eventEntry.name).toBe('blob')
     expect(eventEntry.type).toBe('application/json')
-    const { metadata } = await readReplayPayload(payload)
-    expect(metadata).toEqual(METADATA_AND_SEGMENT_SIZES)
+    const { event } = await readReplayPayload(payload)
+    expect(event).toEqual(METADATA_AND_SEGMENT_SIZES)
   })
 
   it('returns the approximate byte counts of the request', () => {
