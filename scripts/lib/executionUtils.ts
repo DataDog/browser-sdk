@@ -46,7 +46,7 @@ export function formatSize(bytes: number | null, { includeSign = false } = {}): 
 
   const sign = includeSign && bytes > 0 ? '+' : ''
 
-  if (bytes < 1024) {
+  if (bytes > -1024 && bytes < 1024) {
     return `${sign}${Math.round(bytes)} B`
   }
 

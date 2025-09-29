@@ -1,4 +1,4 @@
-import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
+import { DOCS_ORIGIN, MORE_DETAILS, display } from '../tools/display'
 import type { Configuration } from './configuration'
 
 export const TAG_SIZE_LIMIT = 200
