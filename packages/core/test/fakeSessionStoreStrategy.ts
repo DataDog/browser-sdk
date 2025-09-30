@@ -1,4 +1,5 @@
 import type { Configuration } from '../src/domain/configuration'
+import { TrackingConsent, createTrackingConsentState } from '../src/domain/trackingConsent'
 import type { SessionState } from '../src/domain/session/sessionState'
 import { getExpiredSessionState } from '../src/domain/session/sessionState'
 
@@ -25,7 +26,11 @@ export function createFakeSessionStoreStrategy({
     }),
 
     expireSession: jasmine.createSpy('expireSession').and.callFake((previousSession) => {
-      session = getExpiredSessionState(previousSession, { trackAnonymousUser: true } as Configuration)
+      session = getExpiredSessionState(
+        previousSession,
+        { trackAnonymousUser: true } as Configuration,
+        createTrackingConsentState(TrackingConsent.GRANTED)
+      )
     }),
 
     planRetrieveSession: (index: number, fakeSession: SessionState) => {

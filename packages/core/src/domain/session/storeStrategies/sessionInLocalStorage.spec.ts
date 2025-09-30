@@ -1,4 +1,5 @@
 import type { Configuration } from '../../configuration'
+import { TrackingConsent, createTrackingConsentState } from '../../trackingConsent'
 import { SessionPersistence } from '../sessionConstants'
 import { toSessionState } from '../sessionState'
 import type { SessionState } from '../sessionState'
@@ -31,7 +32,10 @@ describe('session in local storage strategy', () => {
   })
 
   it('should persist a session in local storage', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
+    const localStorageStrategy = initLocalStorageStrategy(
+      DEFAULT_INIT_CONFIGURATION,
+      createTrackingConsentState(TrackingConsent.GRANTED)
+    )
     localStorageStrategy.persistSession(sessionState)
     const session = localStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
@@ -39,7 +43,10 @@ describe('session in local storage strategy', () => {
   })
 
   it('should set `isExpired=1` to the local storage item holding the session', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
+    const localStorageStrategy = initLocalStorageStrategy(
+      DEFAULT_INIT_CONFIGURATION,
+      createTrackingConsentState(TrackingConsent.GRANTED)
+    )
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.expireSession(sessionState)
     const session = localStorageStrategy?.retrieveSession()
@@ -51,7 +58,10 @@ describe('session in local storage strategy', () => {
   })
 
   it('should return an empty object if session string is invalid', () => {
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
+    const localStorageStrategy = initLocalStorageStrategy(
+      DEFAULT_INIT_CONFIGURATION,
+      createTrackingConsentState(TrackingConsent.GRANTED)
+    )
     window.localStorage.setItem(SESSION_STORE_KEY, '{test:42}')
     const session = localStorageStrategy.retrieveSession()
     expect(session).toEqual({})
@@ -59,7 +69,10 @@ describe('session in local storage strategy', () => {
 
   it('should not interfere with other keys present in local storage', () => {
     window.localStorage.setItem('test', 'hello')
-    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
+    const localStorageStrategy = initLocalStorageStrategy(
+      DEFAULT_INIT_CONFIGURATION,
+      createTrackingConsentState(TrackingConsent.GRANTED)
+    )
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.retrieveSession()
     localStorageStrategy.expireSession(sessionState)

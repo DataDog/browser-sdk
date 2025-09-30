@@ -1,5 +1,6 @@
 import { generateUUID } from '../../../tools/utils/stringUtils'
 import type { Configuration } from '../../configuration'
+import type { TrackingConsentState } from '../../trackingConsent'
 import { SessionPersistence } from '../sessionConstants'
 import type { SessionState } from '../sessionState'
 import { toSessionString, toSessionState, getExpiredSessionState } from '../sessionState'
@@ -21,12 +22,15 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
   }
 }
 
-export function initLocalStorageStrategy(configuration: Configuration): SessionStoreStrategy {
+export function initLocalStorageStrategy(
+  configuration: Configuration,
+  trackingConsentState: TrackingConsentState
+): SessionStoreStrategy {
   return {
     isLockEnabled: false,
     persistSession: persistInLocalStorage,
     retrieveSession: retrieveSessionFromLocalStorage,
-    expireSession: (sessionState: SessionState) => expireSessionFromLocalStorage(sessionState, configuration),
+    expireSession: (sessionState: SessionState) => expireSessionFromLocalStorage(sessionState, configuration, trackingConsentState),
   }
 }
 
@@ -39,6 +43,10 @@ function retrieveSessionFromLocalStorage(): SessionState {
   return toSessionState(sessionString)
 }
 
-function expireSessionFromLocalStorage(previousSessionState: SessionState, configuration: Configuration) {
-  persistInLocalStorage(getExpiredSessionState(previousSessionState, configuration))
+function expireSessionFromLocalStorage(
+  previousSessionState: SessionState,
+  configuration: Configuration,
+  trackingConsentState: TrackingConsentState
+) {
+  persistInLocalStorage(getExpiredSessionState(previousSessionState, configuration, trackingConsentState))
 }

@@ -3,6 +3,7 @@ import { objectEntries } from '../../tools/utils/polyfills'
 import { dateNow } from '../../tools/utils/timeUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { Configuration } from '../configuration'
+import type { TrackingConsentState } from '../trackingConsent'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from './sessionConstants'
 import { isValidSessionString, SESSION_ENTRY_REGEXP, SESSION_ENTRY_SEPARATOR } from './sessionStateValidation'
 export const EXPIRED = '1'
@@ -18,12 +19,13 @@ export interface SessionState {
 
 export function getExpiredSessionState(
   previousSessionState: SessionState | undefined,
-  configuration: Configuration
+  configuration: Configuration,
+  trackingConsentState: TrackingConsentState
 ): SessionState {
   const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
-  if (configuration.trackAnonymousUser) {
+  if (configuration.trackAnonymousUser && trackingConsentState.isGranted()) {
     if (previousSessionState?.anonymousId) {
       expiredSessionState.anonymousId = previousSessionState?.anonymousId
     } else {

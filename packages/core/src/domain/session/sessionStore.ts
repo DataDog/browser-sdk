@@ -4,6 +4,7 @@ import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
 import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
+import type { TrackingConsentState } from '../trackingConsent'
 import { display } from '../../tools/display'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
@@ -67,11 +68,12 @@ export function selectSessionStoreStrategyType(
 
 export function getSessionStoreStrategy(
   sessionStoreStrategyType: SessionStoreStrategyType,
-  configuration: Configuration
+  configuration: Configuration,
+  trackingConsentState: TrackingConsentState
 ) {
   return sessionStoreStrategyType.type === SessionPersistence.COOKIE
-    ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
-    : initLocalStorageStrategy(configuration)
+    ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions, trackingConsentState)
+    : initLocalStorageStrategy(configuration, trackingConsentState)
 }
 
 /**
@@ -85,7 +87,8 @@ export function startSessionStore<TrackingType extends string>(
   configuration: Configuration,
   productKey: string,
   computeTrackingType: (rawTrackingType?: string) => TrackingType,
-  sessionStoreStrategy: SessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, configuration)
+  trackingConsentState: TrackingConsentState,
+  sessionStoreStrategy: SessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, configuration, trackingConsentState)
 ): SessionStore {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
@@ -140,7 +143,7 @@ export function startSessionStore<TrackingType extends string>(
       processSessionStoreOperations(
         {
           process: (sessionState: SessionState) =>
-            isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration) : undefined,
+            isSessionInExpiredState(sessionState) ? getExpiredSessionState(sessionState, configuration, trackingConsentState) : undefined,
           after: synchronizeSession,
         },
         sessionStoreStrategy
@@ -152,7 +155,7 @@ export function startSessionStore<TrackingType extends string>(
 
   function synchronizeSession(sessionState: SessionState) {
     if (isSessionInExpiredState(sessionState)) {
-      sessionState = getExpiredSessionState(sessionState, configuration)
+      sessionState = getExpiredSessionState(sessionState, configuration, trackingConsentState)
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
@@ -170,7 +173,7 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
-            return getExpiredSessionState(sessionState, configuration)
+            return getExpiredSessionState(sessionState, configuration, trackingConsentState)
           }
         },
         after: (sessionState) => {
@@ -204,7 +207,7 @@ export function startSessionStore<TrackingType extends string>(
   }
 
   function expireSessionInCache() {
-    sessionCache = getExpiredSessionState(sessionCache, configuration)
+    sessionCache = getExpiredSessionState(sessionCache, configuration, trackingConsentState)
     expireObservable.notify()
   }
 
@@ -234,7 +237,7 @@ export function startSessionStore<TrackingType extends string>(
     expire: () => {
       cancelExpandOrRenewSession()
       sessionStoreStrategy.expireSession(sessionCache)
-      synchronizeSession(getExpiredSessionState(sessionCache, configuration))
+      synchronizeSession(getExpiredSessionState(sessionCache, configuration, trackingConsentState))
     },
     stop: () => {
       clearInterval(watchSessionTimeoutId)

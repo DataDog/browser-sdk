@@ -2,6 +2,7 @@ import { mockClock, getSessionState } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
 import type { Configuration } from '../../configuration'
+import { TrackingConsent, createTrackingConsentState } from '../../trackingConsent'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
@@ -13,7 +14,11 @@ describe('session in cookie strategy', () => {
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    cookieStorageStrategy = initCookieStrategy(DEFAULT_INIT_CONFIGURATION, {})
+    cookieStorageStrategy = initCookieStrategy(
+      DEFAULT_INIT_CONFIGURATION,
+      {},
+      createTrackingConsentState(TrackingConsent.GRANTED)
+    )
   })
 
   afterEach(() => {
@@ -110,7 +115,8 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
   beforeEach(() => {
     cookieStorageStrategy = initCookieStrategy(
       { ...DEFAULT_INIT_CONFIGURATION, trackAnonymousUser: true } as Configuration,
-      {}
+      {},
+      createTrackingConsentState(TrackingConsent.GRANTED)
     )
   })
 
@@ -156,7 +162,11 @@ describe('session in cookie strategy when opt-out anonymous user tracking', () =
   let cookieStorageStrategy: SessionStoreStrategy
 
   beforeEach(() => {
-    cookieStorageStrategy = initCookieStrategy({ trackAnonymousUser: false } as Configuration, {})
+    cookieStorageStrategy = initCookieStrategy(
+      { trackAnonymousUser: false } as Configuration,
+      {},
+      createTrackingConsentState(TrackingConsent.GRANTED)
+    )
   })
 
   afterEach(() => {

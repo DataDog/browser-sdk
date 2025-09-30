@@ -3,11 +3,22 @@ import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED } from './sessionConstant
 import type { SessionState } from './sessionState'
 import {
   expandSessionState,
+  getExpiredSessionState,
   isSessionInExpiredState,
   toSessionString,
   toSessionState,
   isSessionInNotStartedState,
 } from './sessionState'
+import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
+import type { Configuration } from '../configuration'
+
+const DEFAULT_CONFIGURATION = { trackAnonymousUser: true } as Configuration
+function createTestConfiguration(overrides: Partial<Configuration> = {}): Configuration {
+  return {
+    ...DEFAULT_CONFIGURATION,
+    ...overrides,
+  }
+}
 
 describe('session state utilities', () => {
   const NOT_STARTED_SESSION: SessionState = {}
@@ -83,6 +94,52 @@ describe('session state utilities', () => {
       const now = dateNow()
       expandSessionState(session)
       expect(session.expire).toBeGreaterThanOrEqual(now + SESSION_EXPIRATION_DELAY)
+    })
+  })
+
+  describe('getExpiredSessionState', () => {
+    it('should create an expired session state with anonymousId when tracking anonymous users', () => {
+      const configuration = createTestConfiguration({ trackAnonymousUser: true })
+      const previousState = undefined
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+
+      const result = getExpiredSessionState(previousState, configuration, trackingConsentState)
+
+      expect(result.isExpired).toBe('1')
+      expect(result.anonymousId).toBeDefined()
+    })
+
+    it('should reuse anonymousId from previous state when available', () => {
+      const configuration = createTestConfiguration({ trackAnonymousUser: true })
+      const previousState = { anonymousId: 'previous-id' }
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+
+      const result = getExpiredSessionState(previousState, configuration, trackingConsentState)
+
+      expect(result.isExpired).toBe('1')
+      expect(result.anonymousId).toBe('previous-id')
+    })
+
+    it('should not include anonymousId when tracking anonymous users is disabled', () => {
+      const configuration = createTestConfiguration({ trackAnonymousUser: false })
+      const previousState = { anonymousId: 'previous-id' }
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+
+      const result = getExpiredSessionState(previousState, configuration, trackingConsentState)
+
+      expect(result.isExpired).toBe('1')
+      expect(result.anonymousId).toBeUndefined()
+    })
+
+    it('should not include anonymousId when tracking consent is not granted', () => {
+      const configuration = createTestConfiguration({ trackAnonymousUser: true })
+      const previousState = { anonymousId: 'previous-id' }
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.NOT_GRANTED)
+
+      const result = getExpiredSessionState(previousState, configuration, trackingConsentState)
+
+      expect(result.isExpired).toBe('1')
+      expect(result.anonymousId).toBeUndefined()
     })
   })
 })

@@ -58,7 +58,8 @@ export function startSessionManager<TrackingType extends string>(
     configuration.sessionStoreStrategyType!,
     configuration,
     productKey,
-    computeTrackingType
+    computeTrackingType,
+    trackingConsentState
   )
   stopCallbacks.push(() => sessionStore.stop())
 

@@ -2,6 +2,7 @@ import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
 import { getCurrentSite, areCookiesAuthorized, getCookie, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration, Configuration } from '../../configuration'
+import type { TrackingConsentState } from '../../trackingConsent'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
 import {
   SESSION_COOKIE_EXPIRATION_DELAY,
@@ -19,7 +20,11 @@ export function selectCookieStrategy(initConfiguration: InitConfiguration): Sess
   return areCookiesAuthorized(cookieOptions) ? { type: SessionPersistence.COOKIE, cookieOptions } : undefined
 }
 
-export function initCookieStrategy(configuration: Configuration, cookieOptions: CookieOptions): SessionStoreStrategy {
+export function initCookieStrategy(
+  configuration: Configuration,
+  cookieOptions: CookieOptions,
+  trackingConsentState: TrackingConsentState
+): SessionStoreStrategy {
   const cookieStore = {
     /**
      * Lock strategy allows mitigating issues due to concurrent access to cookie.
@@ -33,7 +38,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
       storeSessionCookie(
         cookieOptions,
         configuration,
-        getExpiredSessionState(sessionState, configuration),
+        getExpiredSessionState(sessionState, configuration, trackingConsentState),
         SESSION_TIME_OUT_DELAY
       ),
   }

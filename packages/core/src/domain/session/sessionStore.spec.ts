@@ -1,6 +1,7 @@
 import type { Clock } from '../../../test'
 import { mockClock, createFakeSessionStoreStrategy } from '../../../test'
 import type { InitConfiguration, Configuration } from '../configuration'
+import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
 import { display } from '../../tools/display'
 import type { SessionStore } from './sessionStore'
 import { STORAGE_POLL_DELAY, startSessionStore, selectSessionStoreStrategyType } from './sessionStore'
@@ -209,6 +210,7 @@ describe('session store', () => {
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
         computeTrackingType,
+        createTrackingConsentState(TrackingConsent.GRANTED),
         sessionStoreStrategy
       )
       sessionStoreStrategy.persistSession.calls.reset()
@@ -593,6 +595,7 @@ describe('session store', () => {
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
         computeTrackingType,
+        createTrackingConsentState(TrackingConsent.GRANTED),
         sessionStoreStrategy
       )
       sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpy)
