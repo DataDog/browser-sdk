@@ -86,6 +86,7 @@ export interface RumNotRestoredReasons {
   reasons: RumNotRestoredReasonDetails[] | null
   src: string | null
   url: string | null
+  toJSON(): Omit<RumNotRestoredReasons, 'toJSON'>
 }
 
 export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResourceTiming, 'entryType'> {
