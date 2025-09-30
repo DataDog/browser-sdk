@@ -39,23 +39,23 @@
     "docs:serve": "typedoc && npx http-server ./docs -p 8080 -o"
   },
   "devDependencies": {
-    "@eslint/js": "9.35.0",
+    "@eslint/js": "9.36.0",
     "@jsdevtools/coverage-istanbul-loader": "3.0.5",
     "@playwright/test": "1.53.0",
     "@swc/core": "1.13.5",
-    "@types/chrome": "0.1.11",
+    "@types/chrome": "0.1.12",
     "@types/connect-busboy": "1.0.3",
     "@types/cors": "2.8.19",
     "@types/express": "5.0.3",
     "@types/jasmine": "3.10.18",
-    "@types/node": "24.4.0",
+    "@types/node": "24.5.2",
     "ajv": "8.17.1",
     "browserstack-local": "1.5.8",
     "chrome-webstore-upload": "3.2.0",
     "connect-busboy": "1.0.0",
     "cors": "2.8.5",
     "emoji-name-map": "2.0.3",
-    "eslint": "9.35.0",
+    "eslint": "9.36.0",
     "eslint-module-utils": "2.12.1",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-jasmine": "4.2.2",
@@ -81,7 +81,7 @@
     "minimatch": "10.0.3",
     "npm-run-all": "4.1.5",
     "prettier": "3.6.2",
-    "puppeteer": "24.20.0",
+    "puppeteer": "24.22.0",
     "swc-loader": "0.2.6",
     "terser-webpack-plugin": "5.3.14",
     "ts-loader": "9.5.4",
@@ -89,7 +89,7 @@
     "tsconfig-paths-webpack-plugin": "4.2.0",
     "typedoc": "0.28.13",
     "typescript": "5.9.2",
-    "typescript-eslint": "8.43.0",
+    "typescript-eslint": "8.44.1",
     "webpack": "5.101.3",
     "webpack-cli": "6.0.1",
     "webpack-dev-middleware": "7.4.3"
@@ -99,7 +99,7 @@
   },
   "volta": {
     "node": "24.8.0",
-    "yarn": "4.9.4"
+    "yarn": "4.10.2"
   },
-  "packageManager": "yarn@4.9.4"
+  "packageManager": "yarn@4.10.2"
 }
