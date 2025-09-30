@@ -29,11 +29,11 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
     persistSession: (sessionState: SessionState) =>
       storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
     retrieveSession: retrieveSessionCookie,
-    expireSession: (sessionState: SessionState) =>
+    expireSession: (sessionState: SessionState, hasConsent: boolean = true) =>
       storeSessionCookie(
         cookieOptions,
         configuration,
-        getExpiredSessionState(sessionState, configuration),
+        getExpiredSessionState(sessionState, configuration, hasConsent),
         SESSION_TIME_OUT_DELAY
       ),
   }

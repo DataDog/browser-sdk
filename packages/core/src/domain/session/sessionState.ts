@@ -18,11 +18,15 @@ export interface SessionState {
 
 export function getExpiredSessionState(
   previousSessionState: SessionState | undefined,
-  configuration: Configuration
+  configuration: Configuration,
+  hasConsent: boolean = true
 ): SessionState {
-  const expiredSessionState: SessionState = {
-    isExpired: EXPIRED,
+  const expiredSessionState: SessionState = { isExpired: EXPIRED }
+
+  if (!hasConsent) {
+    return expiredSessionState
   }
+
   if (configuration.trackAnonymousUser) {
     if (previousSessionState?.anonymousId) {
       expiredSessionState.anonymousId = previousSessionState?.anonymousId

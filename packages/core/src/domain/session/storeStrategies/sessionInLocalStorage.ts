@@ -39,6 +39,6 @@ function retrieveSessionFromLocalStorage(): SessionState {
   return toSessionState(sessionString)
 }
 
-function expireSessionFromLocalStorage(previousSessionState: SessionState, configuration: Configuration) {
-  persistInLocalStorage(getExpiredSessionState(previousSessionState, configuration))
+function expireSessionFromLocalStorage(previousSessionState: SessionState, configuration: Configuration, hasConsent: boolean = true) {
+  persistInLocalStorage(getExpiredSessionState(previousSessionState, configuration, hasConsent))
 }

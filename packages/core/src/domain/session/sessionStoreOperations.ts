@@ -5,6 +5,7 @@ import { elapsed, ONE_SECOND, timeStampNow } from '../../tools/utils/timeUtils'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
+import { TrackingConsentState } from '../trackingConsent'
 
 interface Operations {
   process: (sessionState: SessionState) => SessionState | undefined
@@ -25,7 +26,8 @@ let ongoingOperations: Operations | undefined
 export function processSessionStoreOperations(
   operations: Operations,
   sessionStoreStrategy: SessionStoreStrategy,
-  numberOfRetries = 0
+  trackingConsentState?: TrackingConsentState,
+  numberOfRetries = 0,
 ) {
   const { isLockEnabled, persistSession, expireSession } = sessionStoreStrategy
   const persistWithLock = (session: SessionState) => persistSession({ ...session, lock: currentLock })
@@ -77,7 +79,7 @@ export function processSessionStoreOperations(
   }
   if (processedSession) {
     if (isSessionInExpiredState(processedSession)) {
-      expireSession(processedSession)
+      expireSession(processedSession, trackingConsentState?.isGranted())
     } else {
       expandSessionState(processedSession)
       if (isLockEnabled) {

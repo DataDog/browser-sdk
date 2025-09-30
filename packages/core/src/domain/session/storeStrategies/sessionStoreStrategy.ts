@@ -12,5 +12,5 @@ export interface SessionStoreStrategy {
   isLockEnabled: boolean
   persistSession: (session: SessionState) => void
   retrieveSession: () => SessionState
-  expireSession: (previousSessionState: SessionState) => void
+  expireSession: (previousSessionState: SessionState, hasConsent?: boolean) => void
 }

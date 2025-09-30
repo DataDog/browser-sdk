@@ -58,7 +58,8 @@ export function startSessionManager<TrackingType extends string>(
     configuration.sessionStoreStrategyType!,
     configuration,
     productKey,
-    computeTrackingType
+    computeTrackingType,
+    trackingConsentState,
   )
   stopCallbacks.push(() => sessionStore.stop())
 
@@ -91,7 +92,8 @@ export function startSessionManager<TrackingType extends string>(
     if (trackingConsentState.isGranted()) {
       sessionStore.expandOrRenewSession()
     } else {
-      sessionStore.expire()
+      // expire the session without anonymous id when consent is not granted
+      sessionStore.expire(false)
     }
   })
 
