@@ -4,7 +4,6 @@ import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import type { RumNotRestoredReasons } from '../../browser/performanceObservable'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
@@ -130,8 +129,7 @@ function processViewUpdate(
         count: view.eventCounts.longTaskCount,
       },
       performance: computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics),
-      not_restored_reasons:
-        view.initialViewMetrics.navigationTimings?.notRestoredReasons?.toJSON() as RumNotRestoredReasons,
+      not_restored_reasons: view.initialViewMetrics.navigationTimings?.notRestoredReasons?.toJSON?.(),
       resource: {
         count: view.eventCounts.resourceCount,
       },
