@@ -579,7 +579,6 @@ export function makeRumPublicApi(
         startRumResult.session,
         startRumResult.viewHistory,
         createEncoder
-        // createIdentityEncoder // TODO: use `createEncoder` when evp supports zlib-wrapped deflate
       )
 
       strategy = createPostStartStrategy(strategy, startRumResult)
