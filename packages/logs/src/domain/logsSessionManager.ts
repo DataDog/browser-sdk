@@ -35,7 +35,7 @@ export function startLogsSessionManager(
       return session && session.trackingType === LoggerTrackingType.TRACKED
         ? {
             id: session.id,
-            anonymousId: session.anonymousId,
+            anonymousId: trackingConsentState.isGranted() ? session.anonymousId : undefined,
           }
         : undefined
     },

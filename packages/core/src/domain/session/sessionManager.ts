@@ -91,7 +91,7 @@ export function startSessionManager<TrackingType extends string>(
     if (trackingConsentState.isGranted()) {
       sessionStore.expandOrRenewSession()
     } else {
-      sessionStore.expire()
+      sessionStore.expire(false)
     }
   })
 
