@@ -26,7 +26,7 @@ export interface SessionStore {
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
-  expire: () => void
+  expire: (hasConsent?: boolean) => void
   stop: () => void
   updateSessionState: (state: Partial<SessionState>) => void
 }
@@ -156,7 +156,7 @@ export function startSessionStore<TrackingType extends string>(
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
-        expireSessionInCache()
+        expireSessionInCache(sessionState)
       } else {
         sessionStateUpdateObservable.notify({ previousState: sessionCache, newState: sessionState })
         sessionCache = sessionState
@@ -170,6 +170,9 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
+            if (!sessionState.anonymousId) {
+              sessionState.anonymousId = generateUUID()
+            }
             return getExpiredSessionState(sessionState, configuration)
           }
         },
@@ -203,8 +206,8 @@ export function startSessionStore<TrackingType extends string>(
     return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
   }
 
-  function expireSessionInCache() {
-    sessionCache = getExpiredSessionState(sessionCache, configuration)
+  function expireSessionInCache(sessionState: SessionState) {
+    sessionCache = getExpiredSessionState(sessionState, configuration)
     expireObservable.notify()
   }
 
@@ -231,10 +234,11 @@ export function startSessionStore<TrackingType extends string>(
     expireObservable,
     sessionStateUpdateObservable,
     restartSession: startSession,
-    expire: () => {
+    expire: (hasConsent?: boolean) => {
       cancelExpandOrRenewSession()
-      sessionStoreStrategy.expireSession(sessionCache)
-      synchronizeSession(getExpiredSessionState(sessionCache, configuration))
+      const expiredSessionState = getExpiredSessionState(sessionCache, configuration, hasConsent)
+      sessionStoreStrategy.expireSession(expiredSessionState)
+      synchronizeSession(expiredSessionState)
     },
     stop: () => {
       clearInterval(watchSessionTimeoutId)

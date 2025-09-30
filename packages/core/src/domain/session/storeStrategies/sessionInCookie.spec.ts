@@ -35,14 +35,21 @@ describe('session in cookie strategy', () => {
     expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0')
   })
 
-  it('should set `isExpired=1` and `aid` to the cookie holding the session', () => {
+  it('should set `isExpired=1` to the cookie holding the session', () => {
     const cookieStorageStrategy = setupCookieStrategy()
     spyOn(Math, 'random').and.callFake(() => 0)
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.expireSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId: jasmine.any(String) })
-    expect(getSessionState(SESSION_STORE_KEY)).toEqual({ isExpired: '1', anonymousId: jasmine.any(String) })
+    expect(session).toEqual({ isExpired: '1' })
+    expect(getSessionState(SESSION_STORE_KEY)).toEqual({ isExpired: '1' })
+  })
+
+  it('should not generate an anonymousId if not present', () => {
+    cookieStorageStrategy.persistSession(sessionState)
+    const session = cookieStorageStrategy.retrieveSession()
+    expect(session).toEqual({ id: '123', created: '0' })
+    expect(getSessionState(SESSION_STORE_KEY)).toEqual({ id: '123', created: '0' })
   })
 
   it('should return an empty object if session string is invalid', () => {

@@ -249,6 +249,11 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
         expect(sessionStoreManager.getSession()[PRODUCT_KEY]).toBeDefined()
       })
+
+      it('should generate an anonymousId if not present', () => {
+        setupSessionStore()
+        expect(sessionStoreManager.getSession().anonymousId).toBeDefined()
+      })
     })
 
     describe('expand or renew session', () => {
@@ -573,6 +578,12 @@ describe('session store', () => {
 
         expect(sessionStoreManager.getSession().id).toBe(FIRST_ID)
         expect(sessionStoreManager.getSession().isExpired).toBeUndefined()
+      })
+
+      it('restart session should generate an anonymousId if not present', () => {
+        setupSessionStore()
+        sessionStoreManager.restartSession()
+        expect(sessionStoreManager.getSession().anonymousId).toBeDefined()
       })
     })
   })
