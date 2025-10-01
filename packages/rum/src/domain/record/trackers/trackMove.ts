@@ -1,40 +1,46 @@
 import { addEventListeners, DOM_EVENT, throttle } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import type { BrowserIncrementalSnapshotRecord, MousemoveData, MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'
 import { getEventTarget, isTouchEvent } from '../eventsUtils'
 import { convertMouseEventToLayoutCoordinates } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { SerializationScope } from '../serialization'
 import type { Tracker } from './tracker.types'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 
 export type MousemoveCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function trackMove(configuration: RumConfiguration, moveCb: MousemoveCallBack): Tracker {
+export function trackMove(
+  configuration: RumConfiguration,
+  scope: SerializationScope,
+  moveCb: MousemoveCallBack
+): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle(
     (event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
-      if (hasSerializedNode(target)) {
-        const coordinates = tryToComputeCoordinates(event)
-        if (!coordinates) {
-          return
-        }
-        const position: MousePosition = {
-          id: getSerializedNodeId(target),
-          timeOffset: 0,
-          x: coordinates.x,
-          y: coordinates.y,
-        }
-
-        moveCb(
-          assembleIncrementalSnapshot<MousemoveData>(
-            isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove,
-            { positions: [position] }
-          )
-        )
+      const id = scope.getSerializedNodeId(target)
+      if (id === undefined) {
+        return
       }
+      const coordinates = tryToComputeCoordinates(event)
+      if (!coordinates) {
+        return
+      }
+      const position: MousePosition = {
+        id,
+        timeOffset: 0,
+        x: coordinates.x,
+        y: coordinates.y,
+      }
+
+      moveCb(
+        assembleIncrementalSnapshot<MousemoveData>(
+          isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove,
+          { positions: [position] }
+        )
+      )
     },
     MOUSE_MOVE_OBSERVER_THRESHOLD,
     {

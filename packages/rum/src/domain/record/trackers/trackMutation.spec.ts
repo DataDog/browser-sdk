@@ -11,7 +11,13 @@ import {
 import { createMutationPayloadValidator } from '../../../../test'
 import type { AttributeMutation, Attributes, BrowserMutationPayload } from '../../../types'
 import { NodeType } from '../../../types'
-import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
+import type { SerializationScope } from '../serialization'
+import {
+  serializeDocument,
+  SerializationContextStatus,
+  createSerializationStats,
+  createSerializationScope,
+} from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { appendElement, appendText } from '../../../../../rum-core/test'
@@ -25,10 +31,12 @@ describe('trackMutation', () => {
 
   let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
   let removeShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
+  let scope: SerializationScope
 
   beforeEach(() => {
     addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
     removeShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
+    scope = createSerializationScope()
   })
 
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
@@ -39,6 +47,7 @@ describe('trackMutation', () => {
       {
         defaultPrivacyLevel,
       } as RumConfiguration,
+      scope,
       { ...DEFAULT_SHADOW_ROOT_CONTROLLER, addShadowRoot: addShadowRootSpy, removeShadowRoot: removeShadowRootSpy },
       document
     )
@@ -55,6 +64,7 @@ describe('trackMutation', () => {
       {
         defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
       } as RumConfiguration,
+      scope,
       {
         serializationStats: createSerializationStats(),
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,

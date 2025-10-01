@@ -1,14 +1,10 @@
-export {
-  getElementInputValue,
-  getSerializedNodeId,
-  hasSerializedNode,
-  nodeAndAncestorsHaveSerializedNode,
-} from './serializationUtils'
-export type { NodeWithSerializedNode } from './serialization.types'
+export { getElementInputValue } from './serializationUtils'
 export { SerializationContextStatus } from './serialization.types'
 export type { SerializationContext } from './serialization.types'
 export { serializeDocument } from './serializeDocument'
 export { serializeNodeWithId } from './serializeNode'
 export { serializeAttribute } from './serializeAttribute'
+export type { NodeWithSerializedNode, SerializationScope } from './serializationScope'
+export { createSerializationScope } from './serializationScope'
 export { createSerializationStats, updateSerializationStats, aggregateSerializationStats } from './serializationStats'
 export type { SerializationMetric, SerializationStats } from './serializationStats'

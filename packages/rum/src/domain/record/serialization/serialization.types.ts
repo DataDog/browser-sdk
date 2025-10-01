@@ -1,6 +1,7 @@
 import type { RumConfiguration, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
+import type { SerializationScope } from './serializationScope'
 import type { SerializationStats } from './serializationStats'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
@@ -43,6 +44,5 @@ export interface SerializeOptions {
   parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
   configuration: RumConfiguration
+  scope: SerializationScope
 }
-
-export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }
