@@ -7,8 +7,6 @@ import {
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -178,10 +176,6 @@ function computeGraphQlMetaData(
   request: RequestCompleteEvent,
   configuration: RumConfiguration
 ): GraphQlMetadata | undefined {
-  if (!isExperimentalFeatureEnabled(ExperimentalFeature.GRAPHQL_TRACKING)) {
-    return
-  }
-
   const graphQlConfig = findGraphQlConfiguration(request.url, configuration)
   if (!graphQlConfig) {
     return
