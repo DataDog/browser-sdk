@@ -20,7 +20,7 @@ import type {
   TextNode,
 } from '../../../types'
 import { NodeType } from '../../../types'
-import { getSerializedNodeId, getValidTagName, setSerializedNodeId } from './serializationUtils'
+import { getValidTagName } from './serializationUtils'
 import type { SerializeOptions } from './serialization.types'
 import { serializeStyleSheets } from './serializeStyleSheets'
 import { serializeAttributes } from './serializeAttributes'
@@ -31,20 +31,13 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
     return null
   }
 
-  // Try to reuse the previous id
-  const id = getSerializedNodeId(node) || generateNextId()
+  const id = options.scope.assignSerializedNodeId(node)
   const serializedNodeWithId = serializedNode as SerializedNodeWithId
   serializedNodeWithId.id = id
-  setSerializedNodeId(node, id)
   if (options.serializedNodeIds) {
     options.serializedNodeIds.add(id)
   }
   return serializedNodeWithId
-}
-
-let _nextId = 1
-export function generateNextId(): number {
-  return _nextId++
 }
 
 export function serializeChildNodes(node: Node, options: SerializeOptions): SerializedNodeWithId[] {

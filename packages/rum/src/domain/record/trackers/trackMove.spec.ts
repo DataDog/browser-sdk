@@ -1,6 +1,11 @@
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { createSerializationStats, SerializationContextStatus, serializeDocument } from '../serialization'
+import {
+  createSerializationScope,
+  createSerializationStats,
+  SerializationContextStatus,
+  serializeDocument,
+} from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { MousemoveCallBack } from './trackMove'
@@ -15,7 +20,9 @@ describe('trackMove', () => {
 
   beforeEach(() => {
     configuration = {} as RumConfiguration
-    serializeDocument(document, DEFAULT_CONFIGURATION, {
+
+    const scope = createSerializationScope()
+    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
       serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
@@ -23,7 +30,7 @@ describe('trackMove', () => {
     })
 
     mouseMoveCallbackSpy = jasmine.createSpy()
-    moveTracker = trackMove(configuration, mouseMoveCallbackSpy)
+    moveTracker = trackMove(configuration, scope, mouseMoveCallbackSpy)
 
     registerCleanupTask(() => {
       moveTracker.stop()
