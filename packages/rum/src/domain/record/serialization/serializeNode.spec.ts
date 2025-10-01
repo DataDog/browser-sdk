@@ -17,6 +17,7 @@ import { appendElement } from '../../../../../rum-core/test'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
+import { createNodeIds } from '../nodeIds'
 import {
   HTML,
   generateLeanSerializedDoc,
@@ -29,8 +30,9 @@ import {
 import { serializeDocument } from './serializeDocument'
 import type { SerializationContext, SerializeOptions } from './serialization.types'
 import { SerializationContextStatus } from './serialization.types'
-import { hasSerializedNode } from './serializationUtils'
 import { serializeChildNodes, serializeDocumentNode, serializeNodeWithId } from './serializeNode'
+import type { SerializationScope } from './serializationScope'
+import { createSerializationScope } from './serializationScope'
 import { createSerializationStats } from './serializationStats'
 
 const DEFAULT_CONFIGURATION = {} as RumConfiguration
@@ -51,25 +53,26 @@ function getDefaultSerializationContext(): SerializationContext {
   }
 }
 
-function getDefaultOptions(): SerializeOptions {
-  return {
+describe('serializeNodeWithId', () => {
+  let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
+  let scope: SerializationScope
+
+  const getDefaultOptions = (): SerializeOptions => ({
     parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
     serializationContext: getDefaultSerializationContext(),
     configuration: DEFAULT_CONFIGURATION,
-  }
-}
-
-describe('serializeNodeWithId', () => {
-  let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
+    scope,
+  })
 
   beforeEach(() => {
     addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
+    scope = createSerializationScope(createNodeIds())
   })
 
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
-      expect(serializeDocument(document, DEFAULT_CONFIGURATION, getDefaultSerializationContext())).toEqual({
+      expect(serializeDocument(document, DEFAULT_CONFIGURATION, scope, getDefaultSerializationContext())).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -813,7 +816,7 @@ describe('serializeNodeWithId', () => {
     it('does not serialize ignored nodes', () => {
       const scriptElement = document.createElement('script')
       serializeNodeWithId(scriptElement, getDefaultOptions())
-      expect(hasSerializedNode(scriptElement)).toBe(false)
+      expect(scope.nodeIds.get(scriptElement)).toBe(undefined)
     })
 
     it('ignores script tags', () => {
@@ -988,8 +991,17 @@ describe('serializeNodeWithId', () => {
 
 describe('serializeDocumentNode handles', function testAllowDomTree() {
   const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
+  let scope: SerializationScope
+
+  const getDefaultOptions = (): SerializeOptions => ({
+    parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
+    serializationContext: getDefaultSerializationContext(),
+    configuration: DEFAULT_CONFIGURATION,
+    scope,
+  })
 
   beforeEach(() => {
+    scope = createSerializationScope(createNodeIds())
     registerCleanupTask(() => {
       if (isAdoptedStyleSheetsSupported()) {
         document.adoptedStyleSheets = []
@@ -1005,7 +1017,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
       const styleSheet = new window.CSSStyleSheet()
       styleSheet.insertRule('div { width: 100%; }')
       document.adoptedStyleSheets = [styleSheet]
-      expect(serializeDocument(document, DEFAULT_CONFIGURATION, getDefaultSerializationContext())).toEqual({
+      expect(serializeDocument(document, DEFAULT_CONFIGURATION, scope, getDefaultSerializationContext())).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType }),

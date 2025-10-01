@@ -2,6 +2,7 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserIncrementalSnapshotRecord } from '../../types'
 import { trackInput, trackMutation, trackScroll } from './trackers'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
+import type { SerializationScope } from './serialization'
 
 interface ShadowRootController {
   stop: () => void
@@ -19,6 +20,7 @@ export interface ShadowRootsController {
 
 export const initShadowRootsController = (
   configuration: RumConfiguration,
+  scope: SerializationScope,
   callback: (record: BrowserIncrementalSnapshotRecord) => void,
   elementsScrollPositions: ElementsScrollPositions
 ): ShadowRootsController => {
@@ -29,11 +31,11 @@ export const initShadowRootsController = (
       if (controllerByShadowRoot.has(shadowRoot)) {
         return
       }
-      const mutationTracker = trackMutation(callback, configuration, shadowRootsController, shadowRoot)
+      const mutationTracker = trackMutation(callback, configuration, scope, shadowRootsController, shadowRoot)
       // The change event does not bubble up across the shadow root, we have to listen on the shadow root
-      const inputTracker = trackInput(configuration, callback, shadowRoot)
+      const inputTracker = trackInput(configuration, scope, callback, shadowRoot)
       // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root
-      const scrollTracker = trackScroll(configuration, callback, elementsScrollPositions, shadowRoot)
+      const scrollTracker = trackScroll(configuration, scope, callback, elementsScrollPositions, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
         flush: () => mutationTracker.flush(),
         stop: () => {

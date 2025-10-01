@@ -11,10 +11,17 @@ import {
 import { createMutationPayloadValidator } from '../../../../test'
 import type { AttributeMutation, Attributes, BrowserMutationPayload } from '../../../types'
 import { NodeType } from '../../../types'
-import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
+import type { SerializationScope } from '../serialization'
+import {
+  serializeDocument,
+  SerializationContextStatus,
+  createSerializationStats,
+  createSerializationScope,
+} from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { appendElement, appendText } from '../../../../../rum-core/test'
+import { createNodeIds } from '../nodeIds'
 import { sortAddedAndMovedNodes, trackMutation } from './trackMutation'
 import type { MutationCallBack, MutationTracker } from './trackMutation'
 import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
@@ -25,10 +32,12 @@ describe('trackMutation', () => {
 
   let addShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
   let removeShadowRootSpy: jasmine.Spy<ShadowRootCallBack>
+  let scope: SerializationScope
 
   beforeEach(() => {
     addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
     removeShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
+    scope = createSerializationScope(createNodeIds())
   })
 
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {
@@ -39,6 +48,7 @@ describe('trackMutation', () => {
       {
         defaultPrivacyLevel,
       } as RumConfiguration,
+      scope,
       { ...DEFAULT_SHADOW_ROOT_CONTROLLER, addShadowRoot: addShadowRootSpy, removeShadowRoot: removeShadowRootSpy },
       document
     )
@@ -55,6 +65,7 @@ describe('trackMutation', () => {
       {
         defaultPrivacyLevel: NodePrivacyLevel.ALLOW,
       } as RumConfiguration,
+      scope,
       {
         serializationStats: createSerializationStats(),
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,

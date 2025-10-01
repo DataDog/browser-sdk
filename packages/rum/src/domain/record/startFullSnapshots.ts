@@ -6,7 +6,7 @@ import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
-import type { SerializationContext, SerializationStats } from './serialization'
+import type { SerializationContext, SerializationScope, SerializationStats } from './serialization'
 import { createSerializationStats, SerializationContextStatus, serializeDocument } from './serialization'
 import { getVisualViewport } from './viewports'
 
@@ -15,6 +15,7 @@ export function startFullSnapshots(
   shadowRootsController: ShadowRootsController,
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   flushMutations: () => void,
   emit: (record: BrowserRecord, stats?: SerializationStats) => void
 ) {
@@ -47,7 +48,7 @@ export function startFullSnapshots(
     emit(
       {
         data: {
-          node: serializeDocument(document, configuration, serializationContext),
+          node: serializeDocument(document, configuration, scope, serializationContext),
           initialOffset: {
             left: getScrollX(),
             top: getScrollY(),
