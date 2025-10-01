@@ -3,10 +3,10 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getScrollX, getScrollY, getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { getEventTarget } from '../eventsUtils'
-import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ScrollData } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { SerializationScope } from '../serialization'
 import type { Tracker } from './tracker.types'
 
 const SCROLL_OBSERVER_THRESHOLD = 100
@@ -15,20 +15,23 @@ export type ScrollCallback = (incrementalSnapshotRecord: BrowserIncrementalSnaps
 
 export function trackScroll(
   configuration: RumConfiguration,
+  scope: SerializationScope,
   scrollCb: ScrollCallback,
   elementsScrollPositions: ElementsScrollPositions,
   target: Document | ShadowRoot = document
 ): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle((event: Event) => {
     const target = getEventTarget(event) as HTMLElement | Document
+    if (!target) {
+      return
+    }
+    const id = scope.getSerializedNodeId(target)
     if (
-      !target ||
-      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
-      !hasSerializedNode(target)
+      id === undefined ||
+      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
     ) {
       return
     }
-    const id = getSerializedNodeId(target)
     const scrollPositions =
       target === document
         ? {

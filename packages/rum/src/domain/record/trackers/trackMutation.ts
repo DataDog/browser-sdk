@@ -25,12 +25,14 @@ import type {
   TextMutation,
   BrowserIncrementalSnapshotRecord,
 } from '../../../types'
-import type { NodeWithSerializedNode, SerializationContext, SerializationStats } from '../serialization'
+import type {
+  NodeWithSerializedNode,
+  SerializationContext,
+  SerializationScope,
+  SerializationStats,
+} from '../serialization'
 import {
   getElementInputValue,
-  getSerializedNodeId,
-  hasSerializedNode,
-  nodeAndAncestorsHaveSerializedNode,
   serializeNodeWithId,
   SerializationContextStatus,
   serializeAttribute,
@@ -57,6 +59,7 @@ export type MutationTracker = Tracker & { flush: () => void }
 export function trackMutation(
   mutationCallback: MutationCallBack,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   shadowRootsController: ShadowRootsController,
   target: Node
 ): MutationTracker {
@@ -70,6 +73,7 @@ export function trackMutation(
       mutations.concat(observer.takeRecords() as RumMutationRecord[]),
       mutationCallback,
       configuration,
+      scope,
       shadowRootsController
     )
   })
@@ -100,6 +104,7 @@ function processMutations(
   mutations: RumMutationRecord[],
   mutationCallback: MutationCallBack,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   shadowRootsController: ShadowRootsController
 ) {
   const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
@@ -119,7 +124,7 @@ function processMutations(
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       mutation.target.isConnected &&
-      nodeAndAncestorsHaveSerializedNode(mutation.target) &&
+      scope.nodeAndAncestorsHaveSerializedNode(mutation.target) &&
       getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel, nodePrivacyLevelCache) !==
         NodePrivacyLevel.HIDDEN
   )
@@ -131,6 +136,7 @@ function processMutations(
       (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
     ),
     configuration,
+    scope,
     serializationStats,
     shadowRootsController,
     nodePrivacyLevelCache
@@ -142,6 +148,7 @@ function processMutations(
         mutation.type === 'characterData' && !hasBeenSerialized(mutation.target)
     ),
     configuration,
+    scope,
     nodePrivacyLevelCache
   )
 
@@ -151,6 +158,7 @@ function processMutations(
         mutation.type === 'attributes' && !hasBeenSerialized(mutation.target)
     ),
     configuration,
+    scope,
     nodePrivacyLevelCache
   )
 
@@ -167,6 +175,7 @@ function processMutations(
 function processChildListMutations(
   mutations: Array<WithSerializedTarget<RumChildListMutationRecord>>,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   serializationStats: SerializationStats,
   shadowRootsController: ShadowRootsController,
   nodePrivacyLevelCache: NodePrivacyLevelCache
@@ -240,6 +249,7 @@ function processChildListMutations(
       parentNodePrivacyLevel,
       serializationContext,
       configuration,
+      scope,
     })
     updateSerializationStats(serializationStats, 'serializationDuration', elapsed(serializationStart, timeStampNow()))
     if (!serializedNode) {
@@ -249,32 +259,33 @@ function processChildListMutations(
     const parentNode = getParentNode(node)!
     addedNodeMutations.push({
       nextId: getNextSibling(node),
-      parentId: getSerializedNodeId(parentNode)!,
+      parentId: scope.getSerializedNodeId(parentNode)!,
       node: serializedNode,
     })
   }
   // Finally, we emit remove mutations.
   const removedNodeMutations: RemovedNodeMutation[] = []
   removedNodes.forEach((parent, node) => {
-    if (hasSerializedNode(node)) {
-      removedNodeMutations.push({
-        parentId: getSerializedNodeId(parent),
-        id: getSerializedNodeId(node),
-      })
+    const parentId = scope.getSerializedNodeId(parent)
+    const id = scope.getSerializedNodeId(node)
+    if (parentId !== undefined && id !== undefined) {
+      removedNodeMutations.push({ parentId, id })
     }
   })
 
   return { adds: addedNodeMutations, removes: removedNodeMutations, hasBeenSerialized }
 
   function hasBeenSerialized(node: Node) {
-    return hasSerializedNode(node) && serializedNodeIds.has(getSerializedNodeId(node))
+    const id = scope.getSerializedNodeId(node)
+    return id !== undefined && serializedNodeIds.has(id)
   }
 
   function getNextSibling(node: Node): null | number {
     let nextSibling = node.nextSibling
     while (nextSibling) {
-      if (hasSerializedNode(nextSibling)) {
-        return getSerializedNodeId(nextSibling)
+      const id = scope.getSerializedNodeId(nextSibling)
+      if (id !== undefined) {
+        return id
       }
       nextSibling = nextSibling.nextSibling
     }
@@ -286,6 +297,7 @@ function processChildListMutations(
 function processCharacterDataMutations(
   mutations: Array<WithSerializedTarget<RumCharacterDataMutationRecord>>,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
   const textMutations: TextMutation[] = []
@@ -307,6 +319,11 @@ function processCharacterDataMutations(
       continue
     }
 
+    const id = scope.getSerializedNodeId(mutation.target)
+    if (id === undefined) {
+      continue
+    }
+
     const parentNodePrivacyLevel = getNodePrivacyLevel(
       getParentNode(mutation.target)!,
       configuration.defaultPrivacyLevel,
@@ -317,7 +334,7 @@ function processCharacterDataMutations(
     }
 
     textMutations.push({
-      id: getSerializedNodeId(mutation.target),
+      id,
       value: getTextContent(mutation.target, parentNodePrivacyLevel) ?? null,
     })
   }
@@ -328,6 +345,7 @@ function processCharacterDataMutations(
 function processAttributesMutations(
   mutations: Array<WithSerializedTarget<RumAttributesMutationRecord>>,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
   const attributeMutations: AttributeMutation[] = []
@@ -354,6 +372,12 @@ function processAttributesMutations(
     if (uncensoredValue === mutation.oldValue) {
       continue
     }
+
+    const id = scope.getSerializedNodeId(mutation.target)
+    if (id === undefined) {
+      continue
+    }
+
     const privacyLevel = getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel, nodePrivacyLevelCache)
     const attributeValue = serializeAttribute(mutation.target, privacyLevel, mutation.attributeName!, configuration)
 
@@ -372,10 +396,7 @@ function processAttributesMutations(
 
     let emittedMutation = emittedMutations.get(mutation.target)
     if (!emittedMutation) {
-      emittedMutation = {
-        id: getSerializedNodeId(mutation.target),
-        attributes: {},
-      }
+      emittedMutation = { id, attributes: {} }
       attributeMutations.push(emittedMutation)
       emittedMutations.set(mutation.target, emittedMutation)
     }

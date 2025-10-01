@@ -2,7 +2,12 @@ import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
-import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
+import {
+  serializeDocument,
+  SerializationContextStatus,
+  createSerializationStats,
+  createSerializationScope,
+} from '../serialization'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
@@ -25,13 +30,14 @@ describe('trackScroll', () => {
 
     div = appendElement('<div target></div>') as HTMLDivElement
 
-    serializeDocument(document, DEFAULT_CONFIGURATION, {
+    const scope = createSerializationScope()
+    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
       serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions,
     })
-    scrollTracker = trackScroll(configuration, scrollCallback, elementsScrollPositions)
+    scrollTracker = trackScroll(configuration, scope, scrollCallback, elementsScrollPositions)
 
     registerCleanupTask(() => {
       scrollTracker.stop()
