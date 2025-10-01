@@ -2,9 +2,9 @@
 
 # Global
 packages/flagging                          @Datadog/feature-flagging-experimentation
-packages/rum/src/domain/record             @Datadog/session-replay-sdk
-packages/rum/src/domain/segmentCollection  @Datadog/session-replay-sdk
-packages/rum/src/domain/*.ts               @Datadog/session-replay-sdk
+packages/rum/src/domain/record             @Datadog/rum-browser @Datadog/session-replay-sdk
+packages/rum/src/domain/segmentCollection  @Datadog/rum-browser @Datadog/session-replay-sdk
+packages/rum/src/domain/*.ts               @Datadog/rum-browser @Datadog/session-replay-sdk
 *                                          @Datadog/rum-browser
 
 # Docs
