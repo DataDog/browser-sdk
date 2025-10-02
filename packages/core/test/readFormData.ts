@@ -2,15 +2,15 @@ import { inflate } from 'pako'
 
 // Zlib streams using a default compression are starting with bytes 120 156 (0x78 0x9c)
 // https://stackoverflow.com/a/9050274
-const Z_LIB_MAGIC_BYTES = [120, 156]
+const Z_LIB_MAGIC_BYTES = 0x789c
 
 export async function readFormData<T>(formData: FormData): Promise<T> {
   const entries = getEntries(formData)
-  const data = {} as Record<string, unknown>
+  const data: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(entries)) {
     if (value instanceof Blob) {
-      data[key] = await readJsonBlob(value as Blob)
+      data[key] = await readJsonBlob(value)
     } else {
       data[key] = value
     }
@@ -28,7 +28,7 @@ function getEntries(payload: FormData) {
 }
 
 function isZlibCompressed(buffer: ArrayBuffer) {
-  return new Uint8Array(buffer).subarray(0, 2).toString() === Z_LIB_MAGIC_BYTES.toString()
+  return new DataView(buffer).getUint16(0) === Z_LIB_MAGIC_BYTES
 }
 
 function readJsonBlob<T>(blob: Blob): Promise<T> {
