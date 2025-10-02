@@ -4,7 +4,6 @@ import { createTest } from '../../lib/framework'
 function buildGraphQlConfig({ trackPayload = false }: { trackPayload?: boolean } = {}) {
   return {
     allowedGraphQlUrls: [{ match: (url: string) => url.includes('graphql'), trackPayload }],
-    enableExperimentalFeatures: ['graphql_tracking'],
   }
 }
 

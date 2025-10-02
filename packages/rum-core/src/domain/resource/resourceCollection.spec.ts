@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
-import { createTaskQueue, ExperimentalFeature, noop, RequestType, ResourceType } from '@datadog/browser-core'
-import { mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
   collectAndValidateRawRumEvents,
@@ -152,9 +152,6 @@ describe('resourceCollection', () => {
   })
 
   describe('GraphQL metadata enrichment', () => {
-    beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.GRAPHQL_TRACKING])
-    })
     interface TestCase {
       requestType: RequestType
       name: string
@@ -277,34 +274,6 @@ describe('resourceCollection', () => {
         })
       })
     })
-  })
-
-  it('should not track GraphQL when feature flag is disabled', () => {
-    mockExperimentalFeatures([])
-    setupResourceCollection({
-      trackResources: true,
-      allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: true }],
-    })
-
-    const requestBody = JSON.stringify({
-      query: 'query GetUser { user { name } }',
-    })
-
-    notifyRequest({
-      request: {
-        type: RequestType.FETCH,
-        url: 'https://api.example.com/graphql',
-        method: 'POST' as const,
-        init: {
-          method: 'POST' as const,
-          body: requestBody,
-        },
-        input: 'https://api.example.com/graphql',
-      },
-    })
-
-    const resourceEvent = rawRumEvents[0].rawRumEvent as any
-    expect(resourceEvent.resource.graphql).toBeUndefined()
   })
 
   describe('with trackEarlyRequests enabled', () => {
