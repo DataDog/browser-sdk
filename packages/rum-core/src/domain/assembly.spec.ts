@@ -1,11 +1,5 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  HookNames,
-  ONE_MINUTE,
-  display,
-  startGlobalContext,
-} from '@datadog/browser-core'
+import { ErrorSource, HookNames, ONE_MINUTE, display, startGlobalContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
@@ -75,7 +69,6 @@ describe('rum assembly', () => {
 
           expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
         })
-
       })
 
       describe('context field', () => {
