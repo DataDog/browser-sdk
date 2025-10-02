@@ -218,6 +218,9 @@ __metadata:
 "@datadog/browser-core@npm:6.21.2, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
+  dependencies:
+    "@types/pako": "npm:2.0.4"
+    pako: "npm:2.1.0"
   languageName: unknown
   linkType: soft
 
