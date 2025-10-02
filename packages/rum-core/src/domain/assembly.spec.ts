@@ -1,14 +1,7 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import {
-  ErrorSource,
-  ExperimentalFeature,
-  HookNames,
-  ONE_MINUTE,
-  display,
-  startGlobalContext,
-} from '@datadog/browser-core'
+import { ErrorSource, HookNames, ONE_MINUTE, display, startGlobalContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockExperimentalFeatures, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
+import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
   createRumSessionManagerMock,
   createRawRumEvent,
@@ -75,38 +68,6 @@ describe('rum assembly', () => {
           })
 
           expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
-        })
-
-        describe('field resource.graphql on Resource events', () => {
-          it('by default, it should not be modifiable', () => {
-            const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-              partialConfiguration: {
-                beforeSend: (event) => (event.resource!.graphql = { operationType: 'query' }),
-              },
-            })
-
-            notifyRawRumEvent(lifeCycle, {
-              rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
-            })
-
-            expect((serverRumEvents[0] as RumResourceEvent).resource.graphql).toBeUndefined()
-          })
-
-          it('with the writable_resource_graphql experimental flag is set, it should be modifiable', () => {
-            mockExperimentalFeatures([ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL])
-
-            const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-              partialConfiguration: {
-                beforeSend: (event) => (event.resource!.graphql = { operationType: 'query' }),
-              },
-            })
-
-            notifyRawRumEvent(lifeCycle, {
-              rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
-            })
-
-            expect((serverRumEvents[0] as RumResourceEvent).resource.graphql).toEqual({ operationType: 'query' })
-          })
         })
       })
 
