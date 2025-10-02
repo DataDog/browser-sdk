@@ -779,10 +779,12 @@ describe('serializeNodeWithId', () => {
       })
     })
 
-    it('does not serialize text nodes with only white space if the ignoreWhiteSpace option is specified', () => {
-      expect(
-        serializeNodeWithId(document.createTextNode('   '), { ...getDefaultOptions(), ignoreWhiteSpace: true })
-      ).toEqual(null)
+    it('does not serialize text nodes with only white space if the parent is a HEAD element', () => {
+      const head = document.getElementsByTagName('head')[0]
+      const textNode = document.createTextNode('   ')
+      head.appendChild(textNode)
+      expect(serializeNodeWithId(textNode, getDefaultOptions())).toEqual(null)
+      head.removeChild(textNode)
     })
   })
 

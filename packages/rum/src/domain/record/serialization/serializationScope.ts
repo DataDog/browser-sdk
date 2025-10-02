@@ -17,10 +17,12 @@ export function createSerializationScope(): SerializationScope {
   const nodeIds = new WeakMap<Node, NodeId>()
   let nextNodeId = NodeIds.FIRST
 
+  const getSerializedNodeId = (node: Node): NodeId | undefined => nodeIds.get(node)
+
   return {
     assignSerializedNodeId: (node: Node): NodeId => {
       // Try to reuse any existing id.
-      let nodeId = nodeIds.get(node)
+      let nodeId = getSerializedNodeId(node)
       if (nodeId === undefined) {
         nodeId = nextNodeId++ as NodeId
         nodeIds.set(node, nodeId)
@@ -28,12 +30,12 @@ export function createSerializationScope(): SerializationScope {
       return nodeId
     },
 
-    getSerializedNodeId: (node: Node): NodeId | undefined => nodeIds.get(node),
+    getSerializedNodeId,
 
     nodeAndAncestorsHaveSerializedNode: (node: Node): node is NodeWithSerializedNode => {
       let current: Node | null = node
       while (current) {
-        if (!nodeIds.has(current) && !isNodeShadowRoot(current)) {
+        if (getSerializedNodeId(current) === undefined && !isNodeShadowRoot(current)) {
           return false
         }
         current = getParentNode(current)

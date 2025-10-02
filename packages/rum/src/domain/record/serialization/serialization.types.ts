@@ -40,7 +40,6 @@ export type SerializationContext =
 
 export interface SerializeOptions {
   serializedNodeIds?: Set<number>
-  ignoreWhiteSpace?: boolean
   parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
   configuration: RumConfiguration

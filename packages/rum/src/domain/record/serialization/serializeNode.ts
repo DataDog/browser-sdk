@@ -160,13 +160,12 @@ function serializeElementNode(element: Element, options: SerializeOptions): Elem
     // We should not create a new object systematically as it could impact performances. Try to reuse
     // the same object as much as possible, and clone it only if we need to.
     let childNodesSerializationOptions
-    if (options.parentNodePrivacyLevel === nodePrivacyLevel && options.ignoreWhiteSpace === (tagName === 'head')) {
+    if (options.parentNodePrivacyLevel === nodePrivacyLevel) {
       childNodesSerializationOptions = options
     } else {
       childNodesSerializationOptions = {
         ...options,
         parentNodePrivacyLevel: nodePrivacyLevel,
-        ignoreWhiteSpace: tagName === 'head',
       }
     }
     childNodes = serializeChildNodes(element, childNodesSerializationOptions)
@@ -192,7 +191,7 @@ function isSVGElement(el: Element): boolean {
  */
 
 function serializeTextNode(textNode: Text, options: SerializeOptions): TextNode | undefined {
-  const textContent = getTextContent(textNode, options.ignoreWhiteSpace || false, options.parentNodePrivacyLevel)
+  const textContent = getTextContent(textNode, options.parentNodePrivacyLevel)
   if (textContent === undefined) {
     return
   }

@@ -335,8 +335,7 @@ function processCharacterDataMutations(
 
     textMutations.push({
       id,
-      // TODO: pass a valid "ignoreWhiteSpace" argument
-      value: getTextContent(mutation.target, false, parentNodePrivacyLevel) ?? null,
+      value: getTextContent(mutation.target, parentNodePrivacyLevel) ?? null,
     })
   }
 
