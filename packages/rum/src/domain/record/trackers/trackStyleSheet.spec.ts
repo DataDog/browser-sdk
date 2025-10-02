@@ -8,6 +8,7 @@ import {
 } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
+import { createNodeIds } from '../nodeIds'
 import type { StyleSheetCallback } from './trackStyleSheet'
 import { trackStyleSheet, getPathToNestedCSSRule } from './trackStyleSheet'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
@@ -22,7 +23,7 @@ describe('trackStyleSheet', () => {
   const styleRule = '.selector-1 { color: #fff }'
 
   beforeEach(() => {
-    scope = createSerializationScope()
+    scope = createSerializationScope(createNodeIds())
     styleSheetCallbackSpy = jasmine.createSpy()
     styleElement = document.createElement('style')
     document.head.appendChild(styleElement)

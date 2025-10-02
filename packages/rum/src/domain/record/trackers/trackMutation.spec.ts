@@ -21,6 +21,7 @@ import {
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack } from '../shadowRootsController'
 import { appendElement, appendText } from '../../../../../rum-core/test'
+import { createNodeIds } from '../nodeIds'
 import { sortAddedAndMovedNodes, trackMutation } from './trackMutation'
 import type { MutationCallBack, MutationTracker } from './trackMutation'
 import { DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
@@ -36,7 +37,7 @@ describe('trackMutation', () => {
   beforeEach(() => {
     addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
     removeShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
-    scope = createSerializationScope()
+    scope = createSerializationScope(createNodeIds())
   })
 
   function startMutationCollection(defaultPrivacyLevel: DefaultPrivacyLevel = DefaultPrivacyLevel.ALLOW) {

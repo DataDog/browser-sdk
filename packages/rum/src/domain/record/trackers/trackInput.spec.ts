@@ -13,6 +13,7 @@ import {
 } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
+import { createNodeIds } from '../nodeIds'
 import type { InputCallback } from './trackInput'
 import { trackInput } from './trackInput'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
@@ -29,7 +30,7 @@ describe('trackInput', () => {
   beforeEach(() => {
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     inputCallbackSpy = jasmine.createSpy()
-    scope = createSerializationScope()
+    scope = createSerializationScope(createNodeIds())
 
     input = appendElement('<div><input target /></div>') as HTMLInputElement
 

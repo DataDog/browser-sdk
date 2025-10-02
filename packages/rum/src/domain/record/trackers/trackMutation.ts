@@ -25,12 +25,7 @@ import type {
   TextMutation,
   BrowserIncrementalSnapshotRecord,
 } from '../../../types'
-import type {
-  NodeWithSerializedNode,
-  SerializationContext,
-  SerializationScope,
-  SerializationStats,
-} from '../serialization'
+import type { SerializationContext, SerializationScope, SerializationStats } from '../serialization'
 import {
   getElementInputValue,
   serializeNodeWithId,
@@ -42,6 +37,7 @@ import {
 import { createMutationBatch } from '../mutationBatch'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { NodeWithSerializedNode } from '../nodeIds'
 import type { Tracker } from './tracker.types'
 
 export type MutationCallBack = (
@@ -124,7 +120,7 @@ function processMutations(
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       mutation.target.isConnected &&
-      scope.nodeAndAncestorsHaveSerializedNode(mutation.target) &&
+      scope.nodeIds.areAssignedForNodeAndAncestors(mutation.target) &&
       getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel, nodePrivacyLevelCache) !==
         NodePrivacyLevel.HIDDEN
   )
@@ -259,15 +255,15 @@ function processChildListMutations(
     const parentNode = getParentNode(node)!
     addedNodeMutations.push({
       nextId: getNextSibling(node),
-      parentId: scope.getSerializedNodeId(parentNode)!,
+      parentId: scope.nodeIds.get(parentNode)!,
       node: serializedNode,
     })
   }
   // Finally, we emit remove mutations.
   const removedNodeMutations: RemovedNodeMutation[] = []
   removedNodes.forEach((parent, node) => {
-    const parentId = scope.getSerializedNodeId(parent)
-    const id = scope.getSerializedNodeId(node)
+    const parentId = scope.nodeIds.get(parent)
+    const id = scope.nodeIds.get(node)
     if (parentId !== undefined && id !== undefined) {
       removedNodeMutations.push({ parentId, id })
     }
@@ -276,14 +272,14 @@ function processChildListMutations(
   return { adds: addedNodeMutations, removes: removedNodeMutations, hasBeenSerialized }
 
   function hasBeenSerialized(node: Node) {
-    const id = scope.getSerializedNodeId(node)
+    const id = scope.nodeIds.get(node)
     return id !== undefined && serializedNodeIds.has(id)
   }
 
   function getNextSibling(node: Node): null | number {
     let nextSibling = node.nextSibling
     while (nextSibling) {
-      const id = scope.getSerializedNodeId(nextSibling)
+      const id = scope.nodeIds.get(nextSibling)
       if (id !== undefined) {
         return id
       }
@@ -319,7 +315,7 @@ function processCharacterDataMutations(
       continue
     }
 
-    const id = scope.getSerializedNodeId(mutation.target)
+    const id = scope.nodeIds.get(mutation.target)
     if (id === undefined) {
       continue
     }
@@ -373,7 +369,7 @@ function processAttributesMutations(
       continue
     }
 
-    const id = scope.getSerializedNodeId(mutation.target)
+    const id = scope.nodeIds.get(mutation.target)
     if (id === undefined) {
       continue
     }
