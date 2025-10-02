@@ -8,6 +8,7 @@ import {
 } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
+import { createNodeIds } from '../nodeIds'
 import type { MousemoveCallBack } from './trackMove'
 import { trackMove } from './trackMove'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
@@ -21,7 +22,7 @@ describe('trackMove', () => {
   beforeEach(() => {
     configuration = {} as RumConfiguration
 
-    const scope = createSerializationScope()
+    const scope = createSerializationScope(createNodeIds())
     serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
       serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,

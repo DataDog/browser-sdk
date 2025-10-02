@@ -109,7 +109,7 @@ export function trackInput(
    * There can be multiple changes on the same node within the same batched mutation observation.
    */
   function cbWithDedup(target: Node, inputState: InputState, scope: SerializationScope) {
-    const id = scope.getSerializedNodeId(target)
+    const id = scope.nodeIds.get(target)
     if (id === undefined) {
       return
     }

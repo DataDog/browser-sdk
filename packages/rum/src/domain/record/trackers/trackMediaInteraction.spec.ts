@@ -10,6 +10,7 @@ import {
 } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, MediaInteractionType, RecordType } from '../../../types'
+import { createNodeIds } from '../nodeIds'
 import type { InputCallback } from './trackInput'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import { trackMediaInteraction } from './trackMediaInteraction'
@@ -27,7 +28,7 @@ describe('trackMediaInteraction', () => {
 
     audio = appendElement('<audio controls autoplay target></audio>') as HTMLAudioElement
 
-    const scope = createSerializationScope()
+    const scope = createSerializationScope(createNodeIds())
     serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
       serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,

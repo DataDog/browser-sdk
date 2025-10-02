@@ -25,7 +25,7 @@ export function trackScroll(
     if (!target) {
       return
     }
-    const id = scope.getSerializedNodeId(target)
+    const id = scope.nodeIds.get(target)
     if (
       id === undefined ||
       getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN

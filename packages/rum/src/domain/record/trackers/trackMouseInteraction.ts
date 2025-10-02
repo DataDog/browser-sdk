@@ -41,7 +41,7 @@ export function trackMouseInteraction(
 ): Tracker {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
-    const id = scope.getSerializedNodeId(target)
+    const id = scope.nodeIds.get(target)
     if (
       id === undefined ||
       getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN

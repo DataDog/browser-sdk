@@ -24,6 +24,7 @@ import { startFullSnapshots } from './startFullSnapshots'
 import { initRecordIds } from './recordIds'
 import type { SerializationStats } from './serialization'
 import { createSerializationScope } from './serialization'
+import { createNodeIds } from './nodeIds'
 
 export interface RecordOptions {
   emit?: (record: BrowserRecord, stats?: SerializationStats) => void
@@ -53,7 +54,7 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const elementsScrollPositions = createElementsScrollPositions()
-  const scope = createSerializationScope()
+  const scope = createSerializationScope(createNodeIds())
   const shadowRootsController = initShadowRootsController(
     configuration,
     scope,

@@ -17,6 +17,7 @@ import { appendElement } from '../../../../../rum-core/test'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
+import { createNodeIds } from '../nodeIds'
 import {
   HTML,
   generateLeanSerializedDoc,
@@ -65,7 +66,7 @@ describe('serializeNodeWithId', () => {
 
   beforeEach(() => {
     addShadowRootSpy = jasmine.createSpy<ShadowRootCallBack>()
-    scope = createSerializationScope()
+    scope = createSerializationScope(createNodeIds())
   })
 
   describe('document serialization', () => {
@@ -815,7 +816,7 @@ describe('serializeNodeWithId', () => {
     it('does not serialize ignored nodes', () => {
       const scriptElement = document.createElement('script')
       serializeNodeWithId(scriptElement, getDefaultOptions())
-      expect(scope.getSerializedNodeId(scriptElement)).toBe(undefined)
+      expect(scope.nodeIds.get(scriptElement)).toBe(undefined)
     })
 
     it('ignores script tags', () => {
@@ -1000,7 +1001,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   })
 
   beforeEach(() => {
-    scope = createSerializationScope()
+    scope = createSerializationScope(createNodeIds())
     registerCleanupTask(() => {
       if (isAdoptedStyleSheetsSupported()) {
         document.adoptedStyleSheets = []

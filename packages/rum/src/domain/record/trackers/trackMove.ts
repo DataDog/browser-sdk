@@ -20,7 +20,7 @@ export function trackMove(
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle(
     (event: MouseEvent | TouchEvent) => {
       const target = getEventTarget(event)
-      const id = scope.getSerializedNodeId(target)
+      const id = scope.nodeIds.get(target)
       if (id === undefined) {
         return
       }

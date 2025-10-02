@@ -31,7 +31,7 @@ export function serializeNodeWithId(node: Node, options: SerializeOptions): Seri
     return null
   }
 
-  const id = options.scope.assignSerializedNodeId(node)
+  const id = options.scope.nodeIds.assign(node)
   const serializedNodeWithId = serializedNode as SerializedNodeWithId
   serializedNodeWithId.id = id
   if (options.serializedNodeIds) {

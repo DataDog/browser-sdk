@@ -8,6 +8,7 @@ import {
   createElementsScrollPositions,
   createSerializationStats,
 } from '..'
+import { createNodeIds } from '../nodeIds'
 import { createSerializationScope } from './serializationScope'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
@@ -51,7 +52,7 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
         elementsScrollPositions: createElementsScrollPositions(),
       },
       configuration: {} as RumConfiguration,
-      scope: createSerializationScope(),
+      scope: createSerializationScope(createNodeIds()),
     })! as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc

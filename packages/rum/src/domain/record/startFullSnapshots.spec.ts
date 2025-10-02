@@ -8,6 +8,7 @@ import { startFullSnapshots } from './startFullSnapshots'
 import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { createSerializationScope, type SerializationStats } from './serialization'
+import { createNodeIds } from './nodeIds'
 
 describe('startFullSnapshots', () => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
@@ -23,7 +24,7 @@ describe('startFullSnapshots', () => {
       {} as ShadowRootsController,
       lifeCycle,
       {} as RumConfiguration,
-      createSerializationScope(),
+      createSerializationScope(createNodeIds()),
       noop,
       emitCallback
     )

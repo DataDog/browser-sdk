@@ -14,7 +14,7 @@ export function trackStyleSheet(scope: SerializationScope, styleSheetCb: StyleSh
     if (!styleSheet || !styleSheet.ownerNode) {
       return
     }
-    const id = scope.getSerializedNodeId(styleSheet.ownerNode)
+    const id = scope.nodeIds.get(styleSheet.ownerNode)
     if (id === undefined) {
       return
     }
