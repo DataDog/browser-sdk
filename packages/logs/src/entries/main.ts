@@ -53,6 +53,8 @@ export type {
 /**
  * The global Logs instance. Use this to call Logs methods.
  *
+ * @category Main
+ * @see {@link DatadogLogs}
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
 export const datadogLogs = makeLogsPublicApi(startLogs)

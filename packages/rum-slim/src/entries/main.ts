@@ -62,6 +62,13 @@ export type {
 } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
+/**
+ * The global RUM instance. Use this to call RUM methods.
+ *
+ * @category Main
+ * @see {@link DatadogRum}
+ * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
+ */
 export const datadogRum = makeRumPublicApi(startRum, makeRecorderApiStub(), makeProfilerApiStub(), {
   sdkName: 'rum-slim',
 })

@@ -79,6 +79,8 @@ const profilerApi = makeProfilerApi()
 /**
  * The global RUM instance. Use this to call RUM methods.
  *
+ * @category Main
+ * @see {@link DatadogRum}
  * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
 export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
