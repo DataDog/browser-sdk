@@ -2,8 +2,8 @@ import { STACK_WITH_INIT_IN_EXTENSION, STACK_WITH_INIT_IN_PAGE } from '../../tes
 import { display } from '../tools/display'
 import {
   isAllowedTrackingOrigins,
-  WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
   ERROR_NOT_ALLOWED_TRACKING_ORIGIN,
+  ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
 } from './allowedTrackingOrigins'
 
 const DEFAULT_CONFIG = {
@@ -13,17 +13,14 @@ const DEFAULT_CONFIG = {
 }
 
 describe('checkForAllowedTrackingOrigins', () => {
-  let displayWarnSpy: jasmine.Spy
   let displayErrorSpy: jasmine.Spy
 
   beforeEach(() => {
-    displayWarnSpy = spyOn(display, 'warn')
     displayErrorSpy = spyOn(display, 'error')
   })
 
   it('should not warn if not in extension environment', () => {
     const result = isAllowedTrackingOrigins(DEFAULT_CONFIG, STACK_WITH_INIT_IN_PAGE, 'https://app.example.com')
-    expect(displayWarnSpy).not.toHaveBeenCalled()
     expect(displayErrorSpy).not.toHaveBeenCalled()
     expect(result).toBe(true)
   })
@@ -38,7 +35,6 @@ describe('checkForAllowedTrackingOrigins', () => {
         STACK_WITH_INIT_IN_PAGE,
         'https://app.example.com'
       )
-      expect(displayWarnSpy).not.toHaveBeenCalled()
       expect(displayErrorSpy).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })
@@ -52,7 +48,6 @@ describe('checkForAllowedTrackingOrigins', () => {
         STACK_WITH_INIT_IN_PAGE,
         'https://app.example.com'
       )
-      expect(displayWarnSpy).not.toHaveBeenCalled()
       expect(displayErrorSpy).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })
@@ -66,7 +61,6 @@ describe('checkForAllowedTrackingOrigins', () => {
         STACK_WITH_INIT_IN_PAGE,
         'https://app.example.com'
       )
-      expect(displayWarnSpy).not.toHaveBeenCalled()
       expect(displayErrorSpy).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })
@@ -84,7 +78,6 @@ describe('checkForAllowedTrackingOrigins', () => {
         STACK_WITH_INIT_IN_PAGE,
         'https://app.example.com'
       )
-      expect(displayWarnSpy).not.toHaveBeenCalled()
       expect(displayErrorSpy).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })
@@ -175,7 +168,7 @@ describe('checkForAllowedTrackingOrigins', () => {
   })
 
   describe('when configuration does not have allowedTrackingOrigins', () => {
-    it('should warn when in extension environment and allowedTrackingOrigins is undefined', () => {
+    it('should log an error when in extension environment and allowedTrackingOrigins is undefined', () => {
       const result = isAllowedTrackingOrigins(
         {
           ...DEFAULT_CONFIG,
@@ -184,8 +177,8 @@ describe('checkForAllowedTrackingOrigins', () => {
         STACK_WITH_INIT_IN_EXTENSION,
         'https://example.com'
       )
-      expect(displayWarnSpy).toHaveBeenCalledWith(WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
-      expect(result).toBe(true)
+      expect(displayErrorSpy).toHaveBeenCalledWith(ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN)
+      expect(result).toBe(false)
     })
 
     it('should error when in extension environment and allowedTrackingOrigins is an empty array', () => {
@@ -210,7 +203,6 @@ describe('checkForAllowedTrackingOrigins', () => {
         STACK_WITH_INIT_IN_PAGE,
         'https://example.com'
       )
-      expect(displayWarnSpy).not.toHaveBeenCalled()
       expect(displayErrorSpy).not.toHaveBeenCalled()
       expect(result).toBe(true)
     })

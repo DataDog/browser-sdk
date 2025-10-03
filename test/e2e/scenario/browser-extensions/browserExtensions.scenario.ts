@@ -3,8 +3,8 @@ import { test, expect } from '@playwright/test'
 import type { BrowserLog } from '../../lib/framework'
 import { createTest, createExtension, createCrossOriginScriptUrls, formatConfiguration } from '../../lib/framework'
 
-const WARNING_MESSAGE =
-  'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is discouraged and will be forbidden in a future major release unless the `allowedTrackingOrigins` option is provided.'
+const ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN =
+  'Datadog Browser SDK: Running the Browser SDK in a Web extension content script is forbidden unless the `allowedTrackingOrigins` option is provided.'
 const ERROR_MESSAGE = 'Datadog Browser SDK: SDK initialized on a non-allowed domain.'
 
 const BASE_PATH = path.join(process.cwd(), 'test/apps')
@@ -18,22 +18,22 @@ const isNotSdkLoadedMoreThanOnce = (log: BrowserLog) => !log.message.includes('S
 test.describe('browser extensions', () => {
   for (const name of EXTENSIONS) {
     test.describe(`with ${name} extension`, () => {
-      createTest('should warn and start tracking when SDK is initialized in an unsupported environment')
+      createTest('should not start tracking and log an error when SDK is initialized in an unsupported environment')
         .withExtension(createExtension(path.join(BASE_PATH, name)).withRum().withLogs())
         .run(async ({ withBrowserLogs, flushEvents, intakeRegistry }) => {
           await flushEvents()
 
-          expect(intakeRegistry.rumViewEvents).toHaveLength(1)
+          expect(intakeRegistry.rumViewEvents).toHaveLength(0)
 
           withBrowserLogs((logs) => {
             const filteredLogs = logs.filter(isNotSdkLoadedMoreThanOnce)
 
-            // Two warnings, one for RUM and one for LOGS SDK
+            // Two errors, one for RUM and one for LOGS SDK
             expect(filteredLogs).toHaveLength(2)
             filteredLogs.forEach((log) => {
               expect(log).toMatchObject({
-                level: 'warning',
-                message: WARNING_MESSAGE,
+                level: 'error',
+                message: ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
               })
             })
           })
@@ -53,8 +53,8 @@ test.describe('browser extensions', () => {
           withBrowserLogs((logs) =>
             expect(logs).not.toContainEqual(
               expect.objectContaining({
-                level: 'warning',
-                message: WARNING_MESSAGE,
+                level: 'error',
+                message: ERROR_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN,
               })
             )
           )

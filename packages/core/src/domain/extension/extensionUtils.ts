@@ -26,13 +26,3 @@ export function isUnsupportedExtensionEnvironment(windowLocation: string, stack:
 
   return containsExtensionUrl(target)
 }
-
-export function extractExtensionUrlFromStack(stack: string = ''): string | undefined {
-  for (const prefix of EXTENSION_PREFIXES) {
-    const match = stack.match(new RegExp(`${prefix}[^/]+`))
-
-    if (match) {
-      return match[0]
-    }
-  }
-}
