@@ -156,7 +156,7 @@ export function startSessionStore<TrackingType extends string>(
     }
     if (hasSessionInCache()) {
       if (isSessionInCacheOutdated(sessionState)) {
-        expireSessionInCache(sessionState)
+        expireSessionInCache()
       } else {
         sessionStateUpdateObservable.notify({ previousState: sessionCache, newState: sessionState })
         sessionCache = sessionState
@@ -170,9 +170,7 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
-            if (!sessionState.anonymousId) {
-              sessionState.anonymousId = generateUUID()
-            }
+            sessionState.anonymousId = generateUUID()
             return getExpiredSessionState(sessionState, configuration)
           }
         },
@@ -206,8 +204,8 @@ export function startSessionStore<TrackingType extends string>(
     return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
   }
 
-  function expireSessionInCache(sessionState: SessionState) {
-    sessionCache = getExpiredSessionState(sessionState, configuration)
+  function expireSessionInCache() {
+    sessionCache = getExpiredSessionState(sessionCache, configuration)
     expireObservable.notify()
   }
 
@@ -236,9 +234,11 @@ export function startSessionStore<TrackingType extends string>(
     restartSession: startSession,
     expire: (hasConsent?: boolean) => {
       cancelExpandOrRenewSession()
-      const expiredSessionState = getExpiredSessionState(sessionCache, configuration, hasConsent)
-      sessionStoreStrategy.expireSession(expiredSessionState)
-      synchronizeSession(expiredSessionState)
+      if (hasConsent === false && sessionCache) {
+        delete sessionCache.anonymousId
+      }
+      sessionStoreStrategy.expireSession(sessionCache)
+      synchronizeSession(getExpiredSessionState(sessionCache, configuration))
     },
     stop: () => {
       clearInterval(watchSessionTimeoutId)
