@@ -23,13 +23,8 @@ export function getExpiredSessionState(
   const expiredSessionState: SessionState = {
     isExpired: EXPIRED,
   }
-  if (!hasConsent) {
-    return expiredSessionState
-  }
-  if (configuration.trackAnonymousUser) {
-    if (previousSessionState?.anonymousId) {
-      expiredSessionState.anonymousId = previousSessionState?.anonymousId
-    }
+  if (hasConsent && configuration.trackAnonymousUser && previousSessionState?.anonymousId) {
+    expiredSessionState.anonymousId = previousSessionState?.anonymousId
   }
   return expiredSessionState
 }
