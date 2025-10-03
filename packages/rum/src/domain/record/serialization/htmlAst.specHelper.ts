@@ -43,8 +43,7 @@ const DEFAULT_SHADOW_ROOT_CONTROLLER = {
 export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
-    serializeNodeWithId(newDoc, {
-      parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
+    serializeNodeWithId(newDoc, NodePrivacyLevel.ALLOW, {
       serializationContext: {
         serializationStats: createSerializationStats(),
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,

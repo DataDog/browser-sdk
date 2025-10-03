@@ -240,9 +240,8 @@ function processChildListMutations(
     }
 
     const serializationStart = timeStampNow()
-    const serializedNode = serializeNodeWithId(node, {
+    const serializedNode = serializeNodeWithId(node, parentNodePrivacyLevel, {
       serializedNodeIds,
-      parentNodePrivacyLevel,
       serializationContext,
       configuration,
       scope,
