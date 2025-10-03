@@ -16,55 +16,10 @@ const onRumStartSubscribers: StartSubscriber[] = []
  */
 export interface ReactPluginConfiguration {
   /**
-   * Enable react-router integration
-   *
-   * @example React Router v6
-   * ```ts
-   * import { RouterProvider } from 'react-router-dom'
-   * import { datadogRum } from '@datadog/browser-rum'
-   * import { reactPlugin } from '@datadog/browser-rum-react'
-   * // ⚠️ Use "createBrowserRouter" from `@datadog/browser-rum-react/react-router-v6` instead of `react-router-dom`
-   * import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v6'
-   * datadogRum.init({
-   *   applicationId: '<DATADOG_APPLICATION_ID>',
-   *   clientToken: '<DATADOG_CLIENT_TOKEN>',
-   *   plugins: [reactPlugin({ router: true })],
-   *   // ...
-   * })
-   * const router = createBrowserRouter([
-   *   {
-   *     path: '/',
-   *     element: <Root />,
-   *     // ...
-   *   },
-   * ])
-   * ReactDOM.createRoot(document.getElementById('root')).render(<RouterProvider router={router} />)
-   * ```
-   * @example React Router v7
-   * ```ts
-   * import { RouterProvider } from 'react-router'
-   * import { datadogRum } from '@datadog/browser-rum'
-   * import { reactPlugin } from '@datadog/browser-rum-react'
-   *
-   * // ⚠️ Use "createBrowserRouter" from `@datadog/browser-rum-react/react-router-v7` instead of `react-router`
-   * import { createBrowserRouter } from '@datadog/browser-rum-react/react-router-v7'
-   *
-   * datadogRum.init({
-   *   applicationId: '<DATADOG_APPLICATION_ID>',
-   *   clientToken: '<DATADOG_CLIENT_TOKEN>',
-   *   plugins: [reactPlugin({ router: true })],
-   *   // ...
-   * })
-   *
-   * const router = createBrowserRouter([
-   *   {
-   *     path: '/',
-   *     element: <Root />,
-   *     // ...
-   *   },
-   * ])
-   *
-   * ReactDOM.createRoot(document.getElementById('root')).render(<RouterProvider router={router} />)
+   * Enable react-router integration. Make sure to use functions from
+   * {@link @datadog/browser-rum-react/react-router-v6! | @datadog/browser-rum-react/react-router-v6} or
+   * {@link @datadog/browser-rum-react/react-router-v7! | @datadog/browser-rum-react/react-router-v7}
+   * to create the router.
    * ```
    */
   router?: boolean

@@ -1,5 +1,5 @@
 {
-  "entryPoints": ["packages/*"],
+  "entryPoints": ["packages/*", "packages/rum-react/react-router-v6", "packages/rum-react/react-router-v7"],
   "entryPointStrategy": "packages",
   "includeVersion": true,
   "exclude": ["packages/core", "packages/rum-core", "packages/flagging", "packages/worker"],
