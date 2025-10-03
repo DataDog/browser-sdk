@@ -7,7 +7,7 @@ import type { SerializationStats } from './serializationStats'
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
 // ensures that no children are serialized when they shouldn't.
-type ParentNodePrivacyLevel =
+export type ParentPrivacyLevel =
   | typeof NodePrivacyLevel.ALLOW
   | typeof NodePrivacyLevel.MASK
   | typeof NodePrivacyLevel.MASK_USER_INPUT
@@ -40,7 +40,6 @@ export type SerializationContext =
 
 export interface SerializeOptions {
   serializedNodeIds?: Set<number>
-  parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
   configuration: RumConfiguration
   scope: SerializationScope

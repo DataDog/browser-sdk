@@ -13,9 +13,8 @@ export function serializeDocument(
   serializationContext: SerializationContext
 ): SerializedNodeWithId {
   const serializationStart = timeStampNow()
-  const serializedNode = serializeNodeWithId(document, {
+  const serializedNode = serializeNodeWithId(document, configuration.defaultPrivacyLevel, {
     serializationContext,
-    parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
     configuration,
     scope,
   })
