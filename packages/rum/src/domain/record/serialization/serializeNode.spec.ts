@@ -58,7 +58,6 @@ describe('serializeNodeWithId', () => {
   let scope: SerializationScope
 
   const getDefaultOptions = (): SerializeOptions => ({
-    parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
     serializationContext: getDefaultSerializationContext(),
     configuration: DEFAULT_CONFIGURATION,
     scope,
@@ -89,7 +88,9 @@ describe('serializeNodeWithId', () => {
       node: Element,
       options: SerializeOptions | undefined = undefined
     ): (ElementNode & { id: number }) | null {
-      return serializeNodeWithId(node, options ?? getDefaultOptions()) as (ElementNode & { id: number }) | null
+      return serializeNodeWithId(node, NodePrivacyLevel.ALLOW, options ?? getDefaultOptions()) as
+        | (ElementNode & { id: number })
+        | null
     }
 
     it('serializes a div', () => {
@@ -670,7 +671,7 @@ describe('serializeNodeWithId', () => {
         )
 
         const options = getDefaultOptions()
-        expect(serializeNodeWithId(linkNode, options)).toEqual({
+        expect(serializeNodeWithId(linkNode, NodePrivacyLevel.ALLOW, options)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
@@ -700,7 +701,7 @@ describe('serializeNodeWithId', () => {
         })
 
         const options = getDefaultOptions()
-        expect(serializeNodeWithId(linkNode, options)).toEqual({
+        expect(serializeNodeWithId(linkNode, NodePrivacyLevel.ALLOW, options)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
@@ -737,7 +738,7 @@ describe('serializeNodeWithId', () => {
         })
 
         const options = getDefaultOptions()
-        expect(serializeNodeWithId(linkNode, options)).toEqual({
+        expect(serializeNodeWithId(linkNode, NodePrivacyLevel.ALLOW, options)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
@@ -762,7 +763,7 @@ describe('serializeNodeWithId', () => {
       parentEl.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_ALLOW)
       const textNode = document.createTextNode('foo')
       parentEl.appendChild(textNode)
-      expect(serializeNodeWithId(textNode, getDefaultOptions())).toEqual({
+      expect(serializeNodeWithId(textNode, NodePrivacyLevel.ALLOW, getDefaultOptions())).toEqual({
         type: NodeType.Text,
         id: jasmine.any(Number) as unknown as number,
         textContent: 'foo',
@@ -773,7 +774,7 @@ describe('serializeNodeWithId', () => {
       const parentEl = document.createElement('bar')
       const textNode = document.createTextNode('')
       parentEl.appendChild(textNode)
-      expect(serializeNodeWithId(textNode, getDefaultOptions())).toEqual({
+      expect(serializeNodeWithId(textNode, NodePrivacyLevel.ALLOW, getDefaultOptions())).toEqual({
         type: NodeType.Text,
         id: jasmine.any(Number) as unknown as number,
         textContent: '',
@@ -784,7 +785,7 @@ describe('serializeNodeWithId', () => {
       const head = document.getElementsByTagName('head')[0]
       const textNode = document.createTextNode('   ')
       head.appendChild(textNode)
-      expect(serializeNodeWithId(textNode, getDefaultOptions())).toEqual(null)
+      expect(serializeNodeWithId(textNode, NodePrivacyLevel.ALLOW, getDefaultOptions())).toEqual(null)
       head.removeChild(textNode)
     })
   })
@@ -792,7 +793,9 @@ describe('serializeNodeWithId', () => {
   describe('CDATA nodes serialization', () => {
     it('serializes a CDATA node', () => {
       const xmlDocument = new DOMParser().parseFromString('<root></root>', 'text/xml')
-      expect(serializeNodeWithId(xmlDocument.createCDATASection('foo'), getDefaultOptions())).toEqual({
+      expect(
+        serializeNodeWithId(xmlDocument.createCDATASection('foo'), NodePrivacyLevel.ALLOW, getDefaultOptions())
+      ).toEqual({
         type: NodeType.CDATA,
         id: jasmine.any(Number) as unknown as number,
         textContent: '',
@@ -802,47 +805,55 @@ describe('serializeNodeWithId', () => {
 
   it('adds serialized node ids to the provided Set', () => {
     const serializedNodeIds = new Set<number>()
-    const node = serializeNodeWithId(document.createElement('div'), { ...getDefaultOptions(), serializedNodeIds })!
+    const node = serializeNodeWithId(document.createElement('div'), NodePrivacyLevel.ALLOW, {
+      ...getDefaultOptions(),
+      serializedNodeIds,
+    })!
     expect(serializedNodeIds).toEqual(new Set([node.id]))
   })
 
   describe('ignores some nodes', () => {
     it('does not save ignored nodes in the serializedNodeIds set', () => {
       const serializedNodeIds = new Set<number>()
-      serializeNodeWithId(document.createElement('script'), { ...getDefaultOptions(), serializedNodeIds })
+      serializeNodeWithId(document.createElement('script'), NodePrivacyLevel.ALLOW, {
+        ...getDefaultOptions(),
+        serializedNodeIds,
+      })
       expect(serializedNodeIds.size).toBe(0)
     })
 
     it('does not serialize ignored nodes', () => {
       const scriptElement = document.createElement('script')
-      serializeNodeWithId(scriptElement, getDefaultOptions())
+      serializeNodeWithId(scriptElement, NodePrivacyLevel.ALLOW, getDefaultOptions())
       expect(scope.nodeIds.get(scriptElement)).toBe(undefined)
     })
 
     it('ignores script tags', () => {
-      expect(serializeNodeWithId(document.createElement('script'), getDefaultOptions())).toEqual(null)
+      const scriptElement = document.createElement('script')
+      expect(serializeNodeWithId(scriptElement, NodePrivacyLevel.ALLOW, getDefaultOptions())).toEqual(null)
     })
 
     it('ignores comments', () => {
-      expect(serializeNodeWithId(document.createComment('foo'), getDefaultOptions())).toEqual(null)
+      const commentNode = document.createComment('foo')
+      expect(serializeNodeWithId(commentNode, NodePrivacyLevel.ALLOW, getDefaultOptions())).toEqual(null)
     })
 
     it('ignores link favicons', () => {
       const linkElement = document.createElement('link')
       linkElement.setAttribute('rel', 'shortcut icon')
-      expect(serializeNodeWithId(linkElement, getDefaultOptions())).toEqual(null)
+      expect(serializeNodeWithId(linkElement, NodePrivacyLevel.ALLOW, getDefaultOptions())).toEqual(null)
     })
 
     it('ignores meta keywords', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'keywords')
-      expect(serializeNodeWithId(metaElement, getDefaultOptions())).toEqual(null)
+      expect(serializeNodeWithId(metaElement, NodePrivacyLevel.ALLOW, getDefaultOptions())).toEqual(null)
     })
 
     it('ignores meta name attribute casing', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'KeYwOrDs')
-      expect(serializeNodeWithId(metaElement, getDefaultOptions())).toEqual(null)
+      expect(serializeNodeWithId(metaElement, NodePrivacyLevel.ALLOW, getDefaultOptions())).toEqual(null)
     })
   })
 
@@ -994,7 +1005,6 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   let scope: SerializationScope
 
   const getDefaultOptions = (): SerializeOptions => ({
-    parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
     serializationContext: getDefaultSerializationContext(),
     configuration: DEFAULT_CONFIGURATION,
     scope,
@@ -1036,13 +1046,9 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   })
 
   it('a masked DOM Document itself is still serialized ', () => {
-    const serializeOptionsMask: SerializeOptions = {
-      ...getDefaultOptions(),
-      parentNodePrivacyLevel: NodePrivacyLevel.MASK,
-    }
-    expect(serializeDocumentNode(document, serializeOptionsMask)).toEqual({
+    expect(serializeDocumentNode(document, NodePrivacyLevel.MASK, getDefaultOptions())).toEqual({
       type: NodeType.Document,
-      childNodes: serializeChildNodes(document, serializeOptionsMask),
+      childNodes: serializeChildNodes(document, NodePrivacyLevel.MASK, getDefaultOptions()),
       adoptedStyleSheets: undefined,
     })
   })
