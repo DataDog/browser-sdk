@@ -12,6 +12,26 @@ import {
 import { RumEventType } from '@datadog/browser-rum-core'
 import { onRumStart } from '../reactPlugin'
 
+/**
+ * Add a React error to the RUM session.
+ *
+ * @category Error
+ * @example
+ * ```ts
+ * import { createRoot } from 'react-dom/client'
+ * import { datadogRum } from '@datadog/browser-rum'
+ * import { addReactError } from '@datadog/browser-rum-react'
+ *
+ * const container = document.getElementById('root')
+ * const root = createRoot(container, {
+ *   onUncaughtError: (error, errorInfo) => {
+ *     // Report uncaught errors to Datadog
+ *     addReactError(error, errorInfo)
+ *   }
+ * })
+ * // ...
+ * ```
+ */
 export function addReactError(error: Error, info: ErrorInfo) {
   const handlingStack = createHandlingStack('react error')
   const startClocks = clocksNow()

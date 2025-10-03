@@ -1,4 +1,5 @@
 {
   "$schema": "https://typedoc.org/schema.json",
-  "entryPoints": ["src/entries/main.ts", "src/entries/reactRouter.ts"]
+  "entryPoints": ["src/entries/main.ts", "src/entries/reactRouter.ts"],
+  "categoryOrder": ["Main", "Error", "*", "Other"]
 }

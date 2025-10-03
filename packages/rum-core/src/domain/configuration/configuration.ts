@@ -23,8 +23,19 @@ export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'data
 /**
  * Init Configuration for the RUM browser SDK.
  *
- * @category Configuration
- * @example
+ * @category Main
+ * @example NPM
+ * ```ts
+ * import { datadogRum } from '@datadog/browser-rum'
+ *
+ * datadogRum.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   // ...
+ * })
+ * ```
+ * @example CDN
  * ```ts
  * DD_RUM.init({
  *   applicationId: '<DATADOG_APPLICATION_ID>',

@@ -16,7 +16,7 @@ export type { InternalContext } from '../domain/contexts/internalContext'
 export type { LogsMessage } from '../domain/logger'
 export { Logger, HandlerType } from '../domain/logger'
 export { StatusType } from '../domain/logger/isAuthorized'
-export type { LoggerConfiguration, LogsPublicApi as LogsGlobal } from '../boot/logsPublicApi'
+export type { LoggerConfiguration, LogsPublicApi as DatadogLogs } from '../boot/logsPublicApi'
 export type { LogsInitConfiguration } from '../domain/configuration'
 export type { LogsEvent } from '../logsEvent.types'
 export type {
@@ -25,6 +25,11 @@ export type {
   ConsoleLogsEventDomainContext,
   LoggerLogsEventDomainContext,
 } from '../domainContext.types'
+
+/**
+ * @deprecated Use {@link DatadogLogs} instead
+ */
+export type LogsGlobal = LogsPublicApi
 
 export type {
   InitConfiguration,

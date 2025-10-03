@@ -18,7 +18,32 @@
     "includeCategories": true
   },
   "packageOptions": {
-    "excludeInternal": true
+    "excludeInternal": true,
+    "kindSortOrder": [
+      "Reference",
+      "Project",
+      "Module",
+      "Namespace",
+      "Enum",
+      "EnumMember",
+      "Class",
+      "Function",
+      "Constructor",
+      "Property",
+      "Variable",
+      "Accessor",
+      "Method",
+      "Parameter",
+      "Interface",
+      "TypeAlias",
+      "TypeParameter",
+      "TypeLiteral",
+      "CallSignature",
+      "ConstructorSignature",
+      "IndexSignature",
+      "GetSignature",
+      "SetSignature"
+    ]
   },
   "externalSymbolLinkMappings": {
     "@types/react": { "*": "#" }

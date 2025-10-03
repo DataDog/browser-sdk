@@ -5,10 +5,10 @@ import { RumEventType } from '@datadog/browser-rum-core'
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import type { Fallback } from './errorBoundary'
+import type { ErrorBoundaryFallback } from './errorBoundary'
 import { ErrorBoundary } from './errorBoundary'
 
-type FallbackFunctionComponent = Extract<Fallback, (...args: any[]) => any>
+type FallbackFunctionComponent = Extract<ErrorBoundaryFallback, (...args: any[]) => any>
 
 describe('ErrorBoundary', () => {
   beforeEach(() => {

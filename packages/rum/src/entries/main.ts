@@ -31,8 +31,13 @@ export type {
 } from '@datadog/browser-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'
 
+/**
+ * @deprecated Use {@link DatadogRum} instead
+ */
+export type RumGlobal = RumPublicApi
+
 export type {
-  RumPublicApi as RumGlobal,
+  RumPublicApi as DatadogRum,
   RumInitConfiguration,
   ViewOptions,
   StartRecordingOptions,
