@@ -7,7 +7,7 @@ import type { SerializationStats } from './serializationStats'
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
 // ensures that no children are serialized when they shouldn't.
-export type ParentPrivacyLevel =
+export type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.ALLOW
   | typeof NodePrivacyLevel.MASK
   | typeof NodePrivacyLevel.MASK_USER_INPUT

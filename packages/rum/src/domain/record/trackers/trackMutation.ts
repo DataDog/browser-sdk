@@ -230,17 +230,17 @@ function processChildListMutations(
       continue
     }
 
-    const parentPrivacyLevel = getNodePrivacyLevel(
+    const parentNodePrivacyLevel = getNodePrivacyLevel(
       node.parentNode!,
       configuration.defaultPrivacyLevel,
       nodePrivacyLevelCache
     )
-    if (parentPrivacyLevel === NodePrivacyLevel.HIDDEN || parentPrivacyLevel === NodePrivacyLevel.IGNORE) {
+    if (parentNodePrivacyLevel === NodePrivacyLevel.HIDDEN || parentNodePrivacyLevel === NodePrivacyLevel.IGNORE) {
       continue
     }
 
     const serializationStart = timeStampNow()
-    const serializedNode = serializeNodeWithId(node, parentPrivacyLevel, {
+    const serializedNode = serializeNodeWithId(node, parentNodePrivacyLevel, {
       serializedNodeIds,
       serializationContext,
       configuration,
