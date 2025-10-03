@@ -1,10 +1,16 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { serializeDocument, SerializationContextStatus, createSerializationStats } from '../serialization'
+import {
+  serializeDocument,
+  SerializationContextStatus,
+  createSerializationStats,
+  createSerializationScope,
+} from '../serialization'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { RecordType } from '../../../types'
+import { createNodeIds } from '../nodeIds'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { VisualViewportResizeCallback } from './trackViewportResize'
 import { trackVisualViewportResize } from './trackViewportResize'
@@ -25,7 +31,8 @@ describe('trackViewportResize', () => {
     elementsScrollPositions = createElementsScrollPositions()
     visualViewportResizeCallback = jasmine.createSpy()
 
-    serializeDocument(document, DEFAULT_CONFIGURATION, {
+    const scope = createSerializationScope(createNodeIds())
+    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
       serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
