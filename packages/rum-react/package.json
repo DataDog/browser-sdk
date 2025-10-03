@@ -18,7 +18,7 @@
   },
   "peerDependencies": {
     "react": "18 || 19",
-    "react-router": "7",
+    "react-router": "6 || 7",
     "react-router-dom": "6 || 7"
   },
   "peerDependenciesMeta": {
