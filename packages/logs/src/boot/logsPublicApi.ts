@@ -33,7 +33,7 @@ export interface LoggerConfiguration {
  *
  * See [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript) for further information.
  *
- * @category API
+ * @category Main
  */
 export interface LogsPublicApi extends PublicApi {
   /**

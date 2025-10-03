@@ -5,7 +5,7 @@ export function createRoutesComponent<Location extends AnyLocation>(
   useRoutes: AnyUseRoute<Location>,
   createRoutesFromChildren: (children: React.ReactNode, parentPath?: number[]) => AnyRouteObject[]
 ) {
-  return function Routes({ children, location }: { children: React.ReactNode; location?: Location }) {
+  return function Routes({ children, location }: { children?: React.ReactNode; location?: Location }) {
     return useRoutes(createRoutesFromChildren(children), location)
   }
 }
