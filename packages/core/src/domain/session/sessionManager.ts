@@ -210,7 +210,19 @@ function detectSessionIdChange(configuration: Configuration, initialSessionState
       const newSessionState = toSessionState(changed.value)
       if (newSessionState.id && newSessionState.id !== initialSessionState.id) {
         stop()
-        getSessionCookies().catch(monitorError)
+        const time = dateNow() - sdkInitTime
+        getSessionCookies()
+          .then((cookie) => {
+            // monitor-until: 2025-10-01, after investigation done
+            addTelemetryDebug('Session cookie changed', {
+              time,
+              session_age: sessionAge,
+              old: initialSessionState,
+              new: newSessionState,
+              cookie,
+            })
+          })
+          .catch(monitorError)
       }
     }
   }
