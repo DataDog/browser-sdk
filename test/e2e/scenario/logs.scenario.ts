@@ -1,6 +1,6 @@
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest, js } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
@@ -13,7 +13,21 @@ declare global {
 
 test.describe('logs', () => {
   createTest('service worker with worker logs - esm')
-    .withWorker()
+    .withLogs()
+    .withWorker(
+      (setup) => js`
+        // Initialize DD_LOGS in service worker
+        ${setup}
+
+        // Handle messages from main thread
+        self.addEventListener('message', (event) => {
+          const message = event.data;
+
+          DD_LOGS.logger.log(message);
+        });
+      `,
+      true
+    )
     .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
       test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
@@ -28,7 +42,20 @@ test.describe('logs', () => {
     })
 
   createTest('service worker with worker logs - importScripts')
-    .withWorker({ importScript: true })
+    .withLogs()
+    .withWorker(
+      (setup) => js`
+        // Initialize DD_LOGS in service worker
+        ${setup}
+
+        // Handle messages from main thread
+        self.addEventListener('message', (event) => {
+          const message = event.data;
+
+          DD_LOGS.logger.log(message);
+        });
+      `
+    )
     .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
       test.skip(
         browserName === 'webkit',
@@ -46,7 +73,20 @@ test.describe('logs', () => {
     })
 
   createTest('service worker console forwarding')
-    .withWorker({ importScript: true, nativeLog: true })
+    .withLogs({ forwardConsoleLogs: 'all', forwardErrorsToLogs: true })
+    .withWorker(
+      (setup) => js`
+        // Initialize DD_LOGS in service worker
+        ${setup}
+  
+        // Handle messages from main thread
+        self.addEventListener('message', (event) => {
+          const message = event.data;
+  
+          console.log(message);
+        });
+      `
+    )
     .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
       test.skip(
         browserName === 'webkit',
