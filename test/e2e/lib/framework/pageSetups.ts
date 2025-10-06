@@ -6,6 +6,10 @@ import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
+export interface WorkerImplementationFactory {
+  (setup: string): string
+  isModule?: boolean
+}
 export interface SetupOptions {
   rum?: RumInitConfiguration
   useRumSlim: boolean
@@ -27,6 +31,7 @@ export interface SetupOptions {
     logsConfiguration?: LogsInitConfiguration
   }
   hostName?: string
+  workerImplementation?: WorkerImplementationFactory
 }
 
 export interface WorkerOptions {
@@ -209,20 +214,23 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
   })
 }
 
-export function workerSetup(options: WorkerOptions, servers: Servers) {
-  return js`
-      ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
+export function workerSetup(options: SetupOptions, servers: Servers) {
+  let script = ''
+
+  if (!options.workerImplementation) {
+    return script
+  }
+
+  if (options.logs) {
+    script += js`
+      ${options.workerImplementation.isModule ? js`import '/datadog-logs.js';` : js`importScripts('/datadog-logs.js');`}
       
       // Initialize DD_LOGS in service worker
-      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true }, servers)})
-
-      // Handle messages from main thread
-      self.addEventListener('message', (event) => {
-        const message = event.data;
-        
-        ${options.nativeLog ? js`console.log(message);` : js`DD_LOGS.logger.log(message);`}
-      });
+      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, ...options.logs }, servers)})
     `
+  }
+
+  return options.workerImplementation(script)
 }
 
 export function basePage({ header, body }: { header?: string; body?: string }) {
@@ -244,7 +252,7 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function js(parts: readonly string[], ...vars: string[]) {
+export function js(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
