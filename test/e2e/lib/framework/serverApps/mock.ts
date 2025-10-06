@@ -6,14 +6,19 @@ import type { RemoteConfiguration } from '@datadog/browser-rum-core'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
-import { workerSetup } from '../pageSetups'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
 export function createMockServerApp(
   servers: Servers,
   setup: string,
-  remoteConfiguration?: RemoteConfiguration
+  {
+    remoteConfiguration,
+    workerImplementation,
+  }: {
+    remoteConfiguration?: RemoteConfiguration
+    workerImplementation?: string
+  } = {}
 ): MockServerApp {
   const app = express()
   let largeResponseBytesWritten = 0
@@ -46,11 +51,7 @@ export function createMockServerApp(
   })
 
   app.get('/sw.js', (_req, res) => {
-    const query = _req.query
-
-    res
-      .contentType('application/javascript')
-      .send(workerSetup({ importScripts: Boolean(query.importScripts), nativeLog: Boolean(query.nativeLog) }, servers))
+    res.contentType('application/javascript').send(workerImplementation)
   })
 
   function generateLargeResponse(res: ServerResponse, chunkText: string) {
