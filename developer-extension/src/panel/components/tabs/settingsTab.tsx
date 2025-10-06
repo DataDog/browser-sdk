@@ -32,6 +32,28 @@ export function SettingsTab() {
     setSetting,
   ] = useSettings()
 
+  const badgeStatus = () => {
+    const toBadge = (color: 'blue' | 'green' | 'yellow' | 'red', text: string) => <Badge color={color}>{text}</Badge>
+
+    const overridden = useDevBundles && (injectionVariant === 'cdn' || sdkDevServerStatus === DevServerStatus.AVAILABLE)
+    if (overridden) {
+      return toBadge('blue', 'Overridden')
+    }
+
+    if (injectionVariant === 'cdn') {
+      return toBadge('green', 'Available')
+    }
+
+    switch (sdkDevServerStatus) {
+      case DevServerStatus.AVAILABLE:
+        return toBadge('green', 'Available')
+      case DevServerStatus.CHECKING:
+        return toBadge('yellow', 'Checking...')
+      default:
+        return toBadge('red', 'Unavailable')
+    }
+  }
+
   return (
     <TabBase>
       <div className="dd-privacy-allow">
@@ -42,17 +64,7 @@ export function SettingsTab() {
                 <Accordion.Control>
                   <Group>
                     <Text>Browser SDK</Text>
-                    <Box style={{ marginLeft: 'auto' }}>
-                      {sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles ? (
-                        <Badge color="blue">Overridden</Badge>
-                      ) : sdkDevServerStatus === DevServerStatus.AVAILABLE ? (
-                        <Badge color="green">Available</Badge>
-                      ) : sdkDevServerStatus === DevServerStatus.CHECKING ? (
-                        <Badge color="yellow">Checking...</Badge>
-                      ) : (
-                        <Badge color="red">Unavailable</Badge>
-                      )}
-                    </Box>
+                    <Box style={{ marginLeft: 'auto' }}>{badgeStatus()}</Box>
                   </Group>
                 </Accordion.Control>
                 <Accordion.Panel>
