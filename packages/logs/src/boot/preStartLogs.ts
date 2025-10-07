@@ -1,5 +1,6 @@
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
+  isNodeEnvironment,
   createBoundedBuffer,
   canUseEventBridge,
   display,
@@ -43,7 +44,7 @@ export function createPreStartStrategy(
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
+    if (isNodeEnvironment || !cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
       return
     }
 
