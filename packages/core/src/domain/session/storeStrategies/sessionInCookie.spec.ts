@@ -1,7 +1,7 @@
-import { mockClock, getSessionState } from '../../../../test'
+import { mockClock, getSessionState, registerCleanupTask } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
-import type { Configuration } from '../../configuration'
+import { validateAndBuildConfiguration, type Configuration, type InitConfiguration } from '../../configuration'
 import { SESSION_COOKIE_EXPIRATION_DELAY, SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY } from '../sessionConstants'
 import { buildCookieOptions, selectCookieStrategy, initCookieStrategy } from './sessionInCookie'
 import type { SessionStoreStrategy } from './sessionStoreStrategy'
@@ -24,7 +24,7 @@ describe('session in cookie strategy', () => {
     cookieStorageStrategy.persistSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&c=0')
   })
 
   it('should set `isExpired=1` and `aid` to the cookie holding the session', () => {
@@ -101,6 +101,32 @@ describe('session in cookie strategy', () => {
       })
     })
   })
+
+  describe('cookie collision', () => {
+    let secondCookieStrategy: SessionStoreStrategy
+
+    beforeEach(() => {
+      const initConfiguration = {
+        clientToken: 'abc',
+        usePartitionedCrossSiteSessionCookie: true,
+      } as InitConfiguration
+
+      const cookieOptions = buildCookieOptions(initConfiguration)!
+      const configuration = validateAndBuildConfiguration(initConfiguration)!
+
+      secondCookieStrategy = initCookieStrategy(configuration, cookieOptions)
+
+      registerCleanupTask(() => deleteCookie(SESSION_STORE_KEY, cookieOptions))
+    })
+
+    it('should return the first cookie if there is no match', () => {
+      cookieStorageStrategy.persistSession({ foo: 'bar' })
+      secondCookieStrategy.persistSession({ foo: 'baz' })
+
+      expect(cookieStorageStrategy.retrieveSession()).toEqual({ foo: 'bar' })
+      expect(secondCookieStrategy.retrieveSession()).toEqual({ foo: 'baz' })
+    })
+  })
 })
 
 describe('session in cookie strategy when opt-in anonymous user tracking', () => {
@@ -121,14 +147,14 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState, anonymousId })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&aid=device-123')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&aid=device-123&c=0')
   })
 
   it('should expire with anonymous id', () => {
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ isExpired: '1', anonymousId })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=device-123')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=device-123&c=0')
   })
 
   it('should persist for one year when opt-in', () => {
@@ -181,6 +207,6 @@ describe('session in cookie strategy when opt-out anonymous user tracking', () =
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ isExpired: '1' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&c=0')
   })
 })
