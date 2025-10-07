@@ -75,6 +75,62 @@ describe('computeFrustration', () => {
     })
   })
 
+  describe('click-ignore attribute', () => {
+    it('suppresses dead_click when target has data-dd-click-ignore="dead"', () => {
+      const target = appendElement('<button target data-dd-click-ignore="dead"></button>')
+      clicks[1] = createFakeClick({ hasPageActivity: false, event: { target } })
+      computeFrustration(clicks, rageClick)
+      expect(getFrustrations(clicks[1])).toEqual([])
+    })
+
+    it('suppresses error_click when target has data-dd-click-ignore="error"', () => {
+      const target = appendElement('<button target data-dd-click-ignore="error"></button>')
+      clicks[1] = createFakeClick({ hasError: true, event: { target } })
+      computeFrustration(clicks, rageClick)
+      expect(getFrustrations(clicks[1])).toEqual([])
+    })
+
+    it('suppresses rage_click for the chain when any click target has data-dd-click-ignore="rage"', () => {
+      const t1 = appendElement('<button target></button>')
+      const t2 = appendElement('<button target data-dd-click-ignore="rage"></button>')
+      const t3 = appendElement('<button target></button>')
+      clicksConsideredAsRage = [
+        createFakeClick({ event: { target: t1 } }),
+        createFakeClick({ event: { target: t2 } }),
+        createFakeClick({ event: { target: t3 } }),
+      ]
+      computeFrustration(clicksConsideredAsRage, rageClick)
+      expect(getFrustrations(rageClick)).toEqual([])
+    })
+
+    it('inherits from ancestor element', () => {
+      const parent = appendElement('<div data-dd-click-ignore="dead"><button target></button></div>')
+      const child = parent.querySelector('button') as HTMLElement
+      clicks[1] = createFakeClick({ hasPageActivity: false, event: { target: child } })
+      computeFrustration(clicks, rageClick)
+      expect(getFrustrations(clicks[1])).toEqual([])
+    })
+
+    it('all token suppresses dead and error', () => {
+      const parent = appendElement('<div data-dd-click-ignore="all"><button target></button></div>')
+      const child = parent.querySelector('button') as HTMLElement
+      clicks[0] = createFakeClick({ hasError: true, event: { target: child } })
+      clicks[1] = createFakeClick({ hasPageActivity: false, event: { target: child } })
+      computeFrustration(clicks, rageClick)
+      expect(getFrustrations(clicks[0])).toEqual([])
+      expect(getFrustrations(clicks[1])).toEqual([])
+    })
+
+    it('parses mixed case and spacing', () => {
+      const target = appendElement('<button target data-dd-click-ignore=" Rage ,  DEAD  "></button>')
+      clicks[0] = createFakeClick({ hasPageActivity: false, event: { target } })
+      clicks[1] = createFakeClick({ hasError: true, event: { target } })
+      computeFrustration(clicks, rageClick)
+      expect(getFrustrations(clicks[0])).toEqual([]) // dead suppressed
+      expect(getFrustrations(clicks[1])).toEqual([FrustrationType.ERROR_CLICK]) // error not suppressed
+    })
+  })
+
   function getFrustrations(click: FakeClick) {
     return click.addFrustration.calls.allArgs().map((args) => args[0])
   }
