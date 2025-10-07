@@ -11,10 +11,16 @@ const onRumStartSubscribers: StartSubscriber[] = []
 
 /**
  * React plugin configuration.
+ *
+ * @category Main
  */
 export interface ReactPluginConfiguration {
   /**
-   * Enable react-router integration
+   * Enable react-router integration. Make sure to use functions from
+   * {@link @datadog/browser-rum-react/react-router-v6! | @datadog/browser-rum-react/react-router-v6} or
+   * {@link @datadog/browser-rum-react/react-router-v7! | @datadog/browser-rum-react/react-router-v7}
+   * to create the router.
+   * ```
    */
   router?: boolean
 }
@@ -30,6 +36,21 @@ export type ReactPlugin = Required<RumPlugin>
 
 /**
  * React plugin constructor.
+ *
+ * @category Main
+ * @example
+ * ```ts
+ * import { datadogRum } from '@datadog/browser-rum'
+ * import { reactPlugin } from '@datadog/browser-rum-react'
+ *
+ * datadogRum.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   plugins: [reactPlugin()],
+ *   // ...
+ * })
+ * ```
  */
 export function reactPlugin(configuration: ReactPluginConfiguration = {}): ReactPlugin {
   return {

@@ -15,14 +15,23 @@ import type { LogsEventDomainContext } from '../domainContext.types'
 /**
  * Init Configuration for the Logs browser SDK.
  *
- * @category Configuration
- * @example
+ * @category Main
+ * @example NPM
  * ```ts
- * DD_LOGS.init({
- *   applicationId: '<DATADOG_APPLICATION_ID>',
+ * import { datadogLogs } from '@datadog/browser-logs'
+ *
+ * datadogLogs.init({
  *   clientToken: '<DATADOG_CLIENT_TOKEN>',
  *   site: '<DATADOG_SITE>',
- *   ...
+ *   // ...
+ * })
+ * ```
+ * @example CDN
+ * ```ts
+ * DD_LOGS.init({
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   // ...
  * })
  * ```
  */
