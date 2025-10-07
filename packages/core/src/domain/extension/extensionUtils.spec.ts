@@ -3,12 +3,7 @@ import {
   STACK_WITH_INIT_IN_EXTENSION_FIREFOX,
   STACK_WITH_INIT_IN_PAGE,
 } from '../../../test'
-import {
-  containsExtensionUrl,
-  EXTENSION_PREFIXES,
-  extractExtensionUrlFromStack,
-  isUnsupportedExtensionEnvironment,
-} from './extensionUtils'
+import { containsExtensionUrl, EXTENSION_PREFIXES, isUnsupportedExtensionEnvironment } from './extensionUtils'
 
 describe('extensionUtils', () => {
   describe('containsExtensionUrl', () => {
@@ -47,21 +42,6 @@ describe('extensionUtils', () => {
 
     it('should handle extension stack trace', () => {
       expect(isUnsupportedExtensionEnvironment('https://example.com', STACK_WITH_INIT_IN_EXTENSION)).toBe(true)
-    })
-  })
-
-  describe('extract init caller', () => {
-    it('should extract extension URL from stack trace', () => {
-      const stack = `Error
-    at foo (<anonymous>:549:44)
-    at bar (<anonymous>:701:91)
-    at e.init (chrome-extension://abcd/content-script-main.js:1:1009)`
-      expect(extractExtensionUrlFromStack(stack)).toBe('chrome-extension://abcd')
-    })
-
-    it('should return undefined when no extension URL found', () => {
-      const stack = 'Error at https://example.com/script.js:10:15'
-      expect(extractExtensionUrlFromStack(stack)).toBeUndefined()
     })
   })
 })
