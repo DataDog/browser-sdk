@@ -1,12 +1,13 @@
 import type { RumConfiguration, NodePrivacyLevel } from '@datadog/browser-rum-core'
 import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import type { ShadowRootsController } from '../shadowRootsController'
+import type { SerializationScope } from './serializationScope'
 import type { SerializationStats } from './serializationStats'
 
 // Those values are the only one that can be used when inheriting privacy levels from parent to
 // children during serialization, since HIDDEN and IGNORE shouldn't serialize their children. This
 // ensures that no children are serialized when they shouldn't.
-type ParentNodePrivacyLevel =
+export type ParentNodePrivacyLevel =
   | typeof NodePrivacyLevel.ALLOW
   | typeof NodePrivacyLevel.MASK
   | typeof NodePrivacyLevel.MASK_USER_INPUT
@@ -39,10 +40,7 @@ export type SerializationContext =
 
 export interface SerializeOptions {
   serializedNodeIds?: Set<number>
-  ignoreWhiteSpace?: boolean
-  parentNodePrivacyLevel: ParentNodePrivacyLevel
   serializationContext: SerializationContext
   configuration: RumConfiguration
+  scope: SerializationScope
 }
-
-export type NodeWithSerializedNode = Node & { s: 'Node with serialized node' }

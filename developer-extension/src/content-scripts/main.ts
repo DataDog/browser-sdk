@@ -114,7 +114,11 @@ function overrideInitConfiguration(global: GlobalInstrumentation, configurationO
     if ('init' in sdkInstance) {
       const originalInit = sdkInstance.init
       sdkInstance.init = (config: any) => {
-        originalInit({ ...config, ...configurationOverride })
+        originalInit({
+          ...config,
+          ...configurationOverride,
+          allowedTrackingOrigins: [location.origin],
+        })
       }
     }
   })

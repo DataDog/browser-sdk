@@ -134,7 +134,7 @@ export interface InitConfiguration {
   /**
    * List of origins where the SDK is allowed to run when used in a browser extension context.
    * Matches urls against the extensions origin.
-   * If not provided and the SDK is running in a browser extension, a warning will be displayed.
+   * If not provided and the SDK is running in a browser extension, the SDK will not run.
    */
   allowedTrackingOrigins?: MatchOption[] | undefined
 

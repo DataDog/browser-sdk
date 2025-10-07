@@ -8,6 +8,8 @@ import {
   createElementsScrollPositions,
   createSerializationStats,
 } from '..'
+import { createNodeIds } from '../nodeIds'
+import { createSerializationScope } from './serializationScope'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {
@@ -41,8 +43,7 @@ const DEFAULT_SHADOW_ROOT_CONTROLLER = {
 export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
-    serializeNodeWithId(newDoc, {
-      parentNodePrivacyLevel: NodePrivacyLevel.ALLOW,
+    serializeNodeWithId(newDoc, NodePrivacyLevel.ALLOW, {
       serializationContext: {
         serializationStats: createSerializationStats(),
         shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
@@ -50,6 +51,7 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
         elementsScrollPositions: createElementsScrollPositions(),
       },
       configuration: {} as RumConfiguration,
+      scope: createSerializationScope(createNodeIds()),
     })! as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc

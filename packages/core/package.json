@@ -1,6 +1,6 @@
 {
   "name": "@datadog/browser-core",
-  "version": "6.21.1",
+  "version": "6.22.0",
   "license": "Apache-2.0",
   "main": "cjs/index.js",
   "module": "esm/index.js",
@@ -17,6 +17,10 @@
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
     "directory": "packages/core"
+  },
+  "devDependencies": {
+    "@types/pako": "2.0.4",
+    "pako": "2.1.0"
   },
   "volta": {
     "extends": "../../package.json"

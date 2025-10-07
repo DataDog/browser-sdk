@@ -3,18 +3,20 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { SerializedNodeWithId } from '../../../types'
 import type { SerializationContext } from './serialization.types'
 import { serializeNodeWithId } from './serializeNode'
+import type { SerializationScope } from './serializationScope'
 import { updateSerializationStats } from './serializationStats'
 
 export function serializeDocument(
   document: Document,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   serializationContext: SerializationContext
 ): SerializedNodeWithId {
   const serializationStart = timeStampNow()
-  const serializedNode = serializeNodeWithId(document, {
+  const serializedNode = serializeNodeWithId(document, configuration.defaultPrivacyLevel, {
     serializationContext,
-    parentNodePrivacyLevel: configuration.defaultPrivacyLevel,
     configuration,
+    scope,
   })
   updateSerializationStats(
     serializationContext.serializationStats,

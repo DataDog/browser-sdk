@@ -4,7 +4,8 @@ import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, InputData, InputState } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
-import { getElementInputValue, getSerializedNodeId, hasSerializedNode } from '../serialization'
+import { getElementInputValue } from '../serialization'
+import type { SerializationScope } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
 import type { Tracker } from './tracker.types'
 
@@ -12,6 +13,7 @@ export type InputCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapsh
 
 export function trackInput(
   configuration: RumConfiguration,
+  scope: SerializationScope,
   inputCb: InputCallback,
   target: Document | ShadowRoot = document
 ): Tracker {
@@ -89,7 +91,7 @@ export function trackInput(
     }
 
     // Can be multiple changes on the same node within the same batched mutation observation.
-    cbWithDedup(target, inputState)
+    cbWithDedup(target, inputState, scope)
 
     // If a radio was checked, other radios with the same name attribute will be unchecked.
     const name = target.name
@@ -97,7 +99,7 @@ export function trackInput(
       document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach((el: Element) => {
         if (el !== target) {
           // TODO: Consider the privacy implications for various differing input privacy levels
-          cbWithDedup(el, { isChecked: false })
+          cbWithDedup(el, { isChecked: false }, scope)
         }
       })
     }
@@ -106,8 +108,9 @@ export function trackInput(
   /**
    * There can be multiple changes on the same node within the same batched mutation observation.
    */
-  function cbWithDedup(target: Node, inputState: InputState) {
-    if (!hasSerializedNode(target)) {
+  function cbWithDedup(target: Node, inputState: InputState, scope: SerializationScope) {
+    const id = scope.nodeIds.get(target)
+    if (id === undefined) {
       return
     }
     const lastInputState = lastInputStateMap.get(target)
@@ -119,7 +122,7 @@ export function trackInput(
       lastInputStateMap.set(target, inputState)
       inputCb(
         assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, {
-          id: getSerializedNodeId(target),
+          id,
           ...inputState,
         })
       )

@@ -173,17 +173,14 @@ function isFormElement(node: Node | null): boolean {
  */
 const censorText = (text: string) => text.replace(/\S/g, TEXT_MASKING_CHAR)
 
-export function getTextContent(
-  textNode: Node,
-  ignoreWhiteSpace: boolean,
-  parentNodePrivacyLevel: NodePrivacyLevel
-): string | undefined {
+export function getTextContent(textNode: Node, parentNodePrivacyLevel: NodePrivacyLevel): string | undefined {
   // The parent node may not be a html element which has a tagName attribute.
   // So just let it be undefined which is ok in this use case.
   const parentTagName = textNode.parentElement?.tagName
   let textContent = textNode.textContent || ''
 
-  if (ignoreWhiteSpace && !textContent.trim()) {
+  const shouldIgnoreWhiteSpace = parentTagName === 'HEAD'
+  if (shouldIgnoreWhiteSpace && !textContent.trim()) {
     return
   }
 

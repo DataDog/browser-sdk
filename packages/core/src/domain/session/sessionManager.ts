@@ -213,7 +213,7 @@ function detectSessionIdChange(configuration: Configuration, initialSessionState
         const time = dateNow() - sdkInitTime
         getSessionCookies()
           .then((cookie) => {
-            // monitor-until: 2025-10-01, after investigation done
+            // monitor-until: 2025-12-01, after RUM-10845 investigation done
             addTelemetryDebug('Session cookie changed', {
               time,
               session_age: sessionAge,
@@ -238,7 +238,7 @@ async function getSessionCookies(): Promise<{ count: number; domain: string }> {
 
   return {
     count: sessionCookies.length,
-    domain: getCurrentSite(),
+    domain: getCurrentSite() || 'undefined',
     ...sessionCookies,
   }
 }

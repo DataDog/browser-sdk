@@ -159,7 +159,7 @@ test.describe('logs', () => {
 
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
-      expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
+      expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${new URL('/throw-large-response', baseUrl)}`)
       expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       const ellipsisSize = 3
@@ -218,7 +218,7 @@ test.describe('logs', () => {
       const unreachableRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/unreachable'))!
       const throwRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/throw'))!
 
-      expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
+      expect(throwRequest.message).toEqual(`Fetch error GET ${new URL('/throw', baseUrl)}`)
       expect(throwRequest.http!.status_code).toEqual(500)
       expect(throwRequest.error!.stack).toMatch(/Server error/)
 

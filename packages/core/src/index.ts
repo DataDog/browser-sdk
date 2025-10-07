@@ -7,9 +7,6 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
-  buildTags,
-  buildTag,
-  sanitizeTag,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -164,4 +161,4 @@ export * from './domain/deflate'
 export * from './domain/connectivity'
 export * from './tools/stackTrace/handlingStack'
 export * from './tools/abstractHooks'
-export { WARN_DOES_NOT_HAVE_ALLOWED_TRACKING_ORIGIN } from './domain/allowedTrackingOrigins'
+export * from './domain/tags'

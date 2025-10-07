@@ -4,8 +4,6 @@ import {
   isEmptyObject,
   display,
   createEventRateLimiter,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
   HookNames,
   DISCARDED,
   buildTags,
@@ -61,9 +59,6 @@ export function startRumAssembly(
     },
     [RumEventType.RESOURCE]: {
       'resource.url': 'string',
-      ...(isExperimentalFeatureEnabled(ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL)
-        ? { 'resource.graphql': 'object' }
-        : {}),
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,

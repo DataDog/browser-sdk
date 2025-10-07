@@ -18,6 +18,46 @@
 
 ---
 
+## v6.22.0
+
+**Public Changes:**
+
+- ✨ enable rum profiler compression when possible ([#3861](https://github.com/DataDog/browser-sdk/pull/3861)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-11434] add support for GraphQL request ([#3891](https://github.com/DataDog/browser-sdk/pull/3891)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Fix react-router peer dependency ([#3892](https://github.com/DataDog/browser-sdk/pull/3892)) [RUM-REACT]
+- 🔥 enforce allowedTrackingOrigin config when initializing the SDK from an extension ([#3885](https://github.com/DataDog/browser-sdk/pull/3885)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Lock file maintenance ([#3899](https://github.com/DataDog/browser-sdk/pull/3899))
+- 👷 Update dependency @playwright/test to v1.55.1 ([#3897](https://github.com/DataDog/browser-sdk/pull/3897))
+- 👷 Update dependency lerna to v9 ([#3898](https://github.com/DataDog/browser-sdk/pull/3898))
+- 👷 Update dependency @playwright/test to v1.55.0 ([#3798](https://github.com/DataDog/browser-sdk/pull/3798))
+- 👷 Update all non-major dependencies ([#3878](https://github.com/DataDog/browser-sdk/pull/3878))
+- 👷 Update dependency eslint-plugin-jsdoc to v60 ([#3880](https://github.com/DataDog/browser-sdk/pull/3880))
+- 👷 Lock file maintenance ([#3881](https://github.com/DataDog/browser-sdk/pull/3881))
+- 🎨 [PANA-4398] Convert SerializeOptions#parentNodePrivacyLevel into a normal function argument ([#3893](https://github.com/DataDog/browser-sdk/pull/3893)) [RUM]
+- 🎨 [PANA-4372] Explicitly scope serialization state ([#3887](https://github.com/DataDog/browser-sdk/pull/3887)) [RUM]
+- 🎨 [PANA-4378] Eliminate need for getTextContent's ignoreWhiteSpace option ([#3889](https://github.com/DataDog/browser-sdk/pull/3889)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔊 delay the session cookie debug telemetry date ([#3895](https://github.com/DataDog/browser-sdk/pull/3895)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- update description ([#3900](https://github.com/DataDog/browser-sdk/pull/3900)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Remove ff for graphql tracking ([#3886](https://github.com/DataDog/browser-sdk/pull/3886)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👥 [PANA-4375] Transfer replay code to session-replay-sdk team in CODEOWNERS ([#3888](https://github.com/DataDog/browser-sdk/pull/3888))
+
+## v6.21.2
+
+**Public Changes:**
+
+- 🐛 [RUM-11596] fix cookie domain within pages with empty location ([#3866](https://github.com/DataDog/browser-sdk/pull/3866)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 add missing ddtags to telemetry events ([#3873](https://github.com/DataDog/browser-sdk/pull/3873)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛[RUM-11247] Pass down error stack to isAllowedTrackingOrigins ([#3824](https://github.com/DataDog/browser-sdk/pull/3824)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 improve condition to worker flag ([#3870](https://github.com/DataDog/browser-sdk/pull/3870)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Pr comment markdown table alignment ([#3876](https://github.com/DataDog/browser-sdk/pull/3876))
+- [devext] fix `yarn dev` command ([#3872](https://github.com/DataDog/browser-sdk/pull/3872))
+
 ## v6.21.1
 
 **Public Changes:**
