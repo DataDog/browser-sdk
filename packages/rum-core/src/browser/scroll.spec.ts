@@ -1,53 +1,33 @@
-import { addEventListener, DOM_EVENT } from '@datadog/browser-core'
-import { mockRumConfiguration } from '../../test'
+import { DOM_EVENT } from '@datadog/browser-core'
 import { getScrollX, getScrollY } from './scroll'
 
 describe('scroll', () => {
-  let shouldWaitForWindowScrollEvent: boolean
-  const configuration = mockRumConfiguration()
-  const addVerticalScrollBar = () => {
-    document.body.style.setProperty('margin-bottom', '5000px')
-  }
+  let testDidScroll: boolean
 
   beforeEach(() => {
-    shouldWaitForWindowScrollEvent = false
+    document.body.style.setProperty('margin-bottom', '5000px')
+    testDidScroll = false
   })
 
-  afterEach((done) => {
+  afterEach(async () => {
     document.body.style.removeProperty('margin-bottom')
     window.scrollTo(0, 0)
 
-    // Those tests are triggering asynchronous scroll events that might impact tests run after them.
-    // To avoid that, we wait for the next scroll event before continuing to the next one.
-    // Those events don't seem to be triggered consistently on safari though, so stop waiting after a while.
-    if (shouldWaitForWindowScrollEvent) {
-      const STOP_WAITING_FOR_SCROLL = 2000
-      const { stop: removeScrollListener } = addEventListener(
-        configuration,
-        window,
-        DOM_EVENT.SCROLL,
-        () => {
-          clearTimeout(timeout)
-          done()
-        },
-        {
-          passive: true,
-          once: true,
-          capture: true,
-        }
-      )
-      const timeout = setTimeout(() => {
-        removeScrollListener()
-        done()
-      }, STOP_WAITING_FOR_SCROLL)
-    } else {
-      done()
-    }
+    // Those tests are triggering asynchronous events that might impact tests run after them. To
+    // avoid that, we wait for the events before continuing to the next test.
+    await Promise.all([
+      window.visualViewport &&
+        waitForEvents(
+          window.visualViewport,
+          DOM_EVENT.RESIZE,
+          2 // We add then remove the scrollbar, so the resize event is triggered twice
+        ),
+      testDidScroll && waitForEvents(window, DOM_EVENT.SCROLL, 1),
+    ])
   })
 
   describe('getScrollX/Y', () => {
-    it('normalized scroll matches initial behaviour', () => {
-      addVerticalScrollBar()
+    it('normalized scroll matches initial behavior', () => {
       expect(getScrollX()).toBe(0)
       expect(getScrollY()).toBe(0)
       expect(getScrollX()).toBe(window.scrollX || window.pageXOffset)
@@ -55,11 +35,10 @@ describe('scroll', () => {
     })
 
     it('normalized scroll updates when scrolled', () => {
-      addVerticalScrollBar()
       const SCROLL_DOWN_PX = 100
 
       window.scrollTo(0, SCROLL_DOWN_PX)
-      shouldWaitForWindowScrollEvent = true
+      testDidScroll = true
 
       expect(getScrollX()).toBe(0)
       expect(getScrollY()).toBe(100)
@@ -68,3 +47,27 @@ describe('scroll', () => {
     })
   })
 })
+
+function waitForEvents(target: EventTarget, eventName: string, count: number) {
+  return new Promise<void>((resolve) => {
+    let counter = 0
+
+    function listener() {
+      counter++
+      if (counter === count) {
+        done()
+      }
+    }
+
+    function done() {
+      target.removeEventListener(eventName, listener)
+      resolve()
+    }
+
+    target.addEventListener(eventName, listener)
+
+    // In some cases, events are not triggered consistently. This have been observed in Safari. To
+    // avoid waiting forever, we use a timeout.
+    setTimeout(done, 1000)
+  })
+}
