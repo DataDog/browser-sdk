@@ -81,6 +81,18 @@ test.describe('rum sessions', () => {
 
         expect(true).toBeTruthy()
       })
+
+    createTest('removes anonymous id when tracking consent is withdrawn')
+      .withRum()
+      .run(async ({ browserContext, page }) => {
+        expect((await findSessionCookie(browserContext))?.aid).toBeDefined()
+
+        await page.evaluate(() => {
+          window.DD_RUM!.setTrackingConsent('not-granted')
+        })
+
+        expect((await findSessionCookie(browserContext))?.aid).toBeUndefined()
+      })
   })
 
   test.describe('manual session expiration', () => {
