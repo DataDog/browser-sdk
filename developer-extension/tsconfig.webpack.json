@@ -3,13 +3,15 @@
 
   "compilerOptions": {
     "baseUrl": ".",
-    "module": "ES6",
+    "module": "preserve",
     "target": "esnext",
     "jsx": "react",
     "lib": ["ES2022", "DOM"],
     "types": ["chrome", "react", "react-dom", "jasmine"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true
   },
 
-  "include": ["src"]
+  "include": ["src", "webpack.config.mts"]
 }

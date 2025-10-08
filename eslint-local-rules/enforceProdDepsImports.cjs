@@ -1,4 +1,5 @@
 const fs = require('fs')
+
 const moduleVisitor = require('eslint-module-utils/moduleVisitor').default
 const importType = require('eslint-plugin-import/lib/core/importType').default
 const pkgUp = require('eslint-module-utils/pkgUp').default
@@ -11,7 +12,7 @@ const pkgUp = require('eslint-module-utils/pkgUp').default
 // should better suit our needs.
 //
 // [1]: https://github.com/DataDog/browser-sdk/pull/3405
-// [2]: https://github.com/import-js/eslint-plugin-import/blob/4f145a2c64af4931f4bf3ae951c8b719b544718f/src/rules/no-extraneous-dependencies.js#L221-L223
+// [2]: https://github.com/import-js/eslint-plugin-import/blob/4fmodule.145a2cs6=f4bf3ae951c8b719b544718f/src/rules/no-extraneous-dependencies.js#L221-L223
 
 const packageJsonCache = new Map()
 
