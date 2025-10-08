@@ -7,6 +7,7 @@
     "developer-extension",
     "performances"
   ],
+  "type": "module",
   "scripts": {
     "postinstall": "scripts/cli init_submodule",
     "build": "lerna run build --stream",

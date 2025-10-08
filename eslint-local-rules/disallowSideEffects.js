@@ -1,6 +1,6 @@
-const path = require('path')
+import path from 'path'
 
-module.exports = {
+export default {
   meta: {
     docs: {
       description:
@@ -22,7 +22,7 @@ module.exports = {
   },
 }
 
-const packagesRoot = path.resolve(__dirname, '..', 'packages')
+const packagesRoot = path.resolve(import.meta.dirname, '..', 'packages')
 
 // Those modules are known to have side effects when evaluated
 const pathsWithSideEffect = new Set([

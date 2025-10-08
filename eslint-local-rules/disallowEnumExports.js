@@ -1,4 +1,4 @@
-const { SymbolFlags } = require('typescript')
+import { SymbolFlags } from 'typescript'
 
 /**
  * This rule forbids exporting 'enums'.  It serves two purposes:
@@ -34,7 +34,7 @@ const { SymbolFlags } = require('typescript')
  * [1]: https://www.typescriptlang.org/tsconfig#isolatedModules
  * [2]: https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html#type-only-imports-and-export
  */
-module.exports = {
+export default {
   meta: {
     docs: {
       description: 'Disallow export of enums.',

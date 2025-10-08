@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   meta: {
     docs: {
       description: 'Check command execution within nodejs scripts',

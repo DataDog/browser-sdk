@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   meta: {
     docs: {
       description: 'Disallow JS files that are not used as a "script"',

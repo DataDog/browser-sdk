@@ -6,7 +6,6 @@ import { buildEnvKeys, getBuildEnvValue } from './scripts/lib/buildEnv.ts'
 
 const tsconfigPath = path.join(import.meta.dirname, 'tsconfig.webpack.json')
 
-// eslint-disable-next-line import/no-default-export
 export default ({
   entry,
   mode,
