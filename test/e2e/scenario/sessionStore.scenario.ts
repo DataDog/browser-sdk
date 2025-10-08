@@ -107,6 +107,40 @@ test.describe('Session Stores', () => {
         })
     })
 
+    createTest('should not fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values')
+      .withRum({ trackSessionAcrossSubdomains: true })
+      .withLogs({ trackSessionAcrossSubdomains: false })
+      .withHostName(FULL_HOSTNAME)
+      .run(async ({ page }) => {
+        await page.waitForTimeout(1000)
+
+        const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
+          window.DD_RUM?.getInternalContext(),
+          window.DD_LOGS?.getInternalContext(),
+        ])
+
+        expect(rumInternalContext).toBeDefined()
+        expect(logsInternalContext).toBeDefined()
+      })
+
+    createTest(
+      'should not fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values'
+    )
+      .withRum({ usePartitionedCrossSiteSessionCookie: true })
+      .withLogs({ usePartitionedCrossSiteSessionCookie: false })
+      .withHostName(FULL_HOSTNAME)
+      .run(async ({ page }) => {
+        await page.waitForTimeout(1000)
+
+        const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
+          window.DD_RUM?.getInternalContext(),
+          window.DD_LOGS?.getInternalContext(),
+        ])
+
+        expect(rumInternalContext).toBeDefined()
+        expect(logsInternalContext).toBeDefined()
+      })
+
     async function injectSdkInAnIframe(page: Page, bundleUrl: string) {
       await page.evaluate(
         (browserSdkUrl) =>
