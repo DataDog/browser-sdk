@@ -1,4 +1,5 @@
-import { mockClock, getSessionState, registerCleanupTask } from '../../../../test'
+import { ExperimentalFeature } from '../../../tools/experimentalFeatures'
+import { mockClock, getSessionState, registerCleanupTask, mockExperimentalFeatures } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
 import { validateAndBuildConfiguration } from '../../configuration'
@@ -31,7 +32,7 @@ describe('session in cookie strategy', () => {
     cookieStorageStrategy.persistSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&c=0')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0')
   })
 
   it('should set `isExpired=1` and `aid` to the cookie holding the session', () => {
@@ -111,7 +112,11 @@ describe('session in cookie strategy', () => {
     })
   })
 
-  describe('cookie collision', () => {
+  describe('encode cookie options', () => {
+    beforeEach(() => {
+      mockExperimentalFeatures([ExperimentalFeature.ENCODE_COOKIE_OPTIONS])
+    })
+
     it('should encode cookie options in the cookie value', () => {
       // Some older browsers don't support partitioned cross-site session cookies
       // so instead of testing the cookie value, we test the call to the cookie setter
@@ -156,7 +161,7 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ ...sessionState, anonymousId })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&aid=device-123&c=0')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&aid=device-123')
   })
 
   it('should expire with anonymous id', () => {
@@ -164,7 +169,7 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ isExpired: '1', anonymousId })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=device-123&c=0')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=device-123')
   })
 
   it('should persist for one year when opt-in', () => {
@@ -213,6 +218,6 @@ describe('session in cookie strategy when opt-out anonymous user tracking', () =
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ isExpired: '1' })
-    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&c=0')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1')
   })
 })
