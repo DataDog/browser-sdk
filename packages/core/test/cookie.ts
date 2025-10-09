@@ -8,7 +8,9 @@ export function expireCookie() {
 }
 
 export function getSessionState(sessionStoreKey: string) {
-  return toSessionState(getCookie(sessionStoreKey))
+  const sessionState = toSessionState(getCookie(sessionStoreKey))
+  delete sessionState.c
+  return sessionState
 }
 
 interface Cookie {
