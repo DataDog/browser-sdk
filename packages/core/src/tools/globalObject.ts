@@ -50,4 +50,4 @@ export const globalObject = getGlobalObject<GlobalObject>()
 
 export const isBrowserEnvironment = 'document' in globalObject
 export const isWorkerEnvironment = 'WorkerGlobalScope' in globalObject
-export const isNodeEnvironment = !isBrowserEnvironment && !isWorkerEnvironment
+export const isNodeEnvironment = typeof process !== 'undefined'
