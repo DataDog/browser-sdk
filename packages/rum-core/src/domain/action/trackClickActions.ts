@@ -251,6 +251,7 @@ function computeClickActionBase(
   }
 
   const { name, nameSource } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+  console.log('name', name, nameSource, event.target, nodePrivacyLevel, configuration)
 
   return {
     type: ActionType.CLICK,
