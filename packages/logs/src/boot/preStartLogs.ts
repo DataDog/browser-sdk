@@ -43,7 +43,7 @@ export function createPreStartStrategy(
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (isNodeEnvironment || !cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
       return
     }
 
