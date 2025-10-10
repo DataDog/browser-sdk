@@ -200,7 +200,7 @@ function injectCdnBundle(settings: Settings) {
               applicationId: 'bd3472ea-efc2-45e1-8dff-be4cea9429b3',
               clientToken: 'pub7216f8a2d1091e263c95c1205882474e',
               site: 'datad0g.com',
-              allowedTrackingOrigins: [() => true],
+              allowedTrackingOrigins: [location.origin],
               sessionReplaySampleRate: 100,
             }
           : null)
@@ -216,7 +216,7 @@ function injectCdnBundle(settings: Settings) {
           ? {
               clientToken: 'pub7216f8a2d1091e263c95c1205882474e',
               site: 'datad0g.com',
-              allowedTrackingOrigins: [() => true],
+              allowedTrackingOrigins: [location.origin],
             }
           : null)
       injectAndInitializeSDK(logsUrl, 'DD_LOGS', logsConfig as any)
