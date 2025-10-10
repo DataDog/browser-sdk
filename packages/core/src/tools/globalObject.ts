@@ -48,4 +48,6 @@ export function getGlobalObject<T = typeof globalThis>(): T {
 // eslint-disable-next-line local-rules/disallow-side-effects
 export const globalObject = getGlobalObject<GlobalObject>()
 
+export const isBrowserEnvironment = 'document' in globalObject
 export const isWorkerEnvironment = 'WorkerGlobalScope' in globalObject
+export const isNodeEnvironment = 'process' in globalObject
