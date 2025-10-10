@@ -9,16 +9,14 @@ import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
+interface MockServerOptions {
+  remoteConfiguration?: RemoteConfiguration
+  workerImplementation?: string
+}
 export function createMockServerApp(
   servers: Servers,
   setup: string,
-  {
-    remoteConfiguration,
-    workerImplementation,
-  }: {
-    remoteConfiguration?: RemoteConfiguration
-    workerImplementation?: string
-  } = {}
+  { remoteConfiguration, workerImplementation }: MockServerOptions = {}
 ): MockServerApp {
   const app = express()
   let largeResponseBytesWritten = 0
