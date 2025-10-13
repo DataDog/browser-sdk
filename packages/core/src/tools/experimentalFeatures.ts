@@ -18,6 +18,7 @@ export enum ExperimentalFeature {
   USE_TREE_WALKER_FOR_ACTION_NAME = 'use_tree_walker_for_action_name',
   FEATURE_OPERATION_VITAL = 'feature_operation_vital',
   SHORT_SESSION_INVESTIGATION = 'short_session_investigation',
+  ENCODE_COOKIE_OPTIONS = 'encode_cookie_options',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
