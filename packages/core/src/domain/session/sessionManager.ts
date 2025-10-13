@@ -179,29 +179,28 @@ async function reportUnexpectedSessionState(configuration: Configuration) {
     return
   }
 
+  let rawSession
+  let cookieContext
+
   if (sessionStoreStrategyType.type === SessionPersistence.COOKIE) {
-    const rawSession = retrieveSessionCookie(configuration, sessionStoreStrategyType.cookieOptions)
-    // monitor-until: forever, could be handy to troubleshoot issues until session manager rework
-    addTelemetryDebug('Unexpected session state', {
-      sessionStoreStrategyType: sessionStoreStrategyType.type,
-      session: rawSession,
-      isSyntheticsTest: isSyntheticsTest(),
-      createdTimestamp: rawSession?.created,
-      expireTimestamp: rawSession?.expire,
+    rawSession = retrieveSessionCookie(configuration, sessionStoreStrategyType.cookieOptions)
+
+    cookieContext = {
       cookie: await getSessionCookies(),
       currentDomain: `${window.location.protocol}//${window.location.hostname}`,
-    })
-  } else if (sessionStoreStrategyType.type === SessionPersistence.LOCAL_STORAGE) {
-    const rawSession = retrieveSessionFromLocalStorage()
-    // monitor-until: forever, could be handy to troubleshoot issues until session manager rework
-    addTelemetryDebug('Unexpected session state', {
-      sessionStoreStrategyType: sessionStoreStrategyType.type,
-      session: rawSession,
-      isSyntheticsTest: isSyntheticsTest(),
-      createdTimestamp: rawSession?.created,
-      expireTimestamp: rawSession?.expire,
-    })
+    }
+  } else {
+    rawSession = retrieveSessionFromLocalStorage()
   }
+  // monitor-until: forever, could be handy to troubleshoot issues until session manager rework
+  addTelemetryDebug('Unexpected session state', {
+    sessionStoreStrategyType: sessionStoreStrategyType.type,
+    session: rawSession,
+    isSyntheticsTest: isSyntheticsTest(),
+    createdTimestamp: rawSession?.created,
+    expireTimestamp: rawSession?.expire,
+    ...cookieContext,
+  })
 }
 
 function detectSessionIdChange(configuration: Configuration, initialSessionState: SessionState) {

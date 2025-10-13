@@ -121,11 +121,16 @@ function encodeCookieOptions(configuration: Configuration, cookieOptions: Cookie
   return byte.toString(16) // Convert to hex string
 }
 
+/**
+ * Retrieve the session state from the cookie that was set with the same cookie options.
+ * If there is no match, fallback to the first cookie, (because that's how `getCookie()` works)
+ * and this allows to keep the current session id when we release this feature.
+ */
 function retrieveSessionCookieFromEncodedCookie(
   configuration: Configuration,
   cookieOptions: CookieOptions
 ): SessionState {
-  const cookies = getCookies(SESSION_STORE_KEY) ?? []
+  const cookies = getCookies(SESSION_STORE_KEY)
   const opts = encodeCookieOptions(configuration, cookieOptions)
 
   let sessionState: SessionState | undefined
@@ -139,7 +144,7 @@ function retrieveSessionCookieFromEncodedCookie(
     }
   }
 
-  // remove the cookie options from the session state
+  // remove the cookie options from the session state as this is not part of the session state
   delete sessionState?.c
 
   return sessionState ?? {}

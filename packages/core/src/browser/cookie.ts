@@ -37,8 +37,8 @@ export function getCookie(name: string) {
 /**
  * Returns all the values of the cookies with the given name
  */
-export function getCookies(name: string): string[] | undefined {
-  return findAllCommaSeparatedValues(document.cookie).get(name)
+export function getCookies(name: string): string[] {
+  return findAllCommaSeparatedValues(document.cookie).get(name) || []
 }
 
 let initCookieParsed: Map<string, string> | undefined
