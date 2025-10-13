@@ -643,6 +643,27 @@ describe('getActionNameFromElement', () => {
           expectedName: 'foo bar baz',
           expectedNameSource: 'text_content',
         },
+        {
+          html: `
+          <div data-dd-privacy="mask-unless-allowlisted" aria-label="bar" target>
+            <span>bar</span>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          expectedName: 'Masked Element',
+          expectedNameSource: 'standard_attribute',
+        },
+        {
+          html: `
+          <div data-dd-privacy="mask-unless-allowlisted" aria-label="foo" target>
+            <span>bar</span>
+          </div>
+          `,
+          defaultPrivacyLevel: NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED,
+          allowlist: ['foo'],
+          expectedName: 'foo',
+          expectedNameSource: 'standard_attribute',
+        },
       ]
       testCases.forEach(({ html, defaultPrivacyLevel, allowlist, expectedName, expectedNameSource }) => {
         mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
