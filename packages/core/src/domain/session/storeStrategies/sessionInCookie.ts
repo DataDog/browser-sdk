@@ -112,10 +112,9 @@ function encodeCookieOptions(configuration: Configuration, cookieOptions: Cookie
 
   /* eslint-disable no-bitwise */
   let byte = 0
-  byte |= SESSION_COOKIE_VERSION << 6 // Store version in upper 2 bits
-  byte |= domainCount << 2 // Store domain count in next 4 bits
-  byte |= configuration.usePartitionedCrossSiteSessionCookie ? 1 : 0 << 1 // Store useCrossSiteScripting in next bit
-  // there is one bit left for future use
+  byte |= SESSION_COOKIE_VERSION << 5 // Store version in upper 3 bits
+  byte |= domainCount << 1 // Store domain count in next 4 bits
+  byte |= configuration.usePartitionedCrossSiteSessionCookie ? 1 : 0 // Store useCrossSiteScripting in next bit
   /* eslint-enable no-bitwise */
 
   return byte.toString(16) // Convert to hex string
