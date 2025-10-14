@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 import { datadogLogs } from '@datadog/browser-logs'
 import { datadogRum } from '@datadog/browser-rum'
 
@@ -20,7 +18,6 @@ if (typeof window !== 'undefined') {
   }
 } else {
   // compat test
-
   datadogLogs.init({ clientToken: 'xxx', beforeSend: undefined })
   datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
   datadogRum.setUser({ id: undefined })
