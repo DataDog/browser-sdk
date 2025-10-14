@@ -79,23 +79,14 @@ test.describe('logs', () => {
         // Initialize DD_LOGS in service worker
         ${setup}
   
-        // Handle messages from main thread
-        self.addEventListener('message', (event) => {
-          const message = event.data;
-  
-          console.log(message);
-        });
+        console.log('SW console log test');
       `
     )
-    .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
-
-      await interactWithWorker((worker) => {
-        worker.postMessage('SW console log test')
-      })
 
       await flushEvents()
 
