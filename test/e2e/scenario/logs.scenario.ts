@@ -19,7 +19,7 @@ test.describe('logs', () => {
         self.addEventListener('message', (event) => {
           const message = (event as MessageEvent<string>).data
 
-          self.DD_LOGS.logger.log(message)
+          self.DD_LOGS!.logger.log(message)
         })
       },
       { type: 'module' }
@@ -43,7 +43,7 @@ test.describe('logs', () => {
       self.addEventListener('message', (event) => {
         const message = (event as MessageEvent<string>).data
 
-        self.DD_LOGS.logger.log(message)
+        self.DD_LOGS!.logger.log(message)
       })
     })
     .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {

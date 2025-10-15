@@ -8,7 +8,7 @@ import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
 export interface WorkerImplementationFactory {
-  (self: WorkerGlobalScope & { DD_LOGS: DatadogLogs; DD_RUM: DatadogRum }): void
+  (self: WorkerGlobalScope & { DD_LOGS?: DatadogLogs; DD_RUM?: DatadogRum }): void
   isModule?: boolean
 }
 export interface SetupOptions {
