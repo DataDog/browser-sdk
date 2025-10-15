@@ -20,6 +20,8 @@ import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import { isBrowserStack } from './environment'
 
+import '../types/global'
+
 export function createTest(title: string) {
   return new TestBuilder(title)
 }

@@ -1,4 +1,3 @@
-import { stripTypeScriptTypes } from 'node:module'
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration, DatadogLogs } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
