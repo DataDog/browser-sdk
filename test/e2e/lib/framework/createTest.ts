@@ -58,7 +58,7 @@ class TestBuilder {
     logsConfiguration?: LogsInitConfiguration
   } = {}
   private hostName?: string
-  private workerImplementationFactory?: (setup: string) => string
+  private workerImplementationFactory?: WorkerImplementationFactory
 
   constructor(private title: string) {}
 
@@ -130,18 +130,16 @@ class TestBuilder {
     return this
   }
 
-  withWorker(implementation: WorkerImplementationFactory, isModule = false) {
-    implementation.isModule = isModule
+  withWorker(implementation: WorkerImplementationFactory, options: RegistrationOptions = {}) {
+    implementation.isModule = options.type === 'module'
     this.workerImplementationFactory = implementation
-
-    const options = isModule ? '{ type: "module" }' : '{}'
 
     // Service workers require HTTPS or localhost due to browser security restrictions
     this.withHostName('localhost')
     this.withBody(html`
       <script>
         if (!window.myServiceWorker && 'serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw.js', ${options}).then((registration) => {
+          navigator.serviceWorker.register('/sw.js', ${JSON.stringify(options)}).then((registration) => {
             window.myServiceWorker = registration
           })
         }
