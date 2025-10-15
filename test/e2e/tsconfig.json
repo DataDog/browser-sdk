@@ -10,6 +10,7 @@
     "target": "ES2022",
     "module": "ES2020",
     "types": ["node", "ajv"],
+    "lib": ["WebWorker"],
     "allowJs": true,
     "noEmit": true
   }
