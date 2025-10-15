@@ -128,13 +128,16 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
  * Other `shouldMaskNode` cases are edge cases that should not matter too much (ex: should we mask a
  * node if it is ignored or hidden? it doesn't matter since it won't be serialized).
  */
-export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
+export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel, isTextContent: boolean = true) {
   switch (privacyLevel) {
     case NodePrivacyLevel.MASK:
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return true
     case NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED:
+      if (!isTextContent) {
+        return true
+      }
       if (isTextNode(node)) {
         // Always return true if our parent is a form element, like MASK_USER_INPUT.
         // Otherwise, decide whether to mask based on the allowlist.

@@ -306,6 +306,7 @@ export interface Configuration extends TransportConfiguration {
   // Built from init configuration
   beforeSend: GenericBeforeSendCallback | undefined
   sessionStoreStrategyType: SessionStoreStrategyType | undefined
+  usePartitionedCrossSiteSessionCookie: boolean
   sessionSampleRate: number
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
@@ -401,6 +402,7 @@ export function validateAndBuildConfiguration(
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     sessionStoreStrategyType: isWorkerEnvironment ? undefined : selectSessionStoreStrategyType(initConfiguration),
+    usePartitionedCrossSiteSessionCookie: initConfiguration.usePartitionedCrossSiteSessionCookie ?? false,
     sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
     telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
