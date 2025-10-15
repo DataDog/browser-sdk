@@ -197,8 +197,8 @@ function injectCdnBundle(settings: Settings) {
         settings.rumConfigurationOverride ||
         (settings.datadogMode
           ? {
-              applicationId: 'bd3472ea-efc2-45e1-8dff-be4cea9429b3',
-              clientToken: 'pub7216f8a2d1091e263c95c1205882474e',
+              applicationId: 'xxx',
+              clientToken: 'xxx',
               site: 'datad0g.com',
               allowedTrackingOrigins: [location.origin],
               sessionReplaySampleRate: 100,
@@ -214,7 +214,7 @@ function injectCdnBundle(settings: Settings) {
         settings.logsConfigurationOverride ||
         (settings.datadogMode
           ? {
-              clientToken: 'pub7216f8a2d1091e263c95c1205882474e',
+              clientToken: 'xxx',
               site: 'datad0g.com',
               allowedTrackingOrigins: [location.origin],
             }
