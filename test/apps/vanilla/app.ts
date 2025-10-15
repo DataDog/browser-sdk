@@ -26,7 +26,7 @@ if (typeof window !== 'undefined') {
 
   // compat test
   datadogLogs.init({ clientToken: 'xxx', beforeSend: undefined, telemetrySampleRate: 100 })
-  datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined })
+  datadogRum.init({ clientToken: 'xxx', applicationId: 'xxx', beforeSend: undefined, telemetrySampleRate: 100 })
   datadogRum.setUser({ id: undefined })
 
   if (datadogLogs.getInternalContext() || datadogRum.getInternalContext()) {
