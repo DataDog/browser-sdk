@@ -63,7 +63,7 @@ export interface StartRecordingOptions {
  *
  * See [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser) for further information.
  *
- * @category API
+ * @category Main
  */
 export interface RumPublicApi extends PublicApi {
   /**
@@ -73,20 +73,13 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Init
    * @param initConfiguration - Configuration options of the SDK
-   * @example Init RUM Browser SDK example
+   * @example
    * ```ts
    * datadogRum.init({
    *   applicationId: '<DATADOG_APPLICATION_ID>',
    *   clientToken: '<DATADOG_CLIENT_TOKEN>',
    *   site: '<DATADOG_SITE>',
-   *   //  service: 'my-web-application',
-   *   //  env: 'production',
-   *   //  version: '1.0.0',
-   *   sessionSampleRate: 100,
-   *   sessionReplaySampleRate: 100,
-   *   trackResources: true,
-   *   trackLongTasks: true,
-   *   trackUserInteractions: true,
+   *   // ...
    * })
    * ```
    */
@@ -158,6 +151,7 @@ export interface RumPublicApi extends PublicApi {
    * Get the init configuration
    *
    * @category Init
+   * @returns RumInitConfiguration | undefined
    */
   getInitConfiguration: () => RumInitConfiguration | undefined
 
@@ -434,30 +428,33 @@ export interface RumPublicApi extends PublicApi {
   stopDurationVital: (nameOrRef: string | DurationVitalReference, options?: DurationVitalOptions) => void
 
   /**
-   * [Experimental] start a feature operation
+   * start a feature operation
    *
    * @category Vital - Feature Operation
    * @param name - Name of the operation step
    * @param options - Options for the operation step (operationKey, context, description)
+   * @hidden // TODO: replace by @since when GA
    */
   startFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
 
   /**
-   * [Experimental] succeed a feature operation
+   * succeed a feature operation
    *
    * @category Vital - Feature Operation
    * @param name - Name of the operation step
    * @param options - Options for the operation step (operationKey, context, description)
+   * @hidden // TODO: replace by @since when GA
    */
   succeedFeatureOperation: (name: string, options?: FeatureOperationOptions) => void
 
   /**
-   * [Experimental] fail a feature operation
+   * fail a feature operation
    *
    * @category Vital - Feature Operation
    * @param name - Name of the operation step
    * @param failureReason
    * @param options - Options for the operation step (operationKey, context, description)
+   * @hidden // TODO: replace by @since when GA
    */
   failFeatureOperation: (name: string, failureReaon: FailureReason, options?: FeatureOperationOptions) => void
 }

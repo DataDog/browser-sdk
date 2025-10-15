@@ -2,12 +2,12 @@ import React from 'react'
 import type { ErrorInfo } from 'react'
 import { addReactError } from './addReactError'
 
-export interface Props {
-  fallback: Fallback
+export interface ErrorBoundaryProps {
+  fallback: ErrorBoundaryFallback
   children: React.ReactNode
 }
 
-export type Fallback = React.ComponentType<{ error: Error; resetError: () => void }>
+export type ErrorBoundaryFallback = React.ComponentType<{ error: Error; resetError: () => void }>
 
 export type State =
   | {
@@ -21,9 +21,24 @@ export type State =
 
 const INITIAL_STATE: State = { didCatch: false, error: null }
 
+/**
+ * ErrorBoundary component to report React errors to Datadog.
+ *
+ * For more advanced error handling, you can use the {@link addReactError} function.
+ *
+ * @category Error
+ * @example
+ * ```ts
+ * import { ErrorBoundary } from '@datadog/browser-rum-react'
+ *
+ * <ErrorBoundary fallback={() => null}>
+ *   <Component />
+ * </ErrorBoundary>
+ * ```
+ */
 // eslint-disable-next-line no-restricted-syntax
-export class ErrorBoundary extends React.Component<Props, State> {
-  constructor(props: Props) {
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, State> {
+  constructor(props: ErrorBoundaryProps) {
     super(props)
     this.state = INITIAL_STATE
   }
