@@ -1,13 +1,15 @@
+import { stripTypeScriptTypes } from 'node:module'
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { LogsInitConfiguration, DatadogLogs } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
+import type { DatadogRum } from '@datadog/browser-rum'
 import type test from '@playwright/test'
 import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
 export interface WorkerImplementationFactory {
-  (setup: string): string
+  (self: WorkerGlobalScope & { DD_LOGS: DatadogLogs; DD_RUM: DatadogRum }): void
   isModule?: boolean
 }
 export interface SetupOptions {
@@ -230,7 +232,9 @@ export function workerSetup(options: SetupOptions, servers: Servers) {
     `
   }
 
-  return options.workerImplementation(script)
+  script += `;(${options.workerImplementation.toString()})(self);`
+
+  return script
 }
 
 export function basePage({ header, body }: { header?: string; body?: string }) {

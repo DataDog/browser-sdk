@@ -1,6 +1,6 @@
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/cjs/domain/configuration'
 import { test, expect } from '@playwright/test'
-import { createTest, js } from '../lib/framework'
+import { createTest } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
@@ -15,18 +15,14 @@ test.describe('logs', () => {
   createTest('service worker with worker logs - esm')
     .withLogs()
     .withWorker(
-      (setup) => js`
-        // Initialize DD_LOGS in service worker
-        ${setup}
-
-        // Handle messages from main thread
+      function (self) {
         self.addEventListener('message', (event) => {
-          const message = event.data;
+          const message = (event as MessageEvent<string>).data
 
-          DD_LOGS.logger.log(message);
-        });
-      `,
-      true
+          self.DD_LOGS.logger.log(message)
+        })
+      },
+      { type: 'module' }
     )
     .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
       test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
@@ -43,19 +39,13 @@ test.describe('logs', () => {
 
   createTest('service worker with worker logs - importScripts')
     .withLogs()
-    .withWorker(
-      (setup) => js`
-        // Initialize DD_LOGS in service worker
-        ${setup}
+    .withWorker(function (self) {
+      self.addEventListener('message', (event) => {
+        const message = (event as MessageEvent<string>).data
 
-        // Handle messages from main thread
-        self.addEventListener('message', (event) => {
-          const message = event.data;
-
-          DD_LOGS.logger.log(message);
-        });
-      `
-    )
+        self.DD_LOGS.logger.log(message)
+      })
+    })
     .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
       test.skip(
         browserName === 'webkit',
@@ -74,19 +64,22 @@ test.describe('logs', () => {
 
   createTest('service worker console forwarding')
     .withLogs({ forwardConsoleLogs: 'all', forwardErrorsToLogs: true })
-    .withWorker(
-      (setup) => js`
-        // Initialize DD_LOGS in service worker
-        ${setup}
-  
-        console.log('SW console log test');
-      `
-    )
-    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
+    .withWorker(function (self) {
+      self.addEventListener('message', (event) => {
+        const message = (event as MessageEvent<string>).data
+
+        console.log(message)
+      })
+    })
+    .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
+
+      await interactWithWorker((worker) => {
+        worker.postMessage('SW console log test')
+      })
 
       await flushEvents()
 
