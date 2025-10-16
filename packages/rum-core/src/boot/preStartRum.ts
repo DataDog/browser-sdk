@@ -1,6 +1,5 @@
 import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer } from '@datadog/browser-core'
 import {
-  isNodeEnvironment,
   createBoundedBuffer,
   display,
   canUseEventBridge,
@@ -101,10 +100,6 @@ export function createPreStartStrategy(
   }
 
   function doInit(initConfiguration: RumInitConfiguration, errorStack?: string) {
-    if (isNodeEnvironment) {
-      return
-    }
-
     const eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
