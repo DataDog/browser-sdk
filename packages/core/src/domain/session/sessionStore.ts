@@ -26,7 +26,7 @@ export interface SessionStore {
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
-  expire: () => void
+  expire: (hasConsent?: boolean) => void
   stop: () => void
   updateSessionState: (state: Partial<SessionState>) => void
 }
@@ -170,6 +170,7 @@ export function startSessionStore<TrackingType extends string>(
       {
         process: (sessionState) => {
           if (isSessionInNotStartedState(sessionState)) {
+            sessionState.anonymousId = generateUUID()
             return getExpiredSessionState(sessionState, configuration)
           }
         },
@@ -231,8 +232,11 @@ export function startSessionStore<TrackingType extends string>(
     expireObservable,
     sessionStateUpdateObservable,
     restartSession: startSession,
-    expire: () => {
+    expire: (hasConsent?: boolean) => {
       cancelExpandOrRenewSession()
+      if (hasConsent === false && sessionCache) {
+        delete sessionCache.anonymousId
+      }
       sessionStoreStrategy.expireSession(sessionCache)
       synchronizeSession(getExpiredSessionState(sessionCache, configuration))
     },
