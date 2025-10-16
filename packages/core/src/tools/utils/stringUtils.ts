@@ -10,7 +10,7 @@ export function generateUUID(placeholder?: string): string {
 }
 
 const COMMA_SEPARATED_KEY_VALUE = /([\w-]+)\s*=\s*([^;]+)/g
-
+const DATADOG_SESSION_COOKIE_PATTERN = /_dd_s=([^;]+)/g
 /**
  * Returns the value of the key with the given name
  * If there are multiple values with the same key, returns the first one
@@ -33,19 +33,13 @@ export function findCommaSeparatedValue(rawString: string, name: string): string
  * Returns a map of all the values with the given key
  * If there are multiple values with the same key, returns all the values
  */
-export function findAllCommaSeparatedValues(rawString: string): Map<string, string[]> {
-  const result = new Map<string, string[]>()
-  COMMA_SEPARATED_KEY_VALUE.lastIndex = 0
+export function findAllDatadogSessionCookieValues(rawString: string): string[] {
+  const result = []
+  DATADOG_SESSION_COOKIE_PATTERN.lastIndex = 0
   while (true) {
-    const match = COMMA_SEPARATED_KEY_VALUE.exec(rawString)
+    const match = DATADOG_SESSION_COOKIE_PATTERN.exec(rawString)
     if (match) {
-      const key = match[1]
-      const value = match[2]
-      if (result.has(key)) {
-        result.get(key)!.push(value)
-      } else {
-        result.set(key, [value])
-      }
+      result.push(match[1])
     } else {
       break
     }

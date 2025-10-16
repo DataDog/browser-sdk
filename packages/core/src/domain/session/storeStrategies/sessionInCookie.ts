@@ -2,7 +2,13 @@ import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../../../tool
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie, getCookie } from '../../../browser/cookie'
+import {
+  getCurrentSite,
+  areCookiesAuthorized,
+  getAllDatadogSessionCookieValues,
+  setCookie,
+  getCookie,
+} from '../../../browser/cookie'
 import type { InitConfiguration, Configuration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
 import {
@@ -126,7 +132,7 @@ function encodeCookieOptions(cookieOptions: CookieOptions): string {
  * and this allows to keep the current session id when we release this feature.
  */
 function retrieveSessionCookieFromEncodedCookie(cookieOptions: CookieOptions): SessionState {
-  const cookies = getCookies(SESSION_STORE_KEY)
+  const cookies = getAllDatadogSessionCookieValues()
   const opts = encodeCookieOptions(cookieOptions)
 
   let sessionState: SessionState | undefined

@@ -1,7 +1,7 @@
 import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
 import {
-  findAllCommaSeparatedValues,
+  findAllDatadogSessionCookieValues,
   findCommaSeparatedValue,
   findCommaSeparatedValues,
   generateUUID,
@@ -35,10 +35,10 @@ export function getCookie(name: string) {
 }
 
 /**
- * Returns all the values of the cookies with the given name
+ * Returns all the values of the datadog session cookies
  */
-export function getCookies(name: string): string[] {
-  return findAllCommaSeparatedValues(document.cookie).get(name) || []
+export function getAllDatadogSessionCookieValues(): string[] {
+  return findAllDatadogSessionCookieValues(document.cookie)
 }
 
 let initCookieParsed: Map<string, string> | undefined

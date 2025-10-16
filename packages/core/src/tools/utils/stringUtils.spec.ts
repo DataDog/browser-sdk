@@ -2,7 +2,7 @@ import {
   safeTruncate,
   findCommaSeparatedValue,
   findCommaSeparatedValues,
-  findAllCommaSeparatedValues,
+  findAllDatadogSessionCookieValues,
 } from './stringUtils'
 
 describe('stringUtils', () => {
@@ -63,12 +63,12 @@ describe('stringUtils', () => {
     })
   })
 
-  describe('findAllCommaSeparatedValues', () => {
-    it('returns all the values from a comma separated hash', () => {
-      const expectedValues = new Map<string, string[]>()
-      expectedValues.set('foo', ['a', 'c'])
-      expectedValues.set('bar', ['b'])
-      expect(findAllCommaSeparatedValues('foo=a;bar=b;foo=c')).toEqual(expectedValues)
+  describe('findAllDatadogSessionCookieValues', () => {
+    it('returns all the values from a datadog session cookie', () => {
+      const expectedValues = []
+      expectedValues.push('a')
+      expectedValues.push('c')
+      expect(findAllDatadogSessionCookieValues('_dd_s=a;bar=b;_dd_s=c')).toEqual(expectedValues)
     })
   })
 })
