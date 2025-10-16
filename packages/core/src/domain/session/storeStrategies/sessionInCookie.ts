@@ -34,7 +34,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
     isLockEnabled: isChromium(),
     persistSession: (sessionState: SessionState) =>
       storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
-    retrieveSession: () => retrieveSessionCookie(configuration, cookieOptions),
+    retrieveSession: () => retrieveSessionCookie(cookieOptions),
     expireSession: (sessionState: SessionState) =>
       storeSessionCookie(
         cookieOptions,
@@ -62,7 +62,7 @@ function storeSessionCookie(
       ...sessionState,
       // deleting a cookie is writing a new cookie with an empty value
       // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
-      ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(configuration, options) } : {}),
+      ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
     })
   }
 
@@ -78,9 +78,9 @@ function storeSessionCookie(
  * Retrieve the session state from the cookie that was set with the same cookie options
  * If there is no match, return the first cookie, because that's how `getCookie()` works
  */
-export function retrieveSessionCookie(configuration: Configuration, cookieOptions: CookieOptions): SessionState {
+export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionState {
   if (isExperimentalFeatureEnabled(ExperimentalFeature.ENCODE_COOKIE_OPTIONS)) {
-    return retrieveSessionCookieFromEncodedCookie(configuration, cookieOptions)
+    return retrieveSessionCookieFromEncodedCookie(cookieOptions)
   }
 
   const sessionString = getCookie(SESSION_STORE_KEY)
@@ -107,14 +107,14 @@ export function buildCookieOptions(initConfiguration: InitConfiguration): Cookie
   return cookieOptions
 }
 
-function encodeCookieOptions(configuration: Configuration, cookieOptions: CookieOptions): string {
+function encodeCookieOptions(cookieOptions: CookieOptions): string {
   const domainCount = cookieOptions.domain ? cookieOptions.domain.split('.').length - 1 : 0
 
   /* eslint-disable no-bitwise */
   let byte = 0
   byte |= SESSION_COOKIE_VERSION << 5 // Store version in upper 3 bits
   byte |= domainCount << 1 // Store domain count in next 4 bits
-  byte |= configuration.usePartitionedCrossSiteSessionCookie ? 1 : 0 // Store useCrossSiteScripting in next bit
+  byte |= cookieOptions.crossSite ? 1 : 0 // Store useCrossSiteScripting in next bit
   /* eslint-enable no-bitwise */
 
   return byte.toString(16) // Convert to hex string
@@ -125,12 +125,9 @@ function encodeCookieOptions(configuration: Configuration, cookieOptions: Cookie
  * If there is no match, fallback to the first cookie, (because that's how `getCookie()` works)
  * and this allows to keep the current session id when we release this feature.
  */
-function retrieveSessionCookieFromEncodedCookie(
-  configuration: Configuration,
-  cookieOptions: CookieOptions
-): SessionState {
+function retrieveSessionCookieFromEncodedCookie(cookieOptions: CookieOptions): SessionState {
   const cookies = getCookies(SESSION_STORE_KEY)
-  const opts = encodeCookieOptions(configuration, cookieOptions)
+  const opts = encodeCookieOptions(cookieOptions)
 
   let sessionState: SessionState | undefined
 

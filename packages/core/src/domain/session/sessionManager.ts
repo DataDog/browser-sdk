@@ -183,7 +183,7 @@ async function reportUnexpectedSessionState(configuration: Configuration) {
   let cookieContext
 
   if (sessionStoreStrategyType.type === SessionPersistence.COOKIE) {
-    rawSession = retrieveSessionCookie(configuration, sessionStoreStrategyType.cookieOptions)
+    rawSession = retrieveSessionCookie(sessionStoreStrategyType.cookieOptions)
 
     cookieContext = {
       cookie: await getSessionCookies(),
