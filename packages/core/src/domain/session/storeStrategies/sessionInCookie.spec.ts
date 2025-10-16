@@ -46,6 +46,7 @@ describe('session in cookie strategy', () => {
   })
 
   it('should not generate an anonymousId if not present', () => {
+    const cookieStorageStrategy = setupCookieStrategy()
     cookieStorageStrategy.persistSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
     expect(session).toEqual({ id: '123', created: '0' })
