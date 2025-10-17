@@ -49,5 +49,6 @@ export function getGlobalObject<T = typeof globalThis>(): T {
 export const globalObject = getGlobalObject<GlobalObject>()
 
 export const isWorkerEnvironment = 'WorkerGlobalScope' in globalObject
+// @see https://stackoverflow.com/questions/4224606/how-to-check-whether-a-script-is-running-under-node-js
 // @ts-expect-error module is undefined outside of Node.
 export const isNodeEnvironment = typeof module !== 'undefined' && module.exports
