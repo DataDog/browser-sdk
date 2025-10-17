@@ -22,6 +22,7 @@ export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefin
 }
 
 export function initLocalStorageStrategy(configuration: Configuration): SessionStoreStrategy {
+  console.log('initLocalStorageStrategy', configuration)
   return {
     isLockEnabled: false,
     persistSession: persistInLocalStorage,
@@ -35,8 +36,14 @@ function persistInLocalStorage(sessionState: SessionState) {
 }
 
 export function retrieveSessionFromLocalStorage(): SessionState {
-  const sessionString = localStorage.getItem(SESSION_STORE_KEY)
-  return toSessionState(sessionString)
+  console.log('retrieveSessionFromLocalStorage')
+  try {
+    const sessionString = localStorage.getItem(SESSION_STORE_KEY)
+    return toSessionState(sessionString)
+  } catch (error) {
+    console.error('Error retrieving session from local storage', error)
+    return { id: '123', created: '0' }
+  }
 }
 
 function expireSessionFromLocalStorage(previousSessionState: SessionState, configuration: Configuration) {

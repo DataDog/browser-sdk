@@ -15,7 +15,7 @@ describe('endpointBuilder', () => {
   describe('query parameters', () => {
     it('should add intake query parameters', () => {
       expect(createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toMatch(
-        `&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`
+        new RegExp(`&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`)
       )
     })
 
@@ -63,10 +63,10 @@ describe('endpointBuilder', () => {
           DEFAULT_PAYLOAD
         )
       ).toMatch(
-        `https://proxy.io/path\\?ddforward=${encodeURIComponent(
+         new RegExp(`https://proxy.io/path\\?ddforward=${encodeURIComponent(
           `/api/v2/rum?ddsource=(.*)&dd-api-key=${clientToken}` +
             '&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)'
-        )}`
+        )}`)
       )
     })
 
@@ -84,7 +84,7 @@ describe('endpointBuilder', () => {
       expect(
         createEndpointBuilder({ ...initConfiguration, proxy: proxyFn }, 'rum').build('fetch', DEFAULT_PAYLOAD)
       ).toMatch(
-        `https://proxy.io/prefix/api/v2/rum/suffix\\?ddsource=(.*)&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`
+        new RegExp(`https://proxy.io/prefix/api/v2/rum/suffix\\?ddsource=(.*)&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`)
       )
     })
   })

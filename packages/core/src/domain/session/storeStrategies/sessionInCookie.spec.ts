@@ -168,7 +168,7 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     const cookieStorageStrategy = setupCookieStrategy()
     cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ ...sessionState, anonymousId })
+    expect(session).toEqual({ ...sessionState, anonymousId})
     expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&aid=device-123')
   })
 
@@ -176,7 +176,7 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     const cookieStorageStrategy = setupCookieStrategy()
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId })
+    expect(session).toEqual({ isExpired: '1', anonymousId})
     expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=device-123')
   })
 

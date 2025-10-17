@@ -49,6 +49,7 @@
     "@types/express": "5.0.3",
     "@types/jasmine": "3.10.18",
     "@types/node": "24.5.2",
+    "@vitest/browser": "3.2.4",
     "ajv": "8.17.1",
     "browserstack-local": "1.5.8",
     "chrome-webstore-upload": "3.2.0",
@@ -90,6 +91,7 @@
     "typedoc": "0.28.13",
     "typescript": "5.9.2",
     "typescript-eslint": "8.44.1",
+    "vitest": "3.2.4",
     "webpack": "5.101.3",
     "webpack-cli": "6.0.1",
     "webpack-dev-middleware": "7.4.5"
