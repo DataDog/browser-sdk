@@ -49,3 +49,5 @@ export function getGlobalObject<T = typeof globalThis>(): T {
 export const globalObject = getGlobalObject<GlobalObject>()
 
 export const isWorkerEnvironment = 'WorkerGlobalScope' in globalObject
+// @ts-expect-error module is undefined outside of Node.
+export const isNodeEnvironment = typeof module !== 'undefined' && module.exports
