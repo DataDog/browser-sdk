@@ -5,6 +5,7 @@
   "main": "cjs/index.js",
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
+  "type": "module",
   "sideEffects": false,
   "scripts": {
     "pack": "yarn pack",

@@ -19,16 +19,27 @@ export function withXhr({
 }: {
   setup: (xhr: MockXhr) => void
   onComplete: (xhr: XMLHttpRequest) => void
-}) {
-  const xhr = new XMLHttpRequest()
-  const loadend = () => {
-    xhr.removeEventListener('loadend', loadend)
-    setTimeout(() => {
-      onComplete(xhr)
-    })
-  }
-  xhr.addEventListener('loadend', loadend)
-  setup(xhr as unknown as MockXhr)
+}): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    const loadend = () => {
+      xhr.removeEventListener('loadend', loadend)
+      setTimeout(() => {
+        try {
+          onComplete(xhr)
+          resolve()
+        } catch (error) {
+          reject(error)
+        }
+      })
+    }
+    xhr.addEventListener('loadend', loadend)
+    try {
+      setup(xhr as unknown as MockXhr)
+    } catch (error) {
+      reject(error)
+    }
+  })
 }
 
 export class MockXhr extends MockEventTarget {

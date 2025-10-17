@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { Configuration } from '../src/domain/configuration'
 import type { SessionState } from '../src/domain/session/sessionState'
 import { getExpiredSessionState } from '../src/domain/session/sessionState'
@@ -12,11 +13,11 @@ export function createFakeSessionStoreStrategy({
   return {
     isLockEnabled,
 
-    persistSession: jasmine.createSpy('persistSession').and.callFake((newSession) => {
+    persistSession: vi.fn((newSession) => {
       session = newSession
     }),
 
-    retrieveSession: jasmine.createSpy<() => SessionState>('retrieveSession').and.callFake(() => {
+    retrieveSession: vi.fn<() => SessionState>(() => {
       const plannedSession = plannedRetrieveSessions.shift()
       if (plannedSession) {
         session = plannedSession
@@ -24,7 +25,7 @@ export function createFakeSessionStoreStrategy({
       return { ...session }
     }),
 
-    expireSession: jasmine.createSpy('expireSession').and.callFake((previousSession) => {
+    expireSession: vi.fn((previousSession) => {
       session = getExpiredSessionState(previousSession, { trackAnonymousUser: true } as Configuration)
     }),
 

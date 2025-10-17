@@ -1,3 +1,5 @@
+import { afterEach } from 'vitest'
+
 const cleanupTasks: Array<() => void> = []
 
 export function registerCleanupTask(task: () => void) {

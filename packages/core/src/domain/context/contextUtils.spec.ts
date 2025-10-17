@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { display } from '../../tools/display'
 import type { Context } from '../../tools/serialisation/context'
 import type { Account } from '../contexts/accountContext'
@@ -6,7 +7,7 @@ import { checkContext } from './contextUtils'
 
 describe('checkContext function', () => {
   it('should only accept valid objects', () => {
-    spyOn(display, 'error')
+    vi.spyOn(display, 'error')
 
     const obj: any = { id: 42, name: true, email: null } // Valid, even though not sanitized
     const user: User = { id: '42', name: 'John', email: 'john@doe.com' }

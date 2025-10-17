@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { RumEvent } from '../../../../rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
@@ -15,10 +16,10 @@ import { serializeConfiguration, validateAndBuildConfiguration } from './configu
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
 
-  let displaySpy: jasmine.Spy<typeof display.error>
+  let displaySpy: ReturnType<typeof vi.fn<typeof display.error>>
 
   beforeEach(() => {
-    displaySpy = spyOn(display, 'error')
+    displaySpy = vi.spyOn(display, 'error')
   })
 
   afterEach(() => {
@@ -41,10 +42,10 @@ describe('validateAndBuildConfiguration', () => {
         clientToken,
         enableExperimentalFeatures: ['bar', undefined as any, null as any, 11 as any],
       })
-      expect(isExperimentalFeatureEnabled('bar' as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(undefined as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(null as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(11 as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled('bar' as any)).toBeFalsy()
+      expect(isExperimentalFeatureEnabled(undefined as any)).toBeFalsy()
+      expect(isExperimentalFeatureEnabled(null as any)).toBeFalsy()
+      expect(isExperimentalFeatureEnabled(11 as any)).toBeFalsy()
     })
   })
 
@@ -70,13 +71,13 @@ describe('validateAndBuildConfiguration', () => {
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       expect(
         validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 } as unknown as InitConfiguration)
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       validateAndBuildConfiguration({ clientToken: 'yes', sessionSampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
     })
@@ -87,13 +88,13 @@ describe('validateAndBuildConfiguration', () => {
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       expect(
         validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 } as unknown as InitConfiguration)
       ).toBeUndefined()
       expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       validateAndBuildConfiguration({ clientToken: 'yes', telemetrySampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
     })
@@ -122,7 +123,7 @@ describe('validateAndBuildConfiguration', () => {
         }
       }
       const configuration = validateAndBuildConfiguration({ clientToken, beforeSend })!
-      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBeFalse()
+      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBeFalsy()
       expect(configuration.beforeSend!({ view: { url: '/bar' } }, {})).toBeUndefined()
     })
 
@@ -140,22 +141,22 @@ describe('validateAndBuildConfiguration', () => {
 
   describe('allowUntrustedEvents', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.allowUntrustedEvents).toBeFalse()
+      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.allowUntrustedEvents).toBeFalsy()
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: true })!.allowUntrustedEvents
-      ).toBeTrue()
+      ).toBeTruthy()
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: false })!.allowUntrustedEvents
-      ).toBeFalse()
+      ).toBeFalsy()
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: 'foo' as any })!.allowUntrustedEvents
-      ).toBeTrue()
+      ).toBeTruthy()
     })
   })
 

@@ -1,3 +1,5 @@
+import { afterEach, vi } from 'vitest'
+
 const ignoreList: Array<{ level: string; match: string }> = []
 
 afterEach(() => {
@@ -11,10 +13,10 @@ afterEach(() => {
 export function ignoreConsoleLogs(level: 'error' | 'warn' | 'log', match: string) {
   ignoreList.push({ level, match })
 
-  if (!jasmine.isSpy(console[level])) {
+  if (!vi.isMockFunction(console[level])) {
     const originalLogFunction = console[level].bind(console)
 
-    spyOn(console, level).and.callFake((...args: unknown[]) => {
+    vi.spyOn(console, level).mockImplementation((...args: unknown[]) => {
       // No need to be too precise with formating here, we just want something to match against
       const message = args.map((arg) => String(arg)).join(' ')
       if (ignoreList.some((ignoreEntry) => ignoreEntry.level === level && message.includes(ignoreEntry.match))) {

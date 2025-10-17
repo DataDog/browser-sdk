@@ -37,7 +37,7 @@ describe('createEventRateLimiter', () => {
   })
 
   it('calls the "onLimitReached" callback with the raw "limit reached" error when the limit is reached', () => {
-    const onLimitReachedSpy = jasmine.createSpy<(rawError: RawError) => void>()
+    const onLimitReachedSpy = vi.fn<(rawError: RawError) => void>()
     eventLimiter = createEventRateLimiter('error', limit, onLimitReachedSpy)
 
     eventLimiter.isLimitReached()
@@ -59,7 +59,7 @@ describe('createEventRateLimiter', () => {
   })
 
   it('does not call the "onLimitReached" callback more than once when the limit is reached', () => {
-    const onLimitReachedSpy = jasmine.createSpy<(rawError: RawError) => void>()
+    const onLimitReachedSpy = vi.fn<(rawError: RawError) => void>()
     eventLimiter = createEventRateLimiter('error', limit, onLimitReachedSpy)
 
     eventLimiter.isLimitReached()

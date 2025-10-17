@@ -1,3 +1,9 @@
+// Setup custom matchers for Vitest
+// we need this for toHaveBeenCalledOnceWith, toHaveBeenCalledBefore, toBeTrue, toBeFalse
+import { setupJasmineMatchers } from './jasmineMatchers'
+setupJasmineMatchers()
+
+export * from './asyncTestHelpers'
 export * from './browserChecks'
 export * from './browserExtension'
 export type * from './buildEnv'

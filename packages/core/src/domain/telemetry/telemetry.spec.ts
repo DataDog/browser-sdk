@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
@@ -66,8 +67,8 @@ describe('telemetry', () => {
     })
 
     expect(await getTelemetryEvents()).toEqual([
-      jasmine.objectContaining({
-        telemetry: jasmine.objectContaining({
+      expect.objectContaining({
+        telemetry: expect.objectContaining({
           type: TelemetryType.LOG,
           status: StatusType.error,
         }),
@@ -89,10 +90,10 @@ describe('telemetry', () => {
       addTelemetryConfiguration({})
 
       expect(await getTelemetryEvents()).toEqual([
-        jasmine.objectContaining({
-          telemetry: jasmine.objectContaining({
+        expect.objectContaining({
+          telemetry: expect.objectContaining({
             type: TelemetryType.CONFIGURATION,
-            configuration: jasmine.anything(),
+            configuration: expect.anything(),
           }),
         }),
       ])
@@ -128,10 +129,10 @@ describe('telemetry', () => {
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: 'granted' })
 
       expect(await getTelemetryEvents()).toEqual([
-        jasmine.objectContaining({
-          telemetry: jasmine.objectContaining({
+        expect.objectContaining({
+          telemetry: expect.objectContaining({
             type: TelemetryType.USAGE,
-            usage: jasmine.anything(),
+            usage: expect.anything(),
           }),
         }),
       ])
@@ -161,8 +162,8 @@ describe('telemetry', () => {
       addTelemetryMetrics(TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, { speed: 1000 })
 
       expect(await getTelemetryEvents()).toEqual([
-        jasmine.objectContaining({
-          telemetry: jasmine.objectContaining({
+        expect.objectContaining({
+          telemetry: expect.objectContaining({
             type: TelemetryType.LOG,
             message: TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME,
             status: StatusType.debug,
@@ -205,8 +206,8 @@ describe('telemetry', () => {
     })
 
     expect((await getTelemetryEvents())[0].telemetry.runtime_env).toEqual({
-      is_local_file: jasmine.any(Boolean),
-      is_worker: jasmine.any(Boolean),
+      is_local_file: expect.any(Boolean),
+      is_worker: expect.any(Boolean),
     })
   })
 
@@ -302,7 +303,7 @@ describe('telemetry', () => {
 
   describe('sampling', () => {
     it('should notify when sampled', async () => {
-      spyOn(Math, 'random').and.callFake(() => 0)
+      vi.spyOn(Math, 'random').mockImplementation(() => 0)
       const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
 
       callMonitored(() => {
@@ -313,7 +314,7 @@ describe('telemetry', () => {
     })
 
     it('should not notify when not sampled', async () => {
-      spyOn(Math, 'random').and.callFake(() => 1)
+      vi.spyOn(Math, 'random').mockImplementation(() => 1)
       const { getTelemetryEvents } = startAndSpyTelemetry({ telemetrySampleRate: 50 })
 
       callMonitored(() => {
@@ -395,18 +396,18 @@ describe('telemetry', () => {
 
       expect((await getTelemetryEvents()).map((event) => event.telemetry)).toEqual([
         // Group 1.
-        jasmine.objectContaining({ message: 'debug 1' }),
-        jasmine.objectContaining({ message: 'error 1' }),
-        jasmine.objectContaining({ message: TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, bandwidth: 500 }),
-        jasmine.objectContaining({ message: TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, speed: 1000 }),
-        jasmine.objectContaining({ usage: jasmine.objectContaining({ feature: 'stop-session' }) }),
+        expect.objectContaining({ message: 'debug 1' }),
+        expect.objectContaining({ message: 'error 1' }),
+        expect.objectContaining({ message: TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, bandwidth: 500 }),
+        expect.objectContaining({ message: TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, speed: 1000 }),
+        expect.objectContaining({ usage: expect.objectContaining({ feature: 'stop-session' }) }),
 
         // Group 2.
-        jasmine.objectContaining({ message: 'debug 2' }),
-        jasmine.objectContaining({ message: 'error 2' }),
-        jasmine.objectContaining({ message: TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, latency: 50 }),
-        jasmine.objectContaining({ message: TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, jank: 50 }),
-        jasmine.objectContaining({ usage: jasmine.objectContaining({ feature: 'start-session-replay-recording' }) }),
+        expect.objectContaining({ message: 'debug 2' }),
+        expect.objectContaining({ message: 'error 2' }),
+        expect.objectContaining({ message: TelemetryMetrics.SEGMENT_METRICS_TELEMETRY_NAME, latency: 50 }),
+        expect.objectContaining({ message: TelemetryMetrics.CUSTOMER_DATA_METRIC_NAME, jank: 50 }),
+        expect.objectContaining({ usage: expect.objectContaining({ feature: 'start-session-replay-recording' }) }),
       ])
     })
   })
@@ -440,7 +441,7 @@ describe('formatError', () => {
       message: 'message',
       error: {
         kind: 'Error',
-        stack: jasmine.stringMatching(/^Error: message(\n|$)/) as unknown as string,
+        stack: expect.stringMatching(/^Error: message(\n|$)/) as unknown as string,
       },
     })
   })

@@ -1,14 +1,29 @@
-let currentSpec: jasmine.SpecResult | null = null
+import { beforeEach, afterEach } from 'vitest'
+import type { Task } from 'vitest'
 
-export function getCurrentJasmineSpec() {
+interface SpecResult {
+  fullName: string
+}
+
+let currentSpec: SpecResult | null = null
+
+export function getCurrentSpec() {
   return currentSpec
 }
 
-jasmine.getEnv().addReporter({
-  specStarted(specResult) {
-    currentSpec = specResult
-  },
-  specDone() {
-    currentSpec = null
-  },
+// Keep legacy name for backward compatibility
+export const getCurrentJasmineSpec = getCurrentSpec
+
+beforeEach((context) => {
+  // Access current test from the context
+  const currentTest = (context as any).task as Task | undefined
+  if (currentTest) {
+    currentSpec = {
+      fullName: currentTest.name,
+    }
+  }
+})
+
+afterEach(() => {
+  currentSpec = null
 })

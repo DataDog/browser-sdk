@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { createHooks } from '../../test'
 import { DISCARDED, HookNames } from './abstractHooks'
@@ -11,7 +12,7 @@ describe('startHooks', () => {
   })
 
   it('unregister a hook callback', () => {
-    const callback = jasmine.createSpy().and.returnValue({ service: 'foo' })
+    const callback = vi.fn().mockReturnValue({ service: 'foo' })
 
     const { unregister } = hooks.register(HookNames.Assemble, callback)
     unregister()
@@ -24,8 +25,8 @@ describe('startHooks', () => {
 
   describe('assemble hook', () => {
     it('combines results from multiple callbacks', () => {
-      const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
-      const callback2 = jasmine.createSpy().and.returnValue({ type: 'action', version: 'bar' })
+      const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+      const callback2 = vi.fn().mockReturnValue({ type: 'action', version: 'bar' })
 
       hooks.register(HookNames.Assemble, callback1)
       hooks.register(HookNames.Assemble, callback2)
@@ -38,8 +39,8 @@ describe('startHooks', () => {
     })
 
     it('does not combine undefined results from callbacks', () => {
-      const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
-      const callback2 = jasmine.createSpy().and.returnValue(undefined)
+      const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+      const callback2 = vi.fn().mockReturnValue(undefined)
 
       hooks.register(HookNames.Assemble, callback1)
       hooks.register(HookNames.Assemble, callback2)
@@ -52,9 +53,9 @@ describe('startHooks', () => {
     })
 
     it('returns DISCARDED if one callbacks returns DISCARDED', () => {
-      const callback1 = jasmine.createSpy().and.returnValue({ type: 'action', service: 'foo' })
-      const callback2 = jasmine.createSpy().and.returnValue(DISCARDED)
-      const callback3 = jasmine.createSpy().and.returnValue({ type: 'action', version: 'bar' })
+      const callback1 = vi.fn().mockReturnValue({ type: 'action', service: 'foo' })
+      const callback2 = vi.fn().mockReturnValue(DISCARDED)
+      const callback3 = vi.fn().mockReturnValue({ type: 'action', version: 'bar' })
 
       hooks.register(HookNames.Assemble, callback1)
       hooks.register(HookNames.Assemble, callback2)

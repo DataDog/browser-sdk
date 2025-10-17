@@ -1,3 +1,4 @@
+import { vi, expect } from 'vitest'
 import { ExperimentalFeature } from '../../../tools/experimentalFeatures'
 import { mockClock, getSessionState, registerCleanupTask, mockExperimentalFeatures } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
@@ -37,7 +38,7 @@ describe('session in cookie strategy', () => {
 
   it('should set `isExpired=1` to the cookie holding the session', () => {
     const cookieStorageStrategy = setupCookieStrategy()
-    spyOn(Math, 'random').and.callFake(() => 0)
+    vi.spyOn(Math, 'random').mockImplementation(() => 0)
     cookieStorageStrategy.persistSession(sessionState)
     cookieStorageStrategy.expireSession(sessionState)
     const session = cookieStorageStrategy.retrieveSession()
@@ -84,7 +85,7 @@ describe('session in cookie strategy', () => {
         secure: false,
         crossSite: false,
         partitioned: false,
-        domain: jasmine.any(String),
+        domain: expect.any(String),
       })
     })
   })
@@ -113,9 +114,9 @@ describe('session in cookie strategy', () => {
       },
     ].forEach(({ description, initConfiguration, cookieString }) => {
       it(description, () => {
-        const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+        const cookieSetSpy = vi.spyOn(document, 'cookie', 'set')
         selectCookieStrategy(initConfiguration)
-        expect(cookieSetSpy.calls.argsFor(0)[0]).toMatch(cookieString)
+        expect(cookieSetSpy.mock.calls[0][0]).toMatch(cookieString)
       })
     })
   })
@@ -128,13 +129,13 @@ describe('session in cookie strategy', () => {
     it('should encode cookie options in the cookie value', () => {
       // Some older browsers don't support partitioned cross-site session cookies
       // so instead of testing the cookie value, we test the call to the cookie setter
-      const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+      const cookieSetSpy = vi.spyOn(document, 'cookie', 'set')
       const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
       cookieStorageStrategy.persistSession({ id: '123' })
 
-      const calls = cookieSetSpy.calls.all()
+      const calls = cookieSetSpy.mock.calls
       const lastCall = calls[calls.length - 1]
-      expect(lastCall.args[0]).toMatch(/^_dd_s=id=123&c=1/)
+      expect(lastCall[0]).toMatch(/^_dd_s=id=123&c=1/)
     })
 
     it('should not encode cookie options in the cookie value if the session is empty (deleting the cookie)', () => {
@@ -145,14 +146,14 @@ describe('session in cookie strategy', () => {
     })
 
     it('should return the correct session state from the cookies', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('_dd_s=id=123&c=0;_dd_s=id=456&c=1;_dd_s=id=789&c=2')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('_dd_s=id=123&c=0;_dd_s=id=456&c=1;_dd_s=id=789&c=2')
       const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
       expect(cookieStorageStrategy.retrieveSession()).toEqual({ id: '456' })
     })
 
     it('should return the session state from the first cookie if there is no match', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('_dd_s=id=123&c=0;_dd_s=id=789&c=2')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('_dd_s=id=123&c=0;_dd_s=id=789&c=2')
       const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
 
       expect(cookieStorageStrategy.retrieveSession()).toEqual({ id: '123' })
@@ -168,7 +169,7 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     const cookieStorageStrategy = setupCookieStrategy()
     cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ ...sessionState, anonymousId })
+    expect(session).toEqual({ ...sessionState, anonymousId})
     expect(getCookie(SESSION_STORE_KEY)).toBe('id=123&created=0&aid=device-123')
   })
 
@@ -176,26 +177,26 @@ describe('session in cookie strategy when opt-in anonymous user tracking', () =>
     const cookieStorageStrategy = setupCookieStrategy()
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
     const session = cookieStorageStrategy.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId })
+    expect(session).toEqual({ isExpired: '1', anonymousId})
     expect(getCookie(SESSION_STORE_KEY)).toBe('isExpired=1&aid=device-123')
   })
 
   it('should persist for one year when opt-in', () => {
     const cookieStorageStrategy = setupCookieStrategy()
-    const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+    const cookieSetSpy = vi.spyOn(document, 'cookie', 'set')
     const clock = mockClock()
     cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
-    expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
+    expect(cookieSetSpy.mock.calls[0][0]).toContain(
       new Date(clock.timeStamp(SESSION_COOKIE_EXPIRATION_DELAY)).toUTCString()
     )
   })
 
   it('should expire in one year when opt-in', () => {
     const cookieStorageStrategy = setupCookieStrategy()
-    const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+    const cookieSetSpy = vi.spyOn(document, 'cookie', 'set')
     const clock = mockClock()
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
-    expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(
+    expect(cookieSetSpy.mock.calls[0][0]).toContain(
       new Date(clock.timeStamp(SESSION_COOKIE_EXPIRATION_DELAY)).toUTCString()
     )
   })
@@ -207,17 +208,17 @@ describe('session in cookie strategy when opt-out anonymous user tracking', () =
 
   it('should not extend cookie expiration time when opt-out', () => {
     const cookieStorageStrategy = setupCookieStrategy({ trackAnonymousUser: false })
-    const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+    const cookieSetSpy = vi.spyOn(document, 'cookie', 'set')
     const clock = mockClock()
     cookieStorageStrategy.expireSession({ ...sessionState, anonymousId })
-    expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(new Date(clock.timeStamp(SESSION_TIME_OUT_DELAY)).toUTCString())
+    expect(cookieSetSpy.mock.calls[0][0]).toContain(new Date(clock.timeStamp(SESSION_TIME_OUT_DELAY)).toUTCString())
   })
 
   it('should not persist with one year when opt-out', () => {
     const cookieStorageStrategy = setupCookieStrategy({ trackAnonymousUser: false })
-    const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
+    const cookieSetSpy = vi.spyOn(document, 'cookie', 'set')
     cookieStorageStrategy.persistSession({ ...sessionState, anonymousId })
-    expect(cookieSetSpy.calls.argsFor(0)[0]).toContain(new Date(Date.now() + SESSION_EXPIRATION_DELAY).toUTCString())
+    expect(cookieSetSpy.mock.calls[0][0]).toContain(new Date(Date.now() + SESSION_EXPIRATION_DELAY).toUTCString())
   })
 
   it('should not persist or expire a session with anonymous id when opt-out', () => {

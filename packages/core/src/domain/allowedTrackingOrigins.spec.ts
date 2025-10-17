@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { STACK_WITH_INIT_IN_EXTENSION, STACK_WITH_INIT_IN_PAGE } from '../../test'
 import { display } from '../tools/display'
 import {
@@ -13,10 +14,10 @@ const DEFAULT_CONFIG = {
 }
 
 describe('checkForAllowedTrackingOrigins', () => {
-  let displayErrorSpy: jasmine.Spy
+  let displayErrorSpy: ReturnType<typeof vi.fn>
 
   beforeEach(() => {
-    displayErrorSpy = spyOn(display, 'error')
+    displayErrorSpy = vi.spyOn(display, 'error')
   })
 
   it('should not warn if not in extension environment', () => {

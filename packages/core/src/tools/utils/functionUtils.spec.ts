@@ -1,17 +1,18 @@
+import { vi } from 'vitest'
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
 import { throttle } from './functionUtils'
 
 describe('functionUtils', () => {
   describe('throttle', () => {
-    let spy: jasmine.Spy
+    let spy: ReturnType<typeof vi.fn>
     let throttled: () => void
     let cancel: () => void
     let clock: Clock
 
     beforeEach(() => {
       clock = mockClock()
-      spy = jasmine.createSpy()
+      spy = vi.fn()
     })
 
     describe('when {leading: false, trailing:false}', () => {

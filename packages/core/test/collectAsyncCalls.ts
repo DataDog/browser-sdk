@@ -1,34 +1,36 @@
+import type { MockInstance } from 'vitest'
+import { expect } from 'vitest'
 import { getCurrentJasmineSpec } from './getCurrentJasmineSpec'
 
-export function collectAsyncCalls<F extends jasmine.Func>(
-  spy: jasmine.Spy<F>,
+export function collectAsyncCalls<T extends (...args: any[]) => any>(
+  spy: MockInstance<T>,
   expectedCallsCount = 1
-): Promise<jasmine.Calls<F>> {
+): Promise<MockInstance<T>> {
   return new Promise((resolve, reject) => {
     const currentSpec = getCurrentJasmineSpec()
     if (!currentSpec) {
-      reject(new Error('collectAsyncCalls should be called within jasmine code'))
+      reject(new Error('collectAsyncCalls should be called within vitest code'))
       return
     }
 
     const checkCalls = () => {
-      if (spy.calls.count() === expectedCallsCount) {
-        spy.and.callFake(extraCallDetected as F)
-        resolve(spy.calls)
-      } else if (spy.calls.count() > expectedCallsCount) {
+      if (spy.mock.calls.length === expectedCallsCount) {
+        spy.mockImplementation(extraCallDetected as T)
+        resolve(spy)
+      } else if (spy.mock.calls.length > expectedCallsCount) {
         extraCallDetected()
       }
     }
 
     checkCalls()
 
-    spy.and.callFake((() => {
+    spy.mockImplementation((() => {
       checkCalls()
-    }) as F)
+    }) as T)
 
     function extraCallDetected() {
       const message = `Unexpected extra call for spec '${currentSpec!.fullName}'`
-      fail(message)
+      expect.fail(message)
       reject(new Error(message))
     }
   })

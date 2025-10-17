@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { Observable } from '..'
 import type { MockFlushController } from '../../test'
 import { createMockFlushController } from '../../test'
@@ -18,8 +19,8 @@ describe('batch', () => {
   let batch: Batch
   let transport: {
     observable: Observable<HttpRequestEvent>
-    send: jasmine.Spy<HttpRequest['send']>
-    sendOnExit: jasmine.Spy<HttpRequest['sendOnExit']>
+    send: ReturnType<typeof vi.fn<HttpRequest['send']>>
+    sendOnExit: ReturnType<typeof vi.fn<HttpRequest['sendOnExit']>>
   }
 
   let flushController: MockFlushController
@@ -28,8 +29,8 @@ describe('batch', () => {
   beforeEach(() => {
     transport = {
       observable: new Observable<HttpRequestEvent>(),
-      send: jasmine.createSpy(),
-      sendOnExit: jasmine.createSpy(),
+      send: vi.fn(),
+      sendOnExit: vi.fn(),
     } satisfies HttpRequest
     flushController = createMockFlushController()
     encoder = createIdentityEncoder()
@@ -41,7 +42,7 @@ describe('batch', () => {
 
     flushController.notifyFlush()
 
-    expect(transport.send.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.mock.calls[send.mock.calls.length - 1][0]).toEqual({
       data: '{"message":"hello"}',
       bytesCount: SMALL_MESSAGE_BYTES_COUNT,
       encoding: undefined,
@@ -74,7 +75,7 @@ describe('batch', () => {
       batch.add(SMALL_MESSAGE)
       batch.upsert(SMALL_MESSAGE, 'a')
 
-      flushController.notifyBeforeAddMessage.calls.reset()
+      flushController.notifyBeforeAddMessage.mockClear()
 
       batch.upsert(SMALL_MESSAGE, 'a')
 
@@ -89,7 +90,7 @@ describe('batch', () => {
     })
 
     it('should not send a message with a bytes size above the limit', () => {
-      const warnSpy = spyOn(display, 'warn')
+      const warnSpy = vi.spyOn(display, 'warn')
       batch.add(BIG_MESSAGE_OVER_BYTES_LIMIT)
 
       expect(warnSpy).toHaveBeenCalled()
@@ -111,9 +112,9 @@ describe('batch', () => {
     batch.upsert({ message: '4' }, 'c')
     flushController.notifyFlush()
 
-    expect(transport.send.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.mock.calls[send.mock.calls.length - 1][0]).toEqual({
       data: '{"message":"2"}\n{"message":"3"}\n{"message":"4"}',
-      bytesCount: jasmine.any(Number),
+      bytesCount: expect.any(Number),
       encoding: undefined,
     })
 
@@ -122,9 +123,9 @@ describe('batch', () => {
     batch.upsert({ message: '7' }, 'a')
     flushController.notifyFlush()
 
-    expect(transport.send.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.mock.calls[send.mock.calls.length - 1][0]).toEqual({
       data: '{"message":"5"}\n{"message":"6"}\n{"message":"7"}',
-      bytesCount: jasmine.any(Number),
+      bytesCount: expect.any(Number),
       encoding: undefined,
     })
 
@@ -134,9 +135,9 @@ describe('batch', () => {
     batch.upsert({ message: '11' }, 'b')
     flushController.notifyFlush()
 
-    expect(transport.send.calls.mostRecent().args[0]).toEqual({
+    expect(transport.send.mock.calls[send.mock.calls.length - 1][0]).toEqual({
       data: '{"message":"10"}\n{"message":"11"}',
-      bytesCount: jasmine.any(Number),
+      bytesCount: expect.any(Number),
       encoding: undefined,
     })
   })
@@ -148,15 +149,15 @@ describe('batch', () => {
 
       flushController.notifyFlush()
 
-      expect(transport.send.calls.mostRecent().args[0]).toEqual({
+      expect(transport.send.mock.calls[send.mock.calls.length - 1][0]).toEqual({
         data: '{"message":"1"}\n{"message":"2"}',
-        bytesCount: jasmine.any(Number),
+        bytesCount: expect.any(Number),
         encoding: undefined,
       })
     })
 
     it('should encode upserted messages', () => {
-      const encoderWriteSpy = spyOn(encoder, 'write')
+      const encoderWriteSpy = vi.spyOn(encoder, 'write')
 
       batch.upsert({ message: '2' }, 'a')
 
@@ -166,7 +167,7 @@ describe('batch', () => {
     })
 
     it('should be able to use telemetry in the httpRequest.send', () => {
-      transport.send.and.callFake(() => {
+      transport.send.mockImplementation(() => {
         addTelemetryDebugFake()
       })
       const addTelemetryDebugFake = () => batch.add({ message: 'telemetry message' })
@@ -230,7 +231,7 @@ describe('batch', () => {
         if (pending) {
           // eslint-disable-next-line @typescript-eslint/unbound-method
           const original = encoder.finishSync
-          spyOn(encoder, 'finishSync').and.callFake(() => ({
+          vi.spyOn(encoder, 'finishSync').mockImplementation(() => ({
             ...original(),
             pendingData: JSON.stringify(pending),
           }))
@@ -243,7 +244,7 @@ describe('batch', () => {
     })
 
     it('should be able to use telemetry in the httpRequest.sendOnExit', () => {
-      transport.sendOnExit.and.callFake(() => {
+      transport.sendOnExit.mockImplementation(() => {
         addTelemetryDebugFake()
       })
       const addTelemetryDebugFake = () => batch.add({ message: 'telemetry message' })

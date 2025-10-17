@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { Clock } from '../../test'
 import { mockClock } from '../../test'
 import type { PageMayExitEvent } from '../browser/pageMayExitObservable'
@@ -15,7 +16,7 @@ const SMALL_MESSAGE_BYTE_COUNT = 2
 describe('flushController', () => {
   let clock: Clock
   let flushController: FlushController
-  let flushSpy: jasmine.Spy<(event: FlushEvent) => void>
+  let flushSpy: ReturnType<typeof vi.fn<(event: FlushEvent) =>> void>
   let pageMayExitObservable: Observable<PageMayExitEvent>
   let sessionExpireObservable: Observable<void>
 
@@ -30,7 +31,7 @@ describe('flushController', () => {
       pageMayExitObservable,
       sessionExpireObservable,
     })
-    flushSpy = jasmine.createSpy()
+    flushSpy = vi.fn()
     flushController.flushObservable.subscribe(flushSpy)
   })
 
@@ -44,7 +45,7 @@ describe('flushController', () => {
     pageMayExitObservable.notify({ reason: 'before_unload' })
 
     expect(flushSpy).toHaveBeenCalledOnceWith({
-      reason: jasmine.any(String),
+      reason: expect.any(String),
       bytesCount: messagesCount * SMALL_MESSAGE_BYTE_COUNT,
       messagesCount,
     })
@@ -62,7 +63,7 @@ describe('flushController', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
       pageMayExitObservable.notify({ reason: 'before_unload' })
-      expect(flushSpy.calls.first().args[0].reason).toBe('before_unload')
+      expect(flushSpy.mock.calls[0][0].reason).toBe('before_unload')
     })
 
     it('does not notify if no message was added', () => {
@@ -89,7 +90,7 @@ describe('flushController', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
       sessionExpireObservable.notify()
-      expect(flushSpy.calls.first().args[0].reason).toBe('session_expire')
+      expect(flushSpy.mock.calls[0][0].reason).toBe('session_expire')
     })
 
     it('does not notify if no message was added', () => {
@@ -114,7 +115,7 @@ describe('flushController', () => {
     it('flush reason should be "bytes_limit"', () => {
       flushController.notifyBeforeAddMessage(BYTES_LIMIT)
       flushController.notifyAfterAddMessage()
-      expect(flushSpy.calls.first().args[0].reason).toBe('bytes_limit')
+      expect(flushSpy.mock.calls[0][0].reason).toBe('bytes_limit')
     })
 
     it('notifies when the bytes limit will be reached before adding a message', () => {
@@ -144,7 +145,7 @@ describe('flushController', () => {
       flushController.notifyBeforeAddMessage(BYTES_LIMIT)
       flushController.notifyAfterAddMessage()
 
-      flushSpy.calls.reset()
+      flushSpy.mockClear()
 
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
@@ -166,7 +167,7 @@ describe('flushController', () => {
         flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
         flushController.notifyAfterAddMessage()
       }
-      expect(flushSpy.calls.first().args[0].reason).toBe('messages_limit')
+      expect(flushSpy.mock.calls[0][0].reason).toBe('messages_limit')
     })
 
     it('does not flush when the message was not fully added yet', () => {
@@ -198,7 +199,7 @@ describe('flushController', () => {
         flushController.notifyAfterAddMessage()
       }
 
-      flushSpy.calls.reset()
+      flushSpy.mockClear()
 
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
@@ -218,7 +219,7 @@ describe('flushController', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
       clock.tick(DURATION_LIMIT)
-      expect(flushSpy.calls.first().args[0].reason).toBe('duration_limit')
+      expect(flushSpy.mock.calls[0][0].reason).toBe('duration_limit')
     })
 
     it('does not postpone the duration limit when another message was added', () => {

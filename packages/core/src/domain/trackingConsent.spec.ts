@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { TrackingConsent, createTrackingConsentState } from './trackingConsent'
 
 describe('createTrackingConsentState', () => {
@@ -8,22 +9,22 @@ describe('createTrackingConsentState', () => {
 
   it('defaults to not granted', () => {
     const trackingConsentState = createTrackingConsentState()
-    expect(trackingConsentState.isGranted()).toBeFalse()
+    expect(trackingConsentState.isGranted()).toBeFalsy()
   })
 
   it('can be created with a default consent state', () => {
     const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-    expect(trackingConsentState.isGranted()).toBeTrue()
+    expect(trackingConsentState.isGranted()).toBeTruthy()
   })
 
   it('can be updated to granted', () => {
     const trackingConsentState = createTrackingConsentState()
     trackingConsentState.update(TrackingConsent.GRANTED)
-    expect(trackingConsentState.isGranted()).toBeTrue()
+    expect(trackingConsentState.isGranted()).toBeTruthy()
   })
 
   it('notifies when the consent is updated', () => {
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     const trackingConsentState = createTrackingConsentState()
     trackingConsentState.observable.subscribe(spy)
     trackingConsentState.update(TrackingConsent.GRANTED)
@@ -33,12 +34,12 @@ describe('createTrackingConsentState', () => {
   it('can init a consent state if not defined yet', () => {
     const trackingConsentState = createTrackingConsentState()
     trackingConsentState.tryToInit(TrackingConsent.GRANTED)
-    expect(trackingConsentState.isGranted()).toBeTrue()
+    expect(trackingConsentState.isGranted()).toBeTruthy()
   })
 
   it('does not init a consent state if already defined', () => {
     const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
     trackingConsentState.tryToInit(TrackingConsent.NOT_GRANTED)
-    expect(trackingConsentState.isGranted()).toBeTrue()
+    expect(trackingConsentState.isGranted()).toBeTruthy()
   })
 })

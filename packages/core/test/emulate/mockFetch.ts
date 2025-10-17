@@ -52,6 +52,17 @@ export function mockFetch() {
     whenAllComplete(callback: () => void) {
       allFetchCompleteCallback = callback
     },
+    whenAllCompleteAsync(): Promise<void> {
+      return new Promise<void>((resolve, reject) => {
+        allFetchCompleteCallback = () => {
+          try {
+            resolve()
+          } catch (error) {
+            reject(error)
+          }
+        }
+      })
+    },
   }
 }
 

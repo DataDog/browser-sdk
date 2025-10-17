@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { readBytesFromStream } from './readBytesFromStream'
 
 describe('readBytesFromStream', () => {
@@ -109,8 +110,8 @@ describe('readBytesFromStream', () => {
 
   it('reads a limited amount of bytes from the response', (done) => {
     // Creates a response that stream "f" indefinitely, one byte at a time
-    const cancelSpy = jasmine.createSpy()
-    const pullSpy = jasmine.createSpy().and.callFake((controller: ReadableStreamDefaultController<Uint8Array>) => {
+    const cancelSpy = vi.fn()
+    const pullSpy = vi.fn().mockImplementation((controller: ReadableStreamDefaultController<Uint8Array>) => {
       controller.enqueue(new TextEncoder().encode('f'))
     })
 

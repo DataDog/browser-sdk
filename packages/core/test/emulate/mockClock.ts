@@ -1,19 +1,18 @@
+import { vi } from 'vitest'
 import type { RelativeTime, TimeStamp } from '../../src/tools/utils/timeUtils'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export type Clock = ReturnType<typeof mockClock>
 
 export function mockClock() {
-  jasmine.clock().install()
-  jasmine.clock().mockDate()
-
+  vi.useFakeTimers()
   const timeOrigin = performance.timing.navigationStart // @see getNavigationStart() in timeUtils.ts
   const timeStampStart = Date.now()
   const relativeStart = timeStampStart - timeOrigin
 
-  spyOn(performance, 'now').and.callFake(() => Date.now() - timeOrigin)
+  vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - timeOrigin)
 
-  registerCleanupTask(() => jasmine.clock().uninstall())
+  registerCleanupTask(() => vi.useRealTimers())
 
   return {
     /**
@@ -26,7 +25,7 @@ export function mockClock() {
      * invokation (the start of the test).
      */
     timeStamp: (duration: number) => (timeStampStart + duration) as TimeStamp,
-    tick: (ms: number) => jasmine.clock().tick(ms),
-    setDate: (date: Date) => jasmine.clock().mockDate(date),
+    tick: (ms: number) => vi.advanceTimersByTime(ms),
+    setDate: (date: Date) => vi.setSystemTime(date),
   }
 }

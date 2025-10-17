@@ -1,11 +1,12 @@
+import { vi } from 'vitest'
 import { display } from './display'
 import { callMonitored, monitor, monitored, startMonitorErrorCollection, resetMonitor, setDebugMode } from './monitor'
 
 describe('monitor', () => {
-  let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
+  let onMonitorErrorCollectedSpy: ReturnType<typeof vi.fn<(error: unknown) => void>>
 
   beforeEach(() => {
-    onMonitorErrorCollectedSpy = jasmine.createSpy()
+    onMonitorErrorCollectedSpy = vi.fn<(error: unknown) => void>()
   })
   afterEach(() => {
     resetMonitor()
@@ -133,10 +134,10 @@ describe('monitor', () => {
   })
 
   describe('setDebugMode', () => {
-    let displaySpy: jasmine.Spy
+    let displaySpy: ReturnType<typeof vi.spyOn>
 
     beforeEach(() => {
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error')
     })
 
     it('when not called, should not display error', () => {
@@ -159,7 +160,9 @@ describe('monitor', () => {
 
     it('displays errors thrown by the onMonitorErrorCollected callback', () => {
       setDebugMode(true)
-      onMonitorErrorCollectedSpy.and.throwError(new Error('unexpected'))
+      onMonitorErrorCollectedSpy.mockImplementation(() => {
+        throw new Error('unexpected')
+      })
       startMonitorErrorCollection(onMonitorErrorCollectedSpy)
 
       callMonitored(() => {

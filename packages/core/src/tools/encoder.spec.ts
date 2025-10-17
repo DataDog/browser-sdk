@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { createIdentityEncoder } from './encoder'
 import { noop } from './utils/functionUtils'
 
@@ -27,7 +28,7 @@ describe('createIdentityEncoder', () => {
     it('calls the callback when writing data with a callback', () => {
       const encoder = createIdentityEncoder()
       const data = 'Callback test'
-      const callbackSpy = jasmine.createSpy()
+      const callbackSpy = vi.fn()
 
       encoder.write(data, callbackSpy)
 
@@ -40,7 +41,7 @@ describe('createIdentityEncoder', () => {
       const encoder = createIdentityEncoder()
       const data = 'Final data'
       encoder.write(data)
-      const callbackSpy = jasmine.createSpy()
+      const callbackSpy = vi.fn()
 
       encoder.finish(callbackSpy)
 

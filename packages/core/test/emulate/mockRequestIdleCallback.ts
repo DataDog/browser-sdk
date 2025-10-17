@@ -1,3 +1,4 @@
+import { vi, type MockInstance } from 'vitest'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 // Arbitrary remaining time for tests that don't care about remaining time
@@ -6,21 +7,21 @@ const DEFAULT_TIME_REMAINING = 10
 export interface RequestIdleCallbackMock {
   idle(timeRemaining?: number): void
   timeout(): void
-  spy: jasmine.Spy<typeof window.requestIdleCallback>
+  spy: MockInstance<typeof window.requestIdleCallback>
 }
 
 export function mockRequestIdleCallback(): RequestIdleCallbackMock {
   let nextId = 1
   const activeIds = new Set<number>()
 
-  const requestSpy = jasmine.createSpy<typeof window.requestIdleCallback>().and.callFake(() => {
+  const requestSpy = vi.fn<typeof window.requestIdleCallback>(() => {
     const id = nextId
     activeIds.add(id)
     nextId++
     return id
   })
 
-  const cancelSpy = jasmine.createSpy<typeof window.cancelIdleCallback>().and.callFake((id: number) => {
+  const cancelSpy = vi.fn<typeof window.cancelIdleCallback>((id: number) => {
     activeIds.delete(id)
   })
 
@@ -35,12 +36,13 @@ export function mockRequestIdleCallback(): RequestIdleCallbackMock {
   })
 
   function callAllActiveCallbacks(deadline: IdleDeadline) {
-    for (const call of requestSpy.calls.all().slice()) {
-      if (!activeIds.has(call.returnValue)) {
+    for (const call of requestSpy.mock.calls.slice()) {
+      const id = requestSpy.mock.results[requestSpy.mock.calls.indexOf(call)]?.value
+      if (!activeIds.has(id)) {
         continue
       }
-      activeIds.delete(call.returnValue)
-      call.args[0](deadline)
+      activeIds.delete(id)
+      call[0](deadline)
     }
   }
 

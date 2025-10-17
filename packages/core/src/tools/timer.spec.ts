@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { mockClock, mockZoneJs, registerCleanupTask } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import { resetMonitor, startMonitorErrorCollection } from './monitor'
@@ -28,7 +29,7 @@ import { noop } from './utils/functionUtils'
     })
 
     it('executes the callback asynchronously', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       setTimer(spy)
       expect(spy).not.toHaveBeenCalled()
       clock.tick(0)
@@ -36,7 +37,7 @@ import { noop } from './utils/functionUtils'
     })
 
     it('schedules an asynchronous task', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       setTimer(spy)
       expect(spy).not.toHaveBeenCalled()
       clock.tick(0)
@@ -44,7 +45,7 @@ import { noop } from './utils/functionUtils'
     })
 
     it('does not use the Zone.js function', () => {
-      const zoneJsSetTimerSpy = jasmine.createSpy()
+      const zoneJsSetTimerSpy = vi.fn()
       zoneJs.replaceProperty(window, name, zoneJsSetTimerSpy)
 
       setTimer(noop)
@@ -54,7 +55,7 @@ import { noop } from './utils/functionUtils'
     })
 
     it('monitors the callback', () => {
-      const onMonitorErrorCollectedSpy = jasmine.createSpy()
+      const onMonitorErrorCollectedSpy = vi.fn()
       startMonitorErrorCollection(onMonitorErrorCollectedSpy)
 
       setTimer(() => {
@@ -66,7 +67,7 @@ import { noop } from './utils/functionUtils'
     })
 
     it('can be canceled', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       const timerId = setTimer(spy)
       clearTimer(timerId)
       clock.tick(0)

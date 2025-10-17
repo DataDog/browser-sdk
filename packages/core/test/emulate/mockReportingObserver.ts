@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { InterventionReport, ReportType } from '../../src/domain/report/browser.types'
 import { noop } from '../../src/tools/utils/functionUtils'
 import { registerCleanupTask } from '../registerCleanupTask'
@@ -52,11 +53,9 @@ export type MockCspEventListener = ReturnType<typeof mockCspEventListener>
 export function mockCspEventListener() {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalAddEventListener = EventTarget.prototype.addEventListener
-  EventTarget.prototype.addEventListener = jasmine
-    .createSpy()
-    .and.callFake((_type: string, listener: EventListener) => {
-      listeners.push(listener)
-    })
+  EventTarget.prototype.addEventListener = vi.fn((_type: string, listener: EventListener) => {
+    listeners.push(listener)
+  }) as any
 
   registerCleanupTask(() => {
     EventTarget.prototype.addEventListener = originalAddEventListener

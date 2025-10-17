@@ -1,14 +1,15 @@
+import { vi } from 'vitest'
 import type { Configuration } from '../domain/configuration'
 import { createNewEvent, restorePageVisibility, setPageVisibility, registerCleanupTask } from '../../test'
 import type { PageMayExitEvent } from './pageMayExitObservable'
 import { PageExitReason, createPageMayExitObservable } from './pageMayExitObservable'
 
 describe('createPageMayExitObservable', () => {
-  let onExitSpy: jasmine.Spy<(event: PageMayExitEvent) => void>
+  let onExitSpy: ReturnType<typeof vi.fn<(event: PageMayExitEvent) =>> void>
   let configuration: Configuration
 
   beforeEach(() => {
-    onExitSpy = jasmine.createSpy()
+    onExitSpy = vi.fn()
     configuration = {} as Configuration
     registerCleanupTask(createPageMayExitObservable(configuration).subscribe(onExitSpy).unsubscribe)
   })
