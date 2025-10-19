@@ -3788,7 +3788,7 @@ __metadata:
     "@types/node": "npm:24.5.2"
     ajv: "npm:8.17.1"
     browserstack-local: "npm:1.5.8"
-    chrome-webstore-upload: "npm:3.2.0"
+    chrome-webstore-upload: "npm:4.0.0"
     connect-busboy: "npm:1.0.0"
     cors: "npm:2.8.5"
     emoji-name-map: "npm:2.0.3"
@@ -3867,6 +3867,13 @@ __metadata:
   dependencies:
     https-proxy-agent: "npm:^2.2.1"
   checksum: 10c0/118704796f0a83aab4d23c7aa506a80cb4cd8338ddafe1fb184cb664c6d9c5527d4748df1529deeeffce53cd6f1e123f329c328ff8a4443ebc6698255a4b3c75
+  languageName: node
+  linkType: hard
+
+"buffer-crc32@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "buffer-crc32@npm:1.0.0"
+  checksum: 10c0/8b86e161cee4bb48d5fa622cbae4c18f25e4857e5203b89e23de59e627ab26beb82d9d7999f2b8de02580165f61f83f997beaf02980cdf06affd175b651921ab
   languageName: node
   linkType: hard
 
@@ -4138,10 +4145,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"chrome-webstore-upload@npm:3.2.0":
-  version: 3.2.0
-  resolution: "chrome-webstore-upload@npm:3.2.0"
-  checksum: 10c0/0513632568fc174ef794f95c1048aeff7cccff7687d9c2eb4173c113d1a29473efcd0c02552440df84fe2223d5945c613f81fe118dae332340d740d96789a449
+"chrome-webstore-upload@npm:4.0.0":
+  version: 4.0.0
+  resolution: "chrome-webstore-upload@npm:4.0.0"
+  dependencies:
+    junk: "npm:^4.0.1"
+    yazl: "npm:^3.3.1"
+  checksum: 10c0/27c686be7e8e04a5233ef2473fc236127762ee4252e19ec139606fba427d41a13e538979e8fa435ffed5631fb18906e6fe456e341181f26d0a17c4bffb1ca8d7
   languageName: node
   linkType: hard
 
@@ -8349,6 +8359,13 @@ __metadata:
   version: 1.3.1
   resolution: "jsonparse@npm:1.3.1"
   checksum: 10c0/89bc68080cd0a0e276d4b5ab1b79cacd68f562467008d176dc23e16e97d4efec9e21741d92ba5087a8433526a45a7e6a9d5ef25408696c402ca1cfbc01a90bf0
+  languageName: node
+  linkType: hard
+
+"junk@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "junk@npm:4.0.1"
+  checksum: 10c0/091117a5dcf65b19a3e4b8506d95d6ab152b5b5fe6f10e8998de950b0f9d689f14d9b63bb07863b8c86c18511fd1b9a21e9a16e686246436558338ed2e8a4548
   languageName: node
   linkType: hard
 
@@ -14042,6 +14059,15 @@ __metadata:
     buffer-crc32: "npm:~0.2.3"
     fd-slicer: "npm:~1.1.0"
   checksum: 10c0/f265002af7541b9ec3589a27f5fb8f11cf348b53cc15e2751272e3c062cd73f3e715bc72d43257de71bbaecae446c3f1b14af7559e8ab0261625375541816422
+  languageName: node
+  linkType: hard
+
+"yazl@npm:^3.3.1":
+  version: 3.3.1
+  resolution: "yazl@npm:3.3.1"
+  dependencies:
+    buffer-crc32: "npm:^1.0.0"
+  checksum: 10c0/8290dffd8afc4ea32459c0ce5d7e22af250515aa0170f289cbc896530d3cd40c5be4788b5e3e7aa5cd21889778071f424e1824faadbd257dbd5ff80fb60d1fa6
   languageName: node
   linkType: hard
 
