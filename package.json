@@ -51,7 +51,7 @@
     "@types/node": "24.5.2",
     "ajv": "8.17.1",
     "browserstack-local": "1.5.8",
-    "chrome-webstore-upload": "3.2.0",
+    "chrome-webstore-upload": "4.0.0",
     "connect-busboy": "1.0.0",
     "cors": "2.8.5",
     "emoji-name-map": "2.0.3",
