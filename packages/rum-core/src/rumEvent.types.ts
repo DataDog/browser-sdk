@@ -104,7 +104,7 @@ export type RumActionEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the action starting in the foreground (focus in browser)
        */
@@ -479,7 +479,7 @@ export type RumErrorEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the error starting in the foreground (focus in browser)
        */
@@ -529,15 +529,15 @@ export type RumLongTaskEvent = CommonProperties &
        */
       readonly blocking_duration?: number
       /**
-       * Start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
+       * Time difference (in ns) between the timeOrigin and the start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
        */
       readonly render_start?: number
       /**
-       * Start time of the time period spent in style and layout calculations
+       * Time difference (in ns) between the timeOrigin and the start time of the time period spent in style and layout calculations
        */
       readonly style_and_layout_start?: number
       /**
-       * Start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
+       * Time difference (in ns) between the timeOrigin and the start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
        */
       readonly first_ui_event_timestamp?: number
       /**
@@ -845,6 +845,42 @@ export type RumResourceEvent = CommonProperties &
          * String representation of the operation variables
          */
         variables?: string
+        /**
+         * Number of GraphQL errors in the response
+         */
+        readonly error_count?: number
+        /**
+         * Array of GraphQL errors from the response
+         */
+        readonly errors?: {
+          /**
+           * Error message
+           */
+          readonly message: string
+          /**
+           * Error code (used by some providers)
+           */
+          readonly code?: string
+          /**
+           * Array of error locations in the GraphQL query
+           */
+          readonly locations?: {
+            /**
+             * Line number where the error occurred
+             */
+            readonly line: number
+            /**
+             * Column number where the error occurred
+             */
+            readonly column: number
+            [k: string]: unknown
+          }[]
+          /**
+           * Path to the field that caused the error
+           */
+          readonly path?: (string | number)[]
+          [k: string]: unknown
+        }[]
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -1303,6 +1339,10 @@ export type RumVitalEvent = CommonProperties &
         readonly computed_value?: boolean
         [k: string]: unknown
       }
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -1467,7 +1507,7 @@ export interface CommonProperties {
   /**
    * View properties
    */
-  readonly view: {
+  readonly view?: {
     /**
      * UUID of the view
      */
@@ -1876,6 +1916,10 @@ export interface StreamSchema {
      * how much did the media progress since the last context update (in ms)
      */
     watch_time?: number
+    /**
+     * Percentage of amount of time watched relative to its total duration
+     */
+    completion_percent?: number
     [k: string]: unknown
   }
   [k: string]: unknown
