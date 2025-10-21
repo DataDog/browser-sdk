@@ -51,7 +51,7 @@ test.describe('API calls and events around init', () => {
       })
 
       const documentEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')!
-      expect(documentEvent.view.id).toBe(initialView.view.id)
+      expect(documentEvent.view?.id).toBe(initialView.view?.id)
 
       expectToHaveErrors(
         intakeRegistry,
@@ -102,7 +102,7 @@ test.describe('API calls and events around init', () => {
       })
 
       const documentEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.type === 'document')!
-      expect(documentEvent.view.id).toBe(initialView.view.id)
+      expect(documentEvent.view?.id).toBe(initialView.view?.id)
 
       expectToHaveErrors(
         intakeRegistry,

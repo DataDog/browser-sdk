@@ -151,7 +151,7 @@ describe('rum session', () => {
     // New view event
     expect(serverRumEvents[2].type).toEqual('view')
     expect(serverRumEvents[2].session.id).toEqual('43')
-    expect(serverRumEvents[2].view.id).not.toEqual(serverRumEvents[0].view.id)
+    expect(serverRumEvents[2].view?.id).not.toEqual(serverRumEvents[0].view?.id)
   })
 })
 
@@ -266,8 +266,8 @@ describe('rum events url', () => {
     changeLocation('/bar')
 
     expect(serverRumEvents.length).toEqual(2)
-    expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
-    expect(serverRumEvents[1].view.url).toEqual('http://foo.com/bar')
+    expect(serverRumEvents[0].view?.url).toEqual('http://foo.com/')
+    expect(serverRumEvents[1].view?.url).toEqual('http://foo.com/bar')
   })
 
   it('should attach the url corresponding to the start of the event', () => {
@@ -291,10 +291,10 @@ describe('rum events url', () => {
     expect(serverRumEvents.length).toBe(3)
     const [firstViewUpdate, longTaskEvent, lastViewUpdate] = serverRumEvents
 
-    expect(firstViewUpdate.view.url).toBe('http://foo.com/')
-    expect(lastViewUpdate.view.url).toBe('http://foo.com/')
+    expect(firstViewUpdate.view?.url).toBe('http://foo.com/')
+    expect(lastViewUpdate.view?.url).toBe('http://foo.com/')
 
-    expect(longTaskEvent.view.url).toBe('http://foo.com/?bar=bar')
+    expect(longTaskEvent.view?.url).toBe('http://foo.com/?bar=bar')
   })
 
   it('should keep the same URL when updating an ended view', () => {
@@ -312,7 +312,7 @@ describe('rum events url', () => {
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
     expect(serverRumEvents.length).toEqual(1)
-    expect(serverRumEvents[0].view.url).toEqual('http://foo.com/')
+    expect(serverRumEvents[0].view?.url).toEqual('http://foo.com/')
   })
 })
 
@@ -386,7 +386,7 @@ describe('view events', () => {
       event: RumEvent
     }
     expect(lastBridgeMessage.event.type).toBe('view')
-    expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
+    expect(lastBridgeMessage.event.view?.time_spent).toBe(toServerDuration(VIEW_DURATION))
   })
 
   it('sends a view update with the correct sdk name', () => {

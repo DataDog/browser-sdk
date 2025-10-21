@@ -117,7 +117,7 @@ describe('validateAndBuildConfiguration', () => {
 
     it('should return the same result as the original', () => {
       const beforeSend = (event: RumEvent) => {
-        if (event.view.url === '/foo') {
+        if (event.view?.url === '/foo') {
           return false
         }
       }
