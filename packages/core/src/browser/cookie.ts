@@ -1,6 +1,11 @@
 import { display } from '../tools/display'
 import { ONE_MINUTE, ONE_SECOND } from '../tools/utils/timeUtils'
-import { findCommaSeparatedValue, findCommaSeparatedValues, generateUUID } from '../tools/utils/stringUtils'
+import {
+  findAllCommaSeparatedValues,
+  findCommaSeparatedValue,
+  findCommaSeparatedValues,
+  generateUUID,
+} from '../tools/utils/stringUtils'
 import { buildUrl } from '../tools/utils/urlPolyfill'
 
 export interface CookieOptions {
@@ -21,8 +26,19 @@ export function setCookie(name: string, value: string, expireDelay: number = 0, 
   document.cookie = `${name}=${value};${expires};path=/;samesite=${sameSite}${domain}${secure}${partitioned}`
 }
 
+/**
+ * Returns the value of the cookie with the given name
+ * If there are multiple cookies with the same name, returns the first one
+ */
 export function getCookie(name: string) {
   return findCommaSeparatedValue(document.cookie, name)
+}
+
+/**
+ * Returns all the values of the cookies with the given name
+ */
+export function getCookies(name: string): string[] {
+  return findAllCommaSeparatedValues(document.cookie).get(name) || []
 }
 
 let initCookieParsed: Map<string, string> | undefined
@@ -30,6 +46,8 @@ let initCookieParsed: Map<string, string> | undefined
 /**
  * Returns a cached value of the cookie. Use this during SDK initialization (and whenever possible)
  * to avoid accessing document.cookie multiple times.
+ *
+ * ⚠️ If there are multiple cookies with the same name, returns the LAST one (unlike `getCookie()`)
  */
 export function getInitCookie(name: string) {
   if (!initCookieParsed) {

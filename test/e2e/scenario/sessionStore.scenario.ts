@@ -1,4 +1,4 @@
-import { SESSION_STORE_KEY } from '@datadog/browser-core'
+import { ExperimentalFeature, SESSION_STORE_KEY } from '@datadog/browser-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
@@ -106,6 +106,60 @@ test.describe('Session Stores', () => {
           )
         })
     })
+
+    for (const encodeCookieOptions of [true, false]) {
+      const enableExperimentalFeatures = encodeCookieOptions ? [ExperimentalFeature.ENCODE_COOKIE_OPTIONS] : []
+
+      createTest(
+        encodeCookieOptions
+          ? 'should not fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values when Encode Cookie Options is enabled'
+          : 'should fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values when Encode Cookie Options is disabled'
+      )
+        .withRum({ trackSessionAcrossSubdomains: true, enableExperimentalFeatures })
+        .withLogs({ trackSessionAcrossSubdomains: false, enableExperimentalFeatures })
+        .withHostName(FULL_HOSTNAME)
+        .run(async ({ page }) => {
+          await page.waitForTimeout(1000)
+
+          if (!encodeCookieOptions) {
+            // ensure the test is failing when the Feature Flag is disabled
+            test.fail()
+          }
+
+          const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
+            window.DD_RUM?.getInternalContext(),
+            window.DD_LOGS?.getInternalContext(),
+          ])
+
+          expect(rumInternalContext).toBeDefined()
+          expect(logsInternalContext).toBeDefined()
+        })
+
+      createTest(
+        encodeCookieOptions
+          ? 'should not fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values when Encode Cookie Options is enabled'
+          : 'should fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values when Encode Cookie Options is disabled'
+      )
+        .withRum({ usePartitionedCrossSiteSessionCookie: true, enableExperimentalFeatures })
+        .withLogs({ usePartitionedCrossSiteSessionCookie: false, enableExperimentalFeatures })
+        .withHostName(FULL_HOSTNAME)
+        .run(async ({ page }) => {
+          await page.waitForTimeout(1000)
+
+          if (!encodeCookieOptions) {
+            // ensure the test is failing when the Feature Flag is disabled
+            test.fail()
+          }
+
+          const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
+            window.DD_RUM?.getInternalContext(),
+            window.DD_LOGS?.getInternalContext(),
+          ])
+
+          expect(rumInternalContext).toBeDefined()
+          expect(logsInternalContext).toBeDefined()
+        })
+    }
 
     async function injectSdkInAnIframe(page: Page, bundleUrl: string) {
       await page.evaluate(

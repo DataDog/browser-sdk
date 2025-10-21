@@ -1,4 +1,9 @@
-import { safeTruncate, findCommaSeparatedValue, findCommaSeparatedValues } from './stringUtils'
+import {
+  safeTruncate,
+  findCommaSeparatedValue,
+  findCommaSeparatedValues,
+  findAllCommaSeparatedValues,
+} from './stringUtils'
 
 describe('stringUtils', () => {
   describe('safeTruncate', () => {
@@ -55,6 +60,15 @@ describe('stringUtils', () => {
       expectedValues.set('foo', 'a')
       expectedValues.set('bar', 'b')
       expect(findCommaSeparatedValues('foo=a;bar=b')).toEqual(expectedValues)
+    })
+  })
+
+  describe('findAllCommaSeparatedValues', () => {
+    it('returns all the values from a comma separated hash', () => {
+      const expectedValues = new Map<string, string[]>()
+      expectedValues.set('foo', ['a', 'c'])
+      expectedValues.set('bar', ['b'])
+      expect(findAllCommaSeparatedValues('foo=a;bar=b;foo=c')).toEqual(expectedValues)
     })
   })
 })
