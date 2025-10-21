@@ -1,6 +1,5 @@
 import type { TrackingConsentState } from '@datadog/browser-core'
 import {
-  isNodeEnvironment,
   createBoundedBuffer,
   canUseEventBridge,
   display,
@@ -56,10 +55,6 @@ export function createPreStartStrategy(
 
   return {
     init(initConfiguration, errorStack) {
-      if (isNodeEnvironment) {
-        return
-      }
-
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
