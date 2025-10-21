@@ -1,6 +1,5 @@
 import type { TrackingConsentState, BufferedObservable, BufferedData, PageMayExitEvent } from '@datadog/browser-core'
 import {
-  isBrowserEnvironment,
   Observable,
   sendToExtension,
   createPageMayExitObservable,
@@ -12,6 +11,7 @@ import {
   TelemetryService,
   createIdentityEncoder,
   startUserContext,
+  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -55,7 +55,7 @@ export function startLogs(
 
   const reportError = startReportError(lifeCycle)
   // Page exit is not observable in worker environments (no window/document events)
-  const pageMayExitObservable = !isBrowserEnvironment
+  const pageMayExitObservable = isWorkerEnvironment
     ? new Observable<PageMayExitEvent>()
     : createPageMayExitObservable(configuration)
 
