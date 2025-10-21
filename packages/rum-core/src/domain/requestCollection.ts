@@ -24,6 +24,8 @@ import { isAllowedRequestUrl } from './resource/resourceUtils'
 import type { Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
 import type { SpanIdentifier, TraceIdentifier } from './tracing/identifier'
+import type { GraphQlError } from './resource/graphql'
+import { findGraphQlConfiguration, parseGraphQlResponse } from './resource/graphql'
 
 export interface CustomContext {
   requestIndex: number
@@ -60,6 +62,8 @@ export interface RequestCompleteEvent {
   isAborted: boolean
   handlingStack?: string
   body?: unknown
+  graphqlErrorsCount?: number
+  graphqlErrors?: GraphQlError[]
 }
 
 let nextRequestIndex = 1
@@ -73,7 +77,7 @@ export function startRequestCollection(
 ) {
   const tracer = startTracer(configuration, sessionManager, userContext, accountContext)
   trackXhr(lifeCycle, configuration, tracer)
-  trackFetch(lifeCycle, tracer)
+  trackFetch(lifeCycle, configuration, tracer)
 }
 
 export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
@@ -118,7 +122,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
   return { stop: () => subscription.unsubscribe() }
 }
 
-export function trackFetch(lifeCycle: LifeCycle, tracer: Tracer) {
+export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
   const subscription = initFetchObservable().subscribe((rawContext) => {
     const context = rawContext as RumFetchResolveContext | RumFetchStartContext
     if (!isAllowedRequestUrl(context.url)) {
@@ -136,28 +140,34 @@ export function trackFetch(lifeCycle: LifeCycle, tracer: Tracer) {
         })
         break
       case 'resolve':
-        waitForResponseToComplete(context, (duration: Duration) => {
-          tracer.clearTracingIfNeeded(context)
-          lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-            duration,
-            method: context.method,
-            requestIndex: context.requestIndex,
-            responseType: context.responseType,
-            spanId: context.spanId,
-            startClocks: context.startClocks,
-            status: context.status,
-            traceId: context.traceId,
-            traceSampled: context.traceSampled,
-            type: RequestType.FETCH,
-            url: context.url,
-            response: context.response,
-            init: context.init,
-            input: context.input,
-            isAborted: context.isAborted,
-            handlingStack: context.handlingStack,
-            body: context.init?.body,
-          })
-        })
+        waitForResponseToComplete(
+          context,
+          configuration,
+          (duration: Duration, graphqlErrorsCount?: number, graphqlErrors?: GraphQlError[]) => {
+            tracer.clearTracingIfNeeded(context)
+            lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+              duration,
+              method: context.method,
+              requestIndex: context.requestIndex,
+              responseType: context.responseType,
+              spanId: context.spanId,
+              startClocks: context.startClocks,
+              status: context.status,
+              traceId: context.traceId,
+              traceSampled: context.traceSampled,
+              type: RequestType.FETCH,
+              url: context.url,
+              response: context.response,
+              init: context.init,
+              input: context.input,
+              isAborted: context.isAborted,
+              handlingStack: context.handlingStack,
+              body: context.init?.body,
+              graphqlErrorsCount,
+              graphqlErrors,
+            })
+          }
+        )
         break
     }
   })
@@ -170,21 +180,37 @@ function getNextRequestIndex() {
   return result
 }
 
-function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
+function waitForResponseToComplete(
+  context: RumFetchResolveContext,
+  configuration: RumConfiguration,
+  callback: (duration: Duration, graphqlErrorsCount?: number, graphqlErrors?: GraphQlError[]) => void
+) {
   const clonedResponse = context.response && tryToClone(context.response)
   if (!clonedResponse || !clonedResponse.body) {
     // do not try to wait for the response if the clone failed, fetch error or null body
     callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
-  } else {
-    readBytesFromStream(
-      clonedResponse.body,
-      () => {
-        callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
-      },
-      {
-        bytesLimit: Number.POSITIVE_INFINITY,
-        collectStreamBody: false,
-      }
-    )
+    return
   }
+
+  const graphQlConfig = findGraphQlConfiguration(context.url, configuration)
+  const shouldExtractGraphQlErrors = graphQlConfig?.trackResponseErrors
+
+  readBytesFromStream(
+    clonedResponse.body,
+    (error?: Error, bytes?: Uint8Array) => {
+      const duration = elapsed(context.startClocks.timeStamp, timeStampNow())
+
+      if (shouldExtractGraphQlErrors && !error && bytes) {
+        parseGraphQlResponse(new TextDecoder().decode(bytes), (errorsCount, errors) => {
+          callback(duration, errorsCount, errors)
+        })
+      } else {
+        callback(duration)
+      }
+    },
+    {
+      bytesLimit: Number.POSITIVE_INFINITY,
+      collectStreamBody: shouldExtractGraphQlErrors,
+    }
+  )
 }
