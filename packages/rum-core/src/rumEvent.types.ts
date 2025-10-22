@@ -1507,7 +1507,7 @@ export interface CommonProperties {
   /**
    * View properties
    */
-  readonly view?: {
+  readonly view: {
     /**
      * UUID of the view
      */
