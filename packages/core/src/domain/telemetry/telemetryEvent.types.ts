@@ -218,6 +218,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       use_track_graph_ql_payload?: boolean
       /**
+       * Whether GraphQL response errors tracking is used for at least one GraphQL endpoint
+       */
+      use_track_graph_ql_response_errors?: boolean
+      /**
        * A list of selected tracing propagators
        */
       selected_tracing_propagators?: ('datadog' | 'b3' | 'b3multi' | 'tracecontext')[]
@@ -841,7 +845,7 @@ export interface AddOperationStepVital {
    */
   feature: 'add-operation-step-vital'
   /**
-   * Feature operations action type
+   * Operations step type
    */
   action_type: 'start' | 'succeed' | 'fail'
   [k: string]: unknown
