@@ -1,5 +1,6 @@
 import { isSafari } from '../utils/browserDetection'
 import * as CapturedExceptions from './capturedExceptions.specHelper'
+import { CHROME_141_HTML_ANONYMOUS_LISTENER } from './capturedExceptions.specHelper'
 import { computeStackTrace } from './computeStackTrace'
 
 describe('computeStackTrace', () => {
@@ -1002,6 +1003,19 @@ Error: foo
       url: 'http://example.com/my-module.wasm:wasm-function[42]:0x1a3b',
       line: undefined,
       column: undefined,
+    })
+  })
+
+  it('should parse stack from html button click listener', () => {
+    const stackFrames = computeStackTrace(CHROME_141_HTML_ANONYMOUS_LISTENER)
+
+    expect(stackFrames.stack.length).toEqual(1)
+    expect(stackFrames.stack[0]).toEqual({
+      args: [],
+      column: 4287,
+      func: 'HTMLButtonElement.<anonymous>',
+      line: 1,
+      url: 'http://path/to/file.js',
     })
   })
 })
