@@ -104,7 +104,7 @@ export type RumActionEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the action starting in the foreground (focus in browser)
        */
@@ -175,6 +175,9 @@ export type RumTransitionEvent = CommonProperties & {
    * RUM event type
    */
   readonly type: 'transition'
+  view: {
+    [k: string]: unknown
+  }
   /**
    * Stream properties
    */
@@ -479,7 +482,7 @@ export type RumErrorEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the error starting in the foreground (focus in browser)
        */
@@ -504,6 +507,9 @@ export type RumLongTaskEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'long_task'
+    view: {
+      [k: string]: unknown
+    }
     /**
      * Long Task properties
      */
@@ -529,15 +535,15 @@ export type RumLongTaskEvent = CommonProperties &
        */
       readonly blocking_duration?: number
       /**
-       * Start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
+       * Time difference (in ns) between the timeOrigin and the start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
        */
       readonly render_start?: number
       /**
-       * Start time of the time period spent in style and layout calculations
+       * Time difference (in ns) between the timeOrigin and the start time of the time period spent in style and layout calculations
        */
       readonly style_and_layout_start?: number
       /**
-       * Start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
+       * Time difference (in ns) between the timeOrigin and the start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
        */
       readonly first_ui_event_timestamp?: number
       /**
@@ -628,6 +634,9 @@ export type RumResourceEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'resource'
+    view: {
+      [k: string]: unknown
+    }
     /**
      * Resource properties
      */
@@ -845,6 +854,42 @@ export type RumResourceEvent = CommonProperties &
          * String representation of the operation variables
          */
         variables?: string
+        /**
+         * Number of GraphQL errors in the response
+         */
+        readonly error_count?: number
+        /**
+         * Array of GraphQL errors from the response
+         */
+        readonly errors?: {
+          /**
+           * Error message
+           */
+          readonly message: string
+          /**
+           * Error code (used by some providers)
+           */
+          readonly code?: string
+          /**
+           * Array of error locations in the GraphQL query
+           */
+          readonly locations?: {
+            /**
+             * Line number where the error occurred
+             */
+            readonly line: number
+            /**
+             * Column number where the error occurred
+             */
+            readonly column: number
+            [k: string]: unknown
+          }[]
+          /**
+           * Path to the field that caused the error
+           */
+          readonly path?: (string | number)[]
+          [k: string]: unknown
+        }[]
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -1279,116 +1324,88 @@ export type RumViewEvent = CommonProperties &
     }
     [k: string]: unknown
   }
+export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent
 /**
- * Schema of all properties of a Vital event
+ * Schema for a duration vital event.
  */
-export type RumVitalEvent = CommonProperties &
-  ViewContainerSchema & {
-    /**
-     * RUM event type
-     */
-    readonly type: 'vital'
-    readonly vital: DurationProperties | AppLaunchProperties | FeatureOperationProperties
-    /**
-     * Internal properties
-     */
-    readonly _dd?: {
-      /**
-       * Internal vital properties
-       */
-      readonly vital?: {
-        /**
-         * Whether the value of the vital is computed by the SDK (as opposed to directly provided by the customer)
-         */
-        readonly computed_value?: boolean
-        [k: string]: unknown
-      }
-      [k: string]: unknown
-    }
+export type RumVitalDurationEvent = RumVitalEventCommonProperties & {
+  view: {
     [k: string]: unknown
   }
-/**
- * Duration properties of a Vital event
- */
-export type DurationProperties = VitalCommonProperties & {
   /**
-   * Type of the vital.
+   * Vital properties
    */
-  readonly type: 'duration'
-  /**
-   * Duration of the vital in nanoseconds.
-   */
-  readonly duration: number
+  readonly vital: {
+    /**
+     * Type of the vital.
+     */
+    readonly type: 'duration'
+    /**
+     * Duration of the vital in nanoseconds.
+     */
+    readonly duration: number
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**
  * Schema of common properties for a Vital event
  */
-export type VitalCommonProperties = {
-  /**
-   * UUID of the vital
-   */
-  readonly id: string
-  /**
-   * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
-   */
-  readonly name?: string
-  /**
-   * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
-   */
-  readonly description?: string
-  [k: string]: unknown
-}
+export type RumVitalEventCommonProperties = CommonProperties &
+  ViewContainerSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'vital'
+    /**
+     * Vital properties
+     */
+    readonly vital: {
+      /**
+       * UUID of the vital
+       */
+      readonly id: string
+      /**
+       * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
+       */
+      readonly name?: string
+      /**
+       * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
+       */
+      readonly description?: string
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
 /**
- * Schema for app launch metrics.
+ * Schema for a vital operation step event.
  */
-export type AppLaunchProperties = VitalCommonProperties & {
+export type RumVitalOperationStepEvent = RumVitalEventCommonProperties & {
+  view: {
+    [k: string]: unknown
+  }
   /**
-   * Type of the vital.
+   * Vital properties
    */
-  readonly type: 'app_launch'
-  /**
-   * The metric of the app launch.
-   */
-  readonly app_launch_metric: 'ttid' | 'ttfd'
-  /**
-   * Duration of the vital in nanoseconds.
-   */
-  readonly duration: number
-  /**
-   * The type of the app launch.
-   */
-  readonly startup_type?: 'cold_start' | 'warm_start'
-  /**
-   * Whether the app launch was prewarmed.
-   */
-  readonly is_prewarmed?: boolean
-  /**
-   * If the app launch had a saved instance state bundle.
-   */
-  readonly has_saved_instance_state_bundle?: boolean
-  [k: string]: unknown
-}
-/**
- * Schema for a feature operation.
- */
-export type FeatureOperationProperties = VitalCommonProperties & {
-  /**
-   * Type of the vital.
-   */
-  readonly type: 'operation_step'
-  /**
-   * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
-   */
-  readonly operation_key?: string
-  /**
-   * Type of the step that triggered the vital, if applicable
-   */
-  readonly step_type?: 'start' | 'update' | 'retry' | 'end'
-  /**
-   * Reason for the failure of the step, if applicable
-   */
-  readonly failure_reason?: 'error' | 'abandoned' | 'other'
+  readonly vital: {
+    /**
+     * Type of the vital.
+     */
+    readonly type: 'operation_step'
+    /**
+     * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
+     */
+    readonly operation_key?: string
+    /**
+     * Type of the step that triggered the vital, if applicable
+     */
+    readonly step_type: 'start' | 'update' | 'retry' | 'end'
+    /**
+     * Reason for the failure of the step, if applicable
+     */
+    readonly failure_reason?: 'error' | 'abandoned' | 'other'
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 
@@ -1467,7 +1484,7 @@ export interface CommonProperties {
   /**
    * View properties
    */
-  readonly view: {
+  readonly view?: {
     /**
      * UUID of the view
      */
@@ -1876,6 +1893,10 @@ export interface StreamSchema {
      * how much did the media progress since the last context update (in ms)
      */
     watch_time?: number
+    /**
+     * Percentage of amount of time watched relative to its total duration
+     */
+    completion_percent?: number
     [k: string]: unknown
   }
   [k: string]: unknown
