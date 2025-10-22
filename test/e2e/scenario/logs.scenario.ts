@@ -16,20 +16,12 @@ test.describe('logs', () => {
     .withLogs()
     .withWorker(
       function (self) {
-        self.addEventListener('message', (event) => {
-          const message = (event as MessageEvent<string>).data
-
-          self.DD_LOGS!.logger.log(message)
-        })
+        self.DD_LOGS!.logger.log('Some message')
       },
       { type: 'module' }
     )
-    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
       test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
-
-      await interactWithWorker((worker) => {
-        worker.postMessage('Some message')
-      })
 
       await flushEvents()
 
@@ -40,22 +32,13 @@ test.describe('logs', () => {
   createTest('service worker with worker logs - importScripts')
     .withLogs()
     .withWorker(function (self) {
-      self.addEventListener('message', (event) => {
-        const message = (event as MessageEvent<string>).data
-
-        self.DD_LOGS!.logger.log(message)
-      })
+      self.DD_LOGS!.logger.log('Other message')
     })
-    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
-
-      await interactWithWorker((worker) => {
-        worker.postMessage('Other message')
-      })
-
       await flushEvents()
 
       expect(intakeRegistry.logsRequests).toHaveLength(1)
@@ -64,22 +47,14 @@ test.describe('logs', () => {
 
   createTest('service worker console forwarding')
     .withLogs({ forwardConsoleLogs: 'all', forwardErrorsToLogs: true })
-    .withWorker(function (self) {
-      self.addEventListener('message', (event) => {
-        const message = (event as MessageEvent<string>).data
-
-        console.log(message)
-      })
+    .withWorker(function () {
+      console.log('SW console log test')
     })
-    .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
-
-      await interactWithWorker((worker) => {
-        worker.postMessage('SW console log test')
-      })
 
       await flushEvents()
 
