@@ -13,6 +13,5 @@
     "lib": ["ESNext", "DOM", "WebWorker"],
     "allowJs": true,
     "noEmit": true
-  },
-  "include": ["."]
+  }
 }
