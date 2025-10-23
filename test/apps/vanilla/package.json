@@ -1,6 +1,6 @@
 {
   "name": "app",
-  "version": "0.0.0",
+  "private": true,
   "scripts": {
     "build": "webpack --config ./webpack.web.js",
     "compat:tsc": "tsc -p tsconfig.json",
