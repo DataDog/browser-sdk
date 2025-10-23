@@ -35,11 +35,6 @@ export interface SetupOptions {
   workerImplementation?: WorkerImplementationFactory
 }
 
-export interface WorkerOptions {
-  importScripts?: boolean
-  nativeLog?: boolean
-}
-
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
 
 // By default, run tests only with the 'bundle' setup outside of the CI (to run faster on the
