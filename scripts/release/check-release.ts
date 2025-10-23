@@ -87,5 +87,5 @@ function checkPackageDependencyVersions(packageJsonFile: PackageJsonFile): void 
 }
 
 function isBrowserSdkPublicPackageName(name: string): boolean {
-  return name?.startsWith('@datadog/')
+  return /^@datadog\/[^/]+$/.test(name)
 }
