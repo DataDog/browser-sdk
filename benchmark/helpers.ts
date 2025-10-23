@@ -1,16 +1,18 @@
 import { test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import type { BrowserWindow, Metrics } from 'profiling.type'
+import { isContinuousIntegration } from './environment'
 import { startProfiling } from './profilers'
-import { reportMetricsToConsole } from './reporters/console'
+import { reportToConsole } from './reporters/reportToConsole'
+import { reportToDatadog } from './reporters/reportToDatadog'
 
 const bundleUrl = 'https://www.datadoghq-browser-agent.com/us1/v6/datadog-rum.js'
-
-export const scenarioConfigurations = ['none', 'rum', 'rum_replay', 'rum_profiling'] as const
+const scenarioConfigurations = ['none', 'rum', 'rum_replay', 'rum_profiling'] as const
+const rumApplicationId = '9fa62a5b-8a7e-429d-8466-8b111a4d4693'
 
 type ScenarioConfiguration = (typeof scenarioConfigurations)[number]
 
-async function injectSDK(page: Page, scenarioConfiguration: ScenarioConfiguration) {
+async function injectSDK(page: Page, scenarioName: string, scenarioConfiguration: ScenarioConfiguration) {
   await page.addInitScript(`
     function loadSDK() {
       (function(h,o,u,n,d) {
@@ -21,12 +23,15 @@ async function injectSDK(page: Page, scenarioConfiguration: ScenarioConfiguratio
 
       window.DD_RUM.onReady(function() {
         window.DD_RUM.init({
-          clientToken: 'xxx',
-          applicationId: 'xxx',
+          clientToken: '${isContinuousIntegration ? 'pubab31fd1ab9d01d2b385a8aa3dd403b1d' : 'fake-client-token' /** prevent sending event in local environment */}',
+          applicationId: '${rumApplicationId}',
           site: 'datadoghq.com',
+          service: 'browser-sdk-continuous-benchmark',
           profilingSampleRate: ${scenarioConfiguration === 'rum_replay' ? 100 : 0},
           sessionReplaySampleRate: ${scenarioConfiguration === 'rum_profiling' ? 100 : 0},
+          trackBfcacheViews: true,
         })
+        window.DD_RUM.addContext('scenario', { name: '${scenarioName}', configuration: '${scenarioConfiguration}' })
       })
     }
 
@@ -57,7 +62,7 @@ export function createBenchmarkTest(scenarioName: string) {
           const { stopProfiling, takeMeasurements } = await startProfiling(page)
 
           if (scenarioConfiguration !== 'none') {
-            await injectSDK(page, scenarioConfiguration)
+            await injectSDK(page, scenarioName, scenarioConfiguration)
           }
 
           await runner(page, takeMeasurements)
@@ -71,8 +76,11 @@ export function createBenchmarkTest(scenarioName: string) {
         })
       })
 
-      test.afterAll(() => {
-        reportMetricsToConsole(metrics)
+      test.afterAll(async () => {
+        reportToConsole(metrics)
+        if (isContinuousIntegration) {
+          await reportToDatadog(metrics, rumApplicationId)
+        }
       })
     },
   }

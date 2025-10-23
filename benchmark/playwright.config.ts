@@ -1,13 +1,13 @@
 import { defineConfig, devices } from '@playwright/test'
+import { isContinuousIntegration } from './environment'
 
-// eslint-disable-next-line import/no-default-export
-export default defineConfig({
+const baseConfig = {
   testDir: './scenarios',
   testMatch: '**/*.scenario.ts',
   tsconfig: './tsconfig.json',
   fullyParallel: true,
-  workers: 1,
   retries: 0,
+  workers: 1,
   projects: [
     {
       name: 'chromium',
@@ -16,4 +16,13 @@ export default defineConfig({
       },
     },
   ],
+}
+
+// eslint-disable-next-line import/no-default-export
+export default defineConfig({
+  ...baseConfig,
+  ...(isContinuousIntegration && {
+    repeatEach: 15,
+    workers: 4,
+  }),
 })

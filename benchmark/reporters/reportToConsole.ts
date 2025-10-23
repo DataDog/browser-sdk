@@ -4,7 +4,7 @@ const DURATION_UNITS = ['μs', 'ms', 's']
 const BYTES_UNITS = ['B', 'kB', 'MB']
 const NO_VALUE = ''
 
-export function reportMetricsToConsole(metricsTable: Record<string, Metrics>) {
+export function reportToConsole(metricsTable: Record<string, Metrics>) {
   const report: Record<string, Record<string, string>> = {
     'memory (median)': {},
     cpu: {},
