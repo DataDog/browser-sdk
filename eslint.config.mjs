@@ -50,6 +50,7 @@ export default tseslint.config(
           './tsconfig.scripts.json',
           './developer-extension/tsconfig.webpack.json',
           './test/e2e/tsconfig.json',
+          './benchmark/tsconfig.json',
           './performances/tsconfig.json',
 
           './test/apps/**/tsconfig.json',
