@@ -39,7 +39,6 @@ interface TestContext {
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
-  interactWithWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -132,9 +131,8 @@ class TestBuilder {
     return this
   }
 
-  withWorker(implementation: WorkerImplementationFactory, options: RegistrationOptions = {}) {
-    implementation.isModule = options.type === 'module'
-    this.workerImplementationFactory = implementation
+  withWorker(implementation: WorkerImplementationFactory['implementation'], options: RegistrationOptions = {}) {
+    this.workerImplementationFactory = { ...options, implementation }
 
     // Service workers require HTTPS or localhost due to browser security restrictions
     this.withHostName('localhost')
@@ -175,7 +173,7 @@ class TestBuilder {
       testFixture: this.testFixture,
       extension: this.extension,
       hostName: this.hostName,
-      workerImplementation: this.workerImplementationFactory,
+      workerImplementationFactory: this.workerImplementationFactory,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -255,7 +253,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.base.bindServerApp(
       createMockServerApp(servers, setup, {
         remoteConfiguration: setupOptions.remoteConfiguration,
-        workerImplementation: setupOptions.workerImplementation && workerSetup(setupOptions, servers),
+        workerImplementation: setupOptions.workerImplementationFactory && workerSetup(setupOptions, servers),
       })
     )
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
@@ -298,9 +296,6 @@ function createTestContext(
       } finally {
         browserLogsManager.clear()
       }
-    },
-    interactWithWorker: async (cb: (worker: ServiceWorker) => void) => {
-      await page.evaluate(`(${cb.toString()})(window.myServiceWorker.active)`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
     flushEvents: () => flushEvents(page),
