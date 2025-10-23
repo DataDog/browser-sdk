@@ -6,9 +6,8 @@ import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
-export interface WorkerImplementationFactory {
-  (self: WorkerGlobalScope & { DD_LOGS?: DatadogLogs }): void
-  isModule?: boolean
+export interface WorkerImplementationFactory extends RegistrationOptions {
+  implementation: (self: WorkerGlobalScope & { DD_LOGS?: DatadogLogs }) => void
 }
 export interface SetupOptions {
   rum?: RumInitConfiguration
@@ -31,7 +30,7 @@ export interface SetupOptions {
     logsConfiguration?: LogsInitConfiguration
   }
   hostName?: string
-  workerImplementation?: WorkerImplementationFactory
+  workerImplementationFactory?: WorkerImplementationFactory
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -212,20 +211,20 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
 export function workerSetup(options: SetupOptions, servers: Servers) {
   let script = ''
 
-  if (!options.workerImplementation) {
+  if (!options.workerImplementationFactory) {
     return script
   }
 
   if (options.logs) {
     script += js`
-      ${options.workerImplementation.isModule ? js`import '/datadog-logs.js';` : js`importScripts('/datadog-logs.js');`}
+      ${options.workerImplementationFactory.type === 'module' ? js`import '/datadog-logs.js';` : js`importScripts('/datadog-logs.js');`}
       
       // Initialize DD_LOGS in service worker
       DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, ...options.logs }, servers)})
     `
   }
 
-  script += `;(${options.workerImplementation.toString()})(self);`
+  script += `;(${options.workerImplementationFactory.implementation.toString()})(self);`
 
   return script
 }
