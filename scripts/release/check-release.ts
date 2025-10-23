@@ -8,6 +8,7 @@ interface PackageJsonFile {
   content: {
     name: string
     version: string
+    private?: boolean
     dependencies?: Record<string, string>
     devDependencies?: Record<string, string>
     peerDependencies?: Record<string, string>
@@ -51,10 +52,15 @@ function checkBrowserSdkPackageJsonFiles(): void {
 }
 
 function checkPackageJsonVersion(packageJsonFile: PackageJsonFile): void {
-  if (
-    isBrowserSdkPublicPackageName(packageJsonFile.content.name) &&
-    packageJsonFile.content.version !== releaseVersion
-  ) {
+  if (packageJsonFile.content?.private) {
+    // The developer extension is a private package, but it should still have a version
+    if (
+      packageJsonFile.content.version &&
+      packageJsonFile.content.name !== '@datadog/browser-sdk-developer-extension'
+    ) {
+      throw new Error(`Private package ${packageJsonFile.relativePath} should not have a version`)
+    }
+  } else if (packageJsonFile.content.version !== releaseVersion) {
     throw new Error(
       `Invalid version for ${packageJsonFile.relativePath}: expected ${releaseVersion}, got ${packageJsonFile.content.version}`
     )
@@ -62,6 +68,10 @@ function checkPackageJsonVersion(packageJsonFile: PackageJsonFile): void {
 }
 
 function checkPackageDependencyVersions(packageJsonFile: PackageJsonFile): void {
+  if (packageJsonFile.content.private) {
+    return
+  }
+
   for (const dependencies of [
     packageJsonFile.content.dependencies,
     packageJsonFile.content.devDependencies,
@@ -72,12 +82,7 @@ function checkPackageDependencyVersions(packageJsonFile: PackageJsonFile): void 
     }
 
     for (const [dependencyName, dependencyVersion] of Object.entries(dependencies)) {
-      if (
-        isBrowserSdkPublicPackageName(dependencyName) &&
-        !dependencyVersion.startsWith('workspace:') &&
-        !dependencyVersion.startsWith('file:') &&
-        dependencyVersion !== releaseVersion
-      ) {
+      if (isBrowserSdkPackageName(dependencyName) && dependencyVersion !== releaseVersion) {
         throw new Error(
           `Invalid dependency version for ${dependencyName} in ${packageJsonFile.relativePath}: expected ${releaseVersion}, got ${dependencyVersion}`
         )
@@ -86,6 +91,6 @@ function checkPackageDependencyVersions(packageJsonFile: PackageJsonFile): void 
   }
 }
 
-function isBrowserSdkPublicPackageName(name: string): boolean {
-  return /^@datadog\/[^/]+$/.test(name)
+function isBrowserSdkPackageName(name: string): boolean {
+  return name?.startsWith('@datadog/')
 }
