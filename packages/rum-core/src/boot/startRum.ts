@@ -55,6 +55,7 @@ import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
+import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -187,6 +188,7 @@ export function startRumEventCollection(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, session, recorderApi, viewHistory)
   startConnectivityContext(hooks)
+  startSourceCodeContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
