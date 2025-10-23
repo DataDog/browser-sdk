@@ -249,9 +249,7 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-export function js(parts: readonly string[], ...vars: string[]) {
-  return parts.reduce((full, part, index) => full + vars[index - 1] + part)
-}
+export const js = html
 
 function setupEventBridge(servers: Servers) {
   const baseHostname = new URL(servers.base.origin).hostname
