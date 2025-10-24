@@ -16,7 +16,7 @@ async function generateRumEventsFormatTypes(schemasDirectoryPath: string): Promi
   await generateTypesFromSchema(
     path.join(import.meta.dirname, '../packages/rum-core/src/rumEvent.types.ts'),
     schemasDirectoryPath,
-    'rum-events-schema.json'
+    'rum-events-browser-schema.json'
   )
   await generateTypesFromSchema(
     path.join(import.meta.dirname, '../packages/core/src/domain/telemetry/telemetryEvent.types.ts'),
