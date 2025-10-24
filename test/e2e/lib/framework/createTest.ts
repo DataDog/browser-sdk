@@ -13,17 +13,14 @@ import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import type { SetupFactory, SetupOptions } from './pageSetups'
-import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import type { SetupFactory, SetupOptions, WorkerImplementationFactory } from './pageSetups'
+import { workerSetup, html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
 import { isBrowserStack } from './environment'
 
-interface LogsWorkerOptions {
-  importScript?: boolean
-  nativeLog?: boolean
-}
+import '../types/global'
 
 export function createTest(title: string) {
   return new TestBuilder(title)
@@ -42,7 +39,6 @@ interface TestContext {
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
-  interactWithWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -62,8 +58,8 @@ class TestBuilder {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   } = {}
-  private useServiceWorker: boolean = false
   private hostName?: string
+  private workerImplementationFactory?: WorkerImplementationFactory
 
   constructor(private title: string) {}
 
@@ -135,37 +131,20 @@ class TestBuilder {
     return this
   }
 
-  withWorker({ importScript = false, nativeLog = false }: LogsWorkerOptions = {}) {
-    if (!this.useServiceWorker) {
-      this.useServiceWorker = true
+  withWorker(implementation: WorkerImplementationFactory['implementation'], options: RegistrationOptions = {}) {
+    this.workerImplementationFactory = { ...options, implementation }
 
-      const isModule = !importScript
-
-      const params = []
-      if (importScript) {
-        params.push('importScripts=true')
-      }
-      if (nativeLog) {
-        params.push('nativeLog=true')
-      }
-
-      const query = params.length > 0 ? `?${params.join('&')}` : ''
-      const url = `/sw.js${query}`
-
-      const options = isModule ? '{ type: "module" }' : '{}'
-
-      // Service workers require HTTPS or localhost due to browser security restrictions
-      this.hostName = 'localhost'
-      this.withBody(html`
-        <script>
-          if (!window.myServiceWorker && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.register('${url}', ${options}).then((registration) => {
-              window.myServiceWorker = registration
-            })
-          }
-        </script>
-      `)
-    }
+    // Service workers require HTTPS or localhost due to browser security restrictions
+    this.withHostName('localhost')
+    this.withBody(html`
+      <script>
+        if (!window.myServiceWorker && 'serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js', ${JSON.stringify(options)}).then((registration) => {
+            window.myServiceWorker = registration
+          })
+        }
+      </script>
+    `)
 
     return this
   }
@@ -194,6 +173,7 @@ class TestBuilder {
       testFixture: this.testFixture,
       extension: this.extension,
       hostName: this.hostName,
+      workerImplementationFactory: this.workerImplementationFactory,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -270,7 +250,12 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
+    servers.base.bindServerApp(
+      createMockServerApp(servers, setup, {
+        remoteConfiguration: setupOptions.remoteConfiguration,
+        workerImplementation: setupOptions.workerImplementationFactory && workerSetup(setupOptions, servers),
+      })
+    )
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(browserLogs, testContext)
@@ -311,9 +296,6 @@ function createTestContext(
       } finally {
         browserLogsManager.clear()
       }
-    },
-    interactWithWorker: async (cb: (worker: ServiceWorker) => void) => {
-      await page.evaluate(`(${cb.toString()})(window.myServiceWorker.active)`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
     flushEvents: () => flushEvents(page),
