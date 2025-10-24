@@ -13,8 +13,8 @@ import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import type { SetupFactory, SetupOptions, WorkerImplementationFactory } from './pageSetups'
-import { workerSetup, html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import type { SetupFactory, SetupOptions, WorkerOptions } from './pageSetups'
+import { buildWorkerScript, html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
@@ -59,7 +59,7 @@ class TestBuilder {
     logsConfiguration?: LogsInitConfiguration
   } = {}
   private hostName?: string
-  private workerImplementationFactory?: WorkerImplementationFactory
+  private workerOptions?: WorkerOptions
 
   constructor(private title: string) {}
 
@@ -131,15 +131,15 @@ class TestBuilder {
     return this
   }
 
-  withWorker(implementation: WorkerImplementationFactory['implementation'], options: RegistrationOptions = {}) {
-    this.workerImplementationFactory = { ...options, implementation }
+  withWorker(testCase: WorkerOptions['testCase'], registrationOptions: RegistrationOptions = {}) {
+    this.workerOptions = { ...registrationOptions, testCase }
 
     // Service workers require HTTPS or localhost due to browser security restrictions
     this.withHostName('localhost')
     this.withBody(html`
       <script>
         if (!window.myServiceWorker && 'serviceWorker' in navigator) {
-          navigator.serviceWorker.register('/sw.js', ${JSON.stringify(options)}).then((registration) => {
+          navigator.serviceWorker.register('/sw.js', ${JSON.stringify(registrationOptions)}).then((registration) => {
             window.myServiceWorker = registration
           })
         }
@@ -173,7 +173,7 @@ class TestBuilder {
       testFixture: this.testFixture,
       extension: this.extension,
       hostName: this.hostName,
-      workerImplementationFactory: this.workerImplementationFactory,
+      workerOptions: this.workerOptions,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -253,7 +253,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.base.bindServerApp(
       createMockServerApp(servers, setup, {
         remoteConfiguration: setupOptions.remoteConfiguration,
-        workerImplementation: setupOptions.workerImplementationFactory && workerSetup(setupOptions, servers),
+        workerScript: buildWorkerScript(setupOptions, servers),
       })
     )
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
