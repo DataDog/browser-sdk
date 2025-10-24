@@ -1,6 +1,6 @@
 import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
 import { getPrivacySelector, NodePrivacyLevel } from '../privacyConstants'
-import { getNodePrivacyLevel, shouldMaskNode } from '../privacy'
+import { getNodePrivacyLevel, maskDisallowedTextContent, shouldMaskNode } from '../privacy'
 import type { NodePrivacyLevelCache } from '../privacy'
 import type { RumConfiguration } from '../configuration'
 import { isElementNode } from '../../browser/htmlDomUtils'
@@ -84,7 +84,7 @@ const priorityStrategies: NameStrategy[] = [
       return getActionNameFromTextualContent(element, rumConfiguration)
     }
   },
-  (element) => getActionNameFromStandardAttribute(element, 'aria-label'),
+  (element, rumConfiguration) => getActionNameFromStandardAttribute(element, 'aria-label', rumConfiguration),
   // associated element text designated by the aria-labelledby attribute
   (element, rumConfiguration) => {
     const labelledByAttribute = element.getAttribute('aria-labelledby')
@@ -100,10 +100,10 @@ const priorityStrategies: NameStrategy[] = [
       }
     }
   },
-  (element) => getActionNameFromStandardAttribute(element, 'alt'),
-  (element) => getActionNameFromStandardAttribute(element, 'name'),
-  (element) => getActionNameFromStandardAttribute(element, 'title'),
-  (element) => getActionNameFromStandardAttribute(element, 'placeholder'),
+  (element, rumConfiguration) => getActionNameFromStandardAttribute(element, 'alt', rumConfiguration),
+  (element, rumConfiguration) => getActionNameFromStandardAttribute(element, 'name', rumConfiguration),
+  (element, rumConfiguration) => getActionNameFromStandardAttribute(element, 'title', rumConfiguration),
+  (element, rumConfiguration) => getActionNameFromStandardAttribute(element, 'placeholder', rumConfiguration),
   // SELECT first OPTION text
   (element, rumConfiguration) => {
     if ('options' in element && element.options.length > 0) {
@@ -169,9 +169,19 @@ function getElementById(refElement: Element, id: string) {
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
 }
 
-function getActionNameFromStandardAttribute(element: Element | HTMLElement, attribute: string): ActionName {
+function getActionNameFromStandardAttribute(
+  element: Element | HTMLElement,
+  attribute: string,
+  rumConfiguration: RumConfiguration
+): ActionName {
+  const { enablePrivacyForActionName, defaultPrivacyLevel } = rumConfiguration
+  const nodeSelfPrivacyLevel = getNodePrivacyLevel(element, defaultPrivacyLevel)
+  const attributeValue = element.getAttribute(attribute)
   return {
-    name: element.getAttribute(attribute) || '',
+    name:
+      enablePrivacyForActionName && nodeSelfPrivacyLevel && shouldMaskNode(element, nodeSelfPrivacyLevel, false)
+        ? maskDisallowedTextContent(attributeValue || '', ACTION_NAME_PLACEHOLDER)
+        : attributeValue || '',
     nameSource: ActionNameSource.STANDARD_ATTRIBUTE,
   }
 }
