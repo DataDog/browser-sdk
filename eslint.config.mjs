@@ -216,11 +216,12 @@ export default tseslint.config(
         {
           commonjs: true,
           ignore: [
-            // typescript-eslint package has no 'main' field, only 'exports', but
+            // typescript-eslint and chrome-webstore-upload packages have no 'main' field, only 'exports', but
             // eslint-plugin-import doesn't support it. See:
             // * https://github.com/import-js/eslint-plugin-import/issues/3088#issuecomment-2425233952
             // * https://github.com/browserify/resolve/issues/222
             'typescript-eslint',
+            'chrome-webstore-upload',
 
             // The json-schema-to-typescript is built on demand (see scripts/cli build_json2type)
             // and is not always available in the node_modules. Skip the import check.
