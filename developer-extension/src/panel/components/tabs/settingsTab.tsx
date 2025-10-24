@@ -5,7 +5,12 @@ import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerSta
 import { useSettings } from '../../hooks/useSettings'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/extension.types'
+import type {
+  DevBundlesOverride,
+  EventCollectionStrategy,
+  InjectionVariant,
+  SdkInjectionType,
+} from '../../../common/extension.types'
 
 export function SettingsTab() {
   const sdkDevServerStatus = useDevServerStatus(DEV_LOGS_URL)
@@ -21,9 +26,33 @@ export function SettingsTab() {
       autoFlush,
       debugMode: debug,
       datadogMode,
+      injectionVariant,
+      sdkInjectionType,
     },
     setSetting,
   ] = useSettings()
+
+  const badgeStatus = () => {
+    const toBadge = (color: 'blue' | 'green' | 'yellow' | 'red', text: string) => <Badge color={color}>{text}</Badge>
+
+    const overridden = useDevBundles && (injectionVariant === 'cdn' || sdkDevServerStatus === DevServerStatus.AVAILABLE)
+    if (overridden) {
+      return toBadge('blue', 'Overridden')
+    }
+
+    if (injectionVariant === 'cdn') {
+      return toBadge('green', 'Available')
+    }
+
+    switch (sdkDevServerStatus) {
+      case DevServerStatus.AVAILABLE:
+        return toBadge('green', 'Available')
+      case DevServerStatus.CHECKING:
+        return toBadge('yellow', 'Checking...')
+      default:
+        return toBadge('red', 'Unavailable')
+    }
+  }
 
   return (
     <TabBase>
@@ -35,17 +64,7 @@ export function SettingsTab() {
                 <Accordion.Control>
                   <Group>
                     <Text>Browser SDK</Text>
-                    <Box style={{ marginLeft: 'auto' }}>
-                      {sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles ? (
-                        <Badge color="blue">Overridden</Badge>
-                      ) : sdkDevServerStatus === DevServerStatus.AVAILABLE ? (
-                        <Badge color="green">Available</Badge>
-                      ) : sdkDevServerStatus === DevServerStatus.CHECKING ? (
-                        <Badge color="yellow">Checking...</Badge>
-                      ) : (
-                        <Badge color="red">Unavailable</Badge>
-                      )}
-                    </Box>
+                    <Box style={{ marginLeft: 'auto' }}>{badgeStatus()}</Box>
                   </Group>
                 </Accordion.Control>
                 <Accordion.Panel>
@@ -55,6 +74,55 @@ export function SettingsTab() {
                   </Box>
 
                   <Space h="md" />
+
+                  {datadogMode && (
+                    <>
+                      <SettingItem
+                        input={
+                          <Group>
+                            <Text>Injection variant:</Text>
+                            <SegmentedControl
+                              color="violet"
+                              value={injectionVariant}
+                              size="xs"
+                              data={[
+                                { value: 'local-dev', label: 'Local Dev' },
+                                { value: 'cdn', label: 'CDN' },
+                              ]}
+                              onChange={(value) => {
+                                setSetting('injectionVariant', value as InjectionVariant)
+                              }}
+                            />
+                          </Group>
+                        }
+                        description={<></>}
+                      />
+
+                      {injectionVariant === 'cdn' && (
+                        <SettingItem
+                          input={
+                            <Group>
+                              <Text>SDK injection type:</Text>
+                              <SegmentedControl
+                                color="violet"
+                                value={sdkInjectionType}
+                                size="xs"
+                                data={[
+                                  { value: 'RUM', label: 'RUM' },
+                                  { value: 'LOGS', label: 'LOGS' },
+                                  { value: 'BOTH', label: 'BOTH' },
+                                ]}
+                                onChange={(value) => {
+                                  setSetting('sdkInjectionType', value as SdkInjectionType)
+                                }}
+                              />
+                            </Group>
+                          }
+                          description={<></>}
+                        />
+                      )}
+                    </>
+                  )}
 
                   <SettingItem
                     input={
