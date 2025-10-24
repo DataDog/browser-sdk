@@ -524,8 +524,8 @@ describe('validateAndBuildRumConfiguration', () => {
         allowedGraphQlUrls: ['https://api.example.com/graphql', '/graphql'],
       })!
       expect(configuration.allowedGraphQlUrls).toEqual([
-        { match: 'https://api.example.com/graphql', trackPayload: false },
-        { match: '/graphql', trackPayload: false },
+        { match: 'https://api.example.com/graphql', trackPayload: false, trackResponseErrors: false },
+        { match: '/graphql', trackPayload: false, trackResponseErrors: false },
       ])
     })
 
@@ -535,8 +535,8 @@ describe('validateAndBuildRumConfiguration', () => {
         allowedGraphQlUrls: [{ match: /\/graphql$/i }, { match: 'https://api.example.com/graphql' }],
       })!
       expect(configuration.allowedGraphQlUrls).toEqual([
-        { match: /\/graphql$/i, trackPayload: false },
-        { match: 'https://api.example.com/graphql', trackPayload: false },
+        { match: /\/graphql$/i, trackPayload: false, trackResponseErrors: false },
+        { match: 'https://api.example.com/graphql', trackPayload: false, trackResponseErrors: false },
       ])
     })
 
@@ -546,7 +546,9 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         allowedGraphQlUrls: [{ match: customMatcher }],
       })!
-      expect(configuration.allowedGraphQlUrls).toEqual([{ match: customMatcher, trackPayload: false }])
+      expect(configuration.allowedGraphQlUrls).toEqual([
+        { match: customMatcher, trackPayload: false, trackResponseErrors: false },
+      ])
     })
 
     it('should accept GraphQL options with trackPayload', () => {
@@ -554,7 +556,19 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         allowedGraphQlUrls: [{ match: '/graphql', trackPayload: true }],
       })!
-      expect(configuration.allowedGraphQlUrls).toEqual([{ match: '/graphql', trackPayload: true }])
+      expect(configuration.allowedGraphQlUrls).toEqual([
+        { match: '/graphql', trackPayload: true, trackResponseErrors: false },
+      ])
+    })
+
+    it('should accept GraphQL options with trackResponseErrors', () => {
+      const configuration = validateAndBuildRumConfiguration({
+        ...DEFAULT_INIT_CONFIGURATION,
+        allowedGraphQlUrls: [{ match: '/graphql', trackResponseErrors: true }],
+      })!
+      expect(configuration.allowedGraphQlUrls).toEqual([
+        { match: '/graphql', trackResponseErrors: true, trackPayload: false },
+      ])
     })
 
     it('should reject invalid values', () => {
@@ -621,6 +635,7 @@ describe('serializeRumConfiguration', () => {
       | MapRumInitConfigurationKey<keyof RumInitConfiguration>
       | 'selected_tracing_propagators'
       | 'use_track_graph_ql_payload'
+      | 'use_track_graph_ql_response_errors'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
@@ -632,6 +647,7 @@ describe('serializeRumConfiguration', () => {
       use_allowed_tracing_urls: true,
       use_allowed_graph_ql_urls: true,
       use_track_graph_ql_payload: false,
+      use_track_graph_ql_response_errors: false,
       selected_tracing_propagators: ['tracecontext', 'datadog'],
       use_excluded_activity_urls: true,
       track_user_interactions: true,

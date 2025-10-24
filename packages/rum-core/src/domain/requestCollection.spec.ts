@@ -35,7 +35,7 @@ describe('collect fetch', () => {
         context.spanId = createSpanIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, tracerStub as Tracer))
+    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, mockRumConfiguration(), tracerStub as Tracer))
 
     fetch = window.fetch as MockFetch
 
@@ -332,6 +332,73 @@ describe('collect xhr', () => {
           done()
         },
       })
+    })
+  })
+})
+
+describe('GraphQL response errors tracking', () => {
+  const FAKE_GRAPHQL_URL = 'http://fake-url/graphql'
+
+  it('should extract GraphQL errors when trackResponseErrors is enabled', (done) => {
+    const mockFetchManager = mockFetch()
+    const completeSpy = jasmine.createSpy('requestComplete')
+    const lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
+
+    const configuration = mockRumConfiguration({
+      allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors: true }],
+    })
+    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
+    const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
+    registerCleanupTask(stop)
+
+    const fetch = window.fetch as MockFetch
+    fetch(FAKE_GRAPHQL_URL, {
+      method: 'POST',
+      body: JSON.stringify({ query: 'query Test { test }' }),
+    }).resolveWith({
+      status: 200,
+      responseText: JSON.stringify({
+        data: null,
+        errors: [{ message: 'Not found' }, { message: 'Unauthorized' }],
+      }),
+    })
+
+    mockFetchManager.whenAllComplete(() => {
+      const request = completeSpy.calls.argsFor(0)[0]
+      expect(request.graphqlErrorsCount).toBe(2)
+      expect(request.graphqlErrors).toEqual([{ message: 'Not found' }, { message: 'Unauthorized' }])
+      done()
+    })
+  })
+
+  it('should not extract GraphQL errors when trackResponseErrors is false', (done) => {
+    const mockFetchManager = mockFetch()
+    const completeSpy = jasmine.createSpy('requestComplete')
+    const lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
+
+    const configuration = mockRumConfiguration({
+      allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors: false }],
+    })
+    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
+    const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
+    registerCleanupTask(stop)
+
+    const fetch = window.fetch as MockFetch
+    fetch(FAKE_GRAPHQL_URL, {
+      method: 'POST',
+      body: JSON.stringify({ query: 'query Test { test }' }),
+    }).resolveWith({
+      status: 200,
+      responseText: JSON.stringify({ errors: [{ message: 'Error' }] }),
+    })
+
+    mockFetchManager.whenAllComplete(() => {
+      const request = completeSpy.calls.argsFor(0)[0]
+      expect(request.graphqlErrorsCount).toBeUndefined()
+      expect(request.graphqlErrors).toBeUndefined()
+      done()
     })
   })
 })

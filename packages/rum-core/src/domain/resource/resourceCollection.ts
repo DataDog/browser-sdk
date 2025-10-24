@@ -39,7 +39,7 @@ import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocument
 import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
 import type { GraphQlMetadata } from './graphql'
-import { findGraphQlConfiguration, extractGraphQlMetadata } from './graphql'
+import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
@@ -181,7 +181,7 @@ function computeGraphQlMetaData(
     return
   }
 
-  return extractGraphQlMetadata(request.body, graphQlConfig.trackPayload)
+  return extractGraphQlMetadata(request, graphQlConfig)
 }
 
 function getResourceDomainContext(
