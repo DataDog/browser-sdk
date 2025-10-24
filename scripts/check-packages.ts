@@ -1,8 +1,8 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { globSync } from 'glob'
+import { globSync } from 'node:fs'
 import { minimatch } from 'minimatch'
-import { printLog, printError, runMain } from './lib/executionUtils.ts'
+import { printLog, printError, runMain, printWarning } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
 
 interface PackageFile {
@@ -28,9 +28,18 @@ runMain(() => {
 })
 
 function checkPackage(packagePath: string): boolean {
+  const packageJson = getPackageJson(packagePath)
+
+  if (packageJson?.private) {
+    printWarning(`Skipping private package ${packageJson.name}`)
+    return true
+  }
+
   printLog(`Checking ${packagePath}`)
+
   const packageFiles = getPackageFiles(packagePath)
-  return checkPackageJsonEntryPoints(packagePath, packageFiles) && checkNpmIgnore(packagePath, packageFiles)
+
+  return checkPackageJsonEntryPoints(packageJson, packageFiles) && checkNpmIgnore(packagePath, packageFiles)
 }
 
 function getPackageFiles(packagePath: string): string[] {
@@ -44,19 +53,12 @@ function getPackageFiles(packagePath: string): string[] {
   return parsed[0].files.map((file) => file.path)
 }
 
-function checkPackageJsonEntryPoints(packagePath: string, packageFiles: string[]): boolean {
-  const filesFromPackageJsonEntryPoints = packageFiles
-    .filter((file) => file.endsWith('package.json'))
-    .flatMap((packageJsonPath) => {
-      const content = JSON.parse(fs.readFileSync(path.join(packagePath, packageJsonPath), 'utf8'))
-      return [content.main, content.module, content.types]
-        .filter(Boolean)
-        .map((entryPointPath: string) => path.join(path.dirname(packageJsonPath), entryPointPath))
-    })
+function checkPackageJsonEntryPoints(packageJson: PackageJson, packageFiles: string[]): boolean {
+  const filesFromPackageJsonEntryPoints = [packageJson.main, packageJson.module, packageJson.types].filter(Boolean)
 
   for (const file of filesFromPackageJsonEntryPoints) {
     if (!packageFiles.includes(file)) {
-      printError(`File ${file} used as an entry point in ${packagePath} is missing from the package`)
+      printError(`File ${file} used as an entry point in ${packageJson.name} is missing from the package`)
       return false
     }
   }
@@ -93,4 +95,18 @@ function checkNpmIgnore(packagePath: string, packageFiles: string[]): boolean {
   }
 
   return true
+}
+
+function getPackageJson(packagePath: string) {
+  return globSync(path.join(packagePath, 'package.json')).map(
+    (packageJsonFile) => JSON.parse(fs.readFileSync(packageJsonFile, 'utf8')) as PackageJson
+  )[0]
+}
+
+interface PackageJson {
+  name: string
+  private?: boolean
+  main: string
+  module: string
+  types: string
 }

@@ -39,6 +39,11 @@ export function printLog(...params: any[]): void {
   console.log(greenColor, ...params, resetColor)
 }
 
+export function printWarning(...params: any[]): void {
+  const yellowColor = '\x1b[33;1m'
+  console.log(yellowColor, ...params, resetColor)
+}
+
 export function formatSize(bytes: number | null, { includeSign = false } = {}): string {
   if (bytes === null) {
     return 'N/A'
