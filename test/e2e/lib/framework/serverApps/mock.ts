@@ -11,12 +11,12 @@ export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
 interface MockServerOptions {
   remoteConfiguration?: RemoteConfiguration
-  workerImplementation?: string
+  workerScript?: string
 }
 export function createMockServerApp(
   servers: Servers,
   setup: string,
-  { remoteConfiguration, workerImplementation }: MockServerOptions = {}
+  { remoteConfiguration, workerScript }: MockServerOptions = {}
 ): MockServerApp {
   const app = express()
   let largeResponseBytesWritten = 0
@@ -49,7 +49,7 @@ export function createMockServerApp(
   })
 
   app.get('/sw.js', (_req, res) => {
-    res.contentType('application/javascript').send(workerImplementation)
+    res.contentType('application/javascript').send(workerScript)
   })
 
   function generateLargeResponse(res: ServerResponse, chunkText: string) {
