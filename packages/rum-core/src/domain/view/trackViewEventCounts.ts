@@ -4,7 +4,7 @@ import { trackEventCounts } from '../trackEventCounts'
 export function trackViewEventCounts(lifeCycle: LifeCycle, viewId: string, onChange: () => void) {
   const { stop, eventCounts } = trackEventCounts({
     lifeCycle,
-    isChildEvent: (event) => event.view.id === viewId,
+    isChildEvent: (event) => event.view?.id === viewId,
     onChange,
   })
 

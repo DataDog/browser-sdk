@@ -29,7 +29,7 @@ describe('rum assembly', () => {
         it('should allow modification', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
-              beforeSend: (event) => (event.view.url = 'modified'),
+              beforeSend: (event) => (event.view!.url = 'modified'),
             },
           })
 
@@ -37,13 +37,13 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
           })
 
-          expect(serverRumEvents[0].view.url).toBe('modified')
+          expect(serverRumEvents[0].view?.url).toBe('modified')
         })
 
         it('should allow addition', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
-              beforeSend: (event) => (event.view.name = 'added'),
+              beforeSend: (event) => (event.view!.name = 'added'),
             },
           })
 
@@ -51,13 +51,13 @@ describe('rum assembly', () => {
             rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { view: { url: '/path?foo=bar' } }),
           })
 
-          expect(serverRumEvents[0].view.name).toBe('added')
+          expect(serverRumEvents[0].view?.name).toBe('added')
         })
 
         it('should allow modification of view.performance.lcp.resource_url', () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
             partialConfiguration: {
-              beforeSend: (event) => (event.view.performance.lcp.resource_url = 'modified_url'),
+              beforeSend: (event) => (event.view!.performance!.lcp!.resource_url = 'modified_url'),
             },
           })
 
@@ -228,7 +228,7 @@ describe('rum assembly', () => {
           }),
         })
 
-        expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+        expect(serverRumEvents[0].view?.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
       })
 
       it('should not allow to add a sensitive field on the wrong event type', () => {
@@ -297,7 +297,7 @@ describe('rum assembly', () => {
           }),
         })
 
-        expect(serverRumEvents[0].view.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
+        expect(serverRumEvents[0].view?.id).toBe('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')
         expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view events using beforeSend!")
       })
     })
@@ -390,7 +390,7 @@ describe('rum assembly', () => {
       })
       expect(serverRumEvents[0].service).toEqual('new service')
       expect(serverRumEvents[0].version).toEqual('new version')
-      expect(serverRumEvents[0].view.id).toEqual('new view id')
+      expect(serverRumEvents[0].view?.id).toEqual('new view id')
     })
 
     it('should not override customer context', () => {
