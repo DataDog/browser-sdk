@@ -372,7 +372,7 @@ describe('httpRequest with AVOID_FETCH_KEEPALIVE feature flag', () => {
 
   it('should use regular fetch (without keepalive) when feature flag is enabled', async () => {
     addExperimentalFeatures([ExperimentalFeature.AVOID_FETCH_KEEPALIVE])
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
 
     request.send({ data: '{"foo":"bar"}', bytesCount: 10 })
     await interceptor.waitForAllFetchCalls()
@@ -387,7 +387,7 @@ describe('httpRequest with AVOID_FETCH_KEEPALIVE feature flag', () => {
       pending('no fetch keepalive support')
     }
 
-    request = createHttpRequest(endpointBuilder, BATCH_BYTES_LIMIT, noop)
+    request = createHttpRequest([endpointBuilder], BATCH_BYTES_LIMIT, noop)
 
     request.send({ data: '{"foo":"bar"}', bytesCount: 10 })
     await interceptor.waitForAllFetchCalls()
