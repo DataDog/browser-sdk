@@ -6,7 +6,6 @@ import { default as clsx } from 'clsx'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type {
-  DurationProperties,
   RumActionEvent,
   RumErrorEvent,
   RumLongTaskEvent,
@@ -373,7 +372,7 @@ function LongTaskDescription({ event }: { event: RumLongTaskEvent }) {
 
 function VitalDescription({ event }: { event: RumVitalEvent }) {
   const vitalName = event.vital.name
-  const vitalValue = (event.vital as DurationProperties).duration
+  const vitalValue = (event.vital as { duration?: number }).duration
   const vitalDescription = event.vital.description
   return (
     <>
