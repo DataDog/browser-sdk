@@ -11,7 +11,9 @@ declare global {
   }
 }
 
-type SdkPublicApi = { [key: string]: (...args: any[]) => unknown }
+interface SdkPublicApi {
+  [key: string]: (...args: any[]) => unknown
+}
 
 function main() {
   // Prevent multiple executions when the devetools are reconnecting
@@ -108,7 +110,11 @@ function overrideInitConfiguration(global: GlobalInstrumentation, configurationO
     if ('init' in sdkInstance) {
       const originalInit = sdkInstance.init
       sdkInstance.init = (config: any) => {
-        originalInit({ ...config, ...configurationOverride })
+        originalInit({
+          ...config,
+          ...configurationOverride,
+          allowedTrackingOrigins: [location.origin],
+        })
       }
     }
   })

@@ -3,10 +3,16 @@ import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
-import { serializeDocument, SerializationContextStatus } from '../serialization'
+import {
+  serializeDocument,
+  SerializationContextStatus,
+  createSerializationStats,
+  createSerializationScope,
+} from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { RecordIds } from '../recordIds'
 import { initRecordIds } from '../recordIds'
+import { createNodeIds } from '../nodeIds'
 import type { MouseInteractionCallback } from './trackMouseInteraction'
 import { trackMouseInteraction } from './trackMouseInteraction'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
@@ -24,7 +30,9 @@ describe('trackMouseInteraction', () => {
     a = appendElement('<a tabindex="0"></a>') as HTMLAnchorElement // tabindex 0 makes the element focusable
     a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))
 
-    serializeDocument(document, DEFAULT_CONFIGURATION, {
+    const scope = createSerializationScope(createNodeIds())
+    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
+      serializationStats: createSerializationStats(),
       shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions: createElementsScrollPositions(),
@@ -32,7 +40,7 @@ describe('trackMouseInteraction', () => {
 
     mouseInteractionCallbackSpy = jasmine.createSpy()
     recordIds = initRecordIds()
-    mouseInteractionTracker = trackMouseInteraction(configuration, mouseInteractionCallbackSpy, recordIds)
+    mouseInteractionTracker = trackMouseInteraction(configuration, scope, mouseInteractionCallbackSpy, recordIds)
 
     registerCleanupTask(() => {
       mouseInteractionTracker.stop()

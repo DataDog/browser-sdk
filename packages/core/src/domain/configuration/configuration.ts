@@ -10,46 +10,79 @@ import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
+import type { MatchOption } from '../../tools/matchOption'
+import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
+import type { Site } from '../intakeSites'
+import { isWorkerEnvironment } from '../../tools/globalObject'
 import type { TransportConfiguration } from './transportConfiguration'
 import { computeTransportConfiguration } from './transportConfiguration'
-import type { Site } from './intakeSites'
 
+/**
+ * Default privacy level for the browser SDK.
+ *
+ * [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
+ */
 export const DefaultPrivacyLevel = {
   ALLOW: 'allow',
   MASK: 'mask',
   MASK_USER_INPUT: 'mask-user-input',
+  MASK_UNLESS_ALLOWLISTED: 'mask-unless-allowlisted',
 } as const
 export type DefaultPrivacyLevel = (typeof DefaultPrivacyLevel)[keyof typeof DefaultPrivacyLevel]
 
+/**
+ * Trace context injection option.
+ *
+ * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+ */
 export const TraceContextInjection = {
   ALL: 'all',
   SAMPLED: 'sampled',
 } as const
 
+/**
+ * Trace context injection option.
+ *
+ * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+ *
+ */
 export type TraceContextInjection = (typeof TraceContextInjection)[keyof typeof TraceContextInjection]
 
 export interface InitConfiguration {
   /**
    * The client token for Datadog. Required for authenticating your application with Datadog.
+   *
+   * @category Authentication
    */
   clientToken: string
+
   /**
    * A callback function that can be used to modify events before they are sent to Datadog.
+   *
+   * @category Data Collection
    */
   beforeSend?: GenericBeforeSendCallback | undefined
+
   /**
    * The percentage of sessions tracked. A value between 0 and 100.
-   * @default 100
+   *
+   * @category Data Collection
+   * @defaultValue 100
    */
   sessionSampleRate?: number | undefined
+
   /**
    * The percentage of telemetry events sent. A value between 0 and 100.
-   * @default 20
+   *
+   * @category Data Collection
+   * @defaultValue 20
    */
   telemetrySampleRate?: number | undefined
+
   /**
    * Initialization fails silently if the RUM Browser SDK is already initialized on the page.
-   * @default false
+   *
+   * @defaultValue false
    */
   silentMultipleInit?: boolean | undefined
 
@@ -57,7 +90,9 @@ export interface InitConfiguration {
    * Which storage strategy to use for persisting sessions. Can be either 'cookie' or 'local-storage'.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * @default "cookie"
+   *
+   * @category Session Persistence
+   * @defaultValue "cookie"
    */
   sessionPersistence?: SessionPersistence | undefined
 
@@ -66,51 +101,79 @@ export interface InitConfiguration {
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    * See [Monitor Electron Applications Using the Browser SDK](https://docs.datadoghq.com/real_user_monitoring/guide/monitor-electron-applications-using-browser-sdk) for further information.
+   *
+   * @category Session Persistence
    * @deprecated use `sessionPersistence: local-storage` where you want to use localStorage instead
    */
   allowFallbackToLocalStorage?: boolean | undefined
 
   /**
    * Allow listening to DOM events dispatched programmatically ([untrusted events](https://developer.mozilla.org/en-US/docs/Web/API/Event/isTrusted)). Enabling this option can be useful if you heavily rely on programmatic events, such as in an automated UI test environment.
-   * @default false
+   *
+   * @defaultValue false
    */
   allowUntrustedEvents?: boolean | undefined
+
   /**
    * Store global context and user context in localStorage to preserve them along the user navigation.
    * See [Contexts life cycle](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#contexts-life-cycle) for further information.
-   * @default false
+   *
+   * @defaultValue false
    */
   storeContextsAcrossPages?: boolean | undefined
+
   /**
    * Set the initial user tracking consent state.
    * See [User tracking consent](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#user-tracking-consent) for further information.
-   * @default granted
+   *
+   * @category Privacy
+   * @defaultValue granted
    */
   trackingConsent?: TrackingConsent | undefined
+
+  /**
+   * List of origins where the SDK is allowed to run when used in a browser extension context.
+   * Matches urls against the extensions origin.
+   * If not provided and the SDK is running in a browser extension, the SDK will not run.
+   */
+  allowedTrackingOrigins?: MatchOption[] | undefined
 
   // transport options
   /**
    * Optional proxy URL, for example: https://www.proxy.com/path.
    * See [Proxy Your Browser RUM Data](https://docs.datadoghq.com/real_user_monitoring/guide/proxy-rum-data) for further information.
+   *
+   * @category Transport
    */
   proxy?: string | ProxyFn | undefined
+
   /**
    * The Datadog [site](https://docs.datadoghq.com/getting_started/site) parameter of your organization.
-   * @default datadoghq.com
+   *
+   * @category Transport
+   * @defaultValue datadoghq.com
    */
   site?: Site | undefined
 
   // tag and context options
   /**
    * The service name for your application. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Data Collection
    */
   service?: string | undefined | null
+
   /**
    * The application’s environment, for example: prod, pre-prod, and staging. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Data Collection
    */
   env?: string | undefined | null
+
   /**
    * The application’s version, for example: 1.2.3, 6c44da20, and 2020.02.13. Follows the [tag syntax requirements](https://docs.datadoghq.com/getting_started/tagging/#define-tags).
+   *
+   * @category Data Collection
    */
   version?: string | undefined | null
 
@@ -119,56 +182,106 @@ export interface InitConfiguration {
    * Use a partitioned secure cross-site session cookie. This allows the RUM Browser SDK to run when the site is loaded from another one (iframe). Implies `useSecureSessionCookie`.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * @default false
+   *
+   * @category Session Persistence
+   * @defaultValue false
    */
   usePartitionedCrossSiteSessionCookie?: boolean | undefined
+
   /**
    * Use a secure session cookie. This disables RUM events sent on insecure (non-HTTPS) connections.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * @default false
+   *
+   * @category Session Persistence
+   * @defaultValue false
    */
   useSecureSessionCookie?: boolean | undefined
+
   /**
    * Preserve the session across subdomains for the same site.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
-   * @default false
+   *
+   * @category Session Persistence
+   * @defaultValue false
    */
   trackSessionAcrossSubdomains?: boolean | undefined
+
   /**
    * Track anonymous user for the same site and extend cookie expiration date
-   * @default true
+   *
+   * @category Data Collection
+   * @defaultValue true
    */
   trackAnonymousUser?: boolean | undefined
+
   // internal options
   /**
    * [Internal option] Enable experimental features
+   *
+   * @internal
    */
   enableExperimentalFeatures?: string[] | undefined
+
   /**
-   * [Internal option] Configure the dual chipping to another datacenter
+   * [Internal option] Configure the dual shipping to another datacenter
+   *
+   * @internal
    */
   replica?: ReplicaUserConfiguration | undefined
+
   /**
-   * [Internal option] Set the datacenter from where the data is dual chipped
+   * [Internal option] Set the datacenter from where the data is dual shipped
+   *
+   * @internal
    */
   datacenter?: string
+
   /**
    * [Internal option] Datadog internal analytics subdomain
+   *
+   * @internal
    */
   // TODO next major: remove this option and replace usages by proxyFn
   internalAnalyticsSubdomain?: string
+
   /**
    * [Internal option] The percentage of telemetry configuration sent. A value between 0 and 100.
-   * @default 5
+   *
+   * @internal
+   * @defaultValue 5
    */
   telemetryConfigurationSampleRate?: number
+
   /**
    * [Internal option] The percentage of telemetry usage sent. A value between 0 and 100.
-   * @default 5
+   *
+   * @internal
+   * @defaultValue 5
    */
   telemetryUsageSampleRate?: number
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
+   */
+  source?: 'browser' | 'flutter' | 'unity' | undefined
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
+   */
+  sdkVersion?: string | undefined
+
+  /**
+   * [Internal option] Additional configuration for the SDK.
+   *
+   * @internal
+   */
+  variant?: string | undefined
 }
 
 // This type is only used to build the core configuration. Logs and RUM SDKs are using a proper type
@@ -179,8 +292,11 @@ type GenericBeforeSendCallback = (event: any, context?: any) => unknown
  * path: /api/vX/product
  * parameters: xxx=yyy&zzz=aaa
  */
-type ProxyFn = (options: { path: string; parameters: string }) => string
+export type ProxyFn = (options: { path: string; parameters: string }) => string
 
+/**
+ * @internal
+ */
 export interface ReplicaUserConfiguration {
   applicationId?: string
   clientToken: string
@@ -194,13 +310,14 @@ export interface Configuration extends TransportConfiguration {
   telemetrySampleRate: number
   telemetryConfigurationSampleRate: number
   telemetryUsageSampleRate: number
-  service: string | undefined
+  service?: string | undefined
+  version?: string | undefined
+  env?: string | undefined
   silentMultipleInit: boolean
   allowUntrustedEvents: boolean
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
-
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
   maxTelemetryEventsPerPage: number
@@ -210,6 +327,11 @@ export interface Configuration extends TransportConfiguration {
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
+
+  // internal
+  sdkVersion: string | undefined
+  source: 'browser' | 'flutter' | 'unity'
+  variant: string | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -236,9 +358,20 @@ export function isSampleRate(sampleRate: unknown, name: string) {
   return true
 }
 
-export function validateAndBuildConfiguration(initConfiguration: InitConfiguration): Configuration | undefined {
+export function validateAndBuildConfiguration(
+  initConfiguration: InitConfiguration,
+  errorStack?: string
+): Configuration | undefined {
   if (!initConfiguration || !initConfiguration.clientToken) {
     display.error('Client Token is not configured, we will not send any data.')
+    return
+  }
+
+  if (
+    initConfiguration.allowedTrackingOrigins !== undefined &&
+    !Array.isArray(initConfiguration.allowedTrackingOrigins)
+  ) {
+    display.error('Allowed Tracking Origins must be an array')
     return
   }
 
@@ -250,7 +383,8 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     !isSampleRate(initConfiguration.telemetryUsageSampleRate, 'Telemetry Usage') ||
     !isString(initConfiguration.version, 'Version') ||
     !isString(initConfiguration.env, 'Env') ||
-    !isString(initConfiguration.service, 'Service')
+    !isString(initConfiguration.service, 'Service') ||
+    !isAllowedTrackingOrigins(initConfiguration, errorStack ?? '')
   ) {
     return
   }
@@ -266,12 +400,15 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
   return {
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
-    sessionStoreStrategyType: selectSessionStoreStrategyType(initConfiguration),
+    sessionStoreStrategyType: isWorkerEnvironment ? undefined : selectSessionStoreStrategyType(initConfiguration),
     sessionSampleRate: initConfiguration.sessionSampleRate ?? 100,
     telemetrySampleRate: initConfiguration.telemetrySampleRate ?? 20,
     telemetryConfigurationSampleRate: initConfiguration.telemetryConfigurationSampleRate ?? 5,
     telemetryUsageSampleRate: initConfiguration.telemetryUsageSampleRate ?? 5,
-    service: initConfiguration.service || undefined,
+    service: initConfiguration.service ?? undefined,
+    env: initConfiguration.env ?? undefined,
+    version: initConfiguration.version ?? undefined,
+    datacenter: initConfiguration.datacenter ?? undefined,
     silentMultipleInit: !!initConfiguration.silentMultipleInit,
     allowUntrustedEvents: !!initConfiguration.allowUntrustedEvents,
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
@@ -293,10 +430,18 @@ export function validateAndBuildConfiguration(initConfiguration: InitConfigurati
     flushTimeout: (30 * ONE_SECOND) as Duration,
 
     /**
-     * Logs intake limit
+     * Logs intake limit. When using the SDK in a Worker Environment, we
+     * limit the batch size to 1 to ensure it can be sent in a single event.
      */
-    batchMessagesLimit: 50,
+    batchMessagesLimit: isWorkerEnvironment ? 1 : 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
+
+    /**
+     * The source of the SDK, used for support plugins purposes.
+     */
+    variant: initConfiguration.variant,
+    sdkVersion: initConfiguration.sdkVersion,
+
     ...computeTransportConfiguration(initConfiguration),
   }
 }
@@ -319,5 +464,9 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
+    use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
+    source: initConfiguration.source,
+    sdk_version: initConfiguration.sdkVersion,
+    variant: initConfiguration.variant,
   } satisfies RawTelemetryConfiguration
 }

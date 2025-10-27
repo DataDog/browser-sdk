@@ -35,8 +35,7 @@ describe('resourceCollection', () => {
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
-    // Run tasks immediately to simplify general tests
-    taskQueuePushSpy = spyOn(taskQueue, 'push').and.callFake((task) => task())
+    taskQueuePushSpy = spyOn(taskQueue, 'push')
     const startResult = startResourceCollection(
       lifeCycle,
       { ...baseConfiguration, ...partialConfig },
@@ -69,6 +68,7 @@ describe('resourceCollection', () => {
       responseStart: 250 as RelativeTime,
     })
     notifyPerformanceEntries([performanceEntry])
+    runTasks()
 
     expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
@@ -88,6 +88,8 @@ describe('resourceCollection', () => {
         protocol: 'HTTP/1.0',
         delivery_type: 'cache',
         render_blocking_status: 'blocking',
+        method: undefined,
+        graphql: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -102,21 +104,20 @@ describe('resourceCollection', () => {
   it('should create resource from completed XHR request', () => {
     setupResourceCollection()
     const xhr = new XMLHttpRequest()
-    lifeCycle.notify(
-      LifeCycleEventType.REQUEST_COMPLETED,
-      createCompletedRequest({
+    notifyRequest({
+      request: {
         duration: 100 as Duration,
         method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
         type: RequestType.XHR,
         url: 'https://resource.com/valid',
         xhr,
         isAborted: false,
-      })
-    )
+      },
+    })
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -124,10 +125,18 @@ describe('resourceCollection', () => {
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
-        delivery_type: undefined,
-        protocol: undefined,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
         type: ResourceType.XHR,
         url: 'https://resource.com/valid',
+        render_blocking_status: 'non-blocking',
+        size: undefined,
+        encoded_body_size: undefined,
+        decoded_body_size: undefined,
+        transfer_size: undefined,
+        download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
+        first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
+        graphql: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -136,13 +145,178 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       xhr,
-      performanceEntry: undefined,
-      response: undefined,
-      requestInput: undefined,
-      requestInit: undefined,
-      error: undefined,
+      performanceEntry: jasmine.any(Object),
       isAborted: false,
       handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+    })
+  })
+
+  describe('GraphQL metadata enrichment', () => {
+    interface TestCase {
+      requestType: RequestType
+      name: string
+    }
+
+    const testCases: TestCase[] = [
+      { requestType: RequestType.FETCH, name: 'FETCH' },
+      { requestType: RequestType.XHR, name: 'XHR' },
+    ]
+
+    testCases.forEach(({ requestType, name }) => {
+      describe(`for ${name} requests`, () => {
+        function createRequest(requestType: RequestType, url: string, body: string) {
+          const baseRequest = {
+            type: requestType,
+            url,
+            method: 'POST' as const,
+          }
+
+          if (requestType === RequestType.FETCH) {
+            return {
+              ...baseRequest,
+              init: {
+                method: 'POST' as const,
+                body,
+              },
+              input: url,
+              body,
+            }
+          }
+          {
+            // XHR
+            return {
+              ...baseRequest,
+              body,
+              status: 200,
+              duration: 100 as Duration,
+              startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+              isAborted: false,
+            }
+          }
+        }
+
+        it('should enrich resource with GraphQL metadata when the URL matches allowedGraphQlUrls', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: true }],
+          })
+
+          const requestBody = JSON.stringify({
+            query: 'query GetUser($id: ID!) { user(id: $id) { name email } }',
+            operationName: 'GetUser',
+            variables: { id: '123' },
+          })
+
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/graphql', requestBody),
+          })
+
+          expect(rawRumEvents[0].rawRumEvent).toEqual(
+            jasmine.objectContaining({
+              resource: jasmine.objectContaining({
+                graphql: {
+                  operationType: 'query',
+                  operationName: 'GetUser',
+                  variables: '{"id":"123"}',
+                  payload: 'query GetUser($id: ID!) { user(id: $id) { name email } }',
+                },
+              }),
+            })
+          )
+        })
+
+        it('should not enrich resource with GraphQL metadata when URL does not match', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: '/graphql', trackPayload: false }],
+          })
+
+          const requestBody = JSON.stringify({
+            query: 'query GetUser { user { name } }',
+          })
+
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/api/rest', requestBody),
+          })
+
+          const resourceEvent = rawRumEvents[0].rawRumEvent as any
+          expect(resourceEvent.resource.graphql).toBeUndefined()
+        })
+
+        it('should not include payload when trackPayload is false', () => {
+          setupResourceCollection({
+            trackResources: true,
+            allowedGraphQlUrls: [{ match: 'https://api.example.com/graphql', trackPayload: false }],
+          })
+
+          const requestBody = JSON.stringify({
+            query: 'mutation CreateUser { createUser { id } }',
+            operationName: 'CreateUser',
+            variables: { name: 'John' },
+          })
+
+          notifyRequest({
+            request: createRequest(requestType, 'https://api.example.com/graphql', requestBody),
+          })
+
+          expect(rawRumEvents[0].rawRumEvent).toEqual(
+            jasmine.objectContaining({
+              resource: jasmine.objectContaining({
+                graphql: {
+                  operationType: 'mutation',
+                  operationName: 'CreateUser',
+                  variables: '{"name":"John"}',
+                  payload: undefined,
+                },
+              }),
+            })
+          )
+        })
+      })
+    })
+  })
+
+  describe('with trackEarlyRequests enabled', () => {
+    it('creates a resource from a performance entry without a matching request', () => {
+      setupResourceCollection({ trackResources: true, trackEarlyRequests: true })
+
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          initiatorType: RequestType.FETCH,
+        }),
+      ])
+      runTasks()
+
+      expect(rawRumEvents.length).toBe(1)
+      expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
+      expect(rawRumEvents[0].rawRumEvent).toEqual({
+        date: jasmine.any(Number),
+        resource: {
+          id: jasmine.any(String),
+          duration: (100 * 1e6) as ServerDuration,
+          method: undefined,
+          status_code: 200,
+          delivery_type: 'cache',
+          protocol: 'HTTP/1.0',
+          type: ResourceType.FETCH,
+          url: 'https://resource.com/valid',
+          render_blocking_status: 'non-blocking',
+          size: undefined,
+          encoded_body_size: undefined,
+          decoded_body_size: undefined,
+          transfer_size: undefined,
+          download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
+          first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
+          graphql: undefined,
+        },
+        type: RumEventType.RESOURCE,
+        _dd: {
+          discarded: false,
+        },
+      })
+      expect(rawRumEvents[0].domainContext).toEqual({
+        performanceEntry: jasmine.any(Object),
+      })
     })
   })
 
@@ -152,18 +326,18 @@ describe('resourceCollection', () => {
         setupResourceCollection({ trackResources: false })
 
         notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE)])
+        runTasks()
 
         expect(rawRumEvents.length).toBe(0)
       })
 
       it('should not collect a resource from a completed XHR request', () => {
         setupResourceCollection({ trackResources: false })
-        lifeCycle.notify(
-          LifeCycleEventType.REQUEST_COMPLETED,
-          createCompletedRequest({
+        notifyRequest({
+          request: {
             type: RequestType.XHR,
-          })
-        )
+          },
+        })
 
         expect(rawRumEvents.length).toBe(0)
       })
@@ -174,6 +348,7 @@ describe('resourceCollection', () => {
         setupResourceCollection({ trackResources: false })
 
         notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
+        runTasks()
 
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
@@ -181,15 +356,14 @@ describe('resourceCollection', () => {
 
       it('should collect a resource from a completed XHR request', () => {
         setupResourceCollection({ trackResources: false })
-        lifeCycle.notify(
-          LifeCycleEventType.REQUEST_COMPLETED,
-          createCompletedRequest({
+        notifyRequest({
+          request: {
             type: RequestType.XHR,
             traceId: createTraceIdentifier(),
             spanId: createSpanIdentifier(),
             traceSampled: true,
-          })
-        )
+          },
+        })
 
         expect(rawRumEvents.length).toBe(1)
         expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
@@ -199,11 +373,12 @@ describe('resourceCollection', () => {
 
   it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
     setupResourceCollection()
-    const mockXHR = createCompletedRequest()
-
     wasInPageStateDuringPeriodSpy.and.returnValue(true)
 
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, mockXHR)
+    notifyRequest({
+      // For now, this behavior only happens when there is no performance entry matching the request
+      notifyPerformanceEntry: false,
+    })
 
     const rawRumResourceEventFetch = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
     expect(rawRumResourceEventFetch.resource.duration).toBeUndefined()
@@ -212,12 +387,11 @@ describe('resourceCollection', () => {
   it('should create resource from completed fetch request', () => {
     setupResourceCollection()
     const response = new Response()
-    lifeCycle.notify(
-      LifeCycleEventType.REQUEST_COMPLETED,
-      createCompletedRequest({
+    notifyRequest({
+      request: {
         duration: 100 as Duration,
         method: 'GET',
-        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+        startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
         status: 200,
         type: RequestType.FETCH,
         url: 'https://resource.com/valid',
@@ -225,10 +399,10 @@ describe('resourceCollection', () => {
         input: 'https://resource.com/valid',
         init: { headers: { foo: 'bar' } },
         isAborted: false,
-      })
-    )
+      },
+    })
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -236,10 +410,19 @@ describe('resourceCollection', () => {
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
-        delivery_type: undefined,
-        protocol: undefined,
+        delivery_type: 'cache',
+        protocol: 'HTTP/1.0',
         type: ResourceType.FETCH,
+
+        render_blocking_status: 'non-blocking',
+        size: undefined,
+        encoded_body_size: undefined,
+        decoded_body_size: undefined,
+        transfer_size: undefined,
+        download: { duration: 100000000 as ServerDuration, start: 0 as ServerDuration },
+        first_byte: { duration: 0 as ServerDuration, start: 0 as ServerDuration },
         url: 'https://resource.com/valid',
+        graphql: undefined,
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -247,8 +430,7 @@ describe('resourceCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: undefined,
-      xhr: undefined,
+      performanceEntry: jasmine.any(Object),
       response,
       requestInput: 'https://resource.com/valid',
       requestInit: { headers: { foo: 'bar' } },
@@ -262,13 +444,9 @@ describe('resourceCollection', () => {
       typeof input === 'object' ? JSON.stringify(input) : String(input)
     } as fetch input parameter`, () => {
       setupResourceCollection()
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
-          type: RequestType.FETCH,
-          input,
-        })
-      )
+      notifyRequest({
+        request: { type: RequestType.FETCH, input },
+      })
 
       expect(rawRumEvents.length).toBe(1)
       expect((rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext).requestInput).toBe(input)
@@ -278,7 +456,9 @@ describe('resourceCollection', () => {
   it('should include the error in failed fetch requests', () => {
     setupResourceCollection()
     const error = new Error()
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ error }))
+    notifyRequest({
+      request: { type: RequestType.FETCH, error },
+    })
 
     expect(rawRumEvents[0].domainContext).toEqual(
       jasmine.objectContaining({
@@ -291,6 +471,7 @@ describe('resourceCollection', () => {
     setupResourceCollection()
     const performanceEntry = createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { responseStatus: 0 })
     notifyPerformanceEntries([performanceEntry])
+    runTasks()
     expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBeUndefined()
   })
 
@@ -298,6 +479,7 @@ describe('resourceCollection', () => {
     it('should be processed from traced initial document', () => {
       setupResourceCollection()
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { traceId: '1234' })])
+      runTasks()
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
@@ -306,14 +488,13 @@ describe('resourceCollection', () => {
 
     it('should be processed from sampled completed request', () => {
       setupResourceCollection()
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: true,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.trace_id).toBeDefined()
       expect(privateFields.span_id).toBeDefined()
@@ -321,14 +502,13 @@ describe('resourceCollection', () => {
 
     it('should not be processed from not sampled completed request', () => {
       setupResourceCollection()
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: false,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.trace_id).not.toBeDefined()
       expect(privateFields.span_id).not.toBeDefined()
@@ -342,14 +522,13 @@ describe('resourceCollection', () => {
       })!
       setupResourceCollection(config)
 
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: true,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0.6)
     })
@@ -361,14 +540,13 @@ describe('resourceCollection', () => {
       })!
       setupResourceCollection(config)
 
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: true,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toBeUndefined()
     })
@@ -381,14 +559,13 @@ describe('resourceCollection', () => {
       })!
       setupResourceCollection(config)
 
-      lifeCycle.notify(
-        LifeCycleEventType.REQUEST_COMPLETED,
-        createCompletedRequest({
+      notifyRequest({
+        request: {
           traceSampled: true,
           spanId: createSpanIdentifier(),
           traceId: createTraceIdentifier(),
-        })
-      )
+        },
+      })
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields.rule_psr).toEqual(0)
     })
@@ -397,7 +574,7 @@ describe('resourceCollection', () => {
   it('should collect handlingStack from completed fetch request', () => {
     setupResourceCollection()
     const response = new Response()
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ response }))
+    notifyRequest({ request: { type: RequestType.FETCH, response } })
     const domainContext = rawRumEvents[0].domainContext as RumFetchResourceEventDomainContext
 
     expect(domainContext.handlingStack).toMatch(HANDLING_STACK_REGEX)
@@ -406,7 +583,7 @@ describe('resourceCollection', () => {
   it('should collect handlingStack from completed XHR request', () => {
     setupResourceCollection()
     const xhr = new XMLHttpRequest()
-    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, createCompletedRequest({ xhr }))
+    notifyRequest({ request: { type: RequestType.XHR, xhr } })
 
     const domainContext = rawRumEvents[0].domainContext as RumXhrResourceEventDomainContext
 
@@ -415,8 +592,6 @@ describe('resourceCollection', () => {
 
   it('collects handle resources in different tasks', () => {
     setupResourceCollection()
-    // Don't run the tasks immediately
-    taskQueuePushSpy.and.callFake(noop)
 
     notifyPerformanceEntries([
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE),
@@ -433,19 +608,40 @@ describe('resourceCollection', () => {
       expect(rawRumEvents.length).toBe(index + 1)
     })
   })
-})
 
-function createCompletedRequest(details?: Partial<RequestCompleteEvent>): RequestCompleteEvent {
-  const request: Partial<RequestCompleteEvent> = {
-    duration: 100 as Duration,
-    method: 'GET',
-    startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
-    status: 200,
-    type: RequestType.XHR,
-    url: 'https://resource.com/valid',
-    handlingStack:
-      'Error: \n  at <anonymous> @ http://localhost/foo.js:1:2\n    at <anonymous> @ http://localhost/vendor.js:1:2',
-    ...details,
+  function runTasks() {
+    taskQueuePushSpy.calls.allArgs().forEach(([task]) => {
+      task()
+    })
+    taskQueuePushSpy.calls.reset()
   }
-  return request as RequestCompleteEvent
-}
+
+  function notifyRequest({
+    request,
+    notifyPerformanceEntry = true,
+  }: { request?: Partial<RequestCompleteEvent>; notifyPerformanceEntry?: boolean } = {}) {
+    const requestCompleteEvent = {
+      duration: 100 as Duration,
+      method: 'GET',
+      startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      status: 200,
+      type: RequestType.XHR,
+      url: 'https://resource.com/valid',
+      handlingStack:
+        'Error: \n  at <anonymous> @ http://localhost/foo.js:1:2\n    at <anonymous> @ http://localhost/vendor.js:1:2',
+      ...request,
+    } satisfies Partial<RequestCompleteEvent> as RequestCompleteEvent
+
+    lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, requestCompleteEvent)
+
+    if (notifyPerformanceEntry) {
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+          initiatorType: requestCompleteEvent.type === RequestType.FETCH ? 'fetch' : 'xmlhttprequest',
+        }),
+      ])
+    }
+
+    runTasks()
+  }
+})

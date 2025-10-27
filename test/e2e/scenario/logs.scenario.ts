@@ -5,7 +5,65 @@ import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
 
+declare global {
+  interface Window {
+    myServiceWorker: ServiceWorkerRegistration
+  }
+}
+
 test.describe('logs', () => {
+  createTest('service worker with worker logs - esm')
+    .withWorker()
+    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
+      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
+
+      await interactWithWorker((worker) => {
+        worker.postMessage('Some message')
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('Some message')
+    })
+
+  createTest('service worker with worker logs - importScripts')
+    .withWorker({ importScript: true })
+    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
+      test.skip(
+        browserName === 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
+      await interactWithWorker((worker) => {
+        worker.postMessage('Other message')
+      })
+
+      await flushEvents()
+
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('Other message')
+    })
+
+  createTest('service worker console forwarding')
+    .withWorker({ importScript: true, nativeLog: true })
+    .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
+      test.skip(
+        browserName === 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
+      await interactWithWorker((worker) => {
+        worker.postMessage('SW console log test')
+      })
+
+      await flushEvents()
+
+      // Expect logs for console, error, and report events from service worker
+      expect(intakeRegistry.logsRequests).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('SW console log test')
+    })
+
   createTest('send logs')
     .withLogs()
     .run(async ({ intakeRegistry, flushEvents, page }) => {
@@ -101,7 +159,7 @@ test.describe('logs', () => {
 
       await flushEvents()
       expect(intakeRegistry.logsEvents).toHaveLength(1)
-      expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${baseUrl}/throw-large-response`)
+      expect(intakeRegistry.logsEvents[0].message).toBe(`Fetch error GET ${new URL('/throw-large-response', baseUrl)}`)
       expect(intakeRegistry.logsEvents[0].origin).toBe('network')
 
       const ellipsisSize = 3
@@ -160,13 +218,34 @@ test.describe('logs', () => {
       const unreachableRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/unreachable'))!
       const throwRequest = intakeRegistry.logsEvents.find((log) => log.http!.url.includes('/throw'))!
 
-      expect(throwRequest.message).toEqual(`Fetch error GET ${baseUrl}/throw`)
+      expect(throwRequest.message).toEqual(`Fetch error GET ${new URL('/throw', baseUrl)}`)
       expect(throwRequest.http!.status_code).toEqual(500)
       expect(throwRequest.error!.stack).toMatch(/Server error/)
 
       expect(unreachableRequest.message).toEqual(`Fetch error GET ${UNREACHABLE_URL}`)
       expect(unreachableRequest.http!.status_code).toEqual(0)
       expect(unreachableRequest.error!.stack).toContain('TypeError')
+    })
+
+  createTest('send runtime errors happening before initialization')
+    .withLogs({ forwardErrorsToLogs: true })
+    .withLogsInit((configuration) => {
+      // Use a setTimeout to:
+      // * have a constant stack trace regardless of the setup used
+      // * avoid the exception to be swallowed by the `onReady` logic
+      setTimeout(() => {
+        throw new Error('oh snap')
+      })
+      // Simulate a late initialization of the RUM SDK
+      setTimeout(() => window.DD_LOGS!.init(configuration))
+    })
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs }) => {
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].message).toBe('oh snap')
+      withBrowserLogs((browserLogs) => {
+        expect(browserLogs).toHaveLength(1)
+      })
     })
 
   createTest('add RUM internal context to logs')
@@ -180,6 +259,47 @@ test.describe('logs', () => {
       expect(intakeRegistry.logsEvents).toHaveLength(1)
       expect(intakeRegistry.logsEvents[0].view.id).toBeDefined()
       expect(intakeRegistry.logsEvents[0].application_id).toBe(APPLICATION_ID)
+    })
+
+  createTest('add default tags to logs')
+    .withLogs({
+      service: 'foo',
+      env: 'dev',
+      version: '1.0.0',
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.log('hello world!')
+      })
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),env:dev,service:foo,version:1.0.0$/)
+    })
+
+  createTest('add tags to the logger')
+    .withLogs()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.addTag('planet', 'mars')
+        window.DD_LOGS!.logger.log('hello world!')
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*),planet:mars$/)
+    })
+
+  createTest('ignore tags from message context and logger context')
+    .withLogs()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_LOGS!.logger.setContextProperty('ddtags', 'planet:mars')
+        window.DD_LOGS!.logger.log('hello world!', { ddtags: 'planet:earth' })
+      })
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(1)
+      expect(intakeRegistry.logsEvents[0].ddtags).toMatch(/sdk_version:(.*)$/)
     })
 
   createTest('allow to modify events')

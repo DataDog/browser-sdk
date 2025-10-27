@@ -1,11 +1,12 @@
 import type { ServerDuration, Duration, RelativeTime } from '@datadog/browser-core'
+import { HookNames } from '@datadog/browser-core'
 import type { Clock } from '../../../../core/test'
 import { mockClock, registerCleanupTask } from '../../../../core/test'
-import { mockRumConfiguration, mockPerformanceObserver } from '../../../test'
-import { createHooks, HookNames } from '../../hooks'
-import type { Hooks } from '../../hooks'
+import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../test'
 import { RumEventType } from '../../rawRumEvent.types'
 import * as performanceObservable from '../../browser/performanceObservable'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import type { PageStateHistory } from './pageStateHistory'
 import { PageState, startPageStateHistory } from './pageStateHistory'
 
@@ -13,22 +14,17 @@ describe('pageStateHistory', () => {
   let clock: Clock
   let hooks: Hooks
   const configuration = mockRumConfiguration()
-  let getEntriesByTypeSpy: jasmine.Spy<Performance['getEntriesByType']>
 
   beforeEach(() => {
     clock = mockClock()
     hooks = createHooks()
-    getEntriesByTypeSpy = spyOn(performance, 'getEntriesByType').and.returnValue([])
-  })
-
-  afterEach(() => {
-    clock.cleanup()
   })
 
   describe('wasInPageStateDuringPeriod', () => {
     let pageStateHistory: PageStateHistory
 
     beforeEach(() => {
+      mockPerformanceObserver()
       pageStateHistory = startPageStateHistory(hooks, configuration)
       registerCleanupTask(pageStateHistory.stop)
     })
@@ -73,6 +69,7 @@ describe('pageStateHistory', () => {
       let pageStateHistory: PageStateHistory
 
       beforeEach(() => {
+        mockPerformanceObserver()
         pageStateHistory = startPageStateHistory(hooks, configuration)
         registerCleanupTask(pageStateHistory.stop)
       })
@@ -183,6 +180,7 @@ describe('pageStateHistory', () => {
       let pageStateHistory: PageStateHistory
 
       beforeEach(() => {
+        mockPerformanceObserver()
         pageStateHistory = startPageStateHistory(hooks, configuration)
         registerCleanupTask(pageStateHistory.stop)
       })
@@ -229,22 +227,20 @@ describe('pageStateHistory', () => {
     })
 
     it('should backfill history if visibility-state is supported and entries exist', () => {
-      mockPerformanceObserver({
-        supportedEntryTypes: [
-          ...Object.values(performanceObservable.RumPerformanceEntryType).filter(
-            (type) => type !== performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE
-          ),
-          performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE,
-        ],
+      const { notifyPerformanceEntries } = mockPerformanceObserver({
+        supportedEntryTypes: [performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE],
       })
 
-      const mockEntries = [
-        { entryType: 'visibility-state', name: 'visible', startTime: 5 },
-        { entryType: 'visibility-state', name: 'hidden', startTime: 15 },
-      ] as PerformanceEntry[]
-      getEntriesByTypeSpy
-        .withArgs(performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE)
-        .and.returnValue(mockEntries)
+      notifyPerformanceEntries([
+        createPerformanceEntry(performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE, {
+          name: 'visible',
+          startTime: 5 as RelativeTime,
+        }),
+        createPerformanceEntry(performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE, {
+          name: 'hidden',
+          startTime: 15 as RelativeTime,
+        }),
+      ])
 
       pageStateHistory = startPageStateHistory(hooks, configuration)
       registerCleanupTask(pageStateHistory.stop)
@@ -257,19 +253,15 @@ describe('pageStateHistory', () => {
 
     it('should not backfill if visibility-state is not supported', () => {
       mockPerformanceObserver({
-        supportedEntryTypes: Object.values(performanceObservable.RumPerformanceEntryType).filter(
-          (type) => type !== performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE
-        ),
+        supportedEntryTypes: [],
       })
-
-      getEntriesByTypeSpy.calls.reset()
 
       pageStateHistory = startPageStateHistory(hooks, configuration)
       registerCleanupTask(pageStateHistory.stop)
 
-      expect(getEntriesByTypeSpy).not.toHaveBeenCalledWith(
-        performanceObservable.RumPerformanceEntryType.VISIBILITY_STATE
-      )
+      expect(
+        pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)
+      ).toBeFalse()
     })
   })
 })

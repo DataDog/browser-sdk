@@ -1,5 +1,5 @@
 import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import { noop, combine, toServerDuration, generateUUID } from '@datadog/browser-core'
+import { noop, combine, toServerDuration, generateUUID, SKIPPED, HookNames } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -7,15 +7,15 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
-import type { DefaultRumEventAttributes, Hooks } from '../../hooks'
-import { HookNames, SKIPPED } from '../../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
 
 export type { ActionContexts }
 
 export interface CustomAction {
-  type: ActionType.CUSTOM
+  type: typeof ActionType.CUSTOM
   name: string
   startClocks: ClocksState
   context?: Context
@@ -27,12 +27,15 @@ export type AutoAction = ClickAction
 export function startActionCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, (action) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+  const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
+    LifeCycleEventType.AUTO_ACTION_COMPLETED,
+    (action) => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    }
   )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
@@ -55,6 +58,13 @@ export function startActionCollection(
     }
   })
 
+  hooks.register(
+    HookNames.AssembleTelemetry,
+    ({ startTime }): DefaultTelemetryEventAttributes => ({
+      action: { id: actionContexts.findActionId(startTime) as string },
+    })
+  )
+
   let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
   let stop: () => void = noop
 
@@ -72,7 +82,10 @@ export function startActionCollection(
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
     },
     actionContexts,
-    stop,
+    stop: () => {
+      unsubscribeAutoAction()
+      stop()
+    },
   }
 }
 
@@ -103,24 +116,24 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
           },
         },
       }
-    : undefined
+    : {
+        context: action.context,
+      }
   const actionEvent: RawRumActionEvent = combine(
     {
       action: { id: generateUUID(), target: { name: action.name }, type: action.type },
       date: action.startClocks.timeStamp,
-      type: RumEventType.ACTION as const,
+      type: RumEventType.ACTION,
     },
     autoActionProperties
   )
 
   const duration = isAutoAction(action) ? action.duration : undefined
-  const customerContext = !isAutoAction(action) ? action.context : undefined
   const domainContext: RumActionEventDomainContext = isAutoAction(action)
     ? { events: action.events }
     : { handlingStack: action.handlingStack }
 
   return {
-    customerContext,
     rawRumEvent: actionEvent,
     duration,
     startTime: action.startClocks.relative,

@@ -1,19 +1,13 @@
 import type { Duration, Subscription } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
-import type { GlobalPerformanceBufferMock } from '../../test'
-import {
-  createPerformanceEntry,
-  mockGlobalPerformanceBuffer,
-  mockPerformanceObserver,
-  mockRumConfiguration,
-} from '../../test'
+import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../test'
 import { RumPerformanceEntryType, createPerformanceObservable } from './performanceObservable'
 
 describe('performanceObservable', () => {
   let performanceSubscription: Subscription | undefined
   const configuration = mockRumConfiguration()
-  const forbiddenUrl = 'https://forbidden.url/abce?ddsource=browser&ddtags=sdk_version'
+  const forbiddenUrl = 'https://forbidden.url/abce?ddsource=browser&dd-api-key=xxxx&dd-request-id=1234567890'
   const allowedUrl = 'https://allowed.url'
   let observableCallback: jasmine.Spy
   let clock: Clock
@@ -28,7 +22,6 @@ describe('performanceObservable', () => {
 
   afterEach(() => {
     performanceSubscription?.unsubscribe()
-    clock?.cleanup()
   })
 
   describe('primary strategy when type supported', () => {
@@ -67,7 +60,6 @@ describe('performanceObservable', () => {
 
     it('should notify buffered performance resources asynchronously', () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver()
-      // add the performance entry to the buffer
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
 
       const performanceResourceObservable = createPerformanceObservable(configuration, {
@@ -82,12 +74,6 @@ describe('performanceObservable', () => {
   })
 
   describe('fallback strategy when type not supported', () => {
-    let globalPerformanceBufferMock: GlobalPerformanceBufferMock
-
-    beforeEach(() => {
-      globalPerformanceBufferMock = mockGlobalPerformanceBuffer()
-    })
-
     it('should notify performance resources when type not supported', () => {
       const { notifyPerformanceEntries } = mockPerformanceObserver({ typeSupported: false })
       const performanceResourceObservable = createPerformanceObservable(configuration, {
@@ -100,11 +86,9 @@ describe('performanceObservable', () => {
     })
 
     it('should notify buffered performance resources when type not supported', () => {
-      mockPerformanceObserver({ typeSupported: false })
+      const { notifyPerformanceEntries } = mockPerformanceObserver({ typeSupported: false })
       // add the performance entry to the buffer
-      globalPerformanceBufferMock.addPerformanceEntry(
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })
-      )
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, { name: allowedUrl })])
 
       const performanceResourceObservable = createPerformanceObservable(configuration, {
         type: RumPerformanceEntryType.RESOURCE,

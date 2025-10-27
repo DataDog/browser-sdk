@@ -1,10 +1,12 @@
-import type { RawError, HttpRequest, DeflateEncoder } from '@datadog/browser-core'
+import type { RawError, HttpRequest, DeflateEncoder, Telemetry } from '@datadog/browser-core'
 import { createHttpRequest, addTelemetryDebug, canUseEventBridge } from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
+import type { SerializationStats } from '../domain/record'
 import { record } from '../domain/record'
-import { startSegmentCollection, SEGMENT_BYTES_LIMIT } from '../domain/segmentCollection'
+import type { ReplayPayload } from '../domain/segmentCollection'
+import { startSegmentCollection, SEGMENT_BYTES_LIMIT, startSegmentTelemetry } from '../domain/segmentCollection'
 import type { BrowserRecord } from '../types'
 import { startRecordBridge } from '../domain/startRecordBridge'
 
@@ -14,19 +16,21 @@ export function startRecording(
   sessionManager: RumSessionManager,
   viewHistory: ViewHistory,
   encoder: DeflateEncoder,
-  httpRequest?: HttpRequest
+  telemetry: Telemetry,
+  httpRequest?: HttpRequest<ReplayPayload>
 ) {
   const cleanupTasks: Array<() => void> = []
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    // monitor-until: forever, to keep an eye on the errors reported to customers
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
   const replayRequest =
-    httpRequest || createHttpRequest(configuration.sessionReplayEndpointBuilder, SEGMENT_BYTES_LIMIT, reportError)
+    httpRequest || createHttpRequest([configuration.sessionReplayEndpointBuilder], SEGMENT_BYTES_LIMIT, reportError)
 
-  let addRecord: (record: BrowserRecord) => void
+  let addRecord: (record: BrowserRecord, stats?: SerializationStats) => void
 
   if (!canUseEventBridge()) {
     const segmentCollection = startSegmentCollection(
@@ -39,6 +43,9 @@ export function startRecording(
     )
     addRecord = segmentCollection.addRecord
     cleanupTasks.push(segmentCollection.stop)
+
+    const segmentTelemetry = startSegmentTelemetry(telemetry, replayRequest.observable)
+    cleanupTasks.push(segmentTelemetry.stop)
   } else {
     ;({ addRecord } = startRecordBridge(viewHistory))
   }

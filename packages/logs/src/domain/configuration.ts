@@ -12,6 +12,29 @@ import {
 import type { LogsEvent } from '../logsEvent.types'
 import type { LogsEventDomainContext } from '../domainContext.types'
 
+/**
+ * Init Configuration for the Logs browser SDK.
+ *
+ * @category Main
+ * @example NPM
+ * ```ts
+ * import { datadogLogs } from '@datadog/browser-logs'
+ *
+ * datadogLogs.init({
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   // ...
+ * })
+ * ```
+ * @example CDN
+ * ```ts
+ * DD_LOGS.init({
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   // ...
+ * })
+ * ```
+ */
 export interface LogsInitConfiguration extends InitConfiguration {
   /**
    * Access to every logs collected by the Logs SDK before they are sent to Datadog.
@@ -19,24 +42,38 @@ export interface LogsInitConfiguration extends InitConfiguration {
    * - Enrich your logs with additional context attributes
    * - Modify your logs to modify their content, or redact sensitive sequences (see the list of editable properties)
    * - Discard selected logs
+   *
+   * @category Data Collection
    */
   beforeSend?: ((event: LogsEvent, context: LogsEventDomainContext) => boolean) | undefined
+
   /**
    * Forward console.error logs, uncaught exceptions and network errors to Datadog.
-   * @default true
+   *
+   * @category Data Collection
+   * @defaultValue true
    */
   forwardErrorsToLogs?: boolean | undefined
+
   /**
    * Forward logs from console.* to Datadog. Use "all" to forward everything or an array of console API names to forward only a subset.
+   *
+   * @category Data Collection
    */
   forwardConsoleLogs?: ConsoleApiName[] | 'all' | undefined
+
   /**
    * Forward reports from the [Reporting API](https://developer.mozilla.org/en-US/docs/Web/API/Reporting_API) to Datadog. Use "all" to forward everything or an array of report types to forward only a subset.
+   *
+   * @category Data Collection
    */
   forwardReports?: RawReportType[] | 'all' | undefined
+
   /**
    * Use PCI-compliant intake. See [PCI DSS Compliance](https://docs.datadoghq.com/data_security/pci_compliance/?tab=logmanagement) for further information.
-   * @default false
+   *
+   * @category Privacy
+   * @defaultValue false
    */
   usePciIntake?: boolean
 }
@@ -56,7 +93,8 @@ export interface LogsConfiguration extends Configuration {
 export const DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT = 32 * ONE_KIBI_BYTE
 
 export function validateAndBuildLogsConfiguration(
-  initConfiguration: LogsInitConfiguration
+  initConfiguration: LogsInitConfiguration,
+  errorStack?: string
 ): LogsConfiguration | undefined {
   if (initConfiguration.usePciIntake === true && initConfiguration.site && initConfiguration.site !== 'datadoghq.com') {
     display.warn(
@@ -64,7 +102,7 @@ export function validateAndBuildLogsConfiguration(
     )
   }
 
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
 
   const forwardConsoleLogs = validateAndBuildForwardOption<ConsoleApiName>(
     initConfiguration.forwardConsoleLogs,

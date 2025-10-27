@@ -1,6 +1,5 @@
 import type { TimeStamp } from '@datadog/browser-core'
 import { ConsoleApiName, timeStampNow, ErrorSource, originalConsoleMethods } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { CommonContext, RawLoggerLogsEvent } from '../../rawLogsEvent.types'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -18,7 +17,6 @@ describe('logger collection', () => {
   let handleLog: ReturnType<typeof startLoggerCollection>['handleLog']
   let logger: Logger
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawLoggerLogsEvent>>
-  let clock: Clock
 
   beforeEach(() => {
     rawLogsEvents = []
@@ -29,11 +27,7 @@ describe('logger collection', () => {
     spyOn(console, 'error').and.callFake(() => true)
     logger = new Logger((...params) => handleLog(...params))
     ;({ handleLog: handleLog } = startLoggerCollection(lifeCycle))
-    clock = mockClock()
-  })
-
-  afterEach(() => {
-    clock.cleanup()
+    mockClock()
   })
 
   describe('when handle type is set to "console"', () => {
@@ -129,6 +123,7 @@ describe('logger collection', () => {
         domainContext: {
           handlingStack: HANDLING_STACK,
         },
+        ddtags: [],
       })
     })
 
@@ -149,6 +144,37 @@ describe('logger collection', () => {
       handleLog({ message: 'message', status: 'unknown' as StatusType }, logger, HANDLING_STACK, COMMON_CONTEXT)
 
       expect(rawLogsEvents.length).toBe(0)
+    })
+  })
+
+  describe('ddtags', () => {
+    beforeEach(() => {
+      logger.setHandler(HandlerType.http)
+    })
+
+    it('should contain the ddtags of the logger', () => {
+      logger.addTag('tag1', 'value1')
+      handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
+
+      expect(rawLogsEvents[0].ddtags).toEqual(['tag1:value1'])
+    })
+
+    it('should ignore the tags of the message context', () => {
+      handleLog(
+        { message: 'message', status: StatusType.error, context: { ddtags: ['tag3:value3'] } },
+        logger,
+        HANDLING_STACK,
+        COMMON_CONTEXT
+      )
+
+      expect(rawLogsEvents[0].ddtags).toEqual([])
+    })
+
+    it('should ignore the tags of the logger context', () => {
+      logger.setContext({ ddtags: ['tag1:value1'] })
+      handleLog({ message: 'message', status: StatusType.error }, logger, HANDLING_STACK, COMMON_CONTEXT)
+
+      expect(rawLogsEvents[0].ddtags).toEqual([])
     })
   })
 })

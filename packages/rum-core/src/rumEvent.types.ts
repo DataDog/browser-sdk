@@ -1,6 +1,6 @@
 /* eslint-disable */
 /**
- * DO NOT MODIFY IT BY HAND. Run `yarn rum-events-format:sync` instead.
+ * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.
  */
 
 /**
@@ -8,6 +8,7 @@
  */
 export type RumEvent =
   | RumActionEvent
+  | RumTransitionEvent
   | RumErrorEvent
   | RumLongTaskEvent
   | RumResourceEvent
@@ -103,7 +104,7 @@ export type RumActionEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the action starting in the foreground (focus in browser)
        */
@@ -166,6 +167,63 @@ export type RumActionEvent = CommonProperties &
     }
     [k: string]: unknown
   }
+/**
+ * Schema of all properties of an Transition event
+ */
+export type RumTransitionEvent = CommonProperties & {
+  /**
+   * RUM event type
+   */
+  readonly type: 'transition'
+  view: {
+    [k: string]: unknown
+  }
+  /**
+   * Stream properties
+   */
+  readonly stream: {
+    /**
+     * UUID of the stream
+     */
+    readonly id: string
+    [k: string]: unknown
+  }
+  /**
+   * Transition properties
+   */
+  readonly transition: {
+    /**
+     * Type of the transition
+     */
+    readonly type: string
+    /**
+     * UUID of the transition
+     */
+    readonly id?: string
+    /**
+     * The player's current timestamp in milliseconds
+     */
+    readonly timestamp?: number
+    /**
+     * Buffer starvation duration, the amount of time spent rebuffering in milliseconds
+     */
+    readonly buffer_starvation_duration?: number
+    /**
+     * Media start delay, the amount of time spent loading before playing in milliseconds
+     */
+    readonly media_start_delay?: number
+    /**
+     * Error code, as reported by the player
+     */
+    readonly error_code?: number
+    /**
+     * Duration of the event in milliseconds
+     */
+    readonly duration?: number
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
 /**
  * Schema of all properties of an Error event
  */
@@ -233,7 +291,7 @@ export type RumErrorEvent = CommonProperties &
       /**
        * The specific category of the error. It provides a high-level grouping for different types of errors.
        */
-      readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning'
+      readonly category?: 'ANR' | 'App Hang' | 'Exception' | 'Watchdog Termination' | 'Memory Warning' | 'Network'
       /**
        * Whether the error has been handled manually in the source code or not
        */
@@ -424,7 +482,7 @@ export type RumErrorEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view?: {
+    readonly view: {
       /**
        * Is the error starting in the foreground (focus in browser)
        */
@@ -449,6 +507,9 @@ export type RumLongTaskEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'long_task'
+    view: {
+      [k: string]: unknown
+    }
     /**
      * Long Task properties
      */
@@ -474,15 +535,15 @@ export type RumLongTaskEvent = CommonProperties &
        */
       readonly blocking_duration?: number
       /**
-       * Start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
+       * Time difference (in ns) between the timeOrigin and the start time of the rendering cycle, which includes requestAnimationFrame callbacks, style and layout calculation, resize observer and intersection observer callbacks
        */
       readonly render_start?: number
       /**
-       * Start time of the time period spent in style and layout calculations
+       * Time difference (in ns) between the timeOrigin and the start time of the time period spent in style and layout calculations
        */
       readonly style_and_layout_start?: number
       /**
-       * Start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
+       * Time difference (in ns) between the timeOrigin and the start time of of the first UI event (mouse/keyboard and so on) to be handled during the course of this frame
        */
       readonly first_ui_event_timestamp?: number
       /**
@@ -555,6 +616,10 @@ export type RumLongTaskEvent = CommonProperties &
        * Whether the long task should be discarded or indexed
        */
       readonly discarded?: boolean
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -569,6 +634,9 @@ export type RumResourceEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'resource'
+    view: {
+      [k: string]: unknown
+    }
     /**
      * Resource properties
      */
@@ -786,6 +854,42 @@ export type RumResourceEvent = CommonProperties &
          * String representation of the operation variables
          */
         variables?: string
+        /**
+         * Number of GraphQL errors in the response
+         */
+        readonly error_count?: number
+        /**
+         * Array of GraphQL errors from the response
+         */
+        readonly errors?: {
+          /**
+           * Error message
+           */
+          readonly message: string
+          /**
+           * Error code (used by some providers)
+           */
+          readonly code?: string
+          /**
+           * Array of error locations in the GraphQL query
+           */
+          readonly locations?: {
+            /**
+             * Line number where the error occurred
+             */
+            readonly line: number
+            /**
+             * Column number where the error occurred
+             */
+            readonly column: number
+            [k: string]: unknown
+          }[]
+          /**
+           * Path to the field that caused the error
+           */
+          readonly path?: (string | number)[]
+          [k: string]: unknown
+        }[]
         [k: string]: unknown
       }
       [k: string]: unknown
@@ -799,7 +903,11 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly span_id?: string
       /**
-       * trace identifier in decimal format
+       * parent span identifier in decimal format
+       */
+      readonly parent_span_id?: string
+      /**
+       * trace identifier, either a 64 bit decimal number or a 128 bit hexadecimal number padded with 0s
        */
       readonly trace_id?: string
       /**
@@ -818,7 +926,8 @@ export type RumResourceEvent = CommonProperties &
  * Schema of all properties of a View event
  */
 export type RumViewEvent = CommonProperties &
-  ViewContainerSchema & {
+  ViewContainerSchema &
+  StreamSchema & {
     /**
      * RUM event type
      */
@@ -1083,6 +1192,10 @@ export type RumViewEvent = CommonProperties &
        * Performance data. (Web Vitals, etc.)
        */
       performance?: ViewPerformanceData
+      /**
+       * Accessibility properties of the view
+       */
+      accessibility?: ViewAccessibilityProperties
       [k: string]: unknown
     }
     /**
@@ -1175,6 +1288,10 @@ export type RumViewEvent = CommonProperties &
         readonly start_session_replay_recording_manually?: boolean
         [k: string]: unknown
       }
+      /**
+       * Profiling context
+       */
+      profiling?: ProfilingInternalContextSchema
       [k: string]: unknown
     }
     /**
@@ -1207,10 +1324,34 @@ export type RumViewEvent = CommonProperties &
     }
     [k: string]: unknown
   }
+export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent
 /**
- * Schema of all properties of a Vital event
+ * Schema for a duration vital event.
  */
-export type RumVitalEvent = CommonProperties &
+export type RumVitalDurationEvent = RumVitalEventCommonProperties & {
+  view: {
+    [k: string]: unknown
+  }
+  /**
+   * Vital properties
+   */
+  readonly vital: {
+    /**
+     * Type of the vital.
+     */
+    readonly type: 'duration'
+    /**
+     * Duration of the vital in nanoseconds.
+     */
+    readonly duration: number
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * Schema of common properties for a Vital event
+ */
+export type RumVitalEventCommonProperties = CommonProperties &
   ViewContainerSchema & {
     /**
      * RUM event type
@@ -1220,10 +1361,6 @@ export type RumVitalEvent = CommonProperties &
      * Vital properties
      */
     readonly vital: {
-      /**
-       * Type of the vital
-       */
-      readonly type: 'duration'
       /**
        * UUID of the vital
        */
@@ -1236,36 +1373,41 @@ export type RumVitalEvent = CommonProperties &
        * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
        */
       readonly description?: string
-      /**
-       * Duration of the vital in nanoseconds
-       */
-      readonly duration?: number
-      /**
-       * User custom vital.
-       */
-      readonly custom?: {
-        [k: string]: number
-      }
-      [k: string]: unknown
-    }
-    /**
-     * Internal properties
-     */
-    readonly _dd?: {
-      /**
-       * Internal vital properties
-       */
-      readonly vital?: {
-        /**
-         * Whether the value of the vital is computed by the SDK (as opposed to directly provided by the customer)
-         */
-        readonly computed_value?: boolean
-        [k: string]: unknown
-      }
       [k: string]: unknown
     }
     [k: string]: unknown
   }
+/**
+ * Schema for a vital operation step event.
+ */
+export type RumVitalOperationStepEvent = RumVitalEventCommonProperties & {
+  view: {
+    [k: string]: unknown
+  }
+  /**
+   * Vital properties
+   */
+  readonly vital: {
+    /**
+     * Type of the vital.
+     */
+    readonly type: 'operation_step'
+    /**
+     * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
+     */
+    readonly operation_key?: string
+    /**
+     * Type of the step that triggered the vital, if applicable
+     */
+    readonly step_type: 'start' | 'update' | 'retry' | 'end'
+    /**
+     * Reason for the failure of the step, if applicable
+     */
+    readonly failure_reason?: 'error' | 'abandoned' | 'other'
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
 
 /**
  * Schema of common properties of RUM events
@@ -1283,6 +1425,10 @@ export interface CommonProperties {
      * UUID of the application
      */
     readonly id: string
+    /**
+     * The user's current locale as a language tag (language + region), computed from their preferences and the app's supported languages, e.g. 'es-FR'.
+     */
+    readonly current_locale?: string
     [k: string]: unknown
   }
   /**
@@ -1301,6 +1447,10 @@ export interface CommonProperties {
    * Generated unique ID of the application build. Unlike version or build_version this field is not meant to be coming from the user, but rather generated by the tooling for each build.
    */
   readonly build_id?: string
+  /**
+   * Tags of the event in key:value format, separated by commas (e.g. 'env:prod,version:1.2.3')
+   */
+  readonly ddtags?: string
   /**
    * Session properties
    */
@@ -1334,7 +1484,7 @@ export interface CommonProperties {
   /**
    * View properties
    */
-  readonly view: {
+  readonly view?: {
     /**
      * UUID of the view
      */
@@ -1508,7 +1658,7 @@ export interface CommonProperties {
     /**
      * Device type info
      */
-    readonly type: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other'
+    readonly type?: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other'
     /**
      * Device marketing name, e.g. Xiaomi Redmi Note 8 Pro, Pixel 5, etc.
      */
@@ -1525,6 +1675,30 @@ export interface CommonProperties {
      * The CPU architecture of the device that is reporting the error
      */
     readonly architecture?: string
+    /**
+     * The user’s locale as a language tag combining language and region, e.g. 'en-US'.
+     */
+    readonly locale?: string
+    /**
+     * Ordered list of the user’s preferred system languages as IETF language tags.
+     */
+    readonly locales?: string[]
+    /**
+     * The device’s current time zone identifier, e.g. 'Europe/Berlin'.
+     */
+    readonly time_zone?: string
+    /**
+     * Current battery level of the device (0.0 to 1.0).
+     */
+    readonly battery_level?: number
+    /**
+     * Whether the device is in power saving mode.
+     */
+    readonly power_saving_mode?: boolean
+    /**
+     * Current screen brightness level (0.0 to 1.0).
+     */
+    readonly brightness_level?: number
     [k: string]: unknown
   }
   /**
@@ -1568,18 +1742,36 @@ export interface CommonProperties {
        * The percentage of sessions with RUM & Session Replay pricing tracked
        */
       readonly session_replay_sample_rate?: number
+      /**
+       * The percentage of views profiled
+       */
+      readonly profiling_sample_rate?: number
       [k: string]: unknown
     }
     /**
      * Browser SDK version
      */
     readonly browser_sdk_version?: string
+    /**
+     * SDK name (e.g. 'logs', 'rum', 'rum-slim', etc.)
+     */
+    readonly sdk_name?: string
     [k: string]: unknown
   }
   /**
    * User provided context
    */
   context?: {
+    [k: string]: unknown
+  }
+  /**
+   * Stream properties
+   */
+  stream?: {
+    /**
+     * UUID of the stream
+     */
+    readonly id: string
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -1630,6 +1822,81 @@ export interface ActionChildProperties {
      * UUID of the action
      */
     readonly id: string | string[]
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
+ * RUM Profiler Internal Context schema
+ */
+export interface ProfilingInternalContextSchema {
+  /**
+   * Used to track the status of the RUM Profiler.
+   *
+   * They are defined in order of when they can happen, from the moment the SDK is initialized to the moment the Profiler is actually running.
+   *
+   * - `starting`: The Profiler is starting (i.e., when the SDK just started). This is the initial status.
+   * - `running`: The Profiler is running.
+   * - `stopped`: The Profiler is stopped.
+   * - `error`: The Profiler encountered an error. See `error_reason` for more details.
+   */
+  readonly status?: 'starting' | 'running' | 'stopped' | 'error'
+  /**
+   * The reason the Profiler encountered an error. This attribute is only present if the status is `error`.
+   *
+   * Possible values:
+   * - `not-supported-by-browser`: The browser does not support the Profiler (i.e., `window.Profiler` is not available).
+   * - `failed-to-lazy-load`: The Profiler script failed to be loaded by the browser (may be a connection issue or the chunk was not found).
+   * - `missing-document-policy-header`: The Profiler failed to start because its missing `Document-Policy: js-profiling` HTTP response header.
+   * - `unexpected-exception`: An exception occurred when starting the Profiler.
+   */
+  readonly error_reason?:
+    | 'not-supported-by-browser'
+    | 'failed-to-lazy-load'
+    | 'missing-document-policy-header'
+    | 'unexpected-exception'
+  [k: string]: unknown
+}
+/**
+ * Stream schema for media streaming properties
+ */
+export interface StreamSchema {
+  /**
+   * Stream properties
+   */
+  readonly stream?: {
+    /**
+     * current bitrate at the time of collection
+     */
+    bitrate?: number
+    /**
+     * How long is the content (VOD only) (in ms)
+     */
+    readonly duration?: number
+    /**
+     * Stream format
+     */
+    readonly format?: string
+    /**
+     * current frames per second at the time of collection
+     */
+    fps?: number
+    /**
+     * Stream resolution
+     */
+    readonly resolution?: string
+    /**
+     * current timestamp at the time of collection
+     */
+    timestamp?: number
+    /**
+     * how much did the media progress since the last context update (in ms)
+     */
+    watch_time?: number
+    /**
+     * Percentage of amount of time watched relative to its total duration
+     */
+    completion_percent?: number
     [k: string]: unknown
   }
   [k: string]: unknown
@@ -1782,5 +2049,99 @@ export interface RumRect {
    * The element's height
    */
   readonly height: number
+  [k: string]: unknown
+}
+/**
+ * Compact representation of accessibility features for a view
+ */
+export interface ViewAccessibilityProperties {
+  /**
+   * User’s preferred text scale relative to the default system size.
+   */
+  readonly text_size?: string
+  /**
+   * Indicates whether a screen reader is currently active.
+   */
+  readonly screen_reader_enabled?: boolean
+  /**
+   * Indicates whether the system-wide bold text accessibility setting is enabled.
+   */
+  readonly bold_text_enabled?: boolean
+  /**
+   * Indicates whether the system-wide reduce transparency setting is enabled.
+   */
+  readonly reduce_transparency_enabled?: boolean
+  /**
+   * Indicates whether the system-wide reduce motion setting is enabled.
+   */
+  readonly reduce_motion_enabled?: boolean
+  /**
+   * Indicates whether the system-wide button shapes setting is enabled.
+   */
+  readonly button_shapes_enabled?: boolean
+  /**
+   * Indicates whether the system-wide color inversion setting is enabled.
+   */
+  readonly invert_colors_enabled?: boolean
+  /**
+   * Indicates whether the system-wide increase contrast setting is enabled.
+   */
+  readonly increase_contrast_enabled?: boolean
+  /**
+   * Indicates whether an alternative input method like Switch Control or Switch Access is currently enabled.
+   */
+  readonly assistive_switch_enabled?: boolean
+  /**
+   * Indicates whether the system-wide AssistiveTouch feature is currently enabled.
+   */
+  readonly assistive_touch_enabled?: boolean
+  /**
+   * Indicates whether the video autoplay setting is enabled in the system or application.
+   */
+  readonly video_autoplay_enabled?: boolean
+  /**
+   * Indicates whether closed captioning is enabled for media playback.
+   */
+  readonly closed_captioning_enabled?: boolean
+  /**
+   * Indicates whether the system-wide mono audio setting is enabled.
+   */
+  readonly mono_audio_enabled?: boolean
+  /**
+   * Indicates whether the Shake to Undo feature is enabled.
+   */
+  readonly shake_to_undo_enabled?: boolean
+  /**
+   * Indicates whether the user prefers reduced animations or cross-fade transitions.
+   */
+  readonly reduced_animations_enabled?: boolean
+  /**
+   * Indicates whether the system should differentiate interface elements without relying solely on color.
+   */
+  readonly should_differentiate_without_color?: boolean
+  /**
+   * Indicates whether the device display is currently using grayscale mode.
+   */
+  readonly grayscale_enabled?: boolean
+  /**
+   * Indicates whether the device is currently locked to a single app through Guided Access or Screen Pinning.
+   */
+  readonly single_app_mode_enabled?: boolean
+  /**
+   * Indicates whether on/off switch labels are enabled in the system settings.
+   */
+  readonly on_off_switch_labels_enabled?: boolean
+  /**
+   * Indicates whether the Speak Screen feature is enabled.
+   */
+  readonly speak_screen_enabled?: boolean
+  /**
+   * Indicates whether the text-to-speech selection feature is enabled.
+   */
+  readonly speak_selection_enabled?: boolean
+  /**
+   * Indicates whether the right-to-left support is enabled.
+   */
+  readonly rtl_enabled?: boolean
   [k: string]: unknown
 }

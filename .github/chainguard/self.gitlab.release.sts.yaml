@@ -1,0 +1,10 @@
+issuer: https://gitlab.ddbuild.io
+
+subject_pattern: 'project_path:DataDog/browser-sdk:ref_type:tag.*'
+
+claim_pattern:
+  project_path: 'DataDog/browser-sdk'
+  ref_type: 'tag'
+
+permissions:
+  contents: write

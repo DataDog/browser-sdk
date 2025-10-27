@@ -1,5 +1,5 @@
 import { dateNow } from '../../tools/utils/timeUtils'
-import { SESSION_EXPIRATION_DELAY } from './sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_NOT_TRACKED } from './sessionConstants'
 import type { SessionState } from './sessionState'
 import {
   expandSessionState,
@@ -43,7 +43,7 @@ describe('session state utilities', () => {
       expect(isSessionInExpiredState({ created: dateNowWithOffset(-1000), expire: dateNowWithOffset(1000) })).toBe(
         false
       )
-      expect(isSessionInExpiredState({ first: 'not-tracked' })).toBe(false)
+      expect(isSessionInExpiredState({ first: SESSION_NOT_TRACKED })).toBe(false)
       expect(isSessionInExpiredState({ first: 'tracked' })).toBe(false)
     })
   })

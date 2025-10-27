@@ -87,10 +87,6 @@ describe('isRage', () => {
     clock = mockClock()
   })
 
-  afterEach(() => {
-    clock.cleanup()
-  })
-
   it('considers as rage three clicks happening at the same time', () => {
     expect(isRage([createFakeClick(), createFakeClick(), createFakeClick()])).toBe(true)
   })
@@ -176,4 +172,47 @@ describe('isDead', () => {
       ).toBe(expected)
     })
   }
+
+  describe('label elements', () => {
+    it('does not consider as dead when the click target is a label referring to a text input', () => {
+      appendElement('<input type="text" id="test-input" />')
+      const label = appendElement('<label for="test-input">Click me</label>')
+
+      expect(
+        isDead(
+          createFakeClick({
+            hasPageActivity: false,
+            event: { target: label },
+          })
+        )
+      ).toBe(false)
+    })
+
+    it('considers as dead when the click target is a label referring to a checkbox', () => {
+      appendElement('<input type="checkbox" id="test-checkbox" />')
+      const label = appendElement('<label for="test-checkbox">Check me</label>')
+
+      expect(
+        isDead(
+          createFakeClick({
+            hasPageActivity: false,
+            event: { target: label },
+          })
+        )
+      ).toBe(true)
+    })
+
+    it('considers as dead when the click target is a label referring to a non-existent element', () => {
+      const label = appendElement('<label for="non-existent-id">Click me</label>')
+
+      expect(
+        isDead(
+          createFakeClick({
+            hasPageActivity: false,
+            event: { target: label },
+          })
+        )
+      ).toBe(true)
+    })
+  })
 })

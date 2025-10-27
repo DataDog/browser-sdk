@@ -1,4 +1,5 @@
 import type { Encoder } from '../../tools/encoder'
+import type { Uint8ArrayBuffer } from '../../tools/utils/byteUtils'
 
 export type DeflateWorkerAction =
   // Action to send when creating the worker to check if the communication is working correctly.
@@ -31,8 +32,8 @@ export type DeflateWorkerResponse =
       type: 'wrote'
       id: number
       streamId: number
-      result: Uint8Array
-      trailer: Uint8Array
+      result: Uint8ArrayBuffer
+      trailer: Uint8ArrayBuffer
       additionalBytesCount: number
     }
   // Could happen at any time when something goes wrong in the worker
@@ -46,10 +47,11 @@ export interface DeflateWorker extends Worker {
   postMessage(message: DeflateWorkerAction): void
 }
 
-export type DeflateEncoder = Encoder<Uint8Array> & { stop: () => void }
+export type DeflateEncoder = Encoder<Uint8ArrayBuffer> & { stop: () => void }
 
 export const enum DeflateEncoderStreamId {
   REPLAY = 1,
   RUM = 2,
-  RUM_REPLICA = 3,
+  TELEMETRY = 4,
+  PROFILING = 6,
 }

@@ -1,5 +1,5 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import { isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import { getTimeZone, DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
@@ -9,8 +9,8 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
 import type { ViewHistory } from '../contexts/viewHistory'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { DISCARDED, HookNames } from '../../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
@@ -21,7 +21,7 @@ export function startViewCollection(
   hooks: Hooks,
   configuration: RumConfiguration,
   location: Location,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,
@@ -50,6 +50,15 @@ export function startViewCollection(
       },
     }
   })
+
+  hooks.register(
+    HookNames.AssembleTelemetry,
+    ({ startTime }): DefaultTelemetryEventAttributes => ({
+      view: {
+        id: viewHistory.findView(startTime)?.id,
+      },
+    })
+  )
 
   return trackViews(
     location,
@@ -137,6 +146,11 @@ function processViewUpdate(
       : undefined,
     privacy: {
       replay_level: configuration.defaultPrivacyLevel,
+    },
+    device: {
+      locale: navigator.language,
+      locales: navigator.languages,
+      time_zone: getTimeZone(),
     },
   }
 

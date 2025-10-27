@@ -30,6 +30,7 @@ function validateRumEventFormat(rawRumEvent: RawRumEvent) {
       configuration: {
         session_sample_rate: 40,
         session_replay_sample_rate: 60,
+        profiling_sample_rate: 0,
       },
     },
     application: {
@@ -74,6 +75,9 @@ function validateRumFormat(rumEvent: Context) {
         }
         if (error.keyword === 'enum') {
           message += ` ${formatAllowedValues(error.params.allowedValues)}`
+        }
+        if (error.keyword === 'additionalProperties') {
+          message += ` ${formatAllowedValues([error.params.additionalProperty])}`
         }
         return `  event${error.instancePath || ''} ${message}`
       })

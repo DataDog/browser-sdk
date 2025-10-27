@@ -1,5 +1,7 @@
 import type { FetchResolveContext, XhrCompleteContext } from '@datadog/browser-core'
 import {
+  isWorkerEnvironment,
+  Observable,
   ErrorSource,
   initXhrObservable,
   RequestType,
@@ -24,7 +26,10 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
     return { stop: noop }
   }
 
-  const xhrSubscription = initXhrObservable(configuration).subscribe((context) => {
+  // XHR is not available in web workers, so we use an empty observable that never emits
+  const xhrSubscription = (
+    isWorkerEnvironment ? new Observable<XhrCompleteContext>() : initXhrObservable(configuration)
+  ).subscribe((context) => {
     if (context.state === 'complete') {
       handleResponse(RequestType.XHR, context)
     }

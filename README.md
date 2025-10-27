@@ -12,6 +12,10 @@ See the dedicated [Datadog Browser Log Collection documentation][08] to learn ho
 
 See the dedicated [Datadog Browser RUM Collection documentation][18] to learn how to send RUM data from your browser application to Datadog.
 
+### API Reference
+
+For detailed API information, see the [Datadog Browser SDK API Reference][71].
+
 ## npm packages
 
 This repository contains several packages:
@@ -31,11 +35,12 @@ Datadog provides one CDN bundle per [site][70]:
 
 | Site    | logs                                                           | rum                                                           | rum-slim                                                           |
 | ------- | -------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------ |
-| US1     | https://www.datadoghq-browser-agent.com/us1/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us1/v5/datadog-rum-slim.js |
-| US3     | https://www.datadoghq-browser-agent.com/us3/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us3/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us3/v5/datadog-rum-slim.js |
-| US5     | https://www.datadoghq-browser-agent.com/us5/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/us5/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/us5/v5/datadog-rum-slim.js |
-| EU1     | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-logs.js | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum.js | https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum-slim.js |
-| US1-FED | https://www.datadoghq-browser-agent.com/datadog-logs-v5.js     | https://www.datadoghq-browser-agent.com/datadog-rum-v5.js     | https://www.datadoghq-browser-agent.com/datadog-rum-slim-v5.js     |
+| US1     | https://www.datadoghq-browser-agent.com/us1/v6/datadog-logs.js | https://www.datadoghq-browser-agent.com/us1/v6/datadog-rum.js | https://www.datadoghq-browser-agent.com/us1/v6/datadog-rum-slim.js |
+| US3     | https://www.datadoghq-browser-agent.com/us3/v6/datadog-logs.js | https://www.datadoghq-browser-agent.com/us3/v6/datadog-rum.js | https://www.datadoghq-browser-agent.com/us3/v6/datadog-rum-slim.js |
+| US5     | https://www.datadoghq-browser-agent.com/us5/v6/datadog-logs.js | https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum.js | https://www.datadoghq-browser-agent.com/us5/v6/datadog-rum-slim.js |
+| EU1     | https://www.datadoghq-browser-agent.com/eu1/v6/datadog-logs.js | https://www.datadoghq-browser-agent.com/eu1/v6/datadog-rum.js | https://www.datadoghq-browser-agent.com/eu1/v6/datadog-rum-slim.js |
+| AP1     | https://www.datadoghq-browser-agent.com/ap1/v6/datadog-logs.js | https://www.datadoghq-browser-agent.com/ap1/v6/datadog-rum.js | https://www.datadoghq-browser-agent.com/ap1/v6/datadog-rum-slim.js |
+| US1-FED | https://www.datadoghq-browser-agent.com/datadog-logs-v6.js     | https://www.datadoghq-browser-agent.com/datadog-rum-v6.js     | https://www.datadoghq-browser-agent.com/datadog-rum-slim-v6.js     |
 
 [1]: https://github.githubassets.com/favicons/favicon.png
 [2]: https://imgix.datadoghq.com/img/favicons/favicon-32x32.png
@@ -67,3 +72,4 @@ Datadog provides one CDN bundle per [site][70]:
 [63]: https://deno.bundlejs.com/badge?q=@datadog/browser-worker&treeshake=[*]
 [64]: https://bundlejs.com/?q=@datadog/browser-worker&treeshake=[*]
 [70]: https://docs.datadoghq.com/getting_started/site/
+[71]: https://datadoghq.dev/browser-sdk/

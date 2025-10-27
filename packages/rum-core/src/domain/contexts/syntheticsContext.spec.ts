@@ -1,8 +1,9 @@
 import type { RelativeTime } from '@datadog/browser-core'
+import { HookNames } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../core/test'
-import type { Hooks } from '../../hooks'
-import { createHooks, HookNames } from '../../hooks'
 import { SessionType } from '../rumSessionManager'
+import type { Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startSyntheticsContext } from './syntheticsContext'
 
 describe('getSyntheticsContext', () => {

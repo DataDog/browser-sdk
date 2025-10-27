@@ -1,7 +1,7 @@
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
 import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
@@ -12,6 +12,7 @@ import type { StartRum } from './startRum'
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
   addError: () => undefined,
+  addEvent: () => undefined,
   addTiming: () => undefined,
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
@@ -31,6 +32,9 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   globalContext: {} as any,
   userContext: {} as any,
   accountContext: {} as any,
+  hooks: {} as any,
+  telemetry: {} as any,
+  addOperationStepVital: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -122,7 +126,6 @@ describe('rum public api', () => {
   describe('addAction', () => {
     let addActionSpy: jasmine.Spy<ReturnType<StartRum>['addAction']>
     let rumPublicApi: RumPublicApi
-    let clock: Clock
 
     beforeEach(() => {
       addActionSpy = jasmine.createSpy()
@@ -134,11 +137,7 @@ describe('rum public api', () => {
         noopRecorderApi,
         noopProfilerApi
       )
-      clock = mockClock()
-
-      registerCleanupTask(() => {
-        clock.cleanup()
-      })
+      mockClock()
     })
 
     it('allows sending actions before init', () => {
@@ -190,10 +189,6 @@ describe('rum public api', () => {
         noopProfilerApi
       )
       clock = mockClock()
-
-      registerCleanupTask(() => {
-        clock.cleanup()
-      })
     })
 
     it('allows capturing an error before init', () => {
@@ -790,6 +785,57 @@ describe('rum public api', () => {
     })
   })
 
+  describe('startFeatureOperation', () => {
+    it('should call addOperationStepVital on the startRum result with start status', () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), addOperationStepVital: addOperationStepVitalSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'start', {
+        operationKey: '00000000-0000-0000-0000-000000000000',
+      })
+    })
+  })
+
+  describe('succeedFeatureOperation', () => {
+    it('should call addOperationStepVital on the startRum result with end status', () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), addOperationStepVital: addOperationStepVitalSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.succeedFeatureOperation('foo', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith('foo', 'end', {
+        operationKey: '00000000-0000-0000-0000-000000000000',
+      })
+    })
+  })
+
+  describe('failFeatureOperation', () => {
+    it('should call addOperationStepVital on the startRum result with end status and failure reason', () => {
+      const addOperationStepVitalSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({ ...noopStartRum(), addOperationStepVital: addOperationStepVitalSpy }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.failFeatureOperation('foo', 'error', { operationKey: '00000000-0000-0000-0000-000000000000' })
+      expect(addOperationStepVitalSpy).toHaveBeenCalledWith(
+        'foo',
+        'end',
+        { operationKey: '00000000-0000-0000-0000-000000000000' },
+        'error'
+      )
+    })
+  })
+
   it('should provide sdk version', () => {
     const rumPublicApi = makeRumPublicApi(noopStartRum, noopRecorderApi, noopProfilerApi)
     expect(rumPublicApi.version).toBe('test')
@@ -882,6 +928,24 @@ describe('rum public api', () => {
     it('should return an empty object before init', () => {
       expect(rumPublicApi.getViewContext()).toEqual({})
       expect(getViewContextSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('it should pass down the sdk name to startRum', () => {
+    let startRumSpy: jasmine.Spy<StartRum>
+
+    beforeEach(() => {
+      startRumSpy = jasmine.createSpy().and.callFake(noopStartRum)
+    })
+
+    it('should return the sdk name', () => {
+      const rumPublicApi = makeRumPublicApi(startRumSpy, noopRecorderApi, noopProfilerApi, {
+        sdkName: 'rum-slim',
+      })
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      const sdkName = startRumSpy.calls.argsFor(0)[8]
+      expect(sdkName).toBe('rum-slim')
     })
   })
 })

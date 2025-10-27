@@ -14,10 +14,11 @@ import { objectHasValue } from './utils/objectUtils'
 
 // eslint-disable-next-line no-restricted-syntax
 export enum ExperimentalFeature {
-  PROFILING = 'profiling',
   TRACK_INTAKE_REQUESTS = 'track_intake_requests',
-  USER_ACCOUNT_TRACE_HEADER = 'user_account_trace_header',
-  WRITABLE_RESOURCE_GRAPHQL = 'writable_resource_graphql',
+  USE_TREE_WALKER_FOR_ACTION_NAME = 'use_tree_walker_for_action_name',
+  FEATURE_OPERATION_VITAL = 'feature_operation_vital',
+  SHORT_SESSION_INVESTIGATION = 'short_session_investigation',
+  ENCODE_COOKIE_OPTIONS = 'encode_cookie_options',
   AVOID_FETCH_KEEPALIVE = 'avoid_fetch_keepalive',
 }
 

@@ -44,7 +44,6 @@ describe('preStartLogs', () => {
 
   afterEach(() => {
     resetFetchObservable()
-    clock.cleanup()
   })
 
   describe('configuration validation', () => {
@@ -162,23 +161,7 @@ describe('preStartLogs', () => {
       )
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
-      expect(getLoggedMessage(0).savedCommonContext!.view.url).toEqual('url')
-    })
-
-    it('saves the common context', () => {
-      getCommonContextSpy.and.returnValue({ context: { foo: 'bar' } } as unknown as CommonContext)
-      strategy.handleLog(
-        {
-          status: StatusType.info,
-          message: 'message',
-        },
-        {} as Logger
-      )
-      getCommonContextSpy.and.returnValue({ context: { foo: 'baz' } } as unknown as CommonContext)
-
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
-
-      expect(getLoggedMessage(0).savedCommonContext!.context.foo).toEqual('bar')
+      expect(getLoggedMessage(0).savedCommonContext!.view?.url).toEqual('url')
     })
 
     it('saves the log context', () => {

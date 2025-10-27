@@ -1,4 +1,4 @@
-import type { RawError, Duration, RelativeTime } from '@datadog/browser-core'
+import type { RawError, Duration, RelativeTime, BufferedData } from '@datadog/browser-core'
 import {
   Observable,
   stopSessionManager,
@@ -10,6 +10,7 @@ import {
   createIdentityEncoder,
   createTrackingConsentState,
   TrackingConsent,
+  BufferedObservable,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -38,15 +39,16 @@ import { startViewCollection } from '../domain/view/viewCollection'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { LocationChange } from '../browser/locationChangeObservable'
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { startViewHistory } from '..'
-import type { RumSessionManager } from '..'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
-import { createHooks } from '../hooks'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
 import { startSessionContext } from '../domain/contexts/sessionContext'
+import { createHooks } from '../domain/hooks'
+import type { RumSessionManager } from '../domain/rumSessionManager'
+import type { RumMutationRecord } from '../browser/domMutationObservable'
+import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -62,7 +64,7 @@ function startRumStub(
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
   location: Location,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
   pageStateHistory: PageStateHistory,
@@ -113,7 +115,7 @@ describe('rum session', () => {
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
-    const domMutationObservable = new Observable<void>()
+    const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const { locationChangeObservable } = setupLocationObserver()
 
@@ -163,7 +165,7 @@ describe('rum session keep alive', () => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('1234')
-    const domMutationObservable = new Observable<void>()
+    const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const { locationChangeObservable } = setupLocationObserver()
 
@@ -182,7 +184,6 @@ describe('rum session keep alive', () => {
 
     registerCleanupTask(() => {
       stop()
-      clock.cleanup()
     })
   })
 
@@ -229,7 +230,7 @@ describe('rum events url', () => {
 
   function setupViewUrlTest() {
     const sessionManager = createRumSessionManagerMock().setId('1234')
-    const domMutationObservable = new Observable<void>()
+    const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     const locationSetupResult = setupLocationObserver('http://foo.com/')
     changeLocation = locationSetupResult.changeLocation
@@ -254,7 +255,6 @@ describe('rum events url', () => {
     serverRumEvents = collectServerEvents(lifeCycle)
 
     registerCleanupTask(() => {
-      clock?.cleanup()
       stop()
     })
   })
@@ -329,7 +329,9 @@ describe('view events', () => {
       undefined,
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),
-      createCustomVitalsState()
+      createCustomVitalsState(),
+      new BufferedObservable<BufferedData>(100),
+      'rum'
     )
 
     stop = startResult.stop
@@ -342,7 +344,6 @@ describe('view events', () => {
     registerCleanupTask(() => {
       stop()
       stopSessionManager()
-      clock.cleanup()
     })
   })
 
@@ -386,5 +387,24 @@ describe('view events', () => {
     }
     expect(lastBridgeMessage.event.type).toBe('view')
     expect(lastBridgeMessage.event.view.time_spent).toBe(toServerDuration(VIEW_DURATION))
+  })
+
+  it('sends a view update with the correct sdk name', () => {
+    // Arbitrary duration to simulate a non-zero view duration
+    const VIEW_DURATION = ONE_SECOND as Duration
+
+    setupViewCollectionTest()
+
+    clock.tick(VIEW_DURATION - relativeNow())
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
+      .split('\n')
+      .map((line) => JSON.parse(line) as RumEvent)
+    const lastRumViewEvent = findLast(
+      lastRumEvents,
+      (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
+    )!
+    expect(lastRumViewEvent._dd.sdk_name).toBe('rum')
   })
 })

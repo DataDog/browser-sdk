@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, Encoder, RelativeTime } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -11,10 +11,22 @@ import {
   clocksOrigin,
   clocksNow,
   elapsed,
+  DeflateEncoderStreamId,
 } from '@datadog/browser-core'
 
-import type { LifeCycle, RumConfiguration, RumSessionManager, ViewHistoryEntry } from '@datadog/browser-rum-core'
-import { LifeCycleEventType, RumPerformanceEntryType, supportPerformanceTimingEvent } from '@datadog/browser-rum-core'
+import type {
+  LifeCycle,
+  RumConfiguration,
+  RumSessionManager,
+  TransportPayload,
+  ViewHistoryEntry,
+} from '@datadog/browser-rum-core'
+import {
+  createFormDataTransport,
+  LifeCycleEventType,
+  RumPerformanceEntryType,
+  supportPerformanceTimingEvent,
+} from '@datadog/browser-rum-core'
 import type {
   RumProfilerTrace,
   RumProfilerInstance,
@@ -24,14 +36,11 @@ import type {
   RumViewEntry,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
-import {
-  disableLongTaskRegistry,
-  enableLongTaskRegistry,
-  deleteLongTaskIdsBefore,
-  getLongTaskId,
-} from './utils/longTaskRegistry'
+import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
 import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
-import { transport } from './transport/transport'
+import type { ProfilingContextManager } from './profilingContext'
+import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
+import { assembleProfilingPayload } from './transport/assembly'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -44,8 +53,11 @@ export function createRumProfiler(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   session: RumSessionManager,
+  profilingContextManager: ProfilingContextManager,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
+  const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
   let lastViewEntry: RumViewEntry | undefined
@@ -63,7 +75,11 @@ export function createRumProfiler(
     // Add initial view
     // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
     lastViewEntry = viewEntry
-      ? { startClocks: viewEntry.startClocks, viewId: viewEntry.id, viewName: viewEntry.name }
+      ? {
+          startClocks: viewEntry.startClocks,
+          viewId: viewEntry.id,
+          viewName: getCustomOrDefaultViewName(viewEntry.name, document.location.pathname),
+        }
       : undefined
 
     // Add global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
@@ -80,11 +96,14 @@ export function createRumProfiler(
     // Stop current profiler instance
     await stopProfilerInstance('stopped')
 
-    // Disable Long Task Registry as we no longer need to correlate them with RUM
-    disableLongTaskRegistry()
-
     // Cleanup global listeners
     globalCleanupTasks.forEach((task) => task())
+
+    // Cleanup Long Task Registry as we no longer need to correlate them with RUM
+    cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
+
+    // Update Profiling status once the Profiler has been stopped.
+    profilingContextManager.set({ status: 'stopped', error_reason: undefined })
   }
 
   /**
@@ -117,17 +136,23 @@ export function createRumProfiler(
         mayStoreLongTaskIdForProfilerCorrelation(data)
       })
 
-      // Enable Long Task registry so we can correlate them with RUM
-      enableLongTaskRegistry()
-
       cleanupTasks.push(() => observer?.disconnect())
       cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
     }
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
-      // Note: `view.name` is only filled when users use manual view creation via `startView` method.
-      collectViewEntry({ viewId: view.id, viewName: view.name, startClocks: view.startClocks })
+      const viewEntry = {
+        viewId: view.id,
+        // Note: `viewName` is only filled when users use manual view creation via `startView` method.
+        viewName: getCustomOrDefaultViewName(view.name, document.location.pathname),
+        startClocks: view.startClocks,
+      }
+
+      collectViewEntry(viewEntry)
+
+      // Update last view entry
+      lastViewEntry = viewEntry
     })
     cleanupTasks.push(viewUpdatedSubscription.unsubscribe)
 
@@ -142,6 +167,7 @@ export function createRumProfiler(
     const globalThisProfiler: Profiler | undefined = getGlobalObject<any>().Profiler
 
     if (!globalThisProfiler) {
+      profilingContextManager.set({ status: 'error', error_reason: 'not-supported-by-browser' })
       throw new Error('RUM Profiler is not supported in this browser.')
     }
 
@@ -161,14 +187,21 @@ export function createRumProfiler(
         ),
       })
     } catch (e) {
-      // If we fail to create a profiler, it's likely due to the missing Response Header (`js-profiling`) that is required to enable the profiler.
-      // We should suggest the user to enable the Response Header in their server configuration.
-      display.warn(
-        '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
-        e
-      )
+      if (e instanceof Error && e.message.includes('disabled by Document Policy')) {
+        // Missing Response Header (`js-profiling`) that is required to enable the profiler.
+        // We should suggest the user to enable the Response Header in their server configuration.
+        display.warn(
+          '[DD_RUM] Profiler startup failed. Ensure your server includes the `Document-Policy: js-profiling` response header when serving HTML pages.',
+          e
+        )
+        profilingContextManager.set({ status: 'error', error_reason: 'missing-document-policy-header' })
+      } else {
+        profilingContextManager.set({ status: 'error', error_reason: 'unexpected-exception' })
+      }
       return
     }
+
+    profilingContextManager.set({ status: 'running', error_reason: undefined })
 
     // Kick-off the new instance
     instance = {
@@ -236,7 +269,7 @@ export function createRumProfiler(
         )
 
         // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
-        deleteLongTaskIdsBefore(collectClocks)
+        cleanupLongTaskRegistryAfterCollection(collectClocks.relative)
       })
       .catch(monitorError)
   }
@@ -266,11 +299,9 @@ export function createRumProfiler(
   function handleProfilerTrace(trace: RumProfilerTrace): void {
     // Find current session to assign it to the Profile.
     const sessionId = session.findTrackedSession()?.id
+    const payload = assembleProfilingPayload(trace, configuration, sessionId)
 
-    // Send JSON Profile to intake.
-    transport
-      .sendProfile(trace, configuration.profilingEndpointBuilder, configuration.applicationId, sessionId)
-      .catch(monitorError)
+    void transport.send(payload as unknown as TransportPayload)
   }
 
   function handleSampleBufferFull(): void {
@@ -294,9 +325,11 @@ export function createRumProfiler(
 
       const startClocks = relativeToClocks(entry.startTime as RelativeTime)
 
+      const longTaskId = getLongTaskId(startClocks.relative)
+
       // Store Long Task entry, which is a lightweight version of the PerformanceEntry
       instance.longTasks.push({
-        id: getLongTaskId(startClocks.relative),
+        id: longTaskId,
         duration: entry.duration as Duration,
         entryType: entry.entryType,
         startClocks,

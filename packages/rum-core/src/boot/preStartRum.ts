@@ -13,25 +13,32 @@ import {
   addTelemetryConfiguration,
   initFetchObservable,
   CustomerContextKey,
+  buildAccountContextManager,
+  buildGlobalContextManager,
+  buildUserContextManager,
+  monitorError,
+  sanitize,
 } from '@datadog/browser-core'
+import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
   validateAndBuildRumConfiguration,
-  type RumConfiguration,
-  type RumInitConfiguration,
+  fetchAndApplyRemoteConfiguration,
+  serializeRumConfiguration,
 } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
-import type { DurationVital, CustomVitalsState } from '../domain/vital/vitalCollection'
+import type {
+  DurationVital,
+  CustomVitalsState,
+  FeatureOperationOptions,
+  FailureReason,
+} from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
-import { fetchAndApplyRemoteConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import { callPluginsMethod } from '../domain/plugins'
-import { buildGlobalContextManager } from '../domain/contexts/globalContext'
-import { buildUserContextManager } from '../domain/contexts/userContext'
-import { buildAccountContextManager } from '../domain/contexts/accountContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export function createPreStartStrategy(
-  { ignoreInitIfSyntheticsWillInjectRum, startDeflateWorker }: RumPublicApiOptions,
+  { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   doStartRum: (
@@ -92,7 +99,7 @@ export function createPreStartStrategy(
     bufferApiCalls.drain(startRumResult)
   }
 
-  function doInit(initConfiguration: RumInitConfiguration) {
+  function doInit(initConfiguration: RumInitConfiguration, errorStack?: string) {
     const eventBridgeAvailable = canUseEventBridge()
     if (eventBridgeAvailable) {
       initConfiguration = overrideInitConfigurationForBridge(initConfiguration)
@@ -107,7 +114,7 @@ export function createPreStartStrategy(
       return
     }
 
-    const configuration = validateAndBuildRumConfiguration(initConfiguration)
+    const configuration = validateAndBuildRumConfiguration(initConfiguration, errorStack)
     if (!configuration) {
       return
     }
@@ -147,8 +154,24 @@ export function createPreStartStrategy(
     bufferApiCalls.add((startRumResult) => startRumResult.addDurationVital(vital))
   }
 
+  const addOperationStepVital = (
+    name: string,
+    stepType: 'start' | 'end',
+    options?: FeatureOperationOptions,
+    failureReason?: FailureReason
+  ) => {
+    bufferApiCalls.add((startRumResult) =>
+      startRumResult.addOperationStepVital(
+        sanitize(name)!,
+        stepType,
+        sanitize(options) as FeatureOperationOptions,
+        sanitize(failureReason) as FailureReason | undefined
+      )
+    )
+  }
+
   const strategy: Strategy = {
-    init(initConfiguration, publicApi) {
+    init(initConfiguration, publicApi, errorStack) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -170,9 +193,15 @@ export function createPreStartStrategy(
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
       if (initConfiguration.remoteConfigurationId) {
-        fetchAndApplyRemoteConfiguration(initConfiguration, doInit)
+        fetchAndApplyRemoteConfiguration(initConfiguration, { user: userContext, context: globalContext })
+          .then((initConfiguration) => {
+            if (initConfiguration) {
+              doInit(initConfiguration, errorStack)
+            }
+          })
+          .catch(monitorError)
       } else {
-        doInit(initConfiguration)
+        doInit(initConfiguration, errorStack)
       }
     },
 
@@ -241,6 +270,7 @@ export function createPreStartStrategy(
     },
 
     addDurationVital,
+    addOperationStepVital,
   }
 
   return strategy

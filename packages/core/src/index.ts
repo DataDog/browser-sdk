@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, EndpointBuilder } from './domain/configuration'
+export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn } from './domain/configuration'
 export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
@@ -6,13 +6,9 @@ export {
   serializeConfiguration,
   isSampleRate,
   buildEndpointHost,
-  INTAKE_SITE_STAGING,
-  INTAKE_SITE_US1,
-  INTAKE_SITE_US1_FED,
-  INTAKE_SITE_EU1,
-  INTAKE_URL_PARAMETERS,
   isIntakeUrl,
 } from './domain/configuration'
+export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
 export {
@@ -46,31 +42,31 @@ export {
   startTelemetry,
   addTelemetryDebug,
   addTelemetryError,
-  startFakeTelemetry,
   resetTelemetry,
   TelemetryService,
-  isTelemetryReplicationAllowed,
+  TelemetryMetrics,
   addTelemetryConfiguration,
   addTelemetryUsage,
-  drainPreStartTelemetry,
+  addTelemetryMetrics,
 } from './domain/telemetry'
 export { monitored, monitor, callMonitored, setDebugMode, monitorError } from './tools/monitor'
 export type { Subscription } from './tools/observable'
-export { Observable } from './tools/observable'
+export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager } from './domain/session/sessionManager'
 export { startSessionManager, stopSessionManager } from './domain/session/sessionManager'
 export {
   SESSION_TIME_OUT_DELAY, // Exposed for tests
+  SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { HttpRequest, Payload, FlushEvent, FlushReason } from './transport'
+export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,
   getEventBridge,
   bridgeSupports,
   BridgeCapability,
-  startBatchWithReplica,
+  createBatch,
   createFlushController,
 } from './transport'
 export * from './tools/display'
@@ -80,7 +76,7 @@ export * from './tools/utils/urlPolyfill'
 export * from './tools/utils/timeUtils'
 export * from './tools/utils/arrayUtils'
 export * from './tools/serialisation/sanitize'
-export * from './tools/getGlobalObject'
+export * from './tools/globalObject'
 export { AbstractLifeCycle } from './tools/abstractLifeCycle'
 export * from './domain/eventRateLimiter/createEventRateLimiter'
 export * from './tools/utils/browserDetection'
@@ -123,7 +119,14 @@ export { createBoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'
 export type { ContextManager } from './domain/context/contextManager'
 export { createContextManager } from './domain/context/contextManager'
+export { defineContextMethod, bufferContextCalls } from './domain/context/defineContextMethod'
 export { storeContextManager, removeStorageListeners } from './domain/context/storeContextManager'
+export { startAccountContext, buildAccountContextManager } from './domain/contexts/accountContext'
+export { startGlobalContext, buildGlobalContextManager } from './domain/contexts/globalContext'
+export { startUserContext, buildUserContextManager } from './domain/contexts/userContext'
+export type { User } from './domain/contexts/userContext'
+export type { Account } from './domain/contexts/accountContext'
+export type { RumInternalContext } from './domain/contexts/rumInternalContext.type'
 export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './domain/context/contextConstants'
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
@@ -135,12 +138,13 @@ export {
   willSyntheticsInjectRum,
   getSyntheticsTestId,
   getSyntheticsResultId,
+  isSyntheticsTest,
 } from './domain/synthetics/syntheticsWorkerValues'
-export type { User } from './domain/user.types'
-export type { Account } from './domain/account.types'
 export { checkContext } from './domain/context/contextUtils'
 export * from './domain/resourceUtils'
+export * from './domain/bufferedData'
 export * from './tools/utils/polyfills'
+export * from './tools/utils/timezone'
 export * from './tools/utils/numberUtils'
 export * from './tools/utils/byteUtils'
 export * from './tools/utils/objectUtils'
@@ -156,3 +160,5 @@ export { ErrorHandling, ErrorSource } from './domain/error/error.types'
 export * from './domain/deflate'
 export * from './domain/connectivity'
 export * from './tools/stackTrace/handlingStack'
+export * from './tools/abstractHooks'
+export * from './domain/tags'

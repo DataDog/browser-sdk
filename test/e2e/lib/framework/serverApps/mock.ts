@@ -2,13 +2,19 @@ import type { ServerResponse } from 'http'
 import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
+import type { RemoteConfiguration } from '@datadog/browser-rum-core'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
+import { workerSetup } from '../pageSetups'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 
-export function createMockServerApp(servers: Servers, setup: string): MockServerApp {
+export function createMockServerApp(
+  servers: Servers,
+  setup: string,
+  remoteConfiguration?: RemoteConfiguration
+): MockServerApp {
   const app = express()
   let largeResponseBytesWritten = 0
 
@@ -37,6 +43,14 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
   app.get('/large-response', (_req, res) => {
     const chunkText = 'foofoobarbar\n'.repeat(50)
     generateLargeResponse(res, chunkText)
+  })
+
+  app.get('/sw.js', (_req, res) => {
+    const query = _req.query
+
+    res
+      .contentType('application/javascript')
+      .send(workerSetup({ importScripts: Boolean(query.importScripts), nativeLog: Boolean(query.nativeLog) }, servers))
   })
 
   function generateLargeResponse(res: ServerResponse, chunkText: string) {
@@ -83,6 +97,11 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     setTimeout(() => res.send('ok'), timeoutDuration)
   })
 
+  app.post('/graphql', (_req, res) => {
+    res.header('Content-Type', 'application/json')
+    res.json({ data: { result: 'success' } })
+  })
+
   app.get('/redirect', (req, res) => {
     const redirectUri = url.parse(req.originalUrl)
     res.redirect(`ok${redirectUri.search!}`)
@@ -96,9 +115,9 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     res.header(
       'Content-Security-Policy',
       [
-        `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        "script-src 'self' 'unsafe-inline'",
-        'worker-src blob:',
+        `connect-src ${servers.intake.origin} ${servers.base.origin} ${servers.crossOrigin.origin}`,
+        `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
+        "worker-src blob: 'self'",
       ].join(';')
     )
     res.send(setup)
@@ -109,8 +128,8 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     res.header(
       'Content-Security-Policy',
       [
-        `connect-src ${servers.intake.url} ${servers.base.url} ${servers.crossOrigin.url}`,
-        "script-src 'self' 'unsafe-inline'",
+        `connect-src ${servers.intake.origin} ${servers.base.origin} ${servers.crossOrigin.origin}`,
+        `script-src 'self' 'unsafe-inline' ${servers.crossOrigin.origin}`,
       ].join(';')
     )
     res.send(setup)
@@ -135,9 +154,13 @@ export function createMockServerApp(servers: Servers, setup: string): MockServer
     }
   })
 
-  app.get(/(?<appName>app|react-app).js$/, (req, res) => {
+  app.get(/(?<appName>app|react-[\w-]+).js$/, (req, res) => {
     const { originalUrl, params } = req
     res.sendFile(getTestAppBundlePath(params.appName, originalUrl))
+  })
+
+  app.get('/config', (_req, res) => {
+    res.send(JSON.stringify(remoteConfiguration))
   })
 
   return Object.assign(app, {

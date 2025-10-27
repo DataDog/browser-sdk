@@ -20,7 +20,6 @@ describe('viewportObservable', () => {
 
   afterEach(() => {
     viewportSubscription.unsubscribe()
-    clock.cleanup()
   })
 
   const addVerticalScrollBar = () => {

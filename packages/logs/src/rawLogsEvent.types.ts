@@ -1,4 +1,4 @@
-import type { Context, ErrorSource, RawErrorCause, TimeStamp, User, ErrorHandling } from '@datadog/browser-core'
+import type { ErrorSource, RawErrorCause, TimeStamp, ErrorHandling } from '@datadog/browser-core'
 import type { StatusType } from './domain/logger/isAuthorized'
 
 export type RawLogsEvent =
@@ -9,7 +9,7 @@ export type RawLogsEvent =
   | RawReportLogsEvent
   | RawRuntimeLogsEvent
 
-type Error = {
+interface Error {
   message?: string
   kind?: string
   stack?: string
@@ -62,12 +62,8 @@ export interface RawAgentLogsEvent extends CommonRawLogsEvent {
 }
 
 export interface CommonContext {
-  view: {
+  view?: {
     referrer: string
     url: string
   }
-  context: Context
-  user: User
-  // We don't want to enforce id internally so use Context as internal type
-  account: Context
 }

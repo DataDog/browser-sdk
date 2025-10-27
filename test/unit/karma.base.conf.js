@@ -1,4 +1,5 @@
-const webpackConfig = require('../../webpack.base')({
+const { parseArgs } = require('util')
+const webpackConfig = require('../../webpack.base.ts').default({
   mode: 'development',
   types: ['jasmine', 'chrome'],
   // do not replace some build env variables in unit test in order to test different build behaviors
@@ -16,17 +17,22 @@ if (testReportDirectory) {
   reporters.push('junit')
 }
 
+const FILES = [
+  // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
+  // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
+  // `afterEach` hooks.
+  'packages/core/test/forEach.spec.ts',
+  'packages/rum/test/toto.css',
+]
+
+const FILES_SPECS = [
+  'packages/*/@(src|test)/**/*.spec.@(ts|tsx)',
+  'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
+]
+
 module.exports = {
   basePath: '../..',
-  files: [
-    // Make sure 'forEach.spec' is the first file to be loaded, so its `beforeEach` hook is executed
-    // before all other `beforeEach` hooks, and its `afterEach` hook is executed after all other
-    // `afterEach` hooks.
-    'packages/core/test/forEach.spec.ts',
-    'packages/*/@(src|test)/**/*.spec.@(ts|tsx)',
-    'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
-    'packages/rum/test/toto.css',
-  ],
+  files: getFiles(),
   frameworks: ['jasmine', 'webpack'],
   client: {
     jasmine: {
@@ -36,6 +42,8 @@ module.exports = {
   },
   preprocessors: {
     '**/*.+(ts|tsx)': ['webpack', 'sourcemap'],
+    // Apply sourcemaps to webpack common chunk
+    '/**/*.js': ['sourcemap'],
   },
   reporters,
   specReporter: {
@@ -104,7 +112,7 @@ function overrideTsLoaderRule(module) {
   // We use swc-loader to transpile some dependencies that are using syntax not compatible with browsers we use for testing
   module.rules.push({
     test: /\.m?js$/,
-    include: /node_modules\/(react-router-dom|turbo-stream)/,
+    include: /node_modules\/(react-router-dom|react-router|turbo-stream)/,
     use: {
       loader: 'swc-loader',
       options: {
@@ -118,4 +126,23 @@ function overrideTsLoaderRule(module) {
   })
 
   return module
+}
+
+function getFiles() {
+  const { values } = parseArgs({
+    allowPositionals: true,
+    strict: false,
+    options: {
+      spec: {
+        type: 'string',
+        multiple: true,
+      },
+    },
+  })
+
+  if (values.spec) {
+    return FILES.concat(values.spec)
+  }
+
+  return FILES.concat(FILES_SPECS)
 }

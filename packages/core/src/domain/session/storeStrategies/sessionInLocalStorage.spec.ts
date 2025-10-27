@@ -43,11 +43,18 @@ describe('session in local storage strategy', () => {
     localStorageStrategy.persistSession(sessionState)
     localStorageStrategy.expireSession(sessionState)
     const session = localStorageStrategy?.retrieveSession()
-    expect(session).toEqual({ isExpired: '1', anonymousId: jasmine.any(String) })
+    expect(session).toEqual({ isExpired: '1' })
     expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual({
       isExpired: '1',
-      anonymousId: jasmine.any(String),
     })
+  })
+
+  it('should not generate an anonymousId if not present', () => {
+    const localStorageStrategy = initLocalStorageStrategy(DEFAULT_INIT_CONFIGURATION)
+    localStorageStrategy.persistSession(sessionState)
+    const session = localStorageStrategy.retrieveSession()
+    expect(session).toEqual({ id: '123', created: '0' })
+    expect(getSessionStateFromLocalStorage(SESSION_STORE_KEY)).toEqual({ id: '123', created: '0' })
   })
 
   it('should return an empty object if session string is invalid', () => {

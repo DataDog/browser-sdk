@@ -58,9 +58,9 @@ export interface RumPerformanceResourceTiming {
   responseEnd: RelativeTime
   redirectStart: RelativeTime
   redirectEnd: RelativeTime
-  decodedBodySize: number
-  encodedBodySize: number
-  transferSize: number
+  decodedBodySize?: number
+  encodedBodySize?: number
+  transferSize?: number
   nextHopProtocol?: string
   renderBlockingStatus?: string
   traceId?: string
@@ -136,7 +136,7 @@ export interface RumLayoutShiftTiming {
 }
 
 // Documentation https://developer.chrome.com/docs/web-platform/long-animation-frames#better-attribution
-export type RumPerformanceScriptTiming = {
+export interface RumPerformanceScriptTiming {
   duration: Duration
   entryType: 'script'
   executionStart: RelativeTime
@@ -191,7 +191,7 @@ export type RumPerformanceEntry =
   | RumLayoutShiftTiming
   | RumFirstHiddenTiming
 
-export type EntryTypeToReturnType = {
+export interface EntryTypeToReturnType {
   [RumPerformanceEntryType.EVENT]: RumPerformanceEventTiming
   [RumPerformanceEntryType.FIRST_INPUT]: RumFirstInputTiming
   [RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT]: RumLargestContentfulPaintTiming

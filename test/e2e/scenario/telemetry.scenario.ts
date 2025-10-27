@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest, html } from '../lib/framework'
 
 test.describe('telemetry', () => {
   createTest('send errors for logs')
-    .withLogs()
+    .withLogs({ trackingConsent: 'granted' })
     .run(async ({ intakeRegistry, page, flushEvents }) => {
       await page.evaluate(() => {
         const context = {
@@ -54,6 +54,7 @@ test.describe('telemetry', () => {
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.configuration.forward_errors_to_logs).toEqual(true)
+      expect(event.session!.id).toEqual(expect.any(String))
     })
 
   createTest('send init configuration for RUM')
@@ -66,6 +67,7 @@ test.describe('telemetry', () => {
       const event = intakeRegistry.telemetryConfigurationEvents[0]
       expect(event.service).toEqual('browser-rum-sdk')
       expect(event.telemetry.configuration.track_user_interactions).toEqual(true)
+      expect(event.application!.id).toEqual(expect.any(String))
     })
 
   createTest('send usage telemetry for RUM')
@@ -95,4 +97,79 @@ test.describe('telemetry', () => {
       expect(event.service).toEqual('browser-logs-sdk')
       expect(event.telemetry.usage.feature).toEqual('set-tracking-consent')
     })
+
+  createTest('stops sending telemetry after consent revocation')
+    .withRum()
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      // Generate initial telemetry, revoke consent, then try to generate more
+      await page.evaluate(() => {
+        window.DD_RUM!.addAction('initial-action')
+        window.DD_RUM!.setTrackingConsent('not-granted')
+        window.DD_RUM!.addAction('post-revocation-action')
+        window.DD_RUM!.getAccount()
+      })
+
+      await flushEvents()
+
+      // Verify telemetry events: should have initial action and consent revocation,
+      // but NOT the post-revocation action
+      const telemetryEvents = intakeRegistry.telemetryUsageEvents
+      expect(telemetryEvents.length).toBeGreaterThanOrEqual(2)
+
+      // Verify no telemetry for post-revocation action or get-account
+      const postRevocationEvents = telemetryEvents.filter(
+        (event) => event.telemetry.usage.feature === 'add-action' || event.telemetry.usage.feature === 'get-account'
+      )
+      expect(postRevocationEvents.length).toEqual(1) // Only the initial action
+    })
+
+  test.describe('collect errors related to session initialization', () => {
+    // Test for RUM and Logs separately, because using both at the same time via NPM triggers
+    // different errors (because both SDKs are sharing the same cookie store `operationBuffer`
+    // queue). This could be revisited after properly fixing incident-39238.
+
+    const DENY_SESSION_COOKIE_ACCESS = html`
+      <script>
+        // Make Logs and RUM session initialization fail by denying cookie access
+        const originalDescriptor = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie')
+        Object.defineProperty(Document.prototype, 'cookie', {
+          get: () => originalDescriptor.get.call(document),
+          set: (value) => {
+            if (value.includes('_dd_s=')) {
+              throw new Error('expected error')
+            }
+            originalDescriptor.set.call(document, value)
+          },
+        })
+      </script>
+    `
+
+    createTest('logs')
+      .withHead(DENY_SESSION_COOKIE_ACCESS)
+      .withLogs()
+      .run(async ({ intakeRegistry, flushEvents }) => {
+        await flushEvents()
+        expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
+        const error = intakeRegistry.telemetryErrorEvents[0]
+        expect(error.service).toEqual('browser-logs-sdk')
+        expect(error.telemetry.message).toBe('expected error')
+        expect(error.telemetry.error!.kind).toBe('Error')
+        expect(error.telemetry.status).toBe('error')
+        intakeRegistry.empty()
+      })
+
+    createTest('rum')
+      .withHead(DENY_SESSION_COOKIE_ACCESS)
+      .withRum()
+      .run(async ({ intakeRegistry, flushEvents }) => {
+        await flushEvents()
+        expect(intakeRegistry.telemetryErrorEvents).toHaveLength(1)
+        const error = intakeRegistry.telemetryErrorEvents[0]
+        expect(error.service).toEqual('browser-rum-sdk')
+        expect(error.telemetry.message).toBe('expected error')
+        expect(error.telemetry.error!.kind).toBe('Error')
+        expect(error.telemetry.status).toBe('error')
+        intakeRegistry.empty()
+      })
+  })
 })

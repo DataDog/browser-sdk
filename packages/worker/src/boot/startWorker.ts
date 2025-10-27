@@ -1,4 +1,4 @@
-import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
+import type { DeflateWorkerAction, DeflateWorkerResponse, Uint8ArrayBuffer } from '@datadog/browser-core'
 import { concatBuffers } from '@datadog/browser-core'
 import { Deflate, constants, string2buf } from '../domain/deflate'
 
@@ -98,7 +98,7 @@ function handleAction(streams: Map<number, Deflate>, message: DeflateWorkerActio
  * Beside creating a valid zlib stream, those 6 bits are expected to be here so the Datadog backend
  * can merge streams together (see internal doc).
  */
-function makeTrailer(deflate: Deflate): Uint8Array {
+function makeTrailer(deflate: Deflate): Uint8ArrayBuffer {
   /* eslint-disable no-bitwise */
   const adler = deflate.strm.adler
   return new Uint8Array([

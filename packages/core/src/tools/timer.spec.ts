@@ -22,7 +22,6 @@ import { noop } from './utils/functionUtils'
     beforeEach(() => {
       clock = mockClock()
       registerCleanupTask(() => {
-        clock.cleanup()
         resetMonitor()
       })
       zoneJs = mockZoneJs()

@@ -1,4 +1,4 @@
-import { jsonStringify } from '../serialisation/jsonStringify'
+import { globalObject } from '../globalObject'
 
 export function normalizeUrl(url: string) {
   return buildUrl(url, location.href).href
@@ -18,40 +18,39 @@ export function getPathName(url: string) {
 }
 
 export function buildUrl(url: string, base?: string) {
-  const supportedURL = getSupportedUrl()
-  if (supportedURL) {
-    try {
-      return base !== undefined ? new supportedURL(url, base) : new supportedURL(url)
-    } catch (error) {
-      throw new Error(`Failed to construct URL: ${String(error)} ${jsonStringify({ url, base })!}`)
-    }
+  const { URL } = getPristineWindow()
+
+  try {
+    return base !== undefined ? new URL(url, base) : new URL(url)
+  } catch (error) {
+    throw new Error(`Failed to construct URL: ${String(error)}`)
   }
-  if (base === undefined && !/:/.test(url)) {
-    throw new Error(`Invalid URL: '${url}'`)
-  }
-  let doc = document
-  const anchorElement = doc.createElement('a')
-  if (base !== undefined) {
-    doc = document.implementation.createHTMLDocument('')
-    const baseElement = doc.createElement('base')
-    baseElement.href = base
-    doc.head.appendChild(baseElement)
-    doc.body.appendChild(anchorElement)
-  }
-  anchorElement.href = url
-  return anchorElement
 }
 
-const originalURL = URL
-let isURLSupported: boolean | undefined
-function getSupportedUrl(): typeof URL | undefined {
-  if (isURLSupported === undefined) {
+/**
+ * Get native URL constructor from a clean iframe
+ * This avoids polyfill issues by getting the native implementation from a fresh iframe context
+ * Falls back to the original URL constructor if iframe approach fails
+ */
+let getPristineGlobalObjectCache: Pick<typeof window, 'URL'> | undefined
+
+export function getPristineWindow() {
+  if (!getPristineGlobalObjectCache) {
+    let iframe: HTMLIFrameElement | undefined
+    let pristineWindow: Window & typeof globalThis
     try {
-      const url = new originalURL('http://test/path')
-      isURLSupported = url.href === 'http://test/path'
+      iframe = document.createElement('iframe')
+      iframe.style.display = 'none'
+      document.body.appendChild(iframe)
+      pristineWindow = iframe.contentWindow as Window & typeof globalThis
     } catch {
-      isURLSupported = false
+      pristineWindow = globalObject as unknown as Window & typeof globalThis
     }
+    getPristineGlobalObjectCache = {
+      URL: pristineWindow.URL,
+    }
+    iframe?.remove()
   }
-  return isURLSupported ? originalURL : undefined
+
+  return getPristineGlobalObjectCache
 }

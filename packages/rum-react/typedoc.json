@@ -1,0 +1,5 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/entries/main.ts"],
+  "categoryOrder": ["Main", "Error", "*", "Other"]
+}

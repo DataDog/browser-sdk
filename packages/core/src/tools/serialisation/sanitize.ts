@@ -7,16 +7,18 @@ import { detachToJsonMethod } from './jsonStringify'
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function
 type ExtendedContextValue = PrimitivesAndFunctions | object | ExtendedContext | ExtendedContextArray
-type ExtendedContext = { [key: string]: ExtendedContextValue }
+interface ExtendedContext {
+  [key: string]: ExtendedContextValue
+}
 type ExtendedContextArray = ExtendedContextValue[]
 
-type ContainerElementToProcess = {
+interface ContainerElementToProcess {
   source: ExtendedContextArray | ExtendedContext
   target: ContextArray | Context
   path: string
 }
 
-type SanitizedEvent = {
+interface SanitizedEvent extends Context {
   type: string
   isTrusted: boolean
   currentTarget: string | null | undefined
@@ -45,8 +47,8 @@ const KEY_DECORATION_LENGTH = 3
  * - Size does not take into account indentation that can be applied to JSON.stringify
  * - Non-numerical properties of Arrays are ignored. Same behavior as JSON.stringify
  *
- * @param source              User-provided data meant to be serialized using JSON.stringify
- * @param maxCharacterCount   Maximum number of characters allowed in serialized form
+ * @param source              - User-provided data meant to be serialized using JSON.stringify
+ * @param maxCharacterCount   - Maximum number of characters allowed in serialized form
  */
 export function sanitize(source: string, maxCharacterCount?: number): string | undefined
 export function sanitize(source: Context, maxCharacterCount?: number): Context

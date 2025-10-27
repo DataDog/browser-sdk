@@ -6,8 +6,6 @@ import {
   isMatchOption,
   matchList,
   TraceContextInjection,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
@@ -17,10 +15,10 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
+import { isSampled } from '../sampler/sampler'
 import type { PropagatorType, TracingOption } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
-import { isTraceSampled } from './sampler'
 
 export interface Tracer {
   traceFetch: (context: Partial<RumFetchStartContext>) => void
@@ -143,7 +141,7 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const traceSampled = isTraceSampled(session.id, configuration.traceSampleRate)
+  const traceSampled = isSampled(session.id, configuration.traceSampleRate)
 
   const shouldInjectHeaders = traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
   if (!shouldInjectHeaders) {
@@ -223,10 +221,7 @@ function makeTracingHeaders(
     }
   })
 
-  if (
-    isExperimentalFeatureEnabled(ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER) &&
-    configuration.propagateTraceBaggage
-  ) {
+  if (configuration.propagateTraceBaggage) {
     const baggageItems: Record<string, string> = {
       'session.id': sessionId,
     }

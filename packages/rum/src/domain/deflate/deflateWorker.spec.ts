@@ -1,8 +1,7 @@
-import type { RawTelemetryEvent } from '@datadog/browser-core'
-import { display, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
+import { display, resetTelemetry } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreateDeflateWorker } from './deflateWorker'
 import { startDeflateWorker, resetDeflateWorkerState, INITIALIZATION_TIME_OUT_DELAY } from './deflateWorker'
@@ -69,14 +68,14 @@ describe('startDeflateWorker', () => {
   })
 
   describe('worker CSP error', () => {
-    let telemetryEvents: RawTelemetryEvent[]
+    let telemetry: MockTelemetry
     // mimic Chrome behavior
     let CSP_ERROR: DOMException
     let displaySpy: jasmine.Spy
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      telemetryEvents = startFakeTelemetry()
+      telemetry = startMockTelemetry()
       CSP_ERROR = new DOMException(
         "Failed to construct 'Worker': Access to the script at 'blob:https://example.org/9aadbb61-effe-41ee-aa76-fc607053d642' is denied by the document's Content Security Policy."
       )
@@ -101,10 +100,10 @@ describe('startDeflateWorker', () => {
         )
       })
 
-      it('does not report CSP errors to telemetry', () => {
+      it('does not report CSP errors to telemetry', async () => {
         createDeflateWorkerSpy.and.throwError(CSP_ERROR)
         startDeflateWorkerWithDefaults()
-        expect(telemetryEvents).toEqual([])
+        expect(await telemetry.hasEvents()).toBe(false)
       })
 
       it('does not try to create a worker again after the creation failed', () => {
@@ -179,10 +178,6 @@ describe('startDeflateWorker', () => {
       clock = mockClock()
     })
 
-    afterEach(() => {
-      clock.cleanup()
-    })
-
     it('displays an error message when the worker does not respond to the init action', () => {
       startDeflateWorkerWithDefaults()
       clock.tick(INITIALIZATION_TIME_OUT_DELAY)
@@ -201,13 +196,13 @@ describe('startDeflateWorker', () => {
   })
 
   describe('worker unknown error', () => {
-    let telemetryEvents: RawTelemetryEvent[]
+    let telemetry: MockTelemetry
     const UNKNOWN_ERROR = new Error('boom')
     let displaySpy: jasmine.Spy
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      telemetryEvents = startFakeTelemetry()
+      telemetry = startMockTelemetry()
     })
 
     afterEach(() => {
@@ -232,10 +227,10 @@ describe('startDeflateWorker', () => {
       )
     })
 
-    it('reports unknown errors to telemetry', () => {
+    it('reports unknown errors to telemetry', async () => {
       createDeflateWorkerSpy.and.throwError(UNKNOWN_ERROR)
       startDeflateWorkerWithDefaults()
-      expect(telemetryEvents).toEqual([
+      expect(await telemetry.getEvents()).toEqual([
         {
           type: 'log',
           status: 'error',
@@ -251,12 +246,12 @@ describe('startDeflateWorker', () => {
       expect(displaySpy).not.toHaveBeenCalledWith(jasmine.stringContaining('CSP'))
     })
 
-    it('reports errors occurring after loading to telemetry', () => {
+    it('reports errors occurring after loading to telemetry', async () => {
       startDeflateWorkerWithDefaults()
       mockWorker.processAllMessages()
 
       mockWorker.dispatchErrorMessage('boom', TEST_STREAM_ID)
-      expect(telemetryEvents).toEqual([
+      expect(await telemetry.getEvents()).toEqual([
         {
           type: 'log',
           status: 'error',

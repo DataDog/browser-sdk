@@ -1,1 +1,3 @@
-export type Tracker = { stop: () => void }
+export interface Tracker {
+  stop: () => void
+}

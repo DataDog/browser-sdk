@@ -8,12 +8,15 @@ import {
   initFetchObservable,
   noop,
   timeStampNow,
+  buildAccountContextManager,
+  CustomerContextKey,
+  bufferContextCalls,
+  addTelemetryConfiguration,
+  buildGlobalContextManager,
+  buildUserContextManager,
 } from '@datadog/browser-core'
-import {
-  validateAndBuildLogsConfiguration,
-  type LogsConfiguration,
-  type LogsInitConfiguration,
-} from '../domain/configuration'
+import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
@@ -24,6 +27,17 @@ export function createPreStartStrategy(
   doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
+
+  // TODO next major: remove the globalContext, accountContextManager, userContext from preStartStrategy and use an empty context instead
+  const globalContext = buildGlobalContextManager()
+  bufferContextCalls(globalContext, CustomerContextKey.globalContext, bufferApiCalls)
+
+  const accountContext = buildAccountContextManager()
+  bufferContextCalls(accountContext, CustomerContextKey.accountContext, bufferApiCalls)
+
+  const userContext = buildUserContextManager()
+  bufferContextCalls(userContext, CustomerContextKey.userContext, bufferApiCalls)
+
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
@@ -40,7 +54,7 @@ export function createPreStartStrategy(
   }
 
   return {
-    init(initConfiguration) {
+    init(initConfiguration, errorStack) {
       if (!initConfiguration) {
         display.error('Missing configuration')
         return
@@ -54,13 +68,14 @@ export function createPreStartStrategy(
 
       // Expose the initial configuration regardless of initialization success.
       cachedInitConfiguration = initConfiguration
+      addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
 
       if (cachedConfiguration) {
         displayAlreadyInitializedError('DD_LOGS', initConfiguration)
         return
       }
 
-      const configuration = validateAndBuildLogsConfiguration(initConfiguration)
+      const configuration = validateAndBuildLogsConfiguration(initConfiguration, errorStack)
       if (!configuration) {
         return
       }
@@ -79,6 +94,10 @@ export function createPreStartStrategy(
     get initConfiguration() {
       return cachedInitConfiguration
     },
+
+    globalContext,
+    accountContext,
+    userContext,
 
     getInternalContext: noop as () => undefined,
 

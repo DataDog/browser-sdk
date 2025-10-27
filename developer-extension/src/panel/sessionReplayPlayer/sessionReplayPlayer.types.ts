@@ -34,7 +34,7 @@ export interface Dimensions {
   height: number
 }
 
-export type StaticFrameContext = {
+export interface StaticFrameContext {
   origin: string
   featureFlags: { [flagName: string]: boolean }
   tabId: string
@@ -99,14 +99,14 @@ export type MessageBridgeUp = {
 /**
  * Message send by the sanboxing when iframe is ready
  */
-export type MessageBridgeUpReady = {
+export interface MessageBridgeUpReady {
   type: MessageBridgeUpType.READY
 }
 
 /**
  * Message send by the sanboxing when a record has been applied
  */
-export type MessageBridgeUpRecordApplied = {
+export interface MessageBridgeUpRecordApplied {
   type: MessageBridgeUpType.RECORD_APPLIED
   /** OrderId of the Record applied */
   orderId: number
@@ -117,7 +117,7 @@ export type MessageBridgeUpRecordApplied = {
 /**
  * Message send by the sanboxing when a log is sent
  */
-export type MessageBridgeUpLog = {
+export interface MessageBridgeUpLog {
   type: MessageBridgeUpType.LOG
   level: MessageBridgeUpLogLevel
   message: string
@@ -127,7 +127,7 @@ export type MessageBridgeUpLog = {
 /**
  * Message send by the sanboxing iframe when there is an error
  */
-export type MessageBridgeUpError = {
+export interface MessageBridgeUpError {
   type: MessageBridgeUpType.ERROR
   serialisedError: SerialisedError
   context?: { [key: string]: any }
@@ -136,7 +136,7 @@ export type MessageBridgeUpError = {
 /**
  * Message send by the sanboxing iframe with a custom timing
  */
-export type MessageBridgeUpTiming = {
+export interface MessageBridgeUpTiming {
   type: MessageBridgeUpType.METRIC_TIMING
   name: string
   duration: number
@@ -146,14 +146,14 @@ export type MessageBridgeUpTiming = {
 /**
  * Message send by the sanboxing iframe with a custom count
  */
-export type MessageBridgeUpIncrement = {
+export interface MessageBridgeUpIncrement {
   type: MessageBridgeUpType.METRIC_INCREMENT
   name: string
   value: number
   context?: { [key: string]: any }
 }
 
-export type MessageBridgeUpCapabilities = {
+export interface MessageBridgeUpCapabilities {
   type: MessageBridgeUpType.CAPABILITIES
   capabilities: {
     SERVICE_WORKER: boolean
@@ -161,26 +161,26 @@ export type MessageBridgeUpCapabilities = {
   }
 }
 
-export type MessageBridgeUpServiceWorkerActivated = {
+export interface MessageBridgeUpServiceWorkerActivated {
   type: MessageBridgeUpType.SERVICE_WORKER_ACTIVATED
 }
 
-export type MessageBridgeUpRendererDimensions = {
+export interface MessageBridgeUpRendererDimensions {
   type: MessageBridgeUpType.RENDERER_DIMENSIONS
   dimensions: Dimensions
 }
 
-export type ElementPositionResponse = {
+export interface ElementPositionResponse {
   cssSelector: string
   position: Omit<DOMRect, 'toJSON'>
 }
 
-export type MessageBridgeUpElementPosition = {
+export interface MessageBridgeUpElementPosition {
   type: MessageBridgeUpType.ELEMENT_POSITION
   positions: ElementPositionResponse[]
 }
 
-type MessageBridgeMetadata = {
+interface MessageBridgeMetadata {
   sentAt: number
 }
 
@@ -200,7 +200,7 @@ export type MessageBridgeDownElementPosition = {
   cssSelectors: string[]
 } & MessageBridgeMetadata
 
-export type SerialisedError = {
+export interface SerialisedError {
   name: string
   message: string
   stack?: string

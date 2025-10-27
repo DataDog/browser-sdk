@@ -1,5 +1,12 @@
-import { monitor, noop } from '@datadog/browser-core'
-import type { RumConfiguration, NodePrivacyLevelCache } from '@datadog/browser-rum-core'
+import { elapsed, monitor, noop, timeStampNow } from '@datadog/browser-core'
+import type {
+  RumConfiguration,
+  NodePrivacyLevelCache,
+  RumMutationRecord,
+  RumChildListMutationRecord,
+  RumCharacterDataMutationRecord,
+  RumAttributesMutationRecord,
+} from '@datadog/browser-rum-core'
 import {
   isNodeShadowHost,
   getMutationObserverConstructor,
@@ -18,50 +25,27 @@ import type {
   TextMutation,
   BrowserIncrementalSnapshotRecord,
 } from '../../../types'
-import type { NodeWithSerializedNode } from '../serialization'
+import type { SerializationContext, SerializationScope, SerializationStats } from '../serialization'
 import {
   getElementInputValue,
-  getSerializedNodeId,
-  hasSerializedNode,
-  nodeAndAncestorsHaveSerializedNode,
   serializeNodeWithId,
   SerializationContextStatus,
   serializeAttribute,
+  createSerializationStats,
+  updateSerializationStats,
 } from '../serialization'
 import { createMutationBatch } from '../mutationBatch'
 import type { ShadowRootCallBack, ShadowRootsController } from '../shadowRootsController'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { NodeWithSerializedNode } from '../nodeIds'
 import type { Tracker } from './tracker.types'
 
-export type MutationCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
+export type MutationCallBack = (
+  incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord,
+  stats?: SerializationStats
+) => void
 
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
-
-// https://dom.spec.whatwg.org/#interface-mutationrecord
-interface RumCharacterDataMutationRecord {
-  type: 'characterData'
-  target: Node
-  oldValue: string | null
-}
-
-interface RumAttributesMutationRecord {
-  type: 'attributes'
-  target: Element
-  oldValue: string | null
-  attributeName: string | null
-}
-
-interface RumChildListMutationRecord {
-  type: 'childList'
-  target: Node
-  addedNodes: NodeList
-  removedNodes: NodeList
-}
-
-export type RumMutationRecord =
-  | RumCharacterDataMutationRecord
-  | RumAttributesMutationRecord
-  | RumChildListMutationRecord
 
 export type MutationTracker = Tracker & { flush: () => void }
 
@@ -71,6 +55,7 @@ export type MutationTracker = Tracker & { flush: () => void }
 export function trackMutation(
   mutationCallback: MutationCallBack,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   shadowRootsController: ShadowRootsController,
   target: Node
 ): MutationTracker {
@@ -84,11 +69,12 @@ export function trackMutation(
       mutations.concat(observer.takeRecords() as RumMutationRecord[]),
       mutationCallback,
       configuration,
+      scope,
       shadowRootsController
     )
   })
 
-  const observer = new MutationObserver(monitor(mutationBatch.addMutations) as (callback: MutationRecord[]) => void)
+  const observer = new MutationObserver(monitor(mutationBatch.addMutations) as (callback: RumMutationRecord[]) => void)
 
   observer.observe(target, {
     attributeOldValue: true,
@@ -114,6 +100,7 @@ function processMutations(
   mutations: RumMutationRecord[],
   mutationCallback: MutationCallBack,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   shadowRootsController: ShadowRootsController
 ) {
   const nodePrivacyLevelCache: NodePrivacyLevelCache = new Map()
@@ -133,16 +120,20 @@ function processMutations(
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       mutation.target.isConnected &&
-      nodeAndAncestorsHaveSerializedNode(mutation.target) &&
+      scope.nodeIds.areAssignedForNodeAndAncestors(mutation.target) &&
       getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel, nodePrivacyLevelCache) !==
         NodePrivacyLevel.HIDDEN
   )
+
+  const serializationStats = createSerializationStats()
 
   const { adds, removes, hasBeenSerialized } = processChildListMutations(
     filteredMutations.filter(
       (mutation): mutation is WithSerializedTarget<RumChildListMutationRecord> => mutation.type === 'childList'
     ),
     configuration,
+    scope,
+    serializationStats,
     shadowRootsController,
     nodePrivacyLevelCache
   )
@@ -153,6 +144,7 @@ function processMutations(
         mutation.type === 'characterData' && !hasBeenSerialized(mutation.target)
     ),
     configuration,
+    scope,
     nodePrivacyLevelCache
   )
 
@@ -162,6 +154,7 @@ function processMutations(
         mutation.type === 'attributes' && !hasBeenSerialized(mutation.target)
     ),
     configuration,
+    scope,
     nodePrivacyLevelCache
   )
 
@@ -170,13 +163,16 @@ function processMutations(
   }
 
   mutationCallback(
-    assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, { adds, removes, texts, attributes })
+    assembleIncrementalSnapshot<BrowserMutationData>(IncrementalSource.Mutation, { adds, removes, texts, attributes }),
+    serializationStats
   )
 }
 
 function processChildListMutations(
   mutations: Array<WithSerializedTarget<RumChildListMutationRecord>>,
   configuration: RumConfiguration,
+  scope: SerializationScope,
+  serializationStats: SerializationStats,
   shadowRootsController: ShadowRootsController,
   nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
@@ -222,6 +218,12 @@ function processChildListMutations(
   // node ids in a set to be able to skip subsequent related mutations.
   const serializedNodeIds = new Set<number>()
 
+  const serializationContext: SerializationContext = {
+    status: SerializationContextStatus.MUTATION,
+    serializationStats,
+    shadowRootsController,
+  }
+
   const addedNodeMutations: AddedNodeMutation[] = []
   for (const node of sortedAddedAndMovedNodes) {
     if (hasBeenSerialized(node)) {
@@ -237,12 +239,14 @@ function processChildListMutations(
       continue
     }
 
-    const serializedNode = serializeNodeWithId(node, {
+    const serializationStart = timeStampNow()
+    const serializedNode = serializeNodeWithId(node, parentNodePrivacyLevel, {
       serializedNodeIds,
-      parentNodePrivacyLevel,
-      serializationContext: { status: SerializationContextStatus.MUTATION, shadowRootsController },
+      serializationContext,
       configuration,
+      scope,
     })
+    updateSerializationStats(serializationStats, 'serializationDuration', elapsed(serializationStart, timeStampNow()))
     if (!serializedNode) {
       continue
     }
@@ -250,32 +254,33 @@ function processChildListMutations(
     const parentNode = getParentNode(node)!
     addedNodeMutations.push({
       nextId: getNextSibling(node),
-      parentId: getSerializedNodeId(parentNode)!,
+      parentId: scope.nodeIds.get(parentNode)!,
       node: serializedNode,
     })
   }
   // Finally, we emit remove mutations.
   const removedNodeMutations: RemovedNodeMutation[] = []
   removedNodes.forEach((parent, node) => {
-    if (hasSerializedNode(node)) {
-      removedNodeMutations.push({
-        parentId: getSerializedNodeId(parent),
-        id: getSerializedNodeId(node),
-      })
+    const parentId = scope.nodeIds.get(parent)
+    const id = scope.nodeIds.get(node)
+    if (parentId !== undefined && id !== undefined) {
+      removedNodeMutations.push({ parentId, id })
     }
   })
 
   return { adds: addedNodeMutations, removes: removedNodeMutations, hasBeenSerialized }
 
   function hasBeenSerialized(node: Node) {
-    return hasSerializedNode(node) && serializedNodeIds.has(getSerializedNodeId(node))
+    const id = scope.nodeIds.get(node)
+    return id !== undefined && serializedNodeIds.has(id)
   }
 
   function getNextSibling(node: Node): null | number {
     let nextSibling = node.nextSibling
     while (nextSibling) {
-      if (hasSerializedNode(nextSibling)) {
-        return getSerializedNodeId(nextSibling)
+      const id = scope.nodeIds.get(nextSibling)
+      if (id !== undefined) {
+        return id
       }
       nextSibling = nextSibling.nextSibling
     }
@@ -287,6 +292,7 @@ function processChildListMutations(
 function processCharacterDataMutations(
   mutations: Array<WithSerializedTarget<RumCharacterDataMutationRecord>>,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
   const textMutations: TextMutation[] = []
@@ -308,6 +314,11 @@ function processCharacterDataMutations(
       continue
     }
 
+    const id = scope.nodeIds.get(mutation.target)
+    if (id === undefined) {
+      continue
+    }
+
     const parentNodePrivacyLevel = getNodePrivacyLevel(
       getParentNode(mutation.target)!,
       configuration.defaultPrivacyLevel,
@@ -318,9 +329,8 @@ function processCharacterDataMutations(
     }
 
     textMutations.push({
-      id: getSerializedNodeId(mutation.target),
-      // TODO: pass a valid "ignoreWhiteSpace" argument
-      value: getTextContent(mutation.target, false, parentNodePrivacyLevel) ?? null,
+      id,
+      value: getTextContent(mutation.target, parentNodePrivacyLevel) ?? null,
     })
   }
 
@@ -330,6 +340,7 @@ function processCharacterDataMutations(
 function processAttributesMutations(
   mutations: Array<WithSerializedTarget<RumAttributesMutationRecord>>,
   configuration: RumConfiguration,
+  scope: SerializationScope,
   nodePrivacyLevelCache: NodePrivacyLevelCache
 ) {
   const attributeMutations: AttributeMutation[] = []
@@ -356,6 +367,12 @@ function processAttributesMutations(
     if (uncensoredValue === mutation.oldValue) {
       continue
     }
+
+    const id = scope.nodeIds.get(mutation.target)
+    if (id === undefined) {
+      continue
+    }
+
     const privacyLevel = getNodePrivacyLevel(mutation.target, configuration.defaultPrivacyLevel, nodePrivacyLevelCache)
     const attributeValue = serializeAttribute(mutation.target, privacyLevel, mutation.attributeName!, configuration)
 
@@ -374,10 +391,7 @@ function processAttributesMutations(
 
     let emittedMutation = emittedMutations.get(mutation.target)
     if (!emittedMutation) {
-      emittedMutation = {
-        id: getSerializedNodeId(mutation.target),
-        attributes: {},
-      }
+      emittedMutation = { id, attributes: {} }
       attributeMutations.push(emittedMutation)
       emittedMutations.set(mutation.target, emittedMutation)
     }

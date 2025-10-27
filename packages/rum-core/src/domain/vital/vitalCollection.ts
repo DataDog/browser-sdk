@@ -1,5 +1,14 @@
-import type { ClocksState, Duration, Context } from '@datadog/browser-core'
-import { clocksNow, combine, elapsed, generateUUID, toServerDuration } from '@datadog/browser-core'
+import type { ClocksState, Duration } from '@datadog/browser-core'
+import {
+  clocksNow,
+  combine,
+  elapsed,
+  ExperimentalFeature,
+  generateUUID,
+  isExperimentalFeatureEnabled,
+  sanitize,
+  toServerDuration,
+} from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RawRumVitalEvent } from '../../rawRumEvent.types'
@@ -7,29 +16,44 @@ import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 
-export interface DurationVitalOptions {
-  context?: Context
+export interface VitalOptions {
+  context?: any
   description?: string
+}
+export type DurationVitalOptions = VitalOptions
+export interface FeatureOperationOptions extends VitalOptions {
+  operationKey?: string
+}
+
+export type FailureReason = 'error' | 'abandoned' | 'other'
+export interface AddDurationVitalOptions extends DurationVitalOptions {
+  startTime: number
+  duration: number
 }
 
 export interface DurationVitalReference {
   __dd_vital_reference: true
 }
 
-export interface DurationVitalStart {
+export interface DurationVitalStart extends DurationVitalOptions {
   name: string
   startClocks: ClocksState
-  context?: Context
-  description?: string
 }
 
-export interface DurationVital {
+interface BaseVital extends VitalOptions {
   name: string
-  type: VitalType.DURATION
   startClocks: ClocksState
+}
+export interface DurationVital extends BaseVital {
+  type: typeof VitalType.DURATION
   duration: Duration
-  description?: string
-  context?: Context
+}
+
+export interface OperationStepVital extends BaseVital {
+  type: typeof VitalType.OPERATION_STEP
+  stepType: 'start' | 'end'
+  operationKey?: string
+  failureReason?: string
 }
 
 export interface CustomVitalsState {
@@ -54,11 +78,37 @@ export function startVitalCollection(
 
   function addDurationVital(vital: DurationVital) {
     if (isValid(vital)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, true))
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
     }
   }
 
+  function addOperationStepVital(
+    name: string,
+    stepType: 'start' | 'end',
+    options?: FeatureOperationOptions,
+    failureReason?: FailureReason
+  ) {
+    if (!isExperimentalFeatureEnabled(ExperimentalFeature.FEATURE_OPERATION_VITAL)) {
+      return
+    }
+
+    const { operationKey, context, description } = options || {}
+
+    const vital: OperationStepVital = {
+      name,
+      type: VitalType.OPERATION_STEP,
+      operationKey,
+      failureReason,
+      stepType,
+      startClocks: clocksNow(),
+      context: sanitize(context),
+      description,
+    }
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
+  }
+
   return {
+    addOperationStepVital,
     addDurationVital,
     startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
       startDurationVital(customVitalsState, name, options),
@@ -76,8 +126,7 @@ export function startDurationVital(
   const vital = {
     name,
     startClocks: clocksNow(),
-    context: options.context,
-    description: options.description,
+    ...options,
   }
 
   // To avoid leaking implementation details of the vital, we return a reference to it.
@@ -128,32 +177,31 @@ function buildDurationVital(
   }
 }
 
-function processVital(vital: DurationVital, valueComputedBySdk: boolean): RawRumEventCollectedData<RawRumVitalEvent> {
-  const rawRumEvent: RawRumVitalEvent = {
-    date: vital.startClocks.timeStamp,
-    vital: {
-      id: generateUUID(),
-      type: vital.type,
-      name: vital.name,
-      duration: toServerDuration(vital.duration),
-      description: vital.description,
-    },
-    type: RumEventType.VITAL,
-  }
-
-  if (valueComputedBySdk) {
-    rawRumEvent._dd = {
-      vital: {
-        computed_value: true,
-      },
-    }
+function processVital(vital: DurationVital | OperationStepVital): RawRumEventCollectedData<RawRumVitalEvent> {
+  const { startClocks, type, name, description, context } = vital
+  const vitalData = {
+    id: generateUUID(),
+    type,
+    name,
+    description,
+    ...(type === VitalType.DURATION
+      ? { duration: toServerDuration(vital.duration) }
+      : {
+          step_type: vital.stepType,
+          operation_key: vital.operationKey,
+          failure_reason: vital.failureReason,
+        }),
   }
 
   return {
-    rawRumEvent,
-    startTime: vital.startClocks.relative,
-    duration: vital.duration,
-    customerContext: vital.context,
+    rawRumEvent: {
+      date: startClocks.timeStamp,
+      vital: vitalData,
+      type: RumEventType.VITAL,
+      context,
+    },
+    startTime: startClocks.relative,
+    duration: type === VitalType.DURATION ? vital.duration : undefined,
     domainContext: {},
   }
 }

@@ -37,6 +37,10 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   internalAnalyticsSubdomain: 'internal-analytics-subdomain.com',
   telemetryConfigurationSampleRate: 70,
   telemetryUsageSampleRate: 80,
+  allowedTrackingOrigins: ['chrome-extension://example'],
+  source: 'browser',
+  sdkVersion: '1.0.0',
+  variant: 'variant',
 }
 
 export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
@@ -56,6 +60,10 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   allow_untrusted_events: true,
   tracking_consent: 'not-granted' as const,
   track_anonymous_user: true,
+  use_allowed_tracking_origins: true,
+  source: 'browser',
+  sdk_version: '1.0.0',
+  variant: 'variant',
 }
 
 /**
@@ -63,7 +71,7 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
  */
 export type MapInitConfigurationKey<Key extends string> =
   // Some keys are prefixed with `use_` to indicate that they are boolean flags
-  Key extends 'proxy' | 'beforeSend'
+  Key extends 'proxy' | 'beforeSend' | 'allowedTrackingOrigins'
     ? `use_${CamelToSnakeCase<Key>}`
     : // Those keys should not be serialized
       Key extends

@@ -1,24 +1,22 @@
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, mockEventBridge } from '@datadog/browser-core/test'
-import { timeStampNow, type RelativeTime } from '@datadog/browser-core'
+import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
+import { HookNames, timeStampNow } from '@datadog/browser-core'
+import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { createHooks, HookNames } from '../../hooks'
+import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import { createHooks } from '../hooks'
 import { startDefaultContext } from './defaultContext'
 
 describe('startDefaultContext', () => {
+  let hooks: Hooks
+
+  beforeEach(() => {
+    mockClock()
+    hooks = createHooks()
+  })
+
   describe('assemble hook', () => {
-    let hooks: Hooks
-    let clock: Clock
-
-    beforeEach(() => {
-      clock = mockClock()
-      hooks = createHooks()
-      registerCleanupTask(() => clock.cleanup())
-    })
-
     it('should set the rum default context', () => {
-      startDefaultContext(hooks, mockRumConfiguration({ applicationId: '1' }))
+      startDefaultContext(hooks, mockRumConfiguration({ applicationId: '1' }), 'rum')
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
@@ -39,7 +37,7 @@ describe('startDefaultContext', () => {
     })
 
     it('should set the browser sdk version if event bridge detected', () => {
-      startDefaultContext(hooks, mockRumConfiguration())
+      startDefaultContext(hooks, mockRumConfiguration(), 'rum')
       const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
@@ -57,7 +55,7 @@ describe('startDefaultContext', () => {
     })
 
     it('should set the configured sample rates', () => {
-      startDefaultContext(hooks, mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20 }))
+      startDefaultContext(hooks, mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20 }), 'rum')
 
       const event = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
@@ -66,6 +64,20 @@ describe('startDefaultContext', () => {
 
       expect(event._dd!.configuration!.session_sample_rate).toBe(10)
       expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)
+      expect(event._dd!.configuration!.profiling_sample_rate).toBe(0)
+      expect(event._dd!.sdk_name).toBe('rum')
+    })
+  })
+
+  describe('assemble telemetry hook', () => {
+    it('should set the application id', () => {
+      startDefaultContext(hooks, mockRumConfiguration(), 'rum')
+
+      const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: 0 as RelativeTime,
+      }) as DefaultTelemetryEventAttributes
+
+      expect(telemetryEventAttributes.application?.id).toEqual('appId')
     })
   })
 })

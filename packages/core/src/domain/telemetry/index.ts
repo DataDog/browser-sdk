@@ -1,15 +1,15 @@
 export type { Telemetry } from './telemetry'
 export {
   TelemetryService,
+  TelemetryMetrics,
   addTelemetryDebug,
   addTelemetryError,
-  startFakeTelemetry,
   resetTelemetry,
   startTelemetry,
-  isTelemetryReplicationAllowed,
   addTelemetryConfiguration,
   addTelemetryUsage,
-  drainPreStartTelemetry,
+  addTelemetryMetrics,
+  getTelemetryObservable,
 } from './telemetry'
 
 export * from './rawTelemetryEvent.types'

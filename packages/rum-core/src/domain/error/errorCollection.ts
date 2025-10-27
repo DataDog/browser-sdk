@@ -1,11 +1,11 @@
-import type { Context, RawError, ClocksState } from '@datadog/browser-core'
+import type { Context, RawError, ClocksState, BufferedData } from '@datadog/browser-core'
 import {
+  BufferedDataType,
+  Observable,
   ErrorSource,
   generateUUID,
   computeRawError,
   ErrorHandling,
-  Observable,
-  trackRuntimeError,
   NonErrorPrefix,
   combine,
 } from '@datadog/browser-core'
@@ -26,11 +26,20 @@ export interface ProvidedError {
   componentStack?: string
 }
 
-export function startErrorCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
+export function startErrorCollection(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration,
+  bufferedDataObservable: Observable<BufferedData>
+) {
   const errorObservable = new Observable<RawError>()
 
+  bufferedDataObservable.subscribe((bufferedData) => {
+    if (bufferedData.type === BufferedDataType.RUNTIME_ERROR) {
+      errorObservable.notify(bufferedData.error)
+    }
+  })
+
   trackConsoleError(errorObservable)
-  trackRuntimeError(errorObservable)
   trackReportError(configuration, errorObservable)
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
@@ -39,16 +48,12 @@ export function startErrorCollection(lifeCycle: LifeCycle, configuration: RumCon
 }
 
 export function doStartErrorCollection(lifeCycle: LifeCycle) {
-  lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error, customerContext }) => {
-    customerContext = combine(error.context, customerContext)
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      customerContext,
-      ...processError(error),
-    })
+  lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error }) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error))
   })
 
   return {
-    addError: ({ error, handlingStack, componentStack, startClocks, context: customerContext }: ProvidedError) => {
+    addError: ({ error, handlingStack, componentStack, startClocks, context }: ProvidedError) => {
       const rawError = computeRawError({
         originalError: error,
         handlingStack,
@@ -58,11 +63,9 @@ export function doStartErrorCollection(lifeCycle: LifeCycle) {
         source: ErrorSource.CUSTOM,
         handling: ErrorHandling.HANDLED,
       })
+      rawError.context = combine(rawError.context, context)
 
-      lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
-        customerContext,
-        error: rawError,
-      })
+      lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error: rawError })
     },
   }
 }
@@ -84,7 +87,8 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
       fingerprint: error.fingerprint,
       csp: error.csp,
     },
-    type: RumEventType.ERROR as const,
+    type: RumEventType.ERROR,
+    context: error.context,
   }
 
   const domainContext: RumErrorEventDomainContext = {

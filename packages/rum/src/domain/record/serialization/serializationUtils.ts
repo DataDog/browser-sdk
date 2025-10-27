@@ -1,34 +1,6 @@
 import { buildUrl } from '@datadog/browser-core'
-import { getParentNode, isNodeShadowRoot, CENSORED_STRING_MARK, shouldMaskNode } from '@datadog/browser-rum-core'
+import { CENSORED_STRING_MARK, shouldMaskNode } from '@datadog/browser-rum-core'
 import type { NodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { NodeWithSerializedNode } from './serialization.types'
-
-const serializedNodeIds = new WeakMap<Node, number>()
-
-export function hasSerializedNode(node: Node): node is NodeWithSerializedNode {
-  return serializedNodeIds.has(node)
-}
-
-export function nodeAndAncestorsHaveSerializedNode(node: Node): node is NodeWithSerializedNode {
-  let current: Node | null = node
-  while (current) {
-    if (!hasSerializedNode(current) && !isNodeShadowRoot(current)) {
-      return false
-    }
-    current = getParentNode(current)
-  }
-  return true
-}
-
-export function getSerializedNodeId(node: NodeWithSerializedNode): number
-export function getSerializedNodeId(node: Node): number | undefined
-export function getSerializedNodeId(node: Node) {
-  return serializedNodeIds.get(node)
-}
-
-export function setSerializedNodeId(node: Node, serializeNodeId: number) {
-  serializedNodeIds.set(node, serializeNodeId)
-}
 
 /**
  * Get the element "value" to be serialized as an attribute or an input update record. It respects
@@ -96,7 +68,7 @@ export function switchToAbsoluteUrl(cssText: string, cssHref: string | null): st
   )
 }
 
-export function makeUrlAbsolute(url: string, baseUrl: string): string {
+function makeUrlAbsolute(url: string, baseUrl: string): string {
   try {
     return buildUrl(url, baseUrl).href
   } catch {

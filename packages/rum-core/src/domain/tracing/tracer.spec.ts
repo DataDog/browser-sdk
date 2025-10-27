@@ -1,6 +1,5 @@
 import type { ContextManager, ContextValue } from '@datadog/browser-core'
-import { display, ExperimentalFeature, objectEntries, TraceContextInjection } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '../../../../core/test'
+import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
@@ -261,10 +260,6 @@ describe('tracer', () => {
     })
 
     describe('baggage propagation header', () => {
-      beforeEach(() => {
-        mockExperimentalFeatures([ExperimentalFeature.USER_ACCOUNT_TRACE_HEADER])
-      })
-
       function traceRequestAndGetBaggageHeader({
         initConfiguration,
         userId,

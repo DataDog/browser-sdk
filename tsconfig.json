@@ -1,9 +1,10 @@
-// This tsconfig is only used for tooling (ex: typecheck in code editors / lint)
 {
-  "extends": "./tsconfig.base.json",
-  "compilerOptions": {
-    "types": ["jasmine"]
-  },
-  "include": ["packages", "scripts", "test", "eslint.config.mjs", "eslint-local-rules"],
-  "exclude": ["packages/*/cjs", "packages/*/esm", "packages/*/bundle", "test/e2e", "test/apps", "developer-extension"]
+  "files": [],
+  "references": [
+    { "path": "./tsconfig.default.json" },
+    { "path": "./tsconfig.scripts.json" },
+    { "path": "./developer-extension/tsconfig.webpack.json" },
+    { "path": "./test/e2e/tsconfig.json" },
+    { "path": "./performances/tsconfig.json" }
+  ]
 }

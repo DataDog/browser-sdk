@@ -29,7 +29,6 @@ describe('ViewHistory', () => {
 
     registerCleanupTask(() => {
       viewHistory.stop()
-      clock.cleanup()
     })
   })
 

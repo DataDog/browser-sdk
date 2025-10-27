@@ -16,7 +16,6 @@ describe('createClickChain', () => {
 
   afterEach(() => {
     clickChain?.stop()
-    clock.cleanup()
   })
 
   it('creates a click chain', () => {

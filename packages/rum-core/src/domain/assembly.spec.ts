@@ -1,7 +1,7 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, ExperimentalFeature, ONE_MINUTE, display } from '@datadog/browser-core'
+import { ErrorSource, HookNames, ONE_MINUTE, display, startGlobalContext } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockExperimentalFeatures, registerCleanupTask, mockClock } from '@datadog/browser-core/test'
+import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
   createRumSessionManagerMock,
   createRawRumEvent,
@@ -13,15 +13,14 @@ import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
 import type { RumErrorEvent, RumEvent, RumResourceEvent } from '../rumEvent.types'
-import { HookNames, createHooks } from '../hooks'
 import { startRumAssembly } from './assembly'
 import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
 import type { RumSessionManager } from './rumSessionManager'
-import { startGlobalContext } from './contexts/globalContext'
 import { startSessionContext } from './contexts/sessionContext'
+import { createHooks } from './hooks'
 
 describe('rum assembly', () => {
   describe('beforeSend', () => {
@@ -70,38 +69,6 @@ describe('rum assembly', () => {
 
           expect((serverRumEvents[0].view as any).performance.lcp.resource_url).toBe('modified_url')
         })
-
-        describe('field resource.graphql on Resource events', () => {
-          it('by default, it should not be modifiable', () => {
-            const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-              partialConfiguration: {
-                beforeSend: (event) => (event.resource!.graphql = { operationType: 'query' }),
-              },
-            })
-
-            notifyRawRumEvent(lifeCycle, {
-              rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
-            })
-
-            expect((serverRumEvents[0] as RumResourceEvent).resource.graphql).toBeUndefined()
-          })
-
-          it('with the writable_resource_graphql experimental flag is set, it should be modifiable', () => {
-            mockExperimentalFeatures([ExperimentalFeature.WRITABLE_RESOURCE_GRAPHQL])
-
-            const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-              partialConfiguration: {
-                beforeSend: (event) => (event.resource!.graphql = { operationType: 'query' }),
-              },
-            })
-
-            notifyRawRumEvent(lifeCycle, {
-              rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
-            })
-
-            expect((serverRumEvents[0] as RumResourceEvent).resource.graphql).toEqual({ operationType: 'query' })
-          })
-        })
       })
 
       describe('context field', () => {
@@ -147,8 +114,7 @@ describe('rum assembly', () => {
           })
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-            customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { context: { foo: 'bar' } }),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -164,8 +130,7 @@ describe('rum assembly', () => {
           })
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-            customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { context: { foo: 'bar' } }),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -181,8 +146,7 @@ describe('rum assembly', () => {
           })
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-            customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { context: { foo: 'bar' } }),
           })
 
           expect(serverRumEvents[0].context).toBeUndefined()
@@ -228,8 +192,7 @@ describe('rum assembly', () => {
           })
 
           notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK),
-            customerContext: { foo: 'bar' },
+            rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, { context: { foo: 'bar' } }),
           })
 
           expect(serverRumEvents[0].context!.foo).toBe('bar')
@@ -372,23 +335,11 @@ describe('rum assembly', () => {
     })
   })
 
-  describe('customer context', () => {
-    it('should be merged with event attributes', () => {
-      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults()
-      notifyRawRumEvent(lifeCycle, {
-        customerContext: { foo: 'bar' },
-        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
-      })
-
-      expect((serverRumEvents[0].context as any).foo).toEqual('bar')
-    })
-  })
-
   describe('service and version', () => {
-    const extraConfigurationOptions = { service: 'default service', version: 'default version' }
+    const extraConfigurationOptions = { service: 'default-service', version: 'default-version' }
 
-    describe('fields service and version', () => {
-      it('it should be modifiable', () => {
+    Object.values(RumEventType).forEach((eventType) => {
+      it(`should be modifiable for ${eventType}`, () => {
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
             ...extraConfigurationOptions,
@@ -402,19 +353,29 @@ describe('rum assembly', () => {
         })
 
         notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, { resource: { url: '/path?foo=bar' } }),
+          rawRumEvent: createRawRumEvent(eventType),
         })
-
         expect((serverRumEvents[0] as RumResourceEvent).service).toBe('bar')
         expect((serverRumEvents[0] as RumResourceEvent).version).toBe('0.2.0')
       })
+    })
+
+    it('should be added to the event as ddtags', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: extraConfigurationOptions,
+      })
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW),
+      })
+
+      expect(serverRumEvents[0].ddtags).toEqual('sdk_version:test,service:default-service,version:default-version')
     })
   })
 
   describe('assemble hook', () => {
     it('should add and override common properties', () => {
       const { lifeCycle, hooks, serverRumEvents } = setupAssemblyTestWithDefaults({
-        partialConfiguration: { service: 'default service', version: 'default version' },
+        partialConfiguration: { service: 'default-service', version: 'default-version' },
       })
 
       hooks.register(HookNames.Assemble, ({ eventType }) => ({
@@ -441,8 +402,7 @@ describe('rum assembly', () => {
       }))
 
       notifyRawRumEvent(lifeCycle, {
-        rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        customerContext: { foo: 'customer context' },
+        rawRumEvent: createRawRumEvent(RumEventType.ACTION, { context: { foo: 'customer context' } }),
       })
       expect(serverRumEvents[0].context).toEqual({ foo: 'customer context' })
     })
@@ -551,7 +511,6 @@ describe('rum assembly', () => {
         let clock: Clock
         beforeEach(() => {
           clock = mockClock()
-          registerCleanupTask(() => clock.cleanup())
         })
 
         it(`allows to send new ${eventType} events after a minute`, () => {
@@ -614,7 +573,7 @@ function setupAssemblyTestWithDefaults({
   })
   const recorderApi = noopRecorderApi
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
-  startGlobalContext(hooks, mockRumConfiguration())
+  startGlobalContext(hooks, mockRumConfiguration(), 'rum', true)
   startSessionContext(hooks, rumSessionManager, recorderApi, viewHistory)
   startRumAssembly(mockRumConfiguration(partialConfiguration), lifeCycle, hooks, reportErrorSpy)
 

@@ -1,10 +1,11 @@
 import type {
   Observable,
-  TelemetryEvent,
   RawError,
   DeflateEncoderStreamId,
   Encoder,
   TrackingConsentState,
+  BufferedData,
+  BufferedObservable,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -12,10 +13,12 @@ import {
   TelemetryService,
   startTelemetry,
   canUseEventBridge,
-  getEventBridge,
   addTelemetryDebug,
-  drainPreStartTelemetry,
+  startAccountContext,
+  startGlobalContext,
+  startUserContext,
 } from '@datadog/browser-core'
+import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
@@ -44,16 +47,16 @@ import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext
 import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
-import type { Hooks } from '../hooks'
-import { createHooks } from '../hooks'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
-import { startGlobalContext } from '../domain/contexts/globalContext'
-import { startUserContext } from '../domain/contexts/userContext'
-import { startAccountContext } from '../domain/contexts/accountContext'
 import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
+import type { Hooks } from '../domain/hooks'
+import { createHooks } from '../domain/hooks'
+import { startEventCollection } from '../domain/event/eventCollection'
+import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -70,7 +73,9 @@ export function startRum(
   // collecting logs unconditionally. As such, `startRum` should be called with a
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
-  customVitalsState: CustomVitalsState
+  customVitalsState: CustomVitalsState,
+  bufferedDataObservable: BufferedObservable<BufferedData>,
+  sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
@@ -78,24 +83,9 @@ export function startRum(
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
-  const telemetry = startRumTelemetry(configuration)
-  telemetry.setContextProvider(() => ({
-    application: {
-      id: configuration.applicationId,
-    },
-    session: {
-      id: session.findTrackedSession()?.id,
-    },
-    view: {
-      id: viewHistory.findView()?.id,
-    },
-    action: {
-      id: actionContexts.findActionId(),
-    },
-  }))
-
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
+    // monitor-until: forever, to keep an eye on the errors reported to customers
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
@@ -105,6 +95,16 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
+  const telemetry = startTelemetry(
+    TelemetryService.RUM,
+    configuration,
+    hooks,
+    reportError,
+    pageMayExitObservable,
+    createEncoder
+  )
+  cleanupTasks.push(telemetry.stop)
+
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()
@@ -113,14 +113,13 @@ export function startRum(
     const batch = startRumBatch(
       configuration,
       lifeCycle,
-      telemetry.observable,
       reportError,
       pageMayExitObservable,
       session.expireObservable,
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
-    startCustomerDataTelemetry(configuration, telemetry, lifeCycle, batch.flushObservable)
+    startCustomerDataTelemetry(telemetry, lifeCycle, batch.flushController.flushObservable)
   } else {
     startRumEventBridge(lifeCycle)
   }
@@ -130,7 +129,7 @@ export function startRum(
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
-  startDefaultContext(hooks, configuration)
+  startDefaultContext(hooks, configuration, sdkName)
   const pageStateHistory = startPageStateHistory(hooks, configuration)
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
@@ -139,13 +138,15 @@ export function startRum(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, session, recorderApi, viewHistory)
   startConnectivityContext(hooks)
-  const globalContext = startGlobalContext(hooks, configuration)
-  const userContext = startUserContext(hooks, configuration, session)
-  const accountContext = startAccountContext(hooks, configuration)
+  startTrackingConsentContext(hooks, trackingConsentState)
+  const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
+  const userContext = startUserContext(hooks, configuration, session, 'rum')
+  const accountContext = startAccountContext(hooks, configuration, 'rum')
 
   const {
     actionContexts,
     addAction,
+    addEvent,
     stop: stopRumEventCollection,
   } = startRumEventCollection(
     lifeCycle,
@@ -157,8 +158,6 @@ export function startRum(
     reportError
   )
   cleanupTasks.push(stopRumEventCollection)
-
-  drainPreStartTelemetry()
 
   const {
     addTiming,
@@ -183,6 +182,9 @@ export function startRum(
 
   cleanupTasks.push(stopViewCollection)
 
+  const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
+  cleanupTasks.push(stopInitialViewMetricsTelemetry)
+
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
@@ -195,7 +197,8 @@ export function startRum(
     }
   }
 
-  const { addError } = startErrorCollection(lifeCycle, configuration)
+  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
+  bufferedDataObservable.unbuffer()
 
   startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 
@@ -213,6 +216,7 @@ export function startRum(
 
   return {
     addAction,
+    addEvent,
     addError,
     addTiming,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
@@ -229,22 +233,16 @@ export function startRum(
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,
     addDurationVital: vitalCollection.addDurationVital,
+    addOperationStepVital: vitalCollection.addOperationStepVital,
     globalContext,
     userContext,
     accountContext,
+    telemetry,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
+    hooks,
   }
-}
-
-function startRumTelemetry(configuration: RumConfiguration) {
-  const telemetry = startTelemetry(TelemetryService.RUM, configuration)
-  if (canUseEventBridge()) {
-    const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
-    telemetry.observable.subscribe((event) => bridge.send('internal_telemetry', event))
-  }
-  return telemetry
 }
 
 export function startRumEventCollection(
@@ -252,7 +250,7 @@ export function startRumEventCollection(
   hooks: Hooks,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory,
-  domMutationObservable: Observable<void>,
+  domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   reportError: (error: RawError) => void
 ) {
@@ -264,8 +262,10 @@ export function startRumEventCollection(
     configuration
   )
 
+  const eventCollection = startEventCollection(lifeCycle)
+
   const displayContext = startDisplayContext(hooks, configuration)
-  const ciVisibilityContext = startCiVisibilityContext(hooks)
+  const ciVisibilityContext = startCiVisibilityContext(configuration, hooks)
   startSyntheticsContext(hooks)
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
@@ -273,6 +273,7 @@ export function startRumEventCollection(
   return {
     pageStateHistory,
     addAction: actionCollection.addAction,
+    addEvent: eventCollection.addEvent,
     actionContexts: actionCollection.actionContexts,
     stop: () => {
       actionCollection.stop()

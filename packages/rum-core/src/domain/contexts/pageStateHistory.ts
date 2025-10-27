@@ -1,5 +1,6 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
+  SKIPPED,
   elapsed,
   createValueHistory,
   SESSION_TIME_OUT_DELAY,
@@ -7,12 +8,13 @@ import {
   addEventListeners,
   relativeNow,
   DOM_EVENT,
+  HookNames,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
-import { RumEventType, type PageStateServerEntry } from '../../rawRumEvent.types'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { HookNames, SKIPPED } from '../../hooks'
+import type { PageStateServerEntry } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 // Arbitrary value to cap number of element for memory consumption in the browser
 export const MAX_PAGE_STATE_ENTRIES = 4000
@@ -29,7 +31,10 @@ export const enum PageState {
   TERMINATED = 'terminated',
 }
 
-export type PageStateEntry = { state: PageState; startTime: RelativeTime }
+export interface PageStateEntry {
+  state: PageState
+  startTime: RelativeTime
+}
 
 export interface PageStateHistory {
   wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean

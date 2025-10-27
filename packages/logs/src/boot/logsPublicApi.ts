@@ -1,15 +1,17 @@
-import type { Account, Context, TrackingConsent, User, PublicApi } from '@datadog/browser-core'
+import type { TrackingConsent, PublicApi, ContextManager, Account, Context, User } from '@datadog/browser-core'
 import {
+  ContextManagerMethod,
+  CustomerContextKey,
   addTelemetryUsage,
-  CustomerDataType,
-  createContextManager,
   makePublicApi,
   monitor,
   sanitize,
-  storeContextManager,
   displayAlreadyInitializedError,
   deepClone,
   createTrackingConsentState,
+  defineContextMethod,
+  startBufferingData,
+  callMonitored,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -26,21 +28,33 @@ export interface LoggerConfiguration {
   context?: object
 }
 
+/**
+ * Public API for the Logs browser SDK.
+ *
+ * See [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript) for further information.
+ *
+ * @category Main
+ */
 export interface LogsPublicApi extends PublicApi {
+  /**
+   * The default logger
+   *
+   * @category Logger
+   */
   logger: Logger
 
   /**
    * Init the Logs browser SDK.
-   * @param initConfiguration Configuration options of the SDK
    *
    * See [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript) for further information.
+   *
+   * @category Init
+   * @param initConfiguration - Configuration options of the SDK
    */
   init: (initConfiguration: LogsInitConfiguration) => void
 
   /**
    * Set the tracking consent of the current user.
-   *
-   * @param {"granted" | "not-granted"} trackingConsent The user tracking consent
    *
    * Logs will be sent only if it is set to "granted". This value won't be stored by the library
    * across page loads: you will need to call this method or set the appropriate `trackingConsent`
@@ -48,53 +62,168 @@ export interface LogsPublicApi extends PublicApi {
    *
    * If this method is called before the init() method, the provided value will take precedence
    * over the one provided as initialization parameter.
+   *
+   * See [User tracking consent](https://docs.datadoghq.com/logs/log_collection/javascript/#user-tracking-consent) for further information.
+   *
+   * @category Privacy
+   * @param trackingConsent - The user tracking consent
    */
   setTrackingConsent: (trackingConsent: TrackingConsent) => void
 
   /**
-   * Get the global Context
+   * Set the global context information to all events, stored in `@context`
+   * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
-   */
-  getGlobalContext: () => Context
-
-  /**
-   * Set the global context information to all logs, stored in `@context`
-   *
-   * @param context Global context
-   *
-   * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
+   * @category Context - Global Context
+   * @param context - Global context
    */
   setGlobalContext: (context: any) => void
 
   /**
+   * Get the global Context
+   *
+   * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
+   *
+   * @category Context - Global Context
+   */
+  getGlobalContext: () => Context
+
+  /**
    * Set or update a global context property, stored in `@context.<key>`
    *
-   * @param key Key of the property
-   * @param property Value of the property
+   * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
    *
-   * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
+   * @category Context - Global Context
+   * @param key - Key of the property
+   * @param value - Value of the property
    */
   setGlobalContextProperty: (key: any, value: any) => void
 
   /**
    * Remove a global context property
    *
-   * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
+   * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
+   *
+   * @category Context - Global Context
    */
   removeGlobalContextProperty: (key: any) => void
 
   /**
    * Clear the global context
    *
-   * See [Overwrite context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
+   * See [Global context](https://docs.datadoghq.com/logs/log_collection/javascript/#overwrite-context) for further information.
+   *
+   * @category Context - Global Context
    */
   clearGlobalContext: () => void
+
+  /**
+   * Set user information to all events, stored in `@usr`
+   *
+   * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
+   *
+   * @category Context - User
+   * @param newUser - User information
+   */
+  setUser(newUser: User & { id: string }): void
+
+  /**
+   * Set user information to all events, stored in `@usr`
+   *
+   * @category Context - User
+   * @deprecated You must specify a user id, favor using {@link setUser} instead
+   * @param newUser - User information with optional id
+   */
+  setUser(newUser: User): void
+
+  /**
+   * Get user information
+   *
+   * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
+   *
+   * @category Context - User
+   * @returns User information
+   */
+  getUser: () => Context
+
+  /**
+   * Set or update the user property, stored in `@usr.<key>`
+   *
+   * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
+   *
+   * @category Context - User
+   * @param key - Key of the property
+   * @param property - Value of the property
+   */
+  setUserProperty: (key: any, property: any) => void
+
+  /**
+   * Remove a user property
+   *
+   * @category Context - User
+   * @param key - Key of the property to remove
+   * @see [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
+   */
+  removeUserProperty: (key: any) => void
+
+  /**
+   * Clear all user information
+   *
+   * See [User session](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
+   *
+   * @category Context - User
+   */
+  clearUser: () => void
+
+  /**
+   * Set account information to all events, stored in `@account`
+   *
+   * @category Context - Account
+   * @param newAccount - Account information
+   */
+  setAccount: (newAccount: Account) => void
+
+  /**
+   * Get account information
+   *
+   * @category Context - Account
+   * @returns Account information
+   */
+  getAccount: () => Context
+
+  /**
+   * Set or update the account property, stored in `@account.<key>`
+   *
+   * @category Context - Account
+   * @param key - Key of the property
+   * @param property - Value of the property
+   */
+  setAccountProperty: (key: string, property: any) => void
+
+  /**
+   * Remove an account property
+   *
+   * @category Context - Account
+   * @param key - Key of the property to remove
+   */
+  removeAccountProperty: (key: string) => void
+
+  /**
+   * Clear all account information
+   *
+   * @category Context - Account
+   * @returns Clear all account information
+   */
+  clearAccount: () => void
 
   /**
    * The Datadog browser logs SDK contains a default logger `DD_LOGS.logger`, but this API allows to create different ones.
    *
    * See [Define multiple loggers](https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers) for further information.
+   *
+   * @category Logger
+   * @param name - Name of the logger
+   * @param conf - Configuration of the logger (level, handler, context)
    */
   createLogger: (name: string, conf?: LoggerConfiguration) => Logger
 
@@ -102,11 +231,17 @@ export interface LogsPublicApi extends PublicApi {
    * Get a logger
    *
    * See [Define multiple loggers](https://docs.datadoghq.com/logs/log_collection/javascript/#define-multiple-loggers) for further information.
+   *
+   * @category Logger
+   * @param name - Name of the logger
    */
   getLogger: (name: string) => Logger | undefined
 
   /**
    * Get the init configuration
+   *
+   * @category Init
+   * @returns The init configuration
    */
   getInitConfiguration: () => LogsInitConfiguration | undefined
 
@@ -114,126 +249,43 @@ export interface LogsPublicApi extends PublicApi {
    * [Internal API] Get the internal SDK context
    *
    * See [Access internal context](https://docs.datadoghq.com/logs/log_collection/javascript/#access-internal-context) for further information.
+   *
+   * @internal
    */
   getInternalContext: (startTime?: number) => InternalContext | undefined
-
-  /**
-   * Set user information to all events, stored in `@usr`
-   *
-   * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
-   */
-  setUser(newUser: User & { id: string }): void
-
-  /**
-   * Set user information to all events, stored in `@usr`
-   *
-   * @deprecated You must specified a user id
-   * @see {@link setUser}
-   */
-  setUser(newUser: User): void
-
-  /**
-   * Get user information
-   *
-   * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
-   */
-  getUser: () => Context
-
-  /**
-   * Set or update the user property, stored in `@usr.<key>`
-   *
-   * @param key Key of the property
-   * @param property Value of the property
-   *
-   * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
-   */
-  setUserProperty: (key: any, property: any) => void
-
-  /**
-   * Remove a user property
-   *
-   * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
-   */
-  removeUserProperty: (key: any) => void
-
-  /**
-   * Clear all user information
-   *
-   * See [User context](https://docs.datadoghq.com/logs/log_collection/javascript/#user-context) for further information.
-   */
-  clearUser: () => void
-
-  /**
-   * Set account information to all events, stored in `@account`
-   */
-  setAccount: (newAccount: Account) => void
-
-  /**
-   * Get account information
-   */
-  getAccount: () => Context
-
-  /**
-   * Set or update the account property, stored in `@account.<key>`
-   *
-   * @param key Key of the property
-   * @param property Value of the property
-   */
-  setAccountProperty: (key: string, property: any) => void
-
-  /**
-   * Remove an account property
-   */
-  removeAccountProperty: (key: string) => void
-
-  /**
-   * Clear all account information
-   */
-  clearAccount: () => void
 }
 
-const LOGS_STORAGE_KEY = 'logs'
-
 export interface Strategy {
-  init: (initConfiguration: LogsInitConfiguration) => void
+  init: (initConfiguration: LogsInitConfiguration, errorStack?: string) => void
   initConfiguration: LogsInitConfiguration | undefined
+  globalContext: ContextManager
+  accountContext: ContextManager
+  userContext: ContextManager
   getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
-  const globalContextManager = createContextManager('global context')
-  const userContextManager = createContextManager('user', {
-    propertiesConfig: {
-      id: { type: 'string' },
-      name: { type: 'string' },
-      email: { type: 'string' },
-    },
-  })
-  const accountContextManager = createContextManager('account', {
-    propertiesConfig: {
-      id: { type: 'string', required: true },
-      name: { type: 'string' },
-    },
-  })
   const trackingConsentState = createTrackingConsentState()
+  const bufferedDataObservable = startBufferingData().observable
 
-  function getCommonContext() {
-    return buildCommonContext(globalContextManager, userContextManager, accountContextManager)
-  }
+  let strategy = createPreStartStrategy(
+    buildCommonContext,
+    trackingConsentState,
+    (initConfiguration, configuration) => {
+      const startLogsResult = startLogsImpl(
+        configuration,
+        buildCommonContext,
+        trackingConsentState,
+        bufferedDataObservable
+      )
 
-  let strategy = createPreStartStrategy(getCommonContext, trackingConsentState, (initConfiguration, configuration) => {
-    if (initConfiguration.storeContextsAcrossPages) {
-      storeContextManager(configuration, globalContextManager, LOGS_STORAGE_KEY, CustomerDataType.GlobalContext)
-      storeContextManager(configuration, userContextManager, LOGS_STORAGE_KEY, CustomerDataType.User)
-      storeContextManager(configuration, accountContextManager, LOGS_STORAGE_KEY, CustomerDataType.Account)
+      strategy = createPostStartStrategy(initConfiguration, startLogsResult)
+      return startLogsResult
     }
+  )
 
-    const startLogsResult = startLogsImpl(initConfiguration, configuration, getCommonContext, trackingConsentState)
-
-    strategy = createPostStartStrategy(initConfiguration, startLogsResult)
-    return startLogsResult
-  })
+  const getStrategy = () => strategy
 
   const customLoggers: { [name: string]: Logger | undefined } = {}
 
@@ -242,22 +294,44 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   return makePublicApi<LogsPublicApi>({
     logger: mainLogger,
 
-    init: monitor((initConfiguration) => strategy.init(initConfiguration)),
+    init: (initConfiguration) => {
+      const errorStack = new Error().stack
+      callMonitored(() => strategy.init(initConfiguration, errorStack))
+    },
 
     setTrackingConsent: monitor((trackingConsent) => {
       trackingConsentState.update(trackingConsent)
       addTelemetryUsage({ feature: 'set-tracking-consent', tracking_consent: trackingConsent })
     }),
 
-    getGlobalContext: monitor(() => globalContextManager.getContext()),
+    getGlobalContext: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.getContext
+    ),
+    setGlobalContext: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.setContext
+    ),
 
-    setGlobalContext: monitor((context) => globalContextManager.setContext(context)),
+    setGlobalContextProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.setContextProperty
+    ),
 
-    setGlobalContextProperty: monitor((key, value) => globalContextManager.setContextProperty(key, value)),
+    removeGlobalContextProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.removeContextProperty
+    ),
 
-    removeGlobalContextProperty: monitor((key) => globalContextManager.removeContextProperty(key)),
-
-    clearGlobalContext: monitor(() => globalContextManager.clearContext()),
+    clearGlobalContext: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.globalContext,
+      ContextManagerMethod.clearContext
+    ),
 
     createLogger: monitor((name, conf = {}) => {
       customLoggers[name] = new Logger(
@@ -277,25 +351,45 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
 
-    setUser: monitor(userContextManager.setContext),
+    setUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.setContext),
 
-    getUser: monitor(userContextManager.getContext),
+    getUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.getContext),
 
-    setUserProperty: monitor(userContextManager.setContextProperty),
+    setUserProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.userContext,
+      ContextManagerMethod.setContextProperty
+    ),
 
-    removeUserProperty: monitor(userContextManager.removeContextProperty),
+    removeUserProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.userContext,
+      ContextManagerMethod.removeContextProperty
+    ),
 
-    clearUser: monitor(userContextManager.clearContext),
+    clearUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.clearContext),
 
-    setAccount: monitor(accountContextManager.setContext),
+    setAccount: defineContextMethod(getStrategy, CustomerContextKey.accountContext, ContextManagerMethod.setContext),
 
-    getAccount: monitor(accountContextManager.getContext),
+    getAccount: defineContextMethod(getStrategy, CustomerContextKey.accountContext, ContextManagerMethod.getContext),
 
-    setAccountProperty: monitor(accountContextManager.setContextProperty),
+    setAccountProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.accountContext,
+      ContextManagerMethod.setContextProperty
+    ),
 
-    removeAccountProperty: monitor(accountContextManager.removeContextProperty),
+    removeAccountProperty: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.accountContext,
+      ContextManagerMethod.removeContextProperty
+    ),
 
-    clearAccount: monitor(accountContextManager.clearContext),
+    clearAccount: defineContextMethod(
+      getStrategy,
+      CustomerContextKey.accountContext,
+      ContextManagerMethod.clearContext
+    ),
   })
 }
 

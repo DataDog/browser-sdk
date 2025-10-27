@@ -22,9 +22,12 @@ import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
 import { initRecordIds } from './recordIds'
+import type { SerializationStats } from './serialization'
+import { createSerializationScope } from './serialization'
+import { createNodeIds } from './nodeIds'
 
 export interface RecordOptions {
-  emit?: (record: BrowserRecord) => void
+  emit?: (record: BrowserRecord, stats?: SerializationStats) => void
   configuration: RumConfiguration
   lifeCycle: LifeCycle
   viewHistory: ViewHistory
@@ -43,24 +46,30 @@ export function record(options: RecordOptions): RecordAPI {
     throw new Error('emit function is required')
   }
 
-  const emitAndComputeStats = (record: BrowserRecord) => {
-    emit(record)
+  const emitAndComputeStats = (record: BrowserRecord, stats?: SerializationStats) => {
+    emit(record, stats)
     sendToExtension('record', { record })
     const view = options.viewHistory.findView()!
     replayStats.addRecord(view.id)
   }
 
   const elementsScrollPositions = createElementsScrollPositions()
-
-  const shadowRootsController = initShadowRootsController(configuration, emitAndComputeStats, elementsScrollPositions)
+  const scope = createSerializationScope(createNodeIds())
+  const shadowRootsController = initShadowRootsController(
+    configuration,
+    scope,
+    emitAndComputeStats,
+    elementsScrollPositions
+  )
 
   const { stop: stopFullSnapshots } = startFullSnapshots(
     elementsScrollPositions,
     shadowRootsController,
     lifeCycle,
     configuration,
+    scope,
     flushMutations,
-    (records) => records.forEach((record) => emitAndComputeStats(record))
+    emitAndComputeStats
   )
 
   function flushMutations() {
@@ -69,16 +78,16 @@ export function record(options: RecordOptions): RecordAPI {
   }
 
   const recordIds = initRecordIds()
-  const mutationTracker = trackMutation(emitAndComputeStats, configuration, shadowRootsController, document)
+  const mutationTracker = trackMutation(emitAndComputeStats, configuration, scope, shadowRootsController, document)
   const trackers: Tracker[] = [
     mutationTracker,
-    trackMove(configuration, emitAndComputeStats),
-    trackMouseInteraction(configuration, emitAndComputeStats, recordIds),
-    trackScroll(configuration, emitAndComputeStats, elementsScrollPositions, document),
+    trackMove(configuration, scope, emitAndComputeStats),
+    trackMouseInteraction(configuration, scope, emitAndComputeStats, recordIds),
+    trackScroll(configuration, scope, emitAndComputeStats, elementsScrollPositions, document),
     trackViewportResize(configuration, emitAndComputeStats),
-    trackInput(configuration, emitAndComputeStats),
-    trackMediaInteraction(configuration, emitAndComputeStats),
-    trackStyleSheet(emitAndComputeStats),
+    trackInput(configuration, scope, emitAndComputeStats),
+    trackMediaInteraction(configuration, scope, emitAndComputeStats),
+    trackStyleSheet(scope, emitAndComputeStats),
     trackFocus(configuration, emitAndComputeStats),
     trackVisualViewportResize(configuration, emitAndComputeStats),
     trackFrustration(lifeCycle, emitAndComputeStats, recordIds),

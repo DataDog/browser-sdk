@@ -1,11 +1,19 @@
-import { SESSION_STORE_KEY } from '@datadog/browser-core'
+import { ExperimentalFeature, SESSION_STORE_KEY } from '@datadog/browser-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import type { RumPublicApi } from '@datadog/browser-rum-core'
+import { bundleSetup, createTest } from '../lib/framework'
 
 const DISABLE_LOCAL_STORAGE = '<script>Object.defineProperty(Storage.prototype, "getItem", { get: () => 42});</script>'
 const DISABLE_COOKIES = '<script>Object.defineProperty(Document.prototype, "cookie", { get: () => 42});</script>'
 const SESSION_ID_REGEX = /(?<!a)id=([\w-]+)/ // match `id` but not `aid`
+
+const FULL_HOSTNAME = 'foo.bar.localhost'
+
+// Note: this isn't entirely exact, ideally it should be `.localhost`, but the Browser
+// SDK skips the toplevel domain (ex: .com) and starts with the second level domain
+// directly (ex: .foo.com) as it's fine in 99.9% of cases and we save one cookie check.
+const MAIN_HOSTNAME = '.bar.localhost'
 
 test.describe('Session Stores', () => {
   test.describe('Cookies', () => {
@@ -32,6 +40,150 @@ test.describe('Session Stores', () => {
         expect(logsContext).not.toBeUndefined()
         expect(rumContext).toBeUndefined()
       })
+
+    test.describe('trackSessionAcrossSubdomains: false', () => {
+      createTest('stores the cookie on the full host name')
+        .withRum({ trackSessionAcrossSubdomains: false })
+        .withHostName(FULL_HOSTNAME)
+        .run(async ({ browserContext }) => {
+          const cookies = await browserContext.cookies()
+          expect(cookies).toEqual([
+            expect.objectContaining({
+              domain: FULL_HOSTNAME,
+            }),
+          ])
+        })
+
+      createTest('when injected in a iframe without `src`, the cookie should be stored on the parent window domain')
+        .withRum({ trackSessionAcrossSubdomains: false })
+        .withHostName(FULL_HOSTNAME)
+        .withSetup(bundleSetup)
+        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers }) => {
+          await injectSdkInAnIframe(page, `${servers.crossOrigin.origin}/datadog-rum.js`)
+          await flushEvents()
+
+          const cookies = await browserContext.cookies()
+          expect(cookies).toEqual([
+            expect.objectContaining({
+              domain: FULL_HOSTNAME,
+            }),
+          ])
+          expect(intakeRegistry.rumViewEvents.map((event) => event.view.url)).toEqual(
+            expect.arrayContaining([baseUrl, 'about:blank'])
+          )
+        })
+    })
+
+    test.describe('trackSessionAcrossSubdomains: true', () => {
+      createTest('with `trackSessionAcrossSubdomains: true`, stores the cookie on the eTLD+1')
+        .withRum({ trackSessionAcrossSubdomains: true })
+        .withHostName(FULL_HOSTNAME)
+        .run(async ({ browserContext }) => {
+          const cookies = await browserContext.cookies()
+          expect(cookies).toEqual([
+            expect.objectContaining({
+              domain: MAIN_HOSTNAME,
+            }),
+          ])
+        })
+
+      createTest('when injected in a iframe without `src`, the cookie should be stored on the parent window domain')
+        .withRum({ trackSessionAcrossSubdomains: true })
+        .withHostName(FULL_HOSTNAME)
+        .withSetup(bundleSetup)
+        .run(async ({ page, baseUrl, browserContext, flushEvents, intakeRegistry, servers }) => {
+          await injectSdkInAnIframe(page, `${servers.crossOrigin.origin}/datadog-rum.js`)
+          await flushEvents()
+
+          const cookies = await browserContext.cookies()
+          expect(cookies).toEqual([
+            expect.objectContaining({
+              domain: MAIN_HOSTNAME,
+            }),
+          ])
+          expect(intakeRegistry.rumViewEvents.map((event) => event.view.url)).toEqual(
+            expect.arrayContaining([baseUrl, 'about:blank'])
+          )
+        })
+    })
+
+    for (const encodeCookieOptions of [true, false]) {
+      const enableExperimentalFeatures = encodeCookieOptions ? [ExperimentalFeature.ENCODE_COOKIE_OPTIONS] : []
+
+      createTest(
+        encodeCookieOptions
+          ? 'should not fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values when Encode Cookie Options is enabled'
+          : 'should fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values when Encode Cookie Options is disabled'
+      )
+        .withRum({ trackSessionAcrossSubdomains: true, enableExperimentalFeatures })
+        .withLogs({ trackSessionAcrossSubdomains: false, enableExperimentalFeatures })
+        .withHostName(FULL_HOSTNAME)
+        .run(async ({ page }) => {
+          await page.waitForTimeout(1000)
+
+          if (!encodeCookieOptions) {
+            // ensure the test is failing when the Feature Flag is disabled
+            test.fail()
+          }
+
+          const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
+            window.DD_RUM?.getInternalContext(),
+            window.DD_LOGS?.getInternalContext(),
+          ])
+
+          expect(rumInternalContext).toBeDefined()
+          expect(logsInternalContext).toBeDefined()
+        })
+
+      createTest(
+        encodeCookieOptions
+          ? 'should not fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values when Encode Cookie Options is enabled'
+          : 'should fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values when Encode Cookie Options is disabled'
+      )
+        .withRum({ usePartitionedCrossSiteSessionCookie: true, enableExperimentalFeatures })
+        .withLogs({ usePartitionedCrossSiteSessionCookie: false, enableExperimentalFeatures })
+        .withHostName(FULL_HOSTNAME)
+        .run(async ({ page }) => {
+          await page.waitForTimeout(1000)
+
+          if (!encodeCookieOptions) {
+            // ensure the test is failing when the Feature Flag is disabled
+            test.fail()
+          }
+
+          const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
+            window.DD_RUM?.getInternalContext(),
+            window.DD_LOGS?.getInternalContext(),
+          ])
+
+          expect(rumInternalContext).toBeDefined()
+          expect(logsInternalContext).toBeDefined()
+        })
+    }
+
+    async function injectSdkInAnIframe(page: Page, bundleUrl: string) {
+      await page.evaluate(
+        (browserSdkUrl) =>
+          new Promise<void>((resolve) => {
+            const iframe = document.createElement('iframe')
+            document.body.appendChild(iframe)
+            const iframeWindow = iframe.contentWindow!
+
+            function onReady() {
+              ;(iframeWindow as { DD_RUM: RumPublicApi }).DD_RUM.init(window.DD_RUM!.getInitConfiguration()!)
+              resolve()
+            }
+
+            // This is similar to async setup, but simpler
+            ;(iframeWindow as any).DD_RUM = { q: [onReady] }
+            const script = iframeWindow.document.createElement('script')
+            script.async = true
+            script.src = browserSdkUrl
+            iframeWindow.document.head.appendChild(script)
+          }),
+        bundleUrl
+      )
+    }
   })
 
   test.describe('Local Storage', () => {

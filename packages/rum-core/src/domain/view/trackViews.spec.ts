@@ -1,4 +1,4 @@
-import type { Context, Duration, RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   PageExitReason,
   timeStampNow,
@@ -9,10 +9,10 @@ import {
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
+import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
-import type { RumEvent } from '../../rumEvent.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
@@ -122,7 +122,6 @@ describe('view lifecycle', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -353,17 +352,15 @@ describe('view lifecycle', () => {
 
 describe('view loading type', () => {
   const lifeCycle = new LifeCycle()
-  let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     viewTest = setupViewTest({ lifeCycle })
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -396,7 +393,6 @@ describe('view metrics', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -606,7 +602,6 @@ describe('view custom timings', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -743,7 +738,6 @@ describe('start view', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
     })
   })
 
@@ -840,7 +834,6 @@ describe('view event count', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
       resetExperimentalFeatures()
     })
   })
@@ -881,7 +874,7 @@ describe('view event count', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       view: { id: firstView.id },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -902,7 +895,7 @@ describe('view event count', () => {
     lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
       type: RumEventType.RESOURCE,
       view: { id: firstView.id },
-    } as RumEvent & Context)
+    } as AssembledRumEvent)
 
     clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
 
@@ -915,7 +908,7 @@ describe('view event count', () => {
       type: RumEventType.ACTION,
       action: {},
       view: viewTest.getLatestViewContext(),
-    } as RumEvent & Context
+    } as AssembledRumEvent
   }
 
   describe('view specific context', () => {
@@ -992,15 +985,13 @@ describe('view event count', () => {
 
 describe('service and version', () => {
   const lifeCycle = new LifeCycle()
-  let clock: Clock
   let viewTest: ViewTest
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     registerCleanupTask(() => {
       viewTest.stop()
-      clock.cleanup()
       resetExperimentalFeatures()
     })
   })
@@ -1027,5 +1018,33 @@ describe('service and version', () => {
 
     expect(getViewUpdate(0).service).toEqual('view service')
     expect(getViewUpdate(0).version).toEqual('view version')
+  })
+})
+
+describe('BFCache views', () => {
+  const lifeCycle = new LifeCycle()
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    viewTest = setupViewTest({ lifeCycle, partialConfig: { trackBfcacheViews: true } })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
+  it('should create a new "bf_cache" view when restoring from the BFCache', () => {
+    const { getViewCreateCount, getViewEndCount, getViewUpdate, getViewUpdateCount } = viewTest
+
+    expect(getViewCreateCount()).toBe(1)
+    expect(getViewEndCount()).toBe(0)
+
+    const event = createNewEvent('pageshow', { persisted: true })
+
+    window.dispatchEvent(event)
+
+    expect(getViewEndCount()).toBe(1)
+    expect(getViewCreateCount()).toBe(2)
+    expect(getViewUpdate(getViewUpdateCount() - 1).loadingType).toBe(ViewLoadingType.BF_CACHE)
   })
 })

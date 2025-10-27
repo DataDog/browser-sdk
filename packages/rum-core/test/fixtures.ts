@@ -1,5 +1,6 @@
 import type { Context, Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { combine, ErrorHandling, ErrorSource, generateUUID, relativeNow, ResourceType } from '@datadog/browser-core'
+import type { RumMutationRecord } from '@datadog/browser-rum-core'
 import {
   type RumPerformanceEntry,
   type RumLayoutShiftAttribution,
@@ -266,6 +267,14 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
       }
       break
 
+    case RumPerformanceEntryType.VISIBILITY_STATE:
+      entry = {
+        entryType: RumPerformanceEntryType.VISIBILITY_STATE,
+        name: 'visible',
+        startTime: 0 as RelativeTime,
+      }
+      break
+
     default:
       throw new Error(`Unsupported entryType fixture: ${entryType}`)
   }
@@ -277,4 +286,16 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
     toJSON: () => entry,
   }
   return fullEntry as EntryTypeToReturnType[T]
+}
+
+export function createMutationRecord<T extends RumMutationRecord['type']>(
+  type: T = 'childList' as T,
+  overrides: Partial<Exclude<RumMutationRecord, { type: T }>> = {}
+): RumMutationRecord {
+  return {
+    type,
+    target: document.body,
+
+    ...overrides,
+  } as RumMutationRecord
 }

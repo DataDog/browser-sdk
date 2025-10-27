@@ -5,8 +5,8 @@ import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshot
 import { IncrementalSource, MouseInteractionType } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
 import { getEventTarget } from '../eventsUtils'
-import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import type { RecordIds } from '../recordIds'
+import type { SerializationScope } from '../serialization'
 import { tryToComputeCoordinates } from './trackMove'
 import type { Tracker } from './tracker.types'
 
@@ -35,18 +35,19 @@ export type MouseInteractionCallback = (record: BrowserIncrementalSnapshotRecord
 
 export function trackMouseInteraction(
   configuration: RumConfiguration,
+  scope: SerializationScope,
   mouseInteractionCb: MouseInteractionCallback,
   recordIds: RecordIds
 ): Tracker {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
+    const id = scope.nodeIds.get(target)
     if (
-      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN ||
-      !hasSerializedNode(target)
+      id === undefined ||
+      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
     ) {
       return
     }
-    const id = getSerializedNodeId(target)
     const type = eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction]
 
     let interaction: MouseInteraction

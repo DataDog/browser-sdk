@@ -4,9 +4,10 @@ import type {
   DeflateEncoderStreamId,
   DeflateWorker,
   EncoderResult,
+  Uint8ArrayBuffer,
 } from '@datadog/browser-core'
+import { addEventListener, concatBuffers } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { addEventListener, addTelemetryDebug, concatBuffers } from '@datadog/browser-core'
 
 export function createDeflateEncoder(
   configuration: RumConfiguration,
@@ -14,9 +15,10 @@ export function createDeflateEncoder(
   streamId: DeflateEncoderStreamId
 ): DeflateEncoder {
   let rawBytesCount = 0
-  let compressedData: Uint8Array[] = []
-  let compressedDataTrailer: Uint8Array
+  let compressedData: Uint8ArrayBuffer[] = []
+  let compressedDataTrailer: Uint8ArrayBuffer
 
+  let isEmpty = true
   let nextWriteActionId = 0
   const pendingWriteActions: Array<{
     writeCallback?: (additionalEncodedBytesCount: number) => void
@@ -34,28 +36,32 @@ export function createDeflateEncoder(
         return
       }
 
-      rawBytesCount += workerResponse.additionalBytesCount
-      compressedData.push(workerResponse.result)
-      compressedDataTrailer = workerResponse.trailer
+      const nextPendingAction = pendingWriteActions[0]
+      if (nextPendingAction) {
+        if (nextPendingAction.id === workerResponse.id) {
+          pendingWriteActions.shift()
 
-      const nextPendingAction = pendingWriteActions.shift()
-      if (nextPendingAction && nextPendingAction.id === workerResponse.id) {
-        if (nextPendingAction.writeCallback) {
-          nextPendingAction.writeCallback(workerResponse.result.byteLength)
-        } else if (nextPendingAction.finishCallback) {
-          nextPendingAction.finishCallback()
+          rawBytesCount += workerResponse.additionalBytesCount
+          compressedData.push(workerResponse.result)
+          compressedDataTrailer = workerResponse.trailer
+
+          if (nextPendingAction.writeCallback) {
+            nextPendingAction.writeCallback(workerResponse.result.byteLength)
+          } else if (nextPendingAction.finishCallback) {
+            nextPendingAction.finishCallback()
+          }
+        } else if (nextPendingAction.id < workerResponse.id) {
+          // Worker responses received out of order
+          removeMessageListener()
         }
-      } else {
-        removeMessageListener()
-        addTelemetryDebug('Worker responses received out of order.')
       }
     }
   )
 
-  function consumeResult(): EncoderResult<Uint8Array> {
+  function consumeResult(): EncoderResult<Uint8ArrayBuffer> {
     const output =
       compressedData.length === 0 ? new Uint8Array(0) : concatBuffers(compressedData.concat(compressedDataTrailer))
-    const result: EncoderResult<Uint8Array> = {
+    const result: EncoderResult<Uint8ArrayBuffer> = {
       rawBytesCount,
       output,
       outputBytesCount: output.byteLength,
@@ -67,12 +73,12 @@ export function createDeflateEncoder(
   }
 
   function sendResetIfNeeded() {
-    if (nextWriteActionId > 0) {
+    if (!isEmpty) {
       worker.postMessage({
         action: 'reset',
         streamId,
       })
-      nextWriteActionId = 0
+      isEmpty = true
     }
   }
 
@@ -80,7 +86,7 @@ export function createDeflateEncoder(
     isAsync: true,
 
     get isEmpty() {
-      return nextWriteActionId === 0
+      return isEmpty
     },
 
     write(data, callback) {
@@ -95,6 +101,7 @@ export function createDeflateEncoder(
         writeCallback: callback,
         data,
       })
+      isEmpty = false
       nextWriteActionId += 1
     },
 
@@ -116,16 +123,9 @@ export function createDeflateEncoder(
 
     finishSync() {
       sendResetIfNeeded()
-
-      const pendingData = pendingWriteActions
-        .map((pendingWriteAction) => {
-          // Make sure we do not call any write or finish callback
-          delete pendingWriteAction.writeCallback
-          delete pendingWriteAction.finishCallback
-          return pendingWriteAction.data
-        })
-        .join('')
-
+      const pendingData = pendingWriteActions.map((pendingWriteAction) => pendingWriteAction.data).join('')
+      // Ignore all pending write actions responses from the worker
+      pendingWriteActions.length = 0
       return { ...consumeResult(), pendingData }
     },
 

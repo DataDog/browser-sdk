@@ -1,13 +1,12 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
-import { DefaultPrivacyLevel } from '@datadog/browser-rum'
+import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
 import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '../helpers/browser'
-import { APPLICATION_ID, CLIENT_TOKEN } from '../helpers/configuration'
+import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { IntakeRegistry } from './intakeRegistry'
@@ -15,31 +14,15 @@ import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
-import { DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
+import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
+import type { Extension } from './createExtension'
+import { isBrowserStack } from './environment'
 
-const DEFAULT_RUM_CONFIGURATION = {
-  applicationId: APPLICATION_ID,
-  clientToken: CLIENT_TOKEN,
-  defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
-  trackResources: true,
-  trackLongTasks: true,
-  enableExperimentalFeatures: [],
-  allowUntrustedEvents: true,
-  // Force All sample rates to 100% to avoid flakiness
-  sessionReplaySampleRate: 100,
-  telemetrySampleRate: 100,
-  telemetryUsageSampleRate: 100,
-  telemetryConfigurationSampleRate: 100,
-}
-
-const DEFAULT_LOGS_CONFIGURATION = {
-  clientToken: CLIENT_TOKEN,
-  // Force All sample rates to 100% to avoid flakiness
-  telemetrySampleRate: 100,
-  telemetryUsageSampleRate: 100,
-  telemetryConfigurationSampleRate: 100,
+interface LogsWorkerOptions {
+  importScript?: boolean
+  nativeLog?: boolean
 }
 
 export function createTest(title: string) {
@@ -48,17 +31,18 @@ export function createTest(title: string) {
 
 interface TestContext {
   baseUrl: string
-  crossOriginUrl: string
   intakeRegistry: IntakeRegistry
   servers: Servers
   page: Page
   browserContext: BrowserContext
   browserName: 'chromium' | 'firefox' | 'webkit' | 'msedge'
+  getExtensionId: () => Promise<string>
   withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
   flushBrowserLogs: () => void
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
+  interactWithWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -67,11 +51,19 @@ class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
   private alsoRunWithRumSlim = false
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
+  private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
   private body = ''
   private basePath = ''
   private eventBridge = false
   private setups: Array<{ factory: SetupFactory; name?: string }> = DEFAULT_SETUPS
+  private testFixture: typeof test = test
+  private extension: {
+    rumConfiguration?: RumInitConfiguration
+    logsConfiguration?: LogsInitConfiguration
+  } = {}
+  private useServiceWorker: boolean = false
+  private hostName?: string
 
   constructor(private title: string) {}
 
@@ -115,13 +107,71 @@ class TestBuilder {
     return this
   }
 
-  withReact() {
-    this.setups = [{ factory: reactSetup }]
+  withReactApp(appName: string) {
+    this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
     return this
   }
 
   withBasePath(newBasePath: string) {
     this.basePath = newBasePath
+    return this
+  }
+
+  withSetup(setup: SetupFactory) {
+    this.setups = [{ factory: setup }]
+    return this
+  }
+
+  withExtension(extension: Extension) {
+    this.testFixture = extension.fixture
+    this.extension.rumConfiguration = extension.rumConfiguration
+    this.extension.logsConfiguration = extension.logsConfiguration
+
+    return this
+  }
+
+  withRemoteConfiguration(remoteConfiguration: RemoteConfiguration) {
+    this.remoteConfiguration = remoteConfiguration
+    return this
+  }
+
+  withWorker({ importScript = false, nativeLog = false }: LogsWorkerOptions = {}) {
+    if (!this.useServiceWorker) {
+      this.useServiceWorker = true
+
+      const isModule = !importScript
+
+      const params = []
+      if (importScript) {
+        params.push('importScripts=true')
+      }
+      if (nativeLog) {
+        params.push('nativeLog=true')
+      }
+
+      const query = params.length > 0 ? `?${params.join('&')}` : ''
+      const url = `/sw.js${query}`
+
+      const options = isModule ? '{ type: "module" }' : '{}'
+
+      // Service workers require HTTPS or localhost due to browser security restrictions
+      this.hostName = 'localhost'
+      this.withBody(html`
+        <script>
+          if (!window.myServiceWorker && 'serviceWorker' in navigator) {
+            navigator.serviceWorker.register('${url}', ${options}).then((registration) => {
+              window.myServiceWorker = registration
+            })
+          }
+        </script>
+      `)
+    }
+
+    return this
+  }
+
+  withHostName(hostName: string) {
+    this.hostName = hostName
     return this
   }
 
@@ -131,6 +181,7 @@ class TestBuilder {
       head: this.head,
       logs: this.logsConfiguration,
       rum: this.rumConfiguration,
+      remoteConfiguration: this.remoteConfiguration,
       rumInit: this.rumInit,
       logsInit: this.logsInit,
       useRumSlim: false,
@@ -140,10 +191,13 @@ class TestBuilder {
         run_id: getRunId(),
         test_name: '<PLACEHOLDER>',
       },
+      testFixture: this.testFixture,
+      extension: this.extension,
+      hostName: this.hostName,
     }
 
     if (this.alsoRunWithRumSlim) {
-      test.describe(this.title, () => {
+      this.testFixture.describe(this.title, () => {
         declareTestsForSetups('rum', this.setups, setupOptions, runner)
         declareTestsForSetups(
           'rum-slim',
@@ -173,21 +227,38 @@ function declareTestsForSetups(
   runner: TestRunner
 ) {
   if (setups.length > 1) {
-    test.describe(title, () => {
+    setupOptions.testFixture.describe(title, () => {
       for (const { name, factory } of setups) {
         declareTest(name!, setupOptions, factory, runner)
       }
     })
-  } else {
+  } else if (setups.length === 1) {
     declareTest(title, setupOptions, setups[0].factory, runner)
+  } else {
+    console.warn('no setup available for', title)
   }
 }
 
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  test(title, async ({ page, context }) => {
+  const testFixture = setupOptions.testFixture ?? test
+  testFixture(title, async ({ page, context }) => {
     const browserName = getBrowserName(test.info().project.name)
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
+
+    test.skip(
+      !!setupOptions.hostName && setupOptions.hostName.endsWith('.localhost') && isBrowserStack,
+      // Skip those tests on BrowserStack because it doesn't support localhost subdomains. As a
+      // workaround we could use normal domains and use either:
+      // * the BrowserStack proxy capabilities -> not tried, but this sounds more complex because
+      //   we also want to run tests outside of BrowserStack
+      // * the Playwright proxy capabilities -> tried and it seems to fail because of mismatch
+      //   version between Playwright local and BrowserStack versions
+      // * a "ngrok-like" service -> not tried yet (it sounds more complex)
+      //
+      // See https://www.browserstack.com/support/faq/local-testing/local-exceptions/i-face-issues-while-testing-localhost-urls-or-private-servers-in-safari-on-macos-os-x-and-ios
+      'Localhost subdomains are not supported in BrowserStack'
+    )
 
     const title = test.info().titlePath.join(' > ')
     setupOptions.context.test_name = title
@@ -199,7 +270,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(createMockServerApp(servers, setup))
+    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(browserLogs, testContext)
@@ -219,11 +290,16 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath }: SetupOptions
+  { basePath, hostName }: SetupOptions
 ): TestContext {
+  const baseUrl = new URL(basePath, servers.base.origin)
+
+  if (hostName) {
+    baseUrl.hostname = hostName
+  }
+
   return {
-    baseUrl: servers.base.url + basePath,
-    crossOriginUrl: servers.crossOrigin.url,
+    baseUrl: baseUrl.href,
     intakeRegistry: new IntakeRegistry(),
     servers,
     page,
@@ -236,10 +312,22 @@ function createTestContext(
         browserLogsManager.clear()
       }
     },
+    interactWithWorker: async (cb: (worker: ServiceWorker) => void) => {
+      await page.evaluate(`(${cb.toString()})(window.myServiceWorker.active)`)
+    },
     flushBrowserLogs: () => browserLogsManager.clear(),
     flushEvents: () => flushEvents(page),
     deleteAllCookies: () => deleteAllCookies(browserContext),
     sendXhr: (url: string, headers?: string[][]) => sendXhr(page, url, headers),
+    getExtensionId: async () => {
+      let [background] = browserContext.serviceWorkers()
+      if (!background) {
+        background = await browserContext.waitForEvent('serviceworker')
+      }
+
+      const extensionId = background.url().split('/')[2]
+      return extensionId || ''
+    },
   }
 }
 

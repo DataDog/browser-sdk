@@ -51,16 +51,30 @@ export interface WeakRefConstructor {
   new <T extends object>(target: T): WeakRef<T>
 }
 
-// Those are native API types that are not official supported by TypeScript yet
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface CookieStore extends EventTarget {}
+export interface CookieStore extends EventTarget {
+  get(name: string): Promise<unknown>
+  getAll(name?: string): Promise<
+    Array<{
+      name: string
+      value: string
+      domain?: string
+      path?: string
+      expires?: number
+      secure?: boolean
+      sameSite?: 'strict' | 'lax' | 'none'
+      partitioned?: boolean
+    }>
+  >
+}
 
 export interface CookieStoreEventMap {
   change: CookieChangeEvent
 }
 
-export type CookieChangeItem = { name: string; value: string | undefined }
+export interface CookieChangeItem {
+  name: string
+  value: string | undefined
+}
 
 export type CookieChangeEvent = Event & {
   changed: CookieChangeItem[]

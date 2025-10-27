@@ -2,7 +2,7 @@ import { Table, Badge, Menu } from '@mantine/core'
 import { IconCopy, IconDotsVertical, IconColumnInsertRight } from '@tabler/icons-react'
 import type { ComponentPropsWithoutRef, ReactNode } from 'react'
 import React, { useRef, useState } from 'react'
-import clsx from 'clsx'
+import { default as clsx } from 'clsx'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type {
@@ -34,6 +34,7 @@ const RUM_EVENT_TYPE_COLOR = {
   resource: 'cyan',
   telemetry: 'teal',
   vital: 'orange',
+  transition: 'green',
 }
 
 const LOG_STATUS_COLOR = {
@@ -371,7 +372,7 @@ function LongTaskDescription({ event }: { event: RumLongTaskEvent }) {
 
 function VitalDescription({ event }: { event: RumVitalEvent }) {
   const vitalName = event.vital.name
-  const vitalValue = event.vital.duration
+  const vitalValue = (event.vital as { duration?: number }).duration
   const vitalDescription = event.vital.description
   return (
     <>

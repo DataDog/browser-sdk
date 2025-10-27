@@ -1,20 +1,33 @@
-import type { DeflateWorker, RawTelemetryEvent } from '@datadog/browser-core'
-import { display, resetTelemetry, startFakeTelemetry } from '@datadog/browser-core'
+import { type DeflateWorker, type RawTelemetryEvent, type Telemetry, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle } from '@datadog/browser-rum-core'
-import { registerCleanupTask, wait } from '@datadog/browser-core/test'
+import type { MockTelemetry } from '@datadog/browser-core/test'
+import { registerCleanupTask, startMockTelemetry, wait } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
-import { MockWorker } from '../../test'
 import { resetDeflateWorkerState } from '../domain/deflate'
+import { MockWorker } from '../../test'
 import * as replayStats from '../domain/replayStats'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
 import { lazyLoadRecorder } from './lazyLoadRecorder'
 
+const RECORDER_INIT_TELEMETRY: RawTelemetryEvent = {
+  type: 'log',
+  status: 'debug',
+  message: 'Recorder init metrics',
+  metrics: {
+    forced: false,
+    loadRecorderModuleDuration: jasmine.any(Number),
+    recorderInitDuration: jasmine.any(Number),
+    result: 'recorder-load-failed',
+    waitForDocReadyDuration: jasmine.any(Number),
+  },
+}
+
 describe('lazyLoadRecorder', () => {
   let displaySpy: jasmine.Spy
-  let telemetryEvents: RawTelemetryEvent[]
+  let telemetry: MockTelemetry
   let lifeCycle: LifeCycle
   let recorderApi: RecorderApi
   let startRecordingSpy: jasmine.Spy
@@ -33,7 +46,7 @@ describe('lazyLoadRecorder', () => {
     sessionManager?: RumSessionManager
     startSessionReplayRecordingManually?: boolean
   } = {}) {
-    telemetryEvents = startFakeTelemetry()
+    telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
     createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
     displaySpy = spyOn(display, 'error')
@@ -42,36 +55,42 @@ describe('lazyLoadRecorder', () => {
     stopRecordingSpy = jasmine.createSpy('stopRecording')
     startRecordingSpy = jasmine.createSpy('startRecording')
 
-    // Workaround because using resolveTo(startRecordingSpy) was not working
-    loadRecorderSpy = jasmine.createSpy('loadRecorder').and.resolveTo((...args: any) => {
+    loadRecorderSpy = jasmine.createSpy('loadRecorder').and.callFake((...args) => {
       if (loadRecorderError) {
         return lazyLoadRecorder(() => Promise.reject(loadRecorderError))
       }
       startRecordingSpy(...args)
-      return {
+      return Promise.resolve({
         stop: stopRecordingSpy,
-      }
+      })
+    })
+
+    const configuration = mockRumConfiguration({
+      startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
     })
 
     recorderApi = makeRecorderApi(loadRecorderSpy, createDeflateWorkerSpy)
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
-        mockRumConfiguration({ startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false }),
+        configuration,
         sessionManager ?? createRumSessionManagerMock().setId('1234'),
         mockViewHistory(),
-        worker
+        worker,
+        {
+          enabled: true,
+          metricsEnabled: true,
+        } as Telemetry
       )
     }
 
     registerCleanupTask(() => {
       resetDeflateWorkerState()
       replayStats.resetReplayStats()
-      resetTelemetry()
     })
   }
 
-  it('should report an error but no telemetry if CSP blocks the module', async () => {
+  it('should report a console error and metrics but no telemetry error if CSP blocks the module', async () => {
     const loadRecorderError = new Error('Dynamic import was blocked due to Content Security Policy')
     setupRecorderApi({
       loadRecorderError,
@@ -85,10 +104,12 @@ describe('lazyLoadRecorder', () => {
 
     expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Recorder failed to start'), loadRecorderError)
     expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
-    expect(telemetryEvents.length).toBe(0)
+
+    // There should be no actual telemetry error, but we should see the failure in the metrics.
+    expect(await telemetry.getEvents()).toEqual([RECORDER_INIT_TELEMETRY])
   })
 
-  it('should report an error but no telemetry if importing fails for non-CSP reasons', async () => {
+  it('should report a console error and metrics but no telemetry error if importing fails for non-CSP reasons', async () => {
     const loadRecorderError = new Error('Dynamic import failed')
     setupRecorderApi({
       loadRecorderError,
@@ -101,6 +122,8 @@ describe('lazyLoadRecorder', () => {
     await wait(0)
 
     expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Recorder failed to start'), loadRecorderError)
-    expect(telemetryEvents.length).toBe(0)
+
+    // There should be no actual telemetry error, but we should see the failure in the metrics.
+    expect(await telemetry.getEvents()).toEqual([RECORDER_INIT_TELEMETRY])
   })
 })

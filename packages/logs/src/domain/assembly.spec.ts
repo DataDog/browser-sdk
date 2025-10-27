@@ -1,5 +1,5 @@
 import type { Context, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { Observable, ErrorSource, ONE_MINUTE, getTimeStamp, noop } from '@datadog/browser-core'
+import { ErrorSource, ONE_MINUTE, getTimeStamp, noop, HookNames } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
 import type { LogsEvent } from '../logsEvent.types'
@@ -9,11 +9,12 @@ import type { LogsConfiguration } from './configuration'
 import { validateAndBuildLogsConfiguration } from './configuration'
 import { Logger } from './logger'
 import { StatusType } from './logger/isAuthorized'
-import type { LogsSessionManager } from './logsSessionManager'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
+import type { Hooks } from './hooks'
+import { createHooks } from './hooks'
+import { startRUMInternalContext } from './contexts/rumInternalContext'
 
-const initConfiguration = { clientToken: 'xxx', service: 'service' }
-const SESSION_ID = 'session-id'
+const initConfiguration = { clientToken: 'xxx', service: 'service', env: 'test', version: '1.0.0' }
 const DEFAULT_MESSAGE = {
   status: StatusType.info,
   message: 'message',
@@ -25,43 +26,17 @@ const COMMON_CONTEXT: CommonContext = {
     referrer: 'referrer_from_common_context',
     url: 'url_from_common_context',
   },
-  context: { common_context_key: 'common_context_value' },
-  user: {},
-  account: {},
-}
-
-const COMMON_CONTEXT_WITH_USER_AND_ACCOUNT: CommonContext = {
-  ...COMMON_CONTEXT,
-  user: { id: 'id', name: 'name', email: 'test@test.com' },
-  account: { id: 'id', name: 'name' },
-}
-
-const COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID: CommonContext = {
-  ...COMMON_CONTEXT,
-  account: { name: 'name' },
 }
 
 describe('startLogsAssembly', () => {
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: (_startTime, options) => {
-      if (sessionIsTracked && (sessionIsActive || options?.returnInactive)) {
-        return { id: SESSION_ID }
-      }
-    },
-    expireObservable: new Observable(),
-  }
-
   let beforeSend: (event: LogsEvent) => void | boolean
-  let sessionIsActive: boolean
-  let sessionIsTracked: boolean
   let lifeCycle: LifeCycle
   let configuration: LogsConfiguration
   let serverLogs: Array<LogsEvent & Context> = []
   let mainLogger: Logger
+  let hooks: Hooks
 
   beforeEach(() => {
-    sessionIsTracked = true
-    sessionIsActive = true
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
     configuration = {
@@ -70,7 +45,9 @@ describe('startLogsAssembly', () => {
     }
     beforeSend = noop
     mainLogger = new Logger(() => noop)
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
+    hooks = createHooks()
+    startRUMInternalContext(hooks)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
     window.DD_RUM = {
       getInternalContext: noop,
     }
@@ -105,56 +82,6 @@ describe('startLogsAssembly', () => {
     expect(serverLogs.length).toEqual(0)
   })
 
-  describe('event generation condition', () => {
-    it('should not send if session is not tracked', () => {
-      sessionIsTracked = false
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(0)
-    })
-
-    it('should send log with session id if session is active', () => {
-      sessionIsTracked = true
-      sessionIsActive = true
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-      expect(serverLogs[0].session_id).toEqual(SESSION_ID)
-    })
-
-    it('should send log without session id if session has expired', () => {
-      sessionIsTracked = true
-      sessionIsActive = false
-
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-      expect(serverLogs[0].session_id).toBeUndefined()
-    })
-
-    it('should enable/disable the sending when the tracking type change', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-
-      sessionIsTracked = false
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(1)
-
-      sessionIsTracked = true
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-      })
-      expect(serverLogs.length).toEqual(2)
-    })
-  })
-
   describe('contexts inclusion', () => {
     it('should include message context', () => {
       spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
@@ -175,7 +102,6 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0]).toEqual(
         jasmine.objectContaining({
           view: COMMON_CONTEXT.view,
-          ...COMMON_CONTEXT.context,
         })
       )
     })
@@ -186,7 +112,6 @@ describe('startLogsAssembly', () => {
           referrer: 'referrer_from_saved_common_context',
           url: 'url_from_saved_common_context',
         },
-        context: { foo: 'bar' },
         user: { email: 'test@test.com' },
         account: { id: '123' },
       }
@@ -195,7 +120,6 @@ describe('startLogsAssembly', () => {
       expect(serverLogs[0]).toEqual(
         jasmine.objectContaining({
           view: savedCommonContext.view,
-          ...savedCommonContext.context,
         })
       )
       expect(serverLogs[0].common_context_key).toBeUndefined()
@@ -245,30 +169,53 @@ describe('startLogsAssembly', () => {
     })
   })
 
-  describe('contexts precedence', () => {
-    it('common context should take precedence over service and session_id', () => {
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: DEFAULT_MESSAGE,
-        savedCommonContext: {
-          ...COMMON_CONTEXT,
-          context: { service: 'foo', session_id: 'bar' },
-        },
-      })
+  describe('assembly precedence', () => {
+    it('defaultLogsEventAttributes should take precedence over service, session_id', () => {
+      hooks.register(HookNames.Assemble, () => ({
+        service: 'foo',
+        session_id: 'bar',
+      }))
+
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
       expect(serverLogs[0].service).toBe('foo')
       expect(serverLogs[0].session_id).toBe('bar')
     })
 
-    it('RUM context should take precedence over common context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ view: { url: 'from-rum-context' } })
+    it('defaultLogsEventAttributes should take precedence over common context', () => {
+      hooks.register(HookNames.Assemble, () => ({
+        view: {
+          referrer: 'referrer_from_defaultLogsEventAttributes',
+          url: 'url_from_defaultLogsEventAttributes',
+        },
+        user: { name: 'name_from_defaultLogsEventAttributes' },
+      }))
 
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+        savedCommonContext: {
+          view: {
+            referrer: 'referrer_from_common_context',
+            url: 'url_from_common_context',
+          },
+        },
+      })
 
-      expect(serverLogs[0].view.url).toEqual('from-rum-context')
+      expect(serverLogs[0]).toEqual(
+        jasmine.objectContaining({
+          view: {
+            referrer: 'referrer_from_defaultLogsEventAttributes',
+            url: 'url_from_defaultLogsEventAttributes',
+          },
+          user: { name: 'name_from_defaultLogsEventAttributes' },
+        })
+      )
     })
 
-    it('raw log should take precedence over RUM context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({ message: 'from-rum-context' })
+    it('raw log should take precedence over defaultLogsEventAttributes', () => {
+      hooks.register(HookNames.Assemble, () => ({
+        message: 'from-defaultLogsEventAttributes',
+      }))
 
       lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
 
@@ -282,6 +229,21 @@ describe('startLogsAssembly', () => {
       })
 
       expect(serverLogs[0].message).toEqual('from-message-context')
+    })
+  })
+
+  describe('ddtags', () => {
+    it('should contain and format the default tags', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0')
+    })
+
+    it('should append custom tags', () => {
+      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+        rawLogsEvent: DEFAULT_MESSAGE,
+        ddtags: ['foo:bar'],
+      })
+      expect(serverLogs[0].ddtags).toEqual('sdk_version:test,env:test,service:service,version:1.0.0,foo:bar')
     })
   })
 
@@ -314,110 +276,17 @@ describe('startLogsAssembly', () => {
   })
 })
 
-describe('user and account management', () => {
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => (sessionIsTracked ? { id: SESSION_ID } : undefined),
-    expireObservable: new Observable<void>(),
-  }
-
-  let sessionIsTracked: boolean
-  let lifeCycle: LifeCycle
-  let serverLogs: Array<LogsEvent & Context> = []
-
-  const beforeSend: (event: LogsEvent) => void | boolean = noop
-  const configuration = {
-    ...validateAndBuildLogsConfiguration(initConfiguration)!,
-    beforeSend: (x: LogsEvent) => beforeSend(x),
-  }
-
-  beforeEach(() => {
-    sessionIsTracked = true
-    lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
-  })
-
-  afterEach(() => {
-    delete window.DD_RUM
-    serverLogs = []
-  })
-
-  it('should not output usr/account key if user/account is not set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, noop)
-
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-    expect(serverLogs[0].usr).toBeUndefined()
-    expect(serverLogs[0].account).toBeUndefined()
-  })
-
-  it('should include user/account data when user/account has been set', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_USER_AND_ACCOUNT, noop)
-
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-    expect(serverLogs[0].usr).toEqual({
-      id: 'id',
-      name: 'name',
-      email: 'test@test.com',
-    })
-
-    expect(serverLogs[0].account).toEqual({
-      id: 'id',
-      name: 'name',
-    })
-  })
-
-  it('should prioritize global context over user/account context', () => {
-    const globalContextWithUser = {
-      ...COMMON_CONTEXT_WITH_USER_AND_ACCOUNT,
-      context: {
-        ...COMMON_CONTEXT.context,
-        usr: {
-          id: 4242,
-          name: 'solution',
-        },
-        account: {
-          id: 4242,
-          name: 'account',
-        },
-      },
-    }
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => globalContextWithUser, noop)
-
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-    expect(serverLogs[0].usr).toEqual({
-      id: 4242,
-      name: 'solution',
-      email: 'test@test.com',
-    })
-
-    expect(serverLogs[0].account).toEqual({
-      id: 4242,
-      name: 'account',
-    })
-  })
-
-  it('should not include account if `id` is missing and display a warn', () => {
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT_WITH_MISSING_ACCOUNT_ID, noop)
-
-    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, { rawLogsEvent: DEFAULT_MESSAGE })
-
-    expect(serverLogs[0].account).toBe(undefined)
-  })
-})
-
 describe('logs limitation', () => {
   let clock: Clock
-  const sessionManager: LogsSessionManager = {
-    findTrackedSession: () => ({ id: SESSION_ID }),
-    expireObservable: new Observable(),
-  }
-
   let beforeSend: (event: LogsEvent) => void | boolean
   let lifeCycle: LifeCycle
+  let hooks: Hooks
   let serverLogs: Array<LogsEvent & Context> = []
   let reportErrorSpy: jasmine.Spy<jasmine.Func>
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
+    hooks = createHooks()
     lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverRumEvent) => serverLogs.push(serverRumEvent))
     const configuration = {
       ...validateAndBuildLogsConfiguration(initConfiguration)!,
@@ -427,14 +296,14 @@ describe('logs limitation', () => {
     }
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(sessionManager, configuration, lifeCycle, () => COMMON_CONTEXT, reportErrorSpy)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
     clock = mockClock()
   })
 
   afterEach(() => {
-    clock.cleanup()
     serverLogs = []
   })
+
   it('should not apply to agent logs', () => {
     lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
       rawLogsEvent: { ...DEFAULT_MESSAGE, origin: ErrorSource.AGENT, status: 'error', message: 'foo' },

@@ -1,6 +1,5 @@
-import { getConnectivity } from '@datadog/browser-core'
-import type { Hooks, DefaultRumEventAttributes } from '../../hooks'
-import { HookNames } from '../../hooks'
+import { getConnectivity, HookNames } from '@datadog/browser-core'
+import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export function startConnectivityContext(hooks: Hooks) {
   hooks.register(

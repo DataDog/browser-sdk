@@ -10,8 +10,7 @@ import {
   validateAndBuildConfiguration,
   isSampleRate,
   isNumber,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
+  isNonEmptyArray,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
@@ -21,17 +20,48 @@ import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
 
+/**
+ * Init Configuration for the RUM browser SDK.
+ *
+ * @category Main
+ * @example NPM
+ * ```ts
+ * import { datadogRum } from '@datadog/browser-rum'
+ *
+ * datadogRum.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   // ...
+ * })
+ * ```
+ * @example CDN
+ * ```ts
+ * DD_RUM.init({
+ *   applicationId: '<DATADOG_APPLICATION_ID>',
+ *   clientToken: '<DATADOG_CLIENT_TOKEN>',
+ *   site: '<DATADOG_SITE>',
+ *   ...
+ * })
+ * ```
+ */
 export interface RumInitConfiguration extends InitConfiguration {
   // global options
   /**
    * The RUM application ID.
+   *
+   * @category Authentication
    */
   applicationId: string
+
   /**
    * Whether to propagate user and account IDs in the baggage header of trace requests.
-   * @default false
+   *
+   * @category Tracing
+   * @defaultValue false
    */
   propagateTraceBaggage?: boolean | undefined
+
   /**
    * Access to every event collected by the RUM SDK before they are sent to Datadog.
    * It allows:
@@ -40,98 +70,178 @@ export interface RumInitConfiguration extends InitConfiguration {
    * - Discard selected RUM events
    *
    * See [Enrich And Control Browser RUM Data With beforeSend](https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data) for further information.
+   *
+   * @category Data Collection
+   * @param event - The RUM event
+   * @param context - The RUM event domain context providing access to native browser data based on the event type (e.g. error, performance entry).
+   * @returns true if the event should be sent to Datadog, false otherwise
    */
   beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => boolean) | undefined
+
   /**
    * A list of request origins ignored when computing the page activity.
    * See [How page activity is calculated](https://docs.datadoghq.com/real_user_monitoring/browser/monitoring_page_performance/#how-page-activity-is-calculated) for further information.
    */
   excludedActivityUrls?: MatchOption[] | undefined
+
   /**
    * URL pointing to the Datadog Browser SDK Worker JavaScript file. The URL can be relative or absolute, but is required to have the same origin as the web application.
    * See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.
+   *
+   * @category Transport
    */
   workerUrl?: string
+
   /**
    * Compress requests sent to the Datadog intake to reduce bandwidth usage when sending large amounts of data. The compression is done in a Worker thread.
    * See [Content Security Policy guidelines](https://docs.datadoghq.com/integrations/content_security_policy_logs/?tab=firefox#use-csp-with-real-user-monitoring-and-session-replay) for further information.
+   *
+   * @category Transport
    */
   compressIntakeRequests?: boolean | undefined
+
+  /**
+   * [Internal option] Id of the remote configuration
+   *
+   * @internal
+   */
   remoteConfigurationId?: string | undefined
+
+  /**
+   * [Internal option] set a proxy URL for the remote configuration
+   *
+   * @internal
+   */
+  remoteConfigurationProxy?: string | undefined
 
   // tracing options
   /**
    * A list of request URLs used to inject tracing headers.
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+   *
+   * @category Tracing
    */
   allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
 
   /**
    * The percentage of requests to trace: 100 for all, 0 for none.
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+   *
+   * @category Tracing
    */
   traceSampleRate?: number | undefined
   /**
    * If you set a `traceSampleRate`, to ensure backend services' sampling decisions are still applied, configure the `traceContextInjection` initialization parameter to sampled.
-   * @default sampled
+   *
    * See [Connect RUM and Traces](https://docs.datadoghq.com/real_user_monitoring/platform/connect_rum_and_traces/?tab=browserrum) for further information.
+   *
+   * @category Tracing
+   * @defaultValue sampled
    */
   traceContextInjection?: TraceContextInjection | undefined
 
   // replay options
   /**
    * Allow to protect end user privacy and prevent sensitive organizational information from being collected.
-   * @default mask
+   *
    * See [Replay Privacy Options](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/privacy_options) for further information.
+   *
+   * @category Privacy
+   * @defaultValue mask
    */
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
+
   /**
    * If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL .
+   *
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
+   *
    */
   subdomain?: string
+
   /**
    * The percentage of tracked sessions with [Browser RUM & Session Replay pricing](https://www.datadoghq.com/pricing/?product=real-user-monitoring--session-replay#real-user-monitoring--session-replay) features: 100 for all, 0 for none.
+   *
    * See [Configure Your Setup For Browser RUM and Browser RUM & Session Replay Sampling](https://docs.datadoghq.com/real_user_monitoring/guide/sampling-browser-plans) for further information.
+   *
+   * @category Session Replay
    */
   sessionReplaySampleRate?: number | undefined
+
   /**
    * If the session is sampled for Session Replay, only start the recording when `startSessionReplayRecording()` is called, instead of at the beginning of the session. Default: if startSessionReplayRecording is 0, true; otherwise, false.
+   *
    * See [Session Replay Usage](https://docs.datadoghq.com/real_user_monitoring/session_replay/browser/#usage) for further information.
+   *
+   * @category Session Replay
    */
   startSessionReplayRecordingManually?: boolean | undefined
 
   /**
    * Enables privacy control for action names.
+   *
+   * @category Privacy
    */
   enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
+
   /**
    * Enables automatic collection of users actions.
+   *
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
-   * @default true
+   *
+   * @category Data Collection
+   * @defaultValue true
    */
   trackUserInteractions?: boolean | undefined
+
   /**
    * Specify your own attribute to use to name actions.
+   *
    * See [Declare a name for click actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions/#declare-a-name-for-click-actions) for further information.
+   *
+   * @category Data Collection
    */
   actionNameAttribute?: string | undefined
 
   // view options
   /**
    * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
+   *
+   * @category Data Collection
    */
   trackViewsManually?: boolean | undefined
+
+  /**
+   * Enable the creation of dedicated views for pages restored from the Back-Forward cache.
+   *
+   * @category Data Collection
+   * @defaultValue false
+   */
+  trackBfcacheViews?: boolean | undefined
+
   /**
    * Enables collection of resource events.
-   * @default true
+   *
+   * @category Data Collection
+   * @defaultValue true
    */
   trackResources?: boolean | undefined
+
   /**
    * Enables collection of long task events.
-   * @default true
+   *
+   * @category Data Collection
+   * @defaultValue true
    */
   trackLongTasks?: boolean | undefined
+
+  /**
+   * Enables early request collection before resource timing entries are available.
+   *
+   * @category Data Collection
+   * @defaultValue false
+   */
+  trackEarlyRequests?: boolean | undefined
 
   /**
    * List of plugins to enable. The plugins API is unstable and experimental, and may change without
@@ -141,21 +251,36 @@ export interface RumInitConfiguration extends InitConfiguration {
   plugins?: RumPlugin[] | undefined
 
   /**
-   * Enables collection of features flags in chosen events.
+   * Enables collection of features flags in additional events (e.g. long task, resource, action, vital).
+   *
+   * @category Data Collection
    */
   trackFeatureFlagsForEvents?: FeatureFlagsForEvents[]
 
   /**
-   * @experimental Not ready for production.
    * The percentage of users profiled. A value between 0 and 100.
-   * @default 0
+   *
+   * @category Profiling
+   * @defaultValue 0
    */
   profilingSampleRate?: number | undefined
+
+  /**
+   * A list of GraphQL endpoint URLs to track and enrich with GraphQL-specific metadata.
+   *
+   * @category Data Collection
+   */
+  allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
+
+export interface GraphQlUrlOption {
+  match: MatchOption
+  trackPayload?: boolean
+}
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
@@ -175,18 +300,20 @@ export interface RumConfiguration extends Configuration {
   trackViewsManually: boolean
   trackResources: boolean
   trackLongTasks: boolean
-  version?: string
+  trackBfcacheViews: boolean
+  trackEarlyRequests: boolean
   subdomain?: string
-  customerDataTelemetrySampleRate: number
   traceContextInjection: TraceContextInjection
   plugins: RumPlugin[]
   trackFeatureFlagsForEvents: FeatureFlagsForEvents[]
   profilingSampleRate: number
   propagateTraceBaggage: boolean
+  allowedGraphQlUrls: GraphQlUrlOption[]
 }
 
 export function validateAndBuildRumConfiguration(
-  initConfiguration: RumInitConfiguration
+  initConfiguration: RumInitConfiguration,
+  errorStack?: string
 ): RumConfiguration | undefined {
   if (
     initConfiguration.trackFeatureFlagsForEvents !== undefined &&
@@ -217,18 +344,18 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
-  const baseConfiguration = validateAndBuildConfiguration(initConfiguration)
+  const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
+
+  const allowedGraphQlUrls = validateAndBuildGraphQlOptions(initConfiguration)
+
   if (!baseConfiguration) {
     return
   }
-
-  const profilingEnabled = isExperimentalFeatureEnabled(ExperimentalFeature.PROFILING)
 
   const sessionReplaySampleRate = initConfiguration.sessionReplaySampleRate ?? 0
 
   return {
     applicationId: initConfiguration.applicationId,
-    version: initConfiguration.version || undefined,
     actionNameAttribute: initConfiguration.actionNameAttribute,
     sessionReplaySampleRate,
     startSessionReplayRecordingManually:
@@ -245,19 +372,21 @@ export function validateAndBuildRumConfiguration(
     trackViewsManually: !!initConfiguration.trackViewsManually,
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
+    trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
+    trackEarlyRequests: !!initConfiguration.trackEarlyRequests,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
       : DefaultPrivacyLevel.MASK,
     enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
-    customerDataTelemetrySampleRate: 1,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
-    profilingSampleRate: profilingEnabled ? (initConfiguration.profilingSampleRate ?? 0) : 0, // Enforce 0 if profiling is not enabled, and set 0 as default when not set.
+    profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
+    allowedGraphQlUrls,
     ...baseConfiguration,
   }
 }
@@ -301,7 +430,7 @@ function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration)
 function getSelectedTracingPropagators(configuration: RumInitConfiguration): PropagatorType[] {
   const usedTracingPropagators = new Set<PropagatorType>()
 
-  if (Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0) {
+  if (isNonEmptyArray(configuration.allowedTracingUrls)) {
     configuration.allowedTracingUrls.forEach((option) => {
       if (isMatchOption(option)) {
         DEFAULT_PROPAGATOR_TYPES.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))
@@ -315,6 +444,47 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
   return Array.from(usedTracingPropagators)
 }
 
+/**
+ * Build GraphQL options from configuration
+ */
+function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration): GraphQlUrlOption[] {
+  if (!initConfiguration.allowedGraphQlUrls) {
+    return []
+  }
+
+  if (!Array.isArray(initConfiguration.allowedGraphQlUrls)) {
+    display.warn('allowedGraphQlUrls should be an array')
+    return []
+  }
+
+  const graphQlOptions: GraphQlUrlOption[] = []
+
+  initConfiguration.allowedGraphQlUrls.forEach((option) => {
+    if (isMatchOption(option)) {
+      graphQlOptions.push({ match: option, trackPayload: false })
+    } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
+      graphQlOptions.push({
+        match: option.match,
+        trackPayload: !!option.trackPayload,
+      })
+    }
+  })
+
+  return graphQlOptions
+}
+
+function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
+  return (
+    isNonEmptyArray(allowedGraphQlUrls) &&
+    allowedGraphQlUrls.some((option) => {
+      if (typeof option === 'object' && 'trackPayload' in option) {
+        return !!option.trackPayload
+      }
+      return false
+    })
+  )
+}
+
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
@@ -323,25 +493,31 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     start_session_replay_recording_manually: configuration.startSessionReplayRecordingManually,
     trace_sample_rate: configuration.traceSampleRate,
     trace_context_injection: configuration.traceContextInjection,
+    propagate_trace_baggage: configuration.propagateTraceBaggage,
     action_name_attribute: configuration.actionNameAttribute,
-    use_allowed_tracing_urls:
-      Array.isArray(configuration.allowedTracingUrls) && configuration.allowedTracingUrls.length > 0,
+    use_allowed_tracing_urls: isNonEmptyArray(configuration.allowedTracingUrls),
+    use_allowed_graph_ql_urls: isNonEmptyArray(configuration.allowedGraphQlUrls),
+    use_track_graph_ql_payload: hasGraphQlPayloadTracking(configuration.allowedGraphQlUrls),
     selected_tracing_propagators: getSelectedTracingPropagators(configuration),
     default_privacy_level: configuration.defaultPrivacyLevel,
     enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
-    use_excluded_activity_urls:
-      Array.isArray(configuration.excludedActivityUrls) && configuration.excludedActivityUrls.length > 0,
+    use_excluded_activity_urls: isNonEmptyArray(configuration.excludedActivityUrls),
     use_worker_url: !!configuration.workerUrl,
     compress_intake_requests: configuration.compressIntakeRequests,
     track_views_manually: configuration.trackViewsManually,
     track_user_interactions: configuration.trackUserInteractions,
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
+    track_bfcache_views: configuration.trackBfcacheViews,
+    track_early_requests: configuration.trackEarlyRequests,
     plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
+    remote_configuration_id: configuration.remoteConfigurationId,
+    profiling_sample_rate: configuration.profilingSampleRate,
+    use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

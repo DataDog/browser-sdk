@@ -1,13 +1,9 @@
-import type { RelativeTime, Context } from '@datadog/browser-core'
-import {
-  willSyntheticsInjectRum,
-  addTelemetryDebug,
-  getSyntheticsTestId,
-  getSyntheticsResultId,
-} from '@datadog/browser-core'
+import type { RelativeTime, RumInternalContext } from '@datadog/browser-core'
+import { globalObject, willSyntheticsInjectRum, HookNames, SKIPPED } from '@datadog/browser-core'
+import type { Hooks } from '../hooks'
 
 interface Rum {
-  getInternalContext?: (startTime?: RelativeTime) => Context | undefined
+  getInternalContext?: (startTime?: RelativeTime) => RumInternalContext | undefined
 }
 
 interface BrowserWindow {
@@ -15,32 +11,45 @@ interface BrowserWindow {
   DD_RUM_SYNTHETICS?: Rum
 }
 
-let logsSentBeforeRumInjectionTelemetryAdded = false
+export function startRUMInternalContext(hooks: Hooks) {
+  const browserWindow = globalObject as BrowserWindow
 
-export function getRUMInternalContext(startTime?: RelativeTime): Context | undefined {
-  const browserWindow = window as BrowserWindow
-
-  if (willSyntheticsInjectRum()) {
-    const context = getInternalContextFromRumGlobal(browserWindow.DD_RUM_SYNTHETICS)
-    if (!context && !logsSentBeforeRumInjectionTelemetryAdded) {
-      logsSentBeforeRumInjectionTelemetryAdded = true
-      addTelemetryDebug('Logs sent before RUM is injected by the synthetics worker', {
-        testId: getSyntheticsTestId(),
-        resultId: getSyntheticsResultId(),
-      })
+  hooks.register(HookNames.Assemble, ({ startTime }) => {
+    const internalContext = getRUMInternalContext(startTime)
+    if (!internalContext) {
+      return SKIPPED
     }
-    return context
+
+    return internalContext
+  })
+
+  hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => {
+    const internalContext = getRUMInternalContext(startTime)
+
+    if (!internalContext) {
+      return SKIPPED
+    }
+
+    return {
+      application: { id: internalContext.application_id },
+      view: { id: internalContext.view?.id },
+      action: { id: internalContext.user_action?.id as string },
+    }
+  })
+
+  function getRUMInternalContext(startTime?: RelativeTime) {
+    const willSyntheticsInjectRumResult = willSyntheticsInjectRum()
+    const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
+    const rumContext = getInternalContextFromRumGlobal(startTime, rumSource)
+
+    if (rumContext) {
+      return rumContext
+    }
   }
 
-  return getInternalContextFromRumGlobal(browserWindow.DD_RUM)
-
-  function getInternalContextFromRumGlobal(rumGlobal?: Rum): Context | undefined {
+  function getInternalContextFromRumGlobal(startTime?: RelativeTime, rumGlobal?: Rum): RumInternalContext | undefined {
     if (rumGlobal && rumGlobal.getInternalContext) {
       return rumGlobal.getInternalContext(startTime)
     }
   }
-}
-
-export function resetRUMInternalContext() {
-  logsSentBeforeRumInjectionTelemetryAdded = false
 }

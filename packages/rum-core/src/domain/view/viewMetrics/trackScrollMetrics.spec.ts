@@ -62,7 +62,6 @@ describe('trackScrollMetrics', () => {
 
   afterEach(() => {
     document.body.innerHTML = ''
-    clock.cleanup()
   })
 
   const updateScrollValues = (scrollValues: ScrollValues) => {

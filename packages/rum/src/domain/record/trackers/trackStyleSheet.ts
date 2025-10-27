@@ -1,19 +1,24 @@
 import { instrumentMethod } from '@datadog/browser-core'
 import { IncrementalSource } from '../../../types'
 import type { StyleSheetRuleData, BrowserIncrementalSnapshotRecord } from '../../../types'
-import { getSerializedNodeId, hasSerializedNode } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { SerializationScope } from '../serialization'
 import type { Tracker } from './tracker.types'
 
 type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 
 export type StyleSheetCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function trackStyleSheet(styleSheetCb: StyleSheetCallback): Tracker {
+export function trackStyleSheet(scope: SerializationScope, styleSheetCb: StyleSheetCallback): Tracker {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
-    if (styleSheet && hasSerializedNode(styleSheet.ownerNode!)) {
-      callback(getSerializedNodeId(styleSheet.ownerNode))
+    if (!styleSheet || !styleSheet.ownerNode) {
+      return
     }
+    const id = scope.nodeIds.get(styleSheet.ownerNode)
+    if (id === undefined) {
+      return
+    }
+    callback(id)
   }
 
   const instrumentationStoppers = [

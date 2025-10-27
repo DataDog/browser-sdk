@@ -1,0 +1,6 @@
+---
+description: Read this to know which package manager to use
+globs:
+alwaysApply: true
+---
+- We use Yarn. Never use neither `npm` nor `npx`.
