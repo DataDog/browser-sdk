@@ -22,7 +22,7 @@ runMain(async () => {
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPath}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPath}`.withLogs().run()
 
-  if (withMonitorChecks) {
+  if (withMonitorChecks && uploadPath !== 'root') {
     await gateMonitors(uploadPath)
   }
 })
