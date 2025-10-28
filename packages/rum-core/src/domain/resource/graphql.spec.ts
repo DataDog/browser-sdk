@@ -1,4 +1,3 @@
-import { RequestType } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
 import type { RequestCompleteEvent } from '../requestCollection'
 import {
@@ -263,19 +262,15 @@ describe('GraphQL detection and metadata extraction', () => {
   })
 
   describe('extractGraphQlMetadata', () => {
-    it('should extract both request and response errors for XHR', () => {
+    it('should extract request metadata and response errors from RequestCompleteEvent', () => {
       const requestBody = JSON.stringify({
         query: 'query GetUser { user { id } }',
       })
 
-      const responseBody = JSON.stringify({
-        errors: [{ message: 'Not found' }],
-      })
-
       const request: RequestCompleteEvent = {
-        type: RequestType.XHR,
         body: requestBody,
-        xhr: { response: responseBody } as XMLHttpRequest,
+        graphqlErrorsCount: 1,
+        graphqlErrors: [{ message: 'Not found' }],
       } as RequestCompleteEvent
 
       const result = extractGraphQlMetadata(request, {
@@ -289,13 +284,32 @@ describe('GraphQL detection and metadata extraction', () => {
       expect(result?.errors).toEqual([{ message: 'Not found' }])
     })
 
-    it('should extract response errors from Fetch request event', () => {
+    it('should extract request metadata without response errors when not provided', () => {
       const requestBody = JSON.stringify({
         query: 'query GetUser { user { id } }',
       })
 
       const request: RequestCompleteEvent = {
-        type: RequestType.FETCH,
+        body: requestBody,
+      } as RequestCompleteEvent
+
+      const result = extractGraphQlMetadata(request, {
+        match: '/graphql',
+        trackPayload: false,
+        trackResponseErrors: true,
+      })
+
+      expect(result?.operationType).toBe('query')
+      expect(result?.errors_count).toBeUndefined()
+      expect(result?.errors).toBeUndefined()
+    })
+
+    it('should handle multiple errors from RequestCompleteEvent', () => {
+      const requestBody = JSON.stringify({
+        query: 'query GetUser { user { id } }',
+      })
+
+      const request: RequestCompleteEvent = {
         body: requestBody,
         graphqlErrorsCount: 2,
         graphqlErrors: [{ message: 'Error 1' }, { message: 'Error 2' }],

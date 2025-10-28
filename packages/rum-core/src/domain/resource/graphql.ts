@@ -1,4 +1,4 @@
-import { matchList, ONE_KIBI_BYTE, safeTruncate, RequestType } from '@datadog/browser-core'
+import { matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
 import type { RumConfiguration, GraphQlUrlOption } from '../configuration'
 import type { RequestCompleteEvent } from '../requestCollection'
 
@@ -32,22 +32,11 @@ export function extractGraphQlMetadata(
     return
   }
 
-  if (request.type === RequestType.XHR && request.xhr && graphQlConfig.trackResponseErrors) {
-    extractGraphQlXhrResponseErrors(request.xhr, (errorsCount, errors) => {
-      if (errorsCount !== undefined) {
-        metadata.errors_count = errorsCount
-      }
-      if (errors !== undefined) {
-        metadata.errors = errors
-      }
-    })
-  } else if (request.type === RequestType.FETCH) {
-    if (request.graphqlErrorsCount !== undefined) {
-      metadata.errors_count = request.graphqlErrorsCount
-    }
-    if (request.graphqlErrors !== undefined) {
-      metadata.errors = request.graphqlErrors
-    }
+  if (request.graphqlErrorsCount !== undefined) {
+    metadata.errors_count = request.graphqlErrorsCount
+  }
+  if (request.graphqlErrors !== undefined) {
+    metadata.errors = request.graphqlErrors
   }
 
   return metadata
@@ -147,15 +136,4 @@ export function extractGraphQlRequestMetadata(
 
 function getOperationType(query: string) {
   return query.match(/^\s*(query|mutation|subscription)\b/i)?.[1] as 'query' | 'mutation' | 'subscription' | undefined
-}
-
-function extractGraphQlXhrResponseErrors(
-  xhr: XMLHttpRequest,
-  callback: (errorsCount?: number, errors?: GraphQlError[]) => void
-) {
-  if (typeof xhr.response === 'string') {
-    parseGraphQlResponse(xhr.response, callback)
-  } else {
-    callback()
-  }
 }
