@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test'
 import { createBenchmarkTest } from '../helpers'
 
 test.describe('benchmark', () => {
-  createBenchmarkTest('heavy').run(async (page, takeMeasurements) => {
-    await page.goto('http://localhost:5173/')
+  createBenchmarkTest('heavy').run(async (page, takeMeasurements, appUrl) => {
+    await page.goto(appUrl);
     await takeMeasurements()
 
     await page.getByRole('textbox', { name: 'Search...' }).click()

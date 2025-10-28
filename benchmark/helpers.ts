@@ -1,14 +1,14 @@
 import { test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import type { BrowserWindow, Metrics } from 'profiling.type'
-import { isContinuousIntegration } from './environment'
+import { isContinuousIntegration, sdkBundleUrl, testAppUrl } from './environment'
 import { startProfiling } from './profilers'
 import { reportToConsole } from './reporters/reportToConsole'
 import { reportToDatadog } from './reporters/reportToDatadog'
 
-const bundleUrl = 'https://www.datadoghq-browser-agent.com/us1/v6/datadog-rum.js'
-const scenarioConfigurations = ['none', 'rum', 'rum_replay', 'rum_profiling'] as const
-const rumApplicationId = '9fa62a5b-8a7e-429d-8466-8b111a4d4693'
+const scenarioConfigurations = ['none', 'rum', 'rum_replay', 'rum_profiling', 'none_with_headers'] as const
+const rumApplicationId = 'a81f40b8-e9bd-4805-9b66-4e4edc529a14'
+const clientToken = 'pubfe2e138a54296da76dd66f6b0b5f3d98'
 
 type ScenarioConfiguration = (typeof scenarioConfigurations)[number]
 
@@ -17,21 +17,22 @@ async function injectSDK(page: Page, scenarioName: string, scenarioConfiguration
     function loadSDK() {
       (function(h,o,u,n,d) {
         h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
-        d=o.createElement(u);d.async=1;d.src=n
-        n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
-      })(window,document,'script','${bundleUrl}','DD_RUM')
+        d=o.createElement(u);
+        d.async=1;
+        d.src=n;
+        o.head.appendChild(d);
+      })(window,document,'script','${sdkBundleUrl}','DD_RUM')
 
       window.DD_RUM.onReady(function() {
         window.DD_RUM.init({
-          clientToken: '${isContinuousIntegration ? 'pubab31fd1ab9d01d2b385a8aa3dd403b1d' : 'fake-client-token' /** prevent sending event in local environment */}',
+          clientToken: '${clientToken}',
           applicationId: '${rumApplicationId}',
-          site: 'datadoghq.com',
+          site: 'datad0g.com',
           service: 'browser-sdk-continuous-benchmark',
-          profilingSampleRate: ${scenarioConfiguration === 'rum_replay' ? 100 : 0},
-          sessionReplaySampleRate: ${scenarioConfiguration === 'rum_profiling' ? 100 : 0},
+          profilingSampleRate: ${scenarioConfiguration === 'rum_profiling' ? 100 : 0},
           trackBfcacheViews: true,
         })
-        window.DD_RUM.addContext('scenario', { name: '${scenarioName}', configuration: '${scenarioConfiguration}' })
+        console.log('DD_RUM SDK initialized with profiling rate:', ${scenarioConfiguration === 'rum_profiling' ? 100 : 0})
       })
     }
 
@@ -43,7 +44,18 @@ async function injectSDK(page: Page, scenarioName: string, scenarioConfiguration
   `)
 }
 
-type TestRunner = (page: Page, takeMeasurements: () => Promise<void>) => Promise<void> | void
+type TestRunner = (page: Page, takeMeasurements: () => Promise<void>, appUrl: string) => Promise<void> | void
+
+function getAppUrl(scenarioConfiguration: ScenarioConfiguration): string {
+  const url = new URL(testAppUrl)
+  
+  // Add profiling parameter for configurations that need response headers
+  if (scenarioConfiguration === 'rum_profiling' || scenarioConfiguration === 'none_with_headers' || scenarioConfiguration === 'rum_replay') {
+    url.searchParams.set('profiling', 'true')
+  }
+  
+  return url.toString()
+}
 
 async function stopSession(page: Page) {
   await page.evaluate(() => {
@@ -61,14 +73,25 @@ export function createBenchmarkTest(scenarioName: string) {
 
           const { stopProfiling, takeMeasurements } = await startProfiling(page)
 
-          if (scenarioConfiguration !== 'none') {
+          if (scenarioConfiguration !== 'none' && scenarioConfiguration !== 'none_with_headers') {
             await injectSDK(page, scenarioName, scenarioConfiguration)
           }
 
-          await runner(page, takeMeasurements)
+          await runner(page, takeMeasurements, getAppUrl(scenarioConfiguration))
 
-          if (scenarioConfiguration !== 'none') {
+          // Wait for profiler to finish capturing and sending profiles
+          if (scenarioConfiguration === 'rum_profiling') {
+            console.log('Waiting for profiles to be sent...')
+            await page.waitForTimeout(5000) // Give profiler time to send profiles
+          }
+
+          if (scenarioConfiguration !== 'none' && scenarioConfiguration !== 'none_with_headers') {
             await stopSession(page) // Flush events
+          }
+          
+          // Additional wait after stopping session to ensure profiles are uploaded
+          if (scenarioConfiguration === 'rum_profiling') {
+            await page.waitForTimeout(2000)
           }
 
           metrics[scenarioConfiguration] = await stopProfiling()
