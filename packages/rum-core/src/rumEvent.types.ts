@@ -1324,7 +1324,7 @@ export type RumViewEvent = CommonProperties &
     }
     [k: string]: unknown
   }
-export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent | RumVitalAppLaunchEvent
+export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent
 /**
  * Schema for a duration vital event.
  */
@@ -1404,52 +1404,6 @@ export type RumVitalOperationStepEvent = RumVitalEventCommonProperties & {
      * Reason for the failure of the step, if applicable
      */
     readonly failure_reason?: 'error' | 'abandoned' | 'other'
-    [k: string]: unknown
-  }
-  [k: string]: unknown
-}
-/**
- * Schema for app launch metrics.
- */
-export type RumVitalAppLaunchEvent = RumVitalEventCommonProperties & {
-  /**
-   * Vital properties
-   */
-  readonly vital: {
-    /**
-     * Type of the vital.
-     */
-    readonly type: 'app_launch'
-    /**
-     * The metric of the app launch.
-     */
-    readonly app_launch_metric: 'ttid' | 'ttfd'
-    /**
-     * Duration of the vital in nanoseconds.
-     */
-    readonly duration: number
-    /**
-     * The type of the app launch.
-     */
-    readonly startup_type?: 'cold_start' | 'warm_start'
-    /**
-     * Whether the app launch was prewarmed.
-     */
-    readonly is_prewarmed?: boolean
-    /**
-     * If the app launch had a saved instance state bundle.
-     */
-    readonly has_saved_instance_state_bundle?: boolean
-    [k: string]: unknown
-  }
-  /**
-   * Internal properties
-   */
-  readonly _dd?: {
-    /**
-     * Profiling context
-     */
-    profiling?: ProfilingInternalContextSchema
     [k: string]: unknown
   }
   [k: string]: unknown
