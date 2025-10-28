@@ -339,20 +339,25 @@ describe('collect xhr', () => {
 describe('GraphQL response errors tracking', () => {
   const FAKE_GRAPHQL_URL = 'http://fake-url/graphql'
 
-  it('should extract GraphQL errors when trackResponseErrors is enabled', (done) => {
+  function setupGraphQlFetchTest(trackResponseErrors: boolean) {
     const mockFetchManager = mockFetch()
     const completeSpy = jasmine.createSpy('requestComplete')
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
 
     const configuration = mockRumConfiguration({
-      allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors: true }],
+      allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors }],
     })
     const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
     const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
     registerCleanupTask(stop)
 
-    const fetch = window.fetch as MockFetch
+    return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }
+  }
+
+  it('should extract GraphQL errors when trackResponseErrors is enabled', (done) => {
+    const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(true)
+
     fetch(FAKE_GRAPHQL_URL, {
       method: 'POST',
       body: JSON.stringify({ query: 'query Test { test }' }),
@@ -373,19 +378,8 @@ describe('GraphQL response errors tracking', () => {
   })
 
   it('should not extract GraphQL errors when trackResponseErrors is false', (done) => {
-    const mockFetchManager = mockFetch()
-    const completeSpy = jasmine.createSpy('requestComplete')
-    const lifeCycle = new LifeCycle()
-    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
+    const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(false)
 
-    const configuration = mockRumConfiguration({
-      allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors: false }],
-    })
-    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
-    const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
-    registerCleanupTask(stop)
-
-    const fetch = window.fetch as MockFetch
     fetch(FAKE_GRAPHQL_URL, {
       method: 'POST',
       body: JSON.stringify({ query: 'query Test { test }' }),
