@@ -845,7 +845,7 @@ export interface AddOperationStepVital {
    */
   feature: 'add-operation-step-vital'
   /**
-   * Feature operations action type
+   * Operations step type
    */
   action_type: 'start' | 'succeed' | 'fail'
   [k: string]: unknown

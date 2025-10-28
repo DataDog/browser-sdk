@@ -175,6 +175,9 @@ export type RumTransitionEvent = CommonProperties & {
    * RUM event type
    */
   readonly type: 'transition'
+  view: {
+    [k: string]: unknown
+  }
   /**
    * Stream properties
    */
@@ -504,6 +507,9 @@ export type RumLongTaskEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'long_task'
+    view: {
+      [k: string]: unknown
+    }
     /**
      * Long Task properties
      */
@@ -628,6 +634,9 @@ export type RumResourceEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'resource'
+    view: {
+      [k: string]: unknown
+    }
     /**
      * Resource properties
      */
@@ -1315,120 +1324,134 @@ export type RumViewEvent = CommonProperties &
     }
     [k: string]: unknown
   }
+export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent | RumVitalAppLaunchEvent
 /**
- * Schema of all properties of a Vital event
+ * Schema for a duration vital event.
  */
-export type RumVitalEvent = CommonProperties &
-  ViewContainerSchema & {
-    /**
-     * RUM event type
-     */
-    readonly type: 'vital'
-    readonly vital: DurationProperties | AppLaunchProperties | FeatureOperationProperties
-    /**
-     * Internal properties
-     */
-    readonly _dd?: {
-      /**
-       * Internal vital properties
-       */
-      readonly vital?: {
-        /**
-         * Whether the value of the vital is computed by the SDK (as opposed to directly provided by the customer)
-         */
-        readonly computed_value?: boolean
-        [k: string]: unknown
-      }
-      /**
-       * Profiling context
-       */
-      profiling?: ProfilingInternalContextSchema
-      [k: string]: unknown
-    }
+export type RumVitalDurationEvent = RumVitalEventCommonProperties & {
+  view: {
     [k: string]: unknown
   }
-/**
- * Duration properties of a Vital event
- */
-export type DurationProperties = VitalCommonProperties & {
   /**
-   * Type of the vital.
+   * Vital properties
    */
-  readonly type: 'duration'
-  /**
-   * Duration of the vital in nanoseconds.
-   */
-  readonly duration: number
+  readonly vital: {
+    /**
+     * Type of the vital.
+     */
+    readonly type: 'duration'
+    /**
+     * Duration of the vital in nanoseconds.
+     */
+    readonly duration: number
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**
  * Schema of common properties for a Vital event
  */
-export type VitalCommonProperties = {
+export type RumVitalEventCommonProperties = CommonProperties &
+  ViewContainerSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'vital'
+    /**
+     * Vital properties
+     */
+    readonly vital: {
+      /**
+       * UUID of the vital
+       */
+      readonly id: string
+      /**
+       * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
+       */
+      readonly name?: string
+      /**
+       * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
+       */
+      readonly description?: string
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+/**
+ * Schema for a vital operation step event.
+ */
+export type RumVitalOperationStepEvent = RumVitalEventCommonProperties & {
+  view: {
+    [k: string]: unknown
+  }
   /**
-   * UUID of the vital
+   * Vital properties
    */
-  readonly id: string
-  /**
-   * Name of the vital, as it is also used as facet path for its value, it must contain only letters, digits, or the characters - _ . @ $
-   */
-  readonly name?: string
-  /**
-   * Description of the vital. It can be used as a secondary identifier (URL, React component name...)
-   */
-  readonly description?: string
+  readonly vital: {
+    /**
+     * Type of the vital.
+     */
+    readonly type: 'operation_step'
+    /**
+     * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
+     */
+    readonly operation_key?: string
+    /**
+     * Type of the step that triggered the vital, if applicable
+     */
+    readonly step_type: 'start' | 'update' | 'retry' | 'end'
+    /**
+     * Reason for the failure of the step, if applicable
+     */
+    readonly failure_reason?: 'error' | 'abandoned' | 'other'
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 /**
  * Schema for app launch metrics.
  */
-export type AppLaunchProperties = VitalCommonProperties & {
+export type RumVitalAppLaunchEvent = RumVitalEventCommonProperties & {
   /**
-   * Type of the vital.
+   * Vital properties
    */
-  readonly type: 'app_launch'
+  readonly vital: {
+    /**
+     * Type of the vital.
+     */
+    readonly type: 'app_launch'
+    /**
+     * The metric of the app launch.
+     */
+    readonly app_launch_metric: 'ttid' | 'ttfd'
+    /**
+     * Duration of the vital in nanoseconds.
+     */
+    readonly duration: number
+    /**
+     * The type of the app launch.
+     */
+    readonly startup_type?: 'cold_start' | 'warm_start'
+    /**
+     * Whether the app launch was prewarmed.
+     */
+    readonly is_prewarmed?: boolean
+    /**
+     * If the app launch had a saved instance state bundle.
+     */
+    readonly has_saved_instance_state_bundle?: boolean
+    [k: string]: unknown
+  }
   /**
-   * The metric of the app launch.
+   * Internal properties
    */
-  readonly app_launch_metric: 'ttid' | 'ttfd'
-  /**
-   * Duration of the vital in nanoseconds.
-   */
-  readonly duration: number
-  /**
-   * The type of the app launch.
-   */
-  readonly startup_type?: 'cold_start' | 'warm_start'
-  /**
-   * Whether the app launch was prewarmed.
-   */
-  readonly is_prewarmed?: boolean
-  /**
-   * If the app launch had a saved instance state bundle.
-   */
-  readonly has_saved_instance_state_bundle?: boolean
-  [k: string]: unknown
-}
-/**
- * Schema for a feature operation.
- */
-export type FeatureOperationProperties = VitalCommonProperties & {
-  /**
-   * Type of the vital.
-   */
-  readonly type: 'operation_step'
-  /**
-   * Optional key to distinguish between multiple operations of the same name running in parallel (e.g., 'photo_upload' with keys 'profile_pic' vs 'cover')
-   */
-  readonly operation_key?: string
-  /**
-   * Type of the step that triggered the vital, if applicable
-   */
-  readonly step_type?: 'start' | 'update' | 'retry' | 'end'
-  /**
-   * Reason for the failure of the step, if applicable
-   */
-  readonly failure_reason?: 'error' | 'abandoned' | 'other'
+  readonly _dd?: {
+    /**
+     * Profiling context
+     */
+    profiling?: ProfilingInternalContextSchema
+    [k: string]: unknown
+  }
   [k: string]: unknown
 }
 
@@ -1507,7 +1530,7 @@ export interface CommonProperties {
   /**
    * View properties
    */
-  readonly view: {
+  readonly view?: {
     /**
      * UUID of the view
      */

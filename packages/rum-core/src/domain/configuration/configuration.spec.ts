@@ -567,7 +567,7 @@ describe('validateAndBuildRumConfiguration', () => {
         allowedGraphQlUrls: [{ match: '/graphql', trackResponseErrors: true }],
       })!
       expect(configuration.allowedGraphQlUrls).toEqual([
-        { match: '/graphql', trackResponseErrors: true, trackPayload: false },
+        { match: '/graphql', trackPayload: false, trackResponseErrors: true },
       ])
     })
 

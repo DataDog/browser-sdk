@@ -31,7 +31,7 @@ test.describe('GraphQL tracking', () => {
       })
 
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/graphql'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.method).toBe('POST')
       expect(resourceEvent.resource.graphql).toEqual({
@@ -58,7 +58,7 @@ test.describe('GraphQL tracking', () => {
       )
 
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/graphql'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.method).toBe('POST')
       expect(resourceEvent.resource.graphql).toEqual({
@@ -80,7 +80,7 @@ test.describe('GraphQL tracking', () => {
 
       await flushEvents()
 
-      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/ok'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/ok'))!
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.graphql).toBeUndefined()
     })
@@ -100,7 +100,7 @@ test.describe('GraphQL tracking', () => {
       )
 
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/graphql'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.graphql).toEqual({
         operationType: 'query',
@@ -134,7 +134,7 @@ test.describe('GraphQL tracking', () => {
       })
 
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/graphql'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.graphql?.errors_count).toBe(2)
       expect(resourceEvent.resource.graphql?.errors).toEqual([
@@ -157,7 +157,7 @@ test.describe('GraphQL tracking', () => {
       )
 
       await flushEvents()
-      const resourceEvent = intakeRegistry.rumResourceEvents.find((r) => r.resource.url.includes('/graphql'))!
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
       expect(resourceEvent).toBeDefined()
       expect(resourceEvent.resource.graphql?.errors_count).toBeUndefined()
       expect(resourceEvent.resource.graphql?.errors).toBeUndefined()
