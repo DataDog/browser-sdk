@@ -12,14 +12,17 @@ const GATE_INTERVAL = ONE_MINUTE_IN_SECOND
 
 const version: string = process.argv[2]
 const uploadPath: string = process.argv[3]
-const withGateMonitors: boolean = process.argv[4] === 'true'
+const withMonitorChecks: boolean = process.argv[4] === 'true'
 
 runMain(async () => {
-  command`node ./scripts/deploy/check-monitors.ts ${uploadPath}`.withLogs().run()
+  if (withMonitorChecks) {
+    command`node ./scripts/deploy/check-monitors.ts ${uploadPath}`.withLogs().run()
+  }
+
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPath}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPath}`.withLogs().run()
 
-  if (withGateMonitors && uploadPath !== 'root') {
+  if (withMonitorChecks) {
     await gateMonitors(uploadPath)
   }
 })
