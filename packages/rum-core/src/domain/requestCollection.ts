@@ -11,7 +11,7 @@ import {
   RequestType,
   initFetchObservable,
   initXhrObservable,
-  readBytesFromStream,
+  readResponseBody,
   elapsed,
   timeStampNow,
   tryToClone,
@@ -182,11 +182,19 @@ function getNextRequestIndex() {
 
 function extractResponseTextFromXhr(context: RumXhrCompleteContext, configuration: RumConfiguration) {
   const graphQlConfig = findGraphQlConfiguration(context.url, configuration)
-  if (!graphQlConfig?.trackResponseErrors || !context.xhr || typeof context.xhr.response !== 'string') {
+  if (!graphQlConfig?.trackResponseErrors) {
     return
   }
 
-  context.responseText = context.xhr.response
+  readResponseBody(
+    context,
+    (result) => {
+      if (typeof result.body === 'string') {
+        context.responseText = result.body
+      }
+    },
+    {}
+  )
 }
 
 function waitForFetchResponseAndExtractResponseText(
@@ -205,20 +213,17 @@ function waitForFetchResponseAndExtractResponseText(
   const graphQlConfig = findGraphQlConfiguration(context.url, configuration)
   const shouldCollectResponseText = graphQlConfig?.trackResponseErrors
 
-  readBytesFromStream(
-    clonedResponse.body,
-    (error?: Error, bytes?: Uint8Array) => {
+  readResponseBody(
+    context,
+    (result) => {
       context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
 
-      if (shouldCollectResponseText && !error && bytes) {
-        context.responseText = new TextDecoder().decode(bytes)
+      if (shouldCollectResponseText && typeof result.body === 'string') {
+        context.responseText = result.body
       }
 
       onComplete()
     },
-    {
-      bytesLimit: Number.POSITIVE_INFINITY,
-      collectStreamBody: shouldCollectResponseText,
-    }
+    {}
   )
 }

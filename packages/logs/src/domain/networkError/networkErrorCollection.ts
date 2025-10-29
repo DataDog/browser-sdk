@@ -8,10 +8,8 @@ import {
   initFetchObservable,
   computeStackTrace,
   toStackTraceString,
-  monitor,
   noop,
-  readBytesFromStream,
-  tryToClone,
+  readResponseBody,
   isServerError,
   isIntakeUrl,
 } from '@datadog/browser-core'
@@ -97,11 +95,13 @@ export function computeXhrResponseData(
   configuration: LogsConfiguration,
   callback: (responseData: unknown) => void
 ) {
-  if (typeof xhr.response === 'string') {
-    callback(truncateResponseText(xhr.response, configuration))
-  } else {
-    callback(xhr.response)
-  }
+  readResponseBody(
+    { xhr } as any,
+    (result) => {
+      callback(result.body)
+    },
+    { bytesLimit: configuration.requestErrorResponseLengthLimit }
+  )
 }
 
 export function computeFetchErrorText(
@@ -117,55 +117,19 @@ export function computeFetchResponseText(
   configuration: LogsConfiguration,
   callback: (responseText?: string) => void
 ) {
-  const clonedResponse = tryToClone(response)
-  if (!clonedResponse || !clonedResponse.body) {
-    // if the clone failed or if the body is null, let's not try to read it.
-    callback()
-  } else if (!window.TextDecoder) {
-    // If the browser doesn't support TextDecoder, let's read the whole response then truncate it.
-    //
-    // This should only be the case on early versions of Edge (before they migrated to Chromium).
-    // Even if it could be possible to implement a workaround for the missing TextDecoder API (using
-    // a Blob and FileReader), we found another issue preventing us from reading only the first
-    // bytes from the response: contrary to other browsers, when reading from the cloned response,
-    // if the original response gets canceled, the cloned response is also canceled and we can't
-    // know about it.  In the following illustration, the promise returned by `reader.read()` may
-    // never be fulfilled:
-    //
-    // fetch('/').then((response) => {
-    //   const reader = response.clone().body.getReader()
-    //   readMore()
-    //   function readMore() {
-    //     reader.read().then(
-    //       (result) => {
-    //         if (result.done) {
-    //           console.log('done')
-    //         } else {
-    //           readMore()
-    //         }
-    //       },
-    //       () => console.log('error')
-    //     )
-    //   }
-    //   response.body.getReader().cancel()
-    // })
-    clonedResponse.text().then(
-      monitor((text) => callback(truncateResponseText(text, configuration))),
-      monitor((error) => callback(`Unable to retrieve response: ${error as string}`))
-    )
-  } else {
-    truncateResponseStream(
-      clonedResponse.body,
-      configuration.requestErrorResponseLengthLimit,
-      (error, responseText) => {
-        if (error) {
-          callback(`Unable to retrieve response: ${error as unknown as string}`)
-        } else {
-          callback(responseText)
-        }
+  readResponseBody(
+    { response } as any,
+    (result) => {
+      if (result.error) {
+        callback(`Unable to retrieve response: ${result.error as unknown as string}`)
+      } else if (typeof result.body === 'string') {
+        callback(result.body)
+      } else {
+        callback()
       }
-    )
-  }
+    },
+    { bytesLimit: configuration.requestErrorResponseLengthLimit }
+  )
 }
 
 function isRejected(request: { status: number; responseType?: string }) {
@@ -184,29 +148,4 @@ function format(type: RequestType) {
     return 'XHR'
   }
   return 'Fetch'
-}
-
-function truncateResponseStream(
-  stream: ReadableStream<Uint8Array>,
-  bytesLimit: number,
-  callback: (error?: Error, responseText?: string) => void
-) {
-  readBytesFromStream(
-    stream,
-    (error, bytes, limitExceeded) => {
-      if (error) {
-        callback(error)
-      } else {
-        let responseText = new TextDecoder().decode(bytes)
-        if (limitExceeded) {
-          responseText += '...'
-        }
-        callback(undefined, responseText)
-      }
-    },
-    {
-      bytesLimit,
-      collectStreamBody: true,
-    }
-  )
 }

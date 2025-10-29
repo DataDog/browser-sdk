@@ -131,6 +131,8 @@ export { CustomerDataType, CustomerContextKey, ContextManagerMethod } from './do
 export type { ValueHistory, ValueHistoryEntry } from './tools/valueHistory'
 export { createValueHistory, CLEAR_OLD_VALUES_INTERVAL } from './tools/valueHistory'
 export { readBytesFromStream } from './tools/readBytesFromStream'
+export type { ReadResponseBodyResult, ReadResponseBodyOptions, RequestContext } from './tools/readResponseBody'
+export { readResponseBody } from './tools/readResponseBody'
 export type { SessionState } from './domain/session/sessionState'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
