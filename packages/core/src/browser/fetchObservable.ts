@@ -147,9 +147,8 @@ async function afterSend(
   if (responseBodyCondition !== ResponseBodyAction.IGNORE) {
     const clonedResponse = tryToClone(response)
     if (clonedResponse && clonedResponse.body) {
-      const { bytes } = await readBytesFromStream(clonedResponse.body, {
+      const bytes = await readBytesFromStream(clonedResponse.body, {
         collectStreamBody: responseBodyCondition === ResponseBodyAction.COLLECT,
-        bytesLimit: Number.POSITIVE_INFINITY,
       })
       context.responseBody = bytes && new TextDecoder().decode(bytes)
     }

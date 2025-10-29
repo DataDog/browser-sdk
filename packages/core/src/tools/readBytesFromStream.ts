@@ -3,7 +3,8 @@ import { concatBuffers } from './utils/byteUtils'
 import { noop } from './utils/functionUtils'
 
 interface Options {
-  bytesLimit: number
+  // TODO(next-major): always collect stream body when `trackEarlyRequests` is removed, as we don't
+  // need to use this function to just wait for the end of the stream without collecting it
   collectStreamBody?: boolean
 }
 
@@ -15,7 +16,6 @@ interface Options {
 export async function readBytesFromStream(stream: ReadableStream<Uint8ArrayBuffer>, options: Options) {
   const reader = stream.getReader()
   const chunks: Uint8ArrayBuffer[] = []
-  let readBytesCount = 0
 
   while (true) {
     const result = await reader.read()
@@ -26,11 +26,6 @@ export async function readBytesFromStream(stream: ReadableStream<Uint8ArrayBuffe
     if (options.collectStreamBody) {
       chunks.push(result.value)
     }
-    readBytesCount += result.value.length
-
-    if (readBytesCount > options.bytesLimit) {
-      break
-    }
   }
 
   reader.cancel().catch(
@@ -39,11 +34,7 @@ export async function readBytesFromStream(stream: ReadableStream<Uint8ArrayBuffe
     noop
   )
 
-  let bytes: Uint8ArrayBuffer | undefined
-  if (options.collectStreamBody) {
-    const completeBuffer = concatBuffers(chunks)
-    bytes = completeBuffer.slice(0, options.bytesLimit)
-  }
+  const bytes = options.collectStreamBody ? concatBuffers(chunks) : undefined
 
-  return { bytes, limitExceeded: readBytesCount > options.bytesLimit }
+  return bytes
 }
