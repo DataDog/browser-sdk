@@ -340,7 +340,7 @@ export const AST_MASK = {
               tagName: 'input',
               attributes: {
                 type: 'checkbox',
-                name: 'inputFoo',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -371,7 +371,7 @@ export const AST_MASK = {
               tagName: 'input',
               attributes: {
                 type: 'radio',
-                name: 'radioGroup',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -384,7 +384,7 @@ export const AST_MASK = {
               type: 2,
               tagName: 'textarea',
               attributes: {
-                name: 'baz',
+                name: '***',
                 rows: '2',
                 cols: '20',
                 value: '***',
@@ -854,7 +854,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'a',
               attributes: {
-                href: 'https://private.com/path/nested?query=param#hash',
+                href: '***',
               },
               childNodes: [
                 {
@@ -871,7 +871,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'img',
               attributes: {
-                src: 'https://private.com/path/nested?query=param#hash',
+                src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
               },
               childNodes: [],
             },
@@ -954,7 +954,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               tagName: 'input',
               attributes: {
                 type: 'checkbox',
-                name: 'inputFoo',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -985,7 +985,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               tagName: 'input',
               attributes: {
                 type: 'radio',
-                name: 'radioGroup',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -998,7 +998,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'textarea',
               attributes: {
-                name: 'baz',
+                name: '***',
                 rows: '2',
                 cols: '20',
                 value: '***',
