@@ -1,6 +1,6 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { monitor } from '../tools/monitor'
+import { monitor, monitorError } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
@@ -90,38 +90,35 @@ function beforeSend(
   parameters[0] = context.input as RequestInfo | URL
   parameters[1] = context.init
 
-  onPostCall((responsePromise) => afterSend(observable, responsePromise, context))
+  onPostCall((responsePromise) => {
+    afterSend(observable, responsePromise, context).catch(monitorError)
+  })
 }
 
-function afterSend(
+async function afterSend(
   observable: Observable<FetchContext>,
   responsePromise: Promise<Response>,
   startContext: FetchStartContext
 ) {
   const context = startContext as unknown as FetchResolveContext
+  context.state = 'resolve'
 
-  function reportFetch(partialContext: Partial<FetchResolveContext>) {
-    context.state = 'resolve'
-    Object.assign(context, partialContext)
+  let response: Response
+
+  try {
+    response = await responsePromise
+  } catch (error) {
+    context.status = 0
+    context.isAborted =
+      context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR)
+    context.error = error as Error
     observable.notify(context)
+    return
   }
 
-  responsePromise.then(
-    monitor((response) => {
-      reportFetch({
-        response,
-        responseType: response.type,
-        status: response.status,
-        isAborted: false,
-      })
-    }),
-    monitor((error: Error) => {
-      reportFetch({
-        status: 0,
-        isAborted:
-          context.init?.signal?.aborted || (error instanceof DOMException && error.code === DOMException.ABORT_ERR),
-        error,
-      })
-    })
-  )
+  context.response = response
+  context.status = response.status
+  context.responseType = response.type
+  context.isAborted = false
+  observable.notify(context)
 }
