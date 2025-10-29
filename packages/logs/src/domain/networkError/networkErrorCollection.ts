@@ -12,6 +12,7 @@ import {
   isServerError,
   isIntakeUrl,
   ResponseBodyAction,
+  safeTruncate,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
@@ -65,7 +66,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
         message: `${format(type)} error ${request.method} ${request.url}`,
         date: request.startClocks.timeStamp,
         error: {
-          stack: truncateResponseText(stack, configuration),
+          stack: safeTruncate(stack, configuration.requestErrorResponseLengthLimit, '...'),
           // We don't know if the error was handled or not, so we set it to undefined
           handling: undefined,
         },
@@ -91,13 +92,6 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
 
 function isRejected(request: { status: number; responseType?: string }) {
   return request.status === 0 && request.responseType !== 'opaque'
-}
-
-function truncateResponseText(responseText: string, configuration: LogsConfiguration) {
-  if (responseText.length > configuration.requestErrorResponseLengthLimit) {
-    return `${responseText.substring(0, configuration.requestErrorResponseLengthLimit)}...`
-  }
-  return responseText
 }
 
 function format(type: RequestType) {
