@@ -19,95 +19,64 @@ describe('readBytesFromStream', () => {
     })
   })
 
-  it('should read full stream', (done) => {
-    readBytesFromStream(
-      stream,
-      (error, bytes, limitExceeded) => {
-        expect(error).toBeUndefined()
-        expect(bytes?.length).toBe(27)
-        expect(limitExceeded).toBe(false)
-        done()
-      },
-      {
-        bytesLimit: Number.POSITIVE_INFINITY,
-        collectStreamBody: true,
-      }
-    )
+  it('should read full stream', async () => {
+    const { bytes, limitExceeded } = await readBytesFromStream(stream, {
+      bytesLimit: Number.POSITIVE_INFINITY,
+      collectStreamBody: true,
+    })
+
+    expect(bytes?.length).toBe(27)
+    expect(limitExceeded).toBe(false)
   })
 
-  it('should read full stream without body', (done) => {
-    readBytesFromStream(
-      stream,
-      (error, bytes, limitExceeded) => {
-        expect(error).toBeUndefined()
-        expect(bytes).toBeUndefined()
-        expect(limitExceeded).toBeUndefined()
-        done()
-      },
-      {
-        bytesLimit: Number.POSITIVE_INFINITY,
-        collectStreamBody: false,
-      }
-    )
+  it('should read full stream without body', async () => {
+    const { bytes, limitExceeded } = await readBytesFromStream(stream, {
+      bytesLimit: Number.POSITIVE_INFINITY,
+      collectStreamBody: false,
+    })
+    expect(bytes).toBeUndefined()
+    expect(limitExceeded).toBeUndefined()
   })
 
-  it('should read stream up to limit', (done) => {
-    readBytesFromStream(
-      stream,
-      (error, bytes, limitExceeded) => {
-        expect(error).toBeUndefined()
-        expect(bytes?.length).toBe(10)
-        expect(limitExceeded).toBe(true)
-        done()
-      },
-      {
-        bytesLimit: 10,
-        collectStreamBody: true,
-      }
-    )
+  it('should read stream up to limit', async () => {
+    const { bytes, limitExceeded } = await readBytesFromStream(stream, {
+      bytesLimit: 10,
+      collectStreamBody: true,
+    })
+    expect(bytes?.length).toBe(10)
+    expect(limitExceeded).toBe(true)
   })
 
-  it('should handle rejection error on pull', (done) => {
+  it('should handle rejection error on pull', async () => {
     const stream = new ReadableStream({
       pull: () => Promise.reject(new Error('foo')),
     })
 
-    readBytesFromStream(
-      stream,
-      (error, bytes, limitExceeded) => {
-        expect(error).toBeDefined()
-        expect(bytes).toBeUndefined()
-        expect(limitExceeded).toBeUndefined()
-        done()
-      },
-      {
+    try {
+      await readBytesFromStream(stream, {
         bytesLimit: Number.POSITIVE_INFINITY,
         collectStreamBody: true,
-      }
-    )
+      })
+      fail('Should have thrown an error')
+    } catch (error) {
+      expect(error).toEqual(jasmine.any(Error))
+    }
   })
 
-  it('should handle rejection error on cancel', (done) => {
+  it('should handle rejection error on cancel', async () => {
     const stream = new ReadableStream({
       pull: (controller) => controller.enqueue(new TextEncoder().encode('f')),
       cancel: () => Promise.reject(new Error('foo')),
     })
 
-    readBytesFromStream(
-      stream,
-      (error, bytes) => {
-        expect(error).toBeUndefined()
-        expect(bytes).toBeDefined()
-        done()
-      },
-      {
-        bytesLimit: 64,
-        collectStreamBody: true,
-      }
-    )
+    const { bytes } = await readBytesFromStream(stream, {
+      bytesLimit: 64,
+      collectStreamBody: true,
+    })
+    expect(bytes).toBeDefined()
   })
 
-  it('reads a limited amount of bytes from the response', (done) => {
+  it('reads a limited amount of bytes from the response', async () => {
     // Creates a response that stream "f" indefinitely, one byte at a time
     const cancelSpy = jasmine.createSpy()
     const pullSpy = jasmine.createSpy().and.callFake((controller: ReadableStreamDefaultController<Uint8Array>) => {
@@ -121,20 +90,15 @@ describe('readBytesFromStream', () => {
       cancel: cancelSpy,
     })
 
-    readBytesFromStream(
-      stream,
-      () => {
-        expect(pullSpy).toHaveBeenCalledTimes(
-          // readBytesFromStream may read one more byte than necessary to make sure it exceeds the limit
-          bytesLimit + 1
-        )
-        expect(cancelSpy).toHaveBeenCalledTimes(1)
-        done()
-      },
-      {
-        bytesLimit,
-        collectStreamBody: true,
-      }
+    await readBytesFromStream(stream, {
+      bytesLimit,
+      collectStreamBody: true,
+    })
+
+    expect(pullSpy).toHaveBeenCalledTimes(
+      // readBytesFromStream may read one more byte than necessary to make sure it exceeds the limit
+      bytesLimit + 1
     )
+    expect(cancelSpy).toHaveBeenCalledTimes(1)
   })
 })
