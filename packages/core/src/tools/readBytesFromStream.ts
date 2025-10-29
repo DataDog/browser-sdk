@@ -1,4 +1,6 @@
 import { monitor } from './monitor'
+import type { Uint8ArrayBuffer } from './utils/byteUtils'
+import { concatBuffers } from './utils/byteUtils'
 import { noop } from './utils/functionUtils'
 
 interface Options {
@@ -11,19 +13,19 @@ interface Options {
  * has been exceeded if more bytes were available.
  */
 export function readBytesFromStream(
-  stream: ReadableStream<Uint8Array>,
+  stream: ReadableStream<Uint8ArrayBuffer>,
   callback: (error?: Error, bytes?: Uint8Array, limitExceeded?: boolean) => void,
   options: Options
 ) {
   const reader = stream.getReader()
-  const chunks: Uint8Array[] = []
+  const chunks: Uint8ArrayBuffer[] = []
   let readBytesCount = 0
 
   readMore()
 
   function readMore() {
     reader.read().then(
-      monitor((result: ReadableStreamReadResult<Uint8Array>) => {
+      monitor((result: ReadableStreamReadResult<Uint8ArrayBuffer>) => {
         if (result.done) {
           onDone()
           return
@@ -51,23 +53,10 @@ export function readBytesFromStream(
       noop
     )
 
-    let bytes: Uint8Array | undefined
+    let bytes: Uint8ArrayBuffer | undefined
     let limitExceeded: boolean | undefined
     if (options.collectStreamBody) {
-      let completeBuffer: Uint8Array
-      if (chunks.length === 1) {
-        // optimization: if the response is small enough to fit in a single buffer (provided by the browser), just
-        // use it directly.
-        completeBuffer = chunks[0]
-      } else {
-        // else, we need to copy buffers into a larger buffer to concatenate them.
-        completeBuffer = new Uint8Array(readBytesCount)
-        let offset = 0
-        chunks.forEach((chunk) => {
-          completeBuffer.set(chunk, offset)
-          offset += chunk.length
-        })
-      }
+      const completeBuffer = concatBuffers(chunks)
       bytes = completeBuffer.slice(0, options.bytesLimit)
       limitExceeded = completeBuffer.length > options.bytesLimit
     }
