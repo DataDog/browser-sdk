@@ -12,7 +12,7 @@ const clientToken = 'pubfe2e138a54296da76dd66f6b0b5f3d98'
 
 type ScenarioConfiguration = (typeof scenarioConfigurations)[number]
 
-async function injectSDK(page: Page, scenarioName: string, scenarioConfiguration: ScenarioConfiguration) {
+async function injectSDK(page: Page, scenarioConfiguration: ScenarioConfiguration) {
   await page.addInitScript(`
     function loadSDK() {
       (function(h,o,u,n,d) {
@@ -47,11 +47,15 @@ type TestRunner = (page: Page, takeMeasurements: () => Promise<void>, appUrl: st
 
 function getAppUrl(scenarioConfiguration: ScenarioConfiguration): string {
   const url = new URL(testAppUrl)
-  
-  if (scenarioConfiguration === 'rum_profiling' || scenarioConfiguration === 'none_with_headers' || scenarioConfiguration === 'rum_replay') {
+
+  if (
+    scenarioConfiguration === 'rum_profiling' ||
+    scenarioConfiguration === 'none_with_headers' ||
+    scenarioConfiguration === 'rum_replay'
+  ) {
     url.searchParams.set('profiling', 'true')
   }
-  
+
   return url.toString()
 }
 
@@ -61,12 +65,12 @@ async function stopSession(page: Page) {
   })
 }
 
-export function createBenchmarkTest(scenarioName: string) {
+export function createBenchmarkTest() {
   return {
     run(runner: TestRunner) {
       const metrics: Record<string, Metrics> = {}
       scenarioConfigurations.forEach((scenarioConfiguration) => {
-        test(`${scenarioName} ${scenarioConfiguration}`, async ({ page }) => {
+        test(`benchmark ${scenarioConfiguration}`, async ({ page }) => {
           await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US' })
 
           let profileRequestCompleted = false
@@ -81,17 +85,17 @@ export function createBenchmarkTest(scenarioName: string) {
           const { stopProfiling, takeMeasurements } = await startProfiling(page)
 
           if (scenarioConfiguration !== 'none' && scenarioConfiguration !== 'none_with_headers') {
-            await injectSDK(page, scenarioName, scenarioConfiguration)
+            await injectSDK(page, scenarioConfiguration)
           }
 
           await runner(page, takeMeasurements, getAppUrl(scenarioConfiguration))
 
           if (scenarioConfiguration === 'rum_profiling') {
             const startTime = Date.now()
-            while (!profileRequestCompleted && (Date.now() - startTime) < 60000) {
+            while (!profileRequestCompleted && Date.now() - startTime < 60000) {
               await page.waitForTimeout(500)
             }
-            
+
             if (!profileRequestCompleted) {
               throw new Error('Test failed: Profile was not successfully uploaded to Datadog')
             }
