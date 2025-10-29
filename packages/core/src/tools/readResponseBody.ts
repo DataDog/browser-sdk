@@ -18,12 +18,11 @@ export interface RequestContext {
   response?: Response
 }
 
-/**
- * Reads the response body from an XHR or Fetch request context.
- * For XHR requests, reads directly from xhr.response.
- * For Fetch requests, clones the response and reads from the stream.
- * Optionally truncates the response text if bytesLimit is specified.
- */
+// Reads the response body from an XHR or Fetch request context.
+// For XHR requests, reads directly from xhr.response.
+// For Fetch requests, clones the response and reads from the stream.
+// Optionally truncates the response text if bytesLimit is specified.
+
 export function readResponseBody(
   request: RequestContext,
   callback: (result: ReadResponseBodyResult) => void,
