@@ -73,6 +73,7 @@ step-7_create-github-release:
   stage: deploy
   extends:
     - .base-configuration
+  when: manual
   allow_failure: false
   script:
     - yarn
