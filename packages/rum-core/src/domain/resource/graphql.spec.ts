@@ -188,20 +188,21 @@ describe('GraphQL detection and metadata extraction', () => {
   })
 
   describe('parseGraphQlResponse', () => {
-    it('should extract error count and detailed errors from GraphQL response', (done) => {
+    it('should extract error count and detailed errors from GraphQL response', () => {
       const responseText = JSON.stringify({
         data: null,
         errors: [{ message: 'Field not found' }, { message: 'Unauthorized' }],
       })
 
-      parseGraphQlResponse(responseText, (errorsCount, errors) => {
-        expect(errorsCount).toBe(2)
-        expect(errors).toEqual([{ message: 'Field not found' }, { message: 'Unauthorized' }])
-        done()
+      const result = parseGraphQlResponse(responseText)
+
+      expect(result).toEqual({
+        errorsCount: 2,
+        errors: [{ message: 'Field not found' }, { message: 'Unauthorized' }],
       })
     })
 
-    it('should extract detailed errors with extensions, locations and path', (done) => {
+    it('should extract detailed errors with extensions, locations and path', () => {
       const responseText = JSON.stringify({
         data: null,
         errors: [
@@ -214,49 +215,47 @@ describe('GraphQL detection and metadata extraction', () => {
         ],
       })
 
-      parseGraphQlResponse(responseText, (errorsCount, errors) => {
-        expect(errorsCount).toBe(1)
-        expect(errors).toEqual([
+      const result = parseGraphQlResponse(responseText)
+
+      expect(result).toEqual({
+        errorsCount: 1,
+        errors: [
           {
             message: 'Field not found',
             code: 'FIELD_NOT_FOUND',
             locations: [{ line: 2, column: 5 }],
             path: ['user', 'profile'],
           },
-        ])
-        done()
+        ],
       })
     })
 
-    it('should handle response without errors', (done) => {
+    it('should handle response without errors', () => {
       const responseText = JSON.stringify({
         data: { user: { name: 'John' } },
       })
 
-      parseGraphQlResponse(responseText, (errorsCount, errors) => {
-        expect(errorsCount).toBeUndefined()
-        expect(errors).toBeUndefined()
-        done()
-      })
+      const result = parseGraphQlResponse(responseText)
+
+      expect(result).toBeUndefined()
     })
 
-    it('should handle invalid JSON', (done) => {
-      parseGraphQlResponse('not valid json', (errorsCount, errors) => {
-        expect(errorsCount).toBeUndefined()
-        expect(errors).toBeUndefined()
-        done()
-      })
+    it('should handle invalid JSON', () => {
+      const result = parseGraphQlResponse('not valid json')
+
+      expect(result).toBeUndefined()
     })
 
-    it('should handle errors with missing extensions', (done) => {
+    it('should handle errors with missing extensions', () => {
       const responseText = JSON.stringify({
         errors: [{ message: 'Simple error' }],
       })
 
-      parseGraphQlResponse(responseText, (errorsCount, errors) => {
-        expect(errorsCount).toBe(1)
-        expect(errors).toEqual([{ message: 'Simple error' }])
-        done()
+      const result = parseGraphQlResponse(responseText)
+
+      expect(result).toEqual({
+        errorsCount: 1,
+        errors: [{ message: 'Simple error' }],
       })
     })
   })

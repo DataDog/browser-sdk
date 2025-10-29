@@ -1,4 +1,4 @@
-import { matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
+import { isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
 import type { RumConfiguration, GraphQlUrlOption } from '../configuration'
 import type { RequestCompleteEvent } from '../requestCollection'
 
@@ -12,6 +12,11 @@ export interface GraphQlError {
   code?: string
   locations?: Array<{ line: number; column: number }>
   path?: Array<string | number>
+}
+
+export interface GraphQlResponseErrors {
+  errorsCount: number
+  errors: GraphQlError[]
 }
 
 export interface GraphQlMetadata {
@@ -42,49 +47,49 @@ export function extractGraphQlMetadata(
   return metadata
 }
 
-export function parseGraphQlResponse(
-  responseText: string,
-  callback: (errorsCount?: number, errors?: GraphQlError[]) => void
-) {
+export function parseGraphQlResponse(responseText: string): GraphQlResponseErrors | undefined {
+  let response: unknown
   try {
-    const response = JSON.parse(responseText)
+    response = JSON.parse(responseText)
+  } catch {
+    // Invalid JSON response
+    return
+  }
 
-    if (!response || !Array.isArray(response.errors) || response.errors.length === 0) {
-      callback()
-      return
+  if (!response || typeof response !== 'object') {
+    return
+  }
+
+  const responseObj = response as Record<string, unknown>
+
+  if (!isNonEmptyArray(responseObj.errors)) {
+    return
+  }
+
+  const errors = (responseObj.errors as Array<Record<string, unknown>>).map((error) => {
+    const graphqlError: GraphQlError = {
+      message: typeof error.message === 'string' ? error.message : 'Unknown GraphQL error',
     }
 
-    const errors = (response.errors as unknown[]).map((error: unknown) => {
-      const errorObj = error as Record<string, unknown>
-      const graphqlError: GraphQlError = {
-        message: typeof errorObj.message === 'string' ? errorObj.message : 'Unknown GraphQL error',
-      }
+    const extensions = error.extensions as Record<string, unknown> | undefined
+    if (extensions?.code && typeof extensions.code === 'string') {
+      graphqlError.code = extensions.code
+    }
 
-      const extensions = errorObj.extensions as Record<string, unknown> | undefined
-      if (extensions?.code && typeof extensions.code === 'string') {
-        graphqlError.code = extensions.code
-      }
+    if (Array.isArray(error.locations)) {
+      graphqlError.locations = error.locations
+    }
 
-      if (Array.isArray(errorObj.locations)) {
-        graphqlError.locations = (errorObj.locations as unknown[]).map((loc: unknown) => {
-          const locObj = loc as Record<string, unknown>
-          return {
-            line: typeof locObj.line === 'number' ? locObj.line : 0,
-            column: typeof locObj.column === 'number' ? locObj.column : 0,
-          }
-        })
-      }
+    if (Array.isArray(error.path)) {
+      graphqlError.path = error.path
+    }
 
-      if (Array.isArray(errorObj.path)) {
-        graphqlError.path = errorObj.path as Array<string | number>
-      }
+    return graphqlError
+  })
 
-      return graphqlError
-    })
-
-    callback(errors.length, errors)
-  } catch {
-    callback()
+  return {
+    errorsCount: errors.length,
+    errors,
   }
 }
 

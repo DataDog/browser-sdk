@@ -192,10 +192,11 @@ function extractGraphQlErrorsFromXhr(context: RumXhrCompleteContext, configurati
     return
   }
 
-  parseGraphQlResponse(context.xhr.response, (graphqlErrorsCount, graphqlErrors) => {
-    context.graphqlErrorsCount = graphqlErrorsCount
-    context.graphqlErrors = graphqlErrors
-  })
+  const result = parseGraphQlResponse(context.xhr.response)
+  if (result) {
+    context.graphqlErrorsCount = result.errorsCount
+    context.graphqlErrors = result.errors
+  }
 }
 
 function waitForFetchResponseAndExtractGraphQlErrors(
@@ -220,14 +221,14 @@ function waitForFetchResponseAndExtractGraphQlErrors(
       context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
 
       if (shouldExtractGraphQlErrors && !error && bytes) {
-        parseGraphQlResponse(new TextDecoder().decode(bytes), (graphqlErrorsCount, graphqlErrors) => {
-          context.graphqlErrorsCount = graphqlErrorsCount
-          context.graphqlErrors = graphqlErrors
-          onComplete()
-        })
-      } else {
-        onComplete()
+        const result = parseGraphQlResponse(new TextDecoder().decode(bytes))
+        if (result) {
+          context.graphqlErrorsCount = result.errorsCount
+          context.graphqlErrors = result.errors
+        }
       }
+
+      onComplete()
     },
     {
       bytesLimit: Number.POSITIVE_INFINITY,
