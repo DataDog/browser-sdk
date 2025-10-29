@@ -28,11 +28,10 @@ async function injectSDK(page: Page, scenarioName: string, scenarioConfiguration
           clientToken: '${clientToken}',
           applicationId: '${rumApplicationId}',
           site: 'datad0g.com',
-          service: 'browser-sdk-continuous-benchmark',
+          service: 'browser-sdk-benchmark-${scenarioConfiguration}',
           profilingSampleRate: ${scenarioConfiguration === 'rum_profiling' ? 100 : 0},
           trackBfcacheViews: true,
         })
-        console.log('DD_RUM SDK initialized with profiling rate:', ${scenarioConfiguration === 'rum_profiling' ? 100 : 0})
       })
     }
 
@@ -49,7 +48,6 @@ type TestRunner = (page: Page, takeMeasurements: () => Promise<void>, appUrl: st
 function getAppUrl(scenarioConfiguration: ScenarioConfiguration): string {
   const url = new URL(testAppUrl)
   
-  // Add profiling parameter for configurations that need response headers
   if (scenarioConfiguration === 'rum_profiling' || scenarioConfiguration === 'none_with_headers' || scenarioConfiguration === 'rum_replay') {
     url.searchParams.set('profiling', 'true')
   }
@@ -71,6 +69,15 @@ export function createBenchmarkTest(scenarioName: string) {
         test(`${scenarioName} ${scenarioConfiguration}`, async ({ page }) => {
           await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US' })
 
+          let profileRequestCompleted = false
+          if (scenarioConfiguration === 'rum_profiling') {
+            page.on('response', (response) => {
+              if (response.url().includes('/api/v2/profile') && response.status() === 202) {
+                profileRequestCompleted = true
+              }
+            })
+          }
+
           const { stopProfiling, takeMeasurements } = await startProfiling(page)
 
           if (scenarioConfiguration !== 'none' && scenarioConfiguration !== 'none_with_headers') {
@@ -79,19 +86,19 @@ export function createBenchmarkTest(scenarioName: string) {
 
           await runner(page, takeMeasurements, getAppUrl(scenarioConfiguration))
 
-          // Wait for profiler to finish capturing and sending profiles
           if (scenarioConfiguration === 'rum_profiling') {
-            console.log('Waiting for profiles to be sent...')
-            await page.waitForTimeout(5000) // Give profiler time to send profiles
+            const startTime = Date.now()
+            while (!profileRequestCompleted && (Date.now() - startTime) < 60000) {
+              await page.waitForTimeout(500)
+            }
+            
+            if (!profileRequestCompleted) {
+              throw new Error('Test failed: Profile was not successfully uploaded to Datadog')
+            }
           }
 
           if (scenarioConfiguration !== 'none' && scenarioConfiguration !== 'none_with_headers') {
-            await stopSession(page) // Flush events
-          }
-          
-          // Additional wait after stopping session to ensure profiles are uploaded
-          if (scenarioConfiguration === 'rum_profiling') {
-            await page.waitForTimeout(2000)
+            await stopSession(page)
           }
 
           metrics[scenarioConfiguration] = await stopProfiling()

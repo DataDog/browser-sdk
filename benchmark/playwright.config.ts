@@ -8,6 +8,7 @@ const baseConfig = {
   fullyParallel: true,
   retries: 0,
   workers: 1,
+  timeout: 90000, // 90 seconds to allow time for profile collection
   projects: [
     {
       name: 'chromium',

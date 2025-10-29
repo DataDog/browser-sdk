@@ -3,7 +3,7 @@ import { createBenchmarkTest } from '../helpers'
 
 test.describe('benchmark', () => {
   createBenchmarkTest('heavy').run(async (page, takeMeasurements, appUrl) => {
-    await page.goto(appUrl);
+    await page.goto(appUrl, { waitUntil: 'domcontentloaded' })
     await takeMeasurements()
 
     await page.getByRole('textbox', { name: 'Search...' }).click()
