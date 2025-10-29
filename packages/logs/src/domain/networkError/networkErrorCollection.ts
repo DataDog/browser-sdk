@@ -100,7 +100,7 @@ export function computeXhrResponseData(
     (result) => {
       callback(result.body)
     },
-    { bytesLimit: configuration.requestErrorResponseLengthLimit }
+    { bytesLimit: configuration.requestErrorResponseLengthLimit, collectBody: true }
   )
 }
 
@@ -128,7 +128,7 @@ export function computeFetchResponseText(
         callback()
       }
     },
-    { bytesLimit: configuration.requestErrorResponseLengthLimit }
+    { bytesLimit: configuration.requestErrorResponseLengthLimit, collectBody: true }
   )
 }
 

@@ -17,13 +17,13 @@ describe('readResponseBody', () => {
       )
     })
 
-    it('should return non-string XHR response as-is', (done) => {
+    it('should return undefined for non-string XHR response', (done) => {
       const xhr = { response: { foo: 'bar' } } as XMLHttpRequest
 
       readResponseBody(
         { xhr },
         (result) => {
-          expect(result.body).toEqual({ foo: 'bar' })
+          expect(result.body).toBeUndefined()
           expect(result.limitExceeded).toBe(false)
           done()
         },
@@ -181,6 +181,34 @@ describe('readResponseBody', () => {
         (result) => {
           expect(result.body).toBeUndefined()
           expect(result.error).toEqual(jasmine.any(Error))
+          expect(result.limitExceeded).toBe(false)
+          done()
+        },
+        {}
+      )
+    })
+
+    it('should not collect body when collectBody is false', (done) => {
+      const response = new MockResponse({ responseText: 'test response' })
+
+      readResponseBody(
+        { response },
+        (result) => {
+          expect(result.body).toBeUndefined()
+          expect(result.limitExceeded).toBe(false)
+          done()
+        },
+        { collectBody: false }
+      )
+    })
+
+    it('should collect body by default when collectBody is not specified', (done) => {
+      const response = new MockResponse({ responseText: 'test response' })
+
+      readResponseBody(
+        { response },
+        (result) => {
+          expect(result.body).toBe('test response')
           expect(result.limitExceeded).toBe(false)
           done()
         },

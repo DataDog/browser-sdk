@@ -14,7 +14,6 @@ import {
   readResponseBody,
   elapsed,
   timeStampNow,
-  tryToClone,
 } from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
@@ -189,11 +188,9 @@ function extractResponseTextFromXhr(context: RumXhrCompleteContext, configuratio
   readResponseBody(
     context,
     (result) => {
-      if (typeof result.body === 'string') {
-        context.responseText = result.body
-      }
+      context.responseText = result.body
     },
-    {}
+    { collectBody: true }
   )
 }
 
@@ -202,14 +199,6 @@ function waitForFetchResponseAndExtractResponseText(
   configuration: RumConfiguration,
   onComplete: () => void
 ) {
-  const clonedResponse = context.response && tryToClone(context.response)
-  if (!clonedResponse || !clonedResponse.body) {
-    // do not try to wait for the response if the clone failed, fetch error or null body
-    context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
-    onComplete()
-    return
-  }
-
   const graphQlConfig = findGraphQlConfiguration(context.url, configuration)
   const shouldCollectResponseText = graphQlConfig?.trackResponseErrors
 
@@ -217,13 +206,9 @@ function waitForFetchResponseAndExtractResponseText(
     context,
     (result) => {
       context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
-
-      if (shouldCollectResponseText && typeof result.body === 'string') {
-        context.responseText = result.body
-      }
-
+      context.responseText = result.body
       onComplete()
     },
-    {}
+    { collectBody: shouldCollectResponseText }
   )
 }

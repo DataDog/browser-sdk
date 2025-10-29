@@ -3,13 +3,14 @@ import { readBytesFromStream } from './readBytesFromStream'
 import { monitor } from './monitor'
 
 export interface ReadResponseBodyResult {
-  body?: unknown
+  body?: string
   limitExceeded: boolean
   error?: Error
 }
 
 export interface ReadResponseBodyOptions {
   bytesLimit?: number
+  collectBody?: boolean
 }
 
 export interface RequestContext {
@@ -50,7 +51,7 @@ function readXhrResponseBody(
     })
   } else {
     callback({
-      body: xhr.response,
+      body: undefined,
       limitExceeded: false,
     })
   }
@@ -89,6 +90,7 @@ function readFetchResponseBody(
   }
 
   const bytesLimit = options.bytesLimit ?? Number.POSITIVE_INFINITY
+  const collectBody = options.collectBody ?? true
   readBytesFromStream(
     clonedResponse.body,
     (error, bytes, limitExceeded) => {
@@ -101,7 +103,7 @@ function readFetchResponseBody(
         return
       }
 
-      if (!bytes) {
+      if (!collectBody || !bytes) {
         callback({ body: undefined, limitExceeded: false })
         return
       }
@@ -118,7 +120,7 @@ function readFetchResponseBody(
     },
     {
       bytesLimit,
-      collectStreamBody: true,
+      collectStreamBody: collectBody,
     }
   )
 }

@@ -160,10 +160,10 @@ describe('computeXhrResponseData', () => {
     })
   })
 
-  it('return the response value directly if it is not a string', (done) => {
+  it('returns undefined if the response value is not a string', (done) => {
     const xhr = { response: { foo: 'bar' } } as XMLHttpRequest
     computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
-      expect(responseData).toEqual({ foo: 'bar' })
+      expect(responseData).toBeUndefined()
       done()
     })
   })
