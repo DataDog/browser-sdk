@@ -268,8 +268,9 @@ describe('GraphQL detection and metadata extraction', () => {
 
       const request: RequestCompleteEvent = {
         body: requestBody,
-        graphqlErrorsCount: 1,
-        graphqlErrors: [{ message: 'Not found' }],
+        responseText: JSON.stringify({
+          errors: [{ message: 'Not found' }],
+        }),
       } as RequestCompleteEvent
 
       const result = extractGraphQlMetadata(request, {
@@ -310,8 +311,9 @@ describe('GraphQL detection and metadata extraction', () => {
 
       const request: RequestCompleteEvent = {
         body: requestBody,
-        graphqlErrorsCount: 2,
-        graphqlErrors: [{ message: 'Error 1' }, { message: 'Error 2' }],
+        responseText: JSON.stringify({
+          errors: [{ message: 'Error 1' }, { message: 'Error 2' }],
+        }),
       } as RequestCompleteEvent
 
       const result = extractGraphQlMetadata(request, {

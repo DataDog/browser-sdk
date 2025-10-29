@@ -37,11 +37,12 @@ export function extractGraphQlMetadata(
     return
   }
 
-  if (request.graphqlErrorsCount !== undefined) {
-    metadata.errors_count = request.graphqlErrorsCount
-  }
-  if (request.graphqlErrors !== undefined) {
-    metadata.errors = request.graphqlErrors
+  if (graphQlConfig.trackResponseErrors && request.responseText) {
+    const responseErrors = parseGraphQlResponse(request.responseText)
+    if (responseErrors) {
+      metadata.errors_count = responseErrors.errorsCount
+      metadata.errors = responseErrors.errors
+    }
   }
 
   return metadata

@@ -24,8 +24,7 @@ import { isAllowedRequestUrl } from './resource/resourceUtils'
 import type { Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
 import type { SpanIdentifier, TraceIdentifier } from './tracing/identifier'
-import type { GraphQlError } from './resource/graphql'
-import { findGraphQlConfiguration, parseGraphQlResponse } from './resource/graphql'
+import { findGraphQlConfiguration } from './resource/graphql'
 
 export interface CustomContext {
   requestIndex: number
@@ -36,13 +35,11 @@ export interface CustomContext {
 export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
 export interface RumFetchResolveContext extends FetchResolveContext, CustomContext {
   duration?: Duration
-  graphqlErrorsCount?: number
-  graphqlErrors?: GraphQlError[]
+  responseText?: string
 }
 export interface RumXhrStartContext extends XhrStartContext, CustomContext {}
 export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext {
-  graphqlErrorsCount?: number
-  graphqlErrors?: GraphQlError[]
+  responseText?: string
 }
 
 export interface RequestStartEvent {
@@ -69,8 +66,7 @@ export interface RequestCompleteEvent {
   isAborted: boolean
   handlingStack?: string
   body?: unknown
-  graphqlErrorsCount?: number
-  graphqlErrors?: GraphQlError[]
+  responseText?: string
 }
 
 let nextRequestIndex = 1
@@ -105,7 +101,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
         })
         break
       case 'complete':
-        extractGraphQlErrorsFromXhr(context, configuration)
+        extractResponseTextFromXhr(context, configuration)
         tracer.clearTracingIfNeeded(context)
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
           duration: context.duration,
@@ -122,8 +118,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           isAborted: context.isAborted,
           handlingStack: context.handlingStack,
           body: context.body,
-          graphqlErrorsCount: context.graphqlErrorsCount,
-          graphqlErrors: context.graphqlErrors,
+          responseText: context.responseText,
         })
         break
     }
@@ -150,7 +145,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         })
         break
       case 'resolve':
-        waitForFetchResponseAndExtractGraphQlErrors(context, configuration, () => {
+        waitForFetchResponseAndExtractResponseText(context, configuration, () => {
           tracer.clearTracingIfNeeded(context)
           lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
             duration: context.duration!,
@@ -170,8 +165,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
             isAborted: context.isAborted,
             handlingStack: context.handlingStack,
             body: context.init?.body,
-            graphqlErrorsCount: context.graphqlErrorsCount,
-            graphqlErrors: context.graphqlErrors,
+            responseText: context.responseText,
           })
         })
         break
@@ -186,20 +180,16 @@ function getNextRequestIndex() {
   return result
 }
 
-function extractGraphQlErrorsFromXhr(context: RumXhrCompleteContext, configuration: RumConfiguration) {
+function extractResponseTextFromXhr(context: RumXhrCompleteContext, configuration: RumConfiguration) {
   const graphQlConfig = findGraphQlConfiguration(context.url, configuration)
   if (!graphQlConfig?.trackResponseErrors || !context.xhr || typeof context.xhr.response !== 'string') {
     return
   }
 
-  const result = parseGraphQlResponse(context.xhr.response)
-  if (result) {
-    context.graphqlErrorsCount = result.errorsCount
-    context.graphqlErrors = result.errors
-  }
+  context.responseText = context.xhr.response
 }
 
-function waitForFetchResponseAndExtractGraphQlErrors(
+function waitForFetchResponseAndExtractResponseText(
   context: RumFetchResolveContext,
   configuration: RumConfiguration,
   onComplete: () => void
@@ -213,26 +203,22 @@ function waitForFetchResponseAndExtractGraphQlErrors(
   }
 
   const graphQlConfig = findGraphQlConfiguration(context.url, configuration)
-  const shouldExtractGraphQlErrors = graphQlConfig?.trackResponseErrors
+  const shouldCollectResponseText = graphQlConfig?.trackResponseErrors
 
   readBytesFromStream(
     clonedResponse.body,
     (error?: Error, bytes?: Uint8Array) => {
       context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
 
-      if (shouldExtractGraphQlErrors && !error && bytes) {
-        const result = parseGraphQlResponse(new TextDecoder().decode(bytes))
-        if (result) {
-          context.graphqlErrorsCount = result.errorsCount
-          context.graphqlErrors = result.errors
-        }
+      if (shouldCollectResponseText && !error && bytes) {
+        context.responseText = new TextDecoder().decode(bytes)
       }
 
       onComplete()
     },
     {
       bytesLimit: Number.POSITIVE_INFINITY,
-      collectStreamBody: shouldExtractGraphQlErrors,
+      collectStreamBody: shouldCollectResponseText,
     }
   )
 }

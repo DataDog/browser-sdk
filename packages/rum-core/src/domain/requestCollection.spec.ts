@@ -336,7 +336,7 @@ describe('collect xhr', () => {
   })
 })
 
-describe('GraphQL response errors tracking', () => {
+describe('GraphQL response text collection', () => {
   const FAKE_GRAPHQL_URL = 'http://fake-url/graphql'
 
   function setupGraphQlFetchTest(trackResponseErrors: boolean) {
@@ -355,29 +355,30 @@ describe('GraphQL response errors tracking', () => {
     return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }
   }
 
-  it('should extract GraphQL errors when trackResponseErrors is enabled', (done) => {
+  it('should collect responseText when trackResponseErrors is enabled', (done) => {
     const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(true)
+
+    const responseBody = JSON.stringify({
+      data: null,
+      errors: [{ message: 'Not found' }, { message: 'Unauthorized' }],
+    })
 
     fetch(FAKE_GRAPHQL_URL, {
       method: 'POST',
       body: JSON.stringify({ query: 'query Test { test }' }),
     }).resolveWith({
       status: 200,
-      responseText: JSON.stringify({
-        data: null,
-        errors: [{ message: 'Not found' }, { message: 'Unauthorized' }],
-      }),
+      responseText: responseBody,
     })
 
     mockFetchManager.whenAllComplete(() => {
       const request = completeSpy.calls.argsFor(0)[0]
-      expect(request.graphqlErrorsCount).toBe(2)
-      expect(request.graphqlErrors).toEqual([{ message: 'Not found' }, { message: 'Unauthorized' }])
+      expect(request.responseText).toBe(responseBody)
       done()
     })
   })
 
-  it('should not extract GraphQL errors when trackResponseErrors is false', (done) => {
+  it('should not collect responseText when trackResponseErrors is false', (done) => {
     const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(false)
 
     fetch(FAKE_GRAPHQL_URL, {
@@ -390,8 +391,7 @@ describe('GraphQL response errors tracking', () => {
 
     mockFetchManager.whenAllComplete(() => {
       const request = completeSpy.calls.argsFor(0)[0]
-      expect(request.graphqlErrorsCount).toBeUndefined()
-      expect(request.graphqlErrors).toBeUndefined()
+      expect(request.responseText).toBeUndefined()
       done()
     })
   })
