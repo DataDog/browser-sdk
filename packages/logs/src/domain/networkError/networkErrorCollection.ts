@@ -9,9 +9,9 @@ import {
   computeStackTrace,
   toStackTraceString,
   noop,
-  readResponseBody,
   isServerError,
   isIntakeUrl,
+  ResponseBodyAction,
 } from '@datadog/browser-core'
 import type { LogsConfiguration } from '../configuration'
 import type { LifeCycle } from '../lifeCycle'
@@ -32,49 +32,53 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
       handleResponse(RequestType.XHR, context)
     }
   })
-  const fetchSubscription = initFetchObservable().subscribe((context) => {
+
+  const fetchSubscription = initFetchObservable({
+    responseBodyAction: (context) => (isNetworkError(context) ? ResponseBodyAction.COLLECT : ResponseBodyAction.IGNORE),
+  }).subscribe((context) => {
     if (context.state === 'resolve') {
       handleResponse(RequestType.FETCH, context)
     }
   })
 
+  function isNetworkError(request: XhrCompleteContext | FetchResolveContext) {
+    return !isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))
+  }
+
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
-    if (!isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))) {
-      if ('xhr' in request) {
-        computeXhrResponseData(request.xhr, configuration, onResponseDataAvailable)
-      } else if (request.response) {
-        computeFetchResponseText(request.response, configuration, onResponseDataAvailable)
-      } else if (request.error) {
-        computeFetchErrorText(request.error, configuration, onResponseDataAvailable)
-      }
+    if (!isNetworkError(request)) {
+      return
     }
 
-    function onResponseDataAvailable(responseData: unknown) {
-      const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
-        isAborted: request.isAborted,
-        handlingStack: request.handlingStack,
-      }
+    const stack =
+      'error' in request && request.error
+        ? toStackTraceString(computeStackTrace(request.error))
+        : request.responseBody || 'Failed to load'
 
-      lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
-        rawLogsEvent: {
-          message: `${format(type)} error ${request.method} ${request.url}`,
-          date: request.startClocks.timeStamp,
-          error: {
-            stack: (responseData as string) || 'Failed to load',
-            // We don't know if the error was handled or not, so we set it to undefined
-            handling: undefined,
-          },
-          http: {
-            method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
-            status_code: request.status,
-            url: request.url,
-          },
-          status: StatusType.error,
-          origin: ErrorSource.NETWORK,
+    const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
+      isAborted: request.isAborted,
+      handlingStack: request.handlingStack,
+    }
+
+    lifeCycle.notify(LifeCycleEventType.RAW_LOG_COLLECTED, {
+      rawLogsEvent: {
+        message: `${format(type)} error ${request.method} ${request.url}`,
+        date: request.startClocks.timeStamp,
+        error: {
+          stack: truncateResponseText(stack, configuration),
+          // We don't know if the error was handled or not, so we set it to undefined
+          handling: undefined,
         },
-        domainContext,
-      })
-    }
+        http: {
+          method: request.method as any, // Cast resource method because of case mismatch cf issue RUMF-1152
+          status_code: request.status,
+          url: request.url,
+        },
+        status: StatusType.error,
+        origin: ErrorSource.NETWORK,
+      },
+      domainContext,
+    })
   }
 
   return {
@@ -83,53 +87,6 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
       fetchSubscription.unsubscribe()
     },
   }
-}
-
-// TODO: ideally, computeXhrResponseData should always call the callback with a string instead of
-// `unknown`. But to keep backward compatibility, in the case of XHR with a `responseType` different
-// than "text", the response data should be whatever `xhr.response` is. This is a bit confusing as
-// Logs event 'stack' is expected to be a string. This should be changed in a future major version
-// as it could be a breaking change.
-export function computeXhrResponseData(
-  xhr: XMLHttpRequest,
-  configuration: LogsConfiguration,
-  callback: (responseData: unknown) => void
-) {
-  readResponseBody(
-    { xhr } as any,
-    (result) => {
-      callback(result.body)
-    },
-    { bytesLimit: configuration.requestErrorResponseLengthLimit, collectBody: true }
-  )
-}
-
-export function computeFetchErrorText(
-  error: Error,
-  configuration: LogsConfiguration,
-  callback: (errorText: string) => void
-) {
-  callback(truncateResponseText(toStackTraceString(computeStackTrace(error)), configuration))
-}
-
-export function computeFetchResponseText(
-  response: Response,
-  configuration: LogsConfiguration,
-  callback: (responseText?: string) => void
-) {
-  readResponseBody(
-    { response } as any,
-    (result) => {
-      if (result.error) {
-        callback(`Unable to retrieve response: ${result.error as unknown as string}`)
-      } else if (typeof result.body === 'string') {
-        callback(result.body)
-      } else {
-        callback()
-      }
-    },
-    { bytesLimit: configuration.requestErrorResponseLengthLimit, collectBody: true }
-  )
 }
 
 function isRejected(request: { status: number; responseType?: string }) {

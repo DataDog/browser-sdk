@@ -7,6 +7,8 @@ import { clocksNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import type { GlobalObject } from '../tools/globalObject'
 import { globalObject } from '../tools/globalObject'
+import { readBytesFromStream } from '../tools/readBytesFromStream'
+import { tryToClone } from '../tools/utils/responseUtils'
 
 interface FetchContextBase {
   method: string
@@ -25,6 +27,7 @@ export interface FetchResolveContext extends FetchContextBase {
   state: 'resolve'
   status: number
   response?: Response
+  responseBody?: string
   responseType?: string
   isAborted: boolean
   error?: Error
@@ -32,9 +35,23 @@ export interface FetchResolveContext extends FetchContextBase {
 
 export type FetchContext = FetchStartContext | FetchResolveContext
 
-let fetchObservable: Observable<FetchContext> | undefined
+type ResponseBodyActionGetter = (context: FetchResolveContext) => ResponseBodyAction
 
-export function initFetchObservable() {
+export const enum ResponseBodyAction {
+  IGNORE = 0,
+  // TODO(next-major): Remove the "WAIT" action when `trackEarlyRequests` is removed, as the
+  // duratiorn of fetch requests will always come from PerformanceResourceTiming
+  WAIT = 1,
+  COLLECT = 2,
+}
+
+let fetchObservable: Observable<FetchContext> | undefined
+const responseBodyActionGetters: ResponseBodyActionGetter[] = []
+
+export function initFetchObservable({ responseBodyAction }: { responseBodyAction?: ResponseBodyActionGetter } = {}) {
+  if (responseBodyAction) {
+    responseBodyActionGetters.push(responseBodyAction)
+  }
   if (!fetchObservable) {
     fetchObservable = createFetchObservable()
   }
@@ -43,6 +60,7 @@ export function initFetchObservable() {
 
 export function resetFetchObservable() {
   fetchObservable = undefined
+  responseBodyActionGetters.length = 0
 }
 
 function createFetchObservable() {
@@ -120,5 +138,22 @@ async function afterSend(
   context.status = response.status
   context.responseType = response.type
   context.isAborted = false
+
+  const responseBodyCondition = responseBodyActionGetters.reduce(
+    (action, getter) => Math.max(action, getter(context)),
+    ResponseBodyAction.IGNORE
+  ) as ResponseBodyAction
+
+  if (responseBodyCondition !== ResponseBodyAction.IGNORE) {
+    const clonedResponse = tryToClone(response)
+    if (clonedResponse && clonedResponse.body) {
+      const { bytes } = await readBytesFromStream(clonedResponse.body, {
+        collectStreamBody: responseBodyCondition === ResponseBodyAction.COLLECT,
+        bytesLimit: Number.POSITIVE_INFINITY,
+      })
+      context.responseBody = bytes && new TextDecoder().decode(bytes)
+    }
+  }
+
   observable.notify(context)
 }
