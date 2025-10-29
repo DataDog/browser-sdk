@@ -8,19 +8,19 @@
   },
   "devDependencies": {
     "@pmmmwh/react-refresh-webpack-plugin": "^0.6.0",
-    "@types/chrome": "0.1.12",
-    "@types/react": "19.1.15",
-    "@types/react-dom": "19.1.9",
+    "@types/chrome": "0.1.24",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
     "@types/webpack-env": "^1.18.4",
     "@webextension-toolbox/webpack-webextension-plugin": "3.3.1",
     "copy-webpack-plugin": "13.0.1",
     "css-loader": "7.1.2",
     "html-webpack-plugin": "5.6.4",
-    "react-refresh": "^0.17.0",
+    "react-refresh": "^0.18.0",
     "react-refresh-typescript": "^2.0.9",
     "style-loader": "4.0.0",
-    "typescript": "5.9.2",
-    "webpack": "5.101.3",
+    "typescript": "5.9.3",
+    "webpack": "5.102.1",
     "webpack-cli": "^6.0.0",
     "webpack-dev-server": "^5.0.4"
   },
@@ -28,12 +28,12 @@
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "8.3.2",
-    "@mantine/hooks": "8.3.2",
+    "@mantine/core": "8.3.5",
+    "@mantine/hooks": "8.3.5",
     "@tabler/icons-react": "3.35.0",
     "clsx": "2.1.1",
-    "react": "19.1.1",
-    "react-dom": "19.1.1"
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   },
   "volta": {
     "extends": "../package.json"
