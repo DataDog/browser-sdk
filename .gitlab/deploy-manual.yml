@@ -70,11 +70,10 @@ step-6_publish-developer-extension:
     - node ./scripts/deploy/publish-developer-extension.ts
 
 step-7_create-github-release:
-  needs:
-    - step-6_publish-developer-extension
   stage: deploy
   extends:
     - .base-configuration
+  when: manual
   allow_failure: false
   script:
     - yarn
