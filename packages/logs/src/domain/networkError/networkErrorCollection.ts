@@ -96,7 +96,7 @@ export function computeXhrResponseData(
   callback: (responseData: unknown) => void
 ) {
   readResponseBody(
-    { xhr } as any,
+    { xhr },
     (result) => {
       callback(result.body)
     },
@@ -118,7 +118,7 @@ export function computeFetchResponseText(
   callback: (responseText?: string) => void
 ) {
   readResponseBody(
-    { response } as any,
+    { response },
     (result) => {
       if (result.error) {
         callback(`Unable to retrieve response: ${result.error as unknown as string}`)
