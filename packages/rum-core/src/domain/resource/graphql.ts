@@ -69,20 +69,10 @@ export function parseGraphQlResponse(responseText: string): GraphQlResponseError
 
   const errors = (responseObj.errors as Array<Record<string, unknown>>).map((error) => {
     const graphqlError: GraphQlError = {
-      message: typeof error.message === 'string' ? error.message : 'Unknown GraphQL error',
-    }
-
-    const extensions = error.extensions as Record<string, unknown> | undefined
-    if (extensions?.code && typeof extensions.code === 'string') {
-      graphqlError.code = extensions.code
-    }
-
-    if (Array.isArray(error.locations)) {
-      graphqlError.locations = error.locations
-    }
-
-    if (Array.isArray(error.path)) {
-      graphqlError.path = error.path
+      message: error.message as string,
+      path: error.path as Array<string | number>,
+      locations: error.locations as Array<{ line: number; column: number }>,
+      code: (error.extensions as Record<string, unknown> | undefined)?.code as string,
     }
 
     return graphqlError
