@@ -7,10 +7,9 @@
   "types": "cjs/entries/main.d.ts",
   "scripts": {
     "pack": "yarn pack",
-    "build": "run-p build:cjs build:esm build:bundle",
+    "build": "run-p build:modules build:bundle",
     "build:bundle": "rm -rf bundle && SDK_SETUP=cdn webpack --disable-interpret --mode=production",
-    "build:cjs": "rm -rf cjs && tsc -p tsconfig.cjs.json",
-    "build:esm": "rm -rf esm && tsc -p tsconfig.esm.json"
+    "build:modules": "node ../../scripts/build/build-package.ts --modules"
   },
   "dependencies": {
     "@datadog/browser-core": "6.23.0",
