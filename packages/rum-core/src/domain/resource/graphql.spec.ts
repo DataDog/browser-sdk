@@ -284,9 +284,7 @@ describe('GraphQL detection and metadata extraction', () => {
 
       expect(result?.operationType).toBe('query')
       expect(result?.errors_count).toBe(1)
-      expect(result?.errors).toEqual([
-        { message: 'Not found', path: undefined, locations: undefined, code: undefined },
-      ])
+      expect(result?.errors).toEqual([{ message: 'Not found', path: undefined, locations: undefined, code: undefined }])
     })
 
     it('should extract request metadata without response errors when not provided', () => {
