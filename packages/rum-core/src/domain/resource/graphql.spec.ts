@@ -198,7 +198,10 @@ describe('GraphQL detection and metadata extraction', () => {
 
       expect(result).toEqual({
         errorsCount: 2,
-        errors: [{ message: 'Field not found' }, { message: 'Unauthorized' }],
+        errors: [
+          { message: 'Field not found', path: undefined, locations: undefined, code: undefined },
+          { message: 'Unauthorized', path: undefined, locations: undefined, code: undefined },
+        ],
       })
     })
 
@@ -255,7 +258,7 @@ describe('GraphQL detection and metadata extraction', () => {
 
       expect(result).toEqual({
         errorsCount: 1,
-        errors: [{ message: 'Simple error' }],
+        errors: [{ message: 'Simple error', path: undefined, locations: undefined, code: undefined }],
       })
     })
   })
@@ -281,7 +284,9 @@ describe('GraphQL detection and metadata extraction', () => {
 
       expect(result?.operationType).toBe('query')
       expect(result?.errors_count).toBe(1)
-      expect(result?.errors).toEqual([{ message: 'Not found' }])
+      expect(result?.errors).toEqual([
+        { message: 'Not found', path: undefined, locations: undefined, code: undefined },
+      ])
     })
 
     it('should extract request metadata without response errors when not provided', () => {
@@ -324,7 +329,10 @@ describe('GraphQL detection and metadata extraction', () => {
 
       expect(result?.operationType).toBe('query')
       expect(result?.errors_count).toBe(2)
-      expect(result?.errors).toEqual([{ message: 'Error 1' }, { message: 'Error 2' }])
+      expect(result?.errors).toEqual([
+        { message: 'Error 1', path: undefined, locations: undefined, code: undefined },
+        { message: 'Error 2', path: undefined, locations: undefined, code: undefined },
+      ])
     })
   })
 })
