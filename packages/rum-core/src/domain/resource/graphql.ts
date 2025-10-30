@@ -37,8 +37,8 @@ export function extractGraphQlMetadata(
     return
   }
 
-  if (graphQlConfig.trackResponseErrors && request.responseText) {
-    const responseErrors = parseGraphQlResponse(request.responseText)
+  if (graphQlConfig.trackResponseErrors && request.responseBody) {
+    const responseErrors = parseGraphQlResponse(request.responseBody)
     if (responseErrors) {
       metadata.errors_count = responseErrors.errorsCount
       metadata.errors = responseErrors.errors

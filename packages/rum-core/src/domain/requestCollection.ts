@@ -9,10 +9,10 @@ import type {
 } from '@datadog/browser-core'
 import {
   RequestType,
+  ResponseBodyAction,
+  elapsed,
   initFetchObservable,
   initXhrObservable,
-  readResponseBody,
-  elapsed,
   timeStampNow,
 } from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
@@ -65,7 +65,7 @@ export interface RequestCompleteEvent {
   isAborted: boolean
   handlingStack?: string
   body?: unknown
-  responseText?: string
+  responseBody?: string
 }
 
 let nextRequestIndex = 1
@@ -100,7 +100,6 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
         })
         break
       case 'complete':
-        extractResponseTextFromXhr(context, configuration)
         tracer.clearTracingIfNeeded(context)
         lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
           duration: context.duration,
@@ -117,7 +116,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           isAborted: context.isAborted,
           handlingStack: context.handlingStack,
           body: context.body,
-          responseText: context.responseText,
+          responseBody: context.responseBody,
         })
         break
     }
@@ -127,7 +126,14 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
 }
 
 export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
-  const subscription = initFetchObservable().subscribe((rawContext) => {
+  const subscription = initFetchObservable({
+    responseBodyAction: (context) => {
+      if (findGraphQlConfiguration(context.url, configuration)?.trackResponseErrors) {
+        return ResponseBodyAction.COLLECT
+      }
+      return ResponseBodyAction.WAIT
+    },
+  }).subscribe((rawContext) => {
     const context = rawContext as RumFetchResolveContext | RumFetchStartContext
     if (!isAllowedRequestUrl(context.url)) {
       return
@@ -144,28 +150,26 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
         })
         break
       case 'resolve':
-        waitForFetchResponseAndExtractResponseText(context, configuration, () => {
-          tracer.clearTracingIfNeeded(context)
-          lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-            duration: context.duration!,
-            method: context.method,
-            requestIndex: context.requestIndex,
-            responseType: context.responseType,
-            spanId: context.spanId,
-            startClocks: context.startClocks,
-            status: context.status,
-            traceId: context.traceId,
-            traceSampled: context.traceSampled,
-            type: RequestType.FETCH,
-            url: context.url,
-            response: context.response,
-            init: context.init,
-            input: context.input,
-            isAborted: context.isAborted,
-            handlingStack: context.handlingStack,
-            body: context.init?.body,
-            responseText: context.responseText,
-          })
+        tracer.clearTracingIfNeeded(context)
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+          duration: elapsed(context.startClocks.timeStamp, timeStampNow()),
+          method: context.method,
+          requestIndex: context.requestIndex,
+          responseType: context.responseType,
+          spanId: context.spanId,
+          startClocks: context.startClocks,
+          status: context.status,
+          traceId: context.traceId,
+          traceSampled: context.traceSampled,
+          type: RequestType.FETCH,
+          url: context.url,
+          response: context.response,
+          init: context.init,
+          input: context.input,
+          isAborted: context.isAborted,
+          handlingStack: context.handlingStack,
+          body: context.init?.body,
+          responseBody: context.responseBody,
         })
         break
     }
@@ -177,38 +181,4 @@ function getNextRequestIndex() {
   const result = nextRequestIndex
   nextRequestIndex += 1
   return result
-}
-
-function extractResponseTextFromXhr(context: RumXhrCompleteContext, configuration: RumConfiguration) {
-  const graphQlConfig = findGraphQlConfiguration(context.url, configuration)
-  if (!graphQlConfig?.trackResponseErrors) {
-    return
-  }
-
-  readResponseBody(
-    context,
-    (result) => {
-      context.responseText = result.body
-    },
-    { collectBody: true }
-  )
-}
-
-function waitForFetchResponseAndExtractResponseText(
-  context: RumFetchResolveContext,
-  configuration: RumConfiguration,
-  onComplete: () => void
-) {
-  const graphQlConfig = findGraphQlConfiguration(context.url, configuration)
-  const shouldCollectResponseText = graphQlConfig?.trackResponseErrors
-
-  readResponseBody(
-    context,
-    (result) => {
-      context.duration = elapsed(context.startClocks.timeStamp, timeStampNow())
-      context.responseText = result.body
-      onComplete()
-    },
-    { collectBody: shouldCollectResponseText }
-  )
 }
