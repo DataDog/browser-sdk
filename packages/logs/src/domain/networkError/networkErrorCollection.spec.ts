@@ -144,117 +144,60 @@ describe('network error collection', () => {
       done()
     })
   })
-})
 
-// TODO
-// describe('computeXhrResponseData', () => {
-//   it('computes response text from XHR', (done) => {
-//     const xhr = { response: 'foo' } as XMLHttpRequest
-//     computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
-//       expect(responseData).toBe('foo')
-//       done()
-//     })
-//   })
-//
-//   it('returns undefined if the response value is not a string', (done) => {
-//     const xhr = { response: { foo: 'bar' } } as XMLHttpRequest
-//     computeXhrResponseData(xhr, CONFIGURATION, (responseData) => {
-//       expect(responseData).toBeUndefined()
-//       done()
-//     })
-//   })
-//
-//   it('truncates xhr response text', (done) => {
-//     const xhr = { response: 'Lorem ipsum dolor sit amet orci aliquam.' } as XMLHttpRequest
-//     computeXhrResponseData(xhr, { ...CONFIGURATION, requestErrorResponseLengthLimit: 32 }, (responseData) => {
-//       expect(responseData).toBe('Lorem ipsum dolor sit amet orci ...')
-//       done()
-//     })
-//   })
-// })
-//
-// describe('computeFetchResponseText', () => {
-//   it('computes response text from Response objects', (done) => {
-//     computeFetchResponseText(new MockResponse({ responseText: 'foo' }), CONFIGURATION, (responseText) => {
-//       expect(responseText).toBe('foo')
-//       done()
-//     })
-//   })
-//
-//   // https://fetch.spec.whatwg.org/#concept-body-consume-body
-//   it('computes response text from Response objects failing to retrieve text', (done) => {
-//     computeFetchResponseText(
-//       new MockResponse({ responseTextError: new Error('locked') }),
-//       CONFIGURATION,
-//       (responseText) => {
-//         expect(responseText).toBe('Unable to retrieve response: Error: locked')
-//         done()
-//       }
-//     )
-//   })
-//
-//   it('should return undefined if no response body', (done) => {
-//     const response = new MockResponse({})
-//     computeFetchResponseText(response, CONFIGURATION, (responseText) => {
-//       expect(responseText).toBeUndefined()
-//       done()
-//     })
-//   })
-//
-//   it('should return undefined if body used by another instrumentation', (done) => {
-//     const response = new MockResponse({ bodyUsed: true })
-//     computeFetchResponseText(response, CONFIGURATION, (responseText) => {
-//       expect(responseText).toBeUndefined()
-//       done()
-//     })
-//   })
-//
-//   it('should return undefined if body is disturbed', (done) => {
-//     const response = new MockResponse({ bodyDisturbed: true })
-//     computeFetchResponseText(response, CONFIGURATION, (responseText) => {
-//       expect(responseText).toBeUndefined()
-//       done()
-//     })
-//   })
-//
-//   it('does not consume the response body', (done) => {
-//     const response = new MockResponse({ responseText: 'foo' })
-//     computeFetchResponseText(response, CONFIGURATION, () => {
-//       expect(response.bodyUsed).toBe(false)
-//       done()
-//     })
-//   })
-//
-//   it('does not truncate the response if its size is equal to the limit', (done) => {
-//     const text = 'foo'
-//     computeFetchResponseText(
-//       new MockResponse({ responseText: text }),
-//       { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length },
-//       (responseData) => {
-//         expect(responseData).toBe(text)
-//         done()
-//       }
-//     )
-//   })
-//
-//   it('truncates the response if its size is greater than the limit', (done) => {
-//     const text = 'foobar'
-//     computeFetchResponseText(
-//       new MockResponse({ responseText: text }),
-//       { ...CONFIGURATION, requestErrorResponseLengthLimit: text.length - 1 },
-//       (responseData) => {
-//         expect(responseData).toBe('fooba...')
-//         done()
-//       }
-//     )
-//   })
-// })
-//
-// describe('computeFetchErrorText', () => {
-//   it('computes response text from requests ending as an error', (done) => {
-//     computeFetchErrorText(new Error('fetch error'), CONFIGURATION, (errorText) => {
-//       expect(errorText).toContain('Error: fetch error')
-//       done()
-//     })
-//   })
-// })
+  describe('response body handling', () => {
+    beforeEach(() => {
+      startCollection()
+    })
+
+    it('should use responseBody for fetch server errors', (done) => {
+      const responseBody = 'Internal Server Error Details'
+      fetch('http://fake-url/').resolveWith({
+        status: 500,
+        responseText: responseBody,
+      })
+
+      mockFetchManager.whenAllComplete(() => {
+        const log = rawLogsEvents[0].rawLogsEvent
+        expect(log.error.stack).toBe(responseBody)
+        done()
+      })
+    })
+
+    it('should use error stack trace for fetch rejections', (done) => {
+      fetch('http://fake-url/').rejectWith(new Error('Network failure'))
+
+      mockFetchManager.whenAllComplete(() => {
+        const log = rawLogsEvents[0].rawLogsEvent
+        expect(log.error.stack).toContain('Error: Network failure')
+        done()
+      })
+    })
+
+    it('should truncate responseBody according to limit', (done) => {
+      const longResponse = 'a'.repeat(100)
+
+      fetch('http://fake-url/').resolveWith({
+        status: 500,
+        responseText: longResponse,
+      })
+
+      mockFetchManager.whenAllComplete(() => {
+        const log = rawLogsEvents[0].rawLogsEvent
+        expect(log.error.stack?.length).toBe(67) // 64 chars + '...'
+        expect(log.error.stack).toMatch(/^a{64}\.\.\.$/)
+        done()
+      })
+    })
+
+    it('should use fallback message when no responseBody available', (done) => {
+      fetch('http://fake-url/').resolveWith({ status: 500 })
+
+      mockFetchManager.whenAllComplete(() => {
+        const log = rawLogsEvents[0].rawLogsEvent
+        expect(log.error.stack).toBe('Failed to load')
+        done()
+      })
+    })
+  })
+})
