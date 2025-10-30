@@ -1,6 +1,6 @@
 import type { InstrumentedMethodCall } from '../tools/instrumentMethod'
 import { instrumentMethod } from '../tools/instrumentMethod'
-import { monitor, monitorError } from '../tools/monitor'
+import { monitorError } from '../tools/monitor'
 import { Observable } from '../tools/observable'
 import type { ClocksState } from '../tools/utils/timeUtils'
 import { clocksNow } from '../tools/utils/timeUtils'
