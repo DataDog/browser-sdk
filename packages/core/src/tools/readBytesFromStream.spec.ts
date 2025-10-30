@@ -2,19 +2,13 @@ import { readBytesFromStream } from './readBytesFromStream'
 
 describe('readBytesFromStream', () => {
   const str = 'Lorem ipsum dolor sit amet.'
-  let beenCalled = false
   let stream: ReadableStream
 
   beforeEach(() => {
-    beenCalled = false
     stream = new ReadableStream({
-      pull: (controller) => {
-        if (!beenCalled) {
-          controller.enqueue(new TextEncoder().encode(str))
-          beenCalled = true
-        } else {
-          controller.close()
-        }
+      start: (controller) => {
+        controller.enqueue(new TextEncoder().encode(str))
+        controller.close()
       },
     })
   })
@@ -34,9 +28,11 @@ describe('readBytesFromStream', () => {
     expect(bytes).toBeUndefined()
   })
 
-  it('should handle rejection error on pull', async () => {
+  it('should handle rejection error on read', async () => {
     const stream = new ReadableStream({
-      pull: () => Promise.reject(new Error('foo')),
+      start: (controller) => {
+        controller.error(new Error('foo'))
+      },
     })
 
     try {
@@ -51,7 +47,10 @@ describe('readBytesFromStream', () => {
 
   it('should handle rejection error on cancel', async () => {
     const stream = new ReadableStream({
-      pull: (controller) => controller.enqueue(new TextEncoder().encode('f')),
+      start: (controller) => {
+        controller.enqueue(new TextEncoder().encode('f'))
+        controller.close()
+      },
       cancel: () => Promise.reject(new Error('foo')),
     })
 

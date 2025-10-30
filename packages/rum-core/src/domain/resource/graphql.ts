@@ -32,7 +32,7 @@ export function extractGraphQlMetadata(
   request: RequestCompleteEvent,
   graphQlConfig: GraphQlUrlOption
 ): GraphQlMetadata | undefined {
-  const metadata = extractGraphQlRequestMetadata(request.body, graphQlConfig.trackPayload)
+  const metadata = extractGraphQlRequestMetadata(request.requestBody, graphQlConfig.trackPayload)
   if (!metadata) {
     return
   }

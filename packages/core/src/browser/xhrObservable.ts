@@ -20,7 +20,7 @@ export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
   isAborted: boolean
   xhr: XMLHttpRequest
   handlingStack?: string
-  body?: unknown
+  requestBody?: unknown
 }
 
 export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
@@ -89,7 +89,7 @@ function sendXhr(
   startContext.isAborted = false
   startContext.xhr = xhr
   startContext.handlingStack = handlingStack
-  startContext.body = body
+  startContext.requestBody = body
 
   let hasBeenReported = false
 

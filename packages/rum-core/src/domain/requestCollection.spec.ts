@@ -355,7 +355,7 @@ describe('GraphQL response text collection', () => {
     return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }
   }
 
-  it('should collect responseText when trackResponseErrors is enabled', (done) => {
+  it('should collect responseBody when trackResponseErrors is enabled', (done) => {
     const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(true)
 
     const responseBody = JSON.stringify({
@@ -373,25 +373,7 @@ describe('GraphQL response text collection', () => {
 
     mockFetchManager.whenAllComplete(() => {
       const request = completeSpy.calls.argsFor(0)[0]
-      expect(request.responseText).toBe(responseBody)
-      done()
-    })
-  })
-
-  it('should not collect responseText when trackResponseErrors is false', (done) => {
-    const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(false)
-
-    fetch(FAKE_GRAPHQL_URL, {
-      method: 'POST',
-      body: JSON.stringify({ query: 'query Test { test }' }),
-    }).resolveWith({
-      status: 200,
-      responseText: JSON.stringify({ errors: [{ message: 'Error' }] }),
-    })
-
-    mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
-      expect(request.responseText).toBeUndefined()
+      expect(request.responseBody).toBe(responseBody)
       done()
     })
   })

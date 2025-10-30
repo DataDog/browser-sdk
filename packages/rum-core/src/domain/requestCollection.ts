@@ -34,12 +34,9 @@ export interface CustomContext {
 export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
 export interface RumFetchResolveContext extends FetchResolveContext, CustomContext {
   duration?: Duration
-  responseText?: string
 }
 export interface RumXhrStartContext extends XhrStartContext, CustomContext {}
-export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext {
-  responseText?: string
-}
+export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext {}
 
 export interface RequestStartEvent {
   requestIndex: number
@@ -64,7 +61,7 @@ export interface RequestCompleteEvent {
   error?: Error
   isAborted: boolean
   handlingStack?: string
-  body?: unknown
+  requestBody?: unknown
   responseBody?: string
 }
 
@@ -115,7 +112,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           xhr: context.xhr,
           isAborted: context.isAborted,
           handlingStack: context.handlingStack,
-          body: context.body,
+          requestBody: context.requestBody,
           responseBody: context.responseBody,
         })
         break
@@ -168,7 +165,7 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
           input: context.input,
           isAborted: context.isAborted,
           handlingStack: context.handlingStack,
-          body: context.init?.body,
+          requestBody: context.init?.body,
           responseBody: context.responseBody,
         })
         break
