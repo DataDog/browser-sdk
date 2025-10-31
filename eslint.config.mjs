@@ -330,7 +330,7 @@ export default tseslint.config(
 
   {
     // JS files. Allow weaker typings since TS can't infer types as accurately as TS files.
-    files: ['**/*.{js,mjs,cjs}'],
+    files: ['**/*.{js,mjs}'],
     rules: {
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
@@ -419,7 +419,7 @@ export default tseslint.config(
     files: [
       'scripts/**',
       'test/**/*.js',
-      'eslint-local-rules/**/*.{js,cjs}',
+      'eslint-local-rules/**/*.js',
       'eslint.config.mjs',
       'packages/*/scripts/**/*.js',
     ],
