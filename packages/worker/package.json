@@ -5,7 +5,8 @@
   "main": "bundle/worker.js",
   "scripts": {
     "pack": "yarn pack",
-    "build": "rm -rf bundle && webpack --disable-interpret --mode=production"
+    "build": "node ../../scripts/build/build-package.ts --bundle worker.js",
+    "build:bundle": "yarn build"
   },
   "dependencies": {
     "@datadog/browser-core": "6.23.0"
