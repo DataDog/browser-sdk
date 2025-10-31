@@ -1,11 +1,4 @@
-import {
-  canUseEventBridge,
-  currentDrift,
-  getExperimentalFeatures,
-  HookNames,
-  round,
-  timeStampNow,
-} from '@datadog/browser-core'
+import { canUseEventBridge, currentDrift, HookNames, round, timeStampNow } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 
@@ -29,7 +22,6 @@ export function startDefaultContext(
           session_sample_rate: round(configuration.sessionSampleRate, 3),
           session_replay_sample_rate: round(configuration.sessionReplaySampleRate, 3),
           profiling_sample_rate: round(configuration.profilingSampleRate, 3),
-          experimental_features: Array.from(getExperimentalFeatures()),
         },
         browser_sdk_version: canUseEventBridge() ? __BUILD_ENV__SDK_VERSION__ : undefined,
         sdk_name: sdkName,
