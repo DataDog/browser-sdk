@@ -1,14 +1,17 @@
-const { parseArgs } = require('util')
-const webpackConfig = require('../../webpack.base.ts').default({
+import { parseArgs } from 'node:util'
+import webpackBase from '../../webpack.base.ts'
+
+import { getTestReportDirectory } from '../envUtils.cjs'
+import jasmineSeedReporterPlugin from './jasmineSeedReporterPlugin.js'
+import karmaSkippedFailedReporterPlugin from './karmaSkippedFailedReporterPlugin.js'
+import karmaDuplicateTestNameReporterPlugin from './karmaDuplicateTestNameReporterPlugin.js'
+
+const webpackConfig = webpackBase({
   mode: 'development',
   types: ['jasmine', 'chrome'],
   // do not replace some build env variables in unit test in order to test different build behaviors
   keepBuildEnvVariables: ['SDK_VERSION'],
 })
-const { getTestReportDirectory } = require('../envUtils')
-const jasmineSeedReporterPlugin = require('./jasmineSeedReporterPlugin')
-const karmaSkippedFailedReporterPlugin = require('./karmaSkippedFailedReporterPlugin')
-const karmaDuplicateTestNameReporterPlugin = require('./karmaDuplicateTestNameReporterPlugin')
 
 const reporters = ['spec', 'jasmine-seed', 'karma-skipped-failed', 'karma-duplicate-test-name']
 
@@ -30,7 +33,8 @@ const FILES_SPECS = [
   'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
 ]
 
-module.exports = {
+// eslint-disable-next-line import/no-default-export
+export default {
   basePath: '../..',
   files: getFiles(),
   frameworks: ['jasmine', 'webpack'],
