@@ -24,6 +24,11 @@ export function computeBytesCount(candidate: string): number {
 }
 
 export function concatBuffers(buffers: Uint8ArrayBuffer[]): Uint8ArrayBuffer {
+  // Optimization: if there is a single buffer, no need to copy it
+  if (buffers.length === 1) {
+    return buffers[0]
+  }
+
   const length = buffers.reduce((total, buffer) => total + buffer.length, 0)
   const result: Uint8ArrayBuffer = new Uint8Array(length)
   let offset = 0

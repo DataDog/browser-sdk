@@ -164,7 +164,7 @@ describe('resourceCollection', () => {
 
     testCases.forEach(({ requestType, name }) => {
       describe(`for ${name} requests`, () => {
-        function createRequest(requestType: RequestType, url: string, body: string) {
+        function createRequest(requestType: RequestType, url: string, requestBody: string) {
           const baseRequest = {
             type: requestType,
             url,
@@ -176,17 +176,17 @@ describe('resourceCollection', () => {
               ...baseRequest,
               init: {
                 method: 'POST' as const,
-                body,
+                body: requestBody,
               },
               input: url,
-              body,
+              requestBody,
             }
           }
           {
             // XHR
             return {
               ...baseRequest,
-              body,
+              requestBody,
               status: 200,
               duration: 100 as Duration,
               startClocks: { relative: 200 as RelativeTime, timeStamp: 123456789 as TimeStamp },
