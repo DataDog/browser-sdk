@@ -18,7 +18,7 @@ export function getBuildInfos() {
 }
 
 export function getRunId() {
-  return process.env.CI_JOB_ID || process.env.USER
+  return process.env.CI_JOB_ID || process.env.USER || 'n/a'
 }
 
 function getCIInfos() {
