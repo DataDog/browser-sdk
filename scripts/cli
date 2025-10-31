@@ -26,11 +26,6 @@ cmd_typecheck () {
   tsc -p "$project_path" --noEmit true
 }
 
-cmd_lint () {
-  local project_path="${1}"
-  eslint "$project_path"
-}
-
 cmd_init_submodule () {
   git submodule update --init
 }

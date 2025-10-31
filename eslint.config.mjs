@@ -330,7 +330,7 @@ export default tseslint.config(
 
   {
     // JS files. Allow weaker typings since TS can't infer types as accurately as TS files.
-    files: ['**/*.js', '**/*.mjs'],
+    files: ['**/*.{js,mjs}'],
     rules: {
       '@typescript-eslint/no-unsafe-call': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
@@ -432,9 +432,9 @@ export default tseslint.config(
   },
 
   {
-    files: ['**/webpack.*.ts'],
+    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js'],
     rules: {
-      // Webpack configuration files are expected to use a default export.
+      // Webpack configuration files and eslint rules files are expected to use a default export.
       'import/no-default-export': 'off',
     },
   },

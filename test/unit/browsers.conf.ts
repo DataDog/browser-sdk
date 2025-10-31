@@ -1,9 +1,8 @@
 // Capabilities: https://www.browserstack.com/automate/capabilities
 
-/**
- * @type {Array<import('../browsers.conf').BrowserConfiguration>}
- */
-const browserConfigurations = [
+import type { BrowserConfiguration } from '../browsers.conf'
+
+export const browserConfigurations: BrowserConfiguration[] = [
   {
     sessionName: 'Edge',
     name: 'Edge',
@@ -47,7 +46,3 @@ const browserConfigurations = [
     device: 'iPhone 13',
   },
 ]
-
-module.exports = {
-  browserConfigurations,
-}

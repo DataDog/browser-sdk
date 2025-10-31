@@ -9,6 +9,7 @@ function seedReporter(logger) {
 
 seedReporter.$inject = ['logger']
 
-module.exports = {
+// eslint-disable-next-line import/no-default-export
+export default {
   'reporter:jasmine-seed': ['type', seedReporter],
 }

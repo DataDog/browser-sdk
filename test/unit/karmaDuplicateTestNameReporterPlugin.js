@@ -36,6 +36,7 @@ function KarmaDuplicateTestNameReporter(logger) {
 
 KarmaDuplicateTestNameReporter.$inject = ['logger']
 
-module.exports = {
+// eslint-disable-next-line import/no-default-export
+export default {
   'reporter:karma-duplicate-test-name': ['type', KarmaDuplicateTestNameReporter],
 }
