@@ -2,6 +2,8 @@ import fs from 'node:fs/promises'
 import { parseArgs } from 'node:util'
 import ts from 'typescript'
 import { globSync } from 'glob'
+import webpack from 'webpack'
+import webpackBase from '../../webpack.base.ts'
 
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
@@ -12,6 +14,9 @@ runMain(async () => {
     options: {
       modules: {
         type: 'boolean',
+      },
+      bundle: {
+        type: 'string',
       },
       verbose: {
         type: 'boolean',
@@ -33,7 +38,39 @@ runMain(async () => {
       verbose: values.verbose,
     })
   }
+
+  if (values.bundle) {
+    printLog('Building bundle...')
+    await buildBundle({
+      filename: values.bundle,
+      verbose: values.verbose,
+    })
+  }
 })
+
+async function buildBundle({ filename, verbose }: { filename: string; verbose: boolean }) {
+  await fs.rm('./bundle', { recursive: true, force: true })
+  return new Promise<void>((resolve, reject) => {
+    webpack(
+      webpackBase({
+        mode: 'production',
+        entry: './src/entries/main.ts',
+        filename,
+      }),
+      (error, stats) => {
+        if (error) {
+          reject(error)
+          return
+        }
+
+        if (verbose) {
+          console.log(stats!.toString({ colors: true }))
+        }
+        resolve()
+      }
+    )
+  })
+}
 
 async function buildModules({ outDir, module, verbose }: { outDir: string; module: string; verbose: boolean }) {
   await fs.rm(outDir, { recursive: true, force: true })

@@ -7,9 +7,8 @@
   "types": "cjs/entries/main.d.ts",
   "scripts": {
     "pack": "yarn pack",
-    "build": "run-p build:modules build:bundle",
-    "build:bundle": "rm -rf bundle && SDK_SETUP=cdn webpack --disable-interpret  --mode=production",
-    "build:modules": "node ../../scripts/build/build-package.ts --modules"
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-logs.js",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-logs.js"
   },
   "dependencies": {
     "@datadog/browser-core": "6.23.0"
