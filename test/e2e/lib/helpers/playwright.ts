@@ -1,6 +1,6 @@
 import type { PlaywrightWorkerOptions } from '@playwright/test'
 import type { BrowserConfiguration } from '../../../browsers.conf'
-import { getBuildInfos } from '../../../envUtils.cjs'
+import { getBuildInfos } from '../../../envUtils.ts'
 import packageJson from '../../../../package.json' with { type: 'json' }
 
 export const DEV_SERVER_BASE_URL = 'http://localhost:8080'

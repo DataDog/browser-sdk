@@ -1,12 +1,12 @@
-const os = require('os')
+import os from 'os'
 
-function getIp() {
-  return Object.values(os.networkInterfaces())
+export function getIp() {
+  return (Object.values(os.networkInterfaces()) as os.NetworkInterfaceInfo[][])
     .flat()
-    .find(({ family, internal }) => family === 'IPv4' && !internal).address
+    .find(({ family, internal }) => family === 'IPv4' && !internal)!.address
 }
 
-function getBuildInfos() {
+export function getBuildInfos() {
   const ciInfos = getCIInfos()
   if (ciInfos) {
     return ciInfos
@@ -17,7 +17,7 @@ function getBuildInfos() {
   }
 }
 
-function getRunId() {
+export function getRunId() {
   return process.env.CI_JOB_ID || process.env.USER
 }
 
@@ -32,24 +32,16 @@ function getLocalInfos() {
   return `${process.env.USER} ${new Date().toLocaleString()}`
 }
 
-function getTestReportDirectory() {
+export function getTestReportDirectory() {
   if (process.env.CI_JOB_NAME) {
     return `test-report/${process.env.CI_JOB_NAME}`
   }
 }
 
-function getCoverageReportDirectory() {
+export function getCoverageReportDirectory() {
   if (process.env.CI_JOB_NAME) {
     return `coverage/${process.env.CI_JOB_NAME}`
   }
 
   return 'coverage'
-}
-
-module.exports = {
-  getRunId,
-  getBuildInfos,
-  getIp,
-  getTestReportDirectory,
-  getCoverageReportDirectory,
 }

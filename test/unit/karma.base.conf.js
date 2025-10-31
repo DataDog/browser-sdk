@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util'
 import webpackBase from '../../webpack.base.ts'
 
-import { getTestReportDirectory } from '../envUtils.cjs'
+import { getTestReportDirectory } from '../envUtils.ts'
 import jasmineSeedReporterPlugin from './jasmineSeedReporterPlugin.js'
 import karmaSkippedFailedReporterPlugin from './karmaSkippedFailedReporterPlugin.js'
 import karmaDuplicateTestNameReporterPlugin from './karmaDuplicateTestNameReporterPlugin.js'

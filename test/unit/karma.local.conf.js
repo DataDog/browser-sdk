@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { getCoverageReportDirectory } from '../envUtils.cjs'
+import { getCoverageReportDirectory } from '../envUtils.ts'
 import karmaBaseConf from './karma.base.conf.js'
 
 const coverageReports = ['text-summary', 'html']
