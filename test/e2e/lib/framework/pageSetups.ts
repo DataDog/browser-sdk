@@ -1,11 +1,14 @@
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
-import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { LogsInitConfiguration, DatadogLogs } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
+export interface WorkerImplementationFactory extends RegistrationOptions {
+  implementation: (self: WorkerGlobalScope & { DD_LOGS?: DatadogLogs }) => void
+}
 export interface SetupOptions {
   rum?: RumInitConfiguration
   useRumSlim: boolean
@@ -27,11 +30,7 @@ export interface SetupOptions {
     logsConfiguration?: LogsInitConfiguration
   }
   hostName?: string
-}
-
-export interface WorkerOptions {
-  importScripts?: boolean
-  nativeLog?: boolean
+  workerImplementationFactory?: WorkerImplementationFactory
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -209,20 +208,25 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
   })
 }
 
-export function workerSetup(options: WorkerOptions, servers: Servers) {
-  return js`
-      ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
+export function workerSetup(options: SetupOptions, servers: Servers) {
+  let script = ''
+
+  if (!options.workerImplementationFactory) {
+    return script
+  }
+
+  if (options.logs) {
+    script += js`
+      ${options.workerImplementationFactory.type === 'module' ? js`import '/datadog-logs.js';` : js`importScripts('/datadog-logs.js');`}
       
       // Initialize DD_LOGS in service worker
-      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true }, servers)})
-
-      // Handle messages from main thread
-      self.addEventListener('message', (event) => {
-        const message = event.data;
-        
-        ${options.nativeLog ? js`console.log(message);` : js`DD_LOGS.logger.log(message);`}
-      });
+      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, ...options.logs }, servers)})
     `
+  }
+
+  script += `;(${options.workerImplementationFactory.implementation.toString()})(self);`
+
+  return script
 }
 
 export function basePage({ header, body }: { header?: string; body?: string }) {
@@ -244,9 +248,7 @@ export function html(parts: readonly string[], ...vars: string[]) {
   return parts.reduce((full, part, index) => full + vars[index - 1] + part)
 }
 
-function js(parts: readonly string[], ...vars: string[]) {
-  return parts.reduce((full, part, index) => full + vars[index - 1] + part)
-}
+export const js = html
 
 function setupEventBridge(servers: Servers) {
   const baseHostname = new URL(servers.base.origin).hostname
