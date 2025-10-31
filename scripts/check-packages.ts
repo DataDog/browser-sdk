@@ -48,7 +48,7 @@ function getPackageFiles(packagePath: string): string[] {
   //
   // [1]: Quoting Lerna doc: "Lerna always uses npm to publish packages."
   // https://lerna.js.org/docs/features/version-and-publish#from-package
-  const output = command`npm pack --dry-run --json`.withCurrentWorkingDirectory(packagePath).run()
+  const output = command`npm pack --ignore-scripts --dry-run --json`.withCurrentWorkingDirectory(packagePath).run()
   const parsed: NpmPackOutput[] = JSON.parse(output)
   return parsed[0].files.map((file) => file.path)
 }
