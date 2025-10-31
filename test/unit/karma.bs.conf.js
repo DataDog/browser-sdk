@@ -1,6 +1,6 @@
 import { getBuildInfos } from '../envUtils.ts'
-import { browserConfigurations } from './browsers.conf'
-import karmaBaseConf from './karma.base.conf'
+import { browserConfigurations } from './browsers.conf.ts'
+import karmaBaseConf from './karma.base.conf.js'
 
 // eslint-disable-next-line import/no-default-export
 export default function (config) {
