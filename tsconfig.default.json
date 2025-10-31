@@ -14,7 +14,7 @@
     "packages/*/bundle",
 
     // Files included in ./tsconfig.scripts.json
-    "**/webpack.*.ts",
+    "**/webpack.*",
     "scripts",
 
     // Files included in ./test/e2e/tsconfig.json

@@ -13,5 +13,5 @@
     "noEmit": true
   },
 
-  "include": ["src", "webpack.config.mts"]
+  "include": ["src"]
 }
