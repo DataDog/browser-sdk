@@ -17,7 +17,7 @@
     "build:docs:json": "typedoc --logLevel Verbose --json ./docs.json",
     "build:docs:html": "typedoc --out ./docs",
     "format": "prettier --check .",
-    "lint": "scripts/cli lint .",
+    "lint": "NODE_OPTIONS='--max-old-space-size=4096' eslint .",
     "typecheck": "tsc -b --noEmit true",
     "dev": "node scripts/dev-server.ts",
     "release": "scripts/cli release",
