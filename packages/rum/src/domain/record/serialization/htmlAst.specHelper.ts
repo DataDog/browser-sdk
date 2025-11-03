@@ -854,7 +854,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'a',
               attributes: {
-                href: 'https://private.com/path/nested?query=param#hash',
+                href: '***',
               },
               childNodes: [
                 {
@@ -871,7 +871,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'img',
               attributes: {
-                src: 'https://private.com/path/nested?query=param#hash',
+                src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
               },
               childNodes: [],
             },

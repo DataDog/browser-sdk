@@ -5,7 +5,10 @@ import {
   CENSORED_STRING_MARK,
   getPrivacySelector,
   TEXT_MASKING_CHAR,
+  PRIVACY_ATTR_NAME,
 } from './privacyConstants'
+import { STABLE_ATTRIBUTES } from './getSelectorFromElement'
+import type { RumConfiguration } from './configuration'
 
 export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
 
@@ -128,16 +131,13 @@ export function getNodeSelfPrivacyLevel(node: Node): NodePrivacyLevel | undefine
  * Other `shouldMaskNode` cases are edge cases that should not matter too much (ex: should we mask a
  * node if it is ignored or hidden? it doesn't matter since it won't be serialized).
  */
-export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel, isTextContent: boolean = true) {
+export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
   switch (privacyLevel) {
     case NodePrivacyLevel.MASK:
     case NodePrivacyLevel.HIDDEN:
     case NodePrivacyLevel.IGNORE:
       return true
     case NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED:
-      if (!isTextContent) {
-        return true
-      }
       if (isTextNode(node)) {
         // Always return true if our parent is a form element, like MASK_USER_INPUT.
         // Otherwise, decide whether to mask based on the allowlist.
@@ -151,6 +151,43 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel, isTex
     default:
       return false
   }
+}
+
+export function shouldMaskAttribute(
+  tagName: string,
+  attributeName: string,
+  nodePrivacyLevel: NodePrivacyLevel,
+  configuration: RumConfiguration,
+  attributeValue?: string | null
+) {
+  if (nodePrivacyLevel === NodePrivacyLevel.MASK || nodePrivacyLevel === NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
+    if (
+      attributeName !== PRIVACY_ATTR_NAME &&
+      !STABLE_ATTRIBUTES.includes(attributeName) &&
+      attributeName !== configuration.actionNameAttribute
+    ) {
+      switch (attributeName) {
+        case 'title':
+        case 'alt':
+        case 'placeholder':
+          return true
+      }
+      if (tagName === 'A' && attributeName === 'href') {
+        return true
+      }
+      if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
+        return true
+      }
+      if (attributeValue && attributeName.startsWith('data-')) {
+        return true
+      }
+      if ((tagName === 'IMG' || tagName === 'SOURCE') && (attributeName === 'src' || attributeName === 'srcset')) {
+        return true
+      }
+    }
+  }
+
+  return false
 }
 
 function isFormElement(node: Node | null): boolean {

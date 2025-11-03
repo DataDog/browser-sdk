@@ -645,7 +645,7 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-          <div data-dd-privacy="mask-unless-allowlisted" aria-label="bar" target>
+          <div data-dd-privacy="mask-unless-allowlisted" alt="bar" target>
             <span>bar</span>
           </div>
           `,
@@ -655,7 +655,7 @@ describe('getActionNameFromElement', () => {
         },
         {
           html: `
-          <div data-dd-privacy="mask-unless-allowlisted" aria-label="foo" target>
+          <div data-dd-privacy="mask-unless-allowlisted" alt="foo" target>
             <span>bar</span>
           </div>
           `,
