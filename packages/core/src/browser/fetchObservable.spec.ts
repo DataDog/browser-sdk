@@ -2,7 +2,7 @@ import type { MockFetch, MockFetchManager } from '../../test'
 import { registerCleanupTask, mockFetch } from '../../test'
 import type { Subscription } from '../tools/observable'
 import type { FetchResolveContext, FetchContext } from './fetchObservable'
-import { initFetchObservable } from './fetchObservable'
+import { initFetchObservable, resetFetchObservable, ResponseBodyAction } from './fetchObservable'
 
 describe('fetch proxy', () => {
   const FAKE_URL = 'http://fake-url/'
@@ -262,6 +262,90 @@ describe('fetch proxy', () => {
       requestsTrackingSubscription.unsubscribe()
 
       expect(window.fetch).toBe(originalMockFetch)
+    })
+  })
+})
+
+describe('fetch proxy with ResponseBodyAction', () => {
+  const FAKE_URL = 'http://fake-url/'
+  let mockFetchManager: MockFetchManager
+  let requestsTrackingSubscription: Subscription
+  let requests: FetchResolveContext[]
+  let fetch: MockFetch
+
+  afterEach(() => {
+    requestsTrackingSubscription?.unsubscribe()
+    resetFetchObservable()
+  })
+
+  it('should collect response body with COLLECT action', (done) => {
+    mockFetchManager = mockFetch()
+
+    requests = []
+    requestsTrackingSubscription = initFetchObservable({
+      responseBodyAction: () => ResponseBodyAction.COLLECT,
+    }).subscribe((context) => {
+      if (context.state === 'resolve') {
+        requests.push(context)
+      }
+    })
+    fetch = window.fetch as MockFetch
+
+    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
+
+    mockFetchManager.whenAllComplete(() => {
+      expect(requests[0].responseBody).toBe('response body content')
+      done()
+    })
+  })
+
+  it('should not collect response body with WAIT or IGNORE action', (done) => {
+    mockFetchManager = mockFetch()
+
+    requests = []
+    requestsTrackingSubscription = initFetchObservable({
+      responseBodyAction: () => ResponseBodyAction.WAIT,
+    }).subscribe((context) => {
+      if (context.state === 'resolve') {
+        requests.push(context)
+      }
+    })
+    fetch = window.fetch as MockFetch
+
+    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
+
+    mockFetchManager.whenAllComplete(() => {
+      expect(requests[0].responseBody).toBeUndefined()
+      done()
+    })
+  })
+
+  it('should use the highest priority action when multiple getters are registered', (done) => {
+    mockFetchManager = mockFetch()
+
+    requests = []
+    requestsTrackingSubscription = initFetchObservable({
+      responseBodyAction: () => ResponseBodyAction.WAIT,
+    }).subscribe((context) => {
+      if (context.state === 'resolve') {
+        requests.push(context)
+      }
+    })
+
+    initFetchObservable({
+      responseBodyAction: () => ResponseBodyAction.COLLECT,
+    })
+
+    registerCleanupTask(() => {
+      requestsTrackingSubscription.unsubscribe()
+    })
+
+    fetch = window.fetch as MockFetch
+    fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
+
+    mockFetchManager.whenAllComplete(() => {
+      expect(requests[0].responseBody).toBe('response body content')
+      done()
     })
   })
 })

@@ -9,9 +9,8 @@ interface Options {
 }
 
 /**
- * Read bytes from a ReadableStream until at least `limit` bytes have been read (or until the end of
- * the stream). The callback is invoked with the at most `limit` bytes, and indicates that the limit
- * has been exceeded if more bytes were available.
+ * Read bytes from a ReadableStream until the end of the stream.
+ * Returns the bytes if collectStreamBody is true, otherwise returns undefined.
  */
 export async function readBytesFromStream(stream: ReadableStream<Uint8ArrayBuffer>, options: Options) {
   const reader = stream.getReader()
@@ -34,7 +33,5 @@ export async function readBytesFromStream(stream: ReadableStream<Uint8ArrayBuffe
     noop
   )
 
-  const bytes = options.collectStreamBody ? concatBuffers(chunks) : undefined
-
-  return bytes
+  return options.collectStreamBody ? concatBuffers(chunks) : undefined
 }

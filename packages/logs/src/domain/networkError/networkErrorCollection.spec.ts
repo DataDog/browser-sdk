@@ -199,5 +199,25 @@ describe('network error collection', () => {
         done()
       })
     })
+
+    it('should use fallback message when response body is already used', (done) => {
+      fetch('http://fake-url/').resolveWith({ status: 500, bodyUsed: true })
+
+      mockFetchManager.whenAllComplete(() => {
+        const log = rawLogsEvents[0].rawLogsEvent
+        expect(log.error.stack).toBe('Failed to load')
+        done()
+      })
+    })
+
+    it('should use fallback message when response body is disturbed', (done) => {
+      fetch('http://fake-url/').resolveWith({ status: 500, bodyDisturbed: true })
+
+      mockFetchManager.whenAllComplete(() => {
+        const log = rawLogsEvents[0].rawLogsEvent
+        expect(log.error.stack).toBe('Failed to load')
+        done()
+      })
+    })
   })
 })

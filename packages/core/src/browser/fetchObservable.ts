@@ -37,10 +37,14 @@ export type FetchContext = FetchStartContext | FetchResolveContext
 
 type ResponseBodyActionGetter = (context: FetchResolveContext) => ResponseBodyAction
 
+/**
+ * Action to take with the response body of a fetch request.
+ * Values are ordered by priority: higher values take precedence when multiple actions are requested.
+ */
 export const enum ResponseBodyAction {
   IGNORE = 0,
   // TODO(next-major): Remove the "WAIT" action when `trackEarlyRequests` is removed, as the
-  // duratiorn of fetch requests will always come from PerformanceResourceTiming
+  // duration of fetch requests will always come from PerformanceResourceTiming
   WAIT = 1,
   COLLECT = 2,
 }
