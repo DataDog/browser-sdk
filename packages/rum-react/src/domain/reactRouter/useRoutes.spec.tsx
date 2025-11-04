@@ -3,6 +3,7 @@ import * as rrdom6 from 'react-router-dom-6'
 import * as rrdom7 from 'react-router-dom'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
+import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import { ignoreConsoleLogs } from '../../../../core/test'
 import type { AnyRouteObject } from './types'
 import { ignoreReactRouterDeprecationWarnings } from './reactRouter.specHelper'
@@ -47,6 +48,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
 
     beforeEach(() => {
       ignoreReactRouterDeprecationWarnings()
+      initReactOldBrowsersSupport()
       startViewSpy = jasmine.createSpy()
       initializeReactPlugin({
         configuration: {

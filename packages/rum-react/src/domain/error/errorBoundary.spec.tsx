@@ -5,6 +5,7 @@ import { RumEventType } from '@datadog/browser-rum-core'
 import { disableJasmineUncaughtExceptionTracking, ignoreConsoleLogs } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
+import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import type { ErrorBoundaryFallback } from './errorBoundary'
 import { ErrorBoundary } from './errorBoundary'
 
@@ -16,6 +17,7 @@ describe('ErrorBoundary', () => {
     ignoreConsoleLogs('error', 'Error: error')
 
     disableJasmineUncaughtExceptionTracking()
+    initReactOldBrowsersSupport()
   })
 
   it('renders children', () => {
