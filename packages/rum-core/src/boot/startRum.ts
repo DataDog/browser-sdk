@@ -136,7 +136,7 @@ export function startRum(
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  startSessionContext(hooks, session, recorderApi, viewHistory)
+  startSessionContext(hooks, session, recorderApi, viewHistory, pageStateHistory)
   startConnectivityContext(hooks)
   startTrackingConsentContext(hooks, trackingConsentState)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)

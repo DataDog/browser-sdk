@@ -39,6 +39,7 @@ export interface PageStateEntry {
 export interface PageStateHistory {
   wasInPageStateDuringPeriod: (state: PageState, startTime: RelativeTime, duration: Duration) => boolean
   addPageState(nextPageState: PageState, startTime?: RelativeTime): void
+  findPageStatesForPeriod: (startTime: RelativeTime, duration: Duration) => PageStateServerEntry[] | undefined
   stop: () => void
 }
 
@@ -99,14 +100,18 @@ export function startPageStateHistory(
     return pageStateEntryHistory.findAll(startTime, duration).some((pageState) => pageState.state === state)
   }
 
+  function findPageStatesForPeriod(startTime: RelativeTime, duration: Duration) {
+    const pageStateEntries = pageStateEntryHistory.findAll(startTime, duration)
+    return processPageStates(pageStateEntries, startTime, maxPageStateEntriesSelectable)
+  }
+
   hooks.register(
     HookNames.Assemble,
     ({ startTime, duration = 0 as Duration, eventType }): DefaultRumEventAttributes | SKIPPED => {
       if (eventType === RumEventType.VIEW) {
-        const pageStates = pageStateEntryHistory.findAll(startTime, duration)
         return {
           type: eventType,
-          _dd: { page_states: processPageStates(pageStates, startTime, maxPageStateEntriesSelectable) },
+          _dd: { page_states: findPageStatesForPeriod(startTime, duration) },
         }
       }
 
@@ -124,6 +129,7 @@ export function startPageStateHistory(
   return {
     wasInPageStateDuringPeriod,
     addPageState,
+    findPageStatesForPeriod,
     stop: () => {
       stopEventListeners()
       pageStateEntryHistory.stop()

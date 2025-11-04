@@ -1,16 +1,28 @@
-import { DISCARDED, HookNames, SKIPPED } from '@datadog/browser-core'
-import { SessionReplayState, SessionType } from '../rumSessionManager'
+import type { ContextValue } from '@datadog/browser-core'
+import {
+  DISCARDED,
+  HookNames,
+  SKIPPED,
+  dateNow,
+  ONE_MINUTE,
+  addTelemetryDebug,
+  elapsed,
+  relativeNow,
+} from '@datadog/browser-core'
 import type { RumSessionManager } from '../rumSessionManager'
+import { SessionReplayState, SessionType } from '../rumSessionManager'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { ViewHistory } from './viewHistory'
+import type { PageStateHistory } from './pageStateHistory'
 
 export function startSessionContext(
   hooks: Hooks,
   sessionManager: RumSessionManager,
   recorderApi: RecorderApi,
-  viewHistory: ViewHistory
+  viewHistory: ViewHistory,
+  pageStateHistory: PageStateHistory
 ) {
   hooks.register(HookNames.Assemble, ({ eventType, startTime }): DefaultRumEventAttributes | DISCARDED => {
     const session = sessionManager.findTrackedSession(startTime)
@@ -18,6 +30,18 @@ export function startSessionContext(
 
     if (!session || !view) {
       return DISCARDED
+    }
+    if (session.expire && dateNow() - Number(session.expire) > ONE_MINUTE) {
+      const duration = elapsed(startTime, relativeNow())
+      // monitor-until: 2026-01-01
+      addTelemetryDebug('Event sent after session expiration', {
+        debug: {
+          duration,
+          eventType,
+          expired_since: dateNow() - Number(session.expire),
+          page_state: pageStateHistory.findPageStatesForPeriod(startTime, duration) as ContextValue,
+        },
+      })
     }
 
     let hasReplay

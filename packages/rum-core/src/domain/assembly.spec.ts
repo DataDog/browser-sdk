@@ -8,6 +8,7 @@ import {
   mockRumConfiguration,
   mockViewHistory,
   noopRecorderApi,
+  mockPageStateHistory,
 } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
@@ -574,7 +575,7 @@ function setupAssemblyTestWithDefaults({
   const recorderApi = noopRecorderApi
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
   startGlobalContext(hooks, mockRumConfiguration(), 'rum', true)
-  startSessionContext(hooks, rumSessionManager, recorderApi, viewHistory)
+  startSessionContext(hooks, rumSessionManager, recorderApi, viewHistory, mockPageStateHistory())
   startRumAssembly(mockRumConfiguration(partialConfiguration), lifeCycle, hooks, reportErrorSpy)
 
   registerCleanupTask(() => {
