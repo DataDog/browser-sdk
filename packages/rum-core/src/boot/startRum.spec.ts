@@ -73,7 +73,7 @@ function startRumStub(
   const hooks = createHooks()
   const viewHistory = startViewHistory(lifeCycle)
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
-  startSessionContext(hooks, sessionManager, noopRecorderApi, viewHistory)
+  startSessionContext(hooks, sessionManager, noopRecorderApi, viewHistory, pageStateHistory)
 
   const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,

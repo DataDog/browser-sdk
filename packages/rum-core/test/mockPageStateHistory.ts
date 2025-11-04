@@ -5,6 +5,7 @@ export function mockPageStateHistory(partialPageStateHistory?: Partial<PageState
   const pageStateHistory: PageStateHistory = {
     addPageState: noop,
     stop: noop,
+    findPageStatesForPeriod: () => [],
     wasInPageStateDuringPeriod: () => false,
     ...partialPageStateHistory,
   }
