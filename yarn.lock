@@ -5332,6 +5332,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"e2e-079dc0@workspace:test/e2e":
+  version: 0.0.0-use.local
+  resolution: "e2e-079dc0@workspace:test/e2e"
+  languageName: unknown
+  linkType: soft
+
 "eastasianwidth@npm:^0.2.0":
   version: 0.2.0
   resolution: "eastasianwidth@npm:0.2.0"

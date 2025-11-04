@@ -1,7 +1,12 @@
-const fs = require('fs')
-const moduleVisitor = require('eslint-module-utils/moduleVisitor').default
-const importType = require('eslint-plugin-import/lib/core/importType').default
-const pkgUp = require('eslint-module-utils/pkgUp').default
+import fs from 'node:fs'
+
+import moduleVisitorPackage from 'eslint-module-utils/moduleVisitor.js'
+import importTypePackage from 'eslint-plugin-import/lib/core/importType.js'
+import pkgUpPackage from 'eslint-module-utils/pkgUp.js'
+
+const moduleVisitor = moduleVisitorPackage.default
+const pkgUp = pkgUpPackage.default
+const importType = importTypePackage.default
 
 // The import/no-extraneous-dependencies rule cannot catch this issue[1] where we imported an
 // aliased package in production code, because it resolves[2] the alias to the real package name, and
@@ -15,7 +20,7 @@ const pkgUp = require('eslint-module-utils/pkgUp').default
 
 const packageJsonCache = new Map()
 
-module.exports = {
+export default {
   meta: {
     docs: {
       description: 'Forbids importing non-prod dependencies in prod files',

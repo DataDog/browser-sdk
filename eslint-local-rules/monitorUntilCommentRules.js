@@ -1,7 +1,7 @@
 const METHODS_TO_CHECK = ['addTelemetryDebug', 'addTelemetryMetrics']
 const MONITOR_COMMENT_FORMAT = /^\s*monitor-until: (\d{4}-\d{2}-\d{2}|forever)/
 
-module.exports = {
+export default {
   'enforce-monitor-until-comment': {
     meta: {
       docs: {

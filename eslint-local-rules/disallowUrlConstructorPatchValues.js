@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   meta: {
     docs: {
       description: 'Disallow problematic URL constructor patched values.',
