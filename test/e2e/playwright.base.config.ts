@@ -30,8 +30,11 @@ export const config: Config = {
   use: {
     trace: isCi ? 'off' : 'retain-on-failure',
   },
+
   webServer: isLocal
     ? {
+        stdout: 'pipe',
+        cwd: path.join(__dirname, '../..'),
         command: 'yarn dev',
         url: DEV_SERVER_BASE_URL,
         reuseExistingServer: true,

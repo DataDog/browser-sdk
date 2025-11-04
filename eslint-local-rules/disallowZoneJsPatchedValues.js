@@ -19,7 +19,7 @@ const PROBLEMATIC_IDENTIFIERS = {
   removeEventListener: 'Use `addEventListener().stop` from @datadog/browser-core instead',
 }
 
-module.exports = {
+export default {
   meta: {
     docs: {
       description: 'Disallow problematic ZoneJs patched values.',

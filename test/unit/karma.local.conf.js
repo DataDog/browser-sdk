@@ -1,6 +1,6 @@
-const path = require('path')
-const { getCoverageReportDirectory } = require('../envUtils')
-const karmaBaseConf = require('./karma.base.conf')
+import path from 'node:path'
+import { getCoverageReportDirectory } from '../envUtils.ts'
+import karmaBaseConf from './karma.base.conf.js'
 
 const coverageReports = ['text-summary', 'html']
 
@@ -8,7 +8,8 @@ if (process.env.CI) {
   coverageReports.push('clover')
 }
 
-module.exports = function (config) {
+// eslint-disable-next-line import/no-default-export
+export default function (config) {
   config.set({
     ...karmaBaseConf,
     reporters: ['coverage-istanbul', ...karmaBaseConf.reporters],
@@ -28,7 +29,7 @@ module.exports = function (config) {
       module: withIstanbulRule(karmaBaseConf.webpack.module),
     },
     sourceMapLoader: {
-      remapSource: (source) => source.replace(/webpack:\/\//g, path.join(__dirname, '../../')),
+      remapSource: (source) => source.replace(/webpack:\/\//g, path.join(import.meta.dirname, '../../')),
     },
   })
 }

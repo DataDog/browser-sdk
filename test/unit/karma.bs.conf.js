@@ -1,8 +1,9 @@
-const { getBuildInfos } = require('../envUtils')
-const { browserConfigurations } = require('./browsers.conf')
-const karmaBaseConf = require('./karma.base.conf')
+import { getBuildInfos } from '../envUtils.ts'
+import { browserConfigurations } from './browsers.conf.ts'
+import karmaBaseConf from './karma.base.conf.js'
 
-module.exports = function (config) {
+// eslint-disable-next-line import/no-default-export
+export default function (config) {
   config.set({
     ...karmaBaseConf,
     exclude: [
