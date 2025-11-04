@@ -52,7 +52,7 @@ function main() {
     if (settings.injectionVariant === 'local-dev' && settings.useDevBundles === 'npm') {
       injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
-    } else if (settings.injectionVariant === 'cdn') {
+    } else if (settings.injectionVariant === 'cdn' && settings.datadogMode) {
       injectCdnBundle(settings)
     }
   }

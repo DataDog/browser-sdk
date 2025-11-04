@@ -18,6 +18,29 @@
 
 ---
 
+## v6.23.0
+
+**Public Changes:**
+
+- 🐛 [RUM-11850] Remove anonymous Id when consent is not granted ([#3883](https://github.com/DataDog/browser-sdk/pull/3883)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 📝 improve API documentation ([#3894](https://github.com/DataDog/browser-sdk/pull/3894)) [LOGS] [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ⚗️ [RUM-5645] Add a ff to avoid using "fetch keepalive" ([#3640](https://github.com/DataDog/browser-sdk/pull/3640)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Add check to skip private packages in update-peer-dependency-versions script ([#3929](https://github.com/DataDog/browser-sdk/pull/3929))
+- 👷 Lock file maintenance ([#3931](https://github.com/DataDog/browser-sdk/pull/3931))
+- 👷 Remove version field from package.json in flagging and performances packages ([#3928](https://github.com/DataDog/browser-sdk/pull/3928)) [FLAGGING]
+- 👷 fix check-release script to ignore sub-packages ([#3925](https://github.com/DataDog/browser-sdk/pull/3925))
+- 👷 Update github/codeql-action action to v4 ([#3919](https://github.com/DataDog/browser-sdk/pull/3919))
+- 👷 Update dependency eslint-plugin-jsdoc to v61 ([#3918](https://github.com/DataDog/browser-sdk/pull/3918))
+- 👷 Update dependency chrome-webstore-upload to v4 ([#3920](https://github.com/DataDog/browser-sdk/pull/3920))
+- 👷 Lock file maintenance ([#3909](https://github.com/DataDog/browser-sdk/pull/3909))
+- 👷 Update all non-major dependencies ([#3896](https://github.com/DataDog/browser-sdk/pull/3896)) [RUM-REACT]
+- ✅ fix flaky test ([#3902](https://github.com/DataDog/browser-sdk/pull/3902)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🏷️ update rum-events-format ([#3923](https://github.com/DataDog/browser-sdk/pull/3923)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚗️ encode cookie options in cookie value ([#3905](https://github.com/DataDog/browser-sdk/pull/3905)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.22.0
 
 **Public Changes:**

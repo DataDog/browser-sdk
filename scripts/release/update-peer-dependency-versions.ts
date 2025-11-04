@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { runMain } from '../lib/executionUtils.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
 import { command } from '../lib/command.ts'
@@ -17,6 +18,11 @@ const JSON_FILES = packagesDirectoryNames.map((packageName) => `./packages/${pac
 // [2]: https://github.com/lerna/lerna/issues/1575
 runMain(async () => {
   for (const jsonFile of JSON_FILES) {
+    const packageJson = JSON.parse(readFileSync(jsonFile, 'utf8'))
+    if (packageJson?.private) {
+      continue
+    }
+
     await modifyFile(jsonFile, updateJsonPeerDependencies)
   }
   // update yarn.lock to match the updated JSON files

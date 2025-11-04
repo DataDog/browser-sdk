@@ -48,9 +48,19 @@ async function loadSettingsFromStorage() {
 
 function setSetting<Name extends keyof Settings>(name: Name, value: Settings[Name]) {
   settings![name] = value
+  
+  const settingsToStore: Partial<Settings> = { [name]: value }
+  
+  // Reset injectionVariant to default when Datadog mode is disabled
+  if (name === 'datadogMode' && value === false) {
+    settings!.injectionVariant = DEFAULT_SETTINGS.injectionVariant
+    settingsToStore.injectionVariant = DEFAULT_SETTINGS.injectionVariant
+  }
+  
   onSettingsChange.notify()
+  
   chrome.storage.local
-    .set({ [name]: value })
+    .set(settingsToStore)
     .catch((error) => logger.error('Error while storing setting to the storage', error))
   if (settings) {
     syncSettingsWithSessionStorage(settings)
