@@ -1,6 +1,6 @@
-import path from 'path'
-import fs from 'fs'
-import zlib from 'zlib'
+import path from 'node:path'
+import fs from 'node:fs'
+import zlib from 'node:zlib'
 import { glob } from 'glob'
 
 const packages = ['rum', 'logs', 'flagging', 'rum-slim', 'worker'] as const

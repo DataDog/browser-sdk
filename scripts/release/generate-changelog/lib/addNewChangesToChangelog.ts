@@ -1,5 +1,5 @@
-import { readFile } from 'fs/promises'
-import * as fs from 'fs'
+import { readFile } from 'node:fs/promises'
+import * as fs from 'node:fs'
 import * as emojiNameMap from 'emoji-name-map'
 
 import { browserSdkVersion } from '../../../lib/browserSdkVersion.ts'

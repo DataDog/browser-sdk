@@ -1,4 +1,4 @@
-import path from 'path'
+import path from 'node:path'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvValue } from '../lib/buildEnv.ts'
