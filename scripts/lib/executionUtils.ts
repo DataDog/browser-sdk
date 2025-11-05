@@ -1,4 +1,4 @@
-import { spawn } from 'child_process'
+import { spawn } from 'node:child_process'
 
 /**
  * Helper to run executables asynchronously, in a shell. This function does not prevent Shell

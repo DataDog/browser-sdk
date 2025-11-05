@@ -1,6 +1,6 @@
-import { readFileSync } from 'fs'
-import path from 'path'
-import { execSync } from 'child_process'
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
+import { execSync } from 'node:child_process'
 import { browserSdkVersion } from './browserSdkVersion.ts'
 import { command } from './command.ts'
 

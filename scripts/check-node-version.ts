@@ -1,6 +1,6 @@
-import * as fs from 'fs'
-import * as readline from 'readline'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as readline from 'node:readline'
+import * as path from 'node:path'
 import packageJson from '../package.json' with { type: 'json' }
 import { printLog, printError, runMain } from './lib/executionUtils.ts'
 

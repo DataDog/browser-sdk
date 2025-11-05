@@ -1,6 +1,6 @@
-import fs from 'fs'
-import path from 'path'
-import fsPromises from 'fs/promises'
+import fs from 'node:fs'
+import path from 'node:path'
+import fsPromises from 'node:fs/promises'
 import { command } from './command.ts'
 
 export const CI_FILE = '.gitlab-ci.yml'
