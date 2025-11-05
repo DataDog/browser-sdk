@@ -34,7 +34,8 @@ export interface VitalOptions {
 /**
  * Duration vital options
  */
-export type DurationVitalOptions = VitalOptions
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface DurationVitalOptions extends VitalOptions {}
 export interface FeatureOperationOptions extends VitalOptions {
   operationKey?: string
 }
