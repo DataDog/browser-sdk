@@ -1,4 +1,4 @@
-import { ErrorSource } from '@datadog/browser-core'
+import { ErrorSource, resetFetchObservable } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { SPEC_ENDPOINTS, mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
@@ -32,7 +32,10 @@ describe('network error collection', () => {
   function startCollection(forwardErrorsToLogs = true) {
     mockFetchManager = mockFetch()
     const { stop } = startNetworkErrorCollection({ ...CONFIGURATION, forwardErrorsToLogs }, lifeCycle)
-    registerCleanupTask(stop)
+    registerCleanupTask(() => {
+      stop()
+      resetFetchObservable()
+    })
     fetch = window.fetch as MockFetch
   }
 

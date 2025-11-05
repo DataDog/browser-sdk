@@ -41,6 +41,7 @@ describe('collect fetch', () => {
 
     registerCleanupTask(() => {
       stopFetchTracking()
+      resetFetchObservable()
     })
   })
 
@@ -354,7 +355,10 @@ describe('GraphQL response text collection', () => {
     })
     const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
     const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
-    registerCleanupTask(stop)
+    registerCleanupTask(() => {
+      stop()
+      resetFetchObservable()
+    })
 
     return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }
   }

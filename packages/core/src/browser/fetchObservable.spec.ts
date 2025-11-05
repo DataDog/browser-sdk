@@ -30,6 +30,7 @@ describe('fetch proxy', () => {
     registerCleanupTask(() => {
       requestsTrackingSubscription.unsubscribe()
       contextEditionSubscription?.unsubscribe()
+      resetFetchObservable()
     })
   })
 
