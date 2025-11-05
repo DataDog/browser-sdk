@@ -105,7 +105,7 @@ export type { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser
 export type { XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
-export { initFetchObservable, resetFetchObservable } from './browser/fetchObservable'
+export { initFetchObservable, resetFetchObservable, ResponseBodyAction } from './browser/fetchObservable'
 export type { PageMayExitEvent } from './browser/pageMayExitObservable'
 export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
 export * from './browser/addEventListener'
