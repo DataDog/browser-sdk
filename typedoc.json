@@ -19,6 +19,23 @@
   },
   "packageOptions": {
     "excludeInternal": true,
+
+    "categoryOrder": [
+      "Init",
+      "Main",
+      "Authentication",
+      "Privacy",
+      "Data Collection",
+      "Error",
+      "Session Replay",
+      "Tracing",
+      "Profiling",
+      "Session Persistence",
+      "Transport",
+      "*",
+      "Other"
+    ],
+
     "kindSortOrder": [
       "Reference",
       "Project",
