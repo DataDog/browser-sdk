@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import express from 'express'
 import middleware from 'webpack-dev-middleware'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
@@ -9,7 +10,7 @@ import { printLog, runMain } from './lib/executionUtils.ts'
 const sandboxPath = './sandbox'
 const port = 8080
 
-const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'flagging', 'worker']
+const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'flagging', 'worker', 'core-next', 'rum-next', 'logs-next']
 
 runMain(() => {
   const app = express()
@@ -29,7 +30,9 @@ function createStaticSandboxApp(): express.Application {
         webpack(
           webpackBase({
             mode: 'development',
-            entry: `${packagePath}/src/entries/main.ts`,
+            entry: existsSync(`${packagePath}/src/entries/bundle.ts`)
+              ? `${packagePath}/src/entries/bundle.ts`
+              : `${packagePath}/src/entries/main.ts`,
             filename: packageName === 'worker' ? 'worker.js' : `datadog-${packageName}.js`,
           })
         )

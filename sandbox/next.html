@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sandbox</title>
+    <script src="http://localhost:8080/datadog-core-next.js"></script>
+    <script src="http://localhost:8080/datadog-rum-next.js"></script>
+    <script src="http://localhost:8080/datadog-logs-next.js"></script>
+    <script>
+      DATADOG.initialize({
+        clientToken: 'xxx',
+        rum: {
+          applicationId: 'xxx',
+        },
+        logs: {},
+      })
+
+      DATADOG.setGlobalContext({ foo: 'bar' })
+
+      DATADOG.rum.addError(new Error('test'))
+
+      const ref = DATADOG.rum.startDurationVital('foo')
+
+      setTimeout(() => {
+        DATADOG.rum.stopDurationVital(ref)
+      }, 100)
+
+      DATADOG.logs.createLogger('foo').info('test')
+    </script>
+  </head>
+
+  <body></body>
+</html>

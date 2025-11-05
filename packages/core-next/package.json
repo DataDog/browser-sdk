@@ -1,0 +1,20 @@
+{
+  "name": "@datadog/browser-core-next",
+  "private": true,
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.js",
+  "types": "cjs/entries/main.d.ts",
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-core-next.js",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-core-next.js"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.25.0",
+    "@datadog/browser-internal-next": "workspace:*",
+    "@datadog/browser-logs-next": "workspace:*",
+    "@datadog/browser-profiling-next": "workspace:*",
+    "@datadog/browser-rum": "6.25.0",
+    "@datadog/browser-rum-core": "6.25.0",
+    "@datadog/browser-rum-next": "workspace:*"
+  }
+}

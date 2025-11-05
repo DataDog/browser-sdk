@@ -1,0 +1,13 @@
+{
+  "name": "@datadog/browser-profiling-next",
+  "private": true,
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.25.0",
+    "@datadog/browser-internal-next": "workspace:*",
+    "@datadog/browser-rum": "6.25.0",
+    "@datadog/browser-rum-core": "6.25.0"
+  }
+}

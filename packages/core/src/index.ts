@@ -21,7 +21,7 @@ export {
 } from './tools/experimentalFeatures'
 export { trackRuntimeError } from './domain/error/trackRuntimeError'
 export type { StackTrace } from './tools/stackTrace/computeStackTrace'
-export { computeStackTrace } from './tools/stackTrace/computeStackTrace'
+export { computeStackTrace, computeStackTraceFromOnErrorMessage } from './tools/stackTrace/computeStackTrace'
 export type { PublicApi } from './boot/init'
 export { defineGlobal, makePublicApi } from './boot/init'
 export { displayAlreadyInitializedError } from './boot/displayAlreadyInitializedError'
@@ -59,7 +59,15 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
+export type {
+  BandwidthStats,
+  HttpRequest,
+  HttpRequestEvent,
+  Payload,
+  FlushEvent,
+  FlushReason,
+  Batch,
+} from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,

@@ -172,6 +172,7 @@ export function stopDurationVital(
   nameOrRef: string | DurationVitalReference,
   options: DurationVitalOptions = {}
 ) {
+  debugger
   const vitalStart = typeof nameOrRef === 'string' ? vitalsByName.get(nameOrRef) : vitalsByReference.get(nameOrRef)
 
   if (!vitalStart) {

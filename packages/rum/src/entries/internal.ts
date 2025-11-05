@@ -16,3 +16,6 @@ export {
 export * from '../types'
 
 export { takeFullSnapshot, takeNodeSnapshot, serializeNode as serializeNodeWithId } from '../domain/record'
+
+export * from '../domain/profiling/profiler'
+export * from '../domain/deflate'

@@ -1,7 +1,7 @@
 import { display } from './display'
 
 let onMonitorErrorCollected: undefined | ((error: unknown) => void)
-let debugMode = false
+let debugMode = true
 
 export function startMonitorErrorCollection(newOnMonitorErrorCollected: (error: unknown) => void) {
   onMonitorErrorCollected = newOnMonitorErrorCollected

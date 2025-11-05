@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/lazy.js",
+  "module": "../esm/entries/lazy.js",
+  "types": "../cjs/entries/lazy.d.ts"
+}

@@ -30,12 +30,18 @@ const pathsWithSideEffect = new Set([
   `${packagesRoot}/flagging/src/entries/main.ts`,
   `${packagesRoot}/rum/src/entries/main.ts`,
   `${packagesRoot}/rum-slim/src/entries/main.ts`,
+  `${packagesRoot}/rum-next/src/entries/bundle.ts`,
+  `${packagesRoot}/core-next/src/entries/bundle.ts`,
+  `${packagesRoot}/core-next/src/entries/main.ts`,
 ])
 
 // Those packages are known to have no side effects when evaluated
 const packagesWithoutSideEffect = new Set([
   '@datadog/browser-core',
   '@datadog/browser-rum-core',
+  '@datadog/browser-internal-next',
+  '@datadog/browser-rum/internal',
+  '@datadog/browser-logs/internal',
   'react',
   'react-router-dom',
 ])
@@ -181,6 +187,11 @@ function isAllowedCallExpression({ callee }) {
 
   // Allow ".concat()"
   if (callee.type === 'MemberExpression' && callee.property.name === 'concat') {
+    return true
+  }
+
+  // Allow "Symbol.for()"
+  if (callee.type === 'MemberExpression' && callee.object.name === 'Symbol' && callee.property.name === 'for') {
     return true
   }
 

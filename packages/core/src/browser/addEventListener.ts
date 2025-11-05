@@ -39,6 +39,7 @@ export const enum DOM_EVENT {
   SECURITY_POLICY_VIOLATION = 'securitypolicyviolation',
   SELECTION_CHANGE = 'selectionchange',
   STORAGE = 'storage',
+  ERROR = 'error',
 }
 
 interface AddEventListenerOptions {
@@ -47,7 +48,7 @@ interface AddEventListenerOptions {
   passive?: boolean
 }
 
-type EventMapFor<T> = T extends Window
+type EventMapFor<T> = T extends Window | typeof globalThis
   ? WindowEventMap & {
       // TS 4.9.5 does not support `freeze` and `resume` events yet
       freeze: Event

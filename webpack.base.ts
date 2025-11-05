@@ -6,6 +6,19 @@ import { buildEnvKeys, getBuildEnvValue } from './scripts/lib/buildEnv.ts'
 
 const tsconfigPath = path.join(import.meta.dirname, 'tsconfig.webpack.json')
 
+const packagesRoot = path.resolve(import.meta.dirname, 'packages')
+
+// Those modules are known to have side effects when evaluated
+const pathsWithSideEffect = new Set([
+  `${packagesRoot}/logs/src/entries/main.ts`,
+  `${packagesRoot}/flagging/src/entries/main.ts`,
+  `${packagesRoot}/rum/src/entries/main.ts`,
+  `${packagesRoot}/rum-slim/src/entries/main.ts`,
+  `${packagesRoot}/rum-next/src/entries/bundle.ts`,
+  `${packagesRoot}/core-next/src/entries/bundle.ts`,
+  `${packagesRoot}/core-next/src/entries/main.ts`,
+])
+
 export default ({
   entry,
   mode,
@@ -28,13 +41,19 @@ export default ({
           // can redirect requests for them reliably.
           `chunks/[name]-${filename}`
         : // Include a content hash in chunk names in production.
-          `chunks/[name]-[contenthash]-${filename}`,
+          'chunks/[name]-[contenthash].js',
+    chunkLoading: 'import',
+    chunkFormat: 'module',
     path: path.resolve('./bundle'),
   },
   target: ['web', 'es2018'],
   devtool: false,
   module: {
     rules: [
+      {
+        test: (request) => !pathsWithSideEffect.has(request),
+        sideEffects: false,
+      },
       {
         test: /\.(ts|tsx|js)$/,
         loader: 'ts-loader',
@@ -60,9 +79,23 @@ export default ({
       pako: 'pako/dist/pako.es5.js',
     },
   },
-
   optimization: {
     chunkIds: 'named',
+
+    splitChunks: {
+      chunks: 'async',
+      cacheGroups: {
+        defaultVendors: false,
+        default: false,
+        common: {
+          test: /core/,
+          name: 'common',
+          chunks: 'async',
+          minChunks: 3, // Every modules used at least 3 times are put in a common chunk
+        },
+      },
+    },
+
     minimizer: [
       new TerserPlugin({
         extractComments: false,
@@ -89,7 +122,7 @@ export default ({
           // the CDN (yet).
           {
             filename: '[file].map',
-            append: false,
+            // append: false,
           }
     ),
     createDefinePlugin({ keepBuildEnvVariables }),

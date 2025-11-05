@@ -53,11 +53,12 @@ runMain(async () => {
 
 async function buildBundle({ filename, verbose }: { filename: string; verbose: boolean }) {
   await fs.rm('./bundle', { recursive: true, force: true })
+  const entry = (await fileExists('./src/entries/bundle.ts')) ? './src/entries/bundle.ts' : './src/entries/main.ts'
   return new Promise<void>((resolve, reject) => {
     webpack(
       webpackBase({
         mode: 'production',
-        entry: './src/entries/main.ts',
+        entry,
         filename,
       }),
       (error, stats) => {
@@ -80,6 +81,15 @@ async function buildBundle({ filename, verbose }: { filename: string; verbose: b
 
   function printStats(stats: webpack.Stats) {
     console.log(stats.toString({ colors: true }))
+  }
+}
+
+async function fileExists(path: string) {
+  try {
+    await fs.access(path)
+    return true
+  } catch {
+    return false
   }
 }
 
