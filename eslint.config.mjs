@@ -428,6 +428,7 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+      'import/enforce-node-protocol-usage': ['error', 'always'],
     },
   },
 
