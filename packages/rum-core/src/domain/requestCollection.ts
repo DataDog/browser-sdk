@@ -32,9 +32,7 @@ export interface CustomContext {
   traceSampled?: boolean
 }
 export interface RumFetchStartContext extends FetchStartContext, CustomContext {}
-export interface RumFetchResolveContext extends FetchResolveContext, CustomContext {
-  duration?: Duration
-}
+export interface RumFetchResolveContext extends FetchResolveContext, CustomContext {}
 export interface RumXhrStartContext extends XhrStartContext, CustomContext {}
 export interface RumXhrCompleteContext extends XhrCompleteContext, CustomContext {}
 

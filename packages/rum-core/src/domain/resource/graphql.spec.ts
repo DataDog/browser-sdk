@@ -188,7 +188,7 @@ describe('GraphQL detection and metadata extraction', () => {
   })
 
   describe('parseGraphQlResponse', () => {
-    it('should extract error count and detailed errors from GraphQL response', () => {
+    it('should extract detailed errors from GraphQL response', () => {
       const responseText = JSON.stringify({
         data: null,
         errors: [{ message: 'Field not found' }, { message: 'Unauthorized' }],
@@ -196,13 +196,10 @@ describe('GraphQL detection and metadata extraction', () => {
 
       const result = parseGraphQlResponse(responseText)
 
-      expect(result).toEqual({
-        errorsCount: 2,
-        errors: [
-          { message: 'Field not found', path: undefined, locations: undefined, code: undefined },
-          { message: 'Unauthorized', path: undefined, locations: undefined, code: undefined },
-        ],
-      })
+      expect(result).toEqual([
+        { message: 'Field not found', path: undefined, locations: undefined, code: undefined },
+        { message: 'Unauthorized', path: undefined, locations: undefined, code: undefined },
+      ])
     })
 
     it('should extract detailed errors with extensions, locations and path', () => {
@@ -220,17 +217,14 @@ describe('GraphQL detection and metadata extraction', () => {
 
       const result = parseGraphQlResponse(responseText)
 
-      expect(result).toEqual({
-        errorsCount: 1,
-        errors: [
-          {
-            message: 'Field not found',
-            code: 'FIELD_NOT_FOUND',
-            locations: [{ line: 2, column: 5 }],
-            path: ['user', 'profile'],
-          },
-        ],
-      })
+      expect(result).toEqual([
+        {
+          message: 'Field not found',
+          code: 'FIELD_NOT_FOUND',
+          locations: [{ line: 2, column: 5 }],
+          path: ['user', 'profile'],
+        },
+      ])
     })
 
     it('should handle response without errors', () => {
@@ -256,10 +250,7 @@ describe('GraphQL detection and metadata extraction', () => {
 
       const result = parseGraphQlResponse(responseText)
 
-      expect(result).toEqual({
-        errorsCount: 1,
-        errors: [{ message: 'Simple error', path: undefined, locations: undefined, code: undefined }],
-      })
+      expect(result).toEqual([{ message: 'Simple error', path: undefined, locations: undefined, code: undefined }])
     })
   })
 

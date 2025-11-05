@@ -14,11 +14,6 @@ export interface GraphQlError {
   path?: Array<string | number>
 }
 
-export interface GraphQlResponseErrors {
-  errorsCount: number
-  errors: GraphQlError[]
-}
-
 export interface GraphQlMetadata {
   operationType: 'query' | 'mutation' | 'subscription'
   operationName?: string
@@ -40,15 +35,15 @@ export function extractGraphQlMetadata(
   if (graphQlConfig.trackResponseErrors && request.responseBody) {
     const responseErrors = parseGraphQlResponse(request.responseBody)
     if (responseErrors) {
-      metadata.errors_count = responseErrors.errorsCount
-      metadata.errors = responseErrors.errors
+      metadata.errors_count = responseErrors.length
+      metadata.errors = responseErrors
     }
   }
 
   return metadata
 }
 
-export function parseGraphQlResponse(responseText: string): GraphQlResponseErrors | undefined {
+export function parseGraphQlResponse(responseText: string): GraphQlError[] | undefined {
   let response: unknown
   try {
     response = JSON.parse(responseText)
@@ -78,10 +73,7 @@ export function parseGraphQlResponse(responseText: string): GraphQlResponseError
     return graphqlError
   })
 
-  return {
-    errorsCount: errors.length,
-    errors,
-  }
+  return errors
 }
 
 export function findGraphQlConfiguration(url: string, configuration: RumConfiguration): GraphQlUrlOption | undefined {

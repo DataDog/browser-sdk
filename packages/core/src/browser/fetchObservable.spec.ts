@@ -273,23 +273,24 @@ describe('fetch proxy with ResponseBodyAction', () => {
   let requests: FetchResolveContext[]
   let fetch: MockFetch
 
+  function setupFetchTracking(responseBodyAction: () => ResponseBodyAction) {
+    mockFetchManager = mockFetch()
+    requests = []
+    requestsTrackingSubscription = initFetchObservable({ responseBodyAction }).subscribe((context) => {
+      if (context.state === 'resolve') {
+        requests.push(context)
+      }
+    })
+    fetch = window.fetch as MockFetch
+  }
+
   afterEach(() => {
     requestsTrackingSubscription?.unsubscribe()
     resetFetchObservable()
   })
 
   it('should collect response body with COLLECT action', (done) => {
-    mockFetchManager = mockFetch()
-
-    requests = []
-    requestsTrackingSubscription = initFetchObservable({
-      responseBodyAction: () => ResponseBodyAction.COLLECT,
-    }).subscribe((context) => {
-      if (context.state === 'resolve') {
-        requests.push(context)
-      }
-    })
-    fetch = window.fetch as MockFetch
+    setupFetchTracking(() => ResponseBodyAction.COLLECT)
 
     fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
@@ -300,17 +301,7 @@ describe('fetch proxy with ResponseBodyAction', () => {
   })
 
   it('should not collect response body with WAIT or IGNORE action', (done) => {
-    mockFetchManager = mockFetch()
-
-    requests = []
-    requestsTrackingSubscription = initFetchObservable({
-      responseBodyAction: () => ResponseBodyAction.WAIT,
-    }).subscribe((context) => {
-      if (context.state === 'resolve') {
-        requests.push(context)
-      }
-    })
-    fetch = window.fetch as MockFetch
+    setupFetchTracking(() => ResponseBodyAction.WAIT)
 
     fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
@@ -321,16 +312,7 @@ describe('fetch proxy with ResponseBodyAction', () => {
   })
 
   it('should use the highest priority action when multiple getters are registered', (done) => {
-    mockFetchManager = mockFetch()
-
-    requests = []
-    requestsTrackingSubscription = initFetchObservable({
-      responseBodyAction: () => ResponseBodyAction.WAIT,
-    }).subscribe((context) => {
-      if (context.state === 'resolve') {
-        requests.push(context)
-      }
-    })
+    setupFetchTracking(() => ResponseBodyAction.WAIT)
 
     initFetchObservable({
       responseBodyAction: () => ResponseBodyAction.COLLECT,
