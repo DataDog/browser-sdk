@@ -16,18 +16,43 @@ import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 
+/**
+ * Vital options
+ */
 export interface VitalOptions {
+  /**
+   * Vital context
+   */
   context?: any
+
+  /**
+   * Vital description
+   */
   description?: string
 }
+
+/**
+ * Duration vital options
+ */
 export type DurationVitalOptions = VitalOptions
 export interface FeatureOperationOptions extends VitalOptions {
   operationKey?: string
 }
 
 export type FailureReason = 'error' | 'abandoned' | 'other'
+
+/**
+ * Add duration vital options
+ */
 export interface AddDurationVitalOptions extends DurationVitalOptions {
+  /**
+   * Vital start time, expects a UNIX timestamp in milliseconds (the number of milliseconds since January 1, 1970)
+   */
   startTime: number
+
+  /**
+   * Vital duration, expects a duration in milliseconds
+   */
   duration: number
 }
 
