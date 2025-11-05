@@ -97,9 +97,34 @@ export function createMockServerApp(
     setTimeout(() => res.send('ok'), timeoutDuration)
   })
 
-  app.post('/graphql', (_req, res) => {
+  app.post('/graphql', (req, res) => {
     res.header('Content-Type', 'application/json')
-    res.json({ data: { result: 'success' } })
+
+    const scenario = req.query.scenario as string | undefined
+
+    if (scenario === 'validation-error') {
+      res.json({
+        data: null,
+        errors: [
+          {
+            message: 'Field "unknownField" does not exist',
+            extensions: { code: 'GRAPHQL_VALIDATION_FAILED' },
+            locations: [{ line: 2, column: 5 }],
+            path: ['user', 'unknownField'],
+          },
+        ],
+      })
+    } else if (scenario === 'multiple-errors') {
+      res.json({
+        data: { user: null },
+        errors: [
+          { message: 'User not found' },
+          { message: 'Insufficient permissions', extensions: { code: 'UNAUTHORIZED' } },
+        ],
+      })
+    } else {
+      res.json({ data: { result: 'success' } })
+    }
   })
 
   app.get('/redirect', (req, res) => {

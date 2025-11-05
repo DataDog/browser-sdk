@@ -9,12 +9,11 @@ import type {
 } from '@datadog/browser-core'
 import {
   RequestType,
+  ResponseBodyAction,
+  elapsed,
   initFetchObservable,
   initXhrObservable,
-  readBytesFromStream,
-  elapsed,
   timeStampNow,
-  tryToClone,
 } from '@datadog/browser-core'
 import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
@@ -24,6 +23,7 @@ import { isAllowedRequestUrl } from './resource/resourceUtils'
 import type { Tracer } from './tracing/tracer'
 import { startTracer } from './tracing/tracer'
 import type { SpanIdentifier, TraceIdentifier } from './tracing/identifier'
+import { findGraphQlConfiguration } from './resource/graphql'
 
 export interface CustomContext {
   requestIndex: number
@@ -59,7 +59,8 @@ export interface RequestCompleteEvent {
   error?: Error
   isAborted: boolean
   handlingStack?: string
-  body?: unknown
+  requestBody?: unknown
+  responseBody?: string
 }
 
 let nextRequestIndex = 1
@@ -73,7 +74,7 @@ export function startRequestCollection(
 ) {
   const tracer = startTracer(configuration, sessionManager, userContext, accountContext)
   trackXhr(lifeCycle, configuration, tracer)
-  trackFetch(lifeCycle, tracer)
+  trackFetch(lifeCycle, configuration, tracer)
 }
 
 export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
@@ -109,7 +110,8 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           xhr: context.xhr,
           isAborted: context.isAborted,
           handlingStack: context.handlingStack,
-          body: context.body,
+          requestBody: context.requestBody,
+          responseBody: context.responseBody,
         })
         break
     }
@@ -118,8 +120,15 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
   return { stop: () => subscription.unsubscribe() }
 }
 
-export function trackFetch(lifeCycle: LifeCycle, tracer: Tracer) {
-  const subscription = initFetchObservable().subscribe((rawContext) => {
+export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration, tracer: Tracer) {
+  const subscription = initFetchObservable({
+    responseBodyAction: (context) => {
+      if (findGraphQlConfiguration(context.url, configuration)?.trackResponseErrors) {
+        return ResponseBodyAction.COLLECT
+      }
+      return ResponseBodyAction.WAIT
+    },
+  }).subscribe((rawContext) => {
     const context = rawContext as RumFetchResolveContext | RumFetchStartContext
     if (!isAllowedRequestUrl(context.url)) {
       return
@@ -136,27 +145,26 @@ export function trackFetch(lifeCycle: LifeCycle, tracer: Tracer) {
         })
         break
       case 'resolve':
-        waitForResponseToComplete(context, (duration: Duration) => {
-          tracer.clearTracingIfNeeded(context)
-          lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
-            duration,
-            method: context.method,
-            requestIndex: context.requestIndex,
-            responseType: context.responseType,
-            spanId: context.spanId,
-            startClocks: context.startClocks,
-            status: context.status,
-            traceId: context.traceId,
-            traceSampled: context.traceSampled,
-            type: RequestType.FETCH,
-            url: context.url,
-            response: context.response,
-            init: context.init,
-            input: context.input,
-            isAborted: context.isAborted,
-            handlingStack: context.handlingStack,
-            body: context.init?.body,
-          })
+        tracer.clearTracingIfNeeded(context)
+        lifeCycle.notify(LifeCycleEventType.REQUEST_COMPLETED, {
+          duration: elapsed(context.startClocks.timeStamp, timeStampNow()),
+          method: context.method,
+          requestIndex: context.requestIndex,
+          responseType: context.responseType,
+          spanId: context.spanId,
+          startClocks: context.startClocks,
+          status: context.status,
+          traceId: context.traceId,
+          traceSampled: context.traceSampled,
+          type: RequestType.FETCH,
+          url: context.url,
+          response: context.response,
+          init: context.init,
+          input: context.input,
+          isAborted: context.isAborted,
+          handlingStack: context.handlingStack,
+          requestBody: context.init?.body,
+          responseBody: context.responseBody,
         })
         break
     }
@@ -168,23 +176,4 @@ function getNextRequestIndex() {
   const result = nextRequestIndex
   nextRequestIndex += 1
   return result
-}
-
-function waitForResponseToComplete(context: RumFetchResolveContext, callback: (duration: Duration) => void) {
-  const clonedResponse = context.response && tryToClone(context.response)
-  if (!clonedResponse || !clonedResponse.body) {
-    // do not try to wait for the response if the clone failed, fetch error or null body
-    callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
-  } else {
-    readBytesFromStream(
-      clonedResponse.body,
-      () => {
-        callback(elapsed(context.startClocks.timeStamp, timeStampNow()))
-      },
-      {
-        bytesLimit: Number.POSITIVE_INFINITY,
-        collectStreamBody: false,
-      }
-    )
-  }
 }
