@@ -59,6 +59,7 @@ export function startRumAssembly(
     },
     [RumEventType.RESOURCE]: {
       'resource.url': 'string',
+      'resource.graphql': 'object',
       ...USER_CUSTOMIZABLE_FIELD_PATHS,
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
