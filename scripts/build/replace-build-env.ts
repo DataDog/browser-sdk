@@ -1,4 +1,5 @@
-import { globSync } from 'glob'
+import { globSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { modifyFile } from '../lib/filesUtils.ts'
 import { buildEnvKeys, getBuildEnvValue } from '../lib/buildEnv.ts'
@@ -12,8 +13,8 @@ import { buildEnvKeys, getBuildEnvValue } from '../lib/buildEnv.ts'
 runMain(async () => {
   const buildDirectory = process.argv[2]
 
-  for (const path of globSync('**/*.js', { cwd: buildDirectory, absolute: true })) {
-    if (await modifyFile(path, (content: string) => replaceBuildEnv(content))) {
+  for (const path of globSync('**/*.js', { cwd: buildDirectory })) {
+    if (await modifyFile(resolve(buildDirectory, path), (content: string) => replaceBuildEnv(content))) {
       printLog(`Replaced BuildEnv in ${path}`)
     }
   }
