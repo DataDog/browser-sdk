@@ -8,6 +8,7 @@ import {
   addTelemetryDebug,
   elapsed,
   relativeNow,
+  relativeToClocks,
 } from '@datadog/browser-core'
 import type { RumSessionManager } from '../rumSessionManager'
 import { SessionReplayState, SessionType } from '../rumSessionManager'
@@ -16,6 +17,7 @@ import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { ViewHistory } from './viewHistory'
 import type { PageStateHistory } from './pageStateHistory'
+import { PageState } from './pageStateHistory'
 
 export function startSessionContext(
   hooks: Hooks,
@@ -31,15 +33,26 @@ export function startSessionContext(
     if (!session || !view) {
       return DISCARDED
     }
-    if (session.expire && dateNow() - Number(session.expire) > ONE_MINUTE) {
-      const duration = elapsed(startTime, relativeNow())
+    // TODO share constant
+    const isSessionExpired = dateNow() - Number(session.expire) > 15 * ONE_MINUTE
+    const eventDuration = elapsed(startTime, relativeNow())
+    const wasInFrozenState = pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, startTime, eventDuration)
+    if (isSessionExpired || (wasInFrozenState && eventType !== RumEventType.VIEW)) {
       // monitor-until: 2026-01-01
-      addTelemetryDebug('Event sent after session expiration', {
+      addTelemetryDebug('Event sent after session expiration or frozen page state', {
         debug: {
-          duration,
+          eventDuration,
           eventType,
-          expired_since: dateNow() - Number(session.expire),
-          page_state: pageStateHistory.findPageStatesForPeriod(startTime, duration) as ContextValue,
+          isSessionExpired,
+          sessionExpiredSince: isSessionExpired ? dateNow() - Number(session.expire) : undefined,
+          elapsedBetweenStartAndExpire: isSessionExpired
+            ? Number(session.expire) - relativeToClocks(startTime).timeStamp
+            : undefined,
+          wasInFrozenState,
+          pageStateDuringEventDuration: pageStateHistory.findPageStatesForPeriod(
+            startTime,
+            eventDuration
+          ) as ContextValue,
         },
       })
     }

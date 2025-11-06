@@ -89,6 +89,15 @@ export function startSessionManager<TrackingType extends string>(
     }
   }
 
+  sessionStore.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
+    if (previousState.id === newState.id && previousState.expire !== newState.expire) {
+      const entry = sessionContextHistory.find()
+      if (entry) {
+        entry.expire = newState.expire
+      }
+    }
+  })
+
   trackingConsentState.observable.subscribe(() => {
     if (trackingConsentState.isGranted()) {
       sessionStore.expandOrRenewSession()
