@@ -16,6 +16,7 @@
     "build:apps": "node scripts/build/build-test-apps.ts",
     "build:docs:json": "typedoc --logLevel Verbose --json ./docs.json",
     "build:docs:html": "typedoc --out ./docs",
+    "pack": "yarn workspaces foreach --all --parallel --include '@datadog/*' exec yarn pack",
     "format": "prettier --check .",
     "lint": "NODE_OPTIONS='--max-old-space-size=4096' eslint .",
     "typecheck": "tsc -b --noEmit true",

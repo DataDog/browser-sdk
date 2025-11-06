@@ -7,7 +7,6 @@
   "types": "cjs/index.d.ts",
   "sideEffects": false,
   "scripts": {
-    "pack": "yarn pack",
     "build": "node ../../scripts/build/build-package.ts --modules"
   },
   "repository": {
