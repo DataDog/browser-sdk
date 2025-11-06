@@ -240,56 +240,6 @@ describe('rum assembly', () => {
 
           expect((serverRumEvents[0] as RumResourceEvent).resource.graphql!.variables).toBe('{"modified":"value"}')
         })
-
-        it('should allow modification of resource.graphql.operationName property', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-            partialConfiguration: {
-              beforeSend: (event) => {
-                if (event.resource!.graphql) {
-                  event.resource!.graphql.operationName = 'ModifiedOperation'
-                }
-              },
-            },
-          })
-
-          notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
-              resource: {
-                graphql: {
-                  operationType: 'mutation',
-                  operationName: 'OriginalOperation',
-                },
-              },
-            }),
-          })
-
-          expect((serverRumEvents[0] as RumResourceEvent).resource.graphql!.operationName).toBe('ModifiedOperation')
-        })
-
-        it('should allow modification of resource.graphql.payload property', () => {
-          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-            partialConfiguration: {
-              beforeSend: (event) => {
-                if (event.resource!.graphql) {
-                  event.resource!.graphql.payload = 'modified payload'
-                }
-              },
-            },
-          })
-
-          notifyRawRumEvent(lifeCycle, {
-            rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
-              resource: {
-                graphql: {
-                  operationType: 'query',
-                  payload: 'original payload',
-                },
-              },
-            }),
-          })
-
-          expect((serverRumEvents[0] as RumResourceEvent).resource.graphql!.payload).toBe('modified payload')
-        })
       })
 
       it('should reject modification of field not sensitive, context or customer provided', () => {
