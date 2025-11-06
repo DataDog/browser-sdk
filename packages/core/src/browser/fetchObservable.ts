@@ -151,10 +151,15 @@ async function afterSend(
   if (responseBodyCondition !== ResponseBodyAction.IGNORE) {
     const clonedResponse = tryToClone(response)
     if (clonedResponse && clonedResponse.body) {
-      const bytes = await readBytesFromStream(clonedResponse.body, {
-        collectStreamBody: responseBodyCondition === ResponseBodyAction.COLLECT,
-      })
-      context.responseBody = bytes && new TextDecoder().decode(bytes)
+      try {
+        const bytes = await readBytesFromStream(clonedResponse.body, {
+          collectStreamBody: responseBodyCondition === ResponseBodyAction.COLLECT,
+        })
+        context.responseBody = bytes && new TextDecoder().decode(bytes)
+      } catch {
+        // Ignore errors when reading the response body (e.g., stream aborted, network errors)
+        // This is not critical and should not be reported as an SDK error
+      }
     }
   }
 
