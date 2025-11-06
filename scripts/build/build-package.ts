@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises'
 import { parseArgs } from 'node:util'
+import path from 'node:path'
+import { globSync } from 'node:fs'
 import ts from 'typescript'
-import { globSync } from 'glob'
 import webpack from 'webpack'
 import webpackBase from '../../webpack.base.ts'
 
@@ -103,10 +104,11 @@ async function buildModules({ outDir, module, verbose }: { outDir: string; modul
 }
 
 async function replaceBuildEnvInDirectory(dir: string, { verbose }: { verbose: boolean }) {
-  for (const path of globSync('**/*.js', { cwd: dir, absolute: true })) {
-    if (await modifyFile(path, (content: string) => replaceBuildEnv(content))) {
+  for (const relativePath of globSync('**/*.js', { cwd: dir })) {
+    const absolutePath = path.resolve(dir, relativePath)
+    if (await modifyFile(absolutePath, (content: string) => replaceBuildEnv(content))) {
       if (verbose) {
-        printLog(`Replaced BuildEnv in ${path}`)
+        printLog(`Replaced BuildEnv in ${absolutePath}`)
       }
     }
   }
