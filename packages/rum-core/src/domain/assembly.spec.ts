@@ -215,6 +215,33 @@ describe('rum assembly', () => {
         })
       })
 
+      describe('field resource.graphql on Resource events', () => {
+        it('should allow modification of resource.graphql.variables property', () => {
+          const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+            partialConfiguration: {
+              beforeSend: (event) => {
+                if (event.resource!.graphql) {
+                  event.resource!.graphql.variables = '{"modified":"value"}'
+                }
+              },
+            },
+          })
+
+          notifyRawRumEvent(lifeCycle, {
+            rawRumEvent: createRawRumEvent(RumEventType.RESOURCE, {
+              resource: {
+                graphql: {
+                  operationType: 'query',
+                  variables: '{"original":"value"}',
+                },
+              },
+            }),
+          })
+
+          expect((serverRumEvents[0] as RumResourceEvent).resource.graphql!.variables).toBe('{"modified":"value"}')
+        })
+      })
+
       it('should reject modification of field not sensitive, context or customer provided', () => {
         const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
           partialConfiguration: {

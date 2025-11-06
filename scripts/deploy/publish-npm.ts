@@ -1,4 +1,4 @@
-import fs from 'fs'
+import fs from 'node:fs'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getNpmToken } from '../lib/secrets.ts'

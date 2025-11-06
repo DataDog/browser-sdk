@@ -1,5 +1,5 @@
 import type { Payload } from '@datadog/browser-core'
-import { RequestType } from '@datadog/browser-core'
+import { RequestType, resetFetchObservable } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
@@ -35,12 +35,13 @@ describe('collect fetch', () => {
         context.spanId = createSpanIdentifier()
       },
     }
-    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, tracerStub as Tracer))
+    ;({ stop: stopFetchTracking } = trackFetch(lifeCycle, mockRumConfiguration(), tracerStub as Tracer))
 
     fetch = window.fetch as MockFetch
 
     registerCleanupTask(() => {
       stopFetchTracking()
+      resetFetchObservable()
     })
   })
 
@@ -332,6 +333,79 @@ describe('collect xhr', () => {
           done()
         },
       })
+    })
+  })
+})
+
+describe('GraphQL response text collection', () => {
+  const FAKE_GRAPHQL_URL = 'http://fake-url/graphql'
+
+  beforeEach(() => {
+    resetFetchObservable()
+  })
+
+  function setupGraphQlFetchTest(trackResponseErrors: boolean) {
+    const mockFetchManager = mockFetch()
+    const completeSpy = jasmine.createSpy('requestComplete')
+    const lifeCycle = new LifeCycle()
+    lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
+
+    const configuration = mockRumConfiguration({
+      allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors }],
+    })
+    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
+    const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
+    registerCleanupTask(() => {
+      stop()
+      resetFetchObservable()
+    })
+
+    return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }
+  }
+
+  it('should collect responseBody when trackResponseErrors is enabled', (done) => {
+    const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(true)
+
+    const responseBody = JSON.stringify({
+      data: null,
+      errors: [{ message: 'Not found' }, { message: 'Unauthorized' }],
+    })
+
+    fetch(FAKE_GRAPHQL_URL, {
+      method: 'POST',
+      body: JSON.stringify({ query: 'query Test { test }' }),
+    }).resolveWith({
+      status: 200,
+      responseText: responseBody,
+    })
+
+    mockFetchManager.whenAllComplete(() => {
+      const request = completeSpy.calls.argsFor(0)[0]
+      expect(request.responseBody).toBe(responseBody)
+      done()
+    })
+  })
+
+  it('should not collect responseBody when trackResponseErrors is disabled', (done) => {
+    const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(false)
+
+    const responseBody = JSON.stringify({
+      data: null,
+      errors: [{ message: 'Not found' }],
+    })
+
+    fetch(FAKE_GRAPHQL_URL, {
+      method: 'POST',
+      body: JSON.stringify({ query: 'query Test { test }' }),
+    }).resolveWith({
+      status: 200,
+      responseText: responseBody,
+    })
+
+    mockFetchManager.whenAllComplete(() => {
+      const request = completeSpy.calls.argsFor(0)[0]
+      expect(request.responseBody).toBeUndefined()
+      done()
     })
   })
 })

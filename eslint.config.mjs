@@ -360,6 +360,7 @@ export default tseslint.config(
     ignores: [SPEC_FILES],
     rules: {
       'local-rules/enforce-monitor-until-comment': 'error',
+      // @ts-expect-error - MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL is either 'warn' or 'error'
       'local-rules/monitor-until-comment-expired': MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL,
       'local-rules/disallow-side-effects': 'error',
       'local-rules/disallow-zone-js-patched-values': 'error',
@@ -428,6 +429,18 @@ export default tseslint.config(
     },
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+      'import/enforce-node-protocol-usage': ['error', 'always'],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'glob',
+              message: 'Use node:fs or node:fs/promises (fs.glob) instead.',
+            },
+          ],
+        },
+      ],
     },
   },
 

@@ -20,13 +20,14 @@ export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
   isAborted: boolean
   xhr: XMLHttpRequest
   handlingStack?: string
-  body?: unknown
+  requestBody?: unknown
 }
 
 export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
   state: 'complete'
   duration: Duration
   status: number
+  responseBody?: string
 }
 
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
@@ -88,7 +89,7 @@ function sendXhr(
   startContext.isAborted = false
   startContext.xhr = xhr
   startContext.handlingStack = handlingStack
-  startContext.body = body
+  startContext.requestBody = body
 
   let hasBeenReported = false
 
@@ -114,6 +115,9 @@ function sendXhr(
     completeContext.state = 'complete'
     completeContext.duration = elapsed(startContext.startClocks.timeStamp, timeStampNow())
     completeContext.status = xhr.status
+    if (typeof xhr.response === 'string') {
+      completeContext.responseBody = xhr.response
+    }
     observable.notify(shallowClone(completeContext))
   }
 

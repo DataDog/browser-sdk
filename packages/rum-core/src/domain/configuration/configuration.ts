@@ -280,6 +280,7 @@ export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource
 export interface GraphQlUrlOption {
   match: MatchOption
   trackPayload?: boolean
+  trackResponseErrors?: boolean
 }
 
 export interface RumConfiguration extends Configuration {
@@ -461,11 +462,12 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
 
   initConfiguration.allowedGraphQlUrls.forEach((option) => {
     if (isMatchOption(option)) {
-      graphQlOptions.push({ match: option, trackPayload: false })
+      graphQlOptions.push({ match: option, trackPayload: false, trackResponseErrors: false })
     } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
       graphQlOptions.push({
         match: option.match,
         trackPayload: !!option.trackPayload,
+        trackResponseErrors: !!option.trackResponseErrors,
       })
     }
   })
@@ -485,6 +487,18 @@ function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['all
   )
 }
 
+function hasGraphQlResponseErrorsTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
+  return (
+    isNonEmptyArray(allowedGraphQlUrls) &&
+    allowedGraphQlUrls.some((option) => {
+      if (typeof option === 'object' && 'trackResponseErrors' in option) {
+        return !!option.trackResponseErrors
+      }
+      return false
+    })
+  )
+}
+
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
   const baseSerializedConfiguration = serializeConfiguration(configuration)
 
@@ -498,6 +512,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     use_allowed_tracing_urls: isNonEmptyArray(configuration.allowedTracingUrls),
     use_allowed_graph_ql_urls: isNonEmptyArray(configuration.allowedGraphQlUrls),
     use_track_graph_ql_payload: hasGraphQlPayloadTracking(configuration.allowedGraphQlUrls),
+    use_track_graph_ql_response_errors: hasGraphQlResponseErrorsTracking(configuration.allowedGraphQlUrls),
     selected_tracing_propagators: getSelectedTracingPropagators(configuration),
     default_privacy_level: configuration.defaultPrivacyLevel,
     enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
