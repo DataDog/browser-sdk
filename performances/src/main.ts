@@ -1,5 +1,5 @@
 import type { Page } from 'puppeteer'
-import puppeteer from 'puppeteer'
+import { launch } from 'puppeteer'
 import { formatProfilingResults } from './format'
 import { startProfiling } from './profilers/startProfiling'
 import type { ProfilingResults, ProfilingOptions } from './profiling.types'
@@ -49,7 +49,7 @@ async function profileScenario(
   options: ProfilingOptions,
   runScenario: (page: Page, takeMeasurements: () => Promise<void>) => Promise<void>
 ) {
-  const browser = await puppeteer.launch({
+  const browser = await launch({
     defaultViewport: { width: 1366, height: 768 },
     // Twitter detects headless browsing and refuses to load
     headless: false,

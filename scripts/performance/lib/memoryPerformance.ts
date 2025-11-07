@@ -1,5 +1,5 @@
 import type { Browser, CDPSession, Page, Protocol } from 'puppeteer'
-import puppeteer from 'puppeteer'
+import { launch } from 'puppeteer'
 import { fetchPR, LOCAL_BRANCH } from '../../lib/gitUtils.ts'
 import { formatSize, printLog } from '../../lib/executionUtils.ts'
 import { markdownArray, type Pr } from './reportAsAPrComment.ts'
@@ -84,7 +84,7 @@ async function runTests(tests: Test[], benchmarkUrl: string, cb: (result: Perfor
 }
 
 async function runTest(testButton: string, benchmarkUrl: string): Promise<TestRunResult> {
-  const browser: Browser = await puppeteer.launch({
+  const browser: Browser = await launch({
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
   const page: Page = await browser.newPage()
