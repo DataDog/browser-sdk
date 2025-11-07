@@ -476,6 +476,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
+    beta_encode_cookie_options: initConfiguration.betaEncodeCookieOptions,
     source: initConfiguration.source,
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,
