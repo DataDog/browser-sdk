@@ -27,6 +27,9 @@
     // Files included in ./performances/tsconfig.json
     "performances",
 
+    // Files included in ./benchmark/tsconfig.json
+    "benchmark",
+
     // Skip typechecking for these folders for now
     "rum-events-format",
     "test/apps"

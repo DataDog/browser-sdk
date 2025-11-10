@@ -588,6 +588,21 @@ bump-chrome-version-scheduled-failure:
     - bump-chrome-version-scheduled
 
 ########################################################################################################################
+# Performance benchmark
+########################################################################################################################
+
+performance-benchmark:
+  stage: task
+  extends: .base-configuration
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
+  script:
+    - yarn
+    - yarn playwright install
+    - yarn test:performance
+
+########################################################################################################################
 # Check expired telemetry
 ########################################################################################################################
 
