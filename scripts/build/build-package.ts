@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises'
 import { parseArgs } from 'node:util'
+import path from 'node:path'
+import { globSync } from 'node:fs'
 import ts from 'typescript'
-import { globSync } from 'glob'
 import webpack from 'webpack'
 import webpackBase from '../../webpack.base.ts'
 
@@ -46,6 +47,8 @@ runMain(async () => {
       verbose: values.verbose,
     })
   }
+
+  printLog('Done.')
 })
 
 async function buildBundle({ filename, verbose }: { filename: string; verbose: boolean }) {
@@ -78,54 +81,34 @@ async function buildModules({ outDir, module, verbose }: { outDir: string; modul
   // TODO: in the future, consider building packages with something else than typescript (ex:
   // rspack, tsdown...)
 
-  const parsed = ts.parseJsonConfigFileContent(
-    {
-      extends: '../../tsconfig.base.json',
-      compilerOptions: {
-        baseUrl: '.',
-        declaration: true,
-        allowJs: true,
-        module,
-        rootDir: './src/',
-        outDir,
-      },
-      include: ['./src'],
-      exclude: ['./src/**/*.spec.*', './src/**/*.specHelper.*'],
+  const diagnostics = buildWithTypeScript({
+    extends: '../../tsconfig.base.json',
+    compilerOptions: {
+      baseUrl: '.',
+      declaration: true,
+      allowJs: true,
+      module,
+      rootDir: './src/',
+      outDir,
     },
-    ts.sys,
-    process.cwd(),
-    undefined,
-    'tsconfig.json' // just used in messages
-  )
-
-  const host = ts.createCompilerHost(parsed.options)
-  const program = ts.createProgram({
-    rootNames: parsed.fileNames,
-    options: parsed.options,
-    host,
+    include: ['./src'],
+    exclude: ['./src/**/*.spec.*', './src/**/*.specHelper.*'],
   })
 
-  const emitResult = program.emit()
-  const diagnostics = ts.getPreEmitDiagnostics(program).concat(emitResult.diagnostics)
-
   if (diagnostics.length) {
-    const formatHost: ts.FormatDiagnosticsHost = {
-      getCanonicalFileName: (f) => f,
-      // eslint-disable-next-line @typescript-eslint/unbound-method
-      getCurrentDirectory: ts.sys.getCurrentDirectory,
-      getNewLine: () => ts.sys.newLine,
-    }
-    console.error(ts.formatDiagnosticsWithColorAndContext(diagnostics, formatHost))
+    printTypeScriptDiagnostics(diagnostics)
+    throw new Error('Failed to build package due to TypeScript errors')
   }
 
-  if (emitResult.emitSkipped) {
-    throw new Error('Failed to build package')
-  }
+  await replaceBuildEnvInDirectory(outDir, { verbose })
+}
 
-  for (const path of globSync('**/*.js', { cwd: outDir, absolute: true })) {
-    if (await modifyFile(path, (content: string) => replaceBuildEnv(content))) {
+async function replaceBuildEnvInDirectory(dir: string, { verbose }: { verbose: boolean }) {
+  for (const relativePath of globSync('**/*.js', { cwd: dir })) {
+    const absolutePath = path.resolve(dir, relativePath)
+    if (await modifyFile(absolutePath, (content: string) => replaceBuildEnv(content))) {
       if (verbose) {
-        printLog(`Replaced BuildEnv in ${path}`)
+        printLog(`Replaced BuildEnv in ${absolutePath}`)
       }
     }
   }
@@ -136,4 +119,38 @@ async function buildModules({ outDir, module, verbose }: { outDir: string; modul
       content
     )
   }
+}
+
+function buildWithTypeScript(configuration: { [key: string]: unknown }) {
+  const parsedConfiguration = ts.parseJsonConfigFileContent(
+    configuration,
+    ts.sys,
+    process.cwd(),
+    undefined,
+    'tsconfig.json' // just used in messages
+  )
+
+  const host = ts.createCompilerHost(parsedConfiguration.options)
+  const program = ts.createProgram({
+    rootNames: parsedConfiguration.fileNames,
+    options: parsedConfiguration.options,
+    host,
+  })
+
+  const emitResult = program.emit()
+  if (emitResult.emitSkipped) {
+    throw new Error('No files were emitted')
+  }
+
+  return [...ts.getPreEmitDiagnostics(program), ...emitResult.diagnostics]
+}
+
+function printTypeScriptDiagnostics(diagnostics: ts.Diagnostic[]) {
+  const formatHost: ts.FormatDiagnosticsHost = {
+    getCanonicalFileName: (f) => f,
+    // eslint-disable-next-line @typescript-eslint/unbound-method
+    getCurrentDirectory: ts.sys.getCurrentDirectory,
+    getNewLine: () => ts.sys.newLine,
+  }
+  console.error(ts.formatDiagnosticsWithColorAndContext(diagnostics, formatHost))
 }
