@@ -12,6 +12,7 @@
   "scripts": {
     "postinstall": "scripts/cli init_submodule",
     "build": "lerna run build --stream",
+    "build:electron": "lerna run build:modules --scope=@datadog/electron",
     "build:bundle": "lerna run build:bundle --stream",
     "build:apps": "node scripts/build/build-test-apps.ts",
     "build:docs:json": "typedoc --logLevel Verbose --json ./docs.json",

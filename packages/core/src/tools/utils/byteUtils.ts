@@ -1,3 +1,5 @@
+import { globalObject } from '../globalObject'
+
 export const ONE_KIBI_BYTE = 1024
 export const ONE_MEBI_BYTE = 1024 * ONE_KIBI_BYTE
 
@@ -16,8 +18,8 @@ export function computeBytesCount(candidate: string): number {
     return candidate.length
   }
 
-  if (window.TextEncoder !== undefined) {
-    return new TextEncoder().encode(candidate).length
+  if ('TextEncoder' in globalObject) {
+    return new (globalObject as { TextEncoder: typeof TextEncoder }).TextEncoder().encode(candidate).length
   }
 
   return new Blob([candidate]).size
