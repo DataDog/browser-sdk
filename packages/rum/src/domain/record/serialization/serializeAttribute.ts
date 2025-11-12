@@ -39,6 +39,9 @@ export function serializeAttribute(
       // if we can't get the image size, fallback to the censored image
       return CENSORED_IMG_MARK
     }
+    if (tagName === 'SOURCE') {
+      return CENSORED_IMG_MARK
+    }
 
     return CENSORED_STRING_MARK
   }

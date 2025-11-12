@@ -76,6 +76,11 @@ export const HTML = `
       Click https://private.com/path/nested?query=param#hash
     </a>
     <img src='https://private.com/path/nested?query=param#hash'>
+    <video controls>
+      <source src="https://private.com/path/nested?query=param#hash" type="video/webm">
+      <source src="https://private.com/path/nested?query=param#hash" type="video/mp4">
+      <p>Your browser cannot play the provided video file.</p>
+    </video>
     <select>
       <option>private option A</option>
       <option>private option B</option>
@@ -260,6 +265,65 @@ export const AST_MASK = {
                 src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
               },
               childNodes: [],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'video',
+              attributes: {
+                controls: '',
+                rr_mediaState: 'paused',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                    type: 'video/webm',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                    type: 'video/mp4',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'p',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: 'xxxx xxxxxxx xxxxxx xxxx xxx xxxxxxxx xxxxx xxxxx',
+                    },
+                  ],
+                },
+                {
+                  type: 3,
+                  textContent: '\n    ',
+                },
+              ],
             },
             {
               type: 3,
@@ -574,6 +638,65 @@ export const AST_MASK_USER_INPUT = {
             },
             {
               type: 2,
+              tagName: 'video',
+              attributes: {
+                controls: '',
+                rr_mediaState: 'paused',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'https://private.com/path/nested?query=param#hash',
+                    type: 'video/webm',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'https://private.com/path/nested?query=param#hash',
+                    type: 'video/mp4',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'p',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: 'Your browser cannot play the provided video file.',
+                    },
+                  ],
+                },
+                {
+                  type: 3,
+                  textContent: '\n    ',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
               tagName: 'select',
               attributes: {
                 value: '***',
@@ -881,6 +1004,65 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
             },
             {
               type: 2,
+              tagName: 'video',
+              attributes: {
+                controls: '',
+                rr_mediaState: 'paused',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                    type: 'video/webm',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==',
+                    type: 'video/mp4',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'p',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: 'xxxx xxxxxxx xxxxxx xxxx xxx xxxxxxxx xxxxx xxxxx',
+                    },
+                  ],
+                },
+                {
+                  type: 3,
+                  textContent: '\n    ',
+                },
+              ],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
               tagName: 'select',
               attributes: {
                 value: '***',
@@ -1181,6 +1363,65 @@ export const AST_ALLOW = {
                 src: 'https://private.com/path/nested?query=param#hash',
               },
               childNodes: [],
+            },
+            {
+              type: 3,
+              textContent: '\n    ',
+            },
+            {
+              type: 2,
+              tagName: 'video',
+              attributes: {
+                controls: '',
+                rr_mediaState: 'paused',
+              },
+              childNodes: [
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'https://private.com/path/nested?query=param#hash',
+                    type: 'video/webm',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'source',
+                  attributes: {
+                    src: 'https://private.com/path/nested?query=param#hash',
+                    type: 'video/mp4',
+                  },
+                  childNodes: [],
+                },
+                {
+                  type: 3,
+                  textContent: '\n      ',
+                },
+                {
+                  type: 2,
+                  tagName: 'p',
+                  attributes: {},
+                  childNodes: [
+                    {
+                      type: 3,
+                      textContent: 'Your browser cannot play the provided video file.',
+                    },
+                  ],
+                },
+                {
+                  type: 3,
+                  textContent: '\n    ',
+                },
+              ],
             },
             {
               type: 3,
