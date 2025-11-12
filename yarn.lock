@@ -222,7 +222,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.23.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
+"@datadog/browser-core@npm:6.24.0, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
   dependencies:
@@ -249,20 +249,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
-    "@datadog/browser-core": "npm:6.23.0"
+    "@datadog/browser-core": "npm:6.24.0"
   peerDependencies:
-    "@datadog/browser-rum": 6.23.0
+    "@datadog/browser-rum": 6.24.0
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@npm:6.23.0, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@npm:6.24.0, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
-    "@datadog/browser-core": "npm:6.23.0"
+    "@datadog/browser-core": "npm:6.24.0"
     ajv: "npm:8.17.1"
   languageName: unknown
   linkType: soft
@@ -271,8 +271,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-react@workspace:packages/rum-react"
   dependencies:
-    "@datadog/browser-core": "npm:6.23.0"
-    "@datadog/browser-rum-core": "npm:6.23.0"
+    "@datadog/browser-core": "npm:6.24.0"
+    "@datadog/browser-rum-core": "npm:6.24.0"
     "@types/react": "npm:19.2.2"
     "@types/react-dom": "npm:19.2.2"
     react: "npm:19.2.0"
@@ -302,10 +302,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-slim@workspace:packages/rum-slim"
   dependencies:
-    "@datadog/browser-core": "npm:6.23.0"
-    "@datadog/browser-rum-core": "npm:6.23.0"
+    "@datadog/browser-core": "npm:6.24.0"
+    "@datadog/browser-rum-core": "npm:6.24.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.23.0
+    "@datadog/browser-logs": 6.24.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -316,12 +316,12 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum@workspace:packages/rum"
   dependencies:
-    "@datadog/browser-core": "npm:6.23.0"
-    "@datadog/browser-rum-core": "npm:6.23.0"
+    "@datadog/browser-core": "npm:6.24.0"
+    "@datadog/browser-rum-core": "npm:6.24.0"
     "@types/pako": "npm:2.0.4"
     pako: "npm:2.1.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.23.0
+    "@datadog/browser-logs": 6.24.0
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
@@ -364,7 +364,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@datadog/browser-worker@workspace:packages/worker"
   dependencies:
-    "@datadog/browser-core": "npm:6.23.0"
+    "@datadog/browser-core": "npm:6.24.0"
     webpack: "npm:5.102.1"
   languageName: unknown
   linkType: soft
