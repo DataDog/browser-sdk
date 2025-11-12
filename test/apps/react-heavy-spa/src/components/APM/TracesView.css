@@ -1,0 +1,395 @@
+.traces-view {
+  padding: 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.traces-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.traces-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.traces-stats {
+  display: flex;
+  gap: 32px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+
+.traces-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--color-surface);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-group label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+.filter-group select {
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 14px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.filter-group select:hover {
+  border-color: var(--color-primary);
+}
+
+.traces-content {
+  display: flex;
+  gap: 24px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.traces-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.traces-list-header {
+  display: flex;
+  padding: 12px 16px;
+  background: var(--color-surface-elevated);
+  border-bottom: 2px solid var(--color-border);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.traces-list-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.trace-cell {
+  padding: 4px 8px;
+}
+
+.trace-cell-timestamp {
+  flex: 0 0 160px;
+}
+
+.trace-cell-service {
+  flex: 0 0 150px;
+}
+
+.trace-cell-operation {
+  flex: 1;
+  min-width: 200px;
+}
+
+.trace-cell-duration {
+  flex: 0 0 100px;
+  text-align: right;
+}
+
+.trace-cell-spans {
+  flex: 0 0 80px;
+  text-align: center;
+}
+
+.trace-cell-status {
+  flex: 0 0 100px;
+  text-align: center;
+}
+
+.trace-row {
+  display: flex;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: var(--color-text);
+}
+
+.trace-row:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.trace-row.selected {
+  background-color: var(--color-primary-light);
+  border-left: 4px solid var(--color-primary);
+}
+
+.trace-status {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.trace-status-ok {
+  background: rgba(62, 191, 98, 0.2);
+  color: var(--color-success);
+}
+
+.trace-status-warning {
+  background: rgba(255, 167, 38, 0.2);
+  color: var(--color-warning);
+}
+
+.trace-status-error {
+  background: rgba(255, 82, 82, 0.2);
+  color: var(--color-error);
+}
+
+.no-traces {
+  padding: 48px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 16px;
+}
+
+.trace-details {
+  flex: 0 0 600px;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-surface);
+  border-radius: 8px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  min-width: 0;
+}
+
+.trace-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--color-surface-elevated);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.trace-details-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.close-button:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.trace-details-info {
+  padding: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.trace-info-row {
+  display: flex;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.trace-info-row:last-child {
+  border-bottom: none;
+}
+
+.trace-info-label {
+  flex: 0 0 120px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.trace-info-value {
+  flex: 1;
+  color: var(--color-text);
+  font-size: 14px;
+  font-family: 'Monaco', 'Courier New', monospace;
+}
+
+.loading,
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 18px;
+  color: var(--color-text-secondary);
+}
+
+.error {
+  color: var(--color-error);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .trace-details {
+    flex: 0 0 400px;
+  }
+}
+
+@media (max-width: 900px) {
+  .traces-view {
+    padding: 16px;
+  }
+
+  .traces-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .traces-stats {
+    gap: 16px;
+  }
+
+  .traces-content {
+    flex-direction: column;
+  }
+
+  .trace-details {
+    flex: 1;
+    min-height: 400px;
+  }
+
+  .trace-cell-timestamp,
+  .trace-cell-service {
+    flex: 0 0 auto;
+    min-width: 120px;
+  }
+
+  .trace-cell-operation {
+    min-width: 150px;
+  }
+}
+
+@media (max-width: 600px) {
+  .traces-header h1 {
+    font-size: 20px;
+  }
+
+  .traces-stats {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .traces-filters {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .filter-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .filter-group select {
+    flex: 1;
+  }
+
+  .traces-list-header {
+    font-size: 11px;
+    padding: 8px 12px;
+  }
+
+  .trace-row {
+    padding: 8px 12px;
+  }
+
+  .trace-cell {
+    padding: 2px 4px;
+  }
+
+  .trace-cell-timestamp {
+    flex: 0 0 100px;
+    font-size: 11px;
+  }
+
+  .trace-cell-service {
+    display: none;
+  }
+
+  .trace-cell-operation {
+    flex: 1;
+    min-width: 100px;
+    font-size: 12px;
+  }
+
+  .trace-cell-duration {
+    flex: 0 0 60px;
+    font-size: 12px;
+  }
+
+  .trace-cell-spans {
+    flex: 0 0 50px;
+    font-size: 12px;
+  }
+
+  .trace-cell-status {
+    flex: 0 0 80px;
+  }
+}

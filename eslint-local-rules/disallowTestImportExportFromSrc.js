@@ -32,5 +32,5 @@ function checkTestImportExportFromSrc(context, node) {
 }
 
 function isTestCode(filename) {
-  return /(\/test|\/benchmark|\.specHelper|\.spec)/.test(filename)
+  return /(\/test|\.specHelper|\.spec)/.test(filename)
 }

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { getTestServers, waitForServersIdle } from './httpServers'
+import { getTestServers, waitForServersIdle } from '../../../lib/httpServers'
 import { waitForRequests } from './waitForRequests'
 
 export async function flushEvents(page: Page) {

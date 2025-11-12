@@ -3,8 +3,8 @@ import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
-import { isBrowserStack, isContinuousIntegration } from './environment'
-import type { Servers } from './httpServers'
+import { isBrowserStack, isContinuousIntegration } from '../../../lib/environment'
+import type { Servers } from '../../../lib/httpServers'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration

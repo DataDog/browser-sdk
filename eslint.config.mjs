@@ -26,6 +26,7 @@ export default tseslint.config(
       'packages/*/esm',
       'developer-extension/dist',
       'test/**/dist',
+      'test/apps/react-heavy-spa',
       'sandbox',
       'coverage',
       'rum-events-format',
@@ -50,10 +51,11 @@ export default tseslint.config(
           './tsconfig.scripts.json',
           './developer-extension/tsconfig.webpack.json',
           './test/e2e/tsconfig.json',
-          './benchmark/tsconfig.json',
+          './test/performance/tsconfig.json',
           './performances/tsconfig.json',
 
           './test/apps/**/tsconfig.json',
+          './test/apps/**/tsconfig.*.json',
         ],
         sourceType: 'module',
 
@@ -454,7 +456,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['test/e2e/**/*.ts'],
+    files: ['test/e2e/**/*.ts', 'test/performance/**/*.ts'],
     rules: {
       // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
       'import/no-extraneous-dependencies': 'off',

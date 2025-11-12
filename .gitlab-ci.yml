@@ -599,7 +599,6 @@ performance-benchmark:
       - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
   script:
     - yarn
-    - yarn playwright install
     - yarn test:performance
 
 ########################################################################################################################
