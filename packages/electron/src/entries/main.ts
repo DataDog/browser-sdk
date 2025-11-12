@@ -15,20 +15,23 @@ import { createServer } from 'node:http'
 import { ipcMain } from 'electron'
 import type { RawError, PageMayExitEvent, Encoder, Context, InitConfiguration } from '@datadog/browser-core'
 import {
+  dateNow,
   Observable,
   DeflateEncoderStreamId,
   createBatch,
   createHttpRequest,
   createFlushController,
   createIdentityEncoder,
+  combine,
 } from '@datadog/browser-core'
-import type { AllowedRawRumEvent, RumConfiguration, RumEvent, RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumEvent, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { validateAndBuildRumConfiguration } from '@datadog/browser-rum-core/cjs/domain/configuration'
 import type { Batch } from '@datadog/browser-core/cjs/transport/batch'
 import { decode } from '@msgpack/msgpack'
 import type { TrackType } from '@datadog/browser-core/cjs/domain/configuration'
 import { createEndpointBuilder } from '@datadog/browser-core/cjs/domain/configuration'
+import type { RumViewEvent } from '@datadog/browser-rum'
 import tracer from '../tracer'
 
 const sessionId = crypto.randomUUID()
@@ -58,6 +61,17 @@ function makeDatadogElectron() {
         sessionExpireObservable,
         createEncoder
       )
+
+      function sendRumEvent(event: RumEvent) {
+        if (event.type === RumEventType.VIEW) {
+          rumBatch.upsert(event as unknown as Context, event.view.id)
+        } else {
+          rumBatch.add(event as unknown as Context)
+        }
+      }
+
+      startMainProcessTracking(sendRumEvent, configuration)
+
       const spanBatch = startElectronSpanBatch(
         initConfiguration,
         configuration,
@@ -68,7 +82,7 @@ function makeDatadogElectron() {
         sessionExpireObservable,
         createEncoder
       )
-      setupIpcHandlers(rumBatch, configuration)
+      setupIpcHandlers(sendRumEvent, configuration)
       createDdTraceAgent(spanBatch)
 
       setInterval(() => {
@@ -128,7 +142,7 @@ export function startElectronSpanBatch(
   return batch
 }
 
-function setupIpcHandlers(batch: Batch, configuration: RumConfiguration) {
+function setupIpcHandlers(sendRumEvent: (event: RumEvent) => void, configuration: RumConfiguration) {
   ipcMain.handle('datadog:send', (_event, msg: string) => {
     const serverRumEvent = JSON.parse(msg) as BridgeEvent
 
@@ -138,14 +152,11 @@ function setupIpcHandlers(batch: Batch, configuration: RumConfiguration) {
       return
     }
 
-    serverRumEvent.event.session.id = sessionId
-    serverRumEvent.event.application.id = configuration.applicationId
+    const rumEvent = serverRumEvent.event
+    rumEvent.session.id = sessionId
+    rumEvent.application.id = configuration.applicationId
 
-    if (serverRumEvent.event.type === RumEventType.VIEW) {
-      batch.upsert(serverRumEvent.event as unknown as Context, serverRumEvent.event.view.id)
-    } else {
-      batch.add(serverRumEvent.event as unknown as Context)
-    }
+    sendRumEvent(rumEvent)
   })
 }
 
@@ -169,7 +180,7 @@ function createDdTraceAgent(batch: Batch) {
       const decoded = decode(buffer) as unknown[]
 
       for (const trace of decoded) {
-        console.log('trace', trace)
+        // console.log('trace', trace)
         batch.add(trace as Context)
       }
     })
@@ -198,9 +209,54 @@ function createDdTraceAgent(batch: Batch) {
     const { port } = addressInfo
     const url = `http://127.0.0.1:${port}`
 
-    console.log('agents url', url)
+    // console.log('agents url', url)
     tracer.setUrl(url)
   })
+}
+
+function startMainProcessTracking(sendRumEvent: (event: RumEvent) => void, configuration: RumConfiguration) {
+  // To have a view id for events generated from main process
+  const mainProcessContext = {
+    // TODO source electron
+    source: 'browser',
+    application: {
+      id: configuration.applicationId,
+    },
+    session: {
+      id: sessionId,
+      type: 'user',
+    },
+    _dd: {
+      format_version: 2,
+    },
+  }
+  const applicationLaunch = {
+    type: RumEventType.VIEW,
+    date: dateNow(),
+    view: {
+      id: crypto.randomUUID(),
+      name: 'ApplicationLaunch',
+      // TODO get customer package name
+      url: 'com/datadog/application-launch/view',
+      // TODO update it
+      time_spent: 0,
+      action: {
+        count: 0,
+      },
+      resource: {
+        count: 0,
+      },
+      error: {
+        count: 0,
+      },
+    },
+    _dd: {
+      // TODO update it
+      document_version: 1,
+    },
+  } as RumViewEvent
+
+  sendRumEvent(combine(mainProcessContext, applicationLaunch))
 }
 
 export { tracer }
