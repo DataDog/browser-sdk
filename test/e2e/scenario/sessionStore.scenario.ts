@@ -1,4 +1,4 @@
-import { ExperimentalFeature, SESSION_STORE_KEY } from '@datadog/browser-core'
+import { SESSION_STORE_KEY } from '@datadog/browser-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
@@ -107,22 +107,20 @@ test.describe('Session Stores', () => {
         })
     })
 
-    for (const encodeCookieOptions of [true, false]) {
-      const enableExperimentalFeatures = encodeCookieOptions ? [ExperimentalFeature.ENCODE_COOKIE_OPTIONS] : []
-
+    for (const betaEncodeCookieOptions of [true, false]) {
       createTest(
-        encodeCookieOptions
+        betaEncodeCookieOptions
           ? 'should not fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values when Encode Cookie Options is enabled'
           : 'should fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values when Encode Cookie Options is disabled'
       )
-        .withRum({ trackSessionAcrossSubdomains: true, enableExperimentalFeatures })
-        .withLogs({ trackSessionAcrossSubdomains: false, enableExperimentalFeatures })
+        .withRum({ trackSessionAcrossSubdomains: true, betaEncodeCookieOptions })
+        .withLogs({ trackSessionAcrossSubdomains: false, betaEncodeCookieOptions })
         .withHostName(FULL_HOSTNAME)
         .run(async ({ page }) => {
           await page.waitForTimeout(1000)
 
-          if (!encodeCookieOptions) {
-            // ensure the test is failing when the Feature Flag is disabled
+          if (!betaEncodeCookieOptions) {
+            // ensure the test is failing when betaEncodeCookieOptions is disabled
             test.fail()
           }
 
@@ -136,18 +134,18 @@ test.describe('Session Stores', () => {
         })
 
       createTest(
-        encodeCookieOptions
+        betaEncodeCookieOptions
           ? 'should not fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values when Encode Cookie Options is enabled'
           : 'should fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values when Encode Cookie Options is disabled'
       )
-        .withRum({ usePartitionedCrossSiteSessionCookie: true, enableExperimentalFeatures })
-        .withLogs({ usePartitionedCrossSiteSessionCookie: false, enableExperimentalFeatures })
+        .withRum({ usePartitionedCrossSiteSessionCookie: true, betaEncodeCookieOptions })
+        .withLogs({ usePartitionedCrossSiteSessionCookie: false, betaEncodeCookieOptions })
         .withHostName(FULL_HOSTNAME)
         .run(async ({ page }) => {
           await page.waitForTimeout(1000)
 
-          if (!encodeCookieOptions) {
-            // ensure the test is failing when the Feature Flag is disabled
+          if (!betaEncodeCookieOptions) {
+            // ensure the test is failing when betaEncodeCookieOptions is disabled
             test.fail()
           }
 

@@ -216,6 +216,15 @@ export interface InitConfiguration {
    */
   trackAnonymousUser?: boolean | undefined
 
+  /**
+   * Encode cookie options in the cookie value. This can be used as a mitigation for microssession issues.
+   * ⚠️ This is a beta feature and may be changed or removed in the future.
+   *
+   * @category Beta
+   * @defaultValue false
+   */
+  betaEncodeCookieOptions?: boolean | undefined
+
   // internal options
   /**
    * [Internal option] Enable experimental features
@@ -318,6 +327,7 @@ export interface Configuration extends TransportConfiguration {
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
+  betaEncodeCookieOptions: boolean
   // Event limits
   eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
   maxTelemetryEventsPerPage: number
@@ -414,6 +424,7 @@ export function validateAndBuildConfiguration(
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
+    betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
     /**
      * beacon payload max queue size implementation is 64kb
      * ensure that we leave room for logs, rum and potential other users
@@ -465,6 +476,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
+    beta_encode_cookie_options: initConfiguration.betaEncodeCookieOptions,
     source: initConfiguration.source,
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,

@@ -1743,9 +1743,13 @@ export interface CommonProperties {
        */
       readonly session_replay_sample_rate?: number
       /**
-       * The percentage of views profiled
+       * The percentage of sessions profiled
        */
       readonly profiling_sample_rate?: number
+      /**
+       * The percentage of sessions with traced resources
+       */
+      readonly trace_sample_rate?: number
       [k: string]: unknown
     }
     /**

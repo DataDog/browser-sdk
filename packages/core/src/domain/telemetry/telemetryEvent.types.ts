@@ -471,6 +471,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether trace baggage is propagated to child spans
        */
       propagate_trace_baggage?: boolean
+      /**
+       * Whether the beta encode cookie options is enabled
+       */
+      beta_encode_cookie_options?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown

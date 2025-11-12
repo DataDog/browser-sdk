@@ -1,5 +1,4 @@
-import { ExperimentalFeature } from '../../../tools/experimentalFeatures'
-import { mockClock, getSessionState, registerCleanupTask, mockExperimentalFeatures } from '../../../../test'
+import { mockClock, getSessionState, registerCleanupTask } from '../../../../test'
 import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
 import { validateAndBuildConfiguration } from '../../configuration'
@@ -121,15 +120,13 @@ describe('session in cookie strategy', () => {
   })
 
   describe('encode cookie options', () => {
-    beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.ENCODE_COOKIE_OPTIONS])
-    })
+    const config: Partial<InitConfiguration> = { betaEncodeCookieOptions: true }
 
     it('should encode cookie options in the cookie value', () => {
       // Some older browsers don't support partitioned cross-site session cookies
       // so instead of testing the cookie value, we test the call to the cookie setter
       const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
-      const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true, ...config })
       cookieStorageStrategy.persistSession({ id: '123' })
 
       const calls = cookieSetSpy.calls.all()
@@ -138,7 +135,7 @@ describe('session in cookie strategy', () => {
     })
 
     it('should not encode cookie options in the cookie value if the session is empty (deleting the cookie)', () => {
-      const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true, ...config })
       cookieStorageStrategy.persistSession({})
 
       expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
@@ -146,14 +143,14 @@ describe('session in cookie strategy', () => {
 
     it('should return the correct session state from the cookies', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('_dd_s=id=123&c=0;_dd_s=id=456&c=1;_dd_s=id=789&c=2')
-      const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true, ...config })
 
       expect(cookieStorageStrategy.retrieveSession()).toEqual({ id: '456' })
     })
 
     it('should return the session state from the first cookie if there is no match', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('_dd_s=id=123&c=0;_dd_s=id=789&c=2')
-      const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true })
+      const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true, ...config })
 
       expect(cookieStorageStrategy.retrieveSession()).toEqual({ id: '123' })
     })
