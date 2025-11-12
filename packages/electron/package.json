@@ -1,5 +1,5 @@
 {
-  "name": "@datadog/browser-rum",
+  "name": "@datadog/electron",
   "version": "6.23.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
@@ -7,15 +7,19 @@
   "types": "cjs/entries/main.d.ts",
   "scripts": {
     "pack": "yarn pack",
-    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-rum.js",
-    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-rum.js"
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-electron.js",
+    "build:modules": "node ../../scripts/build/build-package.ts --modules",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-electron.js"
   },
   "dependencies": {
     "@datadog/browser-core": "6.23.0",
-    "@datadog/browser-rum-core": "6.23.0"
+    "@datadog/browser-rum-core": "6.23.0",
+    "@msgpack/msgpack": "3.1.2",
+    "dd-trace": "^5.76.0"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "6.23.0"
+    "@datadog/browser-logs": "6.23.0",
+    "electron": "39"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-logs": {
@@ -25,10 +29,11 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/rum"
+    "directory": "packages/electron"
   },
   "devDependencies": {
     "@types/pako": "2.0.4",
+    "electron": "39",
     "pako": "2.1.0"
   },
   "volta": {

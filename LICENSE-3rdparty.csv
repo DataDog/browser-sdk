@@ -56,7 +56,6 @@ dev,karma-webpack,MIT,Copyright JS Foundation and other contributors
 dev,lerna,MIT,Copyright 2015-present Lerna Contributors
 dev,minimatch,ISC,Copyright (c) Isaac Z. Schlueter and Contributors
 dev,node-forge,BSD,Copyright (c) 2010, Digital Bazaar, Inc.
-dev,npm-run-all,MIT,Copyright 2015 Toru Nagashima
 dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
 dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
