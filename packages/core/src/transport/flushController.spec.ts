@@ -2,14 +2,12 @@ import type { Clock } from '../../test'
 import { mockClock } from '../../test'
 import type { PageMayExitEvent } from '../browser/pageMayExitObservable'
 import { Observable } from '../tools/observable'
-import type { Duration } from '../tools/utils/timeUtils'
 import type { FlushController, FlushEvent } from './flushController'
-import { createFlushController } from './flushController'
+import { createFlushController, FLUSH_DURATION_LIMIT } from './flushController'
 import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 const BYTES_LIMIT = RECOMMENDED_REQUEST_BYTES_LIMIT
 const MESSAGES_LIMIT = 5
-const DURATION_LIMIT = 100 as Duration
 // Arbitrary message size that is below the BYTES_LIMIT
 const SMALL_MESSAGE_BYTE_COUNT = 2
 
@@ -26,7 +24,6 @@ describe('flushController', () => {
     sessionExpireObservable = new Observable()
     flushController = createFlushController({
       messagesLimit: MESSAGES_LIMIT,
-      durationLimit: DURATION_LIMIT,
       pageMayExitObservable,
       sessionExpireObservable,
     })
@@ -210,29 +207,29 @@ describe('flushController', () => {
     it('notifies when the duration limit is reached after adding a message', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      clock.tick(DURATION_LIMIT)
+      clock.tick(FLUSH_DURATION_LIMIT)
       expect(flushSpy).toHaveBeenCalled()
     })
 
     it('flush reason should be "duration_limit"', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      clock.tick(DURATION_LIMIT)
+      clock.tick(FLUSH_DURATION_LIMIT)
       expect(flushSpy.calls.first().args[0].reason).toBe('duration_limit')
     })
 
     it('does not postpone the duration limit when another message was added', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      clock.tick(DURATION_LIMIT / 2)
+      clock.tick(FLUSH_DURATION_LIMIT / 2)
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      clock.tick(DURATION_LIMIT / 2)
+      clock.tick(FLUSH_DURATION_LIMIT / 2)
       expect(flushSpy).toHaveBeenCalled()
     })
 
     it('does not notify if no message was added yet', () => {
-      clock.tick(DURATION_LIMIT)
+      clock.tick(FLUSH_DURATION_LIMIT)
       expect(flushSpy).not.toHaveBeenCalled()
     })
 
@@ -240,7 +237,7 @@ describe('flushController', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
       flushController.notifyAfterRemoveMessage(SMALL_MESSAGE_BYTE_COUNT)
-      clock.tick(DURATION_LIMIT)
+      clock.tick(FLUSH_DURATION_LIMIT)
       expect(flushSpy).not.toHaveBeenCalled()
     })
 
@@ -252,7 +249,7 @@ describe('flushController', () => {
       flushController.notifyAfterAddMessage()
       flushController.notifyAfterRemoveMessage(SMALL_MESSAGE_BYTE_COUNT)
 
-      clock.tick(DURATION_LIMIT)
+      clock.tick(FLUSH_DURATION_LIMIT)
       expect(flushSpy).toHaveBeenCalled()
     })
 
@@ -260,12 +257,12 @@ describe('flushController', () => {
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
       flushController.notifyAfterRemoveMessage(SMALL_MESSAGE_BYTE_COUNT)
-      clock.tick(DURATION_LIMIT / 2)
+      clock.tick(FLUSH_DURATION_LIMIT / 2)
       flushController.notifyBeforeAddMessage(SMALL_MESSAGE_BYTE_COUNT)
       flushController.notifyAfterAddMessage()
-      clock.tick(DURATION_LIMIT / 2)
+      clock.tick(FLUSH_DURATION_LIMIT / 2)
       expect(flushSpy).not.toHaveBeenCalled()
-      clock.tick(DURATION_LIMIT / 2)
+      clock.tick(FLUSH_DURATION_LIMIT / 2)
       expect(flushSpy).toHaveBeenCalled()
     })
   })

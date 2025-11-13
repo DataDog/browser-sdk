@@ -228,7 +228,6 @@ function startTelemetryTransport(
       request: createHttpRequest(endpoints, reportError),
       flushController: createFlushController({
         messagesLimit: configuration.batchMessagesLimit,
-        durationLimit: configuration.flushTimeout,
         pageMayExitObservable,
 
         // We don't use an actual session expire observable here, to make telemetry collection

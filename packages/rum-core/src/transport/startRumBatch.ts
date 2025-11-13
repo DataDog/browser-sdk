@@ -24,7 +24,6 @@ export function startRumBatch(
     request: createHttpRequest(endpoints, reportError),
     flushController: createFlushController({
       messagesLimit: configuration.batchMessagesLimit,
-      durationLimit: configuration.flushTimeout,
       pageMayExitObservable,
       sessionExpireObservable,
     }),

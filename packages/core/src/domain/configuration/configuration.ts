@@ -1,8 +1,6 @@
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import type { Duration } from '../../tools/utils/timeUtils'
-import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
 import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
@@ -330,7 +328,6 @@ export interface Configuration extends TransportConfiguration {
   betaEncodeCookieOptions: boolean
 
   // Batch configuration
-  flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
 
@@ -421,12 +418,6 @@ export function validateAndBuildConfiguration(
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
-
-    /**
-     * flush automatically, aim to be lower than ALB connection timeout
-     * to maximize connection reuse.
-     */
-    flushTimeout: (30 * ONE_SECOND) as Duration,
 
     /**
      * Logs intake limit. When using the SDK in a Worker Environment, we

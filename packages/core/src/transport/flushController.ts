@@ -2,10 +2,17 @@ import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObs
 import { Observable } from '../tools/observable'
 import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
+import { ONE_SECOND } from '../tools/utils/timeUtils'
 import type { Duration } from '../tools/utils/timeUtils'
 import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
+
+/**
+ * flush automatically, aim to be lower than ALB connection timeout
+ * to maximize connection reuse.
+ */
+export const FLUSH_DURATION_LIMIT = (30 * ONE_SECOND) as Duration
 
 export type FlushController = ReturnType<typeof createFlushController>
 export interface FlushEvent {
@@ -16,7 +23,6 @@ export interface FlushEvent {
 
 interface FlushControllerOptions {
   messagesLimit: number
-  durationLimit: Duration
   pageMayExitObservable: Observable<PageMayExitEvent>
   sessionExpireObservable: Observable<void>
 }
@@ -28,7 +34,6 @@ interface FlushControllerOptions {
  */
 export function createFlushController({
   messagesLimit,
-  durationLimit,
   pageMayExitObservable,
   sessionExpireObservable,
 }: FlushControllerOptions) {
@@ -67,7 +72,7 @@ export function createFlushController({
     if (durationLimitTimeoutId === undefined) {
       durationLimitTimeoutId = setTimeout(() => {
         flush('duration_limit')
-      }, durationLimit)
+      }, FLUSH_DURATION_LIMIT)
     }
   }
 
