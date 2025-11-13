@@ -3,11 +3,10 @@ import { mockClock } from '../../test'
 import type { PageMayExitEvent } from '../browser/pageMayExitObservable'
 import { Observable } from '../tools/observable'
 import type { FlushController, FlushEvent } from './flushController'
-import { createFlushController, FLUSH_DURATION_LIMIT } from './flushController'
+import { createFlushController, FLUSH_DURATION_LIMIT, MESSAGES_LIMIT } from './flushController'
 import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 const BYTES_LIMIT = RECOMMENDED_REQUEST_BYTES_LIMIT
-const MESSAGES_LIMIT = 5
 // Arbitrary message size that is below the BYTES_LIMIT
 const SMALL_MESSAGE_BYTE_COUNT = 2
 
@@ -23,7 +22,6 @@ describe('flushController', () => {
     pageMayExitObservable = new Observable()
     sessionExpireObservable = new Observable()
     flushController = createFlushController({
-      messagesLimit: MESSAGES_LIMIT,
       pageMayExitObservable,
       sessionExpireObservable,
     })

@@ -22,7 +22,6 @@ export function startLogsBatch(
     encoder: createIdentityEncoder(),
     request: createHttpRequest(endpoints, reportError),
     flushController: createFlushController({
-      messagesLimit: configuration.batchMessagesLimit,
       pageMayExitObservable,
       sessionExpireObservable: session.expireObservable,
     }),

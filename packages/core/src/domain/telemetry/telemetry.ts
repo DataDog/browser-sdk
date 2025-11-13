@@ -227,7 +227,6 @@ function startTelemetryTransport(
       encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
       request: createHttpRequest(endpoints, reportError),
       flushController: createFlushController({
-        messagesLimit: configuration.batchMessagesLimit,
         pageMayExitObservable,
 
         // We don't use an actual session expire observable here, to make telemetry collection

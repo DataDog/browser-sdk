@@ -1,4 +1,5 @@
 import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObservable'
+import { isWorkerEnvironment } from '../tools/globalObject'
 import { Observable } from '../tools/observable'
 import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
@@ -14,6 +15,12 @@ export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'm
  */
 export const FLUSH_DURATION_LIMIT = (30 * ONE_SECOND) as Duration
 
+/**
+ * When using the SDK in a Worker Environment, we limit the batch size to 1 to ensure it can be sent
+ * in a single event.
+ */
+export const MESSAGES_LIMIT = isWorkerEnvironment ? 1 : 50
+
 export type FlushController = ReturnType<typeof createFlushController>
 export interface FlushEvent {
   reason: FlushReason
@@ -22,7 +29,6 @@ export interface FlushEvent {
 }
 
 interface FlushControllerOptions {
-  messagesLimit: number
   pageMayExitObservable: Observable<PageMayExitEvent>
   sessionExpireObservable: Observable<void>
 }
@@ -32,11 +38,7 @@ interface FlushControllerOptions {
  * to happen. The implementation is designed to support both synchronous and asynchronous usages,
  * but relies on invariants described in each method documentation to keep a coherent state.
  */
-export function createFlushController({
-  messagesLimit,
-  pageMayExitObservable,
-  sessionExpireObservable,
-}: FlushControllerOptions) {
+export function createFlushController({ pageMayExitObservable, sessionExpireObservable }: FlushControllerOptions) {
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => flush(event.reason))
   const sessionExpireSubscription = sessionExpireObservable.subscribe(() => flush('session_expire'))
 
@@ -120,7 +122,7 @@ export function createFlushController({
     notifyAfterAddMessage(messageBytesCountDiff = 0) {
       currentBytesCount += messageBytesCountDiff
 
-      if (currentMessagesCount >= messagesLimit) {
+      if (currentMessagesCount >= MESSAGES_LIMIT) {
         flush('messages_limit')
       } else if (currentBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
         flush('bytes_limit')

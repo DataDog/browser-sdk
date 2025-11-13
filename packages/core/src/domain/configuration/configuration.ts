@@ -328,7 +328,6 @@ export interface Configuration extends TransportConfiguration {
   betaEncodeCookieOptions: boolean
 
   // Batch configuration
-  batchMessagesLimit: number
   messageBytesLimit: number
 
   // internal
@@ -419,11 +418,6 @@ export function validateAndBuildConfiguration(
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
 
-    /**
-     * Logs intake limit. When using the SDK in a Worker Environment, we
-     * limit the batch size to 1 to ensure it can be sent in a single event.
-     */
-    batchMessagesLimit: isWorkerEnvironment ? 1 : 50,
     messageBytesLimit: 256 * ONE_KIBI_BYTE,
 
     /**

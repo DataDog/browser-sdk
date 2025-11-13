@@ -23,7 +23,6 @@ export function startRumBatch(
     encoder: createEncoder(DeflateEncoderStreamId.RUM),
     request: createHttpRequest(endpoints, reportError),
     flushController: createFlushController({
-      messagesLimit: configuration.batchMessagesLimit,
       pageMayExitObservable,
       sessionExpireObservable,
     }),

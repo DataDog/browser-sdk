@@ -117,6 +117,7 @@ function reportPotentialSideEffect(context, node) {
       reportPotentialSideEffect(context, node.object)
       reportPotentialSideEffect(context, node.property)
       return
+    case 'ConditionalExpression':
     case 'FunctionExpression':
     case 'ArrowFunctionExpression':
     case 'FunctionDeclaration':
