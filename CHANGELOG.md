@@ -18,6 +18,29 @@
 
 ---
 
+## v6.24.0
+
+**Public Changes:**
+
+- ✨[RUM-12672] Allow graphql variables field to be modifiable in beforeSend ([#3949](https://github.com/DataDog/browser-sdk/pull/3949)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM-12133] Track GraphQl Response ([#3921](https://github.com/DataDog/browser-sdk/pull/3921)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 📝 [DOCS-12292] Improve Vital API documentation ([#3945](https://github.com/DataDog/browser-sdk/pull/3945)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 reduce build boilerplate ([#3938](https://github.com/DataDog/browser-sdk/pull/3938)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 remove glob dependency in favor of native glob from node:fs ([#3950](https://github.com/DataDog/browser-sdk/pull/3950))
+- 👷 Lock file maintenance ([#3942](https://github.com/DataDog/browser-sdk/pull/3942))
+- 👷 fix MODULE_TYPELESS_PACKAGE_JSON warning ([#3906](https://github.com/DataDog/browser-sdk/pull/3906)) [FLAGGING] [LOGS] [RUM-SLIM] [RUM] [WORKER]
+- 👷 Update all non-major dependencies ([#3908](https://github.com/DataDog/browser-sdk/pull/3908)) [FLAGGING] [RUM-REACT] [WORKER]
+- 🔧 factorize typedoc category order ([#3947](https://github.com/DataDog/browser-sdk/pull/3947)) [LOGS] [RUM-REACT] [RUM-SLIM] [RUM]
+- 🔧 Improve manual deploy job ([#3934](https://github.com/DataDog/browser-sdk/pull/3934))
+- 🔧 Bump chrome-webstore-upload from 4.0.0 to 4.0.3 ([#3933](https://github.com/DataDog/browser-sdk/pull/3933))
+- ⚗️ Add beta feature for encoding cookie options ([#3951](https://github.com/DataDog/browser-sdk/pull/3951)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🧹 Refactor Puppeteer imports to use named import 'launch' . ([#3953](https://github.com/DataDog/browser-sdk/pull/3953))
+- fix telemetry errors ([#3952](https://github.com/DataDog/browser-sdk/pull/3952)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Added 'import/enforce-node-protocol-usage' ([#3943](https://github.com/DataDog/browser-sdk/pull/3943))
+
 ## v6.23.0
 
 **Public Changes:**
