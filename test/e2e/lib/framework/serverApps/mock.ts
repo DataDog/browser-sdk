@@ -4,7 +4,7 @@ import cors from 'cors'
 import express from 'express'
 import type { RemoteConfiguration } from '@datadog/browser-rum-core'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
-import type { MockServerApp, Servers } from '../httpServers'
+import type { MockServerApp, Servers } from '../../../../lib/httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
 import { workerSetup } from '../pageSetups'
 

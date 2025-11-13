@@ -1,0 +1,61 @@
+.metric-card {
+  background: var(--color-surface, #2a2a2a);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.metric-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.metric-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #b0b0b0);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metric-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text, #e0e0e0);
+  line-height: 1.2;
+}
+
+.metric-unit {
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--color-text-secondary, #b0b0b0);
+  margin-left: 8px;
+}
+
+.metric-trend {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.metric-trend-up {
+  color: var(--color-success, #3ebf62);
+}
+
+.metric-trend-down {
+  color: var(--color-error, #ff5252);
+}
+
+.metric-trend-neutral {
+  color: var(--color-warning, #ffa726);
+}

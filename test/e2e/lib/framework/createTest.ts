@@ -9,16 +9,16 @@ import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '.
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
+import type { Servers } from '../../../lib/httpServers'
+import { getTestServers, waitForServersIdle } from '../../../lib/httpServers'
+import { isBrowserStack } from '../../../lib/environment'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
-import type { Servers } from './httpServers'
-import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
-import { isBrowserStack } from './environment'
 
 interface LogsWorkerOptions {
   importScript?: boolean

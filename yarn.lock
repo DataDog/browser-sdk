@@ -3872,6 +3872,7 @@ __metadata:
     "@types/express": "npm:5.0.3"
     "@types/jasmine": "npm:3.10.18"
     "@types/node": "npm:24.9.1"
+    "@types/node-forge": "npm:1.3.14"
     ajv: "npm:8.17.1"
     browserstack-local: "npm:1.5.8"
     chrome-webstore-upload: "npm:4.0.3"
@@ -3901,6 +3902,7 @@ __metadata:
     karma-webpack: "npm:5.0.0"
     lerna: "npm:9.0.0"
     minimatch: "npm:10.0.3"
+    node-forge: "npm:1.3.1"
     prettier: "npm:3.6.2"
     puppeteer: "npm:24.26.0"
     swc-loader: "npm:0.2.6"
@@ -10565,6 +10567,12 @@ __metadata:
   checksum: 10c0/8a87e63f7a4afcfb0f9f77b39bb92374afc723418b9cb716ee4257689224171002e07768eeade4ecd0e86f1fa3d8f022994219fb45634f2dbd78c6803e452458
   languageName: node
   linkType: hard
+
+"performance-9ecdc6@workspace:test/performance":
+  version: 0.0.0-use.local
+  resolution: "performance-9ecdc6@workspace:test/performance"
+  languageName: unknown
+  linkType: soft
 
 "performances@workspace:performances":
   version: 0.0.0-use.local

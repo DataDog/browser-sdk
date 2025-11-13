@@ -10,14 +10,27 @@ const OTHER_EXTENSIONS: Array<{ name: string; options?: { runAt?: string } }> = 
   { name: 'appendChild', options: { runAt: 'document_start' } },
 ]
 
+const E2E_APPS = {
+  'test/apps/vanilla': buildApp,
+  'test/apps/react-router-v6-app': buildApp,
+  'test/apps/react-router-v7-app': buildReactRouterv7App,
+  'test/apps/base-extension': buildExtensions,
+}
+
+const PERFORMANCE_APPS = {
+  'test/apps/react-heavy-spa': buildApp,
+}
+
 runMain(async () => {
   printLog('Packing packages...')
   command`yarn lerna run pack`.run()
 
-  buildApp('test/apps/vanilla')
-  buildApp('test/apps/react-router-v6-app')
-  await buildReactRouterv7App()
-  await buildExtensions()
+  const target = process.argv[2]
+
+  const apps = target === 'e2e' ? E2E_APPS : PERFORMANCE_APPS
+  for (const [appName, builder] of Object.entries(apps)) {
+    await Promise.try(() => builder(appName))
+  }
 
   printLog('Test apps and extensions built successfully.')
 })

@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test'
-import { waitForServersIdle } from './httpServers'
+import { waitForServersIdle } from '../../../lib/httpServers'
 
 /**
  * Wait for browser requests to be sent and finished.
