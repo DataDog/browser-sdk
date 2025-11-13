@@ -39,6 +39,7 @@ export interface SessionContext<TrackingType extends string> extends Context {
   trackingType: TrackingType
   isReplayForced: boolean
   anonymousId: string | undefined
+  expire: string | undefined
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
@@ -88,6 +89,15 @@ export function startSessionManager<TrackingType extends string>(
     }
   }
 
+  sessionStore.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
+    if (previousState.id === newState.id && previousState.expire !== newState.expire) {
+      const entry = sessionContextHistory.find()
+      if (entry) {
+        entry.expire = newState.expire
+      }
+    }
+  })
+
   trackingConsentState.observable.subscribe(() => {
     if (trackingConsentState.isGranted()) {
       sessionStore.expandOrRenewSession()
@@ -115,6 +125,7 @@ export function startSessionManager<TrackingType extends string>(
         trackingType: SESSION_NOT_TRACKED as TrackingType,
         isReplayForced: false,
         anonymousId: undefined,
+        expire: undefined,
       }
     }
 
@@ -123,6 +134,7 @@ export function startSessionManager<TrackingType extends string>(
       trackingType: session[productKey] as TrackingType,
       isReplayForced: !!session.forcedReplay,
       anonymousId: session.anonymousId,
+      expire: session.expire,
     }
   }
 

@@ -31,6 +31,7 @@ export interface RumSession {
   id: string
   sessionReplay: SessionReplayState
   anonymousId?: string
+  expire?: string
 }
 
 export const enum RumTrackingType {
@@ -88,6 +89,7 @@ export function startRumSessionManager(
               ? SessionReplayState.FORCED
               : SessionReplayState.OFF,
         anonymousId: session.anonymousId,
+        expire: session.expire,
       }
     },
     expire: sessionManager.expire,

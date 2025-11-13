@@ -1,7 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
-import type { RumSessionManagerMock } from '../../../test'
-import { createRumSessionManagerMock, noopRecorderApi } from '../../../test'
+import {
+  type RumSessionManagerMock,
+  mockPageStateHistory,
+  createRumSessionManagerMock,
+  noopRecorderApi,
+} from '../../../test'
 import { SessionType } from '../rumSessionManager'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
@@ -37,7 +41,7 @@ describe('session context', () => {
     getReplayStatsSpy = spyOn(recorderApi, 'getReplayStats')
     findViewSpy = spyOn(viewHistory, 'findView').and.returnValue(fakeView)
 
-    startSessionContext(hooks, sessionManager, recorderApi, viewHistory)
+    startSessionContext(hooks, sessionManager, recorderApi, viewHistory, mockPageStateHistory())
   })
 
   it('should set id and type', () => {
