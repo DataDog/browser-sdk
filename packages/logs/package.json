@@ -6,7 +6,6 @@
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
   "scripts": {
-    "pack": "yarn pack",
     "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-logs.js",
     "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-logs.js"
   },

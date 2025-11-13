@@ -4,7 +4,6 @@
   "license": "Apache-2.0",
   "main": "bundle/worker.js",
   "scripts": {
-    "pack": "yarn pack",
     "build": "node ../../scripts/build/build-package.ts --bundle worker.js",
     "build:bundle": "yarn build"
   },

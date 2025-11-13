@@ -12,7 +12,7 @@ const OTHER_EXTENSIONS: Array<{ name: string; options?: { runAt?: string } }> = 
 
 runMain(async () => {
   printLog('Packing packages...')
-  command`yarn lerna run pack`.run()
+  command`yarn run pack`.run()
 
   buildApp('test/apps/vanilla')
   buildApp('test/apps/react-router-v6-app')
