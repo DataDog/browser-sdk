@@ -5,10 +5,13 @@ import { ErrorSource } from '../error/error.types'
 
 export type EventRateLimiter = ReturnType<typeof createEventRateLimiter>
 
+// Limit the maximum number of actions, errors and logs per minutes
+const EVENT_RATE_LIMIT = 3000
+
 export function createEventRateLimiter(
   eventType: string,
-  limit: number,
-  onLimitReached: (limitError: RawError) => void
+  onLimitReached: (limitError: RawError) => void,
+  limit = EVENT_RATE_LIMIT
 ) {
   let eventCount = 0
   let allowNextEvent = false
