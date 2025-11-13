@@ -34,19 +34,29 @@ import {
   ErrorHandling,
   generateUUID,
   toServerDuration,
+  HookNames,
+  DISCARDED,
 } from '@datadog/browser-core'
-import type { RumConfiguration, RumEvent, RumInitConfiguration } from '@datadog/browser-rum-core'
-import { RumEventType } from '@datadog/browser-rum-core'
+import {
+  type RumConfiguration,
+  type RumEvent,
+  type RumInitConfiguration,
+  createHooks,
+  RumEventType,
+} from '@datadog/browser-rum-core'
 import { validateAndBuildRumConfiguration } from '@datadog/browser-rum-core/cjs/domain/configuration'
 import type { Batch } from '@datadog/browser-core/cjs/transport/batch'
 import { decode } from '@msgpack/msgpack'
 import type { TrackType } from '@datadog/browser-core/cjs/domain/configuration'
 import { createEndpointBuilder } from '@datadog/browser-core/cjs/domain/configuration'
-import type { RumViewEvent } from '@datadog/browser-rum'
+import type { RumViewEvent, RumErrorEvent } from '@datadog/browser-rum'
 import tracer from '../tracer'
+import type { Hooks } from '../hooks'
 
-const sessionId = crypto.randomUUID()
-console.log('sessionId', sessionId)
+interface CollectedRumEvent {
+  source: 'main-process' | 'renderer'
+  event: RumEvent
+}
 
 function makeDatadogElectron() {
   return {
@@ -61,7 +71,8 @@ function makeDatadogElectron() {
 
       const pageMayExitObservable = new Observable<PageMayExitEvent>()
       const sessionExpireObservable = new Observable<void>()
-      const onRumEventObservable = new Observable<RumEvent>()
+      const onRumEventObservable = new Observable<CollectedRumEvent>()
+      const hooks = createHooks()
       const createEncoder = () => createIdentityEncoder()
 
       const rumBatch = startElectronRumBatch(
@@ -74,16 +85,9 @@ function makeDatadogElectron() {
         createEncoder
       )
 
-      function sendRumEvent(event: RumEvent) {
-        if (event.type === RumEventType.VIEW) {
-          rumBatch.upsert(event as unknown as Context, event.view.id)
-        } else {
-          rumBatch.add(event as unknown as Context)
-        }
-        onRumEventObservable.notify(event)
-      }
+      startRumEventAssembleAndSend(configuration, onRumEventObservable, rumBatch, hooks)
       const onActivityObservable = startActivityTracking(onRumEventObservable)
-      startMainProcessTracking(sendRumEvent, configuration, onActivityObservable)
+      startMainProcessTracking(hooks, onRumEventObservable, onActivityObservable)
 
       const spanBatch = startElectronSpanBatch(
         initConfiguration,
@@ -95,7 +99,7 @@ function makeDatadogElectron() {
         sessionExpireObservable,
         createEncoder
       )
-      setupIpcHandlers(sendRumEvent, configuration)
+      setupIpcHandlers(onRumEventObservable)
       createDdTraceAgent(spanBatch)
 
       setInterval(() => {
@@ -155,7 +159,7 @@ export function startElectronSpanBatch(
   return batch
 }
 
-function setupIpcHandlers(sendRumEvent: (event: RumEvent) => void, configuration: RumConfiguration) {
+function setupIpcHandlers(onRumEventObservable: Observable<CollectedRumEvent>) {
   ipcMain.handle('datadog:send', (_event, msg: string) => {
     const serverRumEvent = JSON.parse(msg) as BridgeEvent
 
@@ -165,11 +169,7 @@ function setupIpcHandlers(sendRumEvent: (event: RumEvent) => void, configuration
       return
     }
 
-    const rumEvent = serverRumEvent.event
-    rumEvent.session.id = sessionId
-    rumEvent.application.id = configuration.applicationId
-
-    sendRumEvent(rumEvent)
+    onRumEventObservable.notify({ event: serverRumEvent.event, source: 'renderer' })
   })
 }
 
@@ -227,38 +227,81 @@ function createDdTraceAgent(batch: Batch) {
   })
 }
 
-function startMainProcessTracking(
-  sendRumEvent: (event: RumEvent) => void,
+function startRumEventAssembleAndSend(
   configuration: RumConfiguration,
+  onRumEventObservable: Observable<CollectedRumEvent>,
+  rumBatch: Batch,
+  hooks: Hooks
+) {
+  onRumEventObservable.subscribe(({ event, source }) => {
+    const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+      eventType: event.type,
+    })!
+
+    if (defaultRumEventAttributes === DISCARDED || defaultRumEventAttributes.session?.id === undefined) {
+      return
+    }
+    const commonContext =
+      source === 'renderer'
+        ? {
+            session: { id: defaultRumEventAttributes.session.id },
+            application: { id: configuration.applicationId },
+          }
+        : combine(defaultRumEventAttributes, {
+            // TODO source electron
+            source: 'browser' as const,
+            application: { id: configuration.applicationId },
+            session: {
+              type: 'user' as const,
+            },
+            _dd: {
+              format_version: 2 as const,
+            },
+          })
+
+    const serverRumEvent = combine(event, commonContext)
+
+    if (serverRumEvent.type === RumEventType.VIEW) {
+      rumBatch.upsert(serverRumEvent as unknown as Context, serverRumEvent.view.id)
+    } else {
+      rumBatch.add(serverRumEvent as unknown as Context)
+    }
+  })
+}
+
+function startMainProcessTracking(
+  hooks: Hooks,
+  onRumEventObservable: Observable<CollectedRumEvent>,
   onActivityObservable: Observable<void>
 ) {
-  // To have a view id for events generated from main process
   const mainProcessContext = {
-    // TODO source electron
-    source: 'browser' as const,
-    application: {
-      id: configuration.applicationId,
-    },
-    session: {
-      id: sessionId,
-      type: 'user' as const,
-    },
-    _dd: {
-      format_version: 2 as const,
-    },
+    sessionId: crypto.randomUUID(),
+    viewId: crypto.randomUUID(),
   }
+  hooks.register(HookNames.Assemble, ({ eventType }) => {
+    return {
+      type: eventType,
+      session: {
+        id: mainProcessContext.sessionId,
+      },
+      view: {
+        id: mainProcessContext.viewId,
+      },
+    }
+  })
+  console.log('sessionId', mainProcessContext.sessionId)
   const applicationStart = timeStampNow()
   let applicationLaunch = {
     type: RumEventType.VIEW,
     date: applicationStart as number,
     view: {
-      id: crypto.randomUUID(),
+      id: mainProcessContext.viewId,
       is_active: true,
       name: 'ApplicationLaunch',
       // TODO get customer package name
       url: 'com/datadog/application-launch/view',
-      // TODO update it
       time_spent: 0,
+      // TODO update counters
       action: {
         count: 0,
       },
@@ -270,10 +313,11 @@ function startMainProcessTracking(
       },
     },
     _dd: {
-      // TODO update it
       document_version: 1,
     },
   } as RumViewEvent
+
+  onRumEventObservable.notify({ event: applicationLaunch, source: 'main-process' })
 
   onActivityObservable.subscribe(() => {
     applicationLaunch = combine(applicationLaunch, {
@@ -284,11 +328,12 @@ function startMainProcessTracking(
         document_version: applicationLaunch._dd.document_version + 1,
       },
     })
-    sendRumEvent(combine(mainProcessContext, applicationLaunch))
+    onRumEventObservable.notify({ event: applicationLaunch, source: 'main-process' })
   })
   // TODO session expiration / renewal
   // TODO useragent
 
+  // TODO remove me when using dd-trace-js
   process.on('uncaughtException', (err) => {
     const error = computeRawError({
       originalError: err,
@@ -297,7 +342,7 @@ function startMainProcessTracking(
       source: 'source',
       handling: ErrorHandling.UNHANDLED,
     })
-    const rawRumEvent = {
+    const errorEvent: Partial<RumErrorEvent> = {
       type: RumEventType.ERROR,
       date: error.startClocks.timeStamp,
       error: {
@@ -313,14 +358,14 @@ function startMainProcessTracking(
         url: applicationLaunch.view.url,
       },
     }
-    sendRumEvent(combine(mainProcessContext, rawRumEvent))
+    onRumEventObservable.notify({ event: errorEvent as RumErrorEvent, source: 'main-process' })
   })
 }
 
-function startActivityTracking(onRumEventObservable: Observable<RumEvent>) {
+function startActivityTracking(onRumEventObservable: Observable<CollectedRumEvent>) {
   const onActivityObservable = new Observable<void>()
   const alreadySeenViewIds = new Set()
-  onRumEventObservable.subscribe((event) => {
+  onRumEventObservable.subscribe(({ event }) => {
     if (event.type === RumEventType.VIEW && !alreadySeenViewIds.has(event.view.id)) {
       alreadySeenViewIds.add(event.view.id)
       onActivityObservable.notify()
