@@ -233,7 +233,6 @@ function startTelemetryTransport(
         // independent of the session. This allows to start and send telemetry events earlier.
         sessionExpireObservable: new Observable(),
       }),
-      messageBytesLimit: configuration.messageBytesLimit,
     })
     cleanupTasks.push(telemetryBatch.stop)
     const telemetrySubscription = telemetryObservable.subscribe(telemetryBatch.add)

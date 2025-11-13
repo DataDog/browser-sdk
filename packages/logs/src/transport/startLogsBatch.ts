@@ -25,7 +25,6 @@ export function startLogsBatch(
       pageMayExitObservable,
       sessionExpireObservable: session.expireObservable,
     }),
-    messageBytesLimit: configuration.messageBytesLimit,
   })
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (serverLogsEvent: LogsEvent & Context) => {

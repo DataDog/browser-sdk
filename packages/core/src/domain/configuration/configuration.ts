@@ -2,7 +2,6 @@ import { catchUserErrors } from '../../tools/catchUserErrors'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
 import { isPercentage } from '../../tools/utils/numberUtils'
-import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
@@ -327,9 +326,6 @@ export interface Configuration extends TransportConfiguration {
   trackAnonymousUser?: boolean
   betaEncodeCookieOptions: boolean
 
-  // Batch configuration
-  messageBytesLimit: number
-
   // internal
   sdkVersion: string | undefined
   source: 'browser' | 'flutter' | 'unity'
@@ -417,8 +413,6 @@ export function validateAndBuildConfiguration(
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
-
-    messageBytesLimit: 256 * ONE_KIBI_BYTE,
 
     /**
      * The source of the SDK, used for support plugins purposes.

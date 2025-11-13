@@ -26,7 +26,6 @@ export function startRumBatch(
       pageMayExitObservable,
       sessionExpireObservable,
     }),
-    messageBytesLimit: configuration.messageBytesLimit,
   })
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: AssembledRumEvent) => {
