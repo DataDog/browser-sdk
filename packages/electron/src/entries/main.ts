@@ -19,10 +19,11 @@ import {
   type Encoder,
   type Context,
   type InitConfiguration,
+  elapsed,
+  timeStampNow,
   computeRawError,
   clocksNow,
   NonErrorPrefix,
-  dateNow,
   Observable,
   DeflateEncoderStreamId,
   createBatch,
@@ -32,6 +33,7 @@ import {
   combine,
   ErrorHandling,
   generateUUID,
+  toServerDuration,
 } from '@datadog/browser-core'
 import type { RumConfiguration, RumEvent, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
@@ -59,6 +61,7 @@ function makeDatadogElectron() {
 
       const pageMayExitObservable = new Observable<PageMayExitEvent>()
       const sessionExpireObservable = new Observable<void>()
+      const onRumEventObservable = new Observable<RumEvent>()
       const createEncoder = () => createIdentityEncoder()
 
       const rumBatch = startElectronRumBatch(
@@ -77,9 +80,10 @@ function makeDatadogElectron() {
         } else {
           rumBatch.add(event as unknown as Context)
         }
+        onRumEventObservable.notify(event)
       }
-
-      startMainProcessTracking(sendRumEvent, configuration)
+      const onActivityObservable = startActivityTracking(onRumEventObservable)
+      startMainProcessTracking(sendRumEvent, configuration, onActivityObservable)
 
       const spanBatch = startElectronSpanBatch(
         initConfiguration,
@@ -223,7 +227,11 @@ function createDdTraceAgent(batch: Batch) {
   })
 }
 
-function startMainProcessTracking(sendRumEvent: (event: RumEvent) => void, configuration: RumConfiguration) {
+function startMainProcessTracking(
+  sendRumEvent: (event: RumEvent) => void,
+  configuration: RumConfiguration,
+  onActivityObservable: Observable<void>
+) {
   // To have a view id for events generated from main process
   const mainProcessContext = {
     // TODO source electron
@@ -239,11 +247,13 @@ function startMainProcessTracking(sendRumEvent: (event: RumEvent) => void, confi
       format_version: 2 as const,
     },
   }
-  const applicationLaunch = {
+  const applicationStart = timeStampNow()
+  let applicationLaunch = {
     type: RumEventType.VIEW,
-    date: dateNow(),
+    date: applicationStart as number,
     view: {
       id: crypto.randomUUID(),
+      is_active: true,
       name: 'ApplicationLaunch',
       // TODO get customer package name
       url: 'com/datadog/application-launch/view',
@@ -265,11 +275,19 @@ function startMainProcessTracking(sendRumEvent: (event: RumEvent) => void, confi
     },
   } as RumViewEvent
 
-  // TODO activity tracking
+  onActivityObservable.subscribe(() => {
+    applicationLaunch = combine(applicationLaunch, {
+      view: {
+        time_spent: toServerDuration(elapsed(applicationStart, timeStampNow())),
+      },
+      _dd: {
+        document_version: applicationLaunch._dd.document_version + 1,
+      },
+    })
+    sendRumEvent(combine(mainProcessContext, applicationLaunch))
+  })
   // TODO session expiration / renewal
   // TODO useragent
-
-  sendRumEvent(combine(mainProcessContext, applicationLaunch))
 
   process.on('uncaughtException', (err) => {
     const error = computeRawError({
@@ -297,6 +315,20 @@ function startMainProcessTracking(sendRumEvent: (event: RumEvent) => void, confi
     }
     sendRumEvent(combine(mainProcessContext, rawRumEvent))
   })
+}
+
+function startActivityTracking(onRumEventObservable: Observable<RumEvent>) {
+  const onActivityObservable = new Observable<void>()
+  const alreadySeenViewIds = new Set()
+  onRumEventObservable.subscribe((event) => {
+    if (event.type === RumEventType.VIEW && !alreadySeenViewIds.has(event.view.id)) {
+      alreadySeenViewIds.add(event.view.id)
+      onActivityObservable.notify()
+    } else if (event.type === RumEventType.ACTION && event.action.type === 'click') {
+      onActivityObservable.notify()
+    }
+  })
+  return onActivityObservable
 }
 
 export { tracer }
