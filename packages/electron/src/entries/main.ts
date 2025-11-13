@@ -21,9 +21,6 @@ import {
   type InitConfiguration,
   elapsed,
   timeStampNow,
-  computeRawError,
-  clocksNow,
-  NonErrorPrefix,
   Observable,
   DeflateEncoderStreamId,
   createBatch,
@@ -31,11 +28,11 @@ import {
   createFlushController,
   createIdentityEncoder,
   combine,
-  ErrorHandling,
-  generateUUID,
   toServerDuration,
   HookNames,
   DISCARDED,
+  ErrorHandling,
+  generateUUID,
 } from '@datadog/browser-core'
 import {
   type RumConfiguration,
@@ -58,6 +55,8 @@ interface CollectedRumEvent {
   event: RumEvent
 }
 
+type Span = any
+
 function makeDatadogElectron() {
   return {
     init(initConfiguration: RumInitConfiguration) {
@@ -72,6 +71,7 @@ function makeDatadogElectron() {
       const pageMayExitObservable = new Observable<PageMayExitEvent>()
       const sessionExpireObservable = new Observable<void>()
       const onRumEventObservable = new Observable<CollectedRumEvent>()
+      const onSpanObservable = new Observable<Span>()
       const hooks = createHooks()
       const createEncoder = () => createIdentityEncoder()
 
@@ -88,6 +88,7 @@ function makeDatadogElectron() {
       startRumEventAssembleAndSend(configuration, onRumEventObservable, rumBatch, hooks)
       const onActivityObservable = startActivityTracking(onRumEventObservable)
       startMainProcessTracking(hooks, onRumEventObservable, onActivityObservable)
+      startConvertSpanToRumEvent(onSpanObservable, onRumEventObservable)
 
       const spanBatch = startElectronSpanBatch(
         initConfiguration,
@@ -99,8 +100,11 @@ function makeDatadogElectron() {
         sessionExpireObservable,
         createEncoder
       )
+      onSpanObservable.subscribe((span) => {
+        spanBatch.add(span)
+      })
       setupIpcHandlers(onRumEventObservable)
-      createDdTraceAgent(spanBatch)
+      createDdTraceAgent(onSpanObservable)
 
       setInterval(() => {
         pageMayExitObservable.notify({ reason: 'page_hide' })
@@ -178,7 +182,7 @@ interface BridgeEvent {
   event: RumEvent & { session: { id: string } } & { application: { id: string } }
 }
 
-function createDdTraceAgent(batch: Batch) {
+function createDdTraceAgent(onSpanObservable: Observable<Span>) {
   const server = createServer()
 
   server.on('request', (req, res) => {
@@ -193,8 +197,12 @@ function createDdTraceAgent(batch: Batch) {
       const decoded = decode(buffer) as unknown[]
 
       for (const trace of decoded) {
-        // console.log('trace', trace)
-        batch.add(trace as Context)
+        for (const span of trace as any) {
+          if (!isSdkRequest(span)) {
+            console.log('span', span)
+            onSpanObservable.notify(span)
+          }
+        }
       }
     })
 
@@ -225,6 +233,16 @@ function createDdTraceAgent(batch: Batch) {
     // console.log('agents url', url)
     tracer.setUrl(url)
   })
+}
+
+function isSdkRequest(span: any) {
+  const spanRequestUrl = span.meta['http.url'] as string | undefined
+  return (
+    (spanRequestUrl &&
+      (spanRequestUrl.startsWith('http://127.0.0.1') ||
+        spanRequestUrl.startsWith('https://browser-intake-datadoghq.com/'))) ||
+    (span.resource as string).startsWith('browser-intake-datadoghq.com')
+  )
 }
 
 function startRumEventAssembleAndSend(
@@ -286,6 +304,8 @@ function startMainProcessTracking(
       },
       view: {
         id: mainProcessContext.viewId,
+        // TODO get customer package name
+        url: 'com/datadog/application-launch/view',
       },
     }
   })
@@ -298,8 +318,6 @@ function startMainProcessTracking(
       id: mainProcessContext.viewId,
       is_active: true,
       name: 'ApplicationLaunch',
-      // TODO get customer package name
-      url: 'com/datadog/application-launch/view',
       time_spent: 0,
       // TODO update counters
       action: {
@@ -332,33 +350,28 @@ function startMainProcessTracking(
   })
   // TODO session expiration / renewal
   // TODO useragent
+}
 
-  // TODO remove me when using dd-trace-js
-  process.on('uncaughtException', (err) => {
-    const error = computeRawError({
-      originalError: err,
-      startClocks: clocksNow(),
-      nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
-      source: 'source',
-      handling: ErrorHandling.UNHANDLED,
-    })
-    const errorEvent: Partial<RumErrorEvent> = {
-      type: RumEventType.ERROR,
-      date: error.startClocks.timeStamp,
-      error: {
-        id: generateUUID(),
-        message: error.message,
-        stack: error.stack,
-        source: error.source,
-        type: error.type,
-        handling: error.handling,
-      },
-      view: {
-        id: applicationLaunch.view.id,
-        url: applicationLaunch.view.url,
-      },
+function startConvertSpanToRumEvent(
+  onSpanObservable: Observable<Span>,
+  onRumEventObservable: Observable<CollectedRumEvent>
+) {
+  onSpanObservable.subscribe((span) => {
+    if (span.error) {
+      const rumError: Partial<RumErrorEvent> = {
+        type: RumEventType.ERROR,
+        date: span.start / 1e6,
+        error: {
+          id: generateUUID(),
+          message: span.meta['error.message'],
+          stack: span.meta['error.stack'],
+          type: span.meta['error.type'],
+          source: 'source',
+          handling: ErrorHandling.UNHANDLED,
+        },
+      }
+      onRumEventObservable.notify({ event: rumError as RumErrorEvent, source: 'main-process' })
     }
-    onRumEventObservable.notify({ event: errorEvent as RumErrorEvent, source: 'main-process' })
   })
 }
 
