@@ -75,6 +75,7 @@ export const enum TelemetryMetrics {
 const METRIC_SAMPLE_RATE = 1
 
 const TELEMETRY_EXCLUDED_SITES: string[] = [INTAKE_SITE_US1_FED]
+const MAX_TELEMETRY_EVENTS_PER_PAGE = 15
 
 let telemetryObservable: BufferedObservable<{ rawEvent: RawTelemetryEvent; metricName?: string }> | undefined
 
@@ -111,7 +112,8 @@ export function startTelemetryCollection(
   configuration: Configuration,
   hooks: AbstractHooks,
   observable: Observable<TelemetryEvent & Context>,
-  metricSampleRate = METRIC_SAMPLE_RATE
+  metricSampleRate = METRIC_SAMPLE_RATE,
+  maxTelemetryEventsPerPage = MAX_TELEMETRY_EVENTS_PER_PAGE
 ) {
   const alreadySentEventsByKind: Record<string, Set<string>> = {}
 
@@ -139,7 +141,7 @@ export function startTelemetryCollection(
       alreadySentEvents = alreadySentEventsByKind[kind] = new Set()
     }
 
-    if (alreadySentEvents.size >= configuration.maxTelemetryEventsPerPage) {
+    if (alreadySentEvents.size >= maxTelemetryEventsPerPage) {
       return
     }
 

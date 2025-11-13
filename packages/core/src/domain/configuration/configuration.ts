@@ -328,8 +328,6 @@ export interface Configuration extends TransportConfiguration {
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
   betaEncodeCookieOptions: boolean
-  // Event limits
-  maxTelemetryEventsPerPage: number
 
   // Batch configuration
   batchBytesLimit: number
@@ -429,8 +427,6 @@ export function validateAndBuildConfiguration(
      * ensure that we leave room for logs, rum and potential other users
      */
     batchBytesLimit: 16 * ONE_KIBI_BYTE,
-
-    maxTelemetryEventsPerPage: 15,
 
     /**
      * flush automatically, aim to be lower than ALB connection timeout
