@@ -5324,12 +5324,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"e2e-079dc0@workspace:test/e2e":
-  version: 0.0.0-use.local
-  resolution: "e2e-079dc0@workspace:test/e2e"
-  languageName: unknown
-  linkType: soft
-
 "eastasianwidth@npm:^0.2.0":
   version: 0.2.0
   resolution: "eastasianwidth@npm:0.2.0"
@@ -12705,6 +12699,12 @@ __metadata:
   checksum: 10c0/f2838dc65ac2ac6a31c7233065364080de73cc363ecb8fe723a54f663b2fa9429abf08bc3920a6bea85c5c7c29908ffcf822baf1572574f8d3859a009bbf2327
   languageName: node
   linkType: hard
+
+"test-e2e@workspace:test/e2e":
+  version: 0.0.0-use.local
+  resolution: "test-e2e@workspace:test/e2e"
+  languageName: unknown
+  linkType: soft
 
 "text-decoder@npm:^1.1.0":
   version: 1.2.3
