@@ -329,7 +329,6 @@ export interface Configuration extends TransportConfiguration {
   trackAnonymousUser?: boolean
   betaEncodeCookieOptions: boolean
   // Event limits
-  eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
   maxTelemetryEventsPerPage: number
 
   // Batch configuration
@@ -431,7 +430,6 @@ export function validateAndBuildConfiguration(
      */
     batchBytesLimit: 16 * ONE_KIBI_BYTE,
 
-    eventRateLimiterThreshold: 3000,
     maxTelemetryEventsPerPage: 15,
 
     /**
