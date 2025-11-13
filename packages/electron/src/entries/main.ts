@@ -13,8 +13,15 @@
 import crypto from 'node:crypto'
 import { createServer } from 'node:http'
 import { ipcMain } from 'electron'
-import type { RawError, PageMayExitEvent, Encoder, Context, InitConfiguration } from '@datadog/browser-core'
 import {
+  type RawError,
+  type PageMayExitEvent,
+  type Encoder,
+  type Context,
+  type InitConfiguration,
+  computeRawError,
+  clocksNow,
+  NonErrorPrefix,
   dateNow,
   Observable,
   DeflateEncoderStreamId,
@@ -23,6 +30,8 @@ import {
   createFlushController,
   createIdentityEncoder,
   combine,
+  ErrorHandling,
+  generateUUID,
 } from '@datadog/browser-core'
 import type { RumConfiguration, RumEvent, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
@@ -218,16 +227,16 @@ function startMainProcessTracking(sendRumEvent: (event: RumEvent) => void, confi
   // To have a view id for events generated from main process
   const mainProcessContext = {
     // TODO source electron
-    source: 'browser',
+    source: 'browser' as const,
     application: {
       id: configuration.applicationId,
     },
     session: {
       id: sessionId,
-      type: 'user',
+      type: 'user' as const,
     },
     _dd: {
-      format_version: 2,
+      format_version: 2 as const,
     },
   }
   const applicationLaunch = {
@@ -256,7 +265,38 @@ function startMainProcessTracking(sendRumEvent: (event: RumEvent) => void, confi
     },
   } as RumViewEvent
 
+  // TODO activity tracking
+  // TODO session expiration / renewal
+  // TODO useragent
+
   sendRumEvent(combine(mainProcessContext, applicationLaunch))
+
+  process.on('uncaughtException', (err) => {
+    const error = computeRawError({
+      originalError: err,
+      startClocks: clocksNow(),
+      nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
+      source: 'source',
+      handling: ErrorHandling.UNHANDLED,
+    })
+    const rawRumEvent = {
+      type: RumEventType.ERROR,
+      date: error.startClocks.timeStamp,
+      error: {
+        id: generateUUID(),
+        message: error.message,
+        stack: error.stack,
+        source: error.source,
+        type: error.type,
+        handling: error.handling,
+      },
+      view: {
+        id: applicationLaunch.view.id,
+        url: applicationLaunch.view.url,
+      },
+    }
+    sendRumEvent(combine(mainProcessContext, rawRumEvent))
+  })
 }
 
 export { tracer }
