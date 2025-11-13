@@ -5,8 +5,9 @@ import { Observable } from '../tools/observable'
 import type { Duration } from '../tools/utils/timeUtils'
 import type { FlushController, FlushEvent } from './flushController'
 import { createFlushController } from './flushController'
+import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
-const BYTES_LIMIT = 100
+const BYTES_LIMIT = RECOMMENDED_REQUEST_BYTES_LIMIT
 const MESSAGES_LIMIT = 5
 const DURATION_LIMIT = 100 as Duration
 // Arbitrary message size that is below the BYTES_LIMIT
@@ -24,7 +25,6 @@ describe('flushController', () => {
     pageMayExitObservable = new Observable()
     sessionExpireObservable = new Observable()
     flushController = createFlushController({
-      bytesLimit: BYTES_LIMIT,
       messagesLimit: MESSAGES_LIMIT,
       durationLimit: DURATION_LIMIT,
       pageMayExitObservable,

@@ -225,10 +225,9 @@ function startTelemetryTransport(
     }
     const telemetryBatch = createBatch({
       encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
-      request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
+      request: createHttpRequest(endpoints, reportError),
       flushController: createFlushController({
         messagesLimit: configuration.batchMessagesLimit,
-        bytesLimit: configuration.batchBytesLimit,
         durationLimit: configuration.flushTimeout,
         pageMayExitObservable,
 

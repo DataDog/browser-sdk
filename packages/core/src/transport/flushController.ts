@@ -3,6 +3,7 @@ import { Observable } from '../tools/observable'
 import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
 import type { Duration } from '../tools/utils/timeUtils'
+import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
 
@@ -15,7 +16,6 @@ export interface FlushEvent {
 
 interface FlushControllerOptions {
   messagesLimit: number
-  bytesLimit: number
   durationLimit: Duration
   pageMayExitObservable: Observable<PageMayExitEvent>
   sessionExpireObservable: Observable<void>
@@ -28,7 +28,6 @@ interface FlushControllerOptions {
  */
 export function createFlushController({
   messagesLimit,
-  bytesLimit,
   durationLimit,
   pageMayExitObservable,
   sessionExpireObservable,
@@ -93,7 +92,7 @@ export function createFlushController({
      * actually added.
      */
     notifyBeforeAddMessage(estimatedMessageBytesCount: number) {
-      if (currentBytesCount + estimatedMessageBytesCount >= bytesLimit) {
+      if (currentBytesCount + estimatedMessageBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
         flush('bytes_limit')
       }
       // Consider the message to be added now rather than in `notifyAfterAddMessage`, because if no
@@ -118,7 +117,7 @@ export function createFlushController({
 
       if (currentMessagesCount >= messagesLimit) {
         flush('messages_limit')
-      } else if (currentBytesCount >= bytesLimit) {
+      } else if (currentBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
         flush('bytes_limit')
       }
     },

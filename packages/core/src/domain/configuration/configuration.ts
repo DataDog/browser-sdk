@@ -330,7 +330,6 @@ export interface Configuration extends TransportConfiguration {
   betaEncodeCookieOptions: boolean
 
   // Batch configuration
-  batchBytesLimit: number
   flushTimeout: Duration
   batchMessagesLimit: number
   messageBytesLimit: number
@@ -422,11 +421,6 @@ export function validateAndBuildConfiguration(
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
-    /**
-     * beacon payload max queue size implementation is 64kb
-     * ensure that we leave room for logs, rum and potential other users
-     */
-    batchBytesLimit: 16 * ONE_KIBI_BYTE,
 
     /**
      * flush automatically, aim to be lower than ALB connection timeout

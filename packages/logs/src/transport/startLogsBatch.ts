@@ -20,10 +20,9 @@ export function startLogsBatch(
 
   const batch = createBatch({
     encoder: createIdentityEncoder(),
-    request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
+    request: createHttpRequest(endpoints, reportError),
     flushController: createFlushController({
       messagesLimit: configuration.batchMessagesLimit,
-      bytesLimit: configuration.batchBytesLimit,
       durationLimit: configuration.flushTimeout,
       pageMayExitObservable,
       sessionExpireObservable: session.expireObservable,
