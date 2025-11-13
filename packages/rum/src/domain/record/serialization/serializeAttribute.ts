@@ -24,7 +24,7 @@ export function serializeAttribute(
   }
   const attributeValue = element.getAttribute(attributeName)
   const tagName = element.tagName
-  if (shouldMaskAttribute(tagName, attributeName, nodePrivacyLevel, configuration, attributeValue)) {
+  if (shouldMaskAttribute(tagName, attributeName, attributeValue, nodePrivacyLevel, configuration)) {
     // mask image URLs
     if (tagName === 'IMG') {
       // generate image with similar dimension than the original to have the same rendering behaviour

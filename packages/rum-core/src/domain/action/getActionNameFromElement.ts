@@ -189,7 +189,7 @@ function getActionNameFromStandardAttribute(
   let attributeValue = element.getAttribute(attribute)
   if (attributeValue && enablePrivacyForActionName) {
     const nodePrivacyLevel = getNodePrivacyLevel(element, defaultPrivacyLevel, nodePrivacyLevelCache)
-    if (shouldMaskAttribute(element.tagName, attribute, nodePrivacyLevel, rumConfiguration, attributeValue)) {
+    if (shouldMaskAttribute(element.tagName, attribute, attributeValue, nodePrivacyLevel, rumConfiguration)) {
       attributeValue = maskDisallowedTextContent(attributeValue, ACTION_NAME_PLACEHOLDER)
     }
   } else if (!attributeValue) {
