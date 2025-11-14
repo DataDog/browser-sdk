@@ -13,6 +13,7 @@ export function setupMainBridge(rumEventObservable: Observable<CollectedRumEvent
     const serverRumEvent = JSON.parse(msg) as BridgeEvent
 
     if (serverRumEvent.eventType !== 'rum') {
+      // TODO: handle other types of events (telemetry, session replays, Logs, ....)
       console.log('not a rum event', serverRumEvent)
 
       return

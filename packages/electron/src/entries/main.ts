@@ -1,4 +1,3 @@
-/* eslint-disable local-rules/enforce-prod-deps-imports */
 /* eslint-disable local-rules/disallow-side-effects */
 /**
  * TODO:
