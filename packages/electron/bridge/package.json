@@ -1,6 +1,0 @@
-{
-  "private": true,
-  "main": "../cjs/entries/bridge.js",
-  "module": "../esm/entries/bridge.js",
-  "types": "../cjs/entries/bridge.d.ts"
-}

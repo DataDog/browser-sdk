@@ -13,12 +13,8 @@
 import crypto from 'node:crypto'
 import { createServer } from 'node:http'
 import { ipcMain } from 'electron'
+import type { RawError, PageMayExitEvent, Encoder, Context, InitConfiguration } from '@datadog/browser-core'
 import {
-  type RawError,
-  type PageMayExitEvent,
-  type Encoder,
-  type Context,
-  type InitConfiguration,
   elapsed,
   timeStampNow,
   Observable,
@@ -34,13 +30,8 @@ import {
   ErrorHandling,
   generateUUID,
 } from '@datadog/browser-core'
-import {
-  type RumConfiguration,
-  type RumEvent,
-  type RumInitConfiguration,
-  createHooks,
-  RumEventType,
-} from '@datadog/browser-rum-core'
+import { createHooks, RumEventType } from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumEvent, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { validateAndBuildRumConfiguration } from '@datadog/browser-rum-core/cjs/domain/configuration'
 import type { Batch } from '@datadog/browser-core/cjs/transport/batch'
 import { decode } from '@msgpack/msgpack'
@@ -194,7 +185,9 @@ function createDdTraceAgent(onSpanObservable: Observable<Span>) {
     req.on('end', () => {
       const buffer = Buffer.concat(chunks)
 
-      const decoded = decode(buffer) as unknown[]
+      const decoded = decode(buffer) as Array<
+        Array<{ name: string; type: string; meta: { [key: string]: unknown }; [key: string]: unknown }>
+      >
 
       for (const trace of decoded) {
         for (const span of trace as any) {
@@ -296,19 +289,17 @@ function startMainProcessTracking(
     sessionId: crypto.randomUUID(),
     viewId: crypto.randomUUID(),
   }
-  hooks.register(HookNames.Assemble, ({ eventType }) => {
-    return {
-      type: eventType,
-      session: {
-        id: mainProcessContext.sessionId,
-      },
-      view: {
-        id: mainProcessContext.viewId,
-        // TODO get customer package name
-        url: 'com/datadog/application-launch/view',
-      },
-    }
-  })
+  hooks.register(HookNames.Assemble, ({ eventType }) => ({
+    type: eventType,
+    session: {
+      id: mainProcessContext.sessionId,
+    },
+    view: {
+      id: mainProcessContext.viewId,
+      // TODO get customer package name
+      url: 'com/datadog/application-launch/view',
+    },
+  }))
   console.log('sessionId', mainProcessContext.sessionId)
   const applicationStart = timeStampNow()
   let applicationLaunch = {

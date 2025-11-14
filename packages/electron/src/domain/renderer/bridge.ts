@@ -1,12 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { DatadogEventBridge } from '@datadog/browser-core/src/transport'
 
-export function setupElectronBridge() {
-  console.log('setupElectronBridge')
-
+export function setupRendererBridge() {
   contextBridge.exposeInMainWorld('DatadogEventBridge', {
     getCapabilities() {
-      return JSON.stringify(['electron'])
+      return '[]'
     },
     getPrivacyLevel() {
       return 'mask'
