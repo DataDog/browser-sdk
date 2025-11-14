@@ -21,7 +21,7 @@
     // Files included in ./test/e2e/tsconfig.json
     "test/e2e",
 
-    // Files included in ./developer-extension/tsconfig.webpack.json
+    // Files included in ./developer-extension/tsconfig.json
     "developer-extension",
 
     // Files included in ./performances/tsconfig.json

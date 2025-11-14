@@ -1,3 +1,4 @@
+import fs from 'fs'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
@@ -17,6 +18,9 @@ export class Extension {
   public logsConfiguration: LogsInitConfiguration | undefined
 
   constructor(path: string) {
+    if (!fs.existsSync(path)) {
+      throw new Error(`Extension ${path} does not exist`)
+    }
     this.fixture = createExtensionTest(path)
 
     return this
