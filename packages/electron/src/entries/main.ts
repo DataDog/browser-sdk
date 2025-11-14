@@ -6,7 +6,7 @@
  * - [x] Transport layer (for the bridge from webview, from dd-trace)
  *   - [x] handle rum events
  *   - [ ] handle routing for other type of events
- *   - [ ] handle dd-trace events (forwards APM spans to trace intake)
+ *   - [x] handle dd-trace events (forwards APM spans to trace intake)
  * - [x] setup bridge client with ipc from webviews (renderer processes)
  * - [x] use `exposeInMainWorld` to setup the bridge function that will setup the ipc to the main process
  */
@@ -14,10 +14,6 @@ import crypto from 'node:crypto'
 import { createServer } from 'node:http'
 import type { RawError, PageMayExitEvent, Encoder, Context, InitConfiguration } from '@datadog/browser-core'
 import {
-  computeRawError,
-  clocksNow,
-  NonErrorPrefix,
-  dateNow,
   elapsed,
   timeStampNow,
   Observable,
@@ -41,7 +37,6 @@ import { decode } from '@msgpack/msgpack'
 import type { TrackType } from '@datadog/browser-core/cjs/domain/configuration'
 import { createEndpointBuilder } from '@datadog/browser-core/cjs/domain/configuration'
 import type { RumViewEvent, RumErrorEvent } from '@datadog/browser-rum'
-import { createSpanIdentifier, createTraceIdentifier } from '@datadog/browser-rum-core/src/domain/tracing/identifier'
 import tracer from '../domain/tracer'
 import type { Hooks } from '../hooks'
 import { createIpcMain } from '../domain/main/ipcMain'
@@ -65,7 +60,7 @@ function makeDatadogElectron() {
       const pageMayExitObservable = new Observable<PageMayExitEvent>()
       const sessionExpireObservable = new Observable<void>()
       const onRumEventObservable = new Observable<CollectedRumEvent>()
-      const onSpanObservable = new Observable<Span>()
+      const onTraceObservable = new Observable<Span>()
       const hooks = createHooks()
       const createEncoder = () => createIdentityEncoder()
 
@@ -82,7 +77,7 @@ function makeDatadogElectron() {
       startRumEventAssembleAndSend(configuration, onRumEventObservable, rumBatch, hooks)
       const onActivityObservable = startActivityTracking(onRumEventObservable)
       startMainProcessTracking(hooks, onRumEventObservable, onActivityObservable)
-      startConvertSpanToRumEvent(onSpanObservable, onRumEventObservable)
+      startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
 
       const spanBatch = startElectronSpanBatch(
         initConfiguration,
@@ -91,13 +86,14 @@ function makeDatadogElectron() {
           console.error('Error reporting to Datadog')
         },
         pageMayExitObservable,
-        sessionExpireObservable
+        sessionExpireObservable,
+        createEncoder
       )
-      onSpanObservable.subscribe((span) => {
-        spanBatch.add(span)
+      onTraceObservable.subscribe((trace) => {
+        spanBatch.add({ env: 'prod', spans: trace })
       })
       setupMainBridge(onRumEventObservable)
-      createDdTraceAgent(onSpanObservable)
+      createDdTraceAgent(onTraceObservable)
 
       setInterval(() => {
         pageMayExitObservable.notify({ reason: 'page_hide' })
@@ -139,92 +135,25 @@ export function startElectronSpanBatch(
   configuration: RumConfiguration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  sessionExpireObservable: Observable<void>
+  sessionExpireObservable: Observable<void>,
+  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
-  const flushController = createFlushController({
-    messagesLimit: configuration.batchMessagesLimit,
-    bytesLimit: configuration.batchBytesLimit,
-    durationLimit: configuration.flushTimeout,
-    pageMayExitObservable,
-    sessionExpireObservable,
-  })
-
   const endpoints = [createEndpointBuilder(initConfiguration, 'spans' as TrackType)]
-  const request = createHttpRequest(endpoints, configuration.batchBytesLimit, reportError)
 
-  const items: any[] = []
-
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  const flushSubscription = flushController.flushObservable.subscribe(async () => {
-    if (items.length === 0) {
-      return
-    }
-
-    const payload = items
-      .map((trace: any[]) =>
-        JSON.stringify({
-          env: 'prod',
-          spans: trace.map((span) => ({
-            ...span,
-            trace_id: span.trace_id?.toString(16),
-            span_id: span.span_id?.toString(16),
-            parent_id: span.parent_id?.toString(16),
-          })),
-        })
-      )
-      .join('\n')
-
-    console.log('>>>', { payload })
-    fetch('https://browser-intake-datadoghq.com/api/v2/spans', {
-      method: 'POST',
-      headers: {
-        'DD-API-KEY': initConfiguration.clientToken,
-        'DD-EVP-ORIGIN': 'electron',
-        'DD-EVP-ORIGIN-VERSION': '1.0.0',
-        'DD-REQUEST-ID': crypto.randomUUID(),
-        'Content-Type': 'text/plain;charset=UTF-8',
-      },
-      body: payload,
-    })
-      .then(async (response) => {
-        console.log('>>>', response, await response.json())
-      })
-      .catch((error) => {
-        throw new Error(`Network error occurred: ${error.message}`)
-      })
-    items.length = 0
+  const batch = createBatch({
+    encoder: createEncoder(DeflateEncoderStreamId.RUM),
+    request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
+    flushController: createFlushController({
+      messagesLimit: configuration.batchMessagesLimit,
+      bytesLimit: configuration.batchBytesLimit,
+      durationLimit: configuration.flushTimeout,
+      pageMayExitObservable,
+      sessionExpireObservable,
+    }),
+    messageBytesLimit: configuration.messageBytesLimit,
   })
-  // const size = new Blob([JSON.stringify({ env: 'prod', spans: items.flat() })], { type: 'application/json' })
-  // const bytes = (await size.bytes()).length
-  //
-  // const payload = new FormData()
-  // payload.set('env', 'prod')
-  // payload.set('spans', JSON.stringify(items.flat()))
-  //
-  // console.log('>>>', { env: 'prod', spans: items.flat() })
-  //
-  // request.send({
-  //   data: payload,
-  //   bytesCount: bytes,
-  // })
-  // })
 
-  return {
-    flushController,
-    add(message: Context): void {
-      flushController.notifyBeforeAddMessage(items.length)
-      items.push(message)
-      flushController.notifyAfterAddMessage(items.length)
-    },
-    upsert(message: Context): void {
-      flushController.notifyBeforeAddMessage(items.length)
-      items.push(message)
-      flushController.notifyAfterAddMessage(items.length)
-    },
-    stop(): void {
-      flushSubscription.unsubscribe()
-    },
-  }
+  return batch
 }
 
 function createDdTraceAgent(onSpanObservable: Observable<Span>) {
