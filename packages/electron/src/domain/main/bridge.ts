@@ -1,7 +1,7 @@
 import type { Observable } from '@datadog/browser-core'
 import type { RumEvent } from '@datadog/browser-rum-core'
 import { ipcMain } from 'electron'
-import type { CollectedRumEvent } from '../events'
+import type { CollectedRumEvent } from '../rum/events'
 
 interface BridgeEvent {
   eventType: 'rum'

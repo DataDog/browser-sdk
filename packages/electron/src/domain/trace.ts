@@ -5,3 +5,6 @@ export interface DatadogCarrier {
   'x-datadog-sampling-priority': string
   'x-datadog-trace-id': string
 }
+
+export type Span = any
+export type Trace = Span[]
