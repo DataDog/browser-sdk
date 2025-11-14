@@ -10,6 +10,7 @@
     "target": "ES2022",
     "module": "preserve",
     "types": ["node", "ajv"],
+    "lib": ["ESNext", "DOM", "WebWorker"],
     "allowJs": true,
     "noEmit": true,
     "allowImportingTsExtensions": true

@@ -13,13 +13,15 @@ declare global {
 
 test.describe('logs', () => {
   createTest('service worker with worker logs - esm')
-    .withWorker()
-    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
+    .withLogs()
+    .withWorker(
+      function (self) {
+        self.DD_LOGS!.logger.log('Some message')
+      },
+      { type: 'module' }
+    )
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
       test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
-
-      await interactWithWorker((worker) => {
-        worker.postMessage('Some message')
-      })
 
       await flushEvents()
 
@@ -28,17 +30,15 @@ test.describe('logs', () => {
     })
 
   createTest('service worker with worker logs - importScripts')
-    .withWorker({ importScript: true })
-    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
+    .withLogs()
+    .withWorker(function (self) {
+      self.DD_LOGS!.logger.log('Other message')
+    })
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
-
-      await interactWithWorker((worker) => {
-        worker.postMessage('Other message')
-      })
-
       await flushEvents()
 
       expect(intakeRegistry.logsRequests).toHaveLength(1)
@@ -46,16 +46,15 @@ test.describe('logs', () => {
     })
 
   createTest('service worker console forwarding')
-    .withWorker({ importScript: true, nativeLog: true })
-    .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
+    .withLogs({ forwardConsoleLogs: 'all', forwardErrorsToLogs: true })
+    .withWorker(function () {
+      console.log('SW console log test')
+    })
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
       )
-
-      await interactWithWorker((worker) => {
-        worker.postMessage('SW console log test')
-      })
 
       await flushEvents()
 
