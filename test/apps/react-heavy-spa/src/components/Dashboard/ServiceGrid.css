@@ -74,3 +74,32 @@
   color: var(--color-text, #e0e0e0);
   font-weight: 500;
 }
+
+.grid-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--color-text-secondary, #b0b0b0);
+}
+
+.grid-loading p {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.grid-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #3ebf62;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

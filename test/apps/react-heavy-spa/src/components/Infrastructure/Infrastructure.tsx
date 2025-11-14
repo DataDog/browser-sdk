@@ -1,15 +1,18 @@
 import { useState, useMemo } from 'react'
 import { useData } from '../../hooks/useData'
-import { InfrastructureData, Host } from '../../types/data'
+import { InfrastructureData, Host, HostStatus } from '../../types/data'
 import HostMap from './HostMap'
 import HostList from './HostList'
 import HostDetails from './HostDetails'
+import { generateHostMetrics } from '../../utils/generateMetrics'
 import './Infrastructure.css'
 
 export default function Infrastructure() {
   const { data, loading, error } = useData<InfrastructureData>('/data/infrastructure.json')
   const [selectedHost, setSelectedHost] = useState<Host | null>(null)
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map')
+  const [statusFilter, setStatusFilter] = useState<HostStatus | 'all'>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleHostSelect = (host: Host) => {
     setSelectedHost(host)
@@ -20,9 +23,29 @@ export default function Infrastructure() {
   }
 
   const selectedHostMetrics = useMemo(() => {
-    if (!selectedHost || !data?.metrics) return null
-    return data.metrics[selectedHost.id]
+    if (!selectedHost) return null
+
+    // Generate metrics dynamically for the selected host
+    return generateHostMetrics(selectedHost.id, 50)
   }, [selectedHost, data?.metrics])
+
+  const filteredHosts = useMemo(() => {
+    if (!data?.hosts) return []
+
+    let filtered = data.hosts
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter((host) => host.status === statusFilter)
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      filtered = filtered.filter((host) => host.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    }
+
+    return filtered
+  }, [data?.hosts, statusFilter, searchQuery])
 
   const statusSummary = useMemo(() => {
     if (!data?.hosts) return { total: 0, healthy: 0, warning: 0, critical: 0 }
@@ -107,15 +130,45 @@ export default function Infrastructure() {
       <div className="infrastructure-content">
         <div className="infrastructure-main">
           {viewMode === 'map' ? (
-            <HostMap hosts={data.hosts} selectedHost={selectedHost} onHostSelect={handleHostSelect} />
+            <HostMap
+              hosts={data.hosts}
+              filteredHosts={filteredHosts}
+              selectedHost={selectedHost}
+              onHostSelect={handleHostSelect}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
           ) : (
-            <HostList hosts={data.hosts} selectedHost={selectedHost} onHostSelect={handleHostSelect} />
+            <HostList
+              hosts={data.hosts}
+              filteredHosts={filteredHosts}
+              selectedHost={selectedHost}
+              onHostSelect={handleHostSelect}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+            />
           )}
         </div>
 
-        {selectedHost && selectedHostMetrics && (
+        {selectedHost && (
           <div className="infrastructure-sidebar">
-            <HostDetails host={selectedHost} metrics={selectedHostMetrics} onClose={handleHostDeselect} />
+            {selectedHostMetrics ? (
+              <HostDetails host={selectedHost} metrics={selectedHostMetrics} onClose={handleHostDeselect} />
+            ) : (
+              <div className="host-details-placeholder">
+                <div className="placeholder-content">
+                  <h3>{selectedHost.name}</h3>
+                  <p>Detailed metrics not available for this host.</p>
+                  <button className="close-btn" onClick={handleHostDeselect}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,7 +1,6 @@
 import * as http from 'http'
-import * as https from 'https'
 import type { AddressInfo } from 'net'
-import { getIp } from '../envUtils'
+import { getIp } from '../../../envUtils'
 
 const MAX_SERVER_CREATION_RETRY = 5
 // Not all port are available with BrowserStack, see https://www.browserstack.com/question/664
@@ -46,8 +45,8 @@ export async function waitForServersIdle() {
   return Promise.all([servers.base.waitForIdle(), servers.crossOrigin.waitForIdle(), servers.intake.waitForIdle()])
 }
 
-export async function createServer<App extends ServerApp>(httpsOptions?: https.ServerOptions): Promise<Server<App>> {
-  const server = await instantiateServer(httpsOptions)
+async function createServer<App extends ServerApp>(): Promise<Server<App>> {
+  const server = await instantiateServer()
   const address = getIp()
   const { port } = server.address() as AddressInfo
   let serverApp: App | undefined
@@ -68,17 +67,17 @@ export async function createServer<App extends ServerApp>(httpsOptions?: https.S
       }
       return serverApp
     },
-    origin: `${httpsOptions ? 'https' : 'http'}://${address}:${port}`,
+    origin: `http://${address}:${port}`,
     waitForIdle: createServerIdleWaiter(server),
   }
 }
 
-async function instantiateServer(httpsOptions?: http.ServerOptions): Promise<http.Server> {
+async function instantiateServer(): Promise<http.Server> {
   for (let tryNumber = 0; tryNumber < MAX_SERVER_CREATION_RETRY; tryNumber += 1) {
     const port = PORT_MIN + Math.floor(Math.random() * (PORT_MAX - PORT_MIN + 1))
 
     try {
-      return await instantiateServerOnPort(port, httpsOptions)
+      return await instantiateServerOnPort(port)
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'EADDRINUSE') {
         continue
@@ -90,9 +89,9 @@ async function instantiateServer(httpsOptions?: http.ServerOptions): Promise<htt
   throw new Error(`Failed to create a server after ${MAX_SERVER_CREATION_RETRY} retries`)
 }
 
-function instantiateServerOnPort(port: number, httpsOptions?: http.ServerOptions): Promise<http.Server> {
+function instantiateServerOnPort(port: number): Promise<http.Server> {
   return new Promise((resolve, reject) => {
-    const server = httpsOptions ? https.createServer(httpsOptions) : http.createServer()
+    const server = http.createServer()
     server.on('error', reject)
     server.listen(port, () => {
       resolve(server)

@@ -1,6 +1,7 @@
 import type { Metrics } from '../profiling.type'
 
 const DURATION_UNITS = ['μs', 'ms', 's']
+const DURATION_UNITS_MS = ['ms', 's']
 const BYTES_UNITS = ['B', 'kB', 'MB']
 const NO_VALUE = ''
 
@@ -24,12 +25,14 @@ export function reportToConsole(metricsTable: Record<string, Metrics>, sdkVersio
     report['cpu'][scenarioConfiguration] = formatNumberWithUnit(metrics.cpu, DURATION_UNITS)
     report['upload'][scenarioConfiguration] = formatNumberWithUnit(metrics.upload, BYTES_UNITS)
     report['download'][scenarioConfiguration] = formatNumberWithUnit(metrics.download, BYTES_UNITS)
-    report['LCP'][scenarioConfiguration] = metrics.LCP ? formatNumberWithUnit(metrics.LCP, DURATION_UNITS) : NO_VALUE
+    report['LCP'][scenarioConfiguration] = metrics.LCP ? formatNumberWithUnit(metrics.LCP, DURATION_UNITS_MS) : NO_VALUE
     report['CLS'][scenarioConfiguration] = metrics.CLS ? formatNumber(metrics.CLS) : NO_VALUE
-    report['FCP'][scenarioConfiguration] = metrics.FCP ? formatNumberWithUnit(metrics.FCP, DURATION_UNITS) : NO_VALUE
-    report['TTFB'][scenarioConfiguration] = metrics.TTFB ? formatNumberWithUnit(metrics.TTFB, DURATION_UNITS) : NO_VALUE
-    report['INP'][scenarioConfiguration] = metrics.INP ? formatNumberWithUnit(metrics.INP, DURATION_UNITS) : NO_VALUE
-    report['TBT'][scenarioConfiguration] = metrics.TBT ? formatNumberWithUnit(metrics.TBT, DURATION_UNITS) : NO_VALUE
+    report['FCP'][scenarioConfiguration] = metrics.FCP ? formatNumberWithUnit(metrics.FCP, DURATION_UNITS_MS) : NO_VALUE
+    report['TTFB'][scenarioConfiguration] = metrics.TTFB
+      ? formatNumberWithUnit(metrics.TTFB, DURATION_UNITS_MS)
+      : NO_VALUE
+    report['INP'][scenarioConfiguration] = metrics.INP ? formatNumberWithUnit(metrics.INP, DURATION_UNITS_MS) : NO_VALUE
+    report['TBT'][scenarioConfiguration] = metrics.TBT ? formatNumberWithUnit(metrics.TBT, DURATION_UNITS_MS) : NO_VALUE
   }
 
   console.log(`Results for SDK version: ${sdkVersion}`)

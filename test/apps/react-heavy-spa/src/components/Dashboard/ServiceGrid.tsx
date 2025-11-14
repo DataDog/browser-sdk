@@ -10,9 +10,10 @@ interface Service {
 
 interface ServiceGridProps {
   services: Service[]
+  loading?: boolean
 }
 
-export default function ServiceGrid({ services }: ServiceGridProps) {
+export default function ServiceGrid({ services, loading = false }: ServiceGridProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'healthy':
@@ -36,30 +37,37 @@ export default function ServiceGrid({ services }: ServiceGridProps) {
   return (
     <div className="service-grid">
       <h3 className="grid-title">Service Health</h3>
-      <div className="grid-container">
-        {services.map((service) => (
-          <div key={service.name} className="service-card">
-            <div className="service-header">
-              <span className="service-status-dot" style={{ backgroundColor: getStatusColor(service.status) }} />
-              <h4 className="service-name">{service.name}</h4>
+      {loading ? (
+        <div className="grid-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading services...</p>
+        </div>
+      ) : (
+        <div className="grid-container">
+          {services.map((service) => (
+            <div key={service.name} className="service-card">
+              <div className="service-header">
+                <span className="service-status-dot" style={{ backgroundColor: getStatusColor(service.status) }} />
+                <h4 className="service-name">{service.name}</h4>
+              </div>
+              <div className="service-metrics">
+                <div className="service-metric">
+                  <span className="metric-label">Requests:</span>
+                  <span className="metric-val">{formatNumber(service.requests)}</span>
+                </div>
+                <div className="service-metric">
+                  <span className="metric-label">Errors:</span>
+                  <span className="metric-val">{service.errors}</span>
+                </div>
+                <div className="service-metric">
+                  <span className="metric-label">Latency:</span>
+                  <span className="metric-val">{service.avgLatency}ms</span>
+                </div>
+              </div>
             </div>
-            <div className="service-metrics">
-              <div className="service-metric">
-                <span className="metric-label">Requests:</span>
-                <span className="metric-val">{formatNumber(service.requests)}</span>
-              </div>
-              <div className="service-metric">
-                <span className="metric-label">Errors:</span>
-                <span className="metric-val">{service.errors}</span>
-              </div>
-              <div className="service-metric">
-                <span className="metric-label">Latency:</span>
-                <span className="metric-val">{service.avgLatency}ms</span>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

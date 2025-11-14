@@ -1,40 +1,46 @@
-import type https from 'https'
-import path from 'path'
+import https from 'https'
+import type http from 'http'
+import path, { dirname } from 'path'
+import type { AddressInfo } from 'net'
+import { fileURLToPath } from 'url'
 import express from 'express'
 import forge from 'node-forge'
-import { createServer } from '../lib/httpServers'
-import type { Server, ServerApp } from '../lib/httpServers'
 
-let serversSingleton: undefined | Server<ServerApp>
+const __dirname = dirname(path.resolve(fileURLToPath(import.meta.url)))
+console.log('__dirname', __dirname)
+export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => any
 
-export async function startPerformanceServer(): Promise<Server<ServerApp>> {
-  if (serversSingleton) {
-    return serversSingleton
-  }
+export interface Server {
+  origin: string
+  stop: () => void
+}
 
-  const app = express()
-  const distPath = path.resolve(__dirname, '../apps/react-heavy-spa/dist')
-  // Add Document-Policy header when ?profiling query param is present
-  app.use((req, res, next) => {
-    if (req.query.profiling) {
-      res.setHeader('Document-Policy', 'js-profiling')
-    }
-    next()
+export function startPerformanceServer(): Promise<Server> {
+  return new Promise((resolve, reject) => {
+    const app = express()
+    const distPath = path.resolve(__dirname, '../apps/react-heavy-spa/dist')
+    app.use(profilingMiddleware)
+    app.use(express.static(distPath))
+
+    const { key, cert } = generateSelfSignedCertificate()
+    const server = https.createServer({ key, cert }, app)
+
+    server.listen(0, '127.0.0.1', () => {
+      const origin = `https://localhost:${(server.address() as AddressInfo).port}`
+      console.log(`App listening on ${origin}`)
+
+      resolve({ origin, stop: () => server.close() })
+    })
+
+    server.on('error', reject)
   })
+}
 
-  app.use(express.static(distPath))
-
-  const { key, cert } = generateSelfSignedCertificate()
-
-  const httpsOptions: https.ServerOptions = {
-    key,
-    cert,
+function profilingMiddleware(req: express.Request, res: express.Response, next: express.NextFunction) {
+  if (req.query.profiling) {
+    res.setHeader('Document-Policy', 'js-profiling')
   }
-
-  serversSingleton = await createServer(httpsOptions)
-  serversSingleton.bindServerApp(app)
-
-  return serversSingleton
+  next()
 }
 
 function generateSelfSignedCertificate(): { key: string; cert: string } {

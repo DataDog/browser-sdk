@@ -55,7 +55,6 @@ export default tseslint.config(
           './performances/tsconfig.json',
 
           './test/apps/**/tsconfig.json',
-          './test/apps/**/tsconfig.*.json',
         ],
         sourceType: 'module',
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { ROUTES } from '../../utils/constants'
 import './TopBar.css'
+import { heavyComputation } from '../../utils/performanceThrottle'
 
 export default function TopBar() {
   const [showNotifications, setShowNotifications] = useState(false)
@@ -12,31 +13,9 @@ export default function TopBar() {
 
   const homeLink = queryString ? `${ROUTES.DASHBOARD}?${queryString}` : ROUTES.DASHBOARD
 
-  // Simulate heavy computation to emulate poor INP
-  const heavyComputation = () => {
-    const startTime = performance.now()
-    let result = 0
-
-    // Block main thread for ~200-300ms to simulate heavy work
-    while (performance.now() - startTime < 250) {
-      result += Math.random() * Math.random()
-    }
-
-    // Additional DOM manipulation work
-    const tempElements: HTMLElement[] = []
-    for (let i = 0; i < 100; i++) {
-      const div = document.createElement('div')
-      div.textContent = `Item ${i}`
-      div.style.display = 'none'
-      tempElements.push(div)
-    }
-
-    return result
-  }
-
   const handleNotificationClick = () => {
     // Emulate heavy work that causes poor INP
-    heavyComputation()
+    heavyComputation([queryString], 300)
 
     // Toggle notifications panel
     setShowNotifications(!showNotifications)

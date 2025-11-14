@@ -1,11 +1,17 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, memo, Dispatch, SetStateAction } from 'react'
+import { FixedSizeList as List } from 'react-window'
 import { Host, HostStatus } from '../../types/data'
 import './HostList.css'
 
 interface HostListProps {
   hosts: Host[]
+  filteredHosts: Host[]
   selectedHost: Host | null
   onHostSelect: (host: Host) => void
+  statusFilter: HostStatus | 'all'
+  setStatusFilter: Dispatch<SetStateAction<HostStatus | 'all'>>
+  searchQuery: string
+  setSearchQuery: Dispatch<SetStateAction<string>>
 }
 
 type SortField = 'name' | 'status' | 'cpu' | 'memory' | 'disk' | 'network' | 'uptime'
@@ -26,11 +32,79 @@ function getStatusOrder(status: HostStatus): number {
   return order[status]
 }
 
-export default function HostList({ hosts, selectedHost, onHostSelect }: HostListProps) {
+// Extract SortIcon as a separate memoized component
+const SortIcon = memo(
+  ({ field, sortField, sortDirection }: { field: SortField; sortField: SortField; sortDirection: SortDirection }) => {
+    if (sortField !== field) {
+      return (
+        <svg className="sort-icon inactive" viewBox="0 0 20 20" fill="currentColor">
+          <path d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
+        </svg>
+      )
+    }
+
+    return sortDirection === 'asc' ? (
+      <svg className="sort-icon active" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
+      </svg>
+    ) : (
+      <svg className="sort-icon active" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z" />
+      </svg>
+    )
+  }
+)
+
+// Memoized row component for better performance
+const HostRow = memo(
+  ({ host, isSelected, onSelect }: { host: Host; isSelected: boolean; onSelect: (host: Host) => void }) => (
+    <tr className={`host-row ${isSelected ? 'selected' : ''}`} onClick={() => onSelect(host)}>
+      <td className="host-name">{host.name}</td>
+      <td>
+        <span className={`status-badge ${host.status}`}>{host.status}</span>
+      </td>
+      <td>
+        <div className="metric-cell">
+          <div className="metric-bar">
+            <div className="metric-fill cpu" style={{ width: `${host.cpu}%` }} />
+          </div>
+          <span className="metric-value">{host.cpu}%</span>
+        </div>
+      </td>
+      <td>
+        <div className="metric-cell">
+          <div className="metric-bar">
+            <div className="metric-fill memory" style={{ width: `${host.memory}%` }} />
+          </div>
+          <span className="metric-value">{host.memory}%</span>
+        </div>
+      </td>
+      <td>
+        <div className="metric-cell">
+          <div className="metric-bar">
+            <div className="metric-fill disk" style={{ width: `${host.disk}%` }} />
+          </div>
+          <span className="metric-value">{host.disk}%</span>
+        </div>
+      </td>
+      <td className="network-cell">{host.network} Mbps</td>
+      <td className="uptime-cell">{formatUptime(host.uptime)}</td>
+    </tr>
+  )
+)
+
+const HostList = memo(function HostList({
+  hosts,
+  filteredHosts,
+  selectedHost,
+  onHostSelect,
+  statusFilter,
+  setStatusFilter,
+  searchQuery,
+  setSearchQuery,
+}: HostListProps) {
   const [sortField, setSortField] = useState<SortField>('name')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
-  const [statusFilter, setStatusFilter] = useState<HostStatus | 'all'>('all')
-  const [searchQuery, setSearchQuery] = useState('')
 
   const handleSort = useCallback(
     (field: SortField) => {
@@ -45,20 +119,10 @@ export default function HostList({ hosts, selectedHost, onHostSelect }: HostList
   )
 
   const filteredAndSortedHosts = useMemo(() => {
-    let filtered = hosts
+    console.log('[Performance] Sorting hosts with heavy computation (HostList)')
 
-    // Apply status filter
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter((host) => host.status === statusFilter)
-    }
-
-    // Apply search filter
-    if (searchQuery) {
-      filtered = filtered.filter((host) => host.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    }
-
-    // Apply sorting
-    const sorted = [...filtered].sort((a, b) => {
+    // Apply sorting to already-filtered hosts
+    const sorted = [...filteredHosts].sort((a, b) => {
       let comparison = 0
 
       switch (sortField) {
@@ -89,7 +153,7 @@ export default function HostList({ hosts, selectedHost, onHostSelect }: HostList
     })
 
     return sorted
-  }, [hosts, statusFilter, searchQuery, sortField, sortDirection])
+  }, [filteredHosts, sortField, sortDirection])
 
   const statusCounts = useMemo(() => {
     return {
@@ -99,26 +163,6 @@ export default function HostList({ hosts, selectedHost, onHostSelect }: HostList
       critical: hosts.filter((h) => h.status === 'critical').length,
     }
   }, [hosts])
-
-  const SortIcon = ({ field }: { field: SortField }) => {
-    if (sortField !== field) {
-      return (
-        <svg className="sort-icon inactive" viewBox="0 0 20 20" fill="currentColor">
-          <path d="M5 12a1 1 0 102 0V6.414l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L5 6.414V12zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
-        </svg>
-      )
-    }
-
-    return sortDirection === 'asc' ? (
-      <svg className="sort-icon active" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h7a1 1 0 100-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM15 8a1 1 0 10-2 0v5.586l-1.293-1.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L15 13.586V8z" />
-      </svg>
-    ) : (
-      <svg className="sort-icon active" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M3 3a1 1 0 000 2h11a1 1 0 100-2H3zM3 7a1 1 0 000 2h5a1 1 0 000-2H3zM3 11a1 1 0 100 2h4a1 1 0 100-2H3zM13 16a1 1 0 102 0v-5.586l1.293 1.293a1 1 0 001.414-1.414l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 101.414 1.414L13 10.414V16z" />
-      </svg>
-    )
-  }
 
   return (
     <div className="host-list">
@@ -167,82 +211,64 @@ export default function HostList({ hosts, selectedHost, onHostSelect }: HostList
             <tr>
               <th onClick={() => handleSort('name')}>
                 <div className="th-content">
-                  Name <SortIcon field="name" />
+                  Name <SortIcon field="name" sortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th onClick={() => handleSort('status')}>
                 <div className="th-content">
-                  Status <SortIcon field="status" />
+                  Status <SortIcon field="status" sortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th onClick={() => handleSort('cpu')}>
                 <div className="th-content">
-                  CPU <SortIcon field="cpu" />
+                  CPU <SortIcon field="cpu" sortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th onClick={() => handleSort('memory')}>
                 <div className="th-content">
-                  Memory <SortIcon field="memory" />
+                  Memory <SortIcon field="memory" sortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th onClick={() => handleSort('disk')}>
                 <div className="th-content">
-                  Disk <SortIcon field="disk" />
+                  Disk <SortIcon field="disk" sortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th onClick={() => handleSort('network')}>
                 <div className="th-content">
-                  Network <SortIcon field="network" />
+                  Network <SortIcon field="network" sortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
               <th onClick={() => handleSort('uptime')}>
                 <div className="th-content">
-                  Uptime <SortIcon field="uptime" />
+                  Uptime <SortIcon field="uptime" sortField={sortField} sortDirection={sortDirection} />
                 </div>
               </th>
             </tr>
           </thead>
-          <tbody>
-            {filteredAndSortedHosts.map((host) => (
-              <tr
-                key={host.id}
-                className={`host-row ${selectedHost?.id === host.id ? 'selected' : ''}`}
-                onClick={() => onHostSelect(host)}
-              >
-                <td className="host-name">{host.name}</td>
-                <td>
-                  <span className={`status-badge ${host.status}`}>{host.status}</span>
-                </td>
-                <td>
-                  <div className="metric-cell">
-                    <div className="metric-bar">
-                      <div className="metric-fill cpu" style={{ width: `${host.cpu}%` }} />
-                    </div>
-                    <span className="metric-value">{host.cpu}%</span>
-                  </div>
-                </td>
-                <td>
-                  <div className="metric-cell">
-                    <div className="metric-bar">
-                      <div className="metric-fill memory" style={{ width: `${host.memory}%` }} />
-                    </div>
-                    <span className="metric-value">{host.memory}%</span>
-                  </div>
-                </td>
-                <td>
-                  <div className="metric-cell">
-                    <div className="metric-bar">
-                      <div className="metric-fill disk" style={{ width: `${host.disk}%` }} />
-                    </div>
-                    <span className="metric-value">{host.disk}%</span>
-                  </div>
-                </td>
-                <td className="network-cell">{host.network} Mbps</td>
-                <td className="uptime-cell">{formatUptime(host.uptime)}</td>
-              </tr>
-            ))}
-          </tbody>
         </table>
+        <div style={{ height: 'calc(100vh - 350px)', overflow: 'auto' }}>
+          <List
+            height={Math.min(filteredAndSortedHosts.length * 45 + 10, window.innerHeight - 350)}
+            itemCount={filteredAndSortedHosts.length}
+            itemSize={45}
+            width="100%"
+            overscanCount={5}
+          >
+            {({ index, style }) => {
+              const host = filteredAndSortedHosts[index]
+              return (
+                <div style={style}>
+                  <table className="host-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+                    <tbody>
+                      <HostRow host={host} isSelected={selectedHost?.id === host.id} onSelect={onHostSelect} />
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }}
+          </List>
+        </div>
       </div>
 
       <div className="host-list-footer">
@@ -250,4 +276,6 @@ export default function HostList({ hosts, selectedHost, onHostSelect }: HostList
       </div>
     </div>
   )
-}
+})
+
+export default HostList

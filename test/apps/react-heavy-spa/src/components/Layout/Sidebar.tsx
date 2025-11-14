@@ -11,7 +11,6 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { path: ROUTES.DASHBOARD, label: 'Dashboard', icon: '📊' },
   { path: ROUTES.LOGS, label: 'Logs', icon: '📝' },
-  { path: ROUTES.APM_TRACES, label: 'APM Traces', icon: '🔍' },
   { path: ROUTES.INFRASTRUCTURE, label: 'Infrastructure', icon: '🖥️' },
   { path: ROUTES.SETTINGS, label: 'Settings', icon: '⚙️' },
 ]

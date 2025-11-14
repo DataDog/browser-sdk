@@ -2,7 +2,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import MainLayout from './components/Layout/MainLayout'
 import Dashboard from './components/Dashboard/Dashboard'
 import LogsExplorer from './components/Logs/LogsExplorer'
-import TracesView from './components/APM/TracesView'
 import Infrastructure from './components/Infrastructure/Infrastructure'
 import Settings from './components/Settings/Settings'
 import { ROUTES } from './utils/constants'
@@ -15,7 +14,6 @@ function App() {
         <Routes>
           <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
           <Route path={ROUTES.LOGS} element={<LogsExplorer />} />
-          <Route path={ROUTES.APM_TRACES} element={<TracesView />} />
           <Route path={ROUTES.INFRASTRUCTURE} element={<Infrastructure />} />
           <Route path={ROUTES.SETTINGS} element={<Settings />} />
         </Routes>

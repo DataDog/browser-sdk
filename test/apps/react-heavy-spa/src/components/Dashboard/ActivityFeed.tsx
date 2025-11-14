@@ -1,31 +1,24 @@
+import { Trace } from '../../types/data'
 import './ActivityFeed.css'
 
-interface Activity {
-  id: number
-  type: 'alert' | 'deployment' | 'incident'
-  severity: 'critical' | 'warning' | 'info'
-  service: string
-  message: string
-  timestamp: number
-}
-
 interface ActivityFeedProps {
-  activities: Activity[]
+  traces: Trace[]
+  loading?: boolean
 }
 
-export default function ActivityFeed({ activities }: ActivityFeedProps) {
-  const getSeverityClass = (severity: string) => {
-    return `activity-severity-${severity}`
+export default function ActivityFeed({ traces, loading = false }: ActivityFeedProps) {
+  const getStatusClass = (status: string) => {
+    return `activity-severity-${status === 'ok' ? 'info' : status === 'error' ? 'critical' : 'warning'}`
   }
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case 'alert':
-        return '⚠️'
-      case 'deployment':
-        return '🚀'
-      case 'incident':
-        return '🔥'
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'ok':
+        return '✓'
+      case 'error':
+        return '✗'
+      case 'warning':
+        return '⚠'
       default:
         return '📋'
     }
@@ -44,23 +37,37 @@ export default function ActivityFeed({ activities }: ActivityFeedProps) {
     return `${days}d ago`
   }
 
+  const formatDuration = (duration: number) => {
+    if (duration < 1000) return `${duration}ms`
+    return `${(duration / 1000).toFixed(2)}s`
+  }
+
   return (
     <div className="activity-feed">
-      <h3 className="feed-title">Recent Activity</h3>
-      <div className="activity-list">
-        {activities.map((activity) => (
-          <div key={activity.id} className={`activity-item ${getSeverityClass(activity.severity)}`}>
-            <div className="activity-icon">{getTypeIcon(activity.type)}</div>
-            <div className="activity-content">
-              <div className="activity-header">
-                <span className="activity-service">{activity.service}</span>
-                <span className="activity-time">{formatTimestamp(activity.timestamp)}</span>
+      <h3 className="feed-title">Recent Traces</h3>
+      {loading ? (
+        <div className="feed-loading">
+          <div className="loading-spinner"></div>
+          <p>Loading traces...</p>
+        </div>
+      ) : (
+        <div className="activity-list">
+          {traces.map((trace) => (
+            <div key={trace.id} className={`activity-item ${getStatusClass(trace.status)}`}>
+              <div className="activity-icon">{getStatusIcon(trace.status)}</div>
+              <div className="activity-content">
+                <div className="activity-header">
+                  <span className="activity-service">{trace.service}</span>
+                  <span className="activity-time">{formatTimestamp(trace.timestamp)}</span>
+                </div>
+                <p className="activity-message">
+                  {trace.operation} - {formatDuration(trace.duration)} ({trace.spans.length} spans)
+                </p>
               </div>
-              <p className="activity-message">{activity.message}</p>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

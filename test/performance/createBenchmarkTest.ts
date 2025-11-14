@@ -1,11 +1,12 @@
 import { test } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import type { Page, CDPSession } from '@playwright/test'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserWindow, Metrics } from './profiling.type'
 import { startProfiling } from './profilers'
 import { reportToConsole } from './reporters/reportToConsole'
 import { reportToDatadog } from './reporters/reportToDatadog'
 import { isContinuousIntegration } from './environment'
+import type { Server } from './server'
 import { startPerformanceServer } from './server'
 import { CLIENT_TOKEN, APPLICATION_ID, DATADOG_SITE, SDK_BUNDLE_URL } from './configuration'
 
@@ -19,25 +20,28 @@ export function createBenchmarkTest(scenarioName: string) {
     run(runner: TestRunner) {
       const metrics: Record<string, Metrics> = {}
       let sdkVersion: string
-      let serverOrigin: string
+      let server: Server
 
       test.beforeAll(async () => {
-        const server = await startPerformanceServer()
-        serverOrigin = server.origin
-        console.log('Server started on:', serverOrigin)
+        server = await startPerformanceServer()
       })
 
       SCENARIO_CONFIGURATIONS.forEach((scenarioConfiguration) => {
         test(`${scenarioName} benchmark ${scenarioConfiguration}`, async ({ page }) => {
           await page.setExtraHTTPHeaders({ 'Accept-Language': 'en-US' })
 
-          const { stopProfiling, takeMeasurements } = await startProfiling(page)
+          const context = page.context()
+          const cdpSession = await context.newCDPSession(page)
+
+          await throttleNetwork(cdpSession)
+
+          const { stopProfiling, takeMeasurements } = await startProfiling(page, cdpSession)
 
           if (shouldInjectSDK(scenarioConfiguration)) {
             await injectSDK(page, scenarioConfiguration, scenarioName)
           }
 
-          await runner(page, takeMeasurements, buildAppUrl(serverOrigin, scenarioConfiguration))
+          await runner(page, takeMeasurements, buildAppUrl(server.origin, scenarioConfiguration))
 
           await flushEvents(page)
           metrics[scenarioConfiguration] = await stopProfiling()
@@ -48,6 +52,7 @@ export function createBenchmarkTest(scenarioName: string) {
       })
 
       test.afterAll(async () => {
+        server.stop()
         reportToConsole(metrics, sdkVersion)
         if (isContinuousIntegration) {
           await reportToDatadog(metrics, scenarioName, sdkVersion)
@@ -136,5 +141,25 @@ async function flushEvents(page: Page) {
     const hiddenEvent = new Event('visibilitychange', { bubbles: true })
     ;(hiddenEvent as unknown as { __ddIsTrusted: boolean }).__ddIsTrusted = true
     document.dispatchEvent(hiddenEvent)
+  })
+}
+
+/**
+ * Throttle network using Chrome DevTools Protocol
+ *
+ * Common network profiles for reference:
+ * - Slow 3G:  Download: 0.4 Mbps (50 KB/s),  Upload: 0.4 Mbps (50 KB/s),  Latency: 2000ms
+ * - Fast 3G:  Download: 1.6 Mbps (200 KB/s), Upload: 0.75 Mbps (94 KB/s), Latency: 562.5ms
+ * - Regular 4G: Download: 4 Mbps (500 KB/s), Upload: 3 Mbps (375 KB/s),   Latency: 20ms
+ * - Fast 4G (LTE): Download: 10 Mbps (1.25 MB/s), Upload: 5 Mbps (625 KB/s), Latency: 10ms
+ * - WiFi:     Download: 30 Mbps (3.75 MB/s), Upload: 15 Mbps (1.875 MB/s), Latency: 2ms
+ */
+async function throttleNetwork(cdpSession: CDPSession) {
+  // Using Regular 4G for realistic performance testing with moderate constraints
+  await cdpSession.send('Network.emulateNetworkConditions', {
+    offline: false,
+    downloadThroughput: (4 * 1024 * 1024) / 8, // 4 Mbps in bytes/sec (Regular 4G)
+    uploadThroughput: (3 * 1024 * 1024) / 8, // 3 Mbps in bytes/sec
+    latency: 20, // 20ms RTT
   })
 }

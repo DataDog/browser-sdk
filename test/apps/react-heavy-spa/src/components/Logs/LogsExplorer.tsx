@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useData } from '../../hooks/useData'
 import { LogEntry, LogsData, LogLevel } from '../../types/data'
+import { heavyComputation } from '../../utils/performanceThrottle'
 import SearchBar from './SearchBar'
 import FilterSidebar from './FilterSidebar'
 import LogTable from './LogTable'
@@ -28,7 +29,7 @@ export default function LogsExplorer() {
   const filteredLogs = useMemo(() => {
     if (!data?.logs) return []
 
-    return data.logs.filter((log) => {
+    const results = data.logs.filter((log) => {
       // Level filter
       if (filters.levels.length > 0 && !filters.levels.includes(log.level)) {
         return false
@@ -51,6 +52,8 @@ export default function LogsExplorer() {
 
       return true
     })
+
+    return heavyComputation(results, 100)
   }, [data?.logs, filters])
 
   const handleFilterChange = (newFilters: Partial<LogFilters>) => {
