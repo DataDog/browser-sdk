@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DatadogEventBridge } from '@datadog/browser-core/src/transport'
+import type { DatadogEventBridge } from '@datadog/browser-core'
 
 export function setupRendererBridge() {
   contextBridge.exposeInMainWorld('DatadogEventBridge', {

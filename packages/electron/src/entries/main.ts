@@ -1,4 +1,4 @@
-/* eslint-disable local-rules/disallow-side-effects */
+/* eslint-disable jsdoc/check-indentation */
 /**
  * TODO:
  * - [ ] Basic session management
@@ -9,7 +9,7 @@
  * - [x] setup bridge client with ipc from webviews (renderer processes)
  * - [x] use `exposeInMainWorld` to setup the bridge function that will setup the ipc to the main process
  */
-import type { RawError, PageMayExitEvent, Encoder, InitConfiguration } from '@datadog/browser-core'
+import type { RawError, PageMayExitEvent, Encoder, InitConfiguration, TrackType } from '@datadog/browser-core'
 import {
   Observable,
   DeflateEncoderStreamId,
@@ -17,12 +17,10 @@ import {
   createHttpRequest,
   createFlushController,
   createIdentityEncoder,
+  createEndpointBuilder,
 } from '@datadog/browser-core'
 import type { RumConfiguration, RumInitConfiguration } from '@datadog/browser-rum-core'
-import { createHooks } from '@datadog/browser-rum-core'
-import { validateAndBuildRumConfiguration } from '@datadog/browser-rum-core/cjs/domain/configuration'
-import type { TrackType } from '@datadog/browser-core/cjs/domain/configuration'
-import { createEndpointBuilder } from '@datadog/browser-core/cjs/domain/configuration'
+import { createHooks, validateAndBuildRumConfiguration } from '@datadog/browser-rum-core'
 import tracer from '../domain/trace/tracer'
 import { createIpcMain } from '../domain/main/ipcMain'
 import type { CollectedRumEvent } from '../domain/rum/events'
@@ -83,6 +81,7 @@ function makeDatadogElectron() {
       setupMainBridge(onRumEventObservable)
       createDdTraceAgent(onTraceObservable, hooks)
 
+      // eslint-disable-next-line
       setInterval(() => {
         pageMayExitObservable.notify({ reason: 'page_hide' })
       }, 1000)

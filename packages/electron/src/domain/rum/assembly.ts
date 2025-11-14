@@ -1,9 +1,8 @@
-import type { Observable, Context } from '@datadog/browser-core'
+import type { Observable, Context, Batch } from '@datadog/browser-core'
 import { HookNames, DISCARDED, combine } from '@datadog/browser-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import type { Hooks } from '../../hooks'
 import type { CollectedRumEvent } from './events'
-import type { Batch } from '@datadog/browser-core/cjs/transport/batch'
 
 export function startRumEventAssembleAndSend(
   onRumEventObservable: Observable<CollectedRumEvent>,
