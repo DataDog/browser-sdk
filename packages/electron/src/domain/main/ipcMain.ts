@@ -3,7 +3,7 @@ import type { IpcMain } from 'electron'
 import tracer from '../tracer'
 import type { DatadogCarrier } from '../trace'
 
-const SPAN_NAME_PREFIX = 'electron.main.ipc'
+const SPAN_NAME_PREFIX = 'ipcMain'
 
 const isDatadogCarrier = (arg: any): arg is DatadogCarrier => typeof arg === 'object' && arg?.__dd_carrier === true
 
@@ -25,11 +25,10 @@ export function createIpcMain(): IpcMain {
 }
 
 function withDatadogCarrier<T extends (...args: any[]) => R, R>(name: string, fn: T): (...args: Parameters<T>) => R {
-  const spanName = `${SPAN_NAME_PREFIX}.${name}`
-
   return (...args: Parameters<T>) => {
     const channel = args[0]
     const listener = args[1]
+    const spanName = `${SPAN_NAME_PREFIX}.${name}.${channel}`
 
     return fn(channel, (...args: Parameters<typeof listener>) => {
       const lastArg = args[args.length - 1]
