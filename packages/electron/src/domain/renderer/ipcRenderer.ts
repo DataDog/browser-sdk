@@ -1,7 +1,7 @@
 import type { IpcRenderer } from 'electron'
-import { createSpanIdentifier, createTraceIdentifier } from '@datadog/browser-rum-core/src/domain/tracing/identifier'
 import { ipcRenderer } from 'electron'
-import type { DatadogCarrier } from '../trace'
+import { createSpanIdentifier, createTraceIdentifier } from '@datadog/browser-rum-core/src/domain/tracing/identifier'
+import type { DatadogCarrier } from '../trace/trace'
 
 function createDatadogCarrier(): DatadogCarrier {
   const spanId = createSpanIdentifier().toString()

@@ -2,7 +2,7 @@ import type { Observable } from '@datadog/browser-core'
 import { generateUUID, ErrorHandling } from '@datadog/browser-core'
 import type { RumErrorEvent } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
-import type { Trace } from '../trace'
+import type { Trace } from '../trace/trace'
 import type { CollectedRumEvent } from './events'
 
 export function startConvertSpanToRumEvent(

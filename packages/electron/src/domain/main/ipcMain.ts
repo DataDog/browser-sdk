@@ -1,7 +1,7 @@
-import { ipcMain } from 'electron'
 import type { IpcMain } from 'electron'
-import tracer from '../tracer'
-import type { DatadogCarrier } from '../trace'
+import { ipcMain } from 'electron'
+import tracer from '../trace/tracer'
+import type { DatadogCarrier } from '../trace/trace'
 
 const SPAN_NAME_PREFIX = 'ipcMain'
 
