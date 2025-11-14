@@ -1,6 +1,5 @@
-import type { ActionIconProps } from '@mantine/core'
+import type { ActionIconProps, PolymorphicComponentProps } from '@mantine/core'
 import { ActionIcon } from '@mantine/core'
-import type { PolymorphicComponentProps } from '@mantine/core/lib/core/factory/create-polymorphic-component'
 import { default as clsx } from 'clsx'
 import type { JSXElementConstructor } from 'react'
 import React, { forwardRef } from 'react'

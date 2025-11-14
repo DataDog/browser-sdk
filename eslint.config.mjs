@@ -32,6 +32,8 @@ export default tseslint.config(
       '.yarn',
       'playwright-report',
       'docs',
+      'developer-extension/.wxt',
+      'developer-extension/.output',
     ],
   },
 
@@ -48,7 +50,7 @@ export default tseslint.config(
         project: [
           './tsconfig.default.json',
           './tsconfig.scripts.json',
-          './developer-extension/tsconfig.webpack.json',
+          './developer-extension/tsconfig.json',
           './test/e2e/tsconfig.json',
           './performances/tsconfig.json',
 

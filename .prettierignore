@@ -8,3 +8,5 @@ developer-extension/dist
 test/**/dist
 yarn.lock
 /docs
+/developer-extension/.output
+/developer-extension/.wxt
