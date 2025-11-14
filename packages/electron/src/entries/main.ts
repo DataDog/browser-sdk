@@ -12,7 +12,6 @@
  */
 import crypto from 'node:crypto'
 import { createServer } from 'node:http'
-import { ipcMain } from 'electron'
 import type { RawError, PageMayExitEvent, Encoder, Context, InitConfiguration } from '@datadog/browser-core'
 import {
   elapsed,
@@ -38,8 +37,9 @@ import { decode } from '@msgpack/msgpack'
 import type { TrackType } from '@datadog/browser-core/cjs/domain/configuration'
 import { createEndpointBuilder } from '@datadog/browser-core/cjs/domain/configuration'
 import type { RumViewEvent, RumErrorEvent } from '@datadog/browser-rum'
-import tracer from '../tracer'
+import tracer from '../domain/tracer'
 import type { Hooks } from '../hooks'
+import { createIpcMain } from '../domain/main/ipcMain'
 
 interface CollectedRumEvent {
   source: 'main-process' | 'renderer'
@@ -105,6 +105,8 @@ function makeDatadogElectron() {
 }
 
 export const ddElectron = makeDatadogElectron()
+export { tracer }
+export const ipcMain = createIpcMain()
 
 export function startElectronRumBatch(
   configuration: RumConfiguration,
@@ -379,5 +381,3 @@ function startActivityTracking(onRumEventObservable: Observable<CollectedRumEven
   })
   return onActivityObservable
 }
-
-export { tracer }

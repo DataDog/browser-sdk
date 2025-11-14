@@ -1,3 +1,4 @@
+/* eslint-disable local-rules/disallow-side-effects */
 import tracer from 'dd-trace'
 import { app } from 'electron'
 
@@ -37,4 +38,4 @@ tracer.init({
   },
 })
 // initialized in a different file to avoid hoisting.
-export default tracer
+export default tracer // eslint-disable-line import/no-default-export
