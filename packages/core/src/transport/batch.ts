@@ -60,7 +60,7 @@ export function createBatch({
 
     if (estimatedMessageBytesCount >= MESSAGE_BYTES_LIMIT) {
       display.warn(
-        `Discarded a message whose size was bigger than the maximum allowed size ${MESSAGE_BYTES_LIMIT}KB. ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`
+        `Discarded a message whose size was bigger than the maximum allowed size ${MESSAGE_BYTES_LIMIT / ONE_KIBI_BYTE}KiB. ${MORE_DETAILS} ${DOCS_TROUBLESHOOTING}/#technical-limitations`
       )
       return
     }
