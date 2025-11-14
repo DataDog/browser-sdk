@@ -27,7 +27,7 @@ export function createIpcMain(): IpcMain {
 function withDatadogCarrier<T extends (...args: any[]) => R, R>(name: string, fn: T): (...args: Parameters<T>) => R {
   return (...args: Parameters<T>) => {
     const channel = args[0]
-    const listener = args[1]
+    const listener = args[1] as (...args: any[]) => R
     const spanName = `${SPAN_NAME_PREFIX}.${name}.${channel}`
 
     return fn(channel, (...args: Parameters<typeof listener>) => {
@@ -37,11 +37,11 @@ function withDatadogCarrier<T extends (...args: any[]) => R, R>(name: string, fn
         args.pop() // remove the carrier from the args
 
         if (parentContext) {
-          return tracer.trace(spanName, { childOf: parentContext }, () => listener(...args)) as R
+          return tracer.trace(spanName, { childOf: parentContext }, () => listener(...args))
         }
       }
 
-      return tracer.trace(spanName, () => listener(...args)) as R
+      return tracer.trace(spanName, () => listener(...args))
     })
   }
 }
