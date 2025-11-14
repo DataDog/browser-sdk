@@ -376,9 +376,11 @@ __metadata:
     "@datadog/browser-core": "npm:6.23.0"
     "@datadog/browser-rum-core": "npm:6.23.0"
     "@msgpack/msgpack": "npm:3.1.2"
+    "@openfeature/core": "npm:1.9.1"
     "@types/pako": "npm:2.0.4"
     dd-trace: "npm:^5.76.0"
     electron: "npm:39"
+    graphql: "npm:16.12.0"
     pako: "npm:2.1.0"
   peerDependencies:
     "@datadog/browser-logs": 6.23.0
@@ -1930,6 +1932,13 @@ __metadata:
   dependencies:
     "@octokit/openapi-types": "npm:^24.2.0"
   checksum: 10c0/f66a401b89d653ec28e5c1529abdb7965752db4d9d40fa54c80e900af4c6bf944af6bd0a83f5b4f1eecb72e3d646899dfb27ffcf272ac243552de7e3b97a038d
+  languageName: node
+  linkType: hard
+
+"@openfeature/core@npm:1.9.1":
+  version: 1.9.1
+  resolution: "@openfeature/core@npm:1.9.1"
+  checksum: 10c0/983c651484621e6e5a3b4bf83fce5398a1adc2ace6162ff5a13a8eaf6d285b7c6b15f5c0a477ece9010ca88b28799985d810047ea0c18324d7a51ac4d04e18d6
   languageName: node
   linkType: hard
 
@@ -7571,6 +7580,13 @@ __metadata:
   version: 1.4.0
   resolution: "graphemer@npm:1.4.0"
   checksum: 10c0/e951259d8cd2e0d196c72ec711add7115d42eb9a8146c8eeda5b8d3ac91e5dd816b9cd68920726d9fd4490368e7ed86e9c423f40db87e2d8dfafa00fa17c3a31
+  languageName: node
+  linkType: hard
+
+"graphql@npm:16.12.0":
+  version: 16.12.0
+  resolution: "graphql@npm:16.12.0"
+  checksum: 10c0/b6fffa4e8a4e4a9933ebe85e7470b346dbf49050c1a482fac5e03e4a1a7bed2ecd3a4c97e29f04457af929464bc5e4f2aac991090c2f320111eef26e902a5c75
   languageName: node
   linkType: hard
 

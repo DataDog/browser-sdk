@@ -14,6 +14,10 @@ import crypto from 'node:crypto'
 import { createServer } from 'node:http'
 import type { RawError, PageMayExitEvent, Encoder, Context, InitConfiguration } from '@datadog/browser-core'
 import {
+  computeRawError,
+  clocksNow,
+  NonErrorPrefix,
+  dateNow,
   elapsed,
   timeStampNow,
   Observable,
@@ -37,6 +41,7 @@ import { decode } from '@msgpack/msgpack'
 import type { TrackType } from '@datadog/browser-core/cjs/domain/configuration'
 import { createEndpointBuilder } from '@datadog/browser-core/cjs/domain/configuration'
 import type { RumViewEvent, RumErrorEvent } from '@datadog/browser-rum'
+import { createSpanIdentifier, createTraceIdentifier } from '@datadog/browser-rum-core/src/domain/tracing/identifier'
 import tracer from '../domain/tracer'
 import type { Hooks } from '../hooks'
 import { createIpcMain } from '../domain/main/ipcMain'
@@ -44,6 +49,7 @@ import type { CollectedRumEvent } from '../domain/events'
 import { setupMainBridge } from '../domain/main/bridge'
 
 type Span = any
+type Trace = Span[]
 
 function makeDatadogElectron() {
   return {
@@ -85,8 +91,7 @@ function makeDatadogElectron() {
           console.error('Error reporting to Datadog')
         },
         pageMayExitObservable,
-        sessionExpireObservable,
-        createEncoder
+        sessionExpireObservable
       )
       onSpanObservable.subscribe((span) => {
         spanBatch.add(span)
@@ -128,29 +133,98 @@ export function startElectronRumBatch(
   return batch
 }
 
+// TODO change it by a single event fetch
 export function startElectronSpanBatch(
   initConfiguration: InitConfiguration,
   configuration: RumConfiguration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
-  sessionExpireObservable: Observable<void>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  sessionExpireObservable: Observable<void>
 ) {
-  const endpoints = [createEndpointBuilder(initConfiguration, 'spans' as TrackType)]
-  const batch = createBatch({
-    encoder: createEncoder(DeflateEncoderStreamId.RUM),
-    request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
-    flushController: createFlushController({
-      messagesLimit: configuration.batchMessagesLimit,
-      bytesLimit: configuration.batchBytesLimit,
-      durationLimit: configuration.flushTimeout,
-      pageMayExitObservable,
-      sessionExpireObservable,
-    }),
-    messageBytesLimit: configuration.messageBytesLimit,
+  const flushController = createFlushController({
+    messagesLimit: configuration.batchMessagesLimit,
+    bytesLimit: configuration.batchBytesLimit,
+    durationLimit: configuration.flushTimeout,
+    pageMayExitObservable,
+    sessionExpireObservable,
   })
 
-  return batch
+  const endpoints = [createEndpointBuilder(initConfiguration, 'spans' as TrackType)]
+  const request = createHttpRequest(endpoints, configuration.batchBytesLimit, reportError)
+
+  const items: any[] = []
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  const flushSubscription = flushController.flushObservable.subscribe(async () => {
+    if (items.length === 0) {
+      return
+    }
+
+    const payload = items
+      .map((trace: any[]) =>
+        JSON.stringify({
+          env: 'prod',
+          spans: trace.map((span) => ({
+            ...span,
+            trace_id: span.trace_id?.toString(16),
+            span_id: span.span_id?.toString(16),
+            parent_id: span.parent_id?.toString(16),
+          })),
+        })
+      )
+      .join('\n')
+
+    console.log('>>>', { payload })
+    fetch('https://browser-intake-datadoghq.com/api/v2/spans', {
+      method: 'POST',
+      headers: {
+        'DD-API-KEY': initConfiguration.clientToken,
+        'DD-EVP-ORIGIN': 'electron',
+        'DD-EVP-ORIGIN-VERSION': '1.0.0',
+        'DD-REQUEST-ID': crypto.randomUUID(),
+        'Content-Type': 'text/plain;charset=UTF-8',
+      },
+      body: payload,
+    })
+      .then(async (response) => {
+        console.log('>>>', response, await response.json())
+      })
+      .catch((error) => {
+        throw new Error(`Network error occurred: ${error.message}`)
+      })
+    items.length = 0
+  })
+  // const size = new Blob([JSON.stringify({ env: 'prod', spans: items.flat() })], { type: 'application/json' })
+  // const bytes = (await size.bytes()).length
+  //
+  // const payload = new FormData()
+  // payload.set('env', 'prod')
+  // payload.set('spans', JSON.stringify(items.flat()))
+  //
+  // console.log('>>>', { env: 'prod', spans: items.flat() })
+  //
+  // request.send({
+  //   data: payload,
+  //   bytesCount: bytes,
+  // })
+  // })
+
+  return {
+    flushController,
+    add(message: Context): void {
+      flushController.notifyBeforeAddMessage(items.length)
+      items.push(message)
+      flushController.notifyAfterAddMessage(items.length)
+    },
+    upsert(message: Context): void {
+      flushController.notifyBeforeAddMessage(items.length)
+      items.push(message)
+      flushController.notifyAfterAddMessage(items.length)
+    },
+    stop(): void {
+      flushSubscription.unsubscribe()
+    },
+  }
 }
 
 function createDdTraceAgent(onSpanObservable: Observable<Span>) {
@@ -170,11 +244,18 @@ function createDdTraceAgent(onSpanObservable: Observable<Span>) {
       >
 
       for (const trace of decoded) {
-        for (const span of trace as any) {
-          if (!isSdkRequest(span)) {
-            console.log('span', span)
-            onSpanObservable.notify(span)
-          }
+        const filteredTrace = trace
+          .filter((span) => !isSdkRequest(span))
+          .map((span) => ({
+            // rewrite id
+            ...span,
+            trace_id: Number(span.trace_id)?.toString(16),
+            span_id: Number(span.span_id)?.toString(16),
+            parent_id: Number(span.parent_id)?.toString(16),
+          }))
+
+        if (filteredTrace.length > 0) {
+          onSpanObservable.notify(filteredTrace)
         }
       }
     })
@@ -324,25 +405,27 @@ function startMainProcessTracking(
 }
 
 function startConvertSpanToRumEvent(
-  onSpanObservable: Observable<Span>,
+  onSpanObservable: Observable<Trace>,
   onRumEventObservable: Observable<CollectedRumEvent>
 ) {
-  onSpanObservable.subscribe((span) => {
-    if (span.error) {
-      const rumError: Partial<RumErrorEvent> = {
-        type: RumEventType.ERROR,
-        date: span.start / 1e6,
-        error: {
-          id: generateUUID(),
-          message: span.meta['error.message'],
-          stack: span.meta['error.stack'],
-          type: span.meta['error.type'],
-          source: 'source',
-          handling: ErrorHandling.UNHANDLED,
-        },
+  onSpanObservable.subscribe((trace) => {
+    trace.forEach((span) => {
+      if (span.error) {
+        const rumError: Partial<RumErrorEvent> = {
+          type: RumEventType.ERROR,
+          date: span.start / 1e6,
+          error: {
+            id: generateUUID(),
+            message: span.meta['error.message'],
+            stack: span.meta['error.stack'],
+            type: span.meta['error.type'],
+            source: 'source',
+            handling: ErrorHandling.UNHANDLED,
+          },
+        }
+        onRumEventObservable.notify({ event: rumError as RumErrorEvent, source: 'main-process' })
       }
-      onRumEventObservable.notify({ event: rumError as RumErrorEvent, source: 'main-process' })
-    }
+    })
   })
 }
 
