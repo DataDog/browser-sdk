@@ -82,9 +82,9 @@ export const HTML = `
       <p>Your browser cannot play the provided video file.</p>
     </video>
     <select>
-      <option>private option A</option>
-      <option>private option B</option>
-      <option>private option C</option>
+      <option aria-label='A'>private option A</option>
+      <option aria-label='B'>private option B</option>
+      <option aria-label='C'>private option C</option>
     </select>
     <input type="password">
     <input type="text">
@@ -339,7 +339,9 @@ export const AST_MASK = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -350,7 +352,9 @@ export const AST_MASK = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -361,7 +365,9 @@ export const AST_MASK = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -404,7 +410,7 @@ export const AST_MASK = {
               tagName: 'input',
               attributes: {
                 type: 'checkbox',
-                name: 'inputFoo',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -435,7 +441,7 @@ export const AST_MASK = {
               tagName: 'input',
               attributes: {
                 type: 'radio',
-                name: 'radioGroup',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -448,7 +454,7 @@ export const AST_MASK = {
               type: 2,
               tagName: 'textarea',
               attributes: {
-                name: 'baz',
+                name: '***',
                 rows: '2',
                 cols: '20',
                 value: '***',
@@ -705,7 +711,9 @@ export const AST_MASK_USER_INPUT = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': 'A',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -716,7 +724,9 @@ export const AST_MASK_USER_INPUT = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': 'B',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -727,7 +737,9 @@ export const AST_MASK_USER_INPUT = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': 'C',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -1071,7 +1083,9 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -1082,7 +1096,9 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -1093,7 +1109,9 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
                 {
                   type: 2,
                   tagName: 'option',
-                  attributes: {},
+                  attributes: {
+                    'aria-label': '***',
+                  },
                   childNodes: [
                     {
                       type: 3,
@@ -1136,7 +1154,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               tagName: 'input',
               attributes: {
                 type: 'checkbox',
-                name: 'inputFoo',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -1167,7 +1185,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               tagName: 'input',
               attributes: {
                 type: 'radio',
-                name: 'radioGroup',
+                name: '***',
                 value: '***',
               },
               childNodes: [],
@@ -1180,7 +1198,7 @@ export const AST_MASK_UNLESS_ALLOWLISTED = {
               type: 2,
               tagName: 'textarea',
               attributes: {
-                name: 'baz',
+                name: '***',
                 rows: '2',
                 cols: '20',
                 value: '***',
@@ -1443,6 +1461,7 @@ export const AST_ALLOW = {
                   tagName: 'option',
                   attributes: {
                     selected: true,
+                    'aria-label': 'A',
                     value: 'private option A',
                   },
                   childNodes: [
@@ -1460,6 +1479,7 @@ export const AST_ALLOW = {
                   type: 2,
                   tagName: 'option',
                   attributes: {
+                    'aria-label': 'B',
                     value: 'private option B',
                   },
                   childNodes: [
@@ -1477,6 +1497,7 @@ export const AST_ALLOW = {
                   type: 2,
                   tagName: 'option',
                   attributes: {
+                    'aria-label': 'C',
                     value: 'private option C',
                   },
                   childNodes: [
