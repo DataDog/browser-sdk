@@ -1,10 +1,7 @@
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import type { Duration } from '../../tools/utils/timeUtils'
-import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
-import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
@@ -328,15 +325,6 @@ export interface Configuration extends TransportConfiguration {
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
   betaEncodeCookieOptions: boolean
-  // Event limits
-  eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
-  maxTelemetryEventsPerPage: number
-
-  // Batch configuration
-  batchBytesLimit: number
-  flushTimeout: Duration
-  batchMessagesLimit: number
-  messageBytesLimit: number
 
   // internal
   sdkVersion: string | undefined
@@ -425,27 +413,6 @@ export function validateAndBuildConfiguration(
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
-    /**
-     * beacon payload max queue size implementation is 64kb
-     * ensure that we leave room for logs, rum and potential other users
-     */
-    batchBytesLimit: 16 * ONE_KIBI_BYTE,
-
-    eventRateLimiterThreshold: 3000,
-    maxTelemetryEventsPerPage: 15,
-
-    /**
-     * flush automatically, aim to be lower than ALB connection timeout
-     * to maximize connection reuse.
-     */
-    flushTimeout: (30 * ONE_SECOND) as Duration,
-
-    /**
-     * Logs intake limit. When using the SDK in a Worker Environment, we
-     * limit the batch size to 1 to ensure it can be sent in a single event.
-     */
-    batchMessagesLimit: isWorkerEnvironment ? 1 : 50,
-    messageBytesLimit: 256 * ONE_KIBI_BYTE,
 
     /**
      * The source of the SDK, used for support plugins purposes.
