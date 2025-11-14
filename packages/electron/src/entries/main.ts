@@ -30,7 +30,7 @@ import {
   generateUUID,
 } from '@datadog/browser-core'
 import { createHooks, RumEventType } from '@datadog/browser-rum-core'
-import type { RumConfiguration, RumEvent, RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { RumConfiguration, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { validateAndBuildRumConfiguration } from '@datadog/browser-rum-core/cjs/domain/configuration'
 import type { Batch } from '@datadog/browser-core/cjs/transport/batch'
 import { decode } from '@msgpack/msgpack'
@@ -40,11 +40,8 @@ import type { RumViewEvent, RumErrorEvent } from '@datadog/browser-rum'
 import tracer from '../domain/tracer'
 import type { Hooks } from '../hooks'
 import { createIpcMain } from '../domain/main/ipcMain'
-
-interface CollectedRumEvent {
-  source: 'main-process' | 'renderer'
-  event: RumEvent
-}
+import type { CollectedRumEvent } from '../domain/events'
+import { setupMainBridge } from '../domain/main/bridge'
 
 type Span = any
 
@@ -94,7 +91,7 @@ function makeDatadogElectron() {
       onSpanObservable.subscribe((span) => {
         spanBatch.add(span)
       })
-      setupIpcHandlers(onRumEventObservable)
+      setupMainBridge(onRumEventObservable)
       createDdTraceAgent(onSpanObservable)
 
       setInterval(() => {
@@ -154,25 +151,6 @@ export function startElectronSpanBatch(
   })
 
   return batch
-}
-
-function setupIpcHandlers(onRumEventObservable: Observable<CollectedRumEvent>) {
-  ipcMain.handle('datadog:send', (_event, msg: string) => {
-    const serverRumEvent = JSON.parse(msg) as BridgeEvent
-
-    if (serverRumEvent.eventType !== 'rum') {
-      console.log('not a rum event', serverRumEvent)
-
-      return
-    }
-
-    onRumEventObservable.notify({ event: serverRumEvent.event, source: 'renderer' })
-  })
-}
-
-interface BridgeEvent {
-  eventType: 'rum'
-  event: RumEvent & { session: { id: string } } & { application: { id: string } }
 }
 
 function createDdTraceAgent(onSpanObservable: Observable<Span>) {
