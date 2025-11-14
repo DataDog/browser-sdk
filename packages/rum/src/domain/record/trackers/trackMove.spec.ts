@@ -1,38 +1,21 @@
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import {
-  createSerializationScope,
-  createSerializationStats,
-  SerializationContextStatus,
-  serializeDocument,
-} from '../serialization'
-import { createElementsScrollPositions } from '../elementsScrollPositions'
+import type { EmitRecordCallback } from '../serialization'
 import { IncrementalSource, RecordType } from '../../../types'
-import { createNodeIds } from '../nodeIds'
-import type { MousemoveCallBack } from './trackMove'
+import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
+import { createSerializationScopeForTesting } from '../test/serializationScope.specHelper'
 import { trackMove } from './trackMove'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { Tracker } from './tracker.types'
 
 describe('trackMove', () => {
-  let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>
+  let mouseMoveCallbackSpy: jasmine.Spy<EmitRecordCallback>
   let moveTracker: Tracker
-  let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
-
-    const scope = createSerializationScope(createNodeIds())
-    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
-      serializationStats: createSerializationStats(),
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
-
     mouseMoveCallbackSpy = jasmine.createSpy()
-    moveTracker = trackMove(configuration, scope, mouseMoveCallbackSpy)
+    const scope = createSerializationScopeForTesting({ emitRecord: mouseMoveCallbackSpy })
+    takeFullSnapshotForTesting(scope)
 
+    moveTracker = trackMove(scope)
     registerCleanupTask(() => {
       moveTracker.stop()
     })

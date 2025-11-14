@@ -1,42 +1,25 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
-import {
-  serializeDocument,
-  SerializationContextStatus,
-  createSerializationStats,
-  createSerializationScope,
-} from '../serialization'
-import { createElementsScrollPositions } from '../elementsScrollPositions'
+import type { EmitRecordCallback } from '../serialization'
 import { IncrementalSource, MediaInteractionType, RecordType } from '../../../types'
-import { createNodeIds } from '../nodeIds'
-import type { InputCallback } from './trackInput'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
+import { createSerializationScopeForTesting } from '../test/serializationScope.specHelper'
 import { trackMediaInteraction } from './trackMediaInteraction'
 import type { Tracker } from './tracker.types'
 
 describe('trackMediaInteraction', () => {
   let mediaInteractionTracker: Tracker
-  let mediaInteractionCallback: jasmine.Spy<InputCallback>
+  let mediaInteractionCallback: jasmine.Spy<EmitRecordCallback>
   let audio: HTMLAudioElement
-  let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
-    mediaInteractionCallback = jasmine.createSpy()
-
     audio = appendElement('<audio controls autoplay target></audio>') as HTMLAudioElement
 
-    const scope = createSerializationScope(createNodeIds())
-    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
-      serializationStats: createSerializationStats(),
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
-    mediaInteractionTracker = trackMediaInteraction(configuration, scope, mediaInteractionCallback)
+    mediaInteractionCallback = jasmine.createSpy()
+    const scope = createSerializationScopeForTesting({ emitRecord: mediaInteractionCallback })
+    takeFullSnapshotForTesting(scope)
 
+    mediaInteractionTracker = trackMediaInteraction(scope)
     registerCleanupTask(() => {
       mediaInteractionTracker.stop()
     })

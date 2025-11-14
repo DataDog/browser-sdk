@@ -1,18 +1,21 @@
+import { noop } from '@datadog/browser-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { EmitRecordCallback } from '../serialization'
+import { createSerializationScopeForTesting } from '../test/serializationScope.specHelper'
 import { RecordType } from '../../../types'
-import type { ViewEndCallback } from './trackViewEnd'
 import { trackViewEnd } from './trackViewEnd'
 import type { Tracker } from './tracker.types'
 
 describe('trackViewEnd', () => {
   let lifeCycle: LifeCycle
-  let viewEndCb: jasmine.Spy<ViewEndCallback>
+  let viewEndCb: jasmine.Spy<EmitRecordCallback>
   let viewEndTracker: Tracker
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     viewEndCb = jasmine.createSpy()
-    viewEndTracker = trackViewEnd(lifeCycle, viewEndCb)
+    const scope = createSerializationScopeForTesting({ emitRecord: viewEndCb })
+    viewEndTracker = trackViewEnd(lifeCycle, scope, noop)
   })
 
   afterEach(() => {

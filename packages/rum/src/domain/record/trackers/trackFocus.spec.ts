@@ -1,20 +1,19 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { RecordType } from '../../../types'
-import { trackFocus, type FocusCallback } from './trackFocus'
+import type { EmitRecordCallback } from '../serialization'
+import { createSerializationScopeForTesting } from '../test/serializationScope.specHelper'
+import { trackFocus } from './trackFocus'
 import type { Tracker } from './tracker.types'
 
 describe('trackFocus', () => {
   let focusTracker: Tracker
-  let focusCallback: jasmine.Spy<FocusCallback>
-  let configuration: RumConfiguration
+  let focusCallback: jasmine.Spy<EmitRecordCallback>
 
   beforeEach(() => {
-    configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     focusCallback = jasmine.createSpy()
-    focusTracker = trackFocus(configuration, focusCallback)
+    const scope = createSerializationScopeForTesting({ emitRecord: focusCallback })
 
+    focusTracker = trackFocus(scope)
     registerCleanupTask(() => {
       focusTracker.stop()
     })

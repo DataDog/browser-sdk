@@ -1,11 +1,9 @@
 import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, MouseInteractionType } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
 import { getEventTarget } from '../eventsUtils'
-import type { RecordIds } from '../recordIds'
 import type { SerializationScope } from '../serialization'
 import { tryToComputeCoordinates } from './trackMove'
 import type { Tracker } from './tracker.types'
@@ -33,43 +31,38 @@ const eventTypeToMouseInteraction = {
 
 export type MouseInteractionCallback = (record: BrowserIncrementalSnapshotRecord) => void
 
-export function trackMouseInteraction(
-  configuration: RumConfiguration,
-  scope: SerializationScope,
-  mouseInteractionCb: MouseInteractionCallback,
-  recordIds: RecordIds
-): Tracker {
+export function trackMouseInteraction(scope: SerializationScope): Tracker {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
-    const target = getEventTarget(event)
-    const id = scope.nodeIds.get(target)
-    if (
-      id === undefined ||
-      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
-    ) {
-      return
-    }
-    const type = eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction]
-
-    let interaction: MouseInteraction
-    if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
-      const coordinates = tryToComputeCoordinates(event as MouseEvent | TouchEvent)
-      if (!coordinates) {
+    scope.captureEvent(() => {
+      const target = getEventTarget(event)
+      const id = scope.nodeIds.get(target)
+      if (
+        id === undefined ||
+        getNodePrivacyLevel(target, scope.configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
+      ) {
         return
       }
-      interaction = { id, type, x: coordinates.x, y: coordinates.y }
-    } else {
-      interaction = { id, type }
-    }
+      const type = eventTypeToMouseInteraction[event.type as keyof typeof eventTypeToMouseInteraction]
 
-    const record = {
-      id: recordIds.getIdForEvent(event),
-      ...assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction),
-    }
+      let interaction: MouseInteraction
+      if (type !== MouseInteractionType.Blur && type !== MouseInteractionType.Focus) {
+        const coordinates = tryToComputeCoordinates(event as MouseEvent | TouchEvent)
+        if (!coordinates) {
+          return
+        }
+        interaction = { id, type, x: coordinates.x, y: coordinates.y }
+      } else {
+        interaction = { id, type }
+      }
 
-    mouseInteractionCb(record)
+      return {
+        id: scope.eventIds.getIdForEvent(event),
+        ...assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction),
+      }
+    })
   }
   return addEventListeners(
-    configuration,
+    scope.configuration,
     document,
     Object.keys(eventTypeToMouseInteraction) as Array<keyof typeof eventTypeToMouseInteraction>,
     handler,

@@ -1,25 +1,21 @@
 import { throttle, DOM_EVENT, addEventListeners, timeStampNow, noop } from '@datadog/browser-core'
-import type { RumConfiguration, ViewportDimension } from '@datadog/browser-rum-core'
+import type { ViewportDimension } from '@datadog/browser-rum-core'
 import { initViewportObservable } from '@datadog/browser-rum-core'
 import { IncrementalSource, RecordType } from '../../../types'
-import type { BrowserIncrementalSnapshotRecord, ViewportResizeData, VisualViewportRecord } from '../../../types'
+import type { ViewportResizeData } from '../../../types'
 import { getVisualViewport } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { SerializationScope } from '../serialization'
 import type { Tracker } from './tracker.types'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
-export type ViewportResizeCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
-
-export type VisualViewportResizeCallback = (visualViewportRecord: VisualViewportRecord) => void
-
-export function trackViewportResize(
-  configuration: RumConfiguration,
-  viewportResizeCb: ViewportResizeCallback
-): Tracker {
-  const viewportResizeSubscription = initViewportObservable(configuration).subscribe((data: ViewportDimension) => {
-    viewportResizeCb(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, data))
-  })
+export function trackViewportResize(scope: SerializationScope): Tracker {
+  const viewportResizeSubscription = initViewportObservable(scope.configuration).subscribe(
+    (data: ViewportDimension) => {
+      scope.captureEvent(() => assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, data))
+    }
+  )
 
   return {
     stop: () => {
@@ -28,21 +24,18 @@ export function trackViewportResize(
   }
 }
 
-export function trackVisualViewportResize(
-  configuration: RumConfiguration,
-  visualViewportResizeCb: VisualViewportResizeCallback
-): Tracker {
+export function trackVisualViewportResize(scope: SerializationScope): Tracker {
   const visualViewport = window.visualViewport
   if (!visualViewport) {
     return { stop: noop }
   }
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
     () => {
-      visualViewportResizeCb({
+      scope.captureEvent(() => ({
         data: getVisualViewport(visualViewport),
         type: RecordType.VisualViewport,
         timestamp: timeStampNow(),
-      })
+      }))
     },
     VISUAL_VIEWPORT_OBSERVER_THRESHOLD,
     {
@@ -50,7 +43,7 @@ export function trackVisualViewportResize(
     }
   )
   const { stop: removeListener } = addEventListeners(
-    configuration,
+    scope.configuration,
     visualViewport,
     [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL],
     updateDimension,

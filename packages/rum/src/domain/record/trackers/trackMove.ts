@@ -1,5 +1,4 @@
 import { addEventListeners, DOM_EVENT, throttle } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserIncrementalSnapshotRecord, MousemoveData, MousePosition } from '../../../types'
 import { IncrementalSource } from '../../../types'
 import { getEventTarget, isTouchEvent } from '../eventsUtils'
@@ -12,35 +11,31 @@ const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 
 export type MousemoveCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
-export function trackMove(
-  configuration: RumConfiguration,
-  scope: SerializationScope,
-  moveCb: MousemoveCallBack
-): Tracker {
+export function trackMove(scope: SerializationScope): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle(
     (event: MouseEvent | TouchEvent) => {
-      const target = getEventTarget(event)
-      const id = scope.nodeIds.get(target)
-      if (id === undefined) {
-        return
-      }
-      const coordinates = tryToComputeCoordinates(event)
-      if (!coordinates) {
-        return
-      }
-      const position: MousePosition = {
-        id,
-        timeOffset: 0,
-        x: coordinates.x,
-        y: coordinates.y,
-      }
+      scope.captureEvent(() => {
+        const target = getEventTarget(event)
+        const id = scope.nodeIds.get(target)
+        if (id === undefined) {
+          return
+        }
+        const coordinates = tryToComputeCoordinates(event)
+        if (!coordinates) {
+          return
+        }
+        const position: MousePosition = {
+          id,
+          timeOffset: 0,
+          x: coordinates.x,
+          y: coordinates.y,
+        }
 
-      moveCb(
-        assembleIncrementalSnapshot<MousemoveData>(
+        return assembleIncrementalSnapshot<MousemoveData>(
           isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove,
           { positions: [position] }
         )
-      )
+      })
     },
     MOUSE_MOVE_OBSERVER_THRESHOLD,
     {
@@ -49,7 +44,7 @@ export function trackMove(
   )
 
   const { stop: removeListener } = addEventListeners(
-    configuration,
+    scope.configuration,
     document,
     [DOM_EVENT.MOUSE_MOVE, DOM_EVENT.TOUCH_MOVE],
     updatePosition,

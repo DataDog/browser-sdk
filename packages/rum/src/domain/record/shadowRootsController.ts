@@ -1,41 +1,34 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { BrowserIncrementalSnapshotRecord } from '../../types'
 import { trackInput, trackMutation, trackScroll } from './trackers'
-import type { ElementsScrollPositions } from './elementsScrollPositions'
-import type { SerializationScope } from './serialization'
+import type { MutationTransaction } from './serialization'
 
 interface ShadowRootController {
   stop: () => void
   flush: () => void
 }
 
-export type ShadowRootCallBack = (shadowRoot: ShadowRoot) => void
+export type AddShadowRootCallBack = (shadowRoot: ShadowRoot, transaction: MutationTransaction) => void
+export type RemoveShadowRootCallBack = (shadowRoot: ShadowRoot) => void
 
 export interface ShadowRootsController {
-  addShadowRoot: ShadowRootCallBack
-  removeShadowRoot: ShadowRootCallBack
+  addShadowRoot: AddShadowRootCallBack
+  removeShadowRoot: RemoveShadowRootCallBack
   stop: () => void
   flush: () => void
 }
 
-export const initShadowRootsController = (
-  configuration: RumConfiguration,
-  scope: SerializationScope,
-  callback: (record: BrowserIncrementalSnapshotRecord) => void,
-  elementsScrollPositions: ElementsScrollPositions
-): ShadowRootsController => {
+export const initShadowRootsController = (): ShadowRootsController => {
   const controllerByShadowRoot = new Map<ShadowRoot, ShadowRootController>()
 
   const shadowRootsController: ShadowRootsController = {
-    addShadowRoot: (shadowRoot: ShadowRoot) => {
+    addShadowRoot: (shadowRoot: ShadowRoot, transaction: MutationTransaction) => {
       if (controllerByShadowRoot.has(shadowRoot)) {
         return
       }
-      const mutationTracker = trackMutation(callback, configuration, scope, shadowRootsController, shadowRoot)
+      const mutationTracker = trackMutation(transaction.scope, shadowRoot)
       // The change event does not bubble up across the shadow root, we have to listen on the shadow root
-      const inputTracker = trackInput(configuration, scope, callback, shadowRoot)
+      const inputTracker = trackInput(transaction.scope, shadowRoot)
       // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root
-      const scrollTracker = trackScroll(configuration, scope, callback, elementsScrollPositions, shadowRoot)
+      const scrollTracker = trackScroll(transaction.scope, shadowRoot)
       controllerByShadowRoot.set(shadowRoot, {
         flush: () => mutationTracker.flush(),
         stop: () => {
