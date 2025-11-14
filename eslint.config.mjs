@@ -24,7 +24,6 @@ export default tseslint.config(
       'packages/*/bundle',
       'packages/*/cjs',
       'packages/*/esm',
-      'developer-extension/dist',
       'test/**/dist',
       'sandbox',
       'coverage',
