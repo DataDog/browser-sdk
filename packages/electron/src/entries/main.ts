@@ -29,8 +29,8 @@ import {
   ErrorHandling,
   generateUUID,
 } from '@datadog/browser-core'
-import { createHooks, RumEventType } from '@datadog/browser-rum-core'
 import type { RumConfiguration, RumInitConfiguration } from '@datadog/browser-rum-core'
+import { createHooks, RumEventType } from '@datadog/browser-rum-core'
 import { validateAndBuildRumConfiguration } from '@datadog/browser-rum-core/cjs/domain/configuration'
 import type { Batch } from '@datadog/browser-core/cjs/transport/batch'
 import { decode } from '@msgpack/msgpack'
@@ -74,9 +74,9 @@ function makeDatadogElectron() {
         createEncoder
       )
 
-      startRumEventAssembleAndSend(configuration, onRumEventObservable, rumBatch, hooks)
+      startRumEventAssembleAndSend(onRumEventObservable, rumBatch, hooks)
       const onActivityObservable = startActivityTracking(onRumEventObservable)
-      startMainProcessTracking(hooks, onRumEventObservable, onActivityObservable)
+      startMainProcessTracking(hooks, configuration, onRumEventObservable, onActivityObservable)
       startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
 
       const spanBatch = startElectronSpanBatch(
@@ -93,7 +93,7 @@ function makeDatadogElectron() {
         spanBatch.add({ env: 'prod', spans: trace })
       })
       setupMainBridge(onRumEventObservable)
-      createDdTraceAgent(onTraceObservable)
+      createDdTraceAgent(onTraceObservable, hooks)
 
       setInterval(() => {
         pageMayExitObservable.notify({ reason: 'page_hide' })
@@ -156,7 +156,7 @@ export function startElectronSpanBatch(
   return batch
 }
 
-function createDdTraceAgent(onSpanObservable: Observable<Span>) {
+function createDdTraceAgent(onTraceObservable: Observable<Trace>, hooks: Hooks) {
   const server = createServer()
 
   server.on('request', (req, res) => {
@@ -172,6 +172,14 @@ function createDdTraceAgent(onSpanObservable: Observable<Span>) {
         Array<{ name: string; type: string; meta: { [key: string]: unknown }; [key: string]: unknown }>
       >
 
+      const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'span' as any,
+      })!
+
+      if (defaultRumEventAttributes === DISCARDED) {
+        return
+      }
+
       for (const trace of decoded) {
         const filteredTrace = trace
           .filter((span) => !isSdkRequest(span))
@@ -181,10 +189,16 @@ function createDdTraceAgent(onSpanObservable: Observable<Span>) {
             trace_id: Number(span.trace_id)?.toString(16),
             span_id: Number(span.span_id)?.toString(16),
             parent_id: Number(span.parent_id)?.toString(16),
+            meta: {
+              ...span.meta,
+              '_dd.application.id': defaultRumEventAttributes.application!.id,
+              '_dd.session.id': defaultRumEventAttributes.session!.id,
+              '_dd.view.id': defaultRumEventAttributes.view!.id,
+            },
           }))
 
         if (filteredTrace.length > 0) {
-          onSpanObservable.notify(filteredTrace)
+          onTraceObservable.notify(filteredTrace)
         }
       }
     })
@@ -229,7 +243,6 @@ function isSdkRequest(span: any) {
 }
 
 function startRumEventAssembleAndSend(
-  configuration: RumConfiguration,
   onRumEventObservable: Observable<CollectedRumEvent>,
   rumBatch: Batch,
   hooks: Hooks
@@ -239,19 +252,19 @@ function startRumEventAssembleAndSend(
       eventType: event.type,
     })!
 
-    if (defaultRumEventAttributes === DISCARDED || defaultRumEventAttributes.session?.id === undefined) {
+    if (defaultRumEventAttributes === DISCARDED) {
       return
     }
     const commonContext =
       source === 'renderer'
         ? {
-            session: { id: defaultRumEventAttributes.session.id },
-            application: { id: configuration.applicationId },
+            session: { id: defaultRumEventAttributes.session!.id },
+            application: { id: defaultRumEventAttributes.application!.id },
           }
         : combine(defaultRumEventAttributes, {
             // TODO source electron
             source: 'browser' as const,
-            application: { id: configuration.applicationId },
+            application: { id: defaultRumEventAttributes.application!.id },
             session: {
               type: 'user' as const,
             },
@@ -272,6 +285,7 @@ function startRumEventAssembleAndSend(
 
 function startMainProcessTracking(
   hooks: Hooks,
+  configuration: RumConfiguration,
   onRumEventObservable: Observable<CollectedRumEvent>,
   onActivityObservable: Observable<void>
 ) {
@@ -281,6 +295,9 @@ function startMainProcessTracking(
   }
   hooks.register(HookNames.Assemble, ({ eventType }) => ({
     type: eventType,
+    application: {
+      id: configuration.applicationId,
+    },
     session: {
       id: mainProcessContext.sessionId,
     },
@@ -334,10 +351,10 @@ function startMainProcessTracking(
 }
 
 function startConvertSpanToRumEvent(
-  onSpanObservable: Observable<Trace>,
+  onTraceObservable: Observable<Trace>,
   onRumEventObservable: Observable<CollectedRumEvent>
 ) {
-  onSpanObservable.subscribe((trace) => {
+  onTraceObservable.subscribe((trace) => {
     trace.forEach((span) => {
       if (span.error) {
         const rumError: Partial<RumErrorEvent> = {
