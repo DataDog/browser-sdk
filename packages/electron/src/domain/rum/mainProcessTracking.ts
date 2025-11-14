@@ -31,6 +31,10 @@ export function startMainProcessTracking(
     },
   }))
   console.log('sessionId', mainProcessContext.sessionId)
+  console.log(
+    '\x1b[34m%s\x1b[0m',
+    `https://app.datadoghq.com/rum/sessions?query=%40type%3Asession%20%40session.id%3A${mainProcessContext.sessionId}`
+  )
   const applicationStart = timeStampNow()
   let applicationLaunch = {
     type: RumEventType.VIEW,

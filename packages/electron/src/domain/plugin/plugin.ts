@@ -1,7 +1,7 @@
 import { generateUUID } from '@datadog/browser-core'
 import type { RumPlugin, RumPublicApi, StartRumResult } from '@datadog/browser-rum-core'
 import type { RawRumResourceEvent } from '@datadog/browser-rum-core/src/rawRumEvent.types'
-import type { SpanInfo } from '../trace'
+import type { SpanInfo } from '../trace/trace'
 
 let globalPublicApi: RumPublicApi | undefined
 let globalConfiguration: ElectronPluginConfiguration | undefined

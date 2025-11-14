@@ -1,5 +1,4 @@
 import type { IpcRenderer } from 'electron'
-import { ipcRenderer } from 'electron'
 import { createSpanIdentifier, createTraceIdentifier } from '@datadog/browser-rum-core/src/domain/tracing/identifier'
 import { contextBridge, ipcRenderer } from 'electron'
 import type { Observable } from '@datadog/browser-core'
