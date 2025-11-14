@@ -10,6 +10,7 @@ import type {
   RawRumLongTaskEvent,
   RawRumResourceEvent,
   RawRumVitalEvent,
+  RawRumStreamEvent,
 } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 
@@ -18,6 +19,9 @@ const allowedEventTypes = [
   RumEventType.ERROR,
   RumEventType.LONG_TASK,
   RumEventType.RESOURCE,
+  RumEventType.STREAM,
+  RumEventType.STREAM,
+  RumEventType.TRANSITION,
   RumEventType.VITAL,
 ] as const
 
@@ -28,6 +32,7 @@ export type AllowedRawRumEvent = (
   | RawRumLongAnimationFrameEvent
   | RawRumActionEvent
   | RawRumVitalEvent
+  | RawRumStreamEvent
 ) & { context?: Context }
 
 export function startEventCollection(lifeCycle: LifeCycle) {
