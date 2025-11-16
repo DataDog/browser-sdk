@@ -7,7 +7,6 @@ import express from 'express'
 import forge from 'node-forge'
 
 const __dirname = dirname(path.resolve(fileURLToPath(import.meta.url)))
-console.log('__dirname', __dirname)
 export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => any
 
 export interface Server {
@@ -15,10 +14,17 @@ export interface Server {
   stop: () => void
 }
 
-export function startPerformanceServer(): Promise<Server> {
+export function startPerformanceServer(scenarioName: string): Promise<Server> {
   return new Promise((resolve, reject) => {
     const app = express()
-    const distPath = path.resolve(__dirname, '../apps/react-heavy-spa/dist')
+
+    // Map scenario names to app directories
+    const appMap: Record<string, string> = {
+      heavy: '../apps/react-heavy-spa/dist',
+      shopistLike: '../apps/react-shopist-like/dist',
+    }
+
+    const distPath = path.resolve(__dirname, appMap[scenarioName])
     app.use(profilingMiddleware)
     app.use(express.static(distPath))
 

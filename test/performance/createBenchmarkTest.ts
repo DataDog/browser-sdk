@@ -23,7 +23,7 @@ export function createBenchmarkTest(scenarioName: string) {
       let server: Server
 
       test.beforeAll(async () => {
-        server = await startPerformanceServer()
+        server = await startPerformanceServer(scenarioName)
       })
 
       SCENARIO_CONFIGURATIONS.forEach((scenarioConfiguration) => {

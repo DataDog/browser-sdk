@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test } from '@playwright/test'
 import { createBenchmarkTest } from '../createBenchmarkTest'
 
 test.describe('benchmark', () => {
@@ -187,17 +187,5 @@ test.describe('benchmark', () => {
     await page.evaluate(() => window.scrollBy(0, 500))
     await page.waitForTimeout(200)
     await page.evaluate(() => window.scrollBy(0, -500))
-
-    // Final logs check with filter toggles
-    await page.getByRole('link', { name: '📝 Logs' }).click()
-    await page.waitForTimeout(300)
-    await page.locator('.filter-sidebar label').filter({ hasText: 'INFO' }).click()
-    await page.waitForTimeout(200)
-    await page.locator('.filter-sidebar label').filter({ hasText: 'DEBUG' }).click()
-    await page.waitForTimeout(200)
-    await page.locator('.filter-sidebar label').filter({ hasText: 'INFO' }).click()
-    await page.waitForTimeout(200)
-
-    expect(true).toBe(true)
   })
 })

@@ -1,10 +1,6 @@
-# Heavy SPA Benchmark - Datadog Web UI
+# React Heavy SPA - Observability App
 
 A complex, JavaScript-heavy single-page application built with React + TypeScript for performance benchmarking and profiling of Datadog Browser SDK.
-
-## Overview
-
-This application simulates a realistic Datadog web UI to benchmark RUM performance, particularly for profiling overhead analysis. It includes performance throttling mechanisms to create realistic poor performance scenarios for testing.
 
 ## Pages
 
@@ -21,14 +17,6 @@ Target to have Web Vitals in the “Needs improvement” score range.
 - **CLS**: ~0.13
 - **INP**: ~300ms
 - **TBT**: ~45000ms
-
-## Technology Stack
-
-- **React 18** + **TypeScript** - UI framework
-- **Vite** - Build tool
-- **React Router v6** - Client-side routing
-- **Recharts** - Data visualization
-- **react-window** - List virtualization
 
 ## Getting Started
 

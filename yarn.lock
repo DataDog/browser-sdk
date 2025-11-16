@@ -10568,12 +10568,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"performance-9ecdc6@workspace:test/performance":
-  version: 0.0.0-use.local
-  resolution: "performance-9ecdc6@workspace:test/performance"
-  languageName: unknown
-  linkType: soft
-
 "performances@workspace:performances":
   version: 0.0.0-use.local
   resolution: "performances@workspace:performances"
