@@ -1,12 +1,10 @@
 import https from 'https'
 import type http from 'http'
-import path, { dirname } from 'path'
+import path from 'path'
 import type { AddressInfo } from 'net'
-import { fileURLToPath } from 'url'
 import express from 'express'
 import forge from 'node-forge'
 
-const __dirname = dirname(path.resolve(fileURLToPath(import.meta.url)))
 export type ServerApp = (req: http.IncomingMessage, res: http.ServerResponse) => any
 
 export interface Server {
@@ -24,7 +22,7 @@ export function startPerformanceServer(scenarioName: string): Promise<Server> {
       shopistLike: '../apps/react-shopist-like/dist',
     }
 
-    const distPath = path.resolve(__dirname, appMap[scenarioName])
+    const distPath = path.resolve(import.meta.dirname, appMap[scenarioName])
     app.use(profilingMiddleware)
     app.use(express.static(distPath))
 
