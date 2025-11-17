@@ -5,6 +5,7 @@ import { decode } from '@msgpack/msgpack'
 import type { Hooks } from '../../hooks'
 import type { Trace } from './trace'
 import tracer from './tracer'
+import { createIdentifier } from './id'
 
 export function createDdTraceAgent(onTraceObservable: Observable<Trace>, hooks: Hooks) {
   const server = createServer()
@@ -34,11 +35,11 @@ export function createDdTraceAgent(onTraceObservable: Observable<Trace>, hooks: 
         const filteredTrace = trace
           .filter((span) => !isSdkRequest(span))
           .map((span) => ({
-            // rewrite id
+            // rewrite ids
             ...span,
-            trace_id: Number(span.trace_id)?.toString(16),
-            span_id: Number(span.span_id)?.toString(16),
-            parent_id: Number(span.parent_id)?.toString(16),
+            trace_id: createIdentifier(`${span.trace_id as number}`, 10).toString(16),
+            span_id: createIdentifier(`${span.span_id as number}`, 10).toString(16),
+            parent_id: createIdentifier(`${span.parent_id as number}`, 10).toString(16),
             meta: {
               ...span.meta,
               '_dd.application.id': defaultRumEventAttributes.application!.id,
