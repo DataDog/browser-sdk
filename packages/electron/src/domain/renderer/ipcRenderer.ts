@@ -38,9 +38,9 @@ function withDatadogCarrier<T extends (...args: any[]) => R, R>(
 
     const notifySpan = () => {
       observable.notify({
-        spanId: carrier['x-datadog-parent-id'],
-        traceId: carrier['x-datadog-trace-id'],
         startClocks: startClock,
+        spanId: parseInt(carrier['x-datadog-parent-id'], 10).toString(),
+        traceId: parseInt(carrier['x-datadog-trace-id'], 10).toString(),
         duration: toServerDuration(elapsed(startClock.timeStamp, clocksNow().timeStamp)),
         name: `${SPAN_NAME_PREFIX}.${method}.${channel}`,
       })
