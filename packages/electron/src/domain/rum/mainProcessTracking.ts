@@ -56,13 +56,30 @@ export function startMainProcessTracking(
       },
     },
     _dd: {
-      document_version: 1,
+      document_version: 0,
     },
   } as RumViewEvent
 
-  onRumEventObservable.notify({ event: applicationLaunch, source: 'main-process' })
+  onRumEventObservable.subscribe(({ event, source }) => {
+    if (source === 'renderer') {
+      return
+    }
+    switch (event.type) {
+      case RumEventType.RESOURCE:
+        ;(applicationLaunch.view.resource.count as any) += 1
+        updateView()
+        break
+      case RumEventType.ERROR:
+        ;(applicationLaunch.view.error.count as any) += 1
+        updateView()
+        break
+    }
+  })
 
-  onActivityObservable.subscribe(() => {
+  updateView()
+  onActivityObservable.subscribe(updateView)
+
+  function updateView() {
     applicationLaunch = combine(applicationLaunch, {
       view: {
         time_spent: toServerDuration(elapsed(applicationStart, timeStampNow())),
@@ -72,7 +89,7 @@ export function startMainProcessTracking(
       },
     })
     onRumEventObservable.notify({ event: applicationLaunch, source: 'main-process' })
-  })
+  }
   // TODO session expiration / renewal
   // TODO useragent
 }
