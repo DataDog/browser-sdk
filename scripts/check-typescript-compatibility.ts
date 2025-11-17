@@ -13,8 +13,8 @@ interface TypeScriptCheck {
 
 runMain(() => {
   printLog('Building project...')
-  command`yarn build`.run()
-  command`lerna run pack --stream`.run()
+  command`yarn run build`.run()
+  command`yarn run pack`.run()
 
   printLog('Setting up test environment...')
   command`yarn install --no-immutable`.withCurrentWorkingDirectory(TEST_APP_DIR).run()

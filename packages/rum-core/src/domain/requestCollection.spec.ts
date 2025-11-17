@@ -182,7 +182,7 @@ describe('collect xhr', () => {
   let stopXhrTracking: () => void
 
   beforeEach(() => {
-    const configuration = mockRumConfiguration({ batchMessagesLimit: 1 })
+    const configuration = mockRumConfiguration()
     mockXhr()
     startSpy = jasmine.createSpy('requestStart')
     completeSpy = jasmine.createSpy('requestComplete')

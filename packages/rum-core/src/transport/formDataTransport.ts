@@ -36,11 +36,7 @@ export function createFormDataTransport<T extends TransportPayload>(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
-  const httpRequest = createHttpRequest(
-    [configuration.profilingEndpointBuilder],
-    configuration.batchBytesLimit,
-    reportError
-  )
+  const httpRequest = createHttpRequest([configuration.profilingEndpointBuilder], reportError)
 
   const encoder = createEncoder(streamId)
 

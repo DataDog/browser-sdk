@@ -5,7 +5,10 @@ import {
   CENSORED_STRING_MARK,
   getPrivacySelector,
   TEXT_MASKING_CHAR,
+  PRIVACY_ATTR_NAME,
 } from './privacyConstants'
+import { STABLE_ATTRIBUTES } from './getSelectorFromElement'
+import type { RumConfiguration } from './configuration'
 
 export type NodePrivacyLevelCache = Map<Node, NodePrivacyLevel>
 
@@ -148,6 +151,46 @@ export function shouldMaskNode(node: Node, privacyLevel: NodePrivacyLevel) {
     default:
       return false
   }
+}
+
+export function shouldMaskAttribute(
+  tagName: string,
+  attributeName: string,
+  attributeValue: string | null,
+  nodePrivacyLevel: NodePrivacyLevel,
+  configuration: RumConfiguration
+) {
+  if (nodePrivacyLevel !== NodePrivacyLevel.MASK && nodePrivacyLevel !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
+    return false
+  }
+  if (
+    attributeName === PRIVACY_ATTR_NAME ||
+    STABLE_ATTRIBUTES.includes(attributeName) ||
+    attributeName === configuration.actionNameAttribute
+  ) {
+    return false
+  }
+
+  switch (attributeName) {
+    case 'title':
+    case 'alt':
+    case 'placeholder':
+      return true
+  }
+  if (tagName === 'A' && attributeName === 'href') {
+    return true
+  }
+  if (tagName === 'IFRAME' && attributeName === 'srcdoc') {
+    return true
+  }
+  if (attributeValue && attributeName.startsWith('data-')) {
+    return true
+  }
+  if ((tagName === 'IMG' || tagName === 'SOURCE') && (attributeName === 'src' || attributeName === 'srcset')) {
+    return true
+  }
+
+  return false
 }
 
 function isFormElement(node: Node | null): boolean {

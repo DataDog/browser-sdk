@@ -4,7 +4,14 @@ import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
 import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { Observable } from '../tools/observable'
+import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
+
+/**
+ * beacon payload max queue size implementation is 64kb
+ * ensure that we leave room for logs, rum and potential other users
+ */
+export const RECOMMENDED_REQUEST_BYTES_LIMIT = 16 * ONE_KIBI_BYTE
 
 /**
  * Use POST request without content type to:
@@ -65,8 +72,8 @@ export interface RetryInfo {
 
 export function createHttpRequest<Body extends Payload = Payload>(
   endpointBuilders: EndpointBuilder[],
-  bytesLimit: number,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT
 ): HttpRequest<Body> {
   const observable = new Observable<HttpRequestEvent<Body>>()
   const retryState = newRetryState<Body>()

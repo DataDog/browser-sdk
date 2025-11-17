@@ -28,7 +28,7 @@ export function startRecording(
   }
 
   const replayRequest =
-    httpRequest || createHttpRequest([configuration.sessionReplayEndpointBuilder], SEGMENT_BYTES_LIMIT, reportError)
+    httpRequest || createHttpRequest([configuration.sessionReplayEndpointBuilder], reportError, SEGMENT_BYTES_LIMIT)
 
   let addRecord: (record: BrowserRecord, stats?: SerializationStats) => void
 

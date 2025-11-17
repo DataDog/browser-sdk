@@ -484,7 +484,7 @@ describe('rum assembly', () => {
     describe(`${eventType} events limitation`, () => {
       it(`stops sending ${eventType} events when reaching the limit`, () => {
         const { lifeCycle, serverRumEvents, reportErrorSpy } = setupAssemblyTestWithDefaults({
-          partialConfiguration: { eventRateLimiterThreshold: 1 },
+          eventRateLimit: 1,
         })
 
         notifyRawRumEvent(lifeCycle, {
@@ -508,13 +508,13 @@ describe('rum assembly', () => {
       it(`does not take discarded ${eventType} events into account`, () => {
         const { lifeCycle, serverRumEvents, reportErrorSpy } = setupAssemblyTestWithDefaults({
           partialConfiguration: {
-            eventRateLimiterThreshold: 1,
             beforeSend: (event) => {
               if (event.type === eventType && event.date === 100) {
                 return false
               }
             },
           },
+          eventRateLimit: 1,
         })
 
         notifyRawRumEvent(lifeCycle, {
@@ -542,7 +542,7 @@ describe('rum assembly', () => {
 
         it(`allows to send new ${eventType} events after a minute`, () => {
           const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-            partialConfiguration: { eventRateLimiterThreshold: 1 },
+            eventRateLimit: 1,
           })
 
           notifyRawRumEvent(lifeCycle, {
@@ -583,12 +583,14 @@ interface AssemblyTestParams {
   sessionManager?: RumSessionManager
   ciVisibilityContext?: Record<string, string>
   findView?: ViewHistory['findView']
+  eventRateLimit?: number
 }
 
 function setupAssemblyTestWithDefaults({
   partialConfiguration,
   sessionManager,
   findView = () => ({ id: '7890', name: 'view name', startClocks: {} as ClocksState, sessionIsActive: false }),
+  eventRateLimit,
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
@@ -602,7 +604,7 @@ function setupAssemblyTestWithDefaults({
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
   startGlobalContext(hooks, mockRumConfiguration(), 'rum', true)
   startSessionContext(hooks, rumSessionManager, recorderApi, viewHistory)
-  startRumAssembly(mockRumConfiguration(partialConfiguration), lifeCycle, hooks, reportErrorSpy)
+  startRumAssembly(mockRumConfiguration(partialConfiguration), lifeCycle, hooks, reportErrorSpy, eventRateLimit)
 
   registerCleanupTask(() => {
     subscription.unsubscribe()

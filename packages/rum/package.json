@@ -1,21 +1,20 @@
 {
   "name": "@datadog/browser-rum",
-  "version": "6.23.0",
+  "version": "6.24.0",
   "license": "Apache-2.0",
   "main": "cjs/entries/main.js",
   "module": "esm/entries/main.js",
   "types": "cjs/entries/main.d.ts",
   "scripts": {
-    "pack": "yarn pack",
     "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-rum.js",
     "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-rum.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.23.0",
-    "@datadog/browser-rum-core": "6.23.0"
+    "@datadog/browser-core": "6.24.0",
+    "@datadog/browser-rum-core": "6.24.0"
   },
   "peerDependencies": {
-    "@datadog/browser-logs": "6.23.0"
+    "@datadog/browser-logs": "6.24.0"
   },
   "peerDependenciesMeta": {
     "@datadog/browser-logs": {

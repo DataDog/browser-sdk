@@ -66,7 +66,7 @@ cmd_release () {
 cmd_version () {
   node ./scripts/release/generate-changelog/index.ts
   node ./scripts/release/update-peer-dependency-versions.ts
-  lerna run pack --stream
+  yarn run pack
   # keep test apps lockfiles up to date
   for app_package_path in $(git ls-files test/apps/*/package.json); do
     app_dir=$(dirname "$app_package_path");
@@ -83,8 +83,8 @@ cmd_woke () {
 }
 
 cmd_check_server_side_rendering_compatibility () {
-  yarn build
-  yarn lerna run pack --stream
+  yarn run build
+  yarn run pack
   cd test/apps/vanilla
   rm -rf node_modules
   yarn install --no-immutable
