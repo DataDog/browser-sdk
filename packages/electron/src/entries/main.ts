@@ -5,9 +5,23 @@
  * - [x] Transport layer (for the bridge from webview, from dd-trace)
  *   - [x] handle rum events
  *   - [ ] handle routing for other type of events
+ *     - [ ] telemetry
+ *     - [ ] session replays
+ *     - [ ] logs
  *   - [x] handle dd-trace events (forwards APM spans to trace intake)
  * - [x] setup bridge client with ipc from webviews (renderer processes)
  * - [x] use `exposeInMainWorld` to setup the bridge function that will setup the ipc to the main process
+ * - [ ] verify the IPCMain / IpcRenderer are generating correct spans (sync/async/callback/...)
+ * - [ ] check with APM for wraping IPCMain and net
+ * - [ ] crash reporting
+ * - [ ] Test bundling on Windows
+ * - [ ] Setup the build so we can measure the bundle sizes
+ * - [ ] check with APM how we can reduce the dd-trace-size
+ * - [ ] found a real world electron app to try and see how it looks
+ *   - [ ] does the app uses IPC
+ * - [ ] look at all the TODOs around the electron SDK
+ * - [ ] add tests
+ * - [ ] add documentation
  */
 import type { RawError, PageMayExitEvent, Encoder, InitConfiguration, TrackType } from '@datadog/browser-core'
 import {
