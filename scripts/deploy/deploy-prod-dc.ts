@@ -28,6 +28,10 @@ const {
 const version = positionals[0]
 const uploadPath = positionals[1] === 'minor-dcs' ? getAllMinorDcs().join(',') : positionals[1]
 
+if (!uploadPath) {
+  throw new Error('UPLOAD_PATH argument is required')
+}
+
 runMain(async () => {
   if (withMonitorChecks) {
     command`node ./scripts/deploy/check-monitors.ts ${uploadPath}`.withLogs().run()

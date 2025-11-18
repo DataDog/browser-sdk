@@ -79,6 +79,13 @@ step-7_create-github-release:
     - yarn
     - node scripts/release/create-github-release.ts
 
+# This step is used to deploy the SDK to a new datacenter.
+# the `UPLOAD_PATH` variable needs to be provided as an argument when starting the manual job
+optional_step-deploy-to-new-datacenter:
+  extends:
+    - .base-configuration
+    - .deploy-prod
+
 ########################################################################################################################
 # Notify
 ########################################################################################################################
