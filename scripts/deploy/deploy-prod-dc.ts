@@ -13,14 +13,14 @@ const GATE_DURATION = 30 * ONE_MINUTE_IN_SECOND
 const GATE_INTERVAL = ONE_MINUTE_IN_SECOND
 
 const {
-  values: { withMonitorChecks },
+  values: { 'check-monitors': checkMonitors },
   positionals,
 } = parseArgs({
   allowPositionals: true,
+  allowNegative: true,
   options: {
-    withMonitorChecks: {
+    'check-monitors': {
       type: 'boolean',
-      default: true,
     },
   },
 })
@@ -33,14 +33,14 @@ if (!uploadPath) {
 }
 
 runMain(async () => {
-  if (withMonitorChecks) {
+  if (checkMonitors) {
     command`node ./scripts/deploy/check-monitors.ts ${uploadPath}`.withLogs().run()
   }
 
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPath}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPath}`.withLogs().run()
 
-  if (withMonitorChecks && uploadPath !== 'root') {
+  if (checkMonitors && uploadPath !== 'root') {
     await gateMonitors(uploadPath)
   }
 })

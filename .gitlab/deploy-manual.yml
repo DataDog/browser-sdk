@@ -19,7 +19,7 @@ stages:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $UPLOAD_PATH --withMonitorChecks false
+    - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $UPLOAD_PATH --no-check-monitors
 
 step-1_deploy-prod-minor-dcs:
   extends:
