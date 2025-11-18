@@ -12,10 +12,12 @@ const OTHER_EXTENSIONS: Array<{ name: string; options?: { runAt?: string } }> = 
 
 runMain(async () => {
   printLog('Packing packages...')
-  command`yarn lerna run pack`.run()
+  command`yarn run pack`.run()
 
   buildApp('test/apps/vanilla')
   buildApp('test/apps/react-router-v6-app')
+  buildApp('test/apps/react-heavy-spa')
+  buildApp('test/apps/react-shopist-like')
   await buildReactRouterv7App()
   await buildExtensions()
 

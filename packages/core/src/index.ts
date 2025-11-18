@@ -79,6 +79,7 @@ export {
   BridgeCapability,
   createBatch,
   createFlushController,
+  FLUSH_DURATION_LIMIT,
 } from './transport'
 export * from './tools/display'
 export type { Encoder, EncoderResult } from './tools/encoder'

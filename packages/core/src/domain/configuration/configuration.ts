@@ -1,10 +1,7 @@
 import { catchUserErrors } from '../../tools/catchUserErrors'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
 import type { RawTelemetryConfiguration } from '../telemetry'
-import type { Duration } from '../../tools/utils/timeUtils'
-import { ONE_SECOND } from '../../tools/utils/timeUtils'
 import { isPercentage } from '../../tools/utils/numberUtils'
-import { ONE_KIBI_BYTE } from '../../tools/utils/byteUtils'
 import { objectHasValue } from '../../tools/utils/objectUtils'
 import { selectSessionStoreStrategyType } from '../session/sessionStore'
 import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
@@ -216,6 +213,15 @@ export interface InitConfiguration {
    */
   trackAnonymousUser?: boolean | undefined
 
+  /**
+   * Encode cookie options in the cookie value. This can be used as a mitigation for microssession issues.
+   * ⚠️ This is a beta feature and may be changed or removed in the future.
+   *
+   * @category Beta
+   * @defaultValue false
+   */
+  betaEncodeCookieOptions?: boolean | undefined
+
   // internal options
   /**
    * [Internal option] Enable experimental features
@@ -318,15 +324,7 @@ export interface Configuration extends TransportConfiguration {
   trackingConsent: TrackingConsent
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
-  // Event limits
-  eventRateLimiterThreshold: number // Limit the maximum number of actions, errors and logs per minutes
-  maxTelemetryEventsPerPage: number
-
-  // Batch configuration
-  batchBytesLimit: number
-  flushTimeout: Duration
-  batchMessagesLimit: number
-  messageBytesLimit: number
+  betaEncodeCookieOptions: boolean
 
   // internal
   sdkVersion: string | undefined
@@ -414,27 +412,7 @@ export function validateAndBuildConfiguration(
     trackingConsent: initConfiguration.trackingConsent ?? TrackingConsent.GRANTED,
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
-    /**
-     * beacon payload max queue size implementation is 64kb
-     * ensure that we leave room for logs, rum and potential other users
-     */
-    batchBytesLimit: 16 * ONE_KIBI_BYTE,
-
-    eventRateLimiterThreshold: 3000,
-    maxTelemetryEventsPerPage: 15,
-
-    /**
-     * flush automatically, aim to be lower than ALB connection timeout
-     * to maximize connection reuse.
-     */
-    flushTimeout: (30 * ONE_SECOND) as Duration,
-
-    /**
-     * Logs intake limit. When using the SDK in a Worker Environment, we
-     * limit the batch size to 1 to ensure it can be sent in a single event.
-     */
-    batchMessagesLimit: isWorkerEnvironment ? 1 : 50,
-    messageBytesLimit: 256 * ONE_KIBI_BYTE,
+    betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
 
     /**
      * The source of the SDK, used for support plugins purposes.
@@ -465,6 +443,7 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,
     tracking_consent: initConfiguration.trackingConsent,
     use_allowed_tracking_origins: Array.isArray(initConfiguration.allowedTrackingOrigins),
+    beta_encode_cookie_options: initConfiguration.betaEncodeCookieOptions,
     source: initConfiguration.source,
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,

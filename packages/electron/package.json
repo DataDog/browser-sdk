@@ -12,8 +12,8 @@
     "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-electron.js"
   },
   "dependencies": {
-    "@datadog/browser-core": "6.23.0",
-    "@datadog/browser-rum-core": "6.23.0",
+    "@datadog/browser-core": "6.24.0",
+    "@datadog/browser-rum-core": "6.24.0",
     "@msgpack/msgpack": "3.1.2",
     "@openfeature/core": "1.9.1",
     "dd-trace": "^5.76.0",

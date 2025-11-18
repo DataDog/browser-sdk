@@ -81,7 +81,6 @@ function makeDatadogElectron() {
 
       const spanBatch = startElectronSpanBatch(
         initConfiguration,
-        configuration,
         () => {
           console.error('Error reporting to Datadog')
         },
@@ -116,15 +115,11 @@ export function startElectronRumBatch(
 ) {
   const batch = createBatch({
     encoder: createEncoder(DeflateEncoderStreamId.RUM),
-    request: createHttpRequest([configuration.rumEndpointBuilder], configuration.batchBytesLimit, reportError),
+    request: createHttpRequest([configuration.rumEndpointBuilder], reportError),
     flushController: createFlushController({
-      messagesLimit: configuration.batchMessagesLimit,
-      bytesLimit: configuration.batchBytesLimit,
-      durationLimit: configuration.flushTimeout,
       pageMayExitObservable,
       sessionExpireObservable,
     }),
-    messageBytesLimit: configuration.messageBytesLimit,
   })
 
   return batch
@@ -133,7 +128,6 @@ export function startElectronRumBatch(
 // TODO change it by a single event fetch
 export function startElectronSpanBatch(
   initConfiguration: InitConfiguration,
-  configuration: RumConfiguration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
   sessionExpireObservable: Observable<void>,
@@ -143,15 +137,11 @@ export function startElectronSpanBatch(
 
   const batch = createBatch({
     encoder: createEncoder(DeflateEncoderStreamId.RUM),
-    request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
+    request: createHttpRequest(endpoints, reportError),
     flushController: createFlushController({
-      messagesLimit: configuration.batchMessagesLimit,
-      bytesLimit: configuration.batchBytesLimit,
-      durationLimit: configuration.flushTimeout,
       pageMayExitObservable,
       sessionExpireObservable,
     }),
-    messageBytesLimit: configuration.messageBytesLimit,
   })
 
   return batch

@@ -1,10 +1,25 @@
 import type { PageMayExitEvent, PageExitReason } from '../browser/pageMayExitObservable'
+import { isWorkerEnvironment } from '../tools/globalObject'
 import { Observable } from '../tools/observable'
 import type { TimeoutId } from '../tools/timer'
 import { clearTimeout, setTimeout } from '../tools/timer'
+import { ONE_SECOND } from '../tools/utils/timeUtils'
 import type { Duration } from '../tools/utils/timeUtils'
+import { RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 export type FlushReason = PageExitReason | 'duration_limit' | 'bytes_limit' | 'messages_limit' | 'session_expire'
+
+/**
+ * flush automatically, aim to be lower than ALB connection timeout
+ * to maximize connection reuse.
+ */
+export const FLUSH_DURATION_LIMIT = (30 * ONE_SECOND) as Duration
+
+/**
+ * When using the SDK in a Worker Environment, we limit the batch size to 1 to ensure it can be sent
+ * in a single event.
+ */
+export const MESSAGES_LIMIT = isWorkerEnvironment ? 1 : 50
 
 export type FlushController = ReturnType<typeof createFlushController>
 export interface FlushEvent {
@@ -14,9 +29,6 @@ export interface FlushEvent {
 }
 
 interface FlushControllerOptions {
-  messagesLimit: number
-  bytesLimit: number
-  durationLimit: Duration
   pageMayExitObservable: Observable<PageMayExitEvent>
   sessionExpireObservable: Observable<void>
 }
@@ -26,13 +38,7 @@ interface FlushControllerOptions {
  * to happen. The implementation is designed to support both synchronous and asynchronous usages,
  * but relies on invariants described in each method documentation to keep a coherent state.
  */
-export function createFlushController({
-  messagesLimit,
-  bytesLimit,
-  durationLimit,
-  pageMayExitObservable,
-  sessionExpireObservable,
-}: FlushControllerOptions) {
+export function createFlushController({ pageMayExitObservable, sessionExpireObservable }: FlushControllerOptions) {
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => flush(event.reason))
   const sessionExpireSubscription = sessionExpireObservable.subscribe(() => flush('session_expire'))
 
@@ -68,7 +74,7 @@ export function createFlushController({
     if (durationLimitTimeoutId === undefined) {
       durationLimitTimeoutId = setTimeout(() => {
         flush('duration_limit')
-      }, durationLimit)
+      }, FLUSH_DURATION_LIMIT)
     }
   }
 
@@ -93,7 +99,7 @@ export function createFlushController({
      * actually added.
      */
     notifyBeforeAddMessage(estimatedMessageBytesCount: number) {
-      if (currentBytesCount + estimatedMessageBytesCount >= bytesLimit) {
+      if (currentBytesCount + estimatedMessageBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
         flush('bytes_limit')
       }
       // Consider the message to be added now rather than in `notifyAfterAddMessage`, because if no
@@ -116,9 +122,9 @@ export function createFlushController({
     notifyAfterAddMessage(messageBytesCountDiff = 0) {
       currentBytesCount += messageBytesCountDiff
 
-      if (currentMessagesCount >= messagesLimit) {
+      if (currentMessagesCount >= MESSAGES_LIMIT) {
         flush('messages_limit')
-      } else if (currentBytesCount >= bytesLimit) {
+      } else if (currentBytesCount >= RECOMMENDED_REQUEST_BYTES_LIMIT) {
         flush('bytes_limit')
       }
     },

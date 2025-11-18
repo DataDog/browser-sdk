@@ -38,6 +38,7 @@ export const EXHAUSTIVE_INIT_CONFIGURATION: Required<InitConfiguration> = {
   telemetryConfigurationSampleRate: 70,
   telemetryUsageSampleRate: 80,
   allowedTrackingOrigins: ['chrome-extension://example'],
+  betaEncodeCookieOptions: true,
   source: 'browser',
   sdkVersion: '1.0.0',
   variant: 'variant',
@@ -61,6 +62,7 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
   tracking_consent: 'not-granted' as const,
   track_anonymous_user: true,
   use_allowed_tracking_origins: true,
+  beta_encode_cookie_options: true,
   source: 'browser',
   sdk_version: '1.0.0',
   variant: 'variant',
@@ -70,7 +72,7 @@ export const SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION = {
  * Maps the keys of InitConfiguration to their serialized version.
  */
 export type MapInitConfigurationKey<Key extends string> =
-  // Some keys are prefixed with `use_` to indicate that they are boolean flags
+  // Some keys cannot be serialized so we prefix them with `use_` to indicate that the option was set.
   Key extends 'proxy' | 'beforeSend' | 'allowedTrackingOrigins'
     ? `use_${CamelToSnakeCase<Key>}`
     : // Those keys should not be serialized

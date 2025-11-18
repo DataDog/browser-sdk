@@ -1,4 +1,3 @@
-import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../../../tools/experimentalFeatures'
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
@@ -34,7 +33,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
     isLockEnabled: isChromium(),
     persistSession: (sessionState: SessionState) =>
       storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
-    retrieveSession: () => retrieveSessionCookie(cookieOptions),
+    retrieveSession: () => retrieveSessionCookie(cookieOptions, configuration),
     expireSession: (sessionState: SessionState) =>
       storeSessionCookie(
         cookieOptions,
@@ -57,7 +56,7 @@ function storeSessionCookie(
 ) {
   let sessionStateString = toSessionString(sessionState)
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.ENCODE_COOKIE_OPTIONS)) {
+  if (configuration.betaEncodeCookieOptions) {
     sessionStateString = toSessionString({
       ...sessionState,
       // deleting a cookie is writing a new cookie with an empty value
@@ -78,8 +77,8 @@ function storeSessionCookie(
  * Retrieve the session state from the cookie that was set with the same cookie options
  * If there is no match, return the first cookie, because that's how `getCookie()` works
  */
-export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionState {
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.ENCODE_COOKIE_OPTIONS)) {
+export function retrieveSessionCookie(cookieOptions: CookieOptions, configuration: Configuration): SessionState {
+  if (configuration.betaEncodeCookieOptions) {
     return retrieveSessionCookieFromEncodedCookie(cookieOptions)
   }
 
