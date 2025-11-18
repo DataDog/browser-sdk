@@ -5,7 +5,7 @@
  */
 import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/secrets.ts'
-import { monitorIdsByDatacenter, siteByDatacenter } from '../lib/datadogSites.ts'
+import { monitorIdsByDatacenter, siteByDatacenter } from '../lib/datacenter.ts'
 
 interface MonitorStatus {
   id: number

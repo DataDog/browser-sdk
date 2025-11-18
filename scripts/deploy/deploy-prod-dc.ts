@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util'
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
-import { siteByDatacenter } from '../lib/datadogSites.ts'
+import { siteByDatacenter } from '../lib/datacenter.ts'
 
 /**
  * Orchestrate the deployments of the artifacts for specific DCs
