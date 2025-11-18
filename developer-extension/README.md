@@ -90,7 +90,7 @@ Info tab contains information about Session and RUM SDK configurations
 Read the [Extend the developers
 tools](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Extending_the_developer_tools)
 MDN guide to get up to speed with WebExtensions for devtools. In particular, look for the
-various entrypoints (panel.html, devtools.html) and the content script communication as it'
+various entrypoints (panel.html, devtools.html) and the content script communication, as it'
 s not straightforward.
 
 To work on the developer extension and debug it easily:
@@ -99,4 +99,4 @@ To work on the developer extension and debug it easily:
 
 2. Run `yarn dev`.
 
-3. It should open a Chrome browser window with the developer extension loaded.
+3. A Chrome browser window with the developer extension loaded opens.
