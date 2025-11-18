@@ -21,7 +21,7 @@
  *   - [ ] does the app uses IPC
  * - [ ] look at all the TODOs around the electron SDK
  * - [ ] add tests
- * - [ ] add documentation
+ * - [ ] source + user agent in the UI (electron app)
  */
 import type { RawError, PageMayExitEvent, Encoder, InitConfiguration, TrackType } from '@datadog/browser-core'
 import {
