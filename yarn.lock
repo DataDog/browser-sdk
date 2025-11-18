@@ -381,7 +381,7 @@ __metadata:
     electron: "npm:39"
     pako: "npm:2.1.0"
   peerDependencies:
-    "@datadog/browser-logs": 6.23.0
+    "@datadog/browser-logs": 6.24.0
     electron: 39
   peerDependenciesMeta:
     "@datadog/browser-logs":
