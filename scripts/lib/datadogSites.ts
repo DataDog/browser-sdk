@@ -5,6 +5,7 @@ export const siteByDatacenter: Record<string, string> = {
   us5: 'us5.datadoghq.com',
   ap1: 'ap1.datadoghq.com',
   ap2: 'ap2.datadoghq.com',
+  pr00test: 'pr00test.staging.dog',
 }
 
 /**
