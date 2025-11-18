@@ -1,0 +1,105 @@
+.service-grid {
+  background: var(--color-surface, #2a2a2a);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.grid-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text, #e0e0e0);
+  margin: 0 0 20px 0;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.service-card {
+  background: var(--color-bg, #1e1e1e);
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 16px;
+  transition: border-color 0.2s ease;
+}
+
+.service-card:hover {
+  border-color: var(--color-primary, #632ca6);
+}
+
+.service-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.service-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.service-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text, #e0e0e0);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.service-metric {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+.metric-label {
+  color: var(--color-text-secondary, #b0b0b0);
+}
+
+.metric-val {
+  color: var(--color-text, #e0e0e0);
+  font-weight: 500;
+}
+
+.grid-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  color: var(--color-text-secondary, #b0b0b0);
+}
+
+.grid-loading p {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.grid-loading .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #3ebf62;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
