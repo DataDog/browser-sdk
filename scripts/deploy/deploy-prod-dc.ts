@@ -1,5 +1,6 @@
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
+import { siteByDatacenter } from '../lib/datadogSites.ts'
 
 /**
  * Orchestrate the deployments of the artifacts for specific DCs
@@ -11,7 +12,7 @@ const GATE_DURATION = 30 * ONE_MINUTE_IN_SECOND
 const GATE_INTERVAL = ONE_MINUTE_IN_SECOND
 
 const version: string = process.argv[2]
-const uploadPath: string = process.argv[3]
+const uploadPath: string = process.argv[3] === 'minor-dcs' ? getAllMinorDcs().join(',') : process.argv[3]
 const withMonitorChecks: boolean = process.argv[4] === 'true'
 
 runMain(async () => {
@@ -35,4 +36,13 @@ async function gateMonitors(uploadPath: string): Promise<void> {
     await timeout(GATE_INTERVAL * 1000)
   }
   printLog() // new line
+}
+
+// Major DCs are the ones that are deployed last.
+// They have their own step jobs in `deploy-manual.yml` and `deploy-auto.yml`.
+const MAJOR_DCS = ['root', 'us1', 'eu1']
+
+// Minor DCs are all the DCs from `siteByDatacenter` that are not in `MAJOR_DCS`.
+function getAllMinorDcs(): string[] {
+  return Object.keys(siteByDatacenter).filter((dc) => !MAJOR_DCS.includes(dc))
 }
