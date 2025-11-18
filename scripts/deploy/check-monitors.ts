@@ -7,15 +7,13 @@ import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/secrets.ts'
 import { monitorIdsByDatacenter, siteByDatacenter } from '../lib/datadogSites.ts'
 
-type Datacenter = keyof typeof siteByDatacenter
-
 interface MonitorStatus {
   id: number
   name: string
   overall_state: string
 }
 
-const datacenters = process.argv[2].split(',') as Datacenter[]
+const datacenters = process.argv[2].split(',')
 
 runMain(async () => {
   for (const datacenter of datacenters) {
