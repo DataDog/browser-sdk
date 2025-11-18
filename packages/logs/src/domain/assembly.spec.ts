@@ -291,12 +291,12 @@ describe('logs limitation', () => {
     const configuration = {
       ...validateAndBuildLogsConfiguration(initConfiguration)!,
       maxBatchSize: 1,
-      eventRateLimiterThreshold: 1,
       beforeSend: (x: LogsEvent) => beforeSend(x),
     }
+
     beforeSend = noop
     reportErrorSpy = jasmine.createSpy('reportError')
-    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy)
+    startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, reportErrorSpy, 1)
     clock = mockClock()
   })
 

@@ -20,6 +20,10 @@
 
     // Files included in ./test/e2e/tsconfig.json
     "test/e2e",
+    "test/lib",
+
+    // Files included in ./test/performance/tsconfig.json
+    "test/performance",
 
     // Files included in ./developer-extension/tsconfig.json
     "developer-extension",

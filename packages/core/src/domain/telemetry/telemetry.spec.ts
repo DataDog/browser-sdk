@@ -25,7 +25,13 @@ import {
 import type { TelemetryEvent } from './telemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
 
-function startAndSpyTelemetry(configuration?: Partial<Configuration>, options?: { metricSampleRate: number }) {
+function startAndSpyTelemetry(
+  configuration?: Partial<Configuration>,
+  {
+    metricSampleRate,
+    maxTelemetryEventsPerPage,
+  }: { metricSampleRate?: number; maxTelemetryEventsPerPage?: number } = {}
+) {
   const observable = new Observable<TelemetryEvent & Context>()
 
   const events: TelemetryEvent[] = []
@@ -34,14 +40,14 @@ function startAndSpyTelemetry(configuration?: Partial<Configuration>, options?: 
   const telemetry = startTelemetryCollection(
     TelemetryService.RUM,
     {
-      maxTelemetryEventsPerPage: 7,
       telemetrySampleRate: 100,
       telemetryUsageSampleRate: 100,
       ...configuration,
     } as Configuration,
     hooks,
     observable,
-    options?.metricSampleRate
+    metricSampleRate,
+    maxTelemetryEventsPerPage
   )
 
   return {
@@ -341,7 +347,7 @@ describe('telemetry', () => {
     })
 
     it('should not consider a discarded event for the maxTelemetryEventsPerPage', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+      const { getTelemetryEvents } = startAndSpyTelemetry(undefined, { maxTelemetryEventsPerPage: 2 })
 
       addTelemetryUsage({ feature: 'stop-session' })
       addTelemetryUsage({ feature: 'stop-session' })
@@ -356,7 +362,7 @@ describe('telemetry', () => {
 
   describe('maxTelemetryEventsPerPage', () => {
     it('should be enforced', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 })
+      const { getTelemetryEvents } = startAndSpyTelemetry(undefined, { maxTelemetryEventsPerPage: 2 })
 
       addTelemetryUsage({ feature: 'stop-session' })
       addTelemetryUsage({ feature: 'start-session-replay-recording' })
@@ -369,7 +375,10 @@ describe('telemetry', () => {
     })
 
     it('should be enforced separately for different kinds of telemetry', async () => {
-      const { getTelemetryEvents } = startAndSpyTelemetry({ maxTelemetryEventsPerPage: 2 }, { metricSampleRate: 100 })
+      const { getTelemetryEvents } = startAndSpyTelemetry(undefined, {
+        metricSampleRate: 100,
+        maxTelemetryEventsPerPage: 2,
+      })
 
       // Group 1. These are all distinct kinds of telemetry, so these should all be sent.
       addTelemetryDebug('debug 1')

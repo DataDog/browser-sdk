@@ -5,6 +5,7 @@
     { "path": "./tsconfig.scripts.json" },
     { "path": "./developer-extension/tsconfig.json" },
     { "path": "./test/e2e/tsconfig.json" },
+    { "path": "./test/performance/tsconfig.json" },
     { "path": "./performances/tsconfig.json" }
   ]
 }

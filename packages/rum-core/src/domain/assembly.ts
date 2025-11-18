@@ -39,7 +39,8 @@ export function startRumAssembly(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   hooks: Hooks,
-  reportError: (error: RawError) => void
+  reportError: (error: RawError) => void,
+  eventRateLimit?: number
 ) {
   modifiableFieldPathsByEvent = {
     [RumEventType.VIEW]: {
@@ -84,21 +85,9 @@ export function startRumAssembly(
     },
   }
   const eventRateLimiters = {
-    [RumEventType.ERROR]: createEventRateLimiter(
-      RumEventType.ERROR,
-      configuration.eventRateLimiterThreshold,
-      reportError
-    ),
-    [RumEventType.ACTION]: createEventRateLimiter(
-      RumEventType.ACTION,
-      configuration.eventRateLimiterThreshold,
-      reportError
-    ),
-    [RumEventType.VITAL]: createEventRateLimiter(
-      RumEventType.VITAL,
-      configuration.eventRateLimiterThreshold,
-      reportError
-    ),
+    [RumEventType.ERROR]: createEventRateLimiter(RumEventType.ERROR, reportError, eventRateLimit),
+    [RumEventType.ACTION]: createEventRateLimiter(RumEventType.ACTION, reportError, eventRateLimit),
+    [RumEventType.VITAL]: createEventRateLimiter(RumEventType.VITAL, reportError, eventRateLimit),
   }
 
   lifeCycle.subscribe(

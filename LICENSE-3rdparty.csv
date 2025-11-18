@@ -25,6 +25,8 @@ dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
 dev,@wxt-dev/module-react,MIT,Copyright (c) 2023 Aaron
+dev,@types/react-window,MIT,Copyright Microsoft Corporation
+dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contributors
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,chrome-webstore-upload,MIT,Copyright Federico Brigante <me@fregante.com> (https://fregante.com), 2020 Andrew Levine
@@ -58,12 +60,15 @@ dev,pako,MIT,(C) 2014-2017 Vitaly Puzrin and Andrey Tupitsin
 dev,prettier,MIT,Copyright James Long and contributors
 dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
 dev,react-router-dom,MIT,Copyright (c) React Training LLC 2015-2019 Copyright (c) Remix Software Inc. 2020-2021 Copyright (c) Shopify Inc. 2022-2023
+dev,react-window,MIT,Copyright (c) 2018 Brian Vaughn
+dev,recharts,MIT,Copyright (c) 2015-present recharts
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
 dev,ts-node,MIT,Copyright 2014 Blake Embrey
 dev,tsconfig-paths-webpack-plugin,MIT,Copyright 2016 Jonas Kello
 dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
+dev,vite,MIT,Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors

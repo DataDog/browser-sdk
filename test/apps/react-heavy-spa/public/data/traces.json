@@ -1,0 +1,297 @@
+{
+  "traces": [
+    {
+      "id": "trace-1",
+      "traceId": "abc123def456",
+      "service": "api-gateway",
+      "operation": "POST /api/checkout",
+      "duration": 1245,
+      "timestamp": 1697501140000,
+      "status": "ok",
+      "spans": [
+        {
+          "spanId": "span-1",
+          "operation": "http.request",
+          "duration": 1245,
+          "service": "api-gateway",
+          "resource": "POST /api/checkout"
+        },
+        {
+          "spanId": "span-2",
+          "operation": "validate.user",
+          "duration": 45,
+          "service": "auth-service",
+          "resource": "validate_token"
+        },
+        {
+          "spanId": "span-3",
+          "operation": "db.query",
+          "duration": 120,
+          "service": "user-service",
+          "resource": "SELECT FROM users"
+        },
+        {
+          "spanId": "span-4",
+          "operation": "payment.process",
+          "duration": 850,
+          "service": "payment-service",
+          "resource": "charge_card"
+        },
+        {
+          "spanId": "span-5",
+          "operation": "inventory.check",
+          "duration": 95,
+          "service": "inventory-service",
+          "resource": "check_stock"
+        },
+        {
+          "spanId": "span-6",
+          "operation": "email.send",
+          "duration": 135,
+          "service": "notification-service",
+          "resource": "send_confirmation"
+        }
+      ]
+    },
+    {
+      "id": "trace-2",
+      "traceId": "xyz789ghi012",
+      "service": "search-service",
+      "operation": "GET /api/search",
+      "duration": 345,
+      "timestamp": 1697501135000,
+      "status": "ok",
+      "spans": [
+        {
+          "spanId": "span-7",
+          "operation": "http.request",
+          "duration": 345,
+          "service": "search-service",
+          "resource": "GET /api/search"
+        },
+        {
+          "spanId": "span-8",
+          "operation": "cache.get",
+          "duration": 15,
+          "service": "cache-service",
+          "resource": "GET search:query:123"
+        },
+        {
+          "spanId": "span-9",
+          "operation": "elasticsearch.query",
+          "duration": 280,
+          "service": "search-service",
+          "resource": "search_products"
+        },
+        {
+          "spanId": "span-10",
+          "operation": "cache.set",
+          "duration": 25,
+          "service": "cache-service",
+          "resource": "SET search:query:123"
+        }
+      ]
+    },
+    {
+      "id": "trace-3",
+      "traceId": "mno345pqr678",
+      "service": "user-service",
+      "operation": "PUT /api/users/profile",
+      "duration": 285,
+      "timestamp": 1697501130000,
+      "status": "ok",
+      "spans": [
+        {
+          "spanId": "span-11",
+          "operation": "http.request",
+          "duration": 285,
+          "service": "user-service",
+          "resource": "PUT /api/users/profile"
+        },
+        {
+          "spanId": "span-12",
+          "operation": "validate.input",
+          "duration": 25,
+          "service": "user-service",
+          "resource": "validate_profile_data"
+        },
+        {
+          "spanId": "span-13",
+          "operation": "db.update",
+          "duration": 180,
+          "service": "db-service",
+          "resource": "UPDATE users"
+        },
+        {
+          "spanId": "span-14",
+          "operation": "cache.invalidate",
+          "duration": 35,
+          "service": "cache-service",
+          "resource": "DEL user:12345"
+        }
+      ]
+    },
+    {
+      "id": "trace-4",
+      "traceId": "stu901vwx234",
+      "service": "storage-service",
+      "operation": "POST /api/upload",
+      "duration": 2450,
+      "timestamp": 1697501125000,
+      "status": "error",
+      "spans": [
+        {
+          "spanId": "span-15",
+          "operation": "http.request",
+          "duration": 2450,
+          "service": "storage-service",
+          "resource": "POST /api/upload"
+        },
+        {
+          "spanId": "span-16",
+          "operation": "validate.file",
+          "duration": 55,
+          "service": "storage-service",
+          "resource": "check_file_type"
+        },
+        {
+          "spanId": "span-17",
+          "operation": "s3.upload",
+          "duration": 2350,
+          "service": "storage-service",
+          "resource": "PUT object",
+          "error": "AccessDenied"
+        }
+      ]
+    },
+    {
+      "id": "trace-5",
+      "traceId": "yza567bcd890",
+      "service": "analytics-service",
+      "operation": "POST /api/events",
+      "duration": 125,
+      "timestamp": 1697501120000,
+      "status": "ok",
+      "spans": [
+        {
+          "spanId": "span-18",
+          "operation": "http.request",
+          "duration": 125,
+          "service": "analytics-service",
+          "resource": "POST /api/events"
+        },
+        {
+          "spanId": "span-19",
+          "operation": "kafka.produce",
+          "duration": 85,
+          "service": "analytics-service",
+          "resource": "send_event"
+        }
+      ]
+    },
+    {
+      "id": "trace-6",
+      "traceId": "efg123hij456",
+      "service": "recommendation-service",
+      "operation": "GET /api/recommendations",
+      "duration": 520,
+      "timestamp": 1697501115000,
+      "status": "ok",
+      "spans": [
+        {
+          "spanId": "span-20",
+          "operation": "http.request",
+          "duration": 520,
+          "service": "recommendation-service",
+          "resource": "GET /api/recommendations"
+        },
+        {
+          "spanId": "span-21",
+          "operation": "ml.inference",
+          "duration": 420,
+          "service": "recommendation-service",
+          "resource": "generate_recommendations"
+        },
+        {
+          "spanId": "span-22",
+          "operation": "db.query",
+          "duration": 75,
+          "service": "db-service",
+          "resource": "SELECT FROM products"
+        }
+      ]
+    },
+    {
+      "id": "trace-7",
+      "traceId": "klm789nop012",
+      "service": "shipping-service",
+      "operation": "POST /api/shipping/calculate",
+      "duration": 1850,
+      "timestamp": 1697501110000,
+      "status": "warning",
+      "spans": [
+        {
+          "spanId": "span-23",
+          "operation": "http.request",
+          "duration": 1850,
+          "service": "shipping-service",
+          "resource": "POST /api/shipping/calculate"
+        },
+        {
+          "spanId": "span-24",
+          "operation": "external.api",
+          "duration": 1720,
+          "service": "shipping-service",
+          "resource": "fedex_api_call",
+          "warning": "slow_response"
+        },
+        {
+          "spanId": "span-25",
+          "operation": "db.insert",
+          "duration": 95,
+          "service": "db-service",
+          "resource": "INSERT INTO shipping_quotes"
+        }
+      ]
+    },
+    {
+      "id": "trace-8",
+      "traceId": "qrs345tuv678",
+      "service": "auth-service",
+      "operation": "POST /api/auth/login",
+      "duration": 195,
+      "timestamp": 1697501105000,
+      "status": "ok",
+      "spans": [
+        {
+          "spanId": "span-26",
+          "operation": "http.request",
+          "duration": 195,
+          "service": "auth-service",
+          "resource": "POST /api/auth/login"
+        },
+        {
+          "spanId": "span-27",
+          "operation": "db.query",
+          "duration": 85,
+          "service": "db-service",
+          "resource": "SELECT FROM users"
+        },
+        {
+          "spanId": "span-28",
+          "operation": "crypto.hash",
+          "duration": 65,
+          "service": "auth-service",
+          "resource": "bcrypt_compare"
+        },
+        {
+          "spanId": "span-29",
+          "operation": "jwt.sign",
+          "duration": 25,
+          "service": "auth-service",
+          "resource": "generate_token"
+        }
+      ]
+    }
+  ]
+}

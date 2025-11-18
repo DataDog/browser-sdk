@@ -21,15 +21,11 @@ export function startRumBatch(
 
   const batch = createBatch({
     encoder: createEncoder(DeflateEncoderStreamId.RUM),
-    request: createHttpRequest(endpoints, configuration.batchBytesLimit, reportError),
+    request: createHttpRequest(endpoints, reportError),
     flushController: createFlushController({
-      messagesLimit: configuration.batchMessagesLimit,
-      bytesLimit: configuration.batchBytesLimit,
-      durationLimit: configuration.flushTimeout,
       pageMayExitObservable,
       sessionExpireObservable,
     }),
-    messageBytesLimit: configuration.messageBytesLimit,
   })
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: AssembledRumEvent) => {

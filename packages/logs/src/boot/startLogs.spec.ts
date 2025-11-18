@@ -11,6 +11,7 @@ import {
   STORAGE_POLL_DELAY,
   ONE_MINUTE,
   BufferedObservable,
+  FLUSH_DURATION_LIMIT,
 } from '@datadog/browser-core'
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
@@ -60,7 +61,6 @@ function startLogsWithDefaults(
     {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
       logsEndpointBuilder: endpointBuilder,
-      batchMessagesLimit: 1,
       ...configuration,
     },
     () => COMMON_CONTEXT,
@@ -78,8 +78,10 @@ function startLogsWithDefaults(
 describe('logs', () => {
   let interceptor: ReturnType<typeof interceptRequests>
   let requests: Request[]
+  let clock: Clock
 
   beforeEach(() => {
+    clock = mockClock()
     interceptor = interceptRequests()
     requests = interceptor.requests
   })
@@ -100,6 +102,7 @@ describe('logs', () => {
         COMMON_CONTEXT
       )
 
+      clock.tick(FLUSH_DURATION_LIMIT)
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
@@ -127,14 +130,13 @@ describe('logs', () => {
     })
 
     it('should all use the same batch', async () => {
-      const { handleLog, logger } = startLogsWithDefaults({
-        configuration: { batchMessagesLimit: 3 },
-      })
+      const { handleLog, logger } = startLogsWithDefaults()
 
       handleLog(DEFAULT_MESSAGE, logger)
       handleLog(DEFAULT_MESSAGE, logger)
       handleLog(DEFAULT_MESSAGE, logger)
 
+      clock.tick(FLUSH_DURATION_LIMIT)
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
@@ -145,6 +147,8 @@ describe('logs', () => {
       const { handleLog, logger } = startLogsWithDefaults()
 
       handleLog(DEFAULT_MESSAGE, logger)
+
+      clock.tick(FLUSH_DURATION_LIMIT)
 
       expect(requests.length).toEqual(0)
       const [message] = sendSpy.calls.mostRecent().args
@@ -214,11 +218,6 @@ describe('logs', () => {
   })
 
   describe('session lifecycle', () => {
-    let clock: Clock
-    beforeEach(() => {
-      clock = mockClock()
-    })
-
     it('sends logs without session id when the session expires ', async () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
       const { handleLog, logger } = startLogsWithDefaults()
@@ -232,6 +231,7 @@ describe('logs', () => {
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)
 
+      clock.tick(FLUSH_DURATION_LIMIT)
       await interceptor.waitForAllFetchCalls()
 
       const firstRequest = getLoggedMessage(requests, 0)
@@ -253,6 +253,8 @@ describe('logs', () => {
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
+      clock.tick(FLUSH_DURATION_LIMIT)
+
       const firstRequest = getLoggedMessage(requests, 0)
       expect(firstRequest.session_id).toEqual('from-global-context')
     })
@@ -264,6 +266,8 @@ describe('logs', () => {
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
+      clock.tick(FLUSH_DURATION_LIMIT)
+
       const firstRequest = getLoggedMessage(requests, 0)
       expect(firstRequest.account).toEqual({ id: 'from-global-context' })
     })
@@ -274,6 +278,8 @@ describe('logs', () => {
       userContext.setContext({ id: 'from-user-context' })
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
+
+      clock.tick(FLUSH_DURATION_LIMIT)
 
       const firstRequest = getLoggedMessage(requests, 0)
       expect(firstRequest.usr).toEqual(jasmine.objectContaining({ id: 'from-global-context' }))
@@ -288,6 +294,8 @@ describe('logs', () => {
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
+      clock.tick(FLUSH_DURATION_LIMIT)
+
       const firstRequest = getLoggedMessage(requests, 0)
       expect(firstRequest.view.url).toEqual('from-rum-context')
     })
@@ -301,6 +309,7 @@ describe('logs', () => {
       // Log a message with consent granted - should be sent
       handleLog({ status: StatusType.info, message: 'message before revocation' }, logger)
 
+      clock.tick(FLUSH_DURATION_LIMIT)
       await interceptor.waitForAllFetchCalls()
       expect(requests.length).toEqual(1)
       expect(getLoggedMessage(requests, 0).message).toBe('message before revocation')
@@ -311,6 +320,7 @@ describe('logs', () => {
       // Log another message - should not be sent
       handleLog({ status: StatusType.info, message: 'message after revocation' }, logger)
 
+      clock.tick(FLUSH_DURATION_LIMIT)
       await interceptor.waitForAllFetchCalls()
       // Should still only have the first request
       expect(requests.length).toEqual(1)

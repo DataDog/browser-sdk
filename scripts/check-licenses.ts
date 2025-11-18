@@ -59,6 +59,9 @@ async function retrieveLicenses(): Promise<string[]> {
   for await (const line of rl) {
     const csvColumns = line.split(',')
     if (!header && csvColumns[0] !== 'file') {
+      if (!csvColumns[1]) {
+        console.log(csvColumns)
+      }
       licenses.push(csvColumns[1])
     }
     header = false
