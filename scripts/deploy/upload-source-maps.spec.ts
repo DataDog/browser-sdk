@@ -4,15 +4,8 @@ import { beforeEach, before, describe, it, mock } from 'node:test'
 import { siteByDatacenter } from '../lib/datadogSites.ts'
 import { mockModule, mockCommandImplementation, replaceChunkHashes } from './lib/testHelpers.ts'
 
-const FAKE_API_KEY = 'FAKE_API_KEY'
-const ENV_STAGING = {
-  DATADOG_API_KEY: FAKE_API_KEY,
-  DATADOG_SITE: 'datad0g.com',
-}
-const ENV_PROD = {
-  DATADOG_API_KEY: FAKE_API_KEY,
-  DATADOG_SITE: 'datadoghq.com',
-}
+const FAKE_ORG2_API_KEY = 'FAKE_ORG2_API_KEY'
+const FAKE_TELEMETRY_API_KEY = 'FAKE_TELEMETRY_API_KEY'
 
 interface CommandDetail {
   command: string
@@ -25,8 +18,13 @@ describe('upload-source-maps', () => {
 
   let uploadSourceMaps: (version: string, uploadPathTypes: string[]) => Promise<void>
 
-  function getSourceMapCommands(): CommandDetail[] {
-    return commands.filter(({ command }) => command.includes('datadog-ci sourcemaps'))
+  function getSourceMapCommands(env: Record<string, string>): CommandDetail[] {
+    return commands
+      .filter(({ command }) => command.includes('datadog-ci sourcemaps'))
+      .filter(
+        ({ env: envCommand }) =>
+          envCommand!.DATADOG_SITE === env.DATADOG_SITE && envCommand!.DATADOG_API_KEY === env.DATADOG_API_KEY
+      )
   }
 
   function getFileRenamingCommands(): CommandDetail[] {
@@ -36,7 +34,8 @@ describe('upload-source-maps', () => {
   before(async () => {
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
     await mockModule(path.resolve(import.meta.dirname, '../lib/secrets.ts'), {
-      getTelemetryOrgApiKey: () => FAKE_API_KEY,
+      getTelemetryOrgApiKey: () => FAKE_TELEMETRY_API_KEY,
+      getOrg2ApiKey: () => FAKE_ORG2_API_KEY,
     })
 
     // This MUST be a dynamic import because that is the only way to ensure the
@@ -49,44 +48,43 @@ describe('upload-source-maps', () => {
     commands = mockCommandImplementation(commandMock)
   })
 
-  function forEachDatacenter(callback: (site: string) => void): void {
-    for (const site of Object.values(siteByDatacenter)) {
-      callback(site)
-    }
-  }
-
   it('should upload root packages source maps', async () => {
     await uploadSourceMaps('v6', ['root'])
 
-    forEachDatacenter((site) => {
-      const commandsByDatacenter = commands.filter(({ env }) => env?.DATADOG_SITE === site)
-      const env = { DATADOG_API_KEY: FAKE_API_KEY, DATADOG_SITE: site }
+    // rename the files with the version suffix
+    assert.deepEqual(getFileRenamingCommands(), [
+      {
+        command: 'mv packages/logs/bundle/datadog-logs.js packages/logs/bundle/datadog-logs-v6.js',
+      },
+      {
+        command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-v6.js.map',
+      },
+      {
+        command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-v6.js',
+      },
+      {
+        command: 'mv packages/rum/bundle/datadog-rum.js.map packages/rum/bundle/datadog-rum-v6.js.map',
+      },
+      {
+        command: 'mv packages/rum-slim/bundle/datadog-rum-slim.js packages/rum-slim/bundle/datadog-rum-slim-v6.js',
+      },
+      {
+        command:
+          'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-v6.js.map',
+      },
+    ])
 
-      // rename the files with the version suffix
-      assert.deepEqual(getFileRenamingCommands(), [
-        {
-          command: 'mv packages/logs/bundle/datadog-logs.js packages/logs/bundle/datadog-logs-v6.js',
-        },
-        {
-          command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-v6.js.map',
-        },
-        {
-          command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-v6.js',
-        },
-        {
-          command: 'mv packages/rum/bundle/datadog-rum.js.map packages/rum/bundle/datadog-rum-v6.js.map',
-        },
-        {
-          command: 'mv packages/rum-slim/bundle/datadog-rum-slim.js packages/rum-slim/bundle/datadog-rum-slim-v6.js',
-        },
-        {
-          command:
-            'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-v6.js.map',
-        },
-      ])
-
-      // upload the source maps
-      assert.deepEqual(commandsByDatacenter, [
+    // upload the source maps
+    ;[
+      { DATADOG_SITE: siteByDatacenter.us1, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.eu1, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.us3, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.us5, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.ap1, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.ap2, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.us1, DATADOG_API_KEY: FAKE_ORG2_API_KEY },
+    ].forEach((env) => {
+      assert.deepEqual(getSourceMapCommands(env), [
         {
           command:
             'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
@@ -109,23 +107,29 @@ describe('upload-source-maps', () => {
   it('should upload datacenter packages source maps', async () => {
     await uploadSourceMaps('v6', ['us1'])
 
-    assert.deepEqual(commands, [
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-    ])
+    // upload the source maps
+    ;[
+      { DATADOG_SITE: siteByDatacenter.us1, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.us1, DATADOG_API_KEY: FAKE_ORG2_API_KEY },
+    ].forEach((env) => {
+      assert.deepEqual(getSourceMapCommands(env), [
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix /us1/v6 --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+      ])
+    })
   })
 
   it('should upload staging packages source maps', async () => {
@@ -155,38 +159,29 @@ describe('upload-source-maps', () => {
     ])
 
     // upload the source maps
-    assert.deepEqual(getSourceMapCommands(), [
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_STAGING,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_STAGING,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_STAGING,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-    ])
+    ;[
+      { DATADOG_SITE: 'datad0g.com', DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.us1, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.us1, DATADOG_API_KEY: FAKE_ORG2_API_KEY },
+    ].forEach((env) => {
+      assert.deepEqual(getSourceMapCommands(env), [
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+      ])
+    })
   })
 
   it('should upload canary packages source maps', async () => {
@@ -216,22 +211,27 @@ describe('upload-source-maps', () => {
     ])
 
     // upload the source maps
-    assert.deepEqual(getSourceMapCommands(), [
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-      {
-        command:
-          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
-        env: ENV_PROD,
-      },
-    ])
+    ;[
+      { DATADOG_SITE: siteByDatacenter.us1, DATADOG_API_KEY: FAKE_TELEMETRY_API_KEY },
+      { DATADOG_SITE: siteByDatacenter.us1, DATADOG_API_KEY: FAKE_ORG2_API_KEY },
+    ].forEach((env) => {
+      assert.deepEqual(getSourceMapCommands(env), [
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+        {
+          command:
+            'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+          env,
+        },
+      ])
+    })
   })
 })

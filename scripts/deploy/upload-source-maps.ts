@@ -2,7 +2,7 @@ import path from 'node:path'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvValue } from '../lib/buildEnv.ts'
-import { getTelemetryOrgApiKey } from '../lib/secrets.ts'
+import { getOrg2ApiKey, getTelemetryOrgApiKey } from '../lib/secrets.ts'
 import { siteByDatacenter } from '../lib/datadogSites.ts'
 import { forEachFile } from '../lib/filesUtils.ts'
 import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } from './lib/deploymentUtils.ts'
@@ -94,18 +94,33 @@ function uploadToDatadog(
     }
     printLog(`Uploading ${packageName} source maps with prefix ${prefix} for ${site}...`)
 
-    command`
-      datadog-ci sourcemaps upload ${bundleFolder}
-        --service ${service}
-        --release-version ${getBuildEnvValue('SDK_VERSION')}
-        --minified-path-prefix ${prefix}
-        --project-path @datadog/browser-${packageName}/
-        --repository-url https://www.github.com/datadog/browser-sdk
-    `
-      .withEnvironment({
-        DATADOG_API_KEY: getTelemetryOrgApiKey(site),
-        DATADOG_SITE: site,
-      })
-      .run()
+    uploadToDatadogOrg(packageName, service, prefix, bundleFolder, site, getTelemetryOrgApiKey(site))
+
+    if (site === 'datadoghq.com') {
+      uploadToDatadogOrg(packageName, service, prefix, bundleFolder, site, getOrg2ApiKey())
+    }
   }
+}
+
+function uploadToDatadogOrg(
+  packageName: string,
+  service: string,
+  prefix: string,
+  bundleFolder: string,
+  site: string,
+  apiKey: string
+) {
+  return command`
+    datadog-ci sourcemaps upload ${bundleFolder}
+      --service ${service}
+      --release-version ${getBuildEnvValue('SDK_VERSION')}
+      --minified-path-prefix ${prefix}
+      --project-path @datadog/browser-${packageName}/
+      --repository-url https://www.github.com/datadog/browser-sdk
+  `
+    .withEnvironment({
+      DATADOG_API_KEY: apiKey,
+      DATADOG_SITE: site,
+    })
+    .run()
 }
