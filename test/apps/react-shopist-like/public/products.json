@@ -1,0 +1,122 @@
+[
+  {
+    "id": 1,
+    "name": "Wicker Chair",
+    "category": "Chairs",
+    "price": 250.0,
+    "image": "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb237?w=400",
+    "description": "Natural wicker chair with comfortable cushioning",
+    "inStock": true,
+    "rating": 4.5
+  },
+  {
+    "id": 2,
+    "name": "Black Shell Chair",
+    "category": "Chairs",
+    "price": 320.0,
+    "image": "https://images.unsplash.com/photo-1503602642458-232111445657?w=400",
+    "description": "Modern black shell chair with metal legs",
+    "inStock": true,
+    "rating": 4.8
+  },
+  {
+    "id": 3,
+    "name": "Wooden Stools",
+    "category": "Chairs",
+    "price": 210.0,
+    "image": "https://images.unsplash.com/photo-1519947486511-46149fa0a254?w=400",
+    "description": "Set of 2 handcrafted wooden stools",
+    "inStock": true,
+    "rating": 4.3
+  },
+  {
+    "id": 4,
+    "name": "Upholstered White Chair",
+    "category": "Chairs",
+    "price": 210.0,
+    "image": "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=400",
+    "description": "Elegant tufted white upholstered chair",
+    "inStock": false,
+    "rating": 4.7
+  },
+  {
+    "id": 5,
+    "name": "Grey Tufted Couch",
+    "category": "Sofas",
+    "price": 850.0,
+    "image": "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400",
+    "description": "Comfortable grey tufted sofa for your living room",
+    "inStock": true,
+    "rating": 4.6
+  },
+  {
+    "id": 6,
+    "name": "Modern Sectional Sofa",
+    "category": "Sofas",
+    "price": 1200.0,
+    "image": "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=400",
+    "description": "Large sectional sofa with chaise lounge",
+    "inStock": true,
+    "rating": 4.4
+  },
+  {
+    "id": 7,
+    "name": "Velvet Blue Sofa",
+    "category": "Sofas",
+    "price": 950.0,
+    "image": "https://images.unsplash.com/photo-1550254478-ead40cc54513?w=400",
+    "description": "Luxurious velvet sofa in deep blue",
+    "inStock": true,
+    "rating": 4.8
+  },
+  {
+    "id": 8,
+    "name": "White Linen Duvet Set",
+    "category": "Bedding",
+    "price": 180.0,
+    "image": "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=400",
+    "description": "Premium white linen duvet cover set",
+    "inStock": true,
+    "rating": 4.5
+  },
+  {
+    "id": 9,
+    "name": "Cotton Quilt Set",
+    "category": "Bedding",
+    "price": 140.0,
+    "image": "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400",
+    "description": "Soft cotton quilt with matching pillowcases",
+    "inStock": true,
+    "rating": 4.6
+  },
+  {
+    "id": 10,
+    "name": "Silk Pillowcase Set",
+    "category": "Bedding",
+    "price": 89.0,
+    "image": "https://images.unsplash.com/photo-1584100936595-c0654b55a2e2?w=400",
+    "description": "Luxurious mulberry silk pillowcases",
+    "inStock": true,
+    "rating": 4.8
+  },
+  {
+    "id": 11,
+    "name": "Modern Floor Lamp",
+    "category": "Lighting",
+    "price": 180.0,
+    "image": "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=400",
+    "description": "Contemporary floor lamp with adjustable head",
+    "inStock": true,
+    "rating": 4.4
+  },
+  {
+    "id": 12,
+    "name": "Pendant Light Set",
+    "category": "Lighting",
+    "price": 220.0,
+    "image": "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?w=400",
+    "description": "Set of 3 modern pendant lights",
+    "inStock": true,
+    "rating": 4.7
+  }
+]
