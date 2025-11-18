@@ -24,6 +24,9 @@ export default defineConfig({
     startUrls: ['https://datadoghq.dev/browser-sdk-test-playground/?application_id=xxx&client_token=xxx'],
   },
   vite: () => ({
+    build: {
+      chunkSizeWarningLimit: 1000,
+    },
     resolve: {
       extensions: ['.ts', '.tsx', '.js'],
     },
