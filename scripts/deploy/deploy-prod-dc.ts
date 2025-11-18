@@ -1,3 +1,4 @@
+import { parseArgs } from 'node:util'
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { siteByDatacenter } from '../lib/datadogSites.ts'
@@ -11,9 +12,21 @@ const ONE_MINUTE_IN_SECOND = 60
 const GATE_DURATION = 30 * ONE_MINUTE_IN_SECOND
 const GATE_INTERVAL = ONE_MINUTE_IN_SECOND
 
-const version: string = process.argv[2]
-const uploadPath: string = process.argv[3] === 'minor-dcs' ? getAllMinorDcs().join(',') : process.argv[3]
-const withMonitorChecks: boolean = process.argv[4] === 'true'
+const {
+  values: { withMonitorChecks },
+  positionals,
+} = parseArgs({
+  allowPositionals: true,
+  options: {
+    withMonitorChecks: {
+      type: 'boolean',
+      default: true,
+    },
+  },
+})
+
+const version = positionals[0]
+const uploadPath = positionals[1] === 'minor-dcs' ? getAllMinorDcs().join(',') : positionals[1]
 
 runMain(async () => {
   if (withMonitorChecks) {
