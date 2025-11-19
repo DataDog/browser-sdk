@@ -42,14 +42,22 @@ export function getOrg2AppKey(): string {
   return getSecretKey('ci.browser-sdk.datadog_ci_application_key')
 }
 
-export function getTelemetryOrgApiKey(site: string): string {
+export function getTelemetryOrgApiKey(site: string): string | undefined {
   const normalizedSite = site.replaceAll('.', '-')
-  return getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
+  try {
+    return getSecretKey(`ci.browser-sdk.source-maps.${normalizedSite}.ci_api_key`)
+  } catch {
+    return
+  }
 }
 
-export function getTelemetryOrgApplicationKey(site: string): string {
+export function getTelemetryOrgApplicationKey(site: string): string | undefined {
   const normalizedSite = site.replaceAll('.', '-')
-  return getSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
+  try {
+    return getSecretKey(`ci.browser-sdk.telemetry.${normalizedSite}.ci_app_key`)
+  } catch {
+    return
+  }
 }
 
 export function getNpmToken(): string {
