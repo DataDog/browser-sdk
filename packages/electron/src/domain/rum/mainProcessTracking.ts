@@ -29,6 +29,9 @@ export function startMainProcessTracking(
       // TODO get customer package name
       url: 'com/datadog/application-launch/view',
     },
+    service: configuration.service,
+    env: configuration.env,
+    version: configuration.version,
   }))
   console.log('sessionId', mainProcessContext.sessionId)
   console.log(
