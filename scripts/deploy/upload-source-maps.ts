@@ -3,7 +3,7 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvValue } from '../lib/buildEnv.ts'
 import { getOrg2ApiKey, getTelemetryOrgApiKey } from '../lib/secrets.ts'
-import { siteByDatacenter } from '../lib/datadogSites.ts'
+import { siteByDatacenter } from '../lib/datacenter.ts'
 import { forEachFile } from '../lib/filesUtils.ts'
 import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } from './lib/deploymentUtils.ts'
 
@@ -88,13 +88,16 @@ function uploadToDatadog(
   sites: string[]
 ): void {
   for (const site of sites) {
-    if (!site) {
-      printLog(`No source maps upload configured for ${site}, skipping...`)
+    const apiKey = getTelemetryOrgApiKey(site)
+
+    if (!apiKey) {
+      printLog(`No API key configured for ${site}, skipping...`)
       continue
     }
+
     printLog(`Uploading ${packageName} source maps with prefix ${prefix} for ${site}...`)
 
-    uploadToDatadogOrg(packageName, service, prefix, bundleFolder, site, getTelemetryOrgApiKey(site))
+    uploadToDatadogOrg(packageName, service, prefix, bundleFolder, site, apiKey)
 
     if (site === 'datadoghq.com') {
       uploadToDatadogOrg(packageName, service, prefix, bundleFolder, site, getOrg2ApiKey())

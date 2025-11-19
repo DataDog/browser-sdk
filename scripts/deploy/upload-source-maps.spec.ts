@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { beforeEach, before, describe, it, mock } from 'node:test'
-import { siteByDatacenter } from '../lib/datadogSites.ts'
+import { siteByDatacenter } from '../lib/datacenter.ts'
 import { mockModule, mockCommandImplementation, replaceChunkHashes } from './lib/testHelpers.ts'
 
 const FAKE_ORG2_API_KEY = 'FAKE_ORG2_API_KEY'
