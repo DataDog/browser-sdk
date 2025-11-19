@@ -12,6 +12,15 @@ const ONE_MINUTE_IN_SECOND = 60
 const GATE_DURATION = 30 * ONE_MINUTE_IN_SECOND
 const GATE_INTERVAL = ONE_MINUTE_IN_SECOND
 
+// Major DCs are the ones that are deployed last.
+// They have their own step jobs in `deploy-manual.yml` and `deploy-auto.yml`.
+const MAJOR_DCS = ['root', 'us1', 'eu1']
+
+// Minor DCs are all the DCs from `siteByDatacenter` that are not in `MAJOR_DCS`.
+function getAllMinorDcs(): string[] {
+  return Object.keys(siteByDatacenter).filter((dc) => !MAJOR_DCS.includes(dc))
+}
+
 const {
   values: { 'check-monitors': checkMonitors },
   positionals,
@@ -53,13 +62,4 @@ async function gateMonitors(uploadPath: string): Promise<void> {
     await timeout(GATE_INTERVAL * 1000)
   }
   printLog() // new line
-}
-
-// Major DCs are the ones that are deployed last.
-// They have their own step jobs in `deploy-manual.yml` and `deploy-auto.yml`.
-const MAJOR_DCS = ['root', 'us1', 'eu1']
-
-// Minor DCs are all the DCs from `siteByDatacenter` that are not in `MAJOR_DCS`.
-function getAllMinorDcs(): string[] {
-  return Object.keys(siteByDatacenter).filter((dc) => !MAJOR_DCS.includes(dc))
 }
