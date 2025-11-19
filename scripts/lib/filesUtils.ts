@@ -56,7 +56,7 @@ interface PackageJsonInfo {
   content: any
 }
 
-export function findBrowserSdkPackageJsonFiles(): PackageJsonInfo[] {
+export function findPackageJsonFiles(): PackageJsonInfo[] {
   const manifestPaths = command`git ls-files -- package.json */package.json`.run()
   return manifestPaths
     .trim()
