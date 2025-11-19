@@ -5,50 +5,66 @@
  */
 import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/secrets.ts'
-import { monitorIdsByDatacenter, siteByDatacenter } from '../lib/datacenter.ts'
-
-interface MonitorStatus {
-  id: number
-  name: string
-  overall_state: string
-}
+import { siteByDatacenter } from '../lib/datacenter.ts'
+import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 
 const datacenters = process.argv[2].split(',')
 
 runMain(async () => {
   for (const datacenter of datacenters) {
-    if (!monitorIdsByDatacenter[datacenter]) {
-      printLog(`No monitors configured for datacenter ${datacenter}`)
+    const site = siteByDatacenter[datacenter]
+    const apiKey = getTelemetryOrgApiKey(site)
+    const applicationKey = getTelemetryOrgApplicationKey(site)
+
+    if (!apiKey || !applicationKey) {
+      printLog(`No API key or application key found for ${site}, skipping...`)
       continue
     }
-    const monitorIds = monitorIdsByDatacenter[datacenter]
-    const site = siteByDatacenter[datacenter]
-    const monitorStatuses = await Promise.all(monitorIds.map((monitorId) => fetchMonitorStatus(site, monitorId)))
-    for (const monitorStatus of monitorStatuses) {
-      printLog(`${monitorStatus.overall_state} - ${monitorStatus.name}`)
-      if (monitorStatus.overall_state !== 'OK') {
-        throw new Error(
-          `Monitor ${monitorStatus.name} is in state ${monitorStatus.overall_state}, see ${computeMonitorLink(site, monitorStatus.id)}`
-        )
-      }
+
+    const errorLogsCount = await queryErrorLogsCount(site, apiKey, applicationKey)
+
+    if (errorLogsCount > 0) {
+      throw new Error(`Errors found in the last 30 minutes,
+see ${computeMonitorLink(site)}`)
+    } else {
+      printLog(`No errors found in the last 30 minutes for ${datacenter}`)
     }
   }
 })
 
-async function fetchMonitorStatus(site: string, monitorId: number): Promise<MonitorStatus> {
-  const response = await fetchHandlingError(`https://api.${site}/api/v1/monitor/${monitorId}`, {
-    method: 'GET',
+async function queryErrorLogsCount(site: string, apiKey: string, applicationKey: string): Promise<number> {
+  const response = await fetchHandlingError(`https://api.${site}/api/v2/logs/events/search`, {
+    method: 'POST',
     headers: {
-      Accept: 'application/json',
-      'DD-API-KEY': getTelemetryOrgApiKey(site),
-      'DD-APPLICATION-KEY': getTelemetryOrgApplicationKey(site),
+      'Content-Type': 'application/json',
+      'DD-API-KEY': apiKey,
+      'DD-APPLICATION-KEY': applicationKey,
     },
+    body: JSON.stringify({
+      filter: {
+        from: 'now-30m',
+        to: 'now',
+        query: `source:browser status:error version:${browserSdkVersion}`,
+      },
+    }),
   })
-  return response.json() as Promise<MonitorStatus>
+
+  const data = (await response.json()) as { data: unknown[] }
+
+  return data.data.length
 }
 
-function computeMonitorLink(site: string, monitorId: number): string {
-  return `https://${computeTelemetryOrgDomain(site)}/monitors/${monitorId}`
+function computeMonitorLink(site: string): string {
+  const now = Date.now()
+  const thirtyMinutesAgo = now - 30 * 60 * 1000
+
+  const queryParams = new URLSearchParams({
+    query: `source:browser status:error version:${browserSdkVersion}`,
+    from_ts: `${thirtyMinutesAgo}`,
+    to_ts: `${now}`,
+  })
+
+  return `https://${computeTelemetryOrgDomain(site)}/logs?${queryParams.toString()}`
 }
 
 function computeTelemetryOrgDomain(site: string): string {
