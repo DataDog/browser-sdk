@@ -50,6 +50,7 @@ function computeEndpointBuilders(initConfiguration: InitConfiguration) {
     profilingEndpointBuilder: createEndpointBuilder(initConfiguration, 'profile'),
     sessionReplayEndpointBuilder: createEndpointBuilder(initConfiguration, 'replay'),
     exposuresEndpointBuilder: createEndpointBuilder(initConfiguration, 'exposures'),
+    flagEvaluationEndpointBuilder: createEndpointBuilder(initConfiguration, 'flagevaluation'),
   }
 }
 
