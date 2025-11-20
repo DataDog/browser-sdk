@@ -35,7 +35,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumConfiguration, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { createHooks, validateAndBuildRumConfiguration } from '@datadog/browser-rum-core'
-import tracer from '../domain/trace/tracer'
+import tracer, { initTracer } from '../domain/trace/tracer'
 import { createIpcMain } from '../domain/main/ipcMain'
 import type { CollectedRumEvent } from '../domain/rum/events'
 import { setupMainBridge } from '../domain/main/bridge'
@@ -92,6 +92,7 @@ function makeDatadogElectron() {
         spanBatch.add({ env: 'prod', spans: trace })
       })
       setupMainBridge(onRumEventObservable)
+      initTracer(configuration.service!, configuration.env!, configuration.version!)
       createDdTraceAgent(onTraceObservable, hooks)
 
       // eslint-disable-next-line
