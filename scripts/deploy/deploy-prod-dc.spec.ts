@@ -1,12 +1,11 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import { beforeEach, before, describe, it, mock } from 'node:test'
+import { beforeEach, before, describe, it, mock, afterEach } from 'node:test'
 import type { CommandDetail } from './lib/testHelpers.ts'
-import { mockModule, mockCommandImplementation } from './lib/testHelpers.ts'
+import { mockCommandImplementation, mockModule } from './lib/testHelpers.ts'
 
 describe('deploy-prod-dc', () => {
   const commandMock = mock.fn()
-
   let commands: CommandDetail[]
 
   before(async () => {
@@ -18,6 +17,10 @@ describe('deploy-prod-dc', () => {
 
   beforeEach(() => {
     commands = mockCommandImplementation(commandMock)
+  })
+
+  afterEach(() => {
+    mock.restoreAll()
   })
 
   it('should deploy a given datacenter', async () => {
@@ -41,22 +44,30 @@ describe('deploy-prod-dc', () => {
     ])
   })
 
-  it('should only check monitors before deploying if the upload path is root', async () => {
-    await runScript('./deploy-prod-dc.ts', 'v6', 'root', '--check-monitors')
-
-    assert.deepEqual(commands, [
-      { command: 'node ./scripts/deploy/check-monitors.ts root' },
-      { command: 'node ./scripts/deploy/deploy.ts prod v6 root' },
-      { command: 'node ./scripts/deploy/upload-source-maps.ts v6 root' },
-    ])
-  })
-
   it('should deploy all minor datacenters', async () => {
     await runScript('./deploy-prod-dc.ts', 'v6', 'minor-dcs', '--no-check-monitors')
 
     assert.deepEqual(commands, [
-      { command: 'node ./scripts/deploy/deploy.ts prod v6 us3,us5,ap1,ap2,prtest00' },
-      { command: 'node ./scripts/deploy/upload-source-maps.ts v6 us3,us5,ap1,ap2,prtest00' },
+      { command: 'node ./scripts/deploy/deploy.ts prod v6 ap1,ap2,us3,us5' },
+      { command: 'node ./scripts/deploy/upload-source-maps.ts v6 ap1,ap2,us3,us5' },
+    ])
+  })
+
+  it('should deploy all private regions', async () => {
+    await runScript('./deploy-prod-dc.ts', 'v6', 'private-regions', '--no-check-monitors')
+
+    assert.deepEqual(commands, [
+      { command: 'node ./scripts/deploy/deploy.ts prod v6 prtest00,prtest01' },
+      { command: 'node ./scripts/deploy/upload-source-maps.ts v6 prtest00,prtest01' },
+    ])
+  })
+
+  it('should deploy gov datacenters to the root upload path', async () => {
+    await runScript('./deploy-prod-dc.ts', 'v6', 'gov', '--no-check-monitors')
+
+    assert.deepEqual(commands, [
+      { command: 'node ./scripts/deploy/deploy.ts prod v6 root' },
+      { command: 'node ./scripts/deploy/upload-source-maps.ts v6 root' },
     ])
   })
 })

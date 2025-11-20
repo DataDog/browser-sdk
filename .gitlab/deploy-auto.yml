@@ -17,7 +17,7 @@ stages:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $UPLOAD_PATH --check-monitors
+    - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $DATACENTER --check-monitors
 
 step-1_deploy-prod-minor-dcs:
   when: manual
@@ -26,7 +26,7 @@ step-1_deploy-prod-minor-dcs:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: minor-dcs
+    DATACENTER: minor-dcs
 
 step-2_deploy-prod-eu1:
   needs:
@@ -35,7 +35,7 @@ step-2_deploy-prod-eu1:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: eu1
+    DATACENTER: eu1
 
 step-3_deploy-prod-us1:
   needs:
@@ -44,7 +44,7 @@ step-3_deploy-prod-us1:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: us1
+    DATACENTER: us1
 
 step-4_deploy-prod-gov:
   needs:
@@ -53,7 +53,7 @@ step-4_deploy-prod-gov:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: root
+    DATACENTER: gov
 
 step-5_publish-npm:
   needs:

@@ -3,7 +3,7 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvValue } from '../lib/buildEnv.ts'
 import { getTelemetryOrgApiKey } from '../lib/secrets.ts'
-import { siteByDatacenter } from '../lib/datacenter.ts'
+import { getSite, getAllDatacenters } from '../lib/datacenter.ts'
 import { forEachFile } from '../lib/filesUtils.ts'
 import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } from './lib/deploymentUtils.ts'
 
@@ -20,7 +20,8 @@ function getSitesByVersion(version: string): string[] {
     case 'canary':
       return ['datadoghq.com']
     default:
-      return Object.values(siteByDatacenter)
+      // TODO: do we upload to root for all DCs?
+      return getAllDatacenters().map(getSite)
   }
 }
 
@@ -56,7 +57,7 @@ async function uploadSourceMaps(
       uploadPath = buildRootUploadPath(packageName, version)
       await renameFilesWithVersionSuffix(bundleFolder, version)
     } else {
-      sites = [siteByDatacenter[uploadPathType]]
+      sites = [getSite(uploadPathType)]
       uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
     }
     const prefix = path.dirname(`/${uploadPath}`)
