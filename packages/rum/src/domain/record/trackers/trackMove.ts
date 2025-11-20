@@ -6,16 +6,15 @@ import { getEventTarget, isTouchEvent } from '../eventsUtils'
 import { convertMouseEventToLayoutCoordinates } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
 import type { SerializationScope } from '../serialization'
+import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
 
 const MOUSE_MOVE_OBSERVER_THRESHOLD = 50
 
-export type MousemoveCallBack = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
-
 export function trackMove(
   configuration: RumConfiguration,
   scope: SerializationScope,
-  moveCb: MousemoveCallBack
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>
 ): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle(
     (event: MouseEvent | TouchEvent) => {
@@ -35,7 +34,7 @@ export function trackMove(
         y: coordinates.y,
       }
 
-      moveCb(
+      emitRecord(
         assembleIncrementalSnapshot<MousemoveData>(
           isTouchEvent(event) ? IncrementalSource.TouchMove : IncrementalSource.MouseMove,
           { positions: [position] }

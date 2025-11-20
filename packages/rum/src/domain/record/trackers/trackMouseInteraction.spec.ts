@@ -13,13 +13,13 @@ import { createElementsScrollPositions } from '../elementsScrollPositions'
 import type { RecordIds } from '../recordIds'
 import { initRecordIds } from '../recordIds'
 import { createNodeIds } from '../nodeIds'
-import type { MouseInteractionCallback } from './trackMouseInteraction'
+import type { EmitRecordCallback } from '../record.types'
 import { trackMouseInteraction } from './trackMouseInteraction'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { Tracker } from './tracker.types'
 
 describe('trackMouseInteraction', () => {
-  let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallback>
+  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let mouseInteractionTracker: Tracker
   let recordIds: RecordIds
   let a: HTMLAnchorElement
@@ -38,9 +38,9 @@ describe('trackMouseInteraction', () => {
       elementsScrollPositions: createElementsScrollPositions(),
     })
 
-    mouseInteractionCallbackSpy = jasmine.createSpy()
+    emitRecordCallback = jasmine.createSpy()
     recordIds = initRecordIds()
-    mouseInteractionTracker = trackMouseInteraction(configuration, scope, mouseInteractionCallbackSpy, recordIds)
+    mouseInteractionTracker = trackMouseInteraction(configuration, scope, emitRecordCallback, recordIds)
 
     registerCleanupTask(() => {
       mouseInteractionTracker.stop()
@@ -50,7 +50,7 @@ describe('trackMouseInteraction', () => {
   it('should generate click record', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.CLICK, { clientX: 0, clientY: 0 }))
 
-    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       id: jasmine.any(Number),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
@@ -68,7 +68,7 @@ describe('trackMouseInteraction', () => {
     const pointerupEvent = createNewEvent(DOM_EVENT.POINTER_UP, { clientX: 1, clientY: 2 })
     a.dispatchEvent(pointerupEvent)
 
-    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       id: recordIds.getIdForEvent(pointerupEvent),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
@@ -86,13 +86,13 @@ describe('trackMouseInteraction', () => {
     const clickEvent = createNewEvent(DOM_EVENT.CLICK)
     a.dispatchEvent(clickEvent)
 
-    expect(mouseInteractionCallbackSpy).not.toHaveBeenCalled()
+    expect(emitRecordCallback).not.toHaveBeenCalled()
   })
 
   it('should generate blur record', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.BLUR))
 
-    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       id: jasmine.any(Number),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),

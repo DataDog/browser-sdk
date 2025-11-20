@@ -12,14 +12,14 @@ import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
 import { createNodeIds } from '../nodeIds'
-import type { InputCallback } from './trackInput'
+import type { EmitRecordCallback } from '../record.types'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import { trackScroll } from './trackScroll'
 import type { Tracker } from './tracker.types'
 
 describe('trackScroll', () => {
   let scrollTracker: Tracker
-  let scrollCallback: jasmine.Spy<InputCallback>
+  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let div: HTMLDivElement
   let configuration: RumConfiguration
   let elementsScrollPositions: ElementsScrollPositions
@@ -27,7 +27,7 @@ describe('trackScroll', () => {
   beforeEach(() => {
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     elementsScrollPositions = createElementsScrollPositions()
-    scrollCallback = jasmine.createSpy()
+    emitRecordCallback = jasmine.createSpy()
 
     div = appendElement('<div target></div>') as HTMLDivElement
 
@@ -38,7 +38,7 @@ describe('trackScroll', () => {
       status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
       elementsScrollPositions,
     })
-    scrollTracker = trackScroll(configuration, scope, scrollCallback, elementsScrollPositions)
+    scrollTracker = trackScroll(configuration, scope, emitRecordCallback, elementsScrollPositions)
 
     registerCleanupTask(() => {
       scrollTracker.stop()
@@ -48,7 +48,7 @@ describe('trackScroll', () => {
   it('collects scrolls', () => {
     div.dispatchEvent(createNewEvent('scroll', { target: div }))
 
-    expect(scrollCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {
@@ -65,6 +65,6 @@ describe('trackScroll', () => {
 
     div.dispatchEvent(createNewEvent('scroll', { target: div }))
 
-    expect(scrollCallback).not.toHaveBeenCalled()
+    expect(emitRecordCallback).not.toHaveBeenCalled()
   })
 })
