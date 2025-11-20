@@ -5,14 +5,14 @@
  */
 import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/secrets.ts'
-import { siteByDatacenter } from '../lib/datacenter.ts'
+import { getSite } from '../lib/datacenter.ts'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 
 const datacenters = process.argv[2].split(',')
 
 runMain(async () => {
   for (const datacenter of datacenters) {
-    const site = siteByDatacenter[datacenter]
+    const site = getSite(datacenter)
     const apiKey = getTelemetryOrgApiKey(site)
     const applicationKey = getTelemetryOrgApplicationKey(site)
 
