@@ -12,6 +12,8 @@ prod,react,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,react-dom,MIT,Copyright (c) Facebook, Inc. and its affiliates.
 prod,@msgpack/msgpack,Apache-2.0,Copyright (c) 2010 Peter Griess
 prod,dd-trace,Apache-2.0,Copyright (c) 2018, Datadog Inc.
+prod,graphql,MIT,Copyright (c) GraphQL Contributors
+prod,@openfeature/core,Apache-2.0,Copyright OpenFeature Maintainers
 dev,typedoc,Apache-2.0,TypeStrong
 dev,@eslint/js,MIT,Copyright OpenJS Foundation and other contributors, <www.openjsf.org>
 dev,@jsdevtools/coverage-istanbul-loader,MIT,Copyright (c) 2015 James Messinger
