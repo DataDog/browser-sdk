@@ -5,9 +5,10 @@ import type { Duration, ClocksState } from '../tools/utils/timeUtils'
 import { elapsed, clocksNow, timeStampNow } from '../tools/utils/timeUtils'
 import { normalizeUrl } from '../tools/utils/urlPolyfill'
 import { shallowClone } from '../tools/utils/objectUtils'
+import type { NormalizedHeaders } from '../tools/headers'
+import { normalizeXhrResponseHeaders, normalizeXhrRequestHeaders } from '../tools/headers'
 import type { Configuration } from '../domain/configuration'
 import { addEventListener } from './addEventListener'
-
 export interface XhrOpenContext {
   state: 'open'
   method: string
@@ -21,6 +22,8 @@ export interface XhrStartContext extends Omit<XhrOpenContext, 'state'> {
   xhr: XMLHttpRequest
   handlingStack?: string
   requestBody?: unknown
+  body?: unknown
+  requestHeaders?: NormalizedHeaders // XHR does not expose request headers reliably; keep undefined for now
 }
 
 export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
@@ -28,6 +31,7 @@ export interface XhrCompleteContext extends Omit<XhrStartContext, 'state'> {
   duration: Duration
   status: number
   responseBody?: string
+  responseHeaders?: NormalizedHeaders
 }
 
 export type XhrContext = XhrOpenContext | XhrStartContext | XhrCompleteContext
@@ -90,6 +94,18 @@ function sendXhr(
   startContext.xhr = xhr
   startContext.handlingStack = handlingStack
   startContext.requestBody = body
+  const requestHeaderRecord: Record<string, string> = {}
+
+  const { stop: stopInstrumentingSetHeader } = instrumentMethod(xhr, 'setRequestHeader', ({ parameters }) => {
+    try {
+      const [key, value] = parameters as unknown as [string, string]
+      if (typeof key === 'string' && typeof value === 'string') {
+        requestHeaderRecord[key] = value
+      }
+    } catch {
+      // display warning
+    }
+  })
 
   let hasBeenReported = false
 
@@ -106,6 +122,7 @@ function sendXhr(
   const onEnd = () => {
     unsubscribeLoadEndListener()
     stopInstrumentingOnReadyStateChange()
+    stopInstrumentingSetHeader()
     if (hasBeenReported) {
       return
     }
@@ -118,6 +135,8 @@ function sendXhr(
     if (typeof xhr.response === 'string') {
       completeContext.responseBody = xhr.response
     }
+    completeContext.requestHeaders = normalizeXhrRequestHeaders(requestHeaderRecord)
+    completeContext.responseHeaders = normalizeXhrResponseHeaders(xhr)
     observable.notify(shallowClone(completeContext))
   }
 

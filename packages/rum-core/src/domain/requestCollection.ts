@@ -7,6 +7,7 @@ import type {
   FetchResolveContext,
   ContextManager,
 } from '@datadog/browser-core'
+import type { NormalizedHeaders } from '@datadog/browser-core/src/tools/headers'
 import {
   RequestType,
   ResponseBodyAction,
@@ -54,8 +55,10 @@ export interface RequestCompleteEvent {
   traceSampled?: boolean
   xhr?: XMLHttpRequest
   response?: Response
+  responseHeaders?: NormalizedHeaders
   input?: unknown
   init?: RequestInit
+  requestHeaders?: NormalizedHeaders
   error?: Error
   isAborted: boolean
   handlingStack?: string
@@ -108,6 +111,7 @@ export function trackXhr(lifeCycle: LifeCycle, configuration: RumConfiguration, 
           type: RequestType.XHR,
           url: context.url,
           xhr: context.xhr,
+          responseHeaders: context.responseHeaders,
           isAborted: context.isAborted,
           handlingStack: context.handlingStack,
           requestBody: context.requestBody,
@@ -165,6 +169,8 @@ export function trackFetch(lifeCycle: LifeCycle, configuration: RumConfiguration
           handlingStack: context.handlingStack,
           requestBody: context.init?.body,
           responseBody: context.responseBody,
+          responseHeaders: context.responseHeaders,
+          requestHeaders: context.requestHeaders,
         })
         break
     }
