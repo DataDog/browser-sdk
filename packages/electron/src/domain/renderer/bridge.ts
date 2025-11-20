@@ -2,7 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 import type { DatadogEventBridge } from '@datadog/browser-core'
 
 export function setupRendererBridge() {
-  contextBridge.exposeInMainWorld('DatadogEventBridge', {
+  ;(window as any).DatadogEventBridge = {
     getCapabilities() {
       return '[]'
     },
@@ -15,5 +15,10 @@ export function setupRendererBridge() {
     send(msg: string) {
       void ipcRenderer.invoke('datadog:send', msg)
     },
-  } satisfies DatadogEventBridge)
+  } satisfies DatadogEventBridge
+  try {
+    contextBridge.exposeInMainWorld('DatadogEventBridge', (window as any).DatadogEventBridge)
+  } catch {
+    // contextBridge API can only be used when contextIsolation is enabled
+  }
 }

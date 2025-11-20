@@ -1,6 +1,6 @@
 import type { IpcRenderer } from 'electron'
-import { createSpanIdentifier, createTraceIdentifier } from '@datadog/browser-rum-core'
 import { contextBridge, ipcRenderer } from 'electron'
+import { createSpanIdentifier, createTraceIdentifier } from '@datadog/browser-rum-core'
 import type { Observable } from '@datadog/browser-core'
 import { BufferedObservable, clocksNow, elapsed, toServerDuration } from '@datadog/browser-core'
 import type { DatadogCarrier, SpanInfo } from '../trace/trace'
@@ -64,13 +64,18 @@ export function createIpcRenderer(): IpcRenderer {
   const ddIpcRenderer = { ...ipcRenderer }
   const observable = new BufferedObservable<SpanInfo>(100)
 
-  contextBridge.exposeInMainWorld('dd_electron_internal_api', {
+  window.dd_electron_internal_api = {
     onSpan: (callback: (spanInfo: SpanInfo) => void) => {
       const subscription = observable.subscribe((spanInfo) => callback(spanInfo))
 
       return () => subscription.unsubscribe()
     },
-  })
+  }
+  try {
+    contextBridge.exposeInMainWorld('dd_electron_internal_api', window.dd_electron_internal_api)
+  } catch {
+    // contextBridge API can only be used when contextIsolation is enabled
+  }
 
   ddIpcRenderer.on = withDatadogCarrier(observable, 'on', ipcRenderer.on.bind(ipcRenderer))
   ddIpcRenderer.off = withDatadogCarrier(observable, 'off', ipcRenderer.off.bind(ipcRenderer))
