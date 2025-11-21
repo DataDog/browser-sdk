@@ -95,6 +95,8 @@ export function startRumAssembly(
     ({ startTime, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: rawRumEvent.type,
+        rawRumEvent,
+        domainContext,
         startTime,
         duration,
       })!
