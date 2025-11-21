@@ -142,6 +142,25 @@ describe('GraphQL detection and metadata extraction', () => {
       const result = extractGraphQlRequestMetadata(requestBody, true)
       expect(result).toBeUndefined()
     })
+
+    it('should extract query operation name and variables for persisted queries', () => {
+      const requestBody = JSON.stringify({
+        extensions: {
+          persistedQuery: {
+            sha256Hash: 'somehashvalue',
+          },
+        },
+        operationName: 'GetUser',
+        variables: { id: '123' },
+      })
+
+      const result = extractGraphQlRequestMetadata(requestBody, true)
+
+      expect(result).toEqual({
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+      })
+    })
   })
 
   describe('request payload truncation', () => {
