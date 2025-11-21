@@ -15,7 +15,7 @@ export interface GraphQlError {
 }
 
 export interface GraphQlMetadata {
-  operationType: 'query' | 'mutation' | 'subscription'
+  operationType?: 'query' | 'mutation' | 'subscription'
   operationName?: string
   variables?: string
   payload?: string
@@ -88,13 +88,25 @@ export function extractGraphQlRequestMetadata(
     return
   }
 
-  let graphqlBody: { query?: string; operationName?: string; variables?: unknown }
+  let graphqlBody: {
+    query?: string
+    operationName?: string
+    variables?: unknown
+    extensions?: { persistedQuery?: unknown }
+  }
 
   try {
     graphqlBody = JSON.parse(requestBody)
   } catch {
     // Not valid JSON
     return
+  }
+
+  if (graphqlBody && graphqlBody.extensions?.persistedQuery) {
+    return {
+      operationName: graphqlBody.operationName,
+      variables: graphqlBody.variables ? JSON.stringify(graphqlBody.variables) : undefined,
+    }
   }
 
   if (!graphqlBody || !graphqlBody.query) {
