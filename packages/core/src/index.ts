@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn } from './domain/configuration'
+export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn, TrackType } from './domain/configuration'
 export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
@@ -7,6 +7,7 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
+  createEndpointBuilder,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -59,7 +60,17 @@ export {
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
+export type {
+  BandwidthStats,
+  HttpRequest,
+  HttpRequestEvent,
+  Payload,
+  FlushEvent,
+  FlushReason,
+  DatadogEventBridge,
+  BrowserWindowWithEventBridge,
+  Batch,
+} from './transport'
 export {
   createHttpRequest,
   canUseEventBridge,

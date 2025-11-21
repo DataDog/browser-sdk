@@ -13,6 +13,7 @@
   "scripts": {
     "postinstall": "scripts/cli init_submodule",
     "build": "yarn workspaces foreach --all --parallel --topological run build",
+    "build:electron": "lerna run build:modules --scope=@datadog/electron",
     "build:bundle": "yarn workspaces foreach --all --parallel run build:bundle",
     "build:apps": "node scripts/build/build-test-apps.ts",
     "build:docs:json": "typedoc --logLevel Verbose --json ./docs.json",

@@ -7,6 +7,7 @@ import {
   generateUUID,
 } from '../tools/utils/stringUtils'
 import { buildUrl } from '../tools/utils/urlPolyfill'
+import { getGlobalObject } from '../tools/globalObject'
 
 export interface CookieOptions {
   secure?: boolean
@@ -65,7 +66,7 @@ export function deleteCookie(name: string, options?: CookieOptions) {
 }
 
 export function areCookiesAuthorized(options: CookieOptions): boolean {
-  if (document.cookie === undefined || document.cookie === null) {
+  if (getGlobalObject<Window>().document?.cookie === undefined || getGlobalObject<Window>().document?.cookie === null) {
     return false
   }
   try {

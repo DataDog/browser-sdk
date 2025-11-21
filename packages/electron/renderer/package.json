@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/renderer.js",
+  "module": "../esm/entries/renderer.js",
+  "types": "../cjs/entries/renderer.d.ts"
+}
