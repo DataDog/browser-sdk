@@ -8,7 +8,7 @@ import type { InitConfiguration } from './configuration'
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures'
+export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation'
 export type ApiType =
   | 'fetch-keepalive'
   | 'fetch'
