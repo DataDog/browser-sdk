@@ -7,14 +7,13 @@ import { getEventTarget } from '../eventsUtils'
 import { getElementInputValue } from '../serialization'
 import type { SerializationScope } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
-
-export type InputCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
 export function trackInput(
   configuration: RumConfiguration,
   scope: SerializationScope,
-  inputCb: InputCallback,
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>,
   target: Document | ShadowRoot = document
 ): Tracker {
   const defaultPrivacyLevel = configuration.defaultPrivacyLevel
@@ -120,7 +119,7 @@ export function trackInput(
       (lastInputState as { isChecked?: boolean }).isChecked !== (inputState as { isChecked?: boolean }).isChecked
     ) {
       lastInputStateMap.set(target, inputState)
-      inputCb(
+      emitRecord(
         assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, {
           id,
           ...inputState,

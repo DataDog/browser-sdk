@@ -12,16 +12,17 @@ import {
   createSerializationScope,
 } from '../serialization'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
+import type { BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, RecordType } from '../../../types'
 import { createNodeIds } from '../nodeIds'
-import type { InputCallback } from './trackInput'
+import type { EmitRecordCallback } from '../record.types'
 import { trackInput } from './trackInput'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { Tracker } from './tracker.types'
 
 describe('trackInput', () => {
   let inputTracker: Tracker
-  let inputCallbackSpy: jasmine.Spy<InputCallback>
+  let inputCallbackSpy: jasmine.Spy<EmitRecordCallback<BrowserIncrementalSnapshotRecord>>
   let input: HTMLInputElement
   let clock: Clock | undefined
   let configuration: RumConfiguration

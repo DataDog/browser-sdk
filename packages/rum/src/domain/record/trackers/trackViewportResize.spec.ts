@@ -11,14 +11,14 @@ import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { RecordType } from '../../../types'
 import { createNodeIds } from '../nodeIds'
+import type { EmitRecordCallback } from '../record.types'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
-import type { VisualViewportResizeCallback } from './trackViewportResize'
 import { trackVisualViewportResize } from './trackViewportResize'
 import type { Tracker } from './tracker.types'
 
 describe('trackViewportResize', () => {
   let viewportResizeTracker: Tracker
-  let visualViewportResizeCallback: jasmine.Spy<VisualViewportResizeCallback>
+  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let configuration: RumConfiguration
   let elementsScrollPositions: ElementsScrollPositions
 
@@ -29,7 +29,7 @@ describe('trackViewportResize', () => {
 
     configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     elementsScrollPositions = createElementsScrollPositions()
-    visualViewportResizeCallback = jasmine.createSpy()
+    emitRecordCallback = jasmine.createSpy()
 
     const scope = createSerializationScope(createNodeIds())
     serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
@@ -39,7 +39,7 @@ describe('trackViewportResize', () => {
       elementsScrollPositions,
     })
 
-    viewportResizeTracker = trackVisualViewportResize(configuration, visualViewportResizeCallback)
+    viewportResizeTracker = trackVisualViewportResize(configuration, emitRecordCallback)
 
     registerCleanupTask(() => {
       viewportResizeTracker.stop()
@@ -49,7 +49,7 @@ describe('trackViewportResize', () => {
   it('collects visual viewport on resize', () => {
     visualViewport!.dispatchEvent(createNewEvent('resize'))
 
-    expect(visualViewportResizeCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
       type: RecordType.VisualViewport,
       timestamp: jasmine.any(Number),
       data: {
@@ -67,7 +67,7 @@ describe('trackViewportResize', () => {
   it('collects visual viewport on scroll', () => {
     visualViewport!.dispatchEvent(createNewEvent('scroll'))
 
-    expect(visualViewportResizeCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
       type: RecordType.VisualViewport,
       timestamp: jasmine.any(Number),
       data: {

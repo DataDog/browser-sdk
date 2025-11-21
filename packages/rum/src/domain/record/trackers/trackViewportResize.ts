@@ -5,20 +5,17 @@ import { IncrementalSource, RecordType } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ViewportResizeData, VisualViewportRecord } from '../../../types'
 import { getVisualViewport } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
-export type ViewportResizeCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
-
-export type VisualViewportResizeCallback = (visualViewportRecord: VisualViewportRecord) => void
-
 export function trackViewportResize(
   configuration: RumConfiguration,
-  viewportResizeCb: ViewportResizeCallback
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>
 ): Tracker {
   const viewportResizeSubscription = initViewportObservable(configuration).subscribe((data: ViewportDimension) => {
-    viewportResizeCb(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, data))
+    emitRecord(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, data))
   })
 
   return {
@@ -30,7 +27,7 @@ export function trackViewportResize(
 
 export function trackVisualViewportResize(
   configuration: RumConfiguration,
-  visualViewportResizeCb: VisualViewportResizeCallback
+  emitRecord: EmitRecordCallback<VisualViewportRecord>
 ): Tracker {
   const visualViewport = window.visualViewport
   if (!visualViewport) {
@@ -38,7 +35,7 @@ export function trackVisualViewportResize(
   }
   const { throttled: updateDimension, cancel: cancelThrottle } = throttle(
     () => {
-      visualViewportResizeCb({
+      emitRecord({
         data: getVisualViewport(visualViewport),
         type: RecordType.VisualViewport,
         timestamp: timeStampNow(),

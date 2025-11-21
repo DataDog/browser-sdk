@@ -1,4 +1,4 @@
-import { DefaultPrivacyLevel, findLast } from '@datadog/browser-core'
+import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { createNewEvent, collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
@@ -22,11 +22,12 @@ import { appendElement } from '../../../../rum-core/test'
 import { getReplayStats, resetReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
+import type { EmitRecordCallback } from './record.types'
 
 describe('record', () => {
   let recordApi: RecordAPI
   let lifeCycle: LifeCycle
-  let emitSpy: jasmine.Spy<(record: BrowserRecord) => void>
+  let emitSpy: jasmine.Spy<EmitRecordCallback>
   const FAKE_VIEW_ID = '123'
 
   beforeEach(() => {
@@ -450,7 +451,8 @@ describe('record', () => {
   function startRecording() {
     lifeCycle = new LifeCycle()
     recordApi = record({
-      emit: emitSpy,
+      emitRecord: emitSpy,
+      emitStats: noop,
       configuration: { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration,
       lifeCycle,
       viewHistory: {

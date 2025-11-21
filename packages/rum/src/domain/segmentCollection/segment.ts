@@ -14,7 +14,8 @@ export type FlushCallback = (
 export type AddRecordCallback = (encodedBytesCount: number) => void
 
 export interface Segment {
-  addRecord: (record: BrowserRecord, stats: SerializationStats | undefined, callback: AddRecordCallback) => void
+  addRecord: (record: BrowserRecord, callback: AddRecordCallback) => void
+  addStats: (stats: SerializationStats) => void
   flush: (callback: FlushCallback) => void
 }
 
@@ -44,21 +45,21 @@ export function createSegment({
   const serializationStats = createSerializationStats()
   replayStats.addSegment(viewId)
 
-  function addRecord(record: BrowserRecord, stats: SerializationStats | undefined, callback: AddRecordCallback): void {
+  function addRecord(record: BrowserRecord, callback: AddRecordCallback): void {
     metadata.start = Math.min(metadata.start, record.timestamp)
     metadata.end = Math.max(metadata.end, record.timestamp)
     metadata.records_count += 1
     metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
-
-    if (stats) {
-      aggregateSerializationStats(serializationStats, stats)
-    }
 
     const prefix = encoder.isEmpty ? '{"records":[' : ','
     encoder.write(prefix + JSON.stringify(record), (additionalEncodedBytesCount) => {
       encodedBytesCount += additionalEncodedBytesCount
       callback(encodedBytesCount)
     })
+  }
+
+  function addStats(stats: SerializationStats): void {
+    aggregateSerializationStats(serializationStats, stats)
   }
 
   function flush(callback: FlushCallback) {
@@ -73,5 +74,5 @@ export function createSegment({
     })
   }
 
-  return { addRecord, flush }
+  return { addRecord, addStats, flush }
 }

@@ -6,14 +6,13 @@ import { IncrementalSource, MediaInteractionType } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
 import { assembleIncrementalSnapshot } from '../assembly'
 import type { SerializationScope } from '../serialization'
+import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
-
-export type MediaInteractionCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
 
 export function trackMediaInteraction(
   configuration: RumConfiguration,
   scope: SerializationScope,
-  mediaInteractionCb: MediaInteractionCallback
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>
 ): Tracker {
   return addEventListeners(
     configuration,
@@ -31,7 +30,7 @@ export function trackMediaInteraction(
       ) {
         return
       }
-      mediaInteractionCb(
+      emitRecord(
         assembleIncrementalSnapshot<MediaInteractionData>(IncrementalSource.MediaInteraction, {
           id,
           type: event.type === DOM_EVENT.PLAY ? MediaInteractionType.Play : MediaInteractionType.Pause,

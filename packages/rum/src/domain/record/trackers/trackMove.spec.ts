@@ -9,13 +9,13 @@ import {
 import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
 import { createNodeIds } from '../nodeIds'
-import type { MousemoveCallBack } from './trackMove'
+import type { EmitRecordCallback } from '../record.types'
 import { trackMove } from './trackMove'
 import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { Tracker } from './tracker.types'
 
 describe('trackMove', () => {
-  let mouseMoveCallbackSpy: jasmine.Spy<MousemoveCallBack>
+  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let moveTracker: Tracker
   let configuration: RumConfiguration
 
@@ -30,8 +30,8 @@ describe('trackMove', () => {
       elementsScrollPositions: createElementsScrollPositions(),
     })
 
-    mouseMoveCallbackSpy = jasmine.createSpy()
-    moveTracker = trackMove(configuration, scope, mouseMoveCallbackSpy)
+    emitRecordCallback = jasmine.createSpy()
+    moveTracker = trackMove(configuration, scope, emitRecordCallback)
 
     registerCleanupTask(() => {
       moveTracker.stop()
@@ -42,7 +42,7 @@ describe('trackMove', () => {
     const event = createNewEvent('mousemove', { clientX: 1, clientY: 2 })
     document.body.dispatchEvent(event)
 
-    expect(mouseMoveCallbackSpy).toHaveBeenCalledWith({
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {
@@ -63,7 +63,7 @@ describe('trackMove', () => {
     const event = createNewEvent('touchmove', { changedTouches: [{ clientX: 1, clientY: 2 }] })
     document.body.dispatchEvent(event)
 
-    expect(mouseMoveCallbackSpy).toHaveBeenCalledWith({
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {
@@ -84,6 +84,6 @@ describe('trackMove', () => {
     const mouseMove = createNewEvent('mousemove')
     document.body.dispatchEvent(mouseMove)
 
-    expect(mouseMoveCallbackSpy).not.toHaveBeenCalled()
+    expect(emitRecordCallback).not.toHaveBeenCalled()
   })
 })
