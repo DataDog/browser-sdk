@@ -15,7 +15,7 @@ runMain(async () => {
   command`yarn build`.withEnvironment({ BUILD_MODE: 'release' }).run()
 
   printLog('Zipping extension files')
-  command`zip -jr ${ZIP_FILE_NAME} developer-extension/dist/`.run()
+  command`zip -jr ${ZIP_FILE_NAME} developer-extension/.output/chrome-mv3`.run()
 
   printLog('Publish Developer extension')
   await uploadAndPublish()

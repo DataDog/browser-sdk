@@ -2,9 +2,9 @@
   "extends": "../tsconfig.base.json",
 
   "compilerOptions": {
-    "baseUrl": ".",
     "module": "preserve",
     "target": "esnext",
+    "moduleResolution": "bundler",
     "jsx": "react",
     "lib": ["ES2022", "DOM"],
     "types": ["chrome", "react", "react-dom", "jasmine"],
@@ -13,5 +13,5 @@
     "noEmit": true
   },
 
-  "include": ["src"]
+  "include": ["src", "wxt.config.ts"]
 }
