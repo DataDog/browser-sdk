@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { createTest, flushElectronEvents } from '../lib/framework'
+import { createTest, flushElectronEvents, npmSetup } from '../lib/framework'
 
 test.describe('electron sdk', () => {
   createTest('should track a view on the main process')
+    .withSetup(npmSetup)
     .withRum()
     .withElectron()
     .run(async ({ intakeRegistry, page }) => {
