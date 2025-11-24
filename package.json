@@ -31,7 +31,7 @@
     "test:unit:watch": "yarn test:unit --no-single-run",
     "test:unit:bs": "node ./scripts/test/bs-wrapper.ts karma start test/unit/karma.bs.conf.js",
     "test:e2e:init": "yarn build && yarn build:apps && yarn playwright install chromium --with-deps",
-    "test:e2e": "playwright test --config test/e2e/playwright.local.config.ts --project chromium",
+    "test:e2e": "xvfb-run -a playwright test --config test/e2e/playwright.local.config.ts --project chromium -g electron",
     "test:e2e:bs": "node ./scripts/test/bs-wrapper.ts playwright test --config test/e2e/playwright.bs.config.ts",
     "test:e2e:ci": "yarn test:e2e:init && yarn test:e2e",
     "test:e2e:ci:bs": "yarn build && yarn build:apps && yarn test:e2e:bs",
