@@ -317,9 +317,8 @@ async function runBrowserTest(runner: TestRunner, testContext: TestContext, brow
 async function runElectronTest(runner: TestRunner, testContext: TestContext, setupOptions: SetupOptions) {
   const ELECTRON_APP_MAIN = 'test/apps/electron/dist/main.js'
   const rumEnv = setupOptions.rum ? toEnvVariable(setupOptions.rum) : undefined
-  console.log('DISPLAY', process.env.DISPLAY)
   const electronApp = await electron.launch({
-    args: [ELECTRON_APP_MAIN, '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+    args: [ELECTRON_APP_MAIN],
     env: {
       ...process.env,
       ...rumEnv,
