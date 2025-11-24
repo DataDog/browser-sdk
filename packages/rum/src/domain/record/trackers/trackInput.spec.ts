@@ -1,57 +1,46 @@
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
-import type { SerializationScope } from '../serialization'
-import {
-  serializeDocument,
-  SerializationContextStatus,
-  createSerializationStats,
-  createSerializationScope,
-} from '../serialization'
-import { createElementsScrollPositions } from '../elementsScrollPositions'
-import type { BrowserIncrementalSnapshotRecord } from '../../../types'
-import { IncrementalSource, RecordType } from '../../../types'
-import { createNodeIds } from '../nodeIds'
 import type { EmitRecordCallback } from '../record.types'
+import type { RecordingScope } from '../recordingScope'
+import type { BrowserIncrementalSnapshotRecord, InputData } from '../../../types'
+import { IncrementalSource, RecordType } from '../../../types'
+import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackInput } from './trackInput'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { Tracker } from './tracker.types'
 
 describe('trackInput', () => {
   let inputTracker: Tracker
-  let inputCallbackSpy: jasmine.Spy<EmitRecordCallback<BrowserIncrementalSnapshotRecord>>
+  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let input: HTMLInputElement
   let clock: Clock | undefined
-  let configuration: RumConfiguration
-  let scope: SerializationScope
+  let scope: RecordingScope
 
   beforeEach(() => {
-    configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
-    inputCallbackSpy = jasmine.createSpy()
-    scope = createSerializationScope(createNodeIds())
-
     input = appendElement('<div><input target /></div>') as HTMLInputElement
 
-    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
-      serializationStats: createSerializationStats(),
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
+    emitRecordCallback = jasmine.createSpy()
+    scope = createRecordingScopeForTesting()
+    takeFullSnapshotForTesting(scope)
 
     registerCleanupTask(() => {
       inputTracker.stop()
     })
   })
 
+  function getLatestInputPayload(): InputData & { text?: string } {
+    const latestRecord = emitRecordCallback.calls.mostRecent()?.args[0] as BrowserIncrementalSnapshotRecord
+    return latestRecord.data as InputData
+  }
+
   it('collects input values when an "input" event is dispatched', () => {
-    inputTracker = trackInput(configuration, scope, inputCallbackSpy)
+    inputTracker = trackInput(document, emitRecordCallback, scope)
     dispatchInputEvent('foo')
 
-    expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {
@@ -64,12 +53,12 @@ describe('trackInput', () => {
 
   it('collects input values when a property setter is used', () => {
     clock = mockClock()
-    inputTracker = trackInput(configuration, scope, inputCallbackSpy)
+    inputTracker = trackInput(document, emitRecordCallback, scope)
     input.value = 'foo'
 
     clock.tick(0)
 
-    expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {
@@ -82,13 +71,13 @@ describe('trackInput', () => {
 
   it('does not invoke callback when the value does not change', () => {
     clock = mockClock()
-    inputTracker = trackInput(configuration, scope, inputCallbackSpy)
+    inputTracker = trackInput(document, emitRecordCallback, scope)
     input.value = 'foo'
     clock.tick(0)
 
     dispatchInputEvent('foo')
 
-    expect(inputCallbackSpy).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
   })
 
   it('does not instrument setters when observing a shadow DOM', () => {
@@ -97,7 +86,7 @@ describe('trackInput', () => {
     const host = document.createElement('div')
     host.attachShadow({ mode: 'open' })
 
-    inputTracker = trackInput(configuration, scope, inputCallbackSpy, host.shadowRoot!)
+    inputTracker = trackInput(host.shadowRoot!, emitRecordCallback, scope)
 
     // eslint-disable-next-line @typescript-eslint/unbound-method
     expect(Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set).toBe(originalSetter)
@@ -105,10 +94,10 @@ describe('trackInput', () => {
 
   // cannot trigger an event in a Shadow DOM because event with `isTrusted:false` do not cross the root
   it('collects input values when an "input" event is composed', () => {
-    inputTracker = trackInput(configuration, scope, inputCallbackSpy)
+    inputTracker = trackInput(document, emitRecordCallback, scope)
     dispatchInputEventWithInShadowDom('foo')
 
-    expect(inputCallbackSpy).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {
@@ -120,32 +109,30 @@ describe('trackInput', () => {
   })
 
   it('masks input values according to the element privacy level', () => {
-    configuration.defaultPrivacyLevel = DefaultPrivacyLevel.ALLOW
-    inputTracker = trackInput(configuration, scope, inputCallbackSpy)
+    inputTracker = trackInput(document, emitRecordCallback, scope)
     input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
     dispatchInputEvent('foo')
 
-    expect((inputCallbackSpy.calls.first().args[0].data as { text?: string }).text).toBe('***')
+    expect(getLatestInputPayload().text).toBe('***')
   })
 
   it('masks input values according to a parent element privacy level', () => {
-    configuration.defaultPrivacyLevel = DefaultPrivacyLevel.ALLOW
-    inputTracker = trackInput(configuration, scope, inputCallbackSpy)
+    inputTracker = trackInput(document, emitRecordCallback, scope)
     input.parentElement!.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
     dispatchInputEvent('foo')
 
-    expect((inputCallbackSpy.calls.first().args[0].data as { text?: string }).text).toBe('***')
+    expect(getLatestInputPayload().text).toBe('***')
   })
 
   it('masks input values according to a the default privacy level', () => {
-    configuration.defaultPrivacyLevel = DefaultPrivacyLevel.MASK
-    inputTracker = trackInput(configuration, scope, inputCallbackSpy)
+    scope.configuration.defaultPrivacyLevel = DefaultPrivacyLevel.MASK
+    inputTracker = trackInput(document, emitRecordCallback, scope)
 
     dispatchInputEvent('foo')
 
-    expect((inputCallbackSpy.calls.first().args[0].data as { text?: string }).text).toBe('***')
+    expect(getLatestInputPayload().text).toBe('***')
   })
 
   function dispatchInputEvent(newValue: string) {

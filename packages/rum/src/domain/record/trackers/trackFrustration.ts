@@ -2,14 +2,14 @@ import type { LifeCycle } from '@datadog/browser-rum-core'
 import { ActionType, RumEventType, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { FrustrationRecord } from '../../../types'
 import { RecordType } from '../../../types'
-import type { RecordIds } from '../recordIds'
 import type { EmitRecordCallback } from '../record.types'
+import type { RecordingScope } from '../recordingScope'
 import type { Tracker } from './tracker.types'
 
 export function trackFrustration(
   lifeCycle: LifeCycle,
   emitRecord: EmitRecordCallback<FrustrationRecord>,
-  recordIds: RecordIds
+  scope: RecordingScope
 ): Tracker {
   const frustrationSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
     if (
@@ -25,7 +25,7 @@ export function trackFrustration(
         type: RecordType.FrustrationRecord,
         data: {
           frustrationTypes: data.rawRumEvent.action.frustration.type,
-          recordIds: data.domainContext.events.map((e) => recordIds.getIdForEvent(e)),
+          recordIds: data.domainContext.events.map((e) => scope.eventIds.getIdForEvent(e)),
         },
       })
     }

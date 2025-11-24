@@ -8,8 +8,8 @@ import type { Tracker } from './tracker.types'
 
 export function trackViewEnd(
   lifeCycle: LifeCycle,
-  flushMutations: () => void,
-  emitRecord: EmitRecordCallback<ViewEndRecord>
+  emitRecord: EmitRecordCallback<ViewEndRecord>,
+  flushMutations: () => void
 ): Tracker {
   const viewEndSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, () => {
     flushMutations()
