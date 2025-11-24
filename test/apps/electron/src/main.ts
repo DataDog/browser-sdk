@@ -33,6 +33,5 @@ function retrieveRumConfiguration(): any {
     .forEach(([key, value]) => {
       rumConfiguration[key.replace(namespace, '')] = Number.isNaN(Number(value)) ? value : Number(value)
     })
-  console.log(rumConfiguration)
   return rumConfiguration
 }

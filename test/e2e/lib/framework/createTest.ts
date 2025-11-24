@@ -320,6 +320,7 @@ async function runElectronTest(runner: TestRunner, testContext: TestContext, set
   const electronApp = await electron.launch({
     args: [ELECTRON_APP_MAIN],
     env: {
+      ...process.env,
       ...rumEnv,
       ELECTRON_ENABLE_LOGGING: '1',
     },
