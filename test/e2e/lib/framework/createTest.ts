@@ -318,7 +318,7 @@ async function runElectronTest(runner: TestRunner, testContext: TestContext, set
   const ELECTRON_APP_MAIN = 'test/apps/electron/dist/main.js'
   const rumEnv = setupOptions.rum ? toEnvVariable(setupOptions.rum) : undefined
   const electronApp = await electron.launch({
-    args: [ELECTRON_APP_MAIN],
+    args: [ELECTRON_APP_MAIN, '--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
     env: {
       ...rumEnv,
       ELECTRON_ENABLE_LOGGING: '1',
