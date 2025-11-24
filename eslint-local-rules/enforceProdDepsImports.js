@@ -38,7 +38,7 @@ export default {
     return moduleVisitor((source) => {
       const importTypeResult = importType(source.value, context)
       // Use an allow list instead of a deny list to make the rule more future-proof.
-      if (importTypeResult === 'parent' || importTypeResult === 'sibling') {
+      if (importTypeResult === 'parent' || importTypeResult === 'sibling' || importTypeResult === 'builtin') {
         return
       }
 

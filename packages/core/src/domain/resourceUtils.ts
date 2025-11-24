@@ -9,6 +9,7 @@ export const ResourceType = {
   FONT: 'font',
   MEDIA: 'media',
   OTHER: 'other',
+  NATIVE: 'native',
 } as const
 
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType]
