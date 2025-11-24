@@ -1,0 +1,223 @@
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import * as os from 'node:os'
+
+import type { Observable } from '@datadog/browser-core'
+import { ErrorHandling, generateUUID } from '@datadog/browser-core'
+import { RumEventType } from '@datadog/browser-rum-core'
+import { app, crashReporter } from 'electron'
+
+import { process_minidump_with_stackwalk } from '../../wasm/minidump'
+import type { CollectedRumEvent } from './events'
+
+/**
+ * Minidump parsed output structure
+ */
+interface MinidumpResult {
+  status: string
+  crash_info: {
+    type: string
+    address: string
+    crashing_thread: number
+  }
+  system_info: {
+    os: string
+    cpu: string
+    cpu_info: string
+  }
+  thread_count: number
+  threads: Array<{
+    thread_index: number
+    frame_count: number
+    frames: Array<{
+      module: string
+      function: string
+      instruction: string
+      module_offset: string
+      trust: string
+    }>
+  }>
+  crashing_thread?: {
+    thread_index: number
+    frames: Array<{
+      module: string
+      function: string
+      instruction: string
+      module_offset: string
+      trust: string
+    }>
+  }
+  module_count: number
+  modules: Array<{
+    base_address: string
+    code_file: string
+    code_identifier: string
+    debug_file: string
+    debug_identifier: string
+    version: string
+  }>
+}
+
+/**
+ * Convert minidump parsed result to a RUM error event format
+ */
+function createCrashErrorEvent(
+  minidumpResult: MinidumpResult,
+  dumpFileName: string,
+  crashTime: number,
+  applicationId: string,
+  sessionId: string,
+  viewId: string
+) {
+  // Transform threads
+  const threads = minidumpResult.threads.map((thread, threadId) => {
+    const isCrashed = thread.thread_index === minidumpResult.crash_info.crashing_thread
+    const stack = thread.frames
+      .map((frame) => {
+        const moduleName = frame.module ? path.basename(frame.module) : '???'
+
+        // find module and read the base address
+        const address = minidumpResult.modules.find((module) => module.code_file === frame.module)?.base_address
+        // offset from hex do decimal
+        const offset = parseInt(frame.module_offset, 16)
+
+        return `${threadId}  ${moduleName} ${frame.instruction} ${address} + ${offset}`
+      })
+      .join('\n')
+
+    return {
+      name: `Thread ${thread.thread_index}`,
+      crashed: isCrashed,
+      stack,
+    }
+  })
+
+  // Transform modules to binary_images
+  const binaryImages = minidumpResult.modules.map((module) => {
+    // Extract base address value (remove 0x prefix if present)
+    const loadAddress = module.base_address
+
+    // Determine if it's a system library based on path
+    const isSystem =
+      module.code_file.includes('/System/Library/') ||
+      module.code_file.includes('/usr/lib/') ||
+      module.code_file.includes('\\Windows\\') ||
+      module.code_file.includes('\\System32\\')
+
+    return {
+      uuid: module.debug_identifier,
+      name: path.basename(module.code_file),
+      is_system: isSystem,
+      load_address: loadAddress,
+      max_address: undefined, // Not provided by minidump parser
+      arch: minidumpResult.system_info.cpu,
+    }
+  })
+
+  // Get the crashed thread for the main stack trace
+  const crashedThread = threads.find((t) => t.crashed)
+
+  return {
+    _dd: {
+      format_version: 2 as const,
+    },
+    application: { id: applicationId },
+    date: crashTime,
+    env: 'prod',
+    error: {
+      binary_images: binaryImages,
+      category: 'Exception' as const,
+      fingerprint: 'v10.B1602146B5E853D276447FE55B77482F',
+      handling: ErrorHandling.UNHANDLED,
+      id: generateUUID(),
+      is_crash: true,
+      message: `Application crashed (${dumpFileName})`,
+      meta: {
+        code_type: minidumpResult.system_info.cpu,
+        process: app.getName(),
+        exception_type: minidumpResult.crash_info.type,
+        path: undefined, // Could be extracted from modules
+      },
+      source: 'source' as const,
+      source_type: 'electron' as 'browser',
+      threads,
+      type: minidumpResult.crash_info.type,
+      was_truncated: false,
+    },
+    service: 'electron-adrian',
+    session: { id: sessionId, type: 'user' as const },
+    source: 'electron' as 'browser',
+    type: RumEventType.ERROR,
+    view: { id: viewId, url: 'com/datadog/application-launch/view' },
+  }
+}
+
+/**
+ * Map OS to source_type
+ */
+function getSourceType(os: string): 'android' | 'ios' | 'browser' {
+  const osLower = os.toLowerCase()
+  if (osLower === 'mac' || osLower === 'ios') {
+    return 'ios'
+  }
+  if (osLower === 'android') {
+    return 'android'
+  }
+  return 'browser'
+}
+
+/**
+ * Start monitoring for crash dumps and report them to RUM
+ */
+export function startCrashMonitoring(
+  onRumEventObservable: Observable<CollectedRumEvent>,
+  applicationId: string,
+  sessionId: string,
+  viewId: string
+) {
+  // Initialize crash reporter
+  crashReporter.start({
+    uploadToServer: false, // We'll handle uploading via RUM
+    compress: true,
+    extra: {
+      sessionId,
+    },
+  })
+
+  // Wait for app to be ready before accessing crash dumps directory
+  void app.whenReady().then(() => {
+    const crashesDirectory = app.getPath('crashDumps')
+
+    // Check if there are any crash reports pending
+    const pendingCrashReports = fs.readdirSync(path.join(crashesDirectory, 'pending'))
+
+    pendingCrashReports.forEach(async (crashReport) => {
+      const reportPath = path.join(crashesDirectory, 'pending', crashReport)
+      const reportMetadata = fs.statSync(reportPath)
+      const reportBytes = fs.readFileSync(reportPath)
+
+      const resultJson = await process_minidump_with_stackwalk(reportBytes)
+      const minidumpResult: MinidumpResult = JSON.parse(resultJson)
+
+      const crashTime = new Date(reportMetadata.ctime).getTime()
+
+      const rumErrorEvent = createCrashErrorEvent(
+        minidumpResult,
+        crashReport,
+        crashTime,
+        applicationId,
+        sessionId,
+        viewId
+      )
+      console.log(JSON.stringify(rumErrorEvent, null, 2))
+
+      onRumEventObservable.notify({
+        event: rumErrorEvent,
+        source: 'main-process',
+      })
+
+      // delete the crash report
+      fs.unlinkSync(reportPath)
+    })
+  })
+}

@@ -1,4 +1,5 @@
 /* eslint-disable jsdoc/check-indentation */
+import crypto from 'node:crypto'
 import type { RawError, PageMayExitEvent, Encoder, InitConfiguration, TrackType } from '@datadog/browser-core'
 import {
   Observable,
@@ -19,6 +20,7 @@ import { startActivityTracking } from '../domain/rum/activity'
 import { startRumEventAssembleAndSend } from '../domain/rum/assembly'
 import { startMainProcessTracking } from '../domain/rum/mainProcessTracking'
 import { startConvertSpanToRumEvent } from '../domain/rum/convertSpans'
+import { startCrashMonitoring } from '../domain/rum/crashReporter'
 import type { Trace } from '../domain/trace/trace'
 import { createDdTraceAgent } from '../domain/trace/traceAgent'
 import { startLogsEventAssembleAndSend } from '../domain/logs/assembly'
@@ -40,6 +42,9 @@ function makeDatadogElectron() {
       const onLogsEventObservable = new Observable<LogsEvent>()
       const onTraceObservable = new Observable<Trace>()
       const hooks = createHooks()
+      const sessionId = crypto.randomUUID()
+      const mainProcessViewId = crypto.randomUUID()
+      const createEncoder = () => createIdentityEncoder()
 
       const rumBatch = startElectronRumBatch(
         configuration,
@@ -48,6 +53,7 @@ function makeDatadogElectron() {
         sessionExpireObservable,
         createIdentityEncoder
       )
+
       startRumEventAssembleAndSend(onRumEventObservable, rumBatch, hooks)
 
       const logsBatch = startElectronLogsBatch(
@@ -71,9 +77,12 @@ function makeDatadogElectron() {
       })
 
       const onActivityObservable = startActivityTracking(onRumEventObservable)
-      startMainProcessTracking(hooks, configuration, onRumEventObservable, onActivityObservable)
+      startMainProcessTracking(hooks, configuration,
+        sessionId,
+        mainProcessViewId, onRumEventObservable, onActivityObservable)
       startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
       setupMainBridge(onRumEventObservable, onLogsEventObservable)
+      startCrashMonitoring(onRumEventObservable, initConfiguration.applicationId, sessionId, mainProcessViewId)
 
       initTracer(configuration.service!, configuration.env!, configuration.version!)
       createDdTraceAgent(onTraceObservable, hooks)

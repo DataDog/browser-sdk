@@ -12,6 +12,9 @@ package.tgz
 docs/
 *.tsbuildinfo
 
+# Generated WASM base64 files
+**/*.wasm.base64.ts
+
 # https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 .pnp.*
 .yarn/*

@@ -35,5 +35,10 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "files": [
+    "cjs/**/*",
+    "esm/**/*",
+    "bundle/**/*"
+  ]
 }

@@ -1,4 +1,3 @@
-import crypto from 'node:crypto'
 import type { RumConfiguration, RumViewEvent } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import type { Observable } from '@datadog/browser-core'
@@ -11,12 +10,14 @@ const NODE_VIEW_NAME = 'ApplicationLaunch'
 export function startMainProcessTracking(
   hooks: Hooks,
   configuration: RumConfiguration,
+  sessionId: string,
+  mainProcessViewId: string,
   onRumEventObservable: Observable<CollectedRumEvent>,
   onActivityObservable: Observable<void>
 ) {
   const mainProcessContext = {
-    sessionId: crypto.randomUUID(),
-    viewId: crypto.randomUUID(),
+    sessionId,
+    viewId: mainProcessViewId,
   }
   hooks.register(HookNames.Assemble, ({ eventType }) => ({
     type: eventType,
