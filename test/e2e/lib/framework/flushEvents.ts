@@ -24,3 +24,9 @@ export async function flushEvents(page: Page) {
   await page.goto(`${servers.base.origin}/ok?duration=200`)
   await waitForServersIdle()
 }
+
+export async function flushElectronEvents(page: Page) {
+  // TODO improve electron sdk flush logic
+  await page.waitForTimeout(1000)
+  await waitForServersIdle()
+}

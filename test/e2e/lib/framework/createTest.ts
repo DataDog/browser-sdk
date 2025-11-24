@@ -2,6 +2,7 @@ import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
+import { _electron as electron } from 'playwright-core'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'
 import { getRunId } from '../../../envUtils'
 import type { BrowserLog } from '../helpers/browser'
@@ -10,7 +11,7 @@ import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helper
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
 import { IntakeRegistry } from './intakeRegistry'
-import { flushEvents } from './flushEvents'
+import { flushEvents, flushElectronEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
 import type { SetupFactory, SetupOptions } from './pageSetups'
@@ -50,6 +51,7 @@ type TestRunner = (testContext: TestContext) => Promise<void> | void
 class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
   private alsoRunWithRumSlim = false
+  private isElectron = false
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
   private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
@@ -84,6 +86,11 @@ class TestBuilder {
 
   withLogsInit(logsInit: (initConfiguration: LogsInitConfiguration) => void) {
     this.logsInit = logsInit
+    return this
+  }
+
+  withElectron() {
+    this.isElectron = true
     return this
   }
 
@@ -194,6 +201,7 @@ class TestBuilder {
       testFixture: this.testFixture,
       extension: this.extension,
       hostName: this.hostName,
+      isElectron: this.isElectron,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -268,20 +276,79 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     const testContext = createTestContext(servers, page, context, browserLogs, browserName, setupOptions)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
+    bindServersToConfigurations(servers, setupOptions)
 
     const setup = factory(setupOptions, servers)
     servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
-    await setUpTest(browserLogs, testContext)
-
-    try {
-      await runner(testContext)
-      tearDownPassedTest(testContext)
-    } finally {
-      await tearDownTest(testContext)
+    if (setupOptions.isElectron) {
+      await runElectronTest(runner, testContext, setupOptions)
+    } else {
+      await runBrowserTest(runner, testContext, browserLogs)
     }
   })
+}
+
+function bindServersToConfigurations(servers: Servers, setupOptions: SetupOptions) {
+  for (const config of [
+    setupOptions.rum,
+    setupOptions.logs,
+    setupOptions.extension?.logsConfiguration,
+    setupOptions.extension?.rumConfiguration,
+  ]) {
+    if (config) {
+      config.proxy = servers.intake.origin
+      ;(config as any).remoteConfigurationProxy = `${servers.base.origin}/config`
+    }
+  }
+}
+
+async function runBrowserTest(runner: TestRunner, testContext: TestContext, browserLogs: BrowserLogsManager) {
+  await setUpTest(browserLogs, testContext)
+  try {
+    await runner(testContext)
+    tearDownPassedTest(testContext)
+  } finally {
+    await tearDownTest(testContext)
+  }
+}
+
+async function runElectronTest(runner: TestRunner, testContext: TestContext, setupOptions: SetupOptions) {
+  const ELECTRON_APP_MAIN = 'test/apps/electron/dist/main.js'
+  const rumEnv = setupOptions.rum ? toEnvVariable(setupOptions.rum) : undefined
+  const electronApp = await electron.launch({
+    args: [ELECTRON_APP_MAIN],
+    env: {
+      ...rumEnv,
+      ELECTRON_ENABLE_LOGGING: '1',
+    },
+  })
+
+  const child = electronApp.process()
+  child.stdout?.on('data', (data) => console.log('[ELECTRON MAIN]', String(data)))
+  child.stderr?.on('data', (data) => console.error('[ELECTRON MAIN]', String(data)))
+
+  const page = await electronApp.firstWindow()
+  testContext.page = page
+  await page.waitForLoadState('domcontentloaded')
+  await waitForServersIdle()
+  try {
+    await runner(testContext)
+    tearDownPassedTest(testContext)
+  } finally {
+    await flushElectronEvents(page)
+    await page.close()
+  }
+}
+
+function toEnvVariable(rum: RumInitConfiguration) {
+  const namespace = 'RUM_'
+  const env: { [key: string]: any } = {}
+  Object.entries(rum).forEach(([key, value]) => {
+    env[`${namespace}${key}`] = value
+  })
+  return env
 }
 
 function createTestContext(
