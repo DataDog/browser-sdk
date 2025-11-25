@@ -1,4 +1,4 @@
-import type { RawError, Duration, RelativeTime, BufferedData } from '@datadog/browser-core'
+import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
 import {
   Observable,
   stopSessionManager,
@@ -21,34 +21,15 @@ import {
   registerCleanupTask,
 } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../test'
-import {
-  createPerformanceEntry,
-  createRumSessionManagerMock,
-  mockDocumentReadyState,
-  mockPageStateHistory,
-  mockPerformanceObserver,
-  mockRumConfiguration,
-  noopProfilerApi,
-  noopRecorderApi,
-  setupLocationObserver,
-} from '../../test'
-import { RumPerformanceEntryType } from '../browser/performanceObservable'
+import { createRumSessionManagerMock, mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
-import { SESSION_KEEP_ALIVE_INTERVAL, THROTTLE_VIEW_UPDATE_PERIOD } from '../domain/view/trackViews'
-import { startViewCollection } from '../domain/view/viewCollection'
+import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
-import type { LocationChange } from '../browser/locationChangeObservable'
-import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
-import type { PageStateHistory } from '../domain/contexts/pageStateHistory'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
-import { startUrlContexts } from '../domain/contexts/urlContexts'
-import { startSessionContext } from '../domain/contexts/sessionContext'
 import { createHooks } from '../domain/hooks'
 import type { RumSessionManager } from '../domain/rumSessionManager'
-import type { RumMutationRecord } from '../browser/domMutationObservable'
-import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -63,46 +44,26 @@ function startRumStub(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   sessionManager: RumSessionManager,
-  location: Location,
-  domMutationObservable: Observable<RumMutationRecord[]>,
-  windowOpenObservable: Observable<void>,
-  locationChangeObservable: Observable<LocationChange>,
-  pageStateHistory: PageStateHistory,
   reportError: (error: RawError) => void
 ) {
   const hooks = createHooks()
-  const viewHistory = startViewHistory(lifeCycle)
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
-  startSessionContext(hooks, sessionManager, noopRecorderApi, viewHistory)
 
   const { stop: rumEventCollectionStop } = startRumEventCollection(
     lifeCycle,
     hooks,
     configuration,
-    pageStateHistory,
-    domMutationObservable,
-    windowOpenObservable,
+    sessionManager,
+    noopRecorderApi,
+    undefined,
+    createCustomVitalsState(),
+    new Observable(),
+    undefined,
     reportError
   )
-  const { stop: viewCollectionStop } = startViewCollection(
-    lifeCycle,
-    hooks,
-    configuration,
-    location,
-    domMutationObservable,
-    windowOpenObservable,
-    locationChangeObservable,
-    noopRecorderApi,
-    viewHistory
-  )
 
-  startLongAnimationFrameCollection(lifeCycle, configuration)
   return {
     stop: () => {
-      viewHistory.stop()
-      urlContexts.stop()
       rumEventCollectionStop()
-      viewCollectionStop()
     },
   }
 }
@@ -115,22 +76,9 @@ describe('rum session', () => {
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     sessionManager = createRumSessionManagerMock().setId('42')
-    const domMutationObservable = new Observable<RumMutationRecord[]>()
-    const windowOpenObservable = new Observable<void>()
-    const { locationChangeObservable } = setupLocationObserver()
 
     serverRumEvents = collectServerEvents(lifeCycle)
-    const { stop } = startRumStub(
-      lifeCycle,
-      mockRumConfiguration(),
-      sessionManager,
-      location,
-      domMutationObservable,
-      windowOpenObservable,
-      locationChangeObservable,
-      mockPageStateHistory(),
-      noop
-    )
+    const { stop } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
 
     registerCleanupTask(stop)
   })
@@ -165,22 +113,9 @@ describe('rum session keep alive', () => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
     sessionManager = createRumSessionManagerMock().setId('1234')
-    const domMutationObservable = new Observable<RumMutationRecord[]>()
-    const windowOpenObservable = new Observable<void>()
-    const { locationChangeObservable } = setupLocationObserver()
 
     serverRumEvents = collectServerEvents(lifeCycle)
-    const { stop } = startRumStub(
-      lifeCycle,
-      mockRumConfiguration(),
-      sessionManager,
-      location,
-      domMutationObservable,
-      windowOpenObservable,
-      locationChangeObservable,
-      mockPageStateHistory(),
-      noop
-    )
+    const { stop } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
 
     registerCleanupTask(() => {
       stop()
