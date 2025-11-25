@@ -6,6 +6,8 @@ import { HookNames, timeStampNow, combine, toServerDuration, elapsed } from '@da
 import type { Hooks } from '../../hooks'
 import type { CollectedRumEvent } from './events'
 
+const NODE_VIEW_NAME = 'ApplicationLaunch'
+
 export function startMainProcessTracking(
   hooks: Hooks,
   configuration: RumConfiguration,
@@ -26,8 +28,7 @@ export function startMainProcessTracking(
     },
     view: {
       id: mainProcessContext.viewId,
-      // TODO get customer package name
-      url: 'com/datadog/application-launch/view',
+      url: NODE_VIEW_NAME,
     },
     service: configuration.service,
     env: configuration.env,
@@ -49,7 +50,7 @@ export function startMainProcessTracking(
     view: {
       id: mainProcessContext.viewId,
       is_active: true,
-      name: 'ApplicationLaunch',
+      name: NODE_VIEW_NAME,
       time_spent: 0,
       // TODO update counters
       action: {

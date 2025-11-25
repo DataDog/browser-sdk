@@ -13,6 +13,6 @@ test.describe('electron sdk', () => {
       expect(viewEvent).toBeDefined()
       expect(viewEvent.source).toBe('browser')
       expect(viewEvent.view.name).toBe('ApplicationLaunch')
-      expect(viewEvent.view.url).toBe('com/datadog/application-launch/view')
+      expect(viewEvent.view.url).toBe('ApplicationLaunch')
     })
 })
