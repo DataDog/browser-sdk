@@ -16,6 +16,7 @@ export function setupRendererBridge() {
       void ipcRenderer.invoke('datadog:send', msg)
     },
   } satisfies DatadogEventBridge
+
   try {
     contextBridge.exposeInMainWorld('DatadogEventBridge', (window as any).DatadogEventBridge)
   } catch {

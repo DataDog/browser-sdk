@@ -13,9 +13,11 @@ export function createDdTraceAgent(onTraceObservable: Observable<Trace>, hooks: 
   server.on('request', (req, res) => {
     // Collect binary data chunks
     const chunks: Buffer[] = []
+
     req.on('data', (chunk: Buffer) => {
       chunks.push(chunk)
     })
+
     req.on('end', () => {
       const buffer = Buffer.concat(chunks)
 

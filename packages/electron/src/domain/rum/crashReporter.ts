@@ -1,12 +1,12 @@
 import * as fs from 'node:fs'
 import * as path from 'node:path'
-import * as os from 'node:os'
 
 import type { Observable } from '@datadog/browser-core'
 import { ErrorHandling, generateUUID } from '@datadog/browser-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { app, crashReporter } from 'electron'
 
+// eslint-disable-next-line camelcase
 import { process_minidump_with_stackwalk } from '../../wasm/minidump'
 import type { CollectedRumEvent } from './events'
 
@@ -127,7 +127,6 @@ function createCrashErrorEvent(
     error: {
       binary_images: binaryImages,
       category: 'Exception' as const,
-      fingerprint: 'v10.B1602146B5E853D276447FE55B77482F',
       handling: ErrorHandling.UNHANDLED,
       id: generateUUID(),
       is_crash: true,
@@ -140,6 +139,7 @@ function createCrashErrorEvent(
       },
       source: 'source' as const,
       source_type: 'electron' as 'browser',
+      stack: crashedThread?.stack,
       threads,
       type: minidumpResult.crash_info.type,
       was_truncated: false,
@@ -152,23 +152,6 @@ function createCrashErrorEvent(
   }
 }
 
-/**
- * Map OS to source_type
- */
-function getSourceType(os: string): 'android' | 'ios' | 'browser' {
-  const osLower = os.toLowerCase()
-  if (osLower === 'mac' || osLower === 'ios') {
-    return 'ios'
-  }
-  if (osLower === 'android') {
-    return 'android'
-  }
-  return 'browser'
-}
-
-/**
- * Start monitoring for crash dumps and report them to RUM
- */
 export function startCrashMonitoring(
   onRumEventObservable: Observable<CollectedRumEvent>,
   applicationId: string,
@@ -191,6 +174,7 @@ export function startCrashMonitoring(
     // Check if there are any crash reports pending
     const pendingCrashReports = fs.readdirSync(path.join(crashesDirectory, 'pending'))
 
+    // eslint-disable-next-line @typescript-eslint/no-misused-promises
     pendingCrashReports.forEach(async (crashReport) => {
       const reportPath = path.join(crashesDirectory, 'pending', crashReport)
       const reportMetadata = fs.statSync(reportPath)
@@ -209,7 +193,6 @@ export function startCrashMonitoring(
         sessionId,
         viewId
       )
-      console.log(JSON.stringify(rumErrorEvent, null, 2))
 
       onRumEventObservable.notify({
         event: rumErrorEvent,
