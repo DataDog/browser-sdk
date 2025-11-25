@@ -1,17 +1,25 @@
-/* eslint-disable jsdoc/check-indentation */
 import crypto from 'node:crypto'
-import type { RawError, PageMayExitEvent, Encoder, InitConfiguration, TrackType } from '@datadog/browser-core'
-import {
-  Observable,
-  createBatch,
-  createHttpRequest,
-  createFlushController,
-  createIdentityEncoder,
-  createEndpointBuilder,
-} from '@datadog/browser-core'
 import type { RumConfiguration, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { createHooks, validateAndBuildRumConfiguration } from '@datadog/browser-rum-core'
 import type { LogsEvent } from '@datadog/browser-logs'
+import type {
+  PageMayExitEvent,
+  AbstractHooks,
+  RawError,
+  Encoder,
+  InitConfiguration,
+  TrackType,
+} from '@datadog/browser-core'
+import {
+  createBatch,
+  createHttpRequest,
+  createFlushController,
+  createEndpointBuilder,
+  buildGlobalContextManager,
+  Observable,
+  createIdentityEncoder,
+  HookNames,
+} from '@datadog/browser-core'
 import tracer, { initTracer } from '../domain/trace/tracer'
 import { createIpcMain } from '../domain/main/ipcMain'
 import type { CollectedRumEvent } from '../domain/rum/events'
@@ -26,6 +34,8 @@ import { createDdTraceAgent } from '../domain/trace/traceAgent'
 import { startLogsEventAssembleAndSend } from '../domain/logs/assembly'
 
 function makeDatadogElectron() {
+  const globalContext = buildGlobalContextManager()
+
   return {
     init(initConfiguration: RumInitConfiguration) {
       console.log('init from SDK Electron')
@@ -44,7 +54,11 @@ function makeDatadogElectron() {
       const hooks = createHooks()
       const sessionId = crypto.randomUUID()
       const mainProcessViewId = crypto.randomUUID()
-      const createEncoder = () => createIdentityEncoder()
+
+      ;(hooks as AbstractHooks).register(HookNames.Assemble, () => {
+        const context = globalContext.getContext()
+        return { context }
+      })
 
       const rumBatch = startElectronRumBatch(
         configuration,
@@ -77,9 +91,14 @@ function makeDatadogElectron() {
       })
 
       const onActivityObservable = startActivityTracking(onRumEventObservable)
-      startMainProcessTracking(hooks, configuration,
+      startMainProcessTracking(
+        hooks,
+        configuration,
         sessionId,
-        mainProcessViewId, onRumEventObservable, onActivityObservable)
+        mainProcessViewId,
+        onRumEventObservable,
+        onActivityObservable
+      )
       startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
       setupMainBridge(onRumEventObservable, onLogsEventObservable)
       startCrashMonitoring(onRumEventObservable, initConfiguration.applicationId, sessionId, mainProcessViewId)
@@ -92,6 +111,11 @@ function makeDatadogElectron() {
         pageMayExitObservable.notify({ reason: 'page_hide' })
       }, 1000)
     },
+    setGlobalContext: globalContext.setContext.bind(globalContext),
+    getGlobalContext: globalContext.getContext.bind(globalContext),
+    setGlobalContextProperty: globalContext.setContextProperty.bind(globalContext),
+    removeGlobalContextProperty: globalContext.removeContextProperty.bind(globalContext),
+    clearGlobalContext: globalContext.clearContext.bind(globalContext),
   }
 }
 
