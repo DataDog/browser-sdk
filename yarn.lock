@@ -245,7 +245,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
+"@datadog/browser-logs@npm:6.24.0, @datadog/browser-logs@workspace:*, @datadog/browser-logs@workspace:packages/logs":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-logs@workspace:packages/logs"
   dependencies:
@@ -374,6 +374,7 @@ __metadata:
   resolution: "@datadog/electron@workspace:packages/electron"
   dependencies:
     "@datadog/browser-core": "npm:6.24.0"
+    "@datadog/browser-logs": "npm:6.24.0"
     "@datadog/browser-rum-core": "npm:6.24.0"
     "@msgpack/msgpack": "npm:3.1.2"
     "@openfeature/core": "npm:1.9.1"
@@ -382,12 +383,6 @@ __metadata:
     electron: "npm:39"
     graphql: "npm:16.12.0"
     pako: "npm:2.1.0"
-  peerDependencies:
-    "@datadog/browser-logs": 6.24.0
-    electron: 39
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
   languageName: unknown
   linkType: soft
 
