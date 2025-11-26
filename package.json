@@ -5,7 +5,6 @@
   "workspaces": [
     "packages/*",
     "developer-extension",
-    "performances",
     "test/e2e",
     "test/performance"
   ],
