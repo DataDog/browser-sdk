@@ -11,6 +11,7 @@ import type {
   TrackType,
 } from '@datadog/browser-core'
 import {
+  monitor,
   createBatch,
   createHttpRequest,
   createFlushController,
@@ -19,6 +20,7 @@ import {
   Observable,
   createIdentityEncoder,
   HookNames,
+  setInterval,
 } from '@datadog/browser-core'
 import tracer, { initTracer } from '../domain/trace/tracer'
 import { createIpcMain } from '../domain/main/ipcMain'
@@ -32,6 +34,7 @@ import { startCrashMonitoring } from '../domain/rum/crashReporter'
 import type { Trace } from '../domain/trace/trace'
 import { createDdTraceAgent } from '../domain/trace/traceAgent'
 import { startLogsEventAssembleAndSend } from '../domain/logs/assembly'
+import { startTelemetry } from '../domain/telemetry/telemetry'
 
 function makeDatadogElectron() {
   const globalContext = buildGlobalContextManager()
@@ -67,8 +70,8 @@ function makeDatadogElectron() {
         sessionExpireObservable,
         createIdentityEncoder
       )
-
       startRumEventAssembleAndSend(onRumEventObservable, rumBatch, hooks)
+      startTelemetry(rumBatch, configuration, hooks)
 
       const logsBatch = startElectronLogsBatch(
         configuration,
@@ -106,16 +109,15 @@ function makeDatadogElectron() {
       initTracer(configuration.service!, configuration.env!, configuration.version!)
       createDdTraceAgent(onTraceObservable, hooks)
 
-      // eslint-disable-next-line
       setInterval(() => {
         pageMayExitObservable.notify({ reason: 'page_hide' })
       }, 1000)
     },
-    setGlobalContext: globalContext.setContext.bind(globalContext),
-    getGlobalContext: globalContext.getContext.bind(globalContext),
-    setGlobalContextProperty: globalContext.setContextProperty.bind(globalContext),
-    removeGlobalContextProperty: globalContext.removeContextProperty.bind(globalContext),
-    clearGlobalContext: globalContext.clearContext.bind(globalContext),
+    setGlobalContext: monitor(globalContext.setContext.bind(globalContext)),
+    getGlobalContext: monitor(globalContext.getContext.bind(globalContext)),
+    setGlobalContextProperty: monitor(globalContext.setContextProperty.bind(globalContext)),
+    removeGlobalContextProperty: monitor(globalContext.removeContextProperty.bind(globalContext)),
+    clearGlobalContext: monitor(globalContext.clearContext.bind(globalContext)),
   }
 }
 

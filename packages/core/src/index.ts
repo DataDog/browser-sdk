@@ -41,6 +41,7 @@ export type {
 } from './domain/telemetry'
 export {
   startTelemetry,
+  startTelemetryCollection,
   addTelemetryDebug,
   addTelemetryError,
   resetTelemetry,

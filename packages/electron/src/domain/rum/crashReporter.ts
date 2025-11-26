@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 
 import type { Observable } from '@datadog/browser-core'
-import { ErrorHandling, generateUUID } from '@datadog/browser-core'
+import { monitor, ErrorHandling, generateUUID } from '@datadog/browser-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { app, crashReporter } from 'electron'
 
@@ -168,39 +168,41 @@ export function startCrashMonitoring(
   })
 
   // Wait for app to be ready before accessing crash dumps directory
-  void app.whenReady().then(() => {
-    const crashesDirectory = app.getPath('crashDumps')
+  void app.whenReady().then(
+    monitor(() => {
+      const crashesDirectory = app.getPath('crashDumps')
 
-    // Check if there are any crash reports pending
-    const pendingCrashReports = fs.readdirSync(path.join(crashesDirectory, 'pending'))
+      // Check if there are any crash reports pending
+      const pendingCrashReports = fs.readdirSync(path.join(crashesDirectory, 'pending'))
 
-    // eslint-disable-next-line @typescript-eslint/no-misused-promises
-    pendingCrashReports.forEach(async (crashReport) => {
-      const reportPath = path.join(crashesDirectory, 'pending', crashReport)
-      const reportMetadata = fs.statSync(reportPath)
-      const reportBytes = fs.readFileSync(reportPath)
+      // eslint-disable-next-line @typescript-eslint/no-misused-promises
+      pendingCrashReports.forEach(async (crashReport) => {
+        const reportPath = path.join(crashesDirectory, 'pending', crashReport)
+        const reportMetadata = fs.statSync(reportPath)
+        const reportBytes = fs.readFileSync(reportPath)
 
-      const resultJson = await process_minidump_with_stackwalk(reportBytes)
-      const minidumpResult: MinidumpResult = JSON.parse(resultJson)
+        const resultJson = await process_minidump_with_stackwalk(reportBytes)
+        const minidumpResult: MinidumpResult = JSON.parse(resultJson)
 
-      const crashTime = new Date(reportMetadata.ctime).getTime()
+        const crashTime = new Date(reportMetadata.ctime).getTime()
 
-      const rumErrorEvent = createCrashErrorEvent(
-        minidumpResult,
-        crashReport,
-        crashTime,
-        applicationId,
-        sessionId,
-        viewId
-      )
+        const rumErrorEvent = createCrashErrorEvent(
+          minidumpResult,
+          crashReport,
+          crashTime,
+          applicationId,
+          sessionId,
+          viewId
+        )
 
-      onRumEventObservable.notify({
-        event: rumErrorEvent,
-        source: 'main-process',
+        onRumEventObservable.notify({
+          event: rumErrorEvent,
+          source: 'main-process',
+        })
+
+        // delete the crash report
+        fs.unlinkSync(reportPath)
       })
-
-      // delete the crash report
-      fs.unlinkSync(reportPath)
     })
-  })
+  )
 }

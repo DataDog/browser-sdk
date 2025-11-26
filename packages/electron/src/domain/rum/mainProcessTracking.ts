@@ -35,6 +35,14 @@ export function startMainProcessTracking(
     env: configuration.env,
     version: configuration.version,
   }))
+  hooks.register(HookNames.AssembleTelemetry, () => ({
+    application: {
+      id: configuration.applicationId,
+    },
+    session: {
+      id: mainProcessContext.sessionId,
+    },
+  }))
   console.log('sessionId', mainProcessContext.sessionId)
   console.log(
     '\x1b[34m%s\x1b[0m',

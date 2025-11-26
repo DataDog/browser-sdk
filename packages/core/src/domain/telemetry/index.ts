@@ -6,6 +6,7 @@ export {
   addTelemetryError,
   resetTelemetry,
   startTelemetry,
+  startTelemetryCollection,
   addTelemetryConfiguration,
   addTelemetryUsage,
   addTelemetryMetrics,
