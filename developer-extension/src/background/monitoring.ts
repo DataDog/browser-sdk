@@ -4,8 +4,7 @@ import { BASE_MONITORING_CONFIG } from '../common/monitoringConfig'
 // Initialize Datadog logs for service worker
 datadogLogs.init({
   ...BASE_MONITORING_CONFIG,
-  // Service worker: disable automatic collection (not supported in service workers)
-  forwardErrorsToLogs: false,
+  forwardErrorsToLogs: true,
   forwardConsoleLogs: 'all',
 })
 
