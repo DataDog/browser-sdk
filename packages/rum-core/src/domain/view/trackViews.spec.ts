@@ -27,9 +27,12 @@ describe('track views automatically', () => {
   const lifeCycle = new LifeCycle()
   let changeLocation: (to: string) => void
   let viewTest: ViewTest
+  let clock: Clock
 
   beforeEach(() => {
-    viewTest = setupViewTest({ lifeCycle, initialLocation: '/foo' }, { name: 'initial view name' })
+    clock = mockClock()
+
+    viewTest = setupViewTest({ lifeCycle, initialLocation: 'http://foo.com/foo' }, { name: 'initial view name' })
     changeLocation = viewTest.changeLocation
 
     registerCleanupTask(() => {
@@ -93,6 +96,45 @@ describe('track views automatically', () => {
       changeLocation('/foo#bar')
 
       expect(getViewCreateCount()).toBe(2)
+    })
+
+    it('should keep the same URL when updating a view ended by a URL change', () => {
+      const { getViewUpdateCount, getViewUpdate } = viewTest
+      expect(getViewUpdateCount()).toEqual(1)
+
+      changeLocation('/bar')
+
+      expect(getViewUpdateCount()).toEqual(3)
+      expect(getViewUpdate(0).location.href).toEqual('http://foo.com/foo')
+      expect(getViewUpdate(1).location.href).toEqual('http://foo.com/foo')
+      expect(getViewUpdate(2).location.href).toEqual('http://foo.com/bar')
+    })
+
+    it('should ignore URL parameter changes', () => {
+      expect(viewTest.getViewUpdateCount()).toEqual(1)
+
+      changeLocation('/foo?bar=bar')
+      changeLocation('/foo?bar=qux')
+
+      expect(viewTest.getViewUpdateCount()).toEqual(1)
+      expect(viewTest.getViewUpdate(0).location.href).toEqual('http://foo.com/foo')
+    })
+
+    it('should keep the same URL when updating an ended view', () => {
+      const initialView = viewTest.getViewUpdate(0)
+      changeLocation('/bar')
+      expect(viewTest.getViewUpdateCount()).toEqual(3)
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        view: { id: initialView.id },
+      } as AssembledRumEvent)
+
+      clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+      expect(viewTest.getViewUpdateCount()).toEqual(4)
+      expect(viewTest.getViewUpdate(3).location.href).toEqual(initialView.location.href)
+      expect(viewTest.getViewUpdate(3).id).toEqual(initialView.id)
     })
   })
 })
