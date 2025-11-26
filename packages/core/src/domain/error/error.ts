@@ -87,17 +87,35 @@ export function isError(error: unknown): error is Error {
 }
 
 export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
-  let currentError = error
   const causes: RawErrorCause[] = []
-  while (isError(currentError?.cause) && causes.length < 10) {
-    const stackTrace = computeStackTrace(currentError.cause)
-    causes.push({
-      message: currentError.cause.message,
-      source: parentSource,
-      type: stackTrace?.name,
-      stack: stackTrace && toStackTraceString(stackTrace),
-    })
-    currentError = currentError.cause
+  let currentCause = error.cause
+
+  while (currentCause !== undefined && currentCause !== null && causes.length < 10) {
+    if (isError(currentCause)) {
+      // Handle Error objects: extract structured data
+      const stackTrace = computeStackTrace(currentCause)
+      causes.push({
+        message: currentCause.message,
+        source: parentSource,
+        type: stackTrace?.name,
+        stack: stackTrace && toStackTraceString(stackTrace),
+      })
+
+      // Continue chain through Error's cause
+      currentCause = (currentCause as ErrorWithCause).cause
+    } else {
+      // Handle non-Error values: normalize to same structure
+      causes.push({
+        message: jsonStringify(sanitize(currentCause))!,
+        source: parentSource,
+        type: typeof currentCause,
+        stack: undefined,
+      })
+
+      // Terminate chain after non-Error cause
+      currentCause = undefined
+    }
   }
+
   return causes.length ? causes : undefined
 }

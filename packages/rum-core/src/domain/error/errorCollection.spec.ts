@@ -126,6 +126,27 @@ describe('error collection', () => {
       expect(error?.causes?.[1].source).toEqual(ErrorSource.CUSTOM)
     })
 
+    it('should extract non-Error causes with consistent structure', () => {
+      setupErrorCollection()
+      const error = new Error('RSA key generation failed') as ErrorWithCause
+      error.cause = { code: 'NonInteger', values: [3.14, 2.71] }
+
+      addError({
+        error,
+        handlingStack: 'Error: handling',
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      })
+
+      const { error: rumError } = rawRumEvents[0].rawRumEvent as RawRumErrorEvent
+      expect(rumError.causes?.length).toBe(1)
+      expect(rumError.causes?.[0]).toEqual({
+        message: '{"code":"NonInteger","values":[3.14,2.71]}',
+        source: ErrorSource.CUSTOM,
+        type: 'object',
+        stack: undefined,
+      })
+    })
+
     it('should extract fingerprint from error', () => {
       setupErrorCollection()
 
