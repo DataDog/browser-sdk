@@ -1,6 +1,6 @@
 import type { Observable } from '@datadog/browser-core'
-import { ResourceType, generateUUID, ErrorHandling } from '@datadog/browser-core'
-import type { RumErrorEvent, RumResourceEvent } from '@datadog/browser-rum-core'
+import { ResourceType, generateUUID } from '@datadog/browser-core'
+import type { RumResourceEvent } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import type { Trace } from '../trace/trace'
 import { createIdentifier } from '../trace/id'
@@ -12,21 +12,6 @@ export function startConvertSpanToRumEvent(
 ) {
   onTraceObservable.subscribe((trace) => {
     trace.forEach((span) => {
-      if (span.error) {
-        const rumError: Partial<RumErrorEvent> = {
-          type: RumEventType.ERROR,
-          date: span.start / 1e6,
-          error: {
-            id: generateUUID(),
-            message: span.meta['error.message'],
-            stack: span.meta['error.stack'],
-            type: span.meta['error.type'],
-            source: 'source',
-            handling: ErrorHandling.UNHANDLED,
-          },
-        }
-        onRumEventObservable.notify({ event: rumError as RumErrorEvent, source: 'main-process' })
-      }
       if (span.name === 'http.request') {
         const rumResource: Partial<RumResourceEvent> = {
           type: RumEventType.RESOURCE,

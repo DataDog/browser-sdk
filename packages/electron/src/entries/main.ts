@@ -35,6 +35,7 @@ import type { Trace } from '../domain/trace/trace'
 import { createDdTraceAgent } from '../domain/trace/traceAgent'
 import { startLogsEventAssembleAndSend } from '../domain/logs/assembly'
 import { startTelemetry } from '../domain/telemetry/telemetry'
+import { startErrorCollection } from '../domain/rum/errorCollection'
 
 function makeDatadogElectron() {
   const globalContext = buildGlobalContextManager()
@@ -102,6 +103,7 @@ function makeDatadogElectron() {
         onRumEventObservable,
         onActivityObservable
       )
+      startErrorCollection(onRumEventObservable)
       startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
       setupMainBridge(onRumEventObservable, onLogsEventObservable)
       startCrashMonitoring(onRumEventObservable, initConfiguration.applicationId, sessionId, mainProcessViewId)
