@@ -92,7 +92,6 @@ export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSou
 
   while (currentCause !== undefined && currentCause !== null && causes.length < 10) {
     if (isError(currentCause)) {
-      // Handle Error objects: extract structured data
       const stackTrace = computeStackTrace(currentCause)
       causes.push({
         message: currentCause.message,
@@ -101,10 +100,8 @@ export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSou
         stack: stackTrace && toStackTraceString(stackTrace),
       })
 
-      // Continue chain through Error's cause
       currentCause = (currentCause as ErrorWithCause).cause
     } else {
-      // Handle non-Error values: normalize to same structure
       causes.push({
         message: jsonStringify(sanitize(currentCause))!,
         source: parentSource,
@@ -112,7 +109,6 @@ export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSou
         stack: undefined,
       })
 
-      // Terminate chain after non-Error cause
       currentCause = undefined
     }
   }
