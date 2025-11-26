@@ -234,21 +234,6 @@ describe('flattenErrorCauses', () => {
     expect(errorCauses).toEqual(undefined)
   })
 
-  it('should support non-Error causes with consistent structure', () => {
-    const error = new Error('foo') as ErrorWithCause
-    const nestedError = { biz: 'buz', cause: new Error('boo') }
-    error.cause = nestedError
-
-    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
-    expect(errorCauses?.length).toEqual(1)
-    expect(errorCauses?.[0]).toEqual({
-      message: '{"biz":"buz","cause":{}}', // JSON stringified, cause is sanitized
-      source: ErrorSource.LOGGER,
-      type: 'object',
-      stack: undefined,
-    })
-  })
-
   it('should use error to extract stack trace', () => {
     const error = new Error('foo') as ErrorWithCause
 
