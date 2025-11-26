@@ -10,4 +10,17 @@ export const BASE_MONITORING_CONFIG = {
   sessionSampleRate: 100,
   telemetrySampleRate: 100,
   sessionPersistence: 'local-storage' as const,
+  forwardErrorsToLogs: true,
+  forwardConsoleLogs: 'all' as const,
+}
+
+export const RUM_CONFIG = {
+  ...BASE_MONITORING_CONFIG,
+  applicationId: '235202fa-3da1-4aeb-abc4-d01b10ca1539',
+  sessionReplaySampleRate: 100,
+  trackUserInteractions: true,
+  trackViewsManually: true,
+  trackResources: true,
+  trackLongTasks: true,
+  defaultPrivacyLevel: 'mask' as const,
 }
