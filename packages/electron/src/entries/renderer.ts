@@ -1,5 +1,2 @@
-import { createIpcRenderer } from '../domain/renderer/ipcRenderer'
-import { setupRendererBridge } from '../domain/renderer/bridge'
-
-setupRendererBridge()
-export const ipcRenderer = createIpcRenderer()
+export type * from './renderer'
+export { electronPlugin } from '../domain/renderer/plugin'

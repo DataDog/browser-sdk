@@ -24,7 +24,7 @@ import {
   setInterval,
 } from '@datadog/browser-core'
 import tracer, { initTracer } from '../domain/trace/tracer'
-import { createIpcMain } from '../domain/main/ipcMain'
+import { monitorIpcMain } from '../domain/main/ipcMain'
 import type { CollectedRumEvent } from '../domain/rum/events'
 import { setupMainBridge } from '../domain/main/bridge'
 import { startActivityTracking } from '../domain/rum/activity'
@@ -39,8 +39,83 @@ import { startTelemetry } from '../domain/telemetry/telemetry'
 import { startErrorCollection } from '../domain/rum/errorCollection'
 import { getUserAgent } from '../tools/userAgent'
 
+export const ddElectron = makeDatadogElectron()
+export { tracer }
+export { monitorIpcMain }
+
 function makeDatadogElectron() {
   const globalContext = buildGlobalContextManager()
+
+  function startElectronRumBatch(
+    configuration: RumConfiguration,
+    reportError: (error: RawError) => void,
+    pageMayExitObservable: Observable<PageMayExitEvent>,
+    sessionExpireObservable: Observable<void>,
+    createEncoder: () => Encoder
+  ) {
+    return createBatch({
+      encoder: createEncoder(),
+      request: createHttpRequest(
+        [configuration.rumEndpointBuilder],
+        reportError,
+        RECOMMENDED_REQUEST_BYTES_LIMIT,
+        getUserAgent()
+      ),
+      flushController: createFlushController({
+        pageMayExitObservable,
+        sessionExpireObservable,
+      }),
+    })
+  }
+
+  function startElectronLogsBatch(
+    configuration: RumConfiguration,
+    reportError: (error: RawError) => void,
+    pageMayExitObservable: Observable<PageMayExitEvent>,
+    sessionExpireObservable: Observable<void>,
+    createEncoder: () => Encoder
+  ) {
+    return createBatch({
+      encoder: createEncoder(),
+      request: createHttpRequest(
+        [configuration.logsEndpointBuilder],
+        reportError,
+        RECOMMENDED_REQUEST_BYTES_LIMIT,
+        getUserAgent()
+      ),
+      flushController: createFlushController({
+        pageMayExitObservable,
+        sessionExpireObservable,
+      }),
+    })
+  }
+
+  // TODO change it by a single event fetch
+  function startElectronSpanBatch(
+    initConfiguration: InitConfiguration,
+    reportError: (error: RawError) => void,
+    pageMayExitObservable: Observable<PageMayExitEvent>,
+    sessionExpireObservable: Observable<void>,
+    createEncoder: () => Encoder
+  ) {
+    return createBatch({
+      encoder: createEncoder(),
+      request: createHttpRequest(
+        [createEndpointBuilder(initConfiguration, 'spans' as TrackType)],
+        reportError,
+        RECOMMENDED_REQUEST_BYTES_LIMIT,
+        getUserAgent()
+      ),
+      flushController: createFlushController({
+        pageMayExitObservable,
+        sessionExpireObservable,
+      }),
+    })
+  }
+
+  function reportError() {
+    console.error('Error reporting to Datadog')
+  }
 
   return {
     init(initConfiguration: RumInitConfiguration) {
@@ -123,85 +198,4 @@ function makeDatadogElectron() {
     removeGlobalContextProperty: monitor(globalContext.removeContextProperty.bind(globalContext)),
     clearGlobalContext: monitor(globalContext.clearContext.bind(globalContext)),
   }
-}
-
-export const ddElectron = makeDatadogElectron()
-export { tracer }
-export const ipcMain = createIpcMain()
-
-export function startElectronRumBatch(
-  configuration: RumConfiguration,
-  reportError: (error: RawError) => void,
-  pageMayExitObservable: Observable<PageMayExitEvent>,
-  sessionExpireObservable: Observable<void>,
-  createEncoder: () => Encoder
-) {
-  const batch = createBatch({
-    encoder: createEncoder(),
-    request: createHttpRequest(
-      [configuration.rumEndpointBuilder],
-      reportError,
-      RECOMMENDED_REQUEST_BYTES_LIMIT,
-      getUserAgent()
-    ),
-    flushController: createFlushController({
-      pageMayExitObservable,
-      sessionExpireObservable,
-    }),
-  })
-
-  return batch
-}
-
-export function startElectronLogsBatch(
-  configuration: RumConfiguration,
-  reportError: (error: RawError) => void,
-  pageMayExitObservable: Observable<PageMayExitEvent>,
-  sessionExpireObservable: Observable<void>,
-  createEncoder: () => Encoder
-) {
-  const batch = createBatch({
-    encoder: createEncoder(),
-    request: createHttpRequest(
-      [configuration.logsEndpointBuilder],
-      reportError,
-      RECOMMENDED_REQUEST_BYTES_LIMIT,
-      getUserAgent()
-    ),
-    flushController: createFlushController({
-      pageMayExitObservable,
-      sessionExpireObservable,
-    }),
-  })
-
-  return batch
-}
-
-// TODO change it by a single event fetch
-export function startElectronSpanBatch(
-  initConfiguration: InitConfiguration,
-  reportError: (error: RawError) => void,
-  pageMayExitObservable: Observable<PageMayExitEvent>,
-  sessionExpireObservable: Observable<void>,
-  createEncoder: () => Encoder
-) {
-  const batch = createBatch({
-    encoder: createEncoder(),
-    request: createHttpRequest(
-      [createEndpointBuilder(initConfiguration, 'spans' as TrackType)],
-      reportError,
-      RECOMMENDED_REQUEST_BYTES_LIMIT,
-      getUserAgent()
-    ),
-    flushController: createFlushController({
-      pageMayExitObservable,
-      sessionExpireObservable,
-    }),
-  })
-
-  return batch
-}
-
-function reportError() {
-  console.error('Error reporting to Datadog')
 }

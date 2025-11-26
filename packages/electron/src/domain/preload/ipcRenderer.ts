@@ -60,7 +60,7 @@ function withDatadogCarrier<T extends (...args: any[]) => R, R>(
   }
 }
 
-export function createIpcRenderer(): IpcRenderer {
+export function monitorIpcRenderer(): IpcRenderer {
   const ddIpcRenderer = { ...ipcRenderer }
   const observable = new BufferedObservable<SpanInfo>(100)
 

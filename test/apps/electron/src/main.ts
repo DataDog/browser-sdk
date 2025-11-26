@@ -1,5 +1,5 @@
 import { app, BrowserWindow } from 'electron'
-import { ddElectron } from '@datadog/electron'
+import { ddElectron } from '@datadog/electron/main'
 
 // Delay startup to not miss early logs in playwright
 setTimeout(startApp, 200)

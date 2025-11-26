@@ -7,7 +7,7 @@ const SPAN_NAME_PREFIX = 'ipcMain'
 
 const isDatadogCarrier = (arg: any): arg is DatadogCarrier => typeof arg === 'object' && arg?.__dd_carrier === true
 
-export function createIpcMain(): IpcMain {
+export function monitorIpcMain(): IpcMain {
   const ddIpcMain = { ...ipcMain }
 
   ddIpcMain.on = withDatadogCarrier('on', ipcMain.on.bind(ipcMain))
