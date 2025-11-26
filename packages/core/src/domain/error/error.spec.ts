@@ -242,7 +242,7 @@ describe('flattenErrorCauses', () => {
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
     expect(errorCauses?.length).toEqual(1)
     expect(errorCauses?.[0]).toEqual({
-      message: '{"biz":"buz","cause":{}}',  // JSON stringified, cause is sanitized
+      message: '{"biz":"buz","cause":{}}', // JSON stringified, cause is sanitized
       source: ErrorSource.LOGGER,
       type: 'object',
       stack: undefined,
@@ -273,7 +273,7 @@ describe('flattenErrorCauses', () => {
       const causes = flattenErrorCauses(error, ErrorSource.CUSTOM)
       expect(causes?.length).toBe(1)
       expect(causes?.[0]).toEqual({
-        message: '"string cause"',  // JSON stringified
+        message: '"string cause"', // JSON stringified
         source: ErrorSource.CUSTOM,
         type: 'string',
         stack: undefined,
