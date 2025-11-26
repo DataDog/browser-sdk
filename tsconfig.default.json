@@ -28,9 +28,6 @@
     // Files included in ./developer-extension/tsconfig.webpack.json
     "developer-extension",
 
-    // Files included in ./performances/tsconfig.json
-    "performances",
-
     // Skip typechecking for these folders for now
     "rum-events-format",
     "test/apps"
