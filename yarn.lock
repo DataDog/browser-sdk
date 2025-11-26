@@ -383,6 +383,8 @@ __metadata:
     electron: "npm:39"
     graphql: "npm:16.12.0"
     pako: "npm:2.1.0"
+  peerDependencies:
+    electron: 39
   languageName: unknown
   linkType: soft
 

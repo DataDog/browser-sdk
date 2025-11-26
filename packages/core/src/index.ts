@@ -74,6 +74,7 @@ export type {
 } from './transport'
 export {
   createHttpRequest,
+  RECOMMENDED_REQUEST_BYTES_LIMIT,
   canUseEventBridge,
   getEventBridge,
   bridgeSupports,

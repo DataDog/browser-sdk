@@ -11,6 +11,7 @@ import type {
   TrackType,
 } from '@datadog/browser-core'
 import {
+  RECOMMENDED_REQUEST_BYTES_LIMIT,
   monitor,
   createBatch,
   createHttpRequest,
@@ -36,6 +37,7 @@ import { createDdTraceAgent } from '../domain/trace/traceAgent'
 import { startLogsEventAssembleAndSend } from '../domain/logs/assembly'
 import { startTelemetry } from '../domain/telemetry/telemetry'
 import { startErrorCollection } from '../domain/rum/errorCollection'
+import { getUserAgent } from '../tools/userAgent'
 
 function makeDatadogElectron() {
   const globalContext = buildGlobalContextManager()
@@ -136,7 +138,12 @@ export function startElectronRumBatch(
 ) {
   const batch = createBatch({
     encoder: createEncoder(),
-    request: createHttpRequest([configuration.rumEndpointBuilder], reportError),
+    request: createHttpRequest(
+      [configuration.rumEndpointBuilder],
+      reportError,
+      RECOMMENDED_REQUEST_BYTES_LIMIT,
+      getUserAgent()
+    ),
     flushController: createFlushController({
       pageMayExitObservable,
       sessionExpireObservable,
@@ -155,7 +162,12 @@ export function startElectronLogsBatch(
 ) {
   const batch = createBatch({
     encoder: createEncoder(),
-    request: createHttpRequest([configuration.logsEndpointBuilder], reportError),
+    request: createHttpRequest(
+      [configuration.logsEndpointBuilder],
+      reportError,
+      RECOMMENDED_REQUEST_BYTES_LIMIT,
+      getUserAgent()
+    ),
     flushController: createFlushController({
       pageMayExitObservable,
       sessionExpireObservable,
@@ -175,7 +187,12 @@ export function startElectronSpanBatch(
 ) {
   const batch = createBatch({
     encoder: createEncoder(),
-    request: createHttpRequest([createEndpointBuilder(initConfiguration, 'spans' as TrackType)], reportError),
+    request: createHttpRequest(
+      [createEndpointBuilder(initConfiguration, 'spans' as TrackType)],
+      reportError,
+      RECOMMENDED_REQUEST_BYTES_LIMIT,
+      getUserAgent()
+    ),
     flushController: createFlushController({
       pageMayExitObservable,
       sessionExpireObservable,
