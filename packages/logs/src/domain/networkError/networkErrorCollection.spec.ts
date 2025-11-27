@@ -1,6 +1,6 @@
 import { ErrorSource, resetFetchObservable } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
-import { SPEC_ENDPOINTS, mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockFetch, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RawNetworkLogsEvent } from '../../rawLogsEvent.types'
 import type { LogsConfiguration } from '../configuration'
 import type { RawLogsEventCollectedData } from '../lifeCycle'
@@ -11,7 +11,6 @@ import { startNetworkErrorCollection } from './networkErrorCollection'
 
 const CONFIGURATION = {
   requestErrorResponseLengthLimit: 64,
-  ...SPEC_ENDPOINTS,
 } as LogsConfiguration
 
 describe('network error collection', () => {

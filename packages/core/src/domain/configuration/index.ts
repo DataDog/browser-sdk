@@ -7,5 +7,5 @@ export {
   serializeConfiguration,
 } from './configuration'
 export type { EndpointBuilder, TrackType } from './endpointBuilder'
-export { createEndpointBuilder, buildEndpointHost } from './endpointBuilder'
+export { createEndpointBuilder, createReplicaEndpointBuilder, buildEndpointHost } from './endpointBuilder'
 export { computeTransportConfiguration } from './transportConfiguration'

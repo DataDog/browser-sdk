@@ -1,5 +1,11 @@
 import type { RawError, HttpRequest, DeflateEncoder, Telemetry } from '@datadog/browser-core'
-import { createHttpRequest, addTelemetryDebug, canUseEventBridge, noop } from '@datadog/browser-core'
+import {
+  createHttpRequest,
+  addTelemetryDebug,
+  canUseEventBridge,
+  noop,
+  createEndpointBuilder,
+} from '@datadog/browser-core'
 import type { LifeCycle, ViewHistory, RumConfiguration, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycleEventType } from '@datadog/browser-rum-core'
 
@@ -28,7 +34,7 @@ export function startRecording(
   }
 
   const replayRequest =
-    httpRequest || createHttpRequest([configuration.sessionReplayEndpointBuilder], reportError, SEGMENT_BYTES_LIMIT)
+    httpRequest || createHttpRequest([createEndpointBuilder(configuration, 'replay')], reportError, SEGMENT_BYTES_LIMIT)
 
   let addRecord: (record: BrowserRecord) => void
   let addStats: (stats: SerializationStats) => void

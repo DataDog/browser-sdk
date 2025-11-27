@@ -1,19 +1,12 @@
 import type { EndpointBuilder } from '../src'
-import { INTAKE_URL_PARAMETERS, noop } from '../src'
+import { noop } from '../src'
 import { mockXhr, MockXhr } from './emulate/mockXhr'
 import { readFormData } from './readFormData'
 import { registerCleanupTask } from './registerCleanupTask'
 
-const INTAKE_PARAMS = INTAKE_URL_PARAMETERS.join('&')
-
 export const DEFAULT_FETCH_MOCK = () => Promise.resolve({ status: 200, type: 'cors' })
 export const TOO_MANY_REQUESTS_FETCH_MOCK = () => Promise.resolve({ status: 429, type: 'cors' })
 export const NETWORK_ERROR_FETCH_MOCK = () => Promise.reject(new Error('Network request failed'))
-
-export const SPEC_ENDPOINTS = {
-  logsEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
-  rumEndpointBuilder: mockEndpointBuilder(`https://mock.com/abcde?${INTAKE_PARAMS}`),
-}
 
 export function mockEndpointBuilder(url: string) {
   return { build: (..._: any) => url } as EndpointBuilder
