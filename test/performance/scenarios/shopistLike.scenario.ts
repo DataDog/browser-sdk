@@ -41,13 +41,6 @@ test.describe('benchmark', () => {
     await page.locator('.back-button').click()
     await page.waitForTimeout(300)
 
-    await page.locator('.product-card').nth(2).click()
-    await page.waitForTimeout(400)
-    await page.locator('.add-to-cart-button').click()
-    await page.waitForTimeout(200)
-    await page.locator('.back-button').click()
-    await page.waitForTimeout(300)
-
     // Go to cart
     await page.getByRole('link', { name: /CART/ }).click()
     await page.waitForTimeout(400)
@@ -62,9 +55,7 @@ test.describe('benchmark', () => {
     // Try discount code
     const discountInput = page.locator('.discount-input')
     await discountInput.click()
-    await discountInput.fill('SAVE')
-    await page.waitForTimeout(200)
-    await discountInput.fill('SAVE20')
+    await discountInput.pressSequentially('SAVE')
     await page.waitForTimeout(200)
     await page.locator('.apply-button').click()
     await page.waitForTimeout(300)
@@ -82,18 +73,14 @@ test.describe('benchmark', () => {
     // Fill form with incremental typing
     const firstNameInput = page.locator('#firstName')
     await firstNameInput.click()
-    await firstNameInput.fill('J')
-    await page.waitForTimeout(100)
-    await firstNameInput.fill('Jane')
+    await firstNameInput.pressSequentially('Jane')
     await page.waitForTimeout(200)
 
     const addressInput = page.locator('#address')
     await addressInput.click()
     await addressInput.press('ControlOrMeta+a')
-    await addressInput.fill('123 Main')
+    await addressInput.pressSequentially('123 Main Street')
     await page.waitForTimeout(100)
-    await addressInput.fill('123 Main Street')
-    await page.waitForTimeout(200)
 
     const stateSelect = page.locator('#state')
     await stateSelect.click()
@@ -103,26 +90,11 @@ test.describe('benchmark', () => {
     const phoneInput = page.locator('#phone')
     await phoneInput.click()
     await phoneInput.press('ControlOrMeta+a')
-    await phoneInput.fill('415')
-    await page.waitForTimeout(100)
-    await phoneInput.fill('415-555-1234')
+    await phoneInput.pressSequentially('415-555-1234')
     await page.waitForTimeout(200)
 
     // Save profile
     await page.locator('.save-button').click()
-    await page.waitForTimeout(400)
-
-    // Continue shopping
-    await page.getByRole('link', { name: 'BEDDING' }).click()
-    await page.waitForTimeout(300)
-
-    await page.locator('.product-card').nth(1).click()
-    await page.waitForTimeout(400)
-    await page.locator('.add-to-cart-button').click()
-    await page.waitForTimeout(200)
-
-    // Final cart check
-    await page.getByRole('link', { name: /CART/ }).click()
     await page.waitForTimeout(400)
   })
 })
