@@ -1,4 +1,3 @@
-import type { Site } from '../intakeSites'
 import { INTAKE_SITE_US1 } from '../intakeSites'
 import type { InitConfiguration } from './configuration'
 import type { EndpointBuilder } from './endpointBuilder'
@@ -10,10 +9,7 @@ export interface TransportConfiguration {
   sessionReplayEndpointBuilder: EndpointBuilder
   profilingEndpointBuilder: EndpointBuilder
   exposuresEndpointBuilder: EndpointBuilder
-  datacenter?: string | undefined
   replicaEndpointBuilders?: ReplicaConfiguration
-  site: Site
-  source: 'browser' | 'flutter' | 'unity'
 }
 
 export interface ReplicaConfiguration {
@@ -22,25 +18,13 @@ export interface ReplicaConfiguration {
 }
 
 export function computeTransportConfiguration(initConfiguration: InitConfiguration): TransportConfiguration {
-  const site = initConfiguration.site || INTAKE_SITE_US1
-  const source = validateSource(initConfiguration.source)
-
-  const endpointBuilders = computeEndpointBuilders({ ...initConfiguration, site, source })
-  const replicaConfiguration = computeReplicaConfiguration({ ...initConfiguration, site, source })
+  const endpointBuilders = computeEndpointBuilders(initConfiguration)
+  const replicaConfiguration = computeReplicaConfiguration(initConfiguration)
 
   return {
     replicaEndpointBuilders: replicaConfiguration,
-    site,
-    source,
     ...endpointBuilders,
   }
-}
-
-function validateSource(source: string | undefined) {
-  if (source === 'flutter' || source === 'unity') {
-    return source
-  }
-  return 'browser'
 }
 
 function computeEndpointBuilders(initConfiguration: InitConfiguration) {

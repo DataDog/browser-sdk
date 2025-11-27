@@ -125,11 +125,12 @@ export function validateAndBuildLogsConfiguration(
   }
 
   return {
+    ...baseConfiguration,
     forwardErrorsToLogs: initConfiguration.forwardErrorsToLogs !== false,
     forwardConsoleLogs,
     forwardReports,
     requestErrorResponseLengthLimit: DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT,
-    ...baseConfiguration,
+    usePciIntake: !!initConfiguration.usePciIntake,
   }
 }
 

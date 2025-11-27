@@ -7,6 +7,7 @@ import {
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
 } from '../../tools/experimentalFeatures'
+import { INTAKE_SITE_FED_STAGING } from '../intakeSites'
 import { SessionPersistence } from '../session/sessionConstants'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
@@ -186,6 +187,40 @@ describe('validateAndBuildConfiguration', () => {
       expect(displaySpy).toHaveBeenCalledOnceWith(
         `Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`
       )
+    })
+  })
+
+  describe('site', () => {
+    it('should use US site by default', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken })
+      expect(configuration!.site).toBe('datadoghq.com')
+    })
+
+    it('should use logs intake domain for fed staging', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, site: INTAKE_SITE_FED_STAGING })
+      expect(configuration!.site).toBe(INTAKE_SITE_FED_STAGING)
+    })
+
+    it('should use site value when set', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, site: 'datadoghq.com' })
+      expect(configuration!.site).toBe('datadoghq.com')
+    })
+  })
+
+  describe('internalAnalyticsSubdomain', () => {
+    it('defaults to undefined', () => {
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+      })
+      expect(configuration!.internalAnalyticsSubdomain).toBeUndefined()
+    })
+
+    it('is set to the provided value', () => {
+      const configuration = validateAndBuildConfiguration({
+        clientToken,
+        internalAnalyticsSubdomain: 'ia-rum-intake',
+      })
+      expect(configuration!.internalAnalyticsSubdomain).toBe('ia-rum-intake')
     })
   })
 
