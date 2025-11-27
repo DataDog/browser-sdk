@@ -12,8 +12,6 @@ import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
 import { INTAKE_SITE_US1 } from '../intakeSites'
 import type { Site } from '../intakeSites'
 import { isWorkerEnvironment } from '../../tools/globalObject'
-import type { TransportConfiguration } from './transportConfiguration'
-import { computeTransportConfiguration } from './transportConfiguration'
 
 /**
  * Default privacy level for the browser SDK.
@@ -309,7 +307,7 @@ export interface ReplicaUserConfiguration {
   clientToken: string
 }
 
-export interface Configuration extends TransportConfiguration {
+export interface Configuration {
   // Built from init configuration
   clientToken: string
   site: Site
@@ -436,8 +434,6 @@ export function validateAndBuildConfiguration(
     variant: initConfiguration.variant,
     sdkVersion: initConfiguration.sdkVersion,
     source: validateSource(initConfiguration.source),
-
-    ...computeTransportConfiguration(initConfiguration),
   }
 }
 
