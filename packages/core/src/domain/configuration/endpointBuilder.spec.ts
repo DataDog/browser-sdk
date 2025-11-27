@@ -1,40 +1,39 @@
 import type { Payload } from '../../transport'
-import type { InitConfiguration } from './configuration'
+import { validateAndBuildConfiguration } from './configuration'
+import type { EndpointBuilderConfiguration } from './endpointBuilder'
 import { createEndpointBuilder, createReplicaEndpointBuilder } from './endpointBuilder'
 
 const DEFAULT_PAYLOAD = {} as Payload
 const clientToken = 'some_client_token'
-const initConfiguration: InitConfiguration = { clientToken }
+const configuration: EndpointBuilderConfiguration = validateAndBuildConfiguration({ clientToken })!
 
 describe('endpointBuilder', () => {
   describe('query parameters', () => {
     it('should add intake query parameters', () => {
-      expect(createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toMatch(
+      expect(createEndpointBuilder(configuration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toMatch(
         `&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`
       )
     })
 
     it('should add batch_time for rum endpoint', () => {
-      expect(createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toContain('&batch_time=')
+      expect(createEndpointBuilder(configuration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toContain('&batch_time=')
     })
 
     it('should not add batch_time for logs and replay endpoints', () => {
-      expect(createEndpointBuilder(initConfiguration, 'logs').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
-        '&batch_time='
-      )
-      expect(createEndpointBuilder(initConfiguration, 'replay').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
+      expect(createEndpointBuilder(configuration, 'logs').build('fetch', DEFAULT_PAYLOAD)).not.toContain('&batch_time=')
+      expect(createEndpointBuilder(configuration, 'replay').build('fetch', DEFAULT_PAYLOAD)).not.toContain(
         '&batch_time='
       )
     })
 
     it('should add the provided encoding', () => {
       expect(
-        createEndpointBuilder(initConfiguration, 'rum').build('fetch', { ...DEFAULT_PAYLOAD, encoding: 'deflate' })
+        createEndpointBuilder(configuration, 'rum').build('fetch', { ...DEFAULT_PAYLOAD, encoding: 'deflate' })
       ).toContain('&dd-evp-encoding=deflate')
     })
 
     it('should not start with ddsource for internal analytics mode', () => {
-      const url = createEndpointBuilder({ ...initConfiguration, internalAnalyticsSubdomain: 'foo' }, 'rum').build(
+      const url = createEndpointBuilder({ ...configuration, internalAnalyticsSubdomain: 'foo' }, 'rum').build(
         'fetch',
         DEFAULT_PAYLOAD
       )
@@ -44,7 +43,7 @@ describe('endpointBuilder', () => {
 
     it('accepts extra parameters', () => {
       const extraParameters = ['application.id=1234', 'application.version=1.0.0']
-      const url = createEndpointBuilder(initConfiguration, 'rum', extraParameters).build('fetch', DEFAULT_PAYLOAD)
+      const url = createEndpointBuilder(configuration, 'rum', extraParameters).build('fetch', DEFAULT_PAYLOAD)
       expect(url).toContain('application.id=1234')
       expect(url).toContain('application.version=1.0.0')
     })
@@ -53,7 +52,7 @@ describe('endpointBuilder', () => {
   describe('proxy configuration', () => {
     it('should replace the intake endpoint by the proxy and set the intake path and parameters in the attribute ddforward', () => {
       expect(
-        createEndpointBuilder({ ...initConfiguration, proxy: 'https://proxy.io/path' }, 'rum').build(
+        createEndpointBuilder({ ...configuration, proxy: 'https://proxy.io/path' }, 'rum').build(
           'fetch',
           DEFAULT_PAYLOAD
         )
@@ -66,7 +65,7 @@ describe('endpointBuilder', () => {
     })
 
     it('normalizes the proxy url', () => {
-      const endpoint = createEndpointBuilder({ ...initConfiguration, proxy: '/path' }, 'rum').build(
+      const endpoint = createEndpointBuilder({ ...configuration, proxy: '/path' }, 'rum').build(
         'fetch',
         DEFAULT_PAYLOAD
       )
@@ -77,7 +76,7 @@ describe('endpointBuilder', () => {
       const proxyFn = (options: { path: string; parameters: string }) =>
         `https://proxy.io/prefix${options.path}/suffix?${options.parameters}`
       expect(
-        createEndpointBuilder({ ...initConfiguration, proxy: proxyFn }, 'rum').build('fetch', DEFAULT_PAYLOAD)
+        createEndpointBuilder({ ...configuration, proxy: proxyFn }, 'rum').build('fetch', DEFAULT_PAYLOAD)
       ).toMatch(
         `https://proxy.io/prefix/api/v2/rum/suffix\\?ddsource=(.*)&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`
       )
@@ -86,12 +85,12 @@ describe('endpointBuilder', () => {
 
   describe('_dd attributes', () => {
     it('should contain api', () => {
-      expect(createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toContain('_dd.api=fetch')
+      expect(createEndpointBuilder(configuration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toContain('_dd.api=fetch')
     })
 
     it('should contain retry infos', () => {
       expect(
-        createEndpointBuilder(initConfiguration, 'rum').build('fetch', {
+        createEndpointBuilder(configuration, 'rum').build('fetch', {
           ...DEFAULT_PAYLOAD,
           retry: {
             count: 5,
@@ -103,7 +102,7 @@ describe('endpointBuilder', () => {
 
     it('should not contain any _dd attributes for non rum endpoints', () => {
       expect(
-        createEndpointBuilder(initConfiguration, 'logs').build('fetch', {
+        createEndpointBuilder(configuration, 'logs').build('fetch', {
           ...DEFAULT_PAYLOAD,
           retry: {
             count: 5,
@@ -116,18 +115,19 @@ describe('endpointBuilder', () => {
 
   describe('PCI compliance intake with option', () => {
     it('should return PCI compliance intake endpoint if site is us1', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
+      const config: EndpointBuilderConfiguration = {
+        ...configuration,
         usePciIntake: true,
         site: 'datadoghq.com',
       }
+
       expect(createEndpointBuilder(config, 'logs').build('fetch', DEFAULT_PAYLOAD)).toContain(
         'https://pci.browser-intake-datadoghq.com'
       )
     })
     it('should not return PCI compliance intake endpoint if site is not us1', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
+      const config: EndpointBuilderConfiguration = {
+        ...configuration,
         usePciIntake: true,
         site: 'ap1.datadoghq.com',
       }
@@ -136,8 +136,8 @@ describe('endpointBuilder', () => {
       )
     })
     it('should not return PCI compliance intake endpoint if and site is us1 and track is not logs', () => {
-      const config: InitConfiguration & { usePciIntake?: boolean } = {
-        clientToken,
+      const config: EndpointBuilderConfiguration = {
+        ...configuration,
         usePciIntake: true,
         site: 'datadoghq.com',
       }
@@ -149,18 +149,18 @@ describe('endpointBuilder', () => {
 
   describe('source configuration', () => {
     it('should use the default source when no configuration is provided', () => {
-      const endpoint = createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      const endpoint = createEndpointBuilder(configuration, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=browser')
     })
 
     it('should use flutter source when provided', () => {
-      const config = { ...initConfiguration, source: 'flutter' as const }
+      const config = { ...configuration, source: 'flutter' as const }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=flutter')
     })
 
     it('should use unity source when provided', () => {
-      const config = { ...initConfiguration, source: 'unity' as const }
+      const config = { ...configuration, source: 'unity' as const }
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=unity')
     })
@@ -170,7 +170,7 @@ describe('endpointBuilder', () => {
 describe('createReplicaEndpointBuilder', () => {
   it('enforce US1 site', () => {
     const endpoint = createReplicaEndpointBuilder(
-      { ...initConfiguration, site: 'datadoghq.eu' },
+      { ...configuration, site: 'datadoghq.eu' },
       { clientToken: 'replica-client-token' },
       'rum'
     )
@@ -178,13 +178,13 @@ describe('createReplicaEndpointBuilder', () => {
   })
 
   it('uses the replica client token', () => {
-    const endpoint = createReplicaEndpointBuilder(initConfiguration, { clientToken: 'replica-client-token' }, 'rum')
+    const endpoint = createReplicaEndpointBuilder(configuration, { clientToken: 'replica-client-token' }, 'rum')
     expect(endpoint.build('fetch', DEFAULT_PAYLOAD)).toContain('replica-client-token')
   })
 
   it('adds the replica application id to the rum replica endpoint', () => {
     const endpoint = createReplicaEndpointBuilder(
-      initConfiguration,
+      configuration,
       { clientToken: 'replica-client-token', applicationId: 'replica-application-id' },
       'rum'
     )

@@ -3,7 +3,7 @@ import { timeStampNow } from '../../tools/utils/timeUtils'
 import { normalizeUrl } from '../../tools/utils/urlPolyfill'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import { INTAKE_SITE_FED_STAGING, INTAKE_SITE_US1, PCI_INTAKE_HOST_US1 } from '../intakeSites'
-import type { InitConfiguration, ReplicaUserConfiguration } from './configuration'
+import type { Configuration, InitConfiguration, ReplicaUserConfiguration } from './configuration'
 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
@@ -19,7 +19,7 @@ export type ApiType =
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
-export type EndpointBuilderConfiguration = Pick<InitConfiguration, 'proxy' | 'clientToken' | 'source'> &
+export type EndpointBuilderConfiguration = Pick<Configuration, 'proxy' | 'clientToken' | 'source'> &
   EndpointHostConfiguration
 
 export type EndpointHostConfiguration = Pick<InitConfiguration, 'site' | 'internalAnalyticsSubdomain'> & {
@@ -105,7 +105,7 @@ export function buildEndpointHost(trackType: TrackType, configuration: EndpointH
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: EndpointBuilderConfiguration,
+  { clientToken, internalAnalyticsSubdomain, source }: EndpointBuilderConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload,
