@@ -8,4 +8,4 @@ export {
 } from './configuration'
 export type { EndpointBuilder, TrackType } from './endpointBuilder'
 export { createEndpointBuilder, buildEndpointHost } from './endpointBuilder'
-export { computeTransportConfiguration, isIntakeUrl } from './transportConfiguration'
+export { computeTransportConfiguration } from './transportConfiguration'

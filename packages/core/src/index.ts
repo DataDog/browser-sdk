@@ -6,7 +6,6 @@ export {
   serializeConfiguration,
   isSampleRate,
   buildEndpointHost,
-  isIntakeUrl,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
