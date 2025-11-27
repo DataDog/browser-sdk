@@ -6,7 +6,6 @@ export {
   serializeConfiguration,
   isSampleRate,
   buildEndpointUrl,
-  isIntakeUrl,
   computeTransportConfiguration,
 } from './domain/configuration'
 export * from './domain/intakeSites'

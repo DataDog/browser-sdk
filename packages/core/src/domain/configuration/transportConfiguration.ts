@@ -1,5 +1,5 @@
 import type { Site } from '../intakeSites'
-import { INTAKE_SITE_US1, INTAKE_URL_PARAMETERS } from '../intakeSites'
+import { INTAKE_SITE_US1 } from '../intakeSites'
 import type { InitConfiguration, ProxyFn, SdkSource } from './configuration'
 import type { EndpointBuilder, TransportSource } from './endpointBuilder'
 import { createEndpointBuilder } from './endpointBuilder'
@@ -104,9 +104,4 @@ function computeReplicaConfiguration(
       `application.id=${initConfiguration.replica.applicationId}`,
     ]),
   }
-}
-
-export function isIntakeUrl(url: string): boolean {
-  // check if tags is present in the query string
-  return INTAKE_URL_PARAMETERS.every((param) => url.includes(param))
 }
