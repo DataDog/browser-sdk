@@ -19,16 +19,23 @@ export type ApiType =
 
 export type EndpointBuilder = ReturnType<typeof createEndpointBuilder>
 
+export type EndpointBuilderConfiguration = Pick<InitConfiguration, 'proxy' | 'clientToken' | 'source'> &
+  EndpointHostConfiguration
+
+export type EndpointHostConfiguration = Pick<InitConfiguration, 'site' | 'internalAnalyticsSubdomain'> & {
+  usePciIntake?: boolean
+}
+
 export function createEndpointBuilder(
-  initConfiguration: InitConfiguration,
+  configuration: EndpointBuilderConfiguration,
   trackType: TrackType,
   extraParameters?: string[]
 ) {
-  const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(initConfiguration, trackType)
+  const buildUrlWithParameters = createEndpointUrlWithParametersBuilder(configuration, trackType)
 
   return {
     build(api: ApiType, payload: Payload) {
-      const parameters = buildEndpointParameters(initConfiguration, trackType, api, payload, extraParameters)
+      const parameters = buildEndpointParameters(configuration, trackType, api, payload, extraParameters)
       return buildUrlWithParameters(parameters)
     },
     trackType,
@@ -41,11 +48,11 @@ export function createEndpointBuilder(
  * request, as only parameters are changing.
  */
 function createEndpointUrlWithParametersBuilder(
-  initConfiguration: InitConfiguration,
+  configuration: EndpointBuilderConfiguration,
   trackType: TrackType
 ): (parameters: string) => string {
   const path = `/api/v2/${trackType}`
-  const proxy = initConfiguration.proxy
+  const proxy = configuration.proxy
   if (typeof proxy === 'string') {
     const normalizedProxyUrl = normalizeUrl(proxy)
     return (parameters) => `${normalizedProxyUrl}?ddforward=${encodeURIComponent(`${path}?${parameters}`)}`
@@ -53,17 +60,14 @@ function createEndpointUrlWithParametersBuilder(
   if (typeof proxy === 'function') {
     return (parameters) => proxy({ path, parameters })
   }
-  const host = buildEndpointHost(trackType, initConfiguration)
+  const host = buildEndpointHost(trackType, configuration)
   return (parameters) => `https://${host}${path}?${parameters}`
 }
 
-export function buildEndpointHost(
-  trackType: TrackType,
-  initConfiguration: InitConfiguration & { usePciIntake?: boolean }
-) {
-  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = initConfiguration
+export function buildEndpointHost(trackType: TrackType, configuration: EndpointHostConfiguration) {
+  const { site = INTAKE_SITE_US1, internalAnalyticsSubdomain } = configuration
 
-  if (trackType === 'logs' && initConfiguration.usePciIntake && site === INTAKE_SITE_US1) {
+  if (trackType === 'logs' && configuration.usePciIntake && site === INTAKE_SITE_US1) {
     return PCI_INTAKE_HOST_US1
   }
 
@@ -85,7 +89,7 @@ export function buildEndpointHost(
  * request, as they change randomly.
  */
 function buildEndpointParameters(
-  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: InitConfiguration,
+  { clientToken, internalAnalyticsSubdomain, source = 'browser' }: EndpointBuilderConfiguration,
   trackType: TrackType,
   api: ApiType,
   { retry, encoding }: Payload,
