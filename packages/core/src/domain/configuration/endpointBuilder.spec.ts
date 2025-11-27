@@ -1,17 +1,12 @@
 import type { Payload } from '../../transport'
 import type { InitConfiguration } from './configuration'
-import { createEndpointBuilder } from './endpointBuilder'
+import { createEndpointBuilder, createReplicaEndpointBuilder } from './endpointBuilder'
 
 const DEFAULT_PAYLOAD = {} as Payload
+const clientToken = 'some_client_token'
+const initConfiguration: InitConfiguration = { clientToken }
 
 describe('endpointBuilder', () => {
-  const clientToken = 'some_client_token'
-  let initConfiguration: InitConfiguration
-
-  beforeEach(() => {
-    initConfiguration = { clientToken }
-  })
-
   describe('query parameters', () => {
     it('should add intake query parameters', () => {
       expect(createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toMatch(
@@ -169,5 +164,30 @@ describe('endpointBuilder', () => {
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=unity')
     })
+  })
+})
+
+describe('createReplicaEndpointBuilder', () => {
+  it('enforce US1 site', () => {
+    const endpoint = createReplicaEndpointBuilder(
+      { ...initConfiguration, site: 'datadoghq.eu' },
+      { clientToken: 'replica-client-token' },
+      'rum'
+    )
+    expect(endpoint.build('fetch', DEFAULT_PAYLOAD)).toContain('https://browser-intake-datadoghq.com')
+  })
+
+  it('uses the replica client token', () => {
+    const endpoint = createReplicaEndpointBuilder(initConfiguration, { clientToken: 'replica-client-token' }, 'rum')
+    expect(endpoint.build('fetch', DEFAULT_PAYLOAD)).toContain('replica-client-token')
+  })
+
+  it('adds the replica application id to the rum replica endpoint', () => {
+    const endpoint = createReplicaEndpointBuilder(
+      initConfiguration,
+      { clientToken: 'replica-client-token', applicationId: 'replica-application-id' },
+      'rum'
+    )
+    expect(endpoint.build('fetch', DEFAULT_PAYLOAD)).toContain('application.id=replica-application-id')
   })
 })
