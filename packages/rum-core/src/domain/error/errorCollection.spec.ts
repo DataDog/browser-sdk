@@ -142,7 +142,7 @@ describe('error collection', () => {
       expect(rumError.causes?.[0]).toEqual({
         message: '{"code":"NonInteger","values":[3.14,2.71]}',
         source: ErrorSource.CUSTOM,
-        type: 'object',
+        type: undefined,
         stack: undefined,
       })
     })

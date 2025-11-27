@@ -105,7 +105,7 @@ export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSou
       causes.push({
         message: jsonStringify(sanitize(currentCause))!,
         source: parentSource,
-        type: typeof currentCause,
+        type: undefined,
         stack: undefined,
       })
 

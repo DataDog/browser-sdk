@@ -260,7 +260,7 @@ describe('flattenErrorCauses', () => {
       expect(causes?.[0]).toEqual({
         message: '"string cause"', // JSON stringified
         source: ErrorSource.CUSTOM,
-        type: 'string',
+        type: undefined,
         stack: undefined,
       })
     })
@@ -274,7 +274,7 @@ describe('flattenErrorCauses', () => {
       expect(causes?.[0]).toEqual({
         message: '{"code":"ERR_001","details":"Invalid input"}',
         source: ErrorSource.CUSTOM,
-        type: 'object',
+        type: undefined,
         stack: undefined,
       })
     })
@@ -288,7 +288,7 @@ describe('flattenErrorCauses', () => {
       expect(causes?.[0]).toEqual({
         message: '42',
         source: ErrorSource.CUSTOM,
-        type: 'number',
+        type: undefined,
         stack: undefined,
       })
     })
@@ -311,7 +311,7 @@ describe('flattenErrorCauses', () => {
       expect(causes?.[1]).toEqual({
         message: '{"code":"ERR_ROOT"}',
         source: ErrorSource.CUSTOM,
-        type: 'object',
+        type: undefined,
         stack: undefined,
       })
     })
@@ -324,7 +324,7 @@ describe('flattenErrorCauses', () => {
       expect(causes?.length).toBe(1)
       // The entire object is captured, nested cause is sanitized
       expect(causes?.[0].message).toContain('"value":"data"')
-      expect(causes?.[0].type).toBe('object')
+      expect(causes?.[0].type).toBeUndefined()
     })
 
     it('should handle null cause', () => {
