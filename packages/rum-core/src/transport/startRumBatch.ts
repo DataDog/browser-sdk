@@ -15,8 +15,8 @@ export function startRumBatch(
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ) {
   const endpoints = [configuration.rumEndpointBuilder]
-  if (configuration.replica) {
-    endpoints.push(configuration.replica.rumEndpointBuilder)
+  if (configuration.replicaEndpointBuilders) {
+    endpoints.push(configuration.replicaEndpointBuilders.rumEndpointBuilder)
   }
 
   const batch = createBatch({

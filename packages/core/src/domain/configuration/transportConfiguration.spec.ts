@@ -58,7 +58,7 @@ describe('transportConfiguration', () => {
         applicationId: replicaApplicationId,
       },
     })
-    expect(configuration.replica!.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).toContain(
+    expect(configuration.replicaEndpointBuilders!.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).toContain(
       `application.id=${replicaApplicationId}`
     )
   })

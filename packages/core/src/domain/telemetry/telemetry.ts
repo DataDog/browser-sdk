@@ -220,8 +220,8 @@ function startTelemetryTransport(
     cleanupTasks.push(telemetrySubscription.unsubscribe)
   } else {
     const endpoints = [configuration.rumEndpointBuilder]
-    if (configuration.replica && isTelemetryReplicationAllowed(configuration)) {
-      endpoints.push(configuration.replica.rumEndpointBuilder)
+    if (configuration.replicaEndpointBuilders && isTelemetryReplicationAllowed(configuration)) {
+      endpoints.push(configuration.replicaEndpointBuilders.rumEndpointBuilder)
     }
     const telemetryBatch = createBatch({
       encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),

@@ -11,7 +11,7 @@ export interface TransportConfiguration {
   profilingEndpointBuilder: EndpointBuilder
   exposuresEndpointBuilder: EndpointBuilder
   datacenter?: string | undefined
-  replica?: ReplicaConfiguration
+  replicaEndpointBuilders?: ReplicaConfiguration
   site: Site
   source: 'browser' | 'flutter' | 'unity'
 }
@@ -29,7 +29,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
   const replicaConfiguration = computeReplicaConfiguration({ ...initConfiguration, site, source })
 
   return {
-    replica: replicaConfiguration,
+    replicaEndpointBuilders: replicaConfiguration,
     site,
     source,
     ...endpointBuilders,

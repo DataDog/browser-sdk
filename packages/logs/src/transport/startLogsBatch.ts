@@ -14,8 +14,8 @@ export function startLogsBatch(
   session: LogsSessionManager
 ) {
   const endpoints = [configuration.logsEndpointBuilder]
-  if (configuration.replica) {
-    endpoints.push(configuration.replica.logsEndpointBuilder)
+  if (configuration.replicaEndpointBuilders) {
+    endpoints.push(configuration.replicaEndpointBuilders.logsEndpointBuilder)
   }
 
   const batch = createBatch({
