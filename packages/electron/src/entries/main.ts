@@ -31,7 +31,7 @@ import { startActivityTracking } from '../domain/rum/activity'
 import { startRumEventAssembleAndSend } from '../domain/rum/assembly'
 import { startMainProcessTracking } from '../domain/rum/mainProcessTracking'
 import { startConvertSpanToRumEvent } from '../domain/rum/convertSpans'
-import { startCrashMonitoring } from '../domain/rum/crashReporter'
+import { startCrashMonitoring, storeCrashContext } from '../domain/rum/crashReporter'
 import type { Trace } from '../domain/trace/trace'
 import { createDdTraceAgent } from '../domain/trace/traceAgent'
 import { startLogsEventAssembleAndSend } from '../domain/logs/assembly'
@@ -42,6 +42,7 @@ import { getUserAgent } from '../tools/userAgent'
 export const ddElectron = makeDatadogElectron()
 export { tracer }
 export { monitorIpcMain }
+import { SessionManager } from '../domain/session/manager'
 
 function makeDatadogElectron() {
   const globalContext = buildGlobalContextManager()
@@ -128,17 +129,26 @@ function makeDatadogElectron() {
       }
 
       const pageMayExitObservable = new Observable<PageMayExitEvent>()
-      const sessionExpireObservable = new Observable<void>()
       const onRumEventObservable = new Observable<CollectedRumEvent>()
       const onLogsEventObservable = new Observable<LogsEvent>()
       const onTraceObservable = new Observable<Trace>()
       const hooks = createHooks()
-      const sessionId = crypto.randomUUID()
       const mainProcessViewId = crypto.randomUUID()
 
       ;(hooks as AbstractHooks).register(HookNames.Assemble, () => {
         const context = globalContext.getContext()
         return { context }
+      })
+
+      // Initialize activity tracking first (needed by session manager)
+      const onActivityObservable = startActivityTracking(onRumEventObservable)
+
+      // Initialize session manager
+      const sessionManager = new SessionManager(onActivityObservable)
+      const sessionExpireObservable = sessionManager.expireObservable
+      sessionManager.stateObservable.subscribe((state) => {
+        console.log('>>> subscribe', state)
+        storeCrashContext({ sessionId: state.id, viewId: mainProcessViewId })
       })
 
       const rumBatch = startElectronRumBatch(
@@ -171,11 +181,10 @@ function makeDatadogElectron() {
         spanBatch.add({ env: 'prod', spans: trace })
       })
 
-      const onActivityObservable = startActivityTracking(onRumEventObservable)
       startMainProcessTracking(
         hooks,
         configuration,
-        sessionId,
+        sessionManager,
         mainProcessViewId,
         onRumEventObservable,
         onActivityObservable
@@ -183,7 +192,7 @@ function makeDatadogElectron() {
       startErrorCollection(onRumEventObservable)
       startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
       setupMainBridge(onRumEventObservable, onLogsEventObservable)
-      startCrashMonitoring(onRumEventObservable, initConfiguration.applicationId, sessionId, mainProcessViewId)
+      startCrashMonitoring(onRumEventObservable, initConfiguration.applicationId)
 
       initTracer(configuration.service!, configuration.env!, configuration.version!)
       createDdTraceAgent(onTraceObservable, hooks)

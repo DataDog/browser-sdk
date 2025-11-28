@@ -58,6 +58,16 @@ interface MinidumpResult {
   }>
 }
 
+interface CrashContext {
+  sessionId: string
+  viewId: string
+}
+
+const CRASH_CONTEXT_FILE_NAME = '.dd_context'
+
+let ready = false
+const callbacks: Array<() => void> = []
+
 /**
  * Convert minidump parsed result to a RUM error event format
  */
@@ -152,19 +162,10 @@ function createCrashErrorEvent(
   }
 }
 
-export function startCrashMonitoring(
-  onRumEventObservable: Observable<CollectedRumEvent>,
-  applicationId: string,
-  sessionId: string,
-  viewId: string
-) {
+export function startCrashMonitoring(onRumEventObservable: Observable<CollectedRumEvent>, applicationId: string) {
   // Initialize crash reporter
   crashReporter.start({
     uploadToServer: false, // We'll handle uploading via RUM
-    compress: true,
-    extra: {
-      sessionId,
-    },
   })
 
   // Wait for app to be ready before accessing crash dumps directory
@@ -172,8 +173,26 @@ export function startCrashMonitoring(
     monitor(() => {
       const crashesDirectory = app.getPath('crashDumps')
 
+      const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
+
+      if (!fs.existsSync(crashContextPath)) {
+        console.warn('[Datadog] No crash context found')
+        // Stop reporting, we don't want to report incorrect data
+        ready = true
+        callbacks.forEach((callback) => callback())
+        return
+      }
+
+      // Read crash context from previous session
+      const crashContext = fs.readFileSync(crashContextPath, 'utf-8')
+      const crashContextData = JSON.parse(crashContext) as CrashContext
+
       // Check if there are any crash reports pending
       const pendingCrashReports = fs.readdirSync(path.join(crashesDirectory, 'pending'))
+
+      if (pendingCrashReports.length === 0) {
+        console.log('[Datadog] No pending crash reports found')
+      }
 
       // eslint-disable-next-line @typescript-eslint/no-misused-promises
       pendingCrashReports.forEach(async (crashReport) => {
@@ -191,8 +210,8 @@ export function startCrashMonitoring(
           crashReport,
           crashTime,
           applicationId,
-          sessionId,
-          viewId
+          crashContextData.sessionId,
+          crashContextData.viewId
         )
 
         onRumEventObservable.notify({
@@ -203,6 +222,24 @@ export function startCrashMonitoring(
         // delete the crash report
         fs.unlinkSync(reportPath)
       })
+
+      ready = true
+      callbacks.forEach((callback) => callback())
     })
   )
 }
+
+export const storeCrashContext = monitor((context: { sessionId: string; viewId: string }) => {
+  if (!ready) {
+    callbacks.push(() => {
+      storeCrashContext(context)
+    })
+    return
+  }
+
+  console.debug('[Datadog] Storing crash context', context)
+  const crashesDirectory = app.getPath('crashDumps')
+
+  const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
+  fs.writeFileSync(crashContextPath, JSON.stringify(context, null, 2), 'utf-8')
+})

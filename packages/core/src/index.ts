@@ -57,6 +57,7 @@ export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager } from './domain/session/sessionManager'
 export { startSessionManager, stopSessionManager } from './domain/session/sessionManager'
 export {
+  SESSION_EXPIRATION_DELAY,
   SESSION_TIME_OUT_DELAY, // Exposed for tests
   SESSION_NOT_TRACKED,
   SessionPersistence,
