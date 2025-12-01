@@ -191,7 +191,7 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
       const crashContextData = JSON.parse(crashContext) as CrashContext
 
       // Check if there are any crash reports pending
-      const pendingCrashReports = await fs.readdir(path.join(crashesDirectory, 'pending'))
+      const pendingCrashReports = await getFilesRecursive(crashesDirectory, '.dmp')
 
       if (pendingCrashReports.length === 0) {
         console.log('[Datadog] No pending crash reports found')
@@ -201,8 +201,7 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
 
       // Process crash reports in parallel
       await Promise.all(
-        pendingCrashReports.map(async (crashReport) => {
-          const reportPath = path.join(crashesDirectory, 'pending', crashReport)
+        pendingCrashReports.map(async (reportPath) => {
           const reportMetadata = await fs.stat(reportPath)
           const reportBytes = await fs.readFile(reportPath)
 
@@ -211,9 +210,10 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
 
           const crashTime = new Date(reportMetadata.ctime).getTime()
 
+          const reportName = path.basename(reportPath)
           const rumErrorEvent = createCrashErrorEvent(
             minidumpResult,
-            crashReport,
+            reportName,
             crashTime,
             applicationId,
             crashContextData.sessionId,
@@ -227,7 +227,7 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
 
           // delete the crash report
           await fs.unlink(reportPath)
-          console.log(`[Datadog] crash processed: ${reportPath}`)
+          console.log(`[Datadog] crash processed: ${reportName}`)
         })
       )
 
@@ -235,6 +235,26 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
       callbacks.forEach((callback) => callback())
     })
   )
+}
+
+async function getFilesRecursive(dir: string, ext: string) {
+  let results: string[] = []
+
+  const entries = await fs.readdir(dir, { withFileTypes: true })
+
+  for (const entry of entries) {
+    const fullPath = path.join(dir, entry.name)
+
+    if (entry.isDirectory()) {
+      // Recurse into subdirectory
+      results = results.concat(await getFilesRecursive(fullPath, ext))
+    } else if (entry.isFile() && entry.name.endsWith(ext)) {
+      // Match extension (example: ".txt")
+      results.push(fullPath)
+    }
+  }
+
+  return results
 }
 
 export const storeCrashContext = monitor(async (context: { sessionId: string; viewId: string }) => {
