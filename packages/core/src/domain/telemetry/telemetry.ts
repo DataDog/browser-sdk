@@ -3,6 +3,7 @@ import { ConsoleApiName } from '../../tools/display'
 import { NO_ERROR_STACK_PRESENT_MESSAGE, isError } from '../error/error'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
 import { getExperimentalFeatures } from '../../tools/experimentalFeatures'
+import { createEndpointBuilder, createReplicaEndpointBuilder } from '../configuration'
 import type { Configuration } from '../configuration'
 import { buildTags } from '../tags'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../intakeSites'
@@ -219,9 +220,9 @@ function startTelemetryTransport(
     const telemetrySubscription = telemetryObservable.subscribe((event) => bridge.send('internal_telemetry', event))
     cleanupTasks.push(telemetrySubscription.unsubscribe)
   } else {
-    const endpoints = [configuration.rumEndpointBuilder]
+    const endpoints = [createEndpointBuilder(configuration, 'rum')]
     if (configuration.replica && isTelemetryReplicationAllowed(configuration)) {
-      endpoints.push(configuration.replica.rumEndpointBuilder)
+      endpoints.push(createReplicaEndpointBuilder(configuration, configuration.replica, 'rum'))
     }
     const telemetryBatch = createBatch({
       encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),

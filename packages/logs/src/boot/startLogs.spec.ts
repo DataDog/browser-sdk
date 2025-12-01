@@ -1,4 +1,4 @@
-import type { BufferedData, Payload } from '@datadog/browser-core'
+import type { BufferedData } from '@datadog/browser-core'
 import {
   ErrorSource,
   display,
@@ -16,7 +16,6 @@ import {
 import type { Clock, Request } from '@datadog/browser-core/test'
 import {
   interceptRequests,
-  mockEndpointBuilder,
   mockEventBridge,
   mockSyntheticsWorkerValues,
   registerCleanupTask,
@@ -50,19 +49,17 @@ const DEFAULT_MESSAGE = { status: StatusType.info, message: 'message' }
 const COMMON_CONTEXT = {
   view: { referrer: 'common_referrer', url: 'common_url' },
 }
-const DEFAULT_PAYLOAD = {} as Payload
 
 function startLogsWithDefaults(
   { configuration }: { configuration?: Partial<LogsConfiguration> } = {},
   trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
 ) {
-  const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
+  const fullConfiguration = {
+    ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
+    ...configuration,
+  }
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
-    {
-      ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
-      logsEndpointBuilder: endpointBuilder,
-      ...configuration,
-    },
+    fullConfiguration,
     () => COMMON_CONTEXT,
     trackingConsentState,
     new BufferedObservable<BufferedData>(100)
@@ -72,7 +69,7 @@ function startLogsWithDefaults(
 
   const logger = new Logger(handleLog)
 
-  return { handleLog, logger, endpointBuilder, globalContext, accountContext, userContext }
+  return { handleLog, logger, globalContext, accountContext, userContext }
 }
 
 describe('logs', () => {
@@ -93,7 +90,7 @@ describe('logs', () => {
 
   describe('request', () => {
     it('should send the needed data', async () => {
-      const { handleLog, logger, endpointBuilder } = startLogsWithDefaults()
+      const { handleLog, logger } = startLogsWithDefaults()
 
       handleLog(
         { message: 'message', status: StatusType.warn, context: { foo: 'bar' } },
@@ -106,7 +103,7 @@ describe('logs', () => {
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
-      expect(requests[0].url).toContain(endpointBuilder.build('fetch', DEFAULT_PAYLOAD))
+      expect(requests[0].url).toContain('https://browser-intake-datadoghq.com/')
       expect(getLoggedMessage(requests, 0)).toEqual({
         date: jasmine.any(Number),
         foo: 'bar',

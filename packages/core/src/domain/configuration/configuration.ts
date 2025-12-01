@@ -9,10 +9,9 @@ import { TrackingConsent } from '../trackingConsent'
 import type { SessionPersistence } from '../session/sessionConstants'
 import type { MatchOption } from '../../tools/matchOption'
 import { isAllowedTrackingOrigins } from '../allowedTrackingOrigins'
+import { INTAKE_SITE_US1 } from '../intakeSites'
 import type { Site } from '../intakeSites'
 import { isWorkerEnvironment } from '../../tools/globalObject'
-import type { TransportConfiguration } from './transportConfiguration'
-import { computeTransportConfiguration } from './transportConfiguration'
 
 /**
  * Default privacy level for the browser SDK.
@@ -308,8 +307,10 @@ export interface ReplicaUserConfiguration {
   clientToken: string
 }
 
-export interface Configuration extends TransportConfiguration {
+export interface Configuration {
   // Built from init configuration
+  clientToken: string
+  site: Site
   beforeSend: GenericBeforeSendCallback | undefined
   sessionStoreStrategyType: SessionStoreStrategyType | undefined
   sessionSampleRate: number
@@ -325,11 +326,18 @@ export interface Configuration extends TransportConfiguration {
   storeContextsAcrossPages: boolean
   trackAnonymousUser?: boolean
   betaEncodeCookieOptions: boolean
+  datacenter: string | undefined
+  proxy: ProxyFn | string | undefined
+
+  // TODO(next-major): remove this
+  usePciIntake: boolean
 
   // internal
   sdkVersion: string | undefined
   source: 'browser' | 'flutter' | 'unity'
   variant: string | undefined
+  replica: ReplicaUserConfiguration | undefined
+  internalAnalyticsSubdomain: string | undefined
 }
 
 function isString(tag: unknown, tagName: string): tag is string | undefined | null {
@@ -396,6 +404,7 @@ export function validateAndBuildConfiguration(
   }
 
   return {
+    site: initConfiguration.site || INTAKE_SITE_US1,
     beforeSend:
       initConfiguration.beforeSend && catchUserErrors(initConfiguration.beforeSend, 'beforeSend threw an error:'),
     sessionStoreStrategyType: isWorkerEnvironment ? undefined : selectSessionStoreStrategyType(initConfiguration),
@@ -413,14 +422,18 @@ export function validateAndBuildConfiguration(
     trackAnonymousUser: initConfiguration.trackAnonymousUser ?? true,
     storeContextsAcrossPages: !!initConfiguration.storeContextsAcrossPages,
     betaEncodeCookieOptions: !!initConfiguration.betaEncodeCookieOptions,
+    replica: initConfiguration.replica,
+    proxy: initConfiguration.proxy,
+    internalAnalyticsSubdomain: initConfiguration.internalAnalyticsSubdomain,
+    clientToken: initConfiguration.clientToken,
+    usePciIntake: false,
 
     /**
      * The source of the SDK, used for support plugins purposes.
      */
     variant: initConfiguration.variant,
     sdkVersion: initConfiguration.sdkVersion,
-
-    ...computeTransportConfiguration(initConfiguration),
+    source: validateSource(initConfiguration.source),
   }
 }
 
@@ -448,4 +461,11 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     sdk_version: initConfiguration.sdkVersion,
     variant: initConfiguration.variant,
   } satisfies RawTelemetryConfiguration
+}
+
+function validateSource(source: string | undefined) {
+  if (source === 'flutter' || source === 'unity') {
+    return source
+  }
+  return 'browser'
 }

@@ -16,3 +16,8 @@ export const INTAKE_SITE_US1_FED: Site = 'ddog-gov.com'
 
 export const PCI_INTAKE_HOST_US1 = 'pci.browser-intake-datadoghq.com'
 export const INTAKE_URL_PARAMETERS = ['ddsource', 'dd-api-key', 'dd-request-id']
+
+export function isIntakeUrl(url: string): boolean {
+  // check if tags is present in the query string
+  return INTAKE_URL_PARAMETERS.every((param) => url.includes(param))
+}

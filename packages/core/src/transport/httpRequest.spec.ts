@@ -9,7 +9,7 @@ import {
 } from '../../test'
 import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
-import { createEndpointBuilder } from '../domain/configuration'
+import { createEndpointBuilder, validateAndBuildConfiguration } from '../domain/configuration'
 import { addExperimentalFeatures, resetExperimentalFeatures, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { noop } from '../tools/utils/functionUtils'
 import {
@@ -334,7 +334,7 @@ describe('httpRequest intake parameters', () => {
   beforeEach(() => {
     interceptor = interceptRequests()
     requests = interceptor.requests
-    endpointBuilder = createEndpointBuilder({ clientToken }, 'logs')
+    endpointBuilder = createEndpointBuilder(validateAndBuildConfiguration({ clientToken })!, 'logs')
     request = createHttpRequest([endpointBuilder], noop)
   })
 
