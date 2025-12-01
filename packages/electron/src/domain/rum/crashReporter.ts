@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
 import type { Observable } from '@datadog/browser-core'
-import { monitor, ErrorHandling, generateUUID } from '@datadog/browser-core'
+import { monitorError, monitor, ErrorHandling, generateUUID, setTimeout, ONE_SECOND } from '@datadog/browser-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { app, crashReporter } from 'electron'
 
@@ -169,72 +169,77 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
   })
 
   // Wait for app to be ready before accessing crash dumps directory
-  void app.whenReady().then(
-    monitor(async () => {
-      const crashesDirectory = app.getPath('crashDumps')
+  void app.whenReady().then(() =>
+    // wait a bit more to prevent crash on windows ¯\_(ツ)_/¯
+    setTimeout(() => {
+      processCrashesFiles(onRumEventObservable, applicationId).catch(monitorError)
+    }, ONE_SECOND)
+  )
+}
 
-      const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
+async function processCrashesFiles(onRumEventObservable: Observable<CollectedRumEvent>, applicationId: string) {
+  const crashesDirectory = app.getPath('crashDumps')
 
-      // Check if crash context file exists
-      try {
-        await fs.access(crashContextPath)
-      } catch {
-        console.warn('[Datadog] No crash context found')
-        // Stop reporting, we don't want to report incorrect data
-        ready = true
-        callbacks.forEach((callback) => callback())
-        return
-      }
+  const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
 
-      // Read crash context from previous session
-      const crashContext = await fs.readFile(crashContextPath, 'utf-8')
-      const crashContextData = JSON.parse(crashContext) as CrashContext
+  // Check if crash context file exists
+  try {
+    await fs.access(crashContextPath)
+  } catch {
+    console.warn('[Datadog] No crash context found')
+    // Stop reporting, we don't want to report incorrect data
+    ready = true
+    callbacks.forEach((callback) => callback())
+    return
+  }
 
-      // Check if there are any crash reports pending
-      const pendingCrashReports = await getFilesRecursive(crashesDirectory, '.dmp')
+  // Read crash context from previous session
+  const crashContext = await fs.readFile(crashContextPath, 'utf-8')
+  const crashContextData = JSON.parse(crashContext) as CrashContext
 
-      if (pendingCrashReports.length === 0) {
-        console.log('[Datadog] No pending crash reports found')
-      } else {
-        console.log(`[Datadog] ${pendingCrashReports.length} pending crash reports found`)
-      }
+  // Check if there are any crash reports pending
+  const pendingCrashReports = await getFilesRecursive(crashesDirectory, '.dmp')
 
-      // Process crash reports in parallel
-      await Promise.all(
-        pendingCrashReports.map(async (reportPath) => {
-          const reportMetadata = await fs.stat(reportPath)
-          const reportBytes = await fs.readFile(reportPath)
+  if (pendingCrashReports.length === 0) {
+    console.log('[Datadog] No pending crash reports found')
+  } else {
+    console.log(`[Datadog] ${pendingCrashReports.length} pending crash reports found`)
+  }
 
-          const resultJson = await process_minidump_with_stackwalk(reportBytes)
-          const minidumpResult: MinidumpResult = JSON.parse(resultJson)
+  // Process crash reports in parallel
+  await Promise.all(
+    pendingCrashReports.map(async (reportPath) => {
+      const reportMetadata = await fs.stat(reportPath)
+      const reportBytes = await fs.readFile(reportPath)
 
-          const crashTime = new Date(reportMetadata.ctime).getTime()
+      const resultJson = await process_minidump_with_stackwalk(reportBytes)
+      const minidumpResult: MinidumpResult = JSON.parse(resultJson)
 
-          const reportName = path.basename(reportPath)
-          const rumErrorEvent = createCrashErrorEvent(
-            minidumpResult,
-            reportName,
-            crashTime,
-            applicationId,
-            crashContextData.sessionId,
-            crashContextData.viewId
-          )
+      const crashTime = new Date(reportMetadata.ctime).getTime()
 
-          onRumEventObservable.notify({
-            event: rumErrorEvent,
-            source: 'main-process',
-          })
-
-          // delete the crash report
-          await fs.unlink(reportPath)
-          console.log(`[Datadog] crash processed: ${reportName}`)
-        })
+      const reportName = path.basename(reportPath)
+      const rumErrorEvent = createCrashErrorEvent(
+        minidumpResult,
+        reportName,
+        crashTime,
+        applicationId,
+        crashContextData.sessionId,
+        crashContextData.viewId
       )
 
-      ready = true
-      callbacks.forEach((callback) => callback())
+      onRumEventObservable.notify({
+        event: rumErrorEvent,
+        source: 'main-process',
+      })
+
+      // delete the crash report
+      await fs.unlink(reportPath)
+      console.log(`[Datadog] crash processed: ${reportName}`)
     })
   )
+
+  ready = true
+  callbacks.forEach((callback) => callback())
 }
 
 async function getFilesRecursive(dir: string, ext: string) {
