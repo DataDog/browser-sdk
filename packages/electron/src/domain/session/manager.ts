@@ -2,13 +2,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { app } from 'electron'
 import type { TimeStamp } from '@datadog/browser-core'
-import {
-  Observable,
-  generateUUID,
-  timeStampNow,
-  SESSION_TIME_OUT_DELAY,
-  SESSION_EXPIRATION_DELAY,
-} from '@datadog/browser-core'
+import { Observable, generateUUID, timeStampNow, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 
 interface State {
   id: string
@@ -89,7 +83,6 @@ export class SessionManager {
   private expandSession(): void {
     this.state.lastActivityAt = timeStampNow()
     this.persistState()
-    console.debug('[Datadog] Expanded session', this.getSession())
     this.stateObservable.notify(this.getSession())
   }
 

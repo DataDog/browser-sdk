@@ -1,4 +1,4 @@
-import * as fs from 'node:fs'
+import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
 import type { Observable } from '@datadog/browser-core'
@@ -170,12 +170,15 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
 
   // Wait for app to be ready before accessing crash dumps directory
   void app.whenReady().then(
-    monitor(() => {
+    monitor(async () => {
       const crashesDirectory = app.getPath('crashDumps')
 
       const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
 
-      if (!fs.existsSync(crashContextPath)) {
+      // Check if crash context file exists
+      try {
+        await fs.access(crashContextPath)
+      } catch {
         console.warn('[Datadog] No crash context found')
         // Stop reporting, we don't want to report incorrect data
         ready = true
@@ -184,44 +187,49 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
       }
 
       // Read crash context from previous session
-      const crashContext = fs.readFileSync(crashContextPath, 'utf-8')
+      const crashContext = await fs.readFile(crashContextPath, 'utf-8')
       const crashContextData = JSON.parse(crashContext) as CrashContext
 
       // Check if there are any crash reports pending
-      const pendingCrashReports = fs.readdirSync(path.join(crashesDirectory, 'pending'))
+      const pendingCrashReports = await fs.readdir(path.join(crashesDirectory, 'pending'))
 
       if (pendingCrashReports.length === 0) {
         console.log('[Datadog] No pending crash reports found')
+      } else {
+        console.log(`[Datadog] ${pendingCrashReports.length} pending crash reports found`)
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-misused-promises
-      pendingCrashReports.forEach(async (crashReport) => {
-        const reportPath = path.join(crashesDirectory, 'pending', crashReport)
-        const reportMetadata = fs.statSync(reportPath)
-        const reportBytes = fs.readFileSync(reportPath)
+      // Process crash reports in parallel
+      await Promise.all(
+        pendingCrashReports.map(async (crashReport) => {
+          const reportPath = path.join(crashesDirectory, 'pending', crashReport)
+          const reportMetadata = await fs.stat(reportPath)
+          const reportBytes = await fs.readFile(reportPath)
 
-        const resultJson = await process_minidump_with_stackwalk(reportBytes)
-        const minidumpResult: MinidumpResult = JSON.parse(resultJson)
+          const resultJson = await process_minidump_with_stackwalk(reportBytes)
+          const minidumpResult: MinidumpResult = JSON.parse(resultJson)
 
-        const crashTime = new Date(reportMetadata.ctime).getTime()
+          const crashTime = new Date(reportMetadata.ctime).getTime()
 
-        const rumErrorEvent = createCrashErrorEvent(
-          minidumpResult,
-          crashReport,
-          crashTime,
-          applicationId,
-          crashContextData.sessionId,
-          crashContextData.viewId
-        )
+          const rumErrorEvent = createCrashErrorEvent(
+            minidumpResult,
+            crashReport,
+            crashTime,
+            applicationId,
+            crashContextData.sessionId,
+            crashContextData.viewId
+          )
 
-        onRumEventObservable.notify({
-          event: rumErrorEvent,
-          source: 'main-process',
+          onRumEventObservable.notify({
+            event: rumErrorEvent,
+            source: 'main-process',
+          })
+
+          // delete the crash report
+          await fs.unlink(reportPath)
+          console.log(`[Datadog] crash processed: ${reportPath}`)
         })
-
-        // delete the crash report
-        fs.unlinkSync(reportPath)
-      })
+      )
 
       ready = true
       callbacks.forEach((callback) => callback())
@@ -229,17 +237,16 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
   )
 }
 
-export const storeCrashContext = monitor((context: { sessionId: string; viewId: string }) => {
+export const storeCrashContext = monitor(async (context: { sessionId: string; viewId: string }) => {
   if (!ready) {
     callbacks.push(() => {
-      storeCrashContext(context)
+      void storeCrashContext(context)
     })
     return
   }
 
-  console.debug('[Datadog] Storing crash context', context)
   const crashesDirectory = app.getPath('crashDumps')
 
   const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
-  fs.writeFileSync(crashContextPath, JSON.stringify(context, null, 2), 'utf-8')
+  await fs.writeFile(crashContextPath, JSON.stringify(context, null, 2), 'utf-8')
 })

@@ -38,11 +38,11 @@ import { startLogsEventAssembleAndSend } from '../domain/logs/assembly'
 import { startTelemetry } from '../domain/telemetry/telemetry'
 import { startErrorCollection } from '../domain/rum/errorCollection'
 import { getUserAgent } from '../tools/userAgent'
+import { SessionManager } from '../domain/session/manager'
 
 export const ddElectron = makeDatadogElectron()
 export { tracer }
 export { monitorIpcMain }
-import { SessionManager } from '../domain/session/manager'
 
 function makeDatadogElectron() {
   const globalContext = buildGlobalContextManager()
@@ -147,8 +147,7 @@ function makeDatadogElectron() {
       const sessionManager = new SessionManager(onActivityObservable)
       const sessionExpireObservable = sessionManager.expireObservable
       sessionManager.stateObservable.subscribe((state) => {
-        console.log('>>> subscribe', state)
-        storeCrashContext({ sessionId: state.id, viewId: mainProcessViewId })
+        void storeCrashContext({ sessionId: state.id, viewId: mainProcessViewId })
       })
 
       const rumBatch = startElectronRumBatch(
