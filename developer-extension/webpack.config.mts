@@ -16,6 +16,7 @@ export default (_env: unknown, argv: { mode?: webpack.Configuration['mode'] }) =
       entry: './src/background',
       output: {
         filename: 'background.js',
+        clean: true,
       },
       plugins: [
         ...(isDevelopment
