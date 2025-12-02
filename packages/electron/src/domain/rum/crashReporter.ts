@@ -168,9 +168,15 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
     uploadToServer: false, // We'll handle uploading via RUM
   })
 
-  // Wait for app to be ready before accessing crash dumps directory
+  // https://www.electronjs.org/docs/latest/tutorial/performance#2-loading-and-running-code-too-soon
+  // As crashes files accesses and parsing can be I/O and CPU intensive, delay them to not impact the main thread during startup
+  // Crashes at startup have been observed on windows VM without the setTimeout
+  // TODO:
+  // - process files sequentially instead of in parallel to limit impact on resources
+  // - stress test to see if it should be adapted
+  // - consider waiting for the loading of the first window to start processing
+  // - consider offloading that to a different thread
   void app.whenReady().then(() =>
-    // wait a bit more to prevent crash on windows ¯\_(ツ)_/¯
     setTimeout(() => {
       processCrashesFiles(onRumEventObservable, applicationId).catch(monitorError)
     }, ONE_SECOND)
