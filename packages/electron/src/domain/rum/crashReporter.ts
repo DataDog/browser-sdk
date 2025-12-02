@@ -2,7 +2,15 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
 import type { Observable } from '@datadog/browser-core'
-import { monitorError, monitor, ErrorHandling, generateUUID, setTimeout, ONE_SECOND } from '@datadog/browser-core'
+import {
+  monitorError,
+  monitor,
+  ErrorHandling,
+  generateUUID,
+  setTimeout,
+  clearTimeout,
+  ONE_SECOND,
+} from '@datadog/browser-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { app, crashReporter } from 'electron'
 
@@ -65,7 +73,8 @@ interface CrashContext {
 
 const CRASH_CONTEXT_FILE_NAME = '.dd_context'
 
-let ready = false
+let pendingCrashReportsProcessed = false
+let pendingCrashReportsProcessingStarted = false
 const callbacks: Array<() => void> = []
 
 /**
@@ -168,6 +177,8 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
     uploadToServer: false, // We'll handle uploading via RUM
   })
 
+  const processing = () => void processCrashesFiles(onRumEventObservable, applicationId).catch(monitorError)
+
   // https://www.electronjs.org/docs/latest/tutorial/performance#2-loading-and-running-code-too-soon
   // As crashes files accesses and parsing can be I/O and CPU intensive, delay them to not impact the main thread during startup
   // Crashes at startup have been observed on windows VM without the setTimeout
@@ -176,11 +187,26 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
   // - stress test to see if it should be adapted
   // - consider waiting for the loading of the first window to start processing
   // - consider offloading that to a different thread
-  void app.whenReady().then(() =>
-    setTimeout(() => {
-      processCrashesFiles(onRumEventObservable, applicationId).catch(monitorError)
-    }, ONE_SECOND)
-  )
+  void app.whenReady().then(() => {
+    const subscription = onRumEventObservable.subscribe(({ source }) => {
+      if (source === 'renderer') {
+        tryProcessCrashesFiles(processing)
+      }
+    })
+
+    const timeout = setTimeout(() => {
+      tryProcessCrashesFiles(processing)
+    }, 5 * ONE_SECOND)
+
+    function tryProcessCrashesFiles(callback: () => void) {
+      if (!pendingCrashReportsProcessingStarted) {
+        pendingCrashReportsProcessingStarted = true
+        subscription.unsubscribe()
+        clearTimeout(timeout)
+        callback()
+      }
+    }
+  })
 }
 
 async function processCrashesFiles(onRumEventObservable: Observable<CollectedRumEvent>, applicationId: string) {
@@ -194,7 +220,7 @@ async function processCrashesFiles(onRumEventObservable: Observable<CollectedRum
   } catch {
     console.warn('[Datadog] No crash context found')
     // Stop reporting, we don't want to report incorrect data
-    ready = true
+    pendingCrashReportsProcessed = true
     callbacks.forEach((callback) => callback())
     return
   }
@@ -244,7 +270,7 @@ async function processCrashesFiles(onRumEventObservable: Observable<CollectedRum
     })
   )
 
-  ready = true
+  pendingCrashReportsProcessed = true
   callbacks.forEach((callback) => callback())
 }
 
@@ -269,7 +295,7 @@ async function getFilesRecursive(dir: string, ext: string) {
 }
 
 export const storeCrashContext = monitor(async (context: { sessionId: string; viewId: string }) => {
-  if (!ready) {
+  if (!pendingCrashReportsProcessed) {
     callbacks.push(() => {
       void storeCrashContext(context)
     })
