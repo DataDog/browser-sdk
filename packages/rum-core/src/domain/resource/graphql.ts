@@ -102,7 +102,7 @@ export function extractGraphQlRequestMetadata(
     return
   }
 
-  if (graphqlBody && graphqlBody.extensions?.persistedQuery) {
+  if (graphqlBody && graphqlBody.extensions?.persistedQuery && !graphqlBody.query) {
     return {
       operationName: graphqlBody.operationName,
       variables: graphqlBody.variables ? JSON.stringify(graphqlBody.variables) : undefined,
