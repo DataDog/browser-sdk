@@ -30,12 +30,12 @@ const CONTENT_SCRIPTS: Array<{
   {
     id: 'browser-sdk-content-script-main',
     world: chrome.scripting.ExecutionWorld.MAIN,
-    file: './content-script-main.js',
+    file: './contentScriptMain.js',
   },
   {
     id: 'browser-sdk-content-script-isolated',
     world: chrome.scripting.ExecutionWorld.ISOLATED,
-    file: './content-script-isolated.js',
+    file: './contentScriptIsolated.js',
   },
 ]
 
