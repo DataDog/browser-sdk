@@ -52,7 +52,7 @@ export function startErrorCollection(onRumEventObservable: Observable<CollectedR
       monitor((_, details) => {
         notifyRawError({
           stack: NO_ERROR_STACK_PRESENT_MESSAGE,
-          message: `Render process gone: '${details.reason}'`,
+          message: `render process ${details.reason}`,
           handling: ErrorHandling.UNHANDLED,
           source: ErrorSource.SOURCE,
           startClocks: clocksNow(),
@@ -66,7 +66,7 @@ export function startErrorCollection(onRumEventObservable: Observable<CollectedR
     monitor((_, details) => {
       notifyRawError({
         stack: NO_ERROR_STACK_PRESENT_MESSAGE,
-        message: `'${details.name || details.serviceName}' process gone: '${details.reason}'`,
+        message: `${details.name || details.serviceName} process ${details.reason}`,
         handling: ErrorHandling.UNHANDLED,
         source: ErrorSource.SOURCE,
         startClocks: clocksNow(),
