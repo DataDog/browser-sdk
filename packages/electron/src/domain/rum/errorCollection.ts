@@ -1,5 +1,7 @@
 import type { Observable, RawError } from '@datadog/browser-core'
 import {
+  monitor,
+  NO_ERROR_STACK_PRESENT_MESSAGE,
   computeRawError,
   clocksNow,
   NonErrorPrefix,
@@ -10,31 +12,53 @@ import {
 } from '@datadog/browser-core'
 import type { RumEvent } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
+import { app } from 'electron'
 import type { CollectedRumEvent } from './events'
 
 export function startErrorCollection(onRumEventObservable: Observable<CollectedRumEvent>) {
-  process.on('unhandledRejection', (reason) => {
-    const error = computeRawError({
-      stackTrace: computeStackTrace(reason),
-      originalError: reason,
-      startClocks: clocksNow(),
-      nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
-      source: ErrorSource.SOURCE,
-      handling: ErrorHandling.UNHANDLED,
+  process.on(
+    'unhandledRejection',
+    monitor((reason) => {
+      const error = computeRawError({
+        stackTrace: computeStackTrace(reason),
+        originalError: reason,
+        startClocks: clocksNow(),
+        nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
+        source: ErrorSource.SOURCE,
+        handling: ErrorHandling.UNHANDLED,
+      })
+      notifyRawError(error)
     })
-    notifyRawError(error)
-  })
+  )
 
-  process.on('uncaughtException', (originalError) => {
-    const error = computeRawError({
-      stackTrace: computeStackTrace(originalError),
-      originalError,
-      startClocks: clocksNow(),
-      nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
-      source: ErrorSource.SOURCE,
-      handling: ErrorHandling.UNHANDLED,
+  process.on(
+    'uncaughtException',
+    monitor((originalError) => {
+      const error = computeRawError({
+        stackTrace: computeStackTrace(originalError),
+        originalError,
+        startClocks: clocksNow(),
+        nonErrorPrefix: NonErrorPrefix.UNCAUGHT,
+        source: ErrorSource.SOURCE,
+        handling: ErrorHandling.UNHANDLED,
+      })
+      notifyRawError(error)
     })
-    notifyRawError(error)
+  )
+
+  app.on('browser-window-created', (_, window) => {
+    window.webContents.on(
+      'render-process-gone',
+      monitor((_, details) => {
+        notifyRawError({
+          stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+          message: `Render process gone: '${details.reason}'`,
+          handling: ErrorHandling.UNHANDLED,
+          source: ErrorSource.SOURCE,
+          startClocks: clocksNow(),
+        })
+      })
+    )
   })
 
   function notifyRawError(error: RawError) {
