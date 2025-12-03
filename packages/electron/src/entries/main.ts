@@ -191,7 +191,7 @@ function makeDatadogElectron() {
       startErrorCollection(onRumEventObservable)
       startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
       setupMainBridge(onRumEventObservable, onLogsEventObservable)
-      startCrashMonitoring(onRumEventObservable, initConfiguration.applicationId)
+      startCrashMonitoring(onRumEventObservable)
 
       initTracer(configuration.service!, configuration.env!, configuration.version!)
       createDdTraceAgent(onTraceObservable, hooks)

@@ -6,7 +6,7 @@ import type { Hooks } from '../../hooks'
 import type { SessionManager } from '../session/manager'
 import type { CollectedRumEvent } from './events'
 
-const NODE_VIEW_NAME = 'ApplicationLaunch'
+export const NODE_VIEW_NAME = 'ApplicationLaunch'
 
 export function startMainProcessTracking(
   hooks: Hooks,
@@ -57,7 +57,7 @@ export function startMainProcessTracking(
       id: sessionManager.getSession()?.id,
     },
   }))
-  console.log('sessionId', currentSessionId)
+  console.log({ sessionId: currentSessionId, viewId: mainProcessViewId })
   console.log(
     '\x1b[34m%s\x1b[0m',
     `https://app.datadoghq.com/rum/sessions?query=%40type%3Asession%20%40session.id%3A${currentSessionId}`

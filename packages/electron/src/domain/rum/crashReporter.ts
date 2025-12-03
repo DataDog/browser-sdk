@@ -11,12 +11,12 @@ import {
   clearTimeout,
   ONE_SECOND,
 } from '@datadog/browser-core'
+import type { RumEvent } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { app, crashReporter } from 'electron'
-
-// eslint-disable-next-line camelcase
 import { process_minidump_with_stackwalk } from '../../wasm/minidump'
 import type { CollectedRumEvent } from './events'
+import { NODE_VIEW_NAME } from './mainProcessTracking'
 
 /**
  * Minidump parsed output structure
@@ -84,10 +84,9 @@ function createCrashErrorEvent(
   minidumpResult: MinidumpResult,
   dumpFileName: string,
   crashTime: number,
-  applicationId: string,
   sessionId: string,
   viewId: string
-) {
+): RumEvent {
   // Transform threads
   const threads = minidumpResult.threads.map((thread, threadId) => {
     const isCrashed = thread.thread_index === minidumpResult.crash_info.crashing_thread
@@ -137,12 +136,7 @@ function createCrashErrorEvent(
   const crashedThread = threads.find((t) => t.crashed)
 
   return {
-    _dd: {
-      format_version: 2 as const,
-    },
-    application: { id: applicationId },
     date: crashTime,
-    env: 'prod',
     error: {
       binary_images: binaryImages,
       category: 'Exception' as const,
@@ -163,21 +157,19 @@ function createCrashErrorEvent(
       type: minidumpResult.crash_info.type,
       was_truncated: false,
     },
-    service: 'electron-adrian',
     session: { id: sessionId, type: 'user' as const },
-    source: 'electron' as 'browser',
     type: RumEventType.ERROR,
-    view: { id: viewId, url: 'com/datadog/application-launch/view' },
-  }
+    view: { id: viewId, url: NODE_VIEW_NAME },
+  } as unknown as RumEvent
 }
 
-export function startCrashMonitoring(onRumEventObservable: Observable<CollectedRumEvent>, applicationId: string) {
+export function startCrashMonitoring(onRumEventObservable: Observable<CollectedRumEvent>) {
   // Initialize crash reporter
   crashReporter.start({
     uploadToServer: false, // We'll handle uploading via RUM
   })
 
-  const processing = () => void processCrashesFiles(onRumEventObservable, applicationId).catch(monitorError)
+  const processing = () => void processCrashesFiles(onRumEventObservable).catch(monitorError)
 
   // https://www.electronjs.org/docs/latest/tutorial/performance#2-loading-and-running-code-too-soon
   // As crashes files accesses and parsing can be I/O and CPU intensive, delay them to not impact the main thread during startup
@@ -209,7 +201,7 @@ export function startCrashMonitoring(onRumEventObservable: Observable<CollectedR
   })
 }
 
-async function processCrashesFiles(onRumEventObservable: Observable<CollectedRumEvent>, applicationId: string) {
+async function processCrashesFiles(onRumEventObservable: Observable<CollectedRumEvent>) {
   const crashesDirectory = app.getPath('crashDumps')
 
   const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
@@ -254,7 +246,6 @@ async function processCrashesFiles(onRumEventObservable: Observable<CollectedRum
         minidumpResult,
         reportName,
         crashTime,
-        applicationId,
         crashContextData.sessionId,
         crashContextData.viewId
       )

@@ -35,7 +35,7 @@ export function startRumEventAssembleAndSend(
             },
           })
 
-    const serverRumEvent = combine(event, commonContext)
+    const serverRumEvent = combine(commonContext, event)
 
     if (serverRumEvent.type === RumEventType.VIEW) {
       rumBatch.upsert(serverRumEvent as unknown as Context, serverRumEvent.view.id)
