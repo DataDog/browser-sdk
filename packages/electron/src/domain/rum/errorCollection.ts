@@ -61,6 +61,19 @@ export function startErrorCollection(onRumEventObservable: Observable<CollectedR
     )
   })
 
+  app.on(
+    'child-process-gone',
+    monitor((_, details) => {
+      notifyRawError({
+        stack: NO_ERROR_STACK_PRESENT_MESSAGE,
+        message: `'${details.name || details.serviceName}' process gone: '${details.reason}'`,
+        handling: ErrorHandling.UNHANDLED,
+        source: ErrorSource.SOURCE,
+        startClocks: clocksNow(),
+      })
+    })
+  )
+
   function notifyRawError(error: RawError) {
     const rawRumEvent: Partial<RumEvent> = {
       date: error.startClocks.timeStamp,
