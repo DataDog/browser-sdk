@@ -7,16 +7,15 @@ import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ScrollData } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
 import type { SerializationScope } from '../serialization'
+import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
 
 const SCROLL_OBSERVER_THRESHOLD = 100
 
-export type ScrollCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
-
 export function trackScroll(
   configuration: RumConfiguration,
   scope: SerializationScope,
-  scrollCb: ScrollCallback,
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>,
   elementsScrollPositions: ElementsScrollPositions,
   target: Document | ShadowRoot = document
 ): Tracker {
@@ -43,7 +42,7 @@ export function trackScroll(
             scrollLeft: Math.round((target as HTMLElement).scrollLeft),
           }
     elementsScrollPositions.set(target, scrollPositions)
-    scrollCb(
+    emitRecord(
       assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, {
         id,
         x: scrollPositions.scrollLeft,

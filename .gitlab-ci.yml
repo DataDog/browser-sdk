@@ -1,5 +1,5 @@
 variables:
-  CURRENT_STAGING: staging-47
+  CURRENT_STAGING: staging-49
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 93
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
@@ -345,30 +345,30 @@ deploy-staging:
     - node ./scripts/deploy/deploy.ts staging staging root
     - node ./scripts/deploy/upload-source-maps.ts staging root
 
-deploy-prod-canary:
-  stage: deploy:canary
-  extends:
-    - .base-configuration
-    - .main
-  script:
-    - export BUILD_MODE=canary
-    - yarn
-    - yarn build:bundle
-    - node ./scripts/deploy/deploy.ts prod canary root
-    - node ./scripts/deploy/upload-source-maps.ts canary root
-
-deploy-next-major-canary:
-  stage: deploy
-  extends:
-    - .base-configuration
-    - .next-major-branch
-  script:
-    - export BUILD_MODE=canary
-    - VERSION=$(node -p -e "require('./lerna.json').version")
-    - yarn
-    - yarn build:bundle
-    - node ./scripts/deploy/deploy.ts prod v${VERSION%%.*}-canary root
-    - node ./scripts/deploy/upload-source-maps.ts v${VERSION%%.*}-canary root
+# deploy-prod-canary:
+#   stage: deploy:canary
+#   extends:
+#     - .base-configuration
+#     - .main
+#   script:
+#     - export BUILD_MODE=canary
+#     - yarn
+#     - yarn build:bundle
+#     - node ./scripts/deploy/deploy.ts prod canary root
+#     - node ./scripts/deploy/upload-source-maps.ts canary root
+#
+# deploy-next-major-canary:
+#   stage: deploy
+#   extends:
+#     - .base-configuration
+#     - .next-major-branch
+#   script:
+#     - export BUILD_MODE=canary
+#     - VERSION=$(node -p -e "require('./lerna.json').version")
+#     - yarn
+#     - yarn build:bundle
+#     - node ./scripts/deploy/deploy.ts prod v${VERSION%%.*}-canary root
+#     - node ./scripts/deploy/upload-source-maps.ts v${VERSION%%.*}-canary root
 
 deploy-manual:
   stage: deploy

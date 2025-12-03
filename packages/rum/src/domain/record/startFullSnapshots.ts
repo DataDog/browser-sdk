@@ -2,13 +2,13 @@ import { LifeCycleEventType, getScrollX, getScrollY, getViewportDimension } from
 import type { RumConfiguration, LifeCycle } from '@datadog/browser-rum-core'
 import { timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import type { ElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
-import type { SerializationContext, SerializationScope, SerializationStats } from './serialization'
+import type { SerializationContext, SerializationScope } from './serialization'
 import { createSerializationStats, SerializationContextStatus, serializeDocument } from './serialization'
 import { getVisualViewport } from './viewports'
+import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
 
 export function startFullSnapshots(
   elementsScrollPositions: ElementsScrollPositions,
@@ -17,11 +17,12 @@ export function startFullSnapshots(
   configuration: RumConfiguration,
   scope: SerializationScope,
   flushMutations: () => void,
-  emit: (record: BrowserRecord, stats?: SerializationStats) => void
+  emitRecord: EmitRecordCallback,
+  emitStats: EmitStatsCallback
 ) {
   const takeFullSnapshot = (timestamp: TimeStamp, status: SerializationContextStatus) => {
     const { width, height } = getViewportDimension()
-    emit({
+    emitRecord({
       data: {
         height,
         href: window.location.href,
@@ -30,7 +31,8 @@ export function startFullSnapshots(
       type: RecordType.Meta,
       timestamp,
     })
-    emit({
+
+    emitRecord({
       data: {
         has_focus: document.hasFocus(),
       },
@@ -45,23 +47,21 @@ export function startFullSnapshots(
       serializationStats,
       shadowRootsController,
     }
-    emit(
-      {
-        data: {
-          node: serializeDocument(document, configuration, scope, serializationContext),
-          initialOffset: {
-            left: getScrollX(),
-            top: getScrollY(),
-          },
+    emitRecord({
+      data: {
+        node: serializeDocument(document, configuration, scope, serializationContext),
+        initialOffset: {
+          left: getScrollX(),
+          top: getScrollY(),
         },
-        type: RecordType.FullSnapshot,
-        timestamp,
       },
-      serializationStats
-    )
+      type: RecordType.FullSnapshot,
+      timestamp,
+    })
+    emitStats(serializationStats)
 
     if (window.visualViewport) {
-      emit({
+      emitRecord({
         data: getVisualViewport(window.visualViewport),
         type: RecordType.VisualViewport,
         timestamp,

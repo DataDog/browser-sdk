@@ -18,6 +18,30 @@
 
 ---
 
+## v6.24.1
+
+**Public Changes:**
+
+- 🐛 [RUM-12503] Add mask-unless-allowlisted privacy level support for standard attr ([#3907](https://github.com/DataDog/browser-sdk/pull/3907)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 fix temporal dead zone ([#3974](https://github.com/DataDog/browser-sdk/pull/3974))
+- 👷 check package.json files for each PR ([#3970](https://github.com/DataDog/browser-sdk/pull/3970))
+- 👷 handle undefined api key for source-maps upload to new DC ([#3971](https://github.com/DataDog/browser-sdk/pull/3971))
+- 👷 Update actions/setup-node action to v6 ([#3930](https://github.com/DataDog/browser-sdk/pull/3930))
+- 👷 remove version number from private packages ([#3969](https://github.com/DataDog/browser-sdk/pull/3969))
+- 👷 fix prtest00 site ([#3967](https://github.com/DataDog/browser-sdk/pull/3967)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update dependency @playwright/test to v1.56.1 ([#3917](https://github.com/DataDog/browser-sdk/pull/3917))
+- 👷 Update dependency eslint-plugin-unicorn to v62 ([#3941](https://github.com/DataDog/browser-sdk/pull/3941))
+- 👷 Update all non-major dependencies ([#3954](https://github.com/DataDog/browser-sdk/pull/3954)) [RUM-REACT]
+- 👷 Reduce packages boilerplate a bit more ([#3957](https://github.com/DataDog/browser-sdk/pull/3957)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 fix: Add name field to e2e package.json ([#3959](https://github.com/DataDog/browser-sdk/pull/3959))
+- ♻️ refactor new datacenter workflow ([#3964](https://github.com/DataDog/browser-sdk/pull/3964))
+- 👷 Fix gitignore ([#3963](https://github.com/DataDog/browser-sdk/pull/3963))
+- 👷 Add Continuous Benchmarking ([#3927](https://github.com/DataDog/browser-sdk/pull/3927))
+- ♻️ remove constants from the `Configuration` object ([#3960](https://github.com/DataDog/browser-sdk/pull/3960)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.24.0
 
 **Public Changes:**

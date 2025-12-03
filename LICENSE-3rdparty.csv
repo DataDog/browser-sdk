@@ -64,7 +64,6 @@ dev,react-window,MIT,Copyright (c) 2018 Brian Vaughn
 dev,recharts,MIT,Copyright (c) 2015-present recharts
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
-dev,ts-node,MIT,Copyright 2014 Blake Embrey
 dev,tsconfig-paths-webpack-plugin,MIT,Copyright 2016 Jonas Kello
 dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
