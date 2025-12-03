@@ -92,7 +92,6 @@ export function extractGraphQlRequestMetadata(
     query?: string
     operationName?: string
     variables?: unknown
-    extensions?: { persistedQuery?: unknown }
   }
 
   try {
@@ -102,25 +101,22 @@ export function extractGraphQlRequestMetadata(
     return
   }
 
-  if (graphqlBody && graphqlBody.extensions?.persistedQuery && !graphqlBody.query) {
-    return {
-      operationName: graphqlBody.operationName,
-      variables: graphqlBody.variables ? JSON.stringify(graphqlBody.variables) : undefined,
+  if (!graphqlBody) {
+    return
+  }
+
+  let operationType: 'query' | 'mutation' | 'subscription' | undefined
+  let payload: string | undefined
+
+  if (graphqlBody.query) {
+    const trimmedQuery = graphqlBody.query.trim()
+    operationType = getOperationType(trimmedQuery)
+    if (trackPayload) {
+      payload = safeTruncate(trimmedQuery, GRAPHQL_PAYLOAD_LIMIT, '...')
     }
   }
 
-  if (!graphqlBody || !graphqlBody.query) {
-    return
-  }
-
-  const query = graphqlBody.query.trim()
-  const operationType = getOperationType(query)
   const operationName = graphqlBody.operationName
-
-  if (!operationType) {
-    return
-  }
-
   let variables: string | undefined
   if (graphqlBody.variables) {
     variables = JSON.stringify(graphqlBody.variables)
@@ -130,7 +126,7 @@ export function extractGraphQlRequestMetadata(
     operationType,
     operationName,
     variables,
-    payload: trackPayload ? safeTruncate(query, GRAPHQL_PAYLOAD_LIMIT, '...') : undefined,
+    payload,
   }
 }
 
