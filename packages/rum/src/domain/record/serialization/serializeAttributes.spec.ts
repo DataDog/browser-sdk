@@ -27,7 +27,7 @@ const PRIVACY_LEVELS = Object.keys({
   [NodePrivacyLevel.MASK_USER_INPUT]: true,
 } satisfies Record<NodePrivacyLevel, true>) as NodePrivacyLevel[]
 
-describe('serializeDOMAttributes', () => {
+describe('serializeAttributes for DOM attributes', () => {
   let transaction: SerializationTransaction
 
   beforeEach(() => {
@@ -272,7 +272,7 @@ describe('serializeDOMAttributes', () => {
   })
 })
 
-describe('serializeVirtualAttributes', () => {
+describe('serializeAttributes for virtual attributes', () => {
   let stats: SerializationStats
   let transaction: SerializationTransaction
 
