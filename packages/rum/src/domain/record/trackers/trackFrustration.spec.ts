@@ -5,9 +5,9 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumFrustrationEvent } from '../../../../test'
 import type { FrustrationRecord } from '../../../types'
 import { RecordType } from '../../../types'
-import type { RecordIds } from '../recordIds'
-import { initRecordIds } from '../recordIds'
 import type { EmitRecordCallback } from '../record.types'
+import type { RecordingScope } from '../recordingScope'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackFrustration } from './trackFrustration'
 import type { Tracker } from './tracker.types'
 
@@ -17,54 +17,50 @@ describe('trackFrustration', () => {
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback<FrustrationRecord>>
   let mouseEvent: MouseEvent
   let rumData: RawRumEventCollectedData<RawRumActionEvent>
-  let recordIds: RecordIds
+  let scope: RecordingScope
 
   beforeEach(() => {
-    mouseEvent = new MouseEvent('pointerup')
     emitRecordCallback = jasmine.createSpy()
-    recordIds = initRecordIds()
+    scope = createRecordingScopeForTesting()
 
+    mouseEvent = new MouseEvent('pointerup')
     rumData = createRumFrustrationEvent(mouseEvent)
 
+    frustrationTracker = trackFrustration(lifeCycle, emitRecordCallback, scope)
     registerCleanupTask(() => {
       frustrationTracker.stop()
     })
   })
 
+  function getLatestFrustrationRecord(): FrustrationRecord {
+    return emitRecordCallback.calls.mostRecent()?.args[0]
+  }
+
   it('calls callback if the raw data inserted is a click action', () => {
-    frustrationTracker = trackFrustration(lifeCycle, emitRecordCallback, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
 
-    const frustrationRecord = emitRecordCallback.calls.first().args[0]
+    const frustrationRecord = getLatestFrustrationRecord()
     expect(frustrationRecord.type).toEqual(RecordType.FrustrationRecord)
     expect(frustrationRecord.timestamp).toEqual(rumData.rawRumEvent.date)
     expect(frustrationRecord.data.frustrationTypes).toEqual(rumData.rawRumEvent.action.frustration!.type)
-    expect(frustrationRecord.data.recordIds).toEqual([recordIds.getIdForEvent(mouseEvent)])
+    expect(frustrationRecord.data.recordIds).toEqual([scope.eventIds.getIdForEvent(mouseEvent)])
   })
 
   it('ignores events other than click actions', () => {
     rumData.rawRumEvent.action.type = ActionType.CUSTOM
-    frustrationTracker = trackFrustration(lifeCycle, emitRecordCallback, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
-
     expect(emitRecordCallback).not.toHaveBeenCalled()
   })
 
   it('ignores click actions without frustrations', () => {
     rumData.rawRumEvent.action.frustration = { type: [] }
-
-    frustrationTracker = trackFrustration(lifeCycle, emitRecordCallback, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
-
     expect(emitRecordCallback).not.toHaveBeenCalled()
   })
 
   it('ignores click actions which are missing the original mouse events', () => {
     rumData.domainContext = {}
-
-    frustrationTracker = trackFrustration(lifeCycle, emitRecordCallback, recordIds)
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rumData)
-
     expect(emitRecordCallback).not.toHaveBeenCalled()
   })
 })

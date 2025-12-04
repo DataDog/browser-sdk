@@ -2,15 +2,15 @@ import { instrumentMethod } from '@datadog/browser-core'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, StyleSheetRuleData } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { SerializationScope } from '../serialization'
+import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
 
 type GroupingCSSRuleTypes = typeof CSSGroupingRule | typeof CSSMediaRule | typeof CSSSupportsRule
 
 export function trackStyleSheet(
-  scope: SerializationScope,
-  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>,
+  scope: RecordingScope
 ): Tracker {
   function checkStyleSheetAndCallback(styleSheet: CSSStyleSheet | null, callback: (id: number) => void): void {
     if (!styleSheet || !styleSheet.ownerNode) {

@@ -1,49 +1,38 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import { trackInput, trackMutation, trackScroll } from './trackers'
-import type { ElementsScrollPositions } from './elementsScrollPositions'
+import type { RecordingScope } from './recordingScope.ts'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
-import type { SerializationScope } from './serialization'
+import { trackInput, trackMutation, trackScroll } from './trackers'
 
 interface ShadowRootController {
   stop: () => void
   flush: () => void
 }
 
-export type ShadowRootCallBack = (shadowRoot: ShadowRoot) => void
+export type AddShadowRootCallBack = (shadowRoot: ShadowRoot, scope: RecordingScope) => void
+export type RemoveShadowRootCallBack = (shadowRoot: ShadowRoot) => void
 
 export interface ShadowRootsController {
-  addShadowRoot: ShadowRootCallBack
-  removeShadowRoot: ShadowRootCallBack
+  addShadowRoot: AddShadowRootCallBack
+  removeShadowRoot: RemoveShadowRootCallBack
   stop: () => void
   flush: () => void
 }
 
 export const initShadowRootsController = (
-  configuration: RumConfiguration,
-  scope: SerializationScope,
   emitRecord: EmitRecordCallback,
-  emitStats: EmitStatsCallback,
-  elementsScrollPositions: ElementsScrollPositions
+  emitStats: EmitStatsCallback
 ): ShadowRootsController => {
   const controllerByShadowRoot = new Map<ShadowRoot, ShadowRootController>()
 
   const shadowRootsController: ShadowRootsController = {
-    addShadowRoot: (shadowRoot: ShadowRoot) => {
+    addShadowRoot: (shadowRoot: ShadowRoot, scope: RecordingScope) => {
       if (controllerByShadowRoot.has(shadowRoot)) {
         return
       }
-      const mutationTracker = trackMutation(
-        emitRecord,
-        emitStats,
-        configuration,
-        scope,
-        shadowRootsController,
-        shadowRoot
-      )
+      const mutationTracker = trackMutation(shadowRoot, emitRecord, emitStats, scope)
       // The change event does not bubble up across the shadow root, we have to listen on the shadow root
-      const inputTracker = trackInput(configuration, scope, emitRecord, shadowRoot)
+      const inputTracker = trackInput(shadowRoot, emitRecord, scope)
       // The scroll event does not bubble up across the shadow root, we have to listen on the shadow root
-      const scrollTracker = trackScroll(configuration, scope, emitRecord, elementsScrollPositions, shadowRoot)
+      const scrollTracker = trackScroll(shadowRoot, emitRecord, scope)
       controllerByShadowRoot.set(shadowRoot, {
         flush: () => mutationTracker.flush(),
         stop: () => {

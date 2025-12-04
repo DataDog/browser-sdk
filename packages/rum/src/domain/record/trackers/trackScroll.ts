@@ -1,23 +1,19 @@
 import { DOM_EVENT, throttle, addEventListener } from '@datadog/browser-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { getScrollX, getScrollY, getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { ElementsScrollPositions } from '../elementsScrollPositions'
 import { getEventTarget } from '../eventsUtils'
 import { IncrementalSource } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ScrollData } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { SerializationScope } from '../serialization'
+import type { RecordingScope } from '../recordingScope'
 import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
 
 const SCROLL_OBSERVER_THRESHOLD = 100
 
 export function trackScroll(
-  configuration: RumConfiguration,
-  scope: SerializationScope,
+  target: Document | ShadowRoot,
   emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>,
-  elementsScrollPositions: ElementsScrollPositions,
-  target: Document | ShadowRoot = document
+  scope: RecordingScope
 ): Tracker {
   const { throttled: updatePosition, cancel: cancelThrottle } = throttle((event: Event) => {
     const target = getEventTarget(event) as HTMLElement | Document
@@ -27,7 +23,7 @@ export function trackScroll(
     const id = scope.nodeIds.get(target)
     if (
       id === undefined ||
-      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
+      getNodePrivacyLevel(target, scope.configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
     ) {
       return
     }
@@ -41,7 +37,7 @@ export function trackScroll(
             scrollTop: Math.round((target as HTMLElement).scrollTop),
             scrollLeft: Math.round((target as HTMLElement).scrollLeft),
           }
-    elementsScrollPositions.set(target, scrollPositions)
+    scope.elementsScrollPositions.set(target, scrollPositions)
     emitRecord(
       assembleIncrementalSnapshot<ScrollData>(IncrementalSource.Scroll, {
         id,
@@ -51,7 +47,7 @@ export function trackScroll(
     )
   }, SCROLL_OBSERVER_THRESHOLD)
 
-  const { stop: removeListener } = addEventListener(configuration, target, DOM_EVENT.SCROLL, updatePosition, {
+  const { stop: removeListener } = addEventListener(scope.configuration, target, DOM_EVENT.SCROLL, updatePosition, {
     capture: true,
     passive: true,
   })

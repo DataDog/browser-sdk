@@ -1,38 +1,21 @@
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import {
-  createSerializationScope,
-  createSerializationStats,
-  SerializationContextStatus,
-  serializeDocument,
-} from '../serialization'
-import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
-import { createNodeIds } from '../nodeIds'
 import type { EmitRecordCallback } from '../record.types'
+import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackMove } from './trackMove'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { Tracker } from './tracker.types'
 
 describe('trackMove', () => {
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let moveTracker: Tracker
-  let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = {} as RumConfiguration
-
-    const scope = createSerializationScope(createNodeIds())
-    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
-      serializationStats: createSerializationStats(),
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
+    const scope = createRecordingScopeForTesting()
+    takeFullSnapshotForTesting(scope)
 
     emitRecordCallback = jasmine.createSpy()
-    moveTracker = trackMove(configuration, scope, emitRecordCallback)
-
+    moveTracker = trackMove(emitRecordCallback, scope)
     registerCleanupTask(() => {
       moveTracker.stop()
     })

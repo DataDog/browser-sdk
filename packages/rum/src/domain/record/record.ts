@@ -21,10 +21,10 @@ import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
-import { initRecordIds } from './recordIds'
-import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
-import { createSerializationScope } from './serialization'
+import { createEventIds } from './eventIds'
 import { createNodeIds } from './nodeIds'
+import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+import { createRecordingScope } from './recordingScope'
 
 export interface RecordOptions {
   emitRecord: EmitRecordCallback
@@ -54,47 +54,36 @@ export function record(options: RecordOptions): RecordAPI {
     replayStats.addRecord(view.id)
   }
 
-  const elementsScrollPositions = createElementsScrollPositions()
-  const scope = createSerializationScope(createNodeIds())
-  const shadowRootsController = initShadowRootsController(
+  const shadowRootsController = initShadowRootsController(processRecord, emitStats)
+  const scope = createRecordingScope(
     configuration,
-    scope,
-    processRecord,
-    emitStats,
-    elementsScrollPositions
+    createElementsScrollPositions(),
+    createEventIds(),
+    createNodeIds(),
+    shadowRootsController
   )
 
-  const { stop: stopFullSnapshots } = startFullSnapshots(
-    elementsScrollPositions,
-    shadowRootsController,
-    lifeCycle,
-    configuration,
-    scope,
-    flushMutations,
-    processRecord,
-    emitStats
-  )
+  const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope)
 
   function flushMutations() {
     shadowRootsController.flush()
     mutationTracker.flush()
   }
 
-  const recordIds = initRecordIds()
-  const mutationTracker = trackMutation(processRecord, emitStats, configuration, scope, shadowRootsController, document)
+  const mutationTracker = trackMutation(document, processRecord, emitStats, scope)
   const trackers: Tracker[] = [
     mutationTracker,
-    trackMove(configuration, scope, processRecord),
-    trackMouseInteraction(configuration, scope, processRecord, recordIds),
-    trackScroll(configuration, scope, processRecord, elementsScrollPositions, document),
-    trackViewportResize(configuration, processRecord),
-    trackInput(configuration, scope, processRecord),
-    trackMediaInteraction(configuration, scope, processRecord),
-    trackStyleSheet(scope, processRecord),
-    trackFocus(configuration, processRecord),
-    trackVisualViewportResize(configuration, processRecord),
-    trackFrustration(lifeCycle, processRecord, recordIds),
-    trackViewEnd(lifeCycle, flushMutations, processRecord),
+    trackMove(processRecord, scope),
+    trackMouseInteraction(processRecord, scope),
+    trackScroll(document, processRecord, scope),
+    trackViewportResize(processRecord, scope),
+    trackInput(document, processRecord, scope),
+    trackMediaInteraction(processRecord, scope),
+    trackStyleSheet(processRecord, scope),
+    trackFocus(processRecord, scope),
+    trackVisualViewportResize(processRecord, scope),
+    trackFrustration(lifeCycle, processRecord, scope),
+    trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
 
   return {

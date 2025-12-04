@@ -1,15 +1,12 @@
-import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
+import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
 import { noop } from '@datadog/browser-core'
 import { RecordType } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { startFullSnapshots } from './startFullSnapshots'
-import { createElementsScrollPositions } from './elementsScrollPositions'
-import type { ShadowRootsController } from './shadowRootsController'
-import { createSerializationScope } from './serialization'
-import { createNodeIds } from './nodeIds'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+import { createRecordingScopeForTesting } from './test/recordingScope.specHelper'
 
 describe('startFullSnapshots', () => {
   const viewStartClock = { relative: 1, timeStamp: 1 as TimeStamp }
@@ -21,17 +18,11 @@ describe('startFullSnapshots', () => {
     lifeCycle = new LifeCycle()
     emitRecordCallback = jasmine.createSpy()
     emitStatsCallback = jasmine.createSpy()
+
     appendElement('<style>body { width: 100%; }</style>', document.head)
-    startFullSnapshots(
-      createElementsScrollPositions(),
-      {} as ShadowRootsController,
-      lifeCycle,
-      {} as RumConfiguration,
-      createSerializationScope(createNodeIds()),
-      noop,
-      emitRecordCallback,
-      emitStatsCallback
-    )
+
+    const scope = createRecordingScopeForTesting()
+    startFullSnapshots(lifeCycle, emitRecordCallback, emitStatsCallback, noop, scope)
   })
 
   it('takes a full snapshot when startFullSnapshots is called', () => {

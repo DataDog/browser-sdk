@@ -1,19 +1,9 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
-import {
-  serializeDocument,
-  SerializationContextStatus,
-  createSerializationStats,
-  createSerializationScope,
-} from '../serialization'
-import type { ElementsScrollPositions } from '../elementsScrollPositions'
-import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { IncrementalSource, RecordType } from '../../../types'
-import { createNodeIds } from '../nodeIds'
 import type { EmitRecordCallback } from '../record.types'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackScroll } from './trackScroll'
 import type { Tracker } from './tracker.types'
 
@@ -21,25 +11,15 @@ describe('trackScroll', () => {
   let scrollTracker: Tracker
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let div: HTMLDivElement
-  let configuration: RumConfiguration
-  let elementsScrollPositions: ElementsScrollPositions
 
   beforeEach(() => {
-    configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
-    elementsScrollPositions = createElementsScrollPositions()
-    emitRecordCallback = jasmine.createSpy()
-
     div = appendElement('<div target></div>') as HTMLDivElement
 
-    const scope = createSerializationScope(createNodeIds())
-    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
-      serializationStats: createSerializationStats(),
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions,
-    })
-    scrollTracker = trackScroll(configuration, scope, emitRecordCallback, elementsScrollPositions)
+    const scope = createRecordingScopeForTesting()
+    takeFullSnapshotForTesting(scope)
 
+    emitRecordCallback = jasmine.createSpy()
+    scrollTracker = trackScroll(document, emitRecordCallback, scope)
     registerCleanupTask(() => {
       scrollTracker.stop()
     })

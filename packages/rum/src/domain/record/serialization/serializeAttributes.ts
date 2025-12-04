@@ -1,15 +1,14 @@
 import { NodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { isSafari } from '@datadog/browser-core'
 import { getElementInputValue, switchToAbsoluteUrl, getValidTagName } from './serializationUtils'
-import type { SerializeOptions } from './serialization.types'
-import { SerializationContextStatus } from './serialization.types'
 import { serializeAttribute } from './serializeAttribute'
-import { updateSerializationStats } from './serializationStats'
+import type { SerializationTransaction } from './serializationTransaction'
+import { SerializationKind } from './serializationTransaction'
 
 export function serializeAttributes(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  options: SerializeOptions
+  transaction: SerializationTransaction
 ): Record<string, string | number | boolean> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
@@ -21,7 +20,7 @@ export function serializeAttributes(
   for (let i = 0; i < element.attributes.length; i += 1) {
     const attribute = element.attributes.item(i)!
     const attributeName = attribute.name
-    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, options.configuration)
+    const attributeValue = serializeAttribute(element, nodePrivacyLevel, attributeName, transaction.scope.configuration)
     if (attributeValue !== null) {
       safeAttrs[attributeName] = attributeValue
     }
@@ -53,7 +52,7 @@ export function serializeAttributes(
     const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
     const cssText = getCssRulesString(stylesheet)
     if (cssText && stylesheet) {
-      updateSerializationStats(options.serializationContext.serializationStats, 'cssText', cssText.length)
+      transaction.addMetric('cssText', cssText.length)
       safeAttrs._cssText = cssText
     }
   }
@@ -62,7 +61,7 @@ export function serializeAttributes(
   if (tagName === 'style' && (element as HTMLStyleElement).sheet) {
     const cssText = getCssRulesString((element as HTMLStyleElement).sheet)
     if (cssText) {
-      updateSerializationStats(options.serializationContext.serializationStats, 'cssText', cssText.length)
+      transaction.addMetric('cssText', cssText.length)
       safeAttrs._cssText = cssText
     }
   }
@@ -97,18 +96,17 @@ export function serializeAttributes(
    */
   let scrollTop: number | undefined
   let scrollLeft: number | undefined
-  const serializationContext = options.serializationContext
-  switch (serializationContext.status) {
-    case SerializationContextStatus.INITIAL_FULL_SNAPSHOT:
+  switch (transaction.kind) {
+    case SerializationKind.INITIAL_FULL_SNAPSHOT:
       scrollTop = Math.round(element.scrollTop)
       scrollLeft = Math.round(element.scrollLeft)
       if (scrollTop || scrollLeft) {
-        serializationContext.elementsScrollPositions.set(element, { scrollTop, scrollLeft })
+        transaction.scope.elementsScrollPositions.set(element, { scrollTop, scrollLeft })
       }
       break
-    case SerializationContextStatus.SUBSEQUENT_FULL_SNAPSHOT:
-      if (serializationContext.elementsScrollPositions.has(element)) {
-        ;({ scrollTop, scrollLeft } = serializationContext.elementsScrollPositions.get(element)!)
+    case SerializationKind.SUBSEQUENT_FULL_SNAPSHOT:
+      if (transaction.scope.elementsScrollPositions.has(element)) {
+        ;({ scrollTop, scrollLeft } = transaction.scope.elementsScrollPositions.get(element)!)
       }
       break
   }
