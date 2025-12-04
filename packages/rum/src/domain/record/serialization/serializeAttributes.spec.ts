@@ -228,49 +228,6 @@ describe('serializeAttributes for DOM attributes', () => {
       { html: '<input type="url" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
       { html: '<input type="week" value="2017-W01">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
       { html: '<input type="week" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
-      /*
-      { html: '<input type="checkbox" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      {
-        html: '<input type="color" value="#e66465">',
-        expectedBehavior: 'maskable',
-        ignoreBehavior: 'masked',
-        // TODO: This is almost certainly a bug; it's quite odd that only <input
-        // type="color"> behaves this way. The intention was probably to make it behave
-        // like the always-unmasked input elements, but the implementation was incomplete.
-        maskUnlessAllowlistedBehavior: 'unmasked',
-      },
-      {
-        html: '<input type="date" value="2018-06-12">',
-        expectedBehavior: 'maskable',
-        ignoreBehavior: 'masked',
-      },
-      {
-        html: '<input type="datetime-local" value="2018-06-12T19:30">',
-        expectedBehavior: 'maskable',
-        ignoreBehavior: 'masked',
-      },
-      { html: '<input type="email" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      {
-        html: '<input type="file" value="C:\\fakepath\\file.txt">',
-        // TODO: This is a bug! It happens because HTMLInputElement#value is falsy until
-        // the user has actually selected a file, causing us to ignore the result of
-        // getElementInputValue() and fall back to the DOM attribute value.
-        expectedBehavior: 'always-unmasked',
-      },
-      { html: '<input type="hidden" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="image" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="month" value="2018-05">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="number" value="42">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="password" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="radio" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="range" value="50">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="search" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="tel" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="text" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="time" value="13:30">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="url" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      { html: '<input type="week" value="2017-W01">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
-      */
 
       // Boolean form element attributes should be maskable, but with special behavior:
       // when masked, the entire attribute should not be serialized.
