@@ -334,7 +334,7 @@ describe('serializeAttributes for virtual attributes', () => {
       stats.cssText = { ...emptyStats }
     }
 
-    it('handles link element stylesheets', () => {
+    it('handles link element stylesheets', async () => {
       const cssBlob = new Blob([cssText], { type: 'text/css' })
       const cssUrl = URL.createObjectURL(cssBlob)
 
@@ -346,7 +346,9 @@ describe('serializeAttributes for virtual attributes', () => {
       link.setAttribute('rel', 'stylesheet')
       link.setAttribute('href', cssUrl)
 
+      const linkLoaded = new Promise((resolve) => link.addEventListener('load', resolve))
       document.body.appendChild(link)
+      await linkLoaded
 
       // eslint-disable-next-line no-console
       console.log(`Link element href: "${link.href}"`)
