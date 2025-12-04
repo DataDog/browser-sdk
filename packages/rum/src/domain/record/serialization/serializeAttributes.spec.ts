@@ -272,7 +272,7 @@ describe('serializeAttributes for DOM attributes', () => {
   })
 })
 
-fdescribe('serializeAttributes for virtual attributes', () => {
+describe('serializeAttributes for virtual attributes', () => {
   let stats: SerializationStats
   let transaction: SerializationTransaction
 
