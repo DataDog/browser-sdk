@@ -24,7 +24,6 @@ export default tseslint.config(
       'packages/*/bundle',
       'packages/*/cjs',
       'packages/*/esm',
-      'developer-extension/dist',
       'test/**/dist',
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
@@ -34,6 +33,8 @@ export default tseslint.config(
       '.yarn',
       'playwright-report',
       'docs',
+      'developer-extension/.wxt',
+      'developer-extension/.output',
     ],
   },
 
@@ -50,11 +51,9 @@ export default tseslint.config(
         project: [
           './tsconfig.default.json',
           './tsconfig.scripts.json',
-          './developer-extension/tsconfig.webpack.json',
+          './developer-extension/tsconfig.json',
           './test/e2e/tsconfig.json',
           './test/performance/tsconfig.json',
-          './performances/tsconfig.json',
-
           './test/apps/**/tsconfig.json',
         ],
         sourceType: 'module',

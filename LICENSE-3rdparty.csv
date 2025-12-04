@@ -24,16 +24,14 @@ dev,@types/node-forge,MIT,Copyright Microsoft Corporation
 dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
+dev,@wxt-dev/module-react,MIT,Copyright (c) 2023 Aaron
 dev,@types/react-window,MIT,Copyright Microsoft Corporation
 dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contributors
-dev,@webextension-toolbox/webpack-webextension-plugin,MIT,Copyright 2018 Henrik Wenz (handtrix@gmail.com)
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack
 dev,chrome-webstore-upload,MIT,Copyright Federico Brigante <me@fregante.com> (https://fregante.com), 2020 Andrew Levine
 dev,connect-busboy,MIT,Copyright Brian White
-dev,copy-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,cors,MIT,Copyright 2013 Troy Goode
-dev,css-loader,MIT,Copyright JS Foundation and other contributors
 dev,emoji-name-map,MIT,Copyright 2016-19 Ionică Bizău <bizauionica@gmail.com> (https://ionicabizau.net)
 dev,eslint,MIT,Copyright JS Foundation and other contributors
 dev,eslint-module-utils,MIT,Copyright (c) 2015 Ben Mosher
@@ -64,10 +62,8 @@ dev,puppeteer,Apache-2.0,Copyright 2017 Google Inc.
 dev,react-router-dom,MIT,Copyright (c) React Training LLC 2015-2019 Copyright (c) Remix Software Inc. 2020-2021 Copyright (c) Shopify Inc. 2022-2023
 dev,react-window,MIT,Copyright (c) 2018 Brian Vaughn
 dev,recharts,MIT,Copyright (c) 2015-present recharts
-dev,style-loader,MIT,Copyright JS Foundation and other contributors
 dev,terser-webpack-plugin,MIT,Copyright JS Foundation and other contributors
 dev,ts-loader,MIT,Copyright 2015 TypeStrong
-dev,ts-node,MIT,Copyright 2014 Blake Embrey
 dev,tsconfig-paths-webpack-plugin,MIT,Copyright 2016 Jonas Kello
 dev,typescript,Apache-2.0,Copyright Microsoft Corporation
 dev,typescript-eslint,MIT,Copyright (c) 2019 typescript-eslint and other contributors
@@ -77,10 +73,6 @@ dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
 dev,@swc/core,Apache-2.0,Copyright (c) SWC Contributors
 dev,swc-loader,MIT,Copyright (c) SWC Contributors
-dev,@pmmmwh/react-refresh-webpack-plugin,MIT,Copyright (c) Michael Mok
-dev,@types/webpack-env,MIT,Copyright Microsoft Corporation
-dev,react-refresh,MIT,Copyright (c) Facebook, Inc. and its affiliates.
-dev,react-refresh-typescript,MIT,Copyright (c) Piotr Monwid-Olechnowicz
-dev,webpack-dev-server,MIT,Copyright JS Foundation and other contributors
 dev,http-server,MIT,Copyright http-party contributors
 dev,react-router,MIT,Copyright (c) React Training LLC 2015-2019 Copyright (c) Remix Software Inc. 2020-2021 Copyright (c) Shopify Inc. 2022-2023
+dev,wxt,MIT,Copyright (c) 2023 Aaron

@@ -5,11 +5,9 @@ import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks 
 // replaced at build time
 declare const __BUILD_ENV__SDK_VERSION__: string
 
-export function startDefaultContext(
-  hooks: Hooks,
-  configuration: RumConfiguration,
-  sdkName: 'rum' | 'rum-slim' | 'rum-synthetics' | undefined
-) {
+export type SdkName = 'rum' | 'rum-slim' | 'rum-synthetics'
+
+export function startDefaultContext(hooks: Hooks, configuration: RumConfiguration, sdkName: SdkName | undefined) {
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes => {
     const source = configuration.source
 

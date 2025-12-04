@@ -14,7 +14,7 @@ export function useDevServerStatus(url: string) {
 
   useEffect(() => {
     const abortController = new AbortController()
-    let checkingTimeoutId: number
+    let checkingTimeoutId: ReturnType<typeof setTimeout>
 
     void refreshDevServerStatus(url, abortController.signal, (status) => {
       // We don't want to show the CHECKING state to quickly to avoid UI flashing. Delay the actual
