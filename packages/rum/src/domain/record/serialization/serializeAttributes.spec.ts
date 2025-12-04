@@ -334,13 +334,25 @@ describe('serializeAttributes for virtual attributes', () => {
       stats.cssText = { ...emptyStats }
     }
 
-    it('handles <link> element stylesheets', () => {
+    it('handles link element stylesheets', async () => {
       const cssUrl = `data:text/css;base64,${btoa(cssText)}`
-      const link = appendElement(`<link rel="stylesheet" href="${cssUrl}">`)
+
+      const link = document.createElement('link')
+      registerCleanupTask(() => {
+        link.parentNode?.removeChild(link)
+      })
+
+      link.setAttribute('rel', 'stylesheet')
+      link.setAttribute('href', cssUrl)
+
+      const linkLoaded = new Promise((resolve) => link.addEventListener('load', resolve))
+      document.body.appendChild(link)
+      await linkLoaded
+
       expectVirtualAttributes(link, { _cssText: cssText }, checkStats)
     })
 
-    it('handles <style> element stylesheets', () => {
+    it('handles style element stylesheets', () => {
       const style = appendElement(`<style>${cssText}</style>`)
       expectVirtualAttributes(style, { _cssText: cssText }, checkStats)
     })
