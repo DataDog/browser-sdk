@@ -272,7 +272,7 @@ describe('serializeAttributes for DOM attributes', () => {
   })
 })
 
-describe('serializeAttributes for virtual attributes', () => {
+fdescribe('serializeAttributes for virtual attributes', () => {
   let stats: SerializationStats
   let transaction: SerializationTransaction
 
@@ -348,6 +348,11 @@ describe('serializeAttributes for virtual attributes', () => {
       const linkLoaded = new Promise((resolve) => link.addEventListener('load', resolve))
       document.body.appendChild(link)
       await linkLoaded
+
+      // eslint-disable-next-line no-console
+      console.log(`Link element href: "${link.href}"`)
+      // eslint-disable-next-line no-console
+      Array.from(document.styleSheets).forEach((sheet) => console.log(`Found stylesheet with href: "${sheet.href}"`))
 
       expectVirtualAttributes(link, { _cssText: cssText }, checkStats)
     })
