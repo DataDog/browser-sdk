@@ -98,10 +98,15 @@ describe('GraphQL detection and metadata extraction', () => {
       expect(result).toBeUndefined()
     })
 
-    it('should return undefined for non-GraphQL request body', () => {
+    it('should return metadata with undefined fields for non-GraphQL request body', () => {
       const requestBody = JSON.stringify({ data: 'some data' })
       const result = extractGraphQlRequestMetadata(requestBody, true)
-      expect(result).toBeUndefined()
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: undefined,
+        variables: undefined,
+        payload: undefined,
+      })
     })
 
     it('should handle GraphQL queries with leading and trailing whitespace', () => {
@@ -129,7 +134,12 @@ describe('GraphQL detection and metadata extraction', () => {
       })
 
       const result = extractGraphQlRequestMetadata(requestBody, true)
-      expect(result).toBeUndefined()
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: '{ user { id name } }',
+      })
     })
 
     it('should return undefined for queries with invalid operation type', () => {
@@ -140,7 +150,55 @@ describe('GraphQL detection and metadata extraction', () => {
       })
 
       const result = extractGraphQlRequestMetadata(requestBody, true)
-      expect(result).toBeUndefined()
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: 'invalid GetUser { user { id name } }',
+      })
+    })
+
+    it('should extract query operation name and variables for persisted queries without query', () => {
+      const requestBody = JSON.stringify({
+        extensions: {
+          persistedQuery: {
+            sha256Hash: 'somehashvalue',
+          },
+        },
+        operationName: 'GetUser',
+        variables: { id: '123' },
+      })
+
+      const result = extractGraphQlRequestMetadata(requestBody, true)
+
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: undefined,
+      })
+    })
+
+    it('should extract full metadata when both query and persistedQuery are present', () => {
+      const requestBody = JSON.stringify({
+        query: 'query GetUser { user { id name } }',
+        extensions: {
+          persistedQuery: {
+            sha256Hash: 'somehashvalue',
+          },
+        },
+        operationName: 'GetUser',
+        variables: { id: '123' },
+      })
+
+      const result = extractGraphQlRequestMetadata(requestBody, true)
+
+      expect(result).toEqual({
+        operationType: 'query',
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: 'query GetUser { user { id name } }',
+      })
     })
   })
 
