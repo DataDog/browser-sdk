@@ -45,27 +45,41 @@ describe('serializeAttributes for DOM attributes', () => {
 
   it('serializes attribute values', () => {
     interface TestCase {
+      // A snippet of HTML containing an attribute we should serialize.
+      // For example: `<div attr="foo">`
       html: string
+
+      // By default, the attribute that should be serialized is determined automatically,
+      // but you can override the default behavior by specifying an attribute manually.
+      attrName?: string
+
+      // By default, the attribute value that should be serialized is determined automatically,
+      // but you can override the default behavior by specifying a value manually.
+      attrValue?: string
 
       // The serialization behavior we expect. There are several options:
       // - 'always-unmasked': We expect the value to be unmasked regardless of privacy
       // level. For HIDDEN, we expect the value not to be serialized.
       // - 'maskable': We expect the value to be masked or unmasked, depending on the
       // privacy level. For HIDDEN, we expect the value not to be serialized.
-      // - 'maskable-boolean': Like 'maskable', except that we expect the attribute to be
-      // serialized into a boolean value, and to not to be serialized at all when the
-      // value is masked. (This is appropriate for boolean attributes.)
+      // - 'maskable-form': Behaves like 'maskable' for truthy attribute values and like
+      // 'always-unmasked' for falsy ones. Used for most form elements.
+      // - 'maskable-form-boolean': The attribute as boolean true or false, depending on
+      // whether it's present, when unmasked. If it's masked, the attribute is not
+      // serialized at all. Used for boolean form element attributes like `<option selected>`.
       // - 'maskable-image': Like 'maskable', except that we expect the masked
       // representation to be a data URL image.
       // - 'maskable-option-selected': Like 'maskable-boolean', in that when unmasked the
       // representation is a boolean value. However, when the value is masked, instead of
       // not being serialized, its underlying string value is used. The effect is a weird
       // hybrid of 'always-unmasked' and 'maskable-boolean'.
-      // TODO: Eliminate this weird behavior by fixing <option selected>.
+      // TODO: Reduce the complexity here by aligning 'maskable-form',
+      // 'maskable-form-boolean', and 'maskable-option-selected'.
       expectedBehavior:
         | 'always-unmasked'
         | 'maskable'
-        | 'maskable-boolean'
+        | 'maskable-form'
+        | 'maskable-form-boolean'
         | 'maskable-image'
         | 'maskable-option-selected'
 
@@ -132,6 +146,89 @@ describe('serializeAttributes for DOM attributes', () => {
       { html: '<input type="submit" value="value">', expectedBehavior: 'always-unmasked' },
 
       // The value attributes of other form elements should be maskable.
+      { html: '<input type="checkbox" value="value">', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="checkbox" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      {
+        html: '<input type="color" value="#e66465">',
+        expectedBehavior: 'maskable',
+        ignoreBehavior: 'masked',
+        // TODO: This is almost certainly a bug; it's quite odd that only <input
+        // type="color"> behaves this way. The intention was probably to make it behave
+        // like the maskable-form input elements, but the implementation was incomplete.
+        maskUnlessAllowlistedBehavior: 'unmasked',
+      },
+      {
+        html: '<input type="color" value>',
+        attrValue: '#000000', // This is the value returned by HTMLInputElement#value for this test case.
+        expectedBehavior: 'maskable',
+        ignoreBehavior: 'masked',
+        maskUnlessAllowlistedBehavior: 'unmasked',
+      },
+      {
+        html: '<input type="date" value="2018-06-12">',
+        expectedBehavior: 'maskable',
+        ignoreBehavior: 'masked',
+      },
+      {
+        html: '<input type="date" value>',
+        expectedBehavior: 'maskable-form',
+        ignoreBehavior: 'masked',
+      },
+      {
+        html: '<input type="datetime-local" value="2018-06-12T19:30">',
+        expectedBehavior: 'maskable',
+        ignoreBehavior: 'masked',
+      },
+      {
+        html: '<input type="datetime-local" value>',
+        expectedBehavior: 'maskable-form',
+        ignoreBehavior: 'masked',
+      },
+      { html: '<input type="email" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="email" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      {
+        html: '<input type="file" value="C:\\fakepath\\file.txt">',
+        // TODO: This is a bug! It happens because HTMLInputElement#value is falsy until
+        // the user has actually selected a file, causing us to ignore the result of
+        // getElementInputValue() and fall back to the DOM attribute value.
+        expectedBehavior: 'always-unmasked',
+      },
+      {
+        html: '<input type="file" value>',
+        expectedBehavior: 'maskable-form',
+      },
+      { html: '<input type="hidden" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="hidden" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="image" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="image" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="month" value="2018-05">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="month" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="number" value="42">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="number" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="password" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="password" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="radio" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="radio" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="range" value="99">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      {
+        html: '<input type="range" value>',
+        attrValue: '50', // This is the value returned by HTMLInputElement#value for this test case.
+        expectedBehavior: 'maskable',
+        ignoreBehavior: 'masked',
+      },
+      { html: '<input type="search" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="search" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="tel" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="tel" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="text" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="text" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="time" value="13:30">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="time" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="url" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="url" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      { html: '<input type="week" value="2017-W01">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      { html: '<input type="week" value>', expectedBehavior: 'maskable-form', ignoreBehavior: 'masked' },
+      /*
       { html: '<input type="checkbox" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
       {
         html: '<input type="color" value="#e66465">',
@@ -173,6 +270,7 @@ describe('serializeAttributes for DOM attributes', () => {
       { html: '<input type="time" value="13:30">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
       { html: '<input type="url" value="value">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
       { html: '<input type="week" value="2017-W01">', expectedBehavior: 'maskable', ignoreBehavior: 'masked' },
+      */
 
       // Boolean form element attributes should be maskable, but with special behavior:
       // when masked, the entire attribute should not be serialized.
@@ -186,19 +284,19 @@ describe('serializeAttributes for DOM attributes', () => {
       },
       {
         html: '<input type="checkbox" checked>',
-        expectedBehavior: 'maskable-boolean',
+        expectedBehavior: 'maskable-form-boolean',
         ignoreBehavior: 'masked',
       },
       {
         html: '<input type="radio" checked>',
-        expectedBehavior: 'maskable-boolean',
+        expectedBehavior: 'maskable-form-boolean',
         ignoreBehavior: 'masked',
       },
     ]
 
     for (const testCase of testCases) {
       const element = appendElement(testCase.html)
-      const attribute = getTestAttribute(element)
+      const attribute = getAttributeToSerialize(element, testCase.attrName)
 
       // Remove the element from the document so that 'maskable-image' elements all have a zero
       // size, giving all such attributes the same expected value.
@@ -211,7 +309,16 @@ describe('serializeAttributes for DOM attributes', () => {
       }
     }
 
-    function getTestAttribute(element: HTMLElement): Attr {
+    function getAttributeToSerialize(
+      element: HTMLElement,
+      attrName: string | undefined
+    ): { name: string; value: string | undefined } {
+      if (attrName) {
+        // The attribute to serialize was explicitly specified.
+        return { name: attrName, value: element.getAttribute(attrName) || undefined }
+      }
+
+      // Infer the attribute to serialize. We use the first attribute that isn't 'type'.
       for (let i = 0; i < element.attributes.length; i++) {
         const attr = element.attributes.item(i)
         if (attr && attr.name !== 'type') {
@@ -225,21 +332,28 @@ describe('serializeAttributes for DOM attributes', () => {
     function expectedValueForPrivacyLevel(
       testCase: TestCase,
       element: Element,
-      attribute: Attr,
+      attribute: { name: string; value: string | undefined },
       privacyLevel: NodePrivacyLevel
     ): boolean | string | undefined {
-      let maskedValue: string | undefined = CENSORED_STRING_MARK
-      if (testCase.expectedBehavior === 'maskable-boolean') {
+      let unmaskedValue: boolean | string | undefined = testCase.attrValue ?? attribute.value
+      if (
+        testCase.expectedBehavior === 'maskable-form-boolean' ||
+        testCase.expectedBehavior === 'maskable-option-selected'
+      ) {
+        unmaskedValue = attribute.value === ''
+      }
+
+      let maskedValue: boolean | string | undefined
+      if (testCase.expectedBehavior === 'maskable-form') {
+        maskedValue = !unmaskedValue ? unmaskedValue : CENSORED_STRING_MARK
+      } else if (testCase.expectedBehavior === 'maskable-form-boolean') {
         maskedValue = undefined
       } else if (testCase.expectedBehavior === 'maskable-image') {
         maskedValue = CENSORED_IMG_MARK
       } else if (testCase.expectedBehavior === 'maskable-option-selected') {
         maskedValue = attribute.value
-      }
-
-      let unmaskedValue: boolean | string = attribute.value
-      if (['maskable-boolean', 'maskable-option-selected'].includes(testCase.expectedBehavior)) {
-        unmaskedValue = attribute.value === ''
+      } else {
+        maskedValue = CENSORED_STRING_MARK
       }
 
       if (testCase.expectedBehavior === 'always-unmasked') {
@@ -355,31 +469,6 @@ describe('serializeAttributes for virtual attributes', () => {
         // Safari 12 fails to load the stylesheet from the blob URL.
         return
       }
-
-      // eslint-disable-next-line no-console
-      console.log(`Link element href: "${link.href}"`)
-      Array.from(document.styleSheets).forEach((sheet) => {
-        // eslint-disable-next-line no-console
-        console.log(`Found stylesheet with href: "${sheet.href}"`)
-        if (link.href === sheet.href) {
-          // eslint-disable-next-line no-console
-          console.log('- Matches link element')
-          // eslint-disable-next-line no-console
-          console.log('--- sheet#rules ----')
-          // eslint-disable-next-line no-console
-          console.log(sheet.rules)
-          // eslint-disable-next-line no-console
-          console.log('--- sheet#cssRules ----')
-          // eslint-disable-next-line no-console
-          console.log(sheet.cssRules)
-          // eslint-disable-next-line no-console
-          console.log('--- Rules ----')
-          // eslint-disable-next-line no-console
-          console.log(getCssRulesString(sheet))
-          // eslint-disable-next-line no-console
-          console.log('-----------')
-        }
-      })
 
       expectVirtualAttributes(link, { _cssText: cssText }, checkStats)
     })
