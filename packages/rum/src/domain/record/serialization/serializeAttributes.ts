@@ -10,7 +10,7 @@ export function serializeAttributes(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
   transaction: SerializationTransaction
-): Record<string, boolean | number | string> {
+): Record<string, number | string> {
   return {
     ...serializeDOMAttributes(element, nodePrivacyLevel, transaction),
     ...serializeVirtualAttributes(element, nodePrivacyLevel, transaction),
@@ -21,12 +21,12 @@ export function serializeDOMAttributes(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
   transaction: SerializationTransaction
-): Record<string, boolean | string> {
+): Record<string, string> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
   }
 
-  const attrs: Record<string, string | boolean> = {}
+  const attrs: Record<string, string> = {}
   const tagName = element.tagName
 
   for (let i = 0; i < element.attributes.length; i += 1) {
@@ -51,11 +51,12 @@ export function serializeDOMAttributes(
   /**
    * <Option> can be selected, which occurs if its `value` matches ancestor `<Select>.value`
    */
-  if (tagName === 'OPTION' && nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
-    // For privacy=`MASK`, all the values would be the same, so skip.
+  if (tagName === 'OPTION') {
     const optionElement = element as HTMLOptionElement
-    if (optionElement.selected) {
-      attrs.selected = optionElement.selected
+    if (optionElement.selected && !shouldMaskNode(optionElement, nodePrivacyLevel)) {
+      attrs.selected = ''
+    } else {
+      delete attrs.selected
     }
   }
 
@@ -69,9 +70,9 @@ export function serializeDOMAttributes(
    */
   const inputElement = element as HTMLInputElement
   if (tagName === 'INPUT' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
-    if (nodePrivacyLevel === NodePrivacyLevel.ALLOW) {
-      attrs.checked = !!inputElement.checked
-    } else if (shouldMaskNode(inputElement, nodePrivacyLevel)) {
+    if (inputElement.checked && !shouldMaskNode(inputElement, nodePrivacyLevel)) {
+      attrs.checked = ''
+    } else {
       delete attrs.checked
     }
   }

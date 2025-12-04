@@ -239,7 +239,7 @@ describe('serializeNodeWithId', () => {
             jasmine.objectContaining({
               attributes: {
                 value: 'bar',
-                selected: true,
+                selected: '',
               },
             }),
           ],
@@ -271,7 +271,6 @@ describe('serializeNodeWithId', () => {
           attributes: {
             type: 'checkbox',
             value: 'on',
-            checked: false,
           },
         })
       )
@@ -283,7 +282,7 @@ describe('serializeNodeWithId', () => {
           attributes: {
             type: 'checkbox',
             value: 'on',
-            checked: true,
+            checked: '',
           },
         })
       )
@@ -295,7 +294,6 @@ describe('serializeNodeWithId', () => {
       expect(serializeNodeWithId(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
         type: 'radio',
         value: 'on',
-        checked: false,
       })
 
       radio.checked = true
@@ -303,7 +301,7 @@ describe('serializeNodeWithId', () => {
       expect(serializeNodeWithId(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
         type: 'radio',
         value: 'on',
-        checked: true,
+        checked: '',
       })
     })
 
