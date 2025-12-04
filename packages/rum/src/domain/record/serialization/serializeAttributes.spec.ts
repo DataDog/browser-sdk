@@ -1,3 +1,4 @@
+import { isSafari } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   CENSORED_IMG_MARK,
@@ -349,6 +350,11 @@ describe('serializeAttributes for virtual attributes', () => {
       const linkLoaded = new Promise((resolve) => link.addEventListener('load', resolve))
       document.body.appendChild(link)
       await linkLoaded
+
+      if (isSafari() && !Array.from(document.styleSheets).find((sheet) => sheet.href === link.href)) {
+        // Safari 12 fails to load the stylesheet from the blob URL.
+        return
+      }
 
       // eslint-disable-next-line no-console
       console.log(`Link element href: "${link.href}"`)
