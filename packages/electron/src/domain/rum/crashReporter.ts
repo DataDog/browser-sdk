@@ -154,25 +154,20 @@ function createCrashErrorEvent(
   } as unknown as RumEvent
 }
 
-export function startCrashMonitoring(onRumEventObservable: Observable<CollectedRumEvent>) {
+export function startCrashMonitoring(
+  onRumEventObservable: Observable<CollectedRumEvent>,
+  onAppStable: Observable<void>
+) {
   // Initialize crash reporter
   crashReporter.start({
     uploadToServer: false, // We'll handle uploading via RUM
   })
 
-  // https://www.electronjs.org/docs/latest/tutorial/performance#2-loading-and-running-code-too-soon
-  // As crashes files accesses and parsing can be I/O and CPU intensive, delay them to not impact the main thread during startup
-  // Crashes at startup have been observed on windows VM when executed only on app ready
   // TODO:
   // - process files sequentially instead of in parallel to limit impact on resources
   // - consider offloading that to a different thread
-  app.once('browser-window-created', (_, window) => {
-    window.webContents.on(
-      'did-finish-load',
-      monitor(() => {
-        void processCrashesFiles(onRumEventObservable).catch(monitorError)
-      })
-    )
+  onAppStable.subscribe(() => {
+    void processCrashesFiles(onRumEventObservable).catch(monitorError)
   })
 }
 

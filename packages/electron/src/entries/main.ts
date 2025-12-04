@@ -39,6 +39,7 @@ import { startTelemetry } from '../domain/telemetry/telemetry'
 import { startErrorCollection } from '../domain/rum/errorCollection'
 import { getUserAgent } from '../tools/userAgent'
 import { SessionManager } from '../domain/session/manager'
+import { startAppStabilityTracking } from '../domain/rum/appStability'
 
 export const ddElectron = makeDatadogElectron()
 export { tracer }
@@ -180,6 +181,7 @@ function makeDatadogElectron() {
         spanBatch.add({ env: 'prod', spans: trace })
       })
 
+      const onAppStable = startAppStabilityTracking()
       startMainProcessTracking(
         hooks,
         configuration,
@@ -191,7 +193,7 @@ function makeDatadogElectron() {
       startErrorCollection(onRumEventObservable)
       startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
       setupMainBridge(onRumEventObservable, onLogsEventObservable)
-      startCrashMonitoring(onRumEventObservable)
+      startCrashMonitoring(onRumEventObservable, onAppStable)
 
       initTracer(configuration.service!, configuration.env!, configuration.version!)
       createDdTraceAgent(onTraceObservable, hooks)
