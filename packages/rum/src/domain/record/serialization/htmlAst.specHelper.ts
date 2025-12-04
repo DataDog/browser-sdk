@@ -1,15 +1,8 @@
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
-import { display, noop, objectValues } from '@datadog/browser-core'
+import { display, objectValues } from '@datadog/browser-core'
 import type { SerializedNodeWithId } from '../../../types'
-import {
-  serializeNodeWithId,
-  SerializationContextStatus,
-  createElementsScrollPositions,
-  createSerializationStats,
-} from '..'
-import { createNodeIds } from '../nodeIds'
-import { createSerializationScope } from './serializationScope'
+import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
+import { serializeNodeWithId } from './serializeNode'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {
@@ -33,26 +26,11 @@ export const removeIdFieldsRecursivelyClone = (thing: Record<string, unknown>): 
   return thing
 }
 
-const DEFAULT_SHADOW_ROOT_CONTROLLER = {
-  flush: noop,
-  stop: noop,
-  addShadowRoot: noop,
-  removeShadowRoot: noop,
-}
-
 export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: string) => {
+  const transaction = createSerializationTransactionForTesting()
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
-    serializeNodeWithId(newDoc, NodePrivacyLevel.ALLOW, {
-      serializationContext: {
-        serializationStats: createSerializationStats(),
-        shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-        status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-        elementsScrollPositions: createElementsScrollPositions(),
-      },
-      configuration: {} as RumConfiguration,
-      scope: createSerializationScope(createNodeIds()),
-    })! as unknown as Record<string, unknown>
+    serializeNodeWithId(newDoc, NodePrivacyLevel.ALLOW, transaction) as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc
 }

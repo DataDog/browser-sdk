@@ -1,46 +1,25 @@
-import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
-import {
-  serializeDocument,
-  SerializationContextStatus,
-  createSerializationStats,
-  createSerializationScope,
-} from '../serialization'
-import type { ElementsScrollPositions } from '../elementsScrollPositions'
-import { createElementsScrollPositions } from '../elementsScrollPositions'
 import { RecordType } from '../../../types'
-import { createNodeIds } from '../nodeIds'
 import type { EmitRecordCallback } from '../record.types'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
+import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackVisualViewportResize } from './trackViewportResize'
 import type { Tracker } from './tracker.types'
 
 describe('trackViewportResize', () => {
   let viewportResizeTracker: Tracker
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
-  let configuration: RumConfiguration
-  let elementsScrollPositions: ElementsScrollPositions
 
   beforeEach(() => {
     if (!window.visualViewport) {
       pending('visualViewport not supported')
     }
 
-    configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
-    elementsScrollPositions = createElementsScrollPositions()
     emitRecordCallback = jasmine.createSpy()
+    const scope = createRecordingScopeForTesting()
+    takeFullSnapshotForTesting(scope)
 
-    const scope = createSerializationScope(createNodeIds())
-    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
-      serializationStats: createSerializationStats(),
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions,
-    })
-
-    viewportResizeTracker = trackVisualViewportResize(configuration, emitRecordCallback)
-
+    viewportResizeTracker = trackVisualViewportResize(emitRecordCallback, scope)
     registerCleanupTask(() => {
       viewportResizeTracker.stop()
     })

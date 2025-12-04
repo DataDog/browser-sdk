@@ -1,22 +1,25 @@
 import { throttle, DOM_EVENT, addEventListeners, timeStampNow, noop } from '@datadog/browser-core'
-import type { RumConfiguration, ViewportDimension } from '@datadog/browser-rum-core'
+import type { ViewportDimension } from '@datadog/browser-rum-core'
 import { initViewportObservable } from '@datadog/browser-rum-core'
 import { IncrementalSource, RecordType } from '../../../types'
 import type { BrowserIncrementalSnapshotRecord, ViewportResizeData, VisualViewportRecord } from '../../../types'
 import { getVisualViewport } from '../viewports'
 import { assembleIncrementalSnapshot } from '../assembly'
 import type { EmitRecordCallback } from '../record.types'
+import type { RecordingScope } from '../recordingScope'
 import type { Tracker } from './tracker.types'
 
 const VISUAL_VIEWPORT_OBSERVER_THRESHOLD = 200
 
 export function trackViewportResize(
-  configuration: RumConfiguration,
-  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>,
+  scope: RecordingScope
 ): Tracker {
-  const viewportResizeSubscription = initViewportObservable(configuration).subscribe((data: ViewportDimension) => {
-    emitRecord(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, data))
-  })
+  const viewportResizeSubscription = initViewportObservable(scope.configuration).subscribe(
+    (data: ViewportDimension) => {
+      emitRecord(assembleIncrementalSnapshot<ViewportResizeData>(IncrementalSource.ViewportResize, data))
+    }
+  )
 
   return {
     stop: () => {
@@ -26,8 +29,8 @@ export function trackViewportResize(
 }
 
 export function trackVisualViewportResize(
-  configuration: RumConfiguration,
-  emitRecord: EmitRecordCallback<VisualViewportRecord>
+  emitRecord: EmitRecordCallback<VisualViewportRecord>,
+  scope: RecordingScope
 ): Tracker {
   const visualViewport = window.visualViewport
   if (!visualViewport) {
@@ -47,7 +50,7 @@ export function trackVisualViewportResize(
     }
   )
   const { stop: removeListener } = addEventListeners(
-    configuration,
+    scope.configuration,
     visualViewport,
     [DOM_EVENT.RESIZE, DOM_EVENT.SCROLL],
     updateDimension,
