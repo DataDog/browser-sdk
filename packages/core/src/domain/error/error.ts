@@ -21,6 +21,32 @@ interface RawErrorParams {
   handling: ErrorHandling
 }
 
+function computeErrorBase({
+  originalError,
+  stackTrace,
+  source,
+  useFallbackStack = true,
+  nonErrorPrefix,
+}: {
+  originalError: unknown
+  stackTrace?: StackTrace
+  source: ErrorSource
+  useFallbackStack?: boolean
+  nonErrorPrefix?: NonErrorPrefix
+}) {
+  const isErrorInstance = isError(originalError)
+  if (!stackTrace && isErrorInstance) {
+    stackTrace = computeStackTrace(originalError)
+  }
+
+  return {
+    source,
+    type: stackTrace ? stackTrace.name : undefined,
+    message: computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError),
+    stack: stackTrace ? toStackTraceString(stackTrace) : useFallbackStack ? NO_ERROR_STACK_PRESENT_MESSAGE : undefined,
+  }
+}
+
 export function computeRawError({
   stackTrace,
   originalError,
@@ -32,22 +58,16 @@ export function computeRawError({
   source,
   handling,
 }: RawErrorParams): RawError {
-  const isErrorInstance = isError(originalError)
-  if (!stackTrace && isErrorInstance) {
-    stackTrace = computeStackTrace(originalError)
-  }
+  const errorBase = computeErrorBase({ originalError, stackTrace, source, useFallbackStack, nonErrorPrefix })
 
   return {
     startClocks,
-    source,
     handling,
     handlingStack,
     componentStack,
     originalError,
-    type: stackTrace ? stackTrace.name : undefined,
-    message: computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError),
-    stack: stackTrace ? toStackTraceString(stackTrace) : useFallbackStack ? NO_ERROR_STACK_PRESENT_MESSAGE : undefined,
-    causes: isErrorInstance ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined,
+    ...errorBase,
+    causes: isError(originalError) ? flattenErrorCauses(originalError as ErrorWithCause, source) : undefined,
     fingerprint: tryToGetFingerprint(originalError),
     context: tryToGetErrorContext(originalError),
   }
@@ -56,7 +76,7 @@ export function computeRawError({
 function computeMessage(
   stackTrace: StackTrace | undefined,
   isErrorInstance: boolean,
-  nonErrorPrefix: NonErrorPrefix,
+  nonErrorPrefix: NonErrorPrefix | undefined,
   originalError: unknown
 ) {
   // Favor stackTrace message only if tracekit has really been able to extract something meaningful (message + name)
@@ -64,7 +84,9 @@ function computeMessage(
   return stackTrace?.message && stackTrace?.name
     ? stackTrace.message
     : !isErrorInstance
-      ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
+      ? nonErrorPrefix
+        ? `${nonErrorPrefix} ${jsonStringify(sanitize(originalError))!}`
+        : jsonStringify(sanitize(originalError))!
       : 'Empty message'
 }
 
@@ -87,17 +109,20 @@ export function isError(error: unknown): error is Error {
 }
 
 export function flattenErrorCauses(error: ErrorWithCause, parentSource: ErrorSource): RawErrorCause[] | undefined {
-  let currentError = error
   const causes: RawErrorCause[] = []
-  while (isError(currentError?.cause) && causes.length < 10) {
-    const stackTrace = computeStackTrace(currentError.cause)
-    causes.push({
-      message: currentError.cause.message,
+  let currentCause = error.cause
+
+  while (currentCause !== undefined && currentCause !== null && causes.length < 10) {
+    const causeBase = computeErrorBase({
+      originalError: currentCause,
       source: parentSource,
-      type: stackTrace?.name,
-      stack: stackTrace && toStackTraceString(stackTrace),
+      useFallbackStack: false,
     })
-    currentError = currentError.cause
+
+    causes.push(causeBase)
+
+    currentCause = isError(currentCause) ? (currentCause as ErrorWithCause).cause : undefined
   }
+
   return causes.length ? causes : undefined
 }
