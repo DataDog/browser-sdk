@@ -351,8 +351,28 @@ describe('serializeAttributes for virtual attributes', () => {
 
       // eslint-disable-next-line no-console
       console.log(`Link element href: "${link.href}"`)
-      // eslint-disable-next-line no-console
-      Array.from(document.styleSheets).forEach((sheet) => console.log(`Found stylesheet with href: "${sheet.href}"`))
+      Array.from(document.styleSheets).forEach((sheet) => {
+        // eslint-disable-next-line no-console
+        console.log(`Found stylesheet with href: "${sheet.href}"`)
+        if (link.href === sheet.href) {
+          // eslint-disable-next-line no-console
+          console.log('- Matches link element')
+          // eslint-disable-next-line no-console
+          console.log('--- sheet#rules ----')
+          // eslint-disable-next-line no-console
+          console.log(sheet.rules)
+          // eslint-disable-next-line no-console
+          console.log('--- sheet#cssRules ----')
+          // eslint-disable-next-line no-console
+          console.log(sheet.cssRules)
+          // eslint-disable-next-line no-console
+          console.log('--- Rules ----')
+          // eslint-disable-next-line no-console
+          console.log(getCssRulesString(sheet))
+          // eslint-disable-next-line no-console
+          console.log('-----------')
+        }
+      })
 
       expectVirtualAttributes(link, { _cssText: cssText }, checkStats)
     })
