@@ -40,6 +40,7 @@ import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import { sendLiveDebuggerLog } from '../domain/liveDebugger/liveDebuggerLogger'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
   AddDurationVitalOptions,
@@ -238,6 +239,15 @@ export interface RumPublicApi extends PublicApi {
    * @category Context - Global Context
    */
   clearGlobalContext(): void
+
+  /**
+   * Send a log event to Datadog logs from the live debugger.
+   * This function sends log events that will be collected by the Datadog Logs SDK if it is initialized.
+   *
+   * @category Live Debugger
+   * @param data - The data object to send as a log event
+   */
+  sendLiveDebuggerLog: (data: object) => void
 
   /**
    * Set user information to all events, stored in `@usr`
@@ -698,6 +708,10 @@ export function makeRumPublicApi(
       ContextManagerMethod.clearContext,
       'clear-global-context'
     ),
+
+    sendLiveDebuggerLog: monitor((data) => {
+      sendLiveDebuggerLog(data)
+    }),
 
     setUser: defineContextMethod(
       getStrategy,
