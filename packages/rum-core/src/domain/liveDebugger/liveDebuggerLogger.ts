@@ -45,9 +45,22 @@ export function liveDebug(message?: string, logger?: any, dd?: any, snapshot?: a
   // Get hostname from browser
   const hostname = typeof window !== 'undefined' && window.location ? window.location.hostname : 'unknown'
   
-  // Get service from logs configuration if available
+  // Get service from logs initialization configuration (defined during DD_LOGS.init())
   const initConfig = browserWindow.DD_LOGS.getInitConfiguration?.()
   const service = initConfig?.service
+
+  // Get application_id from RUM internal context if available (same way regular loggers get it)
+  let applicationId: string | undefined
+  try {
+    const ddRum = (window as any).DD_RUM
+    if (ddRum && typeof ddRum.getInternalContext === 'function') {
+      const getInternalContext = ddRum.getInternalContext as (startTime?: number) => { application_id?: string } | undefined
+      const rumInternalContext = getInternalContext()
+      applicationId = rumInternalContext?.application_id
+    }
+  } catch {
+    // Ignore errors when accessing RUM context
+  }
 
   // Truncate message to 8KB if needed
   const truncatedMessage =
@@ -62,6 +75,7 @@ export function liveDebug(message?: string, logger?: any, dd?: any, snapshot?: a
     ddsource: 'dd_debugger',
     hostname,
     ...(service && { service }),
+    ...(applicationId && { application_id: applicationId }),
     logger,
     dd,
     debugger: { snapshot },
