@@ -7,6 +7,7 @@ import {
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
+  filterHeaders,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -135,6 +136,7 @@ function assembleResource(
     : computeRequestDuration(pageStateHistory, startClocks, request!.duration)
 
   const graphql = request && computeGraphQlMetaData(request, configuration)
+  const headers = computeHeaders(request, configuration)
 
   const resourceEvent = combine(
     {
@@ -154,6 +156,7 @@ function assembleResource(
         protocol: entry && computeResourceEntryProtocol(entry),
         delivery_type: entry && computeResourceEntryDeliveryType(entry),
         graphql,
+        ...(headers && { headers }),
       },
       type: RumEventType.RESOURCE,
       _dd: {
@@ -169,6 +172,34 @@ function assembleResource(
     duration,
     rawRumEvent: resourceEvent,
     domainContext: getResourceDomainContext(entry, request),
+  }
+}
+
+function computeHeaders(request: RequestCompleteEvent | undefined, configuration: RumConfiguration) {
+  if (!request || configuration.trackResourceHeaders.length === 0) {
+    return undefined
+  }
+
+  const requestHeaders = filterHeaders(
+    request.requestHeaders,
+    request.url,
+    'request',
+    configuration.trackResourceHeaders
+  )
+  const responseHeaders = filterHeaders(
+    request.responseHeaders,
+    request.url,
+    'response',
+    configuration.trackResourceHeaders
+  )
+
+  if (!requestHeaders && !responseHeaders) {
+    return undefined
+  }
+
+  return {
+    request: requestHeaders,
+    response: responseHeaders,
   }
 }
 
