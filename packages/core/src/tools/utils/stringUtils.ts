@@ -1,12 +1,40 @@
+import { dateNow } from './timeUtils'
+
+const SESSION_DURATION = 15
+
+export function generateUUID(deviceId?: string, applicationId?: string): string {
+  if (!deviceId || !applicationId) {
+    return generateRandomUUID()
+  }
+  return generateDeterministicUUID(deviceId, applicationId)
+}
+
+function getTimeFence(timestamp: number): string {
+  return Math.ceil(timestamp / 1000 / (SESSION_DURATION * 60)).toString(16)
+}
+
+function getTimeSeed(deviceId: string, applicationId: string) {
+  const timeFence = getTimeFence(dateNow())
+  const applicationIdSeed = applicationId.replace(/[^0-9a-f]/g, '').slice(0, 13)
+  const deviceIdSeed = deviceId.replace(/[^0-9a-f]/g, '').slice(0, 31 - timeFence.length - applicationId.length)
+  const uuidSeed = timeFence + applicationIdSeed + deviceIdSeed
+  return uuidSeed.padEnd(31, '0')
+}
+
+function generateDeterministicUUID(deviceId: string, applicationId: string) {
+  const timeseed = getTimeSeed(deviceId, applicationId)
+  return `${timeseed.slice(0, 8)}-${timeseed.slice(8, 12)}-4${timeseed.slice(12, 15)}-${timeseed.slice(15, 19)}-${timeseed.slice(19, 31)}`
+}
+
 /**
  * UUID v4
  * from https://gist.github.com/jed/982883
  */
-export function generateUUID(placeholder?: string): string {
+function generateRandomUUID(placeholder?: string): string {
   return placeholder
     ? // eslint-disable-next-line  no-bitwise
       (parseInt(placeholder, 10) ^ ((Math.random() * 16) >> (parseInt(placeholder, 10) / 4))).toString(16)
-    : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
+    : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateRandomUUID)
 }
 
 const COMMA_SEPARATED_KEY_VALUE = /([\w-]+)\s*=\s*([^;]+)/g

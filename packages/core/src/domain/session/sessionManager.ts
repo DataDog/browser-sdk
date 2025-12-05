@@ -49,17 +49,18 @@ export function startSessionManager<TrackingType extends string>(
   configuration: Configuration,
   productKey: string,
   computeTrackingType: (rawTrackingType?: string) => TrackingType,
-  trackingConsentState: TrackingConsentState
+  trackingConsentState: TrackingConsentState,
+  applicationId?: string
 ): SessionManager<TrackingType> {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
-
   // TODO - Improve configuration type and remove assertion
   const sessionStore = startSessionStore(
     configuration.sessionStoreStrategyType!,
     configuration,
     productKey,
-    computeTrackingType
+    computeTrackingType,
+    applicationId
   )
   stopCallbacks.push(() => sessionStore.stop())
 
