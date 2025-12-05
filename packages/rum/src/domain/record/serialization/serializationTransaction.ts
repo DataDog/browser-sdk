@@ -29,6 +29,12 @@ export interface SerializationTransaction {
    */
   addMetric(metric: keyof SerializationStats, value: number): void
 
+  /**
+   * Assign and return an id to the given node. If the node has previously been assigned
+   * an id, the existing id will be reused.
+   */
+  assignId(node: Node): NodeId
+
   /** The kind of serialization being performed in this transaction. */
   kind: SerializationKind
 
@@ -59,11 +65,18 @@ export function serializeInTransaction(
   const stats = createSerializationStats()
 
   const transaction: SerializationTransaction = {
-    add: (record: BrowserRecord) => {
+    add(record: BrowserRecord): void {
       records.push(record)
     },
-    addMetric: (metric: keyof SerializationStats, value: number) => {
+    addMetric(metric: keyof SerializationStats, value: number): void {
       updateSerializationStats(stats, metric, value)
+    },
+    assignId(node: Node): NodeId {
+      const id = scope.nodeIds.assign(node)
+      if (transaction.serializedNodeIds) {
+        transaction.serializedNodeIds.add(id)
+      }
+      return id
     },
     kind,
     scope,
