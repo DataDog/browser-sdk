@@ -65,5 +65,6 @@
   },
   "externalSymbolLinkMappings": {
     "@types/react": { "*": "#" }
-  }
+  },
+  "customJs": "./typedoc.js"
 }
