@@ -178,6 +178,7 @@
       <div class="section">
         <h2>Actions</h2>
         <button id="send-test-log-btn">Send Test Log Event</button>
+        <button id="send-sample-debug-btn">Send Sample Debug Event (liveDebug)</button>
         <button id="fetch-firebase-btn">Fetch Firebase Config</button>
         <button id="clear-logs-btn">Clear Logs</button>
       </div>
@@ -402,6 +403,78 @@
         }
       }
 
+      function sendSampleDebug() {
+        if (window.DD_RUM && window.DD_RUM.liveDebug) {
+          // Sample debug data matching the structure from sample_debug.json
+          // This matches the dd-trace-js send method signature: send(message, logger, dd, snapshot)
+          const message = 'Executed org.springframework.samples.petclinic.vet.VetController.showVetList, it took 13.236871ms'
+          
+          const logger = {
+            thread_id: 67,
+            method: 'showVetList',
+            thread_name: 'http-nio-8080-exec-5',
+            name: 'org.springframework.samples.petclinic.vet.VetController',
+            version: 2
+          }
+          
+          // dd parameter - Datadog context (can be empty or contain dd-specific metadata)
+          const dd = {}
+          
+          // snapshot parameter - debugger snapshot data
+          const snapshot = {
+            stack: [
+              {
+                fileName: 'VetController.java',
+                function: 'org.springframework.samples.petclinic.vet.VetController.showVetList',
+                lineNumber: 131
+              },
+              {
+                function: 'jdk.internal.reflect.GeneratedMethodAccessor130.invoke',
+                lineNumber: -1
+              },
+              {
+                fileName: 'DelegatingMethodAccessorImpl.java',
+                function: 'jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke',
+                lineNumber: 43
+              }
+            ],
+            captures: {
+              return: {
+                arguments: {
+                  this: {
+                    type: 'org.springframework.samples.petclinic.vet.VetController',
+                    fields: {
+                      result: {
+                        type: 'int',
+                        value: '0'
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            language: 'java',
+            id: 'baa4f52d-970f-46eb-acb7-bfe5fe466743',
+            probe: {
+              location: {
+                method: 'showVetList',
+                type: 'org.springframework.samples.petclinic.vet.VetController'
+              },
+              id: 'c5ac1d07-3898-41ce-bedb-df609049593f',
+              version: 0
+            },
+            timestamp: Date.now()
+          }
+
+          window.DD_RUM.liveDebug(message, logger, dd, snapshot)
+          log(`Sent sample debug event using liveDebug`, 'success')
+          log(`Message: ${message}`, 'info')
+          log(`Logger: ${logger.name}`, 'info')
+        } else {
+          log('liveDebug not available. Make sure DD_RUM.liveDebug is initialized.', 'error')
+        }
+      }
+
       async function fetchFirebaseConfig() {
         if (window.firebase && window.firebase.remoteConfig) {
           try {
@@ -440,6 +513,7 @@
       window.refreshContext = refreshContext
       window.checkFirebaseValue = checkFirebaseValue
       window.sendTestLog = sendTestLog
+      window.sendSampleDebug = sendSampleDebug
       window.fetchFirebaseConfig = fetchFirebaseConfig
       window.clearLogs = clearLogs
       window.setMockFirebaseValue = setMockFirebaseValue
@@ -466,6 +540,11 @@
         const sendTestLogBtn = document.getElementById('send-test-log-btn')
         if (sendTestLogBtn) {
           sendTestLogBtn.addEventListener('click', sendTestLog)
+        }
+        
+        const sendSampleDebugBtn = document.getElementById('send-sample-debug-btn')
+        if (sendSampleDebugBtn) {
+          sendSampleDebugBtn.addEventListener('click', sendSampleDebug)
         }
         
         const fetchFirebaseBtn = document.getElementById('fetch-firebase-btn')

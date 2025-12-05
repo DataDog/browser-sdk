@@ -106,6 +106,10 @@ export function createPreStartStrategy(
         startLogsResult.handleLog(message, statusType, handlingStack, context, date)
       )
     },
+
+    get lifeCycle() {
+      return undefined
+    },
   }
 }
 

@@ -21,6 +21,8 @@ import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
 import type { StartLogs, StartLogsResult } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
+import type { LogsEvent } from '../logsEvent.types'
+import { LifeCycleEventType, type LifeCycle } from '../domain/lifeCycle'
 
 export interface LoggerConfiguration {
   level?: StatusType
@@ -253,6 +255,16 @@ export interface LogsPublicApi extends PublicApi {
    * @internal
    */
   getInternalContext: (startTime?: number) => InternalContext | undefined
+
+  /**
+   * Send a raw log event directly to the logs pipeline, bypassing assembly.
+   * This method sends the log event directly to LOG_COLLECTED lifecycle event,
+   * skipping the assembly step that adds default context.
+   *
+   * @internal
+   * @param log - The log event to send
+   */
+  sendRawLog: (log: LogsEvent & Context) => void
 }
 
 export interface Strategy {
@@ -263,6 +275,7 @@ export interface Strategy {
   userContext: ContextManager
   getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']
+  lifeCycle?: LifeCycle
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
@@ -350,6 +363,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
     getInitConfiguration: monitor(() => deepClone(strategy.initConfiguration)),
 
     getInternalContext: monitor((startTime) => strategy.getInternalContext(startTime)),
+
+    sendRawLog: monitor((log: LogsEvent & Context) => {
+      if (strategy.lifeCycle) {
+        strategy.lifeCycle.notify(LifeCycleEventType.LOG_COLLECTED, log)
+      }
+    }),
 
     setUser: defineContextMethod(getStrategy, CustomerContextKey.userContext, ContextManagerMethod.setContext),
 

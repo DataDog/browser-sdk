@@ -1,5 +1,5 @@
 import type { ContextManager, TimeStamp } from '@datadog/browser-core'
-import { monitor, display, createContextManager } from '@datadog/browser-core'
+import { monitor, display, createContextManager, ErrorSource } from '@datadog/browser-core'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
@@ -7,6 +7,7 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs } from './startLogs'
+import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 
@@ -252,6 +253,92 @@ describe('logs entry', () => {
         spyOn(accountContext, 'clearContext')
         logsPublicApi.clearAccount()
         expect(accountContext.clearContext).toHaveBeenCalledTimes(1)
+      })
+    })
+
+    describe('sendRawLog', () => {
+      let logsPublicApi: LogsPublicApi
+      let mockLifeCycle: LifeCycle
+      let logCollectedSpy: jasmine.Spy
+
+      beforeEach(() => {
+        mockLifeCycle = new LifeCycle()
+        logCollectedSpy = jasmine.createSpy('logCollected')
+        mockLifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, logCollectedSpy)
+
+        startLogs = jasmine.createSpy().and.callFake(() => ({
+          handleLog: handleLogSpy,
+          getInternalContext,
+          lifeCycle: mockLifeCycle,
+        }))
+
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      })
+
+      it('should send log directly to LOG_COLLECTED event', () => {
+        const log = {
+          date: 1234567890,
+          message: 'test message',
+          status: 'info' as const,
+          origin: ErrorSource.LOGGER,
+          ddsource: 'dd_debugger',
+          hostname: 'test-hostname',
+        }
+
+        logsPublicApi.sendRawLog(log)
+
+        expect(logCollectedSpy).toHaveBeenCalledTimes(1)
+        expect(logCollectedSpy).toHaveBeenCalledWith(log)
+      })
+
+      it('should bypass assembly (no default context added)', () => {
+        const log = {
+          date: 1234567890,
+          message: 'test message',
+          status: 'info' as const,
+          origin: ErrorSource.LOGGER,
+          ddsource: 'dd_debugger',
+          hostname: 'test-hostname',
+          logger: { name: 'test-logger' },
+          dd: { version: '1.0' },
+          debugger: { snapshot: { captures: [] } },
+        }
+
+        logsPublicApi.sendRawLog(log)
+
+        expect(logCollectedSpy).toHaveBeenCalledTimes(1)
+        const collectedLog = logCollectedSpy.calls.mostRecent().args[0]
+        // Verify the log is sent as-is without default context
+        expect(collectedLog).toBe(log)
+        expect(collectedLog.ddsource).toBe('dd_debugger')
+        expect(collectedLog.logger).toEqual({ name: 'test-logger' })
+        expect(collectedLog.dd).toEqual({ version: '1.0' })
+        expect(collectedLog.debugger).toEqual({ snapshot: { captures: [] } })
+        // Verify no default view context was added
+        expect(collectedLog.view).toBeUndefined()
+      })
+
+      it('should handle when lifecycle is not available', () => {
+        startLogs = jasmine.createSpy().and.callFake(() => ({
+          handleLog: handleLogSpy,
+          getInternalContext,
+          // No lifeCycle
+        }))
+
+        logsPublicApi = makeLogsPublicApi(startLogs)
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+        const log = {
+          date: 1234567890,
+          message: 'test message',
+          status: 'info' as const,
+          origin: ErrorSource.LOGGER,
+        }
+
+        expect(() => {
+          logsPublicApi.sendRawLog(log)
+        }).not.toThrow()
       })
     })
   })
