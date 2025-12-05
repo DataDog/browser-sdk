@@ -81,6 +81,25 @@ async function buildModules({ outDir, module, verbose }: { outDir: string; modul
   // TODO: in the future, consider building packages with something else than typescript (ex:
   // rspack, tsdown...)
 
+  // Read package-specific tsconfig.json if it exists
+  let packageCompilerOptions = {}
+  try {
+    const tsconfigPath = path.resolve(process.cwd(), 'tsconfig.json')
+    const tsconfigContent = await fs.readFile(tsconfigPath, 'utf-8')
+    const tsconfig = JSON.parse(tsconfigContent)
+    if (tsconfig.compilerOptions) {
+      // Extract options that should be merged (types, lib, etc.)
+      const { types, lib } = tsconfig.compilerOptions
+      packageCompilerOptions = { types, lib }
+    }
+  } catch {
+    // No package-specific tsconfig.json, continue with defaults
+  }
+
+  // For Yarn workspaces, typeRoots needs to point to the root node_modules
+  const repoRoot = path.resolve(process.cwd(), '../..')
+  const typeRoots = [path.join(repoRoot, 'node_modules/@types')]
+
   const diagnostics = buildWithTypeScript({
     extends: '../../tsconfig.base.json',
     compilerOptions: {
@@ -90,6 +109,8 @@ async function buildModules({ outDir, module, verbose }: { outDir: string; modul
       module,
       rootDir: './src/',
       outDir,
+      typeRoots,
+      ...packageCompilerOptions,
     },
     include: ['./src'],
     exclude: ['./src/**/*.spec.*', './src/**/*.specHelper.*'],

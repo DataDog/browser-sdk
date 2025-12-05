@@ -1,24 +1,26 @@
 {
-  "name": "@datadog/browser-rum-core",
+  "name": "@datadog/ssi",
   "version": "6.24.1",
   "license": "Apache-2.0",
-  "main": "cjs/index.js",
-  "module": "esm/index.js",
-  "types": "cjs/index.d.ts",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.js",
+  "types": "cjs/entries/main.d.ts",
   "scripts": {
-    "build": "node ../../scripts/build/build-package.ts --modules"
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-ssi.js",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-ssi.js",
+    "dev": "node src/entries/main.ts"
   },
   "dependencies": {
     "@datadog/browser-core": "6.24.1",
     "@datadog/browser-remote-configuration": "6.24.1"
   },
   "devDependencies": {
-    "ajv": "8.17.1"
+    "@types/node": "24.10.1"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
-    "directory": "packages/rum-core"
+    "directory": "packages/ssi"
   },
   "volta": {
     "extends": "../../package.json"
