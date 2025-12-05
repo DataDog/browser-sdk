@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Debugger Test - Firebase Remote Config</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      h1 {
+        color: #632ca6;
+        margin-top: 0;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 4px;
+        border-left: 4px solid #632ca6;
+      }
+      .section h2 {
+        margin-top: 0;
+        color: #333;
+      }
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+        font-weight: 500;
+      }
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      .status.warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+      }
+      button {
+        background: #632ca6;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+      }
+      button:hover {
+        background: #4a1f7a;
+      }
+      button:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+      }
+      .value-display {
+        font-family: 'Courier New', monospace;
+        background: #2d2d2d;
+        color: #f8f8f2;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
+        overflow-x: auto;
+      }
+      .config-form {
+        margin: 20px 0;
+      }
+      .config-form label {
+        display: block;
+        margin: 10px 0 5px 0;
+        font-weight: 500;
+      }
+      .config-form input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+        box-sizing: border-box;
+      }
+      .log-entry {
+        padding: 8px;
+        margin: 5px 0;
+        background: #f8f8f8;
+        border-left: 3px solid #632ca6;
+        font-size: 12px;
+        font-family: 'Courier New', monospace;
+      }
+      .log-entry.error {
+        border-left-color: #dc3545;
+        background: #fff5f5;
+      }
+      .log-entry.success {
+        border-left-color: #28a745;
+        background: #f5fff5;
+      }
+      #log-container {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        border-radius: 4px;
+        background: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🔥 Live Debugger Test - Firebase Remote Config</h1>
+
+      <div class="section">
+        <h2>Configuration</h2>
+        <div class="config-form">
+          <label for="firebase-config">Firebase Config (JSON):</label>
+          <textarea id="firebase-config" rows="6" style="width: 100%; font-family: monospace; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">{
+  "apiKey": "AIzaSyBUV8fosbeULC8IrX1yuvKQaaKzHsAdUrU",
+  "authDomain": "browser-sdk-tests.firebaseapp.com",
+  "projectId": "browser-sdk-tests",
+  "storageBucket": "browser-sdk-tests.firebasestorage.app",
+  "messagingSenderId": "609840907506",
+  "appId": "1:609840907506:web:63e05236bd6d6fcd8cfc6b",
+  "measurementId": "G-EB7770V45W"
+}</textarea>
+
+          <label for="live-debugger-id">Live Debugger ID (Firebase Remote Config parameter key):</label>
+          <input type="text" id="live-debugger-id" value="123" placeholder="123" />
+
+          <label for="datadog-client-token">Datadog Client Token:</label>
+          <input type="text" id="datadog-client-token" value="puba80e950e4c56f486a8a596d33016448e" placeholder="puba80e950e4c56f486a8a596d33016448e" />
+
+          <label for="datadog-application-id">Datadog Application ID:</label>
+          <input type="text" id="datadog-application-id" value="a6361095-5776-401e-98f5-7b3514c3b673" placeholder="a6361095-5776-401e-98f5-7b3514c3b673" />
+
+          <label for="datadog-site">Datadog Site:</label>
+          <input type="text" id="datadog-site" value="datadoghq.com" placeholder="datadoghq.com" />
+
+          <button id="initialize-btn">Initialize SDKs</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Status</h2>
+        <div id="status-container">
+          <div class="status info">Waiting for initialization...</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Global Context Property</h2>
+        <div id="context-display" class="value-display">Not initialized</div>
+        <button id="refresh-context-btn">Refresh Context</button>
+        <button id="check-firebase-btn">Check Firebase Value</button>
+      </div>
+
+      <div class="section">
+        <h2>Actions</h2>
+        <button id="send-test-log-btn">Send Test Log Event</button>
+        <button id="fetch-firebase-btn">Fetch Firebase Config</button>
+        <button id="clear-logs-btn">Clear Logs</button>
+      </div>
+
+      <div class="section">
+        <h2>Logs</h2>
+        <div id="log-container"></div>
+      </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-remote-config-compat.js"></script>
+
+    <!-- Datadog SDKs (using local dev server) -->
+    <script src="http://localhost:8080/datadog-rum.js"></script>
+    <script src="http://localhost:8080/datadog-logs.js"></script>
+
+    <script>
+      let isInitialized = false
+
+      function log(message, type = 'info') {
+        const logContainer = document.getElementById('log-container')
+        const entry = document.createElement('div')
+        entry.className = `log-entry ${type}`
+        const timestamp = new Date().toLocaleTimeString()
+        entry.textContent = `[${timestamp}] ${message}`
+        logContainer.insertBefore(entry, logContainer.firstChild)
+      }
+
+      function updateStatus(message, type = 'info') {
+        const statusContainer = document.getElementById('status-container')
+        statusContainer.innerHTML = `<div class="status ${type}">${message}</div>`
+      }
+
+      function updateContextDisplay() {
+        const contextDisplay = document.getElementById('context-display')
+        try {
+          if (window.DD_RUM && window.DD_RUM.getGlobalContext) {
+            const context = window.DD_RUM.getGlobalContext()
+            const liveDebuggerId = document.getElementById('live-debugger-id').value
+            const propertyKey = `dd_${liveDebuggerId}`
+            const value = context[propertyKey]
+            
+            if (value !== undefined) {
+              contextDisplay.textContent = JSON.stringify({ [propertyKey]: value }, null, 2)
+              contextDisplay.style.color = '#f8f8f2'
+            } else {
+              contextDisplay.textContent = `Property "${propertyKey}" not found in global context`
+              contextDisplay.style.color = '#ffa500'
+            }
+          } else {
+            contextDisplay.textContent = 'RUM SDK not initialized'
+            contextDisplay.style.color = '#ff6b6b'
+          }
+        } catch (error) {
+          contextDisplay.textContent = `Error: ${error.message}`
+          contextDisplay.style.color = '#ff6b6b'
+        }
+      }
+
+      async function initializeSDKs() {
+        try {
+          updateStatus('Initializing Firebase...', 'info')
+          log('Starting initialization...', 'info')
+
+          // Get configuration values
+          const firebaseConfigText = document.getElementById('firebase-config').value
+          const liveDebuggerId = document.getElementById('live-debugger-id').value
+          const clientToken = document.getElementById('datadog-client-token').value
+          const applicationId = document.getElementById('datadog-application-id').value
+          const site = document.getElementById('datadog-site').value
+
+          if (!liveDebuggerId) {
+            throw new Error('Live Debugger ID is required')
+          }
+
+          // Parse Firebase config
+          let firebaseConfig
+          try {
+            firebaseConfig = JSON.parse(firebaseConfigText)
+          } catch (e) {
+            throw new Error('Invalid Firebase config JSON. Using mock Firebase for testing.')
+          }
+
+          // Note: Firebase initialization is now handled by the SDK if firebaseConfig is provided
+          // We still keep the mock Firebase for testing without a real Firebase project
+          if (!(firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your-api-key')) {
+            // Mock Firebase for testing without real Firebase project
+            log('Using mock Firebase Remote Config (configure real Firebase config to use actual Remote Config)', 'warning')
+            window.firebase = {
+              remoteConfig: () => ({
+                getValue: (key) => ({
+                  asBoolean: () => {
+                    // Return value from localStorage for testing
+                    const stored = localStorage.getItem(`firebase_rc_${key}`)
+                    return stored === 'true'
+                  },
+                  asString: () => {
+                    const stored = localStorage.getItem(`firebase_rc_${key}`)
+                    return stored || 'false'
+                  },
+                }),
+                onConfigUpdated: (callback) => {
+                  // Mock: trigger callback when localStorage changes
+                  window.addEventListener('storage', (e) => {
+                    if (e.key && e.key.startsWith('firebase_rc_')) {
+                      callback()
+                    }
+                  })
+                  // Also check periodically for testing
+                  setInterval(() => {
+                    const lastCheck = localStorage.getItem('firebase_rc_last_check')
+                    const now = Date.now().toString()
+                    if (lastCheck !== now) {
+                      localStorage.setItem('firebase_rc_last_check', now)
+                      callback()
+                    }
+                  }, 2000)
+                },
+                ensureInitialized: () => Promise.resolve(),
+              }),
+            }
+            log('Mock Firebase Remote Config ready. Use "Set Mock Firebase Value" button to test.', 'info')
+          }
+
+          // Initialize Datadog Logs SDK
+          if (window.DD_LOGS) {
+            window.DD_LOGS.init({
+              clientToken: clientToken,
+              site: site,
+              forwardErrorsToLogs: true,
+              sessionSampleRate: 100,
+            })
+            log('Datadog Logs SDK initialized', 'success')
+          } else {
+            log('Datadog Logs SDK not available', 'error')
+          }
+
+          // Initialize Datadog RUM SDK with live debugger enabled
+          if (window.DD_RUM) {
+            const rumConfig = {
+              applicationId: applicationId,
+              clientToken: clientToken,
+              site: site,
+              sessionSampleRate: 100,
+              sessionReplaySampleRate: 100,
+              trackResources: true,
+              trackLongTasks: true,
+              allowLiveDebugger: true,
+              liveDebuggerId: liveDebuggerId,
+            }
+
+            // Pass Firebase config to SDK if available - SDK will initialize Firebase automatically
+            if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your-api-key') {
+              rumConfig.firebaseConfig = firebaseConfig
+              rumConfig.firebaseVersion = '10.7.1'
+              log('Passing Firebase config to SDK - SDK will initialize Firebase automatically', 'info')
+            }
+
+            window.DD_RUM.init(rumConfig)
+            log(`Datadog RUM SDK initialized with live debugger (ID: ${liveDebuggerId})`, 'success')
+            
+            // Wait a bit for initialization, then check context
+            setTimeout(() => {
+              updateContextDisplay()
+              isInitialized = true
+              updateStatus('SDKs initialized successfully!', 'success')
+            }, 1000)
+          } else {
+            throw new Error('Datadog RUM SDK not available')
+          }
+        } catch (error) {
+          log(`Error: ${error.message}`, 'error')
+          updateStatus(`Error: ${error.message}`, 'error')
+        }
+      }
+
+      function refreshContext() {
+        updateContextDisplay()
+        log('Context refreshed', 'info')
+      }
+
+      async function checkFirebaseValue() {
+        const liveDebuggerId = document.getElementById('live-debugger-id').value
+        if (window.firebase && window.firebase.remoteConfig) {
+          try {
+            const rc = window.firebase.remoteConfig()
+            await rc.fetchAndActivate()
+            const value = rc.getValue(`dd_${liveDebuggerId}`)
+            const boolValue = value.asBoolean()
+            const stringValue = value.asString()
+            const source = value.getSource ? value.getSource() : 'unknown'
+            log(`Firebase Remote Config value for "${liveDebuggerId}": boolean=${boolValue}, string="${stringValue}", source=${source}`, 'info')
+            
+            // Also check what the SDK is actually setting
+            if (window.DD_RUM && window.DD_RUM.getGlobalContext) {
+              const context = window.DD_RUM.getGlobalContext()
+              const propertyKey = `dd_${liveDebuggerId}`
+              const contextValue = context[propertyKey]
+              log(`SDK Global Context "${propertyKey}": ${JSON.stringify(contextValue)}`, contextValue === true ? 'success' : 'warning')
+            }
+          } catch (error) {
+            log(`Error checking Firebase value: ${error.message}`, 'error')
+          }
+        } else {
+          log('Firebase Remote Config not initialized', 'error')
+        }
+      }
+
+      function sendTestLog() {
+        if (window.DD_RUM && window.DD_RUM.sendLiveDebuggerLog) {
+          const testData = {
+            test: true,
+            message: 'Test log from live debugger',
+            timestamp: Date.now(),
+          }
+          window.DD_RUM.sendLiveDebuggerLog(testData)
+          log(`Sent test log: ${JSON.stringify(testData)}`, 'success')
+        } else {
+          log('sendLiveDebuggerLog not available', 'error')
+        }
+      }
+
+      async function fetchFirebaseConfig() {
+        if (window.firebase && window.firebase.remoteConfig) {
+          try {
+            const rc = window.firebase.remoteConfig()
+            await rc.fetchAndActivate()
+            log('Firebase Remote Config fetched and activated', 'success')
+            setTimeout(() => {
+              updateContextDisplay()
+            }, 500)
+          } catch (error) {
+            log(`Error fetching Firebase config: ${error.message}`, 'error')
+          }
+        } else {
+          log('Firebase Remote Config not initialized', 'error')
+        }
+      }
+
+      function clearLogs() {
+        document.getElementById('log-container').innerHTML = ''
+      }
+
+      // Set mock Firebase value for testing (when using mock Firebase)
+      function setMockFirebaseValue() {
+        const liveDebuggerId = document.getElementById('live-debugger-id').value
+        const currentValue = localStorage.getItem(`firebase_rc_${liveDebuggerId}`) === 'true'
+        const newValue = !currentValue
+        localStorage.setItem(`firebase_rc_${liveDebuggerId}`, newValue.toString())
+        log(`Mock Firebase value set to: ${newValue}`, 'success')
+        setTimeout(() => {
+          updateContextDisplay()
+        }, 500)
+      }
+
+      // Expose all functions globally for onclick handlers
+      window.initializeSDKs = initializeSDKs
+      window.refreshContext = refreshContext
+      window.checkFirebaseValue = checkFirebaseValue
+      window.sendTestLog = sendTestLog
+      window.fetchFirebaseConfig = fetchFirebaseConfig
+      window.clearLogs = clearLogs
+      window.setMockFirebaseValue = setMockFirebaseValue
+
+      // Add button for setting mock Firebase value and set up event listeners
+      document.addEventListener('DOMContentLoaded', () => {
+        // Set up initialize button
+        const initializeBtn = document.getElementById('initialize-btn')
+        if (initializeBtn) {
+          initializeBtn.addEventListener('click', initializeSDKs)
+        }
+        
+        // Set up other button event listeners
+        const refreshContextBtn = document.getElementById('refresh-context-btn')
+        if (refreshContextBtn) {
+          refreshContextBtn.addEventListener('click', refreshContext)
+        }
+        
+        const checkFirebaseBtn = document.getElementById('check-firebase-btn')
+        if (checkFirebaseBtn) {
+          checkFirebaseBtn.addEventListener('click', checkFirebaseValue)
+        }
+        
+        const sendTestLogBtn = document.getElementById('send-test-log-btn')
+        if (sendTestLogBtn) {
+          sendTestLogBtn.addEventListener('click', sendTestLog)
+        }
+        
+        const fetchFirebaseBtn = document.getElementById('fetch-firebase-btn')
+        if (fetchFirebaseBtn) {
+          fetchFirebaseBtn.addEventListener('click', fetchFirebaseConfig)
+        }
+        
+        const clearLogsBtn = document.getElementById('clear-logs-btn')
+        if (clearLogsBtn) {
+          clearLogsBtn.addEventListener('click', clearLogs)
+        }
+        
+        const actionsSection = document.querySelector('.section:nth-of-type(4)')
+        const setMockButton = document.createElement('button')
+        setMockButton.textContent = 'Set Mock Firebase Value (Toggle)'
+        setMockButton.addEventListener('click', setMockFirebaseValue)
+        setMockButton.style.background = '#28a745'
+        actionsSection.querySelector('h2').parentNode.insertBefore(setMockButton, actionsSection.querySelector('h2').nextSibling)
+      })
+
+      // Auto-refresh context display every 2 seconds
+      setInterval(() => {
+        if (isInitialized) {
+          updateContextDisplay()
+        }
+      }, 2000)
+    </script>
+  </body>
+</html>
+
