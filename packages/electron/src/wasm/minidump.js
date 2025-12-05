@@ -1,6 +1,8 @@
 let imports = {}
 imports['__wbindgen_placeholder__'] = module.exports
 
+let WASM_VECTOR_LEN = 0
+
 let cachedUint8ArrayMemory0 = null
 
 function getUint8ArrayMemory0() {
@@ -9,36 +11,6 @@ function getUint8ArrayMemory0() {
   }
   return cachedUint8ArrayMemory0
 }
-
-let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true })
-
-cachedTextDecoder.decode()
-
-function decodeText(ptr, len) {
-  return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len))
-}
-
-function getStringFromWasm0(ptr, len) {
-  ptr = ptr >>> 0
-  return decodeText(ptr, len)
-}
-
-function addToExternrefTable0(obj) {
-  const idx = wasm.__externref_table_alloc()
-  wasm.__wbindgen_externrefs.set(idx, obj)
-  return idx
-}
-
-function handleError(f, args) {
-  try {
-    return f.apply(this, args)
-  } catch (e) {
-    const idx = addToExternrefTable0(e)
-    wasm.__wbindgen_exn_store(idx)
-  }
-}
-
-let WASM_VECTOR_LEN = 0
 
 const cachedTextEncoder = new TextEncoder()
 
@@ -95,6 +67,10 @@ function passStringToWasm0(arg, malloc, realloc) {
   return ptr
 }
 
+function isLikeNone(x) {
+  return x === undefined || x === null
+}
+
 let cachedDataViewMemory0 = null
 
 function getDataViewMemory0() {
@@ -108,8 +84,32 @@ function getDataViewMemory0() {
   return cachedDataViewMemory0
 }
 
-function isLikeNone(x) {
-  return x === undefined || x === null
+let cachedTextDecoder = new TextDecoder('utf-8', { ignoreBOM: true, fatal: true })
+
+cachedTextDecoder.decode()
+
+function decodeText(ptr, len) {
+  return cachedTextDecoder.decode(getUint8ArrayMemory0().subarray(ptr, ptr + len))
+}
+
+function getStringFromWasm0(ptr, len) {
+  ptr = ptr >>> 0
+  return decodeText(ptr, len)
+}
+
+function addToExternrefTable0(obj) {
+  const idx = wasm.__externref_table_alloc()
+  wasm.__wbindgen_externrefs.set(idx, obj)
+  return idx
+}
+
+function handleError(f, args) {
+  try {
+    return f.apply(this, args)
+  } catch (e) {
+    const idx = addToExternrefTable0(e)
+    wasm.__wbindgen_exn_store(idx)
+  }
 }
 
 const CLOSURE_DTORS =
@@ -143,12 +143,6 @@ function makeMutClosure(arg0, arg1, dtor, f) {
   CLOSURE_DTORS.register(real, state, state)
   return real
 }
-/**
- * Initialize panic hook for better error messages in WASM
- */
-exports.init = function () {
-  wasm.init()
-}
 
 function passArray8ToWasm0(arg, malloc) {
   const ptr = malloc(arg.length * 1, 1) >>> 0
@@ -174,7 +168,7 @@ function takeFromExternrefTable0(idx) {
  * # Example (JavaScript)
  * ```js
  * const fs = require('fs');
- * const { parse_minidump } = require('./minidump');
+ * const { parse_minidump } = require('./minidump_wasm');
  *
  * const dumpBytes = fs.readFileSync('crash.dmp');
  * const result = parse_minidump(dumpBytes);
@@ -209,6 +203,59 @@ exports.parse_minidump = function (dump_bytes) {
 }
 
 /**
+ * Initialize panic hook for better error messages in WASM
+ */
+exports.init = function () {
+  wasm.init()
+}
+
+function passArrayJsValueToWasm0(array, malloc) {
+  const ptr = malloc(array.length * 4, 4) >>> 0
+  for (let i = 0; i < array.length; i++) {
+    const add = addToExternrefTable0(array[i])
+    getDataViewMemory0().setUint32(ptr + 4 * i, add, true)
+  }
+  WASM_VECTOR_LEN = array.length
+  return ptr
+}
+/**
+ * Process a minidump with stack walking and optional symbol resolution
+ *
+ * This is the main entry point for analyzing minidump files in WebAssembly.
+ *
+ * # Arguments
+ * * `dump_bytes` - The minidump file as a byte array
+ * * `symbol_urls` - Optional array of symbol server URLs (currently not supported)
+ *
+ * # Returns
+ * A Promise that resolves to a JSON string containing complete crash analysis
+ *
+ * # Symbol URL Limitation
+ * **IMPORTANT:** Symbol URLs are currently not supported in WASM builds.
+ * The parameter is accepted for API stability, but symbols will not be fetched.
+ *
+ * # Example (JavaScript)
+ * ```js
+ * const { process_minidump } = require('minidump');
+ * const result = await process_minidump(dumpBytes, null);
+ * const analysis = JSON.parse(result);
+ * console.log('Crash:', analysis.crash_info.type);
+ * ```
+ *
+ * @param {Uint8Array} dump_bytes
+ * @param {string[] | null} [symbol_urls]
+ * @returns {Promise<any>}
+ */
+exports.process_minidump = function (dump_bytes, symbol_urls) {
+  const ptr0 = passArray8ToWasm0(dump_bytes, wasm.__wbindgen_malloc)
+  const len0 = WASM_VECTOR_LEN
+  var ptr1 = isLikeNone(symbol_urls) ? 0 : passArrayJsValueToWasm0(symbol_urls, wasm.__wbindgen_malloc)
+  var len1 = WASM_VECTOR_LEN
+  const ret = wasm.process_minidump(ptr0, len0, ptr1, len1)
+  return ret
+}
+
+/**
  * Process a minidump with full stack walking (returns a Promise)
  *
  * # Arguments
@@ -220,7 +267,7 @@ exports.parse_minidump = function (dump_bytes) {
  * # Example (JavaScript)
  * ```js
  * const fs = require('fs');
- * const { process_minidump_with_stackwalk } = require('./minidump');
+ * const { process_minidump_with_stackwalk } = require('./minidump_wasm');
  *
  * const dumpBytes = fs.readFileSync('crash.dmp');
  * const result = await process_minidump_with_stackwalk(dumpBytes);
@@ -258,6 +305,15 @@ exports.__wbg___wbindgen_is_function_ee8a6c5833c90377 = function (arg0) {
 exports.__wbg___wbindgen_is_undefined_2d472862bd29a478 = function (arg0) {
   const ret = arg0 === undefined
   return ret
+}
+
+exports.__wbg___wbindgen_string_get_e4f06c90489ad01b = function (arg0, arg1) {
+  const obj = arg1
+  const ret = typeof obj === 'string' ? obj : undefined
+  var ptr1 = isLikeNone(ret) ? 0 : passStringToWasm0(ret, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc)
+  var len1 = WASM_VECTOR_LEN
+  getDataViewMemory0().setInt32(arg0 + 4 * 1, len1, true)
+  getDataViewMemory0().setInt32(arg0 + 4 * 0, ptr1, true)
 }
 
 exports.__wbg___wbindgen_throw_b855445ff6a94295 = function (arg0, arg1) {
@@ -368,6 +424,10 @@ exports.__wbg_static_accessor_WINDOW_b45bfc5a37f6cfa2 = function () {
 exports.__wbg_then_4f46f6544e6b4a28 = function (arg0, arg1) {
   const ret = arg0.then(arg1)
   return ret
+}
+
+exports.__wbg_warn_1d74dddbe2fd1dbb = function (arg0) {
+  console.warn(arg0)
 }
 
 exports.__wbindgen_cast_2241b6af4c4b2941 = function (arg0, arg1) {

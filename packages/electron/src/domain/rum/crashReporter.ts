@@ -6,7 +6,7 @@ import { monitorError, monitor, ErrorHandling, generateUUID } from '@datadog/bro
 import type { RumEvent } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { app, crashReporter } from 'electron'
-import { process_minidump_with_stackwalk } from '../../wasm/minidump'
+import { process_minidump } from '../../wasm/minidump'
 import type { CollectedRumEvent } from './events'
 import { NODE_VIEW_NAME } from './mainProcessTracking'
 
@@ -54,6 +54,7 @@ interface MinidumpResult {
     code_identifier: string
     debug_file: string
     debug_identifier: string
+    size: number
     version: string
   }>
 }
@@ -106,6 +107,9 @@ function createCrashErrorEvent(
     // Extract base address value (remove 0x prefix if present)
     const loadAddress = module.base_address
 
+    // Calculate max address: base_address (hex) + size (decimal) -> hex
+    const maxAddress = module.size ? `0x${(parseInt(loadAddress, 16) + module.size).toString(16)}` : undefined
+
     // Determine if it's a system library based on path
     const isSystem =
       module.code_file.includes('/System/Library/') ||
@@ -118,7 +122,7 @@ function createCrashErrorEvent(
       name: path.basename(module.code_file),
       is_system: isSystem,
       load_address: loadAddress,
-      max_address: undefined, // Not provided by minidump parser
+      max_address: maxAddress,
       arch: minidumpResult.system_info.cpu,
     }
   })
@@ -206,7 +210,7 @@ async function processCrashesFiles(onRumEventObservable: Observable<CollectedRum
       const reportMetadata = await fs.stat(reportPath)
       const reportBytes = await fs.readFile(reportPath)
 
-      const resultJson = await process_minidump_with_stackwalk(reportBytes)
+      const resultJson = await process_minidump(reportBytes, null)
       const minidumpResult: MinidumpResult = JSON.parse(resultJson)
 
       const crashTime = new Date(reportMetadata.ctime).getTime()
