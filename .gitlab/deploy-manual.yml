@@ -19,35 +19,35 @@ stages:
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
-    - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $UPLOAD_PATH --no-check-monitors
+    - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $DATACENTER --no-check-monitors
 
 step-1_deploy-prod-minor-dcs:
   extends:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: minor-dcs
+    DATACENTER: minor-dcs
 
 step-2_deploy-prod-eu1:
   extends:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: eu1
+    DATACENTER: eu1
 
 step-3_deploy-prod-us1:
   extends:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: us1
+    DATACENTER: us1
 
 step-4_deploy-prod-gov:
   extends:
     - .base-configuration
     - .deploy-prod
   variables:
-    UPLOAD_PATH: root
+    DATACENTER: root
 
 step-5_publish-npm:
   stage: deploy
@@ -80,7 +80,7 @@ step-7_create-github-release:
     - node scripts/release/create-github-release.ts
 
 # This step is used to deploy the SDK to a new datacenter.
-# the `UPLOAD_PATH` variable needs to be provided as an argument when starting the manual job
+# the `DATACENTER` variable needs to be provided as an argument when starting the manual job
 optional_step-deploy-to-new-datacenter:
   extends:
     - .base-configuration

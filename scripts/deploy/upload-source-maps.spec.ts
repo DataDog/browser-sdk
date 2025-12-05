@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import { beforeEach, before, describe, it, mock } from 'node:test'
-import { siteByDatacenter } from '../lib/datacenter.ts'
+import { beforeEach, before, describe, it, mock, afterEach } from 'node:test'
+import { getAllDatacenters, getSite } from '../lib/datacenter.ts'
 import { mockModule, mockCommandImplementation, replaceChunkHashes } from './lib/testHelpers.ts'
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
@@ -49,9 +49,13 @@ describe('upload-source-maps', () => {
     commands = mockCommandImplementation(commandMock)
   })
 
+  afterEach(() => {
+    mock.restoreAll()
+  })
+
   function forEachDatacenter(callback: (site: string) => void): void {
-    for (const site of Object.values(siteByDatacenter)) {
-      callback(site)
+    for (const datacenter of getAllDatacenters()) {
+      callback(getSite(datacenter))
     }
   }
 
