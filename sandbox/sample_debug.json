@@ -1,0 +1,1781 @@
+{
+	"id": "AwAAAZrufDYYQY3dPQAAABhBWnJ1ZkRZWUFBQjB1M2FmS1htWF93QVcAAAAkZDE5YWVlN2MtNGMxYS00M2RmLWI5NDAtYWZhNjhiOGRkMGYwAAAAAg",
+	"content": {
+		"timestamp": "2025-12-05T12:28:29.080Z",
+		"tags": [
+			"account:staging",
+			"adp_enabled:false",
+			"agent_release_candidate_cluster:false",
+			"agent_version:7.75.0-devel_git.129.78229dd",
+			"app:debugger-demo-java",
+			"auto-discovery.cluster-autoscaler.k8s.io/stripe",
+			"autoscaling_group:us1-staging-dog-stripe-k8s-ng-asg-ca3efd3980d20273",
+			"availability-zone:us-east-1c",
+			"aws_account:727006795293",
+			"aws_autoscaling_groupname:us1-staging-dog-stripe-k8s-ng-asg-ca3efd3980d20273",
+			"aws_ec2_fleet-id:fleet-f197b1a6-0386-6ebe-86b8-2522d4730a41",
+			"aws_ec2launchtemplate_id:lt-0f484a829555482c6",
+			"aws_ec2launchtemplate_version:1",
+			"chart_name:debugger-demo-java",
+			"cloud_provider:aws",
+			"cluster_name:stripe",
+			"cnab.installation:helm/v1::debugger-demo-java.debugger-backend.stripe.us1.staging.dog",
+			"container.baseimage.buildstamp:2025-12-03t16:38:14z",
+			"container.baseimage.isgbi:yes",
+			"container.baseimage.name:images/base/gbi-ubuntu_2404",
+			"container.baseimage.os:ubuntu_noble_lts",
+			"container_id:7abe58cdfcb3a0149685d4d773c05caac3d640b3d79501d9f3c43b7f48aa9c8c",
+			"container_name:debugger-demo-java",
+			"cpu_arch:arm64",
+			"datacenter:us1.staging.dog",
+			"dd_compute_k8s_platform_version:v6-267-0",
+			"debugger_version:1.57.0-snapshot_4e48384724",
+			"default_env:staging",
+			"display_container_name:debugger-demo-java_debugger-demo-java-77886949f5-q6hmp",
+			"entrypoint.basedir:target",
+			"entrypoint.name:spring-petclinic-2.7.3",
+			"entrypoint.type:jar",
+			"env:staging",
+			"git.commit.sha:fd8163131f3150b86b792eee85eb583df81615da",
+			"git.repository_url:https://github.com/datadog/debugger-demos",
+			"host:i-02c9b2ab1d22671cd",
+			"host_name:debugger-demo-java-77886949f5-q6hmp",
+			"iam_profile:k8s/us1-staging-dog-stripe-kube-node_v2",
+			"image:ami-0fc22cd196ef840ea",
+			"image_id:727006795293.dkr.ecr.us-east-1.amazonaws.com/debugger-demo-services@sha256:bff807f964564f9b31db2e30bdea7acb50bbacde9c93beaf132f22f03d03d026",
+			"image_name:727006795293.dkr.ecr.us-east-1.amazonaws.com/debugger-demo-services",
+			"image_tag:debugger-demo-java-v84990627-fd816313",
+			"instance-type:m7g.16xlarge",
+			"instance_type:m7g.16xlarge",
+			"is_kube_cluster_experimental:false",
+			"k8s.io/cluster-autoscaler/enabled:yes",
+			"k8s.io/cluster-autoscaler/node-template/autoscaling-options/scaledownunneededtime:5m0s",
+			"k8s.io/cluster-autoscaler/node-template/autoscaling-options/scaledownutilizationthreshold:0.95",
+			"k8s.io/cluster-autoscaler/node-template/label/agent-profile.datadoghq.com/name:compute-nodeless-600m-v1",
+			"k8s.io/cluster-autoscaler/node-template/label/agent.datadoghq.com/datadogagentprofile:compute-nodeless-600m-v1",
+			"k8s.io/cluster-autoscaler/node-template/label/class:nodeless",
+			"k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/compute",
+			"k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/nodeless",
+			"k8s.io/cluster-autoscaler/node-template/label/node-role.kubernetes.io/nodeless-arm64-d-m7g-16xlarge",
+			"k8s.io/cluster-autoscaler/node-template/label/node.datadoghq.com/cpu_arch:arm64",
+			"k8s.io/cluster-autoscaler/node-template/label/node.datadoghq.com/flavor:standard",
+			"k8s.io/cluster-autoscaler/node-template/label/nodegroups.datadoghq.com/cluster-autoscaler:true",
+			"k8s.io/cluster-autoscaler/node-template/label/nodegroups.datadoghq.com/enable-eni-pd:true",
+			"k8s.io/cluster-autoscaler/node-template/label/nodegroups.datadoghq.com/local-storage:false",
+			"k8s.io/cluster-autoscaler/node-template/label/nodegroups.datadoghq.com/name:nodeless-arm64-d-m7g-16xlarge",
+			"k8s.io/cluster-autoscaler/node-template/label/nodegroups.datadoghq.com/namespace:kube-system",
+			"k8s.io/cluster-autoscaler/node-template/label/scalingset:cpu_arch-arm64",
+			"k8s.io/cluster-autoscaler/node-template/label/topology.ebs.csi.aws.com/zone:us-east-1c",
+			"k8s.io/cluster-autoscaler/node-template/resources/cpu:63870m",
+			"k8s.io/cluster-autoscaler/node-template/resources/ephemeral-storage:212137024683",
+			"k8s.io/cluster-autoscaler/node-template/resources/kubernetes.io/network-bandwidth:3576mi",
+			"k8s.io/cluster-autoscaler/node-template/resources/memory:252589250233",
+			"k8s.io/cluster-autoscaler/node-template/resources/pods:640",
+			"k8s.io/cluster-autoscaler/node-template/taint/cpu_arch:arm64:noschedule",
+			"k8s.io/cluster-autoscaler/node-template/taint/node:nodeless:noschedule",
+			"kernel:none",
+			"kube_cluster_name:stripe",
+			"kube_container_name:debugger-demo-java",
+			"kube_deployment:debugger-demo-java",
+			"kube_namespace:debugger-backend",
+			"kube_node:ip-10-128-94-120.ec2.internal",
+			"kube_node_role:compute",
+			"kube_node_role:nodeless",
+			"kube_node_role:nodeless-arm64-d-m7g-16xlarge",
+			"kube_ownerref_kind:replicaset",
+			"kube_ownerref_name:debugger-demo-java-77886949f5",
+			"kube_qos:guaranteed",
+			"kube_replica_set:debugger-demo-java-77886949f5",
+			"kube_service:debugger-demo-java",
+			"kubernetes.io/cluster/stripe:owned",
+			"kubernetes_cluster:stripe",
+			"name:kube-system_nodeless-arm64-d-m7g-16xlarge",
+			"ng_cluster_autoscaler:true",
+			"ng_local_storage:false",
+			"node.datadoghq.com/base-image:ubuntu_22_04",
+			"node.datadoghq.com/cgroup:v2",
+			"node.datadoghq.com/flavor:standard",
+			"node.datadoghq.com/version:v6-267-0",
+			"nodegroup:kube-system_nodeless-arm64-d-m7g-16xlarge",
+			"nodegroups.datadoghq.com/name:nodeless-arm64-d-m7g-16xlarge",
+			"nodegroups.datadoghq.com/namespace:kube-system",
+			"nodegroups.datadoghq.com/nodegroup-set:kube-system_nodeless-arm64",
+			"nodegroups.datadoghq.com/owner:k8s-dynamic-nodegroup-controller",
+			"orch_cluster_id:4c9f3702-c3bd-4d69-871b-cfa039a397df",
+			"pod_name:debugger-demo-java-77886949f5-q6hmp",
+			"pod_phase:running",
+			"region:us-east-1",
+			"role:kube-node",
+			"security-group-name:common",
+			"security-group-name:us1-staging-dog-stripe-k8s-node",
+			"security_group_name:common",
+			"security_group_name:us1-staging-dog-stripe-k8s-node",
+			"server.name:tomcat",
+			"server.type:tomcat",
+			"service:debugger-demo-java",
+			"short_image:debugger-demo-services",
+			"site:datad0g.com",
+			"source:dd_debugger",
+			"team",
+			"team:debugger",
+			"terraform.managed:true",
+			"terraform.module:cloud-inventory/terraform-modules/aws-network-security-group",
+			"terraform.module_version:1.1.0",
+			"terraform.path:cloud-inventory/aws/staging/network",
+			"version:debugger-demo-java-v84990627-fd816313"
+		],
+		"host": "ip-10-128-94-120.ec2.internal-stripe",
+		"service": "debugger-demo-java",
+		"message": "Executed org.springframework.samples.petclinic.vet.VetController.showVetList, it took 13.236871ms",
+		"attributes": {
+			"service": "debugger-demo-java",
+			"logger": {
+				"thread_id": 67,
+				"method": "showVetList",
+				"thread_name": "http-nio-8080-exec-5",
+				"name": "org.springframework.samples.petclinic.vet.VetController",
+				"version": 2
+			},
+			"debugger": {
+				"snapshot": {
+					"stack": [
+						{
+							"fileName": "VetController.java",
+							"function": "org.springframework.samples.petclinic.vet.VetController.showVetList",
+							"lineNumber": 131
+						},
+						{
+							"function": "jdk.internal.reflect.GeneratedMethodAccessor130.invoke",
+							"lineNumber": -1
+						},
+						{
+							"fileName": "DelegatingMethodAccessorImpl.java",
+							"function": "jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke",
+							"lineNumber": 43
+						},
+						{
+							"fileName": "Method.java",
+							"function": "java.lang.reflect.Method.invoke",
+							"lineNumber": 566
+						},
+						{
+							"fileName": "InvocableHandlerMethod.java",
+							"function": "org.springframework.web.method.support.InvocableHandlerMethod.doInvoke",
+							"lineNumber": 205
+						},
+						{
+							"fileName": "InvocableHandlerMethod.java",
+							"function": "org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest",
+							"lineNumber": 150
+						},
+						{
+							"fileName": "ServletInvocableHandlerMethod.java",
+							"function": "org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle",
+							"lineNumber": 117
+						},
+						{
+							"fileName": "RequestMappingHandlerAdapter.java",
+							"function": "org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod",
+							"lineNumber": 895
+						},
+						{
+							"fileName": "RequestMappingHandlerAdapter.java",
+							"function": "org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal",
+							"lineNumber": 808
+						},
+						{
+							"fileName": "AbstractHandlerMethodAdapter.java",
+							"function": "org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle",
+							"lineNumber": 87
+						},
+						{
+							"fileName": "DispatcherServlet.java",
+							"function": "org.springframework.web.servlet.DispatcherServlet.doDispatch",
+							"lineNumber": 1070
+						},
+						{
+							"fileName": "DispatcherServlet.java",
+							"function": "org.springframework.web.servlet.DispatcherServlet.doService",
+							"lineNumber": 963
+						},
+						{
+							"fileName": "FrameworkServlet.java",
+							"function": "org.springframework.web.servlet.FrameworkServlet.processRequest",
+							"lineNumber": 1006
+						},
+						{
+							"fileName": "FrameworkServlet.java",
+							"function": "org.springframework.web.servlet.FrameworkServlet.doGet",
+							"lineNumber": 898
+						},
+						{
+							"fileName": "HttpServlet.java",
+							"function": "javax.servlet.http.HttpServlet.service",
+							"lineNumber": 529
+						},
+						{
+							"fileName": "FrameworkServlet.java",
+							"function": "org.springframework.web.servlet.FrameworkServlet.service",
+							"lineNumber": 883
+						},
+						{
+							"fileName": "HttpServlet.java",
+							"function": "javax.servlet.http.HttpServlet.service",
+							"lineNumber": 623
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 197
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "WsFilter.java",
+							"function": "org.apache.tomcat.websocket.server.WsFilter.doFilter",
+							"lineNumber": 51
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "ResourceUrlEncodingFilter.java",
+							"function": "org.springframework.web.servlet.resource.ResourceUrlEncodingFilter.doFilter",
+							"lineNumber": 67
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "RequestContextFilter.java",
+							"function": "org.springframework.web.filter.RequestContextFilter.doFilterInternal",
+							"lineNumber": 100
+						},
+						{
+							"fileName": "OncePerRequestFilter.java",
+							"function": "org.springframework.web.filter.OncePerRequestFilter.doFilter",
+							"lineNumber": 117
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "FormContentFilter.java",
+							"function": "org.springframework.web.filter.FormContentFilter.doFilterInternal",
+							"lineNumber": 93
+						},
+						{
+							"fileName": "OncePerRequestFilter.java",
+							"function": "org.springframework.web.filter.OncePerRequestFilter.doFilter",
+							"lineNumber": 117
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "HandlerMappingResourceNameFilter.java",
+							"function": "datadog.trace.instrumentation.springweb.HandlerMappingResourceNameFilter.doFilterInternal",
+							"lineNumber": 57
+						},
+						{
+							"fileName": "OncePerRequestFilter.java",
+							"function": "org.springframework.web.filter.OncePerRequestFilter.doFilter",
+							"lineNumber": 117
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "WebMvcMetricsFilter.java",
+							"function": "org.springframework.boot.actuate.metrics.web.servlet.WebMvcMetricsFilter.doFilterInternal",
+							"lineNumber": 96
+						},
+						{
+							"fileName": "OncePerRequestFilter.java",
+							"function": "org.springframework.web.filter.OncePerRequestFilter.doFilter",
+							"lineNumber": 117
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "CharacterEncodingFilter.java",
+							"function": "org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal",
+							"lineNumber": 201
+						},
+						{
+							"fileName": "OncePerRequestFilter.java",
+							"function": "org.springframework.web.filter.OncePerRequestFilter.doFilter",
+							"lineNumber": 117
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "ServletRequestPathFilter.java",
+							"function": "org.springframework.web.filter.ServletRequestPathFilter.doFilter",
+							"lineNumber": 56
+						},
+						{
+							"fileName": "DelegatingFilterProxy.java",
+							"function": "org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate",
+							"lineNumber": 354
+						},
+						{
+							"fileName": "DelegatingFilterProxy.java",
+							"function": "org.springframework.web.filter.DelegatingFilterProxy.doFilter",
+							"lineNumber": 267
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.internalDoFilter",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "ApplicationFilterChain.java",
+							"function": "org.apache.catalina.core.ApplicationFilterChain.doFilter",
+							"lineNumber": 142
+						},
+						{
+							"fileName": "StandardWrapperValve.java",
+							"function": "org.apache.catalina.core.StandardWrapperValve.invoke",
+							"lineNumber": 166
+						},
+						{
+							"fileName": "StandardContextValve.java",
+							"function": "org.apache.catalina.core.StandardContextValve.invoke",
+							"lineNumber": 88
+						},
+						{
+							"fileName": "AuthenticatorBase.java",
+							"function": "org.apache.catalina.authenticator.AuthenticatorBase.invoke",
+							"lineNumber": 481
+						},
+						{
+							"fileName": "StandardHostValve.java",
+							"function": "org.apache.catalina.core.StandardHostValve.invoke",
+							"lineNumber": 127
+						},
+						{
+							"fileName": "ErrorReportValve.java",
+							"function": "org.apache.catalina.valves.ErrorReportValve.invoke",
+							"lineNumber": 83
+						},
+						{
+							"fileName": "StandardEngineValve.java",
+							"function": "org.apache.catalina.core.StandardEngineValve.invoke",
+							"lineNumber": 72
+						},
+						{
+							"fileName": "RemoteIpValve.java",
+							"function": "org.apache.catalina.valves.RemoteIpValve.invoke",
+							"lineNumber": 763
+						},
+						{
+							"fileName": "CoyoteAdapter.java",
+							"function": "org.apache.catalina.connector.CoyoteAdapter.service",
+							"lineNumber": 344
+						},
+						{
+							"fileName": "Http11Processor.java",
+							"function": "org.apache.coyote.http11.Http11Processor.service",
+							"lineNumber": 398
+						},
+						{
+							"fileName": "AbstractProcessorLight.java",
+							"function": "org.apache.coyote.AbstractProcessorLight.process",
+							"lineNumber": 63
+						},
+						{
+							"fileName": "AbstractProtocol.java",
+							"function": "org.apache.coyote.AbstractProtocol$ConnectionHandler.process",
+							"lineNumber": 935
+						},
+						{
+							"fileName": "NioEndpoint.java",
+							"function": "org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun",
+							"lineNumber": 1831
+						},
+						{
+							"fileName": "SocketProcessorBase.java",
+							"function": "org.apache.tomcat.util.net.SocketProcessorBase.run",
+							"lineNumber": 52
+						},
+						{
+							"fileName": "ThreadPoolExecutor.java",
+							"function": "org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker",
+							"lineNumber": 973
+						},
+						{
+							"fileName": "ThreadPoolExecutor.java",
+							"function": "org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run",
+							"lineNumber": 491
+						},
+						{
+							"fileName": "TaskThread.java",
+							"function": "org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run",
+							"lineNumber": 63
+						},
+						{
+							"fileName": "Thread.java",
+							"function": "java.lang.Thread.run",
+							"lineNumber": 829
+						}
+					],
+					"captures": {
+						"return": {
+							"arguments": {
+								"this": {
+									"type": "org.springframework.samples.petclinic.vet.VetController",
+									"fields": {
+										"result": {
+											"type": "int",
+											"value": "0"
+										},
+										"garbageStart": {
+											"type": "long",
+											"value": "1764937706330"
+										},
+										"executor": {
+											"type": "java.util.concurrent.Executors$FinalizableDelegatedExecutorService",
+											"fields": {
+												"e": {
+													"type": "java.util.concurrent.ThreadPoolExecutor",
+													"fields": {
+														"termination": {
+															"notCapturedReason": "depth",
+															"type": "java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject"
+														},
+														"handler": {
+															"notCapturedReason": "depth",
+															"type": "java.util.concurrent.ThreadPoolExecutor$AbortPolicy"
+														},
+														"threadFactory": {
+															"notCapturedReason": "depth",
+															"type": "org.springframework.samples.petclinic.vet.VetController$$Lambda$1619/0x0000000100e47c40"
+														},
+														"keepAliveTime": {
+															"type": "long",
+															"value": "0"
+														},
+														"largestPoolSize": {
+															"type": "int",
+															"value": "1"
+														},
+														"allowCoreThreadTimeOut": {
+															"type": "boolean",
+															"value": "false"
+														},
+														"corePoolSize": {
+															"type": "int",
+															"value": "1"
+														},
+														"ctl": {
+															"type": "java.util.concurrent.atomic.AtomicInteger",
+															"value": "-536870911"
+														},
+														"completedTaskCount": {
+															"type": "long",
+															"value": "0"
+														},
+														"workQueue": {
+															"notCapturedReason": "depth",
+															"type": "java.util.concurrent.LinkedBlockingQueue"
+														},
+														"maximumPoolSize": {
+															"type": "int",
+															"value": "1"
+														},
+														"workers": {
+															"notCapturedReason": "depth",
+															"type": "java.util.HashSet"
+														},
+														"mainLock": {
+															"notCapturedReason": "depth",
+															"type": "java.util.concurrent.locks.ReentrantLock"
+														}
+													}
+												}
+											}
+										},
+										"vetsPreloaded": {
+											"size": "6",
+											"elements": [
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "James"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Carter"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "1"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Helen"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Leary"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "2"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Linda"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Douglas"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "3"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Rafael"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Ortega"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "4"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Henry"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Stevens"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "5"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Sharon"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Jenkins"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "6"
+														}
+													}
+												}
+											],
+											"type": "java.util.ArrayList"
+										},
+										"garbage": {
+											"size": "1",
+											"elements": [
+												{
+													"size": "4096",
+													"elements": [
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "java.lang.Object"
+														}
+													],
+													"notCapturedReason": "collectionSize",
+													"type": "java.lang.Object[]"
+												}
+											],
+											"type": "java.util.ArrayList"
+										},
+										"vetRepository": {
+											"type": "com.sun.proxy.$Proxy193",
+											"fields": {
+												"h": {
+													"type": "org.springframework.aop.framework.JdkDynamicAopProxy",
+													"fields": {
+														"equalsDefined": {
+															"type": "boolean",
+															"value": "false"
+														},
+														"proxiedInterfaces": {
+															"notCapturedReason": "depth",
+															"type": "java.lang.Class[]"
+														},
+														"hashCodeDefined": {
+															"type": "boolean",
+															"value": "false"
+														},
+														"advised": {
+															"notCapturedReason": "depth",
+															"type": "org.springframework.aop.framework.ProxyFactory"
+														}
+													}
+												}
+											}
+										},
+										"counter": {
+											"type": "int",
+											"value": "0"
+										},
+										"syntheticLiveSet": {
+											"type": "java.util.concurrent.atomic.AtomicReference",
+											"fields": {
+												"value": {
+													"isNull": true,
+													"type": "java.lang.Object"
+												}
+											}
+										}
+									}
+								},
+								"model": {
+									"type": "org.springframework.validation.support.BindingAwareModelMap",
+									"fields": {
+										"head": {
+											"type": "java.util.LinkedHashMap$Entry",
+											"fields": {
+												"next": {
+													"isNull": true,
+													"type": "java.util.HashMap$Node"
+												},
+												"before": {
+													"isNull": true,
+													"type": "java.util.LinkedHashMap$Entry"
+												},
+												"after": {
+													"type": "java.util.LinkedHashMap$Entry",
+													"fields": {
+														"next": {
+															"isNull": true,
+															"type": "java.util.HashMap$Node"
+														},
+														"before": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"after": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"value": {
+															"type": "java.lang.Integer",
+															"value": "2"
+														},
+														"hash": {
+															"type": "int",
+															"value": "-719823880"
+														},
+														"key": {
+															"type": "java.lang.String",
+															"value": "totalPages"
+														}
+													}
+												},
+												"value": {
+													"type": "java.lang.Integer",
+													"value": "1"
+												},
+												"hash": {
+													"type": "int",
+													"value": "601099388"
+												},
+												"key": {
+													"type": "java.lang.String",
+													"value": "currentPage"
+												}
+											}
+										},
+										"modCount": {
+											"type": "int",
+											"value": "4"
+										},
+										"size": {
+											"type": "int",
+											"value": "4"
+										},
+										"loadFactor": {
+											"type": "float",
+											"value": "0.75"
+										},
+										"entrySet": {
+											"isNull": true,
+											"type": "java.util.Set"
+										},
+										"tail": {
+											"type": "java.util.LinkedHashMap$Entry",
+											"fields": {
+												"next": {
+													"isNull": true,
+													"type": "java.util.HashMap$Node"
+												},
+												"before": {
+													"type": "java.util.LinkedHashMap$Entry",
+													"fields": {
+														"next": {
+															"isNull": true,
+															"type": "java.util.HashMap$Node"
+														},
+														"before": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"after": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"value": {
+															"type": "java.lang.Long",
+															"value": "6"
+														},
+														"hash": {
+															"type": "int",
+															"value": "-725724574"
+														},
+														"key": {
+															"type": "java.lang.String",
+															"value": "totalItems"
+														}
+													}
+												},
+												"after": {
+													"isNull": true,
+													"type": "java.util.LinkedHashMap$Entry"
+												},
+												"value": {
+													"size": "5",
+													"elements": [
+														{
+															"notCapturedReason": "depth",
+															"type": "org.springframework.samples.petclinic.vet.Vet"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "org.springframework.samples.petclinic.vet.Vet"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "org.springframework.samples.petclinic.vet.Vet"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "org.springframework.samples.petclinic.vet.Vet"
+														},
+														{
+															"notCapturedReason": "depth",
+															"type": "org.springframework.samples.petclinic.vet.Vet"
+														}
+													],
+													"type": "java.util.Collections$UnmodifiableRandomAccessList"
+												},
+												"hash": {
+													"type": "int",
+													"value": "1345684249"
+												},
+												"key": {
+													"type": "java.lang.String",
+													"value": "listVets"
+												}
+											}
+										},
+										"values": {
+											"isNull": true,
+											"type": "java.util.Collection"
+										},
+										"threshold": {
+											"type": "int",
+											"value": "12"
+										},
+										"keySet": {
+											"isNull": true,
+											"type": "java.util.Set"
+										},
+										"accessOrder": {
+											"type": "boolean",
+											"value": "false"
+										},
+										"table": {
+											"size": "16",
+											"elements": [
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"type": "java.util.LinkedHashMap$Entry",
+													"fields": {
+														"next": {
+															"isNull": true,
+															"type": "java.util.HashMap$Node"
+														},
+														"before": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"after": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"value": {
+															"type": "java.lang.Long",
+															"value": "6"
+														},
+														"hash": {
+															"type": "int",
+															"value": "-725724574"
+														},
+														"key": {
+															"type": "java.lang.String",
+															"value": "totalItems"
+														}
+													}
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"type": "java.util.LinkedHashMap$Entry",
+													"fields": {
+														"next": {
+															"isNull": true,
+															"type": "java.util.HashMap$Node"
+														},
+														"before": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"after": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"value": {
+															"type": "java.lang.Integer",
+															"value": "2"
+														},
+														"hash": {
+															"type": "int",
+															"value": "-719823880"
+														},
+														"key": {
+															"type": "java.lang.String",
+															"value": "totalPages"
+														}
+													}
+												},
+												{
+													"type": "java.util.LinkedHashMap$Entry",
+													"fields": {
+														"next": {
+															"isNull": true,
+															"type": "java.util.HashMap$Node"
+														},
+														"before": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"after": {
+															"isNull": true,
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"value": {
+															"notCapturedReason": "depth",
+															"type": "java.util.Collections$UnmodifiableRandomAccessList"
+														},
+														"hash": {
+															"type": "int",
+															"value": "1345684249"
+														},
+														"key": {
+															"type": "java.lang.String",
+															"value": "listVets"
+														}
+													}
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"type": "java.util.LinkedHashMap$Entry",
+													"fields": {
+														"next": {
+															"isNull": true,
+															"type": "java.util.HashMap$Node"
+														},
+														"before": {
+															"isNull": true,
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"after": {
+															"notCapturedReason": "depth",
+															"type": "java.util.LinkedHashMap$Entry"
+														},
+														"value": {
+															"type": "java.lang.Integer",
+															"value": "1"
+														},
+														"hash": {
+															"type": "int",
+															"value": "601099388"
+														},
+														"key": {
+															"type": "java.lang.String",
+															"value": "currentPage"
+														}
+													}
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												},
+												{
+													"isNull": true,
+													"type": "java.lang.Object"
+												}
+											],
+											"type": "java.util.HashMap$Node[]"
+										}
+									}
+								},
+								"page": {
+									"type": "int",
+									"value": "1"
+								},
+								"uuid": {
+									"type": "java.lang.String",
+									"value": "bee79531-cd25-40c3-84cc-1eb7338dc8c0"
+								}
+							},
+							"locals": {
+								"paginated": {
+									"type": "org.springframework.data.domain.PageImpl",
+									"fields": {
+										"total": {
+											"type": "long",
+											"value": "6"
+										},
+										"pageable": {
+											"type": "org.springframework.data.domain.PageRequest",
+											"fields": {
+												"size": {
+													"type": "int",
+													"value": "5"
+												},
+												"sort": {
+													"type": "org.springframework.data.domain.Sort",
+													"fields": {
+														"orders": {
+															"notCapturedReason": "depth",
+															"type": "java.util.Arrays$ArrayList"
+														}
+													}
+												},
+												"page": {
+													"type": "int",
+													"value": "0"
+												}
+											}
+										},
+										"content": {
+											"size": "5",
+											"elements": [
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "James"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Carter"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "1"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Helen"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Leary"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "2"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Linda"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Douglas"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "3"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Rafael"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Ortega"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "4"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Henry"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Stevens"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "5"
+														}
+													}
+												}
+											],
+											"type": "java.util.ArrayList"
+										}
+									}
+								},
+								"vets": {
+									"type": "org.springframework.samples.petclinic.vet.Vets",
+									"fields": {
+										"vets": {
+											"size": "5",
+											"elements": [
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "James"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Carter"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "1"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Helen"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Leary"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "2"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Linda"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Douglas"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "3"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Rafael"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Ortega"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "4"
+														}
+													}
+												},
+												{
+													"type": "org.springframework.samples.petclinic.vet.Vet",
+													"fields": {
+														"firstName": {
+															"type": "java.lang.String",
+															"value": "Henry"
+														},
+														"lastName": {
+															"type": "java.lang.String",
+															"value": "Stevens"
+														},
+														"specialties": {
+															"notCapturedReason": "depth",
+															"type": "org.hibernate.collection.internal.PersistentSet"
+														},
+														"id": {
+															"type": "java.lang.Integer",
+															"value": "5"
+														}
+													}
+												}
+											],
+											"type": "java.util.ArrayList"
+										}
+									}
+								},
+								"@return": {
+									"type": "java.lang.String",
+									"value": "vets/vetList"
+								}
+							}
+						}
+					},
+					"language": "java",
+					"id": "baa4f52d-970f-46eb-acb7-bfe5fe466743",
+					"probe": {
+						"location": {
+							"method": "showVetList",
+							"type": "org.springframework.samples.petclinic.vet.VetController"
+						},
+						"id": "c5ac1d07-3898-41ce-bedb-df609049593f",
+						"version": 0
+					},
+					"timestamp": 1764937706331
+				}
+			},
+			"dac": {
+				"dataset": "dd_debugger"
+			},
+			"host": "ip-10-128-94-120.ec2.internal-stripe",
+			"host_id": 35184374449326,
+			"timestamp": {
+				"@": {
+					"logmatic": {
+						"date": {
+							"date": 1764937706331
+						}
+					}
+				}
+			},
+			"status": "info"
+		}
+	}
+}
