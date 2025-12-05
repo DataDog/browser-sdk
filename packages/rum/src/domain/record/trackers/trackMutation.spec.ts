@@ -473,16 +473,14 @@ describe('trackMutation', () => {
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
 
+        const expectedHost = expectNewNode({ type: NodeType.Element, tagName: 'div' })
+        const shadowRootNode = expectNewNode({ type: NodeType.DocumentFragment, isShadowRoot: true })
         const child = expectNewNode({ type: NodeType.Element, tagName: 'span' })
-        const shadowRootNode = expectNewNode({ type: NodeType.DocumentFragment, isShadowRoot: true }).withChildren(
-          child
-        )
-        const expectedHost = expectNewNode({ type: NodeType.Element, tagName: 'div' }).withChildren(shadowRootNode)
         validate(getLatestMutationPayload(), {
           adds: [
             {
               parent: expectInitialNode({ idAttribute: 'sandbox' }),
-              node: expectedHost,
+              node: expectedHost.withChildren(shadowRootNode.withChildren(child)),
             },
           ],
         })

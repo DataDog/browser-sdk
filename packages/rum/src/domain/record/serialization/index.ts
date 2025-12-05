@@ -1,6 +1,6 @@
 export { getElementInputValue } from './serializationUtils'
 export { serializeDocument } from './serializeDocument'
-export { serializeNodeWithId } from './serializeNode'
+export { serializeNode } from './serializeNode'
 export { serializeAttribute } from './serializeAttribute'
 export { createSerializationStats, updateSerializationStats, aggregateSerializationStats } from './serializationStats'
 export type { SerializationMetric, SerializationStats } from './serializationStats'

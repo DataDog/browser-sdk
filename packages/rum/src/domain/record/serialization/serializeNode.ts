@@ -12,7 +12,6 @@ import {
 import type {
   DocumentFragmentNode,
   DocumentNode,
-  SerializedNode,
   SerializedNodeWithId,
   CDataNode,
   DocumentTypeNode,
@@ -26,33 +25,37 @@ import { serializeStyleSheets } from './serializeStyleSheets'
 import { serializeAttributes } from './serializeAttributes'
 import type { SerializationTransaction } from './serializationTransaction'
 
-export function serializeNodeWithId(
+export function serializeNode(
   node: Element,
   parentNodePrivacyLevel: ParentNodePrivacyLevel,
   transaction: SerializationTransaction
 ): (SerializedNodeWithId & ElementNode) | null
-export function serializeNodeWithId(
+export function serializeNode(
   node: Node,
   parentNodePrivacyLevel: ParentNodePrivacyLevel,
   transaction: SerializationTransaction
 ): SerializedNodeWithId | null
-export function serializeNodeWithId(
+export function serializeNode(
   node: Node,
   parentNodePrivacyLevel: ParentNodePrivacyLevel,
   transaction: SerializationTransaction
 ): SerializedNodeWithId | null {
-  const serializedNode = serializeNode(node, parentNodePrivacyLevel, transaction)
-  if (!serializedNode) {
-    return null
+  switch (node.nodeType) {
+    case node.DOCUMENT_NODE:
+      return serializeDocumentNode(node as Document, parentNodePrivacyLevel, transaction)
+    case node.DOCUMENT_FRAGMENT_NODE:
+      return serializeDocumentFragmentNode(node as DocumentFragment, parentNodePrivacyLevel, transaction)
+    case node.DOCUMENT_TYPE_NODE:
+      return serializeDocumentTypeNode(node as DocumentType, transaction)
+    case node.ELEMENT_NODE:
+      return serializeElementNode(node as Element, parentNodePrivacyLevel, transaction)
+    case node.TEXT_NODE:
+      return serializeTextNode(node as Text, parentNodePrivacyLevel, transaction)
+    case node.CDATA_SECTION_NODE:
+      return serializeCDataNode(node as CDATASection, transaction)
+    default:
+      return null
   }
-
-  const id = transaction.scope.nodeIds.assign(node)
-  const serializedNodeWithId = serializedNode as SerializedNodeWithId
-  serializedNodeWithId.id = id
-  if (transaction.serializedNodeIds) {
-    transaction.serializedNodeIds.add(id)
-  }
-  return serializedNodeWithId
 }
 
 export function serializeChildNodes(
@@ -62,7 +65,7 @@ export function serializeChildNodes(
 ): SerializedNodeWithId[] {
   const result: SerializedNodeWithId[] = []
   forEachChildNodes(node, (childNode) => {
-    const serializedChildNode = serializeNodeWithId(childNode, parentNodePrivacyLevel, transaction)
+    const serializedChildNode = serializeNode(childNode, parentNodePrivacyLevel, transaction)
     if (serializedChildNode) {
       result.push(serializedChildNode)
     }
@@ -70,34 +73,14 @@ export function serializeChildNodes(
   return result
 }
 
-function serializeNode(
-  node: Node,
-  parentNodePrivacyLevel: ParentNodePrivacyLevel,
-  transaction: SerializationTransaction
-): SerializedNode | undefined {
-  switch (node.nodeType) {
-    case node.DOCUMENT_NODE:
-      return serializeDocumentNode(node as Document, parentNodePrivacyLevel, transaction)
-    case node.DOCUMENT_FRAGMENT_NODE:
-      return serializeDocumentFragmentNode(node as DocumentFragment, parentNodePrivacyLevel, transaction)
-    case node.DOCUMENT_TYPE_NODE:
-      return serializeDocumentTypeNode(node as DocumentType)
-    case node.ELEMENT_NODE:
-      return serializeElementNode(node as Element, parentNodePrivacyLevel, transaction)
-    case node.TEXT_NODE:
-      return serializeTextNode(node as Text, parentNodePrivacyLevel)
-    case node.CDATA_SECTION_NODE:
-      return serializeCDataNode()
-  }
-}
-
 export function serializeDocumentNode(
   document: Document,
   parentNodePrivacyLevel: ParentNodePrivacyLevel,
   transaction: SerializationTransaction
-): DocumentNode {
+): DocumentNode & SerializedNodeWithId {
   return {
     type: NodeType.Document,
+    id: transaction.assignId(document),
     childNodes: serializeChildNodes(document, parentNodePrivacyLevel, transaction),
     adoptedStyleSheets: serializeStyleSheets(document.adoptedStyleSheets),
   }
@@ -107,7 +90,7 @@ function serializeDocumentFragmentNode(
   element: DocumentFragment,
   parentNodePrivacyLevel: ParentNodePrivacyLevel,
   transaction: SerializationTransaction
-): DocumentFragmentNode | undefined {
+): DocumentFragmentNode & SerializedNodeWithId {
   const isShadowRoot = isNodeShadowRoot(element)
   if (isShadowRoot) {
     transaction.scope.shadowRootsController.addShadowRoot(element, transaction.scope)
@@ -115,15 +98,20 @@ function serializeDocumentFragmentNode(
 
   return {
     type: NodeType.DocumentFragment,
+    id: transaction.assignId(element),
     childNodes: serializeChildNodes(element, parentNodePrivacyLevel, transaction),
     isShadowRoot,
     adoptedStyleSheets: isShadowRoot ? serializeStyleSheets(element.adoptedStyleSheets) : undefined,
   }
 }
 
-function serializeDocumentTypeNode(documentType: DocumentType): DocumentTypeNode {
+function serializeDocumentTypeNode(
+  documentType: DocumentType,
+  transaction: SerializationTransaction
+): DocumentTypeNode & SerializedNodeWithId {
   return {
     type: NodeType.DocumentType,
+    id: transaction.assignId(documentType),
     name: documentType.name,
     publicId: documentType.publicId,
     systemId: documentType.systemId,
@@ -152,7 +140,7 @@ function serializeElementNode(
   element: Element,
   parentNodePrivacyLevel: ParentNodePrivacyLevel,
   transaction: SerializationTransaction
-): ElementNode | undefined {
+): (ElementNode & SerializedNodeWithId) | null {
   const tagName = getValidTagName(element.tagName)
   const isSVG = isSVGElement(element) || undefined
 
@@ -164,6 +152,7 @@ function serializeElementNode(
     const { width, height } = element.getBoundingClientRect()
     return {
       type: NodeType.Element,
+      id: transaction.assignId(element),
       tagName,
       attributes: {
         rr_width: `${width}px`,
@@ -177,9 +166,10 @@ function serializeElementNode(
 
   // Ignore Elements like Script and some Link, Metas
   if (nodePrivacyLevel === NodePrivacyLevel.IGNORE) {
-    return
+    return null
   }
 
+  const id = transaction.assignId(element)
   const attributes = serializeAttributes(element, nodePrivacyLevel, transaction)
 
   let childNodes: SerializedNodeWithId[] = []
@@ -193,6 +183,7 @@ function serializeElementNode(
 
   return {
     type: NodeType.Element,
+    id,
     tagName,
     attributes,
     childNodes,
@@ -210,20 +201,29 @@ function isSVGElement(el: Element): boolean {
  * for privacy level.
  */
 
-function serializeTextNode(textNode: Text, parentNodePrivacyLevel: ParentNodePrivacyLevel): TextNode | undefined {
+function serializeTextNode(
+  textNode: Text,
+  parentNodePrivacyLevel: ParentNodePrivacyLevel,
+  transaction: SerializationTransaction
+): (TextNode & SerializedNodeWithId) | null {
   const textContent = getTextContent(textNode, parentNodePrivacyLevel)
   if (textContent === undefined) {
-    return
+    return null
   }
   return {
     type: NodeType.Text,
+    id: transaction.assignId(textNode),
     textContent,
   }
 }
 
-function serializeCDataNode(): CDataNode {
+function serializeCDataNode(
+  node: CDATASection,
+  transaction: SerializationTransaction
+): CDataNode & SerializedNodeWithId {
   return {
     type: NodeType.CDATA,
+    id: transaction.assignId(node),
     textContent: '',
   }
 }

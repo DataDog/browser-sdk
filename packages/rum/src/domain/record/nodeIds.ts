@@ -4,7 +4,7 @@ export type NodeWithSerializedNode = Node & { __brand: 'NodeWithSerializedNode' 
 export type NodeId = number & { __brand: 'NodeId' }
 
 export const enum NodeIdConstants {
-  FIRST_ID = 1,
+  FIRST_ID = 0,
 }
 
 export interface NodeIds {

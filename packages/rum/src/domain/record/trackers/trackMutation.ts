@@ -29,7 +29,7 @@ import {
   getElementInputValue,
   serializeAttribute,
   serializeInTransaction,
-  serializeNodeWithId,
+  serializeNode,
   SerializationKind,
 } from '../serialization'
 import { createMutationBatch } from '../mutationBatch'
@@ -218,7 +218,7 @@ function processChildListMutations(
       continue
     }
 
-    const serializedNode = serializeNodeWithId(node, parentNodePrivacyLevel, transaction)
+    const serializedNode = serializeNode(node, parentNodePrivacyLevel, transaction)
     if (!serializedNode) {
       continue
     }
