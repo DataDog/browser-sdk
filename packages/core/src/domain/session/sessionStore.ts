@@ -85,6 +85,7 @@ export function startSessionStore<TrackingType extends string>(
   configuration: Configuration,
   productKey: string,
   computeTrackingType: (rawTrackingType?: string) => TrackingType,
+  applicationId?: string,
   sessionStoreStrategy: SessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, configuration)
 ): SessionStore {
   const renewObservable = new Observable<void>()
@@ -93,7 +94,6 @@ export function startSessionStore<TrackingType extends string>(
 
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState
-
   startSession()
 
   const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(() => {
@@ -105,7 +105,7 @@ export function startSessionStore<TrackingType extends string>(
           }
 
           const synchronizedSession = synchronizeSession(sessionState)
-          expandOrRenewSessionState(synchronizedSession)
+          expandOrRenewSessionState(synchronizedSession, applicationId)
           return synchronizedSession
         },
         after: (sessionState) => {
@@ -182,7 +182,7 @@ export function startSessionStore<TrackingType extends string>(
     )
   }
 
-  function expandOrRenewSessionState(sessionState: SessionState) {
+  function expandOrRenewSessionState(sessionState: SessionState, applicationId?: string) {
     if (isSessionInNotStartedState(sessionState)) {
       return false
     }
@@ -191,7 +191,7 @@ export function startSessionStore<TrackingType extends string>(
     sessionState[productKey] = trackingType
     delete sessionState.isExpired
     if (trackingType !== SESSION_NOT_TRACKED && !sessionState.id) {
-      sessionState.id = generateUUID()
+      sessionState.id = generateUUID(sessionState.anonymousId, applicationId)
       sessionState.created = String(dateNow())
     }
   }
