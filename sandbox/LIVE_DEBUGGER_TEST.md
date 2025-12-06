@@ -30,6 +30,7 @@ This test page demonstrates the Firebase Remote Config integration with the Data
 The test page includes a mock Firebase Remote Config implementation that uses localStorage for testing:
 
 1. **Start the Dev Server**:
+
    ```bash
    yarn dev
    ```
@@ -64,11 +65,13 @@ The test page provides:
 ## Testing Scenarios
 
 ### Test 1: Initial Value
+
 1. Initialize SDKs
 2. Check that the global context property `dd_<liveDebuggerId>` is set
 3. Verify the value matches Firebase Remote Config default value
 
 ### Test 2: Value Changes
+
 1. Initialize SDKs
 2. Change the Firebase Remote Config value in Firebase Console (or use mock toggle)
 3. Wait for Firebase to fetch updates (or manually click "Fetch Firebase Config")
@@ -76,11 +79,13 @@ The test page provides:
 5. Check logs for log events being sent
 
 ### Test 3: Log Events
+
 1. Initialize SDKs (make sure Logs SDK is initialized)
 2. Click "Send Test Log Event"
 3. Check Datadog Logs Explorer for the log event
 
 ### Test 4: Error Handling
+
 1. Try initializing without Firebase SDK loaded
 2. Try initializing with invalid Firebase config
 3. Verify error messages are displayed
@@ -108,20 +113,24 @@ When working correctly:
 ## Troubleshooting
 
 ### Firebase SDK Not Found
+
 - Make sure Firebase SDK scripts are loaded before initializing RUM SDK
 - Check browser console for errors
 
 ### Global Context Property Not Set
+
 - Verify `allowLiveDebugger` is set to `true` in RUM init
 - Verify `liveDebuggerId` matches Firebase Remote Config parameter key
 - Check browser console for errors
 
 ### Log Events Not Sent
+
 - Make sure Datadog Logs SDK is initialized
 - Check that `DD_LOGS` is available in the browser console
 - Verify logs are being sent to Datadog (check Logs Explorer)
 
 ### Value Not Updating
+
 - Firebase Remote Config has a minimum fetch interval (default: 1 hour)
 - Use "Fetch Firebase Config" button to manually trigger a fetch
 - For testing, the mock Firebase updates every 2 seconds
@@ -132,5 +141,3 @@ When working correctly:
 - For production use, ensure Firebase Remote Config is properly configured
 - The mock Firebase implementation is for testing only and uses localStorage
 - Real Firebase Remote Config requires proper authentication and project setup
-
-

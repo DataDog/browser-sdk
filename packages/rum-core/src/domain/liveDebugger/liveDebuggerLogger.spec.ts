@@ -176,5 +176,3 @@ describe('liveDebuggerLogger', () => {
     })
   })
 })
-
-

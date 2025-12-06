@@ -20,7 +20,6 @@ describe('firebaseRemoteConfig', () => {
       onConfigUpdated: jasmine.createSpy('onConfigUpdated'),
       ensureInitialized: jasmine.createSpy('ensureInitialized').and.returnValue(Promise.resolve()),
     }
-
     ;(window as any).firebase = {
       remoteConfig: jasmine.createSpy('remoteConfig').and.returnValue(mockFirebaseRemoteConfig),
     }
@@ -120,9 +119,7 @@ describe('firebaseRemoteConfig', () => {
     it('should handle when Firebase SDK is not available', async () => {
       ;(window as any).firebase = undefined
 
-      await expectAsync(
-        startFirebaseRemoteConfigIntegration(globalContext, 'test-id')
-      ).toBeRejected()
+      await expectAsync(startFirebaseRemoteConfigIntegration(globalContext, 'test-id')).toBeRejected()
     })
 
     it('should handle when Firebase Remote Config is not available', async () => {
@@ -130,18 +127,13 @@ describe('firebaseRemoteConfig', () => {
         remoteConfig: undefined,
       }
 
-      await expectAsync(
-        startFirebaseRemoteConfigIntegration(globalContext, 'test-id')
-      ).toBeRejected()
+      await expectAsync(startFirebaseRemoteConfigIntegration(globalContext, 'test-id')).toBeRejected()
     })
 
     it('should handle errors during initialization gracefully', async () => {
       mockFirebaseRemoteConfig.ensureInitialized.and.returnValue(Promise.reject(new Error('Init failed')))
 
-      await expectAsync(
-        startFirebaseRemoteConfigIntegration(globalContext, 'test-id')
-      ).toBeRejected()
+      await expectAsync(startFirebaseRemoteConfigIntegration(globalContext, 'test-id')).toBeRejected()
     })
   })
 })
-

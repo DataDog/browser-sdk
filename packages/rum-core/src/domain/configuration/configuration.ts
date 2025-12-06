@@ -136,23 +136,25 @@ export interface RumInitConfiguration extends InitConfiguration {
   /**
    * Firebase configuration for Remote Config integration.
    * If provided, the SDK will initialize Firebase Remote Config automatically.
-   * 
+   *
    * @category Data Collection
    */
-  firebaseConfig?: {
-    apiKey: string
-    authDomain: string
-    projectId: string
-    storageBucket?: string
-    messagingSenderId?: string
-    appId: string
-    measurementId?: string
-  } | undefined
+  firebaseConfig?:
+    | {
+        apiKey: string
+        authDomain: string
+        projectId: string
+        storageBucket?: string
+        messagingSenderId?: string
+        appId: string
+        measurementId?: string
+      }
+    | undefined
 
   /**
    * Firebase SDK version to load (defaults to '10.7.1').
    * Only used if firebaseConfig is provided.
-   * 
+   *
    * @category Data Collection
    */
   firebaseVersion?: string | undefined

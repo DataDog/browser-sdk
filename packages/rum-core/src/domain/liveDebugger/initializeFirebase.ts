@@ -71,10 +71,7 @@ function loadFirebaseScripts(version: string = '10.7.1'): Promise<void> {
 /**
  * Initialize Firebase Remote Config with the provided configuration
  */
-export async function initializeFirebase(
-  firebaseConfig: FirebaseConfig,
-  firebaseVersion?: string
-): Promise<void> {
+export async function initializeFirebase(firebaseConfig: FirebaseConfig, firebaseVersion?: string): Promise<void> {
   const browserWindow = window as BrowserWindow
   const version = firebaseVersion || '10.7.1'
 
@@ -122,4 +119,3 @@ export async function initializeFirebase(
     throw new Error('Firebase Remote Config is not available after initialization')
   }
 }
-

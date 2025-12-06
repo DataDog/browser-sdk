@@ -16,7 +16,7 @@
         background: white;
         border-radius: 8px;
         padding: 30px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       h1 {
         color: #632ca6;
@@ -136,7 +136,19 @@
         <h2>Configuration</h2>
         <div class="config-form">
           <label for="firebase-config">Firebase Config (JSON):</label>
-          <textarea id="firebase-config" rows="6" style="width: 100%; font-family: monospace; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;">{
+          <textarea
+            id="firebase-config"
+            rows="6"
+            style="
+              width: 100%;
+              font-family: monospace;
+              padding: 8px;
+              border: 1px solid #ddd;
+              border-radius: 4px;
+              box-sizing: border-box;
+            "
+          >
+{
   "apiKey": "AIzaSyBUV8fosbeULC8IrX1yuvKQaaKzHsAdUrU",
   "authDomain": "browser-sdk-tests.firebaseapp.com",
   "projectId": "browser-sdk-tests",
@@ -144,16 +156,27 @@
   "messagingSenderId": "609840907506",
   "appId": "1:609840907506:web:63e05236bd6d6fcd8cfc6b",
   "measurementId": "G-EB7770V45W"
-}</textarea>
+}</textarea
+          >
 
           <label for="live-debugger-id">Live Debugger ID (Firebase Remote Config parameter key):</label>
           <input type="text" id="live-debugger-id" value="123" placeholder="123" />
 
           <label for="datadog-client-token">Datadog Client Token:</label>
-          <input type="text" id="datadog-client-token" value="puba80e950e4c56f486a8a596d33016448e" placeholder="puba80e950e4c56f486a8a596d33016448e" />
+          <input
+            type="text"
+            id="datadog-client-token"
+            value="puba80e950e4c56f486a8a596d33016448e"
+            placeholder="puba80e950e4c56f486a8a596d33016448e"
+          />
 
           <label for="datadog-application-id">Datadog Application ID:</label>
-          <input type="text" id="datadog-application-id" value="a6361095-5776-401e-98f5-7b3514c3b673" placeholder="a6361095-5776-401e-98f5-7b3514c3b673" />
+          <input
+            type="text"
+            id="datadog-application-id"
+            value="a6361095-5776-401e-98f5-7b3514c3b673"
+            placeholder="a6361095-5776-401e-98f5-7b3514c3b673"
+          />
 
           <label for="datadog-site">Datadog Site:</label>
           <input type="text" id="datadog-site" value="datadoghq.com" placeholder="datadoghq.com" />
@@ -223,7 +246,7 @@
             const liveDebuggerId = document.getElementById('live-debugger-id').value
             const propertyKey = `dd_${liveDebuggerId}`
             const value = context[propertyKey]
-            
+
             if (value !== undefined) {
               contextDisplay.textContent = JSON.stringify({ [propertyKey]: value }, null, 2)
               contextDisplay.style.color = '#f8f8f2'
@@ -269,7 +292,10 @@
           // We still keep the mock Firebase for testing without a real Firebase project
           if (!(firebaseConfig.apiKey && firebaseConfig.apiKey !== 'your-api-key')) {
             // Mock Firebase for testing without real Firebase project
-            log('Using mock Firebase Remote Config (configure real Firebase config to use actual Remote Config)', 'warning')
+            log(
+              'Using mock Firebase Remote Config (configure real Firebase config to use actual Remote Config)',
+              'warning'
+            )
             window.firebase = {
               remoteConfig: () => ({
                 getValue: (key) => ({
@@ -343,7 +369,7 @@
 
             window.DD_RUM.init(rumConfig)
             log(`Datadog RUM SDK initialized with live debugger (ID: ${liveDebuggerId})`, 'success')
-            
+
             // Wait a bit for initialization, then check context
             setTimeout(() => {
               updateContextDisplay()
@@ -374,14 +400,20 @@
             const boolValue = value.asBoolean()
             const stringValue = value.asString()
             const source = value.getSource ? value.getSource() : 'unknown'
-            log(`Firebase Remote Config value for "${liveDebuggerId}": boolean=${boolValue}, string="${stringValue}", source=${source}`, 'info')
-            
+            log(
+              `Firebase Remote Config value for "${liveDebuggerId}": boolean=${boolValue}, string="${stringValue}", source=${source}`,
+              'info'
+            )
+
             // Also check what the SDK is actually setting
             if (window.DD_RUM && window.DD_RUM.getGlobalContext) {
               const context = window.DD_RUM.getGlobalContext()
               const propertyKey = `dd_${liveDebuggerId}`
               const contextValue = context[propertyKey]
-              log(`SDK Global Context "${propertyKey}": ${JSON.stringify(contextValue)}`, contextValue === true ? 'success' : 'warning')
+              log(
+                `SDK Global Context "${propertyKey}": ${JSON.stringify(contextValue)}`,
+                contextValue === true ? 'success' : 'warning'
+              )
             }
           } catch (error) {
             log(`Error checking Firebase value: ${error.message}`, 'error')
@@ -409,36 +441,37 @@
         if (window.DD_RUM && window.DD_RUM.liveDebug) {
           // Sample debug data matching the structure from sample_debug.json
           // This matches the dd-trace-js send method signature: send(message, logger, dd, snapshot)
-          const message = 'Executed org.springframework.samples.petclinic.vet.VetController.showVetList, it took 13.236871ms'
-          
+          const message =
+            'Executed org.springframework.samples.petclinic.vet.VetController.showVetList, it took 13.236871ms'
+
           const logger = {
             thread_id: 67,
             method: 'showVetList',
             thread_name: 'http-nio-8080-exec-5',
             name: 'org.springframework.samples.petclinic.vet.VetController',
-            version: 2
+            version: 2,
           }
-          
+
           // dd parameter - Datadog context (can be empty or contain dd-specific metadata)
           const dd = {}
-          
+
           // snapshot parameter - debugger snapshot data
           const snapshot = {
             stack: [
               {
                 fileName: 'VetController.java',
                 function: 'org.springframework.samples.petclinic.vet.VetController.showVetList',
-                lineNumber: 131
+                lineNumber: 131,
               },
               {
                 function: 'jdk.internal.reflect.GeneratedMethodAccessor130.invoke',
-                lineNumber: -1
+                lineNumber: -1,
               },
               {
                 fileName: 'DelegatingMethodAccessorImpl.java',
                 function: 'jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke',
-                lineNumber: 43
-              }
+                lineNumber: 43,
+              },
             ],
             captures: {
               return: {
@@ -448,24 +481,24 @@
                     fields: {
                       result: {
                         type: 'int',
-                        value: '0'
-                      }
-                    }
-                  }
-                }
-              }
+                        value: '0',
+                      },
+                    },
+                  },
+                },
+              },
             },
             language: 'java',
             id: 'baa4f52d-970f-46eb-acb7-bfe5fe466743',
             probe: {
               location: {
                 method: 'showVetList',
-                type: 'org.springframework.samples.petclinic.vet.VetController'
+                type: 'org.springframework.samples.petclinic.vet.VetController',
               },
               id: 'c5ac1d07-3898-41ce-bedb-df609049593f',
-              version: 0
+              version: 0,
             },
-            timestamp: Date.now()
+            timestamp: Date.now(),
           }
 
           window.DD_RUM.liveDebug(message, logger, dd, snapshot)
@@ -527,44 +560,46 @@
         if (initializeBtn) {
           initializeBtn.addEventListener('click', initializeSDKs)
         }
-        
+
         // Set up other button event listeners
         const refreshContextBtn = document.getElementById('refresh-context-btn')
         if (refreshContextBtn) {
           refreshContextBtn.addEventListener('click', refreshContext)
         }
-        
+
         const checkFirebaseBtn = document.getElementById('check-firebase-btn')
         if (checkFirebaseBtn) {
           checkFirebaseBtn.addEventListener('click', checkFirebaseValue)
         }
-        
+
         const sendTestLogBtn = document.getElementById('send-test-log-btn')
         if (sendTestLogBtn) {
           sendTestLogBtn.addEventListener('click', sendTestLog)
         }
-        
+
         const sendSampleDebugBtn = document.getElementById('send-sample-debug-btn')
         if (sendSampleDebugBtn) {
           sendSampleDebugBtn.addEventListener('click', sendSampleDebug)
         }
-        
+
         const fetchFirebaseBtn = document.getElementById('fetch-firebase-btn')
         if (fetchFirebaseBtn) {
           fetchFirebaseBtn.addEventListener('click', fetchFirebaseConfig)
         }
-        
+
         const clearLogsBtn = document.getElementById('clear-logs-btn')
         if (clearLogsBtn) {
           clearLogsBtn.addEventListener('click', clearLogs)
         }
-        
+
         const actionsSection = document.querySelector('.section:nth-of-type(4)')
         const setMockButton = document.createElement('button')
         setMockButton.textContent = 'Set Mock Firebase Value (Toggle)'
         setMockButton.addEventListener('click', setMockFirebaseValue)
         setMockButton.style.background = '#28a745'
-        actionsSection.querySelector('h2').parentNode.insertBefore(setMockButton, actionsSection.querySelector('h2').nextSibling)
+        actionsSection
+          .querySelector('h2')
+          .parentNode.insertBefore(setMockButton, actionsSection.querySelector('h2').nextSibling)
       })
 
       // Auto-refresh context display every 2 seconds
@@ -576,4 +611,3 @@
     </script>
   </body>
 </html>
-
