@@ -8,7 +8,7 @@
 
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { Site } from '@datadog/browser-core'
-import { onEntry, onReturn, onThrow } from '../domain/api'
+import { onEntry, onReturn, onThrow, sendDebuggerSnapshot } from '../domain/api'
 import { addProbe, getProbes, removeProbe, clearProbes } from '../domain/probes'
 import type { Probe } from '../domain/probes'
 
@@ -103,6 +103,17 @@ export interface LiveDebuggerPublicApi {
    * @category Probes
    */
   clearProbes: () => void
+
+  /**
+   * Send a debugger snapshot to Datadog logs.
+   *
+   * @category Live Debugger
+   * @param message - The log message
+   * @param logger - Logger information
+   * @param dd - Datadog context information
+   * @param snapshot - Debugger snapshot data
+   */
+  sendDebuggerSnapshot: (message?: string, logger?: any, dd?: any, snapshot?: any) => void
 }
 
 /**
@@ -131,6 +142,10 @@ function makeLiveDebuggerPublicApi(): LiveDebuggerPublicApi {
 
     clearProbes: () => {
       clearProbes()
+    },
+
+    sendDebuggerSnapshot: (message?: string, logger?: any, dd?: any, snapshot?: any) => {
+      sendDebuggerSnapshot(message, logger, dd, snapshot)
     },
   }
 }

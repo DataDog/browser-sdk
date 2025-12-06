@@ -442,7 +442,7 @@
       }
 
       function sendSampleDebug() {
-        if (window.DD_RUM && window.DD_RUM.liveDebug) {
+        if (window.DD_LIVE_DEBUGGER && window.DD_LIVE_DEBUGGER.sendDebuggerSnapshot) {
           // Sample debug data matching the structure from sample_debug.json
           // This matches the dd-trace-js send method signature: send(message, logger, dd, snapshot)
           const message =
@@ -505,12 +505,15 @@
             timestamp: Date.now(),
           }
 
-          window.DD_RUM.liveDebug(message, logger, dd, snapshot)
-          log(`Sent sample debug event using liveDebug`, 'success')
+          window.DD_LIVE_DEBUGGER.sendDebuggerSnapshot(message, logger, dd, snapshot)
+          log(`Sent sample debug event using sendDebuggerSnapshot`, 'success')
           log(`Message: ${message}`, 'info')
           log(`Logger: ${logger.name}`, 'info')
         } else {
-          log('liveDebug not available. Make sure DD_RUM.liveDebug is initialized.', 'error')
+          log(
+            'sendDebuggerSnapshot not available. Make sure DD_LIVE_DEBUGGER.sendDebuggerSnapshot is initialized.',
+            'error'
+          )
         }
       }
 

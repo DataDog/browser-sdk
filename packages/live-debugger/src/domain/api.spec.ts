@@ -1,29 +1,38 @@
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { onEntry, onReturn, onThrow } from './api'
+import { onEntry, onReturn, onThrow, sendDebuggerSnapshot } from './api'
 import { addProbe, getProbes, clearProbes } from './probes'
 import type { Probe } from './probes'
 
 describe('api', () => {
-  let mockRumLiveDebug: jasmine.Spy
+  let mockSendRawLog: jasmine.Spy
+  let mockGetInitConfiguration: jasmine.Spy
   let mockRumGetInternalContext: jasmine.Spy
 
   beforeEach(() => {
     clearProbes()
 
-    // Mock DD_RUM global
-    mockRumLiveDebug = jasmine.createSpy('liveDebug')
+    // Mock DD_LOGS global for liveDebug
+    mockSendRawLog = jasmine.createSpy('sendRawLog')
+    mockGetInitConfiguration = jasmine.createSpy('getInitConfiguration').and.returnValue({ service: 'test-service' })
+    ;(window as any).DD_LOGS = {
+      sendRawLog: mockSendRawLog,
+      getInitConfiguration: mockGetInitConfiguration,
+    }
+
+    // Mock DD_RUM global for context
     mockRumGetInternalContext = jasmine.createSpy('getInternalContext').and.returnValue({
       session_id: 'test-session',
       view: { id: 'test-view' },
       user_action: { id: 'test-action' },
+      application_id: 'test-app-id',
     })
     ;(window as any).DD_RUM = {
       version: '1.0.0',
-      liveDebug: mockRumLiveDebug,
       getInternalContext: mockRumGetInternalContext,
     }
 
     registerCleanupTask(() => {
+      delete (window as any).DD_LOGS
       delete (window as any).DD_RUM
     })
   })
@@ -53,7 +62,8 @@ describe('api', () => {
       onEntry(probes, self, args)
       onReturn(probes, 'result', self, args, {})
 
-      const snapshot = mockRumLiveDebug.calls.mostRecent().args[3]
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
 
       // Verify entry.arguments structure - now flat
       expect(snapshot.captures.entry.arguments).toEqual({
@@ -108,11 +118,13 @@ describe('api', () => {
       const result = onReturn(probes, 'returnValue', self, args, {})
 
       expect(result).toBe('returnValue')
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(1)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
 
-      const call = mockRumLiveDebug.calls.mostRecent()
-      expect(call.args[0]).toBe('Test message')
-      expect(call.args[3]).toEqual(jasmine.objectContaining({ id: jasmine.any(String), captures: jasmine.any(Object) }))
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      expect(payload.message).toBe('Test message')
+      expect(payload.debugger.snapshot).toEqual(
+        jasmine.objectContaining({ id: jasmine.any(String), captures: jasmine.any(Object) })
+      )
     })
 
     it('should skip probe if sampling budget exceeded', () => {
@@ -134,14 +146,14 @@ describe('api', () => {
       // First call should work
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(1)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
 
       // Second immediate call should be skipped (less than 2000ms passed)
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
 
       // Still only one call because sampling budget not refreshed
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(1)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
     })
 
     it('should evaluate condition at ENTRY', () => {
@@ -166,17 +178,17 @@ describe('api', () => {
       // Should fire when condition passes
       onEntry(probes, {}, { x: 10 })
       onReturn(probes, null, {}, { x: 10 }, {})
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(1)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
 
       clearProbes()
       addProbe(probe)
-      mockRumLiveDebug.calls.reset()
+      mockSendRawLog.calls.reset()
 
       probes = getProbes('TestClass;conditionEntry')!
       // Should not fire when condition fails
       onEntry(probes, {}, { x: 3 })
       onReturn(probes, null, {}, { x: 3 }, {})
-      expect(mockRumLiveDebug).not.toHaveBeenCalled()
+      expect(mockSendRawLog).not.toHaveBeenCalled()
     })
 
     it('should evaluate condition at EXIT with @return', () => {
@@ -201,17 +213,17 @@ describe('api', () => {
       // Should fire when return value > 10
       onEntry(probes, {}, {})
       onReturn(probes, 15, {}, {}, {})
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(1)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
 
       clearProbes()
       addProbe(probe)
-      mockRumLiveDebug.calls.reset()
+      mockSendRawLog.calls.reset()
 
       probes = getProbes('TestClass;conditionExit')!
       // Should not fire when return value <= 10
       onEntry(probes, {}, {})
       onReturn(probes, 5, {}, {}, {})
-      expect(mockRumLiveDebug).not.toHaveBeenCalled()
+      expect(mockSendRawLog).not.toHaveBeenCalled()
     })
 
     // TODO: Validate that this test is actually correct
@@ -233,7 +245,8 @@ describe('api', () => {
       onEntry(probes, { name: 'obj' }, { arg: 'value' })
       onReturn(probes, 'result', { name: 'obj' }, { arg: 'value' }, { local: 'data' })
 
-      const snapshot = mockRumLiveDebug.calls.mostRecent().args[3]
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
       expect(snapshot.captures).toEqual({
         entry: {
           arguments: {
@@ -276,7 +289,8 @@ describe('api', () => {
       onEntry(probes, {}, { arg: 'value' })
       onReturn(probes, true, {}, { arg: 'value' }, {})
 
-      const snapshot = mockRumLiveDebug.calls.mostRecent().args[3]
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.entry).toBeUndefined()
       expect(snapshot.captures.return).toBeDefined()
     })
@@ -306,7 +320,8 @@ describe('api', () => {
 
       onReturn(probes, null, {}, {}, {})
 
-      const snapshot = mockRumLiveDebug.calls.mostRecent().args[3]
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
       expect(snapshot.duration).toBeGreaterThan(0)
       expect(snapshot.duration).toBeGreaterThanOrEqual(10000000) // Should be in nanoseconds (>= 10ms)
     })
@@ -330,7 +345,8 @@ describe('api', () => {
       onEntry(probes, {}, {})
       onReturn(probes, null, {}, {}, {})
 
-      const dd = mockRumLiveDebug.calls.mostRecent().args[2]
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      const dd = payload.dd
       expect(dd).toEqual({
         trace_id: 'test-session',
         span_id: 'test-action',
@@ -360,7 +376,8 @@ describe('api', () => {
       onEntry(probes, self, args)
       onThrow(probes, error, self, args)
 
-      const snapshot = mockRumLiveDebug.calls.mostRecent().args[3]
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
 
       // Verify return.arguments structure - now flat
       expect(snapshot.captures.return.arguments).toEqual({
@@ -410,9 +427,10 @@ describe('api', () => {
       onEntry(probes, {}, { arg: 'value' })
       onThrow(probes, error, {}, { arg: 'value' })
 
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(1)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
 
-      const snapshot = mockRumLiveDebug.calls.mostRecent().args[3]
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      const snapshot = payload.debugger.snapshot
       expect(snapshot.captures.return.throwable).toEqual({
         message: 'Test error',
         stacktrace: jasmine.any(Array),
@@ -452,7 +470,7 @@ describe('api', () => {
       onEntry(probes, {}, {})
       onThrow(probes, error, {}, {})
 
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(1)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
     })
 
     it('should handle onThrow without preceding onEntry', () => {
@@ -475,7 +493,7 @@ describe('api', () => {
       onThrow(probes, error, {}, {})
 
       // Should work without errors
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(1)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -506,13 +524,39 @@ describe('api', () => {
       }
 
       // Should only get 25 calls (global limit)
-      expect(mockRumLiveDebug).toHaveBeenCalledTimes(25)
+      expect(mockSendRawLog).toHaveBeenCalledTimes(25)
     })
   })
 
   describe('error handling', () => {
     it('should handle missing DD_RUM gracefully', () => {
       delete (window as any).DD_RUM
+
+      const probe: Probe = {
+        id: 'test-probe',
+        version: 0,
+        type: 'LOG_PROBE',
+        where: { typeName: 'TestClass', methodName: 'errorHandling' },
+        template: 'Test',
+        captureSnapshot: false,
+        capture: {},
+        sampling: {},
+        evaluateAt: 'ENTRY',
+      }
+      addProbe(probe)
+
+      const probes = getProbes('TestClass;errorHandling')!
+      expect(() => {
+        onEntry(probes, {}, {})
+        onReturn(probes, null, {}, {}, {})
+      }).not.toThrow()
+
+      // Should still send to DD_LOGS even without DD_RUM
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
+    })
+
+    it('should handle missing DD_LOGS gracefully', () => {
+      delete (window as any).DD_LOGS
 
       const probe: Probe = {
         id: 'test-probe',
@@ -535,7 +579,102 @@ describe('api', () => {
         onReturn(probes, null, {}, {}, {})
       }).not.toThrow()
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(jasmine.stringContaining('DD_RUM.liveDebug is not available'))
+      // Should log a warning when DD_LOGS is not available
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'DD_LOGS.sendRawLog is not available. Make sure the Logs SDK is initialized to send debugger snapshots.'
+      )
+    })
+  })
+
+  describe('sendDebuggerSnapshot', () => {
+    it('should send log when DD_LOGS.sendRawLog is available', () => {
+      sendDebuggerSnapshot('test message', { name: 'test-logger' }, { version: '1.0' }, { captures: [] })
+
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      expect(payload.message).toBe('test message')
+      expect(payload.logger).toEqual({ name: 'test-logger' })
+      expect(payload.dd).toEqual({ version: '1.0' })
+      expect(payload.debugger).toEqual({ snapshot: { captures: [] } })
+    })
+
+    it('should handle when DD_LOGS is not available', () => {
+      delete (window as any).DD_LOGS
+
+      expect(() => {
+        sendDebuggerSnapshot('test message')
+      }).not.toThrow()
+    })
+
+    it('should handle when sendRawLog is not available', () => {
+      ;(window as any).DD_LOGS = {
+        getInitConfiguration: mockGetInitConfiguration,
+      }
+
+      expect(() => {
+        sendDebuggerSnapshot('test message')
+      }).not.toThrow()
+    })
+
+    it('should construct payload with correct structure matching dd-trace-js', () => {
+      sendDebuggerSnapshot('test message', { name: 'logger' }, { version: '1.0' }, { snapshot: 'data' })
+
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      expect(payload.ddsource).toBe('dd_debugger')
+      expect(payload.hostname).toBe(window.location.hostname)
+      expect(payload.service).toBe('test-service')
+      expect(payload.message).toBe('test message')
+      expect(payload.logger).toEqual({ name: 'logger' })
+      expect(payload.dd).toEqual({ version: '1.0' })
+      expect(payload.debugger).toEqual({ snapshot: { snapshot: 'data' } })
+      expect(payload.date).toBeDefined()
+      expect(payload.status).toBe('info')
+      expect(payload.origin).toBeDefined()
+    })
+
+    it('should include all parameters (message, logger, dd, snapshot)', () => {
+      const message = 'test message'
+      const logger = { name: 'test-logger', level: 'info' }
+      const dd = { version: '1.0', env: 'prod' }
+      const snapshot = { captures: [{ id: '1' }] }
+
+      sendDebuggerSnapshot(message, logger, dd, snapshot)
+
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      expect(payload.message).toBe(message)
+      expect(payload.logger).toBe(logger)
+      expect(payload.dd).toBe(dd)
+      expect(payload.debugger).toEqual({ snapshot })
+    })
+
+    it('should handle empty message', () => {
+      sendDebuggerSnapshot(undefined, { name: 'logger' }, {}, {})
+
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      expect(payload.message).toBe('')
+    })
+
+    it('should not include service if not available in config', () => {
+      mockGetInitConfiguration.and.returnValue({})
+      sendDebuggerSnapshot('test message')
+
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      expect(payload.service).toBeUndefined()
+    })
+
+    it('should handle when getInitConfiguration is not available', () => {
+      ;(window as any).DD_LOGS = {
+        sendRawLog: mockSendRawLog,
+      }
+      sendDebuggerSnapshot('test message')
+
+      expect(mockSendRawLog).toHaveBeenCalledTimes(1)
+      const payload = mockSendRawLog.calls.mostRecent().args[0]
+      expect(payload.service).toBeUndefined()
     })
   })
 })

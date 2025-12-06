@@ -1,4 +1,6 @@
 import type { RumPublicApi } from '@datadog/browser-rum-core'
+import type { Context } from '@datadog/browser-core'
+import { timeStampNow, ErrorSource } from '@datadog/browser-core'
 import { capture, captureFields } from './capture'
 import { type InitializedProbe, checkGlobalSnapshotBudget } from './probes'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
@@ -26,7 +28,26 @@ interface ActiveEntry {
   exception?: Error
 }
 
+interface BrowserWindow extends Window {
+  DD_LOGS?: {
+    logger?: {
+      info: (message: string, context?: Context) => void
+    }
+    sendRawLog?: (log: any) => void
+    getInitConfiguration?: () => { service?: string } | undefined
+  }
+}
+
 const active = new Map<string, Array<ActiveEntry | null>>()
+
+// Cache hostname at module initialization since it won't change during the app lifetime
+const hostname = typeof window !== 'undefined' && window.location ? window.location.hostname : 'unknown'
+
+// Lazy cache for application_id - once RUM is initialized, this won't change
+let cachedApplicationId: string | undefined | null = null // null = not yet fetched, undefined = no app_id available
+
+// Track if we've already warned about missing DD_LOGS to avoid spam
+let hasWarnedAboutMissingLogs = false
 
 /**
  * Called when entering an instrumented function
@@ -232,25 +253,81 @@ function done(probe: any, result: ActiveEntry): void {
 
   // Send the snapshot to the backend via liveDebug
   const rumApi = (window as Window & { DD_RUM?: RumPublicApi }).DD_RUM
-  if (rumApi && typeof rumApi.liveDebug === 'function') {
-    // TODO: Fill out logger with the right information
-    const logger = {
-      name: 'dd.debugger',
-      method: probe.location?.method,
-      thread_name: 'main',
-      thread_id: 1,
-      version: rumApi.version,
-    }
 
-    // Get the RUM internal context for trace correlation
-    const rumContext = rumApi.getInternalContext?.()
-    const dd = {
-      trace_id: rumContext?.session_id,
-      span_id: rumContext?.user_action?.id || rumContext?.view?.id,
-    }
-
-    rumApi.liveDebug(result.message, logger, dd, snapshot)
-  } else {
-    console.warn('DD_RUM.liveDebug is not available. Make sure the RUM SDK is initialized.')
+  // TODO: Fill out logger with the right information
+  const logger = {
+    name: 'dd.debugger',
+    method: probe.location?.method,
+    thread_name: 'main',
+    thread_id: 1,
+    version: rumApi?.version,
   }
+
+  // Get the RUM internal context for trace correlation
+  const rumContext = rumApi?.getInternalContext?.()
+  const dd = {
+    trace_id: rumContext?.session_id,
+    span_id: rumContext?.user_action?.id || rumContext?.view?.id,
+  }
+
+  sendDebuggerSnapshot(result.message, logger, dd, snapshot)
+}
+
+/**
+ * Send a debugger snapshot to Datadog logs, matching dd-trace-js send method signature.
+ * This function sends debugger snapshot logs directly to the logs endpoint without default RUM context.
+ *
+ * @param message - The log message
+ * @param logger - Logger information
+ * @param dd - Datadog context information
+ * @param snapshot - Debugger snapshot data
+ */
+// TODO: Don't export this once the firebase code is removed
+export function sendDebuggerSnapshot(message?: string, logger?: any, dd?: any, snapshot?: any): void {
+  const browserWindow = window as BrowserWindow
+
+  if (!browserWindow.DD_LOGS?.sendRawLog) {
+    if (!hasWarnedAboutMissingLogs) {
+      console.warn(
+        'DD_LOGS.sendRawLog is not available. Make sure the Logs SDK is initialized to send debugger snapshots.'
+      )
+      hasWarnedAboutMissingLogs = true
+    }
+    return
+  }
+
+  // Get service from logs initialization configuration (defined during DD_LOGS.init())
+  const initConfig = browserWindow.DD_LOGS.getInitConfiguration?.()
+  const service = initConfig?.service
+
+  // Get application_id from RUM internal context if available (same way regular loggers get it)
+  // Only cache if we get a value or confirm RUM is initialized (to handle late RUM initialization)
+  if (cachedApplicationId === null) {
+    const ddRum = (window as any).DD_RUM
+    if (ddRum && typeof ddRum.getInternalContext === 'function') {
+      try {
+        const getInternalContext = ddRum.getInternalContext as (
+          startTime?: number
+        ) => { application_id?: string } | undefined
+        const rumInternalContext = getInternalContext()
+        cachedApplicationId = rumInternalContext?.application_id
+      } catch {}
+    }
+  }
+
+  const payload = {
+    date: timeStampNow(),
+    message: message || '',
+    status: 'info' as const,
+    origin: ErrorSource.LOGGER,
+    ddsource: 'dd_debugger',
+    hostname,
+    ...(service && { service }),
+    ...(cachedApplicationId && { application_id: cachedApplicationId }),
+    logger,
+    dd,
+    debugger: { snapshot },
+  }
+
+  browserWindow.DD_LOGS.sendRawLog(payload)
 }
