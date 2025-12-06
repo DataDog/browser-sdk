@@ -46,6 +46,7 @@ describe('firebaseRemoteConfig', () => {
       const liveDebuggerId = 'test-id-123'
       mockFirebaseRemoteConfig.getValue.and.returnValue({
         asBoolean: () => true,
+        asString: () => 'true',
       })
 
       await startFirebaseRemoteConfigIntegration(globalContext, liveDebuggerId)
@@ -57,6 +58,7 @@ describe('firebaseRemoteConfig', () => {
       const liveDebuggerId = 'test-id-123'
       mockFirebaseRemoteConfig.getValue.and.returnValue({
         asBoolean: () => true,
+        asString: () => 'true',
       })
 
       await startFirebaseRemoteConfigIntegration(globalContext, liveDebuggerId)
@@ -81,6 +83,7 @@ describe('firebaseRemoteConfig', () => {
       if (configUpdateCallback) {
         mockFirebaseRemoteConfig.getValue.and.returnValue({
           asBoolean: () => false,
+          asString: () => 'false',
         })
         configUpdateCallback()
       }

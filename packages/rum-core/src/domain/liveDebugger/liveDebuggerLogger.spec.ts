@@ -27,7 +27,7 @@ describe('liveDebuggerLogger', () => {
 
       sendLiveDebuggerLog(data)
 
-      expect(mockLogger.info).toHaveBeenCalledWith('Live Debugger event', data)
+      expect(mockLogger.info).toHaveBeenCalledWith('Live Debugger event', { debuggerContext: data })
     })
 
     it('should handle when DD_LOGS is not available', () => {
@@ -56,7 +56,7 @@ describe('liveDebuggerLogger', () => {
 
       sendLiveDebuggerLog(data)
 
-      expect(mockLogger.info).toHaveBeenCalledWith('Live Debugger event', data)
+      expect(mockLogger.info).toHaveBeenCalledWith('Live Debugger event', { debuggerContext: data })
     })
   })
 
@@ -71,11 +71,6 @@ describe('liveDebuggerLogger', () => {
         sendRawLog: mockSendRawLog,
         getInitConfiguration: mockGetInitConfiguration,
       }
-      // Mock window.location.hostname
-      Object.defineProperty(window, 'location', {
-        value: { hostname: 'test-hostname' },
-        writable: true,
-      })
     })
 
     it('should send log when DD_LOGS.sendRawLog is available', () => {
@@ -115,7 +110,7 @@ describe('liveDebuggerLogger', () => {
       expect(mockSendRawLog).toHaveBeenCalledTimes(1)
       const payload = mockSendRawLog.calls.mostRecent().args[0]
       expect(payload.ddsource).toBe('dd_debugger')
-      expect(payload.hostname).toBe('test-hostname')
+      expect(payload.hostname).toBe(window.location.hostname)
       expect(payload.service).toBe('test-service')
       expect(payload.message).toBe('test message')
       expect(payload.logger).toEqual({ name: 'logger' })
