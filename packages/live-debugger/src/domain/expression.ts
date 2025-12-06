@@ -7,32 +7,111 @@
 
 const identifierRegex = /^[@a-zA-Z_$][\w$]*$/
 
-// Reserved words that cannot be used as identifiers
+// The following identifiers have purposefully not been included in this list:
+// - The reserved words `this` and `super` as they can have valid use cases as `ref` values
+// - The literals `undefined` and `Infinity` as they can be useful as `ref` values, especially to check if a
+//   variable is `undefined`.
+// - The following future reserved words in older standards, as they can now be used safely:
+//   `abstract`, `boolean`, `byte`, `char`, `double`, `final`, `float`, `goto`, `int`, `long`, `native`, `short`,
+//   `synchronized`, `throws`, `transient`, `volatile`.
 const reservedWords = new Set([
   // Reserved words
-  'break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'export',
-  'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null', 'return',
-  'switch', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with',
+  'break',
+  'case',
+  'catch',
+  'class',
+  'const',
+  'continue',
+  'debugger',
+  'default',
+  'delete',
+  'do',
+  'else',
+  'export',
+  'extends',
+  'false',
+  'finally',
+  'for',
+  'function',
+  'if',
+  'import',
+  'in',
+  'instanceof',
+  'new',
+  'null',
+  'return',
+  'switch',
+  'throw',
+  'true',
+  'try',
+  'typeof',
+  'var',
+  'void',
+  'while',
+  'with',
+
   // Reserved in strict mode
-  'let', 'static', 'yield',
-  // Reserved in module code or async function bodies
+  'let',
+  'static',
+  'yield',
+
+  // Reserved in module code or async function bodies:
   'await',
+
   // Future reserved words
   'enum',
+
   // Future reserved words in strict mode
-  'implements', 'interface', 'package', 'private', 'protected', 'public',
+  'implements',
+  'interface',
+  'package',
+  'private',
+  'protected',
+  'public',
+
   // Literals
-  'NaN'
+  'NaN',
 ])
 
 const PRIMITIVE_TYPES = new Set(['string', 'number', 'bigint', 'boolean', 'undefined', 'symbol', 'null'])
 
+export type ExpressionNode =
+  | null
+  | string
+  | number
+  | boolean
+  | { not: ExpressionNode }
+  | { len: ExpressionNode }
+  | { count: ExpressionNode }
+  | { isEmpty: ExpressionNode }
+  | { isDefined: ExpressionNode }
+  | { instanceof: [ExpressionNode, string] }
+  | { ref: string }
+  | { eq: ExpressionNode[] }
+  | { ne: ExpressionNode[] }
+  | { gt: ExpressionNode[] }
+  | { ge: ExpressionNode[] }
+  | { lt: ExpressionNode[] }
+  | { le: ExpressionNode[] }
+  | { any: ExpressionNode[] }
+  | { all: ExpressionNode[] }
+  | { and: ExpressionNode[] }
+  | { or: ExpressionNode[] }
+  | { startsWith: ExpressionNode[] }
+  | { endsWith: ExpressionNode[] }
+  | { contains: ExpressionNode[] }
+  | { matches: ExpressionNode[] }
+  | { filter: ExpressionNode[] }
+  | { substring: ExpressionNode[] }
+  | { getmember: ExpressionNode[] }
+  | { index: ExpressionNode[] }
+
 /**
  * Compile a DSL expression node to JavaScript code
- * @param {*} node - DSL expression node
- * @returns {string} - Compiled JavaScript code
+ * @param node - DSL expression node
+ * @returns Compiled JavaScript code as a string, or raw primitive values
  */
-export function compile (node) {
+export function compile(node: ExpressionNode): string | number | boolean | null {
   if (node === null || typeof node === 'number' || typeof node === 'boolean') {
     return node
   } else if (typeof node === 'string') {
@@ -42,49 +121,60 @@ export function compile (node) {
   const [type, value] = Object.entries(node)[0]
 
   if (type === 'not') {
-    return `!(${compile(value)})`
+    return `!(${compile(value as ExpressionNode)})`
   } else if (type === 'len' || type === 'count') {
-    return getSize(compile(value))
+    return getSize(compile(value as ExpressionNode) as string)
   } else if (type === 'isEmpty') {
-    return `${getSize(compile(value))} === 0`
+    return `${getSize(compile(value as ExpressionNode) as string)} === 0`
   } else if (type === 'isDefined') {
     return `(() => {
       try {
-        ${compile(value)}
+        ${compile(value as ExpressionNode)}
         return true
       } catch {
         return false
       }
     })()`
   } else if (type === 'instanceof') {
-    return isPrimitiveType(value[1])
-      ? `(typeof ${compile(value[0])} === '${value[1]}')`
-      : `Function.prototype[Symbol.hasInstance].call(${assertIdentifier(value[1])}, ${compile(value[0])})`
+    const [target, typeName] = value as [ExpressionNode, string]
+    return isPrimitiveType(typeName)
+      ? `(typeof ${compile(target)} === '${typeName}')`
+      : `Function.prototype[Symbol.hasInstance].call(${assertIdentifier(typeName)}, ${compile(target)})`
   } else if (type === 'ref') {
-    if (value === '@it') {
-      return '$dd_it'
-    } else if (value === '@key') {
-      return '$dd_key'
-    } else if (value === '@value') {
-      return '$dd_value'
+    const refValue = value as string
+    if (refValue.startsWith('@')) {
+      return '$dd_' + refValue.slice(1)
     }
-    return assertIdentifier(value)
+    return assertIdentifier(refValue)
   } else if (Array.isArray(value)) {
-    const args = value.map(compile)
+    const args = value.map((v) => compile(v as ExpressionNode))
     switch (type) {
-      case 'eq': return `(${args[0]}) === (${args[1]})`
-      case 'ne': return `(${args[0]}) !== (${args[1]})`
-      case 'gt': return `${guardAgainstCoercionSideEffects(args[0])} > ${guardAgainstCoercionSideEffects(args[1])}`
-      case 'ge': return `${guardAgainstCoercionSideEffects(args[0])} >= ${guardAgainstCoercionSideEffects(args[1])}`
-      case 'lt': return `${guardAgainstCoercionSideEffects(args[0])} < ${guardAgainstCoercionSideEffects(args[1])}`
-      case 'le': return `${guardAgainstCoercionSideEffects(args[0])} <= ${guardAgainstCoercionSideEffects(args[1])}`
-      case 'any': return iterateOn('some', ...args)
-      case 'all': return iterateOn('every', ...args)
-      case 'and': return `(${args.join(') && (')})`
-      case 'or': return `(${args.join(') || (')})`
-      case 'startsWith': return `String.prototype.startsWith.call(${assertString(args[0])}, ${assertString(args[1])})`
-      case 'endsWith': return `String.prototype.endsWith.call(${assertString(args[0])}, ${assertString(args[1])})`
-      case 'contains': return `((obj, elm) => {
+      case 'eq':
+        return `(${args[0]}) === (${args[1]})`
+      case 'ne':
+        return `(${args[0]}) !== (${args[1]})`
+      case 'gt':
+        return `${guardAgainstCoercionSideEffects(args[0])} > ${guardAgainstCoercionSideEffects(args[1])}`
+      case 'ge':
+        return `${guardAgainstCoercionSideEffects(args[0])} >= ${guardAgainstCoercionSideEffects(args[1])}`
+      case 'lt':
+        return `${guardAgainstCoercionSideEffects(args[0])} < ${guardAgainstCoercionSideEffects(args[1])}`
+      case 'le':
+        return `${guardAgainstCoercionSideEffects(args[0])} <= ${guardAgainstCoercionSideEffects(args[1])}`
+      case 'any':
+        return iterateOn('some', args[0] as string, args[1] as string)
+      case 'all':
+        return iterateOn('every', args[0] as string, args[1] as string)
+      case 'and':
+        return `(${args.join(') && (')})`
+      case 'or':
+        return `(${args.join(') || (')})`
+      case 'startsWith':
+        return `String.prototype.startsWith.call(${assertString(args[0])}, ${assertString(args[1])})`
+      case 'endsWith':
+        return `String.prototype.endsWith.call(${assertString(args[0])}, ${assertString(args[1])})`
+      case 'contains':
+        return `((obj, elm) => {
           if (${isString('obj')}) {
             return String.prototype.includes.call(obj, elm)
           } else if (Array.isArray(obj)) {
@@ -103,7 +193,8 @@ export function compile (node) {
             throw new TypeError('Variable does not support contains')
           }
         })(${args[0]}, ${args[1]})`
-      case 'matches': return `((str, regex) => {
+      case 'matches':
+        return `((str, regex) => {
           if (${isString('str')}) {
             const regexIsString = ${isString('regex')}
             if (regexIsString || Object.getPrototypeOf(regex) === RegExp.prototype) {
@@ -115,7 +206,8 @@ export function compile (node) {
             throw new TypeError('Variable is not a string')
           }
         })(${args[0]}, ${args[1]})`
-      case 'filter': return `(($dd_var) => {
+      case 'filter':
+        return `(($dd_var) => {
           return ${isIterableCollection('$dd_var')}
             ? Array.from($dd_var).filter(($dd_it) => ${args[1]})
             : Object.entries($dd_var).reduce((acc, [$dd_key, $dd_value]) => {
@@ -123,22 +215,25 @@ export function compile (node) {
                 return acc
               }, {})
         })(${args[0]})`
-      case 'substring': return `((str) => {
+      case 'substring':
+        return `((str) => {
           if (${isString('str')}) {
             return String.prototype.substring.call(str, ${args[1]}, ${args[2]})
           } else {
             throw new TypeError('Variable is not a string')
           }
         })(${args[0]})`
-      case 'getmember': return accessProperty(args[0], args[1], false)
-      case 'index': return accessProperty(args[0], args[1], true)
+      case 'getmember':
+        return accessProperty(args[0] as string, args[1] as string, false)
+      case 'index':
+        return accessProperty(args[0] as string, args[1] as string, true)
     }
   }
 
   throw new TypeError(`Unknown AST node type: ${type}`)
 }
 
-function iterateOn (fnName, variable, callbackCode) {
+function iterateOn(fnName: string, variable: string, callbackCode: string): string {
   return `(($dd_val) => {
     return ${isIterableCollection('$dd_val')}
       ? Array.from($dd_val).${fnName}(($dd_it) => ${callbackCode})
@@ -146,32 +241,34 @@ function iterateOn (fnName, variable, callbackCode) {
   })(${variable})`
 }
 
-function isString (variable) {
+function isString(variable: string): string {
   return `(typeof ${variable} === 'string' || ${variable} instanceof String)`
 }
 
-function isPrimitiveType (type) {
+function isPrimitiveType(type: string): boolean {
   return PRIMITIVE_TYPES.has(type)
 }
 
-function isIterableCollection (variable) {
-  return `(${isArrayOrTypedArray(variable)} || ${isInstanceOf('Set', variable)} || ` +
+function isIterableCollection(variable: string): string {
+  return (
+    `(${isArrayOrTypedArray(variable)} || ${isInstanceOf('Set', variable)} || ` +
     `${isInstanceOf('WeakSet', variable)})`
+  )
 }
 
-function isArrayOrTypedArray (variable) {
+function isArrayOrTypedArray(variable: string): string {
   return `(Array.isArray(${variable}) || ${isTypedArray(variable)})`
 }
 
-function isTypedArray (variable) {
+function isTypedArray(variable: string): string {
   return `(${variable} instanceof Object.getPrototypeOf(Int8Array))`
 }
 
-function isInstanceOf (type, variable) {
+function isInstanceOf(type: string, variable: string): string {
   return `(${variable} instanceof ${type})`
 }
 
-function getSize (variable) {
+function getSize(variable: string): string {
   return `((val) => {
     if (${isString('val')} || ${isArrayOrTypedArray('val')}) {
       return ${guardAgainstPropertyAccessSideEffects('val', '"length"')}
@@ -187,16 +284,12 @@ function getSize (variable) {
   })(${variable})`
 }
 
-function accessProperty (variable, keyOrIndex, allowMapAccess) {
+function accessProperty(variable: string, keyOrIndex: string, allowMapAccess: boolean): string {
   return `((val, key) => {
     if (${isInstanceOf('Map', 'val')}) {
-      ${allowMapAccess
-        ? 'return Map.prototype.get.call(val, key)'
-        : 'throw new Error(\'Accessing a Map is not allowed\')'}
+      ${allowMapAccess ? 'return Map.prototype.get.call(val, key)' : "throw new Error('Accessing a Map is not allowed')"}
     } else if (${isInstanceOf('WeakMap', 'val')}) {
-      ${allowMapAccess
-        ? 'return WeakMap.prototype.get.call(val, key)'
-        : 'throw new Error(\'Accessing a WeakMap is not allowed\')'}
+      ${allowMapAccess ? 'return WeakMap.prototype.get.call(val, key)' : "throw new Error('Accessing a WeakMap is not allowed')"}
     } else if (${isInstanceOf('Set', 'val')} || ${isInstanceOf('WeakSet', 'val')}) {
       throw new Error('Accessing a Set or WeakSet is not allowed')
     } else {
@@ -205,7 +298,7 @@ function accessProperty (variable, keyOrIndex, allowMapAccess) {
   })(${variable}, ${keyOrIndex})`
 }
 
-function guardAgainstPropertyAccessSideEffects (variable, propertyName) {
+function guardAgainstPropertyAccessSideEffects(variable: string, propertyName: string): string {
   return `((val, key) => {
     if (Object.getOwnPropertyDescriptor(val, key)?.get !== undefined) {
       throw new Error('Possibility of side effect')
@@ -215,9 +308,9 @@ function guardAgainstPropertyAccessSideEffects (variable, propertyName) {
   })(${variable}, ${propertyName})`
 }
 
-function guardAgainstCoercionSideEffects (variable) {
+function guardAgainstCoercionSideEffects(variable: string | number | boolean | null): string {
   // shortcut if we're comparing number literals
-  if (typeof variable === 'number') return variable
+  if (typeof variable === 'number') return String(variable)
 
   return `((val) => {
     if (
@@ -234,7 +327,7 @@ function guardAgainstCoercionSideEffects (variable) {
   })(${variable})`
 }
 
-function assertString (variable) {
+function assertString(variable: string | number | boolean | null): string {
   return `((val) => {
     if (${isString('val')}) {
       return val
@@ -244,10 +337,9 @@ function assertString (variable) {
   })(${variable})`
 }
 
-function assertIdentifier (value) {
+function assertIdentifier(value: string): string {
   if (!identifierRegex.test(value) || reservedWords.has(value)) {
     throw new SyntaxError(`Illegal identifier: ${value}`)
   }
   return value
 }
-

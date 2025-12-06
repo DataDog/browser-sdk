@@ -126,7 +126,6 @@
         background: white;
       }
     </style>
-    <script src="debugger/index.js" type="module"></script>
   </head>
   <body>
     <div class="container">
@@ -220,6 +219,11 @@
     <!-- Datadog SDKs (using local dev server) -->
     <script src="http://localhost:8080/datadog-rum.js"></script>
     <script src="http://localhost:8080/datadog-logs.js"></script>
+    <script src="http://localhost:8080/datadog-live-debugger.js"></script>
+
+    <!-- Live Debugger Configuration -->
+    <script src="debugger.js"></script>
+    <script src="probes-go-here.js"></script>
 
     <script>
       let isInitialized = false
