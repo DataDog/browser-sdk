@@ -22,7 +22,7 @@ const MAX_MESSAGE_LENGTH = 8 * 1024 // 8KB
 export function sendLiveDebuggerLog(data: object): void {
   const browserWindow = window as BrowserWindow
   if (browserWindow.DD_LOGS?.logger?.info) {
-    browserWindow.DD_LOGS.logger.info('Live Debugger event', {debuggerContext: data} as Context)
+    browserWindow.DD_LOGS.logger.info('Live Debugger event', { debuggerContext: data } as Context)
   }
 }
 
@@ -37,14 +37,14 @@ export function sendLiveDebuggerLog(data: object): void {
  */
 export function liveDebug(message?: string, logger?: any, dd?: any, snapshot?: any): void {
   const browserWindow = window as BrowserWindow
-  
+
   if (!browserWindow.DD_LOGS?.sendRawLog) {
     return
   }
 
   // Get hostname from browser
   const hostname = typeof window !== 'undefined' && window.location ? window.location.hostname : 'unknown'
-  
+
   // Get service from logs initialization configuration (defined during DD_LOGS.init())
   const initConfig = browserWindow.DD_LOGS.getInitConfiguration?.()
   const service = initConfig?.service
@@ -54,7 +54,9 @@ export function liveDebug(message?: string, logger?: any, dd?: any, snapshot?: a
   try {
     const ddRum = (window as any).DD_RUM
     if (ddRum && typeof ddRum.getInternalContext === 'function') {
-      const getInternalContext = ddRum.getInternalContext as (startTime?: number) => { application_id?: string } | undefined
+      const getInternalContext = ddRum.getInternalContext as (
+        startTime?: number
+      ) => { application_id?: string } | undefined
       const rumInternalContext = getInternalContext()
       applicationId = rumInternalContext?.application_id
     }
@@ -83,5 +85,3 @@ export function liveDebug(message?: string, logger?: any, dd?: any, snapshot?: a
 
   browserWindow.DD_LOGS.sendRawLog(payload)
 }
-
-

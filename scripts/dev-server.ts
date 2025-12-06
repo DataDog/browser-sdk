@@ -9,7 +9,7 @@ import { printLog, runMain } from './lib/executionUtils.ts'
 const sandboxPath = './sandbox'
 const port = 8080
 
-const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'flagging', 'worker']
+const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'flagging', 'worker', 'live-debugger']
 
 runMain(() => {
   const app = express()
