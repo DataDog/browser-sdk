@@ -13,7 +13,9 @@ describe('api', () => {
 
     // Mock DD_LOGS global for liveDebug
     mockSendRawLog = jasmine.createSpy('sendRawLog')
-    mockGetInitConfiguration = jasmine.createSpy('getInitConfiguration').and.returnValue({ service: 'test-service' })
+    mockGetInitConfiguration = jasmine
+      .createSpy('getInitConfiguration')
+      .and.returnValue({ service: 'test-service', env: 'test-env' })
     ;(window as any).DD_LOGS = {
       sendRawLog: mockSendRawLog,
       getInitConfiguration: mockGetInitConfiguration,
@@ -571,24 +573,17 @@ describe('api', () => {
       }
       addProbe(probe)
 
-      const consoleWarnSpy = spyOn(console, 'warn')
-
       const probes = getProbes('TestClass;errorHandling')!
       expect(() => {
         onEntry(probes, {}, {})
         onReturn(probes, null, {}, {}, {})
       }).not.toThrow()
-
-      // Should log a warning when DD_LOGS is not available
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'DD_LOGS.sendRawLog is not available. Make sure the Logs SDK is initialized to send debugger snapshots.'
-      )
     })
   })
 
   describe('sendDebuggerSnapshot', () => {
     it('should send log when DD_LOGS.sendRawLog is available', () => {
-      sendDebuggerSnapshot('test message', { name: 'test-logger' }, { version: '1.0' }, { captures: [] })
+      sendDebuggerSnapshot({ name: 'test-logger' }, { version: '1.0' }, { captures: [] }, 'test message')
 
       expect(mockSendRawLog).toHaveBeenCalledTimes(1)
       const payload = mockSendRawLog.calls.mostRecent().args[0]
@@ -602,7 +597,7 @@ describe('api', () => {
       delete (window as any).DD_LOGS
 
       expect(() => {
-        sendDebuggerSnapshot('test message')
+        sendDebuggerSnapshot({}, {}, {}, 'test message')
       }).not.toThrow()
     })
 
@@ -612,25 +607,27 @@ describe('api', () => {
       }
 
       expect(() => {
-        sendDebuggerSnapshot('test message')
+        sendDebuggerSnapshot({}, {}, {}, 'test message')
       }).not.toThrow()
     })
 
     it('should construct payload with correct structure matching dd-trace-js', () => {
-      sendDebuggerSnapshot('test message', { name: 'logger' }, { version: '1.0' }, { snapshot: 'data' })
+      const timestamp = Date.now()
+      sendDebuggerSnapshot({ name: 'logger' }, { version: '1.0' }, { timestamp, data: 'test' }, 'test message')
 
       expect(mockSendRawLog).toHaveBeenCalledTimes(1)
       const payload = mockSendRawLog.calls.mostRecent().args[0]
-      expect(payload.ddsource).toBe('dd_debugger')
       expect(payload.hostname).toBe(window.location.hostname)
       expect(payload.service).toBe('test-service')
+      expect(payload.ddtags).toContain('env:test-env')
+      expect(payload.ddtags).toContain('service:test-service')
       expect(payload.message).toBe('test message')
       expect(payload.logger).toEqual({ name: 'logger' })
       expect(payload.dd).toEqual({ version: '1.0' })
-      expect(payload.debugger).toEqual({ snapshot: { snapshot: 'data' } })
-      expect(payload.date).toBeDefined()
+      expect(payload.debugger).toEqual({ snapshot: { timestamp, data: 'test' } })
+      expect(payload.date).toBe(timestamp)
       expect(payload.status).toBe('info')
-      expect(payload.origin).toBeDefined()
+      expect(payload.origin).toBe('logger')
     })
 
     it('should include all parameters (message, logger, dd, snapshot)', () => {
@@ -639,7 +636,7 @@ describe('api', () => {
       const dd = { version: '1.0', env: 'prod' }
       const snapshot = { captures: [{ id: '1' }] }
 
-      sendDebuggerSnapshot(message, logger, dd, snapshot)
+      sendDebuggerSnapshot(logger, dd, snapshot, message)
 
       expect(mockSendRawLog).toHaveBeenCalledTimes(1)
       const payload = mockSendRawLog.calls.mostRecent().args[0]
@@ -650,31 +647,33 @@ describe('api', () => {
     })
 
     it('should handle empty message', () => {
-      sendDebuggerSnapshot(undefined, { name: 'logger' }, {}, {})
+      sendDebuggerSnapshot({ name: 'logger' }, {}, {})
 
       expect(mockSendRawLog).toHaveBeenCalledTimes(1)
       const payload = mockSendRawLog.calls.mostRecent().args[0]
       expect(payload.message).toBe('')
     })
 
-    it('should not include service if not available in config', () => {
-      mockGetInitConfiguration.and.returnValue({})
-      sendDebuggerSnapshot('test message')
+    it('should handle when getInitConfiguration is not available', () => {
+      ;(window as any).DD_LOGS = {
+        sendRawLog: mockSendRawLog,
+      }
+      sendDebuggerSnapshot({}, {}, {}, 'test message')
 
       expect(mockSendRawLog).toHaveBeenCalledTimes(1)
       const payload = mockSendRawLog.calls.mostRecent().args[0]
       expect(payload.service).toBeUndefined()
     })
 
-    it('should handle when getInitConfiguration is not available', () => {
-      ;(window as any).DD_LOGS = {
-        sendRawLog: mockSendRawLog,
-      }
-      sendDebuggerSnapshot('test message')
+    it('should handle when env is not configured', () => {
+      mockGetInitConfiguration.and.returnValue({ service: 'test-service' })
+      sendDebuggerSnapshot({}, {}, {}, 'test message')
 
       expect(mockSendRawLog).toHaveBeenCalledTimes(1)
       const payload = mockSendRawLog.calls.mostRecent().args[0]
-      expect(payload.service).toBeUndefined()
+      expect(payload.service).toBe('test-service')
+      expect(payload.ddtags).toContain('service:test-service')
+      expect(payload.ddtags).not.toContain('env:')
     })
   })
 })

@@ -1,5 +1,3 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import { compile } from './expression'
 import {
   literals,
   references,
@@ -14,6 +12,8 @@ import {
   typeAndDefinitionChecks,
 } from '../../test'
 import type { TestCase } from '../../test'
+
+import { compile } from './expression'
 
 // Flatten all test cases into a single array
 const testCases: TestCase[] = [
@@ -77,10 +77,12 @@ describe('Expression language', () => {
           : `return ${compiledCode}`
 
         // Create a function with the vars as parameters
+        // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
         const fn = new Function(...Object.keys(vars), code)
         const args = Object.values(vars)
 
         if (expected instanceof Error) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
           expect(() => fn(...args)).toThrowError(expected.constructor as new (...args: any[]) => Error)
         } else {
           const result = runWithDebug(fn, args)
@@ -124,25 +126,25 @@ describe('Expression language', () => {
 
   describe('evaluation edge cases', () => {
     it('should evaluate literal comparisons correctly', () => {
-      const x = 15
+      const x = 15 // eslint-disable-line @typescript-eslint/no-unused-vars
       const compiled = compile({ gt: [{ ref: 'x' }, 10] })
       const code = typeof compiled === 'string' ? compiled : String(compiled)
-      const result = eval(code)
+      const result = eval(code) // eslint-disable-line no-eval
       expect(result).toBe(true)
     })
 
     it('should handle literal in left position', () => {
-      const x = 5
+      const x = 5 // eslint-disable-line @typescript-eslint/no-unused-vars
       const compiled = compile({ gt: [10, { ref: 'x' }] })
       const code = typeof compiled === 'string' ? compiled : String(compiled)
-      const result = eval(code)
+      const result = eval(code) // eslint-disable-line no-eval
       expect(result).toBe(true)
     })
 
     it('should handle both literals', () => {
       const compiled = compile({ gt: [20, 10] })
       const code = typeof compiled === 'string' ? compiled : String(compiled)
-      const result = eval(code)
+      const result = eval(code) // eslint-disable-line no-eval
       expect(result).toBe(true)
     })
   })
@@ -188,9 +190,15 @@ function generateTestCaseName(
 
 function serialize(value: any): string {
   try {
-    if (value === undefined) return 'undefined'
-    if (typeof value === 'function') return 'function'
-    if (typeof value === 'symbol') return value.toString()
+    if (value === undefined) {
+      return 'undefined'
+    }
+    if (typeof value === 'function') {
+      return 'function'
+    }
+    if (typeof value === 'symbol') {
+      return value.toString()
+    }
 
     // Distinguish between primitive strings and String objects
     if (typeof value === 'string') {
@@ -214,18 +222,20 @@ function serialize(value: any): string {
     }
 
     return JSON.stringify(value)
-  } catch (e) {
+  } catch {
     // Some values are not serializable to JSON, so we fall back to stringification
     const str = String(value)
-    return str.length > 50 ? str.substring(0, 50) + '...' : str
+    return str.length > 50 ? `${str.substring(0, 50)}…` : str
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 function runWithDebug(fn: Function, args: any[] = []): any {
   try {
-    return fn(...args)
+    return fn(...args) // eslint-disable-line @typescript-eslint/no-unsafe-call
   } catch (e) {
     // Output the compiled expression for easier debugging
+    // eslint-disable-next-line no-console
     console.log(
       [
         'Compiled expression:',

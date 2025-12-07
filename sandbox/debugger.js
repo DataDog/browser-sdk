@@ -1,16 +1,12 @@
 ;(() => {
+  // @ts-expect-error - DD_LIVE_DEBUGGER does exist
   if (!window.DD_LIVE_DEBUGGER) {
     console.error('DD_LIVE_DEBUGGER is not available. Make sure the live debugger SDK is loaded.')
     return
   }
 
-  // Initialize the Live Debugger
-  window.DD_LIVE_DEBUGGER.init({
-    clientToken: 'pub1234567890abcdef1234567890abcd',
-    site: 'datadoghq.com',
-    service: 'sandbox-app',
-    env: 'local',
-  })
+  // @ts-expect-error - DD_LIVE_DEBUGGER does exist
+  window.DD_LIVE_DEBUGGER.init()
 
   // TODO: Remove hardcoded probes once dynamic probe management is implemented
   // Method log probe with snapshot on entry and return, evaluated at entry

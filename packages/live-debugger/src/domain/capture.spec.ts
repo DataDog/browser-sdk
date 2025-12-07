@@ -1,4 +1,3 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
 import { capture, captureFields } from './capture'
 
 describe('capture', () => {
@@ -327,7 +326,7 @@ describe('capture', () => {
 
   describe('functions', () => {
     it('should capture function', () => {
-      function myFunc() {}
+      function myFunc() {} // eslint-disable-line @typescript-eslint/no-empty-function
       const result = capture(myFunc, defaultOpts) as any
 
       expect(result.type).toBe('Function')
@@ -348,7 +347,7 @@ describe('capture', () => {
     })
 
     it('should respect depth for functions', () => {
-      function myFunc() {}
+      function myFunc() {} // eslint-disable-line @typescript-eslint/no-empty-function
       const result = capture(myFunc, { ...defaultOpts, maxReferenceDepth: 0 })
 
       expect(result).toEqual({ type: 'Function', notCapturedReason: 'depth' })

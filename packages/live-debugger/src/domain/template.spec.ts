@@ -1,4 +1,3 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
 import { templateRequiresEvaluation, compileSegments, evaluateProbeMessage, browserInspect } from './template'
 
 describe('template', () => {
@@ -97,13 +96,13 @@ describe('template', () => {
     })
 
     it('should inspect functions', () => {
-      function myFunc() {}
+      function myFunc() {} // eslint-disable-line @typescript-eslint/no-empty-function
       const result = browserInspect(myFunc)
       expect(result).toBe('[Function: myFunc]')
     })
 
     it('should inspect anonymous functions', () => {
-      const result = browserInspect(() => {})
+      const result = browserInspect(() => {}) // eslint-disable-line @typescript-eslint/no-empty-function
       expect(result).toContain('[Function:')
     })
 
@@ -136,7 +135,7 @@ describe('template', () => {
         it('should truncate very long strings', () => {
           const longString = 'a'.repeat(10000)
           const result = browserInspect(longString)
-          expect(result).toBe('a'.repeat(8192) + '...')
+          expect(result).toBe(`${'a'.repeat(8192)}…`)
         })
 
         it('should not truncate strings shorter than 8KB', () => {
@@ -190,9 +189,9 @@ describe('template', () => {
         it('should apply both maxStringLength and maxArrayLength', () => {
           const data = ['a'.repeat(10000), 'b'.repeat(10000), 'c'.repeat(10000), 'd'.repeat(10000)]
           const result = browserInspect(data)
-          expect(result).toContain('a'.repeat(8192) + '...')
-          expect(result).toContain('b'.repeat(8192) + '...')
-          expect(result).toContain('c'.repeat(8192) + '...')
+          expect(result).toContain(`${'a'.repeat(8192)}…`)
+          expect(result).toContain(`${'b'.repeat(8192)}…`)
+          expect(result).toContain(`${'c'.repeat(8192)}…`)
           expect(result).toContain('1 more items')
         })
 
@@ -219,6 +218,7 @@ describe('template', () => {
       const template: any = {
         createFunction: (keys: string[]) => {
           expect(keys).toEqual(['x', 'y'])
+          // eslint-disable-next-line camelcase, @typescript-eslint/no-unused-vars
           return ($dd_inspect: any, x: number, y: number) => [`x=${x}, y=${y}`]
         },
       }
@@ -234,15 +234,16 @@ describe('template', () => {
 
     it('should handle segments with static and dynamic parts', () => {
       const template: any = {
-        createFunction: (keys: string[]) => {
-          return ($dd_inspect: any, ...values: any[]) => {
+        createFunction:
+          (keys: string[]) =>
+          // eslint-disable-next-line camelcase, @typescript-eslint/no-unused-vars
+          ($dd_inspect: any, ...values: any[]) => {
             const context: any = {}
             keys.forEach((key, i) => {
               context[key] = values[i]
             })
             return ['Value: ', String(context.value)]
-          }
-        },
+          },
       }
 
       const probe: any = {
@@ -256,9 +257,7 @@ describe('template', () => {
 
     it('should handle error objects in segments', () => {
       const template: any = {
-        createFunction: () => {
-          return () => [{ expr: 'bad.expr', message: 'TypeError: Cannot read property' }]
-        },
+        createFunction: () => () => [{ expr: 'bad.expr', message: 'TypeError: Cannot read property' }],
       }
 
       const probe: any = {
@@ -272,9 +271,7 @@ describe('template', () => {
 
     it('should handle non-string segments', () => {
       const template: any = {
-        createFunction: () => {
-          return () => [42, ' ', true, ' ', null]
-        },
+        createFunction: () => () => [42, ' ', true, ' ', null],
       }
 
       const probe: any = {
@@ -304,6 +301,7 @@ describe('template', () => {
           const cacheKey = contextKeys.join(',')
           let fn = functionCache.get(cacheKey)
           if (!fn) {
+            // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
             fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => any[]
             functionCache.set(cacheKey, fn)
           }
@@ -338,6 +336,7 @@ describe('template', () => {
           const cacheKey = contextKeys.join(',')
           let fn = functionCache.get(cacheKey)
           if (!fn) {
+            // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
             fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => any[]
             functionCache.set(cacheKey, fn)
           }
@@ -361,10 +360,8 @@ describe('template', () => {
 
     it('should handle template evaluation errors', () => {
       const template: any = {
-        createFunction: () => {
-          return () => {
-            throw new Error('Evaluation failed')
-          }
+        createFunction: () => () => {
+          throw new Error('Evaluation failed')
         },
       }
 
@@ -380,9 +377,7 @@ describe('template', () => {
     it('should truncate long messages', () => {
       const longMessage = 'a'.repeat(10000)
       const template: any = {
-        createFunction: () => {
-          return () => [longMessage]
-        },
+        createFunction: () => () => [longMessage],
       }
 
       const probe: any = {
@@ -397,11 +392,11 @@ describe('template', () => {
 
     it('should use browserInspect for object values', () => {
       const template: any = {
-        createFunction: (keys: string[]) => {
-          return ($dd_inspect: any, obj: any) => {
-            return ['Object: ', $dd_inspect(obj, {})]
-          }
-        },
+        // eslint-disable-next-line camelcase
+        createFunction: () => ($dd_inspect: (value: any, options: any) => string, obj: any) => [
+          'Object: ',
+          $dd_inspect(obj, {}),
+        ],
       }
 
       const probe: any = {

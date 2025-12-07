@@ -6,8 +6,8 @@
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/dynamic_instrumentation/)
  */
 
-import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
-import type { Site } from '@datadog/browser-core'
+import { defineGlobal, getGlobalObject, makePublicApi } from '@datadog/browser-core'
+import type { PublicApi, Site } from '@datadog/browser-core'
 import { onEntry, onReturn, onThrow, sendDebuggerSnapshot } from '../domain/api'
 import { addProbe, getProbes, removeProbe, clearProbes } from '../domain/probes'
 import type { Probe } from '../domain/probes'
@@ -63,7 +63,7 @@ export interface LiveDebuggerInitConfiguration {
  *
  * @category Main
  */
-export interface LiveDebuggerPublicApi {
+export interface LiveDebuggerPublicApi extends PublicApi {
   /**
    * Initialize the Live Debugger SDK
    *
@@ -120,9 +120,9 @@ export interface LiveDebuggerPublicApi {
  * Create the public API for the Live Debugger
  */
 function makeLiveDebuggerPublicApi(): LiveDebuggerPublicApi {
-  return {
-    init: (initConfiguration: LiveDebuggerInitConfiguration) => {
-      // TODO: Store configuration for later use when sending to backend
+  return makePublicApi<LiveDebuggerPublicApi>({
+    init: () => {
+      // TODO: Support configuration argument
       // Expose internal hooks on globalThis for instrumented code
       if (typeof globalThis !== 'undefined') {
         ;(globalThis as any).$dd_entry = onEntry
@@ -144,10 +144,10 @@ function makeLiveDebuggerPublicApi(): LiveDebuggerPublicApi {
       clearProbes()
     },
 
-    sendDebuggerSnapshot: (message?: string, logger?: any, dd?: any, snapshot?: any) => {
-      sendDebuggerSnapshot(message, logger, dd, snapshot)
+    sendDebuggerSnapshot: (logger: any, dd: any, snapshot: any, message?: string) => {
+      sendDebuggerSnapshot(logger, dd, snapshot, message)
     },
-  }
+  })
 }
 
 /**

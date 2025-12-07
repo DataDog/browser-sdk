@@ -242,9 +242,9 @@ __metadata:
   dependencies:
     "@datadog/browser-core": "npm:6.24.1"
   peerDependencies:
-    "@datadog/browser-rum": 6.24.1
+    "@datadog/browser-rum-core": 6.24.1
   peerDependenciesMeta:
-    "@datadog/browser-rum":
+    "@datadog/browser-rum-core":
       optional: true
   languageName: unknown
   linkType: soft

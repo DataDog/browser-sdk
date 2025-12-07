@@ -505,7 +505,7 @@
             timestamp: Date.now(),
           }
 
-          window.DD_LIVE_DEBUGGER.sendDebuggerSnapshot(message, logger, dd, snapshot)
+          window.DD_LIVE_DEBUGGER.sendDebuggerSnapshot(logger, dd, snapshot, message)
           log(`Sent sample debug event using sendDebuggerSnapshot`, 'success')
           log(`Message: ${message}`, 'info')
           log(`Logger: ${logger.name}`, 'info')

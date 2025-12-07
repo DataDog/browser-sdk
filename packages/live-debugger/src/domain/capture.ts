@@ -19,8 +19,8 @@ export interface CapturedValue {
 
 const hasReplaceAll = typeof (String.prototype as any).replaceAll === 'function'
 const replaceDots = hasReplaceAll
-  ? // @ts-expect-error
-    (str: string) => str.replaceAll('.', '_')
+  ? // @ts-expect-error - replaceAll is not a function on String.prototype in older browsers
+    (str: string) => str.replaceAll('.', '_') // eslint-disable-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return
   : (str: string) => str.replace(/\./g, '_')
 
 const DEFAULT_MAX_REFERENCE_DEPTH = 3
@@ -30,8 +30,13 @@ const DEFAULT_MAX_LENGTH = 255
 
 /**
  * Capture the value of the given object with configurable limits
+ *
  * @param value - The value to capture
  * @param opts - The capture options
+ * @param opts.maxReferenceDepth - The maximum depth of references to capture
+ * @param opts.maxCollectionSize - The maximum size of collections to capture
+ * @param opts.maxFieldCount - The maximum number of fields to capture
+ * @param opts.maxLength - The maximum length of strings to capture
  * @returns The captured value representation
  */
 export function capture(
@@ -48,8 +53,13 @@ export function capture(
 
 /**
  * Capture the fields of an object directly without the outer CapturedValue wrapper
+ *
  * @param obj - The object to capture
  * @param opts - The capture options
+ * @param opts.maxReferenceDepth - The maximum depth of references to capture
+ * @param opts.maxCollectionSize - The maximum size of collections to capture
+ * @param opts.maxFieldCount - The maximum number of fields to capture
+ * @param opts.maxLength - The maximum length of strings to capture
  * @returns A record mapping property names to their captured values
  */
 export function captureFields(
@@ -73,7 +83,9 @@ function captureValue(
   maxLength: number
 ): CapturedValue {
   // Handle null first as typeof null === 'object'
-  if (value === null) return { type: 'null', isNull: true }
+  if (value === null) {
+    return { type: 'null', isNull: true }
+  }
 
   const type = typeof value
 
@@ -81,16 +93,17 @@ function captureValue(
     case 'undefined':
       return { type: 'undefined' }
     case 'boolean':
-      return { type: 'boolean', value: String(value) }
+      return { type: 'boolean', value: String(value) } // eslint-disable-line @typescript-eslint/no-base-to-string
     case 'number':
-      return { type: 'number', value: String(value) }
+      return { type: 'number', value: String(value) } // eslint-disable-line @typescript-eslint/no-base-to-string
     case 'string':
       return captureString(value as string, maxLength)
     case 'symbol':
       return { type: 'symbol', value: (value as symbol).description || '' }
     case 'bigint':
-      return { type: 'bigint', value: String(value) }
+      return { type: 'bigint', value: String(value) } // eslint-disable-line @typescript-eslint/no-base-to-string
     case 'function':
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
       return captureFunction(value as Function, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
     case 'object':
       return captureObject(value as object, depth, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength)
@@ -115,7 +128,7 @@ function captureString(str: string, maxLength: number): CapturedValue {
 }
 
 function captureFunction(
-  fn: Function,
+  fn: Function, // eslint-disable-line @typescript-eslint/no-unsafe-function-type
   depth: number,
   maxReferenceDepth: number,
   maxCollectionSize: number,
@@ -220,7 +233,7 @@ function captureObjectPropertiesFields(
 ): Record<string, CapturedValue> {
   const keys = Object.getOwnPropertyNames(obj)
   const symbolKeys = Object.getOwnPropertySymbols(obj)
-  const allKeys = [...keys, ...symbolKeys]
+  const allKeys: Array<string | symbol> = (keys as Array<string | symbol>).concat(symbolKeys)
 
   const keysToCapture = allKeys.slice(0, maxFieldCount)
 
@@ -240,7 +253,7 @@ function captureObjectPropertiesFields(
         maxFieldCount,
         maxLength
       )
-    } catch (err) {
+    } catch {
       // Handle getters that throw or other access errors
       fields[keyName] = { type: 'undefined', notCapturedReason: 'Error accessing property' }
     }
@@ -260,7 +273,7 @@ function captureObjectProperties(
 ): CapturedValue {
   const keys = Object.getOwnPropertyNames(obj)
   const symbolKeys = Object.getOwnPropertySymbols(obj)
-  const allKeys = [...keys, ...symbolKeys]
+  const allKeys: Array<string | symbol> = (keys as Array<string | symbol>).concat(symbolKeys)
   const totalFields = allKeys.length
 
   const fields = captureObjectPropertiesFields(
@@ -322,7 +335,9 @@ function captureMap(
   const entries: Array<[CapturedValue, CapturedValue]> = []
   let count = 0
   for (const [key, value] of map) {
-    if (count >= entriesToCapture) break
+    if (count >= entriesToCapture) {
+      break
+    }
     entries.push([
       captureValue(key, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength),
       captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength),
@@ -354,7 +369,9 @@ function captureSet(
   const elements: CapturedValue[] = []
   let count = 0
   for (const value of set) {
-    if (count >= itemsToCapture) break
+    if (count >= itemsToCapture) {
+      break
+    }
     elements.push(captureValue(value, depth + 1, maxReferenceDepth, maxCollectionSize, maxFieldCount, maxLength))
     count++
   }

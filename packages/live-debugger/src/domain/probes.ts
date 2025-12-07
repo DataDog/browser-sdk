@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import { compile } from './expression'
 import { templateRequiresEvaluation, compileSegments } from './template'
 import type { TemplateSegment, CompiledTemplate } from './template'
@@ -60,6 +61,7 @@ const probeIdToFunctionId = new Map<string, string>()
 
 /**
  * Add a probe to the registry
+ *
  * @param probe - The probe configuration
  */
 export function addProbe(probe: Probe): void {
@@ -69,13 +71,14 @@ export function addProbe(probe: Probe): void {
     probes = []
     activeProbes.set(probe.functionId, probes)
   }
-  probes.push(probe as InitializedProbe)
+  probes.push(probe)
   probeIdToFunctionId.set(probe.id, probe.functionId)
 }
 
 /**
  * Get initialized probes by function ID
- * @param id - The probe function ID
+ *
+ * @param functionId - The probe function ID
  * @returns The initialized probes
  */
 export function getProbes(functionId: string): InitializedProbe[] | undefined {
@@ -84,13 +87,18 @@ export function getProbes(functionId: string): InitializedProbe[] | undefined {
 
 /**
  * Remove a probe from the registry
+ *
  * @param id - The probe ID
  */
 export function removeProbe(id: string): void {
   const functionId = probeIdToFunctionId.get(id)
-  if (!functionId) throw new Error(`Probe with id ${id} not found`)
+  if (!functionId) {
+    throw new Error(`Probe with id ${id} not found`)
+  }
   const probes = activeProbes.get(functionId)
-  if (!probes) throw new Error(`Probes with function id ${functionId} not found`)
+  if (!probes) {
+    throw new Error(`Probes with function id ${functionId} not found`)
+  }
   for (let i = 0; i < probes.length; i++) {
     const probe = probes[i]
     if (probe.id === id) {
@@ -126,6 +134,7 @@ export function clearProbes(): void {
 
 /**
  * Check global snapshot sampling budget
+ *
  * @param now - Current timestamp in milliseconds
  * @param captureSnapshot - Whether this probe captures snapshots
  * @returns True if within budget, false if rate limited
@@ -156,6 +165,7 @@ export function checkGlobalSnapshotBudget(now: number, captureSnapshot: boolean)
 
 /**
  * Initialize a probe by preprocessing template segments, conditions, and sampling
+ *
  * @param probe - The probe configuration
  */
 export function initializeProbe(probe: Probe): asserts probe is InitializedProbe {
@@ -168,9 +178,10 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
       ;(probe as InitializedProbe).condition = String(compile(probe.when.json))
     }
   } catch (err) {
-    console.error(
+    // TODO: Handle error properly
+    display.error(
       `Cannot compile condition expression: ${probe.when!.dsl} (probe: ${probe.id}, version: ${probe.version})`,
-      err
+      err as Error
     )
   }
 
@@ -194,6 +205,7 @@ export function initializeProbe(probe: Probe): asserts probe is InitializedProbe
         const cacheKey = contextKeys.join(',')
         let fn = functionCache.get(cacheKey)
         if (!fn) {
+          // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
           fn = new Function('$dd_inspect', ...contextKeys, fnBodyTemplate) as (...args: any[]) => any[]
           functionCache.set(cacheKey, fn)
         }

@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 export interface ProbeWithCondition {
   id: string
   condition?: string
@@ -5,6 +6,7 @@ export interface ProbeWithCondition {
 
 /**
  * Evaluate probe condition to determine if probe should fire
+ *
  * @param probe - Probe configuration
  * @param context - Runtime context with variables
  * @returns True if condition passes (or no condition), false otherwise
@@ -22,11 +24,13 @@ export function evaluateProbeCondition(probe: ProbeWithCondition, context: Recor
     const contextValues = Object.values(otherContext)
 
     // Create function and execute with proper 'this' binding
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
     const fn = new Function(...contextKeys, `return ${probe.condition}`)
     return Boolean(fn.call(thisValue, ...contextValues))
   } catch (e) {
     // If condition evaluation fails, log error and let probe fire
-    console.error(`Failed to evaluate condition for probe ${probe.id}:`, e)
+    // TODO: Handle error properly
+    display.error(`Failed to evaluate condition for probe ${probe.id}:`, e)
     return true
   }
 }

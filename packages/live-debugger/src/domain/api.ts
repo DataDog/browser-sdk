@@ -1,8 +1,10 @@
-import type { RumPublicApi } from '@datadog/browser-rum-core'
 import type { Context } from '@datadog/browser-core'
-import { timeStampNow, ErrorSource } from '@datadog/browser-core'
+import type { RumPublicApi } from '@datadog/browser-rum-core'
+import { timeStampNow, ErrorSource, display, buildTags, buildTag } from '@datadog/browser-core'
+import type { LiveDebuggerPublicApi } from '../entries/main'
 import { capture, captureFields } from './capture'
-import { type InitializedProbe, checkGlobalSnapshotBudget } from './probes'
+import type { InitializedProbe } from './probes'
+import { checkGlobalSnapshotBudget } from './probes'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
 import type { StackFrame } from './stacktrace'
 import { evaluateProbeMessage } from './template'
@@ -34,14 +36,26 @@ interface BrowserWindow extends Window {
       info: (message: string, context?: Context) => void
     }
     sendRawLog?: (log: any) => void
-    getInitConfiguration?: () => { service?: string } | undefined
+    getInitConfiguration?: () =>
+      | {
+          service?: string
+          env?: string
+          version?: string
+          datacenter?: string
+        }
+      | undefined
   }
+  DD_LIVE_DEBUGGER?: LiveDebuggerPublicApi
 }
 
 const active = new Map<string, Array<ActiveEntry | null>>()
 
 // Cache hostname at module initialization since it won't change during the app lifetime
 const hostname = typeof window !== 'undefined' && window.location ? window.location.hostname : 'unknown'
+
+const serviceVersion = `1.0.0-${crypto.randomUUID().slice(0, 8)}` // eslint-disable-line local-rules/disallow-side-effects
+
+const threadName = detectThreadName() // eslint-disable-line local-rules/disallow-side-effects
 
 // Lazy cache for application_id - once RUM is initialized, this won't change
 let cachedApplicationId: string | undefined | null = null // null = not yet fetched, undefined = no app_id available
@@ -51,6 +65,7 @@ let hasWarnedAboutMissingLogs = false
 
 /**
  * Called when entering an instrumented function
+ *
  * @param probes - Array of probes for this function
  * @param self - The 'this' context
  * @param args - Function arguments
@@ -82,7 +97,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
     let message: string | undefined
     if (probe.evaluateAt === 'ENTRY') {
       // Build context for condition and message evaluation
-      const context = { this: self, ...args }
+      const context = { ...args, this: self }
 
       // Check condition - if it fails, don't evaluate or capture anything
       if (!evaluateProbeCondition(probe, context)) {
@@ -91,7 +106,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
         continue
       }
 
-      timestamp = Date.now()
+      timestamp = timeStampNow()
       message = evaluateProbeMessage(probe, context)
     }
 
@@ -118,6 +133,7 @@ export function onEntry(probes: InitializedProbe[], self: any, args: Record<stri
 
 /**
  * Called when exiting an instrumented function normally
+ *
  * @param probes - Array of probes for this function
  * @param value - Return value
  * @param self - The 'this' context
@@ -137,14 +153,18 @@ export function onReturn(
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
     const stack = active.get(probe.id) // TODO: Should we use the functionId instead?
-    if (!stack) continue // TODO: This shouldn't be possible, do we need it? Should we warn?
+    if (!stack) {
+      continue // TODO: This shouldn't be possible, do we need it? Should we warn?
+    }
     const result = stack.pop()
-    if (!result) continue
+    if (!result) {
+      continue
+    }
 
     result.duration = end - result.start
 
     if (probe.evaluateAt === 'EXIT') {
-      result.timestamp = Date.now()
+      result.timestamp = timeStampNow()
 
       const context = {
         ...args,
@@ -154,7 +174,9 @@ export function onReturn(
         $dd_return: value,
       }
 
-      if (!evaluateProbeCondition(probe, context)) continue
+      if (!evaluateProbeCondition(probe, context)) {
+        continue
+      }
 
       result.message = evaluateProbeMessage(probe, context)
     }
@@ -180,6 +202,7 @@ export function onReturn(
 
 /**
  * Called when exiting an instrumented function via exception
+ *
  * @param probes - Array of probes for this function
  * @param error - The thrown error
  * @param self - The 'this' context
@@ -191,15 +214,19 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
   // TODO: A lot of repeated work performed for each probe that could be shared between probes
   for (const probe of probes) {
     const stack = active.get(probe.id) // TODO: Should we use the functionId instead?
-    if (!stack) continue // TODO: This shouldn't be possible, do we need it? Should we warn?
+    if (!stack) {
+      continue // TODO: This shouldn't be possible, do we need it? Should we warn?
+    }
     const result = stack.pop()
-    if (!result) continue
+    if (!result) {
+      continue
+    }
 
     result.duration = end - result.start
     result.exception = error
 
     if (probe.evaluateAt === 'EXIT') {
-      result.timestamp = Date.now()
+      result.timestamp = timeStampNow()
 
       const context = {
         ...args,
@@ -208,7 +235,9 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
         $dd_exception: error,
       }
 
-      if (!evaluateProbeCondition(probe, context)) continue
+      if (!evaluateProbeCondition(probe, context)) {
+        continue
+      }
 
       result.message = evaluateProbeMessage(probe, context)
     }
@@ -237,7 +266,11 @@ function done(probe: any, result: ActiveEntry): void {
     probe: {
       id: probe.id,
       version: probe.version,
-      location: probe.location,
+      location: {
+        // TODO: Are our hardcoded where.* keys correct according to the spec?
+        method: probe.where.methodName,
+        type: probe.where.typeName,
+      },
     },
     stack: result.stack,
     language: 'javascript',
@@ -251,16 +284,16 @@ function done(probe: any, result: ActiveEntry): void {
         : undefined,
   }
 
-  // Send the snapshot to the backend via liveDebug
   const rumApi = (window as Window & { DD_RUM?: RumPublicApi }).DD_RUM
+  const liveDebuggerApi = (window as BrowserWindow).DD_LIVE_DEBUGGER
 
   // TODO: Fill out logger with the right information
   const logger = {
-    name: 'dd.debugger',
-    method: probe.location?.method,
-    thread_name: 'main',
-    thread_id: 1,
-    version: rumApi?.version,
+    name: probe.where.typeName,
+    method: probe.where.methodName,
+    version: liveDebuggerApi?.version,
+    // thread_id: 1,
+    thread_name: threadName,
   }
 
   // Get the RUM internal context for trace correlation
@@ -270,25 +303,25 @@ function done(probe: any, result: ActiveEntry): void {
     span_id: rumContext?.user_action?.id || rumContext?.view?.id,
   }
 
-  sendDebuggerSnapshot(result.message, logger, dd, snapshot)
+  sendDebuggerSnapshot(logger, dd, snapshot, result.message)
 }
 
 /**
  * Send a debugger snapshot to Datadog logs, matching dd-trace-js send method signature.
  * This function sends debugger snapshot logs directly to the logs endpoint without default RUM context.
  *
- * @param message - The log message
  * @param logger - Logger information
  * @param dd - Datadog context information
  * @param snapshot - Debugger snapshot data
+ * @param message - The log message
  */
 // TODO: Don't export this once the firebase code is removed
-export function sendDebuggerSnapshot(message?: string, logger?: any, dd?: any, snapshot?: any): void {
+export function sendDebuggerSnapshot(logger: object, dd: object, snapshot: object, message?: string): void {
   const browserWindow = window as BrowserWindow
 
   if (!browserWindow.DD_LOGS?.sendRawLog) {
     if (!hasWarnedAboutMissingLogs) {
-      console.warn(
+      display.warn(
         'DD_LOGS.sendRawLog is not available. Make sure the Logs SDK is initialized to send debugger snapshots.'
       )
       hasWarnedAboutMissingLogs = true
@@ -296,12 +329,13 @@ export function sendDebuggerSnapshot(message?: string, logger?: any, dd?: any, s
     return
   }
 
-  // Get service from logs initialization configuration (defined during DD_LOGS.init())
+  // Get init configuration from logs SDK (defined during DD_LOGS.init())
   const initConfig = browserWindow.DD_LOGS.getInitConfiguration?.()
   const service = initConfig?.service
 
   // Get application_id from RUM internal context if available (same way regular loggers get it)
   // Only cache if we get a value or confirm RUM is initialized (to handle late RUM initialization)
+  // TODO: Maybe don't keep re-trying if it fails?
   if (cachedApplicationId === null) {
     const ddRum = (window as any).DD_RUM
     if (ddRum && typeof ddRum.getInternalContext === 'function') {
@@ -311,23 +345,53 @@ export function sendDebuggerSnapshot(message?: string, logger?: any, dd?: any, s
         ) => { application_id?: string } | undefined
         const rumInternalContext = getInternalContext()
         cachedApplicationId = rumInternalContext?.application_id
-      } catch {}
+      } catch {
+        // ignore
+      }
     }
   }
 
+  const liveDebuggerApi = (window as BrowserWindow).DD_LIVE_DEBUGGER
+
+  // Build ddtags array - sendRawLog bypasses assembly so we need to manually add all tags
+  // Use buildTags to get all configuration tags (env, service, version, datacenter, variant, sdk_version)
+  // Then add source:dd_debugger tag to identify these as debugger logs
+  const configTags = initConfig ? buildTags(initConfig as any) : []
+  const ddtags = configTags.concat(
+    // buildTag('source', 'dd_debugger'),
+    buildTag('version', serviceVersion),
+    buildTag('debugger_version', liveDebuggerApi?.version),
+    buildTag('host_name', hostname) // TODO: Is this needed?
+    // buildTag('git.commit.sha', 'fd8163131f3150b86b792eee85eb583df81615da'),
+    // buildTag('git.repository_url', 'https://github.com/datadog/debugger-demos'),
+  )
+
   const payload = {
-    date: timeStampNow(),
+    date: (snapshot as any).timestamp, // TODO: This isn't in the backend tracer payloads
     message: message || '',
     status: 'info' as const,
-    origin: ErrorSource.LOGGER,
-    ddsource: 'dd_debugger',
+    origin: ErrorSource.LOGGER, // TODO: This isn't in the backend tracer payloads
     hostname,
     ...(service && { service }),
-    ...(cachedApplicationId && { application_id: cachedApplicationId }),
+    ...(ddtags.length > 0 && { ddtags: ddtags.join(',') }),
+    ...(cachedApplicationId && { application_id: cachedApplicationId }), // TODO: Is this even needed?
     logger,
     dd,
     debugger: { snapshot },
   }
 
   browserWindow.DD_LOGS.sendRawLog(payload)
+}
+
+function detectThreadName() {
+  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    return 'main'
+  }
+  if (typeof ServiceWorkerGlobalScope !== 'undefined' && self instanceof ServiceWorkerGlobalScope) {
+    return 'service-worker'
+  }
+  if (typeof importScripts === 'function') {
+    return 'web-worker'
+  }
+  return 'unknown'
 }

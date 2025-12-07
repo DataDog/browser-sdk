@@ -1,4 +1,3 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
 import { captureStackTrace, parseStackTrace } from './stacktrace'
 
 describe('stacktrace', () => {

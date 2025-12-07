@@ -1,11 +1,11 @@
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { display } from '@datadog/browser-core'
 import { evaluateProbeCondition } from './condition'
 
 describe('condition', () => {
-  let consoleErrorSpy: jasmine.Spy
+  let displayErrorSpy: jasmine.Spy
 
   beforeEach(() => {
-    consoleErrorSpy = spyOn(console, 'error')
+    displayErrorSpy = spyOn(display, 'error')
   })
 
   describe('evaluateProbeCondition', () => {
@@ -95,7 +95,7 @@ describe('condition', () => {
       expect(result).toBe(true)
 
       // Should log error
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect(displayErrorSpy).toHaveBeenCalledWith(
         jasmine.stringContaining('Failed to evaluate condition for probe test-probe'),
         jasmine.any(Error)
       )
@@ -108,7 +108,7 @@ describe('condition', () => {
 
       const result = evaluateProbeCondition(probe, {})
       expect(result).toBe(true)
-      expect(consoleErrorSpy).toHaveBeenCalled()
+      expect(displayErrorSpy).toHaveBeenCalled()
     })
 
     it('should handle conditions with special variables', () => {

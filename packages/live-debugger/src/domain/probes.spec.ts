@@ -1,6 +1,12 @@
+import { display } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { initializeProbe, getProbes, addProbe, removeProbe, checkGlobalSnapshotBudget, clearProbes } from './probes'
 import type { Probe } from './probes'
+
+interface TemplateWithCache {
+  createFunction: (params: string[]) => (...args: any[]) => any
+  clearCache?: () => void
+}
 
 describe('probes', () => {
   beforeEach(() => {
@@ -79,7 +85,7 @@ describe('probes', () => {
 
       addProbe(probe)
       const retrieved = getProbes('TestClass;cacheTest')
-      const template = retrieved![0].template as any
+      const template = retrieved![0].template as TemplateWithCache
 
       // Create some cached functions
       template.createFunction(['x', 'y'])
@@ -192,7 +198,7 @@ describe('probes', () => {
     })
 
     it('should handle condition compilation errors', () => {
-      const consoleErrorSpy = spyOn(console, 'error')
+      const displayErrorSpy = spyOn(display, 'error')
       const probe: Probe = {
         id: 'test-probe-1',
         version: 0,
@@ -211,7 +217,7 @@ describe('probes', () => {
 
       initializeProbe(probe)
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
+      expect(displayErrorSpy).toHaveBeenCalledWith(
         jasmine.stringContaining('Cannot compile condition'),
         jasmine.any(Error)
       )
@@ -287,7 +293,7 @@ describe('probes', () => {
 
       initializeProbe(probe)
 
-      const template = probe.template as any
+      const template = probe.template as TemplateWithCache
       const fn1 = template.createFunction(['x', 'y'])
       const fn2 = template.createFunction(['x', 'y'])
 
@@ -378,8 +384,8 @@ describe('probes', () => {
       addProbe(probe2)
       addProbe(probe3)
 
-      const template1 = getProbes('TestClass;clearCache1')![0].template as any
-      const template2 = getProbes('TestClass;clearCache2')![0].template as any
+      const template1 = getProbes('TestClass;clearCache1')![0].template as TemplateWithCache
+      const template2 = getProbes('TestClass;clearCache2')![0].template as TemplateWithCache
 
       // Create some cached functions
       template1.createFunction(['x'])

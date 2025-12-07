@@ -23,19 +23,25 @@ const INSPECT_MAX_STRING_LENGTH = 8 * 1024 // 8KB
 
 /**
  * Check if template segments require runtime evaluation
+ *
  * @param segments - Array of segment objects
  * @returns True if segments contain expressions to evaluate
  */
 export function templateRequiresEvaluation(segments: TemplateSegment[] | undefined): boolean {
-  if (segments === undefined) return false
+  if (segments === undefined) {
+    return false
+  }
   for (const { dsl } of segments) {
-    if (dsl !== undefined) return true
+    if (dsl !== undefined) {
+      return true
+    }
   }
   return false
 }
 
 /**
  * Compile template segments into executable code
+ *
  * @param segments - Array of segment objects with str (static) or dsl/json (dynamic)
  * @returns Compiled JavaScript code that returns an array
  */
@@ -66,6 +72,7 @@ export function compileSegments(segments: TemplateSegment[]): string {
 
 /**
  * Browser-compatible inspect function for template segment evaluation
+ *
  * @param value - Value to inspect
  * @returns String representation of the value
  */
@@ -75,20 +82,32 @@ export function browserInspect(value: unknown): string {
 }
 
 function browserInspectInternal(value: unknown, depthExceeded: boolean = false): string {
-  if (value === null) return 'null'
-  if (value === undefined) return 'undefined'
+  if (value === null) {
+    return 'null'
+  }
+  if (value === undefined) {
+    return 'undefined'
+  }
 
   if (typeof value === 'string') {
     if (value.length > INSPECT_MAX_STRING_LENGTH) {
-      return value.slice(0, INSPECT_MAX_STRING_LENGTH) + '...'
+      return `${value.slice(0, INSPECT_MAX_STRING_LENGTH)}…`
     }
     return value
   }
 
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
-  if (typeof value === 'bigint') return `${value}n`
-  if (typeof value === 'symbol') return value.toString()
-  if (typeof value === 'function') return `[Function: ${(value as Function).name || 'anonymous'}]`
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+  if (typeof value === 'bigint') {
+    return `${value}n`
+  }
+  if (typeof value === 'symbol') {
+    return value.toString()
+  }
+  if (typeof value === 'function') {
+    return `[Function: ${value.name || 'anonymous'}]`
+  }
 
   // Handle arrays
   if (Array.isArray(value)) {
@@ -109,18 +128,20 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
   }
 
   // Handle objects
-  if (depthExceeded) return '[Object]'
+  if (depthExceeded) {
+    return '[Object]'
+  }
 
   try {
     // Create custom replacer to handle maxStringLength in nested values
-    const replacer = (key: string, val: any) => {
+    const replacer = (_key: string, val: unknown) => {
       if (typeof val === 'string' && val.length > INSPECT_MAX_STRING_LENGTH) {
-        return val.slice(0, INSPECT_MAX_STRING_LENGTH) + '...'
+        return `${val.slice(0, INSPECT_MAX_STRING_LENGTH)}…`
       }
       return val
     }
     return JSON.stringify(value, replacer, 0)
-  } catch (e) {
+  } catch {
     return `[${(value as any).constructor?.name || 'Object'}]`
   }
 }
@@ -130,20 +151,32 @@ function browserInspectInternal(value: unknown, depthExceeded: boolean = false):
  * Used for recursive inspection of array/object elements
  */
 function inspectValueInternal(value: unknown, depthExceeded: boolean = false): string {
-  if (value === null) return 'null'
-  if (value === undefined) return 'undefined'
+  if (value === null) {
+    return 'null'
+  }
+  if (value === undefined) {
+    return 'undefined'
+  }
   if (typeof value === 'string') {
     // For nested strings in arrays, we need to quote them like JSON
-    const str = value.length > INSPECT_MAX_STRING_LENGTH ? value.slice(0, INSPECT_MAX_STRING_LENGTH) + '...' : value
+    const str = value.length > INSPECT_MAX_STRING_LENGTH ? `${value.slice(0, INSPECT_MAX_STRING_LENGTH)}…` : value
     return JSON.stringify(str)
   }
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
-  if (typeof value === 'bigint') return `${value}n`
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+  if (typeof value === 'bigint') {
+    return `${value}n`
+  }
 
   // For nested objects/arrays, check depth
   if (depthExceeded) {
-    if (Array.isArray(value)) return '[Array]'
-    if (typeof value === 'object') return '[Object]'
+    if (Array.isArray(value)) {
+      return '[Array]'
+    }
+    if (typeof value === 'object') {
+      return '[Object]'
+    }
   }
 
   // Recursively inspect with browserInspectInternal
@@ -152,6 +185,7 @@ function inspectValueInternal(value: unknown, depthExceeded: boolean = false): s
 
 /**
  * Evaluate compiled template with runtime context
+ *
  * @param compiledTemplate - Template object with createFunction factory
  * @param context - Runtime context with variables
  * @returns Array of segment results (strings or error objects)
@@ -176,6 +210,7 @@ export interface ProbeWithTemplate {
 
 /**
  * Evaluate probe message from template and runtime result
+ *
  * @param probe - Probe configuration
  * @param context - Runtime execution context
  * @returns Evaluated and truncated message
@@ -193,9 +228,8 @@ export function evaluateProbeMessage(probe: ProbeWithTemplate, context: Record<s
           } else if (seg && typeof seg === 'object' && seg.expr) {
             // Error object from template evaluation
             return `{${seg.message}}`
-          } else {
-            return String(seg)
           }
+          return String(seg)
         })
         .join('')
     } catch (e) {
@@ -207,7 +241,7 @@ export function evaluateProbeMessage(probe: ProbeWithTemplate, context: Record<s
 
   // Truncate message if it exceeds maximum length
   if (message.length > MAX_MESSAGE_LENGTH) {
-    message = message.slice(0, MAX_MESSAGE_LENGTH) + '…'
+    message = `${message.slice(0, MAX_MESSAGE_LENGTH)}…`
   }
 
   return message

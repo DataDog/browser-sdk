@@ -7,6 +7,7 @@ export interface StackFrame {
 
 /**
  * Capture the current stack trace
+ *
  * @param skipFrames - Number of frames to skip from the top of the stack (default: 0)
  * @returns Array of stack frames
  */
@@ -17,13 +18,16 @@ export function captureStackTrace(skipFrames = 0): StackFrame[] {
 
 /**
  * Parse a stack trace from an Error object
+ *
  * @param error - Error object with stack property
  * @param skipFrames - Number of frames to skip from the top of the stack (default: 0)
  * @returns Array of stack frames
  */
 export function parseStackTrace(error: Error, skipFrames = 0): StackFrame[] {
   const stack: StackFrame[] = []
-  if (!error.stack) return stack
+  if (!error.stack) {
+    return stack
+  }
   const stackLines = error.stack.split('\n')
 
   // Skip the first line (error message), the captureStackTrace frame, and any additional frames to skip

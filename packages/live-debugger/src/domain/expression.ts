@@ -93,7 +93,7 @@ export type ExpressionNode =
   | { ge: ExpressionNode[] }
   | { lt: ExpressionNode[] }
   | { le: ExpressionNode[] }
-  | { any: ExpressionNode[] }
+  | { any: ExpressionNode[] } // eslint-disable-line id-denylist
   | { all: ExpressionNode[] }
   | { and: ExpressionNode[] }
   | { or: ExpressionNode[] }
@@ -108,6 +108,7 @@ export type ExpressionNode =
 
 /**
  * Compile a DSL expression node to JavaScript code
+ *
  * @param node - DSL expression node
  * @returns Compiled JavaScript code as a string, or raw primitive values
  */
@@ -143,7 +144,7 @@ export function compile(node: ExpressionNode): string | number | boolean | null 
   } else if (type === 'ref') {
     const refValue = value as string
     if (refValue.startsWith('@')) {
-      return '$dd_' + refValue.slice(1)
+      return `$dd_${refValue.slice(1)}`
     }
     return assertIdentifier(refValue)
   } else if (Array.isArray(value)) {
@@ -310,7 +311,9 @@ function guardAgainstPropertyAccessSideEffects(variable: string, propertyName: s
 
 function guardAgainstCoercionSideEffects(variable: string | number | boolean | null): string {
   // shortcut if we're comparing number literals
-  if (typeof variable === 'number') return String(variable)
+  if (typeof variable === 'number') {
+    return String(variable)
+  }
 
   return `((val) => {
     if (

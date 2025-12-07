@@ -309,6 +309,7 @@ export type RumErrorEvent = CommonProperties &
         | 'ios'
         | 'react-native'
         | 'flutter'
+        | 'dd_debugger'
         | 'roku'
         | 'ndk'
         | 'ios+il2cpp'
@@ -1481,6 +1482,7 @@ export interface CommonProperties {
     | 'roku'
     | 'unity'
     | 'kotlin-multiplatform'
+    | 'dd_debugger'
   /**
    * View properties
    */
@@ -1806,6 +1808,7 @@ export interface ViewContainerSchema {
       | 'ios'
       | 'browser'
       | 'flutter'
+      | 'dd_debugger'
       | 'react-native'
       | 'roku'
       | 'unity'
