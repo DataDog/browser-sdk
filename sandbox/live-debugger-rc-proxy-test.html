@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Debugger - Remote Config Proxy Test</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: #f5f5f5;
+      }
+      .container {
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #632ca6;
+        margin-top: 0;
+      }
+      .section {
+        margin: 20px 0;
+        padding: 20px;
+        background: #f9f9f9;
+        border-radius: 4px;
+        border-left: 4px solid #632ca6;
+      }
+      .section h2 {
+        margin-top: 0;
+        color: #333;
+      }
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+        font-weight: 500;
+      }
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+      .status.info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+      .status.warning {
+        background: #fff3cd;
+        color: #856404;
+        border: 1px solid #ffeaa7;
+      }
+      button {
+        background: #632ca6;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+        margin: 5px;
+      }
+      button:hover {
+        background: #4a1f7a;
+      }
+      .value-display {
+        font-family: 'Courier New', monospace;
+        background: #2d2d2d;
+        color: #f8f8f2;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 10px 0;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .metric {
+        display: inline-block;
+        margin: 10px 15px 10px 0;
+        padding: 10px 15px;
+        background: white;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+      }
+      .metric-label {
+        font-size: 12px;
+        color: #666;
+        display: block;
+        margin-bottom: 5px;
+      }
+      .metric-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: #632ca6;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🐛 Live Debugger - Remote Config Proxy Test</h1>
+
+      <div class="section">
+        <h2>Configuration</h2>
+        <div>
+          <strong>RC Proxy URL:</strong> http://localhost:3030<br />
+          <strong>Service:</strong> poc-browser-live-debugger<br />
+          <strong>Environment:</strong> watson-dev<br />
+          <strong>Version:</strong> 1.0.0-&lt;random&gt;
+        </div>
+        <p style="margin-top: 10px; font-size: 14px; color: #666;">
+          Instrumented functions in <code>probes-go-here.js</code> are automatically triggered every second.
+        </p>
+      </div>
+
+      <div class="section">
+        <h2>Status</h2>
+        <div id="status-display" class="status info">Initializing...</div>
+        <div>
+          <div class="metric">
+            <span class="metric-label">Active Probes</span>
+            <span class="metric-value" id="probe-count">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>RC Proxy Health</h2>
+        <button onclick="checkProxyHealth()">Check Proxy Health</button>
+        <div class="value-display" id="health-display">Click button to check proxy health</div>
+      </div>
+
+      <div class="section">
+        <h2>Current Probes</h2>
+        <button onclick="refreshProbes()">Refresh Probes</button>
+        <div class="value-display" id="probes-display">No probes loaded yet</div>
+      </div>
+
+      <div class="section">
+        <h2>Console Log</h2>
+        <button onclick="clearConsole()">Clear Console</button>
+        <div class="value-display" id="console-log"></div>
+      </div>
+    </div>
+
+    <!-- Datadog SDKs (using local dev server) -->
+    <script src="http://localhost:8080/datadog-logs.js"></script>
+    <script src="http://localhost:8080/datadog-live-debugger.js"></script>
+    
+    <!-- Load test functions -->
+    <script src="probes-go-here.js"></script>
+
+    <script>
+      const service = '<add your service name here>'
+      const env = 'dev'
+
+      if (window.DD_LOGS) {
+        window.DD_LOGS.init({
+          clientToken: 'pubaf1e9488f1ff409b1454108915265ecb',
+          site: 'datad0g.com',
+          service,
+          env,
+          source: 'dd_debugger',
+          forwardErrorsToLogs: true,
+          sessionSampleRate: 100,
+        })
+        console.log('Datadog Logs SDK initialized')
+      } else {
+        console.error('Datadog Logs SDK not available')
+      }
+
+      // Initialize the Live Debugger SDK with RC proxy
+      try {
+        window.DD_LIVE_DEBUGGER.init({
+          service,
+          env,
+          version: `1.0.0-${crypto.randomUUID().slice(0, 8)}`,
+          remoteConfigProxyUrl: 'http://localhost:3030'
+        })
+        
+        logToConsole('✅ Live Debugger initialized with RC proxy')
+        updateStatus('Live Debugger initialized - polling RC proxy every 5s', 'success')
+      } catch (err) {
+        logToConsole('❌ Failed to initialize: ' + err.message, 'error')
+        updateStatus('Failed to initialize: ' + err.message, 'warning')
+      }
+
+      // Helper functions
+      function updateStatus(message, type = 'info') {
+        const statusEl = document.getElementById('status-display')
+        statusEl.textContent = message
+        statusEl.className = 'status ' + type
+      }
+
+      function logToConsole(message) {
+        const consoleEl = document.getElementById('console-log')
+        const timestamp = new Date().toLocaleTimeString()
+        consoleEl.textContent += `[${timestamp}] ${message}\n`
+        consoleEl.scrollTop = consoleEl.scrollHeight
+      }
+
+      function clearConsole() {
+        document.getElementById('console-log').textContent = ''
+      }
+
+      // Check RC proxy health
+      async function checkProxyHealth() {
+        try {
+          const response = await fetch('http://localhost:3030/health')
+          const health = await response.json()
+          document.getElementById('health-display').textContent = JSON.stringify(health, null, 2)
+          logToConsole('✅ Proxy health check successful')
+        } catch (err) {
+          document.getElementById('health-display').textContent = 'Error: ' + err.message
+          logToConsole('❌ Proxy health check failed: ' + err.message)
+        }
+      }
+
+      // Refresh probes display from SDK
+      function refreshProbes() {
+        try {
+          const probes = window.DD_LIVE_DEBUGGER.getProbes()
+          
+          document.getElementById('probe-count').textContent = probes.length
+          document.getElementById('probes-display').textContent = JSON.stringify(probes, null, 2)
+          
+          logToConsole(`✅ SDK has ${probes.length} active probe(s)`)
+        } catch (err) {
+          document.getElementById('probes-display').textContent = 'Error: ' + err.message
+          logToConsole('❌ Failed to get probes from SDK: ' + err.message)
+        }
+      }
+
+      // Auto-refresh display every 10 seconds from SDK
+      setInterval(() => {
+        refreshProbes()
+        checkProxyHealth()
+      }, 10000)
+
+      // Initial load
+      setTimeout(() => {
+        refreshProbes()
+        checkProxyHealth()
+      }, 1000)
+    </script>
+  </body>
+</html>
+

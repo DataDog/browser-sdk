@@ -86,6 +86,19 @@ export function getProbes(functionId: string): InitializedProbe[] | undefined {
 }
 
 /**
+ * Get all active probes across all functions
+ *
+ * @returns Array of all active probes
+ */
+export function getAllProbes(): InitializedProbe[] {
+  const allProbes: InitializedProbe[] = []
+  for (const probes of activeProbes.values()) {
+    allProbes.push(...probes)
+  }
+  return allProbes
+}
+
+/**
  * Remove a probe from the registry
  *
  * @param id - The probe ID

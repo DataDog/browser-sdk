@@ -6,11 +6,12 @@
  * @see [Live Debugger Documentation](https://docs.datadoghq.com/dynamic_instrumentation/)
  */
 
-import { defineGlobal, getGlobalObject, makePublicApi } from '@datadog/browser-core'
+import { defineGlobal, getGlobalObject, makePublicApi, display } from '@datadog/browser-core'
 import type { PublicApi, Site } from '@datadog/browser-core'
 import { onEntry, onReturn, onThrow, sendDebuggerSnapshot } from '../domain/api'
-import { addProbe, getProbes, removeProbe, clearProbes } from '../domain/probes'
+import { addProbe, getProbes, getAllProbes, removeProbe, clearProbes } from '../domain/probes'
 import type { Probe } from '../domain/probes'
+import { startRemoteConfigPolling } from '../domain/remoteConfig'
 
 export type { Probe, ProbeWhere, ProbeWhen, ProbeSampling, InitializedProbe } from '../domain/probes'
 export type { CaptureOptions, CapturedValue } from '../domain/capture'
@@ -56,6 +57,22 @@ export interface LiveDebuggerInitConfiguration {
    * @category Data Collection
    */
   version?: string
+
+  /**
+   * URL of the Remote Config proxy for dynamic probe management
+   *
+   * @category Remote Config
+   * @example 'http://localhost:3030'
+   */
+  remoteConfigProxyUrl?: string
+
+  /**
+   * Remote Config polling interval in milliseconds
+   *
+   * @category Remote Config
+   * @defaultValue 5000
+   */
+  remoteConfigPollInterval?: number
 }
 
 /**
@@ -105,6 +122,14 @@ export interface LiveDebuggerPublicApi extends PublicApi {
   clearProbes: () => void
 
   /**
+   * Get all currently active probes across all instrumented functions
+   *
+   * @category Probes
+   * @returns Array of all active probes
+   */
+  getProbes: () => Probe[]
+
+  /**
    * Send a debugger snapshot to Datadog logs.
    *
    * @category Live Debugger
@@ -121,14 +146,23 @@ export interface LiveDebuggerPublicApi extends PublicApi {
  */
 function makeLiveDebuggerPublicApi(): LiveDebuggerPublicApi {
   return makePublicApi<LiveDebuggerPublicApi>({
-    init: () => {
-      // TODO: Support configuration argument
+    init: (initConfiguration: LiveDebuggerInitConfiguration) => {
       // Expose internal hooks on globalThis for instrumented code
       if (typeof globalThis !== 'undefined') {
         ;(globalThis as any).$dd_entry = onEntry
         ;(globalThis as any).$dd_return = onReturn
         ;(globalThis as any).$dd_throw = onThrow
         ;(globalThis as any).$dd_probes = getProbes
+      }
+
+      // Start Remote Config polling if proxy URL is provided
+      if (initConfiguration.remoteConfigProxyUrl) {
+        if (!initConfiguration.service) {
+          display.error('Live Debugger: service is required when using remoteConfigProxyUrl')
+          return
+        }
+
+        startRemoteConfigPolling(initConfiguration)
       }
     },
 
@@ -143,6 +177,8 @@ function makeLiveDebuggerPublicApi(): LiveDebuggerPublicApi {
     clearProbes: () => {
       clearProbes()
     },
+
+    getProbes: () => getAllProbes(),
 
     sendDebuggerSnapshot: (logger: any, dd: any, snapshot: any, message?: string) => {
       sendDebuggerSnapshot(logger, dd, snapshot, message)
