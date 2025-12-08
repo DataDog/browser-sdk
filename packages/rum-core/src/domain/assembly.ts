@@ -11,6 +11,7 @@ import {
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
+import type { RumViewEvent } from '../rumEvent.types'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
@@ -83,6 +84,16 @@ export function startRumAssembly(
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
+    [RumEventType.STREAM]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
+    [RumEventType.TRANSITION]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
   }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(RumEventType.ERROR, reportError, eventRateLimit),
@@ -94,7 +105,7 @@ export function startRumAssembly(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
     ({ startTime, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
-        eventType: rawRumEvent.type,
+        eventType: rawRumEvent.type === 'stream' ? 'view' : rawRumEvent.type,
         startTime,
         duration,
       })!
@@ -111,7 +122,40 @@ export function startRumAssembly(
         if (isEmptyObject(serverRumEvent.context!)) {
           delete serverRumEvent.context
         }
-        lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+
+        if (rawRumEvent.type === 'stream') {
+          const streamEvent = {
+            ...(serverRumEvent as RumViewEvent),
+            _dd: {
+              ...serverRumEvent._dd,
+              document_version: serverRumEvent.stream?.document_version,
+            },
+            stream: {
+              ...serverRumEvent.stream,
+              time_spent: undefined,
+            },
+            view: {
+              ...serverRumEvent.view,
+              id: serverRumEvent.stream?.id,
+              is_active: true,
+              action: {
+                count: 0,
+              },
+              error: {
+                count: 0,
+              },
+              resource: {
+                count: 0,
+              },
+              time_spent: serverRumEvent.stream?.time_spent,
+            },
+            type: 'view',
+          }
+
+          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, streamEvent as AssembledRumEvent)
+        } else {
+          lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, serverRumEvent)
+        }
       }
     }
   )
