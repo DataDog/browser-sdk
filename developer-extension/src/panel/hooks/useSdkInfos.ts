@@ -9,16 +9,16 @@ const REFRESH_INFOS_INTERVAL = 2000
 export interface SdkInfos {
   rum?: {
     version?: string
-    config?: object & { site?: string }
-    internalContext?: object & { session: { id: string } }
-    globalContext?: object
-    user: object
+    config?: Record<string, unknown> & { site?: string }
+    internalContext?: Record<string, unknown> & { session: { id: string } }
+    globalContext?: Record<string, unknown>
+    user: Record<string, unknown>
   }
   logs?: {
     version?: string
-    config?: object & { site?: string }
-    globalContext?: object
-    user: object
+    config?: Record<string, unknown> & { site?: string }
+    globalContext?: Record<string, unknown>
+    user: Record<string, unknown>
   }
   cookie?: {
     id?: string

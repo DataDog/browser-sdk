@@ -22,33 +22,31 @@ export function monitored<T extends (...params: any[]) => unknown>(
   descriptor: TypedPropertyDescriptor<T>
 ) {
   const originalMethod = descriptor.value!
-  descriptor.value = function (this: any, ...args: Parameters<T>) {
+  descriptor.value = function (this: ThisParameterType<T>, ...args: Parameters<T>) {
     const decorated = onMonitorErrorCollected ? monitor(originalMethod) : originalMethod
     return decorated.apply(this, args) as ReturnType<T>
   } as T
 }
 
-export function monitor<T extends (...args: any[]) => any>(fn: T): T {
-  return function (this: any) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return callMonitored(fn, this, arguments as unknown as Parameters<T>)
+export function monitor<T extends (...args: any[]) => unknown>(fn: T): T {
+  return function (this: ThisParameterType<T>, ...args: Parameters<T>) {
+    return callMonitored(fn, this, args)
   } as unknown as T // consider output type has input type
 }
 
-export function callMonitored<T extends (...args: any[]) => any>(
+export function callMonitored<T extends (...args: any[]) => unknown>(
   fn: T,
   context: ThisParameterType<T>,
   args: Parameters<T>
 ): ReturnType<T> | undefined
-export function callMonitored<T extends (this: void) => any>(fn: T): ReturnType<T> | undefined
-export function callMonitored<T extends (...args: any[]) => any>(
+export function callMonitored<T extends (this: void) => unknown>(fn: T): ReturnType<T> | undefined
+export function callMonitored<T extends (...args: any[]) => unknown>(
   fn: T,
   context?: any,
   args?: any
 ): ReturnType<T> | undefined {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return fn.apply(context, args)
+    return fn.apply(context, args) as ReturnType<T>
   } catch (e) {
     monitorError(e)
   }
@@ -65,7 +63,7 @@ export function monitorError(e: unknown) {
   }
 }
 
-export function displayIfDebugEnabled(...args: any[]) {
+export function displayIfDebugEnabled(...args: unknown[]) {
   if (debugMode) {
     display.error('[MONITOR]', ...args)
   }
