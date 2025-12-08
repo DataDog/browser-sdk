@@ -7,9 +7,9 @@
     "dev": "wxt"
   },
   "devDependencies": {
-    "@types/chrome": "0.1.27",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
+    "@types/chrome": "0.1.31",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
     "@wxt-dev/module-react": "1.1.5",
     "typescript": "5.9.3"
   },
@@ -17,8 +17,8 @@
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "8.3.7",
-    "@mantine/hooks": "8.3.7",
+    "@mantine/core": "8.3.9",
+    "@mantine/hooks": "8.3.9",
     "@tabler/icons-react": "3.35.0",
     "clsx": "2.1.1",
     "react": "19.2.0",
