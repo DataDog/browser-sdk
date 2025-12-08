@@ -216,37 +216,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.23.0":
-  version: 6.23.0
-  resolution: "@datadog/browser-core@npm:6.23.0"
-  checksum: 10c0/a4f85c49259a46ebc3e3457a39c8200f0f543f2de4e683bb819750baa3fc2ef4093b65870f485f33a91b3a1ac0418e5900c594a4c808a5452ae650b2b74b646f
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum-core@npm:6.23.0":
-  version: 6.23.0
-  resolution: "@datadog/browser-rum-core@npm:6.23.0"
-  dependencies:
-    "@datadog/browser-core": "npm:6.23.0"
-  checksum: 10c0/857b9966bfdc98696629d9cd905c89335e55d301dea7c94d0aaf9366bb976398ce9150e7ff2868a9cbd290ef2cd5419473649486663cc961c1d4576d014e4198
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum@npm:^6.23.0":
-  version: 6.23.0
-  resolution: "@datadog/browser-rum@npm:6.23.0"
-  dependencies:
-    "@datadog/browser-core": "npm:6.23.0"
-    "@datadog/browser-rum-core": "npm:6.23.0"
-  peerDependencies:
-    "@datadog/browser-logs": 6.23.0
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  checksum: 10c0/00ccbf8addceb2b763f778b5e3e86b8ca98d188c11036ece6cef6843354b5212a5ebc86b97994f114945f6454eac1fffb8a5f5fdb0e1a2145383e2e48f300918
-  languageName: node
-  linkType: hard
-
 "@esbuild/aix-ppc64@npm:0.21.5":
   version: 0.21.5
   resolution: "@esbuild/aix-ppc64@npm:0.21.5"
@@ -1388,7 +1357,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "heavy-spa@workspace:."
   dependencies:
-    "@datadog/browser-rum": "npm:^6.23.0"
     "@types/node": "npm:^24.9.1"
     "@types/react": "npm:^18.3.12"
     "@types/react-dom": "npm:^18.3.1"
@@ -2298,8 +2266,8 @@ __metadata:
   linkType: hard
 
 "vite@npm:^5.4.10":
-  version: 5.4.20
-  resolution: "vite@npm:5.4.20"
+  version: 5.4.21
+  resolution: "vite@npm:5.4.21"
   dependencies:
     esbuild: "npm:^0.21.3"
     fsevents: "npm:~2.3.3"
@@ -2336,7 +2304,7 @@ __metadata:
       optional: true
   bin:
     vite: bin/vite.js
-  checksum: 10c0/391a1fdd7e05445d60aa3b15d6c1cffcdd92c5d154da375bf06b9cd5633c2387ebee0e8f2fceed3226a63dff36c8ef18fb497662dde8c135133c46670996c7a1
+  checksum: 10c0/468336a1409f728b464160cbf02672e72271fb688d0e605e776b74a89d27e1029509eef3a3a6c755928d8011e474dbf234824d054d07960be5f23cd176bc72de
   languageName: node
   linkType: hard
 
