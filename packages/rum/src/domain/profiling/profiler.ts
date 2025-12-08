@@ -88,6 +88,12 @@ export function createRumProfiler(
       addEventListener(configuration, window, DOM_EVENT.BEFORE_UNLOAD, handleBeforeUnload).stop
     )
 
+    // Subscribe to session expiration to stop profiling when session ends
+    const sessionExpiredSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+      stop().catch(monitorError)
+    })
+    globalCleanupTasks.push(sessionExpiredSubscription.unsubscribe)
+
     // Start profiler instance
     startNextProfilerInstance()
   }

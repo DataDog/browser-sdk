@@ -372,6 +372,74 @@ describe('profiler', () => {
     expect(request2.event.session?.id).toBe('session-id-1')
     expect(request2['wall-time.json']).toEqual(mockedRumProfilerTrace)
   })
+
+  it('should stop profiling when session expires', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start({
+      id: 'view-id-1',
+      name: 'view-name-1',
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    })
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Notify that the session has expired
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    // Wait for profiler to stop
+    await waitForBoolean(() => profiler.isStopped())
+
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Verify that profiler collected data before stopping
+    expect(interceptor.requests.length).toBe(1)
+  })
+
+  it('should not restart profiling after session expiration when visibility changes', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start({
+      id: 'view-id-1',
+      name: 'view-name-1',
+      startClocks: {
+        relative: relativeNow(),
+        timeStamp: timeStampNow(),
+      },
+    })
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Notify that the session has expired
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    // Wait for profiler to stop
+    await waitForBoolean(() => profiler.isStopped())
+
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Change visibility to hidden and back to visible
+    setVisibilityState('hidden')
+    await waitForBoolean(() => profiler.isStopped())
+
+    setVisibilityState('visible')
+
+    // Wait a bit to ensure profiler doesn't restart
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Profiler should remain stopped, not paused or running
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+  })
 })
 
 function waitForBoolean(booleanCallback: () => boolean) {
