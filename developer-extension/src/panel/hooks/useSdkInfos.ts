@@ -1,4 +1,7 @@
 import { useEffect, useState } from 'react'
+import type { RumInternalContext, Context } from '@datadog/browser-core'
+import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RumInitConfiguration } from '@datadog/browser-rum'
 import { createLogger } from '../../common/logger'
 import { evalInWindow } from '../evalInWindow'
 
@@ -9,16 +12,16 @@ const REFRESH_INFOS_INTERVAL = 2000
 export interface SdkInfos {
   rum?: {
     version?: string
-    config?: Record<string, unknown> & { site?: string }
-    internalContext?: Record<string, unknown> & { session: { id: string } }
-    globalContext?: Record<string, unknown>
-    user: Record<string, unknown>
+    config?: RumInitConfiguration
+    internalContext?: RumInternalContext
+    globalContext?: Context
+    user: Context
   }
   logs?: {
     version?: string
-    config?: Record<string, unknown> & { site?: string }
-    globalContext?: Record<string, unknown>
-    user: Record<string, unknown>
+    config?: LogsInitConfiguration
+    globalContext?: Context
+    user: Context
   }
   cookie?: {
     id?: string
