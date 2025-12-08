@@ -67,7 +67,7 @@ type PostCallCallback<TARGET extends { [key: string]: any }, METHOD extends keyo
  *    })
  *  })
  */
-export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET & string>(
+export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(
   targetPrototype: TARGET,
   method: METHOD,
   onPreCall: (this: null, callInfos: InstrumentedMethodCall<TARGET, METHOD>) => void,
@@ -76,7 +76,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
   let original = targetPrototype[method]
 
   if (typeof original !== 'function') {
-    if (method in targetPrototype && method.startsWith('on')) {
+    if (method in targetPrototype && typeof method === 'string' && method.startsWith('on')) {
       original = noop as TARGET[METHOD]
     } else {
       return { stop: noop }
@@ -85,7 +85,7 @@ export function instrumentMethod<TARGET extends { [key: string]: any }, METHOD e
 
   let stopped = false
 
-  const instrumentation = function (this: TARGET): ReturnType<TARGET[METHOD]> | undefined {
+  const instrumentation = function (this: TARGET): ReturnType<TARGET[METHOD]> {
     if (stopped) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
       return original.apply(this, arguments as unknown as Parameters<TARGET[METHOD]>)

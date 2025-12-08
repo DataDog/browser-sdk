@@ -183,7 +183,7 @@ function isExcludedMutation(mutation: RumMutationRecord): boolean {
 
   return Boolean(
     targetElement &&
-      isElementNode(targetElement) &&
-      targetElement.matches(`[${EXCLUDED_MUTATIONS_ATTRIBUTE}], [${EXCLUDED_MUTATIONS_ATTRIBUTE}] *`)
+    isElementNode(targetElement) &&
+    targetElement.matches(`[${EXCLUDED_MUTATIONS_ATTRIBUTE}], [${EXCLUDED_MUTATIONS_ATTRIBUTE}] *`)
   )
 }

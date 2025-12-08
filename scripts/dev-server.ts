@@ -32,7 +32,7 @@ function createStaticSandboxApp(): express.Application {
             entry: `${packagePath}/src/entries/main.ts`,
             filename: packageName === 'worker' ? 'worker.js' : `datadog-${packageName}.js`,
           })
-        )!
+        )
       )
     )
   }
@@ -69,7 +69,7 @@ function createReactApp(): express.Application {
           plugins: [new HtmlWebpackPlugin({ publicPath: '/react-app/' })],
           mode: 'development',
         })
-      )!
+      )
     )
   )
 
