@@ -4,6 +4,8 @@
   "labels": ["dependencies"],
   "commitMessagePrefix": "👷 ",
   "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "prCreation": "not-pending",
   "prConcurrentLimit": 5,
   "prHourlyLimit": 1,
   "ignoreDeps": ["registry.ddbuild.io/dd-octo-sts"],
