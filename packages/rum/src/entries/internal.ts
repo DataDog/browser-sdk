@@ -15,4 +15,4 @@ export {
 
 export * from '../types'
 
-export { serializeNode, serializeNode as serializeNodeWithId } from '../domain/record'
+export { takeFullSnapshot, takeNodeSnapshot, serializeNode as serializeNodeWithId } from '../domain/record'
