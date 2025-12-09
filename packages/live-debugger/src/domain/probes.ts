@@ -56,8 +56,17 @@ export interface InitializedProbe extends Probe {
   lastCaptureMs: number
 }
 
-const activeProbes = new Map<string, InitializedProbe[]>()
-const probeIdToFunctionId = new Map<string, string>()
+// Pre-populate with a dummy key to help V8 optimize property lookups.
+// Removing this shows a much larger performance overhead.
+// Benchmarks show that using an object is much faster than a Map.
+const activeProbes: Record<string, InitializedProbe[]> = {
+  // @ts-expect-error - Pre-populate with a dummy key to help V8 optimize property lookups.
+  __dummy__: undefined
+}
+const probeIdToFunctionId: Record<string, string> = {
+  // @ts-expect-error - Pre-populate with a dummy key to help V8 optimize property lookups.
+  __dummy__: undefined
+}
 
 /**
  * Add a probe to the registry
@@ -66,13 +75,13 @@ const probeIdToFunctionId = new Map<string, string>()
  */
 export function addProbe(probe: Probe): void {
   initializeProbe(probe)
-  let probes = activeProbes.get(probe.functionId)
+  let probes = activeProbes[probe.functionId]
   if (!probes) {
     probes = []
-    activeProbes.set(probe.functionId, probes)
+    activeProbes[probe.functionId] = probes
   }
   probes.push(probe)
-  probeIdToFunctionId.set(probe.id, probe.functionId)
+  probeIdToFunctionId[probe.id] = probe.functionId
 }
 
 /**
@@ -82,7 +91,7 @@ export function addProbe(probe: Probe): void {
  * @returns The initialized probes
  */
 export function getProbes(functionId: string): InitializedProbe[] | undefined {
-  return activeProbes.get(functionId)
+  return activeProbes[functionId]
 }
 
 /**
@@ -92,8 +101,10 @@ export function getProbes(functionId: string): InitializedProbe[] | undefined {
  */
 export function getAllProbes(): InitializedProbe[] {
   const allProbes: InitializedProbe[] = []
-  for (const probes of activeProbes.values()) {
-    allProbes.push(...probes)
+  for (const probes of Object.values(activeProbes)) {
+    if (probes) {
+      allProbes.push(...probes)
+    }
   }
   return allProbes
 }
@@ -104,11 +115,11 @@ export function getAllProbes(): InitializedProbe[] {
  * @param id - The probe ID
  */
 export function removeProbe(id: string): void {
-  const functionId = probeIdToFunctionId.get(id)
+  const functionId = probeIdToFunctionId[id]
   if (!functionId) {
     throw new Error(`Probe with id ${id} not found`)
   }
-  const probes = activeProbes.get(functionId)
+  const probes = activeProbes[functionId]
   if (!probes) {
     throw new Error(`Probes with function id ${functionId} not found`)
   }
@@ -122,9 +133,9 @@ export function removeProbe(id: string): void {
       break
     }
   }
-  probeIdToFunctionId.delete(id)
+  delete probeIdToFunctionId[id]
   if (probes.length === 0) {
-    activeProbes.delete(functionId)
+    delete activeProbes[functionId]
   }
 }
 
@@ -132,15 +143,25 @@ export function removeProbe(id: string): void {
  * Clear all probes (useful for testing)
  */
 export function clearProbes(): void {
-  for (const probes of activeProbes.values()) {
-    for (const probe of probes) {
-      if (typeof probe.template === 'object' && 'clearCache' in probe.template && probe.template.clearCache) {
-        probe.template.clearCache()
+  for (const probes of Object.values(activeProbes)) {
+    if (probes) {
+      for (const probe of probes) {
+        if (typeof probe.template === 'object' && 'clearCache' in probe.template && probe.template.clearCache) {
+          probe.template.clearCache()
+        }
       }
     }
   }
-  activeProbes.clear()
-  probeIdToFunctionId.clear()
+  for (const functionId of Object.keys(activeProbes)) {
+    if (functionId !== '__dummy__') {
+      delete activeProbes[functionId]
+    }
+  }
+  for (const probeId of Object.keys(probeIdToFunctionId)) {
+    if (probeId !== '__dummy__') {
+      delete probeIdToFunctionId[probeId]
+    }
+  }
   globalSnapshotSamplingRateWindowStart = 0
   snapshotsSampledWithinTheLastSecond = 0
 }
