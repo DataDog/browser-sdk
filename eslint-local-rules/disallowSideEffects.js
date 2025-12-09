@@ -30,6 +30,7 @@ const pathsWithSideEffect = new Set([
   `${packagesRoot}/flagging/src/entries/main.ts`,
   `${packagesRoot}/rum/src/entries/main.ts`,
   `${packagesRoot}/rum-slim/src/entries/main.ts`,
+  `${packagesRoot}/live-debugger/src/entries/main.ts`,
 ])
 
 // Those packages are known to have no side effects when evaluated

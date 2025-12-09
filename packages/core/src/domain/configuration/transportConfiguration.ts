@@ -13,7 +13,7 @@ export interface TransportConfiguration {
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
-  source: 'browser' | 'flutter' | 'unity'
+  source: 'browser' | 'flutter' | 'unity' | 'dd_debugger'
 }
 
 export interface ReplicaConfiguration {
@@ -37,7 +37,7 @@ export function computeTransportConfiguration(initConfiguration: InitConfigurati
 }
 
 function validateSource(source: string | undefined) {
-  if (source === 'flutter' || source === 'unity') {
+  if (source === 'flutter' || source === 'unity' || source === 'dd_debugger') {
     return source
   }
   return 'browser'

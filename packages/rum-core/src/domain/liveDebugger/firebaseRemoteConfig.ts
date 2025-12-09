@@ -60,7 +60,9 @@ export async function startFirebaseRemoteConfigIntegration(
   const browserWindow = window as BrowserWindow
 
   if (!browserWindow.firebase) {
-    throw new Error('Firebase SDK is not available. Please include Firebase SDK before initializing the RUM SDK or provide firebaseConfig.')
+    throw new Error(
+      'Firebase SDK is not available. Please include Firebase SDK before initializing the RUM SDK or provide firebaseConfig.'
+    )
   }
 
   if (!browserWindow.firebase.remoteConfig) {
@@ -83,11 +85,11 @@ export async function startFirebaseRemoteConfigIntegration(
     const updateContextAndLog = () => {
       try {
         const configValue = remoteConfig.getValue(`dd_${liveDebuggerId}`)
-        
+
         // Get string value first - Firebase Remote Config stores values as strings
         const stringValue = configValue.asString()
         let booleanValue: boolean
-        
+
         // Firebase Remote Config asBoolean() can be unreliable for string values
         // Parse the string value explicitly to handle "true"/"false" strings
         const normalizedString = stringValue.toLowerCase().trim()
@@ -99,7 +101,9 @@ export async function startFirebaseRemoteConfigIntegration(
           // Try asBoolean() as fallback, but log a warning if it seems wrong
           booleanValue = configValue.asBoolean()
           if (normalizedString !== 'true' && normalizedString !== 'false' && booleanValue) {
-            display.warn(`Firebase Remote Config value "${stringValue}" for key "${liveDebuggerId}" converted to boolean ${booleanValue}`)
+            display.warn(
+              `Firebase Remote Config value "${stringValue}" for key "${liveDebuggerId}" converted to boolean ${booleanValue}`
+            )
           }
         }
 
@@ -172,4 +176,3 @@ export async function startFirebaseRemoteConfigIntegration(
     throw error
   }
 }
-

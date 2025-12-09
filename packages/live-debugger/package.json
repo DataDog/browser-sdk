@@ -1,0 +1,34 @@
+{
+  "name": "@datadog/browser-live-debugger",
+  "version": "6.24.1",
+  "license": "Apache-2.0",
+  "main": "cjs/entries/main.js",
+  "module": "esm/entries/main.js",
+  "types": "cjs/entries/main.d.ts",
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-live-debugger.js",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-live-debugger.js"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.24.1"
+  },
+  "peerDependencies": {
+    "@datadog/browser-rum-core": "6.24.1"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-rum-core": {
+      "optional": true
+    }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/live-debugger"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -570,7 +570,15 @@ export interface CommonTelemetryProperties {
   /**
    * The source of this event
    */
-  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity' | 'kotlin-multiplatform'
+  readonly source:
+    | 'android'
+    | 'ios'
+    | 'browser'
+    | 'flutter'
+    | 'react-native'
+    | 'unity'
+    | 'kotlin-multiplatform'
+    | 'dd_debugger'
   /**
    * The version of the SDK generating the telemetry event
    */

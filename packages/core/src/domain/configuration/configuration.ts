@@ -273,7 +273,7 @@ export interface InitConfiguration {
    *
    * @internal
    */
-  source?: 'browser' | 'flutter' | 'unity' | undefined
+  source?: 'browser' | 'flutter' | 'unity' | 'dd_debugger' | undefined
 
   /**
    * [Internal option] Additional configuration for the SDK.
@@ -328,7 +328,7 @@ export interface Configuration extends TransportConfiguration {
 
   // internal
   sdkVersion: string | undefined
-  source: 'browser' | 'flutter' | 'unity'
+  source: 'browser' | 'flutter' | 'unity' | 'dd_debugger'
   variant: string | undefined
 }
 
