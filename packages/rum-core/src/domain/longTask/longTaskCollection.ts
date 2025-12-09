@@ -5,6 +5,7 @@ import {
   generateUUID,
   createValueHistory,
   SESSION_TIME_OUT_DELAY,
+  addDuration,
 } from '@datadog/browser-core'
 import type { RawRumLongTaskEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
@@ -13,9 +14,13 @@ import { LifeCycleEventType } from '../lifeCycle'
 import {
   createPerformanceObservable,
   RumPerformanceEntryType,
-  supportPerformanceTimingEvent
+  supportPerformanceTimingEvent,
 } from '../../browser/performanceObservable'
-import type {RumPerformanceLongAnimationFrameTiming, RumPerformanceLongTaskTiming, RumPerformanceScriptTiming} from '../../browser/performanceObservable';
+import type {
+  RumPerformanceLongAnimationFrameTiming,
+  RumPerformanceLongTaskTiming,
+  RumPerformanceScriptTiming,
+} from '../../browser/performanceObservable'
 import type { RumConfiguration } from '../configuration'
 
 export const LONG_TASK_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
@@ -24,15 +29,13 @@ export interface LongTaskContexts {
   findLongTaskId: (startTime?: RelativeTime) => string | undefined
 }
 
-
-export function startLongTaskCollection(
-  lifeCycle: LifeCycle,
-  configuration: RumConfiguration
-) {
+export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
   const history = createValueHistory<string>({
     expireDelay: LONG_TASK_ID_HISTORY_TIME_OUT_DELAY,
   })
-  const entryType = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME) ? RumPerformanceEntryType.LONG_ANIMATION_FRAME : RumPerformanceEntryType.LONG_TASK
+  const entryType = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
+    ? RumPerformanceEntryType.LONG_ANIMATION_FRAME
+    : RumPerformanceEntryType.LONG_TASK
 
   const subscription = createPerformanceObservable(configuration, {
     type: entryType,
@@ -54,16 +57,18 @@ export function startLongTaskCollection(
         domainContext: { performanceEntry: entry },
       })
 
-      history.add(taskId, startClocks.relative)
+      history.add(taskId, startClocks.relative).close(addDuration(startClocks.relative, entry.duration))
     }
   })
+
+  const longTaskContexts: LongTaskContexts = { findLongTaskId: (startTime?: RelativeTime) => history.find(startTime) }
 
   return {
     stop: () => {
       subscription.unsubscribe()
       history.stop()
     },
-    longTaskContexts: { findActionId: (startTime?: RelativeTime) => history.find(startTime) },
+    longTaskContexts,
   }
 }
 

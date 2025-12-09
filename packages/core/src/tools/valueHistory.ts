@@ -132,8 +132,8 @@ export function createValueHistory<Value>({
   /**
    * Remove entries older than the given startTime
    */
-  function reset(startTime: RelativeTime = Infinity as RelativeTime) {
-    entries = entries.filter((entry) => entry.startTime >= startTime)
+  function reset() {
+    entries = []
   }
 
   /**

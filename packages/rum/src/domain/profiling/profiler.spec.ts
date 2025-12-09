@@ -1,9 +1,4 @@
-import {
-  LifeCycle,
-  LifeCycleEventType,
-  RumPerformanceEntryType,
-  createHooks,
-} from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksOrigin, createIdentityEncoder, deepClone, relativeNow, timeStampNow } from '@datadog/browser-core'
 import {

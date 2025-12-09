@@ -477,7 +477,6 @@ export interface RecorderApi {
   getSessionReplayLink: () => string | undefined
 }
 
-
 export interface ProfilerApi {
   stop: () => void
   onRumStart: (

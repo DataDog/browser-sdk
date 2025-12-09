@@ -63,7 +63,14 @@ export function makeProfilerApi(): ProfilerApi {
           return
         }
 
-        profiler = createRumProfiler(configuration, lifeCycle, sessionManager, profilingContextManager, longTaskContexts, createEncoder)
+        profiler = createRumProfiler(
+          configuration,
+          lifeCycle,
+          sessionManager,
+          profilingContextManager,
+          longTaskContexts,
+          createEncoder
+        )
         profiler.start(viewHistory.findView())
       })
       .catch(monitorError)

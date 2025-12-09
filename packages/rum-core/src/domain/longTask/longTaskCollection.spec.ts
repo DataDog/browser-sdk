@@ -92,7 +92,7 @@ describe('longTaskCollection', () => {
       notifyPerformanceEntries([performanceLongAnimationFrameTiming])
 
       const longTaskId = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task.id
-      expect(longTaskCollection.longTaskContexts.findActionId(1234 as RelativeTime)).toBe(longTaskId)
+      expect(longTaskCollection.longTaskContexts.findLongTaskId(1234 as RelativeTime)).toBe(longTaskId)
     })
   })
 
@@ -156,7 +156,7 @@ describe('longTaskCollection', () => {
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
 
       const longTaskId = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task.id
-      expect(longTaskCollection.longTaskContexts.findActionId(1234 as RelativeTime)).toBe(longTaskId)
+      expect(longTaskCollection.longTaskContexts.findLongTaskId(1234 as RelativeTime)).toBe(longTaskId)
     })
   })
 
@@ -183,7 +183,7 @@ describe('longTaskCollection', () => {
       notifyPerformanceEntries([createPerformanceEntry(entryType)])
       const longTaskId = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task.id
 
-      expect(longTaskCollection.longTaskContexts.findActionId(1234 as RelativeTime)).toBe(longTaskId)
+      expect(longTaskCollection.longTaskContexts.findLongTaskId(1234 as RelativeTime)).toBe(longTaskId)
 
       longTaskCollection.stop()
 
