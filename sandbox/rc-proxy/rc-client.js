@@ -7,7 +7,7 @@ const __dirname = dirname(__filename);
 
 /**
  * Remote Config Client
- * 
+ *
  * Communicates with Datadog's Remote Config backend using protobuf protocol.
  * Hardcoded to LIVE_DEBUGGING product only.
  */
@@ -18,18 +18,18 @@ class RCClient {
     this.site = site;
     this.baseURL = `https://config.${site}`;
     this.endpoint = '/api/v0.1/configurations';
-    
+
     // Version tracking for RC protocol
     this.versions = {
       config_snapshot: 0,
       config_root: 0,
       director_root: 0
     };
-    
+
     // Track products - first request uses new_products, then moves to products
     this.products = new Set();
     this.isFirstRequest = true;
-    
+
     // Protobuf types (loaded async)
     this.proto = null;
     this.initialized = false;
@@ -40,11 +40,11 @@ class RCClient {
    */
   async initialize() {
     if (this.initialized) return;
-    
+
     try {
       const protoPath = join(__dirname, 'remoteconfig.proto');
       const root = await protobuf.load(protoPath);
-      
+
       this.proto = {
         LatestConfigsRequest: root.lookupType('datadog.config.LatestConfigsRequest'),
         LatestConfigsResponse: root.lookupType('datadog.config.LatestConfigsResponse'),
@@ -52,7 +52,7 @@ class RCClient {
         ClientState: root.lookupType('datadog.config.ClientState'),
         ClientTracer: root.lookupType('datadog.config.ClientTracer')
       };
-      
+
       this.initialized = true;
       console.log('[RCClient] Protobuf definitions loaded');
     } catch (err) {
@@ -119,12 +119,12 @@ class RCClient {
 
     // Encode to protobuf
     const requestBuffer = this.proto.LatestConfigsRequest.encode(request).finish();
-    
+
     console.log('[RCClient] Encoded protobuf size:', requestBuffer.length, 'bytes');
 
     // Make HTTP request to Datadog
     const url = `${this.baseURL}${this.endpoint}`;
-    
+
     try {
       const response = await fetch(url, {
         method: 'POST',
@@ -177,9 +177,9 @@ class RCClient {
 
       // Extract and parse target files (probes)
       const probes = this._extractProbes(decodedResponse.targetFiles || []);
-      
+
       console.log(`[RCClient] Poll successful. Received ${probes.length} probes. Versions: ${JSON.stringify(this.versions)}`);
-      
+
       return probes;
     } catch (err) {
       console.error('[RCClient] Poll failed:', err.message);
@@ -204,7 +204,7 @@ class RCClient {
         // LIVE_DEBUGGING configs typically have a structure like:
         // { "probe": { ... probe data ... } }
         // or could be an array of probes
-        
+
         if (config.probe) {
           probes.push(config.probe);
         } else if (Array.isArray(config)) {

@@ -3,10 +3,11 @@ import config from './config.js';
 import ClientTracker from './client-tracker.js';
 import RCClient from './rc-client.js';
 import AgentClient from './agent-client.js';
+import { sendDummyTrace } from './trace-sender.js';
 
 /**
  * Remote Config Proxy Server
- * 
+ *
  * Main server that:
  * - Tracks active browser clients
  * - Polls Datadog RC backend for LIVE_DEBUGGING probes
@@ -38,11 +39,11 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type');
-  
+
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
-  
+
   next();
 });
 
@@ -51,7 +52,7 @@ app.use(express.json());
 
 /**
  * GET /probes
- * 
+ *
  * Register a client and return all probes.
  * Query params:
  * - service (required): Service name
@@ -61,23 +62,36 @@ app.use(express.json());
 app.get('/probes', (req, res) => {
   const { service, env, version } = req.query;
 
-  // Validate required params
-  if (!service) {
+  // Validate required params and ensure they are strings
+  if (!service || typeof service !== 'string') {
     return res.status(400).json({
       error: 'Missing required query parameter: service'
     });
   }
 
+  const envStr = typeof env === 'string' ? env : '';
+  const versionStr = typeof version === 'string' ? version : '';
+
   // Register/update client
+  let isNewClient = false;
   try {
-    clientTracker.registerClient(service, env, version);
+    const result = clientTracker.registerClient(service, envStr, versionStr);
+    isNewClient = result.isNew;
+
+    // Send dummy trace for new clients in agent mode
+    if (isNewClient && config.mode === 'agent' && config.agentUrl) {
+      // Don't await - send trace in background
+      sendDummyTrace(config.agentUrl, service, envStr).catch(err => {
+        console.error('[Server] Failed to send trace for new client:', err);
+      });
+    }
   } catch (err) {
     console.error('[Server] Error registering client:', err);
   }
 
   // Return all probes from cache
   const probes = Array.from(probeCache.values());
-  
+
   res.json({
     probes,
     count: probes.length,
@@ -87,12 +101,12 @@ app.get('/probes', (req, res) => {
 
 /**
  * GET /health
- * 
+ *
  * Health check endpoint
  */
 app.get('/health', (req, res) => {
   const activeClientCount = clientTracker.getActiveClientCount();
-  
+
   res.json({
     ok: !lastPollError,
     lastPollTime,
@@ -111,7 +125,7 @@ app.get('/health', (req, res) => {
 
 /**
  * GET /
- * 
+ *
  * Welcome message and API documentation
  */
 app.get('/', (req, res) => {
@@ -134,19 +148,19 @@ app.get('/', (req, res) => {
 
 /**
  * Background polling loop
- * 
+ *
  * Polls Datadog RC backend periodically and updates probe cache
  */
 async function pollLoop() {
   try {
     // Get active clients
     const activeClients = clientTracker.getActiveClients();
-    
+
     if (activeClients.length === 0) {
       lastPollError = null;
       return;
     }
-    
+
     // Poll RC backend/agent (returns only new/modified probes)
     let deltaProbes;
     if (config.mode === 'agent') {
@@ -154,12 +168,12 @@ async function pollLoop() {
       deltaProbes = await rcClient.poll(activeClients);
     } else {
       // Backend mode: build protobuf client messages
-      const pbClientMessages = activeClients.map(client => 
+      const pbClientMessages = activeClients.map(client =>
         clientTracker.buildClientMessage(client)
       );
       deltaProbes = await rcClient.poll(pbClientMessages);
     }
-    
+
     // Update probe cache with all currently applied probes (not just the delta)
     const allProbes = rcClient.getAllProbes();
     probeCache.clear();
@@ -168,16 +182,66 @@ async function pollLoop() {
         probeCache.set(probe.id, probe);
       }
     }
-    
+
     lastPollTime = new Date().toISOString();
     lastPollError = null;
-    
+
     if (deltaProbes.length > 0) {
       console.log(`[Polling] Updated: ${deltaProbes.length} probe(s) changed (total: ${allProbes.length})`);
     }
   } catch (err) {
-    console.error('[Polling] Poll error:', err.message);
+    if (config.mode === 'agent') {
+      if (err.message.includes('connection refused') || err.message.includes('ECONNREFUSED')) {
+        console.error(`[Polling] ❌ Cannot connect to agent at ${config.agentUrl} - Is the agent still running?`);
+      } else {
+        console.error('[Polling] Poll error:', err.message);
+      }
+    } else {
+      console.error('[Polling] Poll error:', err.message);
+    }
     lastPollError = err;
+  }
+}
+
+/**
+ * Validate that the agent is reachable
+ */
+async function validateAgentConnection() {
+  if (config.mode !== 'agent') {
+    return; // Skip validation for backend mode
+  }
+
+  try {
+    console.log(`[Validation] Checking agent connection at ${config.agentUrl}...`);
+
+    // Try to connect to the agent's info endpoint
+    const response = await fetch(`${config.agentUrl}/info`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(5000) // 5 second timeout
+    });
+
+    if (!response.ok) {
+      throw new Error(`Agent returned status ${response.status}`);
+    }
+
+    console.log('[Validation] ✅ Agent connection successful');
+  } catch (err) {
+    console.error('\n❌ ERROR: Cannot connect to Datadog Agent');
+    console.error(`   Agent URL: ${config.agentUrl}`);
+    console.error(`   Error: ${err.message}\n`);
+    console.error('Please ensure that:');
+    console.error('  1. Docker is running (if using Docker)');
+    console.error('  2. The Datadog Agent is running');
+    console.error('  3. The agent is accessible at the configured URL');
+    console.error('  4. The agent port (default: 8126) is correct\n');
+
+    if (err.cause?.code === 'ECONNREFUSED') {
+      console.error('The connection was refused. The agent is not listening on this port.\n');
+    } else if (err.name === 'TimeoutError' || err.cause?.code === 'ETIMEDOUT') {
+      console.error('The connection timed out. The agent may be unreachable.\n');
+    }
+
+    process.exit(1);
   }
 }
 
@@ -186,7 +250,10 @@ async function pollLoop() {
  */
 async function start() {
   console.log('🚀 Starting Remote Config Proxy...');
-  
+
+  // Validate agent connection first
+  await validateAgentConnection();
+
   // Initialize RC client (load protobuf)
   try {
     await rcClient.initialize();
@@ -200,10 +267,10 @@ async function start() {
     console.log(`\n✅ Proxy running on http://localhost:${config.port}`);
     console.log(`   Polling agent at ${config.agentUrl} every ${config.pollInterval}ms\n`);
   });
-  
+
   // Initial poll
   await pollLoop();
-  
+
   // Set up interval
   setInterval(pollLoop, config.pollInterval);
 }

@@ -5,7 +5,7 @@ dotenv.config();
 
 /**
  * Configuration for the RC Proxy
- * 
+ *
  * Supports two modes:
  * 1. Agent mode (AGENT_URL): Polls local Datadog agent - for POC/development
  * 2. Backend mode (DD_API_KEY + DD_SITE): Polls Datadog RC backend directly - requires backend access

@@ -1,9 +1,9 @@
 /**
  * Agent Client - Polls local Datadog agent for Remote Config updates
- * 
+ *
  * This client connects to a local Datadog agent's /v0.7/config endpoint,
  * which is the same endpoint used by tracers (dd-trace-js, dd-trace-py, etc.)
- * 
+ *
  * The agent endpoint uses JSON (not protobuf) and returns probe configurations
  * directly without requiring API keys or external network access.
  */
@@ -19,10 +19,10 @@ export default class AgentClient {
   constructor(agentUrl) {
     this.agentUrl = agentUrl;
     this.endpoint = '/v0.7/config';
-    
+
     // Generate stable client ID (represents the browser RC proxy)
     this.clientId = this._generateClientId();
-    
+
     // Track RC state (using snake_case for agent JSON API)
     this.state = {
       root_version: 1,
@@ -32,9 +32,9 @@ export default class AgentClient {
       error: '',
       backend_client_state: ''
     };
-    
+
     this.cachedTargetFiles = [];
-    
+
     // Track applied configs (like dd-trace-js RemoteConfigManager)
     // Map<path, {path, version, hashes, length, apply_state, apply_error, probe}>
     this.appliedConfigs = new Map();
@@ -59,7 +59,7 @@ export default class AgentClient {
 
   /**
    * Poll the local agent for RC updates
-   * 
+   *
    * @param {Array} activeClients - Array of browser clients from ClientTracker
    * @returns {Promise<Array>} Array of probe objects
    */
@@ -67,17 +67,18 @@ export default class AgentClient {
     try {
       // Build client payload for each active browser client
       const clients = activeClients.map(client => this._buildClientPayload(client));
-      
+
       // The agent expects a single client per request, but we have multiple browser clients
       // For POC, we'll merge all into one composite client
       const payload = this._buildAgentRequest(clients);
-      
+
       const response = await fetch(`${this.agentUrl}${this.endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(10000) // 10 second timeout
       });
 
       if (!response.ok) {
@@ -92,16 +93,30 @@ export default class AgentClient {
       }
 
       const data = await response.json();
-      
+
       // Parse config update (similar to dd-trace-js RemoteConfigManager.parseConfig)
       const probes = this._parseConfigUpdate(data);
-      
+
       if (probes.length > 0) {
         console.log(`[AgentClient] Received ${probes.length} new/updated probe(s)`);
       }
-      
+
       return probes;
     } catch (err) {
+      if (err.cause?.code === 'ECONNREFUSED') {
+        const error = new Error(`Cannot connect to agent at ${this.agentUrl} - connection refused. Is the agent running?`);
+        error.cause = err.cause;
+        throw error;
+      } else if (err.name === 'TimeoutError' || err.cause?.code === 'ETIMEDOUT') {
+        const error = new Error(`Agent request timed out at ${this.agentUrl}. The agent may be unreachable.`);
+        error.cause = err.cause;
+        throw error;
+      } else if (err.cause?.code === 'ENOTFOUND') {
+        const error = new Error(`Cannot resolve hostname for agent at ${this.agentUrl}. Check the agent URL.`);
+        error.cause = err.cause;
+        throw error;
+      }
+
       console.error('[AgentClient] Poll failed:', err.message);
       throw err;
     }
@@ -114,36 +129,36 @@ export default class AgentClient {
   _parseConfigUpdate(data) {
     const clientConfigs = data.client_configs || [];
     const targetFiles = data.target_files || [];
-    
+
     // Parse TUF targets metadata
     const targetsMetadata = this._fromBase64JSON(data.targets);
-    
+
     if (!targetsMetadata || !targetsMetadata.signed) {
       return [];
     }
-    
+
     const targets = targetsMetadata.signed.targets;
     const newVersion = targetsMetadata.signed.version;
-    
+
     this.state.targets_version = newVersion;
-    
+
     // Update backend client state if present
     if (targetsMetadata.signed.custom && targetsMetadata.signed.custom.opaque_backend_state) {
       this.state.backend_client_state = targetsMetadata.signed.custom.opaque_backend_state;
     }
-    
+
     // Determine which configs to unapply, apply, or modify
     const toUnapply = [];
     const toApply = [];
     const toModify = [];
-    
+
     // Find configs to unapply (in appliedConfigs but not in clientConfigs)
     for (const [path, appliedConfig] of this.appliedConfigs.entries()) {
       if (!clientConfigs.includes(path)) {
         toUnapply.push(appliedConfig);
       }
     }
-    
+
     // Find configs to apply or modify
     for (const path of clientConfigs) {
       const meta = targets[path];
@@ -151,21 +166,21 @@ export default class AgentClient {
         console.warn(`[AgentClient] Unable to find target for path ${path}`);
         continue;
       }
-      
+
       const current = this.appliedConfigs.get(path);
-      
+
       // If we already have this config with the same hash, skip it
       if (current && current.hashes.sha256 === meta.hashes.sha256) {
         continue;
       }
-      
+
       // Find the target file with the probe data
       const file = targetFiles.find(f => f.path === path);
       if (!file) {
         console.warn(`[AgentClient] Unable to find file for path ${path}`);
         continue;
       }
-      
+
       // Parse the probe from the file
       let probe;
       try {
@@ -174,7 +189,7 @@ export default class AgentClient {
         console.error(`[AgentClient] Failed to parse probe from ${path}:`, err.message);
         continue;
       }
-      
+
       // Create config entry
       const config = {
         path,
@@ -185,23 +200,23 @@ export default class AgentClient {
         apply_error: '',
         probe
       };
-      
+
       if (current) {
         toModify.push(config);
       } else {
         toApply.push(config);
       }
     }
-    
+
     // Apply changes to appliedConfigs map
     for (const config of toUnapply) {
       this.appliedConfigs.delete(config.path);
     }
-    
+
     for (const config of [...toApply, ...toModify]) {
       this.appliedConfigs.set(config.path, config);
     }
-    
+
     // Build config_states for next request
     this.state.config_states = Array.from(this.appliedConfigs.values()).map(config => ({
       product: 'LIVE_DEBUGGING',
@@ -210,7 +225,7 @@ export default class AgentClient {
       apply_state: config.apply_state,
       apply_error: config.apply_error
     }));
-    
+
     // Build cached_target_files for next request
     this.cachedTargetFiles = Array.from(this.appliedConfigs.values()).map(config => {
       const hashes = [];
@@ -225,12 +240,12 @@ export default class AgentClient {
         hashes
       };
     });
-    
+
     // Log summary if there were changes
     if (toApply.length > 0 || toModify.length > 0 || toUnapply.length > 0) {
       console.log(`[AgentClient] Config changes: +${toApply.length} new, ~${toModify.length} modified, -${toUnapply.length} removed (total: ${this.appliedConfigs.size})`);
     }
-    
+
     // Return only the new/modified probes
     return [...toApply, ...toModify].map(c => c.probe);
   }
@@ -255,7 +270,7 @@ export default class AgentClient {
     } else {
       throw new Error(`Unknown raw format for ${file.path}`);
     }
-    
+
     if (!probeConfig) {
       throw new Error(`Failed to decode base64 JSON for ${file.path}`);
     }
@@ -301,7 +316,7 @@ export default class AgentClient {
     // For simplicity, use the first client's metadata
     // In production, we might need multiple requests or merge strategies
     const client = clients.length > 0 ? clients[0] : this._buildDefaultClient();
-    
+
     return {
       client: client,
       cached_target_files: this.cachedTargetFiles

@@ -149,7 +149,7 @@
     <!-- Datadog SDKs (using local dev server) -->
     <script src="http://localhost:8080/datadog-logs.js"></script>
     <script src="http://localhost:8080/datadog-live-debugger.js"></script>
-    
+
     <!-- Load test functions -->
     <script src="probes-go-here.js"></script>
 
@@ -180,7 +180,7 @@
           version: `1.0.0-${crypto.randomUUID().slice(0, 8)}`,
           remoteConfigProxyUrl: 'http://localhost:3030'
         })
-        
+
         logToConsole('✅ Live Debugger initialized with RC proxy')
         updateStatus('Live Debugger initialized - polling RC proxy every 5s', 'success')
       } catch (err) {
@@ -223,10 +223,10 @@
       function refreshProbes() {
         try {
           const probes = window.DD_LIVE_DEBUGGER.getProbes()
-          
+
           document.getElementById('probe-count').textContent = probes.length
           document.getElementById('probes-display').textContent = JSON.stringify(probes, null, 2)
-          
+
           logToConsole(`✅ SDK has ${probes.length} active probe(s)`)
         } catch (err) {
           document.getElementById('probes-display').textContent = 'Error: ' + err.message

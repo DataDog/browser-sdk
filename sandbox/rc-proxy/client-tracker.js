@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 
 /**
  * Client Tracker
- * 
+ *
  * Tracks active browser clients (similar to how the Datadog Agent tracks tracer clients).
  * Each client has a TTL and is expired if not seen within the configured timeout.
  */
@@ -25,14 +25,15 @@ class ClientTracker {
    * @param {string} service - Service name
    * @param {string} env - Environment (optional)
    * @param {string} version - App version (optional)
-   * @returns {object} The registered client
+   * @returns {object} The registered client with isNew flag
    */
   registerClient(service, env = '', version = '') {
     const clientKey = this._getClientKey(service, env, version);
     const now = Date.now();
 
     let client = this.clients.get(clientKey);
-    
+    let isNew = false;
+
     if (!client) {
       // New client - generate runtime ID
       client = {
@@ -45,13 +46,14 @@ class ClientTracker {
         createdAt: now
       };
       this.clients.set(clientKey, client);
+      isNew = true;
       console.log(`[ClientTracker] New client registered: ${clientKey}`);
     } else {
       // Update last seen timestamp
       client.lastSeen = now;
     }
 
-    return client;
+    return { client, isNew };
   }
 
   /**
