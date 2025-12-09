@@ -209,37 +209,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@datadog/browser-core@npm:6.24.0":
-  version: 6.24.0
-  resolution: "@datadog/browser-core@npm:6.24.0"
-  checksum: 10c0/9ee158be27183cfbd914430907f67e18d34efa0c2093171967c7b1954c7a9c5ddbb9861b6943f6b6671835469bbed22b4e0cacd7b4975f2062e7c31ea35a8879
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum-core@npm:6.24.0":
-  version: 6.24.0
-  resolution: "@datadog/browser-rum-core@npm:6.24.0"
-  dependencies:
-    "@datadog/browser-core": "npm:6.24.0"
-  checksum: 10c0/2168df863e56e3722ed6baed4f9c44cf5ef7e0d7aee81100d6c41244bceb00cf8db27bf66fbadbb539c7f40a3afe4cef06de4aeba19a30ebdb54d1332edcf2d3
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum@npm:^6.23.0":
-  version: 6.24.0
-  resolution: "@datadog/browser-rum@npm:6.24.0"
-  dependencies:
-    "@datadog/browser-core": "npm:6.24.0"
-    "@datadog/browser-rum-core": "npm:6.24.0"
-  peerDependencies:
-    "@datadog/browser-logs": 6.24.0
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  checksum: 10c0/bd81647b445006b7fc4761372b0ed65b8472432e093a50ea941b4b844a862dc1a0e937383f1386d42d7f7957f2f71e606d7ff7597d126339d3ffa3385d6b9053
-  languageName: node
-  linkType: hard
-
 "@esbuild/aix-ppc64@npm:0.21.5":
   version: 0.21.5
   resolution: "@esbuild/aix-ppc64@npm:0.21.5"
@@ -1567,7 +1536,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-shopist@workspace:."
   dependencies:
-    "@datadog/browser-rum": "npm:^6.23.0"
     "@types/react": "npm:^18.3.12"
     "@types/react-dom": "npm:^18.3.1"
     "@vitejs/plugin-react": "npm:^4.3.3"
