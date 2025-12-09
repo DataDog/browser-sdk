@@ -52,6 +52,7 @@ import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
+import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -476,6 +477,7 @@ export interface RecorderApi {
   getSessionReplayLink: () => string | undefined
 }
 
+
 export interface ProfilerApi {
   stop: () => void
   onRumStart: (
@@ -484,6 +486,7 @@ export interface ProfilerApi {
     configuration: RumConfiguration,
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
+    longTaskContexts: LongTaskContexts,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) => void
 }
@@ -576,6 +579,7 @@ export function makeRumPublicApi(
         configuration,
         startRumResult.session,
         startRumResult.viewHistory,
+        startRumResult.longTaskContexts,
         createEncoder
       )
 

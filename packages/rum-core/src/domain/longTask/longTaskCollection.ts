@@ -1,47 +1,118 @@
-import { toServerDuration, relativeToClocks, generateUUID } from '@datadog/browser-core'
-import type { RawRumLongTaskEvent } from '../../rawRumEvent.types'
+import type { RelativeTime, ClocksState } from '@datadog/browser-core'
+import {
+  toServerDuration,
+  relativeToClocks,
+  generateUUID,
+  createValueHistory,
+  SESSION_TIME_OUT_DELAY,
+} from '@datadog/browser-core'
+import type { RawRumLongTaskEvent, RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { createPerformanceObservable, RumPerformanceEntryType } from '../../browser/performanceObservable'
+import {
+  createPerformanceObservable,
+  RumPerformanceEntryType,
+  supportPerformanceTimingEvent
+} from '../../browser/performanceObservable'
+import type {RumPerformanceLongAnimationFrameTiming, RumPerformanceLongTaskTiming, RumPerformanceScriptTiming} from '../../browser/performanceObservable';
 import type { RumConfiguration } from '../configuration'
-export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
-  const performanceLongTaskSubscription = createPerformanceObservable(configuration, {
-    type: RumPerformanceEntryType.LONG_TASK,
+
+export const LONG_TASK_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
+
+export interface LongTaskContexts {
+  findLongTaskId: (startTime?: RelativeTime) => string | undefined
+}
+
+
+export function startLongTaskCollection(
+  lifeCycle: LifeCycle,
+  configuration: RumConfiguration
+) {
+  const history = createValueHistory<string>({
+    expireDelay: LONG_TASK_ID_HISTORY_TIME_OUT_DELAY,
+  })
+  const entryType = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME) ? RumPerformanceEntryType.LONG_ANIMATION_FRAME : RumPerformanceEntryType.LONG_TASK
+
+  const subscription = createPerformanceObservable(configuration, {
+    type: entryType,
     buffered: true,
   }).subscribe((entries) => {
     for (const entry of entries) {
-      if (entry.entryType !== RumPerformanceEntryType.LONG_TASK) {
-        break
-      }
       if (!configuration.trackLongTasks) {
         break
       }
+
       const startClocks = relativeToClocks(entry.startTime)
-      const rawRumEvent: RawRumLongTaskEvent = {
-        date: startClocks.timeStamp,
-        long_task: {
-          id: generateUUID(),
-          entry_type: RumLongTaskEntryType.LONG_TASK,
-          duration: toServerDuration(entry.duration),
-        },
-        type: RumEventType.LONG_TASK,
-        _dd: {
-          discarded: false,
-        },
-      }
+      const taskId = generateUUID()
+      const rawRumEvent = processEntry(entry, startClocks, taskId)
+
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent,
         startTime: startClocks.relative,
         duration: entry.duration,
         domainContext: { performanceEntry: entry },
       })
+
+      history.add(taskId, startClocks.relative)
     }
   })
 
   return {
-    stop() {
-      performanceLongTaskSubscription.unsubscribe()
+    stop: () => {
+      subscription.unsubscribe()
+      history.stop()
+    },
+    longTaskContexts: { findActionId: (startTime?: RelativeTime) => history.find(startTime) },
+  }
+}
+
+function processEntry(
+  entry: RumPerformanceLongTaskTiming | RumPerformanceLongAnimationFrameTiming,
+  startClocks: ClocksState,
+  taskId: string
+): RawRumLongTaskEvent | RawRumLongAnimationFrameEvent {
+  const baseEvent = {
+    date: startClocks.timeStamp,
+    type: RumEventType.LONG_TASK,
+    _dd: { discarded: false },
+  }
+
+  if (entry.entryType === RumPerformanceEntryType.LONG_TASK) {
+    return {
+      ...baseEvent,
+      long_task: {
+        id: taskId,
+        entry_type: RumLongTaskEntryType.LONG_TASK,
+        duration: toServerDuration(entry.duration),
+      },
+    }
+  }
+
+  return {
+    ...baseEvent,
+    long_task: {
+      id: taskId,
+      entry_type: RumLongTaskEntryType.LONG_ANIMATION_FRAME,
+      duration: toServerDuration(entry.duration),
+      blocking_duration: toServerDuration(entry.blockingDuration),
+      first_ui_event_timestamp: toServerDuration(entry.firstUIEventTimestamp),
+      render_start: toServerDuration(entry.renderStart),
+      style_and_layout_start: toServerDuration(entry.styleAndLayoutStart),
+      start_time: toServerDuration(entry.startTime),
+      scripts: entry.scripts.map((script: RumPerformanceScriptTiming) => ({
+        duration: toServerDuration(script.duration),
+        pause_duration: toServerDuration(script.pauseDuration),
+        forced_style_and_layout_duration: toServerDuration(script.forcedStyleAndLayoutDuration),
+        start_time: toServerDuration(script.startTime),
+        execution_start: toServerDuration(script.executionStart),
+        source_url: script.sourceURL,
+        source_function_name: script.sourceFunctionName,
+        source_char_position: script.sourceCharPosition,
+        invoker: script.invoker,
+        invoker_type: script.invokerType,
+        window_attribution: script.windowAttribution,
+      })),
     },
   }
 }

@@ -12,23 +12,19 @@ import {
   clocksNow,
   elapsed,
   DeflateEncoderStreamId,
-  createValueHistory,
-  SESSION_TIME_OUT_DELAY,
 } from '@datadog/browser-core'
 
 import type {
   LifeCycle,
-  RawRumEvent,
-  RawRumEventCollectedData,
   RumConfiguration,
   RumSessionManager,
   TransportPayload,
   ViewHistoryEntry,
+  LongTaskContexts,
 } from '@datadog/browser-rum-core'
 import {
   createFormDataTransport,
   LifeCycleEventType,
-  RumEventType,
   RumPerformanceEntryType,
   supportPerformanceTimingEvent,
 } from '@datadog/browser-rum-core'
@@ -52,19 +48,17 @@ export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   minNumberOfSamples: 50, // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
 }
 
-export const LONG_TASK_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY // arbitrary
-
 export function createRumProfiler(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
   session: RumSessionManager,
   profilingContextManager: ProfilingContextManager,
+  longTaskContexts: LongTaskContexts,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
-  const longTaskIdHistory = createValueHistory<string>({ expireDelay: LONG_TASK_ID_HISTORY_TIME_OUT_DELAY })
 
   let lastViewEntry: RumViewEntry | undefined
 
@@ -105,10 +99,6 @@ export function createRumProfiler(
     // Cleanup global listeners
     globalCleanupTasks.forEach((task) => task())
 
-    // Cleanup Long Task Registry as we no longer need to correlate them with RUM
-    // cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
-    longTaskIdHistory.reset()
-
     // Update Profiling status once the Profiler has been stopped.
     profilingContextManager.set({ status: 'stopped', error_reason: undefined })
   }
@@ -138,18 +128,7 @@ export function createRumProfiler(
         entryTypes: [getLongTaskEntryType()],
       })
 
-      // Whenever an Event is collected, when it's a Long Task, we may store the long task id for profiler correlation.
-      const rawEventCollectedSubscription = lifeCycle.subscribe(
-        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-        (data: RawRumEventCollectedData<RawRumEvent>) => {
-          if (data.rawRumEvent.type === RumEventType.LONG_TASK) {
-            longTaskIdHistory.add(data.rawRumEvent.long_task.id, data.startTime)
-          }
-        }
-      )
-
       cleanupTasks.push(() => observer?.disconnect())
-      cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
     }
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
@@ -249,9 +228,6 @@ export function createRumProfiler(
     // Store instance data snapshot in local variables to use in async callback
     const { startClocks, longTasks, views } = lastInstance
 
-    // Capturing when we stop the profiler so we use this time as a reference to clean-up long task registry, eg. remove the long tasks that we collected already
-    const collectClocks = clocksNow()
-
     // Stop current profiler to get trace
     await lastInstance.profiler
       .stop()
@@ -279,8 +255,6 @@ export function createRumProfiler(
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           })
         )
-
-        longTaskIdHistory.reset(collectClocks.relative)
       })
       .catch(monitorError)
   }
@@ -336,7 +310,7 @@ export function createRumProfiler(
 
       const startClocks = relativeToClocks(entry.startTime as RelativeTime)
 
-      const longTaskId = longTaskIdHistory.find(startClocks.relative)
+      const longTaskId = longTaskContexts.findLongTaskId(startClocks.relative)
 
       // Store Long Task entry, which is a lightweight version of the PerformanceEntry
       instance.longTasks.push({

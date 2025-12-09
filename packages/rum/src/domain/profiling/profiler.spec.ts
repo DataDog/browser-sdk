@@ -1,7 +1,6 @@
 import {
   LifeCycle,
   LifeCycleEventType,
-  RumEventType,
   RumPerformanceEntryType,
   createHooks,
 } from '@datadog/browser-rum-core'
@@ -18,7 +17,6 @@ import {
 import type { RumPerformanceEntry } from 'packages/rum-core/src/browser/performanceObservable'
 import {
   createPerformanceEntry,
-  createRawRumEvent,
   createRumSessionManagerMock,
   mockPerformanceObserver,
   mockRumConfiguration,
@@ -54,6 +52,7 @@ describe('profiler', () => {
     notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
     profilingContextManager: ProfilingContextManager
     mockedRumProfilerTrace: RumProfilerTrace
+    longTaskContexts: { findLongTaskId: jasmine.Spy }
   } {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
@@ -81,12 +80,18 @@ describe('profiler', () => {
     // Replace Browser's Profiler with a mock for testing purpose.
     mockProfiler(mockProfilerTrace)
 
+    // Mock longTaskContexts
+    const longTaskContexts = {
+      findLongTaskId: jasmine.createSpy('findLongTaskId').and.returnValue(undefined),
+    }
+
     // Start collection of profile.
     const profiler = createRumProfiler(
       mockRumConfiguration({ trackLongTasks: true, profilingSampleRate: 100 }),
       lifeCycle,
       sessionManager,
       profilingContextManager,
+      longTaskContexts,
       createIdentityEncoder,
       // Overrides default configuration for testing purpose.
       {
@@ -96,7 +101,7 @@ describe('profiler', () => {
         minProfileDurationMs: 0,
       }
     )
-    return { profiler, notifyPerformanceEntries, profilingContextManager, mockedRumProfilerTrace }
+    return { profiler, notifyPerformanceEntries, profilingContextManager, mockedRumProfilerTrace, longTaskContexts }
   }
 
   it('should start profiling collection and collect data on stop', async () => {
@@ -186,7 +191,8 @@ describe('profiler', () => {
   })
 
   it('should collect long task from core and then attach long task id to the Profiler trace', async () => {
-    const { profiler, notifyPerformanceEntries, profilingContextManager } = setupProfiler()
+    const { profiler, notifyPerformanceEntries, profilingContextManager, longTaskContexts } = setupProfiler()
+    longTaskContexts.findLongTaskId.and.returnValue('long-task-id-1')
 
     profiler.start({
       id: 'view-id-1',
@@ -200,22 +206,6 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isRunning())
 
     expect(profilingContextManager.get()?.status).toBe('running')
-
-    // Generate a Long Task RUM event
-    const longTaskRumEvent = createRawRumEvent(RumEventType.LONG_TASK, {
-      long_task: {
-        id: 'long-task-id-1',
-        duration: 1000,
-        startTime: 12345 as RelativeTime,
-      },
-    })
-
-    // Notify Profiler that a Long Task RUM event has been collected (via its LifeCycle)
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      rawRumEvent: longTaskRumEvent,
-      startTime: 12345 as RelativeTime,
-      domainContext: {},
-    })
 
     // Notify Profiler that some long tasks have been collected (via its PerformanceObserver)
     notifyPerformanceEntries([
@@ -237,7 +227,7 @@ describe('profiler', () => {
     const trace = request['wall-time.json']
 
     expect(request.event.long_task?.id.length).toBe(1)
-    expect(trace.longTasks[0].id).toBeDefined()
+    expect(trace.longTasks[0].id).toBe('long-task-id-1')
     expect(trace.longTasks[0].startClocks.relative).toBe(12345 as RelativeTime)
   })
 
