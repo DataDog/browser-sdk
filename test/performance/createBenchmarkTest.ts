@@ -10,7 +10,15 @@ import type { Server } from './server'
 import { startPerformanceServer } from './server'
 import { CLIENT_TOKEN, APPLICATION_ID, DATADOG_SITE, SDK_BUNDLE_URL } from './configuration'
 
-const SCENARIO_CONFIGURATIONS = ['none', 'rum', 'rum_replay', 'rum_profiling', 'none_with_headers'] as const
+const SCENARIO_CONFIGURATIONS = [
+  'none',
+  'rum',
+  'rum_replay',
+  'rum_profiling',
+  'none_with_headers',
+  'instrumented_no_probes',
+  'instrumented_with_probes',
+] as const
 
 type ScenarioConfiguration = (typeof SCENARIO_CONFIGURATIONS)[number]
 type TestRunner = (page: Page, takeMeasurements: () => Promise<void>, appUrl: string) => Promise<void> | void
@@ -38,8 +46,12 @@ export function createBenchmarkTest(scenarioName: string) {
 
           const { stopProfiling, takeMeasurements } = await startProfiling(page, cdpSession)
 
-          if (shouldInjectSDK(scenarioConfiguration)) {
-            await injectSDK(page, scenarioConfiguration, scenarioName)
+          if (shouldInjectRumSDK(scenarioConfiguration)) {
+            await injectRumSDK(page, scenarioConfiguration, scenarioName)
+          }
+
+          if (shouldInjectLiveDebugger(scenarioConfiguration)) {
+            await injectLiveDebugger(page, scenarioConfiguration, scenarioName)
           }
 
           await runner(page, takeMeasurements, buildAppUrl(server.origin, scenarioConfiguration))
@@ -70,7 +82,7 @@ interface PageInitScriptParameters {
   scenarioName: string
 }
 
-async function injectSDK(page: Page, scenarioConfiguration: ScenarioConfiguration, scenarioName: string) {
+async function injectRumSDK(page: Page, scenarioConfiguration: ScenarioConfiguration, scenarioName: string) {
   const configuration: Partial<RumInitConfiguration> = {
     clientToken: CLIENT_TOKEN,
     applicationId: APPLICATION_ID,
@@ -116,6 +128,83 @@ async function injectSDK(page: Page, scenarioConfiguration: ScenarioConfiguratio
   )
 }
 
+async function injectLiveDebugger(page: Page, scenarioConfiguration: ScenarioConfiguration, scenarioName: string) {
+  // Set flag for app to use instrumented functions
+  await page.addInitScript(() => {
+    ;(window as any).USE_INSTRUMENTED = true
+  })
+
+  // Load live-debugger SDK (using local build for now)
+  await page.addInitScript(() => {
+    // Define global hooks that instrumented code expects
+    // These do minimal work that the VM can't optimize away
+    // Signatures match the real implementations from packages/live-debugger/src/domain/api.ts
+
+    // Pre-populate with a dummy key to help V8 optimize property lookups.
+    // Removing this shows a much larger performance overhead.
+    // Benchmarks show that using an object is much faster than a Map.
+    const probesObj: Record<string, any> = { __dummy__: undefined }
+
+    // Container used to hold some data manipulated by the $dd_* functions to ensure the VM doesn't optimize them away.
+    const callCounts = { entry: 0, return: 0, throw: 0 }
+
+    ;(window as any).$dd_probes = (functionId: string) => probesObj[functionId]
+    ;(window as any).$dd_entry = (probes: any[], self: any, args: Record<string, any>) => {
+      callCounts.entry++
+    }
+    ;(window as any).$dd_return = (probes: any[], value: any, self: any, args: Record<string, any>, locals: Record<string, any>) => {
+      callCounts.return++
+      return value
+    }
+    ;(window as any).$dd_throw = (probes: any[], error: Error, self: any, args: Record<string, any>) => {
+      callCounts.throw++
+    }
+
+    // Variables starting with $_dd are not going to exist in the real code, but are on the global scope in this benchmark to allow the benchmark to modify them.
+    ;(window as any).$_dd_probesObj = probesObj
+    ;(window as any).$_dd_callCounts = callCounts
+  })
+
+  // Initialize live-debugger after page loads
+  await page.addInitScript(
+    ({ scenarioConfiguration }: { scenarioConfiguration: ScenarioConfiguration }) => {
+      document.addEventListener('DOMContentLoaded', () => {
+        // In a real scenario, DD_LIVE_DEBUGGER would be loaded from a bundle
+        // For now, we're just testing the instrumentation overhead with the hooks
+        const browserWindow = window as any
+
+        // Mock init that sets up the hooks properly
+        if (!browserWindow.DD_LIVE_DEBUGGER) {
+          browserWindow.DD_LIVE_DEBUGGER = {
+            init: () => {
+              // Hooks are already defined in the init script
+            },
+            addProbe: (probe: any) => {
+              // For instrumented_with_probes, add the probe to the object
+              if (scenarioConfiguration === 'instrumented_with_probes') {
+                browserWindow.$_dd_probesObj['instrumented.ts;add1'] = [probe]
+              }
+            },
+            version: 'test',
+          }
+
+          // Auto-init for testing
+          browserWindow.DD_LIVE_DEBUGGER.init()
+
+          // Add probe for add1 in instrumented_with_probes scenario
+          if (scenarioConfiguration === 'instrumented_with_probes') {
+            browserWindow.DD_LIVE_DEBUGGER.addProbe({
+              id: 'test-probe',
+              functionId: 'instrumented.ts;add1',
+            })
+          }
+        }
+      })
+    },
+    { scenarioConfiguration }
+  )
+}
+
 /**
  * Warm-up by loading a page to eliminate inflated TTFB seen on the very first load.
  * Inflated TTFB can come from cold-path costs (DNS resolution, TCP/TLS handshake, etc.).
@@ -126,17 +215,26 @@ async function warmup(browser: Browser, url: string) {
 }
 
 async function getSDKVersion(page: Page) {
-  return await page.evaluate(() => (window as BrowserWindow).DD_RUM?.version || '')
+  return await page.evaluate(
+    () => (window as BrowserWindow).DD_RUM?.version || (window as BrowserWindow).DD_LIVE_DEBUGGER?.version || ''
+  )
 }
 
-function shouldInjectSDK(scenarioConfiguration: ScenarioConfiguration): boolean {
-  return !['none', 'none_with_headers'].includes(scenarioConfiguration)
+function shouldInjectRumSDK(scenarioConfiguration: ScenarioConfiguration): boolean {
+  return ['rum', 'rum_replay', 'rum_profiling'].includes(scenarioConfiguration)
+}
+
+function shouldInjectLiveDebugger(scenarioConfiguration: ScenarioConfiguration): boolean {
+  return ['instrumented_no_probes', 'instrumented_with_probes'].includes(scenarioConfiguration)
 }
 
 function buildAppUrl(origin: string, scenarioConfiguration: ScenarioConfiguration): string {
   const url = new URL(origin)
   if (scenarioConfiguration === 'rum_profiling' || scenarioConfiguration === 'none_with_headers') {
     url.searchParams.set('profiling', 'true')
+  }
+  if (scenarioConfiguration === 'instrumented_no_probes' || scenarioConfiguration === 'instrumented_with_probes') {
+    url.searchParams.set('instrumented', 'true')
   }
   return url.toString()
 }
