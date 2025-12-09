@@ -141,35 +141,23 @@
         <form id="config-form" onsubmit="event.preventDefault(); startLiveDebugger()">
           <div class="form-group">
             <label for="service-input">Service:</label>
-            <input
-              type="text"
-              id="service-input"
-              value="my-service"
-              placeholder="Enter service name"
-              required
-            />
+            <input type="text" id="service-input" value="my-service" placeholder="Enter service name" required />
           </div>
           <div class="form-group">
             <label for="env-input">Environment:</label>
-            <input
-              type="text"
-              id="env-input"
-              value="dev"
-              placeholder="Enter environment name"
-              required
-            />
+            <input type="text" id="env-input" value="dev" placeholder="Enter environment name" required />
           </div>
           <div class="form-group">
             <button type="submit" class="primary" id="start-button">Start Live Debugger</button>
           </div>
         </form>
-        <div id="config-display" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd;">
+        <div id="config-display" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid #ddd">
           <strong>RC Proxy URL:</strong> <span id="proxy-url">http://localhost:3030</span><br />
           <strong>Service:</strong> <span id="service-value">-</span><br />
           <strong>Environment:</strong> <span id="env-value">-</span><br />
           <strong>Version:</strong> <span id="version-value">-</span>
         </div>
-        <p id="auto-trigger-note" style="display: none; margin-top: 10px; font-size: 14px; color: #666;">
+        <p id="auto-trigger-note" style="display: none; margin-top: 10px; font-size: 14px; color: #666">
           Instrumented functions in <code>probes-go-here.js</code> are automatically triggered every second.
         </p>
       </div>
@@ -222,7 +210,7 @@
           const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 second timeout
 
           const response = await fetch(`${RC_PROXY_URL}/health`, {
-            signal: controller.signal
+            signal: controller.signal,
           })
           clearTimeout(timeoutId)
 
@@ -317,7 +305,7 @@
             service,
             env,
             version,
-            remoteConfigProxyUrl: RC_PROXY_URL
+            remoteConfigProxyUrl: RC_PROXY_URL,
           })
 
           logToConsole('✅ Live Debugger initialized with RC proxy')

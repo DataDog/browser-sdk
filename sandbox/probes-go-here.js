@@ -11,7 +11,7 @@ function sometimesThrows(a, b) {
     if (Math.random() < 0.2) {
       throw new Error('Sometimes throws')
     }
-    return $dd_p ? $dd_return($dd_p, (sum), this, { a, b }, { sum }) : (sum)
+    return $dd_p ? $dd_return($dd_p, sum, this, { a, b }, { sum }) : sum
   } catch (e) {
     if ($dd_p) $dd_throw($dd_p, e, this, { a, b })
     throw e
@@ -31,7 +31,7 @@ function withLocals(a, b) {
       label = false
     }
     obj.label = label
-    return $dd_p ? $dd_return($dd_p, (obj), this, { a, b }, { arr, obj, label }) : (obj)
+    return $dd_p ? $dd_return($dd_p, obj, this, { a, b }, { arr, obj, label }) : obj
   } catch (e) {
     if ($dd_p) $dd_throw($dd_p, e, this, { a, b })
     throw e
@@ -42,7 +42,7 @@ function noLocals(a, b) {
   const $dd_p = $dd_probes('probes-go-here.js;noLocals')
   try {
     if ($dd_p) $dd_entry($dd_p, this, { a, b })
-    return $dd_p ? $dd_return($dd_p, (a * b), this, { a, b }, {}) : (a * b)
+    return $dd_p ? $dd_return($dd_p, a * b, this, { a, b }, {}) : a * b
   } catch (e) {
     if ($dd_p) $dd_throw($dd_p, e, this, { a, b })
     throw e

@@ -8,7 +8,11 @@
     "start": "node index.js",
     "dev": "node --watch index.js"
   },
-  "keywords": ["datadog", "remote-config", "live-debugger"],
+  "keywords": [
+    "datadog",
+    "remote-config",
+    "live-debugger"
+  ],
   "author": "Datadog",
   "license": "Apache-2.0",
   "dependencies": {
@@ -18,4 +22,3 @@
     "dotenv": "^16.3.1"
   }
 }
-

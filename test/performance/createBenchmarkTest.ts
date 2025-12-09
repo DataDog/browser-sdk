@@ -152,7 +152,13 @@ async function injectLiveDebugger(page: Page, scenarioConfiguration: ScenarioCon
     ;(window as any).$dd_entry = (probes: any[], self: any, args: Record<string, any>) => {
       callCounts.entry++
     }
-    ;(window as any).$dd_return = (probes: any[], value: any, self: any, args: Record<string, any>, locals: Record<string, any>) => {
+    ;(window as any).$dd_return = (
+      probes: any[],
+      value: any,
+      self: any,
+      args: Record<string, any>,
+      locals: Record<string, any>
+    ) => {
       callCounts.return++
       return value
     }

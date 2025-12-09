@@ -5,10 +5,10 @@ import type { Probe } from './probes'
 
 /**
  * Remote Config Client for Browser Live Debugger
- * 
+ *
  * Polls the RC proxy periodically to get probe updates and synchronizes
  * the local probe registry.
- * 
+ *
  * NOTE: The RC proxy can operate in two modes:
  * - agent mode: Polls local Datadog agent (for POC/development, no CORS issues)
  * - backend mode: Polls Datadog RC backend directly (requires backend access)
@@ -92,11 +92,11 @@ export function stopRemoteConfigPolling(): void {
 
 /**
  * Synchronize local probes with probes from RC proxy
- * 
+ *
  * - Adds new probes
  * - Removes probes no longer in the response
  * - Updates probes if version changed
- * 
+ *
  * @param probes - Array of probes from RC proxy
  */
 function synchronizeProbes(probes: Probe[]): void {
@@ -111,7 +111,7 @@ function synchronizeProbes(probes: Probe[]): void {
 
     const probeState: ProbeState = {
       id: probe.id,
-      version: probe.version
+      version: probe.version,
     }
     newProbeStates.set(probe.id, probeState)
 
@@ -175,4 +175,3 @@ export function clearRemoteConfigState(): void {
     pollIntervalId = undefined
   }
 }
-

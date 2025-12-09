@@ -39,7 +39,9 @@ test.describe('benchmark', () => {
       // Log accumulated results to ensure VM cannot optimize away function bodies
       const callCounts = (window as any).$_dd_callCounts
       const message = `Benchmark complete - ${totalTime.toFixed(1)}ms total, sum1: ${sum1}, sum2: ${sum2}${
-        callCounts ? `, instrumentation: entry=${callCounts.entry} return=${callCounts.return} throw=${callCounts.throw}` : ''
+        callCounts
+          ? `, instrumentation: entry=${callCounts.entry} return=${callCounts.return} throw=${callCounts.throw}`
+          : ''
       }`
       console.log(message)
 

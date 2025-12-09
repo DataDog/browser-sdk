@@ -57,16 +57,19 @@ The proxy will start on `http://localhost:3030`.
 Register a client and fetch probes for it.
 
 **Query Parameters:**
+
 - `service` (required): Service name
 - `env` (optional): Environment (e.g., `prod`, `staging`)
 - `version` (optional): Application version
 
 **Example:**
+
 ```bash
 curl "http://localhost:3030/probes?service=my-app&env=prod&version=1.0.0"
 ```
 
 **Response:**
+
 ```json
 {
   "probes": [
@@ -87,11 +90,13 @@ curl "http://localhost:3030/probes?service=my-app&env=prod&version=1.0.0"
 Get proxy status and health information.
 
 **Example:**
+
 ```bash
 curl http://localhost:3030/health
 ```
 
 **Response:**
+
 ```json
 {
   "ok": true,
@@ -142,7 +147,7 @@ If no clients are active, the proxy skips the RC poll to save resources.
 Initialize the Live Debugger with the proxy URL:
 
 ```javascript
-import { datadogLiveDebugger } from '@datadog/browser-live-debugger';
+import { datadogLiveDebugger } from '@datadog/browser-live-debugger'
 
 datadogLiveDebugger.init({
   clientToken: '<DATADOG_CLIENT_TOKEN>',
@@ -150,11 +155,12 @@ datadogLiveDebugger.init({
   service: 'my-browser-app',
   env: 'production',
   version: '1.0.0',
-  remoteConfigProxyUrl: 'http://localhost:3030'
-});
+  remoteConfigProxyUrl: 'http://localhost:3030',
+})
 ```
 
 The SDK will automatically:
+
 - Poll `/probes` every 5 seconds with service metadata
 - Add new probes dynamically
 - Remove probes that are no longer configured
@@ -226,4 +232,3 @@ sandbox/rc-proxy/
 ## License
 
 Apache-2.0
-

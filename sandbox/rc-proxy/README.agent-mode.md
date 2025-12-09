@@ -40,6 +40,7 @@ npm start
 ```
 
 ### 4. The proxy will now:
+
 - Poll your local agent at `http://localhost:8126/v0.7/config`
 - Get the same LIVE_DEBUGGING probes your backend services see
 - Serve them to the browser SDK (with CORS headers)
@@ -54,7 +55,7 @@ window.DD_LIVE_DEBUGGER.init({
   env: 'production',
   version: '1.0.0',
   remoteConfigProxyUrl: 'http://localhost:3030',
-  remoteConfigPollInterval: 5000
+  remoteConfigPollInterval: 5000,
 })
 ```
 

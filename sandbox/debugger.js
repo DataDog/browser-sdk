@@ -10,7 +10,7 @@
     service: 'poc-browser-live-debugger',
     env: 'watson-dev',
     version: `1.0.0-${crypto.randomUUID().slice(0, 8)}`,
-    remoteConfigProxyUrl: 'http://localhost:3030'
+    remoteConfigProxyUrl: 'http://localhost:3030',
   })
 
   // TODO: Remove hardcoded probes once dynamic probe management is implemented

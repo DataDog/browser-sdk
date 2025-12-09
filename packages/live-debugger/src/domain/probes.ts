@@ -61,11 +61,11 @@ export interface InitializedProbe extends Probe {
 // Benchmarks show that using an object is much faster than a Map.
 const activeProbes: Record<string, InitializedProbe[]> = {
   // @ts-expect-error - Pre-populate with a dummy key to help V8 optimize property lookups.
-  __dummy__: undefined
+  __dummy__: undefined,
 }
 const probeIdToFunctionId: Record<string, string> = {
   // @ts-expect-error - Pre-populate with a dummy key to help V8 optimize property lookups.
-  __dummy__: undefined
+  __dummy__: undefined,
 }
 
 /**

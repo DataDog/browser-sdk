@@ -5,17 +5,20 @@
 A complete Remote Config proxy system for browser Live Debugger consisting of:
 
 ### 1. RC Proxy Service (`sandbox/rc-proxy/`)
+
 - **Client Tracker**: Tracks active browser clients with 30s TTL (like Datadog Agent)
 - **RC Client**: Communicates with Datadog RC backend using protobuf
 - **Express Server**: Serves probes via HTTP GET endpoints
 - **Background Polling**: Automatically polls RC when clients are active
 
 ### 2. Browser SDK Integration (`packages/live-debugger/`)
+
 - **Remote Config Module**: Polls proxy and syncs probes automatically
 - **Init Configuration**: Added `remoteConfigProxyUrl` option
 - **Probe Synchronization**: Adds, removes, and updates probes dynamically
 
 ### 3. Test Page (`sandbox/live-debugger-test.html`)
+
 - Simple UI to test the RC proxy integration
 - Shows active probes, proxy health, and fired probes
 - Test functions to trigger instrumented code
@@ -44,6 +47,7 @@ npm start
 The proxy will start on http://localhost:3030
 
 You should see:
+
 ```
 ✅ Server running on port 3030
    - Probes endpoint: http://localhost:3030/probes?service=my-app
@@ -74,6 +78,7 @@ This creates `packages/live-debugger/bundle/live-debugger.js`
 Open `sandbox/live-debugger-test.html` in your browser.
 
 The page will:
+
 - Initialize Live Debugger with RC proxy URL
 - Start polling the proxy every 5 seconds
 - Display active probes from Datadog
@@ -106,18 +111,22 @@ The page will:
 ## Troubleshooting
 
 ### Proxy says "No active clients"
+
 This is normal when no browsers are connected. Open the test page and it will start polling.
 
 ### Browser not receiving probes
+
 1. Check browser console for errors
 2. Verify `remoteConfigProxyUrl` is correct
 3. Check proxy `/health` endpoint
 4. Ensure probes are configured in Datadog for service `browser-test-app`
 
 ### Proxy returning 401 from Datadog
+
 Check your `DD_API_KEY` in `.env` file is valid and has RC scope.
 
 ### Probes not firing
+
 1. Verify probes are loaded (check "Current Probes" section)
 2. Ensure probe targets match function names
 3. Check browser console for Live Debugger errors
@@ -143,6 +152,7 @@ Check your `DD_API_KEY` in `.env` file is valid and has RC scope.
 ## Architecture Details
 
 ### RC Proxy Files
+
 - `index.js` - Main Express server and endpoints
 - `rc-client.js` - Datadog RC protocol client (protobuf)
 - `client-tracker.js` - Active client tracking with TTL
@@ -150,11 +160,13 @@ Check your `DD_API_KEY` in `.env` file is valid and has RC scope.
 - `remoteconfig.proto` - Protobuf schema
 
 ### Browser SDK Files
+
 - `packages/live-debugger/src/entries/main.ts` - Init with RC config
 - `packages/live-debugger/src/domain/remoteConfig.ts` - RC polling and sync
 - `packages/live-debugger/src/domain/probes.ts` - Probe management
 
 ### Key Features
+
 - ✅ Dynamic client tracking (30s TTL)
 - ✅ Protobuf protocol compatibility
 - ✅ Hardcoded to LIVE_DEBUGGING only
@@ -165,6 +177,7 @@ Check your `DD_API_KEY` in `.env` file is valid and has RC scope.
 ## Support
 
 For questions or issues:
+
 1. Check the proxy logs for errors
 2. Check browser console for SDK errors
 3. Verify RC is enabled in your Datadog org
@@ -173,4 +186,3 @@ For questions or issues:
 ## License
 
 Apache-2.0
-

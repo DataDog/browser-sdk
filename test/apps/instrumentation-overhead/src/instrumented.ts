@@ -6,7 +6,13 @@
 // Global hooks injected by live-debugger SDK
 declare const $dd_probes: (functionId: string) => any[] | undefined
 declare const $dd_entry: (probes: any[], self: any, args: Record<string, any>) => void
-declare const $dd_return: (probes: any[], value: any, self: any, args: Record<string, any>, locals: Record<string, any>) => any
+declare const $dd_return: (
+  probes: any[],
+  value: any,
+  self: any,
+  args: Record<string, any>,
+  locals: Record<string, any>
+) => any
 declare const $dd_throw: (probes: any[], error: Error, self: any, args: Record<string, any>) => void
 
 export function add1(a: number, b: number): number {

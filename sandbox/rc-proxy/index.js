@@ -1,9 +1,9 @@
-import express from 'express';
-import config from './config.js';
-import ClientTracker from './client-tracker.js';
-import RCClient from './rc-client.js';
-import AgentClient from './agent-client.js';
-import { sendDummyTrace } from './trace-sender.js';
+import express from 'express'
+import config from './config.js'
+import ClientTracker from './client-tracker.js'
+import RCClient from './rc-client.js'
+import AgentClient from './agent-client.js'
+import { sendDummyTrace } from './trace-sender.js'
 
 /**
  * Remote Config Proxy Server
@@ -14,41 +14,41 @@ import { sendDummyTrace } from './trace-sender.js';
  * - Serves probes to browsers via HTTP GET
  */
 
-const app = express();
+const app = express()
 
 // Initialize client tracker
-const clientTracker = new ClientTracker(config.clientTTL);
+const clientTracker = new ClientTracker(config.clientTTL)
 
 // Initialize RC client based on mode
-let rcClient;
+let rcClient
 if (config.mode === 'agent') {
-  console.log('[Init] Using local agent mode');
-  rcClient = new AgentClient(config.agentUrl);
+  console.log('[Init] Using local agent mode')
+  rcClient = new AgentClient(config.agentUrl)
 } else {
-  console.log('[Init] Using backend mode (direct RC access)');
-  rcClient = new RCClient(config.apiKey, config.site);
+  console.log('[Init] Using backend mode (direct RC access)')
+  rcClient = new RCClient(config.apiKey, config.site)
 }
 
 // Probe cache
-const probeCache = new Map(); // Key: probe ID, Value: probe object
-let lastPollTime = null;
-let lastPollError = null;
+const probeCache = new Map() // Key: probe ID, Value: probe object
+let lastPollTime = null
+let lastPollError = null
 
 // CORS middleware - allow browser access from localhost
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'GET, OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Content-Type')
 
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+    return res.sendStatus(200)
   }
 
-  next();
-});
+  next()
+})
 
 // JSON middleware
-app.use(express.json());
+app.use(express.json())
 
 /**
  * GET /probes
@@ -60,44 +60,44 @@ app.use(express.json());
  * - version (optional): App version
  */
 app.get('/probes', (req, res) => {
-  const { service, env, version } = req.query;
+  const { service, env, version } = req.query
 
   // Validate required params and ensure they are strings
   if (!service || typeof service !== 'string') {
     return res.status(400).json({
-      error: 'Missing required query parameter: service'
-    });
+      error: 'Missing required query parameter: service',
+    })
   }
 
-  const envStr = typeof env === 'string' ? env : '';
-  const versionStr = typeof version === 'string' ? version : '';
+  const envStr = typeof env === 'string' ? env : ''
+  const versionStr = typeof version === 'string' ? version : ''
 
   // Register/update client
-  let isNewClient = false;
+  let isNewClient = false
   try {
-    const result = clientTracker.registerClient(service, envStr, versionStr);
-    isNewClient = result.isNew;
+    const result = clientTracker.registerClient(service, envStr, versionStr)
+    isNewClient = result.isNew
 
     // Send dummy trace for new clients in agent mode
     if (isNewClient && config.mode === 'agent' && config.agentUrl) {
       // Don't await - send trace in background
-      sendDummyTrace(config.agentUrl, service, envStr).catch(err => {
-        console.error('[Server] Failed to send trace for new client:', err);
-      });
+      sendDummyTrace(config.agentUrl, service, envStr).catch((err) => {
+        console.error('[Server] Failed to send trace for new client:', err)
+      })
     }
   } catch (err) {
-    console.error('[Server] Error registering client:', err);
+    console.error('[Server] Error registering client:', err)
   }
 
   // Return all probes from cache
-  const probes = Array.from(probeCache.values());
+  const probes = Array.from(probeCache.values())
 
   res.json({
     probes,
     count: probes.length,
-    lastPollTime
-  });
-});
+    lastPollTime,
+  })
+})
 
 /**
  * GET /health
@@ -105,7 +105,7 @@ app.get('/probes', (req, res) => {
  * Health check endpoint
  */
 app.get('/health', (req, res) => {
-  const activeClientCount = clientTracker.getActiveClientCount();
+  const activeClientCount = clientTracker.getActiveClientCount()
 
   res.json({
     ok: !lastPollError,
@@ -118,10 +118,10 @@ app.get('/health', (req, res) => {
       agentUrl: config.agentUrl,
       site: config.site,
       pollInterval: config.pollInterval,
-      clientTTL: config.clientTTL
-    }
-  });
-});
+      clientTTL: config.clientTTL,
+    },
+  })
+})
 
 /**
  * GET /
@@ -136,15 +136,15 @@ app.get('/', (req, res) => {
     endpoints: {
       '/probes': 'GET - Register client and fetch probes. Query params: service (required), env, version',
       '/health': 'GET - Health check and status',
-      '/': 'GET - This information'
+      '/': 'GET - This information',
     },
     status: {
       activeClients: clientTracker.getActiveClientCount(),
       probes: probeCache.size,
-      lastPoll: lastPollTime
-    }
-  });
-});
+      lastPoll: lastPollTime,
+    },
+  })
+})
 
 /**
  * Background polling loop
@@ -154,52 +154,50 @@ app.get('/', (req, res) => {
 async function pollLoop() {
   try {
     // Get active clients
-    const activeClients = clientTracker.getActiveClients();
+    const activeClients = clientTracker.getActiveClients()
 
     if (activeClients.length === 0) {
-      lastPollError = null;
-      return;
+      lastPollError = null
+      return
     }
 
     // Poll RC backend/agent (returns only new/modified probes)
-    let deltaProbes;
+    let deltaProbes
     if (config.mode === 'agent') {
       // Agent mode: pass raw client data
-      deltaProbes = await rcClient.poll(activeClients);
+      deltaProbes = await rcClient.poll(activeClients)
     } else {
       // Backend mode: build protobuf client messages
-      const pbClientMessages = activeClients.map(client =>
-        clientTracker.buildClientMessage(client)
-      );
-      deltaProbes = await rcClient.poll(pbClientMessages);
+      const pbClientMessages = activeClients.map((client) => clientTracker.buildClientMessage(client))
+      deltaProbes = await rcClient.poll(pbClientMessages)
     }
 
     // Update probe cache with all currently applied probes (not just the delta)
-    const allProbes = rcClient.getAllProbes();
-    probeCache.clear();
+    const allProbes = rcClient.getAllProbes()
+    probeCache.clear()
     for (const probe of allProbes) {
       if (probe.id) {
-        probeCache.set(probe.id, probe);
+        probeCache.set(probe.id, probe)
       }
     }
 
-    lastPollTime = new Date().toISOString();
-    lastPollError = null;
+    lastPollTime = new Date().toISOString()
+    lastPollError = null
 
     if (deltaProbes.length > 0) {
-      console.log(`[Polling] Updated: ${deltaProbes.length} probe(s) changed (total: ${allProbes.length})`);
+      console.log(`[Polling] Updated: ${deltaProbes.length} probe(s) changed (total: ${allProbes.length})`)
     }
   } catch (err) {
     if (config.mode === 'agent') {
       if (err.message.includes('connection refused') || err.message.includes('ECONNREFUSED')) {
-        console.error(`[Polling] ❌ Cannot connect to agent at ${config.agentUrl} - Is the agent still running?`);
+        console.error(`[Polling] ❌ Cannot connect to agent at ${config.agentUrl} - Is the agent still running?`)
       } else {
-        console.error('[Polling] Poll error:', err.message);
+        console.error('[Polling] Poll error:', err.message)
       }
     } else {
-      console.error('[Polling] Poll error:', err.message);
+      console.error('[Polling] Poll error:', err.message)
     }
-    lastPollError = err;
+    lastPollError = err
   }
 }
 
@@ -208,40 +206,40 @@ async function pollLoop() {
  */
 async function validateAgentConnection() {
   if (config.mode !== 'agent') {
-    return; // Skip validation for backend mode
+    return // Skip validation for backend mode
   }
 
   try {
-    console.log(`[Validation] Checking agent connection at ${config.agentUrl}...`);
+    console.log(`[Validation] Checking agent connection at ${config.agentUrl}...`)
 
     // Try to connect to the agent's info endpoint
     const response = await fetch(`${config.agentUrl}/info`, {
       method: 'GET',
-      signal: AbortSignal.timeout(5000) // 5 second timeout
-    });
+      signal: AbortSignal.timeout(5000), // 5 second timeout
+    })
 
     if (!response.ok) {
-      throw new Error(`Agent returned status ${response.status}`);
+      throw new Error(`Agent returned status ${response.status}`)
     }
 
-    console.log('[Validation] ✅ Agent connection successful');
+    console.log('[Validation] ✅ Agent connection successful')
   } catch (err) {
-    console.error('\n❌ ERROR: Cannot connect to Datadog Agent');
-    console.error(`   Agent URL: ${config.agentUrl}`);
-    console.error(`   Error: ${err.message}\n`);
-    console.error('Please ensure that:');
-    console.error('  1. Docker is running (if using Docker)');
-    console.error('  2. The Datadog Agent is running');
-    console.error('  3. The agent is accessible at the configured URL');
-    console.error('  4. The agent port (default: 8126) is correct\n');
+    console.error('\n❌ ERROR: Cannot connect to Datadog Agent')
+    console.error(`   Agent URL: ${config.agentUrl}`)
+    console.error(`   Error: ${err.message}\n`)
+    console.error('Please ensure that:')
+    console.error('  1. Docker is running (if using Docker)')
+    console.error('  2. The Datadog Agent is running')
+    console.error('  3. The agent is accessible at the configured URL')
+    console.error('  4. The agent port (default: 8126) is correct\n')
 
     if (err.cause?.code === 'ECONNREFUSED') {
-      console.error('The connection was refused. The agent is not listening on this port.\n');
+      console.error('The connection was refused. The agent is not listening on this port.\n')
     } else if (err.name === 'TimeoutError' || err.cause?.code === 'ETIMEDOUT') {
-      console.error('The connection timed out. The agent may be unreachable.\n');
+      console.error('The connection timed out. The agent may be unreachable.\n')
     }
 
-    process.exit(1);
+    process.exit(1)
   }
 }
 
@@ -249,46 +247,45 @@ async function validateAgentConnection() {
  * Start the server
  */
 async function start() {
-  console.log('🚀 Starting Remote Config Proxy...');
+  console.log('🚀 Starting Remote Config Proxy...')
 
   // Validate agent connection first
-  await validateAgentConnection();
+  await validateAgentConnection()
 
   // Initialize RC client (load protobuf)
   try {
-    await rcClient.initialize();
+    await rcClient.initialize()
   } catch (err) {
-    console.error('Failed to initialize RC client:', err);
-    process.exit(1);
+    console.error('Failed to initialize RC client:', err)
+    process.exit(1)
   }
 
   // Start Express server
   app.listen(config.port, () => {
-    console.log(`\n✅ Proxy running on http://localhost:${config.port}`);
-    console.log(`   Polling agent at ${config.agentUrl} every ${config.pollInterval}ms\n`);
-  });
+    console.log(`\n✅ Proxy running on http://localhost:${config.port}`)
+    console.log(`   Polling agent at ${config.agentUrl} every ${config.pollInterval}ms\n`)
+  })
 
   // Initial poll
-  await pollLoop();
+  await pollLoop()
 
   // Set up interval
-  setInterval(pollLoop, config.pollInterval);
+  setInterval(pollLoop, config.pollInterval)
 }
 
 // Handle graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n👋 Shutting down...');
-  process.exit(0);
-});
+  console.log('\n👋 Shutting down...')
+  process.exit(0)
+})
 
 process.on('SIGTERM', () => {
-  console.log('\n👋 Shutting down...');
-  process.exit(0);
-});
+  console.log('\n👋 Shutting down...')
+  process.exit(0)
+})
 
 // Start the server
-start().catch(err => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
-
+start().catch((err) => {
+  console.error('Failed to start server:', err)
+  process.exit(1)
+})
