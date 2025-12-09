@@ -18,6 +18,11 @@
       "groupSlug": "all-minor-patch",
       "matchUpdateTypes": ["minor", "patch"],
       "matchPackageNames": ["!karma-webpack", "!@playwright/test"]
+    },
+    {
+      "matchPaths": ["test/apps/vanilla/**"],
+      "matchDepNames": ["typescript"],
+      "enabled": false
     }
   ]
 }
