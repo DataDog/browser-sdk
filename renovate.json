@@ -11,7 +11,9 @@
   "ignoreDeps": ["registry.ddbuild.io/dd-octo-sts"],
   "schedule": ["every weekend"],
   "postUpdateOptions": ["yarnDedupeHighest"],
-  "lockFileMaintenance": { "enabled": true },
+  "lockFileMaintenance": {
+    "enabled": true
+  },
   "packageRules": [
     {
       "groupName": "all non-major dependencies",
@@ -20,12 +22,12 @@
       "matchPackageNames": ["!karma-webpack", "!@playwright/test"]
     },
     {
-      "matchPaths": ["test/apps/vanilla/**"],
+      "matchFileNames": ["test/apps/vanilla/**"],
       "matchDepNames": ["typescript"],
       "enabled": false
     },
     {
-      "matchPaths": ["test/apps/react-router-v6-app/**"],
+      "matchFileNames": ["test/apps/react-router-v6-app/**"],
       "matchDepNames": ["react-router-dom"],
       "enabled": false
     }
