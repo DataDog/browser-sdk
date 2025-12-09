@@ -18,6 +18,16 @@
       "groupSlug": "all-minor-patch",
       "matchUpdateTypes": ["minor", "patch"],
       "matchPackageNames": ["!karma-webpack", "!@playwright/test"]
+    },
+    {
+      "matchPaths": ["test/apps/vanilla/**"],
+      "matchDepNames": ["typescript"],
+      "enabled": false
+    },
+    {
+      "matchPaths": ["test/apps/react-router-v6-app/**"],
+      "matchDepNames": ["react-router-dom"],
+      "enabled": false
     }
   ]
 }
