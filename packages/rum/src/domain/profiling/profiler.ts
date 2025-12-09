@@ -12,10 +12,14 @@ import {
   clocksNow,
   elapsed,
   DeflateEncoderStreamId,
+  createValueHistory,
+  SESSION_TIME_OUT_DELAY,
 } from '@datadog/browser-core'
 
 import type {
   LifeCycle,
+  RawRumEvent,
+  RawRumEventCollectedData,
   RumConfiguration,
   RumSessionManager,
   TransportPayload,
@@ -24,6 +28,7 @@ import type {
 import {
   createFormDataTransport,
   LifeCycleEventType,
+  RumEventType,
   RumPerformanceEntryType,
   supportPerformanceTimingEvent,
 } from '@datadog/browser-rum-core'
@@ -36,8 +41,6 @@ import type {
   RumViewEntry,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
-import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
-import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { assembleProfilingPayload } from './transport/assembly'
@@ -49,6 +52,8 @@ export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   minNumberOfSamples: 50, // Require at least 50 samples (~500 ms) to report a profile to reduce noise and cost
 }
 
+export const LONG_TASK_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY // arbitrary
+
 export function createRumProfiler(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
@@ -59,6 +64,7 @@ export function createRumProfiler(
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
   const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
+  const longTaskIdHistory = createValueHistory<string>({ expireDelay: LONG_TASK_ID_HISTORY_TIME_OUT_DELAY })
 
   let lastViewEntry: RumViewEntry | undefined
 
@@ -100,7 +106,8 @@ export function createRumProfiler(
     globalCleanupTasks.forEach((task) => task())
 
     // Cleanup Long Task Registry as we no longer need to correlate them with RUM
-    cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
+    // cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
+    longTaskIdHistory.reset()
 
     // Update Profiling status once the Profiler has been stopped.
     profilingContextManager.set({ status: 'stopped', error_reason: undefined })
@@ -132,9 +139,14 @@ export function createRumProfiler(
       })
 
       // Whenever an Event is collected, when it's a Long Task, we may store the long task id for profiler correlation.
-      const rawEventCollectedSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-        mayStoreLongTaskIdForProfilerCorrelation(data)
-      })
+      const rawEventCollectedSubscription = lifeCycle.subscribe(
+        LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+        (data: RawRumEventCollectedData<RawRumEvent>) => {
+          if (data.rawRumEvent.type === RumEventType.LONG_TASK) {
+            longTaskIdHistory.add(data.rawRumEvent.long_task.id, data.startTime)
+          }
+        }
+      )
 
       cleanupTasks.push(() => observer?.disconnect())
       cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
@@ -268,8 +280,7 @@ export function createRumProfiler(
           })
         )
 
-        // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
-        cleanupLongTaskRegistryAfterCollection(collectClocks.relative)
+        longTaskIdHistory.reset(collectClocks.relative)
       })
       .catch(monitorError)
   }
@@ -325,7 +336,7 @@ export function createRumProfiler(
 
       const startClocks = relativeToClocks(entry.startTime as RelativeTime)
 
-      const longTaskId = getLongTaskId(startClocks.relative)
+      const longTaskId = longTaskIdHistory.find(startClocks.relative)
 
       // Store Long Task entry, which is a lightweight version of the PerformanceEntry
       instance.longTasks.push({

@@ -122,13 +122,13 @@ describe('valueHistory', () => {
     })
   })
 
-  it('should reset values', () => {
+  it('should reset values older than the given startTime', () => {
     valueHistory.add('foo', 0 as RelativeTime).close(10 as RelativeTime)
     valueHistory.add('bar', 10 as RelativeTime)
 
-    valueHistory.reset()
+    valueHistory.reset(5 as RelativeTime)
 
-    expect(valueHistory.find()).toBeUndefined()
+    expect(valueHistory.find()).toEqual('bar')
     expect(valueHistory.find(0 as RelativeTime)).toBeUndefined()
   })
 
