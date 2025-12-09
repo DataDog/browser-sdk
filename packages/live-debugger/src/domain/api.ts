@@ -194,7 +194,7 @@ export function onReturn(
         }
       : undefined
 
-    done(probe, result)
+    sendDebuggerSnapshot(probe, result)
   }
 
   return value
@@ -255,11 +255,18 @@ export function onThrow(probes: InitializedProbe[], error: Error, self: any, arg
       },
     }
 
-    done(probe, result)
+    sendDebuggerSnapshot(probe, result)
   }
 }
 
-function done(probe: any, result: ActiveEntry): void {
+/**
+ * Send a debugger snapshot to Datadog logs, matching dd-trace-js send method signature.
+ * This function sends debugger snapshot logs directly to the logs endpoint without default RUM context.
+ *
+ * @param probe - The probe that was executed
+ * @param result - The result of the probe execution
+ */
+function sendDebuggerSnapshot(probe: any, result: ActiveEntry): void {
   const snapshot = {
     id: crypto.randomUUID(),
     timestamp: result.timestamp!,
@@ -303,20 +310,6 @@ function done(probe: any, result: ActiveEntry): void {
     span_id: rumContext?.user_action?.id || rumContext?.view?.id,
   }
 
-  sendDebuggerSnapshot(logger, dd, snapshot, result.message)
-}
-
-/**
- * Send a debugger snapshot to Datadog logs, matching dd-trace-js send method signature.
- * This function sends debugger snapshot logs directly to the logs endpoint without default RUM context.
- *
- * @param logger - Logger information
- * @param dd - Datadog context information
- * @param snapshot - Debugger snapshot data
- * @param message - The log message
- */
-// TODO: Don't export this once the firebase code is removed
-export function sendDebuggerSnapshot(logger: object, dd: object, snapshot: object, message?: string): void {
   const browserWindow = window as BrowserWindow
 
   if (!browserWindow.DD_LOGS?.sendRawLog) {
@@ -351,8 +344,6 @@ export function sendDebuggerSnapshot(logger: object, dd: object, snapshot: objec
     }
   }
 
-  const liveDebuggerApi = (window as BrowserWindow).DD_LIVE_DEBUGGER
-
   // Build ddtags array - sendRawLog bypasses assembly so we need to manually add all tags
   // Use buildTags to get all configuration tags (env, service, version, datacenter, variant, sdk_version)
   // Then add source:dd_debugger tag to identify these as debugger logs
@@ -368,7 +359,7 @@ export function sendDebuggerSnapshot(logger: object, dd: object, snapshot: objec
 
   const payload = {
     date: (snapshot as any).timestamp, // TODO: This isn't in the backend tracer payloads
-    message: message || '',
+    message: result.message || '',
     status: 'info' as const,
     origin: ErrorSource.LOGGER, // TODO: This isn't in the backend tracer payloads
     hostname,

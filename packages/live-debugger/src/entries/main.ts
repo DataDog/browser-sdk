@@ -8,7 +8,7 @@
 
 import { defineGlobal, getGlobalObject, makePublicApi, display } from '@datadog/browser-core'
 import type { PublicApi, Site } from '@datadog/browser-core'
-import { onEntry, onReturn, onThrow, sendDebuggerSnapshot } from '../domain/api'
+import { onEntry, onReturn, onThrow } from '../domain/api'
 import { addProbe, getProbes, getAllProbes, removeProbe, clearProbes } from '../domain/probes'
 import type { Probe } from '../domain/probes'
 import { startRemoteConfigPolling } from '../domain/remoteConfig'
@@ -128,17 +128,6 @@ export interface LiveDebuggerPublicApi extends PublicApi {
    * @returns Array of all active probes
    */
   getProbes: () => Probe[]
-
-  /**
-   * Send a debugger snapshot to Datadog logs.
-   *
-   * @category Live Debugger
-   * @param message - The log message
-   * @param logger - Logger information
-   * @param dd - Datadog context information
-   * @param snapshot - Debugger snapshot data
-   */
-  sendDebuggerSnapshot: (message?: string, logger?: any, dd?: any, snapshot?: any) => void
 }
 
 /**
@@ -179,10 +168,6 @@ function makeLiveDebuggerPublicApi(): LiveDebuggerPublicApi {
     },
 
     getProbes: () => getAllProbes(),
-
-    sendDebuggerSnapshot: (logger: any, dd: any, snapshot: any, message?: string) => {
-      sendDebuggerSnapshot(logger, dd, snapshot, message)
-    },
   })
 }
 
