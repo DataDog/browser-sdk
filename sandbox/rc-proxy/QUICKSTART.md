@@ -15,7 +15,7 @@ A complete Remote Config proxy system for browser Live Debugger consisting of:
 - **Init Configuration**: Added `remoteConfigProxyUrl` option
 - **Probe Synchronization**: Adds, removes, and updates probes dynamically
 
-### 3. Test Page (`sandbox/live-debugger-rc-proxy-test.html`)
+### 3. Test Page (`sandbox/live-debugger-test.html`)
 - Simple UI to test the RC proxy integration
 - Shows active probes, proxy health, and fired probes
 - Test functions to trigger instrumented code
@@ -71,7 +71,7 @@ This creates `packages/live-debugger/bundle/live-debugger.js`
 
 ### Step 5: Open the Test Page
 
-Open `sandbox/live-debugger-rc-proxy-test.html` in your browser.
+Open `sandbox/live-debugger-test.html` in your browser.
 
 The page will:
 - Initialize Live Debugger with RC proxy URL
