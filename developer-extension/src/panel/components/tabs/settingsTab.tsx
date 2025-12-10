@@ -37,12 +37,12 @@ export function SettingsTab() {
                   <Group>
                     <Text>Browser SDK</Text>
                     <Box style={{ marginLeft: 'auto' }}>
-                      {sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles || (useDevBundles && injectCdnProd === 'on') ? (
+                      {(sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles) ||
+                      (useDevBundles && injectCdnProd === 'on') ? (
                         <Badge color="blue">Injected Local Dev</Badge>
                       ) : injectCdnProd === 'on' ? (
                         <Badge color="blue">Injected CDN</Badge>
-                      )
-                       : sdkDevServerStatus === DevServerStatus.AVAILABLE ? (
+                      ) : sdkDevServerStatus === DevServerStatus.AVAILABLE ? (
                         <Badge color="green">Available</Badge>
                       ) : sdkDevServerStatus === DevServerStatus.CHECKING ? (
                         <Badge color="yellow">Checking...</Badge>
@@ -54,8 +54,8 @@ export function SettingsTab() {
                 </Accordion.Control>
                 <Accordion.Panel>
                   <Box>
-                    Use the local or production version of the browser SDK. For local development, the development server must be running; to
-                    start it, run <Code>yarn dev</Code>.
+                    Use the local or production version of the browser SDK. For local development, the development
+                    server must be running; to start it, run <Code>yarn dev</Code>.
                   </Box>
 
                   <Space h="md" />
@@ -72,17 +72,11 @@ export function SettingsTab() {
                             { value: 'off', label: 'Off' },
                             { value: 'on', label: 'On' },
                           ]}
-                          onChange={(value) =>
-                            setSetting('injectCdnProd', value as InjectCdnProd)
-                          }
+                          onChange={(value) => setSetting('injectCdnProd', value as InjectCdnProd)}
                         />
                       </Group>
                     }
-                    description={
-                      <>
-                        Inject the CDN Prod RUM and Logs bundles into the page.
-                      </>
-                    }
+                    description={<>Inject the CDN Prod RUM and Logs bundles into the page.</>}
                   />
 
                   <SettingItem

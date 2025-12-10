@@ -1,7 +1,14 @@
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
 import { createLogger } from '../common/logger'
-import { CDN_LOGS_URL, CDN_RUM_SLIM_URL, CDN_RUM_URL, DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
+import {
+  CDN_LOGS_URL,
+  CDN_RUM_SLIM_URL,
+  CDN_RUM_URL,
+  DEV_LOGS_URL,
+  DEV_RUM_SLIM_URL,
+  DEV_RUM_URL,
+} from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 
 const logger = createLogger('content-script')
@@ -50,7 +57,7 @@ export function main() {
       overrideInitConfiguration(ddLogsGlobal, settings.logsConfigurationOverride)
     }
 
-    const rumDevUrl = settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL 
+    const rumDevUrl = settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL
 
     if (settings.injectCdnProd === 'on' && settings.useDevBundles !== 'npm') {
       injectCdnBundle(settings)
@@ -281,7 +288,7 @@ function initSdkIfAvailable(global: GlobalInstrumentation, config: object) {
   const sdk = global.get()
   if (sdk && 'init' in sdk) {
     try {
-      ;(sdk as any).init(config)
+      sdk.init(config)
     } catch (e) {
       logger.error('Error initializing SDK', e)
     }
