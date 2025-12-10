@@ -26,7 +26,7 @@ export interface ValueHistory<Value> {
 
   closeActive: (endTime: RelativeTime) => void
   findAll: (startTime?: RelativeTime, duration?: Duration) => Value[]
-  reset: (startTime?: RelativeTime) => void
+  reset: () => void
   stop: () => void
 }
 
@@ -130,7 +130,7 @@ export function createValueHistory<Value>({
   }
 
   /**
-   * Remove entries older than the given startTime
+   * Remove all entries from this collection.
    */
   function reset() {
     entries = []
