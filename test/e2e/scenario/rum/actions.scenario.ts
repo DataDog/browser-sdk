@@ -486,7 +486,7 @@ test.describe('action collection with shadow DOM', () => {
     })
 
   createTest('with trackShadowDom, get action name from element inside shadow DOM')
-    .withRum({ trackUserInteractions: true, trackShadowDom: true })
+    .withRum({ trackUserInteractions: true, trackActionsInShadowDom: true })
     .withBody(html`
       <my-button id="shadow-host"></my-button>
       <script>
@@ -514,7 +514,7 @@ test.describe('action collection with shadow DOM', () => {
     })
 
   createTest('with trackShadowDom, traverse shadow boundary for data-dd-action-name')
-    .withRum({ trackUserInteractions: true, trackShadowDom: true })
+    .withRum({ trackUserInteractions: true, trackActionsInShadowDom: true })
     .withBody(html`
       <my-button id="shadow-host" data-dd-action-name="Custom Shadow Action"></my-button>
       <script>
@@ -541,7 +541,7 @@ test.describe('action collection with shadow DOM', () => {
     })
 
   createTest('with trackShadowDom, selector includes stable attributes from inside shadow DOM')
-    .withRum({ trackUserInteractions: true, trackShadowDom: true })
+    .withRum({ trackUserInteractions: true, trackActionsInShadowDom: true })
     .withBody(html`
       <my-button id="shadow-host"></my-button>
       <script>

@@ -544,6 +544,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     remote_configuration_id: configuration.remoteConfigurationId,
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
+    // TODO: Add track_actions_in_shadow_dom once rum-events-format is updated
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
