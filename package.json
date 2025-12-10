@@ -10,7 +10,7 @@
   ],
   "type": "module",
   "scripts": {
-    "postinstall": "scripts/cli init_submodule",
+    "postinstall": "scripts/cli init_submodule && scripts/cli ci_build_and_pack",
     "build": "yarn workspaces foreach --all --parallel --topological run build",
     "build:bundle": "yarn workspaces foreach --all --parallel run build:bundle",
     "build:apps": "node scripts/build/build-test-apps.ts",
