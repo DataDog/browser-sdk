@@ -220,3 +220,94 @@ describe('isSelectorUniqueAmongSiblings', () => {
     expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeTrue()
   })
 })
+
+describe('getSelectorFromElement with shadow DOM', () => {
+  it('should generate selector for element inside shadow DOM', () => {
+    const host = appendElement('<div id="shadow-host"></div>')
+    const shadowRoot = host.attachShadow({ mode: 'open' })
+    const button = document.createElement('button')
+    button.classList.add('shadow-button')
+    shadowRoot.appendChild(button)
+
+    const selector = getSelectorFromElement(button, undefined)
+    expect(selector).toBeDefined()
+    expect(selector).toContain('BUTTON')
+  })
+
+  it('should use stable attribute for element inside shadow DOM', () => {
+    const host = appendElement('<div></div>')
+    const shadowRoot = host.attachShadow({ mode: 'open' })
+    const button = document.createElement('button')
+    button.setAttribute('data-testid', 'shadow-test')
+    shadowRoot.appendChild(button)
+
+    const selector = getSelectorFromElement(button, undefined)
+    expect(selector).toContain('data-testid="shadow-test"')
+  })
+
+  it('should traverse shadow boundary to build selector path', () => {
+    const host = appendElement('<div id="my-host"></div>')
+    const shadowRoot = host.attachShadow({ mode: 'open' })
+    const button = document.createElement('button')
+    shadowRoot.appendChild(button)
+
+    const selector = getSelectorFromElement(button, undefined)
+    expect(selector).toBeDefined()
+    expect(selector).toContain('DIV')
+    expect(selector).toContain('BUTTON')
+  })
+
+  it('should handle nested shadow DOMs', () => {
+    const outerHost = appendElement('<div data-testid="outer-host"></div>')
+    const outerShadowRoot = outerHost.attachShadow({ mode: 'open' })
+
+    const innerHost = document.createElement('div')
+    innerHost.setAttribute('data-testid', 'inner-host')
+    outerShadowRoot.appendChild(innerHost)
+    const innerShadowRoot = innerHost.attachShadow({ mode: 'open' })
+
+    const button = document.createElement('button')
+    button.setAttribute('data-testid', 'deep-button')
+    innerShadowRoot.appendChild(button)
+
+    const selector = getSelectorFromElement(button, undefined)
+    expect(selector).toBeDefined()
+    expect(selector).toContain('data-testid="deep-button"')
+  })
+
+  it('should use position selector inside shadow DOM when no unique identifier', () => {
+    const host = appendElement('<div></div>')
+    const shadowRoot = host.attachShadow({ mode: 'open' })
+
+    const div1 = document.createElement('div')
+    const div2 = document.createElement('div')
+    const target = document.createElement('span')
+    div2.appendChild(target)
+    shadowRoot.appendChild(div1)
+    shadowRoot.appendChild(div2)
+
+    const selector = getSelectorFromElement(target, undefined)
+    expect(selector).toBeDefined()
+    expect(selector).toContain('SPAN')
+  })
+
+  it('should generate unique selector when siblings exist inside shadow DOM', () => {
+    const host = appendElement('<div id="host"></div>')
+    const shadowRoot = host.attachShadow({ mode: 'open' })
+
+    const button1 = document.createElement('button')
+    button1.classList.add('first')
+    const button2 = document.createElement('button')
+    button2.classList.add('second')
+
+    shadowRoot.appendChild(button1)
+    shadowRoot.appendChild(button2)
+
+    const selector1 = getSelectorFromElement(button1, undefined)
+    const selector2 = getSelectorFromElement(button2, undefined)
+
+    expect(selector1).toBeDefined()
+    expect(selector2).toBeDefined()
+    expect(selector1).not.toBe(selector2)
+  })
+})
