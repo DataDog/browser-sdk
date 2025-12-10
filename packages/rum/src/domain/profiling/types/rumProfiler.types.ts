@@ -1,5 +1,5 @@
 import type { TimeoutId, ClocksState } from '@datadog/browser-core'
-import type { LongTaskContext, ViewHistoryEntry } from '@datadog/browser-rum-core'
+import type { LongTaskContext } from '@datadog/browser-rum-core'
 import type { ProfilerTrace, Profiler } from './profilerApi.types'
 
 export interface RumViewEntry {
@@ -37,6 +37,7 @@ export interface RumProfilerTrace extends ProfilerTrace, RumProfilerEnrichmentDa
  */
 export interface RumProfilerStoppedInstance {
   readonly state: 'stopped'
+  readonly stateReason: 'session-expired' | 'stopped-by-user' | 'initializing'
 }
 
 /**
@@ -65,7 +66,7 @@ export interface RumProfilerRunningInstance extends RumProfilerEnrichmentData {
 export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPausedInstance | RumProfilerRunningInstance
 
 export interface RUMProfiler {
-  start: (viewEntry: ViewHistoryEntry | undefined) => void
+  start: () => void
   stop: () => Promise<void>
   isStopped: () => boolean
   isRunning: () => boolean

@@ -69,9 +69,11 @@ export function makeProfilerApi(): ProfilerApi {
           sessionManager,
           profilingContextManager,
           longTaskContexts,
-          createEncoder
+          createEncoder,
+          viewHistory,
+          undefined
         )
-        profiler.start(viewHistory.findView())
+        profiler.start()
       })
       .catch(monitorError)
   }

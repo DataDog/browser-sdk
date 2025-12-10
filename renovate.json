@@ -11,13 +11,26 @@
   "ignoreDeps": ["registry.ddbuild.io/dd-octo-sts"],
   "schedule": ["every weekend"],
   "postUpdateOptions": ["yarnDedupeHighest"],
-  "lockFileMaintenance": { "enabled": true },
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "skipInstalls": false,
   "packageRules": [
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
       "matchUpdateTypes": ["minor", "patch"],
       "matchPackageNames": ["!karma-webpack", "!@playwright/test"]
+    },
+    {
+      "matchFileNames": ["test/apps/vanilla/**"],
+      "matchDepNames": ["typescript"],
+      "enabled": false
+    },
+    {
+      "matchFileNames": ["test/apps/react-router-v6-app/**"],
+      "matchDepNames": ["react-router-dom"],
+      "enabled": false
     }
   ]
 }

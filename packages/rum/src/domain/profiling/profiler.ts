@@ -15,11 +15,11 @@ import {
 
 import type {
   LifeCycle,
+  LongTaskContexts,
   RumConfiguration,
   RumSessionManager,
   TransportPayload,
-  ViewHistoryEntry,
-  LongTaskContexts,
+  ViewHistory,
 } from '@datadog/browser-rum-core'
 import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type {
@@ -28,6 +28,7 @@ import type {
   Profiler,
   RUMProfiler,
   RUMProfilerConfiguration,
+  RumProfilerStoppedInstance,
   RumViewEntry,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
@@ -49,6 +50,7 @@ export function createRumProfiler(
   profilingContextManager: ProfilingContextManager,
   longTaskContexts: LongTaskContexts,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
@@ -58,12 +60,27 @@ export function createRumProfiler(
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
 
-  let instance: RumProfilerInstance = { state: 'stopped' }
+  let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
 
-  function start(viewEntry: ViewHistoryEntry | undefined): void {
+  // Stops the profiler when session expires
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+    stopProfiling('session-expired').catch(monitorError)
+  })
+
+  // Start the profiler again when session is renewed
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    if (instance.state === 'stopped' && instance.stateReason === 'session-expired') {
+      start() // Only restart the profiler if it was stopped due to session expiration. Avoid restarting the profiler if it was stopped manually by the user.
+    }
+  })
+
+  // Public API to start the profiler.
+  function start(): void {
     if (instance.state === 'running') {
       return
     }
+
+    const viewEntry = viewHistory.findView()
 
     // Add initial view
     // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
@@ -85,9 +102,14 @@ export function createRumProfiler(
     startNextProfilerInstance()
   }
 
+  // Public API to manually stop the profiler.
   async function stop() {
+    await stopProfiling('stopped-by-user')
+  }
+
+  async function stopProfiling(reason: RumProfilerStoppedInstance['stateReason']) {
     // Stop current profiler instance
-    await stopProfilerInstance('stopped')
+    await stopProfilerInstance(reason)
 
     // Cleanup global listeners
     globalCleanupTasks.forEach((task) => task())
@@ -233,17 +255,30 @@ export function createRumProfiler(
       .catch(monitorError)
   }
 
-  async function stopProfilerInstance(nextState: 'paused' | 'stopped') {
+  async function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
     if (instance.state !== 'running') {
       return
     }
+    await onPauseOrStopProfilerInstance()
+    instance = { state: 'stopped', stateReason }
+  }
 
+  async function pauseProfilerInstance() {
+    if (instance.state !== 'running') {
+      return
+    }
+    await onPauseOrStopProfilerInstance()
+    instance = { state: 'paused' }
+  }
+
+  async function onPauseOrStopProfilerInstance() {
+    if (instance.state !== 'running') {
+      return
+    }
     // Cleanup tasks
     instance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
 
     await collectProfilerInstance(instance)
-
-    instance = { state: nextState }
   }
 
   function collectViewEntry(viewEntry: RumViewEntry | undefined): void {
@@ -273,7 +308,7 @@ export function createRumProfiler(
       // paused by visibility change and stopped by user.
       // If profiler is paused by the visibility change, we should resume when
       // tab becomes visible again. That's not the case when user stops the profiler.
-      stopProfilerInstance('paused').catch(monitorError)
+      pauseProfilerInstance().catch(monitorError)
     } else if (document.visibilityState === 'visible' && instance.state === 'paused') {
       // Resume when tab becomes visible again
       startNextProfilerInstance()
