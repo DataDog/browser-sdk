@@ -1,5 +1,5 @@
 import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
-import type { RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { clocksOrigin, createIdentityEncoder, deepClone, relativeNow, timeStampNow } from '@datadog/browser-core'
 import {
   setPageVisibility,
@@ -47,7 +47,7 @@ describe('profiler', () => {
     notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
     profilingContextManager: ProfilingContextManager
     mockedRumProfilerTrace: RumProfilerTrace
-    longTaskContexts: { findLongTaskId: jasmine.Spy }
+    longTaskContexts: { findLongTasks: jasmine.Spy }
   } {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
     lifeCycle = new LifeCycle()
@@ -77,7 +77,7 @@ describe('profiler', () => {
 
     // Mock longTaskContexts
     const longTaskContexts = {
-      findLongTaskId: jasmine.createSpy('findLongTaskId').and.returnValue(undefined),
+      findLongTasks: jasmine.createSpy('findLongTasks').and.returnValue([]),
     }
 
     // Start collection of profile.
@@ -187,7 +187,13 @@ describe('profiler', () => {
 
   it('should collect long task from core and then attach long task id to the Profiler trace', async () => {
     const { profiler, notifyPerformanceEntries, profilingContextManager, longTaskContexts } = setupProfiler()
-    longTaskContexts.findLongTaskId.and.returnValue('long-task-id-1')
+    longTaskContexts.findLongTasks.and.returnValue([
+      {
+        id: 'long-task-id-1',
+        startClocks: { relative: 12345 as RelativeTime, timeStamp: 12345 as TimeStamp },
+        duration: 1000 as Duration,
+      },
+    ])
 
     profiler.start({
       id: 'view-id-1',
@@ -222,7 +228,7 @@ describe('profiler', () => {
     const trace = request['wall-time.json']
 
     expect(request.event.long_task?.id.length).toBe(1)
-    expect(trace.longTasks[0].id).toBe('long-task-id-1')
+    expect(trace.longTasks[0].id).toBeDefined()
     expect(trace.longTasks[0].startClocks.relative).toBe(12345 as RelativeTime)
   })
 

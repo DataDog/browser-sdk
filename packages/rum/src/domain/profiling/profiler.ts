@@ -1,4 +1,4 @@
-import type { Duration, Encoder, RelativeTime } from '@datadog/browser-core'
+import type { Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -7,7 +7,6 @@ import {
   monitorError,
   display,
   getGlobalObject,
-  relativeToClocks,
   clocksOrigin,
   clocksNow,
   elapsed,
@@ -22,12 +21,7 @@ import type {
   ViewHistoryEntry,
   LongTaskContexts,
 } from '@datadog/browser-rum-core'
-import {
-  createFormDataTransport,
-  LifeCycleEventType,
-  RumPerformanceEntryType,
-  supportPerformanceTimingEvent,
-} from '@datadog/browser-rum-core'
+import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type {
   RumProfilerTrace,
   RumProfilerInstance,
@@ -58,7 +52,6 @@ export function createRumProfiler(
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
-  const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
   let lastViewEntry: RumViewEntry | undefined
 
@@ -112,24 +105,11 @@ export function createRumProfiler(
       // Instance is already running, so we can keep same event listeners.
       return {
         cleanupTasks: existingInstance.cleanupTasks,
-        observer: existingInstance.observer,
       }
     }
 
     // Store clean-up tasks for this instance (tasks to be executed when the Profiler is stopped or paused.)
     const cleanupTasks = []
-    let observer: PerformanceObserver | undefined
-
-    // Register everything linked to Long Tasks correlations with RUM, when enabled.
-    if (configuration.trackLongTasks) {
-      // Setup event listeners, and since we only listen to Long Tasks for now, we activate the Performance Observer only when they are tracked.
-      observer = new PerformanceObserver(handlePerformance)
-      observer.observe({
-        entryTypes: [getLongTaskEntryType()],
-      })
-
-      cleanupTasks.push(() => observer?.disconnect())
-    }
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
@@ -149,7 +129,6 @@ export function createRumProfiler(
 
     return {
       cleanupTasks,
-      observer,
     }
   }
 
@@ -165,7 +144,7 @@ export function createRumProfiler(
     // Don't wait for data collection to start next instance
     collectProfilerInstance(instance).catch(monitorError)
 
-    const { cleanupTasks, observer } = addEventListeners(instance)
+    const { cleanupTasks } = addEventListeners(instance)
 
     let profiler: Profiler
     try {
@@ -200,10 +179,9 @@ export function createRumProfiler(
       startClocks: clocksNow(),
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
-      longTasks: [],
       views: [],
       cleanupTasks,
-      observer,
+      longTasks: [],
     }
 
     // Add last view entry
@@ -218,28 +196,24 @@ export function createRumProfiler(
       return
     }
 
-    // Empty the performance observer buffer
-    handleLongTaskEntries(lastInstance.observer?.takeRecords() ?? [])
-
     // Cleanup instance
     clearTimeout(lastInstance.timeoutId)
     lastInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startClocks, longTasks, views } = lastInstance
+    const { startClocks, views } = lastInstance
 
     // Stop current profiler to get trace
     await lastInstance.profiler
       .stop()
       .then((trace) => {
         const endClocks = clocksNow()
-
-        const hasLongTasks = longTasks.length > 0
+        const longTasks = longTaskContexts.findLongTasks(startClocks.relative)
         const isBelowDurationThreshold =
           elapsed(startClocks.timeStamp, endClocks.timeStamp) < profilerConfiguration.minProfileDurationMs
         const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
-        if (!hasLongTasks && (isBelowDurationThreshold || isBelowSampleThreshold)) {
+        if (longTasks.length === 0 && (isBelowDurationThreshold || isBelowSampleThreshold)) {
           // Skip very short profiles to reduce noise and cost, but keep them if they contain long tasks.
           return
         }
@@ -293,35 +267,6 @@ export function createRumProfiler(
     startNextProfilerInstance()
   }
 
-  function handlePerformance(list: PerformanceObserverEntryList): void {
-    handleLongTaskEntries(list.getEntries())
-  }
-
-  function handleLongTaskEntries(entries: PerformanceEntryList): void {
-    if (instance.state !== 'running') {
-      return
-    }
-
-    for (const entry of entries) {
-      if (entry.duration < profilerConfiguration.sampleIntervalMs) {
-        // Skip entries shorter than sample interval to reduce noise and size of profile
-        continue
-      }
-
-      const startClocks = relativeToClocks(entry.startTime as RelativeTime)
-
-      const longTaskId = longTaskContexts.findLongTaskId(startClocks.relative)
-
-      // Store Long Task entry, which is a lightweight version of the PerformanceEntry
-      instance.longTasks.push({
-        id: longTaskId,
-        duration: entry.duration as Duration,
-        entryType: entry.entryType,
-        startClocks,
-      })
-    }
-  }
-
   function handleVisibilityChange(): void {
     if (document.visibilityState === 'hidden' && instance.state === 'running') {
       // Pause when tab is hidden. We use paused state to distinguish between
@@ -340,10 +285,6 @@ export function createRumProfiler(
     // We can immediately flush (by starting a new profiler instance) to make sure we receive the data, and at the same time keep the profiler active.
     // In case of the regular unload, the profiler will be shut down anyway.
     startNextProfilerInstance()
-  }
-
-  function getLongTaskEntryType(): 'long-animation-frame' | 'longtask' {
-    return isLongAnimationFrameEnabled ? 'long-animation-frame' : 'longtask'
   }
 
   function isStopped() {

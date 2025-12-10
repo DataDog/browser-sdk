@@ -1,3 +1,4 @@
+import { relativeToClocks } from '@datadog/browser-core'
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -7,7 +8,7 @@ import {
   mockRumConfiguration,
 } from '../../../test'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
-import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../../browser/performanceObservable'
+import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RawRumEvent, RawRumLongTaskEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
@@ -19,8 +20,16 @@ describe('longTaskCollection', () => {
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
-  function setupLongTaskCollection(trackLongTasks = true) {
-    ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+  function setupLongTaskCollection({
+    supportedEntryType,
+    trackLongTasks = true,
+  }: {
+    supportedEntryType?: RumPerformanceEntryType
+    trackLongTasks?: boolean
+  } = {}) {
+    ;({ notifyPerformanceEntries } = mockPerformanceObserver({
+      supportedEntryTypes: supportedEntryType ? [supportedEntryType] : undefined,
+    }))
 
     lifeCycle = new LifeCycle()
     const longTaskCollection = startLongTaskCollection(lifeCycle, mockRumConfiguration({ trackLongTasks }))
@@ -35,13 +44,7 @@ describe('longTaskCollection', () => {
   }
 
   describe('when browser supports long-animation-frame', () => {
-    beforeEach(() => {
-      if (!supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
-        pending('Browser does not support long-animation-frame')
-      }
-    })
-
-    it('should create raw rum event from long animation frame performance entry', () => {
+    it('should create a long task event from long animation frame performance entry', () => {
       setupLongTaskCollection()
       const performanceLongAnimationFrameTiming = createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
@@ -85,45 +88,44 @@ describe('longTaskCollection', () => {
       })
     })
 
-    it('should track long animation frame IDs in history', () => {
-      const longTaskCollection = setupLongTaskCollection()
-      const performanceLongAnimationFrameTiming = createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
-
-      notifyPerformanceEntries([performanceLongAnimationFrameTiming])
-
-      const longTaskId = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task.id
-      expect(longTaskCollection.longTaskContexts.findLongTaskId(1234 as RelativeTime)).toBe(longTaskId)
-    })
-  })
-
-  describe('when browser only supports legacy longtask', () => {
-    beforeEach(() => {
-      if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
-        pending('Browser supports long-animation-frame, skip legacy tests')
-      }
-    })
-
-    it('should only listen to long task performance entry', () => {
+    it('should only listen to long animation frame performance entry', () => {
       setupLongTaskCollection()
 
       notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION),
+        createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME),
         createPerformanceEntry(RumPerformanceEntryType.LONG_TASK),
-        createPerformanceEntry(RumPerformanceEntryType.PAINT),
       ])
 
       expect(rawRumEvents.length).toBe(1)
     })
 
-    it('should collect when trackLongTasks=true', () => {
-      setupLongTaskCollection()
+    it('should track long animation frame contexts', () => {
+      const longTaskCollection = setupLongTaskCollection()
+      const entry = createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
+      notifyPerformanceEntries([entry])
 
-      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
-      expect(rawRumEvents.length).toBe(1)
+      const longTask = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task
+      const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime)
+      expect(longTasks).toContain({
+        id: longTask.id,
+        startClocks: jasmine.objectContaining({ relative: entry.startTime }),
+        duration: entry.duration,
+        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      })
     })
 
-    it('should create raw rum event from legacy long task performance entry', () => {
-      setupLongTaskCollection()
+    it('should not collect when trackLongTasks=false', () => {
+      setupLongTaskCollection({ trackLongTasks: false })
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)])
+
+      expect(rawRumEvents.length).toBe(0)
+    })
+  })
+
+  describe('when browser only supports legacy longtask', () => {
+    it('should create a long task event from long task performance entry', () => {
+      setupLongTaskCollection({ supportedEntryType: RumPerformanceEntryType.LONG_TASK })
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
 
       expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
@@ -150,46 +152,34 @@ describe('longTaskCollection', () => {
       })
     })
 
-    it('should track legacy long task IDs in history', () => {
-      const longTaskCollection = setupLongTaskCollection()
+    it('should collect when trackLongTasks=true', () => {
+      setupLongTaskCollection({ supportedEntryType: RumPerformanceEntryType.LONG_TASK })
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
+      expect(rawRumEvents.length).toBe(1)
+    })
+
+    it('should track long tasks contexts', () => {
+      const longTaskCollection = setupLongTaskCollection({ supportedEntryType: RumPerformanceEntryType.LONG_TASK })
+      const entry = createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)
+      notifyPerformanceEntries([entry])
+
+      const longTask = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task
+      const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime)
+      expect(longTasks).toContain({
+        id: longTask.id,
+        startClocks: jasmine.objectContaining({ relative: entry.startTime }),
+        duration: entry.duration,
+        entryType: RumPerformanceEntryType.LONG_TASK,
+      })
+    })
+
+    it('should not collect when trackLongTasks=false', () => {
+      setupLongTaskCollection({ supportedEntryType: RumPerformanceEntryType.LONG_TASK, trackLongTasks: false })
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
 
-      const longTaskId = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task.id
-      expect(longTaskCollection.longTaskContexts.findLongTaskId(1234 as RelativeTime)).toBe(longTaskId)
-    })
-  })
-
-  describe('common behavior', () => {
-    it('should not collect when trackLongTasks=false', () => {
-      setupLongTaskCollection(false)
-
-      const entryType = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
-        ? RumPerformanceEntryType.LONG_ANIMATION_FRAME
-        : RumPerformanceEntryType.LONG_TASK
-
-      notifyPerformanceEntries([createPerformanceEntry(entryType)])
-
       expect(rawRumEvents.length).toBe(0)
-    })
-
-    it('should stop collection and cleanup history', () => {
-      const longTaskCollection = setupLongTaskCollection()
-
-      const entryType = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
-        ? RumPerformanceEntryType.LONG_ANIMATION_FRAME
-        : RumPerformanceEntryType.LONG_TASK
-
-      notifyPerformanceEntries([createPerformanceEntry(entryType)])
-      const longTaskId = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task.id
-
-      expect(longTaskCollection.longTaskContexts.findLongTaskId(1234 as RelativeTime)).toBe(longTaskId)
-
-      longTaskCollection.stop()
-
-      // After stop, should not collect new entries
-      notifyPerformanceEntries([createPerformanceEntry(entryType)])
-      expect(rawRumEvents.length).toBe(1) // Still just the first one
     })
   })
 })

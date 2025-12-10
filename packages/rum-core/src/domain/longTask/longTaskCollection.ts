@@ -1,4 +1,4 @@
-import type { RelativeTime, ClocksState } from '@datadog/browser-core'
+import type { RelativeTime, ClocksState, Duration } from '@datadog/browser-core'
 import {
   toServerDuration,
   relativeToClocks,
@@ -25,12 +25,19 @@ import type { RumConfiguration } from '../configuration'
 
 export const LONG_TASK_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
+export interface LongTaskContext {
+  id: string
+  startClocks: ClocksState
+  duration: Duration
+  entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME | RumPerformanceEntryType.LONG_TASK
+}
+
 export interface LongTaskContexts {
-  findLongTaskId: (startTime?: RelativeTime) => string | undefined
+  findLongTasks: (startTime: RelativeTime) => LongTaskContext[]
 }
 
 export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
-  const history = createValueHistory<string>({
+  const history = createValueHistory<LongTaskContext>({
     expireDelay: LONG_TASK_ID_HISTORY_TIME_OUT_DELAY,
   })
   const entryType = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
@@ -57,11 +64,14 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: Rum
         domainContext: { performanceEntry: entry },
       })
 
-      history.add(taskId, startClocks.relative).close(addDuration(startClocks.relative, entry.duration))
+      history.add({ id: taskId, startClocks, duration: entry.duration, entryType }, startClocks.relative)
+      history.closeActive(addDuration(startClocks.relative, entry.duration))
     }
   })
 
-  const longTaskContexts: LongTaskContexts = { findLongTaskId: (startTime?: RelativeTime) => history.find(startTime) }
+  const longTaskContexts: LongTaskContexts = {
+    findLongTasks: (startTime: RelativeTime) => history.findAll(startTime),
+  }
 
   return {
     stop: () => {
