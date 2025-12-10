@@ -1,5 +1,6 @@
 import { clocksOrigin } from '@datadog/browser-core'
-import { RumPerformanceEntryType, type LongTaskContext } from '@datadog/browser-rum-core'
+import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
+import type { LongTaskContext } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace, RumViewEntry } from '../types'
 import { buildProfileEventAttributes, type ProfileEventAttributes } from './buildProfileEventAttributes'
 

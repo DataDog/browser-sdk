@@ -1,4 +1,3 @@
-import { relativeToClocks } from '@datadog/browser-core'
 import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
