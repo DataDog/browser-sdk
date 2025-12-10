@@ -1,0 +1,218 @@
+.filter-sidebar {
+  width: 280px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  height: fit-content;
+  max-height: 80vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border-radius: 6px 6px 0 0;
+}
+
+.filter-header h3 {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.clear-filters-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.clear-filters-btn:hover {
+  background: var(--color-primary-hover);
+  color: white;
+}
+
+.filter-loading {
+  padding: var(--spacing-lg);
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Filter Section */
+.filter-section {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.filter-section:last-child {
+  border-bottom: none;
+}
+
+.filter-section-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: none;
+  border: none;
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.filter-section-header:hover {
+  background: var(--color-surface-hover);
+}
+
+.filter-section-title {
+  text-align: left;
+}
+
+.filter-section-chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--color-text-muted);
+  transition: transform 0.2s ease;
+}
+
+.filter-section-chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.filter-section-content {
+  padding: 0 var(--spacing-md) var(--spacing-md);
+}
+
+/* Level Filters */
+.level-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.level-checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.level-checkbox-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.level-checkbox-item input[type='checkbox'] {
+  margin: 0;
+}
+
+.level-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.level-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+/* Checkbox List */
+.checkbox-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.checkbox-list-header {
+  margin-bottom: var(--spacing-xs);
+}
+
+.select-all-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.select-all-btn:hover {
+  background: var(--color-primary-hover);
+  color: white;
+}
+
+.checkbox-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: var(--spacing-sm);
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.checkbox-item:hover {
+  background: var(--color-surface-hover);
+}
+
+.checkbox-item input[type='checkbox'] {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.checkbox-label {
+  font-size: var(--font-size-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.show-more-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.show-more-btn:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+@media (max-width: 768px) {
+  .filter-sidebar {
+    width: 100%;
+    max-height: 400px;
+  }
+}

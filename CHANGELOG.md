@@ -18,6 +18,63 @@
 
 ---
 
+## v6.25.0
+
+**Public Changes:**
+
+- ✨ add logs to service worker extension ([#3987](https://github.com/DataDog/browser-sdk/pull/3987))
+- ✨ add support for persisted GraphQL Queries ([#3979](https://github.com/DataDog/browser-sdk/pull/3979)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ extend masking cases to include aria-label and name ([#3961](https://github.com/DataDog/browser-sdk/pull/3961)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 add support for arbitrary Error causes ([#3860](https://github.com/DataDog/browser-sdk/pull/3860)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Update dependency vite to v5.4.21 [SECURITY] ([#4010](https://github.com/DataDog/browser-sdk/pull/4010))
+- 👷 Include test apps in renovate scan ([#4009](https://github.com/DataDog/browser-sdk/pull/4009))
+- 👷 restore canary deployment ([#4008](https://github.com/DataDog/browser-sdk/pull/4008))
+- 👷 Update all non-major dependencies ([#3980](https://github.com/DataDog/browser-sdk/pull/3980)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 configure renovate to not create PRs before stable ([#4006](https://github.com/DataDog/browser-sdk/pull/4006))
+- 👷 Exclude renovate from CLA Assistant check ([#4007](https://github.com/DataDog/browser-sdk/pull/4007))
+- 👷 extend monitor date ([#3990](https://github.com/DataDog/browser-sdk/pull/3990)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update actions/checkout action to v6 ([#3989](https://github.com/DataDog/browser-sdk/pull/3989))
+- 👷 disable deploy-prod-canary during the freeze ([#3984](https://github.com/DataDog/browser-sdk/pull/3984))
+- 👷 fix temporal dead zone ([#3974](https://github.com/DataDog/browser-sdk/pull/3974))
+- 👷 check package.json files for each PR ([#3970](https://github.com/DataDog/browser-sdk/pull/3970))
+- 👷 [EX-1236] Add support for flagevaluation track. ([#3976](https://github.com/DataDog/browser-sdk/pull/3976)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Add CLA bot GitHub action ([#3995](https://github.com/DataDog/browser-sdk/pull/3995))
+- 👷 Add more complete tests for DOM attribute serialization ([#3994](https://github.com/DataDog/browser-sdk/pull/3994)) [RUM]
+- 👷 [RUM-12600] Refine Continuous Benchmarking ([#3977](https://github.com/DataDog/browser-sdk/pull/3977))
+- 🔧 migrate the developer-extension to wxt ([#3962](https://github.com/DataDog/browser-sdk/pull/3962))
+- 🎨 [PANA-4929] Add the concept of serialization transactions and reorganize state ([#3982](https://github.com/DataDog/browser-sdk/pull/3982)) [RUM]
+- 🎨 [PANA-4976] Separate emission of replay records and serialization stats ([#3978](https://github.com/DataDog/browser-sdk/pull/3978)) [RUM]
+- ♻️ separate RUM event collection ([#3985](https://github.com/DataDog/browser-sdk/pull/3985)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🔥 remove the `performances/` script ([#3986](https://github.com/DataDog/browser-sdk/pull/3986))
+- 🔉 add \_dd.configuration.trace_sample_rate ([#3946](https://github.com/DataDog/browser-sdk/pull/3946)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+## v6.24.1
+
+**Public Changes:**
+
+- 🐛 [RUM-12503] Add mask-unless-allowlisted privacy level support for standard attr ([#3907](https://github.com/DataDog/browser-sdk/pull/3907)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 fix temporal dead zone ([#3974](https://github.com/DataDog/browser-sdk/pull/3974))
+- 👷 check package.json files for each PR ([#3970](https://github.com/DataDog/browser-sdk/pull/3970))
+- 👷 handle undefined api key for source-maps upload to new DC ([#3971](https://github.com/DataDog/browser-sdk/pull/3971))
+- 👷 Update actions/setup-node action to v6 ([#3930](https://github.com/DataDog/browser-sdk/pull/3930))
+- 👷 remove version number from private packages ([#3969](https://github.com/DataDog/browser-sdk/pull/3969))
+- 👷 fix prtest00 site ([#3967](https://github.com/DataDog/browser-sdk/pull/3967)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 Update dependency @playwright/test to v1.56.1 ([#3917](https://github.com/DataDog/browser-sdk/pull/3917))
+- 👷 Update dependency eslint-plugin-unicorn to v62 ([#3941](https://github.com/DataDog/browser-sdk/pull/3941))
+- 👷 Update all non-major dependencies ([#3954](https://github.com/DataDog/browser-sdk/pull/3954)) [RUM-REACT]
+- 👷 Reduce packages boilerplate a bit more ([#3957](https://github.com/DataDog/browser-sdk/pull/3957)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 👷 fix: Add name field to e2e package.json ([#3959](https://github.com/DataDog/browser-sdk/pull/3959))
+- ♻️ refactor new datacenter workflow ([#3964](https://github.com/DataDog/browser-sdk/pull/3964))
+- 👷 Fix gitignore ([#3963](https://github.com/DataDog/browser-sdk/pull/3963))
+- 👷 Add Continuous Benchmarking ([#3927](https://github.com/DataDog/browser-sdk/pull/3927))
+- ♻️ remove constants from the `Configuration` object ([#3960](https://github.com/DataDog/browser-sdk/pull/3960)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.24.0
 
 **Public Changes:**

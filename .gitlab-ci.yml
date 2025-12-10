@@ -1,7 +1,7 @@
 variables:
-  CURRENT_STAGING: staging-46
+  CURRENT_STAGING: staging-50
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 92
+  CURRENT_CI_IMAGE: 94
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -153,7 +153,6 @@ typecheck:
   interruptible: true
   script:
     - yarn
-    - yarn build
     - yarn typecheck
     - scripts/cli typecheck test/apps/vanilla
     - scripts/cli typecheck test/e2e
@@ -165,7 +164,6 @@ build-and-lint:
   interruptible: true
   script:
     - yarn
-    - yarn build
     - yarn lint
     - node scripts/check-packages.ts
 
@@ -588,6 +586,20 @@ bump-chrome-version-scheduled-failure:
     - bump-chrome-version-scheduled
 
 ########################################################################################################################
+# Performance benchmark
+########################################################################################################################
+
+performance-benchmark:
+  stage: task
+  extends: .base-configuration
+  only:
+    variables:
+      - $TARGET_TASK_NAME == "performance-benchmark-scheduled"
+  script:
+    - yarn
+    - yarn test:performance
+
+########################################################################################################################
 # Check expired telemetry
 ########################################################################################################################
 
@@ -599,7 +611,6 @@ check-expired-telemetry-scheduled:
       - $TARGET_TASK_NAME == "check-expired-telemetry"
   script:
     - yarn
-    - yarn build
     - MONITOR_UNTIL_COMMENT_EXPIRED_LEVEL=error yarn lint
 
 check-expired-telemetry-scheduled-failure:

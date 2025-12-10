@@ -4,7 +4,8 @@ esm
 coverage
 rum-events-format
 .yarn
-developer-extension/dist
 test/**/dist
 yarn.lock
 /docs
+/developer-extension/.output
+/developer-extension/.wxt

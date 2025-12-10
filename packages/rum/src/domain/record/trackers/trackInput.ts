@@ -1,29 +1,26 @@
 import { instrumentSetter, DOM_EVENT, addEventListeners, noop } from '@datadog/browser-core'
 import { NodePrivacyLevel, getNodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { IncrementalSource } from '../../../types'
-import type { BrowserIncrementalSnapshotRecord, InputData, InputState } from '../../../types'
+import type { InputData, InputState } from '../../../types'
 import { getEventTarget } from '../eventsUtils'
+import type { RecordingScope } from '../recordingScope'
 import { getElementInputValue } from '../serialization'
-import type { SerializationScope } from '../serialization'
 import { assembleIncrementalSnapshot } from '../assembly'
+import type { EmitRecordCallback } from '../record.types'
 import type { Tracker } from './tracker.types'
 
-export type InputCallback = (incrementalSnapshotRecord: BrowserIncrementalSnapshotRecord) => void
-
 export function trackInput(
-  configuration: RumConfiguration,
-  scope: SerializationScope,
-  inputCb: InputCallback,
-  target: Document | ShadowRoot = document
+  target: Document | ShadowRoot,
+  emitRecord: EmitRecordCallback,
+  scope: RecordingScope
 ): Tracker {
-  const defaultPrivacyLevel = configuration.defaultPrivacyLevel
+  const defaultPrivacyLevel = scope.configuration.defaultPrivacyLevel
   const lastInputStateMap: WeakMap<Node, InputState> = new WeakMap()
 
   const isShadowRoot = target !== document
 
   const { stop: stopEventListeners } = addEventListeners(
-    configuration,
+    scope.configuration,
     target,
     // The 'input' event bubbles across shadow roots, so we don't have to listen for it on shadow
     // roots since it will be handled by the event listener that we did add to the document. Only
@@ -91,7 +88,7 @@ export function trackInput(
     }
 
     // Can be multiple changes on the same node within the same batched mutation observation.
-    cbWithDedup(target, inputState, scope)
+    createRecordIfStateChanged(target, inputState)
 
     // If a radio was checked, other radios with the same name attribute will be unchecked.
     const name = target.name
@@ -99,7 +96,7 @@ export function trackInput(
       document.querySelectorAll(`input[type="radio"][name="${CSS.escape(name)}"]`).forEach((el: Element) => {
         if (el !== target) {
           // TODO: Consider the privacy implications for various differing input privacy levels
-          cbWithDedup(el, { isChecked: false }, scope)
+          createRecordIfStateChanged(el, { isChecked: false })
         }
       })
     }
@@ -108,7 +105,7 @@ export function trackInput(
   /**
    * There can be multiple changes on the same node within the same batched mutation observation.
    */
-  function cbWithDedup(target: Node, inputState: InputState, scope: SerializationScope) {
+  function createRecordIfStateChanged(target: Node, inputState: InputState) {
     const id = scope.nodeIds.get(target)
     if (id === undefined) {
       return
@@ -120,7 +117,7 @@ export function trackInput(
       (lastInputState as { isChecked?: boolean }).isChecked !== (inputState as { isChecked?: boolean }).isChecked
     ) {
       lastInputStateMap.set(target, inputState)
-      inputCb(
+      emitRecord(
         assembleIncrementalSnapshot<InputData>(IncrementalSource.Input, {
           id,
           ...inputState,

@@ -51,6 +51,7 @@ import type {
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
+import type { SdkName } from '../domain/contexts/defaultContext'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -499,7 +500,7 @@ export interface RumPublicApiOptions {
     worker: DeflateWorker,
     streamId: DeflateEncoderStreamId
   ) => DeflateEncoder
-  sdkName?: 'rum' | 'rum-slim' | 'rum-synthetics'
+  sdkName?: SdkName
 }
 
 export interface Strategy {

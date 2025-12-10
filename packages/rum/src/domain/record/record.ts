@@ -1,7 +1,7 @@
 import { sendToExtension } from '@datadog/browser-core'
 import type { LifeCycle, RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
-import type { BrowserRecord } from '../../types'
 import * as replayStats from '../replayStats'
+import type { BrowserRecord } from '../../types'
 import type { Tracker } from './trackers'
 import {
   trackFocus,
@@ -21,13 +21,14 @@ import { createElementsScrollPositions } from './elementsScrollPositions'
 import type { ShadowRootsController } from './shadowRootsController'
 import { initShadowRootsController } from './shadowRootsController'
 import { startFullSnapshots } from './startFullSnapshots'
-import { initRecordIds } from './recordIds'
-import type { SerializationStats } from './serialization'
-import { createSerializationScope } from './serialization'
+import { createEventIds } from './eventIds'
 import { createNodeIds } from './nodeIds'
+import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+import { createRecordingScope } from './recordingScope'
 
 export interface RecordOptions {
-  emit?: (record: BrowserRecord, stats?: SerializationStats) => void
+  emitRecord: EmitRecordCallback
+  emitStats: EmitStatsCallback
   configuration: RumConfiguration
   lifeCycle: LifeCycle
   viewHistory: ViewHistory
@@ -40,61 +41,49 @@ export interface RecordAPI {
 }
 
 export function record(options: RecordOptions): RecordAPI {
-  const { emit, configuration, lifeCycle } = options
+  const { emitRecord, emitStats, configuration, lifeCycle } = options
   // runtime checks for user options
-  if (!emit) {
-    throw new Error('emit function is required')
+  if (!emitRecord || !emitStats) {
+    throw new Error('emit functions are required')
   }
 
-  const emitAndComputeStats = (record: BrowserRecord, stats?: SerializationStats) => {
-    emit(record, stats)
+  const processRecord: EmitRecordCallback = (record: BrowserRecord) => {
+    emitRecord(record)
     sendToExtension('record', { record })
     const view = options.viewHistory.findView()!
     replayStats.addRecord(view.id)
   }
 
-  const elementsScrollPositions = createElementsScrollPositions()
-  const scope = createSerializationScope(createNodeIds())
-  const shadowRootsController = initShadowRootsController(
+  const shadowRootsController = initShadowRootsController(processRecord, emitStats)
+  const scope = createRecordingScope(
     configuration,
-    scope,
-    emitAndComputeStats,
-    elementsScrollPositions
+    createElementsScrollPositions(),
+    createEventIds(),
+    createNodeIds(),
+    shadowRootsController
   )
 
-  const { stop: stopFullSnapshots } = startFullSnapshots(
-    elementsScrollPositions,
-    shadowRootsController,
-    lifeCycle,
-    configuration,
-    scope,
-    flushMutations,
-    emitAndComputeStats
-  )
+  const { stop: stopFullSnapshots } = startFullSnapshots(lifeCycle, processRecord, emitStats, flushMutations, scope)
 
   function flushMutations() {
     shadowRootsController.flush()
     mutationTracker.flush()
   }
 
-  const recordIds = initRecordIds()
-  const mutationTracker = trackMutation(emitAndComputeStats, configuration, scope, shadowRootsController, document)
+  const mutationTracker = trackMutation(document, processRecord, emitStats, scope)
   const trackers: Tracker[] = [
     mutationTracker,
-    trackMove(configuration, scope, emitAndComputeStats),
-    trackMouseInteraction(configuration, scope, emitAndComputeStats, recordIds),
-    trackScroll(configuration, scope, emitAndComputeStats, elementsScrollPositions, document),
-    trackViewportResize(configuration, emitAndComputeStats),
-    trackInput(configuration, scope, emitAndComputeStats),
-    trackMediaInteraction(configuration, scope, emitAndComputeStats),
-    trackStyleSheet(scope, emitAndComputeStats),
-    trackFocus(configuration, emitAndComputeStats),
-    trackVisualViewportResize(configuration, emitAndComputeStats),
-    trackFrustration(lifeCycle, emitAndComputeStats, recordIds),
-    trackViewEnd(lifeCycle, (viewEndRecord) => {
-      flushMutations()
-      emitAndComputeStats(viewEndRecord)
-    }),
+    trackMove(processRecord, scope),
+    trackMouseInteraction(processRecord, scope),
+    trackScroll(document, processRecord, scope),
+    trackViewportResize(processRecord, scope),
+    trackInput(document, processRecord, scope),
+    trackMediaInteraction(processRecord, scope),
+    trackStyleSheet(processRecord, scope),
+    trackFocus(processRecord, scope),
+    trackVisualViewportResize(processRecord, scope),
+    trackFrustration(lifeCycle, processRecord, scope),
+    trackViewEnd(lifeCycle, processRecord, flushMutations),
   ]
 
   return {

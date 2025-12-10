@@ -15,7 +15,7 @@ interface SdkPublicApi {
   [key: string]: (...args: any[]) => unknown
 }
 
-function main() {
+export function main() {
   // Prevent multiple executions when the devetools are reconnecting
   if (window.__ddBrowserSdkExtensionCallback) {
     return
@@ -53,8 +53,6 @@ function main() {
     }
   }
 }
-
-main()
 
 function sendEventsToExtension() {
   // This script is executed in the "main" execution world, the same world as the webpage. Thus, it

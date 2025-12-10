@@ -22,7 +22,7 @@ export function setupViewTest(
   const domMutationObservable = new Observable<RumMutationRecord[]>()
   const windowOpenObservable = new Observable<void>()
   const configuration = mockRumConfiguration(partialConfig)
-  const { locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)
+  const { fakeLocation, locationChangeObservable, changeLocation } = setupLocationObserver(initialLocation)
 
   const {
     handler: viewUpdateHandler,
@@ -47,7 +47,7 @@ export function setupViewTest(
 
   const { stop, startView, setViewName, setViewContext, setViewContextProperty, getViewContext, addTiming } =
     trackViews(
-      location,
+      fakeLocation,
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
