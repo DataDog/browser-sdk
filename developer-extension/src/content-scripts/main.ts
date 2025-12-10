@@ -1,7 +1,10 @@
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
-import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
+import { createLogger } from '../common/logger'
+import { CDN_LOGS_URL, CDN_RUM_SLIM_URL, CDN_RUM_URL, DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
+
+const logger = createLogger('content-script')
 
 declare global {
   interface Window extends EventTarget {
@@ -47,9 +50,23 @@ export function main() {
       overrideInitConfiguration(ddLogsGlobal, settings.logsConfigurationOverride)
     }
 
+    const rumDevUrl = settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL 
+
+    if (settings.injectCdnProd === 'on' && settings.useDevBundles !== 'npm') {
+      injectCdnBundle(settings)
+    }
+
     if (settings.useDevBundles === 'npm') {
-      injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
-      injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
+      runWhenDomReady(() => {
+        const rumConfig = buildRumConfig(settings)
+        const logsConfig = buildLogsConfig(settings)
+
+        injectBundle(rumDevUrl, ddRumGlobal)
+        injectBundle(DEV_LOGS_URL, ddLogsGlobal)
+
+        initSdkIfAvailable(ddRumGlobal, rumConfig)
+        initSdkIfAvailable(ddLogsGlobal, logsConfig)
+      })
     }
   }
 }
@@ -83,13 +100,64 @@ function noBrowserSdkLoaded() {
   return !window.DD_RUM && !window.DD_LOGS
 }
 
-function injectDevBundle(url: string, global: GlobalInstrumentation) {
-  loadSdkScriptFromURL(url)
-  const devInstance = global.get() as SdkPublicApi
+function injectCdnBundle(settings: Settings) {
+  const injectWhenReady = () => {
+    const rumUrl = settings.useRumSlim ? CDN_RUM_SLIM_URL : CDN_RUM_URL
+    const rumConfig = buildRumConfig(settings)
+    injectAndInitializeSDK(rumUrl, 'DD_RUM', rumConfig as any)
 
-  if (devInstance) {
-    global.onSet((sdkInstance) => proxySdk(sdkInstance, devInstance))
-    global.returnValue(devInstance)
+    const logsConfig = buildLogsConfig(settings)
+    injectAndInitializeSDK(CDN_LOGS_URL, 'DD_LOGS', logsConfig as any)
+  }
+  runWhenDomReady(injectWhenReady)
+}
+
+function injectAndInitializeSDK(url: string, globalName: 'DD_RUM' | 'DD_LOGS', config: object | null) {
+  const existingSdk = getSdkGlobal(globalName)
+
+  if (existingSdk) {
+    logger.log(`${globalName} already exists, skipping injection`)
+    return
+  }
+
+  if (!url.includes('datadoghq-browser-agent.com')) {
+    logger.log(`Skipping injection for ${globalName} (non-CDN url)`)
+    return
+  }
+
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onload = () => {
+    const sdk = getSdkGlobal(globalName)
+    if (config && sdk && 'init' in sdk) {
+      try {
+        sdk.init(config as any)
+      } catch (e) {
+        logger.error(`Error initializing ${globalName}:`, e)
+      }
+    }
+  }
+  script.onerror = (e) => {
+    logger.error(`Error loading ${globalName} script:`, e)
+  }
+
+  try {
+    document.head.appendChild(script)
+  } catch (appendErr) {
+    logger.error('failed to append script to head, retrying on documentElement', appendErr)
+    document.documentElement.appendChild(script)
+  }
+}
+
+function injectBundle(url: string, global: GlobalInstrumentation) {
+  loadSdkScriptFromURL(url)
+  const injectedInstance = global.get() as SdkPublicApi
+
+  if (injectedInstance) {
+    // Keep a stable reference so subsequent injections reuse the latest loaded SDK.
+    global.onSet((sdkInstance) => proxySdk(sdkInstance, injectedInstance))
+    global.returnValue(injectedInstance)
   }
 }
 
@@ -181,4 +249,49 @@ function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
 
 function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
   Object.assign(target, root)
+}
+
+function getSdkGlobal(globalName: 'DD_RUM' | 'DD_LOGS') {
+  return (window as any)[globalName] as SdkPublicApi | undefined
+}
+
+function buildRumConfig(settings: Settings) {
+  return (
+    settings.rumConfigurationOverride || {
+      applicationId: 'xxx',
+      clientToken: 'xxx',
+      site: 'datadoghq.com',
+      allowedTrackingOrigins: [location.origin],
+      sessionReplaySampleRate: 100,
+    }
+  )
+}
+
+function buildLogsConfig(settings: Settings) {
+  return (
+    settings.logsConfigurationOverride || {
+      clientToken: 'xxx',
+      site: 'datadoghq.com',
+      allowedTrackingOrigins: [location.origin],
+    }
+  )
+}
+
+function initSdkIfAvailable(global: GlobalInstrumentation, config: object) {
+  const sdk = global.get()
+  if (sdk && 'init' in sdk) {
+    try {
+      ;(sdk as any).init(config)
+    } catch (e) {
+      logger.error('Error initializing SDK', e)
+    }
+  }
+}
+
+function runWhenDomReady(callback: () => void) {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', callback, { once: true })
+  } else {
+    callback()
+  }
 }

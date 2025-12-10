@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS: Readonly<Settings> = {
   logsConfigurationOverride: null,
   debugMode: false,
   datadogMode: false,
+  injectCdnProd: 'off',
 }
 
 let settings: Settings | undefined
