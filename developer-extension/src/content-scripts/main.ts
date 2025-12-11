@@ -67,8 +67,8 @@ export function main() {
     } else if (shouldInjectCdnBundles) {
       void injectCdnBundles({ useRumSlim: settings.useRumSlim })
     } else if (shouldUseRedirect) {
-      injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal, getDefaultRumConfig())
-      injectDevBundle(DEV_LOGS_URL, ddLogsGlobal, getDefaultLogsConfig())
+      injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
+      injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
     }
   }
 }
@@ -184,26 +184,18 @@ function loadSdkScriptFromURL(url: string) {
     // Webpack runtime to load the chunks.
     // Extract the base directory URL from the full file URL.
     const baseUrl = url.substring(0, url.lastIndexOf('/') + 1)
-
-    // Override webpack's scriptUrl detection in multiple places to ensure chunks load from dev server
-    // 1. Replace the error throw with our base URL
+    
+    // Replace the webpack error throw to set scriptUrl.
     sdkCode = sdkCode.replace(
       'if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");',
       `if (!scriptUrl) scriptUrl = ${JSON.stringify(baseUrl)};`
     )
 
-    // 2. Set scriptUrl early if it's determined from document.currentScript or similar
-    sdkCode = sdkCode.replace(/var scriptUrl\s*=\s*[^;]+;/g, `var scriptUrl = ${JSON.stringify(baseUrl)};`)
-
-    // 3. Override __webpack_require__.p (publicPath) if it exists
+    // Override webpack publicPath assignments to ensure chunks load from dev server
     sdkCode = sdkCode.replace(
-      /__webpack_require__\.p\s*=\s*[^;]+;/g,
-      `__webpack_require__.p = ${JSON.stringify(baseUrl)};`
+      /(__webpack_require__\.p\s*=\s*)([^;]+);/g,
+      `$1${JSON.stringify(baseUrl)};`
     )
-
-    // 4. Inject publicPath override at the start of the webpack runtime
-    const publicPathOverride = `(function(){try{if(typeof __webpack_require__!=='undefined'){__webpack_require__.p=${JSON.stringify(baseUrl)};}}catch(e){}})();`
-    sdkCode = publicPathOverride + sdkCode
 
     const script = document.createElement('script')
     script.type = 'text/javascript'
