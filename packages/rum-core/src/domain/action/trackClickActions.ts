@@ -125,6 +125,7 @@ export function trackClickActions(
       const rageClick = click.clone()
       currentClickChain = createClickChain(click, (clicks) => {
         finalizeClicks(clicks, rageClick)
+        // currentClickChain = undefined
       })
     }
   }
