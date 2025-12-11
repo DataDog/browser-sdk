@@ -15,7 +15,7 @@ export interface GraphQlError {
 }
 
 export interface GraphQlMetadata {
-  operationType: 'query' | 'mutation' | 'subscription'
+  operationType?: 'query' | 'mutation' | 'subscription'
   operationName?: string
   variables?: string
   payload?: string
@@ -88,7 +88,11 @@ export function extractGraphQlRequestMetadata(
     return
   }
 
-  let graphqlBody: { query?: string; operationName?: string; variables?: unknown }
+  let graphqlBody: {
+    query?: string
+    operationName?: string
+    variables?: unknown
+  }
 
   try {
     graphqlBody = JSON.parse(requestBody)
@@ -97,18 +101,22 @@ export function extractGraphQlRequestMetadata(
     return
   }
 
-  if (!graphqlBody || !graphqlBody.query) {
+  if (!graphqlBody) {
     return
   }
 
-  const query = graphqlBody.query.trim()
-  const operationType = getOperationType(query)
+  let operationType: 'query' | 'mutation' | 'subscription' | undefined
+  let payload: string | undefined
+
+  if (graphqlBody.query) {
+    const trimmedQuery = graphqlBody.query.trim()
+    operationType = getOperationType(trimmedQuery)
+    if (trackPayload) {
+      payload = safeTruncate(trimmedQuery, GRAPHQL_PAYLOAD_LIMIT, '...')
+    }
+  }
+
   const operationName = graphqlBody.operationName
-
-  if (!operationType) {
-    return
-  }
-
   let variables: string | undefined
   if (graphqlBody.variables) {
     variables = JSON.stringify(graphqlBody.variables)
@@ -118,7 +126,7 @@ export function extractGraphQlRequestMetadata(
     operationType,
     operationName,
     variables,
-    payload: trackPayload ? safeTruncate(query, GRAPHQL_PAYLOAD_LIMIT, '...') : undefined,
+    payload,
   }
 }
 

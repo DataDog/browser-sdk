@@ -2,12 +2,12 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import * as readline from 'node:readline'
 import { printLog, printError, runMain } from './lib/executionUtils.ts'
-import { findBrowserSdkPackageJsonFiles } from './lib/filesUtils.ts'
+import { findPackageJsonFiles } from './lib/filesUtils.ts'
 
 const LICENSE_FILE = 'LICENSE-3rdparty.csv'
 
 runMain(async () => {
-  const packageJsonFiles = findBrowserSdkPackageJsonFiles()
+  const packageJsonFiles = findPackageJsonFiles()
 
   printLog(
     'Looking for dependencies in:\n',
@@ -59,6 +59,9 @@ async function retrieveLicenses(): Promise<string[]> {
   for await (const line of rl) {
     const csvColumns = line.split(',')
     if (!header && csvColumns[0] !== 'file') {
+      if (!csvColumns[1]) {
+        console.log(csvColumns)
+      }
       licenses.push(csvColumns[1])
     }
     header = false

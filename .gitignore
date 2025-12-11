@@ -11,6 +11,8 @@ browserstack.err
 package.tgz
 docs/
 *.tsbuildinfo
+/developer-extension/.output
+/developer-extension/.wxt
 
 # Generated WASM base64 files
 **/*.wasm.base64.ts
@@ -23,8 +25,8 @@ docs/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
-**/test-results/
-**/playwright-report/
 /blob-report/
 /playwright/.cache/
+test-results/
+playwright-report/
 .vscode

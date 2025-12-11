@@ -1,47 +1,29 @@
-import { DOM_EVENT, DefaultPrivacyLevel } from '@datadog/browser-core'
+import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MouseInteractionType, RecordType } from '../../../types'
-import {
-  serializeDocument,
-  SerializationContextStatus,
-  createSerializationStats,
-  createSerializationScope,
-} from '../serialization'
-import { createElementsScrollPositions } from '../elementsScrollPositions'
-import type { RecordIds } from '../recordIds'
-import { initRecordIds } from '../recordIds'
-import { createNodeIds } from '../nodeIds'
-import type { MouseInteractionCallback } from './trackMouseInteraction'
+import type { EmitRecordCallback } from '../record.types'
+import type { RecordingScope } from '../recordingScope'
+import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
+import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { trackMouseInteraction } from './trackMouseInteraction'
-import { DEFAULT_CONFIGURATION, DEFAULT_SHADOW_ROOT_CONTROLLER } from './trackers.specHelper'
 import type { Tracker } from './tracker.types'
 
 describe('trackMouseInteraction', () => {
-  let mouseInteractionCallbackSpy: jasmine.Spy<MouseInteractionCallback>
+  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let mouseInteractionTracker: Tracker
-  let recordIds: RecordIds
+  let scope: RecordingScope
   let a: HTMLAnchorElement
-  let configuration: RumConfiguration
 
   beforeEach(() => {
-    configuration = { defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW } as RumConfiguration
     a = appendElement('<a tabindex="0"></a>') as HTMLAnchorElement // tabindex 0 makes the element focusable
     a.dispatchEvent(createNewEvent(DOM_EVENT.FOCUS))
 
-    const scope = createSerializationScope(createNodeIds())
-    serializeDocument(document, DEFAULT_CONFIGURATION, scope, {
-      serializationStats: createSerializationStats(),
-      shadowRootsController: DEFAULT_SHADOW_ROOT_CONTROLLER,
-      status: SerializationContextStatus.INITIAL_FULL_SNAPSHOT,
-      elementsScrollPositions: createElementsScrollPositions(),
-    })
+    scope = createRecordingScopeForTesting()
+    takeFullSnapshotForTesting(scope)
 
-    mouseInteractionCallbackSpy = jasmine.createSpy()
-    recordIds = initRecordIds()
-    mouseInteractionTracker = trackMouseInteraction(configuration, scope, mouseInteractionCallbackSpy, recordIds)
-
+    emitRecordCallback = jasmine.createSpy()
+    mouseInteractionTracker = trackMouseInteraction(emitRecordCallback, scope)
     registerCleanupTask(() => {
       mouseInteractionTracker.stop()
     })
@@ -50,7 +32,7 @@ describe('trackMouseInteraction', () => {
   it('should generate click record', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.CLICK, { clientX: 0, clientY: 0 }))
 
-    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       id: jasmine.any(Number),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
@@ -68,8 +50,8 @@ describe('trackMouseInteraction', () => {
     const pointerupEvent = createNewEvent(DOM_EVENT.POINTER_UP, { clientX: 1, clientY: 2 })
     a.dispatchEvent(pointerupEvent)
 
-    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
-      id: recordIds.getIdForEvent(pointerupEvent),
+    expect(emitRecordCallback).toHaveBeenCalledWith({
+      id: scope.eventIds.getIdForEvent(pointerupEvent),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {
@@ -86,13 +68,13 @@ describe('trackMouseInteraction', () => {
     const clickEvent = createNewEvent(DOM_EVENT.CLICK)
     a.dispatchEvent(clickEvent)
 
-    expect(mouseInteractionCallbackSpy).not.toHaveBeenCalled()
+    expect(emitRecordCallback).not.toHaveBeenCalled()
   })
 
   it('should generate blur record', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.BLUR))
 
-    expect(mouseInteractionCallbackSpy).toHaveBeenCalledWith({
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       id: jasmine.any(Number),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),

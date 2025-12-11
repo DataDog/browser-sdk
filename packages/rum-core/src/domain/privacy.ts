@@ -175,6 +175,8 @@ export function shouldMaskAttribute(
     case 'title':
     case 'alt':
     case 'placeholder':
+    case 'aria-label':
+    case 'name':
       return true
   }
   if (tagName === 'A' && attributeName === 'href') {

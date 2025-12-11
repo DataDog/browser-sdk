@@ -55,7 +55,11 @@ describe('startDefaultContext', () => {
     })
 
     it('should set the configured sample rates', () => {
-      startDefaultContext(hooks, mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20 }), 'rum')
+      startDefaultContext(
+        hooks,
+        mockRumConfiguration({ sessionSampleRate: 10, sessionReplaySampleRate: 20, traceSampleRate: 30 }),
+        'rum'
+      )
 
       const event = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
@@ -64,6 +68,7 @@ describe('startDefaultContext', () => {
 
       expect(event._dd!.configuration!.session_sample_rate).toBe(10)
       expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)
+      expect(event._dd!.configuration!.trace_sample_rate).toBe(30)
       expect(event._dd!.configuration!.profiling_sample_rate).toBe(0)
       expect(event._dd!.sdk_name).toBe('rum')
     })

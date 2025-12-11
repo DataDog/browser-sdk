@@ -234,16 +234,6 @@ describe('flattenErrorCauses', () => {
     expect(errorCauses).toEqual(undefined)
   })
 
-  it('should return undefined if cause is not of type Error', () => {
-    const error = new Error('foo') as ErrorWithCause
-    const nestedError = { biz: 'buz', cause: new Error('boo') } as unknown as Error
-
-    error.cause = nestedError
-
-    const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
-    expect(errorCauses?.length).toEqual(undefined)
-  })
-
   it('should use error to extract stack trace', () => {
     const error = new Error('foo') as ErrorWithCause
 
@@ -258,6 +248,96 @@ describe('flattenErrorCauses', () => {
     error.cause = error
     const errorCauses = flattenErrorCauses(error, ErrorSource.LOGGER)
     expect(errorCauses?.length).toEqual(10)
+  })
+
+  describe('with non-Error values', () => {
+    it('should handle string cause with consistent structure', () => {
+      const error = new Error('main') as ErrorWithCause
+      error.cause = 'string cause'
+
+      const causes = flattenErrorCauses(error, ErrorSource.CUSTOM)
+      expect(causes?.length).toBe(1)
+      expect(causes?.[0]).toEqual({
+        message: '"string cause"', // JSON stringified
+        source: ErrorSource.CUSTOM,
+        type: undefined,
+        stack: undefined,
+      })
+    })
+
+    it('should handle object cause with consistent structure', () => {
+      const error = new Error('main') as ErrorWithCause
+      error.cause = { code: 'ERR_001', details: 'Invalid input' }
+
+      const causes = flattenErrorCauses(error, ErrorSource.CUSTOM)
+      expect(causes?.length).toBe(1)
+      expect(causes?.[0]).toEqual({
+        message: '{"code":"ERR_001","details":"Invalid input"}',
+        source: ErrorSource.CUSTOM,
+        type: undefined,
+        stack: undefined,
+      })
+    })
+
+    it('should handle number cause with consistent structure', () => {
+      const error = new Error('main') as ErrorWithCause
+      error.cause = 42
+
+      const causes = flattenErrorCauses(error, ErrorSource.CUSTOM)
+      expect(causes?.length).toBe(1)
+      expect(causes?.[0]).toEqual({
+        message: '42',
+        source: ErrorSource.CUSTOM,
+        type: undefined,
+        stack: undefined,
+      })
+    })
+
+    it('should handle mixed Error and non-Error chain', () => {
+      const error1 = new Error('first') as ErrorWithCause
+      const error2 = new Error('second') as ErrorWithCause
+      error1.cause = error2
+      error2.cause = { code: 'ERR_ROOT' }
+
+      const causes = flattenErrorCauses(error1, ErrorSource.CUSTOM)
+      expect(causes?.length).toBe(2)
+
+      // First cause: Error with full structure
+      expect(causes?.[0].message).toBe('second')
+      expect(causes?.[0].type).toBe('Error')
+      expect(causes?.[0].stack).toContain('Error')
+
+      // Second cause: Object with normalized structure
+      expect(causes?.[1]).toEqual({
+        message: '{"code":"ERR_ROOT"}',
+        source: ErrorSource.CUSTOM,
+        type: undefined,
+        stack: undefined,
+      })
+    })
+
+    it('should stop chain after non-Error cause', () => {
+      const error = new Error('main') as ErrorWithCause
+      error.cause = { value: 'data', cause: new Error('ignored') }
+
+      const causes = flattenErrorCauses(error, ErrorSource.CUSTOM)
+      expect(causes?.length).toBe(1)
+      // The entire object is captured, nested cause is sanitized
+      expect(causes?.[0].message).toContain('"value":"data"')
+      expect(causes?.[0].type).toBeUndefined()
+    })
+
+    it('should handle null cause', () => {
+      const error = new Error('main') as ErrorWithCause
+      error.cause = null
+      expect(flattenErrorCauses(error, ErrorSource.CUSTOM)).toBeUndefined()
+    })
+
+    it('should handle undefined cause', () => {
+      const error = new Error('main') as ErrorWithCause
+      error.cause = undefined
+      expect(flattenErrorCauses(error, ErrorSource.CUSTOM)).toBeUndefined()
+    })
   })
 })
 

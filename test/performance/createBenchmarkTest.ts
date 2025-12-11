@@ -1,5 +1,5 @@
 import { test } from '@playwright/test'
-import type { Page, CDPSession } from '@playwright/test'
+import type { Page, CDPSession, Browser } from '@playwright/test'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserWindow, Metrics } from './profiling.type'
 import { startProfiling } from './profilers'
@@ -22,8 +22,9 @@ export function createBenchmarkTest(scenarioName: string) {
       let sdkVersion: string
       let server: Server
 
-      test.beforeAll(async () => {
+      test.beforeAll(async ({ browser }) => {
         server = await startPerformanceServer(scenarioName)
+        await warmup(browser, server.origin)
       })
 
       SCENARIO_CONFIGURATIONS.forEach((scenarioConfiguration) => {
@@ -115,6 +116,15 @@ async function injectSDK(page: Page, scenarioConfiguration: ScenarioConfiguratio
   )
 }
 
+/**
+ * Warm-up by loading a page to eliminate inflated TTFB seen on the very first load.
+ * Inflated TTFB can come from cold-path costs (DNS resolution, TCP/TLS handshake, etc.).
+ */
+async function warmup(browser: Browser, url: string) {
+  const page = await browser.newPage()
+  await page.goto(url)
+}
+
 async function getSDKVersion(page: Page) {
   return await page.evaluate(() => (window as BrowserWindow).DD_RUM?.version || '')
 }
@@ -146,13 +156,6 @@ async function flushEvents(page: Page) {
 
 /**
  * Throttle network using Chrome DevTools Protocol
- *
- * Common network profiles for reference:
- * - Slow 3G:  Download: 0.4 Mbps (50 KB/s),  Upload: 0.4 Mbps (50 KB/s),  Latency: 2000ms
- * - Fast 3G:  Download: 1.6 Mbps (200 KB/s), Upload: 0.75 Mbps (94 KB/s), Latency: 562.5ms
- * - Regular 4G: Download: 4 Mbps (500 KB/s), Upload: 3 Mbps (375 KB/s),   Latency: 20ms
- * - Fast 4G (LTE): Download: 10 Mbps (1.25 MB/s), Upload: 5 Mbps (625 KB/s), Latency: 10ms
- * - WiFi:     Download: 30 Mbps (3.75 MB/s), Upload: 15 Mbps (1.875 MB/s), Latency: 2ms
  */
 async function throttleNetwork(cdpSession: CDPSession) {
   // Using Regular 4G for realistic performance testing with moderate constraints

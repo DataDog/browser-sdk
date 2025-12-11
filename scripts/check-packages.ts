@@ -2,8 +2,9 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { globSync } from 'node:fs'
 import { minimatch } from 'minimatch'
-import { printLog, printError, runMain, printWarning } from './lib/executionUtils.ts'
+import { printLog, runMain, printWarning } from './lib/executionUtils.ts'
 import { command } from './lib/command.ts'
+import { checkPackageJsonFiles } from './lib/checkBrowserSdkPackageJsonFiles.ts'
 
 interface PackageFile {
   path: string
@@ -14,20 +15,16 @@ interface NpmPackOutput {
 }
 
 runMain(() => {
-  let success = true
+  checkPackageJsonFiles()
+
   for (const packagePath of globSync('packages/*')) {
-    success = checkPackage(packagePath) && success
+    checkBrowserSdkPackage(packagePath)
   }
 
-  if (success) {
-    printLog('Packages check done.')
-  } else {
-    printError('Packages check failed.')
-    process.exitCode = 1
-  }
+  printLog('Packages check done.')
 })
 
-function checkPackage(packagePath: string): boolean {
+function checkBrowserSdkPackage(packagePath: string) {
   const packageJson = getPackageJson(packagePath)
 
   if (packageJson?.private) {
@@ -39,7 +36,8 @@ function checkPackage(packagePath: string): boolean {
 
   const packageFiles = getPackageFiles(packagePath)
 
-  return checkPackageJsonEntryPoints(packageJson, packageFiles) && checkNpmIgnore(packagePath, packageFiles)
+  checkPackageJsonEntryPoints(packageJson, packageFiles)
+  checkNpmIgnore(packagePath, packageFiles)
 }
 
 function getPackageFiles(packagePath: string): string[] {
@@ -53,23 +51,21 @@ function getPackageFiles(packagePath: string): string[] {
   return parsed[0].files.map((file) => file.path)
 }
 
-function checkPackageJsonEntryPoints(packageJson: PackageJson, packageFiles: string[]): boolean {
+function checkPackageJsonEntryPoints(packageJson: PackageJson, packageFiles: string[]) {
   const filesFromPackageJsonEntryPoints = [packageJson.main, packageJson.module, packageJson.types].filter(Boolean)
 
   for (const file of filesFromPackageJsonEntryPoints) {
     if (!packageFiles.includes(file)) {
-      printError(`File ${file} used as an entry point in ${packageJson.name} is missing from the package`)
-      return false
+      throw new Error(`File ${file} used as an entry point in ${packageJson.name} is missing from the package`)
     }
   }
-  return true
 }
 
 // NPM will [always include some files][1] like `package.json` and `README.md`.
 // [1]: https://docs.npmjs.com/cli/v9/using-npm/developers#keeping-files-out-of-your-package
 const FILES_ALWAYS_INCLUDED_BY_NPM = ['package.json', 'README.md']
 
-function checkNpmIgnore(packagePath: string, packageFiles: string[]): boolean {
+function checkNpmIgnore(packagePath: string, packageFiles: string[]) {
   const npmIgnorePath = path.join(packagePath, '.npmignore')
   const npmNegatedIgnoreRules = fs
     .readFileSync(npmIgnorePath, { encoding: 'utf8' })
@@ -81,20 +77,16 @@ function checkNpmIgnore(packagePath: string, packageFiles: string[]): boolean {
   // Ensure that each file is explicitly included by checking if at least a negated rule matches it
   for (const file of packageFiles) {
     if (!FILES_ALWAYS_INCLUDED_BY_NPM.includes(file) && !npmNegatedIgnoreRules.some((rule) => rule.match(`/${file}`))) {
-      printError(`File ${file} is not explicitly included in ${npmIgnorePath}`)
-      return false
+      throw new Error(`File ${file} is not explicitly included in ${npmIgnorePath}`)
     }
   }
 
   // Ensure that expected files are correctly included by checking if each negated rule matches at least one file
   for (const rule of npmNegatedIgnoreRules) {
     if (!packageFiles.some((file) => rule.match(`/${file}`))) {
-      printError(`Rule ${rule.pattern} does not match any file ${npmIgnorePath}`)
-      return false
+      throw new Error(`Rule ${rule.pattern} does not match any file ${npmIgnorePath}`)
     }
   }
-
-  return true
 }
 
 function getPackageJson(packagePath: string) {

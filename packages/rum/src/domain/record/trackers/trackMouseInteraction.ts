@@ -1,12 +1,11 @@
 import { addEventListeners, DOM_EVENT } from '@datadog/browser-core'
 import { getNodePrivacyLevel, NodePrivacyLevel } from '@datadog/browser-rum-core'
-import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { MouseInteraction, MouseInteractionData, BrowserIncrementalSnapshotRecord } from '../../../types'
 import { IncrementalSource, MouseInteractionType } from '../../../types'
 import { assembleIncrementalSnapshot } from '../assembly'
 import { getEventTarget } from '../eventsUtils'
-import type { RecordIds } from '../recordIds'
-import type { SerializationScope } from '../serialization'
+import type { RecordingScope } from '../recordingScope'
+import type { EmitRecordCallback } from '../record.types'
 import { tryToComputeCoordinates } from './trackMove'
 import type { Tracker } from './tracker.types'
 
@@ -31,20 +30,16 @@ const eventTypeToMouseInteraction = {
   [DOM_EVENT.TOUCH_END]: MouseInteractionType.TouchEnd,
 }
 
-export type MouseInteractionCallback = (record: BrowserIncrementalSnapshotRecord) => void
-
 export function trackMouseInteraction(
-  configuration: RumConfiguration,
-  scope: SerializationScope,
-  mouseInteractionCb: MouseInteractionCallback,
-  recordIds: RecordIds
+  emitRecord: EmitRecordCallback<BrowserIncrementalSnapshotRecord>,
+  scope: RecordingScope
 ): Tracker {
   const handler = (event: MouseEvent | TouchEvent | FocusEvent) => {
     const target = getEventTarget(event)
     const id = scope.nodeIds.get(target)
     if (
       id === undefined ||
-      getNodePrivacyLevel(target, configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
+      getNodePrivacyLevel(target, scope.configuration.defaultPrivacyLevel) === NodePrivacyLevel.HIDDEN
     ) {
       return
     }
@@ -61,15 +56,13 @@ export function trackMouseInteraction(
       interaction = { id, type }
     }
 
-    const record = {
-      id: recordIds.getIdForEvent(event),
+    emitRecord({
+      id: scope.eventIds.getIdForEvent(event),
       ...assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction),
-    }
-
-    mouseInteractionCb(record)
+    })
   }
   return addEventListeners(
-    configuration,
+    scope.configuration,
     document,
     Object.keys(eventTypeToMouseInteraction) as Array<keyof typeof eventTypeToMouseInteraction>,
     handler,
