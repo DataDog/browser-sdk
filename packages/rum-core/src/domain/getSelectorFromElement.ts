@@ -1,3 +1,4 @@
+import { getParentElement, isNodeShadowRoot } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameConstants'
 
 /**
@@ -71,7 +72,8 @@ export function getSelectorFromElement(
     targetElementSelector =
       uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector)
 
-    currentElement = currentElement.parentElement
+    // Use shadow-aware parent traversal to cross shadow DOM boundaries
+    currentElement = getParentElement(currentElement)
   }
 
   return targetElementSelector
@@ -136,7 +138,12 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 }
 
 function getPositionSelector(element: Element): string {
-  let sibling = element.parentElement!.firstElementChild
+  const parent = getElementParentNode(element)
+  if (!parent) {
+    return CSS.escape(element.tagName)
+  }
+
+  let sibling = parent.firstElementChild
   let elementIndex = 1
 
   while (sibling && sibling !== element) {
@@ -147,6 +154,22 @@ function getPositionSelector(element: Element): string {
   }
 
   return `${CSS.escape(element.tagName)}:nth-of-type(${elementIndex})`
+}
+
+/**
+ * Get the parent node that contains the element's siblings.
+ * For elements in shadow DOM, this is the shadow root.
+ * For regular elements, this is the parent element.
+ */
+function getElementParentNode(element: Element): Element | ShadowRoot | null {
+  if (element.parentElement) {
+    return element.parentElement
+  }
+  const parentNode = element.parentNode
+  if (parentNode && isNodeShadowRoot(parentNode)) {
+    return parentNode
+  }
+  return null
 }
 
 function findSelector(
@@ -249,7 +272,12 @@ export function isSelectorUniqueAmongSiblings(
     isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
   }
 
-  const parent = currentElement.parentElement!
+  const parent = getElementParentNode(currentElement)
+  if (!parent) {
+    // If there's no parent (edge case), consider it unique
+    return true
+  }
+
   let sibling = parent.firstElementChild
   while (sibling) {
     if (sibling !== currentElement && isSiblingMatching(sibling)) {
