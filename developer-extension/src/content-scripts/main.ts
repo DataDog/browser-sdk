@@ -184,7 +184,7 @@ function loadSdkScriptFromURL(url: string) {
     // Webpack runtime to load the chunks.
     // Extract the base directory URL from the full file URL.
     const baseUrl = url.substring(0, url.lastIndexOf('/') + 1)
-    
+
     // Replace the webpack error throw to set scriptUrl.
     sdkCode = sdkCode.replace(
       'if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");',
@@ -192,10 +192,7 @@ function loadSdkScriptFromURL(url: string) {
     )
 
     // Override webpack publicPath assignments to ensure chunks load from dev server
-    sdkCode = sdkCode.replace(
-      /(__webpack_require__\.p\s*=\s*)([^;]+);/g,
-      `$1${JSON.stringify(baseUrl)};`
-    )
+    sdkCode = sdkCode.replace(/(__webpack_require__\.p\s*=\s*)([^;]+);/g, `$1${JSON.stringify(baseUrl)};`)
 
     const script = document.createElement('script')
     script.type = 'text/javascript'
