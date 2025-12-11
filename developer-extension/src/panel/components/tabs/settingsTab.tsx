@@ -38,7 +38,7 @@ export function SettingsTab() {
                     <Text>Browser SDK</Text>
                     <Box style={{ marginLeft: 'auto' }}>
                       {(sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles) ||
-                      (useDevBundles && injectCdnProd === 'on') ? (
+                      (sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles && injectCdnProd === 'on') ? (
                         <Badge color="blue">Injected Local Dev</Badge>
                       ) : injectCdnProd === 'on' ? (
                         <Badge color="blue">Injected CDN</Badge>
