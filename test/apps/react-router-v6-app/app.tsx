@@ -129,6 +129,6 @@ document.body.appendChild(rootElement)
 const root = ReactDOM.createRoot(rootElement)
 root.render(
   <React.StrictMode>
-    <RouterProvider router={router} />
+    <RouterProvider router={router as any} />
   </React.StrictMode>
 )

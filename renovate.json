@@ -14,9 +14,6 @@
   "lockFileMaintenance": {
     "enabled": true
   },
-  "skipInstalls": false,
-  "allowScripts": true,
-  "ignoreScripts": false,
   "packageRules": [
     {
       "groupName": "all non-major dependencies",
