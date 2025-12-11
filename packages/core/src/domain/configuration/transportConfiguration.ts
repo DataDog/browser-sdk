@@ -10,6 +10,7 @@ export interface TransportConfiguration {
   sessionReplayEndpointBuilder: EndpointBuilder
   profilingEndpointBuilder: EndpointBuilder
   exposuresEndpointBuilder: EndpointBuilder
+  flagEvaluationEndpointBuilder: EndpointBuilder
   datacenter?: string | undefined
   replica?: ReplicaConfiguration
   site: Site
