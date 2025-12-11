@@ -1,4 +1,4 @@
-interface BaseIdentifier {
+export interface BaseIdentifier {
   toString(radix?: number): string
 }
 

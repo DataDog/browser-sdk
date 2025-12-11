@@ -418,6 +418,18 @@ export default tseslint.config(
   },
 
   {
+    files: ['packages/electron/src/**/*.ts'],
+    ignores: [SPEC_FILES],
+    rules: {
+      // TODO: verify this is safe
+      'local-rules/disallow-side-effects': 'off',
+
+      // TODO: remove before merging this to main: quick dev only
+      'no-console': 'off',
+    },
+  },
+
+  {
     // Files executed by nodejs
     files: [
       'scripts/**',

@@ -38,6 +38,7 @@ const packagesWithoutSideEffect = new Set([
   '@datadog/browser-rum-core',
   'react',
   'react-router-dom',
+  'electron',
 ])
 
 /**

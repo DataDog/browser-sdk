@@ -2,7 +2,7 @@ import path from 'node:path'
 import fs from 'node:fs'
 import zlib from 'node:zlib'
 
-const packages = ['rum', 'logs', 'flagging', 'rum-slim', 'worker'] as const
+const packages = ['rum', 'logs', 'flagging', 'rum-slim', 'worker', 'electron'] as const
 
 interface BundleSize {
   uncompressed: number

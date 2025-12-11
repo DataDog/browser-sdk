@@ -23,7 +23,7 @@ export type {
   RumEventDomainContext,
   RumVitalEventDomainContext,
 } from './domainContext.types'
-export type { ReplayStats, RawRumActionEvent, RawRumEvent } from './rawRumEvent.types'
+export type { ReplayStats, RawRumActionEvent, RawRumEvent, RawRumResourceEvent } from './rawRumEvent.types'
 export { ActionType, RumEventType, FrustrationType } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
 export type { RawRumEventCollectedData } from './domain/lifeCycle'
@@ -48,6 +48,7 @@ export type {
   FeatureFlagsForEvents,
   RemoteConfiguration,
 } from './domain/configuration'
+export { validateAndBuildRumConfiguration } from './domain/configuration'
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/actionNameConstants'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'
@@ -71,5 +72,7 @@ export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes 
 export { createHooks } from './domain/hooks'
 export { isSampled } from './domain/sampler/sampler'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'
+export type { BaseIdentifier, TraceIdentifier, SpanIdentifier } from './domain/tracing/identifier'
+export { createTraceIdentifier, createSpanIdentifier } from './domain/tracing/identifier'
 export type { TransportPayload } from './transport/formDataTransport'
 export { createFormDataTransport } from './transport/formDataTransport'

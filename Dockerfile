@@ -65,6 +65,8 @@ RUN apt-get -y install git
 
 RUN apt-get -y install procps
 
+RUN apt-get -y install xvfb
+
 # Woke
 RUN set -o pipefail \
   && curl -sSfL https://git.io/getwoke | bash -s -- -b /usr/local/bin v0.17.1

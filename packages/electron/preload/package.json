@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "main": "../cjs/entries/preload.js",
+  "module": "../esm/entries/preload.js",
+  "types": "../cjs/entries/preload.d.ts"
+}

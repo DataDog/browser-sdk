@@ -1,7 +1,8 @@
 import { globalObject } from '../globalObject'
 
 export function normalizeUrl(url: string) {
-  return buildUrl(url, location.href).href
+  const base = typeof location !== 'undefined' ? location.href : undefined
+  return buildUrl(url, base).href
 }
 
 export function isValidUrl(url: string) {

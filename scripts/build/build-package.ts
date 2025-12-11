@@ -2,6 +2,8 @@ import fs from 'node:fs/promises'
 import { parseArgs } from 'node:util'
 import path from 'node:path'
 import { globSync } from 'node:fs'
+import { existsSync } from 'node:fs'
+import { execSync } from 'node:child_process'
 import ts from 'typescript'
 import webpack from 'webpack'
 import webpackBase from '../../webpack.base.ts'
@@ -25,6 +27,9 @@ runMain(async () => {
       },
     },
   })
+
+  // Generate WASM base64 file if this is the electron package
+  await generateWasmBase64IfNeeded({ verbose: values.verbose })
 
   if (values.modules) {
     printLog('Building modules...')
@@ -50,6 +55,26 @@ runMain(async () => {
 
   printLog('Done.')
 })
+
+async function generateWasmBase64IfNeeded({ verbose }: { verbose: boolean }) {
+  // Check if this is the electron package by looking for the WASM generation script
+  const wasmGeneratorScript = './scripts/generate-wasm-base64.js'
+
+  if (existsSync(wasmGeneratorScript)) {
+    printLog('Generating WASM base64...')
+    try {
+      execSync(`node ${wasmGeneratorScript}`, {
+        stdio: verbose ? 'inherit' : 'pipe',
+        encoding: 'utf-8'
+      })
+      if (verbose) {
+        printLog('WASM base64 generation completed')
+      }
+    } catch (error) {
+      throw new Error(`Failed to generate WASM base64: ${error}`)
+    }
+  }
+}
 
 async function buildBundle({ filename, verbose }: { filename: string; verbose: boolean }) {
   await fs.rm('./bundle', { recursive: true, force: true })

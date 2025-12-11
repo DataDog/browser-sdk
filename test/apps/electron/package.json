@@ -1,0 +1,24 @@
+{
+  "name": "electron",
+  "version": "0.0.0",
+  "private": true,
+  "main": "src/main.ts",
+  "scripts": {
+    "start": "electron ./dist/main.js",
+    "build": "webpack --config webpack.main.js && webpack --config webpack.renderer.js"
+  },
+  "devDependencies": {
+    "electron": "39.2.3",
+    "html-webpack-plugin": "5.6.5",
+    "ts-loader": "9.5.4",
+    "webpack": "5.103.0",
+    "webpack-cli": "6.0.1"
+  },
+  "dependencies": {
+    "@datadog/electron": "file:../../../packages/electron/package.tgz"
+  },
+  "resolutions": {
+    "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
+    "@datadog/browser-core": "file:../../../packages/core/package.tgz"
+  }
+}

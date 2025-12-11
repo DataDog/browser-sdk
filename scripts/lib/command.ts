@@ -4,6 +4,7 @@ import { printError } from './executionUtils.ts'
 interface CommandOptions {
   cwd?: string
   stdio?: 'inherit' | 'pipe'
+  shell?: true
 }
 
 interface CommandBuilder {
@@ -11,6 +12,7 @@ interface CommandBuilder {
   withEnvironment(newEnv: Record<string, string>): CommandBuilder
   withCurrentWorkingDirectory(newCurrentWorkingDirectory: string): CommandBuilder
   withLogs(): CommandBuilder
+  withShell(): CommandBuilder
   run(): string
 }
 
@@ -48,6 +50,11 @@ export function command(...templateArguments: [TemplateStringsArray, ...any[]]):
 
     withCurrentWorkingDirectory(newCurrentWorkingDirectory: string) {
       extraOptions.cwd = newCurrentWorkingDirectory
+      return this
+    },
+
+    withShell() {
+      extraOptions.shell = true
       return this
     },
 

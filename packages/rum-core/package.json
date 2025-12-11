@@ -6,6 +6,7 @@
   "module": "esm/index.js",
   "types": "cjs/index.d.ts",
   "scripts": {
+    "pack": "yarn pack",
     "build": "node ../../scripts/build/build-package.ts --modules"
   },
   "dependencies": {

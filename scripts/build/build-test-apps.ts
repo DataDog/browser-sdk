@@ -18,6 +18,7 @@ runMain(async () => {
   buildApp('test/apps/react-router-v6-app')
   buildApp('test/apps/react-heavy-spa')
   buildApp('test/apps/react-shopist-like')
+  buildApp('test/apps/electron')
   await buildReactRouterv7App()
   await buildExtensions()
 

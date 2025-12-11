@@ -8,6 +8,7 @@ import type { Servers } from './httpServers'
 
 export interface SetupOptions {
   rum?: RumInitConfiguration
+  isElectron: boolean
   useRumSlim: boolean
   logs?: LogsInitConfiguration
   logsInit: (initConfiguration: LogsInitConfiguration) => void
@@ -75,7 +76,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
         ${formatSnippet(logsScriptUrl, 'DD_LOGS')}
         DD_LOGS.onReady(function () {
           DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs)})
         })
       </script>
     `
@@ -87,7 +88,7 @@ n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
         ${formatSnippet(rumScriptUrl, 'DD_RUM')}
         DD_RUM.onReady(function () {
           DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum)})
         })
       </script>
     `
@@ -117,7 +118,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript" src="${logsScriptUrl}"></script>
       <script type="text/javascript">
         DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+        ;(${options.logsInit.toString()})(${formatConfiguration(options.logs)})
       </script>
     `
   }
@@ -127,7 +128,7 @@ export function bundleSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript" src="${rumScriptUrl}"></script>
       <script type="text/javascript">
         DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum)})
       </script>
     `
   }
@@ -155,7 +156,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript">
         window.LOGS_INIT = () => {
           window.DD_LOGS.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs, servers)})
+          ;(${options.logsInit.toString()})(${formatConfiguration(options.logs)})
         }
       </script>
     `
@@ -166,7 +167,7 @@ export function npmSetup(options: SetupOptions, servers: Servers) {
       <script type="text/javascript">
         window.RUM_INIT = () => {
           window.DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
-          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+          ;(${options.rumInit.toString()})(${formatConfiguration(options.rum)})
         }
       </script>
     `
@@ -195,7 +196,7 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
   if (options.rum) {
     header += html`
       <script type="text/javascript">
-        window.RUM_CONFIGURATION = ${formatConfiguration(options.rum, servers)}
+        window.RUM_CONFIGURATION = ${formatConfiguration(options.rum)}
         window.RUM_CONTEXT = ${JSON.stringify(options.context)}
       </script>
     `
@@ -214,7 +215,7 @@ export function workerSetup(options: WorkerOptions, servers: Servers) {
       ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
       
       // Initialize DD_LOGS in service worker
-      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true }, servers)})
+      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true, proxy: servers.intake.origin })})
 
       // Handle messages from main thread
       self.addEventListener('message', (event) => {
@@ -292,7 +293,7 @@ function setupExtension(options: SetupOptions, servers: Servers) {
       <script type="text/javascript">
         window.RUM_BUNDLE_URL = '${rumScriptUrl}'
         window.RUM_CONTEXT = ${JSON.stringify(options.context)}
-        window.EXT_RUM_CONFIGURATION = ${formatConfiguration(options.extension.rumConfiguration, servers)}
+        window.EXT_RUM_CONFIGURATION = ${formatConfiguration(options.extension.rumConfiguration)}
       </script>
     `
   }
@@ -302,7 +303,7 @@ function setupExtension(options: SetupOptions, servers: Servers) {
       <script type="text/javascript">
         window.LOGS_BUNDLE_URL = '${logsScriptUrl}'
         window.LOGS_CONTEXT = ${JSON.stringify(options.context)}
-        window.EXT_LOGS_CONFIGURATION = ${formatConfiguration(options.extension.logsConfiguration, servers)}
+        window.EXT_LOGS_CONFIGURATION = ${formatConfiguration(options.extension.logsConfiguration)}
       </script>
     `
   }
@@ -310,27 +311,20 @@ function setupExtension(options: SetupOptions, servers: Servers) {
   return header
 }
 
-export function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration, servers: Servers) {
+export function formatConfiguration(initConfiguration: LogsInitConfiguration | RumInitConfiguration) {
   const fns = new Map<string, () => void>()
 
-  let result = JSON.stringify(
-    {
-      ...initConfiguration,
-      proxy: servers.intake.origin,
-      remoteConfigurationProxy: `${servers.base.origin}/config`,
-    },
-    (_key, value) => {
-      if (typeof value === 'function') {
-        const id = generateUUID()
-        fns.set(id, value)
+  let result = JSON.stringify(initConfiguration, (_key, value) => {
+    if (typeof value === 'function') {
+      const id = generateUUID()
+      fns.set(id, value)
 
-        return id
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-      return value
+      return id
     }
-  )
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return value
+  })
 
   result = result.replace('"LOCATION_ORIGIN"', 'location.origin')
 

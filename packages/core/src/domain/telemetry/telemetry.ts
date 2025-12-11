@@ -56,6 +56,7 @@ const ALLOWED_FRAME_URLS = [
 export const enum TelemetryService {
   LOGS = 'browser-logs-sdk',
   RUM = 'browser-rum-sdk',
+  ELECTRON = 'electron-sdk',
 }
 
 export interface Telemetry {
