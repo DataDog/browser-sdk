@@ -63,16 +63,24 @@ async function buildBundle({ filename, verbose }: { filename: string; verbose: b
       (error, stats) => {
         if (error) {
           reject(error)
-          return
+        } else if (!stats) {
+          reject(new Error('Webpack did not return stats'))
+        } else if (stats.hasErrors()) {
+          printStats(stats)
+          reject(new Error('Failed to build bundle due to Webpack errors'))
+        } else {
+          if (verbose) {
+            printStats(stats)
+          }
+          resolve()
         }
-
-        if (verbose) {
-          console.log(stats!.toString({ colors: true }))
-        }
-        resolve()
       }
     )
   })
+
+  function printStats(stats: webpack.Stats) {
+    console.log(stats.toString({ colors: true }))
+  }
 }
 
 async function buildModules({ outDir, module, verbose }: { outDir: string; module: string; verbose: boolean }) {
