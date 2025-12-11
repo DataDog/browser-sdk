@@ -1,6 +1,13 @@
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
-import { CDN_LOGS_URL, CDN_RUM_SLIM_URL, CDN_RUM_URL, DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
+import {
+  CDN_LOGS_URL,
+  CDN_RUM_SLIM_URL,
+  CDN_RUM_URL,
+  DEV_LOGS_URL,
+  DEV_RUM_SLIM_URL,
+  DEV_RUM_URL,
+} from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 import { createLogger } from '../common/logger'
 
@@ -53,12 +60,12 @@ export function main() {
     }
 
     if (shouldInjectCdnBundles && shouldUseRedirect) {
-      injectCdnBundles({ useRumSlim: settings.useRumSlim }).then(() => {
+      void injectCdnBundles({ useRumSlim: settings.useRumSlim }).then(() => {
         injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
         injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
       })
     } else if (shouldInjectCdnBundles) {
-      injectCdnBundles({ useRumSlim: settings.useRumSlim })
+      void injectCdnBundles({ useRumSlim: settings.useRumSlim })
     } else if (shouldUseRedirect) {
       injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal, getDefaultRumConfig())
       injectDevBundle(DEV_LOGS_URL, ddLogsGlobal, getDefaultLogsConfig())
@@ -96,17 +103,21 @@ function noBrowserSdkLoaded() {
 }
 
 function injectDevBundle(url: string, global: GlobalInstrumentation, config?: object | null) {
-  const existingInstance = global.get() as SdkPublicApi | undefined
-  
+  const existingInstance = global.get()
+
   let initConfig = config
-  if (existingInstance && 'getInitConfiguration' in existingInstance && typeof existingInstance.getInitConfiguration === 'function') {
+  if (
+    existingInstance &&
+    'getInitConfiguration' in existingInstance &&
+    typeof existingInstance.getInitConfiguration === 'function'
+  ) {
     try {
       initConfig = existingInstance.getInitConfiguration() || config
     } catch {
       initConfig = config
     }
   }
-  
+
   loadSdkScriptFromURL(url)
   const devInstance = global.get() as SdkPublicApi
 
@@ -115,10 +126,10 @@ function injectDevBundle(url: string, global: GlobalInstrumentation, config?: ob
       try {
         ;(devInstance as { init(config: object): void }).init(initConfig)
       } catch (error) {
-          logger.error(`[DD Browser SDK extension] Error initializing dev bundle:`, error)
+        logger.error('[DD Browser SDK extension] Error initializing dev bundle:', error)
       }
     }
-    
+
     global.onSet((sdkInstance) => proxySdk(sdkInstance, devInstance))
     global.returnValue(devInstance)
   }
@@ -173,26 +184,23 @@ function loadSdkScriptFromURL(url: string) {
     // Webpack runtime to load the chunks.
     // Extract the base directory URL from the full file URL.
     const baseUrl = url.substring(0, url.lastIndexOf('/') + 1)
-    
+
     // Override webpack's scriptUrl detection in multiple places to ensure chunks load from dev server
     // 1. Replace the error throw with our base URL
     sdkCode = sdkCode.replace(
       'if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");',
       `if (!scriptUrl) scriptUrl = ${JSON.stringify(baseUrl)};`
     )
-    
+
     // 2. Set scriptUrl early if it's determined from document.currentScript or similar
-    sdkCode = sdkCode.replace(
-      /var scriptUrl\s*=\s*[^;]+;/g,
-      `var scriptUrl = ${JSON.stringify(baseUrl)};`
-    )
-    
+    sdkCode = sdkCode.replace(/var scriptUrl\s*=\s*[^;]+;/g, `var scriptUrl = ${JSON.stringify(baseUrl)};`)
+
     // 3. Override __webpack_require__.p (publicPath) if it exists
     sdkCode = sdkCode.replace(
       /__webpack_require__\.p\s*=\s*[^;]+;/g,
       `__webpack_require__.p = ${JSON.stringify(baseUrl)};`
     )
-    
+
     // 4. Inject publicPath override at the start of the webpack runtime
     const publicPathOverride = `(function(){try{if(typeof __webpack_require__!=='undefined'){__webpack_require__.p=${JSON.stringify(baseUrl)};}}catch(e){}})();`
     sdkCode = publicPathOverride + sdkCode
@@ -235,11 +243,7 @@ function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
   Object.assign(target, root)
 }
 
-function injectCdnBundles({
-  useRumSlim,
-}: {
-  useRumSlim: boolean
-}) {
+function injectCdnBundles({ useRumSlim }: { useRumSlim: boolean }) {
   const rumUrl = useRumSlim ? CDN_RUM_SLIM_URL : CDN_RUM_URL
   const logsUrl = CDN_LOGS_URL
 
