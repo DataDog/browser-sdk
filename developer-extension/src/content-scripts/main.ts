@@ -1,7 +1,10 @@
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
-import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
+import { CDN_LOGS_URL, CDN_RUM_SLIM_URL, CDN_RUM_URL, DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
+import { createLogger } from '../common/logger'
+
+const logger = createLogger('main')
 
 declare global {
   interface Window extends EventTarget {
@@ -33,6 +36,8 @@ export function main() {
   ) {
     const ddRumGlobal = instrumentGlobal('DD_RUM')
     const ddLogsGlobal = instrumentGlobal('DD_LOGS')
+    const shouldInjectCdnBundles = settings.injectCdnProd === 'on'
+    const shouldUseRedirect = settings.useDevBundles === 'npm'
 
     if (settings.debugMode) {
       setDebug(ddRumGlobal)
@@ -47,9 +52,16 @@ export function main() {
       overrideInitConfiguration(ddLogsGlobal, settings.logsConfigurationOverride)
     }
 
-    if (settings.useDevBundles === 'npm') {
-      injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
-      injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
+    if (shouldInjectCdnBundles && shouldUseRedirect) {
+      injectCdnBundles({ useRumSlim: settings.useRumSlim }).then(() => {
+        injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal)
+        injectDevBundle(DEV_LOGS_URL, ddLogsGlobal)
+      })
+    } else if (shouldInjectCdnBundles) {
+      injectCdnBundles({ useRumSlim: settings.useRumSlim })
+    } else if (shouldUseRedirect) {
+      injectDevBundle(settings.useRumSlim ? DEV_RUM_SLIM_URL : DEV_RUM_URL, ddRumGlobal, getDefaultRumConfig())
+      injectDevBundle(DEV_LOGS_URL, ddLogsGlobal, getDefaultLogsConfig())
     }
   }
 }
@@ -83,11 +95,30 @@ function noBrowserSdkLoaded() {
   return !window.DD_RUM && !window.DD_LOGS
 }
 
-function injectDevBundle(url: string, global: GlobalInstrumentation) {
+function injectDevBundle(url: string, global: GlobalInstrumentation, config?: object | null) {
+  const existingInstance = global.get() as SdkPublicApi | undefined
+  
+  let initConfig = config
+  if (existingInstance && 'getInitConfiguration' in existingInstance && typeof existingInstance.getInitConfiguration === 'function') {
+    try {
+      initConfig = existingInstance.getInitConfiguration() || config
+    } catch {
+      initConfig = config
+    }
+  }
+  
   loadSdkScriptFromURL(url)
   const devInstance = global.get() as SdkPublicApi
 
   if (devInstance) {
+    if (initConfig && 'init' in devInstance && typeof devInstance.init === 'function') {
+      try {
+        ;(devInstance as { init(config: object): void }).init(initConfig)
+      } catch (error) {
+          logger.error(`[DD Browser SDK extension] Error initializing dev bundle:`, error)
+      }
+    }
+    
     global.onSet((sdkInstance) => proxySdk(sdkInstance, devInstance))
     global.returnValue(devInstance)
   }
@@ -140,10 +171,31 @@ function loadSdkScriptFromURL(url: string) {
     //
     // We'll probably have to revisit when using actual `import()` expressions instead of relying on
     // Webpack runtime to load the chunks.
+    // Extract the base directory URL from the full file URL.
+    const baseUrl = url.substring(0, url.lastIndexOf('/') + 1)
+    
+    // Override webpack's scriptUrl detection in multiple places to ensure chunks load from dev server
+    // 1. Replace the error throw with our base URL
     sdkCode = sdkCode.replace(
       'if (!scriptUrl) throw new Error("Automatic publicPath is not supported in this browser");',
-      `if (!scriptUrl) scriptUrl = ${JSON.stringify(url)};`
+      `if (!scriptUrl) scriptUrl = ${JSON.stringify(baseUrl)};`
     )
+    
+    // 2. Set scriptUrl early if it's determined from document.currentScript or similar
+    sdkCode = sdkCode.replace(
+      /var scriptUrl\s*=\s*[^;]+;/g,
+      `var scriptUrl = ${JSON.stringify(baseUrl)};`
+    )
+    
+    // 3. Override __webpack_require__.p (publicPath) if it exists
+    sdkCode = sdkCode.replace(
+      /__webpack_require__\.p\s*=\s*[^;]+;/g,
+      `__webpack_require__.p = ${JSON.stringify(baseUrl)};`
+    )
+    
+    // 4. Inject publicPath override at the start of the webpack runtime
+    const publicPathOverride = `(function(){try{if(typeof __webpack_require__!=='undefined'){__webpack_require__.p=${JSON.stringify(baseUrl)};}}catch(e){}})();`
+    sdkCode = publicPathOverride + sdkCode
 
     const script = document.createElement('script')
     script.type = 'text/javascript'
@@ -181,4 +233,94 @@ function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
 
 function proxySdk(target: SdkPublicApi, root: SdkPublicApi) {
   Object.assign(target, root)
+}
+
+function injectCdnBundles({
+  useRumSlim,
+}: {
+  useRumSlim: boolean
+}) {
+  const rumUrl = useRumSlim ? CDN_RUM_SLIM_URL : CDN_RUM_URL
+  const logsUrl = CDN_LOGS_URL
+
+  return injectWhenDocumentReady(() =>
+    Promise.all([
+      injectAndInitializeSDK(rumUrl, 'DD_RUM', getDefaultRumConfig()),
+      injectAndInitializeSDK(logsUrl, 'DD_LOGS', getDefaultLogsConfig()),
+    ]).then(() => undefined)
+  )
+}
+
+function injectWhenDocumentReady<T>(callback: () => Promise<T> | T) {
+  if (document.readyState === 'loading') {
+    return new Promise<T>((resolve) => {
+      document.addEventListener(
+        'DOMContentLoaded',
+        () => {
+          resolve(callback())
+        },
+        { once: true }
+      )
+    })
+  }
+
+  return Promise.resolve(callback())
+}
+
+function injectAndInitializeSDK(url: string, globalName: 'DD_RUM' | 'DD_LOGS', config: object | null) {
+  if (window[globalName]) {
+    return Promise.resolve()
+  }
+
+  return new Promise<void>((resolve) => {
+    const script = document.createElement('script')
+    script.src = url
+    script.async = true
+    script.onload = () => {
+      const sdkGlobal = window[globalName]
+      if (config && sdkGlobal && 'init' in sdkGlobal) {
+        try {
+          ;(sdkGlobal as { init(config: object): void }).init(config)
+        } catch (error) {
+          // Ignore "already initialized" errors - this can happen when dev bundles override CDN bundles
+          const errorMessage = error instanceof Error ? error.message : String(error)
+          if (!errorMessage.includes('already initialized')) {
+            // Only log non-initialization errors
+            // eslint-disable-next-line no-console
+            console.error(`[DD Browser SDK extension] Error initializing ${globalName}:`, error)
+          }
+        }
+      }
+      resolve()
+    }
+    script.onerror = () => {
+      resolve()
+    }
+
+    try {
+      document.head.appendChild(script)
+    } catch {
+      document.documentElement.appendChild(script)
+    }
+  })
+}
+
+function getDefaultRumConfig() {
+  return {
+    applicationId: 'xxx',
+    clientToken: 'xxx',
+    site: 'datadoghq.com',
+    service: 'browser-sdk-extension',
+    allowedTrackingOrigins: [location.origin],
+    sessionReplaySampleRate: 100,
+  }
+}
+
+function getDefaultLogsConfig() {
+  return {
+    clientToken: 'xxx',
+    site: 'datadoghq.com',
+    service: 'browser-sdk-extension',
+    allowedTrackingOrigins: [location.origin],
+  }
 }
