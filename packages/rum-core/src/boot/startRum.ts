@@ -43,8 +43,6 @@ import { startDisplayContext } from '../domain/contexts/displayContext'
 import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
-import { startLongAnimationFrameCollection } from '../domain/longAnimationFrame/longAnimationFrameCollection'
-import { RumPerformanceEntryType, supportPerformanceTimingEvent } from '../browser/performanceObservable'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import { startRumAssembly } from '../domain/assembly'
@@ -237,14 +235,8 @@ export function startRumEventCollection(
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
-  if (configuration.trackLongTasks) {
-    if (supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)) {
-      const { stop: stopLongAnimationFrameCollection } = startLongAnimationFrameCollection(lifeCycle, configuration)
-      cleanupTasks.push(stopLongAnimationFrameCollection)
-    } else {
-      startLongTaskCollection(lifeCycle, configuration)
-    }
-  }
+  const { stop: stopLongTaskCollection, longTaskContexts } = startLongTaskCollection(lifeCycle, configuration)
+  cleanupTasks.push(stopLongTaskCollection)
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
 
@@ -280,6 +272,7 @@ export function startRumEventCollection(
     globalContext,
     userContext,
     accountContext,
+    longTaskContexts,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

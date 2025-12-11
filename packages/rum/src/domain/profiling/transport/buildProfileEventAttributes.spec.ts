@@ -1,5 +1,7 @@
 import { clocksOrigin } from '@datadog/browser-core'
-import type { RumProfilerTrace, RumViewEntry, RUMProfilerLongTaskEntry } from '../types'
+import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
+import type { LongTaskContext } from '@datadog/browser-rum-core'
+import type { RumProfilerTrace, RumViewEntry } from '../types'
 import { buildProfileEventAttributes, type ProfileEventAttributes } from './buildProfileEventAttributes'
 
 describe('buildProfileEventAttributes', () => {
@@ -15,11 +17,11 @@ describe('buildProfileEventAttributes', () => {
     }
   }
 
-  function createMockLongTaskEntry(overrides: Partial<RUMProfilerLongTaskEntry> = {}): RUMProfilerLongTaskEntry {
+  function createMockLongTaskEntry(overrides: Partial<LongTaskContext> = {}): LongTaskContext {
     return {
       id: 'longtask-456',
       duration: 100 as any,
-      entryType: 'longtask',
+      entryType: RumPerformanceEntryType.LONG_TASK,
       startClocks: clocksOrigin(),
       ...overrides,
     }
