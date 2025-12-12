@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import { beforeEach, before, describe, it, mock } from 'node:test'
-import { siteByDatacenter } from '../lib/datacenter.ts'
+import { beforeEach, before, describe, it, mock, afterEach } from 'node:test'
 import { mockModule, mockCommandImplementation, replaceChunkHashes } from './lib/testHelpers.ts'
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
@@ -24,6 +23,8 @@ describe('upload-source-maps', () => {
   let commands: CommandDetail[]
 
   let uploadSourceMaps: (version: string, uploadPathTypes: string[]) => Promise<void>
+  let getAllDatacenters: () => string[]
+  let getSite: (datacenter: string) => string
 
   function getSourceMapCommands(): CommandDetail[] {
     return commands.filter(({ command }) => command.includes('datadog-ci sourcemaps'))
@@ -39,19 +40,26 @@ describe('upload-source-maps', () => {
       getTelemetryOrgApiKey: () => FAKE_API_KEY,
     })
 
-    // This MUST be a dynamic import because that is the only way to ensure the
+    // These MUST be dynamic imports because that is the only way to ensure the
     // import starts after the mock has been set up.
     const uploadModule = await import('./upload-source-maps.ts')
     uploadSourceMaps = uploadModule.main
+    const datacenterModule = await import('../lib/datacenter.ts')
+    getAllDatacenters = datacenterModule.getAllDatacenters
+    getSite = datacenterModule.getSite
   })
 
   beforeEach(() => {
     commands = mockCommandImplementation(commandMock)
   })
 
+  afterEach(() => {
+    mock.restoreAll()
+  })
+
   function forEachDatacenter(callback: (site: string) => void): void {
-    for (const site of Object.values(siteByDatacenter)) {
-      callback(site)
+    for (const datacenter of getAllDatacenters()) {
+      callback(getSite(datacenter))
     }
   }
 
