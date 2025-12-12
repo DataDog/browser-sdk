@@ -1,7 +1,7 @@
 // @ts-check .ts config files are still experimental: https://github.com/eslint/eslint/discussions/17726
 
 import eslint from '@eslint/js'
-import tseslint from 'typescript-eslint'
+import * as tseslint from 'typescript-eslint'
 import importPlugin from 'eslint-plugin-import'
 import unicornPlugin from 'eslint-plugin-unicorn'
 import jsdocPlugin from 'eslint-plugin-jsdoc'
@@ -44,6 +44,12 @@ export default tseslint.config(
       'local-rules': { rules: eslintLocalRules },
       jsdoc: jsdocPlugin,
       jasmine,
+    },
+
+    settings: {
+      'import/resolver': {
+        typescript: true,
+      },
     },
 
     languageOptions: {
@@ -218,13 +224,6 @@ export default tseslint.config(
         {
           commonjs: true,
           ignore: [
-            // typescript-eslint and chrome-webstore-upload packages have no 'main' field, only 'exports', but
-            // eslint-plugin-import doesn't support it. See:
-            // * https://github.com/import-js/eslint-plugin-import/issues/3088#issuecomment-2425233952
-            // * https://github.com/browserify/resolve/issues/222
-            'typescript-eslint',
-            'chrome-webstore-upload',
-
             // The json-schema-to-typescript is built on demand (see scripts/cli build_json2type)
             // and is not always available in the node_modules. Skip the import check.
             'json-schema-to-typescript',
@@ -232,7 +231,15 @@ export default tseslint.config(
         },
       ],
       'import/no-useless-path-segments': 'error',
-      'import/order': 'error',
+      'import/order': [
+        'error',
+        {
+          // This is the default order plus 'internal', which is imports like
+          // @datadog/browser-core/test (references a file/folder within a local package)
+          // https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/order.md#groups
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
+        },
+      ],
 
       'jasmine/no-focused-tests': 'error',
       'jsdoc/check-alignment': 'error',

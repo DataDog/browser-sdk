@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
 import { defineBackground } from 'wxt/utils/define-background'
 
 // eslint-disable-next-line import/no-default-export
