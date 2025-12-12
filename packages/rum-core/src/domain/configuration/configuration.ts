@@ -1,4 +1,11 @@
-import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
+import type {
+  Configuration,
+  InitConfiguration,
+  MatchOption,
+  RawTelemetryConfiguration,
+  HeaderCaptureOption,
+  HeaderMatchOption,
+} from '@datadog/browser-core'
 import {
   getType,
   isMatchOption,
@@ -271,6 +278,15 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
+
+  /**
+   * Enables collection of HTTP request and response headers for resources.
+   * When set to true, captures default headers (Cache-Control, ETag, Age, Expires, Content-Type, Content-Encoding, Vary, Content-Length, Server-Timing, X-Cache) for all URLs.
+   * When set to an array, allows fine-grained control over which headers to capture for specific URLs.
+   *
+   * @category Data Collection
+   */
+  trackResourceHeaders?: boolean | Array<MatchOption | HeaderCaptureOption> | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -282,6 +298,8 @@ export interface GraphQlUrlOption {
   trackPayload?: boolean
   trackResponseErrors?: boolean
 }
+
+export type { HeaderMatchOption, HeaderCaptureOption } from '@datadog/browser-core'
 
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
@@ -310,6 +328,7 @@ export interface RumConfiguration extends Configuration {
   profilingSampleRate: number
   propagateTraceBaggage: boolean
   allowedGraphQlUrls: GraphQlUrlOption[]
+  trackResourceHeaders: HeaderCaptureOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -348,6 +367,7 @@ export function validateAndBuildRumConfiguration(
   const baseConfiguration = validateAndBuildConfiguration(initConfiguration, errorStack)
 
   const allowedGraphQlUrls = validateAndBuildGraphQlOptions(initConfiguration)
+  const trackResourceHeaders = validateAndBuildHeaderCaptureOptions(initConfiguration)
 
   if (!baseConfiguration) {
     return
@@ -388,6 +408,7 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     allowedGraphQlUrls,
+    trackResourceHeaders,
     ...baseConfiguration,
   }
 }
@@ -497,6 +518,50 @@ function hasGraphQlResponseErrorsTracking(allowedGraphQlUrls: RumInitConfigurati
       return false
     })
   )
+}
+
+function validateAndBuildHeaderCaptureOptions(initConfiguration: RumInitConfiguration): HeaderCaptureOption[] {
+  const trackResourceHeaders = initConfiguration.trackResourceHeaders
+
+  if (!trackResourceHeaders) {
+    return []
+  }
+
+  if (trackResourceHeaders === true) {
+    return [{ match: () => true, request: true, response: true }]
+  }
+
+  if (!Array.isArray(trackResourceHeaders)) {
+    display.warn('trackResourceHeaders should be a boolean or an array')
+    return []
+  }
+
+  const headerCaptureOptions: HeaderCaptureOption[] = []
+
+  trackResourceHeaders.forEach((option) => {
+    if (isMatchOption(option)) {
+      headerCaptureOptions.push({ match: option, request: true, response: true })
+    } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
+      const normalizedRequest = normalizeHeaderDirective(option.request)
+      const normalizedResponse = normalizeHeaderDirective(option.response)
+      headerCaptureOptions.push({
+        match: option.match,
+        request: normalizedRequest !== undefined ? normalizedRequest : true,
+        response: normalizedResponse !== undefined ? normalizedResponse : true,
+      })
+    }
+  })
+
+  return headerCaptureOptions
+}
+
+function normalizeHeaderDirective(
+  directive: boolean | MatchOption[] | HeaderMatchOption[] | undefined
+): boolean | MatchOption[] | HeaderMatchOption[] | undefined {
+  if (directive === undefined || typeof directive === 'boolean' || Array.isArray(directive)) {
+    return directive
+  }
+  return undefined
 }
 
 export function serializeRumConfiguration(configuration: RumInitConfiguration) {
