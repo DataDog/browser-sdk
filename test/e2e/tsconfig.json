@@ -1,6 +1,6 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "strict": true,
     "skipLibCheck": true,
     "experimentalDecorators": true,
@@ -8,6 +8,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
     "module": "preserve",
     "types": ["node", "ajv"],
     "allowJs": true,
