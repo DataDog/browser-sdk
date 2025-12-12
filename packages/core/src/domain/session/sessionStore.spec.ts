@@ -194,6 +194,7 @@ describe('session store', () => {
 
     function setupSessionStore(
       initialState: SessionState = {},
+      applicationId?: string,
       computeTrackingType: (rawTrackingType?: string) => FakeTrackingType = () => FakeTrackingType.TRACKED
     ) {
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
@@ -209,6 +210,7 @@ describe('session store', () => {
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
         computeTrackingType,
+        applicationId,
         sessionStoreStrategy
       )
       sessionStoreStrategy.persistSession.calls.reset()
@@ -256,6 +258,101 @@ describe('session store', () => {
       })
     })
 
+    describe('session ID generation with applicationId', () => {
+      it('should generate deterministic session ID when applicationId is provided', () => {
+        const applicationId = 'test-app-123'
+        setupSessionStore(undefined, applicationId)
+
+        // First expand creates both anonymousId and session ID
+        sessionStoreManager.expandOrRenewSession()
+        clock.tick(STORAGE_POLL_DELAY)
+
+        const anonymousId = sessionStoreManager.getSession().anonymousId
+        const sessionId1 = sessionStoreManager.getSession().id
+
+        expect(anonymousId).toBeDefined()
+        expect(sessionId1).toBeDefined()
+        expect(sessionId1).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+
+        // Reset and recreate session with same anonymousId and applicationId
+        sessionStoreManager.expire()
+        clock.tick(STORAGE_POLL_DELAY)
+
+        // Manually set the same anonymousId
+        setSessionInStore({ anonymousId })
+        sessionStoreManager.expandOrRenewSession()
+        clock.tick(STORAGE_POLL_DELAY)
+
+        const sessionId2 = sessionStoreManager.getSession().id
+
+        // Session IDs should be deterministic (same for same inputs)
+        expect(sessionId2).toBe(sessionId1)
+      })
+
+      it('should generate random session ID when applicationId is not provided', () => {
+        setupSessionStore(undefined, undefined)
+
+        sessionStoreManager.expandOrRenewSession()
+        clock.tick(STORAGE_POLL_DELAY)
+
+        const sessionId1 = sessionStoreManager.getSession().id
+        expect(sessionId1).toBeDefined()
+
+        // Expire and recreate
+        sessionStoreManager.expire()
+        clock.tick(STORAGE_POLL_DELAY)
+        sessionStoreManager.expandOrRenewSession()
+        clock.tick(STORAGE_POLL_DELAY)
+
+        const sessionId2 = sessionStoreManager.getSession().id
+
+        // Session IDs should be random (different)
+        expect(sessionId2).not.toBe(sessionId1)
+      })
+
+      it('should generate different session IDs for different applicationIds', () => {
+        const anonymousId = 'device-123-456'
+
+        // First session with app1
+        setupSessionStore({ anonymousId, [PRODUCT_KEY]: FakeTrackingType.TRACKED }, 'app-1')
+        sessionStoreManager.expandOrRenewSession()
+        clock.tick(STORAGE_POLL_DELAY)
+        const sessionId1 = sessionStoreManager.getSession().id
+
+        // Reset and create session with app2
+        resetSessionInStore()
+        setupSessionStore({ anonymousId, [PRODUCT_KEY]: FakeTrackingType.TRACKED }, 'app-2')
+        sessionStoreManager.expandOrRenewSession()
+        clock.tick(STORAGE_POLL_DELAY)
+        const sessionId2 = sessionStoreManager.getSession().id
+
+        // Different applicationIds should produce different session IDs
+        expect(sessionId1).not.toBe(sessionId2)
+      })
+
+      it('should use anonymousId as deviceId for deterministic generation', () => {
+        const applicationId = 'test-app-123'
+        setupSessionStore(undefined, applicationId)
+
+        // Create initial session with anonymousId
+        sessionStoreManager.expandOrRenewSession()
+        clock.tick(STORAGE_POLL_DELAY)
+
+        const anonymousId = sessionStoreManager.getSession().anonymousId
+        expect(anonymousId).toBeDefined()
+
+        // Create session ID
+        sessionStoreManager.expandOrRenewSession()
+        clock.tick(STORAGE_POLL_DELAY)
+
+        const sessionId = sessionStoreManager.getSession().id
+        expect(sessionId).toBeDefined()
+
+        // Session ID should be deterministic based on anonymousId and applicationId
+        expect(sessionId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+      })
+    })
+
     describe('expand or renew session', () => {
       it(
         'when session not in cache, session not in store and new session tracked, ' +
@@ -276,7 +373,7 @@ describe('session store', () => {
         'when session not in cache, session not in store and new session not tracked, ' +
           'should store not tracked session and trigger renew session',
         () => {
-          setupSessionStore(EMPTY_SESSION_STATE, () => FakeTrackingType.NOT_TRACKED)
+          setupSessionStore(EMPTY_SESSION_STATE, undefined, () => FakeTrackingType.NOT_TRACKED)
 
           sessionStoreManager.expandOrRenewSession()
 
@@ -321,7 +418,11 @@ describe('session store', () => {
         'when session in cache, session not in store and new session not tracked, ' +
           'should expire session, store not tracked session and trigger renew session',
         () => {
-          setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), () => FakeTrackingType.NOT_TRACKED)
+          setupSessionStore(
+            createSessionState(FakeTrackingType.TRACKED, FIRST_ID),
+            undefined,
+            () => FakeTrackingType.NOT_TRACKED
+          )
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -338,7 +439,11 @@ describe('session store', () => {
         'when session not tracked in cache, session not in store and new session not tracked, ' +
           'should expire session, store not tracked session and trigger renew session',
         () => {
-          setupSessionStore(createSessionState(FakeTrackingType.NOT_TRACKED), () => FakeTrackingType.NOT_TRACKED)
+          setupSessionStore(
+            createSessionState(FakeTrackingType.NOT_TRACKED),
+            undefined,
+            () => FakeTrackingType.NOT_TRACKED
+          )
           resetSessionInStore()
 
           sessionStoreManager.expandOrRenewSession()
@@ -384,7 +489,7 @@ describe('session store', () => {
         'when session in cache is different session than in store and store session is not tracked, ' +
           'should expire session, store not tracked session and trigger renew',
         () => {
-          setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), (rawTrackingType) =>
+          setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), undefined, (rawTrackingType) =>
             rawTrackingType === FakeTrackingType.TRACKED ? FakeTrackingType.TRACKED : FakeTrackingType.NOT_TRACKED
           )
           setSessionInStore(createSessionState(FakeTrackingType.NOT_TRACKED, ''))
@@ -604,6 +709,7 @@ describe('session store', () => {
         DEFAULT_CONFIGURATION,
         PRODUCT_KEY,
         computeTrackingType,
+        undefined,
         sessionStoreStrategy
       )
       sessionStoreManager.sessionStateUpdateObservable.subscribe(updateSpy)
