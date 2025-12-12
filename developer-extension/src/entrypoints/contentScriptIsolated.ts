@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-unresolved
 import { defineContentScript } from 'wxt/utils/define-content-script'
 import { main } from '../content-scripts/isolated'
 
