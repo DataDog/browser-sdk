@@ -8,6 +8,7 @@ import {
   serializeInTransaction,
   updateSerializationStats,
 } from '../serialization'
+import type { NodeId } from '../nodeIds'
 import { createRecordingScopeForTesting } from './recordingScope.specHelper'
 
 export function createSerializationTransactionForTesting({
@@ -19,6 +20,7 @@ export function createSerializationTransactionForTesting({
   scope?: RecordingScope
   stats?: SerializationStats
 } = {}): SerializationTransaction {
+  const transactionScope = scope || createRecordingScopeForTesting()
   return {
     add(): void {
       throw new Error('Use serializeInTransaction normally to test code that generates BrowserRecords.')
@@ -28,8 +30,11 @@ export function createSerializationTransactionForTesting({
         updateSerializationStats(stats, metric, value)
       }
     },
+    assignId(node: Node): NodeId {
+      return transactionScope.nodeIds.assign(node)
+    },
     kind: kind ?? SerializationKind.INITIAL_FULL_SNAPSHOT,
-    scope: scope || createRecordingScopeForTesting(),
+    scope: transactionScope,
   }
 }
 

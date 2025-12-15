@@ -27,13 +27,13 @@ import {
   AST_MASK_UNLESS_ALLOWLISTED,
   AST_ALLOW,
 } from './htmlAst.specHelper'
-import { serializeChildNodes, serializeDocumentNode, serializeNodeWithId } from './serializeNode'
+import { serializeChildNodes, serializeDocumentNode, serializeNode } from './serializeNode'
 import type { SerializationStats } from './serializationStats'
 import { createSerializationStats } from './serializationStats'
 import type { SerializationTransaction } from './serializationTransaction'
 import { serializeInTransaction, SerializationKind } from './serializationTransaction'
 
-describe('serializeNodeWithId', () => {
+describe('serializeNode', () => {
   let addShadowRootSpy: jasmine.Spy<AddShadowRootCallBack>
   let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
   let emitStatsCallback: jasmine.Spy<EmitStatsCallback>
@@ -51,7 +51,7 @@ describe('serializeNodeWithId', () => {
   describe('document serialization', () => {
     it('serializes a document', () => {
       const document = new DOMParser().parseFromString('<!doctype html><html>foo</html>', 'text/html')
-      expect(serializeNodeWithId(document, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+      expect(serializeNode(document, NodePrivacyLevel.ALLOW, transaction)).toEqual({
         type: NodeType.Document,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType, name: 'html', publicId: '', systemId: '' }),
@@ -65,7 +65,7 @@ describe('serializeNodeWithId', () => {
 
   describe('elements serialization', () => {
     it('serializes a div', () => {
-      expect(serializeNodeWithId(document.createElement('div'), NodePrivacyLevel.ALLOW, transaction)).toEqual({
+      expect(serializeNode(document.createElement('div'), NodePrivacyLevel.ALLOW, transaction)).toEqual({
         type: NodeType.Element,
         tagName: 'div',
         attributes: {},
@@ -79,7 +79,7 @@ describe('serializeNodeWithId', () => {
       const element = document.createElement('div')
       element.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
 
-      expect(serializeNodeWithId(element, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+      expect(serializeNode(element, NodePrivacyLevel.ALLOW, transaction)).toEqual({
         type: NodeType.Element,
         tagName: 'div',
         attributes: {
@@ -97,7 +97,7 @@ describe('serializeNodeWithId', () => {
       const element = document.createElement('div')
       element.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
       element.appendChild(document.createElement('hr'))
-      expect(serializeNodeWithId(element, NodePrivacyLevel.ALLOW, transaction)?.childNodes).toEqual([])
+      expect(serializeNode(element, NodePrivacyLevel.ALLOW, transaction)?.childNodes).toEqual([])
     })
 
     it('serializes attributes', () => {
@@ -105,7 +105,7 @@ describe('serializeNodeWithId', () => {
       element.className = 'zog'
       element.style.width = '10px'
 
-      expect(serializeNodeWithId(element, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
+      expect(serializeNode(element, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
         foo: 'bar',
         'data-foo': 'data-bar',
         class: 'zog',
@@ -128,7 +128,7 @@ describe('serializeNodeWithId', () => {
           kind: SerializationKind.INITIAL_FULL_SNAPSHOT,
           scope,
         })
-        const node = serializeNodeWithId(element, NodePrivacyLevel.ALLOW, transaction)
+        const node = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
 
         expect(node?.attributes).toEqual(
           jasmine.objectContaining({
@@ -144,7 +144,7 @@ describe('serializeNodeWithId', () => {
           kind: SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
           scope,
         })
-        const node = serializeNodeWithId(element, NodePrivacyLevel.ALLOW, transaction)
+        const node = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
 
         expect(node?.attributes.rr_scrollLeft).toBeUndefined()
         expect(node?.attributes.rr_scrollTop).toBeUndefined()
@@ -158,7 +158,7 @@ describe('serializeNodeWithId', () => {
           kind: SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
           scope,
         })
-        const node = serializeNodeWithId(element, NodePrivacyLevel.ALLOW, transaction)
+        const node = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
 
         expect(node?.attributes).toEqual(
           jasmine.objectContaining({
@@ -175,7 +175,7 @@ describe('serializeNodeWithId', () => {
           kind: SerializationKind.INCREMENTAL_SNAPSHOT,
           scope,
         })
-        const node = serializeNodeWithId(element, NodePrivacyLevel.ALLOW, transaction)
+        const node = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
 
         expect(node?.attributes.rr_scrollLeft).toBeUndefined()
         expect(node?.attributes.rr_scrollTop).toBeUndefined()
@@ -186,7 +186,7 @@ describe('serializeNodeWithId', () => {
       const head = document.createElement('head')
       head.innerHTML = '  <title>  foo </title>  '
 
-      expect(serializeNodeWithId(head, NodePrivacyLevel.ALLOW, transaction)?.childNodes).toEqual([
+      expect(serializeNode(head, NodePrivacyLevel.ALLOW, transaction)?.childNodes).toEqual([
         jasmine.objectContaining({
           type: NodeType.Element,
           tagName: 'title',
@@ -199,7 +199,7 @@ describe('serializeNodeWithId', () => {
       const input = document.createElement('input')
       input.value = 'toto'
 
-      expect(serializeNodeWithId(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+      expect(serializeNode(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(
         jasmine.objectContaining({
           attributes: { value: 'toto' },
         })
@@ -210,7 +210,7 @@ describe('serializeNodeWithId', () => {
       const textarea = document.createElement('textarea')
       textarea.value = 'toto'
 
-      expect(serializeNodeWithId(textarea, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+      expect(serializeNode(textarea, NodePrivacyLevel.ALLOW, transaction)).toEqual(
         jasmine.objectContaining({
           attributes: { value: 'toto' },
         })
@@ -227,7 +227,7 @@ describe('serializeNodeWithId', () => {
       select.appendChild(option2)
       select.options.selectedIndex = 1
 
-      expect(serializeNodeWithId(select, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+      expect(serializeNode(select, NodePrivacyLevel.ALLOW, transaction)).toEqual(
         jasmine.objectContaining({
           attributes: { value: 'bar' },
           childNodes: [
@@ -252,7 +252,7 @@ describe('serializeNodeWithId', () => {
       input.type = 'password'
       input.value = 'toto'
 
-      expect(serializeNodeWithId(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(jasmine.objectContaining({}))
+      expect(serializeNode(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(jasmine.objectContaining({}))
     })
 
     it('does not serialize <input type="password"> values set via attribute setter', () => {
@@ -260,13 +260,13 @@ describe('serializeNodeWithId', () => {
       input.type = 'password'
       input.setAttribute('value', 'toto')
 
-      expect(serializeNodeWithId(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(jasmine.objectContaining({}))
+      expect(serializeNode(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(jasmine.objectContaining({}))
     })
 
     it('serializes <input type="checkbox"> elements checked state', () => {
       const checkbox = document.createElement('input')
       checkbox.type = 'checkbox'
-      expect(serializeNodeWithId(checkbox, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+      expect(serializeNode(checkbox, NodePrivacyLevel.ALLOW, transaction)).toEqual(
         jasmine.objectContaining({
           attributes: {
             type: 'checkbox',
@@ -277,7 +277,7 @@ describe('serializeNodeWithId', () => {
 
       checkbox.checked = true
 
-      expect(serializeNodeWithId(checkbox, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+      expect(serializeNode(checkbox, NodePrivacyLevel.ALLOW, transaction)).toEqual(
         jasmine.objectContaining({
           attributes: {
             type: 'checkbox',
@@ -291,14 +291,14 @@ describe('serializeNodeWithId', () => {
     it('serializes <input type="radio"> elements checked state', () => {
       const radio = document.createElement('input')
       radio.type = 'radio'
-      expect(serializeNodeWithId(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
+      expect(serializeNode(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
         type: 'radio',
         value: 'on',
       })
 
       radio.checked = true
 
-      expect(serializeNodeWithId(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
+      expect(serializeNode(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
         type: 'radio',
         value: 'on',
         checked: '',
@@ -308,7 +308,7 @@ describe('serializeNodeWithId', () => {
     it('serializes <audio> elements paused state', () => {
       const audio = document.createElement('audio')
 
-      expect(serializeNodeWithId(audio, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+      expect(serializeNode(audio, NodePrivacyLevel.ALLOW, transaction)).toEqual(
         jasmine.objectContaining({
           attributes: { rr_mediaState: 'paused' },
         })
@@ -317,7 +317,7 @@ describe('serializeNodeWithId', () => {
       // Emulate a playing audio file
       Object.defineProperty(audio, 'paused', { value: false })
 
-      expect(serializeNodeWithId(audio, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+      expect(serializeNode(audio, NodePrivacyLevel.ALLOW, transaction)).toEqual(
         jasmine.objectContaining({
           attributes: { rr_mediaState: 'played' },
         })
@@ -330,7 +330,7 @@ describe('serializeNodeWithId', () => {
         input.value = 'toto'
         input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-        expect(serializeNodeWithId(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+        expect(serializeNode(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(
           jasmine.objectContaining({
             attributes: {
               [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK_USER_INPUT,
@@ -347,7 +347,7 @@ describe('serializeNodeWithId', () => {
         parent.appendChild(input)
         parent.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-        expect(serializeNodeWithId(parent, NodePrivacyLevel.ALLOW, transaction)?.childNodes[0]).toEqual(
+        expect(serializeNode(parent, NodePrivacyLevel.ALLOW, transaction)?.childNodes[0]).toEqual(
           jasmine.objectContaining({
             attributes: { value: '***' },
           })
@@ -360,7 +360,7 @@ describe('serializeNodeWithId', () => {
         button.value = 'toto'
         button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-        expect(serializeNodeWithId(button, NodePrivacyLevel.ALLOW, transaction)?.attributes.value).toEqual('toto')
+        expect(serializeNode(button, NodePrivacyLevel.ALLOW, transaction)?.attributes.value).toEqual('toto')
       })
 
       it('does not apply mask for <input type="submit"> contained in a masked ancestor', () => {
@@ -369,7 +369,7 @@ describe('serializeNodeWithId', () => {
         button.value = 'toto'
         button.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-        expect(serializeNodeWithId(button, NodePrivacyLevel.ALLOW, transaction)?.attributes.value).toEqual('toto')
+        expect(serializeNode(button, NodePrivacyLevel.ALLOW, transaction)?.attributes.value).toEqual('toto')
       })
 
       it('serializes <input type="radio"> elements without checked property', () => {
@@ -377,7 +377,7 @@ describe('serializeNodeWithId', () => {
         radio.type = 'radio'
         radio.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_USER_INPUT)
 
-        expect(serializeNodeWithId(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
+        expect(serializeNode(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
           type: 'radio',
           value: '***',
           'data-dd-privacy': 'mask-user-input',
@@ -385,7 +385,7 @@ describe('serializeNodeWithId', () => {
 
         radio.checked = true
 
-        expect(serializeNodeWithId(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
+        expect(serializeNode(radio, NodePrivacyLevel.ALLOW, transaction)?.attributes).toEqual({
           type: 'radio',
           value: '***',
           'data-dd-privacy': 'mask-user-input',
@@ -399,7 +399,7 @@ describe('serializeNodeWithId', () => {
         input.placeholder = 'someValue'
         input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK)
 
-        expect(serializeNodeWithId(input, NodePrivacyLevel.ALLOW, transaction)?.attributes.placeholder).toEqual('***')
+        expect(serializeNode(input, NodePrivacyLevel.ALLOW, transaction)?.attributes.placeholder).toEqual('***')
       })
     })
 
@@ -417,7 +417,7 @@ describe('serializeNodeWithId', () => {
         input.value = 'toto'
         input.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_MASK_UNLESS_ALLOWLISTED)
 
-        expect(serializeNodeWithId(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(jasmine.objectContaining({}))
+        expect(serializeNode(input, NodePrivacyLevel.ALLOW, transaction)).toEqual(jasmine.objectContaining({}))
       })
     })
 
@@ -425,7 +425,7 @@ describe('serializeNodeWithId', () => {
       it('serializes a shadow host', () => {
         const div = document.createElement('div')
         div.attachShadow({ mode: 'open' })
-        expect(serializeNodeWithId(div, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(div, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'div',
           attributes: {},
@@ -448,7 +448,7 @@ describe('serializeNodeWithId', () => {
         const shadowRoot = div.attachShadow({ mode: 'open' })
         shadowRoot.appendChild(document.createElement('hr'))
 
-        expect(serializeNodeWithId(div, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(div, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'div',
           attributes: {},
@@ -482,7 +482,7 @@ describe('serializeNodeWithId', () => {
         const shadowRoot = div.attachShadow({ mode: 'open' })
         shadowRoot.appendChild(document.createTextNode('foo'))
 
-        expect(serializeNodeWithId(div, NodePrivacyLevel.ALLOW, transaction)).toEqual(
+        expect(serializeNode(div, NodePrivacyLevel.ALLOW, transaction)).toEqual(
           jasmine.objectContaining({
             attributes: {
               [PRIVACY_ATTR_NAME]: PRIVACY_ATTR_VALUE_MASK,
@@ -514,7 +514,7 @@ describe('serializeNodeWithId', () => {
         const styleNode = appendElement('<style></style>', document.head) as HTMLStyleElement
         styleNode.sheet!.insertRule('body { width: 100%; }')
 
-        expect(serializeNodeWithId(styleNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(styleNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'style',
           id: jasmine.any(Number) as unknown as number,
@@ -531,7 +531,7 @@ describe('serializeNodeWithId', () => {
       it('serializes a node with CSS rules specified as inner text', () => {
         const styleNode = appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
 
-        expect(serializeNodeWithId(styleNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(styleNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'style',
           id: jasmine.any(Number) as unknown as number,
@@ -549,7 +549,7 @@ describe('serializeNodeWithId', () => {
         const styleNode = appendElement('<style>body { width: 100%; }</style>', document.head) as HTMLStyleElement
         styleNode.sheet!.insertRule('body { color: red; }')
 
-        expect(serializeNodeWithId(styleNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(styleNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'style',
           id: jasmine.any(Number) as unknown as number,
@@ -572,7 +572,7 @@ describe('serializeNodeWithId', () => {
         const cssText2 = 'body { background-color: green; }'
         appendElement(`<style>${cssText2}</style>`, containerNode) as HTMLStyleElement
 
-        expect(serializeNodeWithId(containerNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(containerNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'div',
           id: jasmine.any(Number) as unknown as number,
@@ -624,7 +624,7 @@ describe('serializeNodeWithId', () => {
           document.head
         )
 
-        expect(serializeNodeWithId(linkNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(linkNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
@@ -653,7 +653,7 @@ describe('serializeNodeWithId', () => {
           configurable: true,
         })
 
-        expect(serializeNodeWithId(linkNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(linkNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
@@ -689,7 +689,7 @@ describe('serializeNodeWithId', () => {
           configurable: true,
         })
 
-        expect(serializeNodeWithId(linkNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        expect(serializeNode(linkNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
           type: NodeType.Element,
           tagName: 'link',
           id: jasmine.any(Number) as unknown as number,
@@ -714,7 +714,7 @@ describe('serializeNodeWithId', () => {
       parentEl.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_ALLOW)
       const textNode = document.createTextNode('foo')
       parentEl.appendChild(textNode)
-      expect(serializeNodeWithId(textNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+      expect(serializeNode(textNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
         type: NodeType.Text,
         id: jasmine.any(Number) as unknown as number,
         textContent: 'foo',
@@ -725,7 +725,7 @@ describe('serializeNodeWithId', () => {
       const parentEl = document.createElement('bar')
       const textNode = document.createTextNode('')
       parentEl.appendChild(textNode)
-      expect(serializeNodeWithId(textNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+      expect(serializeNode(textNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
         type: NodeType.Text,
         id: jasmine.any(Number) as unknown as number,
         textContent: '',
@@ -736,7 +736,7 @@ describe('serializeNodeWithId', () => {
       const head = document.getElementsByTagName('head')[0]
       const textNode = document.createTextNode('   ')
       head.appendChild(textNode)
-      expect(serializeNodeWithId(textNode, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
+      expect(serializeNode(textNode, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
       head.removeChild(textNode)
     })
   })
@@ -745,7 +745,7 @@ describe('serializeNodeWithId', () => {
     it('serializes a CDATA node', () => {
       const xmlDocument = new DOMParser().parseFromString('<root></root>', 'text/xml')
       const cdataNode = xmlDocument.createCDATASection('foo')
-      expect(serializeNodeWithId(cdataNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+      expect(serializeNode(cdataNode, NodePrivacyLevel.ALLOW, transaction)).toEqual({
         type: NodeType.CDATA,
         id: jasmine.any(Number) as unknown as number,
         textContent: '',
@@ -761,7 +761,7 @@ describe('serializeNodeWithId', () => {
       scope,
       (transaction) => {
         transaction.serializedNodeIds = new Set()
-        const node = serializeNodeWithId(document.createElement('div'), NodePrivacyLevel.ALLOW, transaction)!
+        const node = serializeNode(document.createElement('div'), NodePrivacyLevel.ALLOW, transaction)!
         expect(transaction.serializedNodeIds).toEqual(new Set([node.id]))
         return []
       }
@@ -777,7 +777,7 @@ describe('serializeNodeWithId', () => {
         scope,
         (transaction) => {
           transaction.serializedNodeIds = new Set()
-          serializeNodeWithId(document.createElement('script'), NodePrivacyLevel.ALLOW, transaction)
+          serializeNode(document.createElement('script'), NodePrivacyLevel.ALLOW, transaction)
           expect(transaction.serializedNodeIds.size).toBe(0)
           return []
         }
@@ -786,36 +786,36 @@ describe('serializeNodeWithId', () => {
 
     it('does not serialize ignored nodes', () => {
       const scriptElement = document.createElement('script')
-      expect(serializeNodeWithId(scriptElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
+      expect(serializeNode(scriptElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
       expect(scope.nodeIds.get(scriptElement)).toBe(undefined)
     })
 
     it('ignores script tags', () => {
       const scriptElement = document.createElement('script')
-      expect(serializeNodeWithId(scriptElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
+      expect(serializeNode(scriptElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
     })
 
     it('ignores comments', () => {
       const commentNode = document.createComment('foo')
-      expect(serializeNodeWithId(commentNode, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
+      expect(serializeNode(commentNode, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
     })
 
     it('ignores link favicons', () => {
       const linkElement = document.createElement('link')
       linkElement.setAttribute('rel', 'shortcut icon')
-      expect(serializeNodeWithId(linkElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
+      expect(serializeNode(linkElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
     })
 
     it('ignores meta keywords', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'keywords')
-      expect(serializeNodeWithId(metaElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
+      expect(serializeNode(metaElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
     })
 
     it('ignores meta name attribute casing', () => {
       const metaElement = document.createElement('meta')
       metaElement.setAttribute('name', 'KeYwOrDs')
-      expect(serializeNodeWithId(metaElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
+      expect(serializeNode(metaElement, NodePrivacyLevel.ALLOW, transaction)).toBeNull()
     })
   })
 
@@ -987,6 +987,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
 
       expect(serializeDocumentNode(document, NodePrivacyLevel.ALLOW, transaction)).toEqual({
         type: NodeType.Document,
+        id: 0,
         childNodes: [
           jasmine.objectContaining({ type: NodeType.DocumentType }),
           jasmine.objectContaining({ type: NodeType.Element, tagName: 'html' }),
@@ -1005,6 +1006,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   it('a masked DOM Document itself is still serialized ', () => {
     expect(serializeDocumentNode(document, NodePrivacyLevel.MASK, transaction)).toEqual({
       type: NodeType.Document,
+      id: 0,
       childNodes: serializeChildNodes(document, NodePrivacyLevel.MASK, transaction),
       adoptedStyleSheets: undefined,
     })
