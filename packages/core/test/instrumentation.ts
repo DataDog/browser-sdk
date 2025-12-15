@@ -9,13 +9,10 @@
  * ```
  */
 export function callbackAddsInstrumentation(callback: () => void) {
-  const existingMethods: Array<[any, string, unknown]> = []
+  const existingMethods: Array<[any, PropertyKey, unknown]> = []
   const expectation = {
     callback,
-    toMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET & string>(
-      target: TARGET,
-      method: METHOD
-    ) {
+    toMethod<TARGET extends { [key: string]: any }, METHOD extends keyof TARGET>(target: TARGET, method: METHOD) {
       existingMethods.push([target, method, target[method]])
       return expectation
     },

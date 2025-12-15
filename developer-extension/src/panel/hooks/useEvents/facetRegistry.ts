@@ -1,7 +1,7 @@
 import { getEventSource, type SdkEvent } from '../../sdkEvent'
 import { createLogger } from '../../../common/logger'
-import { FACET_ROOT } from '../../facets.constants'
 import type { FacetValue, FieldPath, FieldMultiValue, FieldValue } from '../../facets.constants'
+import { FACET_ROOT } from '../../facets.constants'
 
 const logger = createLogger('facetRegistry')
 
@@ -117,15 +117,16 @@ export function getAllFields(event: object) {
         getAllFieldsRecursively(item, path)
       }
     } else if (typeof value === 'object' && value !== null) {
+      const typedValue = value as Record<string, unknown>
       if (path !== undefined) {
         // Store the intermediary field
-        pushField(path, value)
+        pushField(path, typedValue)
       }
       // Recurse inside objects, building the path on the way
-      for (const key in value) {
-        if (Object.prototype.hasOwnProperty.call(value, key)) {
+      for (const key in typedValue) {
+        if (Object.prototype.hasOwnProperty.call(typedValue, key)) {
           const itemPath = path === undefined ? key : `${path}.${key}`
-          const itemValue = (value as { [key: string]: unknown })[key]
+          const itemValue = (typedValue as { [key: string]: unknown })[key]
           getAllFieldsRecursively(itemValue, itemPath)
         }
       }

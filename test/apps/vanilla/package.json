@@ -18,12 +18,11 @@
     "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"
   },
   "devDependencies": {
-    "ts-loader": "6.2.1",
+    "ts-loader": "9.5.4",
     "typescript": "3.8.2",
-    "webpack": "5.94.0"
+    "webpack": "5.103.0"
   },
   "volta": {
     "extends": "../../../package.json"
-  },
-  "packageManager": "yarn@3.5.1"
+  }
 }

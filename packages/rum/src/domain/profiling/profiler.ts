@@ -1,4 +1,4 @@
-import type { Duration, Encoder, RelativeTime } from '@datadog/browser-core'
+import type { Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -7,7 +7,6 @@ import {
   monitorError,
   display,
   getGlobalObject,
-  relativeToClocks,
   clocksOrigin,
   clocksNow,
   elapsed,
@@ -16,28 +15,23 @@ import {
 
 import type {
   LifeCycle,
+  LongTaskContexts,
   RumConfiguration,
   RumSessionManager,
   TransportPayload,
-  ViewHistoryEntry,
+  ViewHistory,
 } from '@datadog/browser-rum-core'
-import {
-  createFormDataTransport,
-  LifeCycleEventType,
-  RumPerformanceEntryType,
-  supportPerformanceTimingEvent,
-} from '@datadog/browser-rum-core'
+import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type {
   RumProfilerTrace,
   RumProfilerInstance,
   Profiler,
   RUMProfiler,
   RUMProfilerConfiguration,
+  RumProfilerStoppedInstance,
   RumViewEntry,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
-import { cleanupLongTaskRegistryAfterCollection, getLongTaskId } from './utils/longTaskRegistry'
-import { mayStoreLongTaskIdForProfilerCorrelation } from './profilingCorrelation'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { assembleProfilingPayload } from './transport/assembly'
@@ -54,23 +48,39 @@ export function createRumProfiler(
   lifeCycle: LifeCycle,
   session: RumSessionManager,
   profilingContextManager: ProfilingContextManager,
+  longTaskContexts: LongTaskContexts,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
+  viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
-  const isLongAnimationFrameEnabled = supportPerformanceTimingEvent(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
 
   let lastViewEntry: RumViewEntry | undefined
 
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
 
-  let instance: RumProfilerInstance = { state: 'stopped' }
+  let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
 
-  function start(viewEntry: ViewHistoryEntry | undefined): void {
+  // Stops the profiler when session expires
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
+    stopProfiling('session-expired').catch(monitorError)
+  })
+
+  // Start the profiler again when session is renewed
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+    if (instance.state === 'stopped' && instance.stateReason === 'session-expired') {
+      start() // Only restart the profiler if it was stopped due to session expiration. Avoid restarting the profiler if it was stopped manually by the user.
+    }
+  })
+
+  // Public API to start the profiler.
+  function start(): void {
     if (instance.state === 'running') {
       return
     }
+
+    const viewEntry = viewHistory.findView()
 
     // Add initial view
     // Note: `viewEntry.name` is only filled when users use manual view creation via `startView` method.
@@ -92,15 +102,17 @@ export function createRumProfiler(
     startNextProfilerInstance()
   }
 
+  // Public API to manually stop the profiler.
   async function stop() {
+    await stopProfiling('stopped-by-user')
+  }
+
+  async function stopProfiling(reason: RumProfilerStoppedInstance['stateReason']) {
     // Stop current profiler instance
-    await stopProfilerInstance('stopped')
+    await stopProfilerInstance(reason)
 
     // Cleanup global listeners
     globalCleanupTasks.forEach((task) => task())
-
-    // Cleanup Long Task Registry as we no longer need to correlate them with RUM
-    cleanupLongTaskRegistryAfterCollection(clocksNow().relative)
 
     // Update Profiling status once the Profiler has been stopped.
     profilingContextManager.set({ status: 'stopped', error_reason: undefined })
@@ -115,30 +127,11 @@ export function createRumProfiler(
       // Instance is already running, so we can keep same event listeners.
       return {
         cleanupTasks: existingInstance.cleanupTasks,
-        observer: existingInstance.observer,
       }
     }
 
     // Store clean-up tasks for this instance (tasks to be executed when the Profiler is stopped or paused.)
     const cleanupTasks = []
-    let observer: PerformanceObserver | undefined
-
-    // Register everything linked to Long Tasks correlations with RUM, when enabled.
-    if (configuration.trackLongTasks) {
-      // Setup event listeners, and since we only listen to Long Tasks for now, we activate the Performance Observer only when they are tracked.
-      observer = new PerformanceObserver(handlePerformance)
-      observer.observe({
-        entryTypes: [getLongTaskEntryType()],
-      })
-
-      // Whenever an Event is collected, when it's a Long Task, we may store the long task id for profiler correlation.
-      const rawEventCollectedSubscription = lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, (data) => {
-        mayStoreLongTaskIdForProfilerCorrelation(data)
-      })
-
-      cleanupTasks.push(() => observer?.disconnect())
-      cleanupTasks.push(rawEventCollectedSubscription.unsubscribe)
-    }
 
     // Whenever the View is updated, we add a views entry to the profiler instance.
     const viewUpdatedSubscription = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
@@ -158,7 +151,6 @@ export function createRumProfiler(
 
     return {
       cleanupTasks,
-      observer,
     }
   }
 
@@ -174,7 +166,7 @@ export function createRumProfiler(
     // Don't wait for data collection to start next instance
     collectProfilerInstance(instance).catch(monitorError)
 
-    const { cleanupTasks, observer } = addEventListeners(instance)
+    const { cleanupTasks } = addEventListeners(instance)
 
     let profiler: Profiler
     try {
@@ -209,10 +201,9 @@ export function createRumProfiler(
       startClocks: clocksNow(),
       profiler,
       timeoutId: setTimeout(startNextProfilerInstance, profilerConfiguration.collectIntervalMs),
-      longTasks: [],
       views: [],
       cleanupTasks,
-      observer,
+      longTasks: [],
     }
 
     // Add last view entry
@@ -227,31 +218,24 @@ export function createRumProfiler(
       return
     }
 
-    // Empty the performance observer buffer
-    handleLongTaskEntries(lastInstance.observer?.takeRecords() ?? [])
-
     // Cleanup instance
     clearTimeout(lastInstance.timeoutId)
     lastInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startClocks, longTasks, views } = lastInstance
-
-    // Capturing when we stop the profiler so we use this time as a reference to clean-up long task registry, eg. remove the long tasks that we collected already
-    const collectClocks = clocksNow()
+    const { startClocks, views } = lastInstance
 
     // Stop current profiler to get trace
     await lastInstance.profiler
       .stop()
       .then((trace) => {
         const endClocks = clocksNow()
-
-        const hasLongTasks = longTasks.length > 0
+        const longTasks = longTaskContexts.findLongTasks(startClocks.relative)
         const isBelowDurationThreshold =
           elapsed(startClocks.timeStamp, endClocks.timeStamp) < profilerConfiguration.minProfileDurationMs
         const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
-        if (!hasLongTasks && (isBelowDurationThreshold || isBelowSampleThreshold)) {
+        if (longTasks.length === 0 && (isBelowDurationThreshold || isBelowSampleThreshold)) {
           // Skip very short profiles to reduce noise and cost, but keep them if they contain long tasks.
           return
         }
@@ -267,24 +251,34 @@ export function createRumProfiler(
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           })
         )
-
-        // Clear long task registry, remove entries that we collected already (eg. avoid slowly growing memory usage by keeping outdated entries)
-        cleanupLongTaskRegistryAfterCollection(collectClocks.relative)
       })
       .catch(monitorError)
   }
 
-  async function stopProfilerInstance(nextState: 'paused' | 'stopped') {
+  async function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
     if (instance.state !== 'running') {
       return
     }
+    await onPauseOrStopProfilerInstance()
+    instance = { state: 'stopped', stateReason }
+  }
 
+  async function pauseProfilerInstance() {
+    if (instance.state !== 'running') {
+      return
+    }
+    await onPauseOrStopProfilerInstance()
+    instance = { state: 'paused' }
+  }
+
+  async function onPauseOrStopProfilerInstance() {
+    if (instance.state !== 'running') {
+      return
+    }
     // Cleanup tasks
     instance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
 
     await collectProfilerInstance(instance)
-
-    instance = { state: nextState }
   }
 
   function collectViewEntry(viewEntry: RumViewEntry | undefined): void {
@@ -308,42 +302,13 @@ export function createRumProfiler(
     startNextProfilerInstance()
   }
 
-  function handlePerformance(list: PerformanceObserverEntryList): void {
-    handleLongTaskEntries(list.getEntries())
-  }
-
-  function handleLongTaskEntries(entries: PerformanceEntryList): void {
-    if (instance.state !== 'running') {
-      return
-    }
-
-    for (const entry of entries) {
-      if (entry.duration < profilerConfiguration.sampleIntervalMs) {
-        // Skip entries shorter than sample interval to reduce noise and size of profile
-        continue
-      }
-
-      const startClocks = relativeToClocks(entry.startTime as RelativeTime)
-
-      const longTaskId = getLongTaskId(startClocks.relative)
-
-      // Store Long Task entry, which is a lightweight version of the PerformanceEntry
-      instance.longTasks.push({
-        id: longTaskId,
-        duration: entry.duration as Duration,
-        entryType: entry.entryType,
-        startClocks,
-      })
-    }
-  }
-
   function handleVisibilityChange(): void {
     if (document.visibilityState === 'hidden' && instance.state === 'running') {
       // Pause when tab is hidden. We use paused state to distinguish between
       // paused by visibility change and stopped by user.
       // If profiler is paused by the visibility change, we should resume when
       // tab becomes visible again. That's not the case when user stops the profiler.
-      stopProfilerInstance('paused').catch(monitorError)
+      pauseProfilerInstance().catch(monitorError)
     } else if (document.visibilityState === 'visible' && instance.state === 'paused') {
       // Resume when tab becomes visible again
       startNextProfilerInstance()
@@ -355,10 +320,6 @@ export function createRumProfiler(
     // We can immediately flush (by starting a new profiler instance) to make sure we receive the data, and at the same time keep the profiler active.
     // In case of the regular unload, the profiler will be shut down anyway.
     startNextProfilerInstance()
-  }
-
-  function getLongTaskEntryType(): 'long-animation-frame' | 'longtask' {
-    return isLongAnimationFrameEnabled ? 'long-animation-frame' : 'longtask'
   }
 
   function isStopped() {

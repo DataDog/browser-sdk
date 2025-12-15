@@ -6,7 +6,7 @@ import { detachToJsonMethod } from './jsonStringify'
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 type PrimitivesAndFunctions = string | number | boolean | undefined | null | symbol | bigint | Function
-type ExtendedContextValue = PrimitivesAndFunctions | object | ExtendedContext | ExtendedContextArray
+type ExtendedContextValue = PrimitivesAndFunctions | ExtendedContext | ExtendedContextArray
 interface ExtendedContext {
   [key: string]: ExtendedContextValue
 }
@@ -177,7 +177,7 @@ function sanitizeProcessor(
   const currentPath = key !== undefined ? `${parentPath}.${key}` : parentPath
   const target = Array.isArray(sourceToSanitize) ? ([] as ContextArray) : ({} as Context)
   visitedObjectsWithPath.set(sourceAsObject, currentPath)
-  queue.push({ source: sourceToSanitize as ExtendedContext | ExtendedContextArray, target, path: currentPath })
+  queue.push({ source: sourceToSanitize, target, path: currentPath })
 
   return target
 }

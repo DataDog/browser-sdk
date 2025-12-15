@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import path from 'node:path'
 import chromeWebstoreUpload from 'chrome-webstore-upload'
 import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
@@ -15,7 +16,8 @@ runMain(async () => {
   command`yarn build`.withEnvironment({ BUILD_MODE: 'release' }).run()
 
   printLog('Zipping extension files')
-  command`zip -jr ${ZIP_FILE_NAME} developer-extension/.output/chrome-mv3`.run()
+  const zipPath = path.resolve(ZIP_FILE_NAME)
+  command`zip -r ${zipPath} .`.withCurrentWorkingDirectory('developer-extension/.output/chrome-mv3').run()
 
   printLog('Publish Developer extension')
   await uploadAndPublish()
