@@ -568,22 +568,21 @@ describe('trackClickActions', () => {
     const targetPosition = target.getBoundingClientRect()
     const offsetX = targetPosition.width / 2
     const offsetY = targetPosition.height / 2
-    const eventProperties = {
+    const baseEventProperties = {
       target,
       clientX: targetPosition.left + offsetX,
       clientY: targetPosition.top + offsetY,
       offsetX,
       offsetY,
-      timeStamp: timeStampNow(),
       isPrimary: true,
       ...eventProperty,
     }
-    target.dispatchEvent(createNewEvent('pointerdown', eventProperties))
+    target.dispatchEvent(createNewEvent('pointerdown', { ...baseEventProperties, timeStamp: relativeNow() }))
     emulateActivityIfNeeded('pointerdown')
     clock!.tick(EMULATED_CLICK_DURATION)
-    target.dispatchEvent(createNewEvent('pointerup', eventProperties))
+    target.dispatchEvent(createNewEvent('pointerup', { ...baseEventProperties, timeStamp: relativeNow() }))
     emulateActivityIfNeeded('pointerup')
-    target.dispatchEvent(createNewEvent('click', eventProperties))
+    target.dispatchEvent(createNewEvent('click', { ...baseEventProperties, timeStamp: relativeNow() }))
     emulateActivityIfNeeded('click')
 
     function emulateActivityIfNeeded(event: 'pointerdown' | 'pointerup' | 'click') {

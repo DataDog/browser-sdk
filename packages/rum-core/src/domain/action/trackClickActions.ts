@@ -5,10 +5,10 @@ import {
   getRelativeTime,
   ONE_MINUTE,
   generateUUID,
-  clocksNow,
   elapsed,
   createValueHistory,
   PageExitReason,
+  relativeToClocks,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -288,7 +288,7 @@ function newClick(
   startEvent: MouseEventOnElement
 ) {
   const id = generateUUID()
-  const startClocks = clocksNow()
+  const startClocks = relativeToClocks(startEvent.timeStamp)
   const historyEntry = history.add(id, startClocks.relative)
   const eventCountsSubscription = trackEventCounts({
     lifeCycle,

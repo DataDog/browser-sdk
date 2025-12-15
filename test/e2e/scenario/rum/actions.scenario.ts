@@ -154,6 +154,60 @@ test.describe('action collection', () => {
       expect(resourceEvents[0].action!.id).toContain(actionEvents[0].action.id!)
     })
 
+  createTest('associate a long tasks to its action')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html`
+      <button>click me</button>
+      <script>
+        const button = document.querySelector('button')
+        button.addEventListener('click', () => {
+          const end = performance.now() + 55
+          while (performance.now() < end) {} // block the handler for ~55ms to trigger a long task
+          fetch('/ok') // fire a fetch to extend the action duration
+        })
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page, browserName }) => {
+      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support long tasks')
+
+      const button = page.locator('button')
+      await button.click()
+      await waitForServersIdle()
+      await flushEvents()
+      const actionEvents = intakeRegistry.rumActionEvents
+      const longTaskEvents = intakeRegistry.rumLongTaskEvents.filter((event) =>
+        event.long_task.scripts?.[0]?.invoker?.includes('BUTTON.onclick')
+      )
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action).toEqual({
+        error: {
+          count: 0,
+        },
+        id: expect.any(String) as unknown as string,
+        loading_time: expect.any(Number),
+        long_task: {
+          count: 1,
+        },
+
+        resource: {
+          count: expect.any(Number) as unknown as number,
+        },
+        target: {
+          name: 'click me',
+        },
+        type: 'click',
+        frustration: {
+          type: [],
+        },
+      })
+
+      expect(longTaskEvents).toHaveLength(1)
+      // long task action id should contain the collected action id + the discarded rage click id
+      expect(longTaskEvents[0].action!.id).toHaveLength(2)
+      expect(longTaskEvents[0].action!.id).toContain(actionEvents[0].action.id!)
+    })
+
   createTest('increment the view.action.count of the view active when the action started')
     .withRum({ trackUserInteractions: true })
     .withBody(html`
