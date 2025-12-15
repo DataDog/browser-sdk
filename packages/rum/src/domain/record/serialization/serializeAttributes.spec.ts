@@ -335,6 +335,19 @@ describe('serializeDOMAttributes', () => {
       }
     }
   })
+
+  it('normalizes tag names', () => {
+    // Create an <option> element in the SVG namespace. This makes it an XML element;
+    // among other things, this results in a lowercase Element#tagName.
+    const element = document.createElementNS('http://www.w3.org/2000/svg', 'option')
+    expect(element.tagName).toBe('option')
+
+    // Check that serializeDOMAttributes() still executes <option>-specific serialization
+    // behavior; it shouldn't behave differently because Element#tagName is lowercase.
+    ;(element as any).selected = true
+    const attributes = serializeDOMAttributes(element, NodePrivacyLevel.ALLOW, transaction)
+    expect(attributes['selected']).toBe(true)
+  })
 })
 
 describe('serializeVirtualAttributes', () => {
@@ -496,6 +509,19 @@ describe('serializeVirtualAttributes', () => {
       expected.scrollTop = 0
       expectVirtualAttributes(div, {}, checkElementScrollPositions)
     })
+  })
+
+  it('normalizes tag names', () => {
+    // Create an <audio> element in the SVG namespace. This makes it an XML element;
+    // among other things, this results in a lowercase Element#tagName.
+    const element = document.createElementNS('http://www.w3.org/2000/svg', 'audio')
+    expect(element.tagName).toBe('audio')
+
+    // Check that serializeVirtualAttributes() still executes <audio>-specific serialization
+    // behavior; it shouldn't behave differently because Element#tagName is lowercase.
+    ;(element as any).paused = true
+    const attributes = serializeVirtualAttributes(element, NodePrivacyLevel.ALLOW, transaction)
+    expect(attributes.rr_mediaState).toBe('paused')
   })
 })
 
