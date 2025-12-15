@@ -38,7 +38,7 @@ async function loadSettingsFromStorage() {
   const storage = await chrome.storage.local.get()
   settings = Object.fromEntries(
     Object.entries(DEFAULT_SETTINGS).map(([name, defaultValue]) => [name, storage[name] ?? defaultValue])
-  ) as Settings
+  ) as unknown as Settings
   if (settings) {
     syncSettingsWithSessionStorage(settings)
   }

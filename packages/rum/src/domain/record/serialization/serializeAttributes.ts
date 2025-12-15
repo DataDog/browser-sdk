@@ -1,6 +1,6 @@
 import { NodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { isSafari } from '@datadog/browser-core'
-import { getElementInputValue, switchToAbsoluteUrl } from './serializationUtils'
+import { getElementInputValue, normalizedTagName, switchToAbsoluteUrl } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
 import type { SerializationTransaction } from './serializationTransaction'
 import { SerializationKind } from './serializationTransaction'
@@ -27,7 +27,7 @@ export function serializeDOMAttributes(
   }
 
   const attrs: Record<string, string> = {}
-  const tagName = element.tagName
+  const tagName = normalizedTagName(element)
 
   for (let i = 0; i < element.attributes.length; i += 1) {
     const attribute = element.attributes.item(i)!
@@ -40,7 +40,7 @@ export function serializeDOMAttributes(
 
   if (
     (element as HTMLInputElement).value &&
-    (tagName === 'TEXTAREA' || tagName === 'SELECT' || tagName === 'OPTION' || tagName === 'INPUT')
+    (tagName === 'textarea' || tagName === 'select' || tagName === 'option' || tagName === 'input')
   ) {
     const formValue = getElementInputValue(element, nodePrivacyLevel)
     if (formValue !== undefined) {
@@ -51,7 +51,7 @@ export function serializeDOMAttributes(
   /**
    * <Option> can be selected, which occurs if its `value` matches ancestor `<Select>.value`
    */
-  if (tagName === 'OPTION') {
+  if (tagName === 'option') {
     const optionElement = element as HTMLOptionElement
     if (optionElement.selected && !shouldMaskNode(optionElement, nodePrivacyLevel)) {
       attrs.selected = ''
@@ -69,7 +69,7 @@ export function serializeDOMAttributes(
    * NOTE: `checked` property exists on `HTMLInputElement`. For serializer assumptions, we check for type=radio|check.
    */
   const inputElement = element as HTMLInputElement
-  if (tagName === 'INPUT' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
+  if (tagName === 'input' && (inputElement.type === 'radio' || inputElement.type === 'checkbox')) {
     if (inputElement.checked && !shouldMaskNode(inputElement, nodePrivacyLevel)) {
       attrs.checked = ''
     } else {
@@ -90,11 +90,11 @@ export function serializeVirtualAttributes(
   }
 
   const attrs: VirtualAttributes = {}
-  const tagName = element.tagName
   const doc = element.ownerDocument
+  const tagName = normalizedTagName(element)
 
   // remote css
-  if (tagName === 'LINK') {
+  if (tagName === 'link') {
     const stylesheet = Array.from(doc.styleSheets).find((s) => s.href === (element as HTMLLinkElement).href)
     const cssText = getCssRulesString(stylesheet)
     if (cssText && stylesheet) {
@@ -104,7 +104,7 @@ export function serializeVirtualAttributes(
   }
 
   // dynamic stylesheet
-  if (tagName === 'STYLE' && (element as HTMLStyleElement).sheet) {
+  if (tagName === 'style' && (element as HTMLStyleElement).sheet) {
     const cssText = getCssRulesString((element as HTMLStyleElement).sheet)
     if (cssText) {
       transaction.addMetric('cssText', cssText.length)
@@ -115,7 +115,7 @@ export function serializeVirtualAttributes(
   /**
    * Serialize the media playback state
    */
-  if (tagName === 'AUDIO' || tagName === 'VIDEO') {
+  if (tagName === 'audio' || tagName === 'video') {
     const mediaElement = element as HTMLMediaElement
     attrs.rr_mediaState = mediaElement.paused ? 'paused' : 'played'
   }
