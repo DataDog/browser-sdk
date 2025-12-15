@@ -61,19 +61,9 @@ describe('serializeDOMAttributes', () => {
       // serialized at all. Used for boolean form element attributes like `<option selected>`.
       // - 'maskable-image': Like 'maskable', except that we expect the masked
       // representation to be a data URL image.
-      // - 'maskable-option-selected': Like 'maskable-boolean', in that when unmasked the
-      // representation is a boolean value. However, when the value is masked, instead of
-      // not being serialized, its underlying string value is used. The effect is a weird
-      // hybrid of 'always-unmasked' and 'maskable-boolean'.
-      // TODO: Reduce the complexity here by aligning 'maskable-form',
-      // 'maskable-form-boolean', and 'maskable-option-selected'.
-      expectedBehavior:
-        | 'always-unmasked'
-        | 'maskable'
-        | 'maskable-form'
-        | 'maskable-form-boolean'
-        | 'maskable-image'
-        | 'maskable-option-selected'
+      // TODO: Reduce the complexity here by aligning 'maskable-form' and
+      // 'maskable-form-boolean'.
+      expectedBehavior: 'always-unmasked' | 'maskable' | 'maskable-form' | 'maskable-form-boolean' | 'maskable-image'
 
       // How to treat the IGNORE privacy level. The default is 'unmasked'.
       // TODO: Eliminate this inconsistency by always masking for IGNORE.
@@ -225,10 +215,7 @@ describe('serializeDOMAttributes', () => {
       // when masked, the entire attribute should not be serialized.
       {
         html: '<option selected>',
-        // TODO: This is a bug! If the <option> is masked, we don't set the value of
-        // 'selected' based on the property, but we still allow the DOM attribute to be
-        // recorded. We should fix this; this should be 'maskable-boolean'.
-        expectedBehavior: 'maskable-option-selected',
+        expectedBehavior: 'maskable-form-boolean',
         ignoreBehavior: 'masked',
       },
       {
@@ -285,13 +272,7 @@ describe('serializeDOMAttributes', () => {
       attribute: { name: string; value: string | undefined },
       privacyLevel: NodePrivacyLevel
     ): boolean | string | undefined {
-      let unmaskedValue: boolean | string | undefined = testCase.attrValue ?? attribute.value
-      if (
-        testCase.expectedBehavior === 'maskable-form-boolean' ||
-        testCase.expectedBehavior === 'maskable-option-selected'
-      ) {
-        unmaskedValue = attribute.value === ''
-      }
+      const unmaskedValue: boolean | string | undefined = testCase.attrValue ?? attribute.value
 
       let maskedValue: boolean | string | undefined
       if (testCase.expectedBehavior === 'maskable-form') {
@@ -300,8 +281,6 @@ describe('serializeDOMAttributes', () => {
         maskedValue = undefined
       } else if (testCase.expectedBehavior === 'maskable-image') {
         maskedValue = CENSORED_IMG_MARK
-      } else if (testCase.expectedBehavior === 'maskable-option-selected') {
-        maskedValue = attribute.value
       } else {
         maskedValue = CENSORED_STRING_MARK
       }
@@ -346,7 +325,7 @@ describe('serializeDOMAttributes', () => {
     // behavior; it shouldn't behave differently because Element#tagName is lowercase.
     ;(element as any).selected = true
     const attributes = serializeDOMAttributes(element, NodePrivacyLevel.ALLOW, transaction)
-    expect(attributes['selected']).toBe(true)
+    expect(attributes['selected']).toBe('')
   })
 })
 
