@@ -1,11 +1,13 @@
 # Order is important, the last matching pattern takes the most precedence.
 
+# Default
+*    @Datadog/rum-browser
+
 # Global
-packages/flagging                          @Datadog/feature-flagging-experimentation
-packages/rum/src/domain/record             @Datadog/rum-browser @Datadog/session-replay-sdk
-packages/rum/src/domain/segmentCollection  @Datadog/rum-browser @Datadog/session-replay-sdk
-packages/rum/src/domain/*.ts               @Datadog/rum-browser @Datadog/session-replay-sdk
-*                                          @Datadog/rum-browser
+packages/flagging                               @Datadog/feature-flagging-experimentation
+packages/rum/src/domain/record/**               @Datadog/rum-browser @Datadog/session-replay-sdk
+packages/rum/src/domain/segmentCollection/**    @Datadog/rum-browser @Datadog/session-replay-sdk
+packages/rum/src/domain/*.ts                    @Datadog/rum-browser @Datadog/session-replay-sdk
 
 # Docs
 *README.md    @Datadog/rum-browser @DataDog/documentation
