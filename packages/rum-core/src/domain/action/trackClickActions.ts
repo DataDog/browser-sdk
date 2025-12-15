@@ -125,6 +125,10 @@ export function trackClickActions(
       const rageClick = click.clone()
       currentClickChain = createClickChain(click, (clicks) => {
         finalizeClicks(clicks, rageClick)
+        // Clear the reference to allow garbage collection. Without this, the finalize callback
+        // retains a closure reference to the old click chain, preventing it from being cleaned up
+        // and causing a memory leak as click chains accumulate over time.
+        currentClickChain = undefined
       })
     }
   }
