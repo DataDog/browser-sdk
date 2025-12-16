@@ -14,7 +14,7 @@
     "@datadog/browser-rum-core": "6.25.0",
     "@msgpack/msgpack": "3.1.2",
     "@openfeature/core": "1.9.1",
-    "dd-trace": "github:datadog/dd-trace-js#vendor-relative",
+    "dd-trace": "github:datadog/dd-trace-js#86b4f716ce3f5fcf36d8e0a6e79a2104c80c55a5",
     "graphql": "16.12.0"
   },
   "peerDependencies": {
