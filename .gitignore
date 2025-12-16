@@ -30,3 +30,4 @@ docs/
 test-results/
 playwright-report/
 .vscode
+/.claude/settings.local.json
