@@ -181,19 +181,19 @@ async function processCrashesFiles(onRumEventObservable: Observable<CollectedRum
   const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
 
   // Check if crash context file exists
+  let crashContextData: CrashContext
   try {
     await fs.access(crashContextPath)
+    // Read crash context from previous session
+    const crashContext = await fs.readFile(crashContextPath, 'utf-8')
+    crashContextData = JSON.parse(crashContext) as CrashContext
   } catch {
-    console.warn('[Datadog] No crash context found')
+    console.warn('[Datadog] Missing or invalid crash context found at', crashContextPath)
     // Stop reporting, we don't want to report incorrect data
     pendingCrashReportsProcessed = true
     callbacks.forEach((callback) => callback())
     return
   }
-
-  // Read crash context from previous session
-  const crashContext = await fs.readFile(crashContextPath, 'utf-8')
-  const crashContextData = JSON.parse(crashContext) as CrashContext
 
   // Check if there are any crash reports pending
   const pendingCrashReports = await getFilesRecursive(crashesDirectory, '.dmp')
