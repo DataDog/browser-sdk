@@ -38,6 +38,30 @@ export const NodeType: {
 
 export type NodeType = (typeof NodeType)[keyof typeof NodeType]
 
+// ChangeTypeId evaluates to Id if [Id, ...Data[]] is a valid variant of Change;
+// otherwise, it triggers a compile-time error.
+type ChangeTypeId<Id, Data> = [Id, ...Data[]] extends SessionReplay.Change ? Id : never
+
+export const ChangeType: {
+  AddString: ChangeTypeId<0, SessionReplay.AddStringChange>
+  AddNode: ChangeTypeId<1, SessionReplay.AddNodeChange>
+  RemoveNode: ChangeTypeId<2, SessionReplay.RemoveNodeChange>
+  Attribute: ChangeTypeId<3, SessionReplay.AttributeChange>
+  Text: ChangeTypeId<4, SessionReplay.TextChange>
+  Size: ChangeTypeId<5, SessionReplay.SizeChange>
+  ScrollPosition: ChangeTypeId<6, SessionReplay.ScrollPositionChange>
+  AdoptedStyleSheets: ChangeTypeId<7, SessionReplay.AdoptedStyleSheetsChange>
+} = {
+  AddString: 0,
+  AddNode: 1,
+  RemoveNode: 2,
+  Attribute: 3,
+  Text: 4,
+  Size: 5,
+  ScrollPosition: 6,
+  AdoptedStyleSheets: 7,
+} as const
+
 export const IncrementalSource: {
   Mutation: SessionReplay.BrowserMutationData['source']
   MouseMove: Exclude<SessionReplay.MousemoveData['source'], 6>
