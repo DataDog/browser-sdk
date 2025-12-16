@@ -91,16 +91,6 @@ cmd_check_server_side_rendering_compatibility () {
   yarn compat:ssr || fail 'server side rendering compatibility broken'
 }
 
-# in CI, build and pack after install to allow renovate to install test apps
-cmd_ci_build_and_pack () {
-  if [[ -z "${CI+x}" ]]; then
-    exit 0
-  else
-    yarn build
-    yarn run pack
-  fi
-}
-
 fail () {
   echo
   echo "❌ ${1}"

@@ -5,62 +5,6 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@datadog/browser-core@file:../../../packages/core/package.tgz::locator=react-router-v6-app%40workspace%3A.":
-  version: 6.25.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=5f6a44&locator=react-router-v6-app%40workspace%3A."
-  checksum: 10c0/d20a19ba2e618847b466eab8363487b85fc487befd0b93e16410f54f8b32ea94c9e6b1a7c66e9541fd708d2eac6f3416cd214f5ad7e5104459d87a73687d506f
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=react-router-v6-app%40workspace%3A.":
-  version: 6.25.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=62f963&locator=react-router-v6-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.25.0"
-  checksum: 10c0/e14f387c7591daea532ce34e62f906a9f39e19fe4749914b8db44a84a3de561bd75ac54fe48713220fb7e01feb187c158c984e3f7c6b3191b46bb15d2ffefefe
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=react-router-v6-app%40workspace%3A.":
-  version: 6.25.0
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=fb5234&locator=react-router-v6-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.25.0"
-    "@datadog/browser-rum-core": "npm:6.25.0"
-  peerDependencies:
-    react: 18 || 19
-    react-router: 6 || 7
-    react-router-dom: 6 || 7
-  peerDependenciesMeta:
-    "@datadog/browser-rum":
-      optional: true
-    "@datadog/browser-rum-slim":
-      optional: true
-    react:
-      optional: true
-    react-router:
-      optional: true
-    react-router-dom:
-      optional: true
-  checksum: 10c0/27d1521afed6fd6a225a4be63633c57d206a09e082c218f91d658d4a6054f43ae11c4acb93b2cf3a781e01a4c847f95609414795a24f6a262aedb0cf8b102fa0
-  languageName: node
-  linkType: hard
-
-"@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=react-router-v6-app%40workspace%3A.":
-  version: 6.25.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=912b9a&locator=react-router-v6-app%40workspace%3A."
-  dependencies:
-    "@datadog/browser-core": "npm:6.25.0"
-    "@datadog/browser-rum-core": "npm:6.25.0"
-  peerDependencies:
-    "@datadog/browser-logs": 6.25.0
-  peerDependenciesMeta:
-    "@datadog/browser-logs":
-      optional: true
-  checksum: 10c0/596e6c651000bcaaaac1ef11c7573c570d963d223d05d03ad07a3e1957a95cf2fdc50880b71b145690e6c735d44c150272bba0208b307cba5d361cf190883953
-  languageName: node
-  linkType: hard
-
 "@jridgewell/gen-mapping@npm:^0.3.5":
   version: 0.3.12
   resolution: "@jridgewell/gen-mapping@npm:0.3.12"
@@ -733,14 +677,20 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-router-v6-app@workspace:."
   dependencies:
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
-    "@datadog/browser-rum-react": "file:../../../packages/rum-react/package.tgz"
     react: "npm:19.2.0"
     react-dom: "npm:19.2.0"
     react-router-dom: "npm:6.30.0"
     ts-loader: "npm:9.5.4"
     typescript: "npm:5.9.3"
     webpack: "npm:5.103.0"
+  peerDependencies:
+    "@datadog/browser-rum": "*"
+    "@datadog/browser-rum-react": "*"
+  peerDependenciesMeta:
+    "@datadog/browser-rum":
+      optional: true
+    "@datadog/browser-rum-react":
+      optional: true
   languageName: unknown
   linkType: soft
 
