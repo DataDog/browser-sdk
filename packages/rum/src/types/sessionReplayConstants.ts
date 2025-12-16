@@ -8,6 +8,7 @@ export const RecordType: {
   ViewEnd: SessionReplay.ViewEndRecord['type']
   VisualViewport: SessionReplay.VisualViewportRecord['type']
   FrustrationRecord: SessionReplay.FrustrationRecord['type']
+  Change: SessionReplay.BrowserChangeRecord['type']
 } = {
   FullSnapshot: 2,
   IncrementalSnapshot: 3,
@@ -16,6 +17,7 @@ export const RecordType: {
   ViewEnd: 7,
   VisualViewport: 8,
   FrustrationRecord: 9,
+  Change: 12,
 } as const
 
 export type RecordType = (typeof RecordType)[keyof typeof RecordType]
