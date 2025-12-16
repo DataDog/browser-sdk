@@ -55,10 +55,12 @@ function createElectronApp(tempDir: string): void {
 
 function installElectronSdk(appDir: string): void {
   const electronPackagePath = path.join(import.meta.dirname, '../packages/electron')
+  const browserRumPackagePath = path.join(import.meta.dirname, '../packages/rum')
 
   command`yarn build`.withCurrentWorkingDirectory(electronPackagePath).run()
 
   command`npm install @datadog/electron@file:${electronPackagePath}`.withCurrentWorkingDirectory(appDir).run()
+  command`npm install @datadog/browser-rum@file:${browserRumPackagePath}`.withCurrentWorkingDirectory(appDir).run()
 }
 
 function instrumentApp(appDir: string): void {
@@ -67,8 +69,8 @@ function instrumentApp(appDir: string): void {
   const mainJsPath = path.join(appDir, 'src', 'main.js')
   const currentMainJs = fs.readFileSync(mainJsPath, 'utf8')
 
-  const instrumentedMainJs = `import { ddElectron } from '@datadog/electron/main';
-
+  const instrumentedMainJs = `const { ddElectron, monitorIpcMain } = require('@datadog/electron/main');
+const ipcMain = monitorIpcMain()
 // Initialize Datadog Electron SDK
 ddElectron.init({
   clientToken: 'pub0000000000000000000000000000000',
@@ -80,6 +82,34 @@ ddElectron.init({
 ${currentMainJs}
 `
   fs.writeFileSync(mainJsPath, instrumentedMainJs)
+
+  const preloadJsPath = path.join(appDir, 'src', 'preload.js')
+  const currentPreloadJs = fs.readFileSync(preloadJsPath, 'utf8')
+
+  const instrumentedPreloadJs = `const { setupRendererBridge } = require('@datadog/electron/preload');
+
+setupRendererBridge()
+const ipcRenderer = monitorIpcRenderer()
+
+${currentPreloadJs}
+`
+  fs.writeFileSync(preloadJsPath, instrumentedPreloadJs)
+
+  const rendererJsPath = path.join(appDir, 'src', 'preload.js')
+  const currentRendererJs = fs.readFileSync(rendererJsPath, 'utf8')
+
+  const instrumentedRendererJs = `const { electronPlugin } = require('@datadog/electron/renderer');
+  const { datadogRum } = require('@datadog/browser-rum');
+
+datadogRum.init({
+  applicationId: 'xxx',
+  clientToken: 'xxx',
+  plugins: [electronPlugin()]
+})
+
+${currentRendererJs}
+`
+  fs.writeFileSync(rendererJsPath, instrumentedRendererJs)
 }
 
 function packageApp(appDir: string): number {
