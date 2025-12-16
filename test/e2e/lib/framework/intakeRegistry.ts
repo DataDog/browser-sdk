@@ -6,6 +6,7 @@ import type {
   RumResourceEvent,
   RumViewEvent,
   RumVitalEvent,
+  RumLongTaskEvent,
 } from '@datadog/browser-rum'
 import type {
   TelemetryEvent,
@@ -102,6 +103,10 @@ export class IntakeRegistry {
     return this.rumEvents.filter(isRumResourceEvent)
   }
 
+  get rumLongTaskEvents() {
+    return this.rumEvents.filter(isRumLongTaskEvent)
+  }
+
   get rumViewEvents() {
     return this.rumEvents.filter(isRumViewEvent)
   }
@@ -169,6 +174,10 @@ function isRumResourceEvent(event: RumEvent): event is RumResourceEvent {
 
 function isRumActionEvent(event: RumEvent): event is RumActionEvent {
   return event.type === 'action'
+}
+
+function isRumLongTaskEvent(event: RumEvent): event is RumLongTaskEvent {
+  return event.type === 'long_task'
 }
 
 function isRumViewEvent(event: RumEvent): event is RumViewEvent {
