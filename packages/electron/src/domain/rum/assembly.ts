@@ -17,25 +17,32 @@ export function startRumEventAssembleAndSend(
     if (defaultRumEventAttributes === DISCARDED) {
       return
     }
-    const commonContext =
-      source === 'renderer'
-        ? {
-            session: { id: defaultRumEventAttributes.session!.id },
-            application: { id: defaultRumEventAttributes.application!.id },
-          }
-        : combine(defaultRumEventAttributes, {
-            // TODO source electron
-            source: 'browser' as const,
-            application: { id: defaultRumEventAttributes.application!.id },
-            session: {
-              type: 'user' as const,
-            },
-            _dd: {
-              format_version: 2 as const,
-            },
-          })
 
-    const serverRumEvent = combine(commonContext, event)
+    let serverRumEvent
+    if (source === 'renderer') {
+      // override renderer events attributes
+      serverRumEvent = combine(event, {
+        session: { id: defaultRumEventAttributes.session!.id },
+        application: { id: defaultRumEventAttributes.application!.id },
+      })
+    } else {
+      // override common attributes by more specific ones
+      serverRumEvent = combine(
+        {
+          // TODO source electron
+          source: 'browser' as const,
+          application: { id: defaultRumEventAttributes.application!.id },
+          session: {
+            type: 'user' as const,
+          },
+          _dd: {
+            format_version: 2 as const,
+          },
+        },
+        defaultRumEventAttributes,
+        event
+      )
+    }
 
     if (serverRumEvent.type === RumEventType.VIEW) {
       rumBatch.upsert(serverRumEvent as unknown as Context, serverRumEvent.view.id)
