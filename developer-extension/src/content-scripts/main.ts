@@ -3,12 +3,10 @@ import { EventListeners } from '../common/eventListeners'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
 import { SESSION_STORAGE_SETTINGS_KEY } from '../common/sessionKeyConstant'
 
-declare global {
-  interface Window extends EventTarget {
-    DD_RUM?: SdkPublicApi
-    DD_LOGS?: SdkPublicApi
-    __ddBrowserSdkExtensionCallback?: (message: unknown) => void
-  }
+const windowWithSdkGlobals = window as Window & {
+  DD_RUM?: SdkPublicApi
+  DD_LOGS?: SdkPublicApi
+  __ddBrowserSdkExtensionCallback?: (message: unknown) => void
 }
 
 interface SdkPublicApi {
@@ -17,7 +15,7 @@ interface SdkPublicApi {
 
 export function main() {
   // Prevent multiple executions when the devetools are reconnecting
-  if (window.__ddBrowserSdkExtensionCallback) {
+  if (windowWithSdkGlobals.__ddBrowserSdkExtensionCallback) {
     return
   }
 
@@ -57,7 +55,7 @@ export function main() {
 function sendEventsToExtension() {
   // This script is executed in the "main" execution world, the same world as the webpage. Thus, it
   // can define a global callback variable to listen to SDK events.
-  window.__ddBrowserSdkExtensionCallback = (message: unknown) => {
+  windowWithSdkGlobals.__ddBrowserSdkExtensionCallback = (message: unknown) => {
     // Relays any message to the "isolated" content-script via a custom event.
     window.dispatchEvent(
       new CustomEvent('__ddBrowserSdkMessage', {
@@ -80,7 +78,7 @@ function getSettings() {
 }
 
 function noBrowserSdkLoaded() {
-  return !window.DD_RUM && !window.DD_LOGS
+  return !windowWithSdkGlobals.DD_RUM && !windowWithSdkGlobals.DD_LOGS
 }
 
 function injectDevBundle(url: string, global: GlobalInstrumentation) {
@@ -169,7 +167,7 @@ function instrumentGlobal(global: 'DD_RUM' | 'DD_LOGS') {
   })
 
   return {
-    get: () => window[global],
+    get: () => windowWithSdkGlobals[global],
     onSet: (callback: (sdkInstance: SdkPublicApi) => void) => {
       eventListeners.subscribe(callback)
     },
