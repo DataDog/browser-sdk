@@ -280,11 +280,9 @@ describe('actionCollection', () => {
     })
 
     it('should merge contexts with stop precedence on conflicts', () => {
-      // Merge non-conflicting keys
       startAction('action1', { context: { cart: 'abc' } })
       stopAction('action1', { context: { total: 100 } })
 
-      // Stop overrides on conflict
       startAction('action2', { context: { status: 'pending' } })
       stopAction('action2', { context: { status: 'complete' } })
 
@@ -302,15 +300,12 @@ describe('actionCollection', () => {
     })
 
     it('should handle type precedence: stop > start > default(CUSTOM)', () => {
-      // Stop overrides start
       startAction('action1', { type: ActionType.TAP })
       stopAction('action1', { type: ActionType.SCROLL })
 
-      // Start used when stop not provided
       startAction('action2', { type: ActionType.SWIPE })
       stopAction('action2')
-
-      // Default to CUSTOM when neither provided
+      
       startAction('action3')
       stopAction('action3')
 
