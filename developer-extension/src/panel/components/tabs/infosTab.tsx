@@ -83,6 +83,7 @@ export function InfosTab() {
                   setSetting('rumConfigurationOverride', value)
                 }}
                 isOverridden={!!settings.rumConfigurationOverride}
+                sdkType="rum"
               />
               <Entry name="Internal context" value={infos.rum.internalContext} />
               <Entry name="Global context" value={infos.rum.globalContext} />
@@ -114,6 +115,7 @@ export function InfosTab() {
                   setSetting('logsConfigurationOverride', value)
                 }}
                 isOverridden={!!settings.logsConfigurationOverride}
+                sdkType="logs"
               />
               <Entry name="Global context" value={infos.logs.globalContext} />
               <Entry name="User" value={infos.logs.user} />
@@ -150,11 +152,13 @@ function Entry({
   value,
   isOverridden = false,
   onChange,
+  sdkType,
 }: {
   name: string
   value: any
   isOverridden?: boolean
   onChange?: (value: object | null) => void
+  sdkType?: 'rum' | 'logs'
 }) {
   const [edited, setEdited] = useState(false)
   const [newValue, setNewValue] = React.useState<string | null>()
@@ -220,7 +224,7 @@ function Entry({
             )}
           </div>
           {!edited ? (
-            <Json value={value} />
+            <Json value={value} sdkType={sdkType} />
           ) : (
             <JsonInput
               style={{ marginTop: '5px' }}
