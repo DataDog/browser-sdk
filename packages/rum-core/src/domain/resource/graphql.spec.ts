@@ -305,7 +305,7 @@ describe('GraphQL detection and metadata extraction', () => {
       })
 
       expect(result?.operationType).toBe('query')
-      expect(result?.errors_count).toBe(1)
+      expect(result?.error_count).toBe(1)
       expect(result?.errors).toEqual([{ message: 'Not found', path: undefined, locations: undefined, code: undefined }])
     })
 
@@ -325,7 +325,7 @@ describe('GraphQL detection and metadata extraction', () => {
       })
 
       expect(result?.operationType).toBe('query')
-      expect(result?.errors_count).toBeUndefined()
+      expect(result?.error_count).toBeUndefined()
       expect(result?.errors).toBeUndefined()
     })
 
@@ -348,7 +348,7 @@ describe('GraphQL detection and metadata extraction', () => {
       })
 
       expect(result?.operationType).toBe('query')
-      expect(result?.errors_count).toBe(2)
+      expect(result?.error_count).toBe(2)
       expect(result?.errors).toEqual([
         { message: 'Error 1', path: undefined, locations: undefined, code: undefined },
         { message: 'Error 2', path: undefined, locations: undefined, code: undefined },

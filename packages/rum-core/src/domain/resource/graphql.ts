@@ -19,7 +19,7 @@ export interface GraphQlMetadata {
   operationName?: string
   variables?: string
   payload?: string
-  errors_count?: number
+  error_count?: number
   errors?: GraphQlError[]
 }
 
@@ -35,7 +35,7 @@ export function extractGraphQlMetadata(
   if (graphQlConfig.trackResponseErrors && request.responseBody) {
     const responseErrors = parseGraphQlResponse(request.responseBody)
     if (responseErrors) {
-      metadata.errors_count = responseErrors.length
+      metadata.error_count = responseErrors.length
       metadata.errors = responseErrors
     }
   }
