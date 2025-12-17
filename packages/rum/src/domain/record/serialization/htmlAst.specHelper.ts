@@ -2,7 +2,7 @@ import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import { display, objectValues } from '@datadog/browser-core'
 import type { SerializedNodeWithId } from '../../../types'
 import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
-import { serializeNodeWithId } from './serializeNode'
+import { serializeNode } from './serializeNode'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {
@@ -30,7 +30,7 @@ export const generateLeanSerializedDoc = (htmlContent: string, privacyTag: strin
   const transaction = createSerializationTransactionForTesting()
   const newDoc = makeHtmlDoc(htmlContent, privacyTag)
   const serializedDoc = removeIdFieldsRecursivelyClone(
-    serializeNodeWithId(newDoc, NodePrivacyLevel.ALLOW, transaction) as unknown as Record<string, unknown>
+    serializeNode(newDoc, NodePrivacyLevel.ALLOW, transaction) as unknown as Record<string, unknown>
   ) as unknown as SerializedNodeWithId
   return serializedDoc
 }
@@ -1438,7 +1438,7 @@ export const AST_ALLOW = {
                   type: 2,
                   tagName: 'option',
                   attributes: {
-                    selected: true,
+                    selected: '',
                     'aria-label': 'A',
                     value: 'private option A',
                   },
@@ -1526,7 +1526,7 @@ export const AST_ALLOW = {
                 type: 'checkbox',
                 name: 'inputFoo',
                 value: 'on',
-                checked: true,
+                checked: '',
               },
               childNodes: [],
             },
@@ -1558,7 +1558,6 @@ export const AST_ALLOW = {
                 type: 'radio',
                 name: 'radioGroup',
                 value: 'bar-private',
-                checked: false,
               },
               childNodes: [],
             },

@@ -90,6 +90,14 @@ export function getValidTagName(tagName: string): string {
   return processedTagName
 }
 
+/**
+ * Returns the tag name of the given element, normalized to ensure a consistent lowercase
+ * representation regardless of whether the element is HTML, XHTML, or SVG.
+ */
+export function normalizedTagName(element: Element): string {
+  return element.tagName.toLowerCase()
+}
+
 export function censoredImageForSize(width: number, height: number) {
   return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}' style='background-color:silver'%3E%3C/svg%3E`
 }

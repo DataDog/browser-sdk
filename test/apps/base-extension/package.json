@@ -4,12 +4,22 @@
   "scripts": {
     "build": "webpack"
   },
-  "dependencies": {
-    "@datadog/browser-logs": "file:../../../packages/logs/package.tgz",
-    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz"
+  "peerDependencies": {
+    "@datadog/browser-logs": "*",
+    "@datadog/browser-rum": "*"
+  },
+  "peerDependenciesMeta": {
+    "@datadog/browser-logs": {
+      "optional": true
+    },
+    "@datadog/browser-rum": {
+      "optional": true
+    }
   },
   "resolutions": {
     "@datadog/browser-rum-core": "file:../../../packages/rum-core/package.tgz",
+    "@datadog/browser-rum": "file:../../../packages/rum/package.tgz",
+    "@datadog/browser-logs": "file:../../../packages/logs/package.tgz",
     "@datadog/browser-core": "file:../../../packages/core/package.tgz",
     "@datadog/browser-rum-slim": "file:../../../packages/rum-slim/package.tgz",
     "@datadog/browser-worker": "file:../../../packages/worker/package.tgz"

@@ -11,7 +11,7 @@ import {
 import { appendElement } from '@datadog/browser-rum-core/test'
 import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
 import type { ScrollPositions } from '../elementsScrollPositions'
-import { getCssRulesString, serializeAttributes } from './serializeAttributes'
+import { getCssRulesString, serializeDOMAttributes, serializeVirtualAttributes } from './serializeAttributes'
 import { SerializationKind, type SerializationTransaction } from './serializationTransaction'
 import type { VirtualAttributes } from './serialization.types'
 import type { SerializationMetric, SerializationStats } from './serializationStats'
@@ -28,20 +28,12 @@ const PRIVACY_LEVELS = Object.keys({
   [NodePrivacyLevel.MASK_USER_INPUT]: true,
 } satisfies Record<NodePrivacyLevel, true>) as NodePrivacyLevel[]
 
-describe('serializeAttributes for DOM attributes', () => {
+describe('serializeDOMAttributes', () => {
   let transaction: SerializationTransaction
 
   beforeEach(() => {
     transaction = createSerializationTransactionForTesting()
   })
-
-  function serializeDOMAttributes(
-    element: Element,
-    nodePrivacyLevel: NodePrivacyLevel,
-    transaction: SerializationTransaction
-  ): Record<string, string | number | boolean | undefined> {
-    return serializeAttributes(element, nodePrivacyLevel, transaction)
-  }
 
   it('serializes attribute values', () => {
     interface TestCase {
@@ -69,19 +61,9 @@ describe('serializeAttributes for DOM attributes', () => {
       // serialized at all. Used for boolean form element attributes like `<option selected>`.
       // - 'maskable-image': Like 'maskable', except that we expect the masked
       // representation to be a data URL image.
-      // - 'maskable-option-selected': Like 'maskable-boolean', in that when unmasked the
-      // representation is a boolean value. However, when the value is masked, instead of
-      // not being serialized, its underlying string value is used. The effect is a weird
-      // hybrid of 'always-unmasked' and 'maskable-boolean'.
-      // TODO: Reduce the complexity here by aligning 'maskable-form',
-      // 'maskable-form-boolean', and 'maskable-option-selected'.
-      expectedBehavior:
-        | 'always-unmasked'
-        | 'maskable'
-        | 'maskable-form'
-        | 'maskable-form-boolean'
-        | 'maskable-image'
-        | 'maskable-option-selected'
+      // TODO: Reduce the complexity here by aligning 'maskable-form' and
+      // 'maskable-form-boolean'.
+      expectedBehavior: 'always-unmasked' | 'maskable' | 'maskable-form' | 'maskable-form-boolean' | 'maskable-image'
 
       // How to treat the IGNORE privacy level. The default is 'unmasked'.
       // TODO: Eliminate this inconsistency by always masking for IGNORE.
@@ -233,10 +215,7 @@ describe('serializeAttributes for DOM attributes', () => {
       // when masked, the entire attribute should not be serialized.
       {
         html: '<option selected>',
-        // TODO: This is a bug! If the <option> is masked, we don't set the value of
-        // 'selected' based on the property, but we still allow the DOM attribute to be
-        // recorded. We should fix this; this should be 'maskable-boolean'.
-        expectedBehavior: 'maskable-option-selected',
+        expectedBehavior: 'maskable-form-boolean',
         ignoreBehavior: 'masked',
       },
       {
@@ -260,7 +239,8 @@ describe('serializeAttributes for DOM attributes', () => {
       element.remove()
 
       for (const privacyLevel of PRIVACY_LEVELS) {
-        const actual = serializeDOMAttributes(element, privacyLevel, transaction)[attribute.name]
+        const attributes = serializeDOMAttributes(element, privacyLevel, transaction)
+        const actual = attributes[attribute.name] as boolean | string | undefined
         const expected = expectedValueForPrivacyLevel(testCase, element, attribute, privacyLevel)
         expect(actual).withContext(`${testCase.html} for ${privacyLevel}`).toEqual(expected)
       }
@@ -292,13 +272,7 @@ describe('serializeAttributes for DOM attributes', () => {
       attribute: { name: string; value: string | undefined },
       privacyLevel: NodePrivacyLevel
     ): boolean | string | undefined {
-      let unmaskedValue: boolean | string | undefined = testCase.attrValue ?? attribute.value
-      if (
-        testCase.expectedBehavior === 'maskable-form-boolean' ||
-        testCase.expectedBehavior === 'maskable-option-selected'
-      ) {
-        unmaskedValue = attribute.value === ''
-      }
+      const unmaskedValue: boolean | string | undefined = testCase.attrValue ?? attribute.value
 
       let maskedValue: boolean | string | undefined
       if (testCase.expectedBehavior === 'maskable-form') {
@@ -307,8 +281,6 @@ describe('serializeAttributes for DOM attributes', () => {
         maskedValue = undefined
       } else if (testCase.expectedBehavior === 'maskable-image') {
         maskedValue = CENSORED_IMG_MARK
-      } else if (testCase.expectedBehavior === 'maskable-option-selected') {
-        maskedValue = attribute.value
       } else {
         maskedValue = CENSORED_STRING_MARK
       }
@@ -342,9 +314,22 @@ describe('serializeAttributes for DOM attributes', () => {
       }
     }
   })
+
+  it('normalizes tag names', () => {
+    // Create an <option> element in the SVG namespace. This makes it an XML element;
+    // among other things, this results in a lowercase Element#tagName.
+    const element = document.createElementNS('http://www.w3.org/2000/svg', 'option')
+    expect(element.tagName).toBe('option')
+
+    // Check that serializeDOMAttributes() still executes <option>-specific serialization
+    // behavior; it shouldn't behave differently because Element#tagName is lowercase.
+    ;(element as any).selected = true
+    const attributes = serializeDOMAttributes(element, NodePrivacyLevel.ALLOW, transaction)
+    expect(attributes['selected']).toBe('')
+  })
 })
 
-describe('serializeAttributes for virtual attributes', () => {
+describe('serializeVirtualAttributes', () => {
   let stats: SerializationStats
   let transaction: SerializationTransaction
 
@@ -352,36 +337,6 @@ describe('serializeAttributes for virtual attributes', () => {
     stats = createSerializationStats()
     transaction = createSerializationTransactionForTesting({ stats })
   })
-
-  function serializeVirtualAttributes(
-    element: Element,
-    nodePrivacyLevel: NodePrivacyLevel,
-    transaction: SerializationTransaction
-  ): VirtualAttributes {
-    const attributes = serializeAttributes(element, nodePrivacyLevel, transaction)
-
-    const virtualAttributes: VirtualAttributes = {}
-    if ('_cssText' in attributes) {
-      virtualAttributes._cssText = attributes._cssText as string
-    }
-    if ('rr_mediaState' in attributes) {
-      virtualAttributes.rr_mediaState = attributes.rr_mediaState as 'paused' | 'played'
-    }
-    if ('rr_scrollLeft' in attributes) {
-      virtualAttributes.rr_scrollLeft = attributes.rr_scrollLeft as number
-    }
-    if ('rr_scrollTop' in attributes) {
-      virtualAttributes.rr_scrollTop = attributes.rr_scrollTop as number
-    }
-    if ('rr_width' in attributes) {
-      virtualAttributes.rr_width = attributes.rr_width as string
-    }
-    if ('rr_height' in attributes) {
-      virtualAttributes.rr_height = attributes.rr_height as string
-    }
-
-    return virtualAttributes
-  }
 
   function expectVirtualAttributes(
     element: Element,
@@ -533,6 +488,19 @@ describe('serializeAttributes for virtual attributes', () => {
       expected.scrollTop = 0
       expectVirtualAttributes(div, {}, checkElementScrollPositions)
     })
+  })
+
+  it('normalizes tag names', () => {
+    // Create an <audio> element in the SVG namespace. This makes it an XML element;
+    // among other things, this results in a lowercase Element#tagName.
+    const element = document.createElementNS('http://www.w3.org/2000/svg', 'audio')
+    expect(element.tagName).toBe('audio')
+
+    // Check that serializeVirtualAttributes() still executes <audio>-specific serialization
+    // behavior; it shouldn't behave differently because Element#tagName is lowercase.
+    ;(element as any).paused = true
+    const attributes = serializeVirtualAttributes(element, NodePrivacyLevel.ALLOW, transaction)
+    expect(attributes.rr_mediaState).toBe('paused')
   })
 })
 

@@ -27,6 +27,23 @@ runMain(async () => {
 function buildApp(appPath: string) {
   printLog(`Building app at ${appPath}...`)
   command`yarn install --no-immutable`.withCurrentWorkingDirectory(appPath).run()
+
+  // install peer dependencies if any
+  // intent: renovate does not allow to generate local packages before install
+  // so local packages are marked as optional peer dependencies and only installed when we build the test apps
+  const packageJson = JSON.parse(fs.readFileSync(path.join(appPath, 'package.json'), 'utf-8'))
+  if (packageJson.peerDependencies) {
+    // For each peer dependency, install it
+    for (const [name] of Object.entries(packageJson.peerDependencies)) {
+      command`yarn add -D ${name}`.withCurrentWorkingDirectory(appPath).run()
+    }
+    // revert package.json & yarn.lock changes if they are versioned
+    const areFilesVersioned = command`git ls-files package.json yarn.lock`.withCurrentWorkingDirectory(appPath).run()
+    if (areFilesVersioned) {
+      command`git checkout package.json yarn.lock`.withCurrentWorkingDirectory(appPath).run()
+    }
+  }
+
   command`yarn build`.withCurrentWorkingDirectory(appPath).run()
 }
 

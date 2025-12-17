@@ -17,11 +17,12 @@ export function serializeAttribute(
   nodePrivacyLevel: NodePrivacyLevel,
   attributeName: string,
   configuration: RumConfiguration
-): string | number | boolean | null {
+): string | null {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     // dup condition for direct access case
     return null
   }
+
   const attributeValue = element.getAttribute(attributeName)
   const tagName = element.tagName
   if (shouldMaskAttribute(tagName, attributeName, attributeValue, nodePrivacyLevel, configuration)) {
@@ -46,7 +47,7 @@ export function serializeAttribute(
     return CENSORED_STRING_MARK
   }
 
-  if (!attributeValue || typeof attributeValue !== 'string') {
+  if (!attributeValue) {
     return attributeValue
   }
 
