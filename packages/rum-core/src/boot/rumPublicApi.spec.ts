@@ -772,25 +772,31 @@ describe('rum public api', () => {
         noopRecorderApi,
         noopProfilerApi
       )
-      
+
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startAction('purchase', { 
-        type: ActionType.CUSTOM, 
-        context: { cart: 'abc' } 
-      })
-      rumPublicApi.stopAction('purchase', { 
-        context: { total: 100 } 
-      })
-      
-      expect(startActionSpy).toHaveBeenCalledWith('purchase', jasmine.objectContaining({
+      rumPublicApi.startAction('purchase', {
         type: ActionType.CUSTOM,
         context: { cart: 'abc' },
-      }))
-      expect(stopActionSpy).toHaveBeenCalledWith('purchase', jasmine.objectContaining({
+      })
+      rumPublicApi.stopAction('purchase', {
         context: { total: 100 },
-      }))
+      })
+
+      expect(startActionSpy).toHaveBeenCalledWith(
+        'purchase',
+        jasmine.objectContaining({
+          type: ActionType.CUSTOM,
+          context: { cart: 'abc' },
+        })
+      )
+      expect(stopActionSpy).toHaveBeenCalledWith(
+        'purchase',
+        jasmine.objectContaining({
+          context: { total: 100 },
+        })
+      )
     })
-  
+
     it('should sanitize startAction and stopAction inputs', () => {
       const startActionSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
@@ -801,19 +807,21 @@ describe('rum public api', () => {
         noopRecorderApi,
         noopProfilerApi
       )
-      
+
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.startAction('action_name', { 
+      rumPublicApi.startAction('action_name', {
         type: ActionType.CUSTOM,
         context: { count: 123, nested: { foo: 'bar' } } as any,
-        actionKey: 'key123'
-      })
-      
-      expect(startActionSpy.calls.argsFor(0)[1]).toEqual(jasmine.objectContaining({
-        type: ActionType.CUSTOM,
-        context: { count: 123, nested: { foo: 'bar' } },
         actionKey: 'key123',
-      }))
+      })
+
+      expect(startActionSpy.calls.argsFor(0)[1]).toEqual(
+        jasmine.objectContaining({
+          type: ActionType.CUSTOM,
+          context: { count: 123, nested: { foo: 'bar' } },
+          actionKey: 'key123',
+        })
+      )
     })
   })
 
@@ -1006,7 +1014,7 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      const sdkName = startRumSpy.calls.argsFor(0)[8]
+      const sdkName = startRumSpy.calls.argsFor(0)[9]
       expect(sdkName).toBe('rum-slim')
     })
   })

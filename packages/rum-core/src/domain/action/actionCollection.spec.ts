@@ -1,6 +1,7 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { ExperimentalFeature, HookNames, Observable } from '@datadog/browser-core'
-import { Clock, createNewEvent, mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
@@ -234,7 +235,7 @@ describe('actionCollection', () => {
       startAction('user_login')
       clock.tick(500)
       stopAction('user_login')
-      
+
       expect(rawRumEvents).toHaveSize(1)
       expect(rawRumEvents[0].duration).toBe(500 as Duration)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
@@ -261,7 +262,6 @@ describe('actionCollection', () => {
 
       expect(rawRumEvents).toHaveSize(1)
     })
-
     ;[ActionType.SWIPE, ActionType.TAP, ActionType.SCROLL].forEach((actionType) => {
       it(`should support ${actionType} action type`, () => {
         startAction('test_action', { type: actionType })
@@ -283,11 +283,11 @@ describe('actionCollection', () => {
       // Merge non-conflicting keys
       startAction('action1', { context: { cart: 'abc' } })
       stopAction('action1', { context: { total: 100 } })
-      
+
       // Stop overrides on conflict
       startAction('action2', { context: { status: 'pending' } })
       stopAction('action2', { context: { status: 'complete' } })
-      
+
       expect(rawRumEvents).toHaveSize(2)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
         jasmine.objectContaining({
@@ -305,15 +305,15 @@ describe('actionCollection', () => {
       // Stop overrides start
       startAction('action1', { type: ActionType.TAP })
       stopAction('action1', { type: ActionType.SCROLL })
-      
+
       // Start used when stop not provided
       startAction('action2', { type: ActionType.SWIPE })
       stopAction('action2')
-      
+
       // Default to CUSTOM when neither provided
       startAction('action3')
       stopAction('action3')
-      
+
       expect(rawRumEvents).toHaveSize(3)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
         jasmine.objectContaining({
