@@ -24,6 +24,7 @@ import { startInternalContext } from '../domain/contexts/internalContext'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { startViewHistory } from '../domain/contexts/viewHistory'
 import { startRequestCollection } from '../domain/requestCollection'
+import type { CustomActionState } from '../domain/action/actionCollection'
 import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
@@ -72,6 +73,7 @@ export function startRum(
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
+  customActionsState: CustomActionState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   sdkName?: SdkName
 ) {
@@ -135,6 +137,7 @@ export function startRum(
     recorderApi,
     initialViewOptions,
     customVitalsState,
+    customActionsState,
     bufferedDataObservable,
     sdkName,
     reportError
@@ -166,6 +169,7 @@ export function startRumEventCollection(
   recorderApi: RecorderApi,
   initialViewOptions: ViewOptions | undefined,
   customVitalsState: CustomVitalsState,
+  customActionsState: CustomActionState,
   bufferedDataObservable: Observable<BufferedData>,
   sdkName: SdkName | undefined,
   reportError: (error: RawError) => void
@@ -196,7 +200,8 @@ export function startRumEventCollection(
     hooks,
     domMutationObservable,
     windowOpenObservable,
-    configuration
+    configuration,
+    customActionsState
   )
   cleanupTasks.push(actionCollection.stop)
 
@@ -254,6 +259,8 @@ export function startRumEventCollection(
 
   return {
     addAction: actionCollection.addAction,
+    startAction: actionCollection.startAction,
+    stopAction: actionCollection.stopAction,
     addEvent: eventCollection.addEvent,
     addError,
     addTiming,

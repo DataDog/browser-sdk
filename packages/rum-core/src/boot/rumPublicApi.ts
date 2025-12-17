@@ -53,6 +53,8 @@ import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
+import type { ActionOptions } from '../domain/action/actionCollection'
+import { createCustomActionsState } from '../domain/action/actionCollection'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -167,6 +169,24 @@ export interface RumPublicApi extends PublicApi {
    * @param context - Context of the action
    */
   addAction: (name: string, context?: object) => void
+
+  /**
+   * Start a custom action, stored in `@action`
+   *
+   * @category Data Collection
+   * @param name - Name of the action
+   * @param options - Options of the action
+   */
+  startAction: (name: string, options?: ActionOptions) => void
+
+  /**
+   * Stop a custom action, stored in `@action`
+   *
+   * @category Data Collection
+   * @param name - Name of the action
+   * @param options - Options of the action
+   */
+  stopAction: (name: string, options?: ActionOptions) => void
 
   /**
    * Add a custom error, stored in `@error`.
@@ -523,6 +543,8 @@ export interface Strategy {
   accountContext: ContextManager
 
   addAction: StartRumResult['addAction']
+  startAction: StartRumResult['startAction']
+  stopAction: StartRumResult['stopAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
   startDurationVital: StartRumResult['startDurationVital']
@@ -539,12 +561,14 @@ export function makeRumPublicApi(
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
+  const customActionsState = createCustomActionsState()
   const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
     customVitalsState,
+    customActionsState,
     (configuration, deflateWorker, initialViewOptions) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
@@ -559,6 +583,7 @@ export function makeRumPublicApi(
         createEncoder,
         trackingConsentState,
         customVitalsState,
+        customActionsState,
         bufferedDataObservable,
         options.sdkName
       )
@@ -652,6 +677,24 @@ export function makeRumPublicApi(
         addTelemetryUsage({ feature: 'add-action' })
       })
     },
+
+    startAction: monitor((name, options) => {
+      addTelemetryUsage({ feature: 'start-action' })
+      strategy.startAction(sanitize(name)!, {
+        type: sanitize(options && options.type) as ActionType | undefined,
+        context: sanitize(options && options.context) as Context,
+        actionKey: sanitize(options && options.actionKey) as string | undefined,
+      })
+    }),
+
+    stopAction: monitor((name, options) => {
+      addTelemetryUsage({ feature: 'stop-action' })
+      strategy.stopAction(sanitize(name)!, {
+        type: sanitize(options && options.type) as ActionType | undefined,
+        context: sanitize(options && options.context) as Context,
+        actionKey: sanitize(options && options.actionKey) as string | undefined,
+      })
+    }),
 
     addError: (error, context) => {
       const handlingStack = createHandlingStack('error')
