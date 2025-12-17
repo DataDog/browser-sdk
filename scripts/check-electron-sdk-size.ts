@@ -110,6 +110,42 @@ datadogRum.init({
 ${currentRendererJs}
 `
   fs.writeFileSync(rendererJsPath, instrumentedRendererJs)
+
+  const webpackMainConfigJsPath = path.join(appDir, 'webpack.main.config.js')
+
+  const instrumentedWebpackMainConfigJs = `module.exports = {
+  /**
+   * This is the main entry point for your application, it's the first file
+   * that runs in the main process.
+   */
+  entry: './src/main.js',
+  // Put your normal webpack config below here
+  module: {
+    rules: require('./webpack.rules'),
+  },
+   externals: [
+        {
+            '@datadog/native-metrics': 'commonjs @datadog/native-metrics',
+            '@datadog/native-appsec': 'commonjs @datadog/native-appsec',
+            '@datadog/native-iast-taint-tracking': 'commonjs @datadog/native-iast-taint-tracking',
+            '@datadog/pprof': 'commonjs @datadog/pprof',
+            '@datadog/libdatadog': 'commonjs @datadog/libdatadog',
+            '@datadog/openfeature-node-server': 'commonjs @datadog/openfeature-node-server',
+            '@opentelemetry/api': 'commonjs @opentelemetry/api',
+            '@opentelemetry/api-logs': 'commonjs @opentelemetry/api-logs',
+            '@openfeature/core': 'commonjs @openfeature/core',
+            '@openfeature/server-sdk': 'commonjs @openfeature/server-sdk'
+        },
+        function({ request }, callback) {
+            if (request && request.startsWith('@datadog/wasm-js-rewriter')) {
+                return callback(null, 'commonjs ' + request);
+            }
+            callback();
+        }
+    ]
+};
+  `
+  fs.writeFileSync(webpackMainConfigJsPath, instrumentedWebpackMainConfigJs)
 }
 
 function packageApp(appDir: string): number {

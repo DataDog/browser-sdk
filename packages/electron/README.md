@@ -26,6 +26,31 @@ npm install @datadog/electron@file:<PATH_TO_LOCAL_REPO>/browser-sdk/packages/ele
 npm install @datadog/browser-rum@file:<PATH_TO_LOCAL_REPO>/browser-sdk/packages/rum
 ```
 
+In your webpack config for the main process, add this extra `externals` configuration:
+
+```
+ externals: [
+    {
+        '@datadog/native-metrics': 'commonjs @datadog/native-metrics',
+        '@datadog/native-appsec': 'commonjs @datadog/native-appsec',
+        '@datadog/native-iast-taint-tracking': 'commonjs @datadog/native-iast-taint-tracking',
+        '@datadog/pprof': 'commonjs @datadog/pprof',
+        '@datadog/libdatadog': 'commonjs @datadog/libdatadog',
+        '@datadog/openfeature-node-server': 'commonjs @datadog/openfeature-node-server',
+        '@opentelemetry/api': 'commonjs @opentelemetry/api',
+        '@opentelemetry/api-logs': 'commonjs @opentelemetry/api-logs',
+        '@openfeature/core': 'commonjs @openfeature/core',
+        '@openfeature/server-sdk': 'commonjs @openfeature/server-sdk'
+    },
+    function({ request }, callback) {
+        if (request && request.startsWith('@datadog/wasm-js-rewriter')) {
+            return callback(null, 'commonjs ' + request);
+        }
+        callback();
+    }
+]
+```
+
 ## Main process monitoring
 
 In main:

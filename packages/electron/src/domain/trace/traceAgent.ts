@@ -91,7 +91,6 @@ export function createDdTraceAgent(onTraceObservable: Observable<Trace>, hooks: 
       const { port } = addressInfo
       const url = `http://127.0.0.1:${port}`
 
-      // console.log('agents url', url)
       tracer.setUrl(url)
     })
   )
