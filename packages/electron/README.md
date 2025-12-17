@@ -1,5 +1,7 @@
 # Electron SDK (POC)
 
+Experimental SDK for Electron, not intended for production use.
+
 ## Setup
 
 Build SDK locally:
