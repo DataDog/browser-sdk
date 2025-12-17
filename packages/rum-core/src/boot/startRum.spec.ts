@@ -28,6 +28,7 @@ import type { RumEvent, RumViewEvent } from '../rumEvent.types'
 import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import { createCustomActionsState } from '../domain/action/actionCollection'
 import { createHooks } from '../domain/hooks'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRum, startRumEventCollection } from './startRum'
@@ -56,6 +57,7 @@ function startRumStub(
     noopRecorderApi,
     undefined,
     createCustomVitalsState(),
+    createCustomActionsState(),
     new Observable(),
     undefined,
     reportError
@@ -168,6 +170,7 @@ describe('view events', () => {
       createIdentityEncoder,
       createTrackingConsentState(TrackingConsent.GRANTED),
       createCustomVitalsState(),
+      createCustomActionsState(),
       new BufferedObservable<BufferedData>(100),
       'rum'
     )

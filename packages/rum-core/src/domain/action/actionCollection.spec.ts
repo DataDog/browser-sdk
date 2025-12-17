@@ -29,7 +29,6 @@ describe('actionCollection', () => {
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     hooks = createHooks()
-    clock = mockClock()
     customActionsState = createCustomActionsState()
 
     const actionCollection = startActionCollection(
@@ -228,6 +227,7 @@ describe('actionCollection', () => {
 
   describe('startAction / stopAction', () => {
     beforeEach(() => {
+      clock = mockClock()
       mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
     })
 
@@ -305,7 +305,7 @@ describe('actionCollection', () => {
 
       startAction('action2', { type: ActionType.SWIPE })
       stopAction('action2')
-      
+
       startAction('action3')
       stopAction('action3')
 
