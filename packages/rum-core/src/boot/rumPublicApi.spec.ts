@@ -36,6 +36,8 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   hooks: {} as any,
   telemetry: {} as any,
   addOperationStepVital: () => undefined,
+  startAction: () => undefined,
+  stopAction: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -153,6 +155,7 @@ describe('rum public api', () => {
           context: { bar: 'baz' },
           name: 'foo',
           startClocks: jasmine.any(Object),
+          duration: jasmine.any(Number),
           type: ActionType.CUSTOM,
           handlingStack: jasmine.any(String),
         },
@@ -753,6 +756,64 @@ describe('rum public api', () => {
         description: 'description-value',
         context: { foo: 'bar' },
       })
+    })
+  })
+
+  describe('startAction / stopAction', () => {
+    it('should call startAction and stopAction on the strategy', () => {
+      const startActionSpy = jasmine.createSpy()
+      const stopActionSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          startAction: startActionSpy,
+          stopAction: stopActionSpy,
+        }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+      
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startAction('purchase', { 
+        type: ActionType.CUSTOM, 
+        context: { cart: 'abc' } 
+      })
+      rumPublicApi.stopAction('purchase', { 
+        context: { total: 100 } 
+      })
+      
+      expect(startActionSpy).toHaveBeenCalledWith('purchase', jasmine.objectContaining({
+        type: ActionType.CUSTOM,
+        context: { cart: 'abc' },
+      }))
+      expect(stopActionSpy).toHaveBeenCalledWith('purchase', jasmine.objectContaining({
+        context: { total: 100 },
+      }))
+    })
+  
+    it('should sanitize startAction and stopAction inputs', () => {
+      const startActionSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          startAction: startActionSpy,
+        }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+      
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startAction('action_name', { 
+        type: ActionType.CUSTOM,
+        context: { count: 123, nested: { foo: 'bar' } } as any,
+        actionKey: 'key123'
+      })
+      
+      expect(startActionSpy.calls.argsFor(0)[1]).toEqual(jasmine.objectContaining({
+        type: ActionType.CUSTOM,
+        context: { count: 123, nested: { foo: 'bar' } },
+        actionKey: 'key123',
+      }))
     })
   })
 

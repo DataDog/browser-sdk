@@ -18,12 +18,12 @@ export function createRawRumEvent(type: RumEventType, overrides?: Context): RawR
           type,
           action: {
             id: generateUUID(),
-            target: {
-              name: 'target',
-            },
-            type: ActionType.CUSTOM,
+          target: {
+            name: 'target',
           },
-          date: 0 as TimeStamp,
+          type: ActionType.CUSTOM,
+        },
+        date: 0 as TimeStamp,
         },
         overrides
       )

@@ -672,6 +672,7 @@ export function makeRumPublicApi(
           context: sanitize(context) as Context,
           startClocks: clocksNow(),
           type: ActionType.CUSTOM,
+          duration: 0 as Duration,
           handlingStack,
         })
         addTelemetryUsage({ feature: 'add-action' })

@@ -1,4 +1,4 @@
-import type { ClocksState, Context, Observable } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, Observable } from '@datadog/browser-core'
 import {
   noop,
   combine,
@@ -7,6 +7,7 @@ import {
   SKIPPED,
   HookNames,
   clocksNow,
+  elapsed,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
 } from '@datadog/browser-core'
@@ -61,6 +62,7 @@ export interface CustomAction {
   type: ActionType
   name: string
   startClocks: ClocksState
+  duration: Duration
   context?: Context
   handlingStack?: string
 }
@@ -180,7 +182,7 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
     autoActionProperties
   )
 
-  const duration = isAutoAction(action) ? action.duration : undefined
+  const duration = action.duration
   const domainContext: RumActionEventDomainContext = isAutoAction(action)
     ? { events: action.events }
     : { handlingStack: action.handlingStack }
@@ -197,6 +199,10 @@ function isAutoAction(action: AutoAction | CustomAction): action is AutoAction {
   return action.type === ActionType.CLICK
 }
 
+function getActionLookupKey(name: string, actionKey?: string): string {
+  return actionKey ? `${name}__${actionKey}` : name
+}
+
 export function startCustomAction({ actionsByName }: CustomActionState, name: string, options: ActionOptions = {}) {
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
     return
@@ -208,33 +214,39 @@ export function startCustomAction({ actionsByName }: CustomActionState, name: st
     ...options,
   }
 
-  actionsByName.set(name, actionStart)
+  const lookupKey = getActionLookupKey(name, options.actionKey)
+  actionsByName.set(lookupKey, actionStart)
 }
 
 export function stopCustomAction(
   stopCallback: (action: CustomAction) => void,
   { actionsByName }: CustomActionState,
-  nameOrRef: string,
+  name: string,
   options: ActionOptions = {}
 ) {
   if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
     return
   }
 
-  const actionStart = actionsByName.get(nameOrRef)
+  const lookupKey = getActionLookupKey(name, options.actionKey)
+  const actionStart = actionsByName.get(lookupKey)
 
   if (!actionStart) {
     return
   }
 
+  const stopClocks = clocksNow()
+  const duration = elapsed(actionStart.startClocks.timeStamp, stopClocks.timeStamp)
+
   const customAction: CustomAction = {
     name: actionStart.name,
     type: (options.type ?? actionStart.type) || ActionType.CUSTOM,
     startClocks: actionStart.startClocks,
+    duration,
     context: combine(actionStart.context, options.context),
   }
 
   stopCallback(customAction)
 
-  actionsByName.delete(nameOrRef)
+  actionsByName.delete(lookupKey)
 }

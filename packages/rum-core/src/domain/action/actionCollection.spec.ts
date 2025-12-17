@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { HookNames, Observable } from '@datadog/browser-core'
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import { ExperimentalFeature, HookNames, Observable } from '@datadog/browser-core'
+import { Clock, createNewEvent, mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
@@ -9,8 +9,8 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts } from './actionCollection'
-import { startActionCollection } from './actionCollection'
+import type { ActionContexts, CustomActionState } from './actionCollection'
+import { createCustomActionsState, startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
 
 describe('actionCollection', () => {
@@ -19,21 +19,30 @@ describe('actionCollection', () => {
   let addAction: ReturnType<typeof startActionCollection>['addAction']
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
   let actionContexts: ActionContexts
+  let customActionsState: CustomActionState
+  let startAction: ReturnType<typeof startActionCollection>['startAction']
+  let stopAction: ReturnType<typeof startActionCollection>['stopAction']
+  let clock: Clock
 
   beforeEach(() => {
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     hooks = createHooks()
+    clock = mockClock()
+    customActionsState = createCustomActionsState()
 
     const actionCollection = startActionCollection(
       lifeCycle,
       hooks,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration()
+      mockRumConfiguration(),
+      customActionsState
     )
     registerCleanupTask(actionCollection.stop)
     addAction = actionCollection.addAction
+    startAction = actionCollection.startAction
+    stopAction = actionCollection.stopAction
     actionContexts = actionCollection.actionContexts
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -113,6 +122,7 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CUSTOM,
+      duration: 0 as Duration,
       context: { foo: 'bar' },
     })
 
@@ -158,6 +168,7 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CUSTOM,
+      duration: 0 as Duration,
       handlingStack: 'Error\n    at foo\n    at bar',
     })
 
@@ -211,6 +222,136 @@ describe('actionCollection', () => {
       }) as DefaultTelemetryEventAttributes
 
       expect(telemetryEventAttributes.action?.id).toBeUndefined()
+    })
+  })
+
+  describe('startAction / stopAction', () => {
+    beforeEach(() => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+    })
+
+    it('should create action with duration from name-based tracking', () => {
+      startAction('user_login')
+      clock.tick(500)
+      stopAction('user_login')
+      
+      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents[0].duration).toBe(500 as Duration)
+      expect(rawRumEvents[0].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          type: RumEventType.ACTION,
+          action: jasmine.objectContaining({
+            target: { name: 'user_login' },
+            type: ActionType.CUSTOM,
+          }),
+        })
+      )
+    })
+
+    it('should not create action if stopped without starting', () => {
+      stopAction('never_started')
+
+      expect(rawRumEvents).toHaveSize(0)
+    })
+
+    it('should only create action once when stopped multiple times', () => {
+      startAction('foo')
+      stopAction('foo')
+      stopAction('foo')
+
+      expect(rawRumEvents).toHaveSize(1)
+    })
+
+    ;[ActionType.SWIPE, ActionType.TAP, ActionType.SCROLL].forEach((actionType) => {
+      it(`should support ${actionType} action type`, () => {
+        startAction('test_action', { type: actionType })
+        stopAction('test_action')
+
+        expect(rawRumEvents).toHaveSize(1)
+        expect(rawRumEvents[0].rawRumEvent).toEqual(
+          jasmine.objectContaining({
+            type: RumEventType.ACTION,
+            action: jasmine.objectContaining({
+              type: actionType,
+            }),
+          })
+        )
+      })
+    })
+
+    it('should merge contexts with stop precedence on conflicts', () => {
+      // Merge non-conflicting keys
+      startAction('action1', { context: { cart: 'abc' } })
+      stopAction('action1', { context: { total: 100 } })
+      
+      // Stop overrides on conflict
+      startAction('action2', { context: { status: 'pending' } })
+      stopAction('action2', { context: { status: 'complete' } })
+      
+      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents[0].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          context: { cart: 'abc', total: 100 },
+        })
+      )
+      expect(rawRumEvents[1].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          context: { status: 'complete' },
+        })
+      )
+    })
+
+    it('should handle type precedence: stop > start > default(CUSTOM)', () => {
+      // Stop overrides start
+      startAction('action1', { type: ActionType.TAP })
+      stopAction('action1', { type: ActionType.SCROLL })
+      
+      // Start used when stop not provided
+      startAction('action2', { type: ActionType.SWIPE })
+      stopAction('action2')
+      
+      // Default to CUSTOM when neither provided
+      startAction('action3')
+      stopAction('action3')
+      
+      expect(rawRumEvents).toHaveSize(3)
+      expect(rawRumEvents[0].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          action: jasmine.objectContaining({ type: ActionType.SCROLL }),
+        })
+      )
+      expect(rawRumEvents[1].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          action: jasmine.objectContaining({ type: ActionType.SWIPE }),
+        })
+      )
+      expect(rawRumEvents[2].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          action: jasmine.objectContaining({ type: ActionType.CUSTOM }),
+        })
+      )
+    })
+
+    it('should support actionKey for tracking same name multiple times', () => {
+      startAction('click', { actionKey: 'button1' })
+      startAction('click', { actionKey: 'button2' })
+
+      clock.tick(100)
+      stopAction('click', { actionKey: 'button2' })
+
+      clock.tick(100)
+      stopAction('click', { actionKey: 'button1' })
+
+      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents[0].duration).toBe(100 as Duration)
+      expect(rawRumEvents[1].duration).toBe(200 as Duration)
+    })
+
+    it('should not create action when actionKey does not match', () => {
+      startAction('click', { actionKey: 'button1' })
+      stopAction('click', { actionKey: 'button2' })
+
+      expect(rawRumEvents).toHaveSize(0)
     })
   })
 })
