@@ -51,7 +51,11 @@ const buildEnvFactories: BuildEnvFactories = {
     // Make sure the worker is built
     // TODO: Improve overall built time by rebuilding the worker only if its sources have changed?
     // TODO: Improve developer experience during tests by detecting worker source changes?
-    command`yarn build`.withCurrentWorkingDirectory(workerPath).run()
+    command`yarn build`
+      .withCurrentWorkingDirectory(workerPath)
+      // shell needed in windows to execute yarn in spawnSync
+      .withShell()
+      .run()
     return readFileSync(path.join(workerPath, 'bundle/worker.js'), {
       encoding: 'utf-8',
     })

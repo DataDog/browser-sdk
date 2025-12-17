@@ -1,4 +1,4 @@
-export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn } from './domain/configuration'
+export type { Configuration, InitConfiguration, EndpointBuilder, ProxyFn, TrackType } from './domain/configuration'
 export {
   validateAndBuildConfiguration,
   DefaultPrivacyLevel,
@@ -7,6 +7,7 @@ export {
   isSampleRate,
   buildEndpointHost,
   isIntakeUrl,
+  createEndpointBuilder,
 } from './domain/configuration'
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
@@ -40,6 +41,7 @@ export type {
 } from './domain/telemetry'
 export {
   startTelemetry,
+  startTelemetryCollection,
   addTelemetryDebug,
   addTelemetryError,
   resetTelemetry,
@@ -55,13 +57,25 @@ export { Observable, BufferedObservable } from './tools/observable'
 export type { SessionManager } from './domain/session/sessionManager'
 export { startSessionManager, stopSessionManager } from './domain/session/sessionManager'
 export {
+  SESSION_EXPIRATION_DELAY,
   SESSION_TIME_OUT_DELAY, // Exposed for tests
   SESSION_NOT_TRACKED,
   SessionPersistence,
 } from './domain/session/sessionConstants'
-export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, FlushEvent, FlushReason } from './transport'
+export type {
+  BandwidthStats,
+  HttpRequest,
+  HttpRequestEvent,
+  Payload,
+  FlushEvent,
+  FlushReason,
+  DatadogEventBridge,
+  BrowserWindowWithEventBridge,
+  Batch,
+} from './transport'
 export {
   createHttpRequest,
+  RECOMMENDED_REQUEST_BYTES_LIMIT,
   canUseEventBridge,
   getEventBridge,
   bridgeSupports,

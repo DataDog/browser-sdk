@@ -73,7 +73,8 @@ export interface RetryInfo {
 export function createHttpRequest<Body extends Payload = Payload>(
   endpointBuilders: EndpointBuilder[],
   reportError: (error: RawError) => void,
-  bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT
+  bytesLimit: number = RECOMMENDED_REQUEST_BYTES_LIMIT,
+  userAgent?: string
 ): HttpRequest<Body> {
   const observable = new Observable<HttpRequestEvent<Body>>()
   const retryState = newRetryState<Body>()
@@ -87,9 +88,9 @@ export function createHttpRequest<Body extends Payload = Payload>(
           retryState,
           (payload, onResponse) => {
             if (isExperimentalFeatureEnabled(ExperimentalFeature.AVOID_FETCH_KEEPALIVE)) {
-              fetchStrategy(endpointBuilder, payload, onResponse)
+              fetchStrategy(endpointBuilder, payload, onResponse, userAgent)
             } else {
-              fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
+              fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse, userAgent)
             }
           },
           endpointBuilder.trackType,
@@ -104,13 +105,18 @@ export function createHttpRequest<Body extends Payload = Payload>(
      */
     sendOnExit: (payload: Body) => {
       for (const endpointBuilder of endpointBuilders) {
-        sendBeaconStrategy(endpointBuilder, bytesLimit, payload)
+        sendBeaconStrategy(endpointBuilder, bytesLimit, payload, userAgent)
       }
     },
   }
 }
 
-function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number, payload: Payload) {
+function sendBeaconStrategy(
+  endpointBuilder: EndpointBuilder,
+  bytesLimit: number,
+  payload: Payload,
+  userAgent?: string
+) {
   const canUseBeacon = !!navigator.sendBeacon && payload.bytesCount < bytesLimit
   if (canUseBeacon) {
     try {
@@ -125,7 +131,7 @@ function sendBeaconStrategy(endpointBuilder: EndpointBuilder, bytesLimit: number
     }
   }
 
-  fetchStrategy(endpointBuilder, payload)
+  fetchStrategy(endpointBuilder, payload, undefined, userAgent)
 }
 
 let hasReportedBeaconError = false
@@ -141,29 +147,39 @@ export function fetchKeepAliveStrategy(
   endpointBuilder: EndpointBuilder,
   bytesLimit: number,
   payload: Payload,
-  onResponse?: (r: HttpResponse) => void
+  onResponse?: (r: HttpResponse) => void,
+  userAgent?: string
 ) {
   const canUseKeepAlive = isKeepAliveSupported() && payload.bytesCount < bytesLimit
 
   if (canUseKeepAlive) {
     const fetchUrl = endpointBuilder.build('fetch-keepalive', payload)
 
-    fetch(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' })
+    const config: RequestInit = { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' }
+    if (userAgent) {
+      config.headers = { 'User-Agent': userAgent }
+    }
+    fetch(fetchUrl, config)
       .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
       .catch(monitor(() => fetchStrategy(endpointBuilder, payload, onResponse)))
   } else {
-    fetchStrategy(endpointBuilder, payload, onResponse)
+    fetchStrategy(endpointBuilder, payload, onResponse, userAgent)
   }
 }
 
 export function fetchStrategy(
   endpointBuilder: EndpointBuilder,
   payload: Payload,
-  onResponse?: (r: HttpResponse) => void
+  onResponse?: (r: HttpResponse) => void,
+  userAgent?: string
 ) {
   const fetchUrl = endpointBuilder.build('fetch', payload)
 
-  fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
+  const config: RequestInit = { method: 'POST', body: payload.data, mode: 'cors' }
+  if (userAgent) {
+    config.headers = { 'User-Agent': userAgent }
+  }
+  fetch(fetchUrl, config)
     .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
     .catch(monitor(() => onResponse?.({ status: 0 })))
 }

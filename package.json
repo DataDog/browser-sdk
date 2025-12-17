@@ -12,6 +12,7 @@
   "scripts": {
     "postinstall": "scripts/cli init_submodule",
     "build": "yarn workspaces foreach --all --parallel --topological run build",
+    "build:electron": "lerna run build:modules --scope=@datadog/electron",
     "build:bundle": "yarn workspaces foreach --all --parallel run build:bundle",
     "build:apps": "node scripts/build/build-test-apps.ts",
     "build:docs:json": "typedoc --logLevel Verbose --json ./docs.json",
@@ -31,7 +32,7 @@
     "test:e2e:init": "yarn build && yarn build:apps && yarn playwright install chromium --with-deps",
     "test:e2e": "playwright test --config test/e2e/playwright.local.config.ts --project chromium",
     "test:e2e:bs": "node ./scripts/test/bs-wrapper.ts playwright test --config test/e2e/playwright.bs.config.ts",
-    "test:e2e:ci": "yarn test:e2e:init && yarn test:e2e",
+    "test:e2e:ci": "yarn test:e2e:init && xvfb-run -a yarn test:e2e",
     "test:e2e:ci:bs": "yarn build && yarn build:apps && yarn test:e2e:bs",
     "test:compat:tsc": "node scripts/check-typescript-compatibility.ts",
     "test:compat:ssr": "scripts/cli check_server_side_rendering_compatibility",

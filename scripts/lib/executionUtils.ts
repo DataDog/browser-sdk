@@ -55,7 +55,12 @@ export function formatSize(bytes: number | null, { includeSign = false } = {}): 
     return `${sign}${Math.round(bytes)} B`
   }
 
-  return `${sign}${(bytes / 1024).toFixed(2)} KiB`
+  const kib = bytes / 1024
+  if (kib > -1024 && kib < 1024) {
+    return `${sign}${kib.toFixed(2)} KiB`
+  }
+
+  return `${sign}${(kib / 1024).toFixed(2)} MiB`
 }
 
 export function formatPercentage(percentage: number, { includeSign = false } = {}): string {

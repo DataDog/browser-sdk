@@ -1,0 +1,43 @@
+{
+  "name": "@datadog/electron",
+  "version": "6.23.0",
+  "license": "Apache-2.0",
+  "scripts": {
+    "pack": "yarn pack",
+    "build": "node ../../scripts/build/build-package.ts --modules --bundle datadog-electron.js",
+    "build:modules": "node ../../scripts/build/build-package.ts --modules",
+    "build:bundle": "node ../../scripts/build/build-package.ts --bundle datadog-electron.js"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.25.0",
+    "@datadog/browser-logs": "6.25.0",
+    "@datadog/browser-rum-core": "6.25.0",
+    "@msgpack/msgpack": "3.1.2",
+    "@openfeature/core": "1.9.1",
+    "graphql": "16.12.0"
+  },
+  "peerDependencies": {
+    "electron": "39"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/electron"
+  },
+  "devDependencies": {
+    "@types/pako": "2.0.4",
+    "electron": "39",
+    "pako": "2.1.0"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "cjs/**/*",
+    "esm/**/*",
+    "bundle/**/*"
+  ]
+}

@@ -1,0 +1,211 @@
+import crypto from 'node:crypto'
+import type { RumConfiguration, RumInitConfiguration } from '@datadog/browser-rum-core'
+import { createHooks, validateAndBuildRumConfiguration } from '@datadog/browser-rum-core'
+import type { LogsEvent } from '@datadog/browser-logs'
+import type {
+  PageMayExitEvent,
+  AbstractHooks,
+  RawError,
+  Encoder,
+  InitConfiguration,
+  TrackType,
+} from '@datadog/browser-core'
+import {
+  RECOMMENDED_REQUEST_BYTES_LIMIT,
+  monitor,
+  createBatch,
+  createHttpRequest,
+  createFlushController,
+  createEndpointBuilder,
+  buildGlobalContextManager,
+  Observable,
+  createIdentityEncoder,
+  HookNames,
+  setInterval,
+} from '@datadog/browser-core'
+import tracer, { initTracer } from '../domain/trace/tracer'
+import { monitorIpcMain } from '../domain/main/ipcMain'
+import type { CollectedRumEvent } from '../domain/rum/events'
+import { setupMainBridge } from '../domain/main/bridge'
+import { startActivityTracking } from '../domain/rum/activity'
+import { startRumEventAssembleAndSend } from '../domain/rum/assembly'
+import { startMainProcessTracking } from '../domain/rum/mainProcessTracking'
+import { startConvertSpanToRumEvent } from '../domain/rum/convertSpans'
+import { startCrashMonitoring, storeCrashContext } from '../domain/rum/crashReporter'
+import type { Trace } from '../domain/trace/trace'
+import { createDdTraceAgent } from '../domain/trace/traceAgent'
+import { startLogsEventAssembleAndSend } from '../domain/logs/assembly'
+import { startTelemetry } from '../domain/telemetry/telemetry'
+import { startErrorCollection } from '../domain/rum/errorCollection'
+import { getUserAgent } from '../tools/userAgent'
+import { SessionManager } from '../domain/session/manager'
+import { startAppStabilityTracking } from '../domain/rum/appStability'
+
+export const ddElectron = makeDatadogElectron()
+export { tracer }
+export { monitorIpcMain }
+
+function makeDatadogElectron() {
+  const globalContext = buildGlobalContextManager()
+
+  function startElectronRumBatch(
+    configuration: RumConfiguration,
+    reportError: (error: RawError) => void,
+    pageMayExitObservable: Observable<PageMayExitEvent>,
+    sessionExpireObservable: Observable<void>,
+    createEncoder: () => Encoder
+  ) {
+    return createBatch({
+      encoder: createEncoder(),
+      request: createHttpRequest(
+        [configuration.rumEndpointBuilder],
+        reportError,
+        RECOMMENDED_REQUEST_BYTES_LIMIT,
+        getUserAgent()
+      ),
+      flushController: createFlushController({
+        pageMayExitObservable,
+        sessionExpireObservable,
+      }),
+    })
+  }
+
+  function startElectronLogsBatch(
+    configuration: RumConfiguration,
+    reportError: (error: RawError) => void,
+    pageMayExitObservable: Observable<PageMayExitEvent>,
+    sessionExpireObservable: Observable<void>,
+    createEncoder: () => Encoder
+  ) {
+    return createBatch({
+      encoder: createEncoder(),
+      request: createHttpRequest(
+        [configuration.logsEndpointBuilder],
+        reportError,
+        RECOMMENDED_REQUEST_BYTES_LIMIT,
+        getUserAgent()
+      ),
+      flushController: createFlushController({
+        pageMayExitObservable,
+        sessionExpireObservable,
+      }),
+    })
+  }
+
+  // TODO change it by a single event fetch
+  function startElectronSpanBatch(
+    initConfiguration: InitConfiguration,
+    reportError: (error: RawError) => void,
+    pageMayExitObservable: Observable<PageMayExitEvent>,
+    sessionExpireObservable: Observable<void>,
+    createEncoder: () => Encoder
+  ) {
+    return createBatch({
+      encoder: createEncoder(),
+      request: createHttpRequest(
+        [createEndpointBuilder(initConfiguration, 'spans' as TrackType)],
+        reportError,
+        RECOMMENDED_REQUEST_BYTES_LIMIT,
+        getUserAgent()
+      ),
+      flushController: createFlushController({
+        pageMayExitObservable,
+        sessionExpireObservable,
+      }),
+    })
+  }
+
+  function reportError() {
+    console.error('Error reporting to Datadog')
+  }
+
+  return {
+    init(initConfiguration: RumInitConfiguration) {
+      console.log('init from SDK Electron')
+
+      const configuration = validateAndBuildRumConfiguration(initConfiguration)
+
+      if (!configuration) {
+        return
+      }
+
+      const pageMayExitObservable = new Observable<PageMayExitEvent>()
+      const onRumEventObservable = new Observable<CollectedRumEvent>()
+      const onLogsEventObservable = new Observable<LogsEvent>()
+      const onTraceObservable = new Observable<Trace>()
+      const hooks = createHooks()
+      const mainProcessViewId = crypto.randomUUID()
+
+      ;(hooks as AbstractHooks).register(HookNames.Assemble, () => {
+        const context = globalContext.getContext()
+        return { context }
+      })
+
+      // Initialize activity tracking first (needed by session manager)
+      const onActivityObservable = startActivityTracking(onRumEventObservable)
+
+      // Initialize session manager
+      const sessionManager = new SessionManager(onActivityObservable)
+      const sessionExpireObservable = sessionManager.expireObservable
+      sessionManager.stateObservable.subscribe((state) => {
+        void storeCrashContext({ sessionId: state.id, viewId: mainProcessViewId })
+      })
+
+      const rumBatch = startElectronRumBatch(
+        configuration,
+        reportError,
+        pageMayExitObservable,
+        sessionExpireObservable,
+        createIdentityEncoder
+      )
+      startRumEventAssembleAndSend(onRumEventObservable, rumBatch, hooks)
+      startTelemetry(rumBatch, configuration, hooks)
+
+      const logsBatch = startElectronLogsBatch(
+        configuration,
+        reportError,
+        pageMayExitObservable,
+        sessionExpireObservable,
+        createIdentityEncoder
+      )
+      startLogsEventAssembleAndSend(onLogsEventObservable, logsBatch, hooks)
+
+      const spanBatch = startElectronSpanBatch(
+        initConfiguration,
+        reportError,
+        pageMayExitObservable,
+        sessionExpireObservable,
+        createIdentityEncoder
+      )
+      onTraceObservable.subscribe((trace) => {
+        spanBatch.add({ env: 'prod', spans: trace })
+      })
+
+      const onAppStable = startAppStabilityTracking()
+      startMainProcessTracking(
+        hooks,
+        configuration,
+        sessionManager,
+        mainProcessViewId,
+        onRumEventObservable,
+        onActivityObservable
+      )
+      startErrorCollection(onRumEventObservable)
+      startConvertSpanToRumEvent(onTraceObservable, onRumEventObservable)
+      setupMainBridge(onRumEventObservable, onLogsEventObservable)
+      startCrashMonitoring(onRumEventObservable, onAppStable)
+
+      initTracer(configuration.service!, configuration.env!, configuration.version!)
+      createDdTraceAgent(onTraceObservable, hooks)
+
+      setInterval(() => {
+        pageMayExitObservable.notify({ reason: 'page_hide' })
+      }, 1000)
+    },
+    setGlobalContext: monitor(globalContext.setContext.bind(globalContext)),
+    getGlobalContext: monitor(globalContext.getContext.bind(globalContext)),
+    setGlobalContextProperty: monitor(globalContext.setContextProperty.bind(globalContext)),
+    removeGlobalContextProperty: monitor(globalContext.removeContextProperty.bind(globalContext)),
+    clearGlobalContext: monitor(globalContext.clearContext.bind(globalContext)),
+  }
+}
