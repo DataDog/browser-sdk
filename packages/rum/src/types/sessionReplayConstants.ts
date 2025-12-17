@@ -52,7 +52,10 @@ export const ChangeType: {
   Text: ChangeTypeId<4, SessionReplay.TextChange>
   Size: ChangeTypeId<5, SessionReplay.SizeChange>
   ScrollPosition: ChangeTypeId<6, SessionReplay.ScrollPositionChange>
-  AdoptedStyleSheets: ChangeTypeId<7, SessionReplay.AdoptedStyleSheetsChange>
+  AddStyleSheet: ChangeTypeId<7, SessionReplay.AddStyleSheetChange>
+  AttachedStyleSheets: ChangeTypeId<8, SessionReplay.AttachedStyleSheetsChange>
+  MediaPlaybackState: ChangeTypeId<9, SessionReplay.MediaPlaybackStateChange>
+  VisualViewport: ChangeTypeId<10, SessionReplay.VisualViewportChange>
 } = {
   AddString: 0,
   AddNode: 1,
@@ -61,8 +64,23 @@ export const ChangeType: {
   Text: 4,
   Size: 5,
   ScrollPosition: 6,
-  AdoptedStyleSheets: 7,
+  AddStyleSheet: 7,
+  AttachedStyleSheets: 8,
+  MediaPlaybackState: 9,
+  VisualViewport: 10,
 } as const
+
+export type ChangeType = (typeof ChangeType)[keyof typeof ChangeType]
+
+export const PlaybackState: {
+  Playing: SessionReplay.PlaybackStatePlaying
+  Paused: SessionReplay.PlaybackStatePaused
+} = {
+  Playing: 0,
+  Paused: 1,
+} as const
+
+export type PlaybackState = (typeof PlaybackState)[keyof typeof PlaybackState]
 
 export const IncrementalSource: {
   Mutation: SessionReplay.BrowserMutationData['source']
