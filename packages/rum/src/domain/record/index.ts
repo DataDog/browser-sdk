@@ -1,3 +1,4 @@
+export { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
 export { record } from './record'
 export type { SerializationMetric, SerializationStats } from './serialization'
 export { createSerializationStats, aggregateSerializationStats } from './serialization'
