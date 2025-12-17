@@ -18,6 +18,37 @@
 
 ---
 
+## v6.25.1
+
+**Public Changes:**
+
+- ✨[PANA-5156] Expose better session replay internal API ([#4018](https://github.com/DataDog/browser-sdk/pull/4018)) [RUM]
+- 🐛 Fix action <-> long task correlation [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 clear chain after finalize ([#4027](https://github.com/DataDog/browser-sdk/pull/4027)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 fix developer extension packaging ([#4024](https://github.com/DataDog/browser-sdk/pull/4024))
+
+**Internal Changes:**
+
+- 👷 improve static analysis ([#4030](https://github.com/DataDog/browser-sdk/pull/4030)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 when webpack has errors, print stats and fail the script ([#4029](https://github.com/DataDog/browser-sdk/pull/4029))
+- 👷 Lock file maintenance ([#4017](https://github.com/DataDog/browser-sdk/pull/4017))
+- 👷 Other strategy to handle test app lockfiles with renovate ([#4028](https://github.com/DataDog/browser-sdk/pull/4028))
+- 👷 Enable more renovate flags... ([#4023](https://github.com/DataDog/browser-sdk/pull/4023))
+- 👷 add a script to easily create an access token ([#4020](https://github.com/DataDog/browser-sdk/pull/4020))
+- 👷 Ensure that renovate do a full install ([#4021](https://github.com/DataDog/browser-sdk/pull/4021))
+- 👷 Ensure to have tarballs built at install ([#4019](https://github.com/DataDog/browser-sdk/pull/4019))
+- 👷: migrate config renovate.json ([#4016](https://github.com/DataDog/browser-sdk/pull/4016))
+- 👷 Update dependency vite to v5.4.21 [SECURITY] ([#4015](https://github.com/DataDog/browser-sdk/pull/4015))
+- 👷 Configure test apps dependencies ([#4014](https://github.com/DataDog/browser-sdk/pull/4014))
+- 🎨 [PANA-5053] Separate DOM and virtual attribute serialization ([#3998](https://github.com/DataDog/browser-sdk/pull/3998)) [RUM]
+- 🎨 [PANA-5222] Make CODEOWNERS more accurate for recording code ([#4034](https://github.com/DataDog/browser-sdk/pull/4034))
+- Update errors_count field to error_count ([#4039](https://github.com/DataDog/browser-sdk/pull/4039)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ♻️ [PANA-5123] Assign node ids in preorder when serializing ([#4002](https://github.com/DataDog/browser-sdk/pull/4002)) [RUM]
+- ♻️ [PANA-5105] Serialize all DOM attribute values as strings ([#3999](https://github.com/DataDog/browser-sdk/pull/3999)) [RUM]
+- ♻️ Replace longTaskRegistry by longTaskContexts ([#4013](https://github.com/DataDog/browser-sdk/pull/4013)) [RUM] [RUM-REACT] [RUM-SLIM]
+- Add flagEvaluationEndpointBuilder to TransportConfiguration interface. ([#4025](https://github.com/DataDog/browser-sdk/pull/4025)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- [RUM Browser Profiler] stop profiler when session expires ([#4011](https://github.com/DataDog/browser-sdk/pull/4011)) [RUM]
+
 ## v6.25.0
 
 **Public Changes:**
