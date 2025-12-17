@@ -107,6 +107,66 @@ export function defaultFormatValue(_path: string, value: unknown) {
   return typeof value === 'number' ? formatNumber(value) : JSON.stringify(value)
 }
 
+interface FunctionMetadata {
+  __type: 'function'
+  __name: string
+  __source?: string
+}
+
+function isFunctionMetadata(value: unknown): value is FunctionMetadata {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '__type' in value &&
+    (value as any).__type === 'function' &&
+    '__name' in value
+  )
+}
+
+function JsonFunctionValue({
+  descriptor,
+  metadata,
+}: {
+  descriptor: JsonValueDescriptor
+  metadata: FunctionMetadata
+}) {
+  const [showSource, setShowSource] = useState(false)
+  const colorScheme = useColorScheme()
+
+  return (
+    <JsonLine descriptor={descriptor}>
+      <JsonText color="grape" descriptor={descriptor}>
+        <Text component="span">
+          {`<function: ${metadata.__name}>`}
+        </Text>
+      </JsonText>
+      {metadata.__source && (
+        <>
+          <Text
+            component="span"
+            size="xs"
+            c="dimmed"
+            ml="xs"
+            className={classes.functionSourceToggle}
+            onClick={() => setShowSource(!showSource)}
+          >
+            {showSource ? '▾ hide source' : '▸ show source'}
+          </Text>
+          <Collapse in={showSource}>
+            <Box
+              p="xs"
+              bg={`gray.${colorScheme === 'dark' ? 8 - descriptor.depth : descriptor.depth + 1}`}
+              className={classes.functionSource}
+            >
+              {metadata.__source}
+            </Box>
+          </Collapse>
+        </>
+      )}
+    </JsonLine>
+  )
+}
+
 function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
   const colorScheme = useColorScheme()
   const { formatValue } = useContext(JsonContext)!
@@ -135,6 +195,11 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
   }
 
   if (typeof descriptor.value === 'object' && descriptor.value !== null) {
+    // Check if this is a serialized function object
+    if (isFunctionMetadata(descriptor.value)) {
+      return <JsonFunctionValue descriptor={descriptor} metadata={descriptor.value} />
+    }
+
     const entries = Object.entries(descriptor.value)
     if (entries.length === 0) {
       return <JsonEmptyValue label="{empty object}" descriptor={descriptor} />

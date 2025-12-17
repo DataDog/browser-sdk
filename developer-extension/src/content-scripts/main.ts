@@ -1,3 +1,5 @@
+import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RumInitConfiguration } from '@datadog/browser-rum'
 import type { Settings } from '../common/extension.types'
 import { EventListeners } from '../common/eventListeners'
 import { DEV_LOGS_URL, DEV_RUM_SLIM_URL, DEV_RUM_URL } from '../common/packagesUrlConstants'
@@ -102,20 +104,64 @@ function setDebug(global: GlobalInstrumentation) {
   })
 }
 
-function overrideInitConfiguration(global: GlobalInstrumentation, configurationOverride: object) {
+function overrideInitConfiguration(
+  global: GlobalInstrumentation,
+  configurationOverride: Partial<RumInitConfiguration | LogsInitConfiguration>
+) {
   global.onSet((sdkInstance) => {
     // Ensure the sdkInstance has an 'init' method, excluding async stubs.
     if ('init' in sdkInstance) {
       const originalInit = sdkInstance.init
-      sdkInstance.init = (config: any) => {
+      sdkInstance.init = (config: RumInitConfiguration | LogsInitConfiguration) => {
         originalInit({
           ...config,
-          ...configurationOverride,
+          ...restoreFunctions(config, configurationOverride),
           allowedTrackingOrigins: [location.origin],
         })
       }
     }
   })
+}
+
+type SDKInitConfiguration = RumInitConfiguration | LogsInitConfiguration
+function restoreFunctions(
+  original: SDKInitConfiguration,
+  override: Partial<SDKInitConfiguration>
+): Partial<SDKInitConfiguration> {
+  // Clone the override to avoid mutating the input
+  const result = (Array.isArray(override) ? [...override] : { ...override }) as Record<string, unknown>
+
+  // Add back any missing functions from original
+  for (const key in original) {
+    if (!Object.prototype.hasOwnProperty.call(original, key)) {
+      continue
+    }
+
+    const originalValue = original[key as keyof typeof original]
+    const resultValue = result[key]
+
+    // If it's a function and missing in result, restore it
+    if (typeof originalValue === 'function' && !(key in result)) {
+      result[key] = originalValue
+    }
+    // If both are objects, recurse to restore functions at deeper levels
+    else if (
+      key in result &&
+      originalValue &&
+      typeof originalValue === 'object' &&
+      !Array.isArray(originalValue) &&
+      resultValue &&
+      typeof resultValue === 'object' &&
+      !Array.isArray(resultValue)
+    ) {
+      result[key] = restoreFunctions(
+        originalValue as SDKInitConfiguration,
+        resultValue as Partial<SDKInitConfiguration>
+      )
+    }
+  }
+
+  return result as Partial<SDKInitConfiguration>
 }
 
 function loadSdkScriptFromURL(url: string) {

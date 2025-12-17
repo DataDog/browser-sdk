@@ -65,3 +65,14 @@
   position: absolute;
   z-index: var(--dd-json-z-index);
 }
+
+.functionSource {
+  border-radius: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  text-indent: 0;
+}
+
+.functionSourceToggle {
+  cursor: pointer;
+}
