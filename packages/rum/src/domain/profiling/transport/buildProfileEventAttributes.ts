@@ -41,7 +41,7 @@ export function buildProfileEventAttributes(
       name: names,
     }
   }
-  const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
+  const longTaskIds: string[] = profilerTrace.longTaskIds
 
   if (longTaskIds.length) {
     attributes.long_task = { id: longTaskIds }

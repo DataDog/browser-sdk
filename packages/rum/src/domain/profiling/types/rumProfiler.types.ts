@@ -1,5 +1,4 @@
 import type { TimeoutId, ClocksState } from '@datadog/browser-core'
-import type { LongTaskContext } from '@datadog/browser-rum-core'
 import type { ProfilerTrace, Profiler } from './profilerApi.types'
 
 export interface RumViewEntry {
@@ -15,8 +14,6 @@ export interface RumViewEntry {
  * Additional data recorded during profiling session
  */
 export interface RumProfilerEnrichmentData {
-  /** List of detected long tasks */
-  readonly longTasks: LongTaskContext[]
   /** List of detected navigation entries */
   readonly views: RumViewEntry[]
 }
@@ -30,6 +27,8 @@ export interface RumProfilerTrace extends ProfilerTrace, RumProfilerEnrichmentDa
   readonly clocksOrigin: ClocksState
   /** Sample interval in milliseconds */
   readonly sampleInterval: number
+  /** List of detected long task ids */
+  readonly longTaskIds: string[]
 }
 
 /**
