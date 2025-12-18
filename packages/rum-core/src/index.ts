@@ -23,7 +23,7 @@ export type {
   RumEventDomainContext,
   RumVitalEventDomainContext,
 } from './domainContext.types'
-export type { ReplayStats, RawRumActionEvent, RawRumEvent } from './rawRumEvent.types'
+export type { ReplayStats, RawRumActionEvent, RawRumEvent, RumLongTaskEntryType } from './rawRumEvent.types'
 export { ActionType, RumEventType, FrustrationType } from './rawRumEvent.types'
 export { startRum } from './boot/startRum'
 export type { RawRumEventCollectedData } from './domain/lifeCycle'

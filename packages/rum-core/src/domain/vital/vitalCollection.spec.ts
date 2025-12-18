@@ -208,7 +208,7 @@ describe('vitalCollection', () => {
         vitalCollection.startDurationVital('foo')
         vitalCollection.stopDurationVital('foo')
 
-        expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
+        expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
         expect(rawRumEvents[0].rawRumEvent).toEqual({
           date: jasmine.any(Number),
           vital: {
@@ -239,7 +239,7 @@ describe('vitalCollection', () => {
         mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
         vitalCollection.addOperationStepVital('foo', 'start')
 
-        expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
+        expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
         expect(rawRumEvents[0].rawRumEvent).toEqual({
           date: jasmine.any(Number),
           vital: {
