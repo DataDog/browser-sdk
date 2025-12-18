@@ -13,6 +13,11 @@ const datacenters = process.argv[2].split(',')
 runMain(async () => {
   for (const datacenter of datacenters) {
     const site = siteByDatacenter[datacenter]
+
+    if (!site) {
+      throw new Error(`No site found for datacenter ${datacenter}`)
+    }
+
     const apiKey = getTelemetryOrgApiKey(site)
     const applicationKey = getTelemetryOrgApplicationKey(site)
 

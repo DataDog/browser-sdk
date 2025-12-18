@@ -4,8 +4,7 @@ import { beforeEach, before, describe, it, mock } from 'node:test'
 import type { CommandDetail } from './lib/testHelpers.ts'
 import { mockModule, mockCommandImplementation } from './lib/testHelpers.ts'
 
-// eslint-disable-next-line
-describe.only('deploy-prod-dc', () => {
+describe('deploy-prod-dc', () => {
   const commandMock = mock.fn()
 
   let commands: CommandDetail[]
