@@ -239,7 +239,7 @@ export function startRumEventCollection(
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(stopResourceCollection)
 
-  const { stop: stopLongTaskCollection, longTaskContexts } = startLongTaskCollection(lifeCycle, configuration)
+  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
@@ -276,7 +276,6 @@ export function startRumEventCollection(
     globalContext,
     userContext,
     accountContext,
-    longTaskContexts,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

@@ -1,6 +1,6 @@
-import type { LongTaskContext, ViewHistoryEntry } from '@datadog/browser-rum-core'
-import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
-import type { Duration, RelativeTime } from '@datadog/browser-core'
+import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
+import { LifeCycle, LifeCycleEventType, RumLongTaskEntryType, createHooks } from '@datadog/browser-rum-core'
+import type { Duration } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -8,6 +8,7 @@ import {
   createIdentityEncoder,
   createValueHistory,
   deepClone,
+  ONE_DAY,
   relativeNow,
   timeStampNow,
 } from '@datadog/browser-core'
@@ -20,7 +21,6 @@ import {
   readFormDataRequest,
   mockClock,
 } from '@datadog/browser-core/test'
-import { LONG_TASK_ID_HISTORY_TIME_OUT_DELAY } from 'packages/rum-core/src/domain/longTask/longTaskCollection'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import { mockedTrace } from './test-utils/mockedTrace'
@@ -29,6 +29,7 @@ import type { ProfilerTrace, RumProfilerTrace } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import type { ProfileEventPayload } from './transport/assembly'
+import type { LongTaskContext } from './longTaskHistory'
 
 describe('profiler', () => {
   // Store the original pathname
@@ -85,22 +86,9 @@ describe('profiler', () => {
     // Replace Browser's Profiler with a mock for testing purpose.
     mockProfiler(mockProfilerTrace)
 
-    // Mock longTaskContexts
-    function mockLongTaskContexts() {
-      const longTaskContexts = createValueHistory<LongTaskContext>({
-        expireDelay: LONG_TASK_ID_HISTORY_TIME_OUT_DELAY,
-      })
-
-      return {
-        findLongTasks: (startTime: RelativeTime, duration: Duration): LongTaskContext[] =>
-          longTaskContexts.findAll(startTime, duration),
-        addLongTask: (longTask: LongTaskContext) =>
-          longTaskContexts
-            .add(longTask, longTask.startClocks.relative)
-            .close(addDuration(longTask.startClocks.relative, longTask.duration)),
-      }
-    }
-    const longTaskContexts = mockLongTaskContexts()
+    const longTaskHistory = createValueHistory<LongTaskContext>({
+      expireDelay: ONE_DAY,
+    })
 
     // Start collection of profile.
     const profiler = createRumProfiler(
@@ -108,7 +96,6 @@ describe('profiler', () => {
       lifeCycle,
       sessionManager,
       profilingContextManager,
-      longTaskContexts,
       createIdentityEncoder,
       viewHistory,
       // Overrides default configuration for testing purpose.
@@ -117,9 +104,17 @@ describe('profiler', () => {
         collectIntervalMs: 60000, // 1min
         minNumberOfSamples: 0,
         minProfileDurationMs: 0,
-      }
+      },
+      longTaskHistory
     )
-    return { profiler, profilingContextManager, mockedRumProfilerTrace, longTaskContexts }
+    return {
+      profiler,
+      profilingContextManager,
+      mockedRumProfilerTrace,
+      addLongTask: (longTask: LongTaskContext) => {
+        longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
+      },
+    }
   }
 
   it('should start profiling collection and collect data on stop', async () => {
@@ -196,26 +191,26 @@ describe('profiler', () => {
 
   it('should collect long task happening during a profiling session', async () => {
     const clock = mockClock()
-    const { profiler, profilingContextManager, longTaskContexts } = setupProfiler()
+    const { profiler, profilingContextManager, addLongTask } = setupProfiler()
 
     // Start collection of profile.
     profiler.start()
     await waitForBoolean(() => profiler.isRunning())
 
     expect(profilingContextManager.get()?.status).toBe('running')
-    longTaskContexts.addLongTask({
+    addLongTask({
       id: 'long-task-id-1',
       startClocks: clocksNow(),
       duration: 50 as Duration,
-      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      entryType: RumLongTaskEntryType.LONG_ANIMATION_FRAME,
     })
     clock.tick(50)
 
-    longTaskContexts.addLongTask({
+    addLongTask({
       id: 'long-task-id-2',
       startClocks: clocksNow(),
       duration: 100 as Duration,
-      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      entryType: RumLongTaskEntryType.LONG_ANIMATION_FRAME,
     })
 
     // Stop first profiling session.
@@ -227,11 +222,11 @@ describe('profiler', () => {
     profiler.start()
     await waitForBoolean(() => profiler.isRunning())
 
-    longTaskContexts.addLongTask({
+    addLongTask({
       id: 'long-task-id-3',
       startClocks: clocksNow(),
       duration: 100 as Duration,
-      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      entryType: RumLongTaskEntryType.LONG_ANIMATION_FRAME,
     })
 
     clock.tick(500)
@@ -255,13 +250,13 @@ describe('profiler', () => {
         id: 'long-task-id-2',
         startClocks: jasmine.any(Object),
         duration: 100 as Duration,
-        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+        entryType: RumLongTaskEntryType.LONG_ANIMATION_FRAME,
       },
       {
         id: 'long-task-id-1',
         startClocks: jasmine.any(Object),
         duration: 50 as Duration,
-        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+        entryType: RumLongTaskEntryType.LONG_ANIMATION_FRAME,
       },
     ])
 
@@ -271,7 +266,7 @@ describe('profiler', () => {
         id: 'long-task-id-3',
         startClocks: jasmine.any(Object),
         duration: 100 as Duration,
-        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+        entryType: RumLongTaskEntryType.LONG_ANIMATION_FRAME,
       },
     ])
   })

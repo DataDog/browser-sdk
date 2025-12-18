@@ -1,7 +1,7 @@
 import { clocksOrigin } from '@datadog/browser-core'
-import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
-import type { LongTaskContext } from '@datadog/browser-rum-core'
+import { RumLongTaskEntryType } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace, RumViewEntry } from '../types'
+import type { LongTaskContext } from '../longTaskHistory'
 import { buildProfileEventAttributes, type ProfileEventAttributes } from './buildProfileEventAttributes'
 
 describe('buildProfileEventAttributes', () => {
@@ -21,7 +21,7 @@ describe('buildProfileEventAttributes', () => {
     return {
       id: 'longtask-456',
       duration: 100 as any,
-      entryType: RumPerformanceEntryType.LONG_TASK,
+      entryType: RumLongTaskEntryType.LONG_TASK,
       startClocks: clocksOrigin(),
       ...overrides,
     }
