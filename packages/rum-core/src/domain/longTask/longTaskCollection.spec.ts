@@ -49,7 +49,7 @@ describe('longTaskCollection', () => {
 
       notifyPerformanceEntries([performanceLongAnimationFrameTiming])
 
-      expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+      expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         long_task: {
@@ -127,7 +127,7 @@ describe('longTaskCollection', () => {
       setupLongTaskCollection({ supportedEntryType: RumPerformanceEntryType.LONG_TASK })
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
 
-      expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+      expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         long_task: {

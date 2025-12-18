@@ -1,5 +1,12 @@
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { ErrorSource, HookNames, ONE_MINUTE, display, startGlobalContext } from '@datadog/browser-core'
+import {
+  ErrorSource,
+  HookNames,
+  ONE_MINUTE,
+  display,
+  relativeToClocks,
+  startGlobalContext,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
 import {
@@ -461,7 +468,7 @@ describe('rum assembly', () => {
 
       notifyRawRumEvent(lifeCycle, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION),
-        startTime: 123 as RelativeTime,
+        startClocks: relativeToClocks(123 as RelativeTime),
       })
 
       expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
@@ -567,11 +574,11 @@ describe('rum assembly', () => {
 
 function notifyRawRumEvent<E extends RawRumEvent>(
   lifeCycle: LifeCycle,
-  partialData: Omit<RawRumEventCollectedData<E>, 'startTime' | 'domainContext'> &
-    Partial<Pick<RawRumEventCollectedData<E>, 'startTime' | 'domainContext'>>
+  partialData: Omit<RawRumEventCollectedData<E>, 'startClocks' | 'domainContext'> &
+    Partial<Pick<RawRumEventCollectedData<E>, 'startClocks' | 'domainContext'>>
 ) {
   const fullData = {
-    startTime: 0 as RelativeTime,
+    startClocks: relativeToClocks(0 as RelativeTime),
     domainContext: {} as RumEventDomainContext,
     ...partialData,
   }

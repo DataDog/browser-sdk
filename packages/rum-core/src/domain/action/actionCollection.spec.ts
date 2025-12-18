@@ -64,7 +64,7 @@ describe('actionCollection', () => {
       events: [event],
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
         error: {
@@ -116,7 +116,7 @@ describe('actionCollection', () => {
       context: { foo: 'bar' },
     })
 
-    expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       action: {
         id: jasmine.any(String),
