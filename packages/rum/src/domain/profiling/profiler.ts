@@ -1,4 +1,4 @@
-import type { Encoder } from '@datadog/browser-core'
+import type { Encoder, ValueHistory } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -15,7 +15,6 @@ import {
 
 import type {
   LifeCycle,
-  LongTaskContexts,
   RumConfiguration,
   RumSessionManager,
   TransportPayload,
@@ -35,6 +34,8 @@ import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { assembleProfilingPayload } from './transport/assembly'
+import type { LongTaskContext } from './longTaskHistory'
+import { createLongTaskHistory } from './longTaskHistory'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -48,10 +49,10 @@ export function createRumProfiler(
   lifeCycle: LifeCycle,
   session: RumSessionManager,
   profilingContextManager: ProfilingContextManager,
-  longTaskContexts: LongTaskContexts,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
-  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
+  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION,
+  longTaskHistory: Pick<ValueHistory<LongTaskContext>, 'findAll'> = createLongTaskHistory(lifeCycle)
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
 
@@ -229,7 +230,7 @@ export function createRumProfiler(
       .then((trace) => {
         const endClocks = clocksNow()
         const duration = elapsed(startClocks.timeStamp, endClocks.timeStamp)
-        const longTasks = longTaskContexts.findLongTasks(startClocks.relative, duration)
+        const longTasks = longTaskHistory.findAll(startClocks.relative, duration)
         const isBelowDurationThreshold = duration < profilerConfiguration.minProfileDurationMs
         const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
