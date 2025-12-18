@@ -23,7 +23,6 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   getInternalContext: () => undefined,
   lifeCycle: {} as any,
   viewHistory: {} as any,
-  longTaskContexts: {} as any,
   session: {} as any,
   stopSession: () => undefined,
   startDurationVital: () => ({}) as DurationVitalReference,
