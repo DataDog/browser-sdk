@@ -1,6 +1,8 @@
 import { getParentElement, isNodeShadowRoot } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameConstants'
 
+export const SHADOW_DOM_MARKER = ' /shadow/ '
+
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:
  * component). Those attribute values should not be generated randomly (hardcoded most of the time)
@@ -47,8 +49,11 @@ export function getSelectorFromElement(
     // parents, and we cannot determine if it's unique in the document.
     return
   }
-  let targetElementSelector: string | undefined
+
+  let cssSelector: string | undefined
+  let outputSelector: string | undefined
   let currentElement: Element | null = targetElement
+  let nextIsShadowBoundary = false
 
   while (currentElement && currentElement.nodeName !== 'HTML') {
     const globallyUniqueSelector = findSelector(
@@ -56,10 +61,10 @@ export function getSelectorFromElement(
       GLOBALLY_UNIQUE_SELECTOR_GETTERS,
       isSelectorUniqueGlobally,
       actionNameAttribute,
-      targetElementSelector
+      cssSelector
     )
     if (globallyUniqueSelector) {
-      return globallyUniqueSelector
+      return combineSelector(globallyUniqueSelector, outputSelector, nextIsShadowBoundary)
     }
 
     const uniqueSelectorAmongChildren = findSelector(
@@ -67,16 +72,29 @@ export function getSelectorFromElement(
       UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
       isSelectorUniqueAmongSiblings,
       actionNameAttribute,
-      targetElementSelector
+      cssSelector
     )
-    targetElementSelector =
-      uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector)
 
-    // Use shadow-aware parent traversal to cross shadow DOM boundaries
+    const currentSelector = uniqueSelectorAmongChildren || getPositionSelector(currentElement)
+
+    cssSelector = combineSelector(currentSelector, cssSelector)
+    outputSelector = combineSelector(currentSelector, outputSelector, nextIsShadowBoundary)
+
+    nextIsShadowBoundary = isCrossingShadowBoundary(currentElement)
+
     currentElement = getParentElement(currentElement)
   }
 
-  return targetElementSelector
+  return outputSelector
+}
+
+/**
+ * Check if traversing to the parent element will cross a shadow DOM boundary.
+ * This happens when the element is a direct child of a shadow root.
+ */
+function isCrossingShadowBoundary(element: Element): boolean {
+  const parentNode = element.parentNode
+  return parentNode !== null && isNodeShadowRoot(parentNode)
 }
 
 function isGeneratedValue(value: string) {
@@ -185,7 +203,7 @@ function findSelector(
       continue
     }
     if (predicate(element, elementSelector, childSelector)) {
-      return combineSelector(elementSelector, childSelector)
+      return elementSelector
     }
   }
 }
@@ -289,6 +307,10 @@ export function isSelectorUniqueAmongSiblings(
   return true
 }
 
-function combineSelector(parent: string, child: string | undefined): string {
-  return child ? `${parent}>${child}` : parent
+function combineSelector(parent: string, child: string | undefined, useShadowSeparator = false): string {
+  if (!child) {
+    return parent
+  }
+  const separator = useShadowSeparator ? SHADOW_DOM_MARKER : '>'
+  return `${parent}${separator}${child}`
 }

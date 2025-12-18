@@ -1,5 +1,5 @@
 import { appendElement } from '../../test'
-import { getSelectorFromElement, isSelectorUniqueAmongSiblings } from './getSelectorFromElement'
+import { getSelectorFromElement, isSelectorUniqueAmongSiblings, SHADOW_DOM_MARKER } from './getSelectorFromElement'
 
 describe('getSelectorFromElement', () => {
   afterEach(() => {
@@ -222,7 +222,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
 })
 
 describe('getSelectorFromElement with shadow DOM', () => {
-  it('should generate selector for element inside shadow DOM', () => {
+  it('should generate selector with shadow marker for element inside shadow DOM', () => {
     const host = appendElement('<div id="shadow-host"></div>')
     const shadowRoot = host.attachShadow({ mode: 'open' })
     const button = document.createElement('button')
@@ -231,10 +231,11 @@ describe('getSelectorFromElement with shadow DOM', () => {
 
     const selector = getSelectorFromElement(button, undefined)
     expect(selector).toBeDefined()
+    expect(selector).toContain(SHADOW_DOM_MARKER)
     expect(selector).toContain('BUTTON')
   })
 
-  it('should use stable attribute for element inside shadow DOM', () => {
+  it('should use stable attribute for element inside shadow DOM with shadow marker', () => {
     const host = appendElement('<div></div>')
     const shadowRoot = host.attachShadow({ mode: 'open' })
     const button = document.createElement('button')
@@ -242,22 +243,23 @@ describe('getSelectorFromElement with shadow DOM', () => {
     shadowRoot.appendChild(button)
 
     const selector = getSelectorFromElement(button, undefined)
+    expect(selector).toContain(SHADOW_DOM_MARKER)
     expect(selector).toContain('data-testid="shadow-test"')
   })
 
-  it('should traverse shadow boundary to build selector path', () => {
+  it('should insert shadow marker when traversing shadow boundary', () => {
     const host = appendElement('<div id="my-host"></div>')
     const shadowRoot = host.attachShadow({ mode: 'open' })
     const button = document.createElement('button')
     shadowRoot.appendChild(button)
 
     const selector = getSelectorFromElement(button, undefined)
-    expect(selector).toBeDefined()
-    expect(selector).toContain('DIV')
+
+    expect(selector).toContain(SHADOW_DOM_MARKER)
     expect(selector).toContain('BUTTON')
   })
 
-  it('should handle nested shadow DOMs', () => {
+  it('should handle nested shadow DOMs with multiple markers', () => {
     const outerHost = appendElement('<div data-testid="outer-host"></div>')
     const outerShadowRoot = outerHost.attachShadow({ mode: 'open' })
 
@@ -272,10 +274,15 @@ describe('getSelectorFromElement with shadow DOM', () => {
 
     const selector = getSelectorFromElement(button, undefined)
     expect(selector).toBeDefined()
+
+    const markerCount = (
+      selector!.match(new RegExp(SHADOW_DOM_MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []
+    ).length
+    expect(markerCount).toBe(2)
     expect(selector).toContain('data-testid="deep-button"')
   })
 
-  it('should use position selector inside shadow DOM when no unique identifier', () => {
+  it('should use position selector inside shadow DOM with shadow marker', () => {
     const host = appendElement('<div></div>')
     const shadowRoot = host.attachShadow({ mode: 'open' })
 
@@ -288,6 +295,7 @@ describe('getSelectorFromElement with shadow DOM', () => {
 
     const selector = getSelectorFromElement(target, undefined)
     expect(selector).toBeDefined()
+    expect(selector).toContain(SHADOW_DOM_MARKER)
     expect(selector).toContain('SPAN')
   })
 
@@ -309,5 +317,17 @@ describe('getSelectorFromElement with shadow DOM', () => {
     expect(selector1).toBeDefined()
     expect(selector2).toBeDefined()
     expect(selector1).not.toBe(selector2)
+    expect(selector1).toContain(SHADOW_DOM_MARKER)
+    expect(selector2).toContain(SHADOW_DOM_MARKER)
+  })
+
+  it('should NOT add shadow marker for elements in light DOM', () => {
+    const element = appendElement('<div><button class="light-btn"></button></div>')
+    const button = element.querySelector('button')!
+
+    const selector = getSelectorFromElement(button, undefined)
+    expect(selector).toBeDefined()
+    expect(selector).not.toContain(SHADOW_DOM_MARKER)
+    expect(selector).toBe('BODY>DIV>BUTTON.light-btn')
   })
 })
