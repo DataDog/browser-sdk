@@ -146,7 +146,7 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
   return {
     rawRumEvent: actionEvent,
     duration,
-    startTime: action.startClocks.relative,
+    startClocks: action.startClocks,
     domainContext,
   }
 }

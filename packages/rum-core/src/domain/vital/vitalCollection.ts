@@ -226,7 +226,7 @@ function processVital(vital: DurationVital | OperationStepVital): RawRumEventCol
       type: RumEventType.VITAL,
       context,
     },
-    startTime: startClocks.relative,
+    startClocks,
     duration: type === VitalType.DURATION ? vital.duration : undefined,
     domainContext: {},
   }
