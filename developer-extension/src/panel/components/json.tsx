@@ -4,21 +4,17 @@ import { useColorScheme } from '@mantine/hooks'
 import { IconCopy, IconSearch } from '@tabler/icons-react'
 import type { ForwardedRef, ReactNode } from 'react'
 import React, { forwardRef, useContext, createContext, useState } from 'react'
-import { createLogger } from '../../common/logger'
 import { copy } from '../copy'
-import { evalInWindow } from '../evalInWindow'
 import { formatNumber } from '../formatNumber'
 
 import * as classes from './json.module.css'
-
-const logger = createLogger('json')
 
 interface JsonProps {
   value: unknown
   defaultCollapseLevel?: number
   getMenuItemsForPath?: GetMenuItemsForPath
   formatValue?: FormatValue
-  sdkType?: 'rum' | 'logs'
+  onRevealFunctionLocation?: (descriptor: JsonValueDescriptor) => void
 }
 
 type GetMenuItemsForPath = (path: string, value: unknown) => ReactNode
@@ -49,21 +45,23 @@ const JsonContext = createContext<{
   defaultCollapseLevel: number
   getMenuItemsForPath?: GetMenuItemsForPath
   formatValue: FormatValue
-  sdkType?: 'rum' | 'logs'
+  onRevealFunctionLocation?: (descriptor: JsonValueDescriptor) => void
 } | null>(null)
 
-type JsonValueDescriptor =
+export type JsonValueDescriptor =
   | {
       parentType: 'root'
       value: unknown
       depth: 0
       path: ''
+      evaluationPath: ''
     }
   | {
       parentType: 'array'
       parentValue: unknown[]
       value: unknown
       path: string
+      evaluationPath: string
       depth: number
     }
   | {
@@ -71,6 +69,7 @@ type JsonValueDescriptor =
       parentValue: object
       value: unknown
       path: string
+      evaluationPath: string
       depth: number
       key: string
     }
@@ -82,7 +81,7 @@ export const Json = forwardRef(
       defaultCollapseLevel = Infinity,
       formatValue = defaultFormatValue,
       getMenuItemsForPath,
-      sdkType,
+      onRevealFunctionLocation,
       ...boxProps
     }: JsonProps & BoxProps,
     ref: ForwardedRef<HTMLDivElement | HTMLSpanElement>
@@ -96,13 +95,16 @@ export const Json = forwardRef(
       component={doesValueHasChildren(value) ? 'div' : 'span'}
       className={classes.root}
     >
-      <JsonContext.Provider value={{ defaultCollapseLevel, getMenuItemsForPath, formatValue, sdkType }}>
+      <JsonContext.Provider
+        value={{ defaultCollapseLevel, getMenuItemsForPath, formatValue, onRevealFunctionLocation }}
+      >
         <JsonValue
           descriptor={{
             parentType: 'root',
             value,
             depth: 0,
             path: '',
+            evaluationPath: '',
           }}
         />
       </JsonContext.Provider>
@@ -133,18 +135,7 @@ function isFunctionMetadata(value: unknown): value is FunctionMetadata {
 function JsonFunctionValue({ descriptor, metadata }: { descriptor: JsonValueDescriptor; metadata: FunctionMetadata }) {
   const [showSource, setShowSource] = useState(false)
   const colorScheme = useColorScheme()
-  const { sdkType } = useContext(JsonContext)!
-
-  const handleRevealLocation = () => {
-    const path = descriptor.path
-    const logExpression = buildLogExpression(path, sdkType)
-
-    if (logExpression) {
-      evalInWindow(logExpression).catch((error) => {
-        logger.error('Failed to log function:', error)
-      })
-    }
-  }
+  const { onRevealFunctionLocation } = useContext(JsonContext)!
 
   return (
     <JsonLine descriptor={descriptor}>
@@ -169,17 +160,19 @@ function JsonFunctionValue({ descriptor, metadata }: { descriptor: JsonValueDesc
               bg={`gray.${colorScheme === 'dark' ? 8 - descriptor.depth : descriptor.depth + 1}`}
               className={classes.functionSource}
             >
-              <Text
-                component="div"
-                size="xs"
-                c="blue"
-                className={classes.functionSourceToggle}
-                onClick={handleRevealLocation}
-                title="Log function to console to reveal source location"
-              >
-                <IconSearch size={12} />
-                Reveal in console
-              </Text>
+              {onRevealFunctionLocation && (
+                <Text
+                  component="div"
+                  size="xs"
+                  c="blue"
+                  className={classes.functionSourceToggle}
+                  onClick={() => onRevealFunctionLocation?.(descriptor)}
+                  title="Log function to console to reveal source location"
+                >
+                  <IconSearch size={12} />
+                  Reveal in console
+                </Text>
+              )}
               {metadata.__source}
             </Box>
           </Collapse>
@@ -187,54 +180,6 @@ function JsonFunctionValue({ descriptor, metadata }: { descriptor: JsonValueDesc
       )}
     </JsonLine>
   )
-}
-
-function buildLogExpression(path: string, sdkType?: 'rum' | 'logs'): string | null {
-  if (!path || !sdkType) {
-    return null
-  }
-
-  const sdkGlobal = sdkType === 'rum' ? 'DD_RUM' : 'DD_LOGS'
-  const sdkName = sdkType === 'rum' ? 'RUM' : 'Logs'
-
-  return `
-    (function() {
-      const config = window.${sdkGlobal}?.getInitConfiguration?.();
-      if (!config) {
-        console.warn('[${sdkName}] SDK not found');
-        return;
-      }
-      
-      // Navigate the path to get the value
-      let value = config;
-      const pathParts = '${path}'.split('.');
-      
-      for (const key of pathParts) {
-        if (!value || typeof value !== 'object') {
-          console.warn('[${sdkName}] Property not found at path: ${path}');
-          return;
-        }
-        
-        // Handle array indices (numeric keys)
-        if (Array.isArray(value)) {
-          const index = parseInt(key, 10);
-          if (isNaN(index) || index < 0 || index >= value.length) {
-            console.warn('[${sdkName}] Invalid array index at path: ${path}');
-            return;
-          }
-          value = value[index];
-        } else {
-          if (!(key in value)) {
-            console.warn('[${sdkName}] Property not found at path: ${path}');
-            return;
-          }
-          value = value[key];
-        }
-      }
-      
-      console.log('[${sdkName}] ${path}:', value);
-    })()
-  `
 }
 
 function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
@@ -255,7 +200,8 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
               parentType: 'array',
               parentValue: descriptor.value as unknown[],
               value: child,
-              path: descriptor.path ? `${descriptor.path}.${i}` : String(i),
+              path: descriptor.path,
+              evaluationPath: descriptor.evaluationPath ? `${descriptor.evaluationPath}.${i}` : String(i),
               depth: descriptor.depth + 1,
             }}
           />
@@ -285,6 +231,7 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
               parentValue: descriptor.value as object,
               value: child,
               path: descriptor.path ? `${descriptor.path}.${key}` : key,
+              evaluationPath: descriptor.evaluationPath ? `${descriptor.evaluationPath}.${key}` : key,
               depth: descriptor.depth + 1,
               key,
             }}
