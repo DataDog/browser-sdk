@@ -288,13 +288,7 @@ function serializeJson(value: object) {
   // replacer to remove function attributes that have been serialized with metadata by useSdkInfos() (ex: beforeSend)
   const replacer = (key: string, val: unknown) => {
     // Filter out function metadata objects
-    if (
-      key !== '' &&
-      !Array.isArray(val) &&
-      typeof val === 'object' &&
-      val &&
-      (val as any).__type === 'function'
-    ) {
+    if (key !== '' && !Array.isArray(val) && typeof val === 'object' && val && (val as any).__type === 'function') {
       return undefined
     }
     return val

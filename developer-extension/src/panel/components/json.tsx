@@ -130,13 +130,7 @@ function isFunctionMetadata(value: unknown): value is FunctionMetadata {
   )
 }
 
-function JsonFunctionValue({
-  descriptor,
-  metadata,
-}: {
-  descriptor: JsonValueDescriptor
-  metadata: FunctionMetadata
-}) {
+function JsonFunctionValue({ descriptor, metadata }: { descriptor: JsonValueDescriptor; metadata: FunctionMetadata }) {
   const [showSource, setShowSource] = useState(false)
   const colorScheme = useColorScheme()
   const { sdkType } = useContext(JsonContext)!
@@ -144,7 +138,7 @@ function JsonFunctionValue({
   const handleRevealLocation = () => {
     const path = descriptor.path
     const logExpression = buildLogExpression(path, sdkType)
-    
+
     if (logExpression) {
       evalInWindow(logExpression).catch((error) => {
         logger.error('Failed to log function:', error)
@@ -155,9 +149,7 @@ function JsonFunctionValue({
   return (
     <JsonLine descriptor={descriptor}>
       <JsonText color="grape" descriptor={descriptor}>
-        <Text component="span">
-          {`<function: ${metadata.__name}>`}
-        </Text>
+        <Text component="span">{`<function: ${metadata.__name}>`}</Text>
       </JsonText>
       {metadata.__source && (
         <>
