@@ -5,27 +5,33 @@ import os from 'node:os'
 import { Writable } from 'node:stream'
 import { printError, printLog, runMain } from '../lib/executionUtils.ts'
 import { findPackageJsonFiles } from '../lib/filesUtils.ts'
+import { command } from '../lib/command.ts'
 
 const TOKEN_NAME = 'browser-sdk-granular'
 
 runMain(async () => {
+  if (getLoggedInUser() !== 'datadog') {
+    printError('You must be logged in as datadog. Run `npm login` and try again.')
+    process.exit(1)
+  }
+
   const accessToken = findAccessTokenFromNpmrc()
   if (!accessToken) {
     printError('Could not find NPM token in ~/.npmrc. Make sure you have logged in with `npm login`')
     process.exit(1)
   }
 
-  const password = await prompt({ question: 'Password: ', showOutput: false })
-  const otp = await prompt({ question: 'OTP: ' })
+  const password = await prompt({ question: 'npmjs.com password: ', showOutput: false })
+  const otp = await prompt({ question: 'npmjs.com OTP: ' })
 
-  const { objects: tokens } = (await callNpmApi({
+  const { objects: tokens } = await callNpmApi<{
+    objects: Array<{ name: string; key: string }>
+  }>({
     route: 'tokens',
     method: 'GET',
     otp,
     accessToken,
-  })) as {
-    objects: Array<{ name: string; key: string }>
-  }
+  })
 
   const existingToken = tokens.find((token) => token.name === TOKEN_NAME)
   if (existingToken) {
@@ -38,7 +44,7 @@ runMain(async () => {
     })
   }
 
-  await callNpmApi({
+  const result = await callNpmApi<{ token: string }>({
     route: 'tokens',
     method: 'POST',
     body: {
@@ -55,9 +61,26 @@ runMain(async () => {
   })
 
   printLog('Token created')
+
+  printLog('Updating AWS SSM parameter...')
+  command`
+    aws-vault exec sso-build-stable-developer -- aws ssm put-parameter --region=us-east-1 --name=ci.browser-sdk.npm_token --value=${result.token} --type SecureString --overwrite
+  `
+    .withLogs()
+    .run()
+
+  printLog('All done!')
 })
 
-async function callNpmApi({
+function getLoggedInUser() {
+  try {
+    return command`npm whoami`.run().trim()
+  } catch {
+    return undefined
+  }
+}
+
+async function callNpmApi<T>({
   route,
   method,
   body,
@@ -69,7 +92,7 @@ async function callNpmApi({
   body?: any
   otp: string
   accessToken: string
-}): Promise<any> {
+}): Promise<T> {
   // https://api-docs.npmjs.com/#tag/Tokens/operation/createToken
   const response = await fetch(`https://registry.npmjs.org/-/npm/v1/${route}`, {
     method,
@@ -97,7 +120,7 @@ async function callNpmApi({
     process.exit(1)
   }
 
-  return responseBody
+  return responseBody as T
 }
 
 function findPublisheablePackages() {
