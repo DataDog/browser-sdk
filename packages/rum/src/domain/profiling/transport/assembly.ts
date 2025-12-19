@@ -1,25 +1,10 @@
 import { buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { RumProfilerTrace } from '../types'
+import type { ProfileEventPayload as GeneratedProfileEventPayload, RumProfilerTrace} from '../../../types'
 import { buildProfileEventAttributes } from './buildProfileEventAttributes'
-import type { ProfileEventAttributes } from './buildProfileEventAttributes'
-
-export interface ProfileEvent extends ProfileEventAttributes {
-  attachments: string[]
-  start: string // ISO date
-  end: string // ISO date
-  family: 'chrome'
-  runtime: 'chrome'
-  format: 'json'
-  version: 4
-  tags_profiler: string
-  _dd: {
-    clock_drift: number
-  }
-}
 
 export interface ProfileEventPayload {
-  event: ProfileEvent
+  event: GeneratedProfileEventPayload['event']
   'wall-time.json': RumProfilerTrace
 }
 
@@ -40,12 +25,12 @@ function buildProfileEvent(
   profilerTrace: RumProfilerTrace,
   configuration: RumConfiguration,
   sessionId: string | undefined
-): ProfileEvent {
+): ProfileEventPayload['event'] {
   const tags = buildTags(configuration) // TODO: get that from the tagContext hook
   const profileAttributes = buildProfileEventAttributes(profilerTrace, configuration.applicationId, sessionId)
   const profileEventTags = buildProfileEventTags(tags)
 
-  const profileEvent: ProfileEvent = {
+  const profileEvent: ProfileEventPayload['event'] = {
     ...profileAttributes,
     attachments: ['wall-time.json'],
     start: new Date(profilerTrace.startClocks.timeStamp).toISOString(),

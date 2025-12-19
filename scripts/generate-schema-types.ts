@@ -8,7 +8,7 @@ import { printLog, runMain } from './lib/executionUtils.ts'
 const prettierConfigPath = path.join(import.meta.dirname, '../.prettierrc.yml')
 
 runMain(async () => {
-  await generateRumEventsFormatTypes(path.join(import.meta.dirname, '../rum-events-format/schemas'))
+  await generateRumEventsFormatTypes(path.join(import.meta.dirname, '../../rum-events-format/schemas'))
   await generateRemoteConfigurationTypes(path.join(import.meta.dirname, '../remote-configuration'))
 })
 
@@ -27,6 +27,13 @@ async function generateRumEventsFormatTypes(schemasDirectoryPath: string): Promi
     path.join(import.meta.dirname, '../packages/rum/src/types/sessionReplay.ts'),
     schemasDirectoryPath,
     'session-replay-browser-schema.json',
+    { options: { additionalProperties: false } }
+  )
+
+  await generateTypesFromSchema(
+    path.join(import.meta.dirname, '../packages/rum/src/types/profiling.ts'),
+    schemasDirectoryPath,
+    'profiling-browser-schema.json',
     { options: { additionalProperties: false } }
   )
 }

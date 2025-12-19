@@ -1,11 +1,4 @@
-import type { RumProfilerTrace, RumViewEntry } from '../types'
-
-export interface ProfileEventAttributes {
-  application: { id: string }
-  session?: { id: string }
-  view?: { id: string[]; name: string[] }
-  long_task?: { id: string[] }
-}
+import type { ProfileEventAttributes, RumProfilerTrace, RumViewEntry } from '../../../types'
 
 /**
  * Builds attributes for the Profile Event.
@@ -20,32 +13,32 @@ export function buildProfileEventAttributes(
   applicationId: string,
   sessionId: string | undefined
 ): ProfileEventAttributes {
+  // Extract view ids and names from the profiler trace and add them as attributes of the profile event.
+  // This will be used to filter the profiles by @view.id and/or @view.name.
+  const { ids, names } = extractViewIdsAndNames(profilerTrace.views)
+  
+  const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
+
   const attributes: ProfileEventAttributes = {
     application: {
       id: applicationId,
     },
-  }
-  if (sessionId) {
-    attributes.session = {
-      id: sessionId,
-    }
+    ...(sessionId && {
+      session: {
+        id: sessionId,
+      },
+    }),
+    ...(ids.length && {
+      view: {
+        id: ids,
+        name: names,
+      },
+    }),
+    ...(longTaskIds.length && {
+      long_task: { id: longTaskIds },
+    }),
   }
 
-  // Extract view ids and names from the profiler trace and add them as attributes of the profile event.
-  // This will be used to filter the profiles by @view.id and/or @view.name.
-  const { ids, names } = extractViewIdsAndNames(profilerTrace.views)
-
-  if (ids.length) {
-    attributes.view = {
-      id: ids,
-      name: names,
-    }
-  }
-  const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
-
-  if (longTaskIds.length) {
-    attributes.long_task = { id: longTaskIds }
-  }
   return attributes
 }
 
