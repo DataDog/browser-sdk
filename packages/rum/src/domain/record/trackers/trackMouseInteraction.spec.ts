@@ -51,7 +51,7 @@ describe('trackMouseInteraction', () => {
     a.dispatchEvent(pointerupEvent)
 
     expect(emitRecordCallback).toHaveBeenCalledWith({
-      id: scope.eventIds.getIdForEvent(pointerupEvent),
+      id: scope.eventIds.getOrInsert(pointerupEvent),
       type: RecordType.IncrementalSnapshot,
       timestamp: jasmine.any(Number),
       data: {
