@@ -16,7 +16,7 @@ export function buildProfileEventAttributes(
   // Extract view ids and names from the profiler trace and add them as attributes of the profile event.
   // This will be used to filter the profiles by @view.id and/or @view.name.
   const { ids, names } = extractViewIdsAndNames(profilerTrace.views)
-  
+
   const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
 
   const attributes: ProfileEventAttributes = {

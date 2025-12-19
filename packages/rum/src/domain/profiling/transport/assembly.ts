@@ -1,6 +1,6 @@
 import { buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { ProfileEventPayload as GeneratedProfileEventPayload, RumProfilerTrace} from '../../../types'
+import type { ProfileEventPayload as GeneratedProfileEventPayload, RumProfilerTrace } from '../../../types'
 import { buildProfileEventAttributes } from './buildProfileEventAttributes'
 
 export interface ProfileEventPayload {
