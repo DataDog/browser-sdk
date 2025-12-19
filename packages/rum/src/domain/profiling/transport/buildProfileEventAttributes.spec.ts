@@ -1,6 +1,4 @@
 import { clocksOrigin } from '@datadog/browser-core'
-import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
-import type { LongTaskContext } from '@datadog/browser-rum-core'
 import type { RumProfilerTrace, RumViewEntry } from '../types'
 import { buildProfileEventAttributes, type ProfileEventAttributes } from './buildProfileEventAttributes'
 
@@ -17,16 +15,6 @@ describe('buildProfileEventAttributes', () => {
     }
   }
 
-  function createMockLongTaskEntry(overrides: Partial<LongTaskContext> = {}): LongTaskContext {
-    return {
-      id: 'longtask-456',
-      duration: 100 as any,
-      entryType: RumPerformanceEntryType.LONG_TASK,
-      startClocks: clocksOrigin(),
-      ...overrides,
-    }
-  }
-
   function createMockProfilerTrace(overrides: Partial<RumProfilerTrace> = {}): RumProfilerTrace {
     return {
       startClocks: clocksOrigin(),
@@ -34,7 +22,7 @@ describe('buildProfileEventAttributes', () => {
       clocksOrigin: clocksOrigin(),
       sampleInterval: 10,
       views: [],
-      longTasks: [],
+      longTaskIds: [],
       resources: [],
       frames: [],
       stacks: [],
@@ -167,9 +155,8 @@ describe('buildProfileEventAttributes', () => {
   })
 
   describe('when handling long tasks', () => {
-    it('should extract long task ids from single long task', () => {
-      const longTask = createMockLongTaskEntry({ id: 'longtask-123' })
-      const profilerTrace = createMockProfilerTrace({ longTasks: [longTask] })
+    it('should include long task ids', () => {
+      const profilerTrace = createMockProfilerTrace({ longTaskIds: ['longtask-123'] })
 
       const result = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
 
@@ -178,13 +165,8 @@ describe('buildProfileEventAttributes', () => {
       })
     })
 
-    it('should extract long task ids from multiple long tasks', () => {
-      const longTasks = [
-        createMockLongTaskEntry({ id: 'longtask-123' }),
-        createMockLongTaskEntry({ id: 'longtask-456' }),
-        createMockLongTaskEntry({ id: 'longtask-789' }),
-      ]
-      const profilerTrace = createMockProfilerTrace({ longTasks })
+    it('should include multiple long task ids', () => {
+      const profilerTrace = createMockProfilerTrace({ longTaskIds: ['longtask-123', 'longtask-456', 'longtask-789'] })
 
       const result = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
 
@@ -193,32 +175,8 @@ describe('buildProfileEventAttributes', () => {
       })
     })
 
-    it('should filter out long tasks with undefined ids', () => {
-      const longTasks = [
-        createMockLongTaskEntry({ id: 'longtask-123' }),
-        createMockLongTaskEntry({ id: undefined }),
-        createMockLongTaskEntry({ id: 'longtask-789' }),
-      ]
-      const profilerTrace = createMockProfilerTrace({ longTasks })
-
-      const result = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
-
-      expect(result.long_task).toEqual({
-        id: ['longtask-123', 'longtask-789'],
-      })
-    })
-
-    it('should omit long_task attribute when no long tasks have ids', () => {
-      const longTasks = [createMockLongTaskEntry({ id: undefined }), createMockLongTaskEntry({ id: undefined })]
-      const profilerTrace = createMockProfilerTrace({ longTasks })
-
-      const result = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
-
-      expect(result.long_task).toBeUndefined()
-    })
-
     it('should omit long_task attribute when no long tasks are present', () => {
-      const profilerTrace = createMockProfilerTrace({ longTasks: [] })
+      const profilerTrace = createMockProfilerTrace({ longTaskIds: [] })
 
       const result = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
 
@@ -232,11 +190,7 @@ describe('buildProfileEventAttributes', () => {
         createMockViewEntry({ viewId: 'view-123', viewName: 'Home Page' }),
         createMockViewEntry({ viewId: 'view-456', viewName: 'About Page' }),
       ]
-      const longTasks = [
-        createMockLongTaskEntry({ id: 'longtask-123' }),
-        createMockLongTaskEntry({ id: 'longtask-456' }),
-      ]
-      const profilerTrace = createMockProfilerTrace({ views, longTasks })
+      const profilerTrace = createMockProfilerTrace({ views, longTaskIds: ['longtask-123', 'longtask-456'] })
 
       const result = buildProfileEventAttributes(profilerTrace, applicationId, sessionId)
 
