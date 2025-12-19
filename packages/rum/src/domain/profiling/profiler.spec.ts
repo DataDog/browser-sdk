@@ -19,9 +19,10 @@ import {
   mockViewHistory,
 } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
+import type { RumProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './profiler'
-import type { ProfilerTrace, RUMProfiler, RumProfilerTrace } from './types'
+import type { ProfilerTrace, RUMProfiler } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import type { ProfileEventPayload } from './transport/assembly'
