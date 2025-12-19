@@ -120,7 +120,7 @@ async function callNpmApi<T>({
     process.exit(1)
   }
 
-  return responseBody
+  return responseBody as T
 }
 
 function findPublisheablePackages() {
