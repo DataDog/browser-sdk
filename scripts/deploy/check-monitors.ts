@@ -8,9 +8,35 @@ import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/sec
 import { siteByDatacenter } from '../lib/datacenter.ts'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 
-const datacenters = process.argv[2].split(',')
+const TIME_WINDOW_IN_MINUTES = 5
+const BASE_QUERY = `source:browser status:error version:${browserSdkVersion}`
+const QUERIES: Query[] = [
+  {
+    name: 'Telemetry errors',
+    query: BASE_QUERY,
+    threshold: 300,
+  },
+  {
+    name: 'Telemetry errors on specific org',
+    query: BASE_QUERY,
+    facet: '@org_id',
+    threshold: 100,
+  },
+  {
+    name: 'Telemetry error on specific message',
+    query: BASE_QUERY,
+    facet: 'issue.id',
+    threshold: 100,
+  },
+]
 
-runMain(async () => {
+if (!process.env.NODE_TEST_CONTEXT) {
+  runMain(() => main(...process.argv.slice(2)))
+}
+
+export async function main(...args: string[]): Promise<void> {
+  const datacenters = args[0].split(',')
+
   for (const datacenter of datacenters) {
     const site = siteByDatacenter[datacenter]
 
@@ -26,19 +52,25 @@ runMain(async () => {
       continue
     }
 
-    const errorLogsCount = await queryErrorLogsCount(site, apiKey, applicationKey)
+    for (const query of QUERIES) {
+      const buckets = await queryLogsApi(site, apiKey, applicationKey, query)
 
-    if (errorLogsCount > 0) {
-      throw new Error(`Errors found in the last 30 minutes,
-see ${computeMonitorLink(site)}`)
-    } else {
-      printLog(`No errors found in the last 30 minutes for ${datacenter}`)
+      // buckets are sorted by count, so we only need to check the first one
+      if (buckets[0]?.computes?.c0 > query.threshold) {
+        throw new Error(`${query.name} found in the last ${TIME_WINDOW_IN_MINUTES} minutes,
+see ${computeLogsLink(site, query)}`)
+      }
     }
   }
-})
+}
 
-async function queryErrorLogsCount(site: string, apiKey: string, applicationKey: string): Promise<number> {
-  const response = await fetchHandlingError(`https://api.${site}/api/v2/logs/events/search`, {
+async function queryLogsApi(
+  site: string,
+  apiKey: string,
+  applicationKey: string,
+  query: Query
+): Promise<QueryResultBucket[]> {
+  const response = await fetchHandlingError(`https://api.${site}/api/v2/logs/analytics/aggregate`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -46,26 +78,51 @@ async function queryErrorLogsCount(site: string, apiKey: string, applicationKey:
       'DD-APPLICATION-KEY': applicationKey,
     },
     body: JSON.stringify({
+      compute: [
+        {
+          aggregation: 'count',
+        },
+      ],
+      ...(query.facet
+        ? {
+            group_by: [
+              {
+                facet: query.facet,
+                sort: {
+                  type: 'measure',
+                  aggregation: 'count',
+                },
+              },
+            ],
+          }
+        : {}),
       filter: {
-        from: 'now-30m',
+        from: `now-${TIME_WINDOW_IN_MINUTES}m`,
         to: 'now',
-        query: `source:browser status:error version:${browserSdkVersion}`,
+        query: query.query,
       },
     }),
   })
 
-  const data = (await response.json()) as { data: unknown[] }
+  const data = (await response.json()) as QueryResult
 
-  return data.data.length
+  return data.data.buckets
 }
 
-function computeMonitorLink(site: string): string {
+function computeLogsLink(site: string, query: Query): string {
   const now = Date.now()
-  const thirtyMinutesAgo = now - 30 * 60 * 1000
+  const timeWindowAgo = now - TIME_WINDOW_IN_MINUTES * 60 * 1000
 
   const queryParams = new URLSearchParams({
-    query: `source:browser status:error version:${browserSdkVersion}`,
-    from_ts: `${thirtyMinutesAgo}`,
+    query: query.query,
+    ...(query.facet
+      ? {
+          agg_q: query.facet,
+          agg_t: 'count',
+          viz: 'toplist',
+        }
+      : {}),
+    from_ts: `${timeWindowAgo}`,
     to_ts: `${now}`,
   })
 
@@ -80,4 +137,22 @@ function computeTelemetryOrgDomain(site: string): string {
     default:
       return site
   }
+}
+
+interface Query {
+  name: string
+  query: string
+  facet?: string
+  threshold: number
+}
+
+interface QueryResult {
+  data: {
+    buckets: QueryResultBucket[]
+  }
+}
+
+export interface QueryResultBucket {
+  by: { [key: string]: number | string }
+  computes: { c0: number }
 }
