@@ -35,7 +35,7 @@ export function createStyleSheetIds(): StyleSheetIds {
 }
 
 export interface ItemIds<ItemType, ItemId extends number> {
-  clear(): void
+  clear(this: void): void
   get(this: void, item: ItemType): ItemId | undefined
   getOrInsert(this: void, item: ItemType): ItemId
 }
