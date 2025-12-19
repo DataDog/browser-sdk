@@ -109,7 +109,8 @@ describe('ItemIds', () => {
   describeItemIdVariant(
     'StyleSheetIds',
     createStyleSheetIds,
-    () => new CSSStyleSheet(),
+    // The CSSStyleSheet constructor is not available on older browsers.
+    () => ({ type: 'CSSStyleSheet' }),
     StyleSheetIdConstants.FIRST_ID as StyleSheetId
   )
 })
