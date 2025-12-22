@@ -14,6 +14,7 @@ import {
   getNodePrivacyLevel,
   getTextContent,
   NodePrivacyLevel,
+  isNodeShadowRoot,
 } from '@datadog/browser-rum-core'
 import { IncrementalSource } from '../../../types'
 import type {
@@ -35,10 +36,11 @@ import {
 import { createMutationBatch } from '../mutationBatch'
 import type { RemoveShadowRootCallBack } from '../shadowRootsController'
 import { assembleIncrementalSnapshot } from '../assembly'
-import type { NodeId, NodeWithSerializedNode } from '../nodeIds'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
+import type { NodeId, NodeIds } from '../itemIds'
 import type { Tracker } from './tracker.types'
 
+export type NodeWithSerializedNode = Node & { __brand: 'NodeWithSerializedNode' }
 type WithSerializedTarget<T> = T & { target: NodeWithSerializedNode }
 
 export type MutationTracker = Tracker & { flush: () => void }
@@ -108,7 +110,7 @@ function processMutations(mutations: RumMutationRecord[], transaction: Serializa
   const filteredMutations = mutations.filter(
     (mutation): mutation is WithSerializedTarget<RumMutationRecord> =>
       mutation.target.isConnected &&
-      transaction.scope.nodeIds.areAssignedForNodeAndAncestors(mutation.target) &&
+      idsAreAssignedForNodeAndAncestors(mutation.target, transaction.scope.nodeIds) &&
       getNodePrivacyLevel(
         mutation.target,
         transaction.scope.configuration.defaultPrivacyLevel,
@@ -404,4 +406,15 @@ function traverseRemovedShadowDom(removedNode: Node, shadowDomRemovedCallback: R
     shadowDomRemovedCallback(removedNode.shadowRoot)
   }
   forEachChildNodes(removedNode, (childNode) => traverseRemovedShadowDom(childNode, shadowDomRemovedCallback))
+}
+
+export function idsAreAssignedForNodeAndAncestors(node: Node, nodeIds: NodeIds): node is NodeWithSerializedNode {
+  let current: Node | null = node
+  while (current) {
+    if (nodeIds.get(current) === undefined && !isNodeShadowRoot(current)) {
+      return false
+    }
+    current = getParentNode(current)
+  }
+  return true
 }

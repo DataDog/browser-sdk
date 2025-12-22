@@ -57,7 +57,7 @@ export function trackMouseInteraction(
     }
 
     emitRecord({
-      id: scope.eventIds.getIdForEvent(event),
+      id: scope.eventIds.getOrInsert(event),
       ...assembleIncrementalSnapshot<MouseInteractionData>(IncrementalSource.MouseInteraction, interaction),
     })
   }
