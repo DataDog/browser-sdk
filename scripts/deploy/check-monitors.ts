@@ -41,7 +41,8 @@ export async function main(...args: string[]): Promise<void> {
     const site = siteByDatacenter[datacenter]
 
     if (!site) {
-      throw new Error(`No site found for datacenter ${datacenter}`)
+      printLog(`No site is configured for datacenter ${datacenter}. skipping...`)
+      continue
     }
 
     const apiKey = getTelemetryOrgApiKey(site)
