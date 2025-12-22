@@ -1,5 +1,6 @@
 import { noop } from '@datadog/browser-core'
 import type { DocumentNode, SerializedNodeWithId } from '../../../types'
+import type { NodeId } from '../itemIds'
 import type { RecordingScope } from '../recordingScope'
 import type { SerializationStats, SerializationTransaction } from '../serialization'
 import {
@@ -8,7 +9,6 @@ import {
   serializeInTransaction,
   updateSerializationStats,
 } from '../serialization'
-import type { NodeId } from '../nodeIds'
 import { createRecordingScopeForTesting } from './recordingScope.specHelper'
 
 export function createSerializationTransactionForTesting({
@@ -31,7 +31,7 @@ export function createSerializationTransactionForTesting({
       }
     },
     assignId(node: Node): NodeId {
-      return transactionScope.nodeIds.assign(node)
+      return transactionScope.nodeIds.getOrInsert(node)
     },
     kind: kind ?? SerializationKind.INITIAL_FULL_SNAPSHOT,
     scope: transactionScope,

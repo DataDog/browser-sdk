@@ -1,8 +1,8 @@
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 import type { ElementsScrollPositions } from './elementsScrollPositions'
-import type { EventIds } from './eventIds'
-import type { NodeIds } from './nodeIds'
+import { createEventIds, createNodeIds, createStringIds, createStyleSheetIds } from './itemIds'
+import type { EventIds, NodeIds, StringIds, StyleSheetIds } from './itemIds'
 import type { ShadowRootsController } from './shadowRootsController'
 
 /**
@@ -17,20 +17,26 @@ export interface RecordingScope {
   eventIds: EventIds
   nodeIds: NodeIds
   shadowRootsController: ShadowRootsController
+  stringIds: StringIds
+  styleSheetIds: StyleSheetIds
 }
 
 export function createRecordingScope(
   configuration: RumConfiguration,
   elementsScrollPositions: ElementsScrollPositions,
-  eventIds: EventIds,
-  nodeIds: NodeIds,
   shadowRootsController: ShadowRootsController
 ): RecordingScope {
+  const eventIds = createEventIds()
+  const nodeIds = createNodeIds()
+  const stringIds = createStringIds()
+  const styleSheetIds = createStyleSheetIds()
   return {
     configuration,
     elementsScrollPositions,
     eventIds,
     nodeIds,
     shadowRootsController,
+    stringIds,
+    styleSheetIds,
   }
 }
