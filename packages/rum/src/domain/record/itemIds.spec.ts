@@ -81,6 +81,16 @@ describe('ItemIds', () => {
           expect(itemIds.get(item)).toBe(itemId)
         })
       })
+
+      describe('size', () => {
+        it('increments when an id is assigned', () => {
+          expect(itemIds.size).toBe(0)
+          itemIds.getOrInsert(createItem())
+          expect(itemIds.size).toBe(1)
+          itemIds.getOrInsert(createItem())
+          expect(itemIds.size).toBe(2)
+        })
+      })
     })
   }
 

@@ -38,6 +38,7 @@ export interface ItemIds<ItemType, ItemId extends number> {
   clear(this: void): void
   get(this: void, item: ItemType): ItemId | undefined
   getOrInsert(this: void, item: ItemType): ItemId
+  get size(): number
 }
 
 function createIdMap<ItemType, ItemId extends number>(firstId: ItemId): ItemIds<ItemType, ItemId> {
@@ -76,6 +77,9 @@ function createItemIds<ItemType, ItemId extends number>(
         map.set(object, id)
       }
       return id
+    },
+    get size(): number {
+      return nextId - firstId
     },
   }
 }
