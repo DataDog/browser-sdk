@@ -1,5 +1,16 @@
-import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import { noop, combine, toServerDuration, generateUUID, SKIPPED, HookNames } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, Observable } from '@datadog/browser-core'
+import {
+  noop,
+  combine,
+  toServerDuration,
+  generateUUID,
+  SKIPPED,
+  HookNames,
+  clocksNow,
+  elapsed,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -14,10 +25,44 @@ import { trackClickActions } from './trackClickActions'
 
 export type { ActionContexts }
 
-export interface CustomAction {
-  type: typeof ActionType.CUSTOM
+export interface ActionOptions {
+  /**
+   * Action Type
+   *
+   * @default 'custom'
+   */
+  type?: ActionType
+
+  /**
+   * Action context
+   */
+  context?: any
+
+  /**
+   * Action key
+   */
+  actionKey?: string
+}
+
+export interface ActionStart extends ActionOptions {
   name: string
   startClocks: ClocksState
+}
+
+export interface CustomActionState {
+  actionsByName: Map<string, ActionStart>
+}
+
+export function createCustomActionsState() {
+  const actionsByName = new Map<string, ActionStart>()
+  return { actionsByName }
+}
+
+export interface CustomAction {
+  type: ActionType
+  name: string
+  startClocks: ClocksState
+  duration: Duration
   context?: Context
   handlingStack?: string
 }
@@ -29,7 +74,8 @@ export function startActionCollection(
   hooks: Hooks,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  customActionsState: CustomActionState
 ) {
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
@@ -77,9 +123,17 @@ export function startActionCollection(
     ))
   }
 
+  function addCustomAction(action: CustomAction) {
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+  }
+
   return {
     addAction: (action: CustomAction) => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    },
+    startAction: (name: string, options: ActionOptions = {}) => startCustomAction(customActionsState, name, options),
+    stopAction: (name: string, options: ActionOptions = {}) => {
+      stopCustomAction(addCustomAction, customActionsState, name, options)
     },
     actionContexts,
     stop: () => {
@@ -128,7 +182,7 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
     autoActionProperties
   )
 
-  const duration = isAutoAction(action) ? action.duration : undefined
+  const duration = action.duration
   const domainContext: RumActionEventDomainContext = isAutoAction(action)
     ? { events: action.events }
     : { handlingStack: action.handlingStack }
@@ -142,5 +196,57 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
 }
 
 function isAutoAction(action: AutoAction | CustomAction): action is AutoAction {
-  return action.type !== ActionType.CUSTOM
+  return action.type === ActionType.CLICK
+}
+
+function getActionLookupKey(name: string, actionKey?: string): string {
+  return actionKey ? `${name}__${actionKey}` : name
+}
+
+export function startCustomAction({ actionsByName }: CustomActionState, name: string, options: ActionOptions = {}) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
+    return
+  }
+
+  const actionStart: ActionStart = {
+    name,
+    startClocks: clocksNow(),
+    ...options,
+  }
+
+  const lookupKey = getActionLookupKey(name, options.actionKey)
+  actionsByName.set(lookupKey, actionStart)
+}
+
+export function stopCustomAction(
+  stopCallback: (action: CustomAction) => void,
+  { actionsByName }: CustomActionState,
+  name: string,
+  options: ActionOptions = {}
+) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
+    return
+  }
+
+  const lookupKey = getActionLookupKey(name, options.actionKey)
+  const actionStart = actionsByName.get(lookupKey)
+
+  if (!actionStart) {
+    return
+  }
+
+  const stopClocks = clocksNow()
+  const duration = elapsed(actionStart.startClocks.timeStamp, stopClocks.timeStamp)
+
+  const customAction: CustomAction = {
+    name: actionStart.name,
+    type: (options.type ?? actionStart.type) || ActionType.CUSTOM,
+    startClocks: actionStart.startClocks,
+    duration,
+    context: combine(actionStart.context, options.context),
+  }
+
+  stopCallback(customAction)
+
+  actionsByName.delete(lookupKey)
 }
