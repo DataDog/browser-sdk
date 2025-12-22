@@ -62,9 +62,7 @@ export function mockCommandImplementation(mockFn: Mock<(...args: any[]) => void>
       withCurrentWorkingDirectory: () => result,
       withLogs: () => result,
       run(): string | undefined {
-        commands.push(commandDetail)
-
-        if (command.includes('aws sts assume-role')) {
+        if (command.startsWith('aws sts assume-role')) {
           return JSON.stringify({
             Credentials: {
               AccessKeyId: FAKE_AWS_ENV_CREDENTIALS.AWS_ACCESS_KEY_ID,
@@ -73,6 +71,22 @@ export function mockCommandImplementation(mockFn: Mock<(...args: any[]) => void>
             },
           })
         }
+
+        if (command.startsWith('ddtool datacenters list')) {
+          return JSON.stringify([
+            { name: 'ap1.prod.dog', site: 'ap1.datadoghq.com' },
+            { name: 'ap2.prod.dog', site: 'ap2.datadoghq.com' },
+            { name: 'eu1.prod.dog', site: 'datadoghq.eu' },
+            { name: 'us1.prod.dog', site: 'datadoghq.com' },
+            { name: 'us3.prod.dog', site: 'us3.datadoghq.com' },
+            { name: 'us5.prod.dog', site: 'us5.datadoghq.com' },
+            { name: 'prtest00.prod.dog', site: 'prtest00.datadoghq.com' },
+            { name: 'prtest01.prod.dog', site: 'prtest01.datadoghq.com' },
+          ])
+        }
+
+        // don't push command details for the above mock commands
+        commands.push(commandDetail)
       },
     }
     return result

@@ -20,6 +20,7 @@ cache:
 stages:
   - task
   - ci-image
+  - before-tests
   - test
   - after-tests
   - browserstack
@@ -123,6 +124,16 @@ ci-image:
   script:
     - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE .
     - docker push $CI_IMAGE
+
+list-datacenters:
+  stage: before-tests
+  extends: .base-configuration
+  script:
+    - |
+      TOKEN=$(curl --silent $VAULT_ADDR/v1/identity/oidc/token/runtime-metadata-service -H 'X-Vault-Request: true' | jq '.data.token' -r)
+      curl -X 'GET' 'https://runtime-metadata-service.us1.ddbuild.io/v2/datacenters' \
+        -H "accept: application/json" \
+        -H "Authorization: Bearer $TOKEN"
 
 ########################################################################################################################
 # Tests

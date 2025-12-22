@@ -5,7 +5,7 @@
  */
 import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/secrets.ts'
-import { siteByDatacenter } from '../lib/datacenter.ts'
+import { getSite } from '../lib/datacenter.ts'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
@@ -38,7 +38,7 @@ export async function main(...args: string[]): Promise<void> {
   const datacenters = args[0].split(',')
 
   for (const datacenter of datacenters) {
-    const site = siteByDatacenter[datacenter]
+    const site = getSite(datacenter)
 
     if (!site) {
       printLog(`No site is configured for datacenter ${datacenter}. skipping...`)
