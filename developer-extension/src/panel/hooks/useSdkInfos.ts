@@ -54,6 +54,20 @@ async function getInfos(): Promise<SdkInfos> {
   try {
     return (await evalInWindow(
       `
+        // Helper to serialize objects while preserving function metadata
+        function serializeWithFunctions(obj) {
+          return JSON.parse(JSON.stringify(obj, function(key, value) {
+            if (typeof value === 'function') {
+              return {
+                __type: 'function',
+                __name: value.name || '(anonymous)',
+                __source: value.toString()
+              }
+            }
+            return value
+          }))
+        }
+
         const cookieRawValue = document.cookie
           .split(';')
           .map(cookie => cookie.match(/(\\S*?)=(.*)/)?.slice(1) || [])
@@ -65,14 +79,14 @@ async function getInfos(): Promise<SdkInfos> {
         )
         const rum = window.DD_RUM && {
           version: window.DD_RUM?.version,
-          config: window.DD_RUM?.getInitConfiguration?.(),
+          config: serializeWithFunctions(window.DD_RUM?.getInitConfiguration?.()),
           internalContext: window.DD_RUM?.getInternalContext?.(),
           globalContext: window.DD_RUM?.getGlobalContext?.(),
           user: window.DD_RUM?.getUser?.(),
         }
         const logs = window.DD_LOGS && {
           version: window.DD_LOGS?.version,
-          config: window.DD_LOGS?.getInitConfiguration?.(),
+          config: serializeWithFunctions(window.DD_LOGS?.getInitConfiguration?.()),
           globalContext: window.DD_LOGS?.getGlobalContext?.(),
           user: window.DD_LOGS?.getUser?.(),
         }
