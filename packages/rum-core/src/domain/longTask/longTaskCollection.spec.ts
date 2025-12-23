@@ -1,4 +1,4 @@
-import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
+import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
@@ -104,7 +104,7 @@ describe('longTaskCollection', () => {
       notifyPerformanceEntries([entry])
 
       const longTask = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task
-      const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime)
+      const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime, 100 as Duration)
       expect(longTasks).toContain({
         id: longTask.id,
         startClocks: jasmine.objectContaining({ relative: entry.startTime }),
@@ -164,7 +164,7 @@ describe('longTaskCollection', () => {
       notifyPerformanceEntries([entry])
 
       const longTask = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task
-      const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime)
+      const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime, 100 as Duration)
       expect(longTasks).toContain({
         id: longTask.id,
         startClocks: jasmine.objectContaining({ relative: entry.startTime }),
