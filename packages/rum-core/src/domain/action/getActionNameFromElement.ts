@@ -3,7 +3,7 @@ import { getPrivacySelector, NodePrivacyLevel } from '../privacyConstants'
 import { getNodePrivacyLevel, maskDisallowedTextContent, shouldMaskNode, shouldMaskAttribute } from '../privacy'
 import type { NodePrivacyLevelCache } from '../privacy'
 import type { RumConfiguration } from '../configuration'
-import { isElementNode } from '../../browser/htmlDomUtils'
+import { isElementNode, getParentElement } from '../../browser/htmlDomUtils'
 import {
   ActionNameSource,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
@@ -49,13 +49,24 @@ export function getActionNameFromElement(
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
-  const elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
+  const elementWithAttribute = closestShadowAware(targetElement, `[${programmaticAttribute}]`)
 
   if (!elementWithAttribute) {
     return
   }
   const name = elementWithAttribute.getAttribute(programmaticAttribute)!
   return truncate(normalizeWhitespace(name.trim()))
+}
+
+function closestShadowAware(element: Element, selector: string): Element | null {
+  let current: Element | null = element
+  while (current) {
+    if (current.matches(selector)) {
+      return current
+    }
+    current = getParentElement(current)
+  }
+  return null
 }
 
 type NameStrategy = (
@@ -160,7 +171,7 @@ function getActionNameFromElementForStrategies(
     if (element.nodeName === 'FORM') {
       break
     }
-    element = element.parentElement
+    element = getParentElement(element)
     recursionCounter += 1
   }
 }

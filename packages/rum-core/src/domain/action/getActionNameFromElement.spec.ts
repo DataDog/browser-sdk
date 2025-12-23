@@ -930,4 +930,43 @@ describe('getActionNameFromElement', () => {
       })
     })
   })
+
+  describe('shadow DOM support', () => {
+    it('extracts text content from element inside shadow DOM', () => {
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const button = document.createElement('button')
+      button.textContent = 'Shadow Button'
+      shadowRoot.appendChild(button)
+
+      const { name, nameSource } = getActionNameFromElement(button, defaultConfiguration)
+      expect(name).toBe('Shadow Button')
+      expect(nameSource).toBe('text_content')
+    })
+
+    it('finds data-dd-action-name on shadow host when element is inside shadow DOM', () => {
+      const host = appendElement('<div data-dd-action-name="Custom Action"></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const target = document.createElement('button')
+      shadowRoot.appendChild(target)
+
+      const { name, nameSource } = getActionNameFromElement(target, defaultConfiguration)
+      expect(name).toBe('Custom Action')
+      expect(nameSource).toBe('custom_attribute')
+    })
+
+    it('traverses parent elements across shadow boundary to find action name', () => {
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const wrapper = document.createElement('div')
+      wrapper.setAttribute('title', 'Parent Title')
+      const target = document.createElement('span')
+      wrapper.appendChild(target)
+      shadowRoot.appendChild(wrapper)
+
+      const { name, nameSource } = getActionNameFromElement(target, defaultConfiguration)
+      expect(name).toBe('Parent Title')
+      expect(nameSource).toBe('standard_attribute')
+    })
+  })
 })

@@ -203,6 +203,15 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   actionNameAttribute?: string | undefined
 
+  /**
+   * Enables accurate action names for clicks inside Shadow DOM elements.
+   * ⚠️ This is a beta feature and will be updated in the future with selector tracking.
+   *
+   * @category Beta
+   * @defaultValue false
+   */
+  betaTrackActionsInShadowDom?: boolean | undefined
+
   // view options
   /**
    * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
@@ -286,6 +295,7 @@ export interface GraphQlUrlOption {
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
+  betaTrackActionsInShadowDom: boolean
   traceSampleRate: number
   rulePsr: number | undefined
   allowedTracingUrls: TracingOption[]
@@ -358,6 +368,7 @@ export function validateAndBuildRumConfiguration(
   return {
     applicationId: initConfiguration.applicationId,
     actionNameAttribute: initConfiguration.actionNameAttribute,
+    betaTrackActionsInShadowDom: !!initConfiguration.betaTrackActionsInShadowDom,
     sessionReplaySampleRate,
     startSessionReplayRecordingManually:
       initConfiguration.startSessionReplayRecordingManually !== undefined

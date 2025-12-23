@@ -5,6 +5,7 @@ import {
   isElementNode,
   isNodeShadowRoot,
   getParentNode,
+  getParentElement,
   isNodeShadowHost,
   forEachChildNodes,
   hasChildNodes,
@@ -195,5 +196,25 @@ describe('getParentNode', () => {
     it(`should ${label}`, () => {
       expect(getParentNode(element)).toBe(result)
     })
+  })
+})
+
+describe('getParentElement', () => {
+  it('should return parentElement for normal element', () => {
+    const parent = document.createElement('div')
+    const child = document.createElement('span')
+    parent.appendChild(child)
+
+    expect(getParentElement(child)).toBe(parent)
+  })
+
+  it('should return the shadow host for element inside shadow DOM', () => {
+    const host = document.createElement('div')
+    const shadowRoot = host.attachShadow({ mode: 'open' })
+    const button = document.createElement('button')
+    shadowRoot.appendChild(button)
+
+    expect(button.parentElement).toBe(null)
+    expect(getParentElement(button)).toBe(host)
   })
 })
