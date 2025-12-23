@@ -15,6 +15,7 @@ describe('createErrorFieldFromRawError', () => {
     type: 'qux',
     message: 'quux',
     stack: 'quuz',
+    file: 'https://example.com/quux.js',
     causes: [],
     fingerprint: 'corge',
     csp: {

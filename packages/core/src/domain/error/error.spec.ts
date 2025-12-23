@@ -100,21 +100,21 @@ describe('computeRawError', () => {
           column: 15,
           func: 'foo',
           line: 52,
-          url: 'http://path/to/file.js',
+          url: 'http://path/to/file-1.js',
         },
         {
           args: [],
           column: undefined,
           func: '?',
           line: 12,
-          url: 'http://path/to/file.js',
+          url: 'http://path/to/file-2.js',
         },
         {
           args: ['baz'],
           column: undefined,
           func: '?',
           line: undefined,
-          url: 'http://path/to/file.js',
+          url: 'http://path/to/file-3.js',
         },
       ],
     }
@@ -128,10 +128,11 @@ describe('computeRawError', () => {
 
     expect(formatted.message).toEqual('oh snap!')
     expect(formatted.stack).toEqual(`TypeError: oh snap!
-  at foo(1, bar) @ http://path/to/file.js:52:15
-  at <anonymous> @ http://path/to/file.js:12
-  at <anonymous>(baz) @ http://path/to/file.js`)
+  at foo(1, bar) @ http://path/to/file-1.js:52:15
+  at <anonymous> @ http://path/to/file-2.js:12
+  at <anonymous>(baz) @ http://path/to/file-3.js`)
     expect(formatted.type).toEqual('TypeError')
+    expect(formatted.file).toEqual('http://path/to/file-1.js')
   })
 
   it('should set handling according to given parameter', () => {
