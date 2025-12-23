@@ -44,6 +44,7 @@ function computeErrorBase({
     type: stackTrace ? stackTrace.name : undefined,
     message: computeMessage(stackTrace, isErrorInstance, nonErrorPrefix, originalError),
     stack: stackTrace ? toStackTraceString(stackTrace) : useFallbackStack ? NO_ERROR_STACK_PRESENT_MESSAGE : undefined,
+    file: stackTrace?.stack[0]?.url,
   }
 }
 
