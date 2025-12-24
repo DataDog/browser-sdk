@@ -1,13 +1,30 @@
-import { noop } from '@datadog/browser-core'
-import type { DocumentNode, SerializedNodeWithId } from '../../../types'
+import { noop, timeStampNow } from '@datadog/browser-core'
+import { RecordType } from '../../../types'
+import type {
+  BrowserChangeRecord,
+  BrowserRecord,
+  DocumentNode,
+  ElementNode,
+  SerializedNodeWithId,
+} from '../../../types'
 import type { NodeId } from '../itemIds'
 import type { RecordingScope } from '../recordingScope'
-import type { SerializationStats, SerializationTransaction } from '../serialization'
+import type {
+  ChangeSerializationTransaction,
+  ParentNodePrivacyLevel,
+  SerializationStats,
+  SerializationTransaction,
+} from '../serialization'
 import {
+  serializeNode,
   SerializationKind,
   serializeDocument,
   serializeInTransaction,
   updateSerializationStats,
+  serializeChangesInTransaction,
+  createRootInsertionCursor,
+  serializeNodeAsChange,
+  convertChangeToFullSnapshot,
 } from '../serialization'
 import { createRecordingScopeForTesting } from './recordingScope.specHelper'
 
@@ -54,4 +71,70 @@ export function takeFullSnapshotForTesting(scope: RecordingScope): DocumentNode 
   )
 
   return node!
+}
+
+/**
+ * A drop-in replacement for serializeNode() that verifies that serializeNodeAsChange()
+ * produces an identical result, failing the running test if it does not.
+ */
+export function serializeNodeAndVerifyChangeRecord(
+  node: Element,
+  parentNodePrivacyLevel: ParentNodePrivacyLevel,
+  transaction: SerializationTransaction
+): (SerializedNodeWithId & ElementNode) | null
+export function serializeNodeAndVerifyChangeRecord(
+  node: Node,
+  parentNodePrivacyLevel: ParentNodePrivacyLevel,
+  transaction: SerializationTransaction
+): SerializedNodeWithId | null
+export function serializeNodeAndVerifyChangeRecord(
+  node: Node,
+  parentNodePrivacyLevel: ParentNodePrivacyLevel,
+  transaction: SerializationTransaction
+): SerializedNodeWithId | null {
+  const serializedNode = serializeNode(node, parentNodePrivacyLevel, transaction)
+
+  // Create an isolated recording scope for calling serializeNodeAsChange(). We do need to
+  // share the ElementsScrollPositions value, because some serialization tests manually
+  // manipulate its contents.
+  const changeScope = createRecordingScopeForTesting()
+  changeScope.elementsScrollPositions = transaction.scope.elementsScrollPositions
+
+  let changeRecord: BrowserChangeRecord | undefined
+  serializeChangesInTransaction(
+    transaction.kind,
+    (record: BrowserRecord): void => {
+      if (record.type !== RecordType.Change) {
+        throw new Error(`Received unexpected record type: ${record.type}`)
+      }
+      changeRecord = record
+    },
+    noop,
+    changeScope,
+    timeStampNow(),
+    (transaction: ChangeSerializationTransaction) => {
+      const cursor = createRootInsertionCursor(changeScope.nodeIds)
+      serializeNodeAsChange(cursor, node, parentNodePrivacyLevel, transaction)
+    }
+  )
+
+  if (serializedNode === null) {
+    // If serializeNode() didn't serialize anything, neither should
+    // serializeNodeAsChange().
+    expect(changeRecord).toBeUndefined()
+  } else {
+    // When converted to a FullSnapshot record, serializeNodeAsChange()'s output should
+    // match serializeNode() exactly.
+    expect(changeRecord).not.toBeUndefined()
+    const converted = convertChangeToFullSnapshot(changeRecord!).data.node
+    expect(converted).toEqual(serializedNode)
+
+    // When stringified, serializeNodeAsChange()'s converted output should be
+    // byte-for-byte identical to serializeNode()'s. (This test is stricter than the one
+    // above, but produces error messages which are a lot harder to read, so it's worth
+    // having both.)
+    expect(JSON.stringify(converted)).toEqual(JSON.stringify(serializedNode))
+  }
+
+  return serializedNode
 }

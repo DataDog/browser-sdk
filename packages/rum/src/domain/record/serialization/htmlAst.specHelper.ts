@@ -1,8 +1,10 @@
 import { NodePrivacyLevel, PRIVACY_ATTR_NAME } from '@datadog/browser-rum-core'
 import { display, objectValues } from '@datadog/browser-core'
 import type { SerializedNodeWithId } from '../../../types'
-import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
-import { serializeNode } from './serializeNode'
+import {
+  createSerializationTransactionForTesting,
+  serializeNodeAndVerifyChangeRecord as serializeNode,
+} from '../test/serialization.specHelper'
 
 export const makeHtmlDoc = (htmlContent: string, privacyTag: string) => {
   try {

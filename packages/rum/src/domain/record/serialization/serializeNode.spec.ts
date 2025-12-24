@@ -14,7 +14,10 @@ import type { SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
 import { appendElement } from '../../../../../rum-core/test'
 import type { AddShadowRootCallBack } from '../shadowRootsController'
-import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
+import {
+  createSerializationTransactionForTesting,
+  serializeNodeAndVerifyChangeRecord as serializeNode,
+} from '../test/serialization.specHelper'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
@@ -27,7 +30,7 @@ import {
   AST_MASK_UNLESS_ALLOWLISTED,
   AST_ALLOW,
 } from './htmlAst.specHelper'
-import { serializeChildNodes, serializeDocumentNode, serializeNode } from './serializeNode'
+import { serializeChildNodes, serializeDocumentNode } from './serializeNode'
 import type { SerializationStats } from './serializationStats'
 import { createSerializationStats } from './serializationStats'
 import type { SerializationTransaction } from './serializationTransaction'
@@ -643,13 +646,17 @@ describe('serializeNode', () => {
           "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
           document.head
         )
+
+        const styleSheet = {
+          href: 'https://datadoghq.com/some/style.css',
+          cssRules: [{ cssText: 'body { width: 100%; }' }],
+        }
         Object.defineProperty(document, 'styleSheets', {
-          value: [
-            {
-              href: 'https://datadoghq.com/some/style.css',
-              cssRules: [{ cssText: 'body { width: 100%; }' }],
-            },
-          ],
+          value: [styleSheet],
+          configurable: true,
+        })
+        Object.defineProperty(linkNode, 'sheet', {
+          value: styleSheet,
           configurable: true,
         })
 
