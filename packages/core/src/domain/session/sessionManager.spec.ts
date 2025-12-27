@@ -665,11 +665,13 @@ describe('startSessionManager', () => {
     productKey = FIRST_PRODUCT_KEY,
     computeTrackingType = () => FakeTrackingType.TRACKED,
     trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
+    applicationId,
   }: {
     configuration?: Partial<Configuration>
     productKey?: string
     computeTrackingType?: () => FakeTrackingType
     trackingConsentState?: TrackingConsentState
+    applicationId?: string
   } = {}) {
     return startSessionManager(
       {
@@ -678,7 +680,128 @@ describe('startSessionManager', () => {
       } as Configuration,
       productKey,
       computeTrackingType,
-      trackingConsentState
+      trackingConsentState,
+      applicationId
     )
   }
+
+  describe('session ID generation with applicationId', () => {
+    it('should generate deterministic session ID when applicationId is provided', () => {
+      const applicationId = 'test-app-123'
+      const sessionManager = startSessionManagerWithDefaults({
+        applicationId,
+        configuration: { trackAnonymousUser: true } as Partial<Configuration>,
+      })
+
+      const session1 = sessionManager.findSession()
+      expect(session1).toBeDefined()
+      expect(session1!.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+
+      const sessionId1 = session1!.id
+      const anonymousId = session1!.anonymousId
+
+      expect(anonymousId).toBeDefined()
+
+      // Expire session
+      sessionManager.expire()
+
+      // Manually restore anonymousId (within same time window)
+      setCookie(SESSION_STORE_KEY, `aid=${anonymousId}&first=tracked`, DURATION)
+
+      // Create new session manager with same applicationId (without advancing time)
+      stopSessionManager()
+      const sessionManager2 = startSessionManagerWithDefaults({
+        applicationId,
+        configuration: { trackAnonymousUser: true } as Partial<Configuration>,
+      })
+
+      const session2 = sessionManager2.findSession()
+      const sessionId2 = session2!.id
+
+      // Session IDs should be deterministic (same anonymousId + applicationId + time window)
+      expect(sessionId2).toBe(sessionId1)
+      expect(session2!.anonymousId).toBe(anonymousId)
+    })
+
+    it('should generate random session ID when applicationId is not provided', () => {
+      const sessionManager = startSessionManagerWithDefaults()
+
+      const session1 = sessionManager.findSession()
+      const sessionId1 = session1!.id
+      expect(sessionId1).toBeDefined()
+
+      // Expire current session
+      sessionManager.expire()
+
+      // Create new session by restoring state and triggering renewal
+      setCookie(SESSION_STORE_KEY, 'first=tracked', DURATION)
+      stopSessionManager()
+      const sessionManager2 = startSessionManagerWithDefaults()
+
+      const session2 = sessionManager2.findSession()
+      const sessionId2 = session2!.id
+
+      // Session IDs should be different (random generation)
+      expect(sessionId2).toBeDefined()
+      expect(sessionId2).not.toBe(sessionId1)
+    })
+
+    it('should generate different session IDs for different applicationIds', () => {
+      const sessionManager1 = startSessionManagerWithDefaults({
+        applicationId: 'app-1',
+        configuration: { trackAnonymousUser: true } as Partial<Configuration>,
+      })
+      const session1 = sessionManager1.findSession()
+      const sessionId1 = session1!.id
+      const anonymousId = session1!.anonymousId
+
+      expect(anonymousId).toBeDefined()
+      expect(anonymousId).not.toBe('undefined')
+
+      sessionManager1.expire()
+      stopSessionManager()
+
+      // Create new session with same anonymousId but different applicationId
+      setCookie(SESSION_STORE_KEY, `aid=${anonymousId}&first=tracked`, DURATION)
+
+      const sessionManager2 = startSessionManagerWithDefaults({
+        applicationId: 'app-2',
+        configuration: { trackAnonymousUser: true } as Partial<Configuration>,
+      })
+      const session2 = sessionManager2.findSession()
+      const sessionId2 = session2!.id
+
+      // Different applicationIds should produce different session IDs (even with same anonymousId)
+      expect(sessionId2).toBeDefined()
+      expect(sessionId2).not.toBe(sessionId1)
+      expect(session2!.anonymousId).toBe(anonymousId)
+    })
+
+    it('should preserve anonymousId across session renewals', () => {
+      const applicationId = 'test-app-123'
+      const sessionManager = startSessionManagerWithDefaults({
+        applicationId,
+        configuration: { trackAnonymousUser: true } as Partial<Configuration>,
+      })
+
+      const session1 = sessionManager.findSession()
+      const anonymousId1 = session1!.anonymousId
+      expect(anonymousId1).toBeDefined()
+
+      // Expire and create new session
+      sessionManager.expire()
+      setCookie(SESSION_STORE_KEY, `aid=${anonymousId1}&first=tracked`, DURATION)
+      stopSessionManager()
+
+      const sessionManager2 = startSessionManagerWithDefaults({
+        applicationId,
+        configuration: { trackAnonymousUser: true } as Partial<Configuration>,
+      })
+      const session2 = sessionManager2.findSession()
+      const anonymousId2 = session2!.anonymousId
+
+      // anonymousId should be preserved
+      expect(anonymousId2).toBe(anonymousId1)
+    })
+  })
 })
