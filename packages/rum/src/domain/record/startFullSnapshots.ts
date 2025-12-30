@@ -16,57 +16,69 @@ export function startFullSnapshots(
   flushMutations: () => void,
   scope: RecordingScope
 ) {
-  const takeFullSnapshot = (timestamp: TimeStamp, kind: SerializationKind) => {
-    serializeInTransaction(kind, emitRecord, emitStats, scope, (transaction: SerializationTransaction): void => {
-      const { width, height } = getViewportDimension()
-      transaction.add({
-        data: {
-          height,
-          href: window.location.href,
-          width,
-        },
-        type: RecordType.Meta,
-        timestamp,
-      })
-
-      transaction.add({
-        data: {
-          has_focus: document.hasFocus(),
-        },
-        type: RecordType.Focus,
-        timestamp,
-      })
-
-      transaction.add({
-        data: {
-          node: serializeDocument(document, transaction),
-          initialOffset: {
-            left: getScrollX(),
-            top: getScrollY(),
-          },
-        },
-        type: RecordType.FullSnapshot,
-        timestamp,
-      })
-
-      if (window.visualViewport) {
-        transaction.add({
-          data: getVisualViewport(window.visualViewport),
-          type: RecordType.VisualViewport,
-          timestamp,
-        })
-      }
-    })
-  }
-
-  takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT)
+  takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope)
 
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
-    takeFullSnapshot(view.startClocks.timeStamp, SerializationKind.SUBSEQUENT_FULL_SNAPSHOT)
+    takeFullSnapshot(
+      view.startClocks.timeStamp,
+      SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
+      emitRecord,
+      emitStats,
+      scope
+    )
   })
 
   return {
     stop: unsubscribe,
   }
+}
+
+export function takeFullSnapshot(
+  timestamp: TimeStamp,
+  kind: SerializationKind,
+  emitRecord: EmitRecordCallback,
+  emitStats: EmitStatsCallback,
+  scope: RecordingScope
+): void {
+  serializeInTransaction(kind, emitRecord, emitStats, scope, (transaction: SerializationTransaction): void => {
+    const { width, height } = getViewportDimension()
+    transaction.add({
+      data: {
+        height,
+        href: window.location.href,
+        width,
+      },
+      type: RecordType.Meta,
+      timestamp,
+    })
+
+    transaction.add({
+      data: {
+        has_focus: document.hasFocus(),
+      },
+      type: RecordType.Focus,
+      timestamp,
+    })
+
+    transaction.add({
+      data: {
+        node: serializeDocument(document, transaction),
+        initialOffset: {
+          left: getScrollX(),
+          top: getScrollY(),
+        },
+      },
+      type: RecordType.FullSnapshot,
+      timestamp,
+    })
+
+    if (window.visualViewport) {
+      transaction.add({
+        data: getVisualViewport(window.visualViewport),
+        type: RecordType.VisualViewport,
+        timestamp,
+      })
+    }
+  })
 }

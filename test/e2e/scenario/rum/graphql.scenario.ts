@@ -107,7 +107,7 @@ test.describe('GraphQL tracking', () => {
         operationName: 'GetUser',
         variables: undefined,
         payload: undefined,
-        errors_count: 1,
+        error_count: 1,
         errors: [
           {
             message: 'Field "unknownField" does not exist',
@@ -136,7 +136,7 @@ test.describe('GraphQL tracking', () => {
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
       expect(resourceEvent).toBeDefined()
-      expect(resourceEvent.resource.graphql?.errors_count).toBe(2)
+      expect(resourceEvent.resource.graphql?.error_count).toBe(2)
       expect(resourceEvent.resource.graphql?.errors).toEqual([
         { message: 'User not found' },
         { message: 'Insufficient permissions', code: 'UNAUTHORIZED' },
@@ -159,7 +159,7 @@ test.describe('GraphQL tracking', () => {
       await flushEvents()
       const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
       expect(resourceEvent).toBeDefined()
-      expect(resourceEvent.resource.graphql?.errors_count).toBeUndefined()
+      expect(resourceEvent.resource.graphql?.error_count).toBeUndefined()
       expect(resourceEvent.resource.graphql?.errors).toBeUndefined()
     })
 })

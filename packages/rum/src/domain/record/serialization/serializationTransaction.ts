@@ -1,7 +1,7 @@
 import { elapsed, timeStampNow } from '@datadog/browser-core'
 
 import type { BrowserRecord } from '../../../types'
-import type { NodeId } from '../nodeIds'
+import type { NodeId } from '../itemIds'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
 import type { SerializationStats } from './serializationStats'
@@ -72,7 +72,7 @@ export function serializeInTransaction(
       updateSerializationStats(stats, metric, value)
     },
     assignId(node: Node): NodeId {
-      const id = scope.nodeIds.assign(node)
+      const id = scope.nodeIds.getOrInsert(node)
       if (transaction.serializedNodeIds) {
         transaction.serializedNodeIds.add(id)
       }

@@ -642,6 +642,18 @@ export interface CommonTelemetryProperties {
        * Model of the device
        */
       model?: string
+      /**
+       * Number of device processors
+       */
+      readonly processor_count?: number
+      /**
+       * Total RAM in megabytes
+       */
+      readonly total_ram?: number
+      /**
+       * Whether the device is considered a low RAM device (Android)
+       */
+      readonly is_low_ram_device?: boolean
       [k: string]: unknown
     }
     /**

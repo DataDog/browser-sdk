@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
-import { ExperimentalFeature, HookNames, Observable } from '@datadog/browser-core'
+import { addDuration, ExperimentalFeature, HookNames, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
@@ -11,7 +11,7 @@ import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ActionContexts } from './actionCollection'
-import { startActionCollection } from './actionCollection'
+import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
 
 describe('actionCollection', () => {
@@ -198,6 +198,20 @@ describe('actionCollection', () => {
 
         expect(defaultRumEventAttributes).toEqual(undefined)
       })
+    })
+
+    it('should add action properties on long task from the context when the start time is slightly before the action start time', () => {
+      const longTaskStartTime = 100 as RelativeTime
+      const findActionIdSpy = spyOn(actionContexts, 'findActionId')
+
+      hooks.triggerHook(HookNames.Assemble, {
+        eventType: RumEventType.LONG_TASK,
+        startTime: longTaskStartTime,
+        duration: 50 as Duration,
+      })
+
+      const [correctedStartTime] = findActionIdSpy.calls.mostRecent().args
+      expect(correctedStartTime).toEqual(addDuration(longTaskStartTime, LONG_TASK_START_TIME_CORRECTION))
     })
   })
 

@@ -104,7 +104,7 @@ export type RumActionEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view: {
+    readonly view?: {
       /**
        * Is the action starting in the foreground (focus in browser)
        */
@@ -175,9 +175,6 @@ export type RumTransitionEvent = CommonProperties & {
    * RUM event type
    */
   readonly type: 'transition'
-  view: {
-    [k: string]: unknown
-  }
   /**
    * Stream properties
    */
@@ -482,7 +479,7 @@ export type RumErrorEvent = CommonProperties &
     /**
      * View properties
      */
-    readonly view: {
+    readonly view?: {
       /**
        * Is the error starting in the foreground (focus in browser)
        */
@@ -507,9 +504,6 @@ export type RumLongTaskEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'long_task'
-    view: {
-      [k: string]: unknown
-    }
     /**
      * Long Task properties
      */
@@ -634,9 +628,6 @@ export type RumResourceEvent = CommonProperties &
      * RUM event type
      */
     readonly type: 'resource'
-    view: {
-      [k: string]: unknown
-    }
     /**
      * Resource properties
      */
@@ -841,7 +832,7 @@ export type RumResourceEvent = CommonProperties &
         /**
          * Type of the GraphQL operation
          */
-        readonly operationType: 'query' | 'mutation' | 'subscription'
+        readonly operationType?: 'query' | 'mutation' | 'subscription'
         /**
          * Name of the GraphQL operation
          */
@@ -1329,13 +1320,10 @@ export type RumVitalEvent = RumVitalDurationEvent | RumVitalOperationStepEvent
  * Schema for a duration vital event.
  */
 export type RumVitalDurationEvent = RumVitalEventCommonProperties & {
-  view: {
-    [k: string]: unknown
-  }
   /**
    * Vital properties
    */
-  readonly vital: {
+  readonly vital?: {
     /**
      * Type of the vital.
      */
@@ -1381,13 +1369,10 @@ export type RumVitalEventCommonProperties = CommonProperties &
  * Schema for a vital operation step event.
  */
 export type RumVitalOperationStepEvent = RumVitalEventCommonProperties & {
-  view: {
-    [k: string]: unknown
-  }
   /**
    * Vital properties
    */
-  readonly vital: {
+  readonly vital?: {
     /**
      * Type of the vital.
      */
@@ -1484,7 +1469,7 @@ export interface CommonProperties {
   /**
    * View properties
    */
-  readonly view?: {
+  readonly view: {
     /**
      * UUID of the view
      */
@@ -1699,6 +1684,18 @@ export interface CommonProperties {
      * Current screen brightness level (0.0 to 1.0).
      */
     readonly brightness_level?: number
+    /**
+     * Number of device processors
+     */
+    readonly processor_count?: number
+    /**
+     * Total RAM in megabytes
+     */
+    readonly total_ram?: number
+    /**
+     * Whether the device is considered a low RAM device (Android)
+     */
+    readonly is_low_ram_device?: boolean
     [k: string]: unknown
   }
   /**

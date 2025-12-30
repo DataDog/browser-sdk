@@ -25,7 +25,7 @@ export function trackFrustration(
         type: RecordType.FrustrationRecord,
         data: {
           frustrationTypes: data.rawRumEvent.action.frustration.type,
-          recordIds: data.domainContext.events.map((e) => scope.eventIds.getIdForEvent(e)),
+          recordIds: data.domainContext.events.map((e) => scope.eventIds.getOrInsert(e)),
         },
       })
     }
