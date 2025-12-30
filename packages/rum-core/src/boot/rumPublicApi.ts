@@ -54,7 +54,6 @@ import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
 import type { ActionOptions } from '../domain/action/actionCollection'
-import { createCustomActionsState } from '../domain/action/actionCollection'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -561,14 +560,12 @@ export function makeRumPublicApi(
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
-  const customActionsState = createCustomActionsState()
   const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     options,
     trackingConsentState,
     customVitalsState,
-    customActionsState,
     (configuration, deflateWorker, initialViewOptions) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
@@ -583,7 +580,6 @@ export function makeRumPublicApi(
         createEncoder,
         trackingConsentState,
         customVitalsState,
-        customActionsState,
         bufferedDataObservable,
         options.sdkName
       )

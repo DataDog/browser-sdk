@@ -509,3 +509,120 @@ test.describe('action collection', () => {
       })
     })
 })
+
+test.describe('custom actions with startAction/stopAction', () => {
+  createTest('track a custom action with startAction/stopAction')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('checkout')
+        window.DD_RUM!.stopAction('checkout')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.target?.name).toBe('checkout')
+      expect(actionEvents[0].action.type).toBe('custom')
+      expect(actionEvents[0].action.id).toBeDefined()
+    })
+
+  createTest('associate an error to a custom action')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('checkout')
+        window.DD_RUM!.addError(new Error('Payment failed'))
+        window.DD_RUM!.stopAction('checkout')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      const errorEvents = intakeRegistry.rumErrorEvents
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.error?.count).toBe(1)
+      expect(errorEvents.length).toBeGreaterThanOrEqual(1)
+
+      const actionId = actionEvents[0].action.id
+      const relatedError = errorEvents.find(
+        (e) => e.action && (Array.isArray(e.action.id) ? e.action.id.includes(actionId!) : e.action.id === actionId)
+      )
+      expect(relatedError).toBeDefined()
+    })
+
+  createTest('associate a resource to a custom action')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('load-data')
+        void fetch('/ok')
+      })
+      await waitForServersIdle()
+      await page.evaluate(() => {
+        window.DD_RUM!.stopAction('load-data')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter((e) => e.resource.type === 'fetch')
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.resource?.count).toBe(1)
+
+      const actionId = actionEvents[0].action.id
+      const relatedResource = resourceEvents.find(
+        (e) => e.action && (Array.isArray(e.action.id) ? e.action.id.includes(actionId!) : e.action.id === actionId)
+      )
+      expect(relatedResource).toBeDefined()
+    })
+
+  createTest('track multiple concurrent custom actions with actionKey')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('click', { actionKey: 'button1' })
+        window.DD_RUM!.startAction('click', { actionKey: 'button2' })
+        window.DD_RUM!.stopAction('click', { actionKey: 'button2' })
+        window.DD_RUM!.stopAction('click', { actionKey: 'button1' })
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(2)
+      expect(actionEvents[0].action.id).not.toBe(actionEvents[1].action.id)
+    })
+
+  createTest('merge contexts from start and stop')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('purchase', { context: { cart_id: 'abc123' } })
+        window.DD_RUM!.stopAction('purchase', { context: { total: 99.99 } })
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].context).toEqual(
+        expect.objectContaining({
+          cart_id: 'abc123',
+          total: 99.99,
+        })
+      )
+    })
+
+  createTest('support custom action types')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('swipe_left', { type: 'swipe' })
+        window.DD_RUM!.stopAction('swipe_left')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.type).toBe('swipe')
+    })
+})

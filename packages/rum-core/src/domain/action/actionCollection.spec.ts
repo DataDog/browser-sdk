@@ -10,8 +10,8 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts, CustomActionState } from './actionCollection'
-import { createCustomActionsState, startActionCollection } from './actionCollection'
+import type { ActionContexts } from './actionCollection'
+import { startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
 
 describe('actionCollection', () => {
@@ -20,7 +20,6 @@ describe('actionCollection', () => {
   let addAction: ReturnType<typeof startActionCollection>['addAction']
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
   let actionContexts: ActionContexts
-  let customActionsState: CustomActionState
   let startAction: ReturnType<typeof startActionCollection>['startAction']
   let stopAction: ReturnType<typeof startActionCollection>['stopAction']
   let clock: Clock
@@ -29,15 +28,13 @@ describe('actionCollection', () => {
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     hooks = createHooks()
-    customActionsState = createCustomActionsState()
 
     const actionCollection = startActionCollection(
       lifeCycle,
       hooks,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(),
-      customActionsState
+      mockRumConfiguration()
     )
     registerCleanupTask(actionCollection.stop)
     addAction = actionCollection.addAction
@@ -347,6 +344,112 @@ describe('actionCollection', () => {
       stopAction('click', { actionKey: 'button2' })
 
       expect(rawRumEvents).toHaveSize(0)
+    })
+
+    it('should use consistent action ID from start to collected event', () => {
+      startAction('checkout')
+      stopAction('checkout')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.id).toBeDefined()
+      expect(typeof actionEvent.action.id).toBe('string')
+      expect(actionEvent.action.id.length).toBeGreaterThan(0)
+    })
+
+    it('should return custom action ID from actionContexts.findActionId during action', () => {
+      startAction('checkout')
+
+      const actionId = actionContexts.findActionId()
+      expect(actionId).toBeDefined()
+
+      stopAction('checkout')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.id).toBe(actionId as string)
+    })
+
+    it('should track error count during custom action', () => {
+      startAction('checkout')
+
+      const actionId = actionContexts.findActionId()
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        action: { id: actionId },
+        error: { message: 'test error' },
+      } as any)
+
+      stopAction('checkout')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.error?.count).toBe(1)
+    })
+
+    it('should track resource count during custom action', () => {
+      startAction('load-data')
+
+      const actionId = actionContexts.findActionId()
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        action: { id: actionId },
+        resource: { type: 'fetch' },
+      } as any)
+
+      stopAction('load-data')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.resource?.count).toBe(1)
+    })
+
+    it('should track long task count during custom action', () => {
+      startAction('heavy-computation')
+
+      const actionId = actionContexts.findActionId()
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.LONG_TASK,
+        action: { id: actionId },
+        long_task: { duration: 100 },
+      } as any)
+
+      stopAction('heavy-computation')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.long_task?.count).toBe(1)
+    })
+
+    it('should include counts in the action event', () => {
+      startAction('complex-action')
+
+      const actionId = actionContexts.findActionId()
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        action: { id: actionId },
+      } as any)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        action: { id: actionId },
+      } as any)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.RESOURCE,
+        action: { id: actionId },
+      } as any)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.LONG_TASK,
+        action: { id: actionId },
+      } as any)
+
+      stopAction('complex-action')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.error?.count).toBe(2)
+      expect(actionEvent.action.resource?.count).toBe(1)
+      expect(actionEvent.action.long_task?.count).toBe(1)
     })
   })
 })

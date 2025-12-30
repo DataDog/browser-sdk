@@ -34,8 +34,6 @@ import type {
 } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
-import type { CustomActionState, CustomAction } from '../domain/action/actionCollection'
-import { startCustomAction, stopCustomAction } from '../domain/action/actionCollection'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
@@ -43,7 +41,6 @@ export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
-  customActionsState: CustomActionState,
   doStartRum: (
     configuration: RumConfiguration,
     deflateWorker: DeflateWorker | undefined,
@@ -173,10 +170,6 @@ export function createPreStartStrategy(
     )
   }
 
-  const addCustomAction = (action: CustomAction) => {
-    bufferApiCalls.add((startRumResult) => startRumResult.addAction(action))
-  }
-
   const strategy: Strategy = {
     init(initConfiguration, publicApi, errorStack) {
       if (!initConfiguration) {
@@ -261,11 +254,11 @@ export function createPreStartStrategy(
     },
 
     startAction(name, options) {
-      startCustomAction(customActionsState, name, options)
+      bufferApiCalls.add((startRumResult) => startRumResult.startAction(name, options))
     },
 
     stopAction(name, options) {
-      stopCustomAction(addCustomAction, customActionsState, name, options)
+      bufferApiCalls.add((startRumResult) => startRumResult.stopAction(name, options))
     },
 
     addError(providedError) {
