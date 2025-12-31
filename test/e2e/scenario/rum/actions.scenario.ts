@@ -554,12 +554,9 @@ test.describe('custom actions with startAction/stopAction', () => {
   createTest('associate a resource to a custom action')
     .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
     .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.evaluate(() => {
+      await page.evaluate(async () => {
         window.DD_RUM!.startAction('load-data')
-        void fetch('/ok')
-      })
-      await waitForServersIdle()
-      await page.evaluate(() => {
+        await fetch('/ok')
         window.DD_RUM!.stopAction('load-data')
       })
       await flushEvents()
