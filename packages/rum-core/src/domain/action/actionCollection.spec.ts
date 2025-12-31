@@ -353,6 +353,16 @@ describe('actionCollection', () => {
       expect(rawRumEvents[1].duration).toBe(200 as Duration)
     })
 
+    it('should include loading_time for timed custom actions', () => {
+      startAction('checkout')
+      clock.tick(500)
+      stopAction('checkout')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.loading_time).toBe((500 * 1e6) as ServerDuration)
+    })
+
     it('should not create action when actionKey does not match', () => {
       startAction('click', { actionKey: 'button1' })
       stopAction('click', { actionKey: 'button2' })

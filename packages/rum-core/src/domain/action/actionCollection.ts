@@ -270,6 +270,9 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
     : {
         action: {
           id: actionId,
+          // We only include loading_time for timed custom actions (startAction/stopAction)
+          // because instant actions (addAction) have duration: 0.
+          ...(action.duration > 0 ? { loading_time: toServerDuration(action.duration) } : {}),
           ...(action.counts
             ? {
                 error: { count: action.counts.errorCount },
