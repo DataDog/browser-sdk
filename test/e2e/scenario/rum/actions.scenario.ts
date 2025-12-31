@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { createTest, html, waitForServersIdle } from '../../lib/framework'
+import { createTest, html, waitForServersIdle, waitForRequests } from '../../lib/framework'
 
 test.describe('action collection', () => {
   createTest('track a click action')
@@ -558,7 +558,7 @@ test.describe('custom actions with startAction/stopAction', () => {
         window.DD_RUM!.startAction('load-data')
         void fetch('/ok')
       })
-      await waitForServersIdle()
+      await waitForRequests(page)
       await page.evaluate(() => {
         window.DD_RUM!.stopAction('load-data')
       })
