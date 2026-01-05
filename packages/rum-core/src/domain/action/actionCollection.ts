@@ -246,6 +246,11 @@ export function startActionCollection(
       unsubscribeAutoAction()
       unsubscribeSessionRenewal()
       stopClickActions()
+      activeCustomActions.forEach((activeAction) => {
+        activeAction.historyEntry.remove()
+        activeAction.eventCountsSubscription.stop()
+      })
+      activeCustomActions.clear()
       customActionHistory.stop()
     },
   }

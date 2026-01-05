@@ -22,6 +22,7 @@ describe('actionCollection', () => {
   let actionContexts: ActionContexts
   let startAction: ReturnType<typeof startActionCollection>['startAction']
   let stopAction: ReturnType<typeof startActionCollection>['stopAction']
+  let stopActionCollection: ReturnType<typeof startActionCollection>['stop']
   let clock: Clock
 
   beforeEach(() => {
@@ -40,6 +41,7 @@ describe('actionCollection', () => {
     addAction = actionCollection.addAction
     startAction = actionCollection.startAction
     stopAction = actionCollection.stopAction
+    stopActionCollection = actionCollection.stop
     actionContexts = actionCollection.actionContexts
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -531,6 +533,21 @@ describe('actionCollection', () => {
       expect(rawRumEvents).toHaveSize(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
       expect(actionEvent.action.error?.count).toBe(0)
+    })
+
+    it('should clean up active custom actions on stop()', () => {
+      startAction('active-when-stopped')
+
+      const actionIdBeforeStop = actionContexts.findActionId()
+      expect(actionIdBeforeStop).toBeDefined()
+
+      stopActionCollection()
+
+      expect(actionContexts.findActionId()).toBeUndefined()
+
+      stopAction('active-when-stopped')
+
+      expect(rawRumEvents).toHaveSize(0)
     })
   })
 })
