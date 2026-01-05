@@ -23,7 +23,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/core@npm:^7.25.2":
+"@babel/core@npm:^7.28.0":
   version: 7.28.5
   resolution: "@babel/core@npm:7.28.5"
   dependencies:
@@ -151,7 +151,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-react-jsx-self@npm:^7.24.7":
+"@babel/plugin-transform-react-jsx-self@npm:^7.27.1":
   version: 7.27.1
   resolution: "@babel/plugin-transform-react-jsx-self@npm:7.27.1"
   dependencies:
@@ -162,7 +162,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-react-jsx-source@npm:^7.24.7":
+"@babel/plugin-transform-react-jsx-source@npm:^7.27.1":
   version: 7.27.1
   resolution: "@babel/plugin-transform-react-jsx-source@npm:7.27.1"
   dependencies:
@@ -461,10 +461,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@remix-run/router@npm:1.13.0":
-  version: 1.13.0
-  resolution: "@remix-run/router@npm:1.13.0"
-  checksum: 10c0/99ca0354b14172fe3b552bb6583dbfa9c55d93eb107ac981cdf6cb406798062f65966444e12be3d7effbaac919e3488ae61cbc7f4db688caf01b2a0ae0e56943
+"@remix-run/router@npm:1.23.1":
+  version: 1.23.1
+  resolution: "@remix-run/router@npm:1.23.1"
+  checksum: 10c0/94ac9632c0070199b8275cd6dffe78eb4c02e8926328937c65561c5c30d7ddf842743df3c8f7df302f00a593dd204846d93667fbbbe3c3641437d7b8f333ed90
+  languageName: node
+  linkType: hard
+
+"@rolldown/pluginutils@npm:1.0.0-beta.27":
+  version: 1.0.0-beta.27
+  resolution: "@rolldown/pluginutils@npm:1.0.0-beta.27"
+  checksum: 10c0/9658f235b345201d4f6bfb1f32da9754ca164f892d1cb68154fe5f53c1df42bd675ecd409836dff46884a7847d6c00bdc38af870f7c81e05bba5c2645eb4ab9c
   languageName: node
   linkType: hard
 
@@ -677,46 +684,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:18.3.1":
-  version: 18.3.1
-  resolution: "@types/react-dom@npm:18.3.1"
-  dependencies:
-    "@types/react": "npm:*"
-  checksum: 10c0/8b416551c60bb6bd8ec10e198c957910cfb271bc3922463040b0d57cf4739cdcd24b13224f8d68f10318926e1ec3cd69af0af79f0291b599a992f8c80d47f1eb
+"@types/react-dom@npm:18.3.7":
+  version: 18.3.7
+  resolution: "@types/react-dom@npm:18.3.7"
+  peerDependencies:
+    "@types/react": ^18.0.0
+  checksum: 10c0/8bd309e2c3d1604a28a736a24f96cbadf6c05d5288cfef8883b74f4054c961b6b3a5e997fd5686e492be903c8f3380dba5ec017eff3906b1256529cd2d39603e
   languageName: node
   linkType: hard
 
-"@types/react@npm:*":
-  version: 19.2.7
-  resolution: "@types/react@npm:19.2.7"
-  dependencies:
-    csstype: "npm:^3.2.2"
-  checksum: 10c0/a7b75f1f9fcb34badd6f84098be5e35a0aeca614bc91f93d2698664c0b2ba5ad128422bd470ada598238cebe4f9e604a752aead7dc6f5a92261d0c7f9b27cfd1
-  languageName: node
-  linkType: hard
-
-"@types/react@npm:18.3.12":
-  version: 18.3.12
-  resolution: "@types/react@npm:18.3.12"
+"@types/react@npm:18.3.27":
+  version: 18.3.27
+  resolution: "@types/react@npm:18.3.27"
   dependencies:
     "@types/prop-types": "npm:*"
-    csstype: "npm:^3.0.2"
-  checksum: 10c0/8bae8d9a41619804561574792e29112b413044eb0d53746dde2b9720c1f9a59f71c895bbd7987cd8ce9500b00786e53bc032dced38cddf42910458e145675290
+    csstype: "npm:^3.2.2"
+  checksum: 10c0/a761d2f58de03d0714806cc65d32bb3d73fb33a08dd030d255b47a295e5fff2a775cf1c20b786824d8deb6454eaccce9bc6998d9899c14fc04bbd1b0b0b72897
   languageName: node
   linkType: hard
 
-"@vitejs/plugin-react@npm:4.3.3":
-  version: 4.3.3
-  resolution: "@vitejs/plugin-react@npm:4.3.3"
+"@vitejs/plugin-react@npm:4.7.0":
+  version: 4.7.0
+  resolution: "@vitejs/plugin-react@npm:4.7.0"
   dependencies:
-    "@babel/core": "npm:^7.25.2"
-    "@babel/plugin-transform-react-jsx-self": "npm:^7.24.7"
-    "@babel/plugin-transform-react-jsx-source": "npm:^7.24.7"
+    "@babel/core": "npm:^7.28.0"
+    "@babel/plugin-transform-react-jsx-self": "npm:^7.27.1"
+    "@babel/plugin-transform-react-jsx-source": "npm:^7.27.1"
+    "@rolldown/pluginutils": "npm:1.0.0-beta.27"
     "@types/babel__core": "npm:^7.20.5"
-    react-refresh: "npm:^0.14.2"
+    react-refresh: "npm:^0.17.0"
   peerDependencies:
-    vite: ^4.2.0 || ^5.0.0
-  checksum: 10c0/b370c25fb47bb96f0cc51f3aadbbcfce54e40f95a4de67cf932e5ec526f139648da703725c6ea2c71a1b525eb3dd6e3e8ff877da143627cd2575de5ec4f00aa3
+    vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0
+  checksum: 10c0/692f23960972879485d647713663ec299c478222c96567d60285acf7c7dc5c178e71abfe9d2eefddef1eeb01514dacbc2ed68aad84628debf9c7116134734253
   languageName: node
   linkType: hard
 
@@ -798,7 +797,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^3.0.2, csstype@npm:^3.2.2":
+"csstype@npm:^3.2.2":
   version: 3.2.3
   resolution: "csstype@npm:3.2.3"
   checksum: 10c0/cd29c51e70fa822f1cecd8641a1445bed7063697469d35633b516e60fe8c1bde04b08f6c5b6022136bb669b64c63d4173af54864510fbb4ee23281801841a3ce
@@ -1358,34 +1357,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-refresh@npm:^0.14.2":
-  version: 0.14.2
-  resolution: "react-refresh@npm:0.14.2"
-  checksum: 10c0/875b72ef56b147a131e33f2abd6ec059d1989854b3ff438898e4f9310bfcc73acff709445b7ba843318a953cb9424bcc2c05af2b3d80011cee28f25aef3e2ebb
+"react-refresh@npm:^0.17.0":
+  version: 0.17.0
+  resolution: "react-refresh@npm:0.17.0"
+  checksum: 10c0/002cba940384c9930008c0bce26cac97a9d5682bc623112c2268ba0c155127d9c178a9a5cc2212d560088d60dfd503edd808669a25f9b377f316a32361d0b23c
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:6.20.0":
-  version: 6.20.0
-  resolution: "react-router-dom@npm:6.20.0"
+"react-router-dom@npm:6.30.2":
+  version: 6.30.2
+  resolution: "react-router-dom@npm:6.30.2"
   dependencies:
-    "@remix-run/router": "npm:1.13.0"
-    react-router: "npm:6.20.0"
+    "@remix-run/router": "npm:1.23.1"
+    react-router: "npm:6.30.2"
   peerDependencies:
     react: ">=16.8"
     react-dom: ">=16.8"
-  checksum: 10c0/b5a1875ae802d6b8e5035fec8ee6c3d3b345d8613b4a982adbb69c9c13e8e1b6a30e8e350e669d52774bb554f7f3fc2326187222cd008ac80edb3a2d81604f16
+  checksum: 10c0/d0c6edf4e2aa7639b4a4f64a7747f03d8861bdf4857e8981b1cff1451b7cb91fcdcd7e315a6e3df910271b2f5071825d2aec218d5f7890f2269fc074f198e42a
   languageName: node
   linkType: hard
 
-"react-router@npm:6.20.0":
-  version: 6.20.0
-  resolution: "react-router@npm:6.20.0"
+"react-router@npm:6.30.2":
+  version: 6.30.2
+  resolution: "react-router@npm:6.30.2"
   dependencies:
-    "@remix-run/router": "npm:1.13.0"
+    "@remix-run/router": "npm:1.23.1"
   peerDependencies:
     react: ">=16.8"
-  checksum: 10c0/34bced7be5112aa239830dc7160498d844fc251827c3ae35bd5e0461a388b1d84fd458e8eb33bb8364468b32bfcff8b741aa3b0de247387b6cc92416ce4b18d2
+  checksum: 10c0/cff5ea92d248d2230adc46d4e2ed3fbeddfaf1ae2e63411da8b7ea6ddc207d71dbc522c05c492e671e553e2153934f4ab180ac02bd36205b274e097f2cfe6fc4
   languageName: node
   linkType: hard
 
@@ -1393,13 +1392,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-shopist@workspace:."
   dependencies:
-    "@types/react": "npm:18.3.12"
-    "@types/react-dom": "npm:18.3.1"
-    "@vitejs/plugin-react": "npm:4.3.3"
+    "@types/react": "npm:18.3.27"
+    "@types/react-dom": "npm:18.3.7"
+    "@vitejs/plugin-react": "npm:4.7.0"
     globals: "npm:16.5.0"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    react-router-dom: "npm:6.20.0"
+    react-router-dom: "npm:6.30.2"
     typescript: "npm:5.9.3"
     vite: "npm:5.4.21"
   languageName: unknown
