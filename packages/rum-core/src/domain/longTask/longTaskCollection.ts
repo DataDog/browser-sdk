@@ -33,7 +33,7 @@ export interface LongTaskContext {
 }
 
 export interface LongTaskContexts {
-  findLongTasks: (startTime: RelativeTime) => LongTaskContext[]
+  findLongTasks: (startTime: RelativeTime, duration: Duration) => LongTaskContext[]
 }
 
 export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: RumConfiguration) {
@@ -70,7 +70,7 @@ export function startLongTaskCollection(lifeCycle: LifeCycle, configuration: Rum
   })
 
   const longTaskContexts: LongTaskContexts = {
-    findLongTasks: (startTime: RelativeTime) => history.findAll(startTime),
+    findLongTasks: (startTime: RelativeTime, duration: Duration) => history.findAll(startTime, duration),
   }
 
   return {
