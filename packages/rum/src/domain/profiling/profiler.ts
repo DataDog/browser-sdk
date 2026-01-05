@@ -22,14 +22,13 @@ import type {
   ViewHistory,
 } from '@datadog/browser-rum-core'
 import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
+import type { RumProfilerTrace, RumViewEntry } from '../../types'
 import type {
-  RumProfilerTrace,
   RumProfilerInstance,
   Profiler,
   RUMProfiler,
   RUMProfilerConfiguration,
   RumProfilerStoppedInstance,
-  RumViewEntry,
 } from './types'
 import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import type { ProfilingContextManager } from './profilingContext'
