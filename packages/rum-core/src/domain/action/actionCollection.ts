@@ -93,8 +93,12 @@ export function startActionCollection(
   )
 
   const { unsubscribe: unsubscribeSessionRenewal } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    customActionHistory.reset()
+    activeCustomActions.forEach((activeAction) => {
+      activeAction.historyEntry.remove()
+      activeAction.eventCountsSubscription.stop()
+    })
     activeCustomActions.clear()
+    customActionHistory.reset()
   })
 
   let clickActionContexts: ActionContexts = { findActionId: noop as () => undefined }

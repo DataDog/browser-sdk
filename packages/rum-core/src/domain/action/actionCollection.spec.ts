@@ -497,5 +497,40 @@ describe('actionCollection', () => {
       expect(actionEvent.action.resource?.count).toBe(1)
       expect(actionEvent.action.long_task?.count).toBe(1)
     })
+
+    it('should discard active custom actions on session renewal', () => {
+      startAction('cross-session-action')
+
+      const actionIdBeforeRenewal = actionContexts.findActionId()
+      expect(actionIdBeforeRenewal).toBeDefined()
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(actionContexts.findActionId()).toBeUndefined()
+
+      stopAction('cross-session-action')
+
+      expect(rawRumEvents).toHaveSize(0)
+    })
+
+    it('should stop event count subscriptions on session renewal', () => {
+      startAction('tracked-action')
+
+      const actionId = actionContexts.findActionId()
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        action: { id: actionId },
+      } as any)
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      startAction('tracked-action')
+      stopAction('tracked-action')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.error?.count).toBe(0)
+    })
   })
 })
