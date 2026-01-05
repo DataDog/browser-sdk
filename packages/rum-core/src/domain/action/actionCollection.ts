@@ -1,5 +1,5 @@
-import type { ClocksState, Context, Observable } from '@datadog/browser-core'
-import { noop, combine, toServerDuration, generateUUID, SKIPPED, HookNames } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, Observable } from '@datadog/browser-core'
+import { noop, combine, toServerDuration, generateUUID, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { ActionType, RumEventType } from '../../rawRumEvent.types'
@@ -24,6 +24,7 @@ export interface CustomAction {
 
 export type AutoAction = ClickAction
 
+export const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
 export function startActionCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
@@ -47,7 +48,16 @@ export function startActionCollection(
       return SKIPPED
     }
 
-    const actionId = actionContexts.findActionId(startTime)
+    // Long tasks triggered by interaction handlers (pointerup, click, etc.)
+    // can have a start time slightly before the interaction timestamp (long_task.start_time < action.start_time).
+    // This likely happens because the interaction timestamp is recorded during the event dispatch,
+    // not at the beginning of the rendering frame. I observed a difference of < 1 ms in my tests.
+    // Fixes flakiness in test: "associates long tasks to interaction actions"
+    const correctedStartTime =
+      eventType === RumEventType.LONG_TASK ? addDuration(startTime, LONG_TASK_START_TIME_CORRECTION) : startTime
+
+    const actionId = actionContexts.findActionId(correctedStartTime)
+
     if (!actionId) {
       return SKIPPED
     }

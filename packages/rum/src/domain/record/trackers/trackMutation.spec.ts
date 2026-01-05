@@ -20,7 +20,7 @@ import type { AddShadowRootCallBack, RemoveShadowRootCallBack } from '../shadowR
 import { appendElement, appendText } from '../../../../../rum-core/test'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
-import { sortAddedAndMovedNodes, trackMutation } from './trackMutation'
+import { idsAreAssignedForNodeAndAncestors, sortAddedAndMovedNodes, trackMutation } from './trackMutation'
 import type { MutationTracker } from './trackMutation'
 
 describe('trackMutation', () => {
@@ -1151,5 +1151,68 @@ describe('sortAddedAndMovedNodes', () => {
     const nodes = [c, aa, b, parent, d, a]
     sortAddedAndMovedNodes(nodes)
     expect(nodes).toEqual([parent, d, c, b, a, aa])
+  })
+})
+
+describe('idsAreAssignedForNodeAndAncestors', () => {
+  let scope: RecordingScope
+
+  beforeEach(() => {
+    scope = createRecordingScopeForTesting()
+  })
+
+  it('returns false for DOM Nodes that have not been assigned an id', () => {
+    expect(idsAreAssignedForNodeAndAncestors(document.createElement('div'), scope.nodeIds)).toBe(false)
+  })
+
+  it('returns true for DOM Nodes that have been assigned an id', () => {
+    const node = document.createElement('div')
+    scope.nodeIds.getOrInsert(node)
+    expect(idsAreAssignedForNodeAndAncestors(node, scope.nodeIds)).toBe(true)
+  })
+
+  it('returns false for DOM Nodes when an ancestor has not been assigned an id', () => {
+    const node = document.createElement('div')
+    scope.nodeIds.getOrInsert(node)
+
+    const parent = document.createElement('div')
+    parent.appendChild(node)
+    scope.nodeIds.getOrInsert(parent)
+
+    const grandparent = document.createElement('div')
+    grandparent.appendChild(parent)
+
+    expect(idsAreAssignedForNodeAndAncestors(node, scope.nodeIds)).toBe(false)
+  })
+
+  it('returns true for DOM Nodes when all ancestors have been assigned an id', () => {
+    const node = document.createElement('div')
+    scope.nodeIds.getOrInsert(node)
+
+    const parent = document.createElement('div')
+    parent.appendChild(node)
+    scope.nodeIds.getOrInsert(parent)
+
+    const grandparent = document.createElement('div')
+    grandparent.appendChild(parent)
+    scope.nodeIds.getOrInsert(grandparent)
+
+    expect(idsAreAssignedForNodeAndAncestors(node, scope.nodeIds)).toBe(true)
+  })
+
+  it('returns true for DOM Nodes in shadow subtrees', () => {
+    const node = document.createElement('div')
+    scope.nodeIds.getOrInsert(node)
+
+    const parent = document.createElement('div')
+    parent.appendChild(node)
+    scope.nodeIds.getOrInsert(parent)
+
+    const grandparent = document.createElement('div')
+    const shadowRoot = grandparent.attachShadow({ mode: 'open' })
+    shadowRoot.appendChild(parent)
+    scope.nodeIds.getOrInsert(grandparent)
+
+    expect(idsAreAssignedForNodeAndAncestors(node, scope.nodeIds)).toBe(true)
   })
 })

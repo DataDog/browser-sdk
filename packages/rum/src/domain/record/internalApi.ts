@@ -7,8 +7,6 @@ import type { ShadowRootsController } from './shadowRootsController'
 import type { RecordingScope } from './recordingScope'
 import { createRecordingScope } from './recordingScope'
 import { createElementsScrollPositions } from './elementsScrollPositions'
-import { createEventIds } from './eventIds'
-import { createNodeIds } from './nodeIds'
 import type { EmitRecordCallback } from './record.types'
 import type { SerializationTransaction } from './serialization'
 import { SerializationKind, serializeInTransaction, serializeNode } from './serialization'
@@ -76,8 +74,6 @@ function createTemporaryRecordingScope(configuration?: Partial<RumConfiguration>
       ...configuration,
     } as RumConfiguration,
     createElementsScrollPositions(),
-    createEventIds(),
-    createNodeIds(),
     {
       addShadowRoot: noop,
       removeShadowRoot: noop,

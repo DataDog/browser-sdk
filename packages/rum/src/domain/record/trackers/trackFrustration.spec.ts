@@ -43,7 +43,7 @@ describe('trackFrustration', () => {
     expect(frustrationRecord.type).toEqual(RecordType.FrustrationRecord)
     expect(frustrationRecord.timestamp).toEqual(rumData.rawRumEvent.date)
     expect(frustrationRecord.data.frustrationTypes).toEqual(rumData.rawRumEvent.action.frustration!.type)
-    expect(frustrationRecord.data.recordIds).toEqual([scope.eventIds.getIdForEvent(mouseEvent)])
+    expect(frustrationRecord.data.recordIds).toEqual([scope.eventIds.getOrInsert(mouseEvent)])
   })
 
   it('ignores events other than click actions', () => {
