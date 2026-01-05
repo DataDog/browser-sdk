@@ -165,6 +165,15 @@ export function startActionCollection(
       return
     }
 
+    const lookupKey = getActionLookupKey(name, options.actionKey)
+
+    const existingAction = activeCustomActions.get(lookupKey)
+    if (existingAction) {
+      existingAction.historyEntry.close(clocksNow().relative)
+      existingAction.eventCountsSubscription.stop()
+      activeCustomActions.delete(lookupKey)
+    }
+
     const id = generateUUID()
     const startClocks = clocksNow()
 
@@ -177,7 +186,6 @@ export function startActionCollection(
         (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
     })
 
-    const lookupKey = getActionLookupKey(name, options.actionKey)
     activeCustomActions.set(lookupKey, {
       id,
       name,
