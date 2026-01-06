@@ -38,6 +38,8 @@ import { wrapUseRoutes } from './useRoutes'
     ),
   },
 ].forEach(({ version, MemoryRouter, Route, useNavigate, Routes }) => {
+  type NavigateFunction = ReturnType<typeof useNavigate>
+
   describe(`Routes component (${version})`, () => {
     let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
@@ -105,8 +107,8 @@ import { wrapUseRoutes } from './useRoutes'
       expect(startViewSpy).toHaveBeenCalledTimes(1)
     })
 
-    it('starts a new view on navigation', () => {
-      let navigate: (path: string) => void
+    it('starts a new view on navigation', async () => {
+      let navigate: NavigateFunction
 
       function NavBar() {
         navigate = useNavigate()
@@ -124,14 +126,14 @@ import { wrapUseRoutes } from './useRoutes'
       )
 
       startViewSpy.calls.reset()
-      act(() => {
-        navigate!('/bar')
+      await act(async () => {
+        await navigate!('/bar')
       })
       expect(startViewSpy).toHaveBeenCalledOnceWith('/bar')
     })
 
-    it('does not start a new view if the URL is the same', () => {
-      let navigate: (path: string) => void
+    it('does not start a new view if the URL is the same', async () => {
+      let navigate: NavigateFunction
 
       function NavBar() {
         navigate = useNavigate()
@@ -148,15 +150,15 @@ import { wrapUseRoutes } from './useRoutes'
       )
 
       startViewSpy.calls.reset()
-      act(() => {
-        navigate!('/foo')
+      await act(async () => {
+        await navigate!('/foo')
       })
 
       expect(startViewSpy).not.toHaveBeenCalled()
     })
 
-    it('does not start a new view if the path is the same but with different parameters', () => {
-      let navigate: (path: string) => void
+    it('does not start a new view if the path is the same but with different parameters', async () => {
+      let navigate: NavigateFunction
 
       function NavBar() {
         navigate = useNavigate()
@@ -173,8 +175,8 @@ import { wrapUseRoutes } from './useRoutes'
       )
 
       startViewSpy.calls.reset()
-      act(() => {
-        navigate!('/foo?bar=baz')
+      await act(async () => {
+        await navigate!('/foo?bar=baz')
       })
 
       expect(startViewSpy).not.toHaveBeenCalled()
