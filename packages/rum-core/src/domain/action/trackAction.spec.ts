@@ -1,6 +1,5 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { ActionTracker, TrackedAction } from './trackAction'

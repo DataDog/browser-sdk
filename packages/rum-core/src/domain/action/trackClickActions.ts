@@ -1,4 +1,4 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
 import {
   timeStampNow,
   Observable,
