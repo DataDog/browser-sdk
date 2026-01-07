@@ -510,8 +510,6 @@ export type TelemetryCommonFeaturesUsage =
   | SetViewName
   | GetViewContext
   | AddAction
-  | StartAction
-  | StopAction
   | AddError
   | GetGlobalContext
   | SetGlobalContext
@@ -736,21 +734,6 @@ export interface AddAction {
    * addAction API
    */
   feature: 'add-action'
-  [k: string]: unknown
-}
-
-export interface StartAction {
-  /**
-   * startAction API
-   */
-  feature: 'start-action'
-  [k: string]: unknown
-}
-export interface StopAction {
-  /**
-   * stopAction API
-   */
-  feature: 'stop-action'
   [k: string]: unknown
 }
 

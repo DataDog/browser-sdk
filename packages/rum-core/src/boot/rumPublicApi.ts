@@ -676,7 +676,7 @@ export function makeRumPublicApi(
     },
 
     startAction: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'start-action' })
+      // addTelemetryUsage({ feature: 'start-action' })
       strategy.startAction(sanitize(name)!, {
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
@@ -685,7 +685,7 @@ export function makeRumPublicApi(
     }),
 
     stopAction: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'stop-action' })
+      // addTelemetryUsage({ feature: 'stop-action' })
       strategy.stopAction(sanitize(name)!, {
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
