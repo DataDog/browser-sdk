@@ -19,13 +19,13 @@ const QUERIES: Query[] = [
   {
     name: 'Telemetry errors on specific org',
     query: BASE_QUERY,
-    facet: '@org_id',
+    groupBy: '@org_id',
     threshold: 100,
   },
   {
     name: 'Telemetry error on specific message',
     query: BASE_QUERY,
-    facet: 'issue.id',
+    groupBy: 'issue.id',
     threshold: 100,
   },
 ]
@@ -84,11 +84,11 @@ async function queryLogsApi(
           aggregation: 'count',
         },
       ],
-      ...(query.facet
+      ...(query.groupBy
         ? {
             group_by: [
               {
-                facet: query.facet,
+                facet: query.groupBy,
                 sort: {
                   type: 'measure',
                   aggregation: 'count',
@@ -107,6 +107,15 @@ async function queryLogsApi(
 
   const data = (await response.json()) as QueryResult
 
+  if (
+    !data ||
+    !data.data ||
+    !Array.isArray(data.data.buckets) ||
+    !data.data.buckets.every((bucket) => bucket.computes && typeof bucket.computes.c0 === 'number')
+  ) {
+    throw new Error(`Unexpected response from the API: ${JSON.stringify(data)}`)
+  }
+
   return data.data.buckets
 }
 
@@ -116,9 +125,9 @@ function computeLogsLink(site: string, query: Query): string {
 
   const queryParams = new URLSearchParams({
     query: query.query,
-    ...(query.facet
+    ...(query.groupBy
       ? {
-          agg_q: query.facet,
+          agg_q: query.groupBy,
           agg_t: 'count',
           viz: 'toplist',
         }
@@ -143,7 +152,7 @@ function computeTelemetryOrgDomain(site: string): string {
 interface Query {
   name: string
   query: string
-  facet?: string
+  groupBy?: string
   threshold: number
 }
 

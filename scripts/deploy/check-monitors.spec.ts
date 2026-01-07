@@ -116,6 +116,40 @@ describe('check-monitors', () => {
       /Telemetry error on specific message found in the last 5 minutes/
     )
   })
+
+  it('should throw an error if the API returns an unexpected response format', async () => {
+    // Mock first API call with invalid response (missing data.buckets)
+    fetchHandlingErrorMock.mock.mockImplementationOnce(
+      (_url: string, _options?: RequestInit) =>
+        Promise.resolve({
+          json: () =>
+            Promise.resolve({
+              error: 'Something went wrong',
+            }),
+        } as unknown as Response),
+      0
+    )
+
+    await assert.rejects(() => runScript('./check-monitors.ts', 'us1'), /Unexpected response from the API/)
+  })
+
+  it('should throw an error if buckets have invalid structure', async () => {
+    // Mock first API call with invalid bucket structure (missing computes.c0)
+    fetchHandlingErrorMock.mock.mockImplementationOnce(
+      (_url: string, _options?: RequestInit) =>
+        Promise.resolve({
+          json: () =>
+            Promise.resolve({
+              data: {
+                buckets: [{ by: {}, computes: {} }], // Missing c0
+              },
+            }),
+        } as unknown as Response),
+      0
+    )
+
+    await assert.rejects(() => runScript('./check-monitors.ts', 'us1'), /Unexpected response from the API/)
+  })
 })
 
 async function runScript(scriptPath: string, ...args: string[]): Promise<void> {
