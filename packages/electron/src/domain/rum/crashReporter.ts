@@ -70,6 +70,64 @@ let pendingCrashReportsProcessed = false
 const callbacks: Array<() => void> = []
 
 /**
+ * Format a memory address as a 64-bit hexadecimal string (16 hex digits with 0x prefix)
+ *
+ * @param address - Address string that may or may not have 0x prefix
+ * @returns Formatted address as 0x followed by 16 hex digits, or undefined if input is undefined
+ * @example
+ * formatAddress64('0x7fff5fc01000') // '0x00007fff5fc01000'
+ * formatAddress64('7fff5fc01000')   // '0x00007fff5fc01000'
+ * formatAddress64('0x1000')         // '0x0000000000001000'
+ */
+function formatAddress64(address: string | undefined): string | undefined {
+  if (!address) {
+    return undefined
+  }
+
+  // Remove 0x prefix if present
+  const hexValue = address.toLowerCase().replace(/^0x/, '')
+
+  // Pad to 16 hex digits (64-bit)
+  const paddedHex = hexValue.padStart(16, '0')
+
+  return `0x${paddedHex}`
+}
+
+/**
+ * Calculate max address by adding size to base address using BigInt arithmetic
+ * to safely handle 64-bit addresses beyond JavaScript's Number precision
+ *
+ * @param baseAddress - Base address string (may have 0x prefix)
+ * @param size - Size in bytes (decimal number)
+ * @returns Formatted max address or undefined if inputs invalid
+ * @example
+ * calculateMaxAddress('0x7fff5fc01000', 4096) // '0x00007fff5fc02000'
+ */
+function calculateMaxAddress(baseAddress: string | undefined, size: number | undefined): string | undefined {
+  if (!baseAddress || !size) {
+    return undefined
+  }
+
+  try {
+    // Remove 0x prefix if present
+    const hexValue = baseAddress.toLowerCase().replace(/^0x/, '')
+
+    // Use BigInt for safe 64-bit arithmetic
+    const baseAddressBigInt = BigInt(`0x${hexValue}`)
+    const maxAddressBigInt = baseAddressBigInt + BigInt(size)
+
+    // Convert to hex string and format as 64-bit
+    const maxAddressHex = maxAddressBigInt.toString(16)
+
+    return formatAddress64(`0x${maxAddressHex}`)
+  } catch (error) {
+    // Handle parse errors gracefully
+    console.warn('[Datadog] Failed to calculate max address:', error)
+    return undefined
+  }
+}
+
+/**
  * Convert minidump parsed result to a RUM error event format
  */
 function createCrashErrorEvent(
@@ -86,12 +144,29 @@ function createCrashErrorEvent(
       .map((frame) => {
         const moduleName = frame.module ? path.basename(frame.module) : '???'
 
-        // find module and read the base address
-        const address = minidumpResult.modules.find((module) => module.code_file === frame.module)?.base_address
-        // offset from hex do decimal
+        // Find module's base address, or calculate it from instruction and offset
+        let baseAddress: string | undefined = minidumpResult.modules.find(
+          (module) => module.code_file === frame.module
+        )?.base_address
+
+        if (!baseAddress && frame.instruction && frame.module_offset) {
+          // Fallback: calculate base address from instruction - offset
+          try {
+            const instructionAddr = BigInt(`0x${frame.instruction.replace(/^0x/i, '')}`)
+            const offsetValue = BigInt(`0x${frame.module_offset.replace(/^0x/i, '')}`)
+            const calculatedBase = instructionAddr - offsetValue
+            baseAddress = `0x${calculatedBase.toString(16)}`
+          } catch {
+            // If calculation fails, baseAddress remains undefined
+          }
+        }
+
+        const address = formatAddress64(baseAddress)
+        // offset from hex to decimal for display
         const offset = parseInt(frame.module_offset, 16)
 
-        return `${threadId}  ${moduleName} ${frame.instruction} ${address} + ${offset}`
+        const instruction = formatAddress64(frame.instruction)
+        return `${threadId}  ${moduleName} ${instruction} ${address} + ${offset}`
       })
       .join('\n')
 
@@ -104,11 +179,11 @@ function createCrashErrorEvent(
 
   // Transform modules to binary_images
   const binaryImages = minidumpResult.modules.map((module) => {
-    // Extract base address value (remove 0x prefix if present)
-    const loadAddress = module.base_address
+    // Format base address as 64-bit hex
+    const loadAddress = formatAddress64(module.base_address)
 
-    // Calculate max address: base_address (hex) + size (decimal) -> hex
-    const maxAddress = module.size ? `0x${(parseInt(loadAddress, 16) + module.size).toString(16)}` : undefined
+    // Calculate max address using BigInt for 64-bit safe arithmetic
+    const maxAddress = calculateMaxAddress(module.base_address, module.size)
 
     // Determine if it's a system library based on path
     const isSystem =
@@ -146,7 +221,7 @@ function createCrashErrorEvent(
         path: undefined, // Could be extracted from modules
       },
       source: 'source' as const,
-      source_type: 'electron' as 'browser',
+      source_type: minidumpResult.system_info.os as 'browser',
       stack: crashedThread?.stack,
       threads,
       type: minidumpResult.crash_info.type,
@@ -272,3 +347,12 @@ export const storeCrashContext = monitor(async (context: { sessionId: string; vi
   const crashContextPath = path.join(crashesDirectory, CRASH_CONTEXT_FILE_NAME)
   await fs.writeFile(crashContextPath, JSON.stringify(context, null, 2), 'utf-8')
 })
+
+// Export internal functions for testing
+export const __test__ = {
+  formatAddress64,
+  calculateMaxAddress,
+  createCrashErrorEvent,
+  getFilesRecursive,
+  processCrashesFiles,
+}
