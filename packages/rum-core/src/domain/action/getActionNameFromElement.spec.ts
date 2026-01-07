@@ -968,5 +968,23 @@ describe('getActionNameFromElement', () => {
       expect(name).toBe('Parent Title')
       expect(nameSource).toBe('standard_attribute')
     })
+
+    it('finds aria-labelledby element inside the same shadow DOM', () => {
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+
+      const label = document.createElement('span')
+      label.id = 'shadow-label'
+      label.textContent = 'Save Data'
+      shadowRoot.appendChild(label)
+
+      const button = document.createElement('button')
+      button.setAttribute('aria-labelledby', 'shadow-label')
+      shadowRoot.appendChild(button)
+
+      const { name, nameSource } = getActionNameFromElement(button, defaultConfiguration)
+      expect(name).toBe('Save Data')
+      expect(nameSource).toBe('text_content')
+    })
   })
 })

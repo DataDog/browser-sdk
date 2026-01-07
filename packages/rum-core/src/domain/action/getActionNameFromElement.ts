@@ -184,7 +184,15 @@ function truncate(s: string) {
   return s.length > 100 ? `${safeTruncate(s, 100)} [...]` : s
 }
 
-function getElementById(refElement: Element, id: string) {
+function getElementById(refElement: Element, id: string): HTMLElement | null {
+  const rootNode = refElement.getRootNode()
+  if (rootNode instanceof ShadowRoot) {
+    const shadowElement = rootNode.getElementById(id)
+    if (shadowElement) {
+      return shadowElement
+    }
+  }
+
   // Use the element ownerDocument here, because tests are executed in an iframe, so
   // document.getElementById won't work.
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null
