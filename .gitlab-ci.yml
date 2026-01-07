@@ -129,11 +129,7 @@ list-datacenters:
   stage: before-tests
   extends: .base-configuration
   script:
-    - |
-      TOKEN=$(curl --silent $VAULT_ADDR/v1/identity/oidc/token/runtime-metadata-service -H 'X-Vault-Request: true' | jq '.data.token' -r)
-      curl -X 'GET' 'https://runtime-metadata-service.us1.ddbuild.io/v2/datacenters' \
-        -H "accept: application/json" \
-        -H "Authorization: Bearer $TOKEN"
+    - node scripts/test-datacenter-api.ts
 
 ########################################################################################################################
 # Tests
