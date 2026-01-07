@@ -24,8 +24,8 @@ describe('upload-source-maps', () => {
   let commands: CommandDetail[]
 
   let uploadSourceMaps: (version: string, uploadPathTypes: string[]) => Promise<void>
-  let getAllDatacenters: () => string[]
-  let getSite: (datacenter: string) => string
+  let getAllDatacenters: () => Promise<string[]>
+  let getSite: (datacenter: string) => Promise<string>
 
   function getSourceMapCommands(): CommandDetail[] {
     return commands.filter(({ command }) => command.includes('datadog-ci sourcemaps'))
