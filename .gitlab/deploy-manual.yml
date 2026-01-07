@@ -47,7 +47,7 @@ step-4_deploy-prod-gov:
     - .base-configuration
     - .deploy-prod
   variables:
-    DATACENTER: root
+    DATACENTER: gov
 
 step-5_publish-npm:
   stage: deploy
