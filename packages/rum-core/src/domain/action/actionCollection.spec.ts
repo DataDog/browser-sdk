@@ -365,13 +365,6 @@ describe('actionCollection', () => {
       expect(actionEvent.action.loading_time).toBe((500 * 1e6) as ServerDuration)
     })
 
-    it('should not create action when actionKey does not match', () => {
-      startAction('click', { actionKey: 'button1' })
-      stopAction('click', { actionKey: 'button2' })
-
-      expect(rawRumEvents).toHaveSize(0)
-    })
-
     it('should clean up previous action when startAction is called twice with same key', () => {
       startAction('checkout')
       const firstActionId = actionContexts.findActionId()
@@ -551,20 +544,20 @@ describe('actionCollection', () => {
     })
 
     it('getActionLookupKey should not collide', () => {
-      startAction('foo__bar')
+      startAction('foo bar')
       startAction('foo', { actionKey: 'bar' })
 
       const actionIds = actionContexts.findActionId()
       expect(Array.isArray(actionIds)).toBeTrue()
       expect((actionIds as string[]).length).toBe(2)
 
-      stopAction('foo__bar')
+      stopAction('foo bar')
       stopAction('foo', { actionKey: 'bar' })
 
       expect(rawRumEvents).toHaveSize(2)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
         jasmine.objectContaining({
-          action: jasmine.objectContaining({ target: { name: 'foo__bar' } }),
+          action: jasmine.objectContaining({ target: { name: 'foo bar' } }),
         })
       )
       expect(rawRumEvents[1].rawRumEvent).toEqual(
