@@ -37,9 +37,7 @@ const TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK = [
 describe('check-monitors', () => {
   const fetchHandlingErrorMock: Mock<typeof fetchHandlingError> = mock.fn()
 
-  function setupTelemetryMocks(
-    responseBuckets: [QueryResultBucket[], QueryResultBucket[], QueryResultBucket[]]
-  ): void {
+  function setupTelemetryMocks(responseBuckets: [QueryResultBucket[], QueryResultBucket[], QueryResultBucket[]]): void {
     let telemetryCallIndex = 0
 
     // Use the shared helper with additional handler for telemetry API calls
