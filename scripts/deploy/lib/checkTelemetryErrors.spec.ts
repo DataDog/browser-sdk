@@ -3,8 +3,8 @@ import path from 'node:path'
 import type { Mock } from 'node:test'
 import { afterEach, before, describe, it, mock } from 'node:test'
 import type { fetchHandlingError } from 'scripts/lib/executionUtils.ts'
-import { mockModule } from './lib/testHelpers.ts'
-import type { QueryResultBucket } from './check-monitors.ts'
+import { mockModule } from './testHelpers.ts'
+import type { QueryResultBucket } from './checkTelemetryErrors.ts'
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
 const FAKE_APPLICATION_KEY = 'FAKE_APPLICATION_KEY'
@@ -34,7 +34,8 @@ const TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK = [
   { by: { 'issue.id': '144e312a-919a-11ef-8519-da7ad0900002' }, computes: { c0: 1 } },
 ]
 
-describe('check-monitors', () => {
+describe('check-telemetry-errors', () => {
+  let checkTelemetryErrors: (datacenters: string[]) => Promise<void>
   const fetchHandlingErrorMock: Mock<typeof fetchHandlingError> = mock.fn()
 
   function mockFetchHandlingError(
@@ -57,14 +58,16 @@ describe('check-monitors', () => {
   }
 
   before(async () => {
-    await mockModule(path.resolve(import.meta.dirname, '../lib/secrets.ts'), {
+    await mockModule(path.resolve(import.meta.dirname, '../../lib/secrets.ts'), {
       getTelemetryOrgApiKey: () => FAKE_API_KEY,
       getTelemetryOrgApplicationKey: () => FAKE_APPLICATION_KEY,
     })
 
-    await mockModule(path.resolve(import.meta.dirname, '../lib/executionUtils.ts'), {
+    await mockModule(path.resolve(import.meta.dirname, '../../lib/executionUtils.ts'), {
       fetchHandlingError: fetchHandlingErrorMock,
     })
+
+    checkTelemetryErrors = (await import('./checkTelemetryErrors.ts')).checkTelemetryErrors
   })
 
   afterEach(() => {
@@ -78,7 +81,7 @@ describe('check-monitors', () => {
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
     ])
 
-    await assert.doesNotReject(() => runScript('./check-monitors.ts', 'us1'))
+    await assert.doesNotReject(() => checkTelemetryErrors(['us1']))
   })
 
   it('should throw an error if telemetry errors are found for a given datacenter', async () => {
@@ -87,8 +90,7 @@ describe('check-monitors', () => {
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
     ])
-
-    await assert.rejects(() => runScript('./check-monitors.ts', 'us1'), /Telemetry errors found in the last 5 minutes/)
+    await assert.rejects(() => checkTelemetryErrors(['us1']), /Telemetry errors found in the last 5 minutes/)
   })
 
   it('should throw an error if telemetry errors on specific org are found for a given datacenter', async () => {
@@ -99,7 +101,7 @@ describe('check-monitors', () => {
     ])
 
     await assert.rejects(
-      () => runScript('./check-monitors.ts', 'us1'),
+      () => checkTelemetryErrors(['us1']),
       /Telemetry errors on specific org found in the last 5 minutes/
     )
   })
@@ -112,7 +114,7 @@ describe('check-monitors', () => {
     ])
 
     await assert.rejects(
-      () => runScript('./check-monitors.ts', 'us1'),
+      () => checkTelemetryErrors(['us1']),
       /Telemetry error on specific message found in the last 5 minutes/
     )
   })
@@ -130,7 +132,7 @@ describe('check-monitors', () => {
       0
     )
 
-    await assert.rejects(() => runScript('./check-monitors.ts', 'us1'), /Unexpected response from the API/)
+    await assert.rejects(() => checkTelemetryErrors(['us1']), /Unexpected response from the API/)
   })
 
   it('should throw an error if buckets have invalid structure', async () => {
@@ -148,12 +150,6 @@ describe('check-monitors', () => {
       0
     )
 
-    await assert.rejects(() => runScript('./check-monitors.ts', 'us1'), /Unexpected response from the API/)
+    await assert.rejects(() => checkTelemetryErrors(['us1']), /Unexpected response from the API/)
   })
 })
-
-async function runScript(scriptPath: string, ...args: string[]): Promise<void> {
-  const { main } = (await import(scriptPath)) as { main: (...args: string[]) => Promise<void> }
-
-  return main(...args)
-}

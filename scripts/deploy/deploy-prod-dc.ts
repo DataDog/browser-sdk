@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { siteByDatacenter } from '../lib/datacenter.ts'
+import { checkTelemetryErrors } from './lib/checkTelemetryErrors.ts'
 
 /**
  * Orchestrate the deployments of the artifacts for specific DCs
@@ -27,14 +28,14 @@ if (!process.env.NODE_TEST_CONTEXT) {
 
 export async function main(...args: string[]): Promise<void> {
   const {
-    values: { 'check-monitors': checkMonitors },
+    values: { 'check-telemetry-errors': shouldCheckTelemetryErrors },
     positionals,
   } = parseArgs({
     args,
     allowPositionals: true,
     allowNegative: true,
     options: {
-      'check-monitors': {
+      'check-telemetry-errors': {
         type: 'boolean',
         default: false,
       },
@@ -48,14 +49,14 @@ export async function main(...args: string[]): Promise<void> {
     throw new Error('UPLOAD_PATH argument is required')
   }
 
-  if (checkMonitors) {
-    command`node ./scripts/deploy/check-monitors.ts ${uploadPath}`.withLogs().run()
+  if (shouldCheckTelemetryErrors) {
+    await checkTelemetryErrors(uploadPath.split(','))
   }
 
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPath}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPath}`.withLogs().run()
 
-  if (checkMonitors && uploadPath !== 'root') {
+  if (shouldCheckTelemetryErrors && uploadPath !== 'root') {
     await gateMonitors(uploadPath)
   }
 }
@@ -63,7 +64,7 @@ export async function main(...args: string[]): Promise<void> {
 async function gateMonitors(uploadPath: string): Promise<void> {
   printLog(`Check monitors for ${uploadPath} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
   for (let i = 0; i < GATE_DURATION; i += GATE_INTERVAL) {
-    command`node ./scripts/deploy/check-monitors.ts ${uploadPath}`.run()
+    await checkTelemetryErrors(uploadPath.split(','))
     process.stdout.write('.') // progress indicator
     await timeout(GATE_INTERVAL * 1000)
   }

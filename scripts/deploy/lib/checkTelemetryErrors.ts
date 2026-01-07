@@ -1,12 +1,10 @@
 /**
  * Check monitors status
- * Usage:
- * node check-monitors.ts us1,eu1,...
  */
-import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
-import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/secrets.ts'
-import { siteByDatacenter } from '../lib/datacenter.ts'
-import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
+import { printLog, fetchHandlingError } from '../../lib/executionUtils.ts'
+import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
+import { siteByDatacenter } from '../../lib/datacenter.ts'
+import { browserSdkVersion } from '../../lib/browserSdkVersion.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
 const BASE_QUERY = `source:browser status:error version:${browserSdkVersion}`
@@ -30,13 +28,12 @@ const QUERIES: Query[] = [
   },
 ]
 
-if (!process.env.NODE_TEST_CONTEXT) {
-  runMain(() => main(...process.argv.slice(2)))
-}
-
-export async function main(...args: string[]): Promise<void> {
-  const datacenters = args[0].split(',')
-
+/**
+ * Check telemetry monitors for given datacenters
+ *
+ * @param datacenters - Array of datacenter names to check
+ */
+export async function checkTelemetryErrors(datacenters: string[]): Promise<void> {
   for (const datacenter of datacenters) {
     const site = siteByDatacenter[datacenter]
 
