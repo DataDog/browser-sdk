@@ -142,7 +142,7 @@ export function mockFetchHandlingError(
     // Datacenters request
     if (url.includes('runtime-metadata-service')) {
       return Promise.resolve({
-        json: () => Promise.resolve(MOCK_DATACENTERS),
+        json: () => Promise.resolve({ datacenters: MOCK_DATACENTERS }),
       } as unknown as Response)
     }
 

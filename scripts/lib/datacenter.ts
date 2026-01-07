@@ -28,6 +28,10 @@ interface Datacenter {
   site: string
 }
 
+interface DatacentersResponse {
+  datacenters: Datacenter[]
+}
+
 let cachedDatacenters: Record<string, Datacenter> | undefined
 
 async function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> {
@@ -36,7 +40,6 @@ async function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> 
   }
 
   const datacenters = await fetchDatacentersFromRuntimeMetadataService()
-  console.log('Fetched datacenters from runtime-metadata-service:', datacenters)
   cachedDatacenters = {}
 
   for (const datacenter of datacenters) {
@@ -61,7 +64,8 @@ async function fetchDatacentersFromRuntimeMetadataService(): Promise<Datacenter[
     },
   })
 
-  return (await response.json()) as Datacenter[]
+  const data = (await response.json()) as DatacentersResponse
+  return data.datacenters
 }
 
 async function getVaultToken(): Promise<string> {
