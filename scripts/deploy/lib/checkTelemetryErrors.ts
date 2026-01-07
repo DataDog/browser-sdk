@@ -4,36 +4,42 @@
 import { printLog, fetchHandlingError } from '../../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
 import { siteByDatacenter } from '../../lib/datacenter.ts'
-import { browserSdkVersion } from '../../lib/browserSdkVersion.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
-const BASE_QUERY = `source:browser status:error version:${browserSdkVersion}`
-const QUERIES: Query[] = [
-  {
-    name: 'Telemetry errors',
-    query: BASE_QUERY,
-    threshold: 300,
-  },
-  {
-    name: 'Telemetry errors on specific org',
-    query: BASE_QUERY,
-    groupBy: '@org_id',
-    threshold: 100,
-  },
-  {
-    name: 'Telemetry error on specific message',
-    query: BASE_QUERY,
-    groupBy: 'issue.id',
-    threshold: 100,
-  },
-]
+
+function getQueries(version: string): Query[] {
+  const query = `source:browser status:error version:${version}`
+
+  return [
+    {
+      name: 'Telemetry errors',
+      query,
+      threshold: 300,
+    },
+    {
+      name: 'Telemetry errors on specific org',
+      query,
+      groupBy: '@org_id',
+      threshold: 100,
+    },
+    {
+      name: 'Telemetry error on specific message',
+      query,
+      groupBy: 'issue.id',
+      threshold: 100,
+    },
+  ]
+}
 
 /**
  * Check telemetry monitors for given datacenters
  *
  * @param datacenters - Array of datacenter names to check
+ * @param version - Browser SDK version to check errors for
  */
-export async function checkTelemetryErrors(datacenters: string[]): Promise<void> {
+export async function checkTelemetryErrors(datacenters: string[], version: string): Promise<void> {
+  const queries = getQueries(version)
+
   for (const datacenter of datacenters) {
     const site = siteByDatacenter[datacenter]
 
@@ -50,7 +56,7 @@ export async function checkTelemetryErrors(datacenters: string[]): Promise<void>
       continue
     }
 
-    for (const query of QUERIES) {
+    for (const query of queries) {
       const buckets = await queryLogsApi(site, apiKey, applicationKey, query)
 
       // buckets are sorted by count, so we only need to check the first one

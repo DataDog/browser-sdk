@@ -35,7 +35,7 @@ const TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK = [
 ]
 
 describe('check-telemetry-errors', () => {
-  let checkTelemetryErrors: (datacenters: string[]) => Promise<void>
+  let checkTelemetryErrors: (datacenters: string[], version: string) => Promise<void>
   const fetchHandlingErrorMock: Mock<typeof fetchHandlingError> = mock.fn()
 
   function mockFetchHandlingError(
@@ -81,7 +81,7 @@ describe('check-telemetry-errors', () => {
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
     ])
 
-    await assert.doesNotReject(() => checkTelemetryErrors(['us1']))
+    await assert.doesNotReject(() => checkTelemetryErrors(['us1'], '6.2.1'))
   })
 
   it('should throw an error if telemetry errors are found for a given datacenter', async () => {
@@ -90,7 +90,7 @@ describe('check-telemetry-errors', () => {
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
     ])
-    await assert.rejects(() => checkTelemetryErrors(['us1']), /Telemetry errors found in the last 5 minutes/)
+    await assert.rejects(() => checkTelemetryErrors(['us1'], '6.2.1'), /Telemetry errors found in the last 5 minutes/)
   })
 
   it('should throw an error if telemetry errors on specific org are found for a given datacenter', async () => {
@@ -101,7 +101,7 @@ describe('check-telemetry-errors', () => {
     ])
 
     await assert.rejects(
-      () => checkTelemetryErrors(['us1']),
+      () => checkTelemetryErrors(['us1'], '6.2.1'),
       /Telemetry errors on specific org found in the last 5 minutes/
     )
   })
@@ -114,7 +114,7 @@ describe('check-telemetry-errors', () => {
     ])
 
     await assert.rejects(
-      () => checkTelemetryErrors(['us1']),
+      () => checkTelemetryErrors(['us1'], '6.2.1'),
       /Telemetry error on specific message found in the last 5 minutes/
     )
   })
@@ -132,7 +132,7 @@ describe('check-telemetry-errors', () => {
       0
     )
 
-    await assert.rejects(() => checkTelemetryErrors(['us1']), /Unexpected response from the API/)
+    await assert.rejects(() => checkTelemetryErrors(['us1'], '6.2.1'), /Unexpected response from the API/)
   })
 
   it('should throw an error if buckets have invalid structure', async () => {
@@ -150,6 +150,6 @@ describe('check-telemetry-errors', () => {
       0
     )
 
-    await assert.rejects(() => checkTelemetryErrors(['us1']), /Unexpected response from the API/)
+    await assert.rejects(() => checkTelemetryErrors(['us1'], '6.2.1'), /Unexpected response from the API/)
   })
 })

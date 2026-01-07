@@ -1,15 +1,18 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { beforeEach, before, describe, it, mock, type Mock } from 'node:test'
+import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 import type { CommandDetail } from './lib/testHelpers.ts'
 import { mockModule, mockCommandImplementation } from './lib/testHelpers.ts'
 
+const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
+
 describe('deploy-prod-dc', () => {
   const commandMock = mock.fn()
-  const checkTelemetryErrorsMock: Mock<(datacenters: string[]) => Promise<void>> = mock.fn()
+  const checkTelemetryErrorsMock: Mock<(datacenters: string[], version: string) => Promise<void>> = mock.fn()
 
   let commands: CommandDetail[]
-  let checkTelemetryErrorsCalls: string[][]
+  let checkTelemetryErrorsCalls: Array<{ version: string; datacenters: string[] }>
 
   before(async () => {
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
@@ -24,8 +27,8 @@ describe('deploy-prod-dc', () => {
   beforeEach(() => {
     commands = mockCommandImplementation(commandMock)
     checkTelemetryErrorsCalls = []
-    checkTelemetryErrorsMock.mock.mockImplementation((datacenters: string[]) => {
-      checkTelemetryErrorsCalls.push(datacenters)
+    checkTelemetryErrorsMock.mock.mockImplementation((datacenters: string[], version: string) => {
+      checkTelemetryErrorsCalls.push({ version, datacenters })
       return Promise.resolve()
     })
   })
@@ -47,8 +50,11 @@ describe('deploy-prod-dc', () => {
 
     // Should call checkTelemetryErrors 31 times: 1 initial + 30 during gating
     assert.strictEqual(checkTelemetryErrorsCalls.length, 31)
-    assert.deepEqual(checkTelemetryErrorsCalls[0], ['us1']) // Initial check
-    assert.deepEqual(checkTelemetryErrorsCalls[30], ['us1']) // Last gating check
+    assert.deepEqual(checkTelemetryErrorsCalls[0], {
+      version: `${currentBrowserSdkVersionMajor}.*`,
+      datacenters: ['us1'],
+    }) // Initial check
+    assert.deepEqual(checkTelemetryErrorsCalls[30], { version: browserSdkVersion, datacenters: ['us1'] }) // Last gating check
 
     assert.deepEqual(commands, [
       { command: 'node ./scripts/deploy/deploy.ts prod v6 us1' },
@@ -61,7 +67,10 @@ describe('deploy-prod-dc', () => {
 
     // Should only call checkTelemetryErrors once (no gating for root)
     assert.strictEqual(checkTelemetryErrorsCalls.length, 1)
-    assert.deepEqual(checkTelemetryErrorsCalls[0], ['root'])
+    assert.deepEqual(checkTelemetryErrorsCalls[0], {
+      version: `${currentBrowserSdkVersionMajor}.*`,
+      datacenters: ['root'],
+    })
 
     assert.deepEqual(commands, [
       { command: 'node ./scripts/deploy/deploy.ts prod v6 root' },

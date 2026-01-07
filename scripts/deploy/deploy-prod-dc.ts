@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { siteByDatacenter } from '../lib/datacenter.ts'
+import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 import { checkTelemetryErrors } from './lib/checkTelemetryErrors.ts'
 
 /**
@@ -50,7 +51,9 @@ export async function main(...args: string[]): Promise<void> {
   }
 
   if (shouldCheckTelemetryErrors) {
-    await checkTelemetryErrors(uploadPath.split(','))
+    // Make sure system is in a good state before deploying
+    const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
+    await checkTelemetryErrors(uploadPath.split(','), `${currentBrowserSdkVersionMajor}.*`)
   }
 
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPath}`.withLogs().run()
@@ -64,7 +67,7 @@ export async function main(...args: string[]): Promise<void> {
 async function gateMonitors(uploadPath: string): Promise<void> {
   printLog(`Check monitors for ${uploadPath} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
   for (let i = 0; i < GATE_DURATION; i += GATE_INTERVAL) {
-    await checkTelemetryErrors(uploadPath.split(','))
+    await checkTelemetryErrors(uploadPath.split(','), browserSdkVersion)
     process.stdout.write('.') // progress indicator
     await timeout(GATE_INTERVAL * 1000)
   }
