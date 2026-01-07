@@ -28,36 +28,45 @@ step-1_deploy-prod-minor-dcs:
   variables:
     DATACENTER: minor-dcs
 
-step-2_deploy-prod-eu1:
+step-2_deploy-prod-private-regions:
   needs:
     - step-1_deploy-prod-minor-dcs
   extends:
     - .base-configuration
     - .deploy-prod
   variables:
+    DATACENTER: private-regions
+
+step-3_deploy-prod-eu1:
+  needs:
+    - step-2_deploy-prod-private-regions
+  extends:
+    - .base-configuration
+    - .deploy-prod
+  variables:
     DATACENTER: eu1
 
-step-3_deploy-prod-us1:
+step-4_deploy-prod-us1:
   needs:
-    - step-2_deploy-prod-eu1
+    - step-3_deploy-prod-eu1
   extends:
     - .base-configuration
     - .deploy-prod
   variables:
     DATACENTER: us1
 
-step-4_deploy-prod-gov:
+step-5_deploy-prod-gov:
   needs:
-    - step-3_deploy-prod-us1
+    - step-4_deploy-prod-us1
   extends:
     - .base-configuration
     - .deploy-prod
   variables:
     DATACENTER: gov
 
-step-5_publish-npm:
+step-6_publish-npm:
   needs:
-    - step-4_deploy-prod-gov
+    - step-5_deploy-prod-gov
   stage: deploy
   extends:
     - .base-configuration
@@ -66,9 +75,9 @@ step-5_publish-npm:
     - yarn
     - node ./scripts/deploy/publish-npm.ts
 
-step-6_publish-developer-extension:
+step-7_publish-developer-extension:
   needs:
-    - step-5_publish-npm
+    - step-6_publish-npm
   stage: deploy
   extends:
     - .base-configuration
@@ -77,9 +86,9 @@ step-6_publish-developer-extension:
     - yarn
     - node ./scripts/deploy/publish-developer-extension.ts
 
-step-7_create-github-release:
+step-8_create-github-release:
   needs:
-    - step-6_publish-developer-extension
+    - step-7_publish-developer-extension
   stage: deploy
   extends:
     - .base-configuration
