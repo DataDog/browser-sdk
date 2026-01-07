@@ -1,4 +1,4 @@
-import type { ClocksState, Context, Duration, Observable, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, Observable, RelativeTime } from '@datadog/browser-core'
 import {
   noop,
   combine,
@@ -11,7 +11,7 @@ import {
   elapsed,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  createValueHistory,
+  relativeNow,
 } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
@@ -22,9 +22,10 @@ import type { RumConfiguration } from '../configuration'
 import type { RumActionEventDomainContext } from '../../domainContext.types'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { trackEventCounts } from '../trackEventCounts'
-import type { ActionContexts, ClickAction } from './trackClickActions'
-import { ACTION_CONTEXT_TIME_OUT_DELAY, trackClickActions } from './trackClickActions'
+import type { ClickAction } from './trackClickActions'
+import { trackClickActions } from './trackClickActions'
+import type { ActionContexts, ActionCounts, TrackedAction } from './trackAction'
+import { startActionTracker } from './trackAction'
 
 export type { ActionContexts }
 
@@ -48,17 +49,8 @@ export interface ActionOptions {
 }
 
 interface ActiveCustomAction extends ActionOptions {
-  id: string
   name: string
-  startClocks: ClocksState
-  historyEntry: ValueHistoryEntry<string>
-  eventCountsSubscription: ReturnType<typeof trackEventCounts>
-}
-
-export interface ActionCounts {
-  errorCount: number
-  longTaskCount: number
-  resourceCount: number
+  trackedAction: TrackedAction
 }
 
 export interface CustomAction {
@@ -75,6 +67,7 @@ export interface CustomAction {
 export type AutoAction = ClickAction
 
 export const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
+
 export function startActionCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
@@ -82,7 +75,8 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  const customActionHistory = createValueHistory<string>({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
+  // Shared action tracker for both click and custom actions
+  const actionTracker = startActionTracker(lifeCycle)
   const activeCustomActions = new Map<string, ActiveCustomAction>()
 
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
@@ -93,40 +87,23 @@ export function startActionCollection(
   )
 
   const { unsubscribe: unsubscribeSessionRenewal } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    activeCustomActions.forEach((activeAction) => {
-      activeAction.historyEntry.remove()
-      activeAction.eventCountsSubscription.stop()
-    })
     activeCustomActions.clear()
-    customActionHistory.reset()
   })
 
-  let clickActionContexts: ActionContexts = { findActionId: noop as () => undefined }
   let stopClickActions: () => void = noop
 
   if (configuration.trackUserInteractions) {
-    ;({ actionContexts: clickActionContexts, stop: stopClickActions } = trackClickActions(
+    ;({ stop: stopClickActions } = trackClickActions(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
-      configuration
+      configuration,
+      actionTracker
     ))
   }
 
   const actionContexts: ActionContexts = {
-    findActionId: (startTime?: RelativeTime) => {
-      const clickIds = clickActionContexts.findActionId(startTime)
-      const customIds = customActionHistory.findAll(startTime)
-
-      const allIds = (clickIds ? (Array.isArray(clickIds) ? clickIds : [clickIds]) : ([] as string[]))
-        .concat(customIds)
-        .filter(Boolean)
-
-      if (allIds.length === 0) {
-        return undefined
-      }
-      return allIds.length === 1 ? allIds[0] : allIds
-    },
+    findActionId: (startTime?: RelativeTime) => actionTracker.findActionId(startTime),
   }
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
@@ -174,29 +151,16 @@ export function startActionCollection(
 
     const existingAction = activeCustomActions.get(lookupKey)
     if (existingAction) {
-      existingAction.historyEntry.close(clocksNow().relative)
-      existingAction.eventCountsSubscription.stop()
+      existingAction.trackedAction.stop(relativeNow())
       activeCustomActions.delete(lookupKey)
     }
 
-    const id = generateUUID()
     const startClocks = clocksNow()
-
-    const historyEntry = customActionHistory.add(id, startClocks.relative)
-
-    const eventCountsSubscription = trackEventCounts({
-      lifeCycle,
-      isChildEvent: (event) =>
-        event.action !== undefined &&
-        (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
-    })
+    const trackedAction = actionTracker.createTrackedAction(startClocks)
 
     activeCustomActions.set(lookupKey, {
-      id,
       name,
-      startClocks,
-      historyEntry,
-      eventCountsSubscription,
+      trackedAction,
       ...options,
     })
   }
@@ -214,18 +178,17 @@ export function startActionCollection(
     }
 
     const stopClocks = clocksNow()
-    const duration = elapsed(activeAction.startClocks.timeStamp, stopClocks.timeStamp)
+    const duration = elapsed(activeAction.trackedAction.startClocks.timeStamp, stopClocks.timeStamp)
 
-    activeAction.historyEntry.close(stopClocks.relative)
+    activeAction.trackedAction.stop(stopClocks.relative)
 
-    const { errorCount, resourceCount, longTaskCount } = activeAction.eventCountsSubscription.eventCounts
-    activeAction.eventCountsSubscription.stop()
+    const { errorCount, resourceCount, longTaskCount } = activeAction.trackedAction.eventCounts
 
     const customAction: CustomAction = {
-      id: activeAction.id,
+      id: activeAction.trackedAction.id,
       name: activeAction.name,
       type: (options.type ?? activeAction.type) || ActionType.CUSTOM,
-      startClocks: activeAction.startClocks,
+      startClocks: activeAction.trackedAction.startClocks,
       duration,
       context: combine(activeAction.context, options.context),
       counts: { errorCount, resourceCount, longTaskCount },
@@ -247,11 +210,10 @@ export function startActionCollection(
       unsubscribeSessionRenewal()
       stopClickActions()
       activeCustomActions.forEach((activeAction) => {
-        activeAction.historyEntry.remove()
-        activeAction.eventCountsSubscription.stop()
+        activeAction.trackedAction.discard()
       })
       activeCustomActions.clear()
-      customActionHistory.stop()
+      actionTracker.stop()
     },
   }
 }
