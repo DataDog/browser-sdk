@@ -1,5 +1,5 @@
 process.env.AWS_LAMBDA_FUNCTION_NAME = 'fake-electron'
-import tracer from '../../../dd-trace/ddTraceBundle'
+import tracer from 'dd-trace'
 
 export function initTracer(service: string, env: string, version: string) {
   tracer.init({
