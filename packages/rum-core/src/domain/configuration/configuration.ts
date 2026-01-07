@@ -477,7 +477,7 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
   initConfiguration.allowedGraphQlUrls.forEach((option) => {
     if (isMatchOption(option)) {
       graphQlOptions.push({ match: option, trackPayload: false, trackResponseErrors: false })
-    } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
+    } else if (isIndexableObject(option) && isMatchOption(option.match)) {
       graphQlOptions.push({
         match: option.match,
         trackPayload: !!option.trackPayload,
@@ -492,24 +492,14 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
 function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
   return (
     isNonEmptyArray(allowedGraphQlUrls) &&
-    allowedGraphQlUrls.some((option) => {
-      if (typeof option === 'object' && 'trackPayload' in option) {
-        return !!option.trackPayload
-      }
-      return false
-    })
+    allowedGraphQlUrls.some((option) => isIndexableObject(option) && option.trackPayload)
   )
 }
 
 function hasGraphQlResponseErrorsTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
   return (
     isNonEmptyArray(allowedGraphQlUrls) &&
-    allowedGraphQlUrls.some((option) => {
-      if (typeof option === 'object' && 'trackResponseErrors' in option) {
-        return !!option.trackResponseErrors
-      }
-      return false
-    })
+    allowedGraphQlUrls.some((option) => isIndexableObject(option) && option.trackResponseErrors)
   )
 }
 
