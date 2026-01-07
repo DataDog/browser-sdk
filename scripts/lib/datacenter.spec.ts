@@ -57,10 +57,16 @@ describe('datacenter', () => {
   it('should fetch datacenters with vault token authorization', async () => {
     await import('./datacenter.ts')
 
-    const datacentersCall = fetchHandlingErrorMock.mock.calls.find(
-      (call) => call.arguments[0] === 'https://runtime-metadata-service.us1.ddbuild.io/v2/datacenters'
+    const datacentersCall = fetchHandlingErrorMock.mock.calls.find((call) =>
+      call.arguments[0].includes('runtime-metadata-service.us1.ddbuild.io/v2/datacenters')
     )
     assert.ok(datacentersCall)
+    assert.ok(
+      datacentersCall.arguments[0].includes(
+        `selector=${encodeURIComponent('datacenter.environment == "prod" && datacenter.flavor == "site"')}`
+      ),
+      'URL should include selector for prod environment and site flavor'
+    )
     assert.deepStrictEqual(datacentersCall.arguments[1]?.headers, {
       accept: 'application/json',
       Authorization: `Bearer ${FAKE_RUNTIME_METADATA_SERVICE_TOKEN}`,

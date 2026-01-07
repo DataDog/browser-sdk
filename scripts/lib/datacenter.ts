@@ -57,12 +57,18 @@ async function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> 
 async function fetchDatacentersFromRuntimeMetadataService(): Promise<Datacenter[]> {
   const token = await getVaultToken()
 
-  const response = await fetchHandlingError(RUNTIME_METADATA_SERVICE_URL, {
-    headers: {
-      accept: 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-  })
+  // Filter for production environment and site flavor only
+  const selector = 'datacenter.environment == "prod" && datacenter.flavor == "site"'
+
+  const response = await fetchHandlingError(
+    `${RUNTIME_METADATA_SERVICE_URL}?selector=${encodeURIComponent(selector)}`,
+    {
+      headers: {
+        accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
 
   const data = (await response.json()) as DatacentersResponse
   return data.datacenters
