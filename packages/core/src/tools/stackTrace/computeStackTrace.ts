@@ -4,6 +4,8 @@
  * Reference implementation: https://github.com/csnover/TraceKit/blob/04530298073c3823de72deb0b97e7b38ca7bcb59/tracekit.js
  */
 
+import { isIndexableObject } from '../utils/typeUtils'
+
 export interface StackFrame {
   url?: string
   func?: string
@@ -177,11 +179,7 @@ function parseGeckoLine(line: string): StackFrame | undefined {
 }
 
 function tryToGetString(candidate: unknown, property: string) {
-  if (typeof candidate !== 'object' || !candidate || !(property in candidate)) {
-    return undefined
-  }
-  const value = (candidate as { [k: string]: unknown })[property]
-  return typeof value === 'string' ? value : undefined
+  return isIndexableObject(candidate) && typeof candidate[property] === 'string' ? candidate[property] : undefined
 }
 
 export function computeStackTraceFromOnErrorMessage(

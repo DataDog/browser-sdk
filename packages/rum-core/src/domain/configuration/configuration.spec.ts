@@ -164,6 +164,24 @@ describe('validateAndBuildRumConfiguration', () => {
       ).toEqual([{ match: 'simple', propagatorTypes: ['b3multi', 'tracecontext'] }])
     })
 
+    it('fallbacks to default propagators', () => {
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTracingUrls: [{ match: 'simple' }],
+          service: 'bar',
+        })!.allowedTracingUrls
+      ).toEqual([{ match: 'simple', propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
+
+      expect(
+        validateAndBuildRumConfiguration({
+          ...DEFAULT_INIT_CONFIGURATION,
+          allowedTracingUrls: [{ match: 'simple', propagatorTypes: null }],
+          service: 'bar',
+        })!.allowedTracingUrls
+      ).toEqual([{ match: 'simple', propagatorTypes: DEFAULT_PROPAGATOR_TYPES }])
+    })
+
     it('should filter out unexpected parameter types', () => {
       expect(
         validateAndBuildRumConfiguration({
@@ -172,8 +190,8 @@ describe('validateAndBuildRumConfiguration', () => {
           allowedTracingUrls: [
             42 as any,
             undefined,
-            { match: 42 as any, propagatorTypes: ['datadog'] },
-            { match: 'toto' },
+            { match: 42, propagatorTypes: ['datadog'] },
+            { match: 'toto', propagatorTypes: 42 },
           ],
         })!.allowedTracingUrls
       ).toEqual([])
