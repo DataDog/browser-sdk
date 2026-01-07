@@ -13,15 +13,17 @@ import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, pack
  * BUILD_MODE=canary|release node upload-source-maps.ts staging|canary|vXXX root,us1,eu1,...
  */
 
-function getSitesByVersion(version: string): string[] {
+async function getSitesByVersion(version: string): Promise<string[]> {
   switch (version) {
     case 'staging':
       return ['datad0g.com', 'datadoghq.com']
     case 'canary':
       return ['datadoghq.com']
-    default:
+    default: {
       // TODO: do we upload to root for all DCs?
-      return getAllDatacenters().map(getSite)
+      const datacenters = await getAllDatacenters()
+      return await Promise.all(datacenters.map((dc) => getSite(dc)))
+    }
   }
 }
 
@@ -53,11 +55,11 @@ async function uploadSourceMaps(
     let sites: string[]
     let uploadPath: string
     if (uploadPathType === 'root') {
-      sites = getSitesByVersion(version)
+      sites = await getSitesByVersion(version)
       uploadPath = buildRootUploadPath(packageName, version)
       await renameFilesWithVersionSuffix(bundleFolder, version)
     } else {
-      sites = [getSite(uploadPathType)]
+      sites = [await getSite(uploadPathType)]
       uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
     }
     const prefix = path.dirname(`/${uploadPath}`)

@@ -38,7 +38,7 @@ export async function main(...args: string[]): Promise<void> {
   const datacenters = args[0].split(',')
 
   for (const datacenter of datacenters) {
-    const site = getSite(datacenter)
+    const site = await getSite(datacenter)
 
     if (!site) {
       printLog(`No site is configured for datacenter ${datacenter}. skipping...`)

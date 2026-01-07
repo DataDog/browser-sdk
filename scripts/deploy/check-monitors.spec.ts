@@ -3,7 +3,7 @@ import path from 'node:path'
 import type { Mock } from 'node:test'
 import { afterEach, before, describe, it, mock } from 'node:test'
 import type { fetchHandlingError } from 'scripts/lib/executionUtils.ts'
-import { mockModule } from './lib/testHelpers.ts'
+import { mockModule, mockFetchHandlingError } from './lib/testHelpers.ts'
 import type { QueryResultBucket } from './check-monitors.ts'
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
@@ -37,23 +37,29 @@ const TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK = [
 describe('check-monitors', () => {
   const fetchHandlingErrorMock: Mock<typeof fetchHandlingError> = mock.fn()
 
-  function mockFetchHandlingError(
+  function setupTelemetryMocks(
     responseBuckets: [QueryResultBucket[], QueryResultBucket[], QueryResultBucket[]]
   ): void {
-    for (let i = 0; i < 3; i++) {
-      fetchHandlingErrorMock.mock.mockImplementationOnce(
-        (_url: string, _options?: RequestInit) =>
-          Promise.resolve({
-            json: () =>
-              Promise.resolve({
-                data: {
-                  buckets: responseBuckets[i],
-                },
-              }),
-          } as unknown as Response),
-        i
-      )
-    }
+    let telemetryCallIndex = 0
+
+    // Use the shared helper with additional handler for telemetry API calls
+    mockFetchHandlingError(fetchHandlingErrorMock, (url) => {
+      // Handle telemetry API calls
+      if (url.includes('/api/v2/logs/analytics/aggregate')) {
+        const buckets = responseBuckets[telemetryCallIndex]
+        telemetryCallIndex++
+        return Promise.resolve({
+          json: () =>
+            Promise.resolve({
+              data: {
+                buckets,
+              },
+            }),
+        } as unknown as Response)
+      }
+      // Return undefined to let default handlers try
+      return undefined
+    })
   }
 
   before(async () => {
@@ -72,7 +78,7 @@ describe('check-monitors', () => {
   })
 
   it('should not throw an error if no telemetry errors are found for a given datacenter', async () => {
-    mockFetchHandlingError([
+    setupTelemetryMocks([
       NO_TELEMETRY_ERRORS_MOCK,
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
@@ -82,7 +88,7 @@ describe('check-monitors', () => {
   })
 
   it('should throw an error if telemetry errors are found for a given datacenter', async () => {
-    mockFetchHandlingError([
+    setupTelemetryMocks([
       TELEMETRY_ERRORS_MOCK,
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
@@ -92,7 +98,7 @@ describe('check-monitors', () => {
   })
 
   it('should throw an error if telemetry errors on specific org are found for a given datacenter', async () => {
-    mockFetchHandlingError([
+    setupTelemetryMocks([
       NO_TELEMETRY_ERRORS_MOCK,
       TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       NO_TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,
@@ -105,7 +111,7 @@ describe('check-monitors', () => {
   })
 
   it('should throw an error if telemetry errors on specific message are found for a given datacenter', async () => {
-    mockFetchHandlingError([
+    setupTelemetryMocks([
       NO_TELEMETRY_ERRORS_MOCK,
       NO_TELEMETRY_ERRORS_ON_SPECIFIC_ORG_MOCK,
       TELEMETRY_ERROR_ON_SPECIFIC_MESSAGE_MOCK,

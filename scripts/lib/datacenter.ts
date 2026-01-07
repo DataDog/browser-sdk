@@ -1,23 +1,26 @@
-import { command } from './command.ts'
+import { fetchHandlingError } from './executionUtils.ts'
 
 // Major DCs are the ones that are deployed last.
 // They have their own step jobs in `deploy-manual.yml` and `deploy-auto.yml`.
 const MAJOR_DCS = ['gov', 'us1', 'eu1']
 
-export function getSite(datacenter: string): string {
-  return getAllDatacentersMetadata()[datacenter].site
+const VAULT_ADDR = process.env.VAULT_ADDR || 'https://vault.us1.ddbuild.io'
+const RUNTIME_METADATA_SERVICE_URL = 'https://runtime-metadata-service.us1.ddbuild.io/v2/datacenters'
+
+export async function getSite(datacenter: string): Promise<string> {
+  return (await getAllDatacentersMetadata())[datacenter].site
 }
 
-export function getAllDatacenters(): string[] {
-  return Object.keys(getAllDatacentersMetadata())
+export async function getAllDatacenters(): Promise<string[]> {
+  return Object.keys(await getAllDatacentersMetadata())
 }
 
-export function getAllMinorDcs(): string[] {
-  return getAllDatacenters().filter((dc) => !MAJOR_DCS.includes(dc) && !dc.startsWith('pr'))
+export async function getAllMinorDcs(): Promise<string[]> {
+  return (await getAllDatacenters()).filter((dc) => !MAJOR_DCS.includes(dc) && !dc.startsWith('pr'))
 }
 
-export function getAllPrivateDcs(): string[] {
-  return getAllDatacenters().filter((dc) => dc.startsWith('pr'))
+export async function getAllPrivateDcs(): Promise<string[]> {
+  return (await getAllDatacenters()).filter((dc) => dc.startsWith('pr'))
 }
 
 interface Datacenter {
@@ -27,18 +30,15 @@ interface Datacenter {
 
 let cachedDatacenters: Record<string, Datacenter> | undefined
 
-function getAllDatacentersMetadata(): Record<string, Datacenter> {
+async function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> {
   if (cachedDatacenters) {
     return cachedDatacenters
   }
 
-  const selector = 'datacenter.environment == "prod" && datacenter.flavor == "site"'
-  const rawDatacenters = command`ddtool datacenters list --selector ${selector}`.run().trim()
-  const jsonDatacenters = JSON.parse(rawDatacenters) as Datacenter[]
-
+  const datacenters = await fetchDatacentersFromRuntimeMetadataService()
   cachedDatacenters = {}
 
-  for (const datacenter of jsonDatacenters) {
+  for (const datacenter of datacenters) {
     const shortName = datacenter.name.split('.')[0]
 
     cachedDatacenters[shortName] = {
@@ -48,4 +48,28 @@ function getAllDatacentersMetadata(): Record<string, Datacenter> {
   }
 
   return cachedDatacenters
+}
+
+async function fetchDatacentersFromRuntimeMetadataService(): Promise<Datacenter[]> {
+  const token = await getVaultToken()
+
+  const response = await fetchHandlingError(RUNTIME_METADATA_SERVICE_URL, {
+    headers: {
+      accept: 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  return (await response.json()) as Datacenter[]
+}
+
+async function getVaultToken(): Promise<string> {
+  const response = await fetchHandlingError(`${VAULT_ADDR}/v1/identity/oidc/token/runtime-metadata-service`, {
+    headers: {
+      'X-Vault-Request': 'true',
+    },
+  })
+
+  const data = (await response.json()) as { data: { token: string } }
+  return data.data.token
 }

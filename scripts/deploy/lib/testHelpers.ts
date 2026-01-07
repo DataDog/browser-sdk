@@ -32,6 +32,7 @@ export const FAKE_AWS_ENV_CREDENTIALS = {
 } as const
 
 export const FAKE_CHUNK_HASH = 'FAKEHASHd7628536637b074ddc3b'
+export const FAKE_RUNTIME_METADATA_SERVICE_TOKEN = 'FAKE_RUNTIME_METADATA_SERVICE_TOKEN'
 
 export interface CommandDetail {
   command: string
@@ -72,19 +73,6 @@ export function mockCommandImplementation(mockFn: Mock<(...args: any[]) => void>
           })
         }
 
-        if (command.startsWith('ddtool datacenters list')) {
-          return JSON.stringify([
-            { name: 'ap1.prod.dog', site: 'ap1.datadoghq.com' },
-            { name: 'ap2.prod.dog', site: 'ap2.datadoghq.com' },
-            { name: 'eu1.prod.dog', site: 'datadoghq.eu' },
-            { name: 'us1.prod.dog', site: 'datadoghq.com' },
-            { name: 'us3.prod.dog', site: 'us3.datadoghq.com' },
-            { name: 'us5.prod.dog', site: 'us5.datadoghq.com' },
-            { name: 'prtest00.prod.dog', site: 'prtest00.datadoghq.com' },
-            { name: 'prtest01.prod.dog', site: 'prtest01.datadoghq.com' },
-          ])
-        }
-
         // don't push command details for the above mock commands
         commands.push(commandDetail)
       },
@@ -93,6 +81,77 @@ export function mockCommandImplementation(mockFn: Mock<(...args: any[]) => void>
   })
 
   return commands
+}
+
+export const MOCK_DATACENTERS = [
+  { name: 'ap1.prod.dog', site: 'ap1.datadoghq.com' },
+  { name: 'ap2.prod.dog', site: 'ap2.datadoghq.com' },
+  { name: 'eu1.prod.dog', site: 'datadoghq.eu' },
+  { name: 'us1.prod.dog', site: 'datadoghq.com' },
+  { name: 'us3.prod.dog', site: 'us3.datadoghq.com' },
+  { name: 'us5.prod.dog', site: 'us5.datadoghq.com' },
+  { name: 'prtest00.prod.dog', site: 'prtest00.datadoghq.com' },
+  { name: 'prtest01.prod.dog', site: 'prtest01.datadoghq.com' },
+]
+
+type FetchMockHandler = (url: string, options?: RequestInit) => Promise<Response> | undefined
+
+/**
+ * Configure a fetchHandlingError mock with datacenter API support.
+ * Can be extended with an additional handler for test-specific API calls.
+ *
+ * @param fetchHandlingErrorMock - The mock function to configure
+ * @param additionalHandler - Optional custom handler that runs before default handlers.
+ * Should return a Response promise if it handles the URL, or undefined to let default handlers try.
+ * @example
+ * // Simple usage with just datacenter mocks
+ * mockFetchHandlingError(fetchMock)
+ * @example
+ * // Extended with telemetry API mock
+ * mockFetchHandlingError(fetchMock, (url) => {
+ *   if (url.includes('api.datadoghq.com')) {
+ *     return Promise.resolve({ json: () => Promise.resolve({ data: [] }) } as Response)
+ *   }
+ * })
+ */
+export function mockFetchHandlingError(
+  fetchHandlingErrorMock: Mock<(...args: any[]) => any>,
+  additionalHandler?: FetchMockHandler
+): void {
+  fetchHandlingErrorMock.mock.mockImplementation((url: string, options?: RequestInit) => {
+    // Try additional handler first (for test-specific mocks)
+    if (additionalHandler) {
+      const result = additionalHandler(url, options)
+      if (result) {
+        return result
+      }
+    }
+
+    // Vault token request
+    if (url.includes('/v1/identity/oidc/token/runtime-metadata-service')) {
+      return Promise.resolve({
+        json: () =>
+          Promise.resolve({
+            data: {
+              token: FAKE_RUNTIME_METADATA_SERVICE_TOKEN,
+            },
+          }),
+      } as unknown as Response)
+    }
+
+    // Datacenters request
+    if (url.includes('runtime-metadata-service')) {
+      return Promise.resolve({
+        json: () => Promise.resolve(MOCK_DATACENTERS),
+      } as unknown as Response)
+    }
+
+    // Default response
+    return Promise.resolve({
+      ok: true,
+      json: () => Promise.resolve({}),
+    } as unknown as Response)
+  })
 }
 
 function rebuildStringTemplate(template: TemplateStringsArray, ...values: any[]): string {

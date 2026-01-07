@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { beforeEach, before, describe, it, mock, afterEach } from 'node:test'
-import { mockModule, mockCommandImplementation, replaceChunkHashes } from './lib/testHelpers.ts'
+import { mockModule, mockCommandImplementation, replaceChunkHashes, mockFetchHandlingError } from './lib/testHelpers.ts'
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
 const ENV_STAGING = {
@@ -20,6 +20,7 @@ interface CommandDetail {
 
 describe('upload-source-maps', () => {
   const commandMock = mock.fn()
+  const fetchHandlingErrorMock = mock.fn()
   let commands: CommandDetail[]
 
   let uploadSourceMaps: (version: string, uploadPathTypes: string[]) => Promise<void>
@@ -35,7 +36,11 @@ describe('upload-source-maps', () => {
   }
 
   before(async () => {
+    mockFetchHandlingError(fetchHandlingErrorMock)
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
+    await mockModule(path.resolve(import.meta.dirname, '../lib/executionUtils.ts'), {
+      fetchHandlingError: fetchHandlingErrorMock,
+    })
     await mockModule(path.resolve(import.meta.dirname, '../lib/secrets.ts'), {
       getTelemetryOrgApiKey: () => FAKE_API_KEY,
     })
@@ -57,16 +62,17 @@ describe('upload-source-maps', () => {
     mock.restoreAll()
   })
 
-  function forEachDatacenter(callback: (site: string) => void): void {
-    for (const datacenter of getAllDatacenters()) {
-      callback(getSite(datacenter))
+  async function forEachDatacenter(callback: (site: string) => void): Promise<void> {
+    const datacenters = await getAllDatacenters()
+    for (const datacenter of datacenters) {
+      callback(await getSite(datacenter))
     }
   }
 
   it('should upload root packages source maps', async () => {
     await uploadSourceMaps('v6', ['root'])
 
-    forEachDatacenter((site) => {
+    await forEachDatacenter((site) => {
       const commandsByDatacenter = commands.filter(({ env }) => env?.DATADOG_SITE === site)
       const env = { DATADOG_API_KEY: FAKE_API_KEY, DATADOG_SITE: site }
 

@@ -2,25 +2,24 @@ import assert from 'node:assert/strict'
 import path from 'node:path'
 import { beforeEach, before, describe, it, mock, afterEach } from 'node:test'
 import type { CommandDetail } from './lib/testHelpers.ts'
-import { mockCommandImplementation, mockModule } from './lib/testHelpers.ts'
+import { mockCommandImplementation, mockModule, mockFetchHandlingError } from './lib/testHelpers.ts'
 
 describe('deploy-prod-dc', () => {
   const commandMock = mock.fn()
+  const fetchHandlingErrorMock = mock.fn()
   let commands: CommandDetail[]
 
   before(async () => {
+    mockFetchHandlingError(fetchHandlingErrorMock)
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
     await mockModule(path.resolve(import.meta.dirname, '../lib/executionUtils.ts'), {
+      fetchHandlingError: fetchHandlingErrorMock,
       timeout: () => Promise.resolve(),
     })
   })
 
   beforeEach(() => {
     commands = mockCommandImplementation(commandMock)
-  })
-
-  afterEach(() => {
-    mock.restoreAll()
   })
 
   it('should deploy a given datacenter', async () => {

@@ -33,7 +33,7 @@ export async function main(...args: string[]): Promise<void> {
   })
 
   const version = positionals[0]
-  const datacenters = getDatacenters(positionals[1])
+  const datacenters = await getDatacenters(positionals[1])
 
   if (!datacenters) {
     throw new Error('DATACENTER argument is required')
@@ -65,13 +65,13 @@ async function gateMonitors(datacenters: string[]): Promise<void> {
   printLog() // new line
 }
 
-function getDatacenters(datacenterGroup: string): string[] {
+async function getDatacenters(datacenterGroup: string): Promise<string[]> {
   if (datacenterGroup === 'minor-dcs') {
-    return getAllMinorDcs()
+    return await getAllMinorDcs()
   }
 
   if (datacenterGroup === 'private-regions') {
-    return getAllPrivateDcs()
+    return await getAllPrivateDcs()
   }
 
   return datacenterGroup.split(',')
