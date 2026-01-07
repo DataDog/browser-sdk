@@ -549,5 +549,29 @@ describe('actionCollection', () => {
 
       expect(rawRumEvents).toHaveSize(0)
     })
+
+    it('getActionLookupKey should not collide', () => {
+      startAction('foo__bar')
+      startAction('foo', { actionKey: 'bar' })
+
+      const actionIds = actionContexts.findActionId()
+      expect(Array.isArray(actionIds)).toBeTrue()
+      expect((actionIds as string[]).length).toBe(2)
+
+      stopAction('foo__bar')
+      stopAction('foo', { actionKey: 'bar' })
+
+      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents[0].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          action: jasmine.objectContaining({ target: { name: 'foo__bar' } }),
+        })
+      )
+      expect(rawRumEvents[1].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          action: jasmine.objectContaining({ target: { name: 'foo' } }),
+        })
+      )
+    })
   })
 })

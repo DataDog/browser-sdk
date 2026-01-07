@@ -291,5 +291,5 @@ function isAutoAction(action: AutoAction | CustomAction): action is AutoAction {
 }
 
 function getActionLookupKey(name: string, actionKey?: string): string {
-  return actionKey ? `${name}__${actionKey}` : name
+  return JSON.stringify({ name, actionKey })
 }
