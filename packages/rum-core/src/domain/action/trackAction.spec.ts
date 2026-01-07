@@ -9,11 +9,9 @@ import { startActionTracker } from './trackAction'
 describe('trackAction', () => {
   let lifeCycle: LifeCycle
   let actionTracker: ActionTracker
-  let clock: Clock
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    clock = mockClock()
     actionTracker = startActionTracker(lifeCycle)
     registerCleanupTask(() => actionTracker.stop())
   })
@@ -205,6 +203,8 @@ describe('trackAction', () => {
     it('should clear all action IDs on session renewal', () => {
       const action1 = actionTracker.createTrackedAction({ relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp })
       const action2 = actionTracker.createTrackedAction({ relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp })
+
+      expect(action1.id).not.toEqual(action2.id)
 
       expect(actionTracker.findActionId()).toBeDefined()
 
