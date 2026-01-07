@@ -39,7 +39,10 @@ export async function main(...args: string[]): Promise<void> {
     throw new Error('DATACENTER argument is required')
   }
 
-  if (checkMonitors) {
+  // Skip all monitor checks for gov datacenter deployments
+  const shouldCheckMonitors = checkMonitors && !datacenters.every((path) => path === 'gov')
+
+  if (shouldCheckMonitors) {
     command`node ./scripts/deploy/check-monitors.ts ${datacenters.join(',')}`.withLogs().run()
   }
 
@@ -48,7 +51,7 @@ export async function main(...args: string[]): Promise<void> {
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPathTypes}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`.withLogs().run()
 
-  if (checkMonitors) {
+  if (shouldCheckMonitors) {
     await gateMonitors(datacenters)
   }
 }

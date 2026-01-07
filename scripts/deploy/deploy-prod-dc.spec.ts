@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import { beforeEach, before, describe, it, mock, afterEach } from 'node:test'
+import { beforeEach, before, describe, it, mock } from 'node:test'
 import type { CommandDetail } from './lib/testHelpers.ts'
 import { mockCommandImplementation, mockModule, mockFetchHandlingError } from './lib/testHelpers.ts'
 
@@ -61,12 +61,14 @@ describe('deploy-prod-dc', () => {
     ])
   })
 
-  it('should deploy gov datacenters to the root upload path', async () => {
-    await runScript('./deploy-prod-dc.ts', 'v6', 'gov', '--no-check-monitors')
+  it('should deploy gov datacenters to the root upload path and skip all monitor checks', async () => {
+    await runScript('./deploy-prod-dc.ts', 'v6', 'gov', '--check-monitors')
 
+    // Should not include any monitor checks since gov maps to root upload path
     assert.deepEqual(commands, [
       { command: 'node ./scripts/deploy/deploy.ts prod v6 root' },
       { command: 'node ./scripts/deploy/upload-source-maps.ts v6 root' },
+      // No monitor checks should be present at all
     ])
   })
 })
