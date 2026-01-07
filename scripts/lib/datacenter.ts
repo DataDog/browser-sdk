@@ -36,6 +36,7 @@ async function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> 
   }
 
   const datacenters = await fetchDatacentersFromRuntimeMetadataService()
+  console.log('Fetched datacenters from runtime-metadata-service:', datacenters)
   cachedDatacenters = {}
 
   for (const datacenter of datacenters) {
