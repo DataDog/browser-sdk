@@ -20,7 +20,6 @@ cache:
 stages:
   - task
   - ci-image
-  - before-tests
   - test
   - after-tests
   - browserstack
@@ -124,12 +123,6 @@ ci-image:
   script:
     - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE .
     - docker push $CI_IMAGE
-
-list-datacenters:
-  stage: before-tests
-  extends: .base-configuration
-  script:
-    - node scripts/test-datacenter-api.ts
 
 ########################################################################################################################
 # Tests
