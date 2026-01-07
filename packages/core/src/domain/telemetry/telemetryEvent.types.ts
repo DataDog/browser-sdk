@@ -736,7 +736,6 @@ export interface AddAction {
   feature: 'add-action'
   [k: string]: unknown
 }
-
 export interface AddError {
   /**
    * addError API
