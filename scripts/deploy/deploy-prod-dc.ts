@@ -2,6 +2,8 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getAllMinorDcs, getAllPrivateDcs } from '../lib/datacenter.ts'
+import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
+import { checkTelemetryErrors } from './lib/checkTelemetryErrors.ts'
 
 /**
  * Orchestrate the deployments of the artifacts for specific DCs
@@ -18,14 +20,14 @@ if (!process.env.NODE_TEST_CONTEXT) {
 
 export async function main(...args: string[]): Promise<void> {
   const {
-    values: { 'check-monitors': checkMonitors },
+    values: { 'check-telemetry-errors': shouldCheckTelemetryErrors },
     positionals,
   } = parseArgs({
     args,
     allowPositionals: true,
     allowNegative: true,
     options: {
-      'check-monitors': {
+      'check-telemetry-errors': {
         type: 'boolean',
         default: false,
       },
@@ -39,11 +41,13 @@ export async function main(...args: string[]): Promise<void> {
     throw new Error('DATACENTER argument is required')
   }
 
-  // Skip all monitor checks for gov datacenter deployments
-  const shouldCheckMonitors = checkMonitors && !datacenters.every((path) => path === 'gov')
+  // Skip all telemetry error checks for gov datacenter deployments
+  const shouldCheckTelemetryErrorsActual = shouldCheckTelemetryErrors && !datacenters.every((dc) => dc === 'gov')
 
-  if (shouldCheckMonitors) {
-    command`node ./scripts/deploy/check-monitors.ts ${datacenters.join(',')}`.withLogs().run()
+  if (shouldCheckTelemetryErrorsActual) {
+    // Make sure system is in a good state before deploying
+    const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
+    await checkTelemetryErrors(datacenters, `${currentBrowserSdkVersionMajor}.*`)
   }
 
   const uploadPathTypes = toDatacenterUploadPathType(datacenters).join(',')
@@ -51,16 +55,15 @@ export async function main(...args: string[]): Promise<void> {
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPathTypes}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`.withLogs().run()
 
-  if (shouldCheckMonitors) {
-    await gateMonitors(datacenters)
+  if (shouldCheckTelemetryErrorsActual) {
+    await gateTelemetryErrors(datacenters)
   }
 }
 
-async function gateMonitors(datacenters: string[]): Promise<void> {
-  printLog(`Check monitors for ${datacenters.join(',')} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
-
+async function gateTelemetryErrors(datacenters: string[]): Promise<void> {
+  printLog(`Check telemetry errors for ${datacenters.join(',')} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
   for (let i = 0; i < GATE_DURATION; i += GATE_INTERVAL) {
-    command`node ./scripts/deploy/check-monitors.ts ${datacenters.join(',')}`.run()
+    await checkTelemetryErrors(datacenters, browserSdkVersion)
     process.stdout.write('.') // progress indicator
     await timeout(GATE_INTERVAL * 1000)
   }

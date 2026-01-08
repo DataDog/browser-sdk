@@ -18,6 +18,22 @@
 
 ---
 
+## v6.25.2
+
+**Public Changes:**
+
+- 🐛 Fix profiling <-> long task association regression ([#4045](https://github.com/DataDog/browser-sdk/pull/4045)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 Fix flaky long task <-> action correlation ([#4050](https://github.com/DataDog/browser-sdk/pull/4050)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ✨[PANA-5288] Update rum-events-format to pull in BrowserChangeRecord ([#4035](https://github.com/DataDog/browser-sdk/pull/4035)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Revert "👷 disable deploy-prod-canary during the freeze ([#4053](https://github.com/DataDog/browser-sdk/pull/4053))" ([#4058](https://github.com/DataDog/browser-sdk/pull/4058))
+- 👷 disable deploy-prod-canary during the freeze ([#4053](https://github.com/DataDog/browser-sdk/pull/4053))
+- 👷 update the token to AWS after renewing it ([#4048](https://github.com/DataDog/browser-sdk/pull/4048))
+- 🎨 [PANA-5260] Consolidate recorder object id tracking code ([#4049](https://github.com/DataDog/browser-sdk/pull/4049)) [RUM]
+- 🔊 add debug logs to npm publishing command ([#4047](https://github.com/DataDog/browser-sdk/pull/4047))
+
 ## v6.25.1
 
 **Public Changes:**

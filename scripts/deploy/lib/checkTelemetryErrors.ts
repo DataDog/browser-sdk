@@ -1,41 +1,44 @@
 /**
- * Check monitors status
- * Usage:
- * node check-monitors.ts us1,eu1,...
+ * Check telemetry errors
  */
-import { printLog, runMain, fetchHandlingError } from '../lib/executionUtils.ts'
-import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../lib/secrets.ts'
-import { getSite } from '../lib/datacenter.ts'
-import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
+import { printLog, fetchHandlingError } from '../../lib/executionUtils.ts'
+import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
+import { getSite } from '../../lib/datacenter.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
-const BASE_QUERY = `source:browser status:error version:${browserSdkVersion}`
-const QUERIES: Query[] = [
-  {
-    name: 'Telemetry errors',
-    query: BASE_QUERY,
-    threshold: 300,
-  },
-  {
-    name: 'Telemetry errors on specific org',
-    query: BASE_QUERY,
-    facet: '@org_id',
-    threshold: 100,
-  },
-  {
-    name: 'Telemetry error on specific message',
-    query: BASE_QUERY,
-    facet: 'issue.id',
-    threshold: 100,
-  },
-]
 
-if (!process.env.NODE_TEST_CONTEXT) {
-  runMain(() => main(...process.argv.slice(2)))
+function getQueries(version: string): Query[] {
+  const query = `source:browser status:error version:${version}`
+
+  return [
+    {
+      name: 'Telemetry errors',
+      query,
+      threshold: 300,
+    },
+    {
+      name: 'Telemetry errors on specific org',
+      query,
+      groupBy: '@org_id',
+      threshold: 100,
+    },
+    {
+      name: 'Telemetry error on specific message',
+      query,
+      groupBy: 'issue.id',
+      threshold: 100,
+    },
+  ]
 }
 
-export async function main(...args: string[]): Promise<void> {
-  const datacenters = args[0].split(',')
+/**
+ * Check telemetry errors for given datacenters
+ *
+ * @param datacenters - Array of datacenter names to check
+ * @param version - Browser SDK version to check errors for
+ */
+export async function checkTelemetryErrors(datacenters: string[], version: string): Promise<void> {
+  const queries = getQueries(version)
 
   for (const datacenter of datacenters) {
     const site = await getSite(datacenter)
@@ -53,7 +56,7 @@ export async function main(...args: string[]): Promise<void> {
       continue
     }
 
-    for (const query of QUERIES) {
+    for (const query of queries) {
       const buckets = await queryLogsApi(site, apiKey, applicationKey, query)
 
       // buckets are sorted by count, so we only need to check the first one
@@ -84,11 +87,11 @@ async function queryLogsApi(
           aggregation: 'count',
         },
       ],
-      ...(query.facet
+      ...(query.groupBy
         ? {
             group_by: [
               {
-                facet: query.facet,
+                facet: query.groupBy,
                 sort: {
                   type: 'measure',
                   aggregation: 'count',
@@ -107,6 +110,15 @@ async function queryLogsApi(
 
   const data = (await response.json()) as QueryResult
 
+  if (
+    !data ||
+    !data.data ||
+    !Array.isArray(data.data.buckets) ||
+    !data.data.buckets.every((bucket) => bucket.computes && typeof bucket.computes.c0 === 'number')
+  ) {
+    throw new Error(`Unexpected response from the API: ${JSON.stringify(data)}`)
+  }
+
   return data.data.buckets
 }
 
@@ -116,9 +128,9 @@ function computeLogsLink(site: string, query: Query): string {
 
   const queryParams = new URLSearchParams({
     query: query.query,
-    ...(query.facet
+    ...(query.groupBy
       ? {
-          agg_q: query.facet,
+          agg_q: query.groupBy,
           agg_t: 'count',
           viz: 'toplist',
         }
@@ -143,7 +155,7 @@ function computeTelemetryOrgDomain(site: string): string {
 interface Query {
   name: string
   query: string
-  facet?: string
+  groupBy?: string
   threshold: number
 }
 
