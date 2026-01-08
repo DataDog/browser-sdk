@@ -25,7 +25,6 @@ import { getVisualViewport } from './viewports'
 import { createRecordingScope } from './recordingScope'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
-import { createElementsScrollPositions } from './elementsScrollPositions'
 
 export function startFullSnapshots(
   lifeCycle: LifeCycle,
