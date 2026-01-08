@@ -1,8 +1,16 @@
+export { convertChangeToFullSnapshot } from './changeConversions'
+export { createRootInsertionCursor } from './insertionCursor'
 export { getElementInputValue } from './serializationUtils'
 export { serializeDocument } from './serializeDocument'
 export { serializeNode } from './serializeNode'
+export { serializeNodeAsChange } from './serializeNodeAsChange'
 export { serializeAttribute } from './serializeAttribute'
 export { createSerializationStats, updateSerializationStats, aggregateSerializationStats } from './serializationStats'
 export type { SerializationMetric, SerializationStats } from './serializationStats'
-export { serializeInTransaction, SerializationKind } from './serializationTransaction'
-export type { SerializationTransaction, SerializationTransactionCallback } from './serializationTransaction'
+export { serializeChangesInTransaction, serializeInTransaction, SerializationKind } from './serializationTransaction'
+export type {
+  ChangeSerializationTransaction,
+  SerializationTransaction,
+  SerializationTransactionCallback,
+} from './serializationTransaction'
+export type { ParentNodePrivacyLevel } from './serialization.types'
