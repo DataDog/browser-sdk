@@ -102,7 +102,7 @@ export function takeFullSnapshot(
     serializeInTransaction(kind, emitRecord, emitStats, scope, (transaction: SerializationTransaction) => {
       const fullSnapshot = serializeFullSnapshotRecord(timestamp, transaction)
 
-      const changeScope = createRecordingScope(scope.configuration, createElementsScrollPositions(), {
+      const changeScope = createRecordingScope(scope.configuration, scope.elementsScrollPositions, {
         addShadowRoot: noop,
         flush: noop,
         removeShadowRoot: noop,
