@@ -60,12 +60,12 @@ export async function main(...args: string[]): Promise<void> {
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPath}`.withLogs().run()
 
   if (shouldCheckTelemetryErrors && uploadPath !== 'root') {
-    await gateMonitors(uploadPath)
+    await gateTelemetryErrors(uploadPath)
   }
 }
 
-async function gateMonitors(uploadPath: string): Promise<void> {
-  printLog(`Check monitors for ${uploadPath} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
+async function gateTelemetryErrors(uploadPath: string): Promise<void> {
+  printLog(`Check telemetry errors for ${uploadPath} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
   for (let i = 0; i < GATE_DURATION; i += GATE_INTERVAL) {
     await checkTelemetryErrors(uploadPath.split(','), browserSdkVersion)
     process.stdout.write('.') // progress indicator

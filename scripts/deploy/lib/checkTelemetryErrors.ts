@@ -1,5 +1,5 @@
 /**
- * Check monitors status
+ * Check telemetry errors
  */
 import { printLog, fetchHandlingError } from '../../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
@@ -32,7 +32,7 @@ function getQueries(version: string): Query[] {
 }
 
 /**
- * Check telemetry monitors for given datacenters
+ * Check telemetry errors for given datacenters
  *
  * @param datacenters - Array of datacenter names to check
  * @param version - Browser SDK version to check errors for

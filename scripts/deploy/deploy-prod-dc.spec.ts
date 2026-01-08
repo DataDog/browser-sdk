@@ -45,7 +45,7 @@ describe('deploy-prod-dc', () => {
     ])
   })
 
-  it('should deploy a given datacenter with check monitors', async () => {
+  it('should deploy a given datacenter with check telemetry errors', async () => {
     await runScript('./deploy-prod-dc.ts', 'v6', 'us1', '--check-telemetry-errors')
 
     // Should call checkTelemetryErrors 31 times: 1 initial + 30 during gating
@@ -62,7 +62,7 @@ describe('deploy-prod-dc', () => {
     ])
   })
 
-  it('should only check monitors before deploying if the upload path is root', async () => {
+  it('should only check telemetry errors before deploying if the upload path is root', async () => {
     await runScript('./deploy-prod-dc.ts', 'v6', 'root', '--check-telemetry-errors')
 
     // Should only call checkTelemetryErrors once (no gating for root)
