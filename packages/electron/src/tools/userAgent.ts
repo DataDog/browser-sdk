@@ -1,14 +1,20 @@
 import os from 'os'
+import { execSync } from 'node:child_process'
 import { app } from 'electron'
 
+let userAgent: string | undefined
+
 export function getUserAgent() {
-  return [
-    `${app.getName()}/${app.getVersion()}`,
-    `(${getOSUserAgentPart()})`,
-    `Electron/${process.versions.electron}`,
-    `Chrome/${process.versions.chrome}`,
-    `Node/${process.versions.node}`,
-  ].join(' ')
+  if (!userAgent) {
+    userAgent = [
+      `${app.getName()}/${app.getVersion()}`,
+      `(${getOSUserAgentPart()})`,
+      `Electron/${process.versions.electron}`,
+      `Chrome/${process.versions.chrome}`,
+      `Node/${process.versions.node}`,
+    ].join(' ')
+  }
+  return userAgent
 }
 
 // totally vibe coded
@@ -17,18 +23,17 @@ function getOSUserAgentPart() {
   const arch = os.arch() // 'x64', 'arm64', etc.
 
   if (platform === 'darwin') {
-    // macOS version is kernel-style (e.g. '23.5.0')
-    // Convert to marketing version (e.g. macOS 14.x.x)
-    const version = os.release() // Darwin kernel version
-    const darwinMajor = parseInt(version.split('.')[0], 10)
+    let version = execSync('sw_vers -productVersion', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim()
 
-    // Darwin→macOS mapping: Darwin 23 → macOS 14, 22 → 13, 21 → 12, 20 → 11
-    const macOSMajor = darwinMajor - 9
+    if (version.split('.').length === 2) {
+      // If macOS has no patch yet, we get: major.minor only
+      version += '.0'
+    }
 
-    // Browser uses underscore-separated
-    const macOSVersionUA = `${macOSMajor}_0_0`
-
-    return `Macintosh; Intel Mac OS X ${macOSVersionUA}`
+    return `Macintosh; Intel Mac OS X ${version.replace('.', '_')}`
   }
 
   if (platform === 'win32') {
