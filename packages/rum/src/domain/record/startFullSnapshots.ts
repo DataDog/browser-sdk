@@ -25,7 +25,6 @@ import { getVisualViewport } from './viewports'
 import { createRecordingScope } from './recordingScope'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
-import { createElementsScrollPositions } from './elementsScrollPositions'
 
 export function startFullSnapshots(
   lifeCycle: LifeCycle,
@@ -102,7 +101,7 @@ export function takeFullSnapshot(
     serializeInTransaction(kind, emitRecord, emitStats, scope, (transaction: SerializationTransaction) => {
       const fullSnapshot = serializeFullSnapshotRecord(timestamp, transaction)
 
-      const changeScope = createRecordingScope(scope.configuration, createElementsScrollPositions(), {
+      const changeScope = createRecordingScope(scope.configuration, scope.elementsScrollPositions, {
         addShadowRoot: noop,
         flush: noop,
         removeShadowRoot: noop,
