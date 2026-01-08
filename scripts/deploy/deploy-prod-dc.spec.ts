@@ -92,13 +92,12 @@ describe('deploy-prod-dc', () => {
   it('should deploy gov datacenters to the root upload path and skip all telemetry error checks', async () => {
     await runScript('./deploy-prod-dc.ts', 'v6', 'gov', '--check-telemetry-errors')
 
-    // Should not include any telemetry error checks since gov maps to root upload path
+    // gov datacenters should not be checked for telemetry errors
     assert.strictEqual(checkTelemetryErrorsCalls.length, 0)
 
     assert.deepEqual(commands, [
       { command: 'node ./scripts/deploy/deploy.ts prod v6 root' },
       { command: 'node ./scripts/deploy/upload-source-maps.ts v6 root' },
-      // No telemetry error checks should be present at all
     ])
   })
 })

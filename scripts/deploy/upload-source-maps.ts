@@ -20,7 +20,6 @@ async function getSitesByVersion(version: string): Promise<string[]> {
     case 'canary':
       return ['datadoghq.com']
     default: {
-      // TODO: do we upload to root for all DCs?
       const datacenters = await getAllDatacenters()
       return await Promise.all(datacenters.map((dc) => getSite(dc)))
     }
