@@ -20,7 +20,7 @@ if (!process.env.NODE_TEST_CONTEXT) {
 
 export async function main(...args: string[]): Promise<void> {
   const {
-    values: { 'check-telemetry-errors': shouldCheckTelemetryErrors },
+    values: { 'check-telemetry-errors': checkTelemetryErrorsFlag },
     positionals,
   } = parseArgs({
     args,
@@ -42,9 +42,9 @@ export async function main(...args: string[]): Promise<void> {
   }
 
   // Skip all telemetry error checks for gov datacenter deployments
-  const shouldCheckTelemetryErrorsActual = shouldCheckTelemetryErrors && !datacenters.every((dc) => dc === 'gov')
+  const shouldCheckTelemetryErrors = checkTelemetryErrorsFlag && !datacenters.every((dc) => dc === 'gov')
 
-  if (shouldCheckTelemetryErrorsActual) {
+  if (shouldCheckTelemetryErrors) {
     // Make sure system is in a good state before deploying
     const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
     await checkTelemetryErrors(datacenters, `${currentBrowserSdkVersionMajor}.*`)
@@ -55,7 +55,7 @@ export async function main(...args: string[]): Promise<void> {
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPathTypes}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`.withLogs().run()
 
-  if (shouldCheckTelemetryErrorsActual) {
+  if (shouldCheckTelemetryErrors) {
     await gateTelemetryErrors(datacenters)
   }
 }

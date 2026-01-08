@@ -3,20 +3,23 @@ import path from 'node:path'
 import { beforeEach, before, describe, it, mock, type Mock } from 'node:test'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 import type { CommandDetail } from './lib/testHelpers.ts'
-import { mockModule, mockCommandImplementation } from './lib/testHelpers.ts'
+import { mockModule, mockCommandImplementation, mockFetchHandlingError } from './lib/testHelpers.ts'
 
 const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
 
 describe('deploy-prod-dc', () => {
   const commandMock = mock.fn()
   const checkTelemetryErrorsMock: Mock<(datacenters: string[], version: string) => Promise<void>> = mock.fn()
+  const fetchHandlingErrorMock = mock.fn()
 
   let commands: CommandDetail[]
   let checkTelemetryErrorsCalls: Array<{ version: string; datacenters: string[] }>
 
   before(async () => {
+    mockFetchHandlingError(fetchHandlingErrorMock)
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
     await mockModule(path.resolve(import.meta.dirname, '../lib/executionUtils.ts'), {
+      fetchHandlingError: fetchHandlingErrorMock,
       timeout: () => Promise.resolve(),
     })
     await mockModule(path.resolve(import.meta.dirname, './lib/checkTelemetryErrors.ts'), {
