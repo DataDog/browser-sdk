@@ -778,15 +778,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-window@npm:2.0.0":
-  version: 2.0.0
-  resolution: "@types/react-window@npm:2.0.0"
-  dependencies:
-    react-window: "npm:*"
-  checksum: 10c0/4de05bf54c3947a68878f1ddcc019db27811d2390aae2e4eb1ab83bff134d6a2f20318555e06b891234df946528470d7c01e43dff759209ec75c54cbda034acf
-  languageName: node
-  linkType: hard
-
 "@types/react@npm:18.3.27":
   version: 18.3.27
   resolution: "@types/react@npm:18.3.27"
@@ -1244,7 +1235,6 @@ __metadata:
     "@types/node": "npm:24.10.4"
     "@types/react": "npm:18.3.27"
     "@types/react-dom": "npm:18.3.7"
-    "@types/react-window": "npm:2.0.0"
     "@vitejs/plugin-react": "npm:5.1.2"
     globals: "npm:16.5.0"
     react: "npm:18.3.1"
@@ -1705,16 +1695,6 @@ __metadata:
     react: ">=16.6.0"
     react-dom: ">=16.6.0"
   checksum: 10c0/2ba754ba748faefa15f87c96dfa700d5525054a0141de8c75763aae6734af0740e77e11261a1e8f4ffc08fd9ab78510122e05c21c2d79066c38bb6861a886c82
-  languageName: node
-  linkType: hard
-
-"react-window@npm:*":
-  version: 2.2.4
-  resolution: "react-window@npm:2.2.4"
-  peerDependencies:
-    react: ^18.0.0 || ^19.0.0
-    react-dom: ^18.0.0 || ^19.0.0
-  checksum: 10c0/4039508429bd4f3e96bb6a9acc8e7253c1185239c19f8a709f85dc90ce64aebde934e588e38dceaf1a533f5b6f67dad7074bdf613e642a5dbc82506dbe14ff9b
   languageName: node
   linkType: hard
 
