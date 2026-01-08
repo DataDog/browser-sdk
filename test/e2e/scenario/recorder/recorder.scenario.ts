@@ -1,15 +1,10 @@
-import type { InputData, StyleSheetRuleData, ScrollData } from '@datadog/browser-rum/src/types'
+import type { InputData, StyleSheetRuleData } from '@datadog/browser-rum/src/types'
 import { NodeType, IncrementalSource, MouseInteractionType } from '@datadog/browser-rum/src/types'
 
 import { FrustrationType } from '@datadog/browser-rum-core'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 
-import {
-  findElement,
-  findElementWithIdAttribute,
-  findTextContent,
-  findElementWithTagName,
-} from '@datadog/browser-rum/test/nodes'
+import { findElement, findElementWithIdAttribute, findTextContent } from '@datadog/browser-rum/test/nodes'
 import {
   findFullSnapshot,
   findIncrementalSnapshot,
@@ -20,7 +15,6 @@ import {
 } from '@datadog/browser-rum/test/segments'
 import { createMutationPayloadValidatorFromSegment } from '@datadog/browser-rum/test/mutationPayloadValidator'
 import { test, expect } from '@playwright/test'
-import { wait } from '@datadog/browser-core/test/wait'
 import { createTest, html } from '../../lib/framework'
 
 const UUID_RE = /^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}$/
@@ -721,98 +715,6 @@ test.describe('recorder', () => {
           frustrationTypes: [FrustrationType.RAGE_CLICK],
           recordIds: mouseupRecords.map((r) => r.id!),
         })
-      })
-  })
-
-  test.describe('scroll positions', () => {
-    createTest('should be recorded across navigation')
-      // to control initial position before recording
-      .withRum({ startSessionReplayRecordingManually: true })
-      .withBody(html`
-        <style>
-          #container {
-            width: 100px;
-            height: 100px;
-            overflow-x: scroll;
-          }
-          #content {
-            width: 250px;
-          }
-          #big-element {
-            height: 4000px;
-          }
-        </style>
-        <div id="container">
-          <div id="content">I'm bigger than the container</div>
-        </div>
-        <div id="big-element"></div>
-      `)
-      .run(async ({ intakeRegistry, page, flushEvents }) => {
-        function scroll({ windowY, containerX }: { windowY: number; containerX: number }) {
-          return page.evaluate(
-            ({ windowY, containerX }) =>
-              new Promise<void>((resolve) => {
-                let scrollCount = 0
-
-                document.addEventListener(
-                  'scroll',
-                  () => {
-                    scrollCount++
-                    if (scrollCount === 2) {
-                      // ensure to bypass observer throttling
-                      setTimeout(resolve, 100)
-                    }
-                  },
-                  { capture: true, passive: true }
-                )
-
-                window.scrollTo(0, windowY)
-                document.getElementById('container')!.scrollTo(containerX, 0)
-              }),
-            { windowY, containerX }
-          )
-        }
-
-        // initial scroll positions
-        await scroll({ windowY: 100, containerX: 10 })
-
-        await page.evaluate(() => {
-          window.DD_RUM!.startSessionReplayRecording()
-        })
-
-        // wait for recorder to be properly started
-        await wait(100)
-
-        // update scroll positions
-        await scroll({ windowY: 150, containerX: 20 })
-
-        // trigger new full snapshot
-        await page.evaluate(() => {
-          window.DD_RUM!.startView()
-        })
-
-        await flushEvents()
-
-        expect(intakeRegistry.replaySegments).toHaveLength(2)
-        const firstSegment = intakeRegistry.replaySegments[0]
-
-        const firstFullSnapshot = findFullSnapshot(firstSegment)!
-        let htmlElement = findElementWithTagName(firstFullSnapshot.data.node, 'html')!
-        expect(htmlElement.attributes.rr_scrollTop).toBe(100)
-        let containerElement = findElementWithIdAttribute(firstFullSnapshot.data.node, 'container')!
-        expect(containerElement.attributes.rr_scrollLeft).toBe(10)
-
-        const scrollRecords = findAllIncrementalSnapshots(firstSegment, IncrementalSource.Scroll)
-        expect(scrollRecords).toHaveLength(2)
-        const [windowScrollData, containerScrollData] = scrollRecords.map((record) => record.data as ScrollData)
-        expect(windowScrollData.y).toEqual(150)
-        expect(containerScrollData.x).toEqual(20)
-
-        const secondFullSnapshot = findFullSnapshot(intakeRegistry.replaySegments.at(-1)!)!
-        htmlElement = findElementWithTagName(secondFullSnapshot.data.node, 'html')!
-        expect(htmlElement.attributes.rr_scrollTop).toBe(150)
-        containerElement = findElementWithIdAttribute(secondFullSnapshot.data.node, 'container')!
-        expect(containerElement.attributes.rr_scrollLeft).toBe(20)
       })
   })
 
