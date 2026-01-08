@@ -1,8 +1,15 @@
 import { LifeCycleEventType, getScrollX, getScrollY, getViewportDimension } from '@datadog/browser-rum-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
-import { ExperimentalFeature, isExperimentalFeatureEnabled, timeStampNow } from '@datadog/browser-core'
+import {
+  addTelemetryError,
+  buildUrl,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+  noop,
+  timeStampNow,
+} from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import type { BrowserFullSnapshotRecord } from '../../types'
+import type { BrowserChangeRecord, BrowserFullSnapshotRecord, BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import type { ChangeSerializationTransaction, SerializationTransaction } from './serialization'
 import {
@@ -12,10 +19,13 @@ import {
   serializeInTransaction,
   serializeNodeAsChange,
   SerializationKind,
+  convertChangeToFullSnapshot,
 } from './serialization'
 import { getVisualViewport } from './viewports'
+import { createRecordingScope } from './recordingScope'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+import { createElementsScrollPositions } from './elementsScrollPositions'
 
 export function startFullSnapshots(
   lifeCycle: LifeCycle,
@@ -88,8 +98,47 @@ export function takeFullSnapshot(
       }
     )
   } else {
+    scope.resetIds()
     serializeInTransaction(kind, emitRecord, emitStats, scope, (transaction: SerializationTransaction) => {
-      transaction.add(serializeFullSnapshotRecord(timestamp, transaction))
+      const fullSnapshot = serializeFullSnapshotRecord(timestamp, transaction)
+
+      const changeScope = createRecordingScope(scope.configuration, createElementsScrollPositions(), {
+        addShadowRoot: noop,
+        flush: noop,
+        removeShadowRoot: noop,
+        stop: noop,
+      })
+
+      let changeRecord: BrowserChangeRecord | undefined
+      serializeChangesInTransaction(
+        transaction.kind,
+        (record: BrowserRecord): void => {
+          if (record.type !== RecordType.Change) {
+            throw new Error(`Received unexpected record type: ${record.type}`)
+          }
+          changeRecord = record
+        },
+        noop,
+        changeScope,
+        timestamp,
+        (transaction: ChangeSerializationTransaction) => {
+          const cursor = createRootInsertionCursor(changeScope.nodeIds)
+          serializeNodeAsChange(cursor, document, scope.configuration.defaultPrivacyLevel, transaction)
+        }
+      )
+
+      const changeRecordAsFullSnapshot = convertChangeToFullSnapshot(changeRecord!)
+      const changeRecordMatchesByteForByte =
+        JSON.stringify(changeRecordAsFullSnapshot.data) === JSON.stringify(fullSnapshot.data)
+      if (!changeRecordMatchesByteForByte) {
+        const url = buildUrl(document.location.href)
+        url.search = ''
+        addTelemetryError(new Error('BrowserChangeRecord does not match BrowserFullSnapshotRecord'), {
+          url: url.href,
+        })
+      }
+
+      transaction.add(fullSnapshot)
     })
   }
 
