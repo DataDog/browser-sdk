@@ -2,6 +2,8 @@ import { parseArgs } from 'node:util'
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { siteByDatacenter } from '../lib/datacenter.ts'
+import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
+import { checkTelemetryErrors } from './lib/checkTelemetryErrors.ts'
 
 /**
  * Orchestrate the deployments of the artifacts for specific DCs
@@ -21,43 +23,51 @@ function getAllMinorDcs(): string[] {
   return Object.keys(siteByDatacenter).filter((dc) => !MAJOR_DCS.includes(dc))
 }
 
-const {
-  values: { 'check-monitors': checkMonitors },
-  positionals,
-} = parseArgs({
-  allowPositionals: true,
-  allowNegative: true,
-  options: {
-    'check-monitors': {
-      type: 'boolean',
-    },
-  },
-})
-
-const version = positionals[0]
-const uploadPath = positionals[1] === 'minor-dcs' ? getAllMinorDcs().join(',') : positionals[1]
-
-if (!uploadPath) {
-  throw new Error('UPLOAD_PATH argument is required')
+if (!process.env.NODE_TEST_CONTEXT) {
+  runMain(() => main(...process.argv.slice(2)))
 }
 
-runMain(async () => {
-  if (checkMonitors) {
-    command`node ./scripts/deploy/check-monitors.ts ${uploadPath}`.withLogs().run()
+export async function main(...args: string[]): Promise<void> {
+  const {
+    values: { 'check-telemetry-errors': shouldCheckTelemetryErrors },
+    positionals,
+  } = parseArgs({
+    args,
+    allowPositionals: true,
+    allowNegative: true,
+    options: {
+      'check-telemetry-errors': {
+        type: 'boolean',
+        default: false,
+      },
+    },
+  })
+
+  const version = positionals[0]
+  const uploadPath = positionals[1] === 'minor-dcs' ? getAllMinorDcs().join(',') : positionals[1]
+
+  if (!uploadPath) {
+    throw new Error('UPLOAD_PATH argument is required')
+  }
+
+  if (shouldCheckTelemetryErrors) {
+    // Make sure system is in a good state before deploying
+    const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
+    await checkTelemetryErrors(uploadPath.split(','), `${currentBrowserSdkVersionMajor}.*`)
   }
 
   command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPath}`.withLogs().run()
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPath}`.withLogs().run()
 
-  if (checkMonitors && uploadPath !== 'root') {
-    await gateMonitors(uploadPath)
+  if (shouldCheckTelemetryErrors && uploadPath !== 'root') {
+    await gateTelemetryErrors(uploadPath)
   }
-})
+}
 
-async function gateMonitors(uploadPath: string): Promise<void> {
-  printLog(`Check monitors for ${uploadPath} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
+async function gateTelemetryErrors(uploadPath: string): Promise<void> {
+  printLog(`Check telemetry errors for ${uploadPath} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
   for (let i = 0; i < GATE_DURATION; i += GATE_INTERVAL) {
-    command`node ./scripts/deploy/check-monitors.ts ${uploadPath}`.run()
+    await checkTelemetryErrors(uploadPath.split(','), browserSdkVersion)
     process.stdout.write('.') // progress indicator
     await timeout(GATE_INTERVAL * 1000)
   }
