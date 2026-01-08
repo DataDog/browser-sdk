@@ -266,7 +266,7 @@ function convertAddNodeChange(addedNode: AddNodeChange, nodeTracker: NodeTracker
       let tagName: string
       let isSVG: true | undefined
       if (nodeName.startsWith('svg>')) {
-        tagName = nodeName.substring(4)
+        tagName = nodeName.substring(4).toLowerCase()
         isSVG = true
       } else {
         tagName = nodeName.toLowerCase()
