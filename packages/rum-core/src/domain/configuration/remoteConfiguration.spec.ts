@@ -26,6 +26,37 @@ const DEFAULT_INIT_CONFIGURATION: RumInitConfiguration = {
   defaultPrivacyLevel: DefaultPrivacyLevel.MASK,
 }
 
+type ResolveRemoteConfigurationValue<T> = T extends any[]
+  ? Array<ResolveRemoteConfigurationValue<T[number]>>
+  : T extends { rcSerializedType: infer SerializedType }
+    ? SerializedType extends 'string' | 'dynamic'
+      ? string
+      : SerializedType extends 'regex'
+        ? RegExp
+        : never
+    : T extends Record<string, any>
+      ? { [K in keyof T]: ResolveRemoteConfigurationProperty<K, T[K]> }
+      : T
+
+type ResolveRemoteConfigurationProperty<Key, Value> =
+  // 'defaultPrivacyLevel' is defined as 'string' in remote configuration but as
+  // 'DefaultPrivacyLevel' in init configuration, so in theory there is no guarantee that remote
+  // configuration sets a supported value for this. This could be improved later.
+  Key extends 'defaultPrivacyLevel' ? DefaultPrivacyLevel : ResolveRemoteConfigurationValue<Value>
+
+type ResolvedRumRemoteConfiguration = ResolveRemoteConfigurationValue<RumRemoteConfiguration>
+
+// Make sure the RumRemoteConfiguration type is assignable to RumInitConfiguration.
+type Assert<T extends true> = T
+export type _ = Assert<
+  ResolvedRumRemoteConfiguration & {
+    // clientToken is not part of the remote configuration but required in init configuration
+    clientToken: string
+  } extends RumInitConfiguration
+    ? true
+    : false
+>
+
 describe('remoteConfiguration', () => {
   describe('fetchRemoteConfiguration', () => {
     const configuration = { remoteConfigurationId: 'xxx' } as RumInitConfiguration
