@@ -1,4 +1,3 @@
-export { convertChangeToFullSnapshot } from './changeConversions'
 export { createRootInsertionCursor } from './insertionCursor'
 export { getElementInputValue } from './serializationUtils'
 export { serializeDocument } from './serializeDocument'

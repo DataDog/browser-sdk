@@ -24,8 +24,8 @@ import {
   serializeChangesInTransaction,
   createRootInsertionCursor,
   serializeNodeAsChange,
-  convertChangeToFullSnapshot,
 } from '../serialization'
+import { convertChangeToFullSnapshot } from './changeConversions.specHelper'
 import { createRecordingScopeForTesting } from './recordingScope.specHelper'
 
 export function createSerializationTransactionForTesting({
