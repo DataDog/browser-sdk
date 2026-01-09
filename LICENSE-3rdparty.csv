@@ -25,7 +25,6 @@ dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
 dev,@wxt-dev/module-react,MIT,Copyright (c) 2023 Aaron
-dev,@types/react-window,MIT,Copyright Microsoft Corporation
 dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contributors
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
 dev,browserstack-local,MIT,Copyright 2016 BrowserStack

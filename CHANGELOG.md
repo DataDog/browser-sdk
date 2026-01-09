@@ -18,6 +18,21 @@
 
 ---
 
+## v6.25.3
+
+**Public Changes:**
+
+- 🐛 fix reading cookies containing special characters ([#4066](https://github.com/DataDog/browser-sdk/pull/4066)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Fix developer extension crash due to missing build variable ([#4061](https://github.com/DataDog/browser-sdk/pull/4061)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-13615] fix remote config tracing options support ([#4062](https://github.com/DataDog/browser-sdk/pull/4062)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 do not rely on monitors for deployment gate ([#3973](https://github.com/DataDog/browser-sdk/pull/3973))
+- 👷 Update dependency @vitejs/plugin-react to v5 ([#4032](https://github.com/DataDog/browser-sdk/pull/4032))
+- 👷 Update dependency @playwright/test to v1.57.0 ([#4005](https://github.com/DataDog/browser-sdk/pull/4005))
+- 👷 Update all non-major dependencies ([#4031](https://github.com/DataDog/browser-sdk/pull/4031)) [FLAGGING] [RUM-REACT] [WORKER]
+
 ## v6.25.2
 
 **Public Changes:**
