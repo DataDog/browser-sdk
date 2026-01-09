@@ -12,7 +12,7 @@ export function generateUUID(placeholder?: string): string {
 // Assuming input string is following the HTTP Cookie format defined in
 // https://www.ietf.org/rfc/rfc2616.txt and https://www.ietf.org/rfc/rfc6265.txt, we don't need to
 // be too strict with this regex.
-const COMMA_SEPARATED_KEY_VALUE = /(\S+?)\s*=\s*(.+?)(;|$)/g
+const COMMA_SEPARATED_KEY_VALUE = /(\S+?)\s*=\s*(.+?)(?:;|$)/g
 
 /**
  * Returns the value of the key with the given name
