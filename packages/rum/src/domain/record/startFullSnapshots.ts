@@ -131,10 +131,9 @@ export function takeFullSnapshot(
       const actual = JSON.stringify(changeRecordAsFullSnapshot.data)
       const changeRecordMatchesByteForByte = expected === actual
       if (!changeRecordMatchesByteForByte) {
-        addTelemetryError(
-          new Error('BrowserChangeRecord does not match BrowserFullSnapshotRecord'),
-          createSerializationMismatchContext(expected, actual)
-        )
+        addTelemetryError(new Error('BrowserChangeRecord does not match BrowserFullSnapshotRecord'), {
+          mismatch: createSerializationMismatchContext(expected, actual),
+        })
       }
 
       transaction.add(fullSnapshot)
@@ -187,7 +186,7 @@ function createSerializationMismatchContext(expected: string, actual: string): R
 }
 
 function getStringNearPosition(str: string, index: number): string {
-  const leftContextStart = Math.max(index - 20, 0)
-  const rightContextEnd = Math.min(index + 100, str.length)
+  const leftContextStart = Math.max(index - 50, 0)
+  const rightContextEnd = Math.min(index + 150, str.length)
   return `${str.substring(leftContextStart, index)}(!)${str.substring(index, rightContextEnd)}`
 }

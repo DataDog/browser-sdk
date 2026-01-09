@@ -375,12 +375,22 @@ function convertAttachedStyleSheetsChange(
 
 function convertScrollPositionChange(change: ScrollPositionChange, nodeTracker: NodeTracker): void {
   const [nodeId, left, top] = change
+
   const node = nodeTracker.get(nodeId as NodeId)
   if (node === nodeTracker.getRoot()) {
     nodeTracker.setRootScrollPosition({ left, top })
   }
-  if (node.type === NodeType.Element) {
+  if (node.type !== NodeType.Element) {
+    return
+  }
+
+  const existingLeft = node.attributes.rr_scrollLeft ?? 0
+  if (left !== 0 || existingLeft !== left) {
     node.attributes.rr_scrollLeft = left
+  }
+
+  const existingTop = node.attributes.rr_scrollTop ?? 0
+  if (top !== 0 || existingTop !== top) {
     node.attributes.rr_scrollTop = top
   }
 }
