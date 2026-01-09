@@ -32,26 +32,29 @@ interface DatacentersResponse {
   datacenters: Datacenter[]
 }
 
-let cachedDatacenters: Record<string, Datacenter> | undefined
+let cachedDatacentersPromise: Promise<Record<string, Datacenter>> | undefined
 
-async function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> {
-  if (cachedDatacenters) {
-    return cachedDatacenters
+function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> {
+  if (cachedDatacentersPromise) {
+    return cachedDatacentersPromise
   }
 
-  const datacenters = await fetchDatacentersFromRuntimeMetadataService()
-  cachedDatacenters = {}
+  cachedDatacentersPromise = fetchDatacentersFromRuntimeMetadataService().then((datacenters) => {
+    const cachedDatacenters: Record<string, Datacenter> = {}
 
-  for (const datacenter of datacenters) {
-    const shortName = datacenter.name.split('.')[0]
+    for (const datacenter of datacenters) {
+      const shortName = datacenter.name.split('.')[0]
 
-    cachedDatacenters[shortName] = {
-      name: datacenter.name,
-      site: datacenter.site,
+      cachedDatacenters[shortName] = {
+        name: datacenter.name,
+        site: datacenter.site,
+      }
     }
-  }
 
-  return cachedDatacenters
+    return cachedDatacenters
+  })
+
+  return cachedDatacentersPromise
 }
 
 async function fetchDatacentersFromRuntimeMetadataService(): Promise<Datacenter[]> {
