@@ -1,4 +1,5 @@
 import { defineConfig } from 'wxt'
+import { getBuildEnvValue } from '../scripts/lib/buildEnv'
 
 // eslint-disable-next-line import/no-default-export
 export default defineConfig({
@@ -35,6 +36,9 @@ export default defineConfig({
         localsConvention: 'camelCase',
         generateScopedName: '[name]_[local]_[hash:base64:5]',
       },
+    },
+    define: {
+      __BUILD_ENV__SDK_VERSION__: JSON.stringify(getBuildEnvValue('SDK_VERSION')),
     },
   }),
 })
