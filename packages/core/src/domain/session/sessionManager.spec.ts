@@ -641,9 +641,9 @@ describe('startSessionManager', () => {
       expect(sessionManager.findSession()!.id).not.toBe(initialSessionId)
     })
 
-    it('Remove anonymousId when tracking consent is withdrawn', () => {
+    it('Remove anonymousId when tracking consent is withdrawn', async () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-      const sessionManager = startSessionManagerWithDefaults({ trackingConsentState })
+      const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
       const session = sessionManager.findSession()!
 
       trackingConsentState.update(TrackingConsent.NOT_GRANTED)
@@ -691,6 +691,32 @@ describe('startSessionManager', () => {
 
       expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcde')
       expect(getSessionState(SESSION_STORE_KEY)[FIRST_PRODUCT_KEY]).toEqual(FakeTrackingType.TRACKED)
+    })
+
+    it('should call onReady callback with session manager after lock is released', () => {
+      if (!isChromium()) {
+        pending('the lock is only enabled in Chromium')
+      }
+
+      setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
+      const onReadySpy = jasmine.createSpy<(sessionManager: SessionManager<FakeTrackingType>) => void>('onReady')
+
+      startSessionManager(
+        { sessionStoreStrategyType: STORE_TYPE } as Configuration,
+        FIRST_PRODUCT_KEY,
+        () => FakeTrackingType.TRACKED,
+        createTrackingConsentState(TrackingConsent.GRANTED),
+        onReadySpy
+      )
+
+      expect(onReadySpy).not.toHaveBeenCalled()
+
+      // Remove lock
+      setCookie(SESSION_STORE_KEY, 'id=abc123', DURATION)
+      clock.tick(LOCK_RETRY_DELAY)
+
+      expect(onReadySpy).toHaveBeenCalledTimes(1)
+      expect(onReadySpy.calls.mostRecent().args[0].findSession).toBeDefined()
     })
   })
 
