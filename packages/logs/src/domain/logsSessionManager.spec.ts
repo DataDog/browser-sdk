@@ -15,10 +15,10 @@ import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, expireCookie, getSessionState, mockClock } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
+import type { LogsSessionManager } from './logsSessionManager'
 import {
   LOGS_SESSION_KEY,
   LoggerTrackingType,
-  LogsSessionManager,
   startLogsSessionManager,
   startLogsSessionManagerStub,
 } from './logsSessionManager'
