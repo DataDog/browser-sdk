@@ -2,14 +2,14 @@ import { NodePrivacyLevel, shouldMaskNode } from '@datadog/browser-rum-core'
 import { isSafari } from '@datadog/browser-core'
 import { getElementInputValue, normalizedTagName, switchToAbsoluteUrl } from './serializationUtils'
 import { serializeAttribute } from './serializeAttribute'
-import type { SerializationTransaction } from './serializationTransaction'
+import type { ChangeSerializationTransaction, SerializationTransaction } from './serializationTransaction'
 import { SerializationKind } from './serializationTransaction'
 import type { VirtualAttributes } from './serialization.types'
 
 export function serializeAttributes(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  transaction: SerializationTransaction
+  transaction: ChangeSerializationTransaction | SerializationTransaction
 ): Record<string, number | string> {
   return {
     ...serializeDOMAttributes(element, nodePrivacyLevel, transaction),
@@ -20,7 +20,7 @@ export function serializeAttributes(
 export function serializeDOMAttributes(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  transaction: SerializationTransaction
+  transaction: ChangeSerializationTransaction | SerializationTransaction
 ): Record<string, string> {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
@@ -83,7 +83,7 @@ export function serializeDOMAttributes(
 export function serializeVirtualAttributes(
   element: Element,
   nodePrivacyLevel: NodePrivacyLevel,
-  transaction: SerializationTransaction
+  transaction: ChangeSerializationTransaction | SerializationTransaction
 ): VirtualAttributes {
   if (nodePrivacyLevel === NodePrivacyLevel.HIDDEN) {
     return {}
