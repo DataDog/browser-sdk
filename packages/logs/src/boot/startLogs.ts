@@ -3,7 +3,6 @@ import {
   Observable,
   sendToExtension,
   createPageMayExitObservable,
-  willSyntheticsInjectRum,
   canUseEventBridge,
   startAccountContext,
   startGlobalContext,
@@ -13,7 +12,7 @@ import {
   startUserContext,
   isWorkerEnvironment,
 } from '@datadog/browser-core'
-import { LogsSessionManager, startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'
