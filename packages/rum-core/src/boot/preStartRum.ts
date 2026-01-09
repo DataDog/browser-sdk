@@ -253,6 +253,14 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.addAction(action))
     },
 
+    startAction(name, options) {
+      bufferApiCalls.add((startRumResult) => startRumResult.startAction(name, options))
+    },
+
+    stopAction(name, options) {
+      bufferApiCalls.add((startRumResult) => startRumResult.stopAction(name, options))
+    },
+
     addError(providedError) {
       bufferApiCalls.add((startRumResult) => startRumResult.addError(providedError))
     },

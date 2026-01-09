@@ -10,6 +10,7 @@ import {
   DefaultPrivacyLevel,
   resetExperimentalFeatures,
   resetFetchObservable,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -18,6 +19,7 @@ import {
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
+  mockExperimentalFeatures,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -634,6 +636,7 @@ describe('preStartRum', () => {
         name: 'foo',
         type: ActionType.CUSTOM,
         startClocks: clocksNow(),
+        duration: 0 as Duration,
       }
       strategy.addAction(customAction)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
@@ -752,6 +755,25 @@ describe('preStartRum', () => {
       strategy.addOperationStepVital('foo', 'start')
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addOperationStepVitalSpy).toHaveBeenCalledOnceWith('foo', 'start', undefined, undefined)
+    })
+
+    it('startAction / stopAction', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+
+      const startActionSpy = jasmine.createSpy()
+      const stopActionSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        startAction: startActionSpy,
+        stopAction: stopActionSpy,
+      } as unknown as StartRumResult)
+
+      strategy.startAction('user_login', { type: ActionType.CUSTOM })
+      strategy.stopAction('user_login')
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(startActionSpy).toHaveBeenCalledWith('user_login', { type: ActionType.CUSTOM })
+      expect(stopActionSpy).toHaveBeenCalledWith('user_login', undefined)
     })
   })
 
