@@ -7,6 +7,7 @@ import {
   DefaultPrivacyLevel,
   Observable,
   ExperimentalFeature,
+  PageExitReason,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
@@ -219,6 +220,21 @@ describe('trackClickActions', () => {
 
     expect(events.length).toBe(1)
     expect(events[0].duration).toBe((2 * BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY) as Duration)
+  })
+
+  it('ongoing click action is stopped on page exit', () => {
+    startClickActionsTracking()
+    emulateClick()
+
+    clock.tick(12)
+
+    lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, {
+      reason: PageExitReason.HIDDEN,
+    })
+
+    expect(events.length).toBe(1)
+    expect(events[0].duration).toBe(12 as Duration)
+    expect(events[0].frustrationTypes).toEqual([])
   })
 
   it('collect click actions even if another one is ongoing', () => {
