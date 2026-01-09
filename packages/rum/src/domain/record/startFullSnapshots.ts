@@ -127,14 +127,14 @@ export function takeFullSnapshot(
       )
 
       const changeRecordAsFullSnapshot = convertChangeToFullSnapshot(changeRecord!)
-      const changeRecordMatchesByteForByte =
-        JSON.stringify(changeRecordAsFullSnapshot.data) === JSON.stringify(fullSnapshot.data)
+      const expected = JSON.stringify(fullSnapshot.data)
+      const actual = JSON.stringify(changeRecordAsFullSnapshot.data)
+      const changeRecordMatchesByteForByte = expected === actual
       if (!changeRecordMatchesByteForByte) {
-        const url = buildUrl(document.location.href)
-        url.search = ''
-        addTelemetryError(new Error('BrowserChangeRecord does not match BrowserFullSnapshotRecord'), {
-          url: url.href,
-        })
+        addTelemetryError(
+          new Error('BrowserChangeRecord does not match BrowserFullSnapshotRecord'),
+          createSerializationMismatchContext(expected, actual)
+        )
       }
 
       transaction.add(fullSnapshot)
@@ -165,4 +165,29 @@ function serializeFullSnapshotRecord(
     type: RecordType.FullSnapshot,
     timestamp,
   }
+}
+
+function createSerializationMismatchContext(expected: string, actual: string): Record<string, string> {
+  const url = buildUrl(document.location.href)
+  url.search = ''
+
+  try {
+    let firstDifferenceIndex = 0
+    while (expected[firstDifferenceIndex] === actual[firstDifferenceIndex]) {
+      firstDifferenceIndex++
+    }
+    return {
+      expected: getStringNearPosition(expected, firstDifferenceIndex),
+      actual: getStringNearPosition(actual, firstDifferenceIndex),
+      url: url.href,
+    }
+  } catch (e) {
+    return { firstDifferenceError: JSON.stringify(e), url: url.href }
+  }
+}
+
+function getStringNearPosition(str: string, index: number): string {
+  const leftContextStart = Math.max(index - 20, 0)
+  const rightContextEnd = Math.min(index + 100, str.length)
+  return `${str.substring(leftContextStart, index)}(!)${str.substring(index, rightContextEnd)}`
 }
