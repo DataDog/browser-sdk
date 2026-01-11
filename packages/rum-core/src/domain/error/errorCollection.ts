@@ -78,6 +78,7 @@ function processError(error: RawError): RawRumEventCollectedData<RawRumErrorEven
       message: error.message,
       source: error.source,
       stack: error.stack,
+      file: error.file,
       handling_stack: error.handlingStack,
       component_stack: error.componentStack,
       type: error.type,
