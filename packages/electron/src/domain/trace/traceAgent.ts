@@ -101,7 +101,9 @@ function isSdkRequest(span: any) {
   return (
     (spanRequestUrl &&
       (spanRequestUrl.startsWith('http://127.0.0.1') ||
-        spanRequestUrl.startsWith('https://browser-intake-datadoghq.com/'))) ||
-    (span.resource as string).startsWith('browser-intake-datadoghq.com')
+        spanRequestUrl.startsWith('https://browser-intake-datadoghq.com/') ||
+        spanRequestUrl.startsWith('https://browser-intake-datad0g.com/'))) ||
+    (span.resource as string).startsWith('browser-intake-datadoghq.com') ||
+    (span.resource as string).startsWith('browser-intake-datad0g.com')
   )
 }
