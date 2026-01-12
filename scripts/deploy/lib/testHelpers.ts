@@ -97,6 +97,23 @@ export const MOCK_DATACENTER_RESPONSE = [
 type FetchMockHandler = (url: string, options?: RequestInit) => Promise<Response> | undefined
 
 /**
+ * Creates a mock Response object for testing fetch calls.
+ *
+ * @param options - Configuration options for the mock response
+ * @param options.status - HTTP status code (default: 200)
+ * @param options.json - JSON data to return (default: {})
+ * @returns A mock Response object
+ */
+export function createMockResponse({ status = 200, json = {} }: { status?: number; json?: any } = {}): Response {
+  return {
+    ok: status < 300,
+    status,
+    json: () => Promise.resolve(json),
+    text: () => Promise.resolve(JSON.stringify(json)),
+  } as unknown as Response
+}
+
+/**
  * Configure a fetchHandlingError mock with datacenter API support.
  * Can be extended with an additional handler for test-specific API calls.
  *
@@ -129,28 +146,24 @@ export function mockFetchHandlingError(
 
     // Vault token request
     if (url.includes('/v1/identity/oidc/token/runtime-metadata-service')) {
-      return Promise.resolve({
-        json: () =>
-          Promise.resolve({
+      return Promise.resolve(
+        createMockResponse({
+          json: {
             data: {
               token: FAKE_RUNTIME_METADATA_SERVICE_TOKEN,
             },
-          }),
-      } as unknown as Response)
+          },
+        })
+      )
     }
 
     // Datacenters request
     if (url.includes('runtime-metadata-service')) {
-      return Promise.resolve({
-        json: () => Promise.resolve({ datacenters: MOCK_DATACENTER_RESPONSE }),
-      } as unknown as Response)
+      return Promise.resolve(createMockResponse({ json: { datacenters: MOCK_DATACENTER_RESPONSE } }))
     }
 
     // Default response
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({}),
-    } as unknown as Response)
+    return Promise.resolve(createMockResponse())
   })
 }
 
