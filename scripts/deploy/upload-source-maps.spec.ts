@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 import { beforeEach, before, describe, it, mock, afterEach } from 'node:test'
+import type { Datacenter } from '../lib/datacenter.ts'
 import { mockModule, mockCommandImplementation, replaceChunkHashes, mockFetchHandlingError } from './lib/testHelpers.ts'
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
@@ -24,8 +25,7 @@ describe('upload-source-maps', () => {
   let commands: CommandDetail[]
 
   let uploadSourceMaps: (version: string, uploadPathTypes: string[]) => Promise<void>
-  let getAllDatacenters: () => Promise<string[]>
-  let getSite: (datacenter: string) => Promise<string>
+  let getAllDatacentersMetadata: () => Promise<Datacenter[]>
 
   function getSourceMapCommands(): CommandDetail[] {
     return commands.filter(({ command }) => command.includes('datadog-ci sourcemaps'))
@@ -50,8 +50,7 @@ describe('upload-source-maps', () => {
     const uploadModule = await import('./upload-source-maps.ts')
     uploadSourceMaps = uploadModule.main
     const datacenterModule = await import('../lib/datacenter.ts')
-    getAllDatacenters = datacenterModule.getAllDatacenters
-    getSite = datacenterModule.getSite
+    getAllDatacentersMetadata = datacenterModule.getAllDatacentersMetadata
   })
 
   beforeEach(() => {
@@ -63,9 +62,9 @@ describe('upload-source-maps', () => {
   })
 
   async function forEachDatacenter(callback: (site: string) => void): Promise<void> {
-    const datacenters = await getAllDatacenters()
+    const datacenters = await getAllDatacentersMetadata()
     for (const datacenter of datacenters) {
-      callback(await getSite(datacenter))
+      callback(datacenter.site)
     }
   }
 

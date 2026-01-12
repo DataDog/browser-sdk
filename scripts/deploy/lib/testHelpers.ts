@@ -83,7 +83,7 @@ export function mockCommandImplementation(mockFn: Mock<(...args: any[]) => void>
   return commands
 }
 
-export const MOCK_DATACENTERS = [
+export const MOCK_DATACENTER_RESPONSE = [
   { name: 'ap1.prod.dog', site: 'ap1.datadoghq.com' },
   { name: 'ap2.prod.dog', site: 'ap2.datadoghq.com' },
   { name: 'eu1.prod.dog', site: 'datadoghq.eu' },
@@ -142,7 +142,7 @@ export function mockFetchHandlingError(
     // Datacenters request
     if (url.includes('runtime-metadata-service')) {
       return Promise.resolve({
-        json: () => Promise.resolve({ datacenters: MOCK_DATACENTERS }),
+        json: () => Promise.resolve({ datacenters: MOCK_DATACENTER_RESPONSE }),
       } as unknown as Response)
     }
 

@@ -1,18 +1,20 @@
 import { fetchHandlingError } from './executionUtils.ts'
 
-export enum DatacenterType {
+export const DatacenterType = {
   // Minor DCs are the ones that are deployed first, all at once.
-  MINOR = 'minor',
+  MINOR: 'minor',
 
   // Private DCs are deployed next, all at once
-  PRIVATE = 'private',
+  PRIVATE: 'private',
 
   // Major DCs are the ones that are deployed last, one after the other.
   // (i.e. they have their own step jobs in `deploy-manual.yml` and `deploy-auto.yml`)
-  MAJOR = 'major',
-}
+  MAJOR: 'major',
+} as const
 
-interface Datacenter {
+export type DatacenterType = (typeof DatacenterType)[keyof typeof DatacenterType]
+
+export interface Datacenter {
   name: string
   site: string
   type: DatacenterType
