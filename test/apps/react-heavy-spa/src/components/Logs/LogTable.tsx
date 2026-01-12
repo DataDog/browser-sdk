@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react'
-import { FixedSizeList as List } from 'react-window'
+import { List, RowComponentProps } from 'react-window'
 import { LogEntry, LogLevel } from '../../types/data'
 import './LogTable.css'
 
@@ -9,14 +9,10 @@ interface LogTableProps {
   onLogSelect: (log: LogEntry) => void
 }
 
-interface LogRowProps {
-  index: number
-  style: React.CSSProperties
-  data?: {
-    logs: LogEntry[]
-    selectedLog: LogEntry | null
-    onLogSelect: (log: LogEntry) => void
-  }
+interface LogRowExtraProps {
+  logs: LogEntry[]
+  selectedLog: LogEntry | null
+  onLogSelect: (log: LogEntry) => void
 }
 
 const LOG_LEVEL_COLORS: Record<LogLevel, string> = {
@@ -64,13 +60,9 @@ function truncateMessage(message: string, maxLength: number = 120): string {
   return message.substring(0, maxLength) + '...'
 }
 
-function LogRow({ index, style, data }: LogRowProps) {
-  if (!data) return null
-
-  const { logs, selectedLog, onLogSelect } = data
+function LogRow({ index, style, logs, selectedLog, onLogSelect }: RowComponentProps<LogRowExtraProps>) {
   const log = logs[index]
 
-  if (!log) return null
   const isSelected = selectedLog?.id === log.id
 
   const handleClick = useCallback(() => {
@@ -182,20 +174,13 @@ export default function LogTable({ logs, selectedLog, onLogSelect }: LogTablePro
       </div>
 
       <div className="log-table-body">
-        <List<{
-          logs: LogEntry[]
-          selectedLog: LogEntry | null
-          onLogSelect: (log: LogEntry) => void
-        }>
-          height={600}
-          width="100%"
-          itemCount={logs.length}
-          itemSize={80}
-          itemData={itemData}
+        <List<LogRowExtraProps>
+          rowCount={logs.length}
+          rowHeight={80}
+          rowProps={itemData}
+          rowComponent={LogRow}
           overscanCount={5}
-        >
-          {LogRow}
-        </List>
+        />
       </div>
 
       <div className="log-table-footer">

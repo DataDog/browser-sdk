@@ -1,12 +1,5 @@
 import type { ContextManager } from '@datadog/browser-core'
-import {
-  objectEntries,
-  shallowClone,
-  getType,
-  isMatchOption,
-  matchList,
-  TraceContextInjection,
-} from '@datadog/browser-core'
+import { objectEntries, shallowClone, matchList, TraceContextInjection } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
@@ -16,7 +9,7 @@ import type {
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
 import { isSampled } from '../sampler/sampler'
-import type { PropagatorType, TracingOption } from './tracer.types'
+import type { PropagatorType } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 
@@ -28,15 +21,6 @@ export interface Tracer {
 
 interface TracingHeaders {
   [key: string]: string
-}
-
-export function isTracingOption(item: unknown): item is TracingOption {
-  const expectedItem = item as TracingOption
-  return (
-    getType(expectedItem) === 'object' &&
-    isMatchOption(expectedItem.match) &&
-    Array.isArray(expectedItem.propagatorTypes)
-  )
 }
 
 /**

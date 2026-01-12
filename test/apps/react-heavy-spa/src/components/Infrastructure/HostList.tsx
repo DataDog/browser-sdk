@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, memo, Dispatch, SetStateAction } from 'react'
-import { FixedSizeList as List } from 'react-window'
+import { List, RowComponentProps } from 'react-window'
 import { Host, HostStatus } from '../../types/data'
 import './HostList.css'
 
@@ -55,43 +55,62 @@ const SortIcon = memo(
   }
 )
 
-// Memoized row component for better performance
-const HostRow = memo(
-  ({ host, isSelected, onSelect }: { host: Host; isSelected: boolean; onSelect: (host: Host) => void }) => (
-    <tr className={`host-row ${isSelected ? 'selected' : ''}`} onClick={() => onSelect(host)}>
-      <td className="host-name">{host.name}</td>
-      <td>
-        <span className={`status-badge ${host.status}`}>{host.status}</span>
-      </td>
-      <td>
-        <div className="metric-cell">
-          <div className="metric-bar">
-            <div className="metric-fill cpu" style={{ width: `${host.cpu}%` }} />
-          </div>
-          <span className="metric-value">{host.cpu}%</span>
-        </div>
-      </td>
-      <td>
-        <div className="metric-cell">
-          <div className="metric-bar">
-            <div className="metric-fill memory" style={{ width: `${host.memory}%` }} />
-          </div>
-          <span className="metric-value">{host.memory}%</span>
-        </div>
-      </td>
-      <td>
-        <div className="metric-cell">
-          <div className="metric-bar">
-            <div className="metric-fill disk" style={{ width: `${host.disk}%` }} />
-          </div>
-          <span className="metric-value">{host.disk}%</span>
-        </div>
-      </td>
-      <td className="network-cell">{host.network} Mbps</td>
-      <td className="uptime-cell">{formatUptime(host.uptime)}</td>
-    </tr>
+type HostRowExtraProps = {
+  filteredAndSortedHosts: Host[]
+  selectedHost: Host | null
+  onHostSelect: (host: Host) => void
+}
+
+function HostRow({
+  filteredAndSortedHosts,
+  index,
+  style,
+  selectedHost,
+  onHostSelect,
+}: RowComponentProps<HostRowExtraProps>) {
+  const host = filteredAndSortedHosts[index]
+  const isSelected = selectedHost?.id === host.id
+  return (
+    <div style={style}>
+      <table className="host-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+        <tbody>
+          <tr className={`host-row ${isSelected ? 'selected' : ''}`} onClick={() => onHostSelect(host)}>
+            <td className="host-name">{host.name}</td>
+            <td>
+              <span className={`status-badge ${host.status}`}>{host.status}</span>
+            </td>
+            <td>
+              <div className="metric-cell">
+                <div className="metric-bar">
+                  <div className="metric-fill cpu" style={{ width: `${host.cpu}%` }} />
+                </div>
+                <span className="metric-value">{host.cpu}%</span>
+              </div>
+            </td>
+            <td>
+              <div className="metric-cell">
+                <div className="metric-bar">
+                  <div className="metric-fill memory" style={{ width: `${host.memory}%` }} />
+                </div>
+                <span className="metric-value">{host.memory}%</span>
+              </div>
+            </td>
+            <td>
+              <div className="metric-cell">
+                <div className="metric-bar">
+                  <div className="metric-fill disk" style={{ width: `${host.disk}%` }} />
+                </div>
+                <span className="metric-value">{host.disk}%</span>
+              </div>
+            </td>
+            <td className="network-cell">{host.network} Mbps</td>
+            <td className="uptime-cell">{formatUptime(host.uptime)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   )
-)
+}
 
 const HostList = memo(function HostList({
   hosts,
@@ -248,26 +267,17 @@ const HostList = memo(function HostList({
           </thead>
         </table>
         <div style={{ height: 'calc(100vh - 350px)', overflow: 'auto' }}>
-          <List
-            height={Math.min(filteredAndSortedHosts.length * 45 + 10, window.innerHeight - 350)}
-            itemCount={filteredAndSortedHosts.length}
-            itemSize={45}
-            width="100%"
+          <List<HostRowExtraProps>
+            rowCount={filteredAndSortedHosts.length}
+            rowComponent={HostRow}
+            rowHeight={45}
             overscanCount={5}
-          >
-            {({ index, style }) => {
-              const host = filteredAndSortedHosts[index]
-              return (
-                <div style={style}>
-                  <table className="host-table" style={{ tableLayout: 'fixed', width: '100%' }}>
-                    <tbody>
-                      <HostRow host={host} isSelected={selectedHost?.id === host.id} onSelect={onHostSelect} />
-                    </tbody>
-                  </table>
-                </div>
-              )
+            rowProps={{
+              filteredAndSortedHosts,
+              selectedHost,
+              onHostSelect,
             }}
-          </List>
+          />
         </div>
       </div>
 

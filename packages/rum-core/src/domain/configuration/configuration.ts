@@ -1,6 +1,5 @@
 import type { Configuration, InitConfiguration, MatchOption, RawTelemetryConfiguration } from '@datadog/browser-core'
 import {
-  getType,
   isMatchOption,
   serializeConfiguration,
   DefaultPrivacyLevel,
@@ -11,11 +10,11 @@ import {
   isSampleRate,
   isNumber,
   isNonEmptyArray,
+  isIndexableObject,
 } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
-import { isTracingOption } from '../tracing/tracer'
 import type { PropagatorType, TracingOption } from '../tracing/tracer.types'
 
 export const DEFAULT_PROPAGATOR_TYPES: PropagatorType[] = ['tracecontext', 'datadog']
@@ -121,7 +120,9 @@ export interface RumInitConfiguration extends InitConfiguration {
    *
    * @category Tracing
    */
-  allowedTracingUrls?: Array<MatchOption | TracingOption> | undefined
+  allowedTracingUrls?:
+    | Array<MatchOption | { match: MatchOption; propagatorTypes?: PropagatorType[] | null | undefined }>
+    | undefined
 
   /**
    * The percentage of requests to trace: 100 for all, 0 for none.
@@ -410,10 +411,9 @@ function validateAndBuildTracingOptions(initConfiguration: RumInitConfiguration)
   // Convert from (MatchOption | TracingOption) to TracingOption, remove unknown properties
   const tracingOptions: TracingOption[] = []
   initConfiguration.allowedTracingUrls.forEach((option) => {
-    if (isMatchOption(option)) {
-      tracingOptions.push({ match: option, propagatorTypes: DEFAULT_PROPAGATOR_TYPES })
-    } else if (isTracingOption(option)) {
-      tracingOptions.push(option)
+    const normalizedOption = normalizeTracingOption(option)
+    if (normalizedOption) {
+      tracingOptions.push(normalizedOption)
     } else {
       display.warn(
         'Allowed Tracing Urls parameters should be a string, RegExp, function, or an object. Ignoring parameter',
@@ -433,16 +433,30 @@ function getSelectedTracingPropagators(configuration: RumInitConfiguration): Pro
 
   if (isNonEmptyArray(configuration.allowedTracingUrls)) {
     configuration.allowedTracingUrls.forEach((option) => {
-      if (isMatchOption(option)) {
-        DEFAULT_PROPAGATOR_TYPES.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))
-      } else if (getType(option) === 'object' && Array.isArray(option.propagatorTypes)) {
-        // Ensure we have an array, as we cannot rely on types yet (configuration is provided by users)
-        option.propagatorTypes.forEach((propagatorType) => usedTracingPropagators.add(propagatorType))
-      }
+      normalizeTracingOption(option)?.propagatorTypes.forEach((propagatorType) =>
+        usedTracingPropagators.add(propagatorType)
+      )
     })
   }
 
   return Array.from(usedTracingPropagators)
+}
+
+function normalizeTracingOption(option: unknown): TracingOption | undefined {
+  if (isMatchOption(option)) {
+    return { match: option, propagatorTypes: DEFAULT_PROPAGATOR_TYPES }
+  }
+
+  if (
+    isIndexableObject(option) &&
+    isMatchOption(option.match) &&
+    (option.propagatorTypes === null || option.propagatorTypes === undefined || Array.isArray(option.propagatorTypes))
+  ) {
+    return {
+      match: option.match,
+      propagatorTypes: option.propagatorTypes || DEFAULT_PROPAGATOR_TYPES,
+    }
+  }
 }
 
 /**
@@ -463,7 +477,7 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
   initConfiguration.allowedGraphQlUrls.forEach((option) => {
     if (isMatchOption(option)) {
       graphQlOptions.push({ match: option, trackPayload: false, trackResponseErrors: false })
-    } else if (option && typeof option === 'object' && 'match' in option && isMatchOption(option.match)) {
+    } else if (isIndexableObject(option) && isMatchOption(option.match)) {
       graphQlOptions.push({
         match: option.match,
         trackPayload: !!option.trackPayload,
@@ -478,24 +492,14 @@ function validateAndBuildGraphQlOptions(initConfiguration: RumInitConfiguration)
 function hasGraphQlPayloadTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
   return (
     isNonEmptyArray(allowedGraphQlUrls) &&
-    allowedGraphQlUrls.some((option) => {
-      if (typeof option === 'object' && 'trackPayload' in option) {
-        return !!option.trackPayload
-      }
-      return false
-    })
+    allowedGraphQlUrls.some((option) => isIndexableObject(option) && option.trackPayload)
   )
 }
 
 function hasGraphQlResponseErrorsTracking(allowedGraphQlUrls: RumInitConfiguration['allowedGraphQlUrls']): boolean {
   return (
     isNonEmptyArray(allowedGraphQlUrls) &&
-    allowedGraphQlUrls.some((option) => {
-      if (typeof option === 'object' && 'trackResponseErrors' in option) {
-        return !!option.trackResponseErrors
-      }
-      return false
-    })
+    allowedGraphQlUrls.some((option) => isIndexableObject(option) && option.trackResponseErrors)
   )
 }
 
