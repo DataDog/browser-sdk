@@ -1,11 +1,13 @@
 /**
  * Check telemetry errors
  */
-import { printLog, fetchHandlingError } from '../../lib/executionUtils.ts'
+import { printLog, fetchHandlingError, timeout } from '../../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
 import { siteByDatacenter } from '../../lib/datacenter.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
+// Rate limit: 2 requests per 10 seconds. Wait 6 seconds between requests to be safe.
+const RATE_LIMIT_DELAY_MS = 6000
 
 function getQueries(version: string): Query[] {
   const query = `source:browser status:error version:${version}`
@@ -40,30 +42,39 @@ function getQueries(version: string): Query[] {
 export async function checkTelemetryErrors(datacenters: string[], version: string): Promise<void> {
   const queries = getQueries(version)
 
-  for (const datacenter of datacenters) {
-    const site = siteByDatacenter[datacenter]
+  // Check all datacenters in parallel since rate limits are per datacenter
+  await Promise.all(datacenters.map((datacenter) => checkDatacenterTelemetryErrors(datacenter, queries)))
+}
 
-    if (!site) {
-      printLog(`No site is configured for datacenter ${datacenter}. skipping...`)
-      continue
-    }
+async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query[]): Promise<void> {
+  const site = siteByDatacenter[datacenter]
 
-    const apiKey = getTelemetryOrgApiKey(site)
-    const applicationKey = getTelemetryOrgApplicationKey(site)
+  if (!site) {
+    printLog(`No site is configured for datacenter ${datacenter}. skipping...`)
+    return
+  }
 
-    if (!apiKey || !applicationKey) {
-      printLog(`No API key or application key found for ${site}, skipping...`)
-      continue
-    }
+  const apiKey = getTelemetryOrgApiKey(site)
+  const applicationKey = getTelemetryOrgApplicationKey(site)
 
-    for (const query of queries) {
-      const buckets = await queryLogsApi(site, apiKey, applicationKey, query)
+  if (!apiKey || !applicationKey) {
+    printLog(`No API key or application key found for ${site}, skipping...`)
+    return
+  }
 
-      // buckets are sorted by count, so we only need to check the first one
-      if (buckets[0]?.computes?.c0 > query.threshold) {
-        throw new Error(`${query.name} found in the last ${TIME_WINDOW_IN_MINUTES} minutes,
+  for (let i = 0; i < queries.length; i++) {
+    const query = queries[i]
+    const buckets = await queryLogsApi(site, apiKey, applicationKey, query)
+
+    // buckets are sorted by count, so we only need to check the first one
+    if (buckets[0]?.computes?.c0 > query.threshold) {
+      throw new Error(`${query.name} found in the last ${TIME_WINDOW_IN_MINUTES} minutes,
 see ${computeLogsLink(site, query)}`)
-      }
+    }
+
+    // Skip rate limit delay after last query
+    if (i < queries.length - 1) {
+      await timeout(RATE_LIMIT_DELAY_MS)
     }
   }
 }
