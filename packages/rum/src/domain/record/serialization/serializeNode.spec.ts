@@ -1084,10 +1084,12 @@ describe('serializeNode', () => {
 
 describe('serializeDocumentNode handles', function testAllowDomTree() {
   const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
+  let stats: SerializationStats
   let transaction: SerializationTransaction
 
   beforeEach(() => {
-    transaction = createSerializationTransactionForTesting()
+    stats = createSerializationStats()
+    transaction = createSerializationTransactionForTesting({ stats })
     registerCleanupTask(() => {
       if (isAdoptedStyleSheetsSupported()) {
         document.adoptedStyleSheets = []
@@ -1120,6 +1122,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
           },
         ],
       })
+      expect(stats.cssText).toEqual({ count: 1, max: 20, sum: 20 })
     })
   })
 

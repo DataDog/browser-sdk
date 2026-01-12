@@ -216,6 +216,10 @@ function serializeStyleSheetsAsChange(
 function serializeStyleSheetAsChange(sheet: CSSStyleSheet, transaction: ChangeSerializationTransaction): StyleSheetId {
   const rules = Array.from(sheet.cssRules || sheet.rules, (rule) => rule.cssText)
   const mediaList = sheet.media.length > 0 ? Array.from(sheet.media) : undefined
+  transaction.addMetric(
+    'cssText',
+    rules.map((rule) => rule.length).reduce((a, b) => a + b, 0)
+  )
   transaction.addStyleSheet(rules, mediaList, sheet.disabled)
   return transaction.scope.styleSheetIds.getOrInsert(sheet)
 }
