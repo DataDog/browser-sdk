@@ -539,7 +539,7 @@ export type TelemetryBrowserFeaturesUsage =
 /**
  * Schema of mobile specific features usage
  */
-export type TelemetryMobileFeaturesUsage = AddViewLoadingTime
+export type TelemetryMobileFeaturesUsage = AddViewLoadingTime | TrackWebView
 
 /**
  * Schema of common properties of Telemetry events
@@ -915,5 +915,12 @@ export interface AddViewLoadingTime {
    * Whether the loading time was overwritten
    */
   overwritten: boolean
+  [k: string]: unknown
+}
+export interface TrackWebView {
+  /**
+   * trackWebView API
+   */
+  feature: 'trackWebView'
   [k: string]: unknown
 }

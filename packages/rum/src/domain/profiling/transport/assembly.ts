@@ -1,15 +1,15 @@
 import { buildTags, currentDrift } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
-import type { ProfileEventPayload as GeneratedProfileEventPayload, RumProfilerTrace } from '../../../types'
+import type { BrowserProfileEvent, BrowserProfilerTrace } from '../../../types'
 import { buildProfileEventAttributes } from './buildProfileEventAttributes'
 
 export interface ProfileEventPayload {
-  event: GeneratedProfileEventPayload['event']
-  'wall-time.json': RumProfilerTrace
+  event: BrowserProfileEvent
+  'wall-time.json': BrowserProfilerTrace
 }
 
 export function assembleProfilingPayload(
-  profilerTrace: RumProfilerTrace,
+  profilerTrace: BrowserProfilerTrace,
   configuration: RumConfiguration,
   sessionId: string | undefined
 ): ProfileEventPayload {
@@ -22,7 +22,7 @@ export function assembleProfilingPayload(
 }
 
 function buildProfileEvent(
-  profilerTrace: RumProfilerTrace,
+  profilerTrace: BrowserProfilerTrace,
   configuration: RumConfiguration,
   sessionId: string | undefined
 ): ProfileEventPayload['event'] {

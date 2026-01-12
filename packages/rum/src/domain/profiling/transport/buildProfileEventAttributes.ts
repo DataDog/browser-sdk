@@ -1,4 +1,21 @@
-import type { ProfileEventAttributes, RumProfilerTrace, RumViewEntry } from '../../../types'
+import type { BrowserProfilerTrace, RumViewEntry } from '../../../types'
+
+// Type definition for the subset of BrowserProfileEvent properties that are built by this function
+export interface ProfileEventAttributes {
+  application: {
+    id: string
+  }
+  session?: {
+    id: string
+  }
+  view?: {
+    id: string[]
+    name: string[]
+  }
+  long_task?: {
+    id: string[]
+  }
+}
 
 /**
  * Builds attributes for the Profile Event.
@@ -9,7 +26,7 @@ import type { ProfileEventAttributes, RumProfilerTrace, RumViewEntry } from '../
  * @returns Additional attributes.
  */
 export function buildProfileEventAttributes(
-  profilerTrace: RumProfilerTrace,
+  profilerTrace: BrowserProfilerTrace,
   applicationId: string,
   sessionId: string | undefined
 ): ProfileEventAttributes {

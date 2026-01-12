@@ -1,8 +1,8 @@
 import { clocksOrigin } from '@datadog/browser-core'
 import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import type { LongTaskContext } from '@datadog/browser-rum-core'
-import type { ProfileEventAttributes, RumProfilerTrace, RumViewEntry } from '../../../types'
-import { buildProfileEventAttributes } from './buildProfileEventAttributes'
+import type { BrowserProfilerTrace, RumViewEntry } from '../../../types'
+import { buildProfileEventAttributes, ProfileEventAttributes } from './buildProfileEventAttributes'
 
 describe('buildProfileEventAttributes', () => {
   const applicationId = 'test-app-id'
@@ -27,7 +27,7 @@ describe('buildProfileEventAttributes', () => {
     }
   }
 
-  function createMockProfilerTrace(overrides: Partial<RumProfilerTrace> = {}): RumProfilerTrace {
+  function createMockProfilerTrace(overrides: Partial<BrowserProfilerTrace> = {}): BrowserProfilerTrace {
     return {
       startClocks: clocksOrigin(),
       endClocks: clocksOrigin(),

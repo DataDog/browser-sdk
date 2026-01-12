@@ -22,7 +22,7 @@ import type {
   ViewHistory,
 } from '@datadog/browser-rum-core'
 import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { RumProfilerTrace, RumViewEntry } from '../../types'
+import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
   Profiler,
@@ -289,7 +289,7 @@ export function createRumProfiler(
     instance.views.push(viewEntry)
   }
 
-  function handleProfilerTrace(trace: RumProfilerTrace): void {
+  function handleProfilerTrace(trace: BrowserProfilerTrace): void {
     // Find current session to assign it to the Profile.
     const sessionId = session.findTrackedSession()?.id
     const payload = assembleProfilingPayload(trace, configuration, sessionId)

@@ -4,67 +4,32 @@
  */
 
 /**
- * Schema of a Profile Event metadata.
+ * Schema of Browser SDK Profiling types.
  */
-export type ProfileEvent = ProfileEventAttributes & {
-  /**
-   * List of attachment filenames.
-   */
-  readonly attachments: string[]
-  /**
-   * Start time as ISO 8601 date string (yyyy-MM-dd'T'HH:mm:ss.SSS'Z').
-   */
-  readonly start: string
-  /**
-   * End time marking when the profile ended, as ISO 8601 date string (yyyy-MM-dd'T'HH:mm:ss.SSS'Z').
-   */
-  readonly end: string
-  /**
-   * Profiler family.
-   */
-  readonly family: 'android' | 'chrome' | 'ios'
-  /**
-   * Runtime environment.
-   */
-  readonly runtime: 'android' | 'chrome' | 'ios'
-  /**
-   * Profile ingestion event version.
-   */
-  readonly version: number
-  /**
-   * Comma-separated profiler tags.
-   */
-  readonly tags_profiler: string
-}
-
+export type BrowserProfiling = BrowserProfileEvent | BrowserProfilerTrace
 /**
  * Schema of the Browser SDK Profile Event payload.
  */
-export interface ProfileEventPayload {
+export type BrowserProfileEvent = ProfileCommonProperties & {
   /**
-   * Profile event metadata.
+   * Profile data format.
    */
-  readonly event: ProfileEvent & {
+  readonly format: 'json'
+  /**
+   * Datadog internal metadata.
+   */
+  readonly _dd: {
     /**
-     * Profile data format.
+     * Clock drift value. Used by Browser SDK.
      */
-    readonly format: 'json'
-    /**
-     * Datadog internal metadata.
-     */
-    readonly _dd: {
-      /**
-       * Clock drift value. Used by Browser SDK.
-       */
-      readonly clock_drift: number
-    }
+    readonly clock_drift: number
   }
-  readonly 'wall-time.json': RumProfilerTrace
 }
+
 /**
- * Schema of attributes for a Profile Event.
+ * Schema of a Profile Event metadata. Contains attributes shared by all profiles.
  */
-export interface ProfileEventAttributes {
+export interface ProfileCommonProperties {
   /**
    * Application properties.
    */
@@ -105,11 +70,39 @@ export interface ProfileEventAttributes {
      */
     readonly id: string[]
   }
+  /**
+   * List of attachment filenames.
+   */
+  readonly attachments: string[]
+  /**
+   * Start time as ISO 8601 date string (yyyy-MM-dd'T'HH:mm:ss.SSS'Z').
+   */
+  readonly start: string
+  /**
+   * End time marking when the profile ended, as ISO 8601 date string (yyyy-MM-dd'T'HH:mm:ss.SSS'Z').
+   */
+  readonly end: string
+  /**
+   * Profiler family.
+   */
+  readonly family: 'android' | 'chrome' | 'ios'
+  /**
+   * Runtime environment.
+   */
+  readonly runtime: 'android' | 'chrome' | 'ios'
+  /**
+   * Profile ingestion event version.
+   */
+  readonly version: number
+  /**
+   * Comma-separated profiler tags.
+   */
+  readonly tags_profiler: string
 }
 /**
- * The profiler trace data (wall-time profile).
+ * Schema of a RUM profiler trace containing profiling data enriched with RUM context.
  */
-export interface RumProfilerTrace {
+export interface BrowserProfilerTrace {
   /**
    * An array of profiler resources.
    */

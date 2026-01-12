@@ -19,7 +19,7 @@ import {
   mockViewHistory,
 } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
-import type { RumProfilerTrace } from '../../types'
+import type { BrowserProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './profiler'
 import type { ProfilerTrace, RUMProfiler } from './types'
@@ -49,7 +49,7 @@ describe('profiler', () => {
     profiler: RUMProfiler
     notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
     profilingContextManager: ProfilingContextManager
-    mockedRumProfilerTrace: RumProfilerTrace
+    mockedRumProfilerTrace: BrowserProfilerTrace
     longTaskContexts: { findLongTasks: jasmine.Spy }
   } {
     const sessionManager = createRumSessionManagerMock().setId('session-id-1')
@@ -60,7 +60,7 @@ describe('profiler', () => {
 
     const mockProfilerTrace: ProfilerTrace = deepClone(mockedTrace)
 
-    const mockedRumProfilerTrace: RumProfilerTrace = Object.assign(mockProfilerTrace, {
+    const mockedRumProfilerTrace: BrowserProfilerTrace = Object.assign(mockProfilerTrace, {
       startClocks: {
         relative: relativeNow(),
         timeStamp: timeStampNow(),
