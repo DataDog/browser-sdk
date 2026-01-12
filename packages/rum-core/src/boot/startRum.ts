@@ -83,6 +83,7 @@ export function startRum(
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
   sessionManager.expireObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED))
+  sessionManager.renewObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED))
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
