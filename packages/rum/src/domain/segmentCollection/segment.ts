@@ -49,7 +49,8 @@ export function createSegment({
     metadata.start = Math.min(metadata.start, record.timestamp)
     metadata.end = Math.max(metadata.end, record.timestamp)
     metadata.records_count += 1
-    metadata.has_full_snapshot ||= record.type === RecordType.FullSnapshot
+    metadata.has_full_snapshot ||=
+      record.type === RecordType.FullSnapshot || (record.type === RecordType.Change && metadata.index_in_view === 0)
 
     const prefix = encoder.isEmpty ? '{"records":[' : ','
     encoder.write(prefix + JSON.stringify(record), (additionalEncodedBytesCount) => {
