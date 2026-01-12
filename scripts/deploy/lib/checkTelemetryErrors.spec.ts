@@ -65,6 +65,7 @@ describe('check-telemetry-errors', () => {
 
     await mockModule(path.resolve(import.meta.dirname, '../../lib/executionUtils.ts'), {
       fetchHandlingError: fetchHandlingErrorMock,
+      timeout: mock.fn(() => Promise.resolve()),
     })
 
     await mockModule(path.resolve(import.meta.dirname, '../../lib/datacenter.ts'), {
