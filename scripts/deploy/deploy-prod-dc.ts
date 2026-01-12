@@ -1,7 +1,7 @@
 import { parseArgs } from 'node:util'
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
-import { getAllMinorDcs, getAllPrivateDcs } from '../lib/datacenter.ts'
+import { DatacenterType, getAllDatacentersMetadata } from '../lib/datacenter.ts'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 import { checkTelemetryErrors } from './lib/checkTelemetryErrors.ts'
 
@@ -72,12 +72,14 @@ async function gateTelemetryErrors(datacenters: string[]): Promise<void> {
 }
 
 async function getDatacenters(datacenterGroup: string): Promise<string[]> {
+  const datacenters = await getAllDatacentersMetadata()
+
   if (datacenterGroup === 'minor-dcs') {
-    return await getAllMinorDcs()
+    return datacenters.filter((dc) => dc.type === DatacenterType.MINOR).map((dc) => dc.name)
   }
 
   if (datacenterGroup === 'private-regions') {
-    return await getAllPrivateDcs()
+    return datacenters.filter((dc) => dc.type === DatacenterType.PRIVATE).map((dc) => dc.name)
   }
 
   return datacenterGroup.split(',')

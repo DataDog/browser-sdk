@@ -3,7 +3,7 @@
  */
 import { printLog, fetchHandlingError } from '../../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
-import { getSite } from '../../lib/datacenter.ts'
+import { getDatacenterMetadata } from '../../lib/datacenter.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
 
@@ -41,12 +41,14 @@ export async function checkTelemetryErrors(datacenters: string[], version: strin
   const queries = getQueries(version)
 
   for (const datacenter of datacenters) {
-    const site = await getSite(datacenter)
+    const datacenterMetadata = await getDatacenterMetadata(datacenter)
 
-    if (!site) {
+    if (!datacenterMetadata?.site) {
       printLog(`No site is configured for datacenter ${datacenter}. skipping...`)
       continue
     }
+
+    const site = datacenterMetadata.site
 
     const apiKey = getTelemetryOrgApiKey(site)
     const applicationKey = getTelemetryOrgApplicationKey(site)

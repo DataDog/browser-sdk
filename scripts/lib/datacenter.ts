@@ -1,54 +1,59 @@
 import { fetchHandlingError } from './executionUtils.ts'
 
-// Major DCs are the ones that are deployed last.
-// They have their own step jobs in `deploy-manual.yml` and `deploy-auto.yml`.
-const MAJOR_DCS = ['gov', 'us1', 'eu1']
+export enum DatacenterType {
+  // Minor DCs are the ones that are deployed first, all at once.
+  MINOR = 'minor',
 
-const VAULT_ADDR = process.env.VAULT_ADDR || 'https://vault.us1.ddbuild.io'
-const RUNTIME_METADATA_SERVICE_URL = 'https://runtime-metadata-service.us1.ddbuild.io/v2/datacenters'
+  // Private DCs are deployed next, all at once
+  PRIVATE = 'private',
 
-export async function getSite(datacenter: string): Promise<string> {
-  return (await getAllDatacentersMetadata())[datacenter].site
-}
-
-export async function getAllDatacenters(): Promise<string[]> {
-  return Object.keys(await getAllDatacentersMetadata())
-}
-
-export async function getAllMinorDcs(): Promise<string[]> {
-  return (await getAllDatacenters()).filter((dc) => !MAJOR_DCS.includes(dc) && !dc.startsWith('pr'))
-}
-
-export async function getAllPrivateDcs(): Promise<string[]> {
-  return (await getAllDatacenters()).filter((dc) => dc.startsWith('pr'))
+  // Major DCs are the ones that are deployed last, one after the other.
+  // (i.e. they have their own step jobs in `deploy-manual.yml` and `deploy-auto.yml`)
+  MAJOR = 'major',
 }
 
 interface Datacenter {
   name: string
   site: string
+  type: DatacenterType
 }
 
 interface DatacentersResponse {
-  datacenters: Datacenter[]
+  datacenters: Array<{
+    name: string
+    site: string
+  }>
 }
 
-let cachedDatacentersPromise: Promise<Record<string, Datacenter>> | undefined
+const MAJOR_DCS = ['gov', 'us1', 'eu1']
 
-function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> {
+const VAULT_ADDR = process.env.VAULT_ADDR || 'https://vault.us1.ddbuild.io'
+const RUNTIME_METADATA_SERVICE_URL = 'https://runtime-metadata-service.us1.ddbuild.io/v2/datacenters'
+
+export async function getDatacenterMetadata(name: string): Promise<Datacenter | undefined> {
+  const datacentersMetadata = await getAllDatacentersMetadata()
+
+  return datacentersMetadata.find((dc) => dc.name === name)
+}
+
+let cachedDatacentersPromise: Promise<Datacenter[]> | undefined
+
+export function getAllDatacentersMetadata(): Promise<Datacenter[]> {
   if (cachedDatacentersPromise) {
     return cachedDatacentersPromise
   }
 
   cachedDatacentersPromise = fetchDatacentersFromRuntimeMetadataService().then((datacenters) => {
-    const cachedDatacenters: Record<string, Datacenter> = {}
+    const cachedDatacenters: Datacenter[] = []
 
     for (const datacenter of datacenters) {
       const shortName = datacenter.name.split('.')[0]
 
-      cachedDatacenters[shortName] = {
-        name: datacenter.name,
+      cachedDatacenters.push({
+        name: shortName,
         site: datacenter.site,
-      }
+        type: getDatacenterType(shortName),
+      })
     }
 
     return cachedDatacenters
@@ -57,7 +62,7 @@ function getAllDatacentersMetadata(): Promise<Record<string, Datacenter>> {
   return cachedDatacentersPromise
 }
 
-async function fetchDatacentersFromRuntimeMetadataService(): Promise<Datacenter[]> {
+async function fetchDatacentersFromRuntimeMetadataService(): Promise<DatacentersResponse['datacenters']> {
   const token = await getVaultToken()
 
   // Filter for production environment and site flavor only
@@ -86,4 +91,16 @@ async function getVaultToken(): Promise<string> {
 
   const data = (await response.json()) as { data: { token: string } }
   return data.data.token
+}
+
+function getDatacenterType(name: string): DatacenterType {
+  if (name.startsWith('pr')) {
+    return DatacenterType.PRIVATE
+  }
+
+  if (MAJOR_DCS.includes(name)) {
+    return DatacenterType.MAJOR
+  }
+
+  return DatacenterType.MINOR
 }

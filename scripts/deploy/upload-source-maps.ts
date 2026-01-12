@@ -3,7 +3,7 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvValue } from '../lib/buildEnv.ts'
 import { getTelemetryOrgApiKey } from '../lib/secrets.ts'
-import { getSite, getAllDatacenters } from '../lib/datacenter.ts'
+import { getAllDatacentersMetadata, getDatacenterMetadata } from '../lib/datacenter.ts'
 import { forEachFile } from '../lib/filesUtils.ts'
 import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } from './lib/deploymentUtils.ts'
 
@@ -20,8 +20,7 @@ async function getSitesByVersion(version: string): Promise<string[]> {
     case 'canary':
       return ['datadoghq.com']
     default: {
-      const datacenters = await getAllDatacenters()
-      return await Promise.all(datacenters.map((dc) => getSite(dc)))
+      return (await getAllDatacentersMetadata()).map((dc) => dc.site)
     }
   }
 }
@@ -58,7 +57,13 @@ async function uploadSourceMaps(
       uploadPath = buildRootUploadPath(packageName, version)
       await renameFilesWithVersionSuffix(bundleFolder, version)
     } else {
-      sites = [await getSite(uploadPathType)]
+      const datacenterMetadata = await getDatacenterMetadata(uploadPathType)
+
+      if (!datacenterMetadata) {
+        throw new Error(`No datacenter metadata found for ${uploadPathType}`)
+      }
+
+      sites = [datacenterMetadata.site]
       uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
     }
     const prefix = path.dirname(`/${uploadPath}`)
