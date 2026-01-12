@@ -14,7 +14,10 @@ import type { SerializedNodeWithId } from '../../../types'
 import { NodeType } from '../../../types'
 import { appendElement } from '../../../../../rum-core/test'
 import type { AddShadowRootCallBack } from '../shadowRootsController'
-import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
+import {
+  createSerializationTransactionForTesting,
+  serializeNodeAndVerifyChangeRecord as serializeNode,
+} from '../test/serialization.specHelper'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import type { RecordingScope } from '../recordingScope'
@@ -27,7 +30,7 @@ import {
   AST_MASK_UNLESS_ALLOWLISTED,
   AST_ALLOW,
 } from './htmlAst.specHelper'
-import { serializeChildNodes, serializeDocumentNode, serializeNode } from './serializeNode'
+import { serializeChildNodes, serializeDocumentNode } from './serializeNode'
 import type { SerializationStats } from './serializationStats'
 import { createSerializationStats } from './serializationStats'
 import type { SerializationTransaction } from './serializationTransaction'
@@ -75,6 +78,71 @@ describe('serializeNode', () => {
       })
     })
 
+    it('serializes SVG elements', () => {
+      const svgElement = appendSubtree(
+        `
+          <svg viewBox="0 0 100 100">
+            <clipPath id="myClip">
+              <circle cx="40" cy="35" r="35" />
+            </clipPath>
+            <path
+              id="heart"
+              d="M10,30 A20,20,0,0,1,50,30 A20,20,0,0,1,90,30 Q90,60,50,90 Q10,60,10,30 Z" />
+            <use clip-path="url(#myClip)" href="#heart" fill="red" />
+          </svg>
+        `
+      )
+      expect(serializeNode(svgElement, NodePrivacyLevel.ALLOW, transaction)).toEqual({
+        type: NodeType.Element,
+        id: 0,
+        tagName: 'svg',
+        attributes: { viewBox: '0 0 100 100' },
+        isSVG: true,
+        childNodes: [
+          {
+            type: NodeType.Element,
+            id: 1,
+            tagName: 'clippath',
+            attributes: { id: 'myClip' },
+            isSVG: true,
+            childNodes: [
+              {
+                type: NodeType.Element,
+                id: 2,
+                tagName: 'circle',
+                attributes: { cx: '40', cy: '35', r: '35' },
+                isSVG: true,
+                childNodes: [],
+              },
+            ],
+          },
+          {
+            type: NodeType.Element,
+            id: 3,
+            tagName: 'path',
+            attributes: {
+              id: 'heart',
+              d: 'M10,30 A20,20,0,0,1,50,30 A20,20,0,0,1,90,30 Q90,60,50,90 Q10,60,10,30 Z',
+            },
+            isSVG: true,
+            childNodes: [],
+          },
+          {
+            type: NodeType.Element,
+            id: 4,
+            tagName: 'use',
+            attributes: {
+              'clip-path': 'url(#myClip)',
+              href: '#heart',
+              fill: 'red',
+            },
+            isSVG: true,
+            childNodes: [],
+          },
+        ],
+      })
+    })
+
     it('serializes hidden elements', () => {
       const element = document.createElement('div')
       element.setAttribute(PRIVACY_ATTR_NAME, PRIVACY_ATTR_VALUE_HIDDEN)
@@ -114,23 +182,24 @@ describe('serializeNode', () => {
     })
 
     describe('rr scroll attributes', () => {
-      let element: HTMLElement
-
-      beforeEach(() => {
-        element = appendElement(
-          '<div style="width: 100px; height: 100px; overflow: scroll"><div style="width: 200px; height: 200px"></div></div>'
+      const elementStyle = 'width: 100px; height: 100px; overflow: scroll'
+      const createScrolledElement = (x: number, y: number): Element => {
+        const element = appendElement(
+          `<div style="${elementStyle}"><div style="width: 200px; height: 200px"></div></div>`
         )
-        element.scrollBy(10, 20)
-      })
+        element.scrollBy(x, y)
+        return element
+      }
 
       it('should be retrieved from attributes during initial full snapshot', () => {
         const transaction = createSerializationTransactionForTesting({
           kind: SerializationKind.INITIAL_FULL_SNAPSHOT,
           scope,
         })
-        const node = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
+        const element = createScrolledElement(10, 20)
+        const serializedNode = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
 
-        expect(node?.attributes).toEqual(
+        expect(serializedNode?.attributes).toEqual(
           jasmine.objectContaining({
             rr_scrollLeft: 10,
             rr_scrollTop: 20,
@@ -139,28 +208,74 @@ describe('serializeNode', () => {
         expect(scope.elementsScrollPositions.get(element)).toEqual({ scrollLeft: 10, scrollTop: 20 })
       })
 
+      it('does not serialize rr_scrollLeft if it would be zero', () => {
+        const transaction = createSerializationTransactionForTesting({
+          kind: SerializationKind.INITIAL_FULL_SNAPSHOT,
+          scope,
+        })
+        const element = createScrolledElement(0, 20)
+        const serializedNode = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
+
+        expect(serializedNode?.attributes).toEqual({
+          rr_scrollTop: 20,
+          style: elementStyle,
+        })
+        expect(scope.elementsScrollPositions.get(element)).toEqual({ scrollLeft: 0, scrollTop: 20 })
+      })
+
+      it('does not serialize rr_scrollTop if it would be zero', () => {
+        const transaction = createSerializationTransactionForTesting({
+          kind: SerializationKind.INITIAL_FULL_SNAPSHOT,
+          scope,
+        })
+        const element = createScrolledElement(10, 0)
+        const serializedNode = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
+
+        expect(serializedNode?.attributes).toEqual({
+          rr_scrollLeft: 10,
+          style: elementStyle,
+        })
+        expect(scope.elementsScrollPositions.get(element)).toEqual({ scrollLeft: 10, scrollTop: 0 })
+      })
+
+      it('does not serialize any rr_scroll attributes if the element is not scrolled', () => {
+        const transaction = createSerializationTransactionForTesting({
+          kind: SerializationKind.INITIAL_FULL_SNAPSHOT,
+          scope,
+        })
+        const element = createScrolledElement(0, 0)
+        const serializedNode = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
+
+        expect(serializedNode?.attributes).toEqual({
+          style: elementStyle,
+        })
+        expect(scope.elementsScrollPositions.get(element)).toEqual(undefined)
+      })
+
       it('should not be retrieved from attributes during subsequent full snapshot', () => {
         const transaction = createSerializationTransactionForTesting({
           kind: SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
           scope,
         })
-        const node = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
+        const element = createScrolledElement(10, 20)
+        const serializedNode = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
 
-        expect(node?.attributes.rr_scrollLeft).toBeUndefined()
-        expect(node?.attributes.rr_scrollTop).toBeUndefined()
+        expect(serializedNode?.attributes.rr_scrollLeft).toBeUndefined()
+        expect(serializedNode?.attributes.rr_scrollTop).toBeUndefined()
         expect(scope.elementsScrollPositions.get(element)).toBeUndefined()
       })
 
       it('should be retrieved from elementsScrollPositions during subsequent full snapshot', () => {
+        const element = createScrolledElement(10, 20)
         scope.elementsScrollPositions.set(element, { scrollLeft: 10, scrollTop: 20 })
 
         const transaction = createSerializationTransactionForTesting({
           kind: SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
           scope,
         })
-        const node = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
+        const serializedNode = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
 
-        expect(node?.attributes).toEqual(
+        expect(serializedNode?.attributes).toEqual(
           jasmine.objectContaining({
             rr_scrollLeft: 10,
             rr_scrollTop: 20,
@@ -169,16 +284,17 @@ describe('serializeNode', () => {
       })
 
       it('should not be retrieved during mutation', () => {
+        const element = createScrolledElement(10, 20)
         scope.elementsScrollPositions.set(element, { scrollLeft: 10, scrollTop: 20 })
 
         const transaction = createSerializationTransactionForTesting({
           kind: SerializationKind.INCREMENTAL_SNAPSHOT,
           scope,
         })
-        const node = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
+        const serializedNode = serializeNode(element, NodePrivacyLevel.ALLOW, transaction)
 
-        expect(node?.attributes.rr_scrollLeft).toBeUndefined()
-        expect(node?.attributes.rr_scrollTop).toBeUndefined()
+        expect(serializedNode?.attributes.rr_scrollLeft).toBeUndefined()
+        expect(serializedNode?.attributes.rr_scrollTop).toBeUndefined()
       })
     })
 
@@ -643,13 +759,17 @@ describe('serializeNode', () => {
           "<link rel='stylesheet' href='https://datadoghq.com/some/style.css' />",
           document.head
         )
+
+        const styleSheet = {
+          href: 'https://datadoghq.com/some/style.css',
+          cssRules: [{ cssText: 'body { width: 100%; }' }],
+        }
         Object.defineProperty(document, 'styleSheets', {
-          value: [
-            {
-              href: 'https://datadoghq.com/some/style.css',
-              cssRules: [{ cssText: 'body { width: 100%; }' }],
-            },
-          ],
+          value: [styleSheet],
+          configurable: true,
+        })
+        Object.defineProperty(linkNode, 'sheet', {
+          value: styleSheet,
           configurable: true,
         })
 
@@ -964,10 +1084,12 @@ describe('serializeNode', () => {
 
 describe('serializeDocumentNode handles', function testAllowDomTree() {
   const toJSONObj = (data: any) => JSON.parse(JSON.stringify(data)) as unknown
+  let stats: SerializationStats
   let transaction: SerializationTransaction
 
   beforeEach(() => {
-    transaction = createSerializationTransactionForTesting()
+    stats = createSerializationStats()
+    transaction = createSerializationTransactionForTesting({ stats })
     registerCleanupTask(() => {
       if (isAdoptedStyleSheetsSupported()) {
         document.adoptedStyleSheets = []
@@ -1000,6 +1122,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
           },
         ],
       })
+      expect(stats.cssText).toEqual({ count: 1, max: 20, sum: 20 })
     })
   })
 
@@ -1047,3 +1170,7 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
     })
   })
 })
+
+function appendSubtree(html: string): Element {
+  return appendElement(html.replace(/(^|\n)\s+/g, ' ').replace(/> </g, '><'))
+}
