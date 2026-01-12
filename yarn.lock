@@ -425,7 +425,7 @@ __metadata:
     "@msgpack/msgpack": "npm:3.1.2"
     "@openfeature/core": "npm:1.9.1"
     "@types/pako": "npm:2.0.4"
-    dd-trace: "github:datadog/dd-trace-js#86b4f716ce3f5fcf36d8e0a6e79a2104c80c55a5"
+    dd-trace: "github:datadog/dd-trace-js#3c661a16992b70ce8820aa50077d91d3fe21478b"
     electron: "npm:39"
     graphql: "npm:16.12.0"
     pako: "npm:2.1.0"
@@ -5563,9 +5563,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dd-trace@github:datadog/dd-trace-js#86b4f716ce3f5fcf36d8e0a6e79a2104c80c55a5":
+"dd-trace@github:datadog/dd-trace-js#3c661a16992b70ce8820aa50077d91d3fe21478b":
   version: 6.0.0-pre
-  resolution: "dd-trace@https://github.com/datadog/dd-trace-js.git#commit=86b4f716ce3f5fcf36d8e0a6e79a2104c80c55a5"
+  resolution: "dd-trace@https://github.com/datadog/dd-trace-js.git#commit=3c661a16992b70ce8820aa50077d91d3fe21478b"
   dependencies:
     "@datadog/libdatadog": "npm:0.7.0"
     "@datadog/native-appsec": "npm:10.3.0"
@@ -5597,7 +5597,7 @@ __metadata:
       optional: true
     "@opentelemetry/api-logs":
       optional: true
-  checksum: 10c0/01e36bfe91f5fa828fe1591f02a78c94cb05e098f79fcc413bc62cea015c65a764341d5100fbc33735b9f54fef56c1eb3526a956e83b750e1ab515562aec49fb
+  checksum: 10c0/974e3032ab7132c986a01c6ad3755e67631f670fcbd23235bcbe280f9c8df53ff7993cf2f4143ea3e6e816f601efe02d2497d252cba33db2c088724714073a31
   languageName: node
   linkType: hard
 
