@@ -1,5 +1,3 @@
-import { ExperimentalFeature } from '@datadog/browser-core'
-import { mockExperimentalFeatures } from '../../../../core/test'
 import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacyConstants'
 import { getNodeSelfPrivacyLevel } from '../privacy'
@@ -115,7 +113,6 @@ describe('getActionNameFromElement', () => {
   })
 
   it('should introduce whitespace for block-level display values', () => {
-    mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
     const testCases = [
       { display: 'block', expected: 'space' },
       { display: 'inline-block', expected: 'no-space' },
@@ -484,7 +481,6 @@ describe('getActionNameFromElement', () => {
     })
 
     it('removes only the child with programmatic action name in textual content', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       const { name, nameSource } = getActionNameFromElement(
         appendElement('<div>Foobar Baz<div data-dd-action-name="custom action">bar<div></div>'),
         defaultConfiguration
@@ -512,7 +508,6 @@ describe('getActionNameFromElement', () => {
     }
 
     it('preserves privacy level of the element when defaultPrivacyLevel is mask-unless-allowlisted', () => {
-      mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       const { name, nameSource } = getActionNameFromElement(
         appendElement(`
         <div data-dd-privacy="mask">
@@ -666,7 +661,6 @@ describe('getActionNameFromElement', () => {
         },
       ]
       testCases.forEach(({ html, defaultPrivacyLevel, allowlist, expectedName, expectedNameSource }) => {
-        mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
         ;(window as BrowserWindow).$DD_ALLOW = new Set(allowlist)
         const target = appendElement(html)
         const { name, nameSource } = getActionNameFromElement(
@@ -883,7 +877,6 @@ describe('getActionNameFromElement', () => {
       })
 
       it('inherit privacy level and remove only the masked child', () => {
-        mockExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
         expect(
           getActionNameFromElement(
             appendElement(`
