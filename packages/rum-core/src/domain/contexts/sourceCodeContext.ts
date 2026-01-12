@@ -1,28 +1,58 @@
-import type { Context } from '@datadog/browser-core'
-import { SKIPPED, computeStackTrace, objectEntries, addTelemetryError, HookNames } from '@datadog/browser-core'
+import {
+  SKIPPED,
+  computeStackTrace,
+  objectEntries,
+  addTelemetryError,
+  HookNames,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import type { Hooks, DefaultRumEventAttributes } from '../hooks'
 
-interface BrowserWindow {
-  DD_SOURCE_CODE_CONTEXT?: { [stack: string]: Context }
+interface SourceCodeContext {
+  service: string
+  version?: string
 }
+
+export interface BrowserWindow {
+  DD_SOURCE_CODE_CONTEXT?: { [stack: string]: SourceCodeContext }
+}
+type StackFrameUrl = string
+
 export function startSourceCodeContext(hooks: Hooks) {
+  if (!isExperimentalFeatureEnabled(ExperimentalFeature.SOURCE_CODE_CONTEXT)) {
+    return
+  }
+
   const browserWindow = window as BrowserWindow
-  browserWindow.DD_SOURCE_CODE_CONTEXT = browserWindow.DD_SOURCE_CODE_CONTEXT || {}
-  const contextByFile = new Map<string, Context>()
+  const contextByFile = new Map<StackFrameUrl, SourceCodeContext>()
 
-  objectEntries(browserWindow.DD_SOURCE_CODE_CONTEXT).forEach(([stack, context]) => {
-    const stackTrace = computeStackTrace({ stack })
-    const firstFrame = stackTrace.stack[0]
-    if (firstFrame.url) {
-      contextByFile.set(firstFrame.url, context)
-    } else {
-      addTelemetryError('Source code context: missing frame url', { stack })
+  function buildContextByFile() {
+    if (!browserWindow.DD_SOURCE_CODE_CONTEXT) {
+      return
     }
-  })
 
-  // TODO: allow late global variable update to be taken into account
+    objectEntries(browserWindow.DD_SOURCE_CODE_CONTEXT).forEach(([stack, context]) => {
+      const stackTrace = computeStackTrace({ stack })
+      const firstFrame = stackTrace.stack[0]
 
-  hooks.register(HookNames.Assemble, ({ domainContext, rawRumEvent }) => {
+      if (!firstFrame.url) {
+        addTelemetryError('Source code context: missing frame url', { stack })
+        return
+      }
+      // don't overwrite existing context
+      if (!contextByFile.has(firstFrame.url)) {
+        contextByFile.set(firstFrame.url, context)
+      }
+    })
+
+    browserWindow.DD_SOURCE_CODE_CONTEXT = {}
+  }
+
+  buildContextByFile()
+
+  hooks.register(HookNames.Assemble, ({ domainContext, rawRumEvent }): DefaultRumEventAttributes | SKIPPED => {
+    buildContextByFile()
     let stack
     if ('handling_stack' in domainContext) {
       stack = domainContext.handling_stack
@@ -38,7 +68,11 @@ export function startSourceCodeContext(hooks: Hooks) {
     if (firstFrame.url) {
       const context = contextByFile.get(firstFrame.url)
       if (context) {
-        return context as DefaultRumEventAttributes
+        return {
+          type: rawRumEvent.type,
+          service: context.service,
+          version: context.version,
+        }
       }
     }
     return SKIPPED
