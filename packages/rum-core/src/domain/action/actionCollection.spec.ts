@@ -376,14 +376,14 @@ describe('actionCollection', () => {
       const secondActionId = actionContexts.findActionId()
       expect(secondActionId).toBeDefined()
 
-      expect(secondActionId).not.toBe(firstActionId)
+      expect(secondActionId).not.toEqual(firstActionId)
 
       clock.tick(200)
       stopAction('checkout')
 
       expect(rawRumEvents).toHaveSize(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.id).toBe(secondActionId as string)
+      expect(actionEvent.action.id).toEqual((secondActionId as string[])[0])
       expect(rawRumEvents[0].duration).toBe(200 as Duration)
     })
 
@@ -408,7 +408,7 @@ describe('actionCollection', () => {
 
       expect(rawRumEvents).toHaveSize(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.id).toBe(actionId as string)
+      expect(actionEvent.action.id).toEqual((actionId as string[])[0])
     })
 
     it('should track error count during custom action', () => {

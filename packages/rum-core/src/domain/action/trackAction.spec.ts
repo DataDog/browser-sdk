@@ -130,7 +130,7 @@ describe('trackAction', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
       const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-      expect(actionTracker.findActionId()).toBe(trackedAction.id)
+      expect(actionTracker.findActionId()).toEqual([trackedAction.id])
     })
 
     it('should return undefined for actions that were stopped without end time', () => {
@@ -148,7 +148,7 @@ describe('trackAction', () => {
 
       trackedAction.stop(200 as RelativeTime)
 
-      expect(actionTracker.findActionId(150 as RelativeTime)).toBe(trackedAction.id)
+      expect(actionTracker.findActionId(150 as RelativeTime)).toEqual([trackedAction.id])
     })
 
     it('should return undefined for events outside the action time range', () => {
@@ -243,7 +243,7 @@ describe('trackAction', () => {
         timeStamp: 1000 as TimeStamp,
       })
 
-      expect(actionTracker.findActionId()).toBe(trackedAction.id)
+      expect(actionTracker.findActionId()).toEqual([trackedAction.id])
 
       actionTracker.stop()
 

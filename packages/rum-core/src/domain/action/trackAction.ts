@@ -88,7 +88,7 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     if (ids.length === 0) {
       return undefined
     }
-    return ids.length === 1 ? ids[0] : ids
+    return ids
   }
 
   function stop() {
