@@ -1,11 +1,5 @@
 import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
-import {
-  timeStampNow,
-  Observable,
-  getRelativeTime,
-  elapsed,
-  relativeToClocks,
-} from '@datadog/browser-core'
+import { timeStampNow, Observable, getRelativeTime, elapsed, relativeToClocks } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
