@@ -767,13 +767,26 @@ describe('preStartRum', () => {
         stopAction: stopActionSpy,
       } as unknown as StartRumResult)
 
+      const beforeStart = clocksNow()
       strategy.startAction('user_login', { type: ActionType.CUSTOM })
+      const beforeStop = clocksNow()
       strategy.stopAction('user_login')
 
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
-      expect(startActionSpy).toHaveBeenCalledWith('user_login', { type: ActionType.CUSTOM })
-      expect(stopActionSpy).toHaveBeenCalledWith('user_login', undefined)
+      expect(startActionSpy).toHaveBeenCalledWith(
+        'user_login',
+        jasmine.objectContaining({
+          type: ActionType.CUSTOM,
+          startClocks: jasmine.objectContaining({ relative: beforeStart.relative }),
+        })
+      )
+      expect(stopActionSpy).toHaveBeenCalledWith(
+        'user_login',
+        jasmine.objectContaining({
+          stopClocks: jasmine.objectContaining({ relative: beforeStop.relative }),
+        })
+      )
     })
   })
 

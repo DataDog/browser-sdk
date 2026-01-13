@@ -11,7 +11,6 @@ import {
   elapsed,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
-  relativeNow,
 } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
@@ -46,6 +45,16 @@ export interface ActionOptions {
    * Action key
    */
   actionKey?: string
+
+  /**
+   * @internal - used to preserve timing for pre-init calls
+   */
+  startClocks?: ClocksState
+
+  /**
+   * @internal - used to preserve timing for pre-init calls
+   */
+  stopClocks?: ClocksState
 }
 
 interface ActiveCustomAction extends ActionOptions {
@@ -151,17 +160,19 @@ export function startActionCollection(
 
     const existingAction = activeCustomActions.get(lookupKey)
     if (existingAction) {
-      existingAction.trackedAction.stop(relativeNow())
+      existingAction.trackedAction.discard()
       activeCustomActions.delete(lookupKey)
     }
 
-    const startClocks = clocksNow()
+    const startClocks = options.startClocks ?? clocksNow()
     const trackedAction = actionTracker.createTrackedAction(startClocks)
 
     activeCustomActions.set(lookupKey, {
       name,
       trackedAction,
-      ...options,
+      type: options.type,
+      context: options.context,
+      actionKey: options.actionKey,
     })
   }
 
@@ -177,7 +188,7 @@ export function startActionCollection(
       return
     }
 
-    const stopClocks = clocksNow()
+    const stopClocks = options.stopClocks ?? clocksNow()
     const duration = elapsed(activeAction.trackedAction.startClocks.timeStamp, stopClocks.timeStamp)
 
     activeAction.trackedAction.stop(stopClocks.relative)

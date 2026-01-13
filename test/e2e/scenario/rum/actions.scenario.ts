@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test'
 import { createTest, html, waitForServersIdle, waitForRequests } from '../../lib/framework'
 
+function hasActionId(event: { action?: { id?: string | string[] } }, actionId: string): boolean {
+  return [event.action?.id].flat().includes(actionId)
+}
+
 test.describe('action collection', () => {
   createTest('track a click action')
     .withRum({ trackUserInteractions: true })
@@ -545,9 +549,7 @@ test.describe('custom actions with startAction/stopAction', () => {
       expect(errorEvents.length).toBeGreaterThanOrEqual(1)
 
       const actionId = actionEvents[0].action.id
-      const relatedError = errorEvents.find(
-        (e) => e.action && (Array.isArray(e.action.id) ? e.action.id.includes(actionId!) : e.action.id === actionId)
-      )
+      const relatedError = errorEvents.find((e) => hasActionId(e, actionId!))
       expect(relatedError).toBeDefined()
     })
 
@@ -571,9 +573,7 @@ test.describe('custom actions with startAction/stopAction', () => {
       expect(actionEvents[0].action.resource?.count).toBe(1)
 
       const actionId = actionEvents[0].action.id
-      const relatedResource = resourceEvents.find(
-        (e) => e.action && (Array.isArray(e.action.id) ? e.action.id.includes(actionId!) : e.action.id === actionId)
-      )
+      const relatedResource = resourceEvents.find((e) => hasActionId(e, actionId!))
       expect(relatedResource).toBeDefined()
     })
 
@@ -624,5 +624,57 @@ test.describe('custom actions with startAction/stopAction', () => {
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.type).toBe('swipe')
+    })
+
+  createTest('preserve timing when startAction is called before init')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.startAction('pre_init_action')
+
+      setTimeout(() => {
+        window.DD_RUM!.init(configuration)
+        window.DD_RUM!.stopAction('pre_init_action')
+      }, 50)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.target?.name).toBe('pre_init_action')
+      expect(actionEvents[0].action.loading_time).toBeGreaterThanOrEqual(40 * 1e6)
+    })
+
+  createTest('attribute errors and resources to action started before init')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.startAction('pre_init_action')
+
+      setTimeout(() => {
+        window.DD_RUM!.init(configuration)
+
+        window.DD_RUM!.addError(new Error('Test error'))
+        void fetch('/ok')
+      }, 10)
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await waitForRequests(page)
+
+      await page.evaluate(() => {
+        window.DD_RUM!.stopAction('pre_init_action')
+      })
+
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+
+      const actionId = actionEvents[0].action.id
+      const relatedError = intakeRegistry.rumErrorEvents.find((e) => hasActionId(e, actionId!))
+      expect(relatedError).toBeDefined()
+
+      const fetchResources = intakeRegistry.rumResourceEvents.filter((e) => e.resource.type === 'fetch')
+      const relatedFetch = fetchResources.find((e) => hasActionId(e, actionId!))
+      expect(relatedFetch).toBeDefined()
     })
 })
