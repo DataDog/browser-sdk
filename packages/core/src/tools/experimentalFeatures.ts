@@ -20,6 +20,7 @@ export enum ExperimentalFeature {
   SHORT_SESSION_INVESTIGATION = 'short_session_investigation',
   AVOID_FETCH_KEEPALIVE = 'avoid_fetch_keepalive',
   START_STOP_ACTION = 'start_stop_action',
+  USE_CHANGE_RECORDS = 'use_change_records',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
