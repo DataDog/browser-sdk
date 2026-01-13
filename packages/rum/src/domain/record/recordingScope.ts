@@ -12,6 +12,8 @@ import type { ShadowRootsController } from './shadowRootsController'
  * or data which aren't present in the current stream.
  */
 export interface RecordingScope {
+  resetIds(): void
+
   configuration: RumConfiguration
   elementsScrollPositions: ElementsScrollPositions
   eventIds: EventIds
@@ -31,6 +33,13 @@ export function createRecordingScope(
   const stringIds = createStringIds()
   const styleSheetIds = createStyleSheetIds()
   return {
+    resetIds(): void {
+      eventIds.clear()
+      nodeIds.clear()
+      stringIds.clear()
+      styleSheetIds.clear()
+    },
+
     configuration,
     elementsScrollPositions,
     eventIds,
