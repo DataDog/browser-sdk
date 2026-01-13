@@ -1,7 +1,7 @@
 import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { Hooks } from '../hooks'
+import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { DisplayContext } from './displayContext'
 import { startDisplayContext } from './displayContext'
@@ -27,7 +27,7 @@ describe('displayContext', () => {
     it('should set the display context', () => {
       displayContext = startDisplayContext(hooks, mockRumConfiguration())
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime })
+      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime } as AssembleHookParams)
       expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(1)
 
       expect(event).toEqual({

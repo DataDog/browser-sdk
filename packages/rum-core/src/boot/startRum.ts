@@ -188,7 +188,6 @@ export function startRumEventCollection(
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, session, recorderApi, viewHistory)
   startConnectivityContext(hooks)
-  startSourceCodeContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
@@ -232,6 +231,9 @@ export function startRumEventCollection(
     viewHistory,
     initialViewOptions
   )
+
+  startSourceCodeContext(hooks)
+
   cleanupTasks.push(stopViewCollection)
 
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)

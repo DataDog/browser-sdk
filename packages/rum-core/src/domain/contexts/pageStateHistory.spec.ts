@@ -5,7 +5,7 @@ import { mockClock, registerCleanupTask } from '../../../../core/test'
 import { createPerformanceEntry, mockPerformanceObserver, mockRumConfiguration } from '../../../test'
 import { RumEventType } from '../../rawRumEvent.types'
 import * as performanceObservable from '../../browser/performanceObservable'
-import type { Hooks } from '../hooks'
+import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { PageStateHistory } from './pageStateHistory'
 import { PageState, startPageStateHistory } from './pageStateHistory'
@@ -97,7 +97,7 @@ describe('pageStateHistory', () => {
           eventType: 'view',
           startTime: clock.relative(15),
           duration: 20 as Duration,
-        })
+        } as AssembleHookParams)
 
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
@@ -125,7 +125,7 @@ describe('pageStateHistory', () => {
           eventType: 'view',
           startTime: clock.relative(0),
           duration: 10 as Duration,
-        })
+        } as AssembleHookParams)
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
           _dd: { page_states: jasmine.any(Array) },
@@ -137,7 +137,7 @@ describe('pageStateHistory', () => {
           eventType: 'view',
           startTime: clock.relative(-10),
           duration: 0 as Duration,
-        })
+        } as AssembleHookParams)
 
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
@@ -159,7 +159,7 @@ describe('pageStateHistory', () => {
           eventType: 'view',
           startTime: clock.relative(0),
           duration: Infinity as Duration,
-        })
+        } as AssembleHookParams)
 
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
@@ -192,7 +192,7 @@ describe('pageStateHistory', () => {
           eventType,
           startTime: clock.relative(0),
           duration: 0 as Duration,
-        })
+        } as AssembleHookParams)
 
         expect(defaultRumEventAttributes).toEqual({
           type: eventType,
@@ -207,7 +207,7 @@ describe('pageStateHistory', () => {
           eventType,
           startTime: clock.relative(0),
           duration: 0 as Duration,
-        })
+        } as any)
 
         expect(defaultRumEventAttributes).toEqual({
           type: eventType,
