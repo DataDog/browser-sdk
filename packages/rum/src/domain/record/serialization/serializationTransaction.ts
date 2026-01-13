@@ -187,12 +187,8 @@ export function serializeChangesInTransaction(
     addMetric(metric: keyof SerializationStats, value: number): void {
       updateSerializationStats(stats, metric, value)
     },
-    addNode(pos, nodeName, ...params): void {
-      const change: AddNodeChange = [pos, nodeName]
-      for (const param of params) {
-        change.push(param as AddNodeParams<AddNodeChange>[number])
-      }
-      encoder.add(ChangeType.AddNode, change)
+    addNode(...change): void {
+      encoder.add(ChangeType.AddNode, change as AddNodeChange)
     },
     addStyleSheet(rules: StyleSheetRules, mediaList?: StyleSheetMediaList, disabled?: boolean): void {
       if (disabled) {

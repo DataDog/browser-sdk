@@ -28,21 +28,17 @@ export function createChangeEncoder(stringIds: StringIds): ChangeEncoder {
   // A helper that searches for strings in arbitrarily-nested arrays, inserts any strings
   // it finds into the string table, and replaces the strings with string table
   // references.
-  const convertStringsToStringReferences = (rootArray: any[]): void => {
-    const arrays: any[][] = [rootArray]
-    for (let arrayIndex = 0; arrayIndex < arrays.length; arrayIndex++) {
-      const array = arrays[arrayIndex]
-      for (let itemIndex = 0; itemIndex < array.length; itemIndex++) {
-        const item = array[itemIndex]
-        if (typeof item === 'string') {
-          const previousSize = stringIds.size
-          array[itemIndex] = stringIds.getOrInsert(item)
-          if (stringIds.size > previousSize) {
-            add(ChangeType.AddString, item)
-          }
-        } else if (Array.isArray(item)) {
-          arrays.push(item)
+  const convertStringsToStringReferences = (array: any[]): void => {
+    for (let index = 0, length = array.length; index < length; index++) {
+      const item = array[index]
+      if (typeof item === 'string') {
+        const previousSize = stringIds.size
+        array[index] = stringIds.getOrInsert(item)
+        if (stringIds.size > previousSize) {
+          add(ChangeType.AddString, item)
         }
+      } else if (Array.isArray(item)) {
+        convertStringsToStringReferences(item)
       }
     }
   }
