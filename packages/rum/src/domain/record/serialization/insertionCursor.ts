@@ -50,23 +50,28 @@ export interface InsertionCursor {
 /** Returns an InsertionCursor which starts positioned at the root of the document. */
 export function createRootInsertionCursor(nodeIds: NodeIds): InsertionCursor {
   interface ChildListCursor {
-    parentId: NodeId | undefined
+    parent: ChildListCursor | undefined
     previousSiblingId: NodeId | undefined
   }
 
-  let childList: ChildListCursor = { parentId: undefined, previousSiblingId: undefined }
-  const stack: ChildListCursor[] = [childList]
+  let cursor: ChildListCursor = {
+    parent: undefined,
+    previousSiblingId: undefined,
+  }
 
   const computeInsertionPoint = (nodeId: NodeId): InsertionPoint => {
-    if (childList.previousSiblingId === nodeId - 1) {
+    if (cursor.previousSiblingId === nodeId - 1) {
       // Use an AppendAfterPreviousInsertionPoint. (i.e., 0)
       return 0
     }
-    if (childList.parentId !== undefined) {
+
+    const parentId = cursor.parent?.previousSiblingId
+    if (parentId !== undefined) {
       // Use an AppendChildInsertionPoint. We identify the parent node using a positive
       // integer indicating the difference between the new node's id and its parent's id.
-      return nodeId - childList.parentId
+      return nodeId - parentId
     }
+
     // There's no parent. Use a RootInsertionPoint. (i.e., null)
     return null
   }
@@ -75,19 +80,20 @@ export function createRootInsertionCursor(nodeIds: NodeIds): InsertionCursor {
     advance(node: Node): { nodeId: NodeId; insertionPoint: InsertionPoint } {
       const nodeId = nodeIds.getOrInsert(node)
       const insertionPoint = computeInsertionPoint(nodeId)
-      childList.previousSiblingId = nodeId
+      cursor.previousSiblingId = nodeId
       return { nodeId, insertionPoint }
     },
     ascend(): void {
-      if (stack.length > 1) {
-        stack.pop()
-        childList = stack[stack.length - 1]
+      if (cursor.parent) {
+        cursor = cursor.parent
       }
     },
     descend(): void {
-      if (childList.previousSiblingId !== undefined) {
-        childList = { parentId: childList.previousSiblingId, previousSiblingId: undefined }
-        stack.push(childList)
+      if (cursor.previousSiblingId !== undefined) {
+        cursor = {
+          parent: cursor,
+          previousSiblingId: undefined,
+        }
       }
     },
   }

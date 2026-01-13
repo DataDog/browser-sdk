@@ -1,7 +1,8 @@
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import { addExperimentalFeatures, ExperimentalFeature, noop, resetExperimentalFeatures } from '@datadog/browser-core'
+import { ExperimentalFeature, noop } from '@datadog/browser-core'
+import { mockExperimentalFeatures } from '@datadog/browser-core/test'
 import type { BrowserRecord } from '../../types'
 import { RecordType } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
@@ -116,12 +117,8 @@ describe('startFullSnapshots', () => {
   })
 
   describe('when generating BrowserChangeRecord', () => {
-    beforeAll(() => {
-      addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
-    })
-
-    afterAll(() => {
-      resetExperimentalFeatures()
+    beforeEach(() => {
+      mockExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
     })
 
     describeStartFullSnapshotsWithExpectedSnapshot({
