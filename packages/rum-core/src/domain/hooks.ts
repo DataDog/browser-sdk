@@ -17,14 +17,20 @@ import type { RumEventDomainContext } from '../domainContext.types'
 export type DefaultRumEventAttributes = RecursivePartial<RumEvent> & { type: RumEvent['type'] }
 export type DefaultTelemetryEventAttributes = RecursivePartial<TelemetryEvent>
 
+type DeepReadonly<T> = {
+  readonly [K in keyof T]: DeepReadonly<T[K]>
+}
+
+export interface AssembleHookParams {
+  readonly eventType: RumEvent['type']
+  rawRumEvent: DeepReadonly<RawRumEvent>
+  domainContext: DeepReadonly<RumEventDomainContext<RawRumEvent['type']>>
+  readonly startTime: RelativeTime
+  readonly duration?: Duration | undefined
+}
+
 export interface HookCallbackMap {
-  [HookNamesAsConst.ASSEMBLE]: (param: {
-    eventType: RumEvent['type']
-    rawRumEvent: RawRumEvent
-    domainContext: RumEventDomainContext<RawRumEvent['type']>
-    startTime: RelativeTime
-    duration?: Duration | undefined
-  }) => DefaultRumEventAttributes | SKIPPED | DISCARDED
+  [HookNamesAsConst.ASSEMBLE]: (param: AssembleHookParams) => DefaultRumEventAttributes | SKIPPED | DISCARDED
   [HookNamesAsConst.ASSEMBLE_TELEMETRY]: (param: {
     startTime: RelativeTime
   }) => DefaultTelemetryEventAttributes | SKIPPED | DISCARDED
