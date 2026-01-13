@@ -16,7 +16,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { Hooks, AssembleHookParams} from './hooks'
+import type { Hooks, AssembleHookParams } from './hooks'
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',

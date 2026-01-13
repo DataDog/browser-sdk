@@ -17,7 +17,10 @@ describe('startConnectivityContext', () => {
       startConnectivityContext(hooks)
       setNavigatorOnLine(true)
       setNavigatorConnection({ effectiveType: '2g' })
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime } as AssembleHookParams)
+      const event = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      } as AssembleHookParams)
 
       expect(event).toEqual({
         type: 'view',

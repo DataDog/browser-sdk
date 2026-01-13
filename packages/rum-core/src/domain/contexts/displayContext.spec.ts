@@ -27,7 +27,10 @@ describe('displayContext', () => {
     it('should set the display context', () => {
       displayContext = startDisplayContext(hooks, mockRumConfiguration())
 
-      const event = hooks.triggerHook(HookNames.Assemble, { eventType: 'view', startTime: 0 as RelativeTime } as AssembleHookParams)
+      const event = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view',
+        startTime: 0 as RelativeTime,
+      } as AssembleHookParams)
       expect(requestAnimationFrameSpy).toHaveBeenCalledTimes(1)
 
       expect(event).toEqual({
