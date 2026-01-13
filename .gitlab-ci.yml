@@ -1,7 +1,7 @@
 variables:
-  CURRENT_STAGING: staging-53
+  CURRENT_STAGING: staging-03
   APP: 'browser-sdk'
-  CURRENT_CI_IMAGE: 94
+  CURRENT_CI_IMAGE: 96
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
@@ -345,30 +345,30 @@ deploy-staging:
     - node ./scripts/deploy/deploy.ts staging staging root
     - node ./scripts/deploy/upload-source-maps.ts staging root
 
-# deploy-prod-canary:
-#   stage: deploy:canary
-#   extends:
-#     - .base-configuration
-#     - .main
-#   script:
-#     - export BUILD_MODE=canary
-#     - yarn
-#     - yarn build:bundle
-#     - node ./scripts/deploy/deploy.ts prod canary root
-#     - node ./scripts/deploy/upload-source-maps.ts canary root
+deploy-prod-canary:
+  stage: deploy:canary
+  extends:
+    - .base-configuration
+    - .main
+  script:
+    - export BUILD_MODE=canary
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.ts prod canary root
+    - node ./scripts/deploy/upload-source-maps.ts canary root
 
-# deploy-next-major-canary:
-#   stage: deploy
-#   extends:
-#     - .base-configuration
-#     - .next-major-branch
-#   script:
-#     - export BUILD_MODE=canary
-#     - VERSION=$(node -p -e "require('./lerna.json').version")
-#     - yarn
-#     - yarn build:bundle
-#     - node ./scripts/deploy/deploy.ts prod v${VERSION%%.*}-canary root
-#     - node ./scripts/deploy/upload-source-maps.ts v${VERSION%%.*}-canary root
+deploy-next-major-canary:
+  stage: deploy
+  extends:
+    - .base-configuration
+    - .next-major-branch
+  script:
+    - export BUILD_MODE=canary
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
+    - node ./scripts/deploy/deploy.ts prod v${VERSION%%.*}-canary root
+    - node ./scripts/deploy/upload-source-maps.ts v${VERSION%%.*}-canary root
 
 deploy-manual:
   stage: deploy

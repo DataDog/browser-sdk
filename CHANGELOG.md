@@ -18,6 +18,37 @@
 
 ---
 
+## v6.25.3
+
+**Public Changes:**
+
+- 🐛 fix reading cookies containing special characters ([#4066](https://github.com/DataDog/browser-sdk/pull/4066)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Fix developer extension crash due to missing build variable ([#4061](https://github.com/DataDog/browser-sdk/pull/4061)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-13615] fix remote config tracing options support ([#4062](https://github.com/DataDog/browser-sdk/pull/4062)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 do not rely on monitors for deployment gate ([#3973](https://github.com/DataDog/browser-sdk/pull/3973))
+- 👷 Update dependency @vitejs/plugin-react to v5 ([#4032](https://github.com/DataDog/browser-sdk/pull/4032))
+- 👷 Update dependency @playwright/test to v1.57.0 ([#4005](https://github.com/DataDog/browser-sdk/pull/4005))
+- 👷 Update all non-major dependencies ([#4031](https://github.com/DataDog/browser-sdk/pull/4031)) [FLAGGING] [RUM-REACT] [WORKER]
+
+## v6.25.2
+
+**Public Changes:**
+
+- 🐛 Fix profiling <-> long task association regression ([#4045](https://github.com/DataDog/browser-sdk/pull/4045)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 Fix flaky long task <-> action correlation ([#4050](https://github.com/DataDog/browser-sdk/pull/4050)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- ✨[PANA-5288] Update rum-events-format to pull in BrowserChangeRecord ([#4035](https://github.com/DataDog/browser-sdk/pull/4035)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- Revert "👷 disable deploy-prod-canary during the freeze ([#4053](https://github.com/DataDog/browser-sdk/pull/4053))" ([#4058](https://github.com/DataDog/browser-sdk/pull/4058))
+- 👷 disable deploy-prod-canary during the freeze ([#4053](https://github.com/DataDog/browser-sdk/pull/4053))
+- 👷 update the token to AWS after renewing it ([#4048](https://github.com/DataDog/browser-sdk/pull/4048))
+- 🎨 [PANA-5260] Consolidate recorder object id tracking code ([#4049](https://github.com/DataDog/browser-sdk/pull/4049)) [RUM]
+- 🔊 add debug logs to npm publishing command ([#4047](https://github.com/DataDog/browser-sdk/pull/4047))
+
 ## v6.25.1
 
 **Public Changes:**

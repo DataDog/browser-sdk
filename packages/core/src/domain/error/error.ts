@@ -5,6 +5,7 @@ import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { toStackTraceString } from '../../tools/stackTrace/handlingStack'
+import { isIndexableObject } from '../../tools/utils/typeUtils'
 import type { ErrorSource, ErrorHandling, RawError, RawErrorCause, ErrorWithCause, NonErrorPrefix } from './error.types'
 
 export const NO_ERROR_STACK_PRESENT_MESSAGE = 'No stack, consider using an instance of Error'
@@ -95,8 +96,8 @@ export function tryToGetFingerprint(originalError: unknown) {
 }
 
 export function tryToGetErrorContext(originalError: unknown) {
-  if (originalError !== null && typeof originalError === 'object' && 'dd_context' in originalError) {
-    return originalError.dd_context as Context
+  if (isIndexableObject(originalError)) {
+    return originalError.dd_context as Context | undefined
   }
 }
 

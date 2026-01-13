@@ -6,6 +6,7 @@ import {
   getCookie,
   addTelemetryMetrics,
   TelemetryMetrics,
+  isIndexableObject,
 } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
@@ -105,7 +106,7 @@ export function applyRemoteConfiguration(
     if (Array.isArray(property)) {
       return property.map(resolveConfigurationProperty)
     }
-    if (isObject(property)) {
+    if (isIndexableObject(property)) {
       if (isSerializedOption(property)) {
         const type = property.rcSerializedType
         switch (type) {
@@ -235,10 +236,6 @@ export function initMetrics() {
       metrics[metricName][type] = metrics[metricName][type] + 1
     },
   }
-}
-
-function isObject(property: unknown): property is { [key: string]: unknown } {
-  return typeof property === 'object' && property !== null
 }
 
 function isSerializedOption(value: object): value is SerializedOption {

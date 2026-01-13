@@ -45,12 +45,24 @@ describe('stringUtils', () => {
       expect(findCommaSeparatedValue('foo=a=b', 'foo')).toBe('a=b')
     })
 
-    it('supports keys containing `-`', () => {
+    it('supports names containing `-`', () => {
       expect(findCommaSeparatedValue('foo-bar=baz', 'foo-bar')).toBe('baz')
+    })
+
+    it('supports names containing special characters', () => {
+      // See https://stackoverflow.com/a/1969339
+      // See RFC2616 section 2.2: https://www.ietf.org/rfc/rfc2616.txt
+      // See RFC6265 section 4.1.1: https://www.ietf.org/rfc/rfc6265.txt
+      const allAllowedSpecialCharacters = "!#$%&'*+-.^_`|~"
+      expect(findCommaSeparatedValue(`${allAllowedSpecialCharacters}=baz`, allAllowedSpecialCharacters)).toBe('baz')
     })
 
     it('returns undefined if the value is not found', () => {
       expect(findCommaSeparatedValue('foo=a;bar=b', 'baz')).toBe(undefined)
+    })
+
+    it('returns undefined if the value is empty', () => {
+      expect(findCommaSeparatedValue('foo=', 'foo')).toBe(undefined)
     })
   })
 

@@ -5,7 +5,7 @@ export const DEV_RUM_URL = `${DEV_SERVER_ORIGIN}/datadog-rum.js`
 
 // To follow web-ui development, this version will need to be manually updated from time to time.
 // When doing that, be sure to update types and implement any protocol changes.
-export const PROD_REPLAY_SANDBOX_VERSION = '0.119.0'
+export const PROD_REPLAY_SANDBOX_VERSION = '0.135.0'
 export const PROD_REPLAY_SANDBOX_ORIGIN = 'https://session-replay-datadoghq.com'
 export const PROD_REPLAY_SANDBOX_URL = `${PROD_REPLAY_SANDBOX_ORIGIN}/${PROD_REPLAY_SANDBOX_VERSION}/index.html`
 

@@ -9,7 +9,10 @@ export function generateUUID(placeholder?: string): string {
     : `${1e7}-${1e3}-${4e3}-${8e3}-${1e11}`.replace(/[018]/g, generateUUID)
 }
 
-const COMMA_SEPARATED_KEY_VALUE = /([\w-]+)\s*=\s*([^;]+)/g
+// Assuming input string is following the HTTP Cookie format defined in
+// https://www.ietf.org/rfc/rfc2616.txt and https://www.ietf.org/rfc/rfc6265.txt, we don't need to
+// be too strict with this regex.
+const COMMA_SEPARATED_KEY_VALUE = /(\S+?)\s*=\s*(.+?)(?:;|$)/g
 
 /**
  * Returns the value of the key with the given name

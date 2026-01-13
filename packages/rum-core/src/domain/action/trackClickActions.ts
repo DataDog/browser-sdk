@@ -4,7 +4,6 @@ import {
   Observable,
   getRelativeTime,
   elapsed,
-  PageExitReason,
   relativeToClocks,
 } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
@@ -63,11 +62,7 @@ export function trackClickActions(
   let currentClickChain: ClickChain | undefined
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
-  lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, (event) => {
-    if (event.reason === PageExitReason.UNLOADING) {
-      stopClickChain()
-    }
-  })
+  lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, stopClickChain)
 
   const { stop: stopActionEventsListener } = listenActionEvents<{
     clickActionBase: ClickActionBase
@@ -210,11 +205,16 @@ function startClickAction(
     click.stop(endClocks.timeStamp)
   })
 
+  const pageMayExitSubscription = lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, () => {
+    click.stop(timeStampNow())
+  })
+
   const stopSubscription = stopObservable.subscribe(() => {
     click.stop()
   })
 
   click.stopObservable.subscribe(() => {
+    pageMayExitSubscription.unsubscribe()
     viewEndedSubscription.unsubscribe()
     stopWaitPageActivityEnd()
     stopSubscription.unsubscribe()
