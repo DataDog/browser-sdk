@@ -1,8 +1,7 @@
-import type { ClocksState, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
-import { ONE_MINUTE, generateUUID, createValueHistory } from '@datadog/browser-core'
+import type { ClocksState, Duration, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
+import { ONE_MINUTE, generateUUID, createValueHistory, elapsed } from '@datadog/browser-core'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import type { EventCounts } from '../trackEventCounts'
 import { trackEventCounts } from '../trackEventCounts'
 
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
@@ -16,7 +15,8 @@ export interface ActionCounts {
 export interface TrackedAction {
   id: string
   startClocks: ClocksState
-  eventCounts: EventCounts
+  duration: Duration | undefined
+  counts: ActionCounts
   stop: (endTime: RelativeTime) => void
   discard: () => void
 }
@@ -45,6 +45,7 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     const id = generateUUID()
     const historyEntry: ValueHistoryEntry<string> = history.add(id, startClocks.relative)
     let stopped = false
+    let duration: Duration | undefined
 
     const eventCountsSubscription = trackEventCounts({
       lifeCycle,
@@ -62,6 +63,7 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
 
       if (endTime !== undefined) {
         historyEntry.close(endTime)
+        duration = elapsed(startClocks.relative, endTime)
       } else {
         historyEntry.remove()
       }
@@ -73,11 +75,15 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     return {
       id,
       startClocks,
-      get eventCounts() {
-        return eventCountsSubscription.eventCounts
+      get duration() {
+        return duration
+      },
+      get counts() {
+        const { errorCount, longTaskCount, resourceCount } = eventCountsSubscription.eventCounts
+        return { errorCount, longTaskCount, resourceCount }
       },
       stop: stopOrDiscard,
-      discard: stopOrDiscard
+      discard: stopOrDiscard,
     }
   }
 

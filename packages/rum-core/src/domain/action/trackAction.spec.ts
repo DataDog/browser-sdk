@@ -44,9 +44,9 @@ describe('trackAction', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
       const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(0)
-      expect(trackedAction.eventCounts.resourceCount).toBe(0)
-      expect(trackedAction.eventCounts.longTaskCount).toBe(0)
+      expect(trackedAction.counts.errorCount).toBe(0)
+      expect(trackedAction.counts.resourceCount).toBe(0)
+      expect(trackedAction.counts.longTaskCount).toBe(0)
     })
   })
 
@@ -65,7 +65,7 @@ describe('trackAction', () => {
         error: { message: 'test error' },
       } as any)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(1)
+      expect(trackedAction.counts.errorCount).toBe(1)
     })
 
     it('should count resources associated with the action', () => {
@@ -75,7 +75,7 @@ describe('trackAction', () => {
         resource: { type: 'fetch' },
       } as any)
 
-      expect(trackedAction.eventCounts.resourceCount).toBe(1)
+      expect(trackedAction.counts.resourceCount).toBe(1)
     })
 
     it('should count long tasks associated with the action', () => {
@@ -85,7 +85,7 @@ describe('trackAction', () => {
         long_task: { duration: 100 },
       } as any)
 
-      expect(trackedAction.eventCounts.longTaskCount).toBe(1)
+      expect(trackedAction.counts.longTaskCount).toBe(1)
     })
 
     it('should count events when action ID is in an array', () => {
@@ -95,7 +95,7 @@ describe('trackAction', () => {
         error: { message: 'test error' },
       } as any)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(1)
+      expect(trackedAction.counts.errorCount).toBe(1)
     })
 
     it('should not count events for other actions', () => {
@@ -105,7 +105,7 @@ describe('trackAction', () => {
         error: { message: 'test error' },
       } as any)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(0)
+      expect(trackedAction.counts.errorCount).toBe(0)
     })
 
     it('should stop counting events after action is stopped', () => {
@@ -117,7 +117,7 @@ describe('trackAction', () => {
         error: { message: 'test error' },
       } as any)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(0)
+      expect(trackedAction.counts.errorCount).toBe(0)
     })
   })
 
@@ -137,7 +137,7 @@ describe('trackAction', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
       const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-      trackedAction.stop()
+      trackedAction.stop(200 as RelativeTime)
 
       expect(actionTracker.findActionId()).toBeUndefined()
     })
@@ -194,7 +194,7 @@ describe('trackAction', () => {
         error: { message: 'test error' },
       } as any)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(0)
+      expect(trackedAction.counts.errorCount).toBe(0)
     })
   })
 
@@ -222,7 +222,7 @@ describe('trackAction', () => {
         error: { message: 'first error' },
       } as any)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(1)
+      expect(trackedAction.counts.errorCount).toBe(1)
 
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
@@ -232,7 +232,7 @@ describe('trackAction', () => {
         error: { message: 'second error' },
       } as any)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(1)
+      expect(trackedAction.counts.errorCount).toBe(1)
     })
   })
 
@@ -264,7 +264,7 @@ describe('trackAction', () => {
         error: { message: 'test error' },
       } as any)
 
-      expect(trackedAction.eventCounts.errorCount).toBe(0)
+      expect(trackedAction.counts.errorCount).toBe(0)
     })
   })
 })

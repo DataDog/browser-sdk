@@ -1,5 +1,5 @@
 import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
-import { timeStampNow, Observable, getRelativeTime, elapsed, relativeToClocks } from '@datadog/browser-core'
+import { timeStampNow, Observable, getRelativeTime, relativeToClocks } from '@datadog/browser-core'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -265,8 +265,7 @@ function newClick(
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement
 ) {
-  const startClocks = relativeToClocks(startEvent.timeStamp)
-  const trackedAction: TrackedAction = actionTracker.createTrackedAction(startClocks)
+  const trackedAction: TrackedAction = actionTracker.createTrackedAction(relativeToClocks(startEvent.timeStamp))
 
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
@@ -293,7 +292,7 @@ function newClick(
     stopObservable,
 
     get hasError() {
-      return trackedAction.eventCounts.errorCount > 0
+      return trackedAction.counts.errorCount > 0
     },
     get hasPageActivity() {
       return activityEndTime !== undefined
@@ -302,7 +301,9 @@ function newClick(
     addFrustration: (frustrationType: FrustrationType) => {
       frustrationTypes.push(frustrationType)
     },
-    startClocks,
+    get startClocks() {
+      return trackedAction.startClocks
+    },
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
@@ -314,13 +315,12 @@ function newClick(
         return
       }
 
-      const { errorCount, longTaskCount, resourceCount } = trackedAction.eventCounts
       const clickAction: ClickAction = {
-        duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
-        startClocks,
+        startClocks: trackedAction.startClocks,
+        duration: trackedAction.duration,
         id: trackedAction.id,
         frustrationTypes,
-        counts: { errorCount, longTaskCount, resourceCount },
+        counts: trackedAction.counts,
         events: domEvents ?? [startEvent],
         event: startEvent,
         ...clickActionBase,

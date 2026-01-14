@@ -1,20 +1,8 @@
 import type { ClocksState, Context, Duration, Observable } from '@datadog/browser-core'
-import {
-  noop,
-  combine,
-  toServerDuration,
-  generateUUID,
-  SKIPPED,
-  HookNames,
-  addDuration,
-  clocksNow,
-  elapsed,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { noop, toServerDuration, generateUUID, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
-import { ActionType, RumEventType } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
@@ -23,44 +11,20 @@ import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks 
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
-import type { ActionContexts, ActionCounts, TrackedAction } from './trackAction'
+import type { ActionContexts, ActionCounts } from './trackAction'
 import { startActionTracker } from './trackAction'
+import type { ActionOptions, CustomAction } from './trackCustomActions'
+import { trackCustomActions } from './trackCustomActions'
 
-export type { ActionContexts }
+export type { ActionContexts, ActionOptions }
 
-export interface ActionOptions {
-  /**
-   * Action Type
-   *
-   * @default 'custom'
-   */
-  type?: ActionType
-
-  /**
-   * Action context
-   */
-  context?: any
-
-  /**
-   * Action key
-   */
-  actionKey?: string
-  }
-
-interface ActiveCustomAction extends ActionOptions {
-  name: string
-  trackedAction: TrackedAction
-}
-
-export interface CustomAction {
-  id?: string
-  type: ActionType
+export interface InstantCustomAction {
+  type: CustomAction['type']
   name: string
   startClocks: ClocksState
   duration: Duration
   context?: Context
   handlingStack?: string
-  counts?: ActionCounts
 }
 
 export type AutoAction = ClickAction
@@ -76,7 +40,6 @@ export function startActionCollection(
 ) {
   // Shared action tracker for both click and custom actions
   const actionTracker = startActionTracker(lifeCycle)
-  const activeCustomActions = new Map<string, ActiveCustomAction>()
 
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
@@ -84,10 +47,6 @@ export function startActionCollection(
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
     }
   )
-
-  const { unsubscribe: unsubscribeSessionRenewal } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    activeCustomActions.clear()
-  })
 
   let stopClickActions: () => void = noop
 
@@ -100,6 +59,10 @@ export function startActionCollection(
       actionTracker
     ))
   }
+
+  const customActions = trackCustomActions(lifeCycle, actionTracker, (action) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+  })
 
   const actionContexts: ActionContexts = {
     findActionId: actionTracker.findActionId,
@@ -141,152 +104,84 @@ export function startActionCollection(
     })
   )
 
-  function startCustomActionInternal(name: string, options: ActionOptions = {}, startClocks = clocksNow()) {
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
-      return
-    }
-
-    const lookupKey = getActionLookupKey(name, options.actionKey)
-
-    const existingAction = activeCustomActions.get(lookupKey)
-    if (existingAction) {
-      existingAction.trackedAction.discard()
-      activeCustomActions.delete(lookupKey)
-    }
-
-    const trackedAction = actionTracker.createTrackedAction(startClocks)
-
-    activeCustomActions.set(lookupKey, {
-      name,
-      trackedAction,
-      type: options.type,
-      context: options.context,
-      actionKey: options.actionKey,
-    })
-  }
-
-  function stopCustomActionInternal(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
-      return
-    }
-
-    const lookupKey = getActionLookupKey(name, options.actionKey)
-    const activeAction = activeCustomActions.get(lookupKey)
-
-    if (!activeAction) {
-      return
-    }
-
-    const duration = elapsed(activeAction.trackedAction.startClocks.timeStamp, stopClocks.timeStamp)
-
-    activeAction.trackedAction.stop(stopClocks.relative)
-
-    const customAction: CustomAction = {
-      id: activeAction.trackedAction.id,
-      name: activeAction.name,
-      type: (options.type ?? activeAction.type) || ActionType.CUSTOM,
-      startClocks: activeAction.trackedAction.startClocks,
-      duration,
-      context: combine(activeAction.context, options.context),
-      counts: activeAction.trackedAction.eventCounts,
-    }
-
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(customAction))
-    activeCustomActions.delete(lookupKey)
-  }
-
   return {
-    addAction: (action: CustomAction) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    addAction: (action: InstantCustomAction) => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processInstantAction(action))
     },
-    startAction: startCustomActionInternal,
-    stopAction: stopCustomActionInternal,
+    startAction: customActions.startAction,
+    stopAction: customActions.stopAction,
     actionContexts,
     stop: () => {
       unsubscribeAutoAction()
-      unsubscribeSessionRenewal()
       stopClickActions()
-      activeCustomActions.forEach((activeAction) => {
-        activeAction.trackedAction.discard()
-      })
-      activeCustomActions.clear()
+      customActions.stop()
       actionTracker.stop()
     },
   }
 }
 
 function processAction(action: AutoAction | CustomAction): RawRumEventCollectedData<RawRumActionEvent> {
-  const actionId = isAutoAction(action) ? action.id : (action.id ?? generateUUID())
+  const isAuto = isAutoAction(action)
 
-  const autoActionProperties = isAutoAction(action)
-    ? {
-        action: {
-          id: actionId,
-          loading_time: discardNegativeDuration(toServerDuration(action.duration)),
-          frustration: {
-            type: action.frustrationTypes,
-          },
-          error: {
-            count: action.counts.errorCount,
-          },
-          long_task: {
-            count: action.counts.longTaskCount,
-          },
-          resource: {
-            count: action.counts.resourceCount,
-          },
-        },
-        _dd: {
+  const actionEvent: RawRumActionEvent = {
+    type: RumEventType.ACTION,
+    date: action.startClocks.timeStamp,
+    action: {
+      id: action.id,
+      loading_time: discardNegativeDuration(toServerDuration(action.duration)),
+      target: { name: action.name },
+      type: action.type,
+      ...(action.counts && {
+        error: { count: action.counts.errorCount },
+        long_task: { count: action.counts.longTaskCount },
+        resource: { count: action.counts.resourceCount },
+      }),
+      frustration: isAuto ? { type: action.frustrationTypes } : undefined,
+    },
+    context: isAuto ? undefined : action.context,
+    _dd: isAuto
+      ? {
           action: {
             target: action.target,
             position: action.position,
             name_source: action.nameSource,
           },
-        },
-      }
-    : {
-        action: {
-          id: actionId,
-          // We only include loading_time for timed custom actions (startAction/stopAction)
-          // because instant actions (addAction) have duration: 0.
-          ...(action.duration > 0 ? { loading_time: toServerDuration(action.duration) } : {}),
-          ...(action.counts
-            ? {
-                error: { count: action.counts.errorCount },
-                long_task: { count: action.counts.longTaskCount },
-                resource: { count: action.counts.resourceCount },
-              }
-            : {}),
-        },
-        context: action.context,
-      }
+        }
+      : undefined,
+  }
 
-  const actionEvent: RawRumActionEvent = combine(
-    {
-      action: { target: { name: action.name }, type: action.type },
-      date: action.startClocks.timeStamp,
-      type: RumEventType.ACTION,
-    },
-    autoActionProperties
-  )
-
-  const duration = action.duration
-  const domainContext: RumActionEventDomainContext = isAutoAction(action)
+  const domainContext: RumActionEventDomainContext = isAuto
     ? { events: action.events }
     : { handlingStack: action.handlingStack }
 
   return {
     rawRumEvent: actionEvent,
-    duration,
+    duration: action.duration,
     startTime: action.startClocks.relative,
     domainContext,
   }
 }
 
-function isAutoAction(action: AutoAction | CustomAction): action is AutoAction {
-  return action.type === ActionType.CLICK && 'events' in action
+function processInstantAction(action: InstantCustomAction): RawRumEventCollectedData<RawRumActionEvent> {
+  const actionEvent: RawRumActionEvent = {
+    type: RumEventType.ACTION,
+    date: action.startClocks.timeStamp,
+    action: {
+      id: generateUUID(),
+      target: { name: action.name },
+      type: action.type,
+    },
+    context: action.context,
+  }
+
+  return {
+    rawRumEvent: actionEvent,
+    duration: action.duration,
+    startTime: action.startClocks.relative,
+    domainContext: { handlingStack: action.handlingStack },
+  }
 }
 
-function getActionLookupKey(name: string, actionKey?: string): string {
-  return JSON.stringify({ name, actionKey })
+function isAutoAction(action: AutoAction | CustomAction): action is AutoAction {
+  return 'events' in action
 }
