@@ -24,11 +24,6 @@ export interface ActionOptions {
   actionKey?: string
 }
 
-interface ActiveCustomAction extends ActionOptions {
-  name: string
-  trackedAction: TrackedAction
-}
-
 export interface CustomAction {
   id: string
   type: ActionType
@@ -45,7 +40,7 @@ export function trackCustomActions(
   actionTracker: ActionTracker,
   onCustomActionCompleted: (action: CustomAction) => void
 ) {
-  const activeCustomActions = new Map<string, ActiveCustomAction>()
+  const activeCustomActions = new Map<string, TrackedAction>()
 
   const { unsubscribe: unsubscribeSessionRenewal } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     activeCustomActions.clear()
@@ -60,19 +55,18 @@ export function trackCustomActions(
 
     const existingAction = activeCustomActions.get(lookupKey)
     if (existingAction) {
-      existingAction.trackedAction.discard()
+      existingAction.discard()
       activeCustomActions.delete(lookupKey)
     }
 
-    const trackedAction = actionTracker.createTrackedAction(startClocks)
-
-    activeCustomActions.set(lookupKey, {
+    const trackedAction = actionTracker.createTrackedAction(startClocks, {
       name,
-      trackedAction,
       type: options.type,
       context: options.context,
       actionKey: options.actionKey,
     })
+
+    activeCustomActions.set(lookupKey, trackedAction)
   }
 
   function stopCustomAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
@@ -81,22 +75,22 @@ export function trackCustomActions(
     }
 
     const lookupKey = getActionLookupKey(name, options.actionKey)
-    const activeAction = activeCustomActions.get(lookupKey)
+    const trackedAction = activeCustomActions.get(lookupKey)
 
-    if (!activeAction) {
+    if (!trackedAction) {
       return
     }
 
-    activeAction.trackedAction.stop(stopClocks.relative)
+    trackedAction.stop(stopClocks.relative)
 
     const customAction: CustomAction = {
-      id: activeAction.trackedAction.id,
-      name: activeAction.name,
-      type: (options.type ?? activeAction.type) || ActionType.CUSTOM,
-      startClocks: activeAction.trackedAction.startClocks,
-      duration: activeAction.trackedAction.duration!,
-      context: combine(activeAction.context, options.context),
-      counts: activeAction.trackedAction.counts,
+      id: trackedAction.id,
+      name: trackedAction.name!,
+      type: (options.type ?? trackedAction.type) || ActionType.CUSTOM,
+      startClocks: trackedAction.startClocks,
+      duration: trackedAction.duration!,
+      context: combine(trackedAction.context, options.context),
+      counts: trackedAction.counts,
     }
 
     onCustomActionCompleted(customAction)
@@ -105,8 +99,8 @@ export function trackCustomActions(
 
   function stop() {
     unsubscribeSessionRenewal()
-    activeCustomActions.forEach((activeAction) => {
-      activeAction.trackedAction.discard()
+    activeCustomActions.forEach((trackedAction) => {
+      trackedAction.discard()
     })
     activeCustomActions.clear()
   }

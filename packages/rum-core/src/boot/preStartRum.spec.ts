@@ -24,9 +24,9 @@ import {
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import type { CustomAction } from '../domain/action/actionCollection'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import type { CustomAction } from '../domain/action/trackCustomActions'
 import type { RumPublicApi, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import { createPreStartStrategy } from './preStartRum'
@@ -637,6 +637,12 @@ describe('preStartRum', () => {
         type: ActionType.CUSTOM,
         startClocks: clocksNow(),
         duration: 0 as Duration,
+        id: '123',
+        counts: {
+          errorCount: 0,
+          longTaskCount: 0,
+          resourceCount: 0,
+        },
       }
       strategy.addAction(customAction)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)

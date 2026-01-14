@@ -1,8 +1,9 @@
-import type { ClocksState, Duration, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
 import { ONE_MINUTE, generateUUID, createValueHistory, elapsed } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle } from '../lifeCycle'
 import { trackEventCounts } from '../trackEventCounts'
+import type { ActionType } from '../../rawRumEvent.types'
 
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
@@ -12,7 +13,14 @@ export interface ActionCounts {
   resourceCount: number
 }
 
-export interface TrackedAction {
+export interface TrackedActionMetadata {
+  name?: string
+  type?: ActionType
+  context?: Context
+  actionKey?: string
+}
+
+export interface TrackedAction extends TrackedActionMetadata {
   id: string
   startClocks: ClocksState
   duration: Duration | undefined
@@ -26,7 +34,7 @@ export interface ActionContexts {
 }
 
 export interface ActionTracker {
-  createTrackedAction: (startClocks: ClocksState) => TrackedAction
+  createTrackedAction: (startClocks: ClocksState, metadata?: TrackedActionMetadata) => TrackedAction
   findActionId: (startTime?: RelativeTime) => string | string[] | undefined
   stop: () => void
 }
@@ -41,7 +49,7 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     activeEventCountSubscriptions.clear()
   })
 
-  function createTrackedAction(startClocks: ClocksState): TrackedAction {
+  function createTrackedAction(startClocks: ClocksState, metadata?: TrackedActionMetadata): TrackedAction {
     const id = generateUUID()
     const historyEntry: ValueHistoryEntry<string> = history.add(id, startClocks.relative)
     let stopped = false
@@ -75,6 +83,10 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     return {
       id,
       startClocks,
+      name: metadata?.name,
+      type: metadata?.type,
+      context: metadata?.context,
+      actionKey: metadata?.actionKey,
       get duration() {
         return duration
       },

@@ -812,12 +812,14 @@ describe('rum public api', () => {
       rumPublicApi.startAction('action_name', {
         type: ActionType.CUSTOM,
         context: { count: 123, nested: { foo: 'bar' } } as any,
+        actionKey: 'action_key',
       })
 
       expect(startActionSpy.calls.argsFor(0)[1]).toEqual(
         jasmine.objectContaining({
           type: ActionType.CUSTOM,
           context: { count: 123, nested: { foo: 'bar' } },
+          actionKey: 'action_key',
         })
       )
     })

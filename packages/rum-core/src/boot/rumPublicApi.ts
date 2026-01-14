@@ -680,6 +680,7 @@ export function makeRumPublicApi(
       strategy.startAction(sanitize(name)!, {
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
+        actionKey: options && options.actionKey,
       })
     }),
 
@@ -688,6 +689,7 @@ export function makeRumPublicApi(
       strategy.stopAction(sanitize(name)!, {
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
+        actionKey: options && options.actionKey,
       })
     }),
 
