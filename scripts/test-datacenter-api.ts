@@ -1,5 +1,6 @@
 import { runMain, printLog } from './lib/executionUtils.ts'
 import { getAllDatacentersMetadata } from './lib/datacenter.ts'
+import { gateTelemetryErrors, getDatacenters } from './deploy/deploy-prod-dc.ts'
 
 /**
  * Test script to verify datacenter API works in CI
@@ -16,6 +17,13 @@ runMain(async () => {
     const site = dc.site
     printLog(`  - [${dc.type}] ${dc.name}: ${site}`)
   }
+
+  printLog('Gating telemetry errors for us1')
+  await gateTelemetryErrors(['us1'])
+
+  printLog('Gating telemetry errors for minor datacenters...')
+
+  await gateTelemetryErrors(await getDatacenters('minor-dcs'))
 
   printLog('✅ Datacenter API test successful!')
 })
