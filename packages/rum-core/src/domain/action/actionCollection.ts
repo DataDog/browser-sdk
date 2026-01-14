@@ -15,7 +15,6 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
-import type { RumActionEventDomainContext } from '../../domainContext.types'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { trackClickActions } from './trackClickActions'
@@ -134,59 +133,49 @@ export function startActionCollection(
 function processAction(action: AutoAction | CustomAction): RawRumEventCollectedData<RawRumActionEvent> {
   const isAuto = isAutoAction(action)
 
-  const actionEvent: RawRumActionEvent = {
-    type: RumEventType.ACTION,
-    date: action.startClocks.timeStamp,
-    action: {
-      id: action.id,
-      loading_time: discardNegativeDuration(toServerDuration(action.duration)),
-      target: { name: action.name },
-      type: action.type,
-      ...(action.counts && {
+  return {
+    rawRumEvent: {
+      type: RumEventType.ACTION,
+      date: action.startClocks.timeStamp,
+      action: {
+        id: action.id,
+        loading_time: discardNegativeDuration(toServerDuration(action.duration)),
+        target: { name: action.name },
+        type: action.type,
         error: { count: action.counts.errorCount },
         long_task: { count: action.counts.longTaskCount },
         resource: { count: action.counts.resourceCount },
-      }),
-      frustration: isAuto ? { type: action.frustrationTypes } : undefined,
+        frustration: isAuto ? { type: action.frustrationTypes } : undefined,
+      },
+      context: isAuto ? undefined : action.context,
+      _dd: isAuto
+        ? {
+            action: {
+              target: action.target,
+              position: action.position,
+              name_source: action.nameSource,
+            },
+          }
+        : undefined,
     },
-    context: isAuto ? undefined : action.context,
-    _dd: isAuto
-      ? {
-          action: {
-            target: action.target,
-            position: action.position,
-            name_source: action.nameSource,
-          },
-        }
-      : undefined,
-  }
-
-  const domainContext: RumActionEventDomainContext = isAuto
-    ? { events: action.events }
-    : { handlingStack: action.handlingStack }
-
-  return {
-    rawRumEvent: actionEvent,
     duration: action.duration,
     startTime: action.startClocks.relative,
-    domainContext,
+    domainContext: isAuto ? { events: action.events } : { handlingStack: action.handlingStack },
   }
 }
 
 function processInstantAction(action: InstantCustomAction): RawRumEventCollectedData<RawRumActionEvent> {
-  const actionEvent: RawRumActionEvent = {
-    type: RumEventType.ACTION,
-    date: action.startClocks.timeStamp,
-    action: {
-      id: generateUUID(),
-      target: { name: action.name },
-      type: action.type,
-    },
-    context: action.context,
-  }
-
   return {
-    rawRumEvent: actionEvent,
+    rawRumEvent: {
+      type: RumEventType.ACTION,
+      date: action.startClocks.timeStamp,
+      action: {
+        id: generateUUID(),
+        target: { name: action.name },
+        type: action.type,
+      },
+      context: action.context,
+    },
     duration: action.duration,
     startTime: action.startClocks.relative,
     domainContext: { handlingStack: action.handlingStack },

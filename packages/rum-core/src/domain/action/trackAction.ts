@@ -38,43 +38,30 @@ export interface ActionTracker {
 
 export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
   const history = createValueHistory<string>({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
-  const activeEventCountSubscriptions = new Set<ReturnType<typeof trackEventCounts>>()
+  const activeSubs = new Set<ReturnType<typeof trackEventCounts>>()
 
   const sessionRenewalSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     history.reset()
-    activeEventCountSubscriptions.forEach((s) => s.stop())
-    activeEventCountSubscriptions.clear()
+    activeSubs.forEach((s) => s.stop())
+    activeSubs.clear()
   })
 
   function createTrackedAction(startClocks: ClocksState, metadata?: TrackedActionMetadata): TrackedAction {
     const id = generateUUID()
     const historyEntry: ValueHistoryEntry<string> = history.add(id, startClocks.relative)
-    let stopped = false
     let duration: Duration | undefined
 
-    const eventCountsSubscription = trackEventCounts({
+    const sub = trackEventCounts({
       lifeCycle,
       isChildEvent: (event) =>
         event.action !== undefined &&
         (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
     })
-    activeEventCountSubscriptions.add(eventCountsSubscription)
+    activeSubs.add(sub)
 
-    function stopOrDiscard(endTime?: RelativeTime) {
-      if (stopped) {
-        return
-      }
-      stopped = true
-
-      if (endTime !== undefined) {
-        historyEntry.close(endTime)
-        duration = elapsed(startClocks.relative, endTime)
-      } else {
-        historyEntry.remove()
-      }
-
-      eventCountsSubscription.stop()
-      activeEventCountSubscriptions.delete(eventCountsSubscription)
+    function cleanup() {
+      sub.stop()
+      activeSubs.delete(sub)
     }
 
     return {
@@ -85,32 +72,32 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
         return duration
       },
       get counts() {
-        return eventCountsSubscription.eventCounts
+        return sub.eventCounts
       },
-      stop: stopOrDiscard,
-      discard: stopOrDiscard,
+      stop(endTime: RelativeTime) {
+        historyEntry.close(endTime)
+        duration = elapsed(startClocks.relative, endTime)
+        cleanup()
+      },
+      discard() {
+        historyEntry.remove()
+        cleanup()
+      },
     }
   }
 
   function findActionId(startTime?: RelativeTime): string | string[] | undefined {
     const ids = history.findAll(startTime)
-    if (ids.length === 0) {
-      return undefined
-    }
-    return ids
+    return ids.length ? ids : undefined
   }
 
   function stop() {
     sessionRenewalSubscription.unsubscribe()
-    activeEventCountSubscriptions.forEach((s) => s.stop())
-    activeEventCountSubscriptions.clear()
+    activeSubs.forEach((s) => s.stop())
+    activeSubs.clear()
     history.reset()
     history.stop()
   }
 
-  return {
-    createTrackedAction,
-    findActionId,
-    stop,
-  }
+  return { createTrackedAction, findActionId, stop }
 }

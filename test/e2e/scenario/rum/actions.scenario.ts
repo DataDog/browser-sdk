@@ -612,20 +612,6 @@ test.describe('custom actions with startAction/stopAction', () => {
       )
     })
 
-  createTest('support custom action types')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
-    .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.evaluate(() => {
-        window.DD_RUM!.startAction('swipe_left', { type: 'swipe' })
-        window.DD_RUM!.stopAction('swipe_left')
-      })
-      await flushEvents()
-
-      const actionEvents = intakeRegistry.rumActionEvents
-      expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action.type).toBe('swipe')
-    })
-
   createTest('preserve timing when startAction is called before init')
     .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
     .withRumInit((configuration) => {

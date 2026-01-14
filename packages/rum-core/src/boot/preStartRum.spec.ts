@@ -642,6 +642,8 @@ describe('preStartRum', () => {
           errorCount: 0,
           longTaskCount: 0,
           resourceCount: 0,
+          actionCount: 0,
+          frustrationCount: 0,
         },
       }
       strategy.addAction(customAction)
