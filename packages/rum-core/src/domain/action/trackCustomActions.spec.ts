@@ -79,17 +79,6 @@ describe('trackCustomActions', () => {
 
     it('should use consistent action ID from start to collected event', () => {
       startAction('checkout')
-      stopAction('checkout')
-
-      expect(rawRumEvents).toHaveSize(1)
-      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.id).toBeDefined()
-      expect(typeof actionEvent.action.id).toBe('string')
-      expect(actionEvent.action.id.length).toBeGreaterThan(0)
-    })
-
-    it('should return custom action ID from actionContexts.findActionId during action', () => {
-      startAction('checkout')
 
       const actionId = actionContexts.findActionId()
       expect(actionId).toBeDefined()
@@ -113,26 +102,28 @@ describe('trackCustomActions', () => {
   })
 
   describe('action types', () => {
-    it('should support custom action type', () => {
-      startAction('test_action', { type: ActionType.CUSTOM })
-      stopAction('test_action')
+    ;[ActionType.SWIPE, ActionType.TAP, ActionType.SCROLL].forEach((actionType) => {
+      it(`should support ${actionType} action type`, () => {
+        startAction('test_action', { type: actionType })
+        stopAction('test_action')
 
-      expect(rawRumEvents).toHaveSize(1)
-      expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          type: RumEventType.ACTION,
-          action: jasmine.objectContaining({
-            type: ActionType.CUSTOM,
-          }),
-        })
-      )
+        expect(rawRumEvents).toHaveSize(1)
+        expect(rawRumEvents[0].rawRumEvent).toEqual(
+          jasmine.objectContaining({
+            type: RumEventType.ACTION,
+            action: jasmine.objectContaining({
+              type: actionType,
+            }),
+          })
+        )
+      })
     })
 
     it('should handle type precedence (stop overrides start)', () => {
-      startAction('action1', { type: ActionType.CUSTOM })
-      stopAction('action1', { type: ActionType.CLICK })
+      startAction('action1', { type: ActionType.TAP })
+      stopAction('action1', { type: ActionType.SCROLL })
 
-      startAction('action2', { type: ActionType.CLICK })
+      startAction('action2', { type: ActionType.SWIPE })
       stopAction('action2')
 
       startAction('action3')
@@ -141,12 +132,12 @@ describe('trackCustomActions', () => {
       expect(rawRumEvents).toHaveSize(3)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
         jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.CLICK }),
+          action: jasmine.objectContaining({ type: ActionType.SCROLL }),
         })
       )
       expect(rawRumEvents[1].rawRumEvent).toEqual(
         jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.CLICK }),
+          action: jasmine.objectContaining({ type: ActionType.SWIPE }),
         })
       )
       expect(rawRumEvents[2].rawRumEvent).toEqual(
@@ -245,57 +236,6 @@ describe('trackCustomActions', () => {
   })
 
   describe('event counting', () => {
-    it('should track error count during custom action', () => {
-      startAction('checkout')
-
-      const actionId = actionContexts.findActionId()
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-        type: RumEventType.ERROR,
-        action: { id: actionId },
-        error: { message: 'test error' },
-      } as any)
-
-      stopAction('checkout')
-
-      expect(rawRumEvents).toHaveSize(1)
-      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.error?.count).toBe(1)
-    })
-
-    it('should track resource count during custom action', () => {
-      startAction('load-data')
-
-      const actionId = actionContexts.findActionId()
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-        type: RumEventType.RESOURCE,
-        action: { id: actionId },
-        resource: { type: 'fetch' },
-      } as any)
-
-      stopAction('load-data')
-
-      expect(rawRumEvents).toHaveSize(1)
-      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.resource?.count).toBe(1)
-    })
-
-    it('should track long task count during custom action', () => {
-      startAction('heavy-computation')
-
-      const actionId = actionContexts.findActionId()
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-        type: RumEventType.LONG_TASK,
-        action: { id: actionId },
-        long_task: { duration: 100 },
-      } as any)
-
-      stopAction('heavy-computation')
-
-      expect(rawRumEvents).toHaveSize(1)
-      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.long_task?.count).toBe(1)
-    })
-
     it('should include counts in the action event', () => {
       startAction('complex-action')
 
