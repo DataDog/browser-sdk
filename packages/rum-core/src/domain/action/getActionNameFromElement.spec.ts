@@ -986,5 +986,16 @@ describe('getActionNameFromElement', () => {
       expect(name).toBe('Save Data')
       expect(nameSource).toBe('text_content')
     })
+
+    it('respects privacy settings for elements inside shadow DOM', () => {
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+      const button = document.createElement('button')
+      button.textContent = 'Secret Button'
+      shadowRoot.appendChild(button)
+
+      const { name } = getActionNameFromElement(button, defaultConfiguration, NodePrivacyLevel.MASK)
+      expect(name).toBe('Masked Element')
+    })
   })
 })
