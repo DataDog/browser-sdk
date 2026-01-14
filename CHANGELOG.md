@@ -18,6 +18,23 @@
 
 ---
 
+## v6.26.0
+
+**Public Changes:**
+
+- ✨ [PANA-5359] Support change records in the developer extension ([#4072](https://github.com/DataDog/browser-sdk/pull/4072))
+- 🐛 [PANA-5375] Treat Change records as full snapshots when appropriate ([#4078](https://github.com/DataDog/browser-sdk/pull/4078)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-13693] make sure click actions are sent on page exit ([#4070](https://github.com/DataDog/browser-sdk/pull/4070)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 do not rely on hardcoded list of DCs ([#4037](https://github.com/DataDog/browser-sdk/pull/4037))
+- 👷 Update dependency react-router to v7.12.0 [SECURITY] ([#4065](https://github.com/DataDog/browser-sdk/pull/4065)) [RUM-REACT]
+- 👷 handle rate limiting in checkTelemetryErrors ([#4069](https://github.com/DataDog/browser-sdk/pull/4069))
+- 👷 Update Node.js to v25 ([#3940](https://github.com/DataDog/browser-sdk/pull/3940))
+- 👷 Update dependency react-window to v2 ([#4052](https://github.com/DataDog/browser-sdk/pull/4052))
+- ⚗️ [PANA-3971] Add a more compact experimental DOM mutation encoding ([#4060](https://github.com/DataDog/browser-sdk/pull/4060)) [RUM]
+
 ## v6.25.3
 
 **Public Changes:**
