@@ -9,9 +9,9 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts } from './actionCollection'
 import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
+import type { ActionContexts } from './trackAction'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
