@@ -11,12 +11,10 @@ import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks 
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import type { ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
-import type { ActionContexts, ActionCounts } from './trackAction'
+import type { ActionContexts } from './trackAction'
 import { startActionTracker } from './trackAction'
-import type { ActionOptions, CustomAction } from './trackCustomActions'
+import type { CustomAction } from './trackCustomActions'
 import { trackCustomActions } from './trackCustomActions'
-
-export type { ActionContexts, ActionOptions }
 
 export interface InstantCustomAction {
   type: CustomAction['type']

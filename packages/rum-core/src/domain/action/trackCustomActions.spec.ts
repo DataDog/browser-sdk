@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
+import type { Duration, ServerDuration } from '@datadog/browser-core'
 import { ExperimentalFeature, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
@@ -9,8 +9,8 @@ import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts } from './actionCollection'
 import { startActionCollection } from './actionCollection'
+import type { ActionContexts } from './trackAction'
 
 describe('trackCustomActions', () => {
   const lifeCycle = new LifeCycle()
