@@ -2,16 +2,13 @@ import type { ClocksState, Context, Duration, RelativeTime, ValueHistoryEntry } 
 import { ONE_MINUTE, generateUUID, createValueHistory, elapsed } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle } from '../lifeCycle'
+import type { EventCounts } from '../trackEventCounts'
 import { trackEventCounts } from '../trackEventCounts'
 import type { ActionType } from '../../rawRumEvent.types'
 
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
-export interface ActionCounts {
-  errorCount: number
-  longTaskCount: number
-  resourceCount: number
-}
+export type ActionCounts = EventCounts
 
 export interface TrackedActionMetadata {
   name?: string
@@ -43,9 +40,9 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
   const history = createValueHistory<string>({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
   const activeEventCountSubscriptions = new Set<ReturnType<typeof trackEventCounts>>()
 
-  const { unsubscribe: unsubscribeSessionRenewal } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
+  const sessionRenewalSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     history.reset()
-    activeEventCountSubscriptions.forEach((subscription) => subscription.stop())
+    activeEventCountSubscriptions.forEach((s) => s.stop())
     activeEventCountSubscriptions.clear()
   })
 
@@ -83,16 +80,12 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     return {
       id,
       startClocks,
-      name: metadata?.name,
-      type: metadata?.type,
-      context: metadata?.context,
-      actionKey: metadata?.actionKey,
+      ...metadata,
       get duration() {
         return duration
       },
       get counts() {
-        const { errorCount, longTaskCount, resourceCount } = eventCountsSubscription.eventCounts
-        return { errorCount, longTaskCount, resourceCount }
+        return eventCountsSubscription.eventCounts
       },
       stop: stopOrDiscard,
       discard: stopOrDiscard,
@@ -108,8 +101,8 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
   }
 
   function stop() {
-    unsubscribeSessionRenewal()
-    activeEventCountSubscriptions.forEach((subscription) => subscription.stop())
+    sessionRenewalSubscription.unsubscribe()
+    activeEventCountSubscriptions.forEach((s) => s.stop())
     activeEventCountSubscriptions.clear()
     history.reset()
     history.stop()

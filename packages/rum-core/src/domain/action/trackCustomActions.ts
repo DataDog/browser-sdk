@@ -1,5 +1,5 @@
 import type { ClocksState, Context, Duration } from '@datadog/browser-core'
-import { clocksNow, combine, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
+import { clocksNow, combine } from '@datadog/browser-core'
 import { ActionType } from '../../rawRumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle } from '../lifeCycle'
@@ -42,16 +42,10 @@ export function trackCustomActions(
 ) {
   const activeCustomActions = new Map<string, TrackedAction>()
 
-  const { unsubscribe: unsubscribeSessionRenewal } = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    activeCustomActions.clear()
-  })
+  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => activeCustomActions.clear())
 
   function startCustomAction(name: string, options: ActionOptions = {}, startClocks = clocksNow()) {
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
-      return
-    }
-
-    const lookupKey = getActionLookupKey(name, options.actionKey)
+    const lookupKey = options.actionKey ?? name
 
     const existingAction = activeCustomActions.get(lookupKey)
     if (existingAction) {
@@ -70,11 +64,7 @@ export function trackCustomActions(
   }
 
   function stopCustomAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
-    if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
-      return
-    }
-
-    const lookupKey = getActionLookupKey(name, options.actionKey)
+    const lookupKey = options.actionKey ?? name
     const trackedAction = activeCustomActions.get(lookupKey)
 
     if (!trackedAction) {
@@ -98,10 +88,7 @@ export function trackCustomActions(
   }
 
   function stop() {
-    unsubscribeSessionRenewal()
-    activeCustomActions.forEach((trackedAction) => {
-      trackedAction.discard()
-    })
+    activeCustomActions.forEach((trackedAction) => trackedAction.discard())
     activeCustomActions.clear()
   }
 
@@ -110,8 +97,4 @@ export function trackCustomActions(
     stopAction: stopCustomAction,
     stop,
   }
-}
-
-function getActionLookupKey(name: string, actionKey?: string): string {
-  return actionKey ?? name
 }

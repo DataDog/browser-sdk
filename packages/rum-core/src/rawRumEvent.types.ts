@@ -337,11 +337,6 @@ export interface RawRumActionEvent {
 export const ActionType = {
   CLICK: 'click',
   CUSTOM: 'custom',
-  TAP: 'tap',
-  SCROLL: 'scroll',
-  SWIPE: 'swipe',
-  APPLICATION_START: 'application_start',
-  BACK: 'back',
 } as const
 
 export type ActionType = (typeof ActionType)[keyof typeof ActionType]

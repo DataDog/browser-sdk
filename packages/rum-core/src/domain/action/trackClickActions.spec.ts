@@ -118,12 +118,12 @@ describe('trackClickActions', () => {
     clock.tick(EXPIRE_DELAY)
     const domEvent = createNewEvent('pointerup', { target: document.createElement('button') })
     expect(events).toEqual([
-      {
-        counts: {
+      jasmine.objectContaining({
+        counts: jasmine.objectContaining({
           errorCount: 0,
           longTaskCount: 0,
           resourceCount: 0,
-        },
+        }),
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
         id: jasmine.any(String),
         name: 'Click me',
@@ -142,7 +142,7 @@ describe('trackClickActions', () => {
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
-      },
+      }),
     ])
   })
 
@@ -169,11 +169,13 @@ describe('trackClickActions', () => {
 
     expect(events.length).toBe(1)
     const clickAction = events[0]
-    expect(clickAction.counts).toEqual({
-      errorCount: 2,
-      longTaskCount: 0,
-      resourceCount: 0,
-    })
+    expect(clickAction.counts).toEqual(
+      jasmine.objectContaining({
+        errorCount: 2,
+        longTaskCount: 0,
+        resourceCount: 0,
+      })
+    )
   })
 
   it('does not count child events unrelated to the click action', () => {

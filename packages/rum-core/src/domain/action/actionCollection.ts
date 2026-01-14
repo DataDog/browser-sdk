@@ -1,5 +1,14 @@
 import type { ClocksState, Context, Duration, Observable } from '@datadog/browser-core'
-import { noop, toServerDuration, generateUUID, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
+import {
+  noop,
+  toServerDuration,
+  generateUUID,
+  SKIPPED,
+  HookNames,
+  addDuration,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -58,9 +67,13 @@ export function startActionCollection(
     ))
   }
 
-  const customActions = trackCustomActions(lifeCycle, actionTracker, (action) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
-  })
+  let customActions: ReturnType<typeof trackCustomActions> | undefined
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
+    customActions = trackCustomActions(lifeCycle, actionTracker, (action) => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+    })
+  }
 
   const actionContexts: ActionContexts = {
     findActionId: actionTracker.findActionId,
@@ -106,13 +119,13 @@ export function startActionCollection(
     addAction: (action: InstantCustomAction) => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processInstantAction(action))
     },
-    startAction: customActions.startAction,
-    stopAction: customActions.stopAction,
+    startAction: customActions?.startAction ?? noop,
+    stopAction: customActions?.stopAction ?? noop,
     actionContexts,
     stop: () => {
       unsubscribeAutoAction()
       stopClickActions()
-      customActions.stop()
+      customActions?.stop()
       actionTracker.stop()
     },
   }

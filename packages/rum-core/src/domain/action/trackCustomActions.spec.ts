@@ -113,28 +113,26 @@ describe('trackCustomActions', () => {
   })
 
   describe('action types', () => {
-    ;[ActionType.SWIPE, ActionType.TAP, ActionType.SCROLL].forEach((actionType) => {
-      it(`should support ${actionType} action type`, () => {
-        startAction('test_action', { type: actionType })
-        stopAction('test_action')
+    it('should support custom action type', () => {
+      startAction('test_action', { type: ActionType.CUSTOM })
+      stopAction('test_action')
 
-        expect(rawRumEvents).toHaveSize(1)
-        expect(rawRumEvents[0].rawRumEvent).toEqual(
-          jasmine.objectContaining({
-            type: RumEventType.ACTION,
-            action: jasmine.objectContaining({
-              type: actionType,
-            }),
-          })
-        )
-      })
+      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents[0].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          type: RumEventType.ACTION,
+          action: jasmine.objectContaining({
+            type: ActionType.CUSTOM,
+          }),
+        })
+      )
     })
 
     it('should handle type precedence (stop overrides start)', () => {
-      startAction('action1', { type: ActionType.TAP })
-      stopAction('action1', { type: ActionType.SCROLL })
+      startAction('action1', { type: ActionType.CUSTOM })
+      stopAction('action1', { type: ActionType.CLICK })
 
-      startAction('action2', { type: ActionType.SWIPE })
+      startAction('action2', { type: ActionType.CLICK })
       stopAction('action2')
 
       startAction('action3')
@@ -143,12 +141,12 @@ describe('trackCustomActions', () => {
       expect(rawRumEvents).toHaveSize(3)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
         jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.SCROLL }),
+          action: jasmine.objectContaining({ type: ActionType.CLICK }),
         })
       )
       expect(rawRumEvents[1].rawRumEvent).toEqual(
         jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.SWIPE }),
+          action: jasmine.objectContaining({ type: ActionType.CLICK }),
         })
       )
       expect(rawRumEvents[2].rawRumEvent).toEqual(
