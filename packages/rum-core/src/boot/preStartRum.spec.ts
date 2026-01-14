@@ -776,19 +776,18 @@ describe('preStartRum', () => {
         'user_login',
         jasmine.objectContaining({
           type: ActionType.CUSTOM,
-          startClocks: jasmine.objectContaining({
-            relative: jasmine.any(Number),
-            timeStamp: jasmine.any(Number),
-          }),
+        }),
+        jasmine.objectContaining({
+          relative: jasmine.any(Number),
+          timeStamp: jasmine.any(Number),
         })
       )
       expect(stopActionSpy).toHaveBeenCalledWith(
         'user_login',
+        undefined,
         jasmine.objectContaining({
-          stopClocks: jasmine.objectContaining({
-            relative: jasmine.any(Number),
-            timeStamp: jasmine.any(Number),
-          }),
+          relative: jasmine.any(Number),
+          timeStamp: jasmine.any(Number),
         })
       )
     })

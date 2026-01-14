@@ -255,12 +255,12 @@ export function createPreStartStrategy(
 
     startAction(name, options) {
       const startClocks = clocksNow()
-      bufferApiCalls.add((startRumResult) => startRumResult.startAction(name, { ...options, startClocks }))
+      bufferApiCalls.add((startRumResult) => startRumResult.startAction(name, options, startClocks))
     },
 
     stopAction(name, options) {
       const stopClocks = clocksNow()
-      bufferApiCalls.add((startRumResult) => startRumResult.stopAction(name, { ...options, stopClocks }))
+      bufferApiCalls.add((startRumResult) => startRumResult.stopAction(name, options, stopClocks))
     },
 
     addError(providedError) {

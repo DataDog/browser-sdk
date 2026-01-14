@@ -819,7 +819,6 @@ describe('rum public api', () => {
         jasmine.objectContaining({
           type: ActionType.CUSTOM,
           context: { count: 123, nested: { foo: 'bar' } },
-          actionKey: 'key123',
         })
       )
     })

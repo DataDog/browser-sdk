@@ -17,7 +17,7 @@ export interface TrackedAction {
   id: string
   startClocks: ClocksState
   eventCounts: EventCounts
-  stop: (endTime?: RelativeTime) => void
+  stop: (endTime: RelativeTime) => void
   discard: () => void
 }
 
@@ -54,7 +54,7 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     })
     activeEventCountSubscriptions.add(eventCountsSubscription)
 
-    function stopTracking(endTime?: RelativeTime) {
+    function stopOrDiscard(endTime?: RelativeTime) {
       if (stopped) {
         return
       }
@@ -76,10 +76,8 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
       get eventCounts() {
         return eventCountsSubscription.eventCounts
       },
-      stop: stopTracking,
-      discard: () => {
-        stopTracking()
-      },
+      stop: stopOrDiscard,
+      discard: stopOrDiscard
     }
   }
 

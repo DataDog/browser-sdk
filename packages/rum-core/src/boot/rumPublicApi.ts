@@ -170,7 +170,7 @@ export interface RumPublicApi extends PublicApi {
   addAction: (name: string, context?: object) => void
 
   /**
-   * Start a custom action, stored in `@action`
+   * [Experimental] start a custom action, stored in `@action`
    *
    * @category Data Collection
    * @param name - Name of the action
@@ -179,7 +179,7 @@ export interface RumPublicApi extends PublicApi {
   startAction: (name: string, options?: ActionOptions) => void
 
   /**
-   * Stop a custom action, stored in `@action`
+   * [Experimental] stop a custom action, stored in `@action`
    *
    * @category Data Collection
    * @param name - Name of the action
@@ -680,7 +680,6 @@ export function makeRumPublicApi(
       strategy.startAction(sanitize(name)!, {
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
-        actionKey: sanitize(options && options.actionKey) as string | undefined,
       })
     }),
 

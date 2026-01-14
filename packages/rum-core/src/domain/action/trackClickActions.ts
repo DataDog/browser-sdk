@@ -314,17 +314,13 @@ function newClick(
         return
       }
 
-      const { resourceCount, errorCount, longTaskCount } = trackedAction.eventCounts
+      const { errorCount, longTaskCount, resourceCount } = trackedAction.eventCounts
       const clickAction: ClickAction = {
         duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
         startClocks,
         id: trackedAction.id,
         frustrationTypes,
-        counts: {
-          resourceCount,
-          errorCount,
-          longTaskCount,
-        },
+        counts: { errorCount, longTaskCount, resourceCount },
         events: domEvents ?? [startEvent],
         event: startEvent,
         ...clickActionBase,

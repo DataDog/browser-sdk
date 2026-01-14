@@ -1,4 +1,4 @@
-import type { ClocksState, Context, Duration, Observable, RelativeTime } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, Observable } from '@datadog/browser-core'
 import {
   noop,
   combine,
@@ -45,17 +45,7 @@ export interface ActionOptions {
    * Action key
    */
   actionKey?: string
-
-  /**
-   * @internal - used to preserve timing for pre-init calls
-   */
-  startClocks?: ClocksState
-
-  /**
-   * @internal - used to preserve timing for pre-init calls
-   */
-  stopClocks?: ClocksState
-}
+  }
 
 interface ActiveCustomAction extends ActionOptions {
   name: string
@@ -112,7 +102,7 @@ export function startActionCollection(
   }
 
   const actionContexts: ActionContexts = {
-    findActionId: (startTime?: RelativeTime) => actionTracker.findActionId(startTime),
+    findActionId: actionTracker.findActionId,
   }
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
@@ -151,7 +141,7 @@ export function startActionCollection(
     })
   )
 
-  function startCustomActionInternal(name: string, options: ActionOptions = {}) {
+  function startCustomActionInternal(name: string, options: ActionOptions = {}, startClocks = clocksNow()) {
     if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
       return
     }
@@ -164,7 +154,6 @@ export function startActionCollection(
       activeCustomActions.delete(lookupKey)
     }
 
-    const startClocks = options.startClocks ?? clocksNow()
     const trackedAction = actionTracker.createTrackedAction(startClocks)
 
     activeCustomActions.set(lookupKey, {
@@ -176,7 +165,7 @@ export function startActionCollection(
     })
   }
 
-  function stopCustomActionInternal(name: string, options: ActionOptions = {}) {
+  function stopCustomActionInternal(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
     if (!isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
       return
     }
@@ -188,12 +177,9 @@ export function startActionCollection(
       return
     }
 
-    const stopClocks = options.stopClocks ?? clocksNow()
     const duration = elapsed(activeAction.trackedAction.startClocks.timeStamp, stopClocks.timeStamp)
 
     activeAction.trackedAction.stop(stopClocks.relative)
-
-    const { errorCount, resourceCount, longTaskCount } = activeAction.trackedAction.eventCounts
 
     const customAction: CustomAction = {
       id: activeAction.trackedAction.id,
@@ -202,7 +188,7 @@ export function startActionCollection(
       startClocks: activeAction.trackedAction.startClocks,
       duration,
       context: combine(activeAction.context, options.context),
-      counts: { errorCount, resourceCount, longTaskCount },
+      counts: activeAction.trackedAction.eventCounts,
     }
 
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(customAction))
