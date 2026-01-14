@@ -1,5 +1,5 @@
 import type { ContextManager } from '@datadog/browser-core'
-import { objectEntries, shallowClone, matchList, TraceContextInjection } from '@datadog/browser-core'
+import { objectEntries, shallowClone, matchList, TraceContextInjection, isSampled } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
@@ -8,7 +8,6 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
-import { isSampled } from '../sampler/sampler'
 import type { PropagatorType } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'

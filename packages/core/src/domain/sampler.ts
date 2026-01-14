@@ -1,4 +1,4 @@
-import { performDraw } from '@datadog/browser-core'
+import { performDraw } from '../tools/utils/numberUtils'
 
 const sampleDecisionCache: Map<number, { sessionId: string; decision: boolean }> = new Map()
 

@@ -7,8 +7,7 @@ import type {
   Hooks,
 } from '@datadog/browser-rum-core'
 import type { DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
-import { isSampled } from '@datadog/browser-rum-core'
-import { monitorError } from '@datadog/browser-core'
+import { monitorError, isSampled } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
