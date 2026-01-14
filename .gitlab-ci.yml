@@ -128,6 +128,7 @@ ci-image:
 list-datacenters:
   stage: before-tests
   extends: .base-configuration
+  tags: ['runner:main', 'size:large']
   script:
     - node scripts/test-datacenter-api.ts
 
