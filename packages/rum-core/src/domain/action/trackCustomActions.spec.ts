@@ -385,4 +385,3 @@ describe('trackCustomActions', () => {
     })
   })
 })
-

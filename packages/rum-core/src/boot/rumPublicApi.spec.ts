@@ -812,7 +812,6 @@ describe('rum public api', () => {
       rumPublicApi.startAction('action_name', {
         type: ActionType.CUSTOM,
         context: { count: 123, nested: { foo: 'bar' } } as any,
-        actionKey: 'key123',
       })
 
       expect(startActionSpy.calls.argsFor(0)[1]).toEqual(

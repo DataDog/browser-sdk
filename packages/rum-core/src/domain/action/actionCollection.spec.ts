@@ -230,5 +230,4 @@ describe('actionCollection', () => {
       expect(telemetryEventAttributes.action?.id).toBeUndefined()
     })
   })
-
 })

@@ -1,10 +1,5 @@
 import type { ClocksState, Context, Duration } from '@datadog/browser-core'
-import {
-  clocksNow,
-  combine,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { clocksNow, combine, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
 import { ActionType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
@@ -126,4 +121,3 @@ export function trackCustomActions(
 function getActionLookupKey(name: string, actionKey?: string): string {
   return JSON.stringify({ name, actionKey })
 }
-
