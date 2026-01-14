@@ -121,7 +121,7 @@ notify-deploy-ready:
 notify-deploy-success:
   stage: post-notify
   needs:
-    - step-6_publish-developer-extension
+    - step-8_create-github-release
   extends:
     - .prepare_notification
   script:
