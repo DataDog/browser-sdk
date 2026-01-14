@@ -7,7 +7,7 @@ import {
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
 } from '@datadog/browser-core'
-import type { Hooks, DefaultRumEventAttributes } from '../hooks'
+import type { Hooks, DefaultRumEventAttributes, AssembleHookParams } from '../hooks'
 
 interface SourceCodeContext {
   service: string
@@ -53,20 +53,11 @@ export function startSourceCodeContext(hooks: Hooks) {
 
   hooks.register(HookNames.Assemble, ({ domainContext, rawRumEvent }): DefaultRumEventAttributes | SKIPPED => {
     buildContextByFile()
-    let stack
-    if ('handling_stack' in domainContext) {
-      stack = domainContext.handling_stack
-    }
-    if (rawRumEvent.type === 'error' && 'stack' in rawRumEvent.error) {
-      stack = rawRumEvent.error.stack
-    }
-    if (!stack) {
-      return SKIPPED
-    }
-    const stackTrace = computeStackTrace({ stack })
-    const firstFrame = stackTrace.stack[0]
-    if (firstFrame.url) {
-      const context = contextByFile.get(firstFrame.url)
+
+    const url = getSourceUrl(domainContext, rawRumEvent)
+
+    if (url) {
+      const context = contextByFile.get(url)
       if (context) {
         return {
           type: rawRumEvent.type,
@@ -77,4 +68,25 @@ export function startSourceCodeContext(hooks: Hooks) {
     }
     return SKIPPED
   })
+}
+
+function getSourceUrl(
+  domainContext: AssembleHookParams['domainContext'],
+  rawRumEvent: AssembleHookParams['rawRumEvent']
+) {
+  if (rawRumEvent.type === 'long_task' && rawRumEvent.long_task.entry_type === 'long-animation-frame') {
+    return rawRumEvent.long_task.scripts[0]?.source_url
+  }
+
+  let stack
+  if ('handlingStack' in domainContext) {
+    stack = domainContext.handlingStack
+  }
+
+  if (rawRumEvent.type === 'error' && rawRumEvent.error.stack) {
+    stack = rawRumEvent.error.stack
+  }
+  const stackTrace = computeStackTrace({ stack })
+
+  return stackTrace.stack[0]?.url
 }

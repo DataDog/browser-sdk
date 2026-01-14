@@ -1,8 +1,9 @@
 import { ExperimentalFeature, HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
-import type { Hooks } from '../hooks'
+import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { mockExperimentalFeatures, registerCleanupTask } from '../../../../core/test'
+import type { RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import type { BrowserWindow } from './sourceCodeContext'
 import { startSourceCodeContext } from './sourceCodeContext'
 
@@ -49,8 +50,8 @@ describe('sourceCodeContext', () => {
           error: {
             stack: MATCHING_TEST_STACK,
           },
-        } as any,
-      })
+        },
+      } as AssembleHookParams)
 
       expect(result).toBeUndefined()
     })
@@ -74,8 +75,8 @@ describe('sourceCodeContext', () => {
           error: {
             stack: MATCHING_TEST_STACK,
           },
-        } as any,
-      })
+        },
+      } as AssembleHookParams)
 
       expect(result).toEqual({
         type: 'error',
@@ -93,14 +94,42 @@ describe('sourceCodeContext', () => {
         startTime: 0 as RelativeTime,
         rawRumEvent: {
           type: 'action',
-        } as any,
-        domainContext: {
-          handling_stack: MATCHING_TEST_STACK,
         },
-      })
+        domainContext: {
+          handlingStack: MATCHING_TEST_STACK,
+        },
+      } as AssembleHookParams)
 
       expect(result).toEqual({
         type: 'action',
+        service: 'my-service',
+        version: '1.0.0',
+      })
+    })
+
+    it('should add source code context matching the LoAF first script source URL', () => {
+      setupBrowserWindowWithContext()
+      startSourceCodeContext(hooks)
+
+      const result = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'long_task',
+        startTime: 0 as RelativeTime,
+        domainContext: {},
+        rawRumEvent: {
+          type: 'long_task',
+          long_task: {
+            entry_type: 'long-animation-frame',
+            scripts: [
+              {
+                source_url: 'http://localhost:8080/file.js',
+              },
+            ],
+          },
+        } as RawRumLongAnimationFrameEvent,
+      } as AssembleHookParams)
+
+      expect(result).toEqual({
+        type: 'long_task',
         service: 'my-service',
         version: '1.0.0',
       })
@@ -120,8 +149,8 @@ describe('sourceCodeContext', () => {
             stack: `Error: Another error
                 at anotherFunction (http://localhost:8080/another-file.js:41:27)`,
           },
-        } as any,
-      })
+        },
+      } as AssembleHookParams)
 
       expect(result).toBeUndefined()
     })
@@ -141,8 +170,8 @@ describe('sourceCodeContext', () => {
           error: {
             stack: TEST_STACK,
           },
-        } as any,
-      })
+        },
+      } as AssembleHookParams)
 
       expect(result).toEqual({
         type: 'error',
@@ -170,8 +199,8 @@ describe('sourceCodeContext', () => {
           error: {
             stack: TEST_STACK,
           },
-        } as any,
-      })
+        },
+      } as AssembleHookParams)
 
       expect(result).toEqual({
         type: 'error',
