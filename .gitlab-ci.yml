@@ -119,6 +119,7 @@ ci-image:
     - .base-configuration
     - .feature-branches
   when: manual
+  tags: ['runner:docker', 'size:large']
   image: $BUILD_STABLE_REGISTRY/docker:18.03.1
   script:
     - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE .
@@ -127,7 +128,6 @@ ci-image:
 list-datacenters:
   stage: before-tests
   extends: .base-configuration
-  tags: ['runner:main', 'size:large']
   script:
     - node scripts/test-datacenter-api.ts
 
