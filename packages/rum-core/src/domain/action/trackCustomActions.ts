@@ -113,5 +113,5 @@ export function trackCustomActions(
 }
 
 function getActionLookupKey(name: string, actionKey?: string): string {
-  return JSON.stringify({ name, actionKey })
+  return actionKey ?? name
 }
