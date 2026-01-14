@@ -32,6 +32,8 @@ const MAJOR_DCS = ['gov', 'us1', 'eu1']
 const VAULT_ADDR = process.env.VAULT_ADDR || 'https://vault.us1.ddbuild.io'
 const RUNTIME_METADATA_SERVICE_URL = 'https://runtime-metadata-service.us1.ddbuild.io/v2/datacenters'
 
+console.log('process.env.VAULT_ADDR', process.env.VAULT_ADDR)
+
 export async function getDatacenterMetadata(name: string): Promise<Datacenter | undefined> {
   const datacentersMetadata = await getAllDatacentersMetadata()
 
