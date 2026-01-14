@@ -29,6 +29,13 @@ async function generateRumEventsFormatTypes(schemasDirectoryPath: string): Promi
     'session-replay-browser-schema.json',
     { options: { additionalProperties: false } }
   )
+
+  await generateTypesFromSchema(
+    path.join(import.meta.dirname, '../packages/rum/src/types/profiling.ts'),
+    schemasDirectoryPath,
+    'profiling-browser-schema.json',
+    { options: { additionalProperties: false } }
+  )
 }
 
 async function generateRemoteConfigurationTypes(schemasDirectoryPath: string): Promise<void> {

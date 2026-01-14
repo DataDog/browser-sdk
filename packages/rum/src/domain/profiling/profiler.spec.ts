@@ -23,9 +23,10 @@ import {
 import { LONG_TASK_ID_HISTORY_TIME_OUT_DELAY } from 'packages/rum-core/src/domain/longTask/longTaskCollection'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
+import type { BrowserProfilerTrace } from '../../types'
 import { mockedTrace } from './test-utils/mockedTrace'
 import { createRumProfiler } from './profiler'
-import type { ProfilerTrace, RumProfilerTrace } from './types'
+import type { ProfilerTrace } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import type { ProfileEventPayload } from './transport/assembly'
@@ -56,7 +57,7 @@ describe('profiler', () => {
 
     const mockProfilerTrace: ProfilerTrace = deepClone(mockedTrace)
 
-    const mockedRumProfilerTrace: RumProfilerTrace = Object.assign(mockProfilerTrace, {
+    const mockedRumProfilerTrace: BrowserProfilerTrace = Object.assign(mockProfilerTrace, {
       startClocks: {
         relative: relativeNow(),
         timeStamp: timeStampNow(),
