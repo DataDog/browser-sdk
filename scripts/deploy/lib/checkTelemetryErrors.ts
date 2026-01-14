@@ -3,7 +3,7 @@
  */
 import { printLog, fetchHandlingError, timeout } from '../../lib/executionUtils.ts'
 import { getTelemetryOrgApiKey, getTelemetryOrgApplicationKey } from '../../lib/secrets.ts'
-import { siteByDatacenter } from '../../lib/datacenter.ts'
+import { getDatacenterMetadata } from '../../lib/datacenter.ts'
 
 const TIME_WINDOW_IN_MINUTES = 5
 // Rate limit: 2 requests per 10 seconds. Wait 6 seconds between requests to be safe.
@@ -47,12 +47,14 @@ export async function checkTelemetryErrors(datacenters: string[], version: strin
 }
 
 async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query[]): Promise<void> {
-  const site = siteByDatacenter[datacenter]
+  const datacenterMetadata = await getDatacenterMetadata(datacenter)
 
-  if (!site) {
+  if (!datacenterMetadata?.site) {
     printLog(`No site is configured for datacenter ${datacenter}. skipping...`)
     return
   }
+
+  const site = datacenterMetadata.site
 
   const apiKey = getTelemetryOrgApiKey(site)
   const applicationKey = getTelemetryOrgApplicationKey(site)
