@@ -4,6 +4,8 @@ import {
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
+  waitNextMicrotask,
+  waitFor,
 } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
@@ -53,7 +55,6 @@ describe('preStartLogs', () => {
     } as unknown as StartLogsResult)
     getCommonContextSpy = jasmine.createSpy()
     strategy = createPreStartStrategy(getCommonContextSpy, createTrackingConsentState(), doStartLogsSpy)
-    clock = mockClock()
   })
 
   afterEach(() => {
@@ -68,9 +69,10 @@ describe('preStartLogs', () => {
       displaySpy = spyOn(display, 'error')
     })
 
-    it('should start when the configuration is valid', () => {
+    it('should start when the configuration is valid', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(displaySpy).not.toHaveBeenCalled()
+      await waitFor(() => doStartLogsSpy.calls.count() > 0, { timeout: 2000 })
       expect(doStartLogsSpy).toHaveBeenCalled()
     })
 
@@ -130,7 +132,7 @@ describe('preStartLogs', () => {
     })
   })
 
-  it('allows sending logs', () => {
+  it('allows sending logs', async () => {
     strategy.handleLog(
       {
         status: StatusType.info,
@@ -141,6 +143,7 @@ describe('preStartLogs', () => {
 
     expect(handleLogSpy).not.toHaveBeenCalled()
     strategy.init(DEFAULT_INIT_CONFIGURATION)
+    await waitFor(() => handleLogSpy.calls.count() > 0, { timeout: 2000 })
 
     expect(handleLogSpy.calls.all().length).toBe(1)
     expect(getLoggedMessage(0).message.message).toBe('message')
@@ -152,6 +155,8 @@ describe('preStartLogs', () => {
 
   describe('save context when submitting a log', () => {
     it('saves the date', () => {
+      mockEventBridge()
+      clock = mockClock()
       strategy.handleLog(
         {
           status: StatusType.info,
@@ -162,10 +167,11 @@ describe('preStartLogs', () => {
       clock.tick(ONE_SECOND)
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
+      expect(handleLogSpy.calls.count()).toBe(1)
       expect(getLoggedMessage(0).savedDate).toEqual((Date.now() - ONE_SECOND) as TimeStamp)
     })
 
-    it('saves the URL', () => {
+    it('saves the URL', async () => {
       getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
       strategy.handleLog(
         {
@@ -176,10 +182,11 @@ describe('preStartLogs', () => {
       )
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
+      await waitFor(() => handleLogSpy.calls.count() > 0, { timeout: 2000 })
       expect(getLoggedMessage(0).savedCommonContext!.view?.url).toEqual('url')
     })
 
-    it('saves the log context', () => {
+    it('saves the log context', async () => {
       const context = { foo: 'bar' }
       strategy.handleLog(
         {
@@ -192,6 +199,7 @@ describe('preStartLogs', () => {
       context.foo = 'baz'
 
       strategy.init(DEFAULT_INIT_CONFIGURATION)
+      await waitFor(() => handleLogSpy.calls.count() > 0, { timeout: 2000 })
 
       expect(getLoggedMessage(0).message.context!.foo).toEqual('bar')
     })
@@ -236,12 +244,13 @@ describe('preStartLogs', () => {
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
-    it('starts logs if tracking consent is granted before init', () => {
+    it('starts logs if tracking consent is granted before init', async () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
       strategy.init({
         ...DEFAULT_INIT_CONFIGURATION,
         trackingConsent: TrackingConsent.NOT_GRANTED,
       })
+      await waitFor(() => doStartLogsSpy.calls.count() > 0, { timeout: 2000 })
       expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
     })
 
@@ -254,11 +263,13 @@ describe('preStartLogs', () => {
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
-    it('do not call startLogs when tracking consent state is updated after init', () => {
+    it('do not call startLogs when tracking consent state is updated after init', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
+      await waitFor(() => doStartLogsSpy.calls.count() > 0, { timeout: 2000 })
       doStartLogsSpy.calls.reset()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
+      await waitNextMicrotask()
 
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
@@ -283,8 +294,10 @@ describe('preStartLogs', () => {
   })
 
   describe('logs session creation', () => {
-    it('creates a session on normal conditions', () => {
+    it('creates a session on normal conditions', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
+
+      await waitFor(() => getCookie(SESSION_STORE_KEY) !== undefined, { timeout: 2000 })
       expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
     })
 

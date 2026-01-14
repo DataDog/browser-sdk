@@ -1,5 +1,6 @@
 import type { ContextManager, TimeStamp } from '@datadog/browser-core'
 import { monitor, display, createContextManager, stopSessionManager } from '@datadog/browser-core'
+import { waitFor } from '@datadog/browser-core/test'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
@@ -72,9 +73,10 @@ describe('logs entry', () => {
   describe('common context', () => {
     let LOGS: LogsPublicApi
 
-    beforeEach(() => {
+    beforeEach(async () => {
       LOGS = makeLogsPublicApi(startLogs)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
+      await waitFor(() => startLogs.calls.count() > 0)
     })
 
     it('should have the current date, view and global context', () => {
@@ -93,9 +95,10 @@ describe('logs entry', () => {
   describe('post start API usages', () => {
     let LOGS: LogsPublicApi
 
-    beforeEach(() => {
+    beforeEach(async () => {
       LOGS = makeLogsPublicApi(startLogs)
       LOGS.init(DEFAULT_INIT_CONFIGURATION)
+      await waitFor(() => startLogs.calls.count() > 0)
     })
 
     it('main logger logs a message', () => {
