@@ -1,8 +1,8 @@
 import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import { clocksNow, combine, isExperimentalFeatureEnabled, ExperimentalFeature } from '@datadog/browser-core'
 import { ActionType } from '../../rawRumEvent.types'
-import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
+import type { LifeCycle } from '../lifeCycle'
 import type { ActionCounts, ActionTracker, TrackedAction } from './trackAction'
 
 export interface ActionOptions {

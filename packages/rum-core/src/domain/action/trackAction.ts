@@ -1,7 +1,7 @@
 import type { ClocksState, Duration, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
 import { ONE_MINUTE, generateUUID, createValueHistory, elapsed } from '@datadog/browser-core'
-import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
+import type { LifeCycle } from '../lifeCycle'
 import { trackEventCounts } from '../trackEventCounts'
 
 export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary

@@ -53,7 +53,7 @@ import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
-import type { ActionOptions } from '../domain/action/actionCollection'
+import type { ActionOptions } from '../domain/action/trackCustomActions'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
