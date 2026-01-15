@@ -632,19 +632,10 @@ describe('preStartRum', () => {
       const addActionSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
 
-      const customAction: CustomAction = {
+      const customAction: Omit<CustomAction, 'id' | 'duration' | 'counts'> = {
         name: 'foo',
         type: ActionType.CUSTOM,
         startClocks: clocksNow(),
-        duration: 0 as Duration,
-        id: '123',
-        counts: {
-          errorCount: 0,
-          longTaskCount: 0,
-          resourceCount: 0,
-          actionCount: 0,
-          frustrationCount: 0,
-        },
       }
       strategy.addAction(customAction)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)

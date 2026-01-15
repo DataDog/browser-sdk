@@ -86,7 +86,6 @@ describe('actionCollection', () => {
         },
         type: ActionType.CLICK,
       },
-      context: undefined,
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
       _dd: {
@@ -114,7 +113,6 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CUSTOM,
-      duration: 0 as Duration,
       context: { foo: 'bar' },
     })
 
@@ -160,7 +158,6 @@ describe('actionCollection', () => {
       name: 'foo',
       startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
       type: ActionType.CUSTOM,
-      duration: 0 as Duration,
       handlingStack: 'Error\n    at foo\n    at bar',
     })
 

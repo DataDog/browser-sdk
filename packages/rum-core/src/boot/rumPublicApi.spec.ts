@@ -155,7 +155,6 @@ describe('rum public api', () => {
           context: { bar: 'baz' },
           name: 'foo',
           startClocks: jasmine.any(Object),
-          duration: jasmine.any(Number),
           type: ActionType.CUSTOM,
           handlingStack: jasmine.any(String),
         },

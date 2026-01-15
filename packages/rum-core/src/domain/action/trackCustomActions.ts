@@ -1,6 +1,7 @@
 import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import { clocksNow, combine } from '@datadog/browser-core'
-import { ActionType } from '../../rawRumEvent.types'
+import type { ActionType } from '../../rawRumEvent.types'
+import { ActionType as ActionTypeEnum } from '../../rawRumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle } from '../lifeCycle'
 import type { ActionCounts, ActionTracker, TrackedAction } from './trackAction'
@@ -29,10 +30,17 @@ export interface CustomAction {
   type: ActionType
   name: string
   startClocks: ClocksState
-  duration: Duration
+  duration?: Duration
   context?: Context
   handlingStack?: string
-  counts: ActionCounts
+  counts?: ActionCounts
+}
+
+interface ActiveCustomAction {
+  name: string
+  type?: ActionType
+  context?: Context
+  trackedAction: TrackedAction
 }
 
 export function trackCustomActions(
@@ -40,7 +48,7 @@ export function trackCustomActions(
   actionTracker: ActionTracker,
   onCustomActionCompleted: (action: CustomAction) => void
 ) {
-  const activeCustomActions = new Map<string, TrackedAction>()
+  const activeCustomActions = new Map<string, ActiveCustomAction>()
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => activeCustomActions.clear())
 
@@ -49,38 +57,38 @@ export function trackCustomActions(
 
     const existingAction = activeCustomActions.get(lookupKey)
     if (existingAction) {
-      existingAction.discard()
+      existingAction.trackedAction.discard()
       activeCustomActions.delete(lookupKey)
     }
 
-    const trackedAction = actionTracker.createTrackedAction(startClocks, {
+    const trackedAction = actionTracker.createTrackedAction(startClocks)
+
+    activeCustomActions.set(lookupKey, {
       name,
       type: options.type,
       context: options.context,
-      actionKey: options.actionKey,
+      trackedAction,
     })
-
-    activeCustomActions.set(lookupKey, trackedAction)
   }
 
   function stopCustomAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
-    const trackedAction = activeCustomActions.get(lookupKey)
+    const activeAction = activeCustomActions.get(lookupKey)
 
-    if (!trackedAction) {
+    if (!activeAction) {
       return
     }
 
-    trackedAction.stop(stopClocks.relative)
+    activeAction.trackedAction.stop(stopClocks.relative)
 
     const customAction: CustomAction = {
-      id: trackedAction.id,
-      name: trackedAction.name!,
-      type: (options.type ?? trackedAction.type) || ActionType.CUSTOM,
-      startClocks: trackedAction.startClocks,
-      duration: trackedAction.duration!,
-      context: combine(trackedAction.context, options.context),
-      counts: trackedAction.counts,
+      id: activeAction.trackedAction.id,
+      name: activeAction.name,
+      type: (options.type ?? activeAction.type) || ActionTypeEnum.CUSTOM,
+      startClocks: activeAction.trackedAction.startClocks,
+      duration: activeAction.trackedAction.duration,
+      context: combine(activeAction.context, options.context),
+      counts: activeAction.trackedAction.counts,
     }
 
     onCustomActionCompleted(customAction)
@@ -88,7 +96,7 @@ export function trackCustomActions(
   }
 
   function stop() {
-    activeCustomActions.forEach((trackedAction) => trackedAction.discard())
+    activeCustomActions.forEach((activeAction) => activeAction.trackedAction.discard())
     activeCustomActions.clear()
   }
 

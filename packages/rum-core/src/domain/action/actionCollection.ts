@@ -24,15 +24,6 @@ import type { ActionContexts } from './trackAction'
 import { trackCustomActions } from './trackCustomActions'
 import type { CustomAction } from './trackCustomActions'
 
-export interface InstantCustomAction {
-  type: CustomAction['type']
-  name: string
-  startClocks: ClocksState
-  duration: Duration
-  context?: Context
-  handlingStack?: string
-}
-
 export type AutoAction = ClickAction
 
 export const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
@@ -115,8 +106,8 @@ export function startActionCollection(
   )
 
   return {
-    addAction: (action: InstantCustomAction) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processInstantAction(action))
+    addAction: (action: Omit<CustomAction, 'id' | 'duration' | 'counts'>) => {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction({ id: generateUUID(), ...action }))
     },
     startAction: customActions?.startAction ?? noop,
     stopAction: customActions?.stopAction ?? noop,
@@ -132,6 +123,7 @@ export function startActionCollection(
 
 function processAction(action: AutoAction | CustomAction): RawRumEventCollectedData<RawRumActionEvent> {
   const isAuto = isAutoAction(action)
+  const loadingTime = discardNegativeDuration(toServerDuration(action.duration))
 
   return {
     rawRumEvent: {
@@ -139,46 +131,31 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
       date: action.startClocks.timeStamp,
       action: {
         id: action.id,
-        loading_time: discardNegativeDuration(toServerDuration(action.duration)),
         target: { name: action.name },
         type: action.type,
-        error: { count: action.counts.errorCount },
-        long_task: { count: action.counts.longTaskCount },
-        resource: { count: action.counts.resourceCount },
-        frustration: isAuto ? { type: action.frustrationTypes } : undefined,
+        ...(loadingTime !== undefined && { loading_time: loadingTime }),
+        ...(action.counts && {
+          error: { count: action.counts.errorCount },
+          long_task: { count: action.counts.longTaskCount },
+          resource: { count: action.counts.resourceCount },
+        }),
+        ...(isAuto && { frustration: { type: action.frustrationTypes } }),
       },
-      context: isAuto ? undefined : action.context,
-      _dd: isAuto
+      ...(isAuto
         ? {
-            action: {
-              target: action.target,
-              position: action.position,
-              name_source: action.nameSource,
+            _dd: {
+              action: {
+                target: action.target,
+                position: action.position,
+                name_source: action.nameSource,
+              },
             },
           }
-        : undefined,
+        : { context: action.context }),
     },
     duration: action.duration,
     startTime: action.startClocks.relative,
     domainContext: isAuto ? { events: action.events } : { handlingStack: action.handlingStack },
-  }
-}
-
-function processInstantAction(action: InstantCustomAction): RawRumEventCollectedData<RawRumActionEvent> {
-  return {
-    rawRumEvent: {
-      type: RumEventType.ACTION,
-      date: action.startClocks.timeStamp,
-      action: {
-        id: generateUUID(),
-        target: { name: action.name },
-        type: action.type,
-      },
-      context: action.context,
-    },
-    duration: action.duration,
-    startTime: action.startClocks.relative,
-    domainContext: { handlingStack: action.handlingStack },
   }
 }
 
