@@ -43,10 +43,10 @@ export async function main(...args: string[]): Promise<void> {
 
   // Skip all telemetry error checks for gov datacenter deployments
   const shouldCheckTelemetryErrors = checkTelemetryErrorsFlag && !datacenters.every((dc) => dc === 'gov')
+  const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
 
   if (shouldCheckTelemetryErrors) {
     // Make sure system is in a good state before deploying
-    const currentBrowserSdkVersionMajor = browserSdkVersion.split('.')[0]
     await checkTelemetryErrors(datacenters, `${currentBrowserSdkVersionMajor}.*`)
   }
 
@@ -56,6 +56,9 @@ export async function main(...args: string[]): Promise<void> {
   command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`.withLogs().run()
 
   if (shouldCheckTelemetryErrors) {
+    // verify we're still in a good state after deploying
+    await checkTelemetryErrors(datacenters, `${currentBrowserSdkVersionMajor}.*`)
+
     await gateTelemetryErrors(datacenters)
   }
 }
