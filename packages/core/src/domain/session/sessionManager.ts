@@ -16,7 +16,7 @@ import { findLast } from '../../tools/utils/polyfills'
 import { monitorError } from '../../tools/monitor'
 import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
-import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
+import { SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
 import { toSessionState } from './sessionState'
@@ -25,11 +25,8 @@ import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { retrieveSessionFromLocalStorage } from './storeStrategies/sessionInLocalStorage'
 import { resetSessionStoreOperations } from './sessionStoreOperations'
 
-export interface SessionManager<TrackingType extends string> {
-  findSession: (
-    startTime?: RelativeTime,
-    options?: { returnInactive: boolean }
-  ) => SessionContext<TrackingType> | undefined
+export interface SessionManager {
+  findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
@@ -37,9 +34,8 @@ export interface SessionManager<TrackingType extends string> {
   updateSessionState: (state: Partial<SessionState>) => void
 }
 
-export interface SessionContext<TrackingType extends string> extends Context {
+export interface SessionContext extends Context {
   id: string
-  trackingType: TrackingType
   isReplayForced: boolean
   anonymousId: string | undefined
 }
@@ -48,12 +44,10 @@ export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
-export function startSessionManager<TrackingType extends string>(
+export function startSessionManager(
   configuration: Configuration,
-  productKey: string,
-  computeTrackingType: (rawTrackingType?: string) => TrackingType,
   trackingConsentState: TrackingConsentState,
-  onReady: (sessionManager: SessionManager<TrackingType>) => void
+  onReady: (sessionManager: SessionManager) => void
 ) {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
@@ -63,15 +57,10 @@ export function startSessionManager<TrackingType extends string>(
     return
   }
 
-  const sessionStore = startSessionStore(
-    configuration.sessionStoreStrategyType,
-    configuration,
-    productKey,
-    computeTrackingType
-  )
+  const sessionStore = startSessionStore(configuration.sessionStoreStrategyType, configuration)
   stopCallbacks.push(() => sessionStore.stop())
 
-  const sessionContextHistory = createValueHistory<SessionContext<TrackingType>>({
+  const sessionContextHistory = createValueHistory<SessionContext>({
     expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
@@ -131,23 +120,21 @@ export function startSessionManager<TrackingType extends string>(
     })
   })
 
-  function buildSessionContext() {
+  function buildSessionContext(): SessionContext {
     const session = sessionStore.getSession()
 
-    if (!session) {
+    if (!session?.id) {
       reportUnexpectedSessionState(configuration).catch(() => void 0) // Ignore errors
 
       return {
         id: 'invalid',
-        trackingType: SESSION_NOT_TRACKED as TrackingType,
         isReplayForced: false,
         anonymousId: undefined,
       }
     }
 
     return {
-      id: session.id!,
-      trackingType: session[productKey] as TrackingType,
+      id: session.id,
       isReplayForced: !!session.forcedReplay,
       anonymousId: session.anonymousId,
     }
