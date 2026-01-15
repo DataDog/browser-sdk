@@ -1,4 +1,4 @@
-import type { ClocksState, Context, Duration, Observable } from '@datadog/browser-core'
+import type { Duration, Observable } from '@datadog/browser-core'
 import {
   noop,
   toServerDuration,
