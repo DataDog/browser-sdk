@@ -16,7 +16,7 @@ describe('user context', () => {
     findTrackedSession: () =>
       ({
         anonymousId: 'device-123',
-      }) as SessionContext<string>,
+      }) as SessionContext,
   }
 
   beforeEach(() => {
