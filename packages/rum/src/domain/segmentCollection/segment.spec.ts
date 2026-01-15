@@ -23,11 +23,6 @@ const FULL_SNAPSHOT_RECORD: BrowserRecord = {
   timestamp: RECORD_TIMESTAMP,
   data: {} as any,
 }
-const CHANGE_RECORD: BrowserRecord = {
-  type: RecordType.Change,
-  timestamp: RECORD_TIMESTAMP,
-  data: [] as any,
-}
 const ENCODED_SEGMENT_HEADER_BYTES_COUNT = 12 // {"records":[
 const ENCODED_RECORD_BYTES_COUNT = 25
 const ENCODED_META_BYTES_COUNT = 193 // this should stay accurate as long as less than 10 records are added
@@ -199,16 +194,6 @@ describe('Segment', () => {
         const segment = createTestSegment()
         segment.addRecord(FULL_SNAPSHOT_RECORD, noop)
         expect(flushAndGetMetadata(segment).has_full_snapshot).toEqual(true)
-      })
-
-      it('sets has_full_snapshot to true if the first segment has a Change', () => {
-        const segment1 = createTestSegment()
-        segment1.addRecord(CHANGE_RECORD, noop)
-        expect(flushAndGetMetadata(segment1).has_full_snapshot).toEqual(true)
-
-        const segment2 = createTestSegment()
-        segment2.addRecord(CHANGE_RECORD, noop)
-        expect(flushAndGetMetadata(segment2).has_full_snapshot).toEqual(false)
       })
 
       it("doesn't overrides has_full_snapshot to false once it has been set to true", () => {

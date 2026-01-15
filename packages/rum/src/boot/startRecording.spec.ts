@@ -1,21 +1,8 @@
 import type { TimeStamp, HttpRequest, HttpRequestEvent, Telemetry } from '@datadog/browser-core'
-import {
-  PageExitReason,
-  DefaultPrivacyLevel,
-  noop,
-  DeflateEncoderStreamId,
-  Observable,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { PageExitReason, DefaultPrivacyLevel, noop, DeflateEncoderStreamId, Observable } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
-import {
-  collectAsyncCalls,
-  createNewEvent,
-  mockEventBridge,
-  mockExperimentalFeatures,
-  registerCleanupTask,
-} from '@datadog/browser-core/test'
+import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
@@ -84,35 +71,6 @@ describe('startRecording', () => {
   })
 
   it('sends recorded segments with valid context', async () => {
-    setupStartRecording()
-    flushSegment(lifeCycle)
-
-    const requests = await readSentRequests(1)
-    expect(requests[0].segment).toEqual(jasmine.any(Object))
-    expect(requests[0].event).toEqual({
-      application: {
-        id: 'appId',
-      },
-      creation_reason: 'init',
-      end: jasmine.stringMatching(/^\d{13}$/),
-      has_full_snapshot: true,
-      records_count: recordsPerFullSnapshot(),
-      session: {
-        id: 'session-id',
-      },
-      start: jasmine.any(Number),
-      raw_segment_size: jasmine.any(Number),
-      compressed_segment_size: jasmine.any(Number),
-      view: {
-        id: 'view-id',
-      },
-      index_in_view: 0,
-      source: 'browser',
-    })
-  })
-
-  it('sends recorded segments with valid context when Change records are enabled', async () => {
-    mockExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
     setupStartRecording()
     flushSegment(lifeCycle)
 

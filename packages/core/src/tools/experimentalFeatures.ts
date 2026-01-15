@@ -19,7 +19,6 @@ export enum ExperimentalFeature {
   FEATURE_OPERATION_VITAL = 'feature_operation_vital',
   SHORT_SESSION_INVESTIGATION = 'short_session_investigation',
   AVOID_FETCH_KEEPALIVE = 'avoid_fetch_keepalive',
-  USE_CHANGE_RECORDS = 'use_change_records',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
