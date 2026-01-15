@@ -1,5 +1,3 @@
-import { performDraw } from '../tools/utils/numberUtils'
-
 const sampleDecisionCache: Map<number, { sessionId: string; decision: boolean }> = new Map()
 
 export function isSampled(sessionId: string, sampleRate: number) {
@@ -18,15 +16,7 @@ export function isSampled(sessionId: string, sampleRate: number) {
     return cachedDecision.decision
   }
 
-  let decision: boolean
-  // @ts-expect-error BigInt might not be defined in every browser we support
-  if (window.BigInt) {
-    decision = sampleUsingKnuthFactor(BigInt(`0x${sessionId.split('-')[4]}`), sampleRate)
-  } else {
-    // For simplicity, we don't use consistent sampling for browser without BigInt support
-    // TODO: remove this when all browser we support have BigInt support
-    decision = performDraw(sampleRate)
-  }
+  const decision = sampleUsingKnuthFactor(BigInt(`0x${sessionId.split('-')[4]}`), sampleRate)
   sampleDecisionCache.set(sampleRate, { sessionId, decision })
   return decision
 }

@@ -22,13 +22,7 @@ describe('isSampled', () => {
     expect(isSampled(ARBITRARY_UUID, 0)).toBeFalse()
   })
 
-  describe('with bigint support', () => {
-    beforeEach(() => {
-      if (!window.BigInt) {
-        pending('BigInt is not supported')
-      }
-    })
-
+  describe('deterministic sampling', () => {
     it('a session id with a low hash value should be sampled with a rate close to 0%', () => {
       expect(isSampled(LOW_HASH_UUID, 0.1)).toBeTrue()
       resetSampleDecisionCache()
@@ -58,30 +52,9 @@ describe('isSampled', () => {
     })
   })
 
-  describe('without bigint support', () => {
-    beforeEach(() => {
-      // @ts-expect-error BigInt might not be defined depending on the browser where we execute
-      // the tests
-      if (window.BigInt) {
-        pending('BigInt is supported')
-      }
-    })
-
-    it('sampling decision should be cached', () => {
-      spyOn(Math, 'random').and.returnValues(0.2, 0.8)
-      expect(isSampled(ARBITRARY_UUID, 50)).toBeTrue()
-      expect(isSampled(ARBITRARY_UUID, 50)).toBeTrue()
-    })
-  })
 })
 
 describe('sampleUsingKnuthFactor', () => {
-  beforeEach(() => {
-    if (!window.BigInt) {
-      pending('BigInt is not supported')
-    }
-  })
-
   it('sampling should be based on the trace id', () => {
     // Generated using the dd-trace-go implementation with the following program: https://go.dev/play/p/CUrDJtze8E_e
     const inputs: Array<[bigint, number, boolean]> = [
