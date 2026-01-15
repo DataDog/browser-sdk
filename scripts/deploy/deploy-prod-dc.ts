@@ -1,6 +1,6 @@
 import { parseArgs } from 'node:util'
+import { getBuildEnvValue } from '../lib/buildEnv.ts'
 import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
-import { command } from '../lib/command.ts'
 import { DatacenterType, getAllDatacentersMetadata } from '../lib/datacenter.ts'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 import { checkTelemetryErrors } from './lib/checkTelemetryErrors.ts'
@@ -51,6 +51,8 @@ export async function main(...args: string[]): Promise<void> {
   }
 
   const uploadPathTypes = toDatacenterUploadPathType(datacenters).join(',')
+
+  console.log('SDK_VERSION', getBuildEnvValue('SDK_VERSION'))
 
   printLog(`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPathTypes}`)
   printLog(`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`)
