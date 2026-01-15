@@ -131,7 +131,7 @@ list-datacenters:
   variables:
     DATACENTER: minor-dcs
   script:
-    - export BUILD_MODE=dev
+    - export BUILD_MODE=canary
     - VERSION=$(node -p -e "require('./lerna.json').version")
     - yarn
     - yarn build:bundle
