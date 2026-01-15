@@ -131,7 +131,10 @@ list-datacenters:
   variables:
     DATACENTER: minor-dcs
   script:
+    - export BUILD_MODE=dev
     - VERSION=$(node -p -e "require('./lerna.json').version")
+    - yarn
+    - yarn build:bundle
     - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $DATACENTER --check-telemetry-errors
 
 ########################################################################################################################
