@@ -18,9 +18,6 @@ runMain(async () => {
     printLog(`  - [${dc.type}] ${dc.name}: ${site}`)
   }
 
-  printLog('Gating telemetry errors for us1')
-  await gateTelemetryErrors(['us1'])
-
   printLog('Gating telemetry errors for minor datacenters...')
 
   await gateTelemetryErrors(await getDatacenters('minor-dcs'))

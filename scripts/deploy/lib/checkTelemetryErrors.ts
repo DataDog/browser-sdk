@@ -68,7 +68,13 @@ async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query
     const query = queries[i]
     const buckets = await queryLogsApi(site, apiKey, applicationKey, query)
 
-    console.log(`${query.name} found ${buckets[0]?.computes?.c0} times in the last ${TIME_WINDOW_IN_MINUTES} minutes`)
+    console.log(
+      `[${datacenter}] ${query.name} found ${buckets[0]?.computes?.c0} times in the last ${TIME_WINDOW_IN_MINUTES} minutes`
+    )
+
+    if (buckets[0]?.computes?.c0 === undefined) {
+      printLog(JSON.stringify(buckets, null, 2))
+    }
 
     // buckets are sorted by count, so we only need to check the first one
     if (buckets[0]?.computes?.c0 > query.threshold) {
