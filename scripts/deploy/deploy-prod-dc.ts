@@ -1,6 +1,5 @@
-/* eslint-disable local-rules/disallow-non-scripts */
 import { parseArgs } from 'node:util'
-import { printLog, timeout } from '../lib/executionUtils.ts'
+import { printLog, runMain, timeout } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { DatacenterType, getAllDatacentersMetadata } from '../lib/datacenter.ts'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
@@ -15,9 +14,9 @@ const ONE_MINUTE_IN_SECOND = 60
 const GATE_DURATION = 30 * ONE_MINUTE_IN_SECOND
 const GATE_INTERVAL = ONE_MINUTE_IN_SECOND
 
-// if (!process.env.NODE_TEST_CONTEXT) {
-//   runMain(() => main(...process.argv.slice(2)))
-// }
+if (!process.env.NODE_TEST_CONTEXT) {
+  runMain(() => main(...process.argv.slice(2)))
+}
 
 export async function main(...args: string[]): Promise<void> {
   const {
@@ -53,15 +52,15 @@ export async function main(...args: string[]): Promise<void> {
 
   const uploadPathTypes = toDatacenterUploadPathType(datacenters).join(',')
 
-  command`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPathTypes}`.withLogs().run()
-  command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`.withLogs().run()
+  printLog(`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPathTypes}`)
+  printLog(`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`)
 
   if (shouldCheckTelemetryErrors) {
     await gateTelemetryErrors(datacenters)
   }
 }
 
-export async function gateTelemetryErrors(datacenters: string[]): Promise<void> {
+async function gateTelemetryErrors(datacenters: string[]): Promise<void> {
   printLog(`Check telemetry errors for ${datacenters.join(',')} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
   for (let i = 0; i < GATE_DURATION; i += GATE_INTERVAL) {
     await checkTelemetryErrors(datacenters, browserSdkVersion)
@@ -72,7 +71,7 @@ export async function gateTelemetryErrors(datacenters: string[]): Promise<void> 
   printLog() // new line
 }
 
-export async function getDatacenters(datacenterGroup: string): Promise<string[]> {
+async function getDatacenters(datacenterGroup: string): Promise<string[]> {
   const datacenters = await getAllDatacentersMetadata()
 
   if (datacenterGroup === 'minor-dcs') {

@@ -128,8 +128,11 @@ ci-image:
 list-datacenters:
   stage: before-tests
   extends: .base-configuration
+  variables:
+    DATACENTER: minor-dcs
   script:
-    - node scripts/test-datacenter-api.ts
+    - VERSION=$(node -p -e "require('./lerna.json').version")
+    - node ./scripts/deploy/deploy-prod-dc.ts v${VERSION%%.*} $DATACENTER --check-telemetry-errors
 
 ########################################################################################################################
 # Tests
