@@ -330,4 +330,31 @@ describe('getSelectorFromElement with shadow DOM', () => {
     expect(selector).not.toContain(SHADOW_DOM_MARKER)
     expect(selector).toBe('BODY>DIV>BUTTON.light-btn')
   })
+
+  it('should generate DIFFERENT selectors for buttons in two identical shadow hosts', () => {
+    const container = appendElement('<div id="test-container"></div>')
+
+    const host1 = document.createElement('my-button')
+    const host2 = document.createElement('my-button')
+    container.appendChild(host1)
+    container.appendChild(host2)
+
+    const shadow1 = host1.attachShadow({ mode: 'open' })
+    const shadow2 = host2.attachShadow({ mode: 'open' })
+
+    const button1 = document.createElement('button')
+    button1.textContent = 'Button 1'
+    shadow1.appendChild(button1)
+
+    const button2 = document.createElement('button')
+    button2.textContent = 'Button 2'
+    shadow2.appendChild(button2)
+
+    const selector1 = getSelectorFromElement(button1, undefined)
+    const selector2 = getSelectorFromElement(button2, undefined)
+
+    expect(selector1).not.toBe(selector2)
+    expect(selector1).toContain('MY-BUTTON:nth-of-type(1)')
+    expect(selector2).toContain('MY-BUTTON:nth-of-type(2)')
+  })
 })
