@@ -657,6 +657,42 @@ describe('trackClickActions', () => {
       expect(events.length).toBe(1)
       expect(events[0].name).toBe('Shadow Button')
     })
+
+    it('with betaTrackActionsInShadowDom, gets selector with shadow marker from composedPath', () => {
+      startClickActionsTracking({ betaTrackActionsInShadowDom: true })
+
+      emulateClick({
+        target: shadowHost,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].target?.selector).toContain('/shadow/')
+      expect(events[0].target?.selector).toContain('BUTTON')
+    })
+
+    it('without betaTrackActionsInShadowDom, selector uses shadow host', () => {
+      startClickActionsTracking({ betaTrackActionsInShadowDom: false })
+
+      emulateClick({
+        target: shadowHost,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].target?.selector).toBe('#shadow-host')
+      expect(events[0].target?.selector).not.toContain('/shadow/')
+    })
   })
 })
 

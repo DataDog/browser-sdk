@@ -1,4 +1,7 @@
+import { getParentElement, isNodeShadowRoot } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameConstants'
+
+export const SHADOW_DOM_MARKER = ' /shadow/ '
 
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:
@@ -46,8 +49,11 @@ export function getSelectorFromElement(
     // parents, and we cannot determine if it's unique in the document.
     return
   }
-  let targetElementSelector: string | undefined
+
+  let cssSelector: string | undefined
+  let outputSelector: string | undefined
   let currentElement: Element | null = targetElement
+  let nextIsShadowBoundary = false
 
   while (currentElement && currentElement.nodeName !== 'HTML') {
     const globallyUniqueSelector = findSelector(
@@ -55,10 +61,10 @@ export function getSelectorFromElement(
       GLOBALLY_UNIQUE_SELECTOR_GETTERS,
       isSelectorUniqueGlobally,
       actionNameAttribute,
-      targetElementSelector
+      cssSelector
     )
     if (globallyUniqueSelector) {
-      return globallyUniqueSelector
+      return combineSelector(globallyUniqueSelector, outputSelector, nextIsShadowBoundary)
     }
 
     const uniqueSelectorAmongChildren = findSelector(
@@ -66,15 +72,29 @@ export function getSelectorFromElement(
       UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
       isSelectorUniqueAmongSiblings,
       actionNameAttribute,
-      targetElementSelector
+      cssSelector
     )
-    targetElementSelector =
-      uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector)
 
-    currentElement = currentElement.parentElement
+    const currentSelector = uniqueSelectorAmongChildren || getPositionSelector(currentElement)
+
+    cssSelector = combineSelector(currentSelector, cssSelector)
+    outputSelector = combineSelector(currentSelector, outputSelector, nextIsShadowBoundary)
+
+    nextIsShadowBoundary = isCrossingShadowBoundary(currentElement)
+
+    currentElement = getParentElement(currentElement)
   }
 
-  return targetElementSelector
+  return outputSelector
+}
+
+/**
+ * Check if traversing to the parent element will cross a shadow DOM boundary.
+ * This happens when the element is a direct child of a shadow root.
+ */
+function isCrossingShadowBoundary(element: Element): boolean {
+  const parentNode = element.parentNode
+  return parentNode !== null && isNodeShadowRoot(parentNode)
 }
 
 function isGeneratedValue(value: string) {
@@ -136,7 +156,9 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 }
 
 function getPositionSelector(element: Element): string {
-  let sibling = element.parentElement!.firstElementChild
+  const parent = getElementParentNode(element)!
+
+  let sibling = parent.firstElementChild
   let elementIndex = 1
 
   while (sibling && sibling !== element) {
@@ -147,6 +169,22 @@ function getPositionSelector(element: Element): string {
   }
 
   return `${CSS.escape(element.tagName)}:nth-of-type(${elementIndex})`
+}
+
+/**
+ * Get the parent node that contains the element's siblings.
+ * For elements in shadow DOM, this is the shadow root.
+ * For regular elements, this is the parent element.
+ */
+function getElementParentNode(element: Element): Element | ShadowRoot | null {
+  if (element.parentElement) {
+    return element.parentElement
+  }
+  const parentNode = element.parentNode
+  if (parentNode && isNodeShadowRoot(parentNode)) {
+    return parentNode
+  }
+  return null
 }
 
 function findSelector(
@@ -162,7 +200,7 @@ function findSelector(
       continue
     }
     if (predicate(element, elementSelector, childSelector)) {
-      return combineSelector(elementSelector, childSelector)
+      return elementSelector
     }
   }
 }
@@ -249,7 +287,8 @@ export function isSelectorUniqueAmongSiblings(
     isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
   }
 
-  const parent = currentElement.parentElement!
+  const parent = getElementParentNode(currentElement)!
+
   let sibling = parent.firstElementChild
   while (sibling) {
     if (sibling !== currentElement && isSiblingMatching(sibling)) {
@@ -261,6 +300,10 @@ export function isSelectorUniqueAmongSiblings(
   return true
 }
 
-function combineSelector(parent: string, child: string | undefined): string {
-  return child ? `${parent}>${child}` : parent
+function combineSelector(parent: string, child: string | undefined, useShadowSeparator = false): string {
+  if (!child) {
+    return parent
+  }
+  const separator = useShadowSeparator ? SHADOW_DOM_MARKER : '>'
+  return `${parent}${separator}${child}`
 }
