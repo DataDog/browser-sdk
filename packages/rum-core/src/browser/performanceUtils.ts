@@ -58,3 +58,10 @@ export function getSafeFirstByte(entry: RelevantNavigationTiming) {
   return entry.responseStart >= 0 && entry.responseStart <= relativeNow() ? entry.responseStart : undefined
 }
 
+export function getResourceEntries() {
+  if (supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)) {
+    return performance.getEntriesByType(RumPerformanceEntryType.RESOURCE)
+  }
+
+  return undefined
+}
