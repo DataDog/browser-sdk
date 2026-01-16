@@ -509,3 +509,116 @@ test.describe('action collection', () => {
       })
     })
 })
+
+test.describe('action collection with shadow DOM', () => {
+  createTest('without trackShadowDom, click inside shadow DOM uses shadow host as target')
+    .withRum({ trackUserInteractions: true })
+    .withBody(html`
+      <my-button id="shadow-host"></my-button>
+      <script>
+        class MyButton extends HTMLElement {
+          constructor() {
+            super()
+            this.attachShadow({ mode: 'open' })
+            const button = document.createElement('button')
+            button.textContent = 'Shadow Button'
+            this.shadowRoot.appendChild(button)
+          }
+        }
+        customElements.define('my-button', MyButton)
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('my-button').first().locator('button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action?.target?.name).toBe('')
+      expect(actionEvents[0]._dd.action?.target?.selector).toBe('#shadow-host')
+    })
+
+  createTest('with trackShadowDom, get action name from element inside shadow DOM')
+    .withRum({ trackUserInteractions: true, trackActionsInShadowDom: true })
+    .withBody(html`
+      <my-button id="shadow-host"></my-button>
+      <script>
+        class MyButton extends HTMLElement {
+          constructor() {
+            super()
+            this.attachShadow({ mode: 'open' })
+            const button = document.createElement('button')
+            button.textContent = 'Shadow Button'
+            this.shadowRoot.appendChild(button)
+          }
+        }
+        customElements.define('my-button', MyButton)
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('my-button').first().locator('button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action?.target?.name).toBe('Shadow Button')
+      expect(actionEvents[0]._dd.action?.target?.selector).toContain('BUTTON')
+    })
+
+  createTest('with trackShadowDom, traverse shadow boundary for data-dd-action-name')
+    .withRum({ trackUserInteractions: true, trackActionsInShadowDom: true })
+    .withBody(html`
+      <my-button id="shadow-host" data-dd-action-name="Custom Shadow Action"></my-button>
+      <script>
+        class MyButton extends HTMLElement {
+          constructor() {
+            super()
+            this.attachShadow({ mode: 'open' })
+            const button = document.createElement('button')
+            button.textContent = 'Click me'
+            this.shadowRoot.appendChild(button)
+          }
+        }
+        customElements.define('my-button', MyButton)
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('my-button').first().locator('button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action?.target?.name).toBe('Custom Shadow Action')
+    })
+
+  createTest('with trackShadowDom, selector includes stable attributes from inside shadow DOM')
+    .withRum({ trackUserInteractions: true, trackActionsInShadowDom: true })
+    .withBody(html`
+      <my-button id="shadow-host"></my-button>
+      <script>
+        class MyButton extends HTMLElement {
+          constructor() {
+            super()
+            this.attachShadow({ mode: 'open' })
+            const button = document.createElement('button')
+            button.setAttribute('data-testid', 'shadow-btn')
+            button.textContent = 'Test Button'
+            this.shadowRoot.appendChild(button)
+          }
+        }
+        customElements.define('my-button', MyButton)
+      </script>
+    `)
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      const button = page.locator('my-button').first().locator('button')
+      await button.click()
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0]._dd.action?.target?.selector).toContain('data-testid')
+    })
+})

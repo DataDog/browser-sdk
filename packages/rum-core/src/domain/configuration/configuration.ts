@@ -204,6 +204,15 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   actionNameAttribute?: string | undefined
 
+  /**
+   * Enables tracking of user interactions within Shadow DOM elements.
+   * When enabled, click actions inside Shadow DOM will have accurate names and selectors.
+   *
+   * @category Data Collection
+   * @defaultValue false
+   */
+  trackActionsInShadowDom?: boolean | undefined
+
   // view options
   /**
    * Allows you to control RUM views creation. See [Override default RUM view names](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/?tab=npm#override-default-rum-view-names) for further information.
@@ -287,6 +296,7 @@ export interface GraphQlUrlOption {
 export interface RumConfiguration extends Configuration {
   // Built from init configuration
   actionNameAttribute: string | undefined
+  trackActionsInShadowDom: boolean
   traceSampleRate: number
   rulePsr: number | undefined
   allowedTracingUrls: TracingOption[]
@@ -359,6 +369,7 @@ export function validateAndBuildRumConfiguration(
   return {
     applicationId: initConfiguration.applicationId,
     actionNameAttribute: initConfiguration.actionNameAttribute,
+    trackActionsInShadowDom: !!initConfiguration.trackActionsInShadowDom,
     sessionReplaySampleRate,
     startSessionReplayRecordingManually:
       initConfiguration.startSessionReplayRecordingManually !== undefined
@@ -537,6 +548,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     remote_configuration_id: configuration.remoteConfigurationId,
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
+    // TODO: Add track_actions_in_shadow_dom once rum-events-format is updated
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
