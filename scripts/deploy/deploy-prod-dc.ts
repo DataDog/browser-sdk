@@ -68,11 +68,10 @@ async function gateTelemetryErrors(datacenters: string[]): Promise<void> {
 
   while (Date.now() < endTime) {
     await checkTelemetryErrors(datacenters, browserSdkVersion)
-    process.stdout.write('.') // progress indicator
+    const elapsed = Math.round((Date.now() - startTime) / 1000 / 60)
+    printLog(`✓ Check completed (${elapsed}/${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes)`)
     await timeout(GATE_INTERVAL * 1000)
   }
-
-  printLog() // new line
 }
 
 async function getDatacenters(datacenterGroup: string): Promise<string[]> {
