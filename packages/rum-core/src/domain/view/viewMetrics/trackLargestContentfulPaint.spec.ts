@@ -1,10 +1,12 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
 import {
   setPageVisibility,
   createNewEvent,
   restorePageVisibility,
   registerCleanupTask,
+  mockClock
 } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'
@@ -13,13 +15,28 @@ import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { LCP_MAXIMUM_DELAY, trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
+const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+  responseStart: 789 as RelativeTime,
+})
+
+const mockSubParts = {
+  firstByte: 789 as RelativeTime,
+  loadDelay: 0 as RelativeTime,
+  loadTime: 0 as RelativeTime,
+  renderDelay: 0 as RelativeTime,
+}
+
 describe('trackLargestContentfulPaint', () => {
   let lcpCallback: jasmine.Spy<(lcp: LargestContentfulPaint) => void>
   let eventTarget: Window
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
+  let clock: Clock
 
   function startLCPTracking() {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
+
+    // This ensures getNavigationEntry() returns controlled values for subParts calculation.
+    notifyPerformanceEntries([mockPerformanceEntry])
 
     const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
     const largestContentfulPaint = trackLargestContentfulPaint(
@@ -39,6 +56,10 @@ describe('trackLargestContentfulPaint', () => {
   beforeEach(() => {
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
+    // Mock clock and advance time so that responseStart: 789 passes the getSafeFirstByte check
+    // which requires responseStart <= relativeNow()
+    clock = mockClock()
+    clock.tick(1000)
   })
 
   it('should provide the largest contentful paint timing', () => {
@@ -49,6 +70,7 @@ describe('trackLargestContentfulPaint', () => {
       value: 789 as RelativeTime,
       targetSelector: undefined,
       resourceUrl: undefined,
+      subParts: mockSubParts,
     })
   })
 
@@ -64,6 +86,7 @@ describe('trackLargestContentfulPaint', () => {
       value: 789 as RelativeTime,
       targetSelector: '#lcp-target-element',
       resourceUrl: undefined,
+      subParts: mockSubParts,
     })
   })
 
@@ -79,6 +102,7 @@ describe('trackLargestContentfulPaint', () => {
       value: 789 as RelativeTime,
       targetSelector: undefined,
       resourceUrl: 'https://example.com/lcp-resource',
+      subParts: mockSubParts,
     })
   })
 
@@ -162,6 +186,7 @@ describe('trackLargestContentfulPaint', () => {
       value: 789 as RelativeTime,
       targetSelector: undefined,
       resourceUrl: undefined,
+      subParts: mockSubParts,
     })
   })
 })
