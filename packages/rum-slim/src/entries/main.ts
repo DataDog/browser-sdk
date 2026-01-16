@@ -39,6 +39,10 @@ export type {
   PropagatorType,
   FeatureFlagsForEvents,
 
+  // Resource options
+  ResourceOptions,
+  ResourceStopOptions,
+
   // Events
   CommonProperties,
   RumEvent,
@@ -58,6 +62,7 @@ export type {
   RumFetchResourceEventDomainContext,
   RumXhrResourceEventDomainContext,
   RumOtherResourceEventDomainContext,
+  RumCustomResourceEventDomainContext,
   RumLongTaskEventDomainContext,
 } from '@datadog/browser-rum-core'
 export { DefaultPrivacyLevel } from '@datadog/browser-core'

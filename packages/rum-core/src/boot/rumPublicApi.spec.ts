@@ -38,6 +38,9 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addOperationStepVital: () => undefined,
   startAction: () => undefined,
   stopAction: () => undefined,
+  startResource: () => undefined,
+  stopResource: () => undefined,
+  stopResourceWithError: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker

@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
-import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { createTaskQueue, ExperimentalFeature, noop, RequestType, ResourceType } from '@datadog/browser-core'
+import { mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
   collectAndValidateRawRumEvents,
@@ -644,4 +644,135 @@ describe('resourceCollection', () => {
 
     runTasks()
   }
+})
+
+describe('customResourceCollection', () => {
+  let lifeCycle: LifeCycle
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
+  let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
+
+  beforeEach(() => {
+    mockExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
+    mockPerformanceObserver()
+  })
+
+  function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
+    lifeCycle = new LifeCycle()
+    const taskQueue = createTaskQueue()
+    taskQueuePushSpy = spyOn(taskQueue, 'push').and.callThrough()
+    const startResult = startResourceCollection(
+      lifeCycle,
+      { ...baseConfiguration, ...partialConfig },
+      pageStateHistory,
+      taskQueue,
+      noop
+    )
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+
+    registerCleanupTask(() => {
+      startResult.stop()
+    })
+
+    return startResult
+  }
+
+  function runTasks() {
+    taskQueuePushSpy.calls.allArgs().forEach(([task]) => {
+      task()
+    })
+    taskQueuePushSpy.calls.reset()
+  }
+
+  describe('startResource/stopResource', () => {
+    it('should create custom resource event when start/stop are called', () => {
+      const { startResource, stopResource } = setupResourceCollection()
+
+      startResource('https://example.com/api/data', { type: ResourceType.FETCH, method: 'POST' })
+      stopResource('https://example.com/api/data', { statusCode: 200 })
+      runTasks()
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.type).toBe(RumEventType.RESOURCE)
+      expect(resourceEvent.resource.url).toBe('https://example.com/api/data')
+      expect(resourceEvent.resource.type).toBe(ResourceType.FETCH)
+      expect(resourceEvent.resource.method).toBe('POST')
+      expect(resourceEvent.resource.status_code).toBe(200)
+    })
+
+    it('should default resource type to OTHER when not specified', () => {
+      const { startResource, stopResource } = setupResourceCollection()
+
+      startResource('https://example.com/api')
+      stopResource('https://example.com/api')
+      runTasks()
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.type).toBe(ResourceType.OTHER)
+    })
+
+    it('should include size when provided on stop', () => {
+      const { startResource, stopResource } = setupResourceCollection()
+
+      startResource('https://example.com/api')
+      stopResource('https://example.com/api', { size: 1024 })
+      runTasks()
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.size).toBe(1024)
+    })
+
+    it('should include context from start and stop', () => {
+      const { startResource, stopResource } = setupResourceCollection()
+
+      startResource('https://example.com/api', { context: { request: 'data' } })
+      stopResource('https://example.com/api', { context: { response: 'result' } })
+      runTasks()
+
+      expect(rawRumEvents).toHaveSize(1)
+      expect((rawRumEvents[0].rawRumEvent as any).context).toEqual({
+        request: 'data',
+        response: 'result',
+      })
+    })
+
+    it('should support resourceKey for multiple concurrent resources', () => {
+      const { startResource, stopResource } = setupResourceCollection()
+
+      startResource('https://example.com/api', { resourceKey: 'req1' })
+      startResource('https://example.com/api', { resourceKey: 'req2' })
+
+      stopResource('https://example.com/api', { resourceKey: 'req1', statusCode: 200 })
+      stopResource('https://example.com/api', { resourceKey: 'req2', statusCode: 201 })
+      runTasks()
+
+      expect(rawRumEvents).toHaveSize(2)
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.status_code).toBe(200)
+      expect((rawRumEvents[1].rawRumEvent as RawRumResourceEvent).resource.status_code).toBe(201)
+    })
+  })
+
+  describe('stopResourceWithError', () => {
+    it('should emit error event with network source when stopResourceWithError is called', () => {
+      const { startResource, stopResourceWithError } = setupResourceCollection()
+      const errorEvents: Array<{ error: { message: string; source: string } }> = []
+
+      lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, (data) => {
+        errorEvents.push({ error: { message: data.error.message, source: data.error.source } })
+      })
+
+      startResource('https://example.com/api')
+      stopResourceWithError('https://example.com/api', 'Connection timeout')
+
+      // No resource event should be collected
+      expect(rawRumEvents).toHaveSize(0)
+      // Error event should be collected
+      expect(errorEvents).toHaveSize(1)
+      expect(errorEvents[0].error.message).toContain('Connection timeout')
+      expect(errorEvents[0].error.source).toBe('network')
+    })
+  })
 })

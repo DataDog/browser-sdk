@@ -54,6 +54,7 @@ import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
 import type { ActionOptions } from '../domain/action/trackCustomActions'
+import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackCustomResources'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -186,6 +187,36 @@ export interface RumPublicApi extends PublicApi {
    * @param options - Options of the action
    */
   stopAction: (name: string, options?: ActionOptions) => void
+
+  /**
+   * [Experimental] Start tracking a custom resource, stored in `@resource`.
+   *
+   * @category Data Collection
+   * @param url - URL of the resource
+   * @param options - Options of the resource
+   */
+  startResource: (url: string, options?: ResourceOptions) => void
+
+  /**
+   * [Experimental] Stop tracking a custom resource, stored in `@resource`.
+   *
+   * @category Data Collection
+   * @param url - URL of the resource
+   * @param options - Options to complete the resource (status code, size, context)
+   */
+  stopResource: (url: string, options?: ResourceStopOptions) => void
+
+  /**
+   * [Experimental] Stop tracking a custom resource with an error.
+   *
+   * This will emit an error event with source 'network' instead of a resource event.
+   *
+   * @category Data Collection
+   * @param url - URL of the resource
+   * @param errorMessage - Error message describing the failure
+   * @param options - Options for the resource stop
+   */
+  stopResourceWithError: (url: string, errorMessage: string, options?: ResourceStopOptions) => void
 
   /**
    * Add a custom error, stored in `@error`.
@@ -544,6 +575,9 @@ export interface Strategy {
   addAction: StartRumResult['addAction']
   startAction: StartRumResult['startAction']
   stopAction: StartRumResult['stopAction']
+  startResource: StartRumResult['startResource']
+  stopResource: StartRumResult['stopResource']
+  stopResourceWithError: StartRumResult['stopResourceWithError']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
   startDurationVital: StartRumResult['startDurationVital']
@@ -689,6 +723,36 @@ export function makeRumPublicApi(
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
         actionKey: options && options.actionKey,
+      })
+    }),
+
+    startResource: monitor((url, options) => {
+      // addTelemetryUsage({ feature: 'start-resource' })
+      strategy.startResource(sanitize(url)!, {
+        type: sanitize(options && options.type) as ResourceOptions['type'],
+        method: sanitize(options && options.method) as string | undefined,
+        context: sanitize(options && options.context) as Context,
+        resourceKey: options && options.resourceKey,
+      })
+    }),
+
+    stopResource: monitor((url, options) => {
+      // addTelemetryUsage({ feature: 'stop-resource' })
+      strategy.stopResource(sanitize(url)!, {
+        statusCode: options && options.statusCode,
+        size: options && options.size,
+        context: sanitize(options && options.context) as Context,
+        resourceKey: options && options.resourceKey,
+      })
+    }),
+
+    stopResourceWithError: monitor((url, errorMessage, options) => {
+      // addTelemetryUsage({ feature: 'stop-resource-with-error' })
+      strategy.stopResourceWithError(sanitize(url)!, sanitize(errorMessage)!, {
+        statusCode: options && options.statusCode,
+        size: options && options.size,
+        context: sanitize(options && options.context) as Context,
+        resourceKey: options && options.resourceKey,
       })
     }),
 

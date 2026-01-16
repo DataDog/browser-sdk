@@ -9,7 +9,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
   : T extends typeof RumEventType.ACTION
     ? RumActionEventDomainContext
     : T extends typeof RumEventType.RESOURCE
-      ? RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext
+      ? RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext | RumCustomResourceEventDomainContext
       : T extends typeof RumEventType.ERROR
         ? RumErrorEventDomainContext
         : T extends typeof RumEventType.LONG_TASK
@@ -47,6 +47,9 @@ export interface RumXhrResourceEventDomainContext {
 export interface RumOtherResourceEventDomainContext {
   performanceEntry: PerformanceEntry
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface RumCustomResourceEventDomainContext {}
 
 export interface RumErrorEventDomainContext {
   error: unknown

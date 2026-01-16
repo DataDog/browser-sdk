@@ -18,6 +18,7 @@ export type {
   RumOtherResourceEventDomainContext,
   RumXhrResourceEventDomainContext,
   RumFetchResourceEventDomainContext,
+  RumCustomResourceEventDomainContext,
   RumActionEventDomainContext,
   RumViewEventDomainContext,
   RumEventDomainContext,
@@ -69,6 +70,7 @@ export type {
   DurationVitalOptions,
 } from './domain/vital/vitalCollection'
 export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes } from './domain/hooks'
+export type { ResourceOptions, ResourceStopOptions } from './domain/resource/trackCustomResources'
 export { createHooks } from './domain/hooks'
 export { isSampled } from './domain/sampler/sampler'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'

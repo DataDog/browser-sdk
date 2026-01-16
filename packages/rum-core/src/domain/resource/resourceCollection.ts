@@ -1,12 +1,17 @@
 import type { ClocksState, Duration } from '@datadog/browser-core'
 import {
   combine,
+  elapsed,
   generateUUID,
   RequestType,
   ResourceType,
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
+  noop,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  ErrorSource,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -15,6 +20,7 @@ import type {
   RumXhrResourceEventDomainContext,
   RumFetchResourceEventDomainContext,
   RumOtherResourceEventDomainContext,
+  RumCustomResourceEventDomainContext,
 } from '../../domainContext.types'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -40,6 +46,8 @@ import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
 import type { GraphQlMetadata } from './graphql'
 import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
+import type { CustomResource, ResourceOptions, ResourceStopOptions } from './trackCustomResources'
+import { trackCustomResources } from './trackCustomResources'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
@@ -83,10 +91,38 @@ export function startResourceCollection(
     })
   }
 
+  let customResources: ReturnType<typeof trackCustomResources> | undefined
+
+  if (isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
+    customResources = trackCustomResources(
+      lifeCycle,
+      (resource) => {
+        handleResource(() => processCustomResource(resource))
+      },
+      (url, errorMessage, startClocks) => {
+        lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, {
+          error: {
+            message: `${errorMessage} (${url})`,
+            source: ErrorSource.NETWORK,
+            startClocks,
+            type: 'NetworkError',
+          },
+          customerContext: undefined,
+        })
+      }
+    )
+  }
+
   return {
+    startResource: customResources?.startResource ?? (noop as (url: string, options?: ResourceOptions) => void),
+    stopResource: customResources?.stopResource ?? (noop as (url: string, options?: ResourceStopOptions) => void),
+    stopResourceWithError:
+      customResources?.stopResourceWithError ??
+      (noop as (url: string, errorMessage: string, options?: ResourceStopOptions) => void),
     stop: () => {
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
+      customResources?.stop()
     },
   }
 }
@@ -98,6 +134,37 @@ function processRequest(
 ): RawRumEventCollectedData<RawRumResourceEvent> | undefined {
   const matchingTiming = matchRequestResourceEntry(request)
   return assembleResource(matchingTiming, request, pageStateHistory, configuration)
+}
+
+function processCustomResource(resource: CustomResource): RawRumEventCollectedData<RawRumResourceEvent> {
+  const duration = elapsed(resource.startClocks.relative, resource.stopClocks.relative)
+
+  const resourceEvent: RawRumResourceEvent & { context?: object } = {
+    date: resource.startClocks.timeStamp,
+    type: RumEventType.RESOURCE,
+    resource: {
+      id: generateUUID(),
+      type: resource.type || ResourceType.OTHER,
+      url: resource.url,
+      duration: toServerDuration(duration),
+      method: resource.method,
+      status_code: resource.statusCode,
+      size: resource.size,
+    },
+    _dd: {
+      discarded: false,
+    },
+    ...(resource.context && { context: resource.context }),
+  }
+
+  const domainContext: RumCustomResourceEventDomainContext = {}
+
+  return {
+    startTime: resource.startClocks.relative,
+    duration,
+    rawRumEvent: resourceEvent,
+    domainContext,
+  }
 }
 
 function processResourceEntry(

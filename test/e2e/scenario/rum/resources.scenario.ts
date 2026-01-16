@@ -297,3 +297,134 @@ function expectToHaveValidTimings(resourceEvent: RumResourceEvent) {
     expect(download.start).toBeGreaterThan(0)
   }
 }
+
+test.describe('custom resources with startResource/stopResource', () => {
+  createTest('track a custom resource with startResource/stopResource')
+    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startResource('https://api.example.com/data')
+        window.DD_RUM!.stopResource('https://api.example.com/data', { statusCode: 200 })
+      })
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter(
+        (e) => e.resource.url === 'https://api.example.com/data'
+      )
+      expect(resourceEvents).toHaveLength(1)
+      expect(resourceEvents[0].resource.type).toBe('other')
+      expect(resourceEvents[0].resource.status_code).toBe(200)
+      expect(resourceEvents[0].resource.duration).toBeGreaterThanOrEqual(0)
+    })
+
+  createTest('track a custom resource with type and method')
+    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startResource('https://api.example.com/users', { type: 'fetch', method: 'POST' })
+        window.DD_RUM!.stopResource('https://api.example.com/users', { statusCode: 201, size: 1024 })
+      })
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter(
+        (e) => e.resource.url === 'https://api.example.com/users'
+      )
+      expect(resourceEvents).toHaveLength(1)
+      expect(resourceEvents[0].resource.type).toBe('fetch')
+      expect(resourceEvents[0].resource.method).toBe('POST')
+      expect(resourceEvents[0].resource.status_code).toBe(201)
+      expect(resourceEvents[0].resource.size).toBe(1024)
+    })
+
+  createTest('track multiple concurrent custom resources with resourceKey')
+    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startResource('https://api.example.com/data', { resourceKey: 'request1' })
+        window.DD_RUM!.startResource('https://api.example.com/data', { resourceKey: 'request2' })
+        window.DD_RUM!.stopResource('https://api.example.com/data', { resourceKey: 'request2', statusCode: 200 })
+        window.DD_RUM!.stopResource('https://api.example.com/data', { resourceKey: 'request1', statusCode: 201 })
+      })
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter(
+        (e) => e.resource.url === 'https://api.example.com/data'
+      )
+      expect(resourceEvents).toHaveLength(2)
+      expect(resourceEvents.map((e) => e.resource.status_code).sort()).toEqual([200, 201])
+    })
+
+  createTest('merge contexts from start and stop')
+    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startResource('https://api.example.com/data', { context: { request_id: 'abc123' } })
+        window.DD_RUM!.stopResource('https://api.example.com/data', { context: { response_size: 512 } })
+      })
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter(
+        (e) => e.resource.url === 'https://api.example.com/data'
+      )
+      expect(resourceEvents).toHaveLength(1)
+      expect(resourceEvents[0].context).toEqual(
+        expect.objectContaining({
+          request_id: 'abc123',
+          response_size: 512,
+        })
+      )
+    })
+
+  createTest('stopResourceWithError emits an error instead of a resource')
+    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startResource('https://api.example.com/fail')
+        window.DD_RUM!.stopResourceWithError('https://api.example.com/fail', 'Connection timeout')
+      })
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter(
+        (e) => e.resource.url === 'https://api.example.com/fail'
+      )
+      expect(resourceEvents).toHaveLength(0)
+
+      const errorEvents = intakeRegistry.rumErrorEvents.filter((e) => e.error.message?.includes('Connection timeout'))
+      expect(errorEvents).toHaveLength(1)
+      expect(errorEvents[0].error.source).toBe('network')
+    })
+
+  createTest('preserve timing when startResource is called before init')
+    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.startResource('https://api.example.com/pre-init')
+
+      setTimeout(() => {
+        window.DD_RUM!.init(configuration)
+        window.DD_RUM!.stopResource('https://api.example.com/pre-init', { statusCode: 200 })
+      }, 50)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter(
+        (e) => e.resource.url === 'https://api.example.com/pre-init'
+      )
+      expect(resourceEvents).toHaveLength(1)
+      expect(resourceEvents[0].resource.duration).toBeGreaterThanOrEqual(40 * 1e6) // 40ms in nanoseconds
+    })
+
+  createTest('ignore stopResource without matching startResource')
+    .withRum({ enableExperimentalFeatures: ['start_stop_resource'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.stopResource('https://never.started.com', { statusCode: 200 })
+      })
+      await flushEvents()
+
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter(
+        (e) => e.resource.url === 'https://never.started.com'
+      )
+      expect(resourceEvents).toHaveLength(0)
+    })
+})
