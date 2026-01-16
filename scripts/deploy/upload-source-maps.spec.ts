@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import { beforeEach, before, describe, it, mock } from 'node:test'
-import { siteByDatacenter } from '../lib/datacenter.ts'
-import { mockModule, mockCommandImplementation, replaceChunkHashes } from './lib/testHelpers.ts'
+import { beforeEach, before, describe, it, mock, afterEach } from 'node:test'
+import type { Datacenter } from '../lib/datacenter.ts'
+import { mockModule, mockCommandImplementation, replaceChunkHashes, mockFetchHandlingError } from './lib/testHelpers.ts'
 
 const FAKE_API_KEY = 'FAKE_API_KEY'
 const ENV_STAGING = {
@@ -21,9 +21,11 @@ interface CommandDetail {
 
 describe('upload-source-maps', () => {
   const commandMock = mock.fn()
+  const fetchHandlingErrorMock = mock.fn()
   let commands: CommandDetail[]
 
   let uploadSourceMaps: (version: string, uploadPathTypes: string[]) => Promise<void>
+  let getAllDatacentersMetadata: () => Promise<Datacenter[]>
 
   function getSourceMapCommands(): CommandDetail[] {
     return commands.filter(({ command }) => command.includes('datadog-ci sourcemaps'))
@@ -34,31 +36,42 @@ describe('upload-source-maps', () => {
   }
 
   before(async () => {
+    mockFetchHandlingError(fetchHandlingErrorMock)
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
+    await mockModule(path.resolve(import.meta.dirname, '../lib/executionUtils.ts'), {
+      fetchHandlingError: fetchHandlingErrorMock,
+    })
     await mockModule(path.resolve(import.meta.dirname, '../lib/secrets.ts'), {
       getTelemetryOrgApiKey: () => FAKE_API_KEY,
     })
 
-    // This MUST be a dynamic import because that is the only way to ensure the
+    // These MUST be dynamic imports because that is the only way to ensure the
     // import starts after the mock has been set up.
     const uploadModule = await import('./upload-source-maps.ts')
     uploadSourceMaps = uploadModule.main
+    const datacenterModule = await import('../lib/datacenter.ts')
+    getAllDatacentersMetadata = datacenterModule.getAllDatacentersMetadata
   })
 
   beforeEach(() => {
     commands = mockCommandImplementation(commandMock)
   })
 
-  function forEachDatacenter(callback: (site: string) => void): void {
-    for (const site of Object.values(siteByDatacenter)) {
-      callback(site)
+  afterEach(() => {
+    mock.restoreAll()
+  })
+
+  async function forEachDatacenter(callback: (site: string) => void): Promise<void> {
+    const datacenters = await getAllDatacentersMetadata()
+    for (const datacenter of datacenters) {
+      callback(datacenter.site)
     }
   }
 
   it('should upload root packages source maps', async () => {
     await uploadSourceMaps('v6', ['root'])
 
-    forEachDatacenter((site) => {
+    await forEachDatacenter((site) => {
       const commandsByDatacenter = commands.filter(({ env }) => env?.DATADOG_SITE === site)
       const env = { DATADOG_API_KEY: FAKE_API_KEY, DATADOG_SITE: site }
 

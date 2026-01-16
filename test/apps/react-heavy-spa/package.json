@@ -11,7 +11,7 @@
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "react-router-dom": "6.30.2",
-    "react-window": "2.2.3",
+    "react-window": "2.2.4",
     "recharts": "2.15.4"
   },
   "devDependencies": {
@@ -19,8 +19,8 @@
     "@types/react": "18.3.27",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "5.1.2",
-    "globals": "16.5.0",
+    "globals": "17.0.0",
     "typescript": "5.9.3",
-    "vite": "5.4.21"
+    "vite": "7.3.1"
   }
 }

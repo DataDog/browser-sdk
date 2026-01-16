@@ -1,5 +1,6 @@
 import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
 import { timeStampNow, Observable, getRelativeTime, relativeToClocks } from '@datadog/browser-core'
+import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
@@ -116,10 +117,14 @@ function processPointerDown(
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
+  const targetForPrivacy = configuration.betaTrackActionsInShadowDom
+    ? getEventTarget(pointerDownEvent)
+    : pointerDownEvent.target
+
   let nodePrivacyLevel: NodePrivacyLevel
 
   if (configuration.enablePrivacyForActionName) {
-    nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+    nodePrivacyLevel = getNodePrivacyLevel(targetForPrivacy, configuration.defaultPrivacyLevel)
   } else {
     nodePrivacyLevel = NodePrivacyLevel.ALLOW
   }
@@ -222,13 +227,16 @@ function computeClickActionBase(
   nodePrivacyLevel: NodePrivacyLevel,
   configuration: RumConfiguration
 ): ClickActionBase {
-  const rect = event.target.getBoundingClientRect()
-  const selector = getSelectorFromElement(event.target, configuration.actionNameAttribute)
+  const selectorTarget = event.target
+  const rect = selectorTarget.getBoundingClientRect()
+  const selector = getSelectorFromElement(selectorTarget, configuration.actionNameAttribute)
+
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
 
-  const { name, nameSource } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+  const nameTarget = configuration.betaTrackActionsInShadowDom ? getEventTarget(event) : event.target
+  const { name, nameSource } = getActionNameFromElement(nameTarget, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
@@ -245,6 +253,16 @@ function computeClickActionBase(
     name,
     nameSource,
   }
+}
+
+function getEventTarget(event: MouseEventOnElement): Element {
+  if (event.composed && isNodeShadowHost(event.target) && typeof event.composedPath === 'function') {
+    const composedPath = event.composedPath()
+    if (composedPath.length > 0 && composedPath[0] instanceof Element) {
+      return composedPath[0]
+    }
+  }
+  return event.target
 }
 
 const enum ClickStatus {

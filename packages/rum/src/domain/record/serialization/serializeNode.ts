@@ -82,7 +82,7 @@ export function serializeDocumentNode(
     type: NodeType.Document,
     id: transaction.assignId(document),
     childNodes: serializeChildNodes(document, parentNodePrivacyLevel, transaction),
-    adoptedStyleSheets: serializeStyleSheets(document.adoptedStyleSheets),
+    adoptedStyleSheets: serializeStyleSheets(document.adoptedStyleSheets, transaction),
   }
 }
 
@@ -101,7 +101,7 @@ function serializeDocumentFragmentNode(
     id: transaction.assignId(element),
     childNodes: serializeChildNodes(element, parentNodePrivacyLevel, transaction),
     isShadowRoot,
-    adoptedStyleSheets: isShadowRoot ? serializeStyleSheets(element.adoptedStyleSheets) : undefined,
+    adoptedStyleSheets: isShadowRoot ? serializeStyleSheets(element.adoptedStyleSheets, transaction) : undefined,
   }
 }
 

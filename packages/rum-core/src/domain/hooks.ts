@@ -9,18 +9,30 @@ import type {
 } from '@datadog/browser-core'
 import { abstractHooks } from '@datadog/browser-core'
 import type { RumEvent } from '../rumEvent.types'
+import type { RawRumEvent } from '../rawRumEvent.types'
+import type { RumEventDomainContext } from '../domainContext.types'
 
 // Define a partial RUM event type.
 // Ensuring the `type` field is always present improves type checking, especially in conditional logic in hooks (e.g., `if (eventType === 'view')`).
 export type DefaultRumEventAttributes = RecursivePartial<RumEvent> & { type: RumEvent['type'] }
 export type DefaultTelemetryEventAttributes = RecursivePartial<TelemetryEvent>
 
+type DeepReadonly<T> = {
+  readonly [K in keyof T]: DeepReadonly<T[K]>
+}
+
+// Use readonly and DeepReadonly to prevents assemble hook callbacks from mutating the inputs.
+// DeepReadonly is only applied to objects rather than the entire AssembleHookParams to avoid casts for primitives.
+export interface AssembleHookParams {
+  readonly eventType: RumEvent['type']
+  rawRumEvent: DeepReadonly<RawRumEvent>
+  domainContext: DeepReadonly<RumEventDomainContext<RawRumEvent['type']>>
+  readonly startTime: RelativeTime
+  readonly duration?: Duration | undefined
+}
+
 export interface HookCallbackMap {
-  [HookNamesAsConst.ASSEMBLE]: (param: {
-    eventType: RumEvent['type']
-    startTime: RelativeTime
-    duration?: Duration | undefined
-  }) => DefaultRumEventAttributes | SKIPPED | DISCARDED
+  [HookNamesAsConst.ASSEMBLE]: (param: AssembleHookParams) => DefaultRumEventAttributes | SKIPPED | DISCARDED
   [HookNamesAsConst.ASSEMBLE_TELEMETRY]: (param: {
     startTime: RelativeTime
   }) => DefaultTelemetryEventAttributes | SKIPPED | DISCARDED
