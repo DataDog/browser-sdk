@@ -1,5 +1,6 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { getRelativeTime, isNumber } from '@datadog/browser-core'
+import { getRelativeTime, isNumber, relativeNow } from '@datadog/browser-core'
+import { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackNavigationTimings'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
 
@@ -48,3 +49,12 @@ export function computeTimingsFromDeprecatedPerformanceTiming() {
   }
   return result as TimingsFromDeprecatedPerformanceTiming
 }
+
+export function getSafeFirstByte(entry: RelevantNavigationTiming) {
+  // In some cases the value reported is negative or is larger
+  // than the current page time. Ignore these cases:
+  // https://github.com/GoogleChrome/web-vitals/issues/137
+  // https://github.com/GoogleChrome/web-vitals/issues/162
+  return entry.responseStart >= 0 && entry.responseStart <= relativeNow() ? entry.responseStart : undefined
+}
+
