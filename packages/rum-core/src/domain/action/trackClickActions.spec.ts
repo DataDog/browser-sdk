@@ -619,6 +619,45 @@ describe('trackClickActions', () => {
   function createFakeErrorEvent() {
     return { type: RumEventType.ERROR, action: { id: findActionId() } } as AssembledRumEvent
   }
+
+  describe('shadow DOM support', () => {
+    let shadowHost: HTMLElement
+    let shadowButton: HTMLButtonElement
+
+    beforeEach(() => {
+      shadowHost = document.createElement('div')
+      shadowHost.id = 'shadow-host'
+      shadowHost.style.width = '100px'
+      shadowHost.style.height = '100px'
+      document.body.appendChild(shadowHost)
+
+      const shadowRoot = shadowHost.attachShadow({ mode: 'open' })
+      shadowButton = document.createElement('button')
+      shadowButton.textContent = 'Shadow Button'
+      shadowRoot.appendChild(shadowButton)
+    })
+
+    afterEach(() => {
+      shadowHost.remove()
+    })
+
+    it('with betaTrackActionsInShadowDom, gets action name from composedPath', () => {
+      startClickActionsTracking({ betaTrackActionsInShadowDom: true })
+
+      emulateClick({
+        target: shadowHost,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [shadowButton, shadowHost.shadowRoot, shadowHost, document.body, document],
+        },
+      })
+      clock.tick(EXPIRE_DELAY)
+
+      expect(events.length).toBe(1)
+      expect(events[0].name).toBe('Shadow Button')
+    })
+  })
 })
 
 describe('finalizeClicks', () => {
