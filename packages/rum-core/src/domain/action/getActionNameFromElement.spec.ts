@@ -987,6 +987,21 @@ describe('getActionNameFromElement', () => {
       expect(nameSource).toBe('text_content')
     })
 
+    it('falls back to document when aria-labelledby references an element outside shadow DOM', () => {
+      const label = appendElement('<span id="light-dom-label">External Label</span>')
+
+      const host = appendElement('<div></div>')
+      const shadowRoot = host.attachShadow({ mode: 'open' })
+
+      const button = document.createElement('button')
+      button.setAttribute('aria-labelledby', 'light-dom-label')
+      shadowRoot.appendChild(button)
+
+      const { name, nameSource } = getActionNameFromElement(button, defaultConfiguration)
+      expect(name).toBe('External Label')
+      expect(nameSource).toBe('text_content')
+    })
+
     it('respects privacy settings for elements inside shadow DOM', () => {
       const host = appendElement('<div></div>')
       const shadowRoot = host.attachShadow({ mode: 'open' })
