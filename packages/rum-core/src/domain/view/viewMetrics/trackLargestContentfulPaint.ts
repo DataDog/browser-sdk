@@ -2,6 +2,7 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import { getNavigationEntry, getResourceEntries, getSafeFirstByte } from '../../../browser/performanceUtils'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
@@ -14,6 +15,12 @@ export interface LargestContentfulPaint {
   value: RelativeTime
   targetSelector?: string
   resourceUrl?: string
+  subParts: {
+    firstByte: RelativeTime
+    loadDelay: RelativeTime
+    loadTime: RelativeTime
+    renderDelay: RelativeTime
+  }
 }
 
 /**
@@ -64,10 +71,27 @@ export function trackLargestContentfulPaint(
         lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
       }
 
+      const resourceUrl = computeLcpEntryUrl(lcpEntry)
+
+      const lcpResourceEntry = resourceUrl
+        ? (getResourceEntries()?.find((e) => e.name === resourceUrl) as PerformanceResourceTiming | undefined)
+        : undefined
+
+      const firstByte = getSafeFirstByte(getNavigationEntry()) || (0 as RelativeTime)
+      const lcpRequestStart = Math.max(firstByte, lcpResourceEntry?.startTime || 0)
+      const lcpResponseEnd = Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0)
+      const lcpRenderTime = Math.max(lcpResponseEnd, lcpEntry.startTime)
+
       callback({
         value: lcpEntry.startTime,
         targetSelector: lcpTargetSelector,
-        resourceUrl: computeLcpEntryUrl(lcpEntry),
+        resourceUrl: resourceUrl,
+        subParts: {
+          firstByte,
+          loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
+          loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
+          renderDelay: (lcpRenderTime - lcpResponseEnd) as RelativeTime,
+        },
       })
       biggestLcpSize = lcpEntry.size
     }
