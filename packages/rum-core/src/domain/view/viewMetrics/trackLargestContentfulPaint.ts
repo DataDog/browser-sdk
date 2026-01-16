@@ -15,7 +15,7 @@ export interface LargestContentfulPaint {
   value: RelativeTime
   targetSelector?: string
   resourceUrl?: string
-  subParts: {
+  subParts?: {
     firstByte: RelativeTime
     loadDelay: RelativeTime
     loadTime: RelativeTime
