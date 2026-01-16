@@ -62,7 +62,11 @@ export async function main(...args: string[]): Promise<void> {
 
 async function gateTelemetryErrors(datacenters: string[]): Promise<void> {
   printLog(`Check telemetry errors for ${datacenters.join(',')} during ${GATE_DURATION / ONE_MINUTE_IN_SECOND} minutes`)
-  for (let i = 0; i < GATE_DURATION; i += GATE_INTERVAL) {
+
+  const startTime = Date.now()
+  const endTime = startTime + GATE_DURATION * 1000
+
+  while (Date.now() < endTime) {
     await checkTelemetryErrors(datacenters, browserSdkVersion)
     process.stdout.write('.') // progress indicator
     await timeout(GATE_INTERVAL * 1000)
