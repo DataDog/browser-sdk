@@ -113,7 +113,11 @@ function parseChromeLine(line: string): StackFrame | undefined {
   }
 }
 
-const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(`^\\s*at ?${fileUrl}${filePosition}?${filePosition}??\\s*$`, 'i')
+const htmlAnonymousPart = '(?:(.*)?(?: @))'
+const CHROME_ANONYMOUS_FUNCTION_RE = new RegExp(
+  `^\\s*at\\s*${htmlAnonymousPart}?\\s*${fileUrl}${filePosition}?${filePosition}??\\s*$`,
+  'i'
+)
 
 function parseChromeAnonymousLine(line: string): StackFrame | undefined {
   const parts = CHROME_ANONYMOUS_FUNCTION_RE.exec(line)
@@ -124,10 +128,10 @@ function parseChromeAnonymousLine(line: string): StackFrame | undefined {
 
   return {
     args: [],
-    column: parts[3] ? +parts[3] : undefined,
-    func: UNKNOWN_FUNCTION,
-    line: parts[2] ? +parts[2] : undefined,
-    url: parts[1],
+    column: parts[4] ? +parts[4] : undefined,
+    func: parts[1] || UNKNOWN_FUNCTION,
+    line: parts[3] ? +parts[3] : undefined,
+    url: parts[2],
   }
 }
 
