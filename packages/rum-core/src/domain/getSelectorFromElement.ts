@@ -54,45 +54,37 @@ export function getSelectorFromElement(
   let outputSelector: string | undefined
   let currentElement: Element | null = targetElement
   let nextIsShadowBoundary = false
-  // Track if we've crossed a shadow boundary. Once crossed, uniqueness checks using querySelector
-  // won't work correctly because querySelector cannot pierce shadow DOM boundaries.
-  let hasCrossedShadowBoundary = false
 
   while (currentElement && currentElement.nodeName !== 'HTML') {
-    if (!hasCrossedShadowBoundary) {
-      const globallyUniqueSelector = findSelector(
-        currentElement,
-        GLOBALLY_UNIQUE_SELECTOR_GETTERS,
-        isSelectorUniqueGlobally,
-        actionNameAttribute,
-        cssSelector
-      )
-      if (globallyUniqueSelector) {
-        return combineSelector(globallyUniqueSelector, outputSelector, nextIsShadowBoundary)
-      }
+    const globallyUniqueSelector = findSelector(
+      currentElement,
+      GLOBALLY_UNIQUE_SELECTOR_GETTERS,
+      isSelectorUniqueGlobally,
+      actionNameAttribute,
+      cssSelector
+    )
+    if (globallyUniqueSelector) {
+      return combineSelector(globallyUniqueSelector, outputSelector, nextIsShadowBoundary)
     }
 
-    let currentSelector: string
+    const uniqueSelectorAmongChildren = findSelector(
+      currentElement,
+      UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
+      isSelectorUniqueAmongSiblings,
+      actionNameAttribute,
+      cssSelector
+    )
 
-    if (hasCrossedShadowBoundary) {
-      currentSelector = getPositionSelector(currentElement)
-    } else {
-      const uniqueSelectorAmongChildren = findSelector(
-        currentElement,
-        UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
-        isSelectorUniqueAmongSiblings,
-        actionNameAttribute,
-        cssSelector
-      )
-      currentSelector = uniqueSelectorAmongChildren || getPositionSelector(currentElement)
-    }
+    const currentSelector = uniqueSelectorAmongChildren || getPositionSelector(currentElement)
 
     cssSelector = combineSelector(currentSelector, cssSelector)
     outputSelector = combineSelector(currentSelector, outputSelector, nextIsShadowBoundary)
 
     nextIsShadowBoundary = isCrossingShadowBoundary(currentElement)
     if (nextIsShadowBoundary) {
-      hasCrossedShadowBoundary = true
+      // Reset cssSelector when crossing shadow boundary. Elements inside the shadow DOM
+      // are not visible to querySelector from outside, so we can't use them for uniqueness checks.
+      cssSelector = undefined
     }
 
     currentElement = getParentElement(currentElement)

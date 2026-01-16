@@ -354,7 +354,10 @@ describe('getSelectorFromElement with shadow DOM', () => {
     const selector2 = getSelectorFromElement(button2, undefined)
 
     expect(selector1).not.toBe(selector2)
+
     expect(selector1).toContain('MY-BUTTON:nth-of-type(1)')
-    expect(selector2).toContain('MY-BUTTON:nth-of-type(2)')
+
+    expect(selector1).toContain('#test-container')
+    expect(selector1).not.toContain('DIV:nth-of-type')
   })
 })
