@@ -53,10 +53,8 @@ export async function main(...args: string[]): Promise<void> {
 
   const uploadPathTypes = toDatacenterUploadPathType(datacenters).join(',')
 
-  console.log('SDK_VERSION', getBuildEnvValue('SDK_VERSION'))
-
   printLog(`node ./scripts/deploy/deploy.ts prod ${version} ${uploadPathTypes}`)
-  command`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`.withLogs().run()
+  printLog(`node ./scripts/deploy/upload-source-maps.ts ${version} ${uploadPathTypes}`)
 
   if (shouldCheckTelemetryErrors) {
     await gateTelemetryErrors(datacenters)

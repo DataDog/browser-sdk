@@ -90,10 +90,6 @@ async function checkDatacenterTelemetryErrors(datacenter: string, queries: Query
     const query = queries[i]
     const buckets = await queryLogsApi(site, apiKey, applicationKey, query, agent)
 
-    console.log(
-      `[${datacenter}] \`${query.query}\` ${query.groupBy ? `grouped by ${query.groupBy}` : ''} - found ${buckets[0]?.computes?.c0 ?? 0} times in the last ${TIME_WINDOW_IN_MINUTES} minutes`
-    )
-
     // buckets are sorted by count, so we only need to check the first one
     if (buckets[0]?.computes?.c0 > query.threshold) {
       throw new Error(`${query.name} found in the last ${TIME_WINDOW_IN_MINUTES} minutes,
