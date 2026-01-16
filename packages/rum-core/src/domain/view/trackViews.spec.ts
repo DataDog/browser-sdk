@@ -588,7 +588,17 @@ describe('view metrics', () => {
           jasmine.objectContaining({
             firstContentfulPaint: 123 as Duration,
             navigationTimings: jasmine.any(Object),
-            largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined, resourceUrl: undefined },
+            largestContentfulPaint: {
+              value: 789 as Duration,
+              targetSelector: undefined,
+              resourceUrl: undefined,
+              subParts: {
+                firstByte: 123,
+                loadDelay: 0,
+                loadTime: 0,
+                renderDelay: 666
+              }
+            },
           })
         )
       })

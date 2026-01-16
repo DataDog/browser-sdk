@@ -85,7 +85,7 @@ export function trackLargestContentfulPaint(
       callback({
         value: lcpEntry.startTime,
         targetSelector: lcpTargetSelector,
-        resourceUrl: resourceUrl,
+        resourceUrl,
         subParts: {
           firstByte,
           loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
