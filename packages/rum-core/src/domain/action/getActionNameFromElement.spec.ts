@@ -988,7 +988,7 @@ describe('getActionNameFromElement', () => {
     })
 
     it('falls back to document when aria-labelledby references an element outside shadow DOM', () => {
-      const label = appendElement('<span id="light-dom-label">External Label</span>')
+      appendElement('<span id="light-dom-label">External Label</span>')
 
       const host = appendElement('<div></div>')
       const shadowRoot = host.attachShadow({ mode: 'open' })
