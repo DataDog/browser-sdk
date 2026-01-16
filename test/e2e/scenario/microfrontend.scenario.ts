@@ -31,7 +31,7 @@ const LOGS_CONFIG: Partial<LogsInitConfiguration> = {
   },
 }
 
-// because the evaluation the script in a different context than the page, resulting in unexpected stack traces
+// Use createBody because `page.evaluate()` runs in a different context and breaks stack traces.
 function createBody(eventGenerator: string) {
   return html`
     <button>click me</button>

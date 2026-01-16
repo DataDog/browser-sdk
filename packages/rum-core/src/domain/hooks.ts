@@ -21,6 +21,8 @@ type DeepReadonly<T> = {
   readonly [K in keyof T]: DeepReadonly<T[K]>
 }
 
+// Use readonly and DeepReadonly to prevents assemble hook callbacks from mutating the inputs.
+// DeepReadonly is only applied to objects rather than the entire AssembleHookParams to avoid casts for primitives.
 export interface AssembleHookParams {
   readonly eventType: RumEvent['type']
   rawRumEvent: DeepReadonly<RawRumEvent>

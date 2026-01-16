@@ -207,7 +207,7 @@ describe('pageStateHistory', () => {
           eventType,
           startTime: clock.relative(0),
           duration: 0 as Duration,
-        } as any)
+        } as AssembleHookParams)
 
         expect(defaultRumEventAttributes).toEqual({
           type: eventType,
