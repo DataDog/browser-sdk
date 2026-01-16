@@ -13,7 +13,7 @@ export function serializeStyleSheets(
     const cssRules = Array.from(rules, (cssRule) => cssRule.cssText)
     transaction.addMetric(
       'cssText',
-      cssRules.map((rule) => rule.length).reduce((a, b) => a + b, 0)
+      cssRules.reduce((totalLength, rule) => totalLength + rule.length, 0)
     )
 
     const styleSheet: StyleSheet = {

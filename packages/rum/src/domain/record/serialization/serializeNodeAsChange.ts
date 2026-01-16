@@ -218,7 +218,7 @@ function serializeStyleSheetAsChange(sheet: CSSStyleSheet, transaction: ChangeSe
   const mediaList = sheet.media.length > 0 ? Array.from(sheet.media) : undefined
   transaction.addMetric(
     'cssText',
-    rules.map((rule) => rule.length).reduce((a, b) => a + b, 0)
+    rules.reduce((totalLength, rule) => totalLength + rule.length, 0)
   )
   transaction.addStyleSheet(rules, mediaList, sheet.disabled)
   return transaction.scope.styleSheetIds.getOrInsert(sheet)
