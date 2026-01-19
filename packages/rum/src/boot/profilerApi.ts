@@ -9,7 +9,7 @@ import type {
 } from '@datadog/browser-rum-core'
 import type { DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import { isSampled } from '@datadog/browser-rum-core'
-import { addTelemetryDebug, monitorError } from '@datadog/browser-core'
+import { monitorError } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { startProfilingContext } from '../domain/profiling/profilingContext'
@@ -57,8 +57,6 @@ export function makeProfilerApi(): ProfilerApi {
     lazyLoadProfiler()
       .then((createRumProfiler) => {
         if (!createRumProfiler) {
-          // monitor-until: 2026-01-01, reconsider after profiling GA
-          addTelemetryDebug('[DD_RUM] Failed to lazy load the RUM Profiler')
           profilingContextManager.set({ status: 'error', error_reason: 'failed-to-lazy-load' })
           return
         }
