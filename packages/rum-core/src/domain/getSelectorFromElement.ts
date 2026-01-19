@@ -1,7 +1,7 @@
 import { getParentElement, isNodeShadowRoot } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameConstants'
 
-export const SHADOW_DOM_MARKER = ' /shadow/ '
+export const SHADOW_DOM_MARKER = ' ::shadow '
 
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:

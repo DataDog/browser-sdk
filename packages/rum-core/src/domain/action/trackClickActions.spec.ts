@@ -19,6 +19,7 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
 import type { BrowserWindow } from '../privacy'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import { SHADOW_DOM_MARKER } from '../getSelectorFromElement'
 import type { ActionContexts } from './actionCollection'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
@@ -672,7 +673,7 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
 
       expect(events.length).toBe(1)
-      expect(events[0].target?.selector).toContain('/shadow/')
+      expect(events[0].target?.selector).toContain(SHADOW_DOM_MARKER)
       expect(events[0].target?.selector).toContain('BUTTON')
     })
 
@@ -691,7 +692,7 @@ describe('trackClickActions', () => {
 
       expect(events.length).toBe(1)
       expect(events[0].target?.selector).toBe('#shadow-host')
-      expect(events[0].target?.selector).not.toContain('/shadow/')
+      expect(events[0].target?.selector).not.toContain(SHADOW_DOM_MARKER)
     })
   })
 })
