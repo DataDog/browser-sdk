@@ -163,7 +163,7 @@ describe('getSelectorFromElement', () => {
 describe('isSelectorUniqueAmongSiblings', () => {
   it('returns true when the element is alone', () => {
     const element = appendElement('<div></div>')
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(element, document, 'DIV', undefined)).toBeTrue()
   })
 
   it('returns false when a sibling element matches the element selector', () => {
@@ -171,7 +171,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
       <div target></div>
       <div></div>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeFalse()
+    expect(isSelectorUniqueAmongSiblings(element, document, 'DIV', undefined)).toBeFalse()
   })
 
   it('returns true when the element selector does not match any sibling', () => {
@@ -179,7 +179,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
       <div target></div>
       <span></span>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(element, document, 'DIV', undefined)).toBeTrue()
   })
 
   it('returns false when the child selector matches an element in a sibling', () => {
@@ -191,7 +191,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
         <hr>
       </div>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeFalse()
+    expect(isSelectorUniqueAmongSiblings(element, document, 'DIV', 'HR')).toBeFalse()
   })
 
   it('returns true when the current element selector does not match the sibling', () => {
@@ -203,7 +203,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
         <hr>
       </h1>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(element, document, 'DIV', 'HR')).toBeTrue()
   })
 
   it('the selector should not consider elements deep in the tree', () => {
@@ -217,7 +217,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
         </div>
       </h1>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(element, document, 'DIV', 'HR')).toBeTrue()
   })
 })
 
@@ -230,9 +230,7 @@ describe('getSelectorFromElement with shadow DOM', () => {
     shadowRoot.appendChild(button)
 
     const selector = getSelectorFromElement(button, undefined)
-    expect(selector).toBeDefined()
-    expect(selector).toContain(SHADOW_DOM_MARKER)
-    expect(selector).toContain('BUTTON')
+    expect(selector).toBe(`#shadow-host${SHADOW_DOM_MARKER}BUTTON.shadow-button`)
   })
 
   it('should use stable attribute for element inside shadow DOM with shadow marker', () => {
@@ -243,8 +241,7 @@ describe('getSelectorFromElement with shadow DOM', () => {
     shadowRoot.appendChild(button)
 
     const selector = getSelectorFromElement(button, undefined)
-    expect(selector).toContain(SHADOW_DOM_MARKER)
-    expect(selector).toContain('data-testid="shadow-test"')
+    expect(selector).toBe(`BODY>DIV${SHADOW_DOM_MARKER}BUTTON[data-testid="shadow-test"]`)
   })
 
   it('should insert shadow marker when traversing shadow boundary', () => {
@@ -254,9 +251,7 @@ describe('getSelectorFromElement with shadow DOM', () => {
     shadowRoot.appendChild(button)
 
     const selector = getSelectorFromElement(button, undefined)
-
-    expect(selector).toContain(SHADOW_DOM_MARKER)
-    expect(selector).toContain('BUTTON')
+    expect(selector).toBe(`#my-host${SHADOW_DOM_MARKER}BUTTON`)
   })
 
   it('should handle nested shadow DOMs with multiple markers', () => {
@@ -273,13 +268,9 @@ describe('getSelectorFromElement with shadow DOM', () => {
     innerShadowRoot.appendChild(button)
 
     const selector = getSelectorFromElement(button, undefined)
-    expect(selector).toBeDefined()
-
-    const markerCount = (
-      selector!.match(new RegExp(SHADOW_DOM_MARKER.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g')) || []
-    ).length
-    expect(markerCount).toBe(2)
-    expect(selector).toContain('data-testid="deep-button"')
+    expect(selector).toBe(
+      `DIV[data-testid="outer-host"]${SHADOW_DOM_MARKER}DIV[data-testid="inner-host"]${SHADOW_DOM_MARKER}BUTTON[data-testid="deep-button"]`
+    )
   })
 
   it('should use position selector inside shadow DOM with shadow marker', () => {
@@ -287,16 +278,19 @@ describe('getSelectorFromElement with shadow DOM', () => {
     const shadowRoot = host.attachShadow({ mode: 'open' })
 
     const div1 = document.createElement('div')
+    const span1 = document.createElement('span')
+    div1.appendChild(span1)
+
     const div2 = document.createElement('div')
     const target = document.createElement('span')
     div2.appendChild(target)
+
     shadowRoot.appendChild(div1)
     shadowRoot.appendChild(div2)
 
     const selector = getSelectorFromElement(target, undefined)
-    expect(selector).toBeDefined()
-    expect(selector).toContain(SHADOW_DOM_MARKER)
-    expect(selector).toContain('SPAN')
+    // Both divs have a span, so DIV>SPAN is not unique, need nth-of-type
+    expect(selector).toBe(`BODY>DIV${SHADOW_DOM_MARKER}DIV:nth-of-type(2)>SPAN`)
   })
 
   it('should generate unique selector when siblings exist inside shadow DOM', () => {
@@ -314,11 +308,8 @@ describe('getSelectorFromElement with shadow DOM', () => {
     const selector1 = getSelectorFromElement(button1, undefined)
     const selector2 = getSelectorFromElement(button2, undefined)
 
-    expect(selector1).toBeDefined()
-    expect(selector2).toBeDefined()
-    expect(selector1).not.toBe(selector2)
-    expect(selector1).toContain(SHADOW_DOM_MARKER)
-    expect(selector2).toContain(SHADOW_DOM_MARKER)
+    expect(selector1).toBe(`#host${SHADOW_DOM_MARKER}BUTTON.first`)
+    expect(selector2).toBe(`#host${SHADOW_DOM_MARKER}BUTTON.second`)
   })
 
   it('should NOT add shadow marker for elements in light DOM', () => {
@@ -326,8 +317,6 @@ describe('getSelectorFromElement with shadow DOM', () => {
     const button = element.querySelector('button')!
 
     const selector = getSelectorFromElement(button, undefined)
-    expect(selector).toBeDefined()
-    expect(selector).not.toContain(SHADOW_DOM_MARKER)
     expect(selector).toBe('BODY>DIV>BUTTON.light-btn')
   })
 
@@ -353,11 +342,18 @@ describe('getSelectorFromElement with shadow DOM', () => {
     const selector1 = getSelectorFromElement(button1, undefined)
     const selector2 = getSelectorFromElement(button2, undefined)
 
-    expect(selector1).not.toBe(selector2)
+    expect(selector1).toBe(`#test-container>MY-BUTTON:nth-of-type(1)${SHADOW_DOM_MARKER}BUTTON`)
+    expect(selector2).toBe(`#test-container>MY-BUTTON:nth-of-type(2)${SHADOW_DOM_MARKER}BUTTON`)
+  })
 
-    expect(selector1).toContain('MY-BUTTON:nth-of-type(1)')
+  it('should handle duplicated IDs between light DOM and shadow DOM', () => {
+    const host = appendElement('<div target></div><div id="foo"></div>')
+    const shadowRoot = host.attachShadow({ mode: 'open' })
+    const button = document.createElement('button')
+    button.id = 'foo'
+    shadowRoot.appendChild(button)
 
-    expect(selector1).toContain('#test-container')
-    expect(selector1).not.toContain('DIV:nth-of-type')
+    const selector = getSelectorFromElement(button, undefined)
+    expect(selector).toBe(`BODY>DIV:nth-of-type(1)${SHADOW_DOM_MARKER}#foo`)
   })
 })
