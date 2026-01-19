@@ -10,12 +10,12 @@
   "dependencies": {
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-router-dom": "6.30.2",
-    "react-window": "2.2.4",
+    "react-router-dom": "6.30.3",
+    "react-window": "2.2.5",
     "recharts": "2.15.4"
   },
   "devDependencies": {
-    "@types/node": "25.0.3",
+    "@types/node": "25.0.6",
     "@types/react": "18.3.27",
     "@types/react-dom": "18.3.7",
     "@vitejs/plugin-react": "5.1.2",
