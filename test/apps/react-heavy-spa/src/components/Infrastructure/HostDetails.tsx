@@ -113,7 +113,7 @@ export default function HostDetails({ host, metrics, onClose }: HostDetailsProps
                     borderRadius: '4px',
                     color: '#E0E0E0',
                   }}
-                  formatter={(value: number) => `${value}%`}
+                  formatter={(value) => `${value ?? 0}%`}
                 />
                 <Line
                   type="monotone"
@@ -148,7 +148,7 @@ export default function HostDetails({ host, metrics, onClose }: HostDetailsProps
                     borderRadius: '4px',
                     color: '#E0E0E0',
                   }}
-                  formatter={(value: number) => `${value}%`}
+                  formatter={(value) => `${value ?? 0}%`}
                 />
                 <Line
                   type="monotone"
@@ -184,7 +184,7 @@ export default function HostDetails({ host, metrics, onClose }: HostDetailsProps
                       borderRadius: '4px',
                       color: '#E0E0E0',
                     }}
-                    formatter={(value: number) => `${value}%`}
+                    formatter={(value) => `${value ?? 0}%`}
                   />
                   <Line
                     type="monotone"
@@ -216,7 +216,7 @@ export default function HostDetails({ host, metrics, onClose }: HostDetailsProps
                       borderRadius: '4px',
                       color: '#E0E0E0',
                     }}
-                    formatter={(value: number) => `${value} Mbps`}
+                    formatter={(value) => `${value ?? 0} Mbps`}
                   />
                   <Line
                     type="monotone"
