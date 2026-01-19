@@ -17,10 +17,10 @@ export function main() {
     isolatedWindow.unregisterIsolatedScript()
   }
   // Register the new callback
-  window.addEventListener('__ddBrowserSdkMessage', browserSdkMessageListener)
+  window.addEventListener('__mvSdkBrowserSdkMessage', browserSdkMessageListener)
 
   isolatedWindow.unregisterIsolatedScript = () => {
-    window.removeEventListener('__ddBrowserSdkMessage', browserSdkMessageListener)
+    window.removeEventListener('__mvSdkBrowserSdkMessage', browserSdkMessageListener)
   }
 
   // Listen to events from the "main" content script and relays them to the background script via the

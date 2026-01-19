@@ -1,6 +1,6 @@
 import { DefaultPrivacyLevel } from '../../src/domain/configuration'
 import { BridgeCapability } from '../../src/transport'
-import type { BrowserWindowWithEventBridge, DatadogEventBridge } from '../../src/transport'
+import type { BrowserWindowWithEventBridge, MVSDKMVSDKDatadogEventBridge } from '../../src/transport'
 import { registerCleanupTask } from '../registerCleanupTask'
 
 export function mockEventBridge({
@@ -8,17 +8,17 @@ export function mockEventBridge({
   privacyLevel = DefaultPrivacyLevel.MASK,
   capabilities = [BridgeCapability.RECORDS],
 }: { allowedWebViewHosts?: string[]; privacyLevel?: DefaultPrivacyLevel; capabilities?: BridgeCapability[] } = {}) {
-  const eventBridge: DatadogEventBridge = {
+  const eventBridge: MVSDKMVSDKDatadogEventBridge = {
     send: (_msg: string) => undefined,
     getAllowedWebViewHosts: () => JSON.stringify(allowedWebViewHosts),
     getCapabilities: () => JSON.stringify(capabilities),
     getPrivacyLevel: () => privacyLevel,
   }
 
-  ;(window as BrowserWindowWithEventBridge).DatadogEventBridge = eventBridge
+  ;(window as BrowserWindowWithEventBridge).MVSDKMVSDKDatadogEventBridge = eventBridge
 
   registerCleanupTask(() => {
-    delete (window as BrowserWindowWithEventBridge).DatadogEventBridge
+    delete (window as BrowserWindowWithEventBridge).MVSDKMVSDKDatadogEventBridge
   })
   return eventBridge
 }

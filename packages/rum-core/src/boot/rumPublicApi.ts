@@ -835,7 +835,7 @@ export function makeRumPublicApi(
 function createPostStartStrategy(preStartStrategy: Strategy, startRumResult: StartRumResult): Strategy {
   return {
     init: (initConfiguration: RumInitConfiguration) => {
-      displayAlreadyInitializedError('DD_RUM', initConfiguration)
+      displayAlreadyInitializedError('MV_SDK_DD_RUM', initConfiguration)
     },
     initConfiguration: preStartStrategy.initConfiguration,
     ...startRumResult,

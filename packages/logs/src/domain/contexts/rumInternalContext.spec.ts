@@ -15,7 +15,7 @@ describe('startRUMInternalContext', () => {
 
   afterEach(() => {
     delete window.DD_RUM
-    delete window.DD_RUM_SYNTHETICS
+    delete window.MV_SDK_MV_SDK_DD_RUM_SYNTHETICS
   })
 
   describe('assemble hook', () => {
@@ -51,7 +51,7 @@ describe('startRUMInternalContext', () => {
       })
 
       it('uses the global variable created when the synthetics worker is injecting RUM', () => {
-        window.DD_RUM_SYNTHETICS = {
+        window.MV_SDK_MV_SDK_DD_RUM_SYNTHETICS = {
           getInternalContext: () => ({ foo: 'bar' }),
         }
         const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {

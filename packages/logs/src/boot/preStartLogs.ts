@@ -71,7 +71,7 @@ export function createPreStartStrategy(
       addTelemetryConfiguration(serializeLogsConfiguration(initConfiguration))
 
       if (cachedConfiguration) {
-        displayAlreadyInitializedError('DD_LOGS', initConfiguration)
+        displayAlreadyInitializedError('MV_SDK_DD_LOGS', initConfiguration)
         return
       }
 

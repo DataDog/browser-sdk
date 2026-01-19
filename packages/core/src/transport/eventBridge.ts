@@ -2,10 +2,10 @@ import { getGlobalObject } from '../tools/globalObject'
 import type { DefaultPrivacyLevel } from '../domain/configuration'
 
 export interface BrowserWindowWithEventBridge extends Window {
-  DatadogEventBridge?: DatadogEventBridge
+  MVSDKMVSDKDatadogEventBridge?: MVSDKMVSDKDatadogEventBridge
 }
 
-export interface DatadogEventBridge {
+export interface MVSDKMVSDKDatadogEventBridge {
   getCapabilities?(): string
   getPrivacyLevel?(): DefaultPrivacyLevel
   getAllowedWebViewHosts(): string
@@ -57,5 +57,5 @@ export function canUseEventBridge(currentHost = getGlobalObject<Window>().locati
 }
 
 function getEventBridgeGlobal() {
-  return getGlobalObject<BrowserWindowWithEventBridge>().DatadogEventBridge
+  return getGlobalObject<BrowserWindowWithEventBridge>().MVSDKMVSDKDatadogEventBridge
 }

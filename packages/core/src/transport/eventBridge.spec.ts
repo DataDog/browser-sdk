@@ -70,7 +70,7 @@ describe('event bridge getPrivacyLevel', () => {
   })
 
   it('should return undefined if getPrivacyLevel not present in the bridge', () => {
-    delete (window as BrowserWindowWithEventBridge).DatadogEventBridge?.getPrivacyLevel
+    delete (window as BrowserWindowWithEventBridge).MVSDKMVSDKDatadogEventBridge?.getPrivacyLevel
     const eventBridge = getEventBridge()!
 
     expect(eventBridge.getPrivacyLevel()).toBeUndefined()

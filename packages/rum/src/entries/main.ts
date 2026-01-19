@@ -90,6 +90,6 @@ export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
 })
 
 interface BrowserWindow extends Window {
-  DD_RUM?: RumPublicApi
+  MV_SDK_DD_RUM?: RumPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+defineGlobal(getGlobalObject<BrowserWindow>(), 'MV_SDK_DD_RUM', datadogRum)

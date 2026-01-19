@@ -4,13 +4,13 @@ import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionStarted } from './sessionState'
 
-export const OLD_SESSION_COOKIE_NAME = '_dd'
-export const OLD_RUM_COOKIE_NAME = '_dd_r'
-export const OLD_LOGS_COOKIE_NAME = '_dd_l'
+export const OLD_SESSION_COOKIE_NAME = '_mv_sdk'
+export const OLD_RUM_COOKIE_NAME = '_mv_sdk_r'
+export const OLD_LOGS_COOKIE_NAME = '_mv_sdk_l'
 
 // duplicate values to avoid dependency issues
-export const RUM_SESSION_KEY = 'rum'
-export const LOGS_SESSION_KEY = 'logs'
+export const RUM_SESSION_KEY = 'mv-sdk-rum'
+export const LOGS_SESSION_KEY = 'mv-sdk-logs'
 
 /**
  * This migration should remain in the codebase as long as older versions are available/live
