@@ -396,7 +396,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 function createPostStartStrategy(initConfiguration: LogsInitConfiguration, startLogsResult: StartLogsResult): Strategy {
   return {
     init: (initConfiguration: LogsInitConfiguration) => {
-      displayAlreadyInitializedError('DD_LOGS', initConfiguration)
+      displayAlreadyInitializedError('ATLAS_SDK_DD_LOGS', initConfiguration)
     },
     initConfiguration,
     ...startLogsResult,

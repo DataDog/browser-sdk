@@ -7,8 +7,8 @@ interface Rum {
 }
 
 interface BrowserWindow {
-  DD_RUM?: Rum
-  DD_RUM_SYNTHETICS?: Rum
+  ATLAS_SDK_DD_RUM?: Rum
+  MV_SDK_ATLAS_SDK_DD_RUM_SYNTHETICS?: Rum
 }
 
 export function startRUMInternalContext(hooks: Hooks) {
@@ -39,7 +39,7 @@ export function startRUMInternalContext(hooks: Hooks) {
 
   function getRUMInternalContext(startTime?: RelativeTime) {
     const willSyntheticsInjectRumResult = willSyntheticsInjectRum()
-    const rumSource = willSyntheticsInjectRumResult ? browserWindow.DD_RUM_SYNTHETICS : browserWindow.DD_RUM
+    const rumSource = willSyntheticsInjectRumResult ? browserWindow.MV_SDK_ATLAS_SDK_DD_RUM_SYNTHETICS : browserWindow.DD_RUM
     const rumContext = getInternalContextFromRumGlobal(startTime, rumSource)
 
     if (rumContext) {

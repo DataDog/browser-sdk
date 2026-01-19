@@ -24,7 +24,7 @@ describe('sourceCodeContext', () => {
   })
 
   function setupBrowserWindowWithContext() {
-    browserWindow.DD_SOURCE_CODE_CONTEXT = {
+    browserWindow.MV_SDK_MV_SDK_DD_SOURCE_CODE_CONTEXT = {
       [TEST_STACK]: {
         service: 'my-service',
         version: '1.0.0',
@@ -32,7 +32,7 @@ describe('sourceCodeContext', () => {
     }
 
     registerCleanupTask(() => {
-      delete browserWindow.DD_SOURCE_CODE_CONTEXT
+      delete browserWindow.MV_SDK_MV_SDK_DD_SOURCE_CODE_CONTEXT
     })
   }
 
@@ -155,7 +155,7 @@ describe('sourceCodeContext', () => {
       expect(result).toBeUndefined()
     })
 
-    it('should support late updates to DD_SOURCE_CODE_CONTEXT', () => {
+    it('should support late updates to MV_SDK_MV_SDK_DD_SOURCE_CODE_CONTEXT', () => {
       startSourceCodeContext(hooks)
 
       // Add context AFTER initialization
@@ -185,7 +185,7 @@ describe('sourceCodeContext', () => {
       startSourceCodeContext(hooks)
 
       // Update existing entry
-      browserWindow.DD_SOURCE_CODE_CONTEXT![TEST_STACK] = {
+      browserWindow.MV_SDK_MV_SDK_DD_SOURCE_CODE_CONTEXT![TEST_STACK] = {
         service: 'updated-service',
         version: '1.1.0',
       }

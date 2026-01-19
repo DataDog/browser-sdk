@@ -110,7 +110,7 @@ export function createPreStartStrategy(
     addTelemetryConfiguration(serializeRumConfiguration(initConfiguration))
 
     if (cachedConfiguration) {
-      displayAlreadyInitializedError('DD_RUM', initConfiguration)
+      displayAlreadyInitializedError('ATLAS_SDK_DD_RUM', initConfiguration)
       return
     }
 

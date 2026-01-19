@@ -6,7 +6,7 @@ import { toSessionString, toSessionState, getExpiredSessionState } from '../sess
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './sessionStoreStrategy'
 
-const LOCAL_STORAGE_TEST_KEY = '_dd_test_'
+const LOCAL_STORAGE_TEST_KEY = '_atlas_sdk_test_'
 
 export function selectLocalStorageStrategy(): SessionStoreStrategyType | undefined {
   try {

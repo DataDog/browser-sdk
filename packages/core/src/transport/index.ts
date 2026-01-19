@@ -1,6 +1,6 @@
 export type { BandwidthStats, HttpRequest, HttpRequestEvent, Payload, RetryInfo } from './httpRequest'
 export { createHttpRequest } from './httpRequest'
-export type { BrowserWindowWithEventBridge, DatadogEventBridge } from './eventBridge'
+export type { BrowserWindowWithEventBridge, MVSDKAtlasSDKDatadogEventBridge } from './eventBridge'
 export { canUseEventBridge, bridgeSupports, getEventBridge, BridgeCapability } from './eventBridge'
 export { createBatch } from './batch'
 export type { FlushController, FlushEvent, FlushReason } from './flushController'
