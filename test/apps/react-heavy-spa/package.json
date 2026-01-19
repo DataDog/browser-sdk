@@ -8,16 +8,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-router-dom": "6.30.3",
     "react-window": "2.2.5",
     "recharts": "2.15.4"
   },
   "devDependencies": {
     "@types/node": "25.0.6",
-    "@types/react": "18.3.27",
-    "@types/react-dom": "18.3.7",
+    "@types/react": "19.2.8",
+    "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.1.2",
     "globals": "17.0.0",
     "typescript": "5.9.3",
