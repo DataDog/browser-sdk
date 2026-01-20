@@ -2,6 +2,7 @@ import { setTimeout } from '../../tools/timer'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { TimeStamp } from '../../tools/utils/timeUtils'
 import { elapsed, ONE_SECOND, timeStampNow } from '../../tools/utils/timeUtils'
+import { addTelemetryError } from '../telemetry'
 import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
@@ -21,6 +22,14 @@ const LOCK_SEPARATOR = '--'
 
 const bufferedOperations: Operations[] = []
 let ongoingOperations: Operations | undefined
+
+function safePersist(persistFn: () => void) {
+  try {
+    persistFn()
+  } catch (e) {
+    addTelemetryError(e)
+  }
+}
 
 export function processSessionStoreOperations(
   operations: Operations,
@@ -58,7 +67,7 @@ export function processSessionStoreOperations(
     }
     // acquire lock
     currentLock = createLock()
-    persistWithLock(currentStore.session)
+    safePersist(() => persistWithLock(currentStore.session))
     // if lock is not acquired, retry later
     currentStore = retrieveStore()
     if (currentStore.lock !== currentLock) {
@@ -77,13 +86,13 @@ export function processSessionStoreOperations(
   }
   if (processedSession) {
     if (isSessionInExpiredState(processedSession)) {
-      expireSession(processedSession)
+      safePersist(() => expireSession(processedSession!))
     } else {
       expandSessionState(processedSession)
       if (isLockEnabled) {
-        persistWithLock(processedSession)
+        safePersist(() => persistWithLock(processedSession!))
       } else {
-        persistSession(processedSession)
+        safePersist(() => persistSession(processedSession!))
       }
     }
   }
@@ -97,7 +106,7 @@ export function processSessionStoreOperations(
         retryLater(operations, sessionStoreStrategy, numberOfRetries)
         return
       }
-      persistSession(currentStore.session)
+      safePersist(() => persistSession(currentStore.session))
       processedSession = currentStore.session
     }
   }

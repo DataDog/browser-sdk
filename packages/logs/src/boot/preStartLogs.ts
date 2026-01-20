@@ -14,17 +14,24 @@ import {
   addTelemetryConfiguration,
   buildGlobalContextManager,
   buildUserContextManager,
+  willSyntheticsInjectRum,
 } from '@datadog/browser-core'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
+import { startLogsSessionManagerStub, startLogsSessionManager } from '../domain/logsSessionManager'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
+  doStartLogs: (
+    initConfiguration: LogsInitConfiguration,
+    configuration: LogsConfiguration,
+    sessionManager: LogsSessionManager
+  ) => StartLogsResult
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
@@ -40,15 +47,14 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
-  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
+  let sessionManager: LogsSessionManager | undefined
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager) {
       return
     }
 
-    trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration)
+    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, sessionManager)
 
     bufferApiCalls.drain(startLogsResult)
   }
@@ -88,7 +94,18 @@ export function createPreStartStrategy(
       initFetchObservable().subscribe(noop)
 
       trackingConsentState.tryToInit(configuration.trackingConsent)
-      tryStartLogs()
+
+      trackingConsentState.onGrantedOnce(() => {
+        if (configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()) {
+          startLogsSessionManager(configuration, trackingConsentState, (newSessionManager) => {
+            sessionManager = newSessionManager
+            tryStartLogs()
+          })
+        } else {
+          sessionManager = startLogsSessionManagerStub(configuration)
+          tryStartLogs()
+        }
+      })
     },
 
     get initConfiguration() {
