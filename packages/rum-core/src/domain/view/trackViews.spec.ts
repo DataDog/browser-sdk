@@ -596,8 +596,8 @@ describe('view metrics', () => {
                 firstByte: 123,
                 loadDelay: 0,
                 loadTime: 0,
-                renderDelay: 666
-              }
+                renderDelay: 666,
+              },
             },
           })
         )

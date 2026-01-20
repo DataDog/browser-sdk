@@ -6,7 +6,7 @@ import {
   createNewEvent,
   restorePageVisibility,
   registerCleanupTask,
-  mockClock
+  mockClock,
 } from '@datadog/browser-core/test'
 import type { RumPerformanceEntry } from '../../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../../browser/performanceObservable'

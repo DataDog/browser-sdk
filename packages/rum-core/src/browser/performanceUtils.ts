@@ -1,6 +1,6 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { getRelativeTime, isNumber, relativeNow } from '@datadog/browser-core'
-import { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackNavigationTimings'
+import type { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackNavigationTimings'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
 
