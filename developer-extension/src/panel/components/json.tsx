@@ -1,7 +1,7 @@
 import type { BoxProps, MantineColor } from '@mantine/core'
 import { Box, Collapse, Menu, Text } from '@mantine/core'
 import { useColorScheme } from '@mantine/hooks'
-import { IconCopy } from '@tabler/icons-react'
+import { IconCopy, IconSearch } from '@tabler/icons-react'
 import type { ForwardedRef, ReactNode } from 'react'
 import React, { forwardRef, useContext, createContext, useState } from 'react'
 import { copy } from '../copy'
@@ -14,6 +14,7 @@ interface JsonProps {
   defaultCollapseLevel?: number
   getMenuItemsForPath?: GetMenuItemsForPath
   formatValue?: FormatValue
+  onRevealFunctionLocation?: (descriptor: JsonValueDescriptor) => void
 }
 
 type GetMenuItemsForPath = (path: string, value: unknown) => ReactNode
@@ -44,20 +45,23 @@ const JsonContext = createContext<{
   defaultCollapseLevel: number
   getMenuItemsForPath?: GetMenuItemsForPath
   formatValue: FormatValue
+  onRevealFunctionLocation?: (descriptor: JsonValueDescriptor) => void
 } | null>(null)
 
-type JsonValueDescriptor =
+export type JsonValueDescriptor =
   | {
       parentType: 'root'
       value: unknown
       depth: 0
       path: ''
+      evaluationPath: ''
     }
   | {
       parentType: 'array'
       parentValue: unknown[]
       value: unknown
       path: string
+      evaluationPath: string
       depth: number
     }
   | {
@@ -65,6 +69,7 @@ type JsonValueDescriptor =
       parentValue: object
       value: unknown
       path: string
+      evaluationPath: string
       depth: number
       key: string
     }
@@ -76,6 +81,7 @@ export const Json = forwardRef(
       defaultCollapseLevel = Infinity,
       formatValue = defaultFormatValue,
       getMenuItemsForPath,
+      onRevealFunctionLocation,
       ...boxProps
     }: JsonProps & BoxProps,
     ref: ForwardedRef<HTMLDivElement | HTMLSpanElement>
@@ -89,13 +95,16 @@ export const Json = forwardRef(
       component={doesValueHasChildren(value) ? 'div' : 'span'}
       className={classes.root}
     >
-      <JsonContext.Provider value={{ defaultCollapseLevel, getMenuItemsForPath, formatValue }}>
+      <JsonContext.Provider
+        value={{ defaultCollapseLevel, getMenuItemsForPath, formatValue, onRevealFunctionLocation }}
+      >
         <JsonValue
           descriptor={{
             parentType: 'root',
             value,
             depth: 0,
             path: '',
+            evaluationPath: '',
           }}
         />
       </JsonContext.Provider>
@@ -105,6 +114,72 @@ export const Json = forwardRef(
 
 export function defaultFormatValue(_path: string, value: unknown) {
   return typeof value === 'number' ? formatNumber(value) : JSON.stringify(value)
+}
+
+interface FunctionMetadata {
+  __type: 'function'
+  __name: string
+  __source?: string
+}
+
+function isFunctionMetadata(value: unknown): value is FunctionMetadata {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '__type' in value &&
+    (value as any).__type === 'function' &&
+    '__name' in value
+  )
+}
+
+function JsonFunctionValue({ descriptor, metadata }: { descriptor: JsonValueDescriptor; metadata: FunctionMetadata }) {
+  const [showSource, setShowSource] = useState(false)
+  const colorScheme = useColorScheme()
+  const { onRevealFunctionLocation } = useContext(JsonContext)!
+
+  return (
+    <JsonLine descriptor={descriptor}>
+      <JsonText color="grape" descriptor={descriptor}>
+        <Text component="span">{`<function: ${metadata.__name}>`}</Text>
+      </JsonText>
+      {metadata.__source && (
+        <>
+          <Text
+            component="span"
+            size="xs"
+            c="dimmed"
+            ml="xs"
+            className={classes.functionSourceToggle}
+            onClick={() => setShowSource(!showSource)}
+          >
+            {showSource ? '▾ hide source' : '▸ show source'}
+          </Text>
+          <Collapse in={showSource}>
+            <Box
+              p="xs"
+              bg={`gray.${colorScheme === 'dark' ? 8 - descriptor.depth : descriptor.depth + 1}`}
+              className={classes.functionSource}
+            >
+              {onRevealFunctionLocation && (
+                <Text
+                  component="div"
+                  size="xs"
+                  c="blue"
+                  className={classes.functionSourceToggle}
+                  onClick={() => onRevealFunctionLocation?.(descriptor)}
+                  title="Log function to console to reveal source location"
+                >
+                  <IconSearch size={12} />
+                  Reveal in console
+                </Text>
+              )}
+              {metadata.__source}
+            </Box>
+          </Collapse>
+        </>
+      )}
+    </JsonLine>
+  )
 }
 
 function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
@@ -126,6 +201,7 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
               parentValue: descriptor.value as unknown[],
               value: child,
               path: descriptor.path,
+              evaluationPath: descriptor.evaluationPath ? `${descriptor.evaluationPath}.${i}` : String(i),
               depth: descriptor.depth + 1,
             }}
           />
@@ -135,6 +211,11 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
   }
 
   if (typeof descriptor.value === 'object' && descriptor.value !== null) {
+    // Check if this is a serialized function object
+    if (isFunctionMetadata(descriptor.value)) {
+      return <JsonFunctionValue descriptor={descriptor} metadata={descriptor.value} />
+    }
+
     const entries = Object.entries(descriptor.value)
     if (entries.length === 0) {
       return <JsonEmptyValue label="{empty object}" descriptor={descriptor} />
@@ -150,6 +231,7 @@ function JsonValue({ descriptor }: { descriptor: JsonValueDescriptor }) {
               parentValue: descriptor.value as object,
               value: child,
               path: descriptor.path ? `${descriptor.path}.${key}` : key,
+              evaluationPath: descriptor.evaluationPath ? `${descriptor.evaluationPath}.${key}` : key,
               depth: descriptor.depth + 1,
               key,
             }}
