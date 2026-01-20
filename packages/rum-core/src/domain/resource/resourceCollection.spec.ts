@@ -70,7 +70,7 @@ describe('resourceCollection', () => {
     notifyPerformanceEntries([performanceEntry])
     runTasks()
 
-    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
+    expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number) as unknown as TimeStamp,
       resource: {
@@ -117,7 +117,7 @@ describe('resourceCollection', () => {
       },
     })
 
-    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
+    expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {
@@ -288,7 +288,7 @@ describe('resourceCollection', () => {
       runTasks()
 
       expect(rawRumEvents.length).toBe(1)
-      expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
+      expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         resource: {
@@ -402,7 +402,7 @@ describe('resourceCollection', () => {
       },
     })
 
-    expect(rawRumEvents[0].startTime).toBe(200 as RelativeTime)
+    expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
       date: jasmine.any(Number),
       resource: {

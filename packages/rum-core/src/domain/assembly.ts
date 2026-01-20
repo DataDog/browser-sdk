@@ -92,12 +92,12 @@ export function startRumAssembly(
 
   lifeCycle.subscribe(
     LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-    ({ startTime, duration, rawRumEvent, domainContext }) => {
+    ({ startClocks, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: rawRumEvent.type,
         rawRumEvent,
         domainContext,
-        startTime,
+        startTime: startClocks.relative,
         duration,
       } as AssembleHookParams)!
 

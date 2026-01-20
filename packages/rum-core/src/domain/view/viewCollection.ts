@@ -163,7 +163,7 @@ function processViewUpdate(
 
   return {
     rawRumEvent: viewEvent,
-    startTime: view.startClocks.relative,
+    startClocks: view.startClocks,
     duration: view.duration,
     domainContext: {
       location: view.location,
