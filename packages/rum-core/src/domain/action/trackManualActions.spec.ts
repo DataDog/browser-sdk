@@ -11,7 +11,7 @@ import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startActionCollection } from './actionCollection'
 import type { ActionContexts } from './trackAction'
 
-describe('trackCustomActions', () => {
+describe('trackManualActions', () => {
   const lifeCycle = new LifeCycle()
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
   let actionContexts: ActionContexts
@@ -90,7 +90,7 @@ describe('trackCustomActions', () => {
       expect(actionEvent.action.id).toEqual((actionId as string[])[0])
     })
 
-    it('should include loading_time for timed custom actions', () => {
+    it('should include loading_time for timed manual actions', () => {
       startAction('checkout')
       clock.tick(500)
       stopAction('checkout')
@@ -269,7 +269,7 @@ describe('trackCustomActions', () => {
   })
 
   describe('session renewal', () => {
-    it('should discard active custom actions on session renewal', () => {
+    it('should discard active manual actions on session renewal', () => {
       startAction('cross-session-action')
 
       const actionIdBeforeRenewal = actionContexts.findActionId()
@@ -306,7 +306,7 @@ describe('trackCustomActions', () => {
   })
 
   describe('cleanup', () => {
-    it('should clean up active custom actions on stop()', () => {
+    it('should clean up active manual actions on stop()', () => {
       startAction('active-when-stopped')
 
       const actionIdBeforeStop = actionContexts.findActionId()

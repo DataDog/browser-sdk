@@ -1,14 +1,5 @@
 import type { Duration, Observable } from '@datadog/browser-core'
-import {
-  noop,
-  toServerDuration,
-  generateUUID,
-  SKIPPED,
-  HookNames,
-  addDuration,
-  isExperimentalFeatureEnabled,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { noop, toServerDuration, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -21,8 +12,8 @@ import { trackClickActions } from './trackClickActions'
 import type { ClickAction } from './trackClickActions'
 import { startActionTracker } from './trackAction'
 import type { ActionContexts } from './trackAction'
-import { trackCustomActions } from './trackCustomActions'
-import type { CustomAction } from './trackCustomActions'
+import { trackManualActions } from './trackManualActions'
+import type { ManualAction } from './trackManualActions'
 
 export type AutoAction = ClickAction
 
@@ -35,7 +26,7 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  // Shared action tracker for both click and custom actions
+  // Shared action tracker for both click and manual actions
   const actionTracker = startActionTracker(lifeCycle)
 
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
@@ -57,13 +48,9 @@ export function startActionCollection(
     ))
   }
 
-  let customActions: ReturnType<typeof trackCustomActions> | undefined
-
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
-    customActions = trackCustomActions(lifeCycle, actionTracker, (action) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
-    })
-  }
+  const manualActions = trackManualActions(lifeCycle, actionTracker, (action) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+  })
 
   const actionContexts: ActionContexts = {
     findActionId: actionTracker.findActionId,
@@ -106,22 +93,20 @@ export function startActionCollection(
   )
 
   return {
-    addAction: (action: Omit<CustomAction, 'id' | 'duration' | 'counts'>) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction({ id: generateUUID(), ...action }))
-    },
-    startAction: customActions?.startAction ?? noop,
-    stopAction: customActions?.stopAction ?? noop,
+    addAction: manualActions.addAction,
+    startAction: manualActions.startAction,
+    stopAction: manualActions.stopAction,
     actionContexts,
     stop: () => {
       unsubscribeAutoAction()
       stopClickActions()
-      customActions?.stop()
+      manualActions.stop()
       actionTracker.stop()
     },
   }
 }
 
-function processAction(action: AutoAction | CustomAction): RawRumEventCollectedData<RawRumActionEvent> {
+function processAction(action: AutoAction | ManualAction): RawRumEventCollectedData<RawRumActionEvent> {
   const isAuto = isAutoAction(action)
   const loadingTime = discardNegativeDuration(toServerDuration(action.duration))
 
@@ -159,6 +144,6 @@ function processAction(action: AutoAction | CustomAction): RawRumEventCollectedD
   }
 }
 
-function isAutoAction(action: AutoAction | CustomAction): action is AutoAction {
+function isAutoAction(action: AutoAction | ManualAction): action is AutoAction {
   return 'events' in action
 }

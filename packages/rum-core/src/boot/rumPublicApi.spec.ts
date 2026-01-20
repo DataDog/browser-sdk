@@ -1,7 +1,7 @@
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks } from '@datadog/browser-core'
+import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks, ExperimentalFeature } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
@@ -760,6 +760,8 @@ describe('rum public api', () => {
 
   describe('startAction / stopAction', () => {
     it('should call startAction and stopAction on the strategy', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+
       const startActionSpy = jasmine.createSpy()
       const stopActionSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
@@ -797,6 +799,8 @@ describe('rum public api', () => {
     })
 
     it('should sanitize startAction and stopAction inputs', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+
       const startActionSpy = jasmine.createSpy()
       const rumPublicApi = makeRumPublicApi(
         () => ({
@@ -821,6 +825,27 @@ describe('rum public api', () => {
           actionKey: 'action_key',
         })
       )
+    })
+
+    it('should not call startAction/stopAction when feature flag is disabled', () => {
+      const startActionSpy = jasmine.createSpy()
+      const stopActionSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          startAction: startActionSpy,
+          stopAction: stopActionSpy,
+        }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startAction('purchase', { type: ActionType.CUSTOM })
+      rumPublicApi.stopAction('purchase')
+
+      expect(startActionSpy).not.toHaveBeenCalled()
+      expect(stopActionSpy).not.toHaveBeenCalled()
     })
   })
 

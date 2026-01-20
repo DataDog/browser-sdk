@@ -26,7 +26,7 @@ import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
-import type { CustomAction } from '../domain/action/trackCustomActions'
+import type { ManualAction } from '../domain/action/trackManualActions'
 import type { RumPublicApi, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import { createPreStartStrategy } from './preStartRum'
@@ -632,14 +632,14 @@ describe('preStartRum', () => {
       const addActionSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
 
-      const customAction: Omit<CustomAction, 'id' | 'duration' | 'counts'> = {
+      const manualAction: Omit<ManualAction, 'id' | 'duration' | 'counts'> = {
         name: 'foo',
         type: ActionType.CUSTOM,
         startClocks: clocksNow(),
       }
-      strategy.addAction(customAction)
+      strategy.addAction(manualAction)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(addActionSpy).toHaveBeenCalledOnceWith(customAction)
+      expect(addActionSpy).toHaveBeenCalledOnceWith(manualAction)
     })
 
     it('addError', () => {
