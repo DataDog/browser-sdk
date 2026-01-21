@@ -258,6 +258,8 @@ export function startRumEventCollection(
 
   return {
     addAction: actionCollection.addAction,
+    startAction: actionCollection.startAction,
+    stopAction: actionCollection.stopAction,
     addEvent: eventCollection.addEvent,
     addError,
     addTiming,
