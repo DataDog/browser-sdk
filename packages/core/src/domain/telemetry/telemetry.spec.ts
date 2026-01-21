@@ -5,6 +5,8 @@ import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/
 import type { Configuration } from '../configuration'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
 import { setNavigatorOnLine, setNavigatorConnection, createHooks, waitNextMicrotask } from '../../../test'
+import { noop } from '../../tools/utils/functionUtils'
+import { createIdentityEncoder } from '../../tools/encoder'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
@@ -18,6 +20,7 @@ import {
   addTelemetryUsage,
   TelemetryService,
   startTelemetryCollection,
+  startTelemetry,
   addTelemetryMetrics,
   addTelemetryDebug,
   TelemetryMetrics,
@@ -440,6 +443,77 @@ describe('telemetry', () => {
         }
       })
     })
+  })
+})
+
+describe('telemetry with deferred transport', () => {
+  it('should start telemetry without transport dependencies', () => {
+    const telemetry = startTelemetry(
+      TelemetryService.RUM,
+      { telemetrySampleRate: 100 } as Configuration
+    )
+
+    // Verify telemetry was started
+    expect(telemetry).toBeDefined()
+    expect(telemetry.enabled).toEqual(true)
+  })
+
+  it('should allow starting transport later', () => {
+    const telemetry = startTelemetry(
+      TelemetryService.RUM,
+      { telemetrySampleRate: 100 } as Configuration
+    )
+
+    const hooks = createHooks()
+
+    // Should not throw when calling startTransport
+    expect(() => {
+      telemetry.startTransport(
+        noop,
+        new Observable(),
+        createIdentityEncoder
+      )
+    }).not.toThrow()
+  })
+
+  it('should ignore second call to startTransport', () => {
+    const telemetry = startTelemetry(
+      TelemetryService.RUM,
+      { telemetrySampleRate: 100 } as Configuration,
+      {
+        hooks: createHooks(),
+        reportError: noop,
+        pageMayExitObservable: new Observable(),
+        createEncoder: createIdentityEncoder,
+      }
+    )
+
+    // Second call should be ignored (no error thrown)
+    expect(() => {
+      telemetry.startTransport(
+        noop,
+        new Observable(),
+        createIdentityEncoder
+      )
+    }).not.toThrow()
+  })
+
+  it('should maintain backward compatibility with full dependencies', () => {
+    // Start with full dependencies (backward compatibility)
+    const telemetry = startTelemetry(
+      TelemetryService.RUM,
+      { telemetrySampleRate: 100 } as Configuration,
+      {
+        hooks: createHooks(),
+        reportError: noop,
+        pageMayExitObservable: new Observable(),
+        createEncoder: createIdentityEncoder,
+      }
+    )
+
+    // Should work without error
+    expect(telemetry).toBeDefined()
+    expect(telemetry.enabled).toEqual(true)
   })
 })
 

@@ -8,7 +8,7 @@ import { buildTags } from '../tags'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../intakeSites'
 import { BufferedObservable, Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/utils/timeUtils'
-import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
+import { displayIfDebugEnabled, startMonitorErrorCollection, resetMonitor } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
@@ -62,6 +62,11 @@ export interface Telemetry {
   stop: () => void
   enabled: boolean
   metricsEnabled: boolean
+  startTransport: (
+    reportError: (error: RawError) => void,
+    pageMayExitObservable: Observable<PageMayExitEvent>,
+    createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  ) => void
 }
 
 export const enum TelemetryMetrics {
@@ -86,31 +91,74 @@ export function getTelemetryObservable() {
   return telemetryObservable
 }
 
+
 export function startTelemetry(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hooks: AbstractHooks,
-  reportError: (error: RawError) => void,
-  pageMayExitObservable: Observable<PageMayExitEvent>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
+  transportDependencies?: {
+    hooks?: AbstractHooks
+    reportError?: (error: RawError) => void
+    pageMayExitObservable?: Observable<PageMayExitEvent>
+    createEncoder?: (streamId: DeflateEncoderStreamId) => Encoder
+  }
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
+  let transportCleanup: (() => void) | undefined
 
-  const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
+  // Hooks are optional - if not provided, telemetry collection won't use them
+  const hooks = transportDependencies?.hooks
+  const { enabled, metricsEnabled } = startTelemetryCollection(
+    telemetryService,
+    configuration,
+    hooks,
+    observable
+  )
 
-  const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
+  // Start transport immediately only if all transport dependencies are provided
+  if (
+    transportDependencies &&
+    transportDependencies.reportError &&
+    transportDependencies.pageMayExitObservable &&
+    transportDependencies.createEncoder
+  ) {
+    const { stop } = startTelemetryTransport(
+      configuration,
+      transportDependencies.reportError,
+      transportDependencies.pageMayExitObservable,
+      transportDependencies.createEncoder,
+      observable
+    )
+    transportCleanup = stop
+  }
 
   return {
-    stop,
+    stop: () => {
+      transportCleanup?.()
+    },
     enabled,
     metricsEnabled,
+    startTransport: (reportError, pageMayExitObservable, createEncoder) => {
+      if (transportCleanup) {
+        // Already started, ignore
+        return
+      }
+
+      const { stop } = startTelemetryTransport(
+        configuration,
+        reportError,
+        pageMayExitObservable,
+        createEncoder,
+        observable
+      )
+      transportCleanup = stop
+    },
   }
 }
 
 export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hooks: AbstractHooks,
+  hooks: AbstractHooks | undefined,
   observable: Observable<TelemetryEvent & Context>,
   metricSampleRate = METRIC_SAMPLE_RATE,
   maxTelemetryEventsPerPage = MAX_TELEMETRY_EVENTS_PER_PAGE
@@ -150,9 +198,9 @@ export function startTelemetryCollection(
       return
     }
 
-    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+    const defaultTelemetryEventAttributes = hooks?.triggerHook(HookNames.AssembleTelemetry, {
       startTime: clocksNow().relative,
-    })
+    }) ?? {}
 
     if (defaultTelemetryEventAttributes === DISCARDED) {
       return
@@ -253,6 +301,7 @@ function getRuntimeEnvInfo(): RuntimeEnvInfo {
 
 export function resetTelemetry() {
   telemetryObservable = undefined
+  resetMonitor()
 }
 
 /**

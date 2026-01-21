@@ -1,4 +1,4 @@
-import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer, Telemetry, AbstractHooks } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   display,
@@ -18,7 +18,10 @@ import {
   buildUserContextManager,
   monitorError,
   sanitize,
+  startTelemetry,
+  TelemetryService,
 } from '@datadog/browser-core'
+import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
   validateAndBuildRumConfiguration,
@@ -66,6 +69,8 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
+  let cachedTelemetry: Telemetry | undefined
+  let cachedHooks: AbstractHooks | undefined
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
@@ -140,6 +145,16 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+
+    // Create hooks early (they're just an empty registry)
+    cachedHooks = createHooks()
+
+    // Start telemetry collection early with real hooks (transport will start later in startRum)
+    cachedTelemetry = startTelemetry(TelemetryService.RUM, configuration, {
+      hooks: cachedHooks,
+      // Other dependencies will be provided via startTransport() later
+    } as any)
+
     // Instrument fetch to track network requests
     // This is needed in case the consent is not granted and some customer
     // library (Apollo Client) is storing uninstrumented fetch to be used later
@@ -207,6 +222,14 @@ export function createPreStartStrategy(
 
     get initConfiguration() {
       return cachedInitConfiguration
+    },
+
+    get cachedTelemetry() {
+      return cachedTelemetry
+    },
+
+    get cachedHooks() {
+      return cachedHooks
     },
 
     getInternalContext: noop as () => undefined,

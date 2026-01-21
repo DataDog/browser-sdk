@@ -6,6 +6,7 @@ import type {
   TrackingConsentState,
   BufferedData,
   BufferedObservable,
+  Telemetry,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -74,11 +75,14 @@ export function startRum(
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
-  sdkName?: SdkName
+  sdkName?: SdkName,
+  cachedTelemetry?: Telemetry,
+  cachedHooks?: Hooks
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
-  const hooks = createHooks()
+  // Use cached hooks if available (started in preStart), otherwise create new
+  const hooks = cachedHooks ?? createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
@@ -94,14 +98,23 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
-  const telemetry = startTelemetry(
-    TelemetryService.RUM,
-    configuration,
+  // Use cached telemetry if available (started in preStart), otherwise create new with hooks
+  const telemetry = cachedTelemetry ?? startTelemetry(TelemetryService.RUM, configuration, {
     hooks,
     reportError,
     pageMayExitObservable,
-    createEncoder
-  )
+    createEncoder,
+  })
+
+  // If using cached telemetry (already has hooks), start transport now
+  if (cachedTelemetry) {
+    telemetry.startTransport(
+      reportError,
+      pageMayExitObservable,
+      createEncoder
+    )
+  }
+
   cleanupTasks.push(telemetry.stop)
 
   const session = !canUseEventBridge()

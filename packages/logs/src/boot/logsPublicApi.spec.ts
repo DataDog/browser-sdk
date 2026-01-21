@@ -1,5 +1,5 @@
 import type { ContextManager, TimeStamp } from '@datadog/browser-core'
-import { monitor, display, createContextManager } from '@datadog/browser-core'
+import { monitor, display, createContextManager, TrackingConsent } from '@datadog/browser-core'
 import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
@@ -8,7 +8,7 @@ import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs } from './startLogs'
 
-const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
+const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', trackingConsent: TrackingConsent.GRANTED as const }
 
 const mockSessionId = 'some-session-id'
 const getInternalContext = () => ({ session_id: mockSessionId })

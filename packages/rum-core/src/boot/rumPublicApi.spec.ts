@@ -1,5 +1,12 @@
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks, ExperimentalFeature } from '@datadog/browser-core'
+import {
+  ONE_SECOND,
+  display,
+  DefaultPrivacyLevel,
+  timeStampToClocks,
+  TrackingConsent,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
@@ -39,7 +46,11 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   startAction: () => undefined,
   stopAction: () => undefined,
 })
-const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
+const DEFAULT_INIT_CONFIGURATION = {
+  applicationId: 'xxx',
+  clientToken: 'xxx',
+  trackingConsent: TrackingConsent.GRANTED as const,
+}
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {

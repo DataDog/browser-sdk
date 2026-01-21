@@ -1,4 +1,4 @@
-import type { TrackingConsent, PublicApi, ContextManager, Account, Context, User } from '@datadog/browser-core'
+import type { TrackingConsent, PublicApi, ContextManager, Account, Context, User, Telemetry, AbstractHooks } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
   CustomerContextKey,
@@ -263,6 +263,12 @@ export interface Strategy {
   userContext: ContextManager
   getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']
+
+  // Internal: cached telemetry instance from preStart phase
+  cachedTelemetry?: Telemetry
+
+  // Internal: cached hooks instance from preStart phase
+  cachedHooks?: AbstractHooks
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
@@ -277,7 +283,9 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
         configuration,
         buildCommonContext,
         trackingConsentState,
-        bufferedDataObservable
+        bufferedDataObservable,
+        strategy.cachedTelemetry,
+        strategy.cachedHooks
       )
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)

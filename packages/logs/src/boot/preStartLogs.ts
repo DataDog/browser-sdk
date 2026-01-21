@@ -1,4 +1,4 @@
-import type { TrackingConsentState } from '@datadog/browser-core'
+import type { TrackingConsentState, Telemetry, AbstractHooks } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   canUseEventBridge,
@@ -14,7 +14,10 @@ import {
   addTelemetryConfiguration,
   buildGlobalContextManager,
   buildUserContextManager,
+  startTelemetry,
+  TelemetryService,
 } from '@datadog/browser-core'
+import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
@@ -40,6 +43,8 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
+  let cachedTelemetry: Telemetry | undefined
+  let cachedHooks: AbstractHooks | undefined
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
@@ -81,6 +86,16 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
+
+      // Create hooks early (they're just an empty registry)
+      cachedHooks = createHooks()
+
+      // Start telemetry collection early with real hooks (transport will start later in startLogs)
+      cachedTelemetry = startTelemetry(TelemetryService.LOGS, configuration, {
+        hooks: cachedHooks,
+        // Other dependencies will be provided via startTransport() later
+      } as any)
+
       // Instrumuent fetch to track network requests
       // This is needed in case the consent is not granted and some cutsomer
       // library (Apollo Client) is storing uninstrumented fetch to be used later
@@ -93,6 +108,14 @@ export function createPreStartStrategy(
 
     get initConfiguration() {
       return cachedInitConfiguration
+    },
+
+    get cachedTelemetry() {
+      return cachedTelemetry
+    },
+
+    get cachedHooks() {
+      return cachedHooks
     },
 
     globalContext,
