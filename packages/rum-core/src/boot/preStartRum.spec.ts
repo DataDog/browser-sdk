@@ -10,6 +10,7 @@ import {
   DefaultPrivacyLevel,
   resetExperimentalFeatures,
   resetFetchObservable,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -18,13 +19,14 @@ import {
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
+  mockExperimentalFeatures,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import type { CustomAction } from '../domain/action/actionCollection'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
+import type { ManualAction } from '../domain/action/trackManualActions'
 import type { RumPublicApi, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import { createPreStartStrategy } from './preStartRum'
@@ -630,14 +632,14 @@ describe('preStartRum', () => {
       const addActionSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
 
-      const customAction: CustomAction = {
+      const manualAction: Omit<ManualAction, 'id' | 'duration' | 'counts' | 'frustrationTypes'> = {
         name: 'foo',
         type: ActionType.CUSTOM,
         startClocks: clocksNow(),
       }
-      strategy.addAction(customAction)
+      strategy.addAction(manualAction)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(addActionSpy).toHaveBeenCalledOnceWith(customAction)
+      expect(addActionSpy).toHaveBeenCalledOnceWith(manualAction)
     })
 
     it('addError', () => {
@@ -752,6 +754,41 @@ describe('preStartRum', () => {
       strategy.addOperationStepVital('foo', 'start')
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addOperationStepVitalSpy).toHaveBeenCalledOnceWith('foo', 'start', undefined, undefined)
+    })
+
+    it('startAction / stopAction', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+
+      const startActionSpy = jasmine.createSpy()
+      const stopActionSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        startAction: startActionSpy,
+        stopAction: stopActionSpy,
+      } as unknown as StartRumResult)
+
+      strategy.startAction('user_login', { type: ActionType.CUSTOM })
+      strategy.stopAction('user_login')
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(startActionSpy).toHaveBeenCalledWith(
+        'user_login',
+        jasmine.objectContaining({
+          type: ActionType.CUSTOM,
+        }),
+        jasmine.objectContaining({
+          relative: jasmine.any(Number),
+          timeStamp: jasmine.any(Number),
+        })
+      )
+      expect(stopActionSpy).toHaveBeenCalledWith(
+        'user_login',
+        undefined,
+        jasmine.objectContaining({
+          relative: jasmine.any(Number),
+          timeStamp: jasmine.any(Number),
+        })
+      )
     })
   })
 
