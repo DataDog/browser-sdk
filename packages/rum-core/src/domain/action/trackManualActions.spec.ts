@@ -4,7 +4,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
-import { RumEventType, ActionType } from '../../rawRumEvent.types'
+import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
@@ -319,6 +319,56 @@ describe('trackManualActions', () => {
       stopAction('active-when-stopped')
 
       expect(rawRumEvents).toHaveSize(0)
+    })
+  })
+
+  describe('frustration detection', () => {
+    it('should include ERROR_CLICK frustration when action has errors', () => {
+      startAction('error-action')
+
+      const actionId = actionContexts.findActionId()
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        action: { id: actionId },
+      } as any)
+
+      stopAction('error-action')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.frustration?.type).toEqual([FrustrationType.ERROR_CLICK])
+    })
+
+    it('should have empty frustration array when action has no errors', () => {
+      startAction('success-action')
+      stopAction('success-action')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.frustration?.type).toEqual([])
+    })
+
+    it('should include ERROR_CLICK frustration when action has multiple errors', () => {
+      startAction('multi-error-action')
+
+      const actionId = actionContexts.findActionId()
+
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        action: { id: actionId },
+      } as any)
+      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
+        type: RumEventType.ERROR,
+        action: { id: actionId },
+      } as any)
+
+      stopAction('multi-error-action')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
+      expect(actionEvent.action.frustration?.type).toEqual([FrustrationType.ERROR_CLICK])
+      expect(actionEvent.action.error?.count).toBe(2)
     })
   })
 })

@@ -1,7 +1,7 @@
 import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import { clocksNow, combine, generateUUID } from '@datadog/browser-core'
-import type { ActionType } from '../../rawRumEvent.types'
-import { ActionType as ActionTypeEnum } from '../../rawRumEvent.types'
+import type { ActionType, FrustrationType } from '../../rawRumEvent.types'
+import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } from '../../rawRumEvent.types'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle } from '../lifeCycle'
 import type { ActionCounts, ActionTracker, TrackedAction } from './trackAction'
@@ -34,6 +34,7 @@ export interface ManualAction {
   context?: Context
   handlingStack?: string
   counts?: ActionCounts
+  frustrationTypes: FrustrationType[]
 }
 
 interface ManualActionStart {
@@ -81,6 +82,11 @@ export function trackManualActions(
 
     activeAction.trackedAction.stop(stopClocks.relative)
 
+    const frustrationTypes: FrustrationType[] = []
+    if (activeAction.trackedAction.counts.errorCount > 0) {
+      frustrationTypes.push(FrustrationTypeEnum.ERROR_CLICK)
+    }
+
     const manualAction: ManualAction = {
       id: activeAction.trackedAction.id,
       name: activeAction.name,
@@ -89,14 +95,15 @@ export function trackManualActions(
       duration: activeAction.trackedAction.duration,
       context: combine(activeAction.context, options.context),
       counts: activeAction.trackedAction.counts,
+      frustrationTypes,
     }
 
     onManualActionCompleted(manualAction)
     activeManualActions.delete(lookupKey)
   }
 
-  function addInstantAction(action: Omit<ManualAction, 'id' | 'duration' | 'counts'>) {
-    onManualActionCompleted({ id: generateUUID(), ...action })
+  function addInstantAction(action: Omit<ManualAction, 'id' | 'duration' | 'counts' | 'frustrationTypes'>) {
+    onManualActionCompleted({ id: generateUUID(), frustrationTypes: [], ...action })
   }
 
   function stop() {

@@ -124,7 +124,7 @@ function processAction(action: AutoAction | ManualAction): RawRumEventCollectedD
           long_task: { count: action.counts.longTaskCount },
           resource: { count: action.counts.resourceCount },
         }),
-        ...(isAuto && { frustration: { type: action.frustrationTypes } }),
+        frustration: { type: action.frustrationTypes },
       },
       ...(isAuto
         ? {

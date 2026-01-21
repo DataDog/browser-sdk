@@ -124,6 +124,9 @@ describe('actionCollection', () => {
           name: 'foo',
         },
         type: ActionType.CUSTOM,
+        frustration: {
+          type: [],
+        },
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,

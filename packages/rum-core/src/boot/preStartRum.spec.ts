@@ -632,7 +632,7 @@ describe('preStartRum', () => {
       const addActionSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
 
-      const manualAction: Omit<ManualAction, 'id' | 'duration' | 'counts'> = {
+      const manualAction: Omit<ManualAction, 'id' | 'duration' | 'counts' | 'frustrationTypes'> = {
         name: 'foo',
         type: ActionType.CUSTOM,
         startClocks: clocksNow(),
