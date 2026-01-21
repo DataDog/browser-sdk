@@ -36,7 +36,7 @@ export interface ManualAction {
   counts?: ActionCounts
 }
 
-interface ActiveManualAction {
+interface ManualActionStart {
   name: string
   type?: ActionType
   context?: Context
@@ -48,7 +48,7 @@ export function trackManualActions(
   actionTracker: ActionTracker,
   onManualActionCompleted: (action: ManualAction) => void
 ) {
-  const activeManualActions = new Map<string, ActiveManualAction>()
+  const activeManualActions = new Map<string, ManualActionStart>()
 
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => activeManualActions.clear())
 

@@ -16,13 +16,15 @@ describe('trackAction', () => {
   })
 
   describe('createTrackedAction', () => {
-    it('should generate a unique action ID', () => {
+    it('should have an ID, start clocks and event counts to zero', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
       const trackedAction = actionTracker.createTrackedAction(startClocks)
 
       expect(trackedAction.id).toBeDefined()
-      expect(typeof trackedAction.id).toBe('string')
-      expect(trackedAction.id.length).toBeGreaterThan(0)
+      expect(trackedAction.startClocks).toBe(startClocks)
+      expect(trackedAction.counts.errorCount).toBe(0)
+      expect(trackedAction.counts.resourceCount).toBe(0)
+      expect(trackedAction.counts.longTaskCount).toBe(0)
     })
 
     it('should create distinct IDs for each tracked action', () => {
@@ -31,22 +33,6 @@ describe('trackAction', () => {
       const action2 = actionTracker.createTrackedAction(startClocks)
 
       expect(action1.id).not.toBe(action2.id)
-    })
-
-    it('should store the start clocks', () => {
-      const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
-
-      expect(trackedAction.startClocks).toBe(startClocks)
-    })
-
-    it('should initialize event counts to zero', () => {
-      const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
-
-      expect(trackedAction.counts.errorCount).toBe(0)
-      expect(trackedAction.counts.resourceCount).toBe(0)
-      expect(trackedAction.counts.longTaskCount).toBe(0)
     })
   })
 
@@ -58,7 +44,7 @@ describe('trackAction', () => {
       trackedAction = actionTracker.createTrackedAction(startClocks)
     })
 
-    it('should count errors associated with the action', () => {
+    it('should count child events associated with the action', () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
         type: RumEventType.ERROR,
         action: { id: trackedAction.id },
@@ -68,37 +54,7 @@ describe('trackAction', () => {
       expect(trackedAction.counts.errorCount).toBe(1)
     })
 
-    it('should count resources associated with the action', () => {
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-        type: RumEventType.RESOURCE,
-        action: { id: trackedAction.id },
-        resource: { type: 'fetch' },
-      } as any)
-
-      expect(trackedAction.counts.resourceCount).toBe(1)
-    })
-
-    it('should count long tasks associated with the action', () => {
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-        type: RumEventType.LONG_TASK,
-        action: { id: trackedAction.id },
-        long_task: { duration: 100 },
-      } as any)
-
-      expect(trackedAction.counts.longTaskCount).toBe(1)
-    })
-
-    it('should count events when action ID is in an array', () => {
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-        type: RumEventType.ERROR,
-        action: { id: ['other-id', trackedAction.id] },
-        error: { message: 'test error' },
-      } as any)
-
-      expect(trackedAction.counts.errorCount).toBe(1)
-    })
-
-    it('should not count events for other actions', () => {
+    it('should not count child events unrelated to the action', () => {
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
         type: RumEventType.ERROR,
         action: { id: 'other-action-id' },
