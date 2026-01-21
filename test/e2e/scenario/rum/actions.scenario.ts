@@ -603,40 +603,12 @@ test.describe('custom actions with startAction/stopAction', () => {
 
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.error?.count).toBe(1)
+      expect(actionEvents[0].action.frustration?.type).toContain('error_click')
       expect(errorEvents.length).toBeGreaterThanOrEqual(1)
 
       const actionId = actionEvents[0].action.id
       const relatedError = errorEvents.find((e) => hasActionId(e, actionId!))
       expect(relatedError).toBeDefined()
-    })
-
-  createTest('include error_click frustration when action has errors')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
-    .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.evaluate(() => {
-        window.DD_RUM!.startAction('error-action')
-        window.DD_RUM!.addError(new Error('Something went wrong'))
-        window.DD_RUM!.stopAction('error-action')
-      })
-      await flushEvents()
-
-      const actionEvents = intakeRegistry.rumActionEvents
-      expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action.frustration?.type).toContain('error_click')
-    })
-
-  createTest('have empty frustration when action has no errors')
-    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
-    .run(async ({ intakeRegistry, flushEvents, page }) => {
-      await page.evaluate(() => {
-        window.DD_RUM!.startAction('success-action')
-        window.DD_RUM!.stopAction('success-action')
-      })
-      await flushEvents()
-
-      const actionEvents = intakeRegistry.rumActionEvents
-      expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0].action.frustration?.type).toEqual([])
     })
 
   createTest('associate a resource to a custom action')
@@ -657,6 +629,7 @@ test.describe('custom actions with startAction/stopAction', () => {
 
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action.resource?.count).toBe(1)
+      expect(actionEvents[0].action.frustration?.type).toEqual([])
 
       const actionId = actionEvents[0].action.id
       const relatedResource = resourceEvents.find((e) => hasActionId(e, actionId!))
