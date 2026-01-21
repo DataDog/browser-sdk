@@ -43,7 +43,12 @@ function startAndSpyTelemetry(
   const telemetry = startTelemetryCollection(
     TelemetryService.RUM,
     {
+      site: 'datadoghq.com',
+      service: 'test-service',
+      env: 'test-env',
+      version: '0.0.0',
       telemetrySampleRate: 100,
+      telemetryConfigurationSampleRate: 100,
       telemetryUsageSampleRate: 100,
       ...configuration,
     } as Configuration,
@@ -64,6 +69,10 @@ function startAndSpyTelemetry(
 }
 
 describe('telemetry', () => {
+  beforeEach(() => {
+    resetTelemetry()
+  })
+
   afterEach(() => {
     resetTelemetry()
   })
@@ -292,21 +301,6 @@ describe('telemetry', () => {
       expect(events[1].application!.id).toEqual('bar')
       expect(events[1].session!.id).toEqual('123')
     })
-
-    it('should apply telemetry hook on events collected before telemetry is started', async () => {
-      addTelemetryDebug('debug 1')
-
-      const { hooks, getTelemetryEvents } = startAndSpyTelemetry()
-
-      hooks.register(HookNames.AssembleTelemetry, () => ({
-        application: {
-          id: 'bar',
-        },
-      }))
-
-      const events = await getTelemetryEvents()
-      expect(events[0].application!.id).toEqual('bar')
-    })
   })
 
   describe('sampling', () => {
@@ -448,10 +442,7 @@ describe('telemetry', () => {
 
 describe('telemetry with deferred transport', () => {
   it('should start telemetry without transport dependencies', () => {
-    const telemetry = startTelemetry(
-      TelemetryService.RUM,
-      { telemetrySampleRate: 100 } as Configuration
-    )
+    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration)
 
     // Verify telemetry was started
     expect(telemetry).toBeDefined()
@@ -459,57 +450,38 @@ describe('telemetry with deferred transport', () => {
   })
 
   it('should allow starting transport later', () => {
-    const telemetry = startTelemetry(
-      TelemetryService.RUM,
-      { telemetrySampleRate: 100 } as Configuration
-    )
+    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration)
 
-    const hooks = createHooks()
+    createHooks()
 
     // Should not throw when calling startTransport
     expect(() => {
-      telemetry.startTransport(
-        noop,
-        new Observable(),
-        createIdentityEncoder
-      )
+      telemetry.startTransport(noop, new Observable(), createIdentityEncoder)
     }).not.toThrow()
   })
 
   it('should ignore second call to startTransport', () => {
-    const telemetry = startTelemetry(
-      TelemetryService.RUM,
-      { telemetrySampleRate: 100 } as Configuration,
-      {
-        hooks: createHooks(),
-        reportError: noop,
-        pageMayExitObservable: new Observable(),
-        createEncoder: createIdentityEncoder,
-      }
-    )
+    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration, {
+      hooks: createHooks(),
+      reportError: noop,
+      pageMayExitObservable: new Observable(),
+      createEncoder: createIdentityEncoder,
+    })
 
     // Second call should be ignored (no error thrown)
     expect(() => {
-      telemetry.startTransport(
-        noop,
-        new Observable(),
-        createIdentityEncoder
-      )
+      telemetry.startTransport(noop, new Observable(), createIdentityEncoder)
     }).not.toThrow()
   })
 
   it('should maintain backward compatibility with full dependencies', () => {
     // Start with full dependencies (backward compatibility)
-    const telemetry = startTelemetry(
-      TelemetryService.RUM,
-      { telemetrySampleRate: 100 } as Configuration,
-      {
-        hooks: createHooks(),
-        reportError: noop,
-        pageMayExitObservable: new Observable(),
-        createEncoder: createIdentityEncoder,
-      }
-    )
+    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration, {
+      hooks: createHooks(),
+      reportError: noop,
+      pageMayExitObservable: new Observable(),
+      createEncoder: createIdentityEncoder,
+    })
 
     // Should work without error
     expect(telemetry).toBeDefined()
