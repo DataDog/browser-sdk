@@ -1,4 +1,12 @@
-import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer, Telemetry, AbstractHooks } from '@datadog/browser-core'
+import type {
+  TrackingConsentState,
+  DeflateWorker,
+  Context,
+  ContextManager,
+  BoundedBuffer,
+  Telemetry,
+  AbstractHooks,
+} from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   display,

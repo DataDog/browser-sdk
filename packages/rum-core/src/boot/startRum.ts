@@ -99,20 +99,18 @@ export function startRum(
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
   // Use cached telemetry if available (started in preStart), otherwise create new with hooks
-  const telemetry = cachedTelemetry ?? startTelemetry(TelemetryService.RUM, configuration, {
-    hooks,
-    reportError,
-    pageMayExitObservable,
-    createEncoder,
-  })
+  const telemetry =
+    cachedTelemetry ??
+    startTelemetry(TelemetryService.RUM, configuration, {
+      hooks,
+      reportError,
+      pageMayExitObservable,
+      createEncoder,
+    })
 
   // If using cached telemetry (already has hooks), start transport now
   if (cachedTelemetry) {
-    telemetry.startTransport(
-      reportError,
-      pageMayExitObservable,
-      createEncoder
-    )
+    telemetry.startTransport(reportError, pageMayExitObservable, createEncoder)
   }
 
   cleanupTasks.push(telemetry.stop)

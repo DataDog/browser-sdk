@@ -8,7 +8,7 @@ import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs } from './startLogs'
 
-const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', trackingConsent: TrackingConsent.GRANTED as const }
+const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', trackingConsent: TrackingConsent.GRANTED }
 
 const mockSessionId = 'some-session-id'
 const getInternalContext = () => ({ session_id: mockSessionId })

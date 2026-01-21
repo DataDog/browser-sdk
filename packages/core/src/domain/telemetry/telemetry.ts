@@ -91,7 +91,6 @@ export function getTelemetryObservable() {
   return telemetryObservable
 }
 
-
 export function startTelemetry(
   telemetryService: TelemetryService,
   configuration: Configuration,
@@ -107,12 +106,7 @@ export function startTelemetry(
 
   // Hooks are optional - if not provided, telemetry collection won't use them
   const hooks = transportDependencies?.hooks
-  const { enabled, metricsEnabled } = startTelemetryCollection(
-    telemetryService,
-    configuration,
-    hooks,
-    observable
-  )
+  const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
 
   // Start transport immediately only if all transport dependencies are provided
   if (
@@ -198,9 +192,10 @@ export function startTelemetryCollection(
       return
     }
 
-    const defaultTelemetryEventAttributes = hooks?.triggerHook(HookNames.AssembleTelemetry, {
-      startTime: clocksNow().relative,
-    }) ?? {}
+    const defaultTelemetryEventAttributes =
+      hooks?.triggerHook(HookNames.AssembleTelemetry, {
+        startTime: clocksNow().relative,
+      }) ?? {}
 
     if (defaultTelemetryEventAttributes === DISCARDED) {
       return

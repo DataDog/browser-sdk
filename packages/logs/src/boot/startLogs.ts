@@ -1,4 +1,11 @@
-import type { TrackingConsentState, BufferedObservable, BufferedData, PageMayExitEvent, Telemetry, AbstractHooks } from '@datadog/browser-core'
+import type {
+  TrackingConsentState,
+  BufferedObservable,
+  BufferedData,
+  PageMayExitEvent,
+  Telemetry,
+  AbstractHooks,
+} from '@datadog/browser-core'
 import {
   Observable,
   sendToExtension,
@@ -63,20 +70,18 @@ export function startLogs(
     : createPageMayExitObservable(configuration)
 
   // Use cached telemetry if available (started in preStart), otherwise create new with hooks
-  const telemetry = cachedTelemetry ?? startTelemetry(TelemetryService.LOGS, configuration, {
-    hooks,
-    reportError,
-    pageMayExitObservable,
-    createEncoder: createIdentityEncoder,
-  })
+  const telemetry =
+    cachedTelemetry ??
+    startTelemetry(TelemetryService.LOGS, configuration, {
+      hooks,
+      reportError,
+      pageMayExitObservable,
+      createEncoder: createIdentityEncoder,
+    })
 
   // If using cached telemetry (already has hooks), start transport now
   if (cachedTelemetry) {
-    telemetry.startTransport(
-      reportError,
-      pageMayExitObservable,
-      createIdentityEncoder
-    )
+    telemetry.startTransport(reportError, pageMayExitObservable, createIdentityEncoder)
   }
 
   cleanupTasks.push(telemetry.stop)

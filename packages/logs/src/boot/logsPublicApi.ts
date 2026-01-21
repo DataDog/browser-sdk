@@ -1,4 +1,13 @@
-import type { TrackingConsent, PublicApi, ContextManager, Account, Context, User, Telemetry, AbstractHooks } from '@datadog/browser-core'
+import type {
+  TrackingConsent,
+  PublicApi,
+  ContextManager,
+  Account,
+  Context,
+  User,
+  Telemetry,
+  AbstractHooks,
+} from '@datadog/browser-core'
 import {
   ContextManagerMethod,
   CustomerContextKey,
