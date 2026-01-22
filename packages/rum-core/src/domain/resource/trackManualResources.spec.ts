@@ -6,7 +6,7 @@ import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumResourceEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { ManualResourceError} from './trackManualResources';
+import type { ManualResourceError } from './trackManualResources'
 import { trackManualResources } from './trackManualResources'
 
 describe('trackManualResources', () => {
