@@ -2,8 +2,8 @@ import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import { clocksNow, combine, generateUUID } from '@datadog/browser-core'
 import type { ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } from '../../rawRumEvent.types'
-import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle } from '../lifeCycle'
+import { createManualEventLifecycle } from '../manualEventLifecycle'
 import type { ActionCounts, ActionTracker, TrackedAction } from './trackAction'
 
 export interface ActionOptions {
@@ -49,22 +49,13 @@ export function trackManualActions(
   actionTracker: ActionTracker,
   onManualActionCompleted: (action: ManualAction) => void
 ) {
-  const activeManualActions = new Map<string, ManualActionStart>()
-
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => activeManualActions.clear())
+  const lifecycle = createManualEventLifecycle<ManualActionStart>(lifeCycle, (data) => data.trackedAction.discard())
 
   function startManualAction(name: string, options: ActionOptions = {}, startClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
-
-    const existingAction = activeManualActions.get(lookupKey)
-    if (existingAction) {
-      existingAction.trackedAction.discard()
-      activeManualActions.delete(lookupKey)
-    }
-
     const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-    activeManualActions.set(lookupKey, {
+    lifecycle.start(lookupKey, {
       name,
       type: options.type,
       context: options.context,
@@ -74,7 +65,7 @@ export function trackManualActions(
 
   function stopManualAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
-    const activeAction = activeManualActions.get(lookupKey)
+    const activeAction = lifecycle.remove(lookupKey)
 
     if (!activeAction) {
       return
@@ -99,7 +90,6 @@ export function trackManualActions(
     }
 
     onManualActionCompleted(manualAction)
-    activeManualActions.delete(lookupKey)
   }
 
   function addInstantAction(action: Omit<ManualAction, 'id' | 'duration' | 'counts' | 'frustrationTypes'>) {
@@ -107,8 +97,7 @@ export function trackManualActions(
   }
 
   function stop() {
-    activeManualActions.forEach((activeAction) => activeAction.trackedAction.discard())
-    activeManualActions.clear()
+    lifecycle.stopAll()
   }
 
   return {

@@ -1,4 +1,4 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration, RawError } from '@datadog/browser-core'
 import {
   combine,
   generateUUID,
@@ -40,11 +40,13 @@ import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
 import type { GraphQlMetadata } from './graphql'
 import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
+import { trackManualResources } from './trackManualResources'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
   pageStateHistory: PageStateHistory,
+  reportError: (error: RawError) => void,
   taskQueue = createTaskQueue(),
   retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
 ) {
@@ -83,10 +85,16 @@ export function startResourceCollection(
     })
   }
 
+  const manualResources = trackManualResources(lifeCycle, reportError)
+
   return {
+    startResource: manualResources.startResource,
+    stopResource: manualResources.stopResource,
+    stopResourceWithError: manualResources.stopResourceWithError,
     stop: () => {
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
+      manualResources.stop()
     },
   }
 }

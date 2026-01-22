@@ -40,6 +40,7 @@ describe('resourceCollection', () => {
       lifeCycle,
       { ...baseConfiguration, ...partialConfig },
       pageStateHistory,
+      noop,
       taskQueue,
       noop
     )
