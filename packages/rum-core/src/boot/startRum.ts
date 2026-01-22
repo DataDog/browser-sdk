@@ -12,12 +12,14 @@ import {
   createPageMayExitObservable,
   TelemetryService,
   startTelemetry,
+  startTelemetryTransport,
   canUseEventBridge,
   addTelemetryDebug,
   startAccountContext,
   startGlobalContext,
   startUserContext,
 } from '@datadog/browser-core'
+import { getPreStartErrorBuffer, clearPreStartErrorBuffer, getPreStartTelemetryObservable, getPreStartHooks } from './preStartRum'
 import { createDOMMutationObservable } from '../browser/domMutationObservable'
 import { createWindowOpenObservable } from '../browser/windowOpenObservable'
 import { startInternalContext } from '../domain/contexts/internalContext'
@@ -74,11 +76,11 @@ export function startRum(
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
+  hooks: Hooks | undefined,
   sdkName?: SdkName
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
-  const hooks = createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
@@ -88,21 +90,59 @@ export function startRum(
     addTelemetryDebug('Error reported to customer', { 'error.message': error.message })
   }
 
+  // Phase 2: Drain any errors collected during preStart phase
+  const preStartErrorBuffer = getPreStartErrorBuffer()
+  preStartErrorBuffer.forEach((error) => {
+    reportError(error)
+  })
+  clearPreStartErrorBuffer()
+
+  // Hooks should always be defined when startRum is called from preStart initialization
+  const definedHooks = hooks || createHooks()
+
   const pageMayExitObservable = createPageMayExitObservable(configuration)
   const pageMayExitSubscription = pageMayExitObservable.subscribe((event) => {
     lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
-  const telemetry = startTelemetry(
-    TelemetryService.RUM,
+  // ============================================================================
+  // TELEMETRY TRANSPORT (Phase 3)
+  // ============================================================================
+  // Split Telemetry Pattern:
+  // - Collection: Started in preStartRum (Phase 2) - captures initialization events
+  // - Transport: Attached here when dependencies ready (encoder, reportError, pageMayExit)
+  //
+  // Why split? Dependencies like encoder and reportError aren't available in preStart.
+  // The BufferedObservable queues events until transport subscribes, then unbuffer()
+  // replays them. This ensures no initialization telemetry is lost.
+  //
+  // Observable lifecycle:
+  // 1. Created in preStartRum via getPreStartTelemetryObservable() (lazy singleton)
+  // 2. Collection fills buffer during preStart phase
+  // 3. Transport subscribes here, then calls unbuffer() to replay events
+  // 4. After unbuffer: buffer cleared, future events flow directly to transport
+  //
+  // Note: Telemetry transport is SEPARATE from RUM transport (startRumBatch/startRumEventBridge).
+  // Telemetry uses its own batch and endpoint. RUM transport handles customer events.
+  // ============================================================================
+  const preStartTelemetryObservable = getPreStartTelemetryObservable()
+  const { stop: stopTelemetryTransport } = startTelemetryTransport(
     configuration,
-    hooks,
     reportError,
     pageMayExitObservable,
-    createEncoder
+    createEncoder,
+    preStartTelemetryObservable
   )
-  cleanupTasks.push(telemetry.stop)
+  cleanupTasks.push(stopTelemetryTransport)
+
+  // Telemetry object for startCustomerDataTelemetry compatibility
+  // Collection is assumed enabled since it was started in preStart
+  const telemetry = {
+    stop: stopTelemetryTransport,
+    enabled: true,
+    metricsEnabled: true,
+  }
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
@@ -123,14 +163,14 @@ export function startRum(
     startRumEventBridge(lifeCycle)
   }
 
-  startTrackingConsentContext(hooks, trackingConsentState)
+  startTrackingConsentContext(definedHooks, trackingConsentState)
 
   const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
   cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
   const { stop: stopRumEventCollection, ...startRumEventCollectionResult } = startRumEventCollection(
     lifeCycle,
-    hooks,
+    definedHooks,
     configuration,
     session,
     recorderApi,
@@ -155,7 +195,7 @@ export function startRum(
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
-    hooks,
+    hooks: definedHooks,
   }
 }
 

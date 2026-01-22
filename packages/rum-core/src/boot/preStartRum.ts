@@ -1,4 +1,4 @@
-import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer } from '@datadog/browser-core'
+import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer, RawError, TelemetryEvent } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   display,
@@ -18,6 +18,12 @@ import {
   buildUserContextManager,
   monitorError,
   sanitize,
+  addTelemetryError,
+  startTelemetryCollection,
+  TelemetryService,
+  addTelemetryDebug,
+  Observable,
+  BufferedObservable,
 } from '@datadog/browser-core'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
@@ -34,8 +40,14 @@ import type {
 } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
+import { createHooks } from '../domain/hooks'
+import type { Hooks } from '../domain/hooks'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
+
+let cachedHooks: Hooks | undefined
+let preStartErrorBuffer: RawError[] = []
+let preStartTelemetryObservable: BufferedObservable<TelemetryEvent & Context> | undefined
 
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
@@ -117,6 +129,25 @@ export function createPreStartStrategy(
     const configuration = validateAndBuildRumConfiguration(initConfiguration, errorStack)
     if (!configuration) {
       return
+    }
+
+    // Phase 2: Create Hooks early for telemetry collection
+    const hooks = createHooks()
+    cachedHooks = hooks
+
+    // Phase 2: Start telemetry collection before other initialization
+    // This captures any errors during preStart (config validation, etc.)
+    // Transport attaches later in startRum (Phase 3) when dependencies ready
+    const { enabled: telemetryEnabled } = startTelemetryCollection(
+      TelemetryService.RUM,
+      configuration,
+      hooks,
+      getPreStartTelemetryObservable()
+    )
+
+    if (!telemetryEnabled) {
+      // Optional: log debug info, but don't block
+      addTelemetryDebug('Telemetry disabled for this site')
     }
 
     if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
@@ -274,6 +305,57 @@ export function createPreStartStrategy(
   }
 
   return strategy
+}
+
+export function getPreStartHooks(): Hooks | undefined {
+  return cachedHooks
+}
+
+export function createPreStartReportError() {
+  return (error: RawError) => {
+    // Emit immediately to telemetry observable
+    addTelemetryError(error.message || 'Unknown error')
+    // Buffer for later replay through full LifeCycle in startRum
+    preStartErrorBuffer.push(error)
+  }
+}
+
+export function getPreStartErrorBuffer(): RawError[] {
+  return preStartErrorBuffer
+}
+
+export function clearPreStartErrorBuffer() {
+  preStartErrorBuffer = []
+}
+
+// ============================================================================
+// PRE-START TELEMETRY OBSERVABLE (Phase 2)
+// ============================================================================
+// Provides the telemetry observable created during preStart for use by startRum.
+// This is a lazy singleton - created once when first accessed.
+// It is a BufferedObservable(100) to capture all events emitted between Phase 2
+// collection start and Phase 3 transport subscription.
+//
+// Flow:
+// 1. preStartRum calls startTelemetryCollection() with getPreStartTelemetryObservable()
+// 2. Collection subscribes to the BufferedObservable, triggering auto-replay via queueMicrotask
+// 3. Events emitted during preStart are buffered (up to 100 events)
+// 4. startRum retrieves same observable and passes to startTelemetryTransport
+// 5. Transport subscribes to parameter observable, triggering replay of buffered events
+// 6. Transport calls unbuffer() to clear buffer and prevent future buffering (memory optimization)
+//
+// The observable continues to work after unbuffer - future events flow through
+// without buffering (memory optimization for long-running sessions).
+// ============================================================================
+export function getPreStartTelemetryObservable(): BufferedObservable<TelemetryEvent & Context> {
+  if (!preStartTelemetryObservable) {
+    preStartTelemetryObservable = new BufferedObservable(100)
+  }
+  return preStartTelemetryObservable
+}
+
+export function clearPreStartTelemetryObservable() {
+  preStartTelemetryObservable = undefined
 }
 
 function overrideInitConfigurationForBridge(initConfiguration: RumInitConfiguration): RumInitConfiguration {

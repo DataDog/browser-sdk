@@ -53,7 +53,7 @@ import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
-import { createPreStartStrategy } from './preStartRum'
+import { createPreStartStrategy, getPreStartHooks } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
 export interface StartRecordingOptions {
@@ -560,6 +560,7 @@ export function makeRumPublicApi(
         trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
+        getPreStartHooks(),
         options.sdkName
       )
 
