@@ -127,6 +127,19 @@ test.describe('telemetry', () => {
     // Test for RUM and Logs separately, because using both at the same time via NPM triggers
     // different errors (because both SDKs are sharing the same cookie store `operationBuffer`
     // queue). This could be revisited after properly fixing incident-39238.
+    //
+    // SPLIT TELEMETRY PATTERN (Phase 2-4 implementation):
+    // These tests verify the end-to-end flow for initialization errors captured during preStart:
+    //   1. Error occurs in preStart (before SDK fully initialized)
+    //   2. Error captured by reportError and sent to telemetry observable
+    //   3. Error buffered in BufferedObservable (collection before transport ready)
+    //   4. Error unbuffered when transport attaches in startRum/startLogs
+    //   5. Error included in FIRST batch sent to HTTP endpoint
+    //
+    // The "first batch" requirement is critical: it proves buffering preserves event order
+    // and prevents loss during the collection→transport handoff. See dedicated test files:
+    //   - test/e2e/scenario/rum/initialization-errors.scenario.ts (with first-batch verification)
+    //   - test/e2e/scenario/logs/initialization-errors.scenario.ts (with first-batch verification)
 
     const DENY_SESSION_COOKIE_ACCESS = html`
       <script>
@@ -155,6 +168,16 @@ test.describe('telemetry', () => {
         expect(error.telemetry.message).toBe('expected error')
         expect(error.telemetry.error!.kind).toBe('Error')
         expect(error.telemetry.status).toBe('error')
+
+        // Verify error appears in FIRST batch (split telemetry pattern validation)
+        // Logs telemetry sent via RUM endpoint (shared telemetry transport)
+        expect(intakeRegistry.rumRequests.length).toBeGreaterThan(0)
+        const firstBatch = intakeRegistry.rumRequests[0]
+        const telemetryErrorsInFirstBatch = firstBatch.events.filter(
+          (event) => event.type === 'telemetry' && event.telemetry.status === 'error'
+        )
+        expect(telemetryErrorsInFirstBatch.length).toBeGreaterThan(0)
+
         intakeRegistry.empty()
       })
 
@@ -169,6 +192,15 @@ test.describe('telemetry', () => {
         expect(error.telemetry.message).toBe('expected error')
         expect(error.telemetry.error!.kind).toBe('Error')
         expect(error.telemetry.status).toBe('error')
+
+        // Verify error appears in FIRST batch (split telemetry pattern validation)
+        expect(intakeRegistry.rumRequests.length).toBeGreaterThan(0)
+        const firstBatch = intakeRegistry.rumRequests[0]
+        const telemetryErrorsInFirstBatch = firstBatch.events.filter(
+          (event) => event.type === 'telemetry' && event.telemetry.status === 'error'
+        )
+        expect(telemetryErrorsInFirstBatch.length).toBeGreaterThan(0)
+
         intakeRegistry.empty()
       })
   })
