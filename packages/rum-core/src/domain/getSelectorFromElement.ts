@@ -45,27 +45,6 @@ interface SubtreeTarget {
   target: Element
 }
 
-/**
- * Returns all (rootNode, target) pairs from the document down to the element.
- */
-function getAllSubtreeTargets(element: Element): SubtreeTarget[] {
-  const result: SubtreeTarget[] = []
-  let currentTarget: Element | undefined = element
-
-  while (currentTarget) {
-    const rootNode = currentTarget.getRootNode() as Document | ShadowRoot
-    result.unshift({ rootNode, target: currentTarget })
-
-    if (isNodeShadowRoot(rootNode)) {
-      currentTarget = rootNode.host
-    } else {
-      break
-    }
-  }
-
-  return result
-}
-
 export function getSelectorFromElement(
   targetElement: Element,
   actionNameAttribute: string | undefined
@@ -88,6 +67,27 @@ export function getSelectorFromElement(
   }
 
   return selectorParts.join(SHADOW_DOM_MARKER)
+}
+
+/**
+ * Returns all (rootNode, target) pairs from the document down to the element.
+ */
+function getAllSubtreeTargets(element: Element): SubtreeTarget[] {
+  const result: SubtreeTarget[] = []
+  let currentTarget: Element | undefined = element
+
+  while (currentTarget) {
+    const rootNode = currentTarget.getRootNode() as Document | ShadowRoot
+    result.unshift({ rootNode, target: currentTarget })
+
+    if (isNodeShadowRoot(rootNode)) {
+      currentTarget = rootNode.host
+    } else {
+      break
+    }
+  }
+
+  return result
 }
 
 /**
@@ -126,13 +126,7 @@ function getSelectorFromElementWithinSubtree(
     const elementSelector = uniqueSelectorAmongChildren || getPositionSelector(currentElement)
     currentSelector = combineSelector(elementSelector, currentSelector)
 
-    // Stop when we've reached a direct child of the rootNode
-    const parent: Element | null = currentElement.parentElement
-    if (!parent || currentElement.parentNode === rootNode) {
-      break
-    }
-
-    currentElement = parent
+    currentElement = currentElement.parentElement
   }
 
   return currentSelector
@@ -197,7 +191,7 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 }
 
 function getPositionSelector(element: Element): string {
-  const parent = getElementParentNode(element)!
+  const parent = element.parentNode!
 
   let sibling = parent.firstElementChild
   let elementIndex = 1
@@ -210,22 +204,6 @@ function getPositionSelector(element: Element): string {
   }
 
   return `${CSS.escape(element.tagName)}:nth-of-type(${elementIndex})`
-}
-
-/**
- * Get the parent node that contains the element's siblings.
- * For elements in shadow DOM, this is the shadow root.
- * For regular elements, this is the parent element.
- */
-function getElementParentNode(element: Element): Element | ShadowRoot | null {
-  if (element.parentElement) {
-    return element.parentElement
-  }
-  const parentNode = element.parentNode
-  if (parentNode && isNodeShadowRoot(parentNode)) {
-    return parentNode
-  }
-  return null
 }
 
 function findSelector(
@@ -337,7 +315,7 @@ export function isSelectorUniqueAmongSiblings(
     isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
   }
 
-  const parent = getElementParentNode(currentElement)!
+  const parent = currentElement.parentNode!
 
   let sibling = parent.firstElementChild
   while (sibling) {
