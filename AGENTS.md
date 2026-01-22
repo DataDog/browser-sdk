@@ -32,6 +32,15 @@ yarn test:e2e
 
 # Run specific E2E test which names match “unhandled rejections”
 yarn test:e2e -g "unhandled rejections"
+
+# Type checking
+yarn typecheck
+
+# Linting
+yarn lint
+
+# Format code
+yarn format
 ```
 
 ## Monorepo Structure
