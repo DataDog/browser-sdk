@@ -3,6 +3,7 @@ Review this session for learnings about working with Agents in this codebase. Up
 ## Step 1: Reflect
 
 What context was missing that would have helped Agents work more effectively?
+
 - Bash commands that were used or discovered
 - Code style patterns followed
 - Testing approaches that worked
@@ -22,6 +23,7 @@ find . -name "AGENTS.md" 2>/dev/null | head -20
 Format: `<command or pattern>` - `<brief description>`
 
 Avoid:
+
 - Verbose explanations
 - Obvious information
 - One-off fixes unlikely to recur
