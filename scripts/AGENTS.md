@@ -21,6 +21,7 @@ scripts/
 ### TypeScript & Node.js Version
 
 Scripts run on the **latest Node.js version** (see `volta.node` in `package.json`):
+
 - Use modern TypeScript and latest Node.js APIs
 - Prefer built-in Node.js modules over dependencies
 - Always use `node:` prefix for Node.js imports
@@ -46,15 +47,16 @@ import { command } from './lib/command.ts'
 
 runMain(async () => {
   printLog('Starting task...')
-  
+
   // Script logic here
   command`yarn build`.run()
-  
+
   printLog('Task completed.')
 })
 ```
 
 **Key conventions:**
+
 - Use `runMain()` wrapper for proper async handling and error reporting
 - Use `printLog()` for console output
 - Use `command` template literal for shell commands
@@ -82,6 +84,7 @@ scripts/deploy/
 ```
 
 Run script tests:
+
 ```bash
 yarn test:script
 ```

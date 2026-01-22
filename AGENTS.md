@@ -9,7 +9,7 @@ This project uses Yarn workspaces (v4.12.0). Never use `npm` or `npx`.
 ## Key Commands
 
 ```bash
-# Development server 
+# Development server
 yarn dev
 
 # Build all packages
@@ -31,7 +31,7 @@ yarn test:e2e:init
 yarn test:e2e
 
 # Run specific E2E test which names match “unhandled rejections”
-yarn test:e2e -g "unhandled rejections" 
+yarn test:e2e -g "unhandled rejections"
 ```
 
 ## Monorepo Structure
@@ -48,7 +48,7 @@ packages/
 
 developer-extension/ # Chrome DevTools extension
 
-test/                
+test/
 ├── apps/            # Test apps for E2E and performance testing
 ├── e2e/             # Playwright E2E test scenarios
 ├── performance/     # Performance benchmarking tests
@@ -70,7 +70,8 @@ scripts/             # Build, deploy, release automation
 Use gitmoji conventions (based on actual usage in this repo):
 
 ### User-Facing Changes
-- ✨ **New feature** - New public API, behavior, event, property 
+
+- ✨ **New feature** - New public API, behavior, event, property
 - 🐛 **Bug fix** - Fix bugs, regressions, crashes
 - ⚡️ **Performance** - Improve performance, reduce bundle size
 - 💥 **Breaking change** - Breaking API changes
@@ -78,6 +79,7 @@ Use gitmoji conventions (based on actual usage in this repo):
 - ⚗️ **Experimental** - New public feature behind a feature flag
 
 ### Internal Changes
+
 - 👷 **Build/CI** - Dependencies, tooling, deployment, CI config
 - ♻️ **Refactor** - Code restructuring, architectural changes
 - 🎨 **Code structure** - Improve code structure, formatting
