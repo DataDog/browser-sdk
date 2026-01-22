@@ -236,7 +236,7 @@ export function startRumEventCollection(
 
   cleanupTasks.push(stopViewCollection)
 
-  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory, reportError)
+  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory)
   cleanupTasks.push(resourceCollection.stop)
 
   const { stop: stopLongTaskCollection, longTaskContexts } = startLongTaskCollection(lifeCycle, configuration)
@@ -262,7 +262,6 @@ export function startRumEventCollection(
     stopAction: actionCollection.stopAction,
     startResource: resourceCollection.startResource,
     stopResource: resourceCollection.stopResource,
-    stopResourceWithError: resourceCollection.stopResourceWithError,
     addEvent: eventCollection.addEvent,
     addError,
     addTiming,

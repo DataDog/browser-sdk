@@ -1,9 +1,8 @@
-import type { ClocksState, Context, Duration, RawError, ResourceType } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, ResourceType } from '@datadog/browser-core'
 import {
   clocksNow,
   combine,
   elapsed,
-  ErrorSource,
   generateUUID,
   ResourceType as ResourceTypeEnum,
   toServerDuration,
@@ -74,15 +73,7 @@ interface ManualResourceStart {
   startClocks: ClocksState
 }
 
-export interface ManualResourceError extends RawError {
-  resource: {
-    url: string
-    method?: string
-    statusCode?: number
-  }
-}
-
-export function trackManualResources(lifeCycle: LifeCycle, reportError: (error: ManualResourceError) => void) {
+export function trackManualResources(lifeCycle: LifeCycle) {
   const lifecycle = createManualEventLifecycle<ManualResourceStart>(lifeCycle)
 
   function startManualResource(url: string, options: ResourceOptions = {}, startClocks = clocksNow()) {
@@ -121,33 +112,6 @@ export function trackManualResources(lifeCycle: LifeCycle, reportError: (error: 
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResource(manualResource))
   }
 
-  function stopManualResourceWithError(
-    url: string,
-    errorMessage: string,
-    options: ResourceStopOptions = {},
-    stopClocks = clocksNow()
-  ) {
-    const lookupKey = options.resourceKey ?? url
-    const activeResource = lifecycle.remove(lookupKey)
-
-    if (!activeResource) {
-      return
-    }
-
-    const error: ManualResourceError = {
-      message: errorMessage,
-      source: ErrorSource.NETWORK,
-      startClocks: stopClocks,
-      resource: {
-        url: activeResource.url,
-        method: activeResource.method,
-        statusCode: options.statusCode,
-      },
-    }
-
-    reportError(error)
-  }
-
   function stop() {
     lifecycle.stopAll()
   }
@@ -155,7 +119,6 @@ export function trackManualResources(lifeCycle: LifeCycle, reportError: (error: 
   return {
     startResource: startManualResource,
     stopResource: stopManualResource,
-    stopResourceWithError: stopManualResourceWithError,
     stop,
   }
 }

@@ -1,36 +1,29 @@
 import type { Duration, ServerDuration } from '@datadog/browser-core'
-import { ErrorSource, ResourceType } from '@datadog/browser-core'
+import { ResourceType } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumResourceEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { ManualResourceError } from './trackManualResources'
 import { trackManualResources } from './trackManualResources'
 
 describe('trackManualResources', () => {
   let lifeCycle: LifeCycle
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
-  let reportedErrors: ManualResourceError[]
   let startResource: ReturnType<typeof trackManualResources>['startResource']
   let stopResource: ReturnType<typeof trackManualResources>['stopResource']
-  let stopResourceWithError: ReturnType<typeof trackManualResources>['stopResourceWithError']
   let stopManualResources: ReturnType<typeof trackManualResources>['stop']
   let clock: Clock
 
   beforeEach(() => {
     clock = mockClock()
     lifeCycle = new LifeCycle()
-    reportedErrors = []
 
-    const manualResources = trackManualResources(lifeCycle, (error) => {
-      reportedErrors.push(error)
-    })
+    const manualResources = trackManualResources(lifeCycle)
     registerCleanupTask(manualResources.stop)
     startResource = manualResources.startResource
     stopResource = manualResources.stopResource
-    stopResourceWithError = manualResources.stopResourceWithError
     stopManualResources = manualResources.stop
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -212,67 +205,6 @@ describe('trackManualResources', () => {
       stopResource('https://api.example.com/data')
 
       expect(rawRumEvents).toHaveSize(0)
-    })
-  })
-
-  describe('stopResourceWithError', () => {
-    it('should not emit resource event', () => {
-      startResource('https://api.example.com/data')
-      stopResourceWithError('https://api.example.com/data', 'Connection timeout')
-
-      const resourceEvents = rawRumEvents.filter((e) => e.rawRumEvent.type === RumEventType.RESOURCE)
-      expect(resourceEvents).toHaveSize(0)
-    })
-
-    it('should report error with NETWORK source', () => {
-      startResource('https://api.example.com/data')
-      stopResourceWithError('https://api.example.com/data', 'Connection timeout')
-
-      expect(reportedErrors).toHaveSize(1)
-      expect(reportedErrors[0]).toEqual(
-        jasmine.objectContaining({
-          message: 'Connection timeout',
-          source: ErrorSource.NETWORK,
-        })
-      )
-    })
-
-    it('should include resource url in error', () => {
-      startResource('https://api.example.com/data', { method: 'POST' })
-      stopResourceWithError('https://api.example.com/data', 'Server error')
-
-      expect(reportedErrors).toHaveSize(1)
-      expect(reportedErrors[0].resource).toEqual(
-        jasmine.objectContaining({
-          url: 'https://api.example.com/data',
-          method: 'POST',
-        })
-      )
-    })
-
-    it('should include statusCode in error when provided', () => {
-      startResource('https://api.example.com/data')
-      stopResourceWithError('https://api.example.com/data', 'Server error', { statusCode: 500 })
-
-      expect(reportedErrors).toHaveSize(1)
-      expect(reportedErrors[0].resource).toEqual(
-        jasmine.objectContaining({
-          statusCode: 500,
-        })
-      )
-    })
-
-    it('should use resourceKey for lookup', () => {
-      startResource('https://api.example.com/data', { resourceKey: 'request1' })
-      stopResourceWithError('https://api.example.com/data', 'Error', { resourceKey: 'request1' })
-
-      expect(reportedErrors).toHaveSize(1)
-    })
-
-    it('should not report error if resource was not started', () => {
-      stopResourceWithError('https://api.example.com/never-started', 'Error')
-
-      expect(reportedErrors).toHaveSize(0)
     })
   })
 })

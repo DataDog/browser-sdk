@@ -210,18 +210,6 @@ export interface RumPublicApi extends PublicApi {
   stopResource: (url: string, options?: ResourceStopOptions) => void
 
   /**
-   * [Experimental] Stop tracking a resource with an error
-   *
-   * Removes the resource from active tracking and reports an error with source: 'network'
-   *
-   * @category Data Collection
-   * @param url - URL of the resource
-   * @param errorMessage - Error message
-   * @param options - Options of the resource
-   */
-  stopResourceWithError: (url: string, errorMessage: string, options?: ResourceStopOptions) => void
-
-  /**
    * Add a custom error, stored in `@error`.
    *
    * See [Send RUM Custom Actions](https://docs.datadoghq.com/real_user_monitoring/guide/send-rum-custom-actions) for further information.
@@ -580,7 +568,6 @@ export interface Strategy {
   stopAction: StartRumResult['stopAction']
   startResource: StartRumResult['startResource']
   stopResource: StartRumResult['stopResource']
-  stopResourceWithError: StartRumResult['stopResourceWithError']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
   startDurationVital: StartRumResult['startDurationVital']
@@ -754,17 +741,6 @@ export function makeRumPublicApi(
         return
       }
       strategy.stopResource(sanitize(url)!, {
-        statusCode: options && options.statusCode,
-        context: sanitize(options && options.context) as Context,
-        resourceKey: options && options.resourceKey,
-      })
-    }),
-
-    stopResourceWithError: monitor((url, errorMessage, options) => {
-      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
-        return
-      }
-      strategy.stopResourceWithError(sanitize(url)!, sanitize(errorMessage)!, {
         statusCode: options && options.statusCode,
         context: sanitize(options && options.context) as Context,
         resourceKey: options && options.resourceKey,

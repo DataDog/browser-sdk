@@ -47,7 +47,6 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   stopAction: () => undefined,
   startResource: () => undefined,
   stopResource: () => undefined,
-  stopResourceWithError: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -859,7 +858,7 @@ describe('rum public api', () => {
     })
   })
 
-  describe('startResource / stopResource / stopResourceWithError', () => {
+  describe('startResource / stopResource', () => {
     it('should call startResource and stopResource on the strategy', () => {
       mockExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
@@ -899,33 +898,6 @@ describe('rum public api', () => {
         jasmine.objectContaining({
           statusCode: 200,
           context: { responseSize: 1024 },
-        })
-      )
-    })
-
-    it('should call stopResourceWithError on the strategy', () => {
-      mockExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
-
-      const stopResourceWithErrorSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
-          stopResourceWithError: stopResourceWithErrorSpy,
-        }),
-        noopRecorderApi,
-        noopProfilerApi
-      )
-
-      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      rumPublicApi.stopResourceWithError('https://api.example.com/data', 'Connection timeout', {
-        statusCode: 0,
-      })
-
-      expect(stopResourceWithErrorSpy).toHaveBeenCalledWith(
-        'https://api.example.com/data',
-        'Connection timeout',
-        jasmine.objectContaining({
-          statusCode: 0,
         })
       )
     })
