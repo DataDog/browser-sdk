@@ -94,7 +94,7 @@ export function startTelemetry(
   pageMayExitObservable: Observable<PageMayExitEvent>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
 ): Telemetry {
-  const observable = new Observable<TelemetryEvent & Context>()
+  const observable = new BufferedObservable<TelemetryEvent & Context>(100)
 
   const { stop } = startTelemetryTransport(configuration, reportError, pageMayExitObservable, createEncoder, observable)
 
@@ -107,6 +107,28 @@ export function startTelemetry(
   }
 }
 
+/**
+ * Starts telemetry collection in the preStart phase.
+ *
+ * PERFORMANCE: This function is designed to be lightweight with minimal overhead.
+ * It creates observable subscriptions and hooks without accessing heavy dependencies
+ * (encoder, reportError, pageMayExit) which are deferred to startTelemetryTransport.
+ *
+ * Expected overhead: < 50ms on typical hardware (measured via performance.now())
+ * Measured in: packages/core/src/domain/telemetry/telemetry.spec.ts
+ * See: Phase 5 planning (05-03-PLAN.md) for performance requirements
+ *
+ * The split telemetry pattern (collection in preStart, transport in start) enables
+ * early error capture without introducing significant initialization latency.
+ *
+ * @param telemetryService - Service identifier (RUM or LOGS)
+ * @param configuration - SDK configuration
+ * @param hooks - Hooks instance for telemetry assembly
+ * @param observable - Observable for telemetry events
+ * @param metricSampleRate - Sample rate for metrics (default: 1 = 100%)
+ * @param maxTelemetryEventsPerPage - Max events per page (default: 15)
+ * @returns Object with enabled and metricsEnabled flags
+ */
 export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
@@ -167,7 +189,6 @@ export function startTelemetryCollection(
     sendToExtension('telemetry', event)
     alreadySentEvents.add(stringifiedEvent)
   })
-  telemetryObservable.unbuffer()
 
   startMonitorErrorCollection(addTelemetryError)
 
@@ -206,17 +227,18 @@ export function startTelemetryCollection(
   }
 }
 
-function startTelemetryTransport(
+export function startTelemetryTransport(
   configuration: Configuration,
   reportError: (error: RawError) => void,
   pageMayExitObservable: Observable<PageMayExitEvent>,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-  telemetryObservable: Observable<TelemetryEvent & Context>
+  telemetryObservable: BufferedObservable<TelemetryEvent & Context>
 ) {
   const cleanupTasks: Array<() => void> = []
   if (canUseEventBridge()) {
     const bridge = getEventBridge<'internal_telemetry', TelemetryEvent>()!
     const telemetrySubscription = telemetryObservable.subscribe((event) => bridge.send('internal_telemetry', event))
+    telemetryObservable.unbuffer()
     cleanupTasks.push(telemetrySubscription.unsubscribe)
   } else {
     const endpoints = [configuration.rumEndpointBuilder]
@@ -236,6 +258,7 @@ function startTelemetryTransport(
     })
     cleanupTasks.push(telemetryBatch.stop)
     const telemetrySubscription = telemetryObservable.subscribe(telemetryBatch.add)
+    telemetryObservable.unbuffer()
     cleanupTasks.push(telemetrySubscription.unsubscribe)
   }
 
