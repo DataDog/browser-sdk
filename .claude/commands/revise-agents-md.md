@@ -1,8 +1,3 @@
----
-description: Update AGENTS.md with learnings from this session
-allowed-tools: Read, Edit, Glob
----
-
 Review this session for learnings about working with Agents in this codebase. Update AGENTS.md with context that would help future Agent sessions be more effective.
 
 ## Step 1: Reflect
