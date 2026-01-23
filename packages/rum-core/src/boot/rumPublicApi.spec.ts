@@ -49,7 +49,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
 const DEFAULT_INIT_CONFIGURATION = {
   applicationId: 'xxx',
   clientToken: 'xxx',
-  trackingConsent: TrackingConsent.GRANTED as const,
+  trackingConsent: TrackingConsent.GRANTED,
 }
 const FAKE_WORKER = {} as DeflateWorker
 
