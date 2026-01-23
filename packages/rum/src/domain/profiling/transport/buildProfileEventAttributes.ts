@@ -35,24 +35,18 @@ export function buildProfileEventAttributes(
 
   const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
 
-  const attributes: ProfileEventAttributes = {
-    application: {
-      id: applicationId,
-    },
-    ...(sessionId && {
-      session: {
-        id: sessionId,
-      },
-    }),
-    ...(ids.length && {
-      view: {
-        id: ids,
-        name: names,
-      },
-    }),
-    ...(longTaskIds.length && {
-      long_task: { id: longTaskIds },
-    }),
+
+  const attributes: ProfileEventAttributes = { application: { id: applicationId } }
+
+  if (sessionId) {
+    attributes.session = { id: sessionId }
+  }
+  if (ids.length) {
+    attributes.view = { id: ids, name: names }
+  }
+  if (longTaskIds.length) {
+    attributes.long_task = { id: longTaskIds }
+  }
   }
   return attributes
 }
