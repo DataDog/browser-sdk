@@ -29,13 +29,10 @@ jobs:
       - name: Install dependencies
         run: yarn install --frozen-lockfile
       
-      - name: Build RUM package
-        run: yarn build:bundle packages/rum
+      - name: Build all packages
+        run: yarn build:bundle
       
-      - name: Build Logs package
-        run: yarn build:bundle packages/logs
-      
-      - name: Prepare package for publishing
+      - name: Prepare RUM package for publishing
         run: |
           cd packages/rum
           # Update package name to scoped version
