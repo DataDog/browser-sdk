@@ -24,7 +24,21 @@ env:
   GITHUB_READ_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  # Quick formatting check on PRs
+  format:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '25.3.0'
+      - run: yarn install --frozen-lockfile
+      - run: yarn format
+
+  # Full lint on main/tags only (test apps have inherited lint errors)
   lint:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +49,7 @@ jobs:
       - run: yarn lint
 
   test:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,6 +60,7 @@ jobs:
       - run: yarn test:unit
 
   build:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
