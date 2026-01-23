@@ -15,7 +15,7 @@ interface SourceCodeContext {
 }
 
 export interface BrowserWindow {
-  DD_SOURCE_CODE_CONTEXT?: { [stack: string]: SourceCodeContext }
+  MV_SDK_MV_SDK_DD_SOURCE_CODE_CONTEXT?: { [stack: string]: SourceCodeContext }
 }
 type StackFrameUrl = string
 
@@ -28,11 +28,11 @@ export function startSourceCodeContext(hooks: Hooks) {
   const contextByFile = new Map<StackFrameUrl, SourceCodeContext>()
 
   function buildContextByFile() {
-    if (!browserWindow.DD_SOURCE_CODE_CONTEXT) {
+    if (!browserWindow.MV_SDK_MV_SDK_DD_SOURCE_CODE_CONTEXT) {
       return
     }
 
-    objectEntries(browserWindow.DD_SOURCE_CODE_CONTEXT).forEach(([stack, context]) => {
+    objectEntries(browserWindow.MV_SDK_MV_SDK_DD_SOURCE_CODE_CONTEXT).forEach(([stack, context]) => {
       const stackTrace = computeStackTrace({ stack })
       const firstFrame = stackTrace.stack[0]
 
@@ -46,7 +46,7 @@ export function startSourceCodeContext(hooks: Hooks) {
       }
     })
 
-    browserWindow.DD_SOURCE_CODE_CONTEXT = {}
+    browserWindow.MV_SDK_MV_SDK_DD_SOURCE_CODE_CONTEXT = {}
   }
 
   buildContextByFile()

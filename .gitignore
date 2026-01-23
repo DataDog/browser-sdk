@@ -27,3 +27,9 @@ docs/
 test-results/
 playwright-report/
 .vscode
+
+# Fork maintenance scripts
+FORK_SUMMARY.md
+rename-dd-globals.sh
+verify-renames.sh
+create-pr.sh

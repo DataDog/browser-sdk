@@ -74,6 +74,6 @@ export const datadogRum = makeRumPublicApi(startRum, makeRecorderApiStub(), make
 })
 
 interface BrowserWindow extends Window {
-  DD_RUM?: RumPublicApi
+  ATLAS_SDK_DD_RUM?: RumPublicApi
 }
-defineGlobal(getGlobalObject<BrowserWindow>(), 'DD_RUM', datadogRum)
+defineGlobal(getGlobalObject<BrowserWindow>(), 'ATLAS_SDK_DD_RUM', datadogRum)
