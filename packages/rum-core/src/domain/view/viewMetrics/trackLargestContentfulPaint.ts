@@ -77,21 +77,27 @@ export function trackLargestContentfulPaint(
         ? (getResourceEntries()?.find((e) => e.name === resourceUrl) as PerformanceResourceTiming | undefined)
         : undefined
 
-      const firstByte = getSafeFirstByte(getNavigationEntry()) || (0 as RelativeTime)
-      const lcpRequestStart = Math.max(firstByte, lcpResourceEntry?.startTime || 0)
-      const lcpResponseEnd = Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0)
-      const lcpRenderTime = Math.max(lcpResponseEnd, lcpEntry.startTime)
+      let subParts;
+      const firstByte = getSafeFirstByte(getNavigationEntry())
+
+      if (firstByte !== undefined) {
+        const lcpRequestStart = Math.max(firstByte, lcpResourceEntry?.startTime || 0)
+        const lcpResponseEnd = Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0)
+        const lcpRenderTime = Math.max(lcpResponseEnd, lcpEntry.startTime);
+
+        subParts = {
+          firstByte,
+          loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
+          loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
+          renderDelay: (lcpRenderTime - lcpResponseEnd) as RelativeTime,
+        }
+      }
 
       callback({
         value: lcpEntry.startTime,
         targetSelector: lcpTargetSelector,
         resourceUrl,
-        subParts: {
-          firstByte,
-          loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
-          loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
-          renderDelay: (lcpRenderTime - lcpResponseEnd) as RelativeTime,
-        },
+        subParts,
       })
       biggestLcpSize = lcpEntry.size
     }
