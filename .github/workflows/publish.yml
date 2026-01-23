@@ -37,13 +37,15 @@ jobs:
           cd packages/rum
           # Update package name to scoped version
           node -e "const pkg=require('./package.json'); pkg.name='@multiverse-io/browser-rum'; pkg.publishConfig={registry:'https://npm.pkg.github.com', access:'public'}; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
-          # Create .npmrc for authentication
-          echo "@multiverse-io:registry=https://npm.pkg.github.com" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}" >> .npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
       
       - name: Publish to GitHub Packages
         run: |
           cd packages/rum
+          # Create .npmrc with auth token
+          echo "@multiverse-io:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
           npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
