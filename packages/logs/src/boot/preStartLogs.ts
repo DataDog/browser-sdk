@@ -94,10 +94,10 @@ export function createPreStartStrategy(
       cachedTelemetry = startTelemetry(TelemetryService.LOGS, configuration, {
         hooks: cachedHooks,
         // Other dependencies will be provided via startTransport() later
-      } as any)
+      })
 
-      // Instrumuent fetch to track network requests
-      // This is needed in case the consent is not granted and some cutsomer
+      // Instrument fetch to track network requests
+      // This is needed in case the consent is not granted and some customer
       // library (Apollo Client) is storing uninstrumented fetch to be used later
       // The subscrption is needed so that the instrumentation process is completed
       initFetchObservable().subscribe(noop)

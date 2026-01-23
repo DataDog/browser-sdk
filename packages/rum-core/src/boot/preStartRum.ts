@@ -161,7 +161,7 @@ export function createPreStartStrategy(
     cachedTelemetry = startTelemetry(TelemetryService.RUM, configuration, {
       hooks: cachedHooks,
       // Other dependencies will be provided via startTransport() later
-    } as any)
+    })
 
     // Instrument fetch to track network requests
     // This is needed in case the consent is not granted and some customer
