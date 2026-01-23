@@ -1,0 +1,59 @@
+name: Build and Publish SDK
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '25.3.0'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@multiverse-io'
+      
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+      
+      - name: Build RUM package
+        run: yarn build:bundle packages/rum
+      
+      - name: Build Logs package
+        run: yarn build:bundle packages/logs
+      
+      - name: Prepare package for publishing
+        run: |
+          cd packages/rum
+          # Update package name to scoped version
+          node -e "const pkg=require('./package.json'); pkg.name='@multiverse-io/browser-rum'; pkg.publishConfig={registry:'https://npm.pkg.github.com'}; require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
+      
+      - name: Publish to GitHub Packages
+        run: |
+          cd packages/rum
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            packages/rum/bundle/**/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
