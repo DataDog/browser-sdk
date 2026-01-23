@@ -3,7 +3,7 @@ name: Build and Publish SDK
 on:
   push:
     branches:
-      - main
+      - '**'  # Temporary: Run on all branches for testing
     tags:
       - 'v*'
   workflow_dispatch:
