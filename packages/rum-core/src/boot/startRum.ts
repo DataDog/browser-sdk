@@ -55,6 +55,7 @@ import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
+import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -230,6 +231,9 @@ export function startRumEventCollection(
     viewHistory,
     initialViewOptions
   )
+
+  startSourceCodeContext(hooks)
+
   cleanupTasks.push(stopViewCollection)
 
   const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
@@ -254,6 +258,8 @@ export function startRumEventCollection(
 
   return {
     addAction: actionCollection.addAction,
+    startAction: actionCollection.startAction,
+    stopAction: actionCollection.stopAction,
     addEvent: eventCollection.addEvent,
     addError,
     addTiming,

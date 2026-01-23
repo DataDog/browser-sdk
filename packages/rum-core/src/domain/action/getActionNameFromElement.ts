@@ -3,7 +3,7 @@ import { getPrivacySelector, NodePrivacyLevel } from '../privacyConstants'
 import { getNodePrivacyLevel, maskDisallowedTextContent, shouldMaskNode, shouldMaskAttribute } from '../privacy'
 import type { NodePrivacyLevelCache } from '../privacy'
 import type { RumConfiguration } from '../configuration'
-import { isElementNode } from '../../browser/htmlDomUtils'
+import { isElementNode, getParentElement } from '../../browser/htmlDomUtils'
 import {
   ActionNameSource,
   DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE,
@@ -49,13 +49,24 @@ export function getActionNameFromElement(
 function getActionNameFromElementProgrammatically(targetElement: Element, programmaticAttribute: string) {
   // We don't use getActionNameFromElementForStrategies here, because we want to consider all parents,
   // without limit. It is up to the user to declare a relevant naming strategy.
-  const elementWithAttribute = targetElement.closest(`[${programmaticAttribute}]`)
+  const elementWithAttribute = closestShadowAware(targetElement, `[${programmaticAttribute}]`)
 
   if (!elementWithAttribute) {
     return
   }
   const name = elementWithAttribute.getAttribute(programmaticAttribute)!
   return truncate(normalizeWhitespace(name.trim()))
+}
+
+function closestShadowAware(element: Element, selector: string): Element | null {
+  let current: Element | null = element
+  while (current) {
+    if (current.matches(selector)) {
+      return current
+    }
+    current = getParentElement(current)
+  }
+  return null
 }
 
 type NameStrategy = (
@@ -160,7 +171,7 @@ function getActionNameFromElementForStrategies(
     if (element.nodeName === 'FORM') {
       break
     }
-    element = element.parentElement
+    element = getParentElement(element)
     recursionCounter += 1
   }
 }
@@ -173,7 +184,15 @@ function truncate(s: string) {
   return s.length > 100 ? `${safeTruncate(s, 100)} [...]` : s
 }
 
-function getElementById(refElement: Element, id: string) {
+function getElementById(refElement: Element, id: string): HTMLElement | null {
+  const rootNode = refElement.getRootNode()
+  if (rootNode instanceof ShadowRoot) {
+    const shadowElement = rootNode.getElementById(id)
+    if (shadowElement) {
+      return shadowElement
+    }
+  }
+
   // Use the element ownerDocument here, because tests are executed in an iframe, so
   // document.getElementById won't work.
   return refElement.ownerDocument ? refElement.ownerDocument.getElementById(id) : null

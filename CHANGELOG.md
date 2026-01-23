@@ -18,6 +18,31 @@
 
 ---
 
+## v6.25.4
+
+**Public Changes:**
+
+- 🐛 [PANA-5375] Treat Change records as full snapshots when appropriate ([#4078](https://github.com/DataDog/browser-sdk/pull/4078)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-13693] make sure click actions are sent on page exit ([#4070](https://github.com/DataDog/browser-sdk/pull/4070)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 manage checkTelemetryError connexion pool ([#4094](https://github.com/DataDog/browser-sdk/pull/4094))
+- 👷 Update dependency globals to v17 ([#4074](https://github.com/DataDog/browser-sdk/pull/4074))
+- 👷 Update dependency vite to v7 ([#4076](https://github.com/DataDog/browser-sdk/pull/4076))
+- 👷 Update all non-major dependencies ([#4073](https://github.com/DataDog/browser-sdk/pull/4073))
+- 👷 do not rely on hardcoded list of DCs ([#4037](https://github.com/DataDog/browser-sdk/pull/4037))
+- 👷 Update dependency react-router to v7.12.0 [SECURITY] ([#4065](https://github.com/DataDog/browser-sdk/pull/4065)) [RUM-REACT]
+- 👷 handle rate limiting in checkTelemetryErrors ([#4069](https://github.com/DataDog/browser-sdk/pull/4069))
+- 👷 Update Node.js to v25 ([#3940](https://github.com/DataDog/browser-sdk/pull/3940))
+- 👷 Update dependency react-window to v2 ([#4052](https://github.com/DataDog/browser-sdk/pull/4052))
+- 🔧 Update deploy-\*.yml to use arch:amd64 runner ([#4086](https://github.com/DataDog/browser-sdk/pull/4086))
+- 🔧 fix deploy auto notification job dependency ([#4084](https://github.com/DataDog/browser-sdk/pull/4084))
+- ⚗️ [PANA-3971] Add a more compact experimental DOM mutation encoding ([#4060](https://github.com/DataDog/browser-sdk/pull/4060)) [RUM]
+- ⚗️ [PANA-5359] Support change records in the developer extension ([#4072](https://github.com/DataDog/browser-sdk/pull/4072))
+- ⚗️ [RUM-13259]Track action names in shadow dom ([#4044](https://github.com/DataDog/browser-sdk/pull/4044)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 📈 [PANA-5371] Add telemetry to help evaluate new DOM mutation encoding ([#4077](https://github.com/DataDog/browser-sdk/pull/4077)) [RUM]
+
 ## v6.25.3
 
 **Public Changes:**

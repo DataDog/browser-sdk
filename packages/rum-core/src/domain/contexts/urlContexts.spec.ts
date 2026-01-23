@@ -5,7 +5,7 @@ import { clocksNow, DISCARDED, HookNames, relativeToClocks } from '@datadog/brow
 import { setupLocationObserver } from '../../../test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
-import type { Hooks } from '../hooks'
+import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startUrlContexts, type UrlContexts } from './urlContexts'
 
@@ -145,7 +145,7 @@ describe('urlContexts', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual(
         jasmine.objectContaining({
@@ -161,7 +161,7 @@ describe('urlContexts', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBe(DISCARDED)
     })

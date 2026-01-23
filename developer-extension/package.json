@@ -1,14 +1,14 @@
 {
   "name": "@datadog/browser-sdk-developer-extension",
-  "version": "6.25.3",
+  "version": "6.25.4",
   "private": true,
   "scripts": {
     "build": "wxt build",
     "dev": "wxt"
   },
   "devDependencies": {
-    "@types/chrome": "0.1.32",
-    "@types/react": "19.2.7",
+    "@types/chrome": "0.1.33",
+    "@types/react": "19.2.8",
     "@types/react-dom": "19.2.3",
     "@wxt-dev/module-react": "1.1.5",
     "typescript": "5.9.3"
@@ -17,9 +17,9 @@
     "@datadog/browser-core": "workspace:*",
     "@datadog/browser-logs": "workspace:*",
     "@datadog/browser-rum": "workspace:*",
-    "@mantine/core": "8.3.10",
-    "@mantine/hooks": "8.3.10",
-    "@tabler/icons-react": "3.36.0",
+    "@mantine/core": "8.3.12",
+    "@mantine/hooks": "8.3.12",
+    "@tabler/icons-react": "3.36.1",
     "clsx": "2.1.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",

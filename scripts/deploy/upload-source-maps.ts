@@ -3,7 +3,7 @@ import { printLog, runMain } from '../lib/executionUtils.ts'
 import { command } from '../lib/command.ts'
 import { getBuildEnvValue } from '../lib/buildEnv.ts'
 import { getTelemetryOrgApiKey } from '../lib/secrets.ts'
-import { siteByDatacenter } from '../lib/datacenter.ts'
+import { getAllDatacentersMetadata, getDatacenterMetadata } from '../lib/datacenter.ts'
 import { forEachFile } from '../lib/filesUtils.ts'
 import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, packages } from './lib/deploymentUtils.ts'
 
@@ -13,14 +13,15 @@ import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, pack
  * BUILD_MODE=canary|release node upload-source-maps.ts staging|canary|vXXX root,us1,eu1,...
  */
 
-function getSitesByVersion(version: string): string[] {
+async function getSitesByVersion(version: string): Promise<string[]> {
   switch (version) {
     case 'staging':
       return ['datad0g.com', 'datadoghq.com']
     case 'canary':
       return ['datadoghq.com']
-    default:
-      return Object.values(siteByDatacenter)
+    default: {
+      return (await getAllDatacentersMetadata()).map((dc) => dc.site)
+    }
   }
 }
 
@@ -52,11 +53,17 @@ async function uploadSourceMaps(
     let sites: string[]
     let uploadPath: string
     if (uploadPathType === 'root') {
-      sites = getSitesByVersion(version)
+      sites = await getSitesByVersion(version)
       uploadPath = buildRootUploadPath(packageName, version)
       await renameFilesWithVersionSuffix(bundleFolder, version)
     } else {
-      sites = [siteByDatacenter[uploadPathType]]
+      const datacenterMetadata = await getDatacenterMetadata(uploadPathType)
+
+      if (!datacenterMetadata) {
+        throw new Error(`No datacenter metadata found for ${uploadPathType}`)
+      }
+
+      sites = [datacenterMetadata.site]
       uploadPath = buildDatacenterUploadPath(uploadPathType, packageName, version)
     }
     const prefix = path.dirname(`/${uploadPath}`)
