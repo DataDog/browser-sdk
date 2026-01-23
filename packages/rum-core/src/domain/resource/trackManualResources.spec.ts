@@ -97,21 +97,13 @@ describe('trackManualResources', () => {
   })
 
   describe('method and status_code', () => {
-    it('should include method when provided', () => {
+    it('should include method and status_code when provided', () => {
       startResource('https://api.example.com/data', { method: 'POST' })
-      stopResource('https://api.example.com/data')
-
-      expect(rawRumEvents).toHaveSize(1)
-      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
-      expect(resourceEvent.resource.method).toBe('POST')
-    })
-
-    it('should include status_code when provided on stop', () => {
-      startResource('https://api.example.com/data')
       stopResource('https://api.example.com/data', { statusCode: 200 })
 
       expect(rawRumEvents).toHaveSize(1)
       const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.method).toBe('POST')
       expect(resourceEvent.resource.status_code).toBe(200)
     })
   })

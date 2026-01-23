@@ -728,6 +728,7 @@ export function makeRumPublicApi(
       if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
         return
       }
+      // addTelemetryUsage({ feature: 'start-resource' })
       strategy.startResource(sanitize(url)!, {
         type: sanitize(options && options.type) as ResourceType | undefined,
         method: sanitize(options && options.method) as string | undefined,
@@ -740,6 +741,7 @@ export function makeRumPublicApi(
       if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
         return
       }
+      // addTelemetryUsage({ feature: 'stop-resource' })
       strategy.stopResource(sanitize(url)!, {
         statusCode: options && options.statusCode,
         context: sanitize(options && options.context) as Context,
