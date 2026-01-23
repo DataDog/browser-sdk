@@ -145,6 +145,6 @@ function processResource(resource: ManualResource): RawRumEventCollectedData<Raw
     rawRumEvent,
     startTime: resource.startClocks.relative,
     duration: resource.duration,
-    domainContext: { performanceEntry: undefined as unknown as PerformanceEntry },
+    domainContext: { isManual: true as const },
   }
 }
