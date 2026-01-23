@@ -1,6 +1,13 @@
 import { isNodeShadowRoot } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameConstants'
 
+/**
+ * Marker used to indicate shadow DOM boundaries in selectors.
+ * Named after the deprecated Shadow DOM v0 '::shadow' pseudo-element which served the same
+ * purpose of marking entry into a shadow root.
+ * Note: This is NOT a valid CSS selector, it's an internal marker that requires custom
+ * parsing logic.
+ */
 export const SHADOW_DOM_MARKER = '::shadow'
 
 /**
