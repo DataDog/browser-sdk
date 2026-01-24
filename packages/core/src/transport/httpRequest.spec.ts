@@ -398,3 +398,65 @@ describe('httpRequest with AVOID_FETCH_KEEPALIVE feature flag', () => {
     expect(requests[0].type).toBe('fetch-keepalive')
   })
 })
+
+
+describe('httpRequest Zone.js bypass', () => {
+  const ENDPOINT_URL = 'http://my.website'
+  let interceptor: ReturnType<typeof interceptRequests>
+  let endpointBuilder: EndpointBuilder
+
+  beforeEach(() => {
+    interceptor = interceptRequests()
+    endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
+  })
+
+  it('fetchStrategy should use native fetch, not Zone.js patched fetch', async () => {
+    const zoneJsFetchSpy = jasmine.createSpy('zoneJsFetch').and.returnValue(
+      Promise.resolve({ status: 200, type: 'cors' } as Response)
+    )
+    const nativeFetch = window.fetch
+
+    // Simulate Zone.js patching: replace window.fetch and store original under __zone_symbol__fetch
+    ;(window as any).Zone = { __symbol__: (name: string) => `__zone_symbol__${name}` }
+    ;(window as any).__zone_symbol__fetch = nativeFetch
+    window.fetch = zoneJsFetchSpy
+
+    fetchStrategy(endpointBuilder, { data: '{"test":"data"}', bytesCount: 15 })
+    await interceptor.waitForAllFetchCalls()
+
+    // The Zone.js patched fetch should NOT have been called
+    expect(zoneJsFetchSpy).not.toHaveBeenCalled()
+
+    // Cleanup
+    window.fetch = nativeFetch
+    delete (window as any).Zone
+    delete (window as any).__zone_symbol__fetch
+  })
+
+  it('fetchKeepAliveStrategy should use native fetch, not Zone.js patched fetch', async () => {
+    if (!interceptor.isFetchKeepAliveSupported()) {
+      pending('no fetch keepalive support')
+    }
+
+    const zoneJsFetchSpy = jasmine.createSpy('zoneJsFetch').and.returnValue(
+      Promise.resolve({ status: 200, type: 'cors' } as Response)
+    )
+    const nativeFetch = window.fetch
+
+    // Simulate Zone.js patching
+    ;(window as any).Zone = { __symbol__: (name: string) => `__zone_symbol__${name}` }
+    ;(window as any).__zone_symbol__fetch = nativeFetch
+    window.fetch = zoneJsFetchSpy
+
+    fetchKeepAliveStrategy(endpointBuilder, RECOMMENDED_REQUEST_BYTES_LIMIT, { data: '{"test":"data"}', bytesCount: 15 })
+    await interceptor.waitForAllFetchCalls()
+
+    // The Zone.js patched fetch should NOT have been called
+    expect(zoneJsFetchSpy).not.toHaveBeenCalled()
+
+    // Cleanup
+    window.fetch = nativeFetch
+    delete (window as any).Zone
+    delete (window as any).__zone_symbol__fetch
+  })
+})
