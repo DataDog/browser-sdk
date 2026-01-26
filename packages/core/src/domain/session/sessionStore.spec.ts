@@ -119,6 +119,18 @@ describe('session store', () => {
       })
     })
 
+    describe('sessionPersistence: in-memory', () => {
+      it('returns in-memory strategy when sessionPersistence is in-memory', () => {
+        disableLocalStorage()
+        disableCookies()
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: SessionPersistence.IN_MEMORY,
+        })
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.IN_MEMORY }))
+      })
+    })
+
     it('returns undefined when sessionPersistence is invalid', () => {
       const displayErrorSpy = spyOn(display, 'error')
 
@@ -259,7 +271,7 @@ describe('session store', () => {
     describe('expand or renew session', () => {
       it(
         'when session not in cache, session not in store and new session tracked, ' +
-          'should create new session and trigger renew session ',
+        'should create new session and trigger renew session ',
         () => {
           setupSessionStore()
 
@@ -274,7 +286,7 @@ describe('session store', () => {
 
       it(
         'when session not in cache, session not in store and new session not tracked, ' +
-          'should store not tracked session and trigger renew session',
+        'should store not tracked session and trigger renew session',
         () => {
           setupSessionStore(EMPTY_SESSION_STATE, () => FakeTrackingType.NOT_TRACKED)
 
@@ -301,7 +313,7 @@ describe('session store', () => {
 
       it(
         'when session in cache, session not in store and new session tracked, ' +
-          'should expire session, create a new one and trigger renew session',
+        'should expire session, create a new one and trigger renew session',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
           resetSessionInStore()
@@ -319,7 +331,7 @@ describe('session store', () => {
 
       it(
         'when session in cache, session not in store and new session not tracked, ' +
-          'should expire session, store not tracked session and trigger renew session',
+        'should expire session, store not tracked session and trigger renew session',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), () => FakeTrackingType.NOT_TRACKED)
           resetSessionInStore()
@@ -336,7 +348,7 @@ describe('session store', () => {
 
       it(
         'when session not tracked in cache, session not in store and new session not tracked, ' +
-          'should expire session, store not tracked session and trigger renew session',
+        'should expire session, store not tracked session and trigger renew session',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.NOT_TRACKED), () => FakeTrackingType.NOT_TRACKED)
           resetSessionInStore()
@@ -366,7 +378,7 @@ describe('session store', () => {
 
       it(
         'when session in cache is different session than in store and store session is tracked, ' +
-          'should expire session, expand store session and trigger renew',
+        'should expire session, expand store session and trigger renew',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
           setSessionInStore(createSessionState(FakeTrackingType.TRACKED, SECOND_ID))
@@ -382,7 +394,7 @@ describe('session store', () => {
 
       it(
         'when session in cache is different session than in store and store session is not tracked, ' +
-          'should expire session, store not tracked session and trigger renew',
+        'should expire session, store not tracked session and trigger renew',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), (rawTrackingType) =>
             rawTrackingType === FakeTrackingType.TRACKED ? FakeTrackingType.TRACKED : FakeTrackingType.NOT_TRACKED
