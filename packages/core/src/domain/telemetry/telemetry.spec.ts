@@ -442,7 +442,7 @@ describe('telemetry', () => {
 
 describe('telemetry with deferred transport', () => {
   it('should start telemetry without transport dependencies', () => {
-    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration)
+    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration, createHooks())
 
     // Verify telemetry was started
     expect(telemetry).toBeDefined()
@@ -450,9 +450,7 @@ describe('telemetry with deferred transport', () => {
   })
 
   it('should allow starting transport later', () => {
-    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration)
-
-    createHooks()
+    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration, createHooks())
 
     // Should not throw when calling startTransport
     expect(() => {
@@ -461,12 +459,16 @@ describe('telemetry with deferred transport', () => {
   })
 
   it('should ignore second call to startTransport', () => {
-    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration, {
-      hooks: createHooks(),
-      reportError: noop,
-      pageMayExitObservable: new Observable(),
-      createEncoder: createIdentityEncoder,
-    })
+    const telemetry = startTelemetry(
+      TelemetryService.RUM,
+      { telemetrySampleRate: 100 } as Configuration,
+      createHooks(),
+      {
+        reportError: noop,
+        pageMayExitObservable: new Observable(),
+        createEncoder: createIdentityEncoder,
+      }
+    )
 
     // Second call should be ignored (no error thrown)
     expect(() => {
@@ -476,12 +478,16 @@ describe('telemetry with deferred transport', () => {
 
   it('should maintain backward compatibility with full dependencies', () => {
     // Start with full dependencies (backward compatibility)
-    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration, {
-      hooks: createHooks(),
-      reportError: noop,
-      pageMayExitObservable: new Observable(),
-      createEncoder: createIdentityEncoder,
-    })
+    const telemetry = startTelemetry(
+      TelemetryService.RUM,
+      { telemetrySampleRate: 100 } as Configuration,
+      createHooks(),
+      {
+        reportError: noop,
+        pageMayExitObservable: new Observable(),
+        createEncoder: createIdentityEncoder,
+      }
+    )
 
     // Should work without error
     expect(telemetry).toBeDefined()

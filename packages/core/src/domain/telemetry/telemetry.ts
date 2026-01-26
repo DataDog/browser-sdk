@@ -94,8 +94,8 @@ export function getTelemetryObservable() {
 export function startTelemetry(
   telemetryService: TelemetryService,
   configuration: Configuration,
+  hooks: AbstractHooks,
   transportDependencies?: {
-    hooks?: AbstractHooks
     reportError?: (error: RawError) => void
     pageMayExitObservable?: Observable<PageMayExitEvent>
     createEncoder?: (streamId: DeflateEncoderStreamId) => Encoder
@@ -104,8 +104,6 @@ export function startTelemetry(
   const observable = new Observable<TelemetryEvent & Context>()
   let transportCleanup: (() => void) | undefined
 
-  // Hooks are optional - if not provided, telemetry collection won't use them
-  const hooks = transportDependencies?.hooks
   const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
 
   // Start transport immediately only if all transport dependencies are provided
@@ -152,7 +150,7 @@ export function startTelemetry(
 export function startTelemetryCollection(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hooks: AbstractHooks | undefined,
+  hooks: AbstractHooks,
   observable: Observable<TelemetryEvent & Context>,
   metricSampleRate = METRIC_SAMPLE_RATE,
   maxTelemetryEventsPerPage = MAX_TELEMETRY_EVENTS_PER_PAGE
@@ -192,10 +190,9 @@ export function startTelemetryCollection(
       return
     }
 
-    const defaultTelemetryEventAttributes =
-      hooks?.triggerHook(HookNames.AssembleTelemetry, {
-        startTime: clocksNow().relative,
-      }) ?? {}
+    const defaultTelemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
+      startTime: clocksNow().relative,
+    })
 
     if (defaultTelemetryEventAttributes === DISCARDED) {
       return
