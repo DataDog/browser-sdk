@@ -568,7 +568,7 @@ test.describe('action collection with shadow DOM', () => {
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action?.target?.name).toBe('Shadow Button')
-      expect(actionEvents[0]._dd.action?.target?.selector).toEqual('MY-BUTTON::shadow>BUTTON')
+      expect(actionEvents[0]._dd.action?.target?.selector).toEqual('#shadow-host::shadow>BUTTON')
     })
 
   createTest('with betaTrackActionsInShadowDom, traverse shadow boundary for data-dd-action-name')
@@ -623,7 +623,7 @@ test.describe('action collection with shadow DOM', () => {
 
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
-      expect(actionEvents[0]._dd.action?.target?.selector).toEqual('MY-BUTTON#shadow-host::shadow>BUTTON[data-testid="shadow-btn"]')
+      expect(actionEvents[0]._dd.action?.target?.selector).toEqual('#shadow-host::shadow>BUTTON[data-testid="shadow-btn"]')
     })
 })
 
