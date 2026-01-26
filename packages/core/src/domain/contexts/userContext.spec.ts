@@ -138,7 +138,7 @@ describe('user context across pages', () => {
     userContext.setContext({ id: '123' })
 
     expect(userContext.getContext()).toEqual({ id: '123' })
-    expect(localStorage.getItem('_dd_c_some_product_key_1')).toBeNull()
+    expect(localStorage.getItem('_atlas_sdk_c_some_product_key_1')).toBeNull()
   })
 
   it('when enabled, should maintain the user in local storage', () => {
@@ -151,6 +151,6 @@ describe('user context across pages', () => {
 
     userContext.setContext({ id: 'foo', qux: 'qix' })
     expect(userContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
-    expect(localStorage.getItem('_dd_c_some_product_key_1')).toBe('{"id":"foo","qux":"qix"}')
+    expect(localStorage.getItem('_atlas_sdk_c_some_product_key_1')).toBe('{"id":"foo","qux":"qix"}')
   })
 })

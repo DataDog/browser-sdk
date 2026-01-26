@@ -26,11 +26,11 @@ describe('old cookies migration', () => {
   })
 
   it('should not touch current cookie', () => {
-    setCookie(SESSION_STORE_KEY, 'id=abcde&rum=0&logs=1&expire=1234567890', SESSION_EXPIRATION_DELAY)
+    setCookie(SESSION_STORE_KEY, 'id=abcde&atlas-sdk-rum=0&atlas-sdk-logs=1&expire=1234567890', SESSION_EXPIRATION_DELAY)
 
     tryOldCookiesMigration(sessionStoreStrategy)
 
-    expect(getCookie(SESSION_STORE_KEY)).toBe('id=abcde&rum=0&logs=1&expire=1234567890')
+    expect(getCookie(SESSION_STORE_KEY)).toBe('id=abcde&atlas-sdk-rum=0&atlas-sdk-logs=1&expire=1234567890')
   })
 
   it('should create new cookie from old cookie values', () => {
@@ -41,8 +41,8 @@ describe('old cookies migration', () => {
     tryOldCookiesMigration(sessionStoreStrategy)
 
     expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcde')
-    expect(getSessionState(SESSION_STORE_KEY).rum).toBe('0')
-    expect(getSessionState(SESSION_STORE_KEY).logs).toBe('1')
+    expect(getSessionState(SESSION_STORE_KEY)['atlas-sdk-rum']).toBe('0')
+    expect(getSessionState(SESSION_STORE_KEY)['atlas-sdk-logs']).toBe('1')
     expect(getSessionState(SESSION_STORE_KEY).expire).toMatch(/\d+/)
   })
 
@@ -51,7 +51,7 @@ describe('old cookies migration', () => {
 
     tryOldCookiesMigration(sessionStoreStrategy)
     expect(getSessionState(SESSION_STORE_KEY).id).not.toBeDefined()
-    expect(getSessionState(SESSION_STORE_KEY).rum).toBe('0')
+    expect(getSessionState(SESSION_STORE_KEY)['atlas-sdk-rum']).toBe('0')
     expect(getSessionState(SESSION_STORE_KEY).expire).toMatch(/\d+/)
   })
 
@@ -69,8 +69,8 @@ describe('old cookies migration', () => {
     tryOldCookiesMigration(sessionStoreStrategy)
 
     expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcde')
-    expect(getSessionState(SESSION_STORE_KEY).rum).toBe('0')
-    expect(getSessionState(SESSION_STORE_KEY).logs).toBe('1')
+    expect(getSessionState(SESSION_STORE_KEY)['atlas-sdk-rum']).toBe('0')
+    expect(getSessionState(SESSION_STORE_KEY)['atlas-sdk-logs']).toBe('1')
     expect(getSessionState(SESSION_STORE_KEY).expire).toMatch(/\d+/)
   })
 })
