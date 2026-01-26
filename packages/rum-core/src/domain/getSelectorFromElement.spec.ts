@@ -347,13 +347,13 @@ describe('getSelectorFromElement with shadow DOM', () => {
   })
 
   it('should handle duplicated IDs between light DOM and shadow DOM', () => {
-    const host = appendElement('<div target></div><div id="foo"></div>')
+    const host = appendElement('<div id="foo"></div>')
     const shadowRoot = host.attachShadow({ mode: 'open' })
     const button = document.createElement('button')
     button.id = 'foo'
     shadowRoot.appendChild(button)
 
     const selector = getSelectorFromElement(button, undefined)
-    expect(selector).toBe(`BODY>DIV:nth-of-type(1)${SHADOW_DOM_MARKER}#foo`)
+    expect(selector).toBe(`#foo${SHADOW_DOM_MARKER}#foo`)
   })
 })
