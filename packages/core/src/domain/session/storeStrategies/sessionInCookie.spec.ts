@@ -142,7 +142,9 @@ describe('session in cookie strategy', () => {
     })
 
     it('should return the correct session state from the cookies', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('_atlas_sdk_s=id=123&c=0;_atlas_sdk_s=id=456&c=1;_atlas_sdk_s=id=789&c=2')
+      spyOnProperty(document, 'cookie', 'get').and.returnValue(
+        '_atlas_sdk_s=id=123&c=0;_atlas_sdk_s=id=456&c=1;_atlas_sdk_s=id=789&c=2'
+      )
       const cookieStorageStrategy = setupCookieStrategy({ usePartitionedCrossSiteSessionCookie: true, ...config })
 
       expect(cookieStorageStrategy.retrieveSession()).toEqual({ id: '456' })

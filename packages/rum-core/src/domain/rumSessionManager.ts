@@ -18,7 +18,7 @@ export const enum SessionType {
   CI_TEST = 'ci_test',
 }
 
-export const RUM_SESSION_KEY = 'atlas-sdk-rum'
+export const RUM_SESSION_KEY = 'atlas_sdk_rum'
 
 export interface RumSessionManager {
   findTrackedSession: (startTime?: RelativeTime) => RumSession | undefined

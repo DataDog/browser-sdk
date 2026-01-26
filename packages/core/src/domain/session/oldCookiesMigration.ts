@@ -9,8 +9,8 @@ export const OLD_RUM_COOKIE_NAME = '_atlas_sdk_r'
 export const OLD_LOGS_COOKIE_NAME = '_atlas_sdk_l'
 
 // duplicate values to avoid dependency issues
-export const RUM_SESSION_KEY = 'atlas-sdk-rum'
-export const LOGS_SESSION_KEY = 'atlas-sdk-logs'
+export const RUM_SESSION_KEY = 'atlas_sdk_rum'
+export const LOGS_SESSION_KEY = 'atlas_sdk_logs'
 
 /**
  * This migration should remain in the codebase as long as older versions are available/live

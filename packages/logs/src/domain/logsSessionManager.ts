@@ -2,7 +2,7 @@ import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
 import { Observable, performDraw, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 
-export const LOGS_SESSION_KEY = 'atlas-sdk-logs'
+export const LOGS_SESSION_KEY = 'atlas_sdk_logs'
 
 export interface LogsSessionManager {
   findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => LogsSession | undefined

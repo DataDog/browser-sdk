@@ -52,7 +52,7 @@ describe('logs session manager', () => {
   })
 
   it('when tracked should keep existing tracking type and session id', () => {
-    setCookie(SESSION_STORE_KEY, 'id=abcdef&atlas-sdk-logs=1', DURATION)
+    setCookie(SESSION_STORE_KEY, 'id=abcdef&atlas_sdk_logs=1', DURATION)
 
     startLogsSessionManagerWithDefaults()
 
@@ -61,7 +61,7 @@ describe('logs session manager', () => {
   })
 
   it('when not tracked should keep existing tracking type', () => {
-    setCookie(SESSION_STORE_KEY, 'atlas-sdk-logs=0', DURATION)
+    setCookie(SESSION_STORE_KEY, 'atlas_sdk_logs=0', DURATION)
 
     startLogsSessionManagerWithDefaults()
 
@@ -83,19 +83,19 @@ describe('logs session manager', () => {
 
   describe('findTrackedSession', () => {
     it('should return the current active session', () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&atlas-sdk-logs=1', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=abcdef&atlas_sdk_logs=1', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       expect(logsSessionManager.findTrackedSession()!.id).toBe('abcdef')
     })
 
     it('should return undefined if the session is not tracked', () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&atlas-sdk-logs=0', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=abcdef&atlas_sdk_logs=0', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       expect(logsSessionManager.findTrackedSession()).toBeUndefined()
     })
 
     it('should not return the current session if it has expired by default', () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&atlas-sdk-logs=1', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=abcdef&atlas_sdk_logs=1', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
       expireCookie()
@@ -111,10 +111,10 @@ describe('logs session manager', () => {
     })
 
     it('should return session corresponding to start time', () => {
-      setCookie(SESSION_STORE_KEY, 'id=foo&atlas-sdk-logs=1', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=foo&atlas_sdk_logs=1', DURATION)
       const logsSessionManager = startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
-      setCookie(SESSION_STORE_KEY, 'id=bar&atlas-sdk-logs=1', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=bar&atlas_sdk_logs=1', DURATION)
       // simulate a click to renew the session
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
       clock.tick(STORAGE_POLL_DELAY)
