@@ -70,12 +70,8 @@ export function trackManualResources(lifeCycle: LifeCycle) {
 
   function stopManualResource(url: string, options: ResourceStopOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.resourceKey ?? url
-    const stopData: Partial<ManualResourceStart> = {}
-    if (options.context !== undefined) {
-      stopData.context = options.context
-    }
 
-    const activeResource = lifecycle.remove(lookupKey, stopClocks, stopData)
+    const activeResource = lifecycle.remove(lookupKey, stopClocks, { context: options.context })
 
     if (!activeResource) {
       return

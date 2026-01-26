@@ -65,15 +65,11 @@ export function trackManualActions(
 
   function stopManualAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
-    const stopData: Partial<ManualActionStart> = {}
-    if (options.type !== undefined) {
-      stopData.type = options.type
-    }
-    if (options.context !== undefined) {
-      stopData.context = options.context
-    }
 
-    const activeAction = lifecycle.remove(lookupKey, stopClocks, stopData)
+    const activeAction = lifecycle.remove(lookupKey, stopClocks, {
+      type: options.type,
+      context: options.context,
+    })
 
     if (!activeAction) {
       return
