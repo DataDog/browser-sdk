@@ -1,0 +1,11 @@
+# Exclude DataDog's test applications (contain inherited lint errors)
+test/apps/**
+
+# Node modules
+node_modules/
+
+# Build outputs
+**/bundle/**
+**/cjs/**
+**/esm/**
+**/dist/**
