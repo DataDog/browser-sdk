@@ -4,7 +4,6 @@ import type {
   BufferedData,
   PageMayExitEvent,
   Telemetry,
-  AbstractHooks,
 } from '@datadog/browser-core'
 import {
   Observable,
@@ -14,8 +13,6 @@ import {
   canUseEventBridge,
   startAccountContext,
   startGlobalContext,
-  startTelemetry,
-  TelemetryService,
   createIdentityEncoder,
   startUserContext,
   isWorkerEnvironment,
@@ -34,7 +31,7 @@ import { startLogsBridge } from '../transport/startLogsBridge'
 import { startInternalContext } from '../domain/contexts/internalContext'
 import { startReportError } from '../domain/reportError'
 import type { CommonContext } from '../rawLogsEvent.types'
-import { createHooks } from '../domain/hooks'
+import type { Hooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
@@ -53,12 +50,10 @@ export function startLogs(
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
-  cachedTelemetry?: Telemetry,
-  cachedHooks?: AbstractHooks
+  telemetry: Telemetry,
+  hooks: Hooks
 ) {
   const lifeCycle = new LifeCycle()
-  // Use cached hooks if available (started in preStart), otherwise create new
-  const hooks = cachedHooks ?? createHooks()
   const cleanupTasks: Array<() => void> = []
 
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
@@ -69,18 +64,7 @@ export function startLogs(
     ? new Observable<PageMayExitEvent>()
     : createPageMayExitObservable(configuration)
 
-  // Use cached telemetry if available (started in preStart), otherwise create new with hooks
-  const telemetry =
-    cachedTelemetry ??
-    startTelemetry(TelemetryService.LOGS, configuration, {
-      hooks,
-      reportError,
-      pageMayExitObservable,
-      createEncoder: createIdentityEncoder,
-    })
-
-  // If using cached telemetry (already has hooks), start transport now
-  if (cachedTelemetry) {
+  if (telemetry) {
     telemetry.startTransport(reportError, pageMayExitObservable, createIdentityEncoder)
   }
 

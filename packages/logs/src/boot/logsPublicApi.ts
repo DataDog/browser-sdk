@@ -272,12 +272,6 @@ export interface Strategy {
   userContext: ContextManager
   getInternalContext: StartLogsResult['getInternalContext']
   handleLog: StartLogsResult['handleLog']
-
-  // Internal: cached telemetry instance from preStart phase
-  cachedTelemetry?: Telemetry
-
-  // Internal: cached hooks instance from preStart phase
-  cachedHooks?: AbstractHooks
 }
 
 export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
@@ -287,14 +281,14 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (initConfiguration, configuration) => {
+    (initConfiguration, configuration, telemetry, hooks) => {
       const startLogsResult = startLogsImpl(
         configuration,
         buildCommonContext,
         trackingConsentState,
         bufferedDataObservable,
-        strategy.cachedTelemetry,
-        strategy.cachedHooks
+        telemetry,
+        hooks
       )
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)

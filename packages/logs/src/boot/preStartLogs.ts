@@ -1,4 +1,4 @@
-import type { TrackingConsentState, Telemetry, AbstractHooks } from '@datadog/browser-core'
+import type { TrackingConsentState, Telemetry } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   canUseEventBridge,
@@ -17,6 +17,7 @@ import {
   startTelemetry,
   TelemetryService,
 } from '@datadog/browser-core'
+import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
@@ -26,7 +27,9 @@ import type { StartLogsResult } from './startLogs'
 
 export type DoStartLogs = (
   initConfiguration: LogsInitConfiguration,
-  configuration: LogsConfiguration
+  configuration: LogsConfiguration,
+  telemetry: Telemetry,
+  hooks: Hooks
 ) => StartLogsResult
 
 export function createPreStartStrategy(
@@ -48,17 +51,17 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
-  let cachedTelemetry: Telemetry | undefined
-  let cachedHooks: AbstractHooks | undefined
+  let telemetry: Telemetry | undefined
+  const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !telemetry || !trackingConsentState.isGranted()) {
       return
     }
 
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration)
+    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, telemetry, hooks)
 
     bufferApiCalls.drain(startLogsResult)
   }
@@ -92,13 +95,8 @@ export function createPreStartStrategy(
 
       cachedConfiguration = configuration
 
-      // Create hooks early (they're just an empty registry)
-      cachedHooks = createHooks()
-
-      // Start telemetry collection early with real hooks (transport will start later in startLogs)
-      cachedTelemetry = startTelemetry(TelemetryService.LOGS, configuration, {
-        hooks: cachedHooks,
-        // Other dependencies will be provided via startTransport() later
+      telemetry = startTelemetry(TelemetryService.LOGS, configuration, {
+        hooks,
       })
 
       // Instrument fetch to track network requests
@@ -113,14 +111,6 @@ export function createPreStartStrategy(
 
     get initConfiguration() {
       return cachedInitConfiguration
-    },
-
-    get cachedTelemetry() {
-      return cachedTelemetry
-    },
-
-    get cachedHooks() {
-      return cachedHooks
     },
 
     globalContext,

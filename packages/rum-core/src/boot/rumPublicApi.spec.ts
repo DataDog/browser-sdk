@@ -989,7 +989,7 @@ describe('rum public api', () => {
       })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      const sdkName = startRumSpy.calls.argsFor(0)[8]
+      const sdkName = startRumSpy.calls.argsFor(0)[10]
       expect(sdkName).toBe('rum-slim')
     })
   })

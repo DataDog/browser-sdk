@@ -14,7 +14,6 @@ import type {
   RumInternalContext,
   Telemetry,
   Encoder,
-  AbstractHooks,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -553,12 +552,6 @@ export interface Strategy {
   stopDurationVital: StartRumResult['stopDurationVital']
   addDurationVital: StartRumResult['addDurationVital']
   addOperationStepVital: StartRumResult['addOperationStepVital']
-
-  // Internal: cached telemetry instance from preStart phase
-  cachedTelemetry?: Telemetry
-
-  // Internal: cached hooks instance from preStart phase
-  cachedHooks?: AbstractHooks
 }
 
 export function makeRumPublicApi(
@@ -575,7 +568,7 @@ export function makeRumPublicApi(
     options,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions) => {
+    (configuration, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -590,9 +583,9 @@ export function makeRumPublicApi(
         trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
-        options.sdkName,
-        strategy.cachedTelemetry,
-        strategy.cachedHooks
+        telemetry,
+        hooks,
+        options.sdkName
       )
 
       recorderApi.onRumStart(

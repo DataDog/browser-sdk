@@ -5,7 +5,6 @@ import type {
   ContextManager,
   BoundedBuffer,
   Telemetry,
-  AbstractHooks,
 } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
@@ -29,6 +28,7 @@ import {
   startTelemetry,
   TelemetryService,
 } from '@datadog/browser-core'
+import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
@@ -51,7 +51,9 @@ import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 export type DoStartRum = (
   configuration: RumConfiguration,
   deflateWorker: DeflateWorker | undefined,
-  initialViewOptions: ViewOptions | undefined
+  initialViewOptions: ViewOptions | undefined,
+  telemetry: Telemetry,
+  hooks: Hooks
 ) => StartRumResult
 
 export function createPreStartStrategy(
@@ -79,15 +81,15 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
-  let cachedTelemetry: Telemetry | undefined
-  let cachedHooks: AbstractHooks | undefined
+  let telemetry: Telemetry | undefined
+  const hooks = createHooks()
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !telemetry || !trackingConsentState.isGranted()) {
       return
     }
 
@@ -109,7 +111,7 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions)
+    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions, telemetry, hooks)
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -156,13 +158,8 @@ export function createPreStartStrategy(
 
     cachedConfiguration = configuration
 
-    // Create hooks early (they're just an empty registry)
-    cachedHooks = createHooks()
-
-    // Start telemetry collection early with real hooks (transport will start later in startRum)
-    cachedTelemetry = startTelemetry(TelemetryService.RUM, configuration, {
-      hooks: cachedHooks,
-      // Other dependencies will be provided via startTransport() later
+    telemetry = startTelemetry(TelemetryService.RUM, configuration, {
+      hooks,
     })
 
     // Instrument fetch to track network requests
@@ -232,14 +229,6 @@ export function createPreStartStrategy(
 
     get initConfiguration() {
       return cachedInitConfiguration
-    },
-
-    get cachedTelemetry() {
-      return cachedTelemetry
-    },
-
-    get cachedHooks() {
-      return cachedHooks
     },
 
     getInternalContext: noop as () => undefined,

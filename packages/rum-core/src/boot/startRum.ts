@@ -11,8 +11,6 @@ import type {
 import {
   sendToExtension,
   createPageMayExitObservable,
-  TelemetryService,
-  startTelemetry,
   canUseEventBridge,
   addTelemetryDebug,
   startAccountContext,
@@ -53,7 +51,6 @@ import type { SdkName } from '../domain/contexts/defaultContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
-import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
@@ -75,14 +72,12 @@ export function startRum(
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
-  sdkName?: SdkName,
-  cachedTelemetry?: Telemetry,
-  cachedHooks?: Hooks
+  telemetry: Telemetry,
+  hooks: Hooks,
+  sdkName?: SdkName
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
-  // Use cached hooks if available (started in preStart), otherwise create new
-  const hooks = cachedHooks ?? createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
@@ -98,18 +93,7 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
-  // Use cached telemetry if available (started in preStart), otherwise create new with hooks
-  const telemetry =
-    cachedTelemetry ??
-    startTelemetry(TelemetryService.RUM, configuration, {
-      hooks,
-      reportError,
-      pageMayExitObservable,
-      createEncoder,
-    })
-
-  // If using cached telemetry (already has hooks), start transport now
-  if (cachedTelemetry) {
+  if (telemetry) {
     telemetry.startTransport(reportError, pageMayExitObservable, createEncoder)
   }
 
