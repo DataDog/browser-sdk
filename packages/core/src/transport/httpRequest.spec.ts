@@ -1,3 +1,4 @@
+import type { Request } from '../../test'
 import {
   collectAsyncCalls,
   mockEndpointBuilder,
@@ -7,18 +8,17 @@ import {
   NETWORK_ERROR_FETCH_MOCK,
   wait,
 } from '../../test'
-import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { addExperimentalFeatures, resetExperimentalFeatures, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { noop } from '../tools/utils/functionUtils'
+import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 import {
   createHttpRequest,
   fetchKeepAliveStrategy,
   fetchStrategy,
   RECOMMENDED_REQUEST_BYTES_LIMIT,
 } from './httpRequest'
-import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 
 describe('httpRequest', () => {
   const ENDPOINT_URL = 'http://my.website'
@@ -399,7 +399,6 @@ describe('httpRequest with AVOID_FETCH_KEEPALIVE feature flag', () => {
   })
 })
 
-
 describe('httpRequest Zone.js bypass', () => {
   const ENDPOINT_URL = 'http://my.website'
   let interceptor: ReturnType<typeof interceptRequests>
@@ -411,9 +410,9 @@ describe('httpRequest Zone.js bypass', () => {
   })
 
   it('fetchStrategy should use native fetch, not Zone.js patched fetch', async () => {
-    const zoneJsFetchSpy = jasmine.createSpy('zoneJsFetch').and.returnValue(
-      Promise.resolve({ status: 200, type: 'cors' } as Response)
-    )
+    const zoneJsFetchSpy = jasmine
+      .createSpy('zoneJsFetch')
+      .and.returnValue(Promise.resolve({ status: 200, type: 'cors' } as Response))
     const nativeFetch = window.fetch
 
     // Simulate Zone.js patching: replace window.fetch and store original under __zone_symbol__fetch
@@ -438,9 +437,9 @@ describe('httpRequest Zone.js bypass', () => {
       pending('no fetch keepalive support')
     }
 
-    const zoneJsFetchSpy = jasmine.createSpy('zoneJsFetch').and.returnValue(
-      Promise.resolve({ status: 200, type: 'cors' } as Response)
-    )
+    const zoneJsFetchSpy = jasmine
+      .createSpy('zoneJsFetch')
+      .and.returnValue(Promise.resolve({ status: 200, type: 'cors' } as Response))
     const nativeFetch = window.fetch
 
     // Simulate Zone.js patching
@@ -448,7 +447,10 @@ describe('httpRequest Zone.js bypass', () => {
     ;(window as any).__zone_symbol__fetch = nativeFetch
     window.fetch = zoneJsFetchSpy
 
-    fetchKeepAliveStrategy(endpointBuilder, RECOMMENDED_REQUEST_BYTES_LIMIT, { data: '{"test":"data"}', bytesCount: 15 })
+    fetchKeepAliveStrategy(endpointBuilder, RECOMMENDED_REQUEST_BYTES_LIMIT, {
+      data: '{"test":"data"}',
+      bytesCount: 15,
+    })
     await interceptor.waitForAllFetchCalls()
 
     // The Zone.js patched fetch should NOT have been called

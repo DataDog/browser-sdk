@@ -1,21 +1,12 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import type { Context } from '../tools/serialisation/context'
+import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
 import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/experimentalFeatures'
-import { getGlobalObject } from '../tools/globalObject'
-import { getZoneJsOriginalValue } from '../tools/getZoneJsOriginalValue'
 import { Observable } from '../tools/observable'
 import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
-
-/**
- * Get the native fetch function, bypassing Zone.js patching.
- * This prevents unnecessary Angular change detection cycles when sending telemetry.
- */
-function getNativeFetch(): typeof fetch {
-  return getZoneJsOriginalValue(getGlobalObject(), 'fetch')
-}
 
 /**
  * beacon payload max queue size implementation is 64kb
@@ -158,7 +149,7 @@ export function fetchKeepAliveStrategy(
   if (canUseKeepAlive) {
     const fetchUrl = endpointBuilder.build('fetch-keepalive', payload)
 
-    getNativeFetch()(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' })
+    fetch(fetchUrl, { method: 'POST', body: payload.data, keepalive: true, mode: 'cors' })
       .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
       .catch(monitor(() => fetchStrategy(endpointBuilder, payload, onResponse)))
   } else {
@@ -173,7 +164,7 @@ export function fetchStrategy(
 ) {
   const fetchUrl = endpointBuilder.build('fetch', payload)
 
-  getNativeFetch()(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
+  fetch(fetchUrl, { method: 'POST', body: payload.data, mode: 'cors' })
     .then(monitor((response: Response) => onResponse?.({ status: response.status, type: response.type })))
     .catch(monitor(() => onResponse?.({ status: 0 })))
 }
