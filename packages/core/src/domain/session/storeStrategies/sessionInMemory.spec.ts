@@ -20,7 +20,7 @@ describe('session in memory strategy', () => {
   it('should set `isExpired=1` on session', () => {
     const inMemoryStorageStrategy = initInMemorySessionStoreStrategy()
     inMemoryStorageStrategy.persistSession(sessionState)
-    inMemoryStorageStrategy.expireSession()
+    inMemoryStorageStrategy.expireSession(sessionState)
     const session = inMemoryStorageStrategy.retrieveSession()
     expect(session).toEqual({ isExpired: '1' })
     expect(session).not.toBe(sessionState)
