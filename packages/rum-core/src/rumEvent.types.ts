@@ -1685,9 +1685,9 @@ export interface CommonProperties {
      */
     readonly brightness_level?: number
     /**
-     * Number of logical CPU cores available for scheduling on the device at runtime, as reported by the operating system.
+     * Number of device processors
      */
-    readonly logical_cpu_count?: number
+    readonly processor_count?: number
     /**
      * Total RAM in megabytes
      */
@@ -1695,7 +1695,7 @@ export interface CommonProperties {
     /**
      * Whether the device is considered a low RAM device (Android)
      */
-    readonly is_low_ram?: boolean
+    readonly is_low_ram_device?: boolean
     [k: string]: unknown
   }
   /**
