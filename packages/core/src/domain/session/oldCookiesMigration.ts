@@ -4,9 +4,9 @@ import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionStarted } from './sessionState'
 
-export const OLD_SESSION_COOKIE_NAME = '_atlas_sdk'
-export const OLD_RUM_COOKIE_NAME = '_atlas_sdk_r'
-export const OLD_LOGS_COOKIE_NAME = '_atlas_sdk_l'
+export const OLD_SESSION_COOKIE_NAME = '_dd'
+export const OLD_RUM_COOKIE_NAME = '_dd_r'
+export const OLD_LOGS_COOKIE_NAME = '_dd_l'
 
 // duplicate values to avoid dependency issues
 export const RUM_SESSION_KEY = 'atlas_sdk_rum'
