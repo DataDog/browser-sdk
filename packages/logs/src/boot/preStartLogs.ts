@@ -24,10 +24,15 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
+export type DoStartLogs = (
+  initConfiguration: LogsInitConfiguration,
+  configuration: LogsConfiguration
+) => StartLogsResult
+
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
+  doStartLogs: DoStartLogs
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 

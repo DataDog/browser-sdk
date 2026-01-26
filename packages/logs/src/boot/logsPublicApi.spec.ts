@@ -1,12 +1,10 @@
-import type { ContextManager, TimeStamp } from '@datadog/browser-core'
+import type { ContextManager } from '@datadog/browser-core'
 import { monitor, display, createContextManager, TrackingConsent } from '@datadog/browser-core'
-import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
-import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
-import type { StartLogs } from './startLogs'
+import type { StartLogs, StartLogsResult } from './startLogs'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', trackingConsent: TrackingConsent.GRANTED }
 
@@ -14,30 +12,10 @@ const mockSessionId = 'some-session-id'
 const getInternalContext = () => ({ session_id: mockSessionId })
 
 describe('logs entry', () => {
-  let handleLogSpy: jasmine.Spy<
-    (
-      logsMessage: LogsMessage,
-      logger: Logger,
-      commonContext: CommonContext | undefined,
-      date: TimeStamp | undefined
-    ) => void
-  >
-  let startLogs: jasmine.Spy<StartLogs>
-
-  function getLoggedMessage(index: number) {
-    const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
-    return { message, logger, savedCommonContext, savedDate }
-  }
-
-  beforeEach(() => {
-    handleLogSpy = jasmine.createSpy()
-    startLogs = jasmine.createSpy().and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext }))
-  })
-
   it('should add a `_setDebug` that works', () => {
     const displaySpy = spyOn(display, 'error')
-    const LOGS = makeLogsPublicApi(startLogs)
-    const setDebug: (debug: boolean) => void = (LOGS as any)._setDebug
+    const { logsPublicApi } = makeLogsPublicApiWithDefaults()
+    const setDebug: (debug: boolean) => void = (logsPublicApi as any)._setDebug
     expect(!!setDebug).toEqual(true)
 
     monitor(() => {
@@ -55,28 +33,29 @@ describe('logs entry', () => {
   })
 
   it('should define the public API with init', () => {
-    const LOGS = makeLogsPublicApi(startLogs)
-    expect(!!LOGS).toEqual(true)
-    expect(!!LOGS.init).toEqual(true)
+    const { logsPublicApi } = makeLogsPublicApiWithDefaults()
+    expect(!!logsPublicApi).toEqual(true)
+    expect(!!logsPublicApi.init).toEqual(true)
   })
 
   it('should provide sdk version', () => {
-    const LOGS = makeLogsPublicApi(startLogs)
-    expect(LOGS.version).toBe('test')
+    const { logsPublicApi } = makeLogsPublicApiWithDefaults()
+    expect(logsPublicApi.version).toBe('test')
   })
 
   describe('common context', () => {
-    let LOGS: LogsPublicApi
+    let logsPublicApi: LogsPublicApi
+    let startLogsSpy: jasmine.Spy<StartLogs>
 
     beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogs)
-      LOGS.init(DEFAULT_INIT_CONFIGURATION)
+      ;({ logsPublicApi, startLogsSpy } = makeLogsPublicApiWithDefaults())
+      logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
     })
 
     it('should have the current date, view and global context', () => {
-      LOGS.setGlobalContextProperty('foo', 'bar')
+      logsPublicApi.setGlobalContextProperty('foo', 'bar')
 
-      const getCommonContext = startLogs.calls.mostRecent().args[1]
+      const getCommonContext = startLogsSpy.calls.mostRecent().args[1]
       expect(getCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
@@ -87,15 +66,16 @@ describe('logs entry', () => {
   })
 
   describe('post start API usages', () => {
-    let LOGS: LogsPublicApi
+    let logsPublicApi: LogsPublicApi
+    let getLoggedMessage: ReturnType<typeof makeLogsPublicApiWithDefaults>['getLoggedMessage']
 
     beforeEach(() => {
-      LOGS = makeLogsPublicApi(startLogs)
-      LOGS.init(DEFAULT_INIT_CONFIGURATION)
+      ;({ logsPublicApi, getLoggedMessage } = makeLogsPublicApiWithDefaults())
+      logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
     })
 
     it('main logger logs a message', () => {
-      LOGS.logger.log('message')
+      logsPublicApi.logger.log('message')
 
       expect(getLoggedMessage(0).message).toEqual({
         message: 'message',
@@ -105,13 +85,13 @@ describe('logs entry', () => {
     })
 
     it('returns cloned initial configuration', () => {
-      expect(LOGS.getInitConfiguration()).toEqual(DEFAULT_INIT_CONFIGURATION)
-      expect(LOGS.getInitConfiguration()).not.toBe(DEFAULT_INIT_CONFIGURATION)
+      expect(logsPublicApi.getInitConfiguration()).toEqual(DEFAULT_INIT_CONFIGURATION)
+      expect(logsPublicApi.getInitConfiguration()).not.toBe(DEFAULT_INIT_CONFIGURATION)
     })
 
     describe('custom loggers', () => {
       it('logs a message', () => {
-        const logger = LOGS.createLogger('foo')
+        const logger = logsPublicApi.createLogger('foo')
         logger.log('message')
 
         expect(getLoggedMessage(0).message).toEqual({
@@ -122,14 +102,14 @@ describe('logs entry', () => {
       })
 
       it('should have a default configuration', () => {
-        const logger = LOGS.createLogger('foo')
+        const logger = logsPublicApi.createLogger('foo')
 
         expect(logger.getHandler()).toEqual(HandlerType.http)
         expect(logger.getLevel()).toEqual(StatusType.debug)
       })
 
       it('should be configurable', () => {
-        const logger = LOGS.createLogger('foo', {
+        const logger = logsPublicApi.createLogger('foo', {
           handler: HandlerType.console,
           level: StatusType.info,
         })
@@ -139,7 +119,7 @@ describe('logs entry', () => {
       })
 
       it('should be configurable with multiple handlers', () => {
-        const logger = LOGS.createLogger('foo', {
+        const logger = logsPublicApi.createLogger('foo', {
           handler: [HandlerType.console, HandlerType.http],
         })
 
@@ -147,13 +127,13 @@ describe('logs entry', () => {
       })
 
       it('should have their name in their context', () => {
-        const logger = LOGS.createLogger('foo')
+        const logger = logsPublicApi.createLogger('foo')
 
         expect(logger.getContext().logger).toEqual({ name: 'foo' })
       })
 
       it('could be initialized with a dedicated context', () => {
-        const logger = LOGS.createLogger('context', {
+        const logger = logsPublicApi.createLogger('context', {
           context: { foo: 'bar' },
         })
 
@@ -161,17 +141,17 @@ describe('logs entry', () => {
       })
 
       it('should be retrievable', () => {
-        const logger = LOGS.createLogger('foo')
-        expect(LOGS.getLogger('foo')).toEqual(logger)
-        expect(LOGS.getLogger('bar')).toBeUndefined()
+        const logger = logsPublicApi.createLogger('foo')
+        expect(logsPublicApi.getLogger('foo')).toEqual(logger)
+        expect(logsPublicApi.getLogger('bar')).toBeUndefined()
       })
     })
 
     describe('internal context', () => {
       it('should get the internal context', () => {
-        const LOGS = makeLogsPublicApi(startLogs)
-        LOGS.init(DEFAULT_INIT_CONFIGURATION)
-        expect(LOGS.getInternalContext()?.session_id).toEqual(mockSessionId)
+        const { logsPublicApi } = makeLogsPublicApiWithDefaults()
+        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+        expect(logsPublicApi.getInternalContext()?.session_id).toEqual(mockSessionId)
       })
     })
 
@@ -180,11 +160,11 @@ describe('logs entry', () => {
       let userContext: ContextManager
       beforeEach(() => {
         userContext = createContextManager('mock')
-        startLogs = jasmine
-          .createSpy()
-          .and.callFake(() => ({ handleLog: handleLogSpy, getInternalContext, userContext }))
-
-        logsPublicApi = makeLogsPublicApi(startLogs)
+        ;({ logsPublicApi } = makeLogsPublicApiWithDefaults({
+          startLogsResult: {
+            userContext,
+          },
+        }))
 
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
@@ -219,13 +199,11 @@ describe('logs entry', () => {
       let accountContext: ContextManager
       beforeEach(() => {
         accountContext = createContextManager('mock')
-        startLogs = jasmine.createSpy().and.callFake(() => ({
-          handleLog: handleLogSpy,
-          getInternalContext,
-          accountContext,
+        ;({ logsPublicApi } = makeLogsPublicApiWithDefaults({
+          startLogsResult: {
+            accountContext,
+          },
         }))
-
-        logsPublicApi = makeLogsPublicApi(startLogs)
 
         logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       })
@@ -256,3 +234,31 @@ describe('logs entry', () => {
     })
   })
 })
+
+function makeLogsPublicApiWithDefaults({
+  startLogsResult,
+}: {
+  startLogsResult?: Partial<StartLogsResult>
+} = {}) {
+  const handleLogSpy = jasmine.createSpy<StartLogsResult['handleLog']>()
+  const startLogsSpy = jasmine.createSpy<StartLogs>().and.callFake(() => ({
+    handleLog: handleLogSpy,
+    getInternalContext,
+    accountContext: {} as any,
+    globalContext: {} as any,
+    userContext: {} as any,
+    stop: () => undefined,
+    ...startLogsResult,
+  }))
+
+  function getLoggedMessage(index: number) {
+    const [message, logger, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+    return { message, logger, savedCommonContext, savedDate }
+  }
+
+  return {
+    startLogsSpy,
+    logsPublicApi: makeLogsPublicApi(startLogsSpy),
+    getLoggedMessage,
+  }
+}

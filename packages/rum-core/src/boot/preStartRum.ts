@@ -48,15 +48,17 @@ import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
+export type DoStartRum = (
+  configuration: RumConfiguration,
+  deflateWorker: DeflateWorker | undefined,
+  initialViewOptions: ViewOptions | undefined
+) => StartRumResult
+
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
-  doStartRum: (
-    configuration: RumConfiguration,
-    deflateWorker: DeflateWorker | undefined,
-    initialViewOptions?: ViewOptions
-  ) => StartRumResult
+  doStartRum: DoStartRum
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
 
