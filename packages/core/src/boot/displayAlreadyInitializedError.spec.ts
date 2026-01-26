@@ -7,7 +7,7 @@ describe('displayAlreadyInitializedError', () => {
     const displayErrorSpy = spyOn(display, 'error')
     displayAlreadyInitializedError('ATLAS_SDK_DD_RUM', {} as InitConfiguration)
     expect(displayErrorSpy).toHaveBeenCalledTimes(1)
-    expect(displayErrorSpy).toHaveBeenCalledWith('DD_RUM is already initialized.')
+    expect(displayErrorSpy).toHaveBeenCalledWith('ATLAS_SDK_DD_RUM is already initialized.')
   })
 
   it('should not display an error if the "silentMultipleInit" option is used', () => {

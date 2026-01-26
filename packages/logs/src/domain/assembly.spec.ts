@@ -48,13 +48,13 @@ describe('startLogsAssembly', () => {
     hooks = createHooks()
     startRUMInternalContext(hooks)
     startLogsAssembly(configuration, lifeCycle, hooks, () => COMMON_CONTEXT, noop)
-    window.DD_RUM = {
+    window.ATLAS_SDK_DD_RUM = {
       getInternalContext: noop,
     }
   })
 
   afterEach(() => {
-    delete window.DD_RUM
+    delete window.ATLAS_SDK_DD_RUM
     serverLogs = []
   })
 
@@ -84,7 +84,7 @@ describe('startLogsAssembly', () => {
 
   describe('contexts inclusion', () => {
     it('should include message context', () => {
-      spyOn(window.DD_RUM!, 'getInternalContext').and.returnValue({
+      spyOn(window.ATLAS_SDK_DD_RUM!, 'getInternalContext').and.returnValue({
         view: { url: 'http://from-rum-context.com', id: 'view-id' },
       })
 
@@ -133,7 +133,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('should include rum internal context related to the error time', () => {
-      window.DD_RUM = {
+      window.ATLAS_SDK_DD_RUM = {
         getInternalContext(startTime) {
           return { foo: startTime === 1234 ? 'b' : 'a' }
         },
@@ -147,7 +147,7 @@ describe('startLogsAssembly', () => {
     })
 
     it('should include RUM context', () => {
-      window.DD_RUM = {
+      window.ATLAS_SDK_DD_RUM = {
         getInternalContext() {
           return { view: { url: 'http://from-rum-context.com', id: 'view-id' } }
         },

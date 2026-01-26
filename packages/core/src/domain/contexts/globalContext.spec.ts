@@ -70,7 +70,7 @@ describe('global context across pages', () => {
     globalContext.setContext({ id: '123' })
 
     expect(globalContext.getContext()).toEqual({ id: '123' })
-    expect(localStorage.getItem('_dd_c_some_product_key_2')).toBeNull()
+    expect(localStorage.getItem('_atlas_sdk_c_some_product_key_2')).toBeNull()
   })
 
   it('when enabled, should maintain the global context in local storage', () => {
@@ -83,6 +83,6 @@ describe('global context across pages', () => {
 
     globalContext.setContext({ id: 'foo', qux: 'qix' })
     expect(globalContext.getContext()).toEqual({ id: 'foo', qux: 'qix' })
-    expect(localStorage.getItem('_dd_c_some_product_key_2')).toBe('{"id":"foo","qux":"qix"}')
+    expect(localStorage.getItem('_atlas_sdk_c_some_product_key_2')).toBe('{"id":"foo","qux":"qix"}')
   })
 })

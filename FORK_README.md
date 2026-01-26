@@ -16,13 +16,13 @@ The challenge: When multiple applications on the same page try to use the standa
 // Ariel's DataDog (standard SDK)
 window.DD_RUM.init({
   applicationId: 'ariel-app-id',
-  service: 'ariel'
+  service: 'ariel',
 })
 
 // Atlas tries to use DataDog too
 window.DD_RUM.init({
   applicationId: 'atlas-app-id',
-  service: 'atlas'
+  service: 'atlas',
 })
 // ❌ This overwrites Ariel's instance!
 // ❌ Session tracking gets mixed between the two
@@ -37,13 +37,13 @@ This fork renames all DataDog globals to use the `ATLAS_SDK` prefix, allowing At
 // Ariel's DataDog (standard SDK)
 window.DD_RUM.init({
   applicationId: 'ariel-app-id',
-  service: 'ariel'
+  service: 'ariel',
 })
 
 // Atlas DataDog (this fork)
 window.ATLAS_SDK_DD_RUM.init({
   applicationId: 'atlas-app-id',
-  service: 'atlas'
+  service: 'atlas',
 })
 // ✅ Both instances coexist peacefully
 // ✅ Separate session tracking
@@ -55,6 +55,7 @@ window.ATLAS_SDK_DD_RUM.init({
 All DataDog globals and storage keys have been renamed with the `ATLAS_SDK` prefix:
 
 ### Globals
+
 - `window.DD_RUM` → `window.ATLAS_SDK_DD_RUM`
 - `window.DD_LOGS` → `window.ATLAS_SDK_DD_LOGS`
 - `window.DD_RUM_SYNTHETICS` → `window.ATLAS_SDK_DD_RUM_SYNTHETICS`
@@ -62,16 +63,17 @@ All DataDog globals and storage keys have been renamed with the `ATLAS_SDK` pref
 - `window.DatadogEventBridge` → `window.AtlasSDKDatadogEventBridge`
 
 ### Storage Keys
+
 - `_dd_s` → `_atlas_sdk_s` (session cookie)
 - `_dd_c` → `_atlas_sdk_c` (context storage prefix)
 - `_dd_test_` → `_atlas_sdk_test_` (localStorage test)
 
 ### Product Keys
+
 - `rum` → `atlas-sdk-rum`
 - `logs` → `atlas-sdk-logs`
 
 This ensures complete isolation between Atlas's DataDog instance and any other DataDog instances on the same page.
-
 
 ## Known Limitations
 
@@ -90,11 +92,13 @@ You may need to add filtering in your `beforeSend` hooks to prevent cross-pollut
 **Must be built with Node.js v22+ (we used v25.3.0)**
 
 Check your Node version:
+
 ```bash
 node --version  # Should be v22.x or higher
 ```
 
 If you need to switch Node versions:
+
 ```bash
 nvm use 25.3.0  # or the version specified in package.json
 ```
@@ -127,7 +131,6 @@ yarn test
 git push origin main
 ```
 
-
 ### Automated Rename (if needed)
 
 The renames follow a consistent pattern. If you need to reapply them after a merge, you can use find/replace:
@@ -137,7 +140,6 @@ The renames follow a consistent pattern. If you need to reapply them after a mer
 - `'_dd_s'` → `'_atlas_sdk_s'`
 - `'_dd_c'` → `'_atlas_sdk_c'`
 - etc.
-
 
 ## Links
 

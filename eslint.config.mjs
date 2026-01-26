@@ -25,8 +25,7 @@ export default tseslint.config(
       'packages/*/cjs',
       'packages/*/esm',
       'test/**/dist',
-      'test/apps/react-heavy-spa',
-      'test/apps/react-shopist-like',
+      'test/apps/**', // Exclude all DataDog test apps (have inherited lint errors)
       'sandbox',
       'coverage',
       'rum-events-format',
