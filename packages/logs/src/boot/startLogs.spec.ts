@@ -41,7 +41,7 @@ interface Rum {
 }
 declare global {
   interface Window {
-    DD_RUM?: Rum
+    ATLAS_SDK_DD_RUM?: Rum
     MV_SDK_ATLAS_SDK_DD_RUM_SYNTHETICS?: Rum
   }
 }
@@ -87,7 +87,7 @@ describe('logs', () => {
   })
 
   afterEach(() => {
-    delete window.DD_RUM
+    delete window.ATLAS_SDK_DD_RUM
     stopSessionManager()
   })
 
@@ -287,7 +287,7 @@ describe('logs', () => {
 
     it('RUM context should take precedence over global context', () => {
       const { handleLog, logger, globalContext } = startLogsWithDefaults()
-      window.DD_RUM = {
+      window.ATLAS_SDK_DD_RUM = {
         getInternalContext: () => ({ view: { url: 'from-rum-context' } }),
       }
       globalContext.setContext({ view: { url: 'from-global-context' } })

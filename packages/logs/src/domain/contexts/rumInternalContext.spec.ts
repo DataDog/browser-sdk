@@ -28,7 +28,7 @@ describe('startRUMInternalContext', () => {
     })
 
     it('returns undefined if the global variable does not have a `getInternalContext` method', () => {
-      window.DD_RUM = {} as any
+      window.ATLAS_SDK_DD_RUM = {} as any
       const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         startTime: 0 as RelativeTime,
       })
@@ -36,7 +36,7 @@ describe('startRUMInternalContext', () => {
     })
 
     it('returns the internal context from the `getInternalContext` method', () => {
-      window.DD_RUM = {
+      window.ATLAS_SDK_DD_RUM = {
         getInternalContext: () => ({ foo: 'bar' }),
       }
       const defaultLogsEventAttributes = hooks.triggerHook(HookNames.Assemble, {
@@ -64,7 +64,7 @@ describe('startRUMInternalContext', () => {
 
   describe('assemble telemetry hook', () => {
     it('should set internal context', () => {
-      window.DD_RUM = {
+      window.ATLAS_SDK_DD_RUM = {
         getInternalContext: () => ({ application_id: '123', view: { id: '456' }, user_action: { id: '789' } }),
       }
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
@@ -79,7 +79,7 @@ describe('startRUMInternalContext', () => {
     })
 
     it('should not set internal context if the RUM instance is not present', () => {
-      window.DD_RUM = {
+      window.ATLAS_SDK_DD_RUM = {
         getInternalContext: () => undefined,
       }
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
