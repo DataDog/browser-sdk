@@ -8,7 +8,7 @@ import {
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { createFakeTelemetryObject, mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
@@ -1016,7 +1016,8 @@ function makeRumPublicApiWithDefaults({
       startRumSpy,
       { ...noopRecorderApi, ...recorderApi },
       { ...noopProfilerApi, ...profilerApi },
-      rumPublicApiOptions
+      rumPublicApiOptions,
+      createFakeTelemetryObject
     ),
   }
 }

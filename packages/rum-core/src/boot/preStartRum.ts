@@ -60,7 +60,8 @@ export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
-  doStartRum: DoStartRum
+  doStartRum: DoStartRum,
+  startTelemetryImpl = startTelemetry
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
 
@@ -158,7 +159,7 @@ export function createPreStartStrategy(
 
     cachedConfiguration = configuration
 
-    telemetry = startTelemetry(TelemetryService.RUM, configuration, hooks)
+    telemetry = startTelemetryImpl(TelemetryService.RUM, configuration, hooks)
 
     // Instrument fetch to track network requests
     // This is needed in case the consent is not granted and some customer

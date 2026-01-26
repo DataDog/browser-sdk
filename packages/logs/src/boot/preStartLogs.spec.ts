@@ -1,4 +1,10 @@
-import { callbackAddsInstrumentation, type Clock, mockClock, mockEventBridge } from '@datadog/browser-core/test'
+import {
+  callbackAddsInstrumentation,
+  type Clock,
+  mockClock,
+  mockEventBridge,
+  createFakeTelemetryObject,
+} from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   ONE_SECOND,
@@ -255,7 +261,12 @@ function createPreStartStrategyWithDefaults({
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
 
   return {
-    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),
+    strategy: createPreStartStrategy(
+      getCommonContextSpy,
+      trackingConsentState,
+      doStartLogsSpy,
+      createFakeTelemetryObject
+    ),
     handleLogSpy,
     doStartLogsSpy,
     getCommonContextSpy,

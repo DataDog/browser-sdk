@@ -2,6 +2,7 @@ import type { ContextManager } from '@datadog/browser-core'
 import { monitor, display, createContextManager, TrackingConsent } from '@datadog/browser-core'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
+import { createFakeTelemetryObject } from '../../../core/test'
 import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs, StartLogsResult } from './startLogs'
@@ -258,7 +259,7 @@ function makeLogsPublicApiWithDefaults({
 
   return {
     startLogsSpy,
-    logsPublicApi: makeLogsPublicApi(startLogsSpy),
+    logsPublicApi: makeLogsPublicApi(startLogsSpy, createFakeTelemetryObject),
     getLoggedMessage,
   }
 }

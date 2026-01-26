@@ -19,6 +19,7 @@ import {
   mockEventBridge,
   mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
+  createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -823,7 +824,8 @@ function createPreStartStrategyWithDefaults({
       rumPublicApiOptions,
       trackingConsentState,
       createCustomVitalsState(),
-      doStartRumSpy
+      doStartRumSpy,
+      createFakeTelemetryObject
     ),
     doStartRumSpy,
   }

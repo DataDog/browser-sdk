@@ -1,4 +1,12 @@
-import type { TrackingConsent, PublicApi, ContextManager, Account, Context, User } from '@datadog/browser-core'
+import type {
+  TrackingConsent,
+  PublicApi,
+  ContextManager,
+  Account,
+  Context,
+  User,
+  startTelemetry,
+} from '@datadog/browser-core'
 import {
   ContextManagerMethod,
   CustomerContextKey,
@@ -265,7 +273,7 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
+export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?: typeof startTelemetry): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
 
@@ -283,7 +291,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)
       return startLogsResult
-    }
+    },
+    startTelemetryImpl
   )
 
   const getStrategy = () => strategy

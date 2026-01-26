@@ -34,7 +34,8 @@ export type DoStartLogs = (
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: DoStartLogs
+  doStartLogs: DoStartLogs,
+  startTelemetryImpl = startTelemetry
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
@@ -93,7 +94,7 @@ export function createPreStartStrategy(
 
       cachedConfiguration = configuration
 
-      startTelemetry(TelemetryService.LOGS, configuration, hooks)
+      startTelemetryImpl(TelemetryService.LOGS, configuration, hooks)
 
       // Instrument fetch to track network requests
       // This is needed in case the consent is not granted and some customer
