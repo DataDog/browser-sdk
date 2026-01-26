@@ -6,12 +6,12 @@ import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
-import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts } from './actionCollection'
 import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
+import type { ActionContexts } from './trackAction'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
@@ -124,6 +124,9 @@ describe('actionCollection', () => {
           name: 'foo',
         },
         type: ActionType.CUSTOM,
+        frustration: {
+          type: [],
+        },
       },
       date: jasmine.any(Number),
       type: RumEventType.ACTION,
@@ -174,7 +177,7 @@ describe('actionCollection', () => {
         const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType,
           startTime: 0 as RelativeTime,
-        })
+        } as AssembleHookParams)
 
         expect(defaultRumEventAttributes).toEqual({ type: eventType, action: { id: actionId } })
       })
@@ -186,7 +189,7 @@ describe('actionCollection', () => {
         const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType,
           startTime: 0 as RelativeTime,
-        })
+        } as AssembleHookParams)
 
         expect(defaultRumEventAttributes).toEqual(undefined)
       })
@@ -200,7 +203,7 @@ describe('actionCollection', () => {
         eventType: RumEventType.LONG_TASK,
         startTime: longTaskStartTime,
         duration: 50 as Duration,
-      })
+      } as AssembleHookParams)
 
       const [correctedStartTime] = findActionIdSpy.calls.mostRecent().args
       expect(correctedStartTime).toEqual(addDuration(longTaskStartTime, LONG_TASK_START_TIME_CORRECTION))

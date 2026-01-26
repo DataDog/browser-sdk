@@ -1,7 +1,7 @@
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks } from '@datadog/browser-core'
+import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks, ExperimentalFeature } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock } from '@datadog/browser-core/test'
+import { mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
@@ -36,6 +36,8 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   hooks: {} as any,
   telemetry: {} as any,
   addOperationStepVital: () => undefined,
+  startAction: () => undefined,
+  stopAction: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -753,6 +755,97 @@ describe('rum public api', () => {
         description: 'description-value',
         context: { foo: 'bar' },
       })
+    })
+  })
+
+  describe('startAction / stopAction', () => {
+    it('should call startAction and stopAction on the strategy', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+
+      const startActionSpy = jasmine.createSpy()
+      const stopActionSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          startAction: startActionSpy,
+          stopAction: stopActionSpy,
+        }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startAction('purchase', {
+        type: ActionType.CUSTOM,
+        context: { cart: 'abc' },
+      })
+      rumPublicApi.stopAction('purchase', {
+        context: { total: 100 },
+      })
+
+      expect(startActionSpy).toHaveBeenCalledWith(
+        'purchase',
+        jasmine.objectContaining({
+          type: ActionType.CUSTOM,
+          context: { cart: 'abc' },
+        })
+      )
+      expect(stopActionSpy).toHaveBeenCalledWith(
+        'purchase',
+        jasmine.objectContaining({
+          context: { total: 100 },
+        })
+      )
+    })
+
+    it('should sanitize startAction and stopAction inputs', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+
+      const startActionSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          startAction: startActionSpy,
+        }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startAction('action_name', {
+        type: ActionType.CUSTOM,
+        context: { count: 123, nested: { foo: 'bar' } } as any,
+        actionKey: 'action_key',
+      })
+
+      expect(startActionSpy.calls.argsFor(0)[1]).toEqual(
+        jasmine.objectContaining({
+          type: ActionType.CUSTOM,
+          context: { count: 123, nested: { foo: 'bar' } },
+          actionKey: 'action_key',
+        })
+      )
+    })
+
+    it('should not call startAction/stopAction when feature flag is disabled', () => {
+      const startActionSpy = jasmine.createSpy()
+      const stopActionSpy = jasmine.createSpy()
+      const rumPublicApi = makeRumPublicApi(
+        () => ({
+          ...noopStartRum(),
+          startAction: startActionSpy,
+          stopAction: stopActionSpy,
+        }),
+        noopRecorderApi,
+        noopProfilerApi
+      )
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startAction('purchase', { type: ActionType.CUSTOM })
+      rumPublicApi.stopAction('purchase')
+
+      expect(startActionSpy).not.toHaveBeenCalled()
+      expect(stopActionSpy).not.toHaveBeenCalled()
     })
   })
 

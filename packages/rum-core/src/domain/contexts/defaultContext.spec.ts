@@ -2,7 +2,7 @@ import { mockClock, mockEventBridge } from '@datadog/browser-core/test'
 import { HookNames, timeStampNow } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
-import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startDefaultContext } from './defaultContext'
 
@@ -20,7 +20,7 @@ describe('startDefaultContext', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual({
         type: 'view',
@@ -41,14 +41,14 @@ describe('startDefaultContext', () => {
       const eventWithoutEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      }) as DefaultRumEventAttributes
+      } as AssembleHookParams) as DefaultRumEventAttributes
 
       mockEventBridge()
 
       const eventWithEventBridge = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      }) as DefaultRumEventAttributes
+      } as AssembleHookParams) as DefaultRumEventAttributes
 
       expect(eventWithEventBridge._dd!.browser_sdk_version).toBeDefined()
       expect(eventWithoutEventBridge._dd!.browser_sdk_version).toBeUndefined()
@@ -64,7 +64,7 @@ describe('startDefaultContext', () => {
       const event = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      }) as DefaultRumEventAttributes
+      } as AssembleHookParams) as DefaultRumEventAttributes
 
       expect(event._dd!.configuration!.session_sample_rate).toBe(10)
       expect(event._dd!.configuration!.session_replay_sample_rate).toBe(20)

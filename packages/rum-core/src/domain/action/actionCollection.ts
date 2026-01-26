@@ -1,30 +1,24 @@
-import type { ClocksState, Context, Duration, Observable } from '@datadog/browser-core'
-import { noop, combine, toServerDuration, generateUUID, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
+import type { Duration, Observable } from '@datadog/browser-core'
+import { noop, toServerDuration, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
-import { ActionType, RumEventType } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
-import type { RumActionEventDomainContext } from '../../domainContext.types'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts, ClickAction } from './trackClickActions'
 import { trackClickActions } from './trackClickActions'
-
-export type { ActionContexts }
-
-export interface CustomAction {
-  type: typeof ActionType.CUSTOM
-  name: string
-  startClocks: ClocksState
-  context?: Context
-  handlingStack?: string
-}
+import type { ClickAction } from './trackClickActions'
+import { startActionTracker } from './trackAction'
+import type { ActionContexts } from './trackAction'
+import { trackManualActions } from './trackManualActions'
+import type { ManualAction } from './trackManualActions'
 
 export type AutoAction = ClickAction
 
 export const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
+
 export function startActionCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
@@ -32,12 +26,35 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
+  // Shared action tracker for both click and manual actions
+  const actionTracker = startActionTracker(lifeCycle)
+
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
     (action) => {
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
     }
   )
+
+  let stopClickActions: () => void = noop
+
+  if (configuration.trackUserInteractions) {
+    ;({ stop: stopClickActions } = trackClickActions(
+      lifeCycle,
+      domMutationObservable,
+      windowOpenObservable,
+      configuration,
+      actionTracker
+    ))
+  }
+
+  const manualActions = trackManualActions(lifeCycle, actionTracker, (action) => {
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
+  })
+
+  const actionContexts: ActionContexts = {
+    findActionId: actionTracker.findActionId,
+  }
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     if (
@@ -75,82 +92,58 @@ export function startActionCollection(
     })
   )
 
-  let actionContexts: ActionContexts = { findActionId: noop as () => undefined }
-  let stop: () => void = noop
-
-  if (configuration.trackUserInteractions) {
-    ;({ actionContexts, stop } = trackClickActions(
-      lifeCycle,
-      domMutationObservable,
-      windowOpenObservable,
-      configuration
-    ))
-  }
-
   return {
-    addAction: (action: CustomAction) => {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
-    },
+    addAction: manualActions.addAction,
+    startAction: manualActions.startAction,
+    stopAction: manualActions.stopAction,
     actionContexts,
     stop: () => {
       unsubscribeAutoAction()
-      stop()
+      stopClickActions()
+      manualActions.stop()
+      actionTracker.stop()
     },
   }
 }
 
-function processAction(action: AutoAction | CustomAction): RawRumEventCollectedData<RawRumActionEvent> {
-  const autoActionProperties = isAutoAction(action)
-    ? {
-        action: {
-          id: action.id,
-          loading_time: discardNegativeDuration(toServerDuration(action.duration)),
-          frustration: {
-            type: action.frustrationTypes,
-          },
-          error: {
-            count: action.counts.errorCount,
-          },
-          long_task: {
-            count: action.counts.longTaskCount,
-          },
-          resource: {
-            count: action.counts.resourceCount,
-          },
-        },
-        _dd: {
-          action: {
-            target: action.target,
-            position: action.position,
-            name_source: action.nameSource,
-          },
-        },
-      }
-    : {
-        context: action.context,
-      }
-  const actionEvent: RawRumActionEvent = combine(
-    {
-      action: { id: generateUUID(), target: { name: action.name }, type: action.type },
-      date: action.startClocks.timeStamp,
-      type: RumEventType.ACTION,
-    },
-    autoActionProperties
-  )
-
-  const duration = isAutoAction(action) ? action.duration : undefined
-  const domainContext: RumActionEventDomainContext = isAutoAction(action)
-    ? { events: action.events }
-    : { handlingStack: action.handlingStack }
+function processAction(action: AutoAction | ManualAction): RawRumEventCollectedData<RawRumActionEvent> {
+  const isAuto = isAutoAction(action)
+  const loadingTime = discardNegativeDuration(toServerDuration(action.duration))
 
   return {
-    rawRumEvent: actionEvent,
-    duration,
+    rawRumEvent: {
+      type: RumEventType.ACTION,
+      date: action.startClocks.timeStamp,
+      action: {
+        id: action.id,
+        target: { name: action.name },
+        type: action.type,
+        ...(loadingTime !== undefined && { loading_time: loadingTime }),
+        ...(action.counts && {
+          error: { count: action.counts.errorCount },
+          long_task: { count: action.counts.longTaskCount },
+          resource: { count: action.counts.resourceCount },
+        }),
+        frustration: { type: action.frustrationTypes },
+      },
+      ...(isAuto
+        ? {
+            _dd: {
+              action: {
+                target: action.target,
+                position: action.position,
+                name_source: action.nameSource,
+              },
+            },
+          }
+        : { context: action.context }),
+    },
+    duration: action.duration,
     startTime: action.startClocks.relative,
-    domainContext,
+    domainContext: isAuto ? { events: action.events } : { handlingStack: action.handlingStack },
   }
 }
 
-function isAutoAction(action: AutoAction | CustomAction): action is AutoAction {
-  return action.type !== ActionType.CUSTOM
+function isAutoAction(action: AutoAction | ManualAction): action is AutoAction {
+  return 'events' in action
 }

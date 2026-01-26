@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
-import { beforeEach, before, describe, it, mock, type Mock } from 'node:test'
+import { beforeEach, before, after, describe, it, mock, type Mock } from 'node:test'
 import { browserSdkVersion } from '../lib/browserSdkVersion.ts'
 import type { CommandDetail } from './lib/testHelpers.ts'
 import { mockModule, mockCommandImplementation, mockFetchHandlingError } from './lib/testHelpers.ts'
@@ -14,13 +14,18 @@ describe('deploy-prod-dc', () => {
 
   let commands: CommandDetail[]
   let checkTelemetryErrorsCalls: Array<{ version: string; datacenters: string[] }>
+  let mockTime: number
+  const originalDateNow = Date.now
 
   before(async () => {
     mockFetchHandlingError(fetchHandlingErrorMock)
     await mockModule(path.resolve(import.meta.dirname, '../lib/command.ts'), { command: commandMock })
     await mockModule(path.resolve(import.meta.dirname, '../lib/executionUtils.ts'), {
       fetchHandlingError: fetchHandlingErrorMock,
-      timeout: () => Promise.resolve(),
+      timeout: (ms: number) => {
+        mockTime += ms
+        return Promise.resolve()
+      },
     })
     await mockModule(path.resolve(import.meta.dirname, './lib/checkTelemetryErrors.ts'), {
       checkTelemetryErrors: checkTelemetryErrorsMock,
@@ -34,6 +39,15 @@ describe('deploy-prod-dc', () => {
       checkTelemetryErrorsCalls.push({ version, datacenters })
       return Promise.resolve()
     })
+
+    // Mock time control
+    mockTime = Date.UTC(2026, 0, 16, 12, 0, 0)
+    Date.now = () => mockTime
+  })
+
+  after(() => {
+    // Restore original Date.now
+    Date.now = originalDateNow
   })
 
   it('should deploy a given datacenter', async () => {

@@ -3,7 +3,7 @@ import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock, noopRecorderApi } from '../../../test'
 import { SessionType } from '../rumSessionManager'
-import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
@@ -46,7 +46,7 @@ describe('session context', () => {
     const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'action',
       startTime: 0 as RelativeTime,
-    })
+    } as AssembleHookParams)
 
     expect(defaultRumEventAttributes).toEqual({
       type: 'action',
@@ -62,13 +62,13 @@ describe('session context', () => {
     const eventWithHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'action',
       startTime: 0 as RelativeTime,
-    }) as DefaultRumEventAttributes
+    } as AssembleHookParams) as DefaultRumEventAttributes
 
     isRecordingSpy.and.returnValue(false)
     const eventWithoutHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'action',
       startTime: 0 as RelativeTime,
-    }) as DefaultRumEventAttributes
+    } as AssembleHookParams) as DefaultRumEventAttributes
 
     expect(getReplayStatsSpy).not.toHaveBeenCalled()
     expect(isRecordingSpy).toHaveBeenCalled()
@@ -81,13 +81,13 @@ describe('session context', () => {
     const eventWithHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as DefaultRumEventAttributes
+    } as AssembleHookParams) as DefaultRumEventAttributes
 
     getReplayStatsSpy.and.returnValue(undefined)
     const eventWithoutHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as DefaultRumEventAttributes
+    } as AssembleHookParams) as DefaultRumEventAttributes
 
     expect(getReplayStatsSpy).toHaveBeenCalled()
     expect(isRecordingSpy).not.toHaveBeenCalled()
@@ -100,12 +100,12 @@ describe('session context', () => {
     const eventWithActiveSession = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as DefaultRumEventAttributes
+    } as AssembleHookParams) as DefaultRumEventAttributes
     findViewSpy.and.returnValue({ ...fakeView, sessionIsActive: false })
     const eventWithoutActiveSession = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as DefaultRumEventAttributes
+    } as AssembleHookParams) as DefaultRumEventAttributes
 
     expect(eventWithActiveSession.session!.is_active).toBe(undefined)
     expect(eventWithoutActiveSession.session!.is_active).toBe(false)
@@ -116,13 +116,13 @@ describe('session context', () => {
     const eventSampleForReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as DefaultRumEventAttributes
+    } as AssembleHookParams) as DefaultRumEventAttributes
 
     sessionManager.setTrackedWithoutSessionReplay()
     const eventSampledOutForReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    }) as DefaultRumEventAttributes
+    } as AssembleHookParams) as DefaultRumEventAttributes
 
     expect(eventSampleForReplay.session!.sampled_for_replay).toBe(true)
     expect(eventSampledOutForReplay.session!.sampled_for_replay).toBe(false)
@@ -133,7 +133,7 @@ describe('session context', () => {
     const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    })
+    } as AssembleHookParams)
 
     expect(defaultRumEventAttributes).toBe(DISCARDED)
   })
@@ -143,7 +143,7 @@ describe('session context', () => {
     const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
-    })
+    } as AssembleHookParams)
 
     expect(defaultRumEventAttributes).toBe(DISCARDED)
   })

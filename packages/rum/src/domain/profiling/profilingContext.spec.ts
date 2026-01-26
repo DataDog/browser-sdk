@@ -1,6 +1,7 @@
 import { RumEventType, createHooks } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
+import type { AssembleHookParams } from '@datadog/browser-rum-core/src/domain/hooks'
 import { startProfilingContext } from './profilingContext'
 
 const relativeTime: RelativeTime = 1000 as RelativeTime
@@ -16,7 +17,7 @@ describe('Profiling Context', () => {
       const eventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType,
         startTime: relativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(eventAttributes).toEqual(
         jasmine.objectContaining({
@@ -31,7 +32,7 @@ describe('Profiling Context', () => {
       const eventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType,
         startTime: relativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(eventAttributes).toBeUndefined()
     }

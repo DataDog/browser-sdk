@@ -19,7 +19,7 @@ export function createRequestRegistry(lifeCycle: LifeCycle): RequestRegistry {
   const subscription = lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, (request) => {
     requests.add(request)
     if (requests.size > MAX_REQUESTS) {
-      // monitor-until: 2026-01-01, after early request collection GA
+      // monitor-until: 2026-06-01, after early request collection is the default in v7
       addTelemetryDebug('Too many requests')
       requests.delete(requests.values().next().value!)
     }
