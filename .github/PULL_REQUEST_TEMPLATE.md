@@ -18,6 +18,5 @@
 - [ ] Tested on staging
 - [ ] Added unit tests for this change.
 - [ ] Added e2e/integration tests for this change.
-- [ ] Updated documentation and/or relevant AGENTS.md file
 
 <!-- Also, please read the contribution guidelines: https://github.com/DataDog/browser-sdk/blob/main/CONTRIBUTING.md -->
