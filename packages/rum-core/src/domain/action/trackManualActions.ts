@@ -1,9 +1,9 @@
 import type { ClocksState, Context, Duration } from '@datadog/browser-core'
-import { clocksNow, combine, generateUUID } from '@datadog/browser-core'
+import { clocksNow, generateUUID } from '@datadog/browser-core'
 import type { ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
-import { createManualEventLifecycle } from '../manualEventLifecycle'
+import { createManualEventLifecycle } from '../manualEventRegistry'
 import type { ActionCounts, ActionTracker, TrackedAction } from './trackAction'
 
 export interface ActionOptions {
@@ -55,7 +55,7 @@ export function trackManualActions(
     const lookupKey = options.actionKey ?? name
     const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-    lifecycle.start(lookupKey, {
+    lifecycle.add(lookupKey, startClocks, {
       name,
       type: options.type,
       context: options.context,
@@ -65,7 +65,15 @@ export function trackManualActions(
 
   function stopManualAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
-    const activeAction = lifecycle.remove(lookupKey)
+    const stopData: Partial<ManualActionStart> = {}
+    if (options.type !== undefined) {
+      stopData.type = options.type
+    }
+    if (options.context !== undefined) {
+      stopData.context = options.context
+    }
+
+    const activeAction = lifecycle.remove(lookupKey, stopClocks, stopData)
 
     if (!activeAction) {
       return
@@ -81,10 +89,10 @@ export function trackManualActions(
     const manualAction: ManualAction = {
       id: activeAction.trackedAction.id,
       name: activeAction.name,
-      type: (options.type ?? activeAction.type) || ActionTypeEnum.CUSTOM,
-      startClocks: activeAction.trackedAction.startClocks,
-      duration: activeAction.trackedAction.duration,
-      context: combine(activeAction.context, options.context),
+      type: activeAction.type || ActionTypeEnum.CUSTOM,
+      startClocks: activeAction.startClocks,
+      duration: activeAction.duration,
+      context: activeAction.context,
       counts: activeAction.trackedAction.counts,
       frustrationTypes,
     }

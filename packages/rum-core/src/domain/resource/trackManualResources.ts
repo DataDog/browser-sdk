@@ -1,17 +1,10 @@
-import type { ClocksState, Context, Duration, ResourceType } from '@datadog/browser-core'
-import {
-  clocksNow,
-  combine,
-  elapsed,
-  generateUUID,
-  ResourceType as ResourceTypeEnum,
-  toServerDuration,
-} from '@datadog/browser-core'
+import type { Context, ResourceType } from '@datadog/browser-core'
+import { clocksNow, generateUUID, ResourceType as ResourceTypeEnum, toServerDuration } from '@datadog/browser-core'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
+import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { createManualEventLifecycle } from '../manualEventLifecycle'
+import { createManualEventLifecycle } from '../manualEventRegistry'
 
 export interface ResourceOptions {
   /**
@@ -54,23 +47,11 @@ export interface ResourceStopOptions {
   resourceKey?: string
 }
 
-export interface ManualResource {
-  id: string
-  url: string
-  type: ResourceType
-  method?: string
-  startClocks: ClocksState
-  duration: Duration
-  statusCode?: number
-  context?: Context
-}
-
 interface ManualResourceStart {
   url: string
   type?: ResourceType
   method?: string
   context?: Context
-  startClocks: ClocksState
 }
 
 export function trackManualResources(lifeCycle: LifeCycle) {
@@ -79,37 +60,48 @@ export function trackManualResources(lifeCycle: LifeCycle) {
   function startManualResource(url: string, options: ResourceOptions = {}, startClocks = clocksNow()) {
     const lookupKey = options.resourceKey ?? url
 
-    lifecycle.start(lookupKey, {
+    lifecycle.add(lookupKey, startClocks, {
       url,
       type: options.type,
       method: options.method,
       context: options.context,
-      startClocks,
     })
   }
 
   function stopManualResource(url: string, options: ResourceStopOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.resourceKey ?? url
-    const activeResource = lifecycle.remove(lookupKey)
+    const stopData: Partial<ManualResourceStart> = {}
+    if (options.context !== undefined) {
+      stopData.context = options.context
+    }
+
+    const activeResource = lifecycle.remove(lookupKey, stopClocks, stopData)
 
     if (!activeResource) {
       return
     }
 
-    const duration = elapsed(activeResource.startClocks.relative, stopClocks.relative)
-
-    const manualResource: ManualResource = {
-      id: generateUUID(),
-      url: activeResource.url,
-      type: activeResource.type || ResourceTypeEnum.OTHER,
-      method: activeResource.method,
-      startClocks: activeResource.startClocks,
-      duration,
-      statusCode: options.statusCode,
-      context: combine(activeResource.context, options.context),
+    const rawRumEvent: RawRumResourceEvent = {
+      date: activeResource.startClocks.timeStamp,
+      type: RumEventType.RESOURCE,
+      resource: {
+        id: generateUUID(),
+        type: activeResource.type || ResourceTypeEnum.OTHER,
+        url: activeResource.url,
+        duration: toServerDuration(activeResource.duration),
+        method: activeResource.method,
+        status_code: options.statusCode,
+      },
+      _dd: {},
+      context: activeResource.context,
     }
 
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processResource(manualResource))
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+      rawRumEvent,
+      startTime: activeResource.startClocks.relative,
+      duration: activeResource.duration,
+      domainContext: { isManual: true as const },
+    })
   }
 
   function stop() {
@@ -120,31 +112,5 @@ export function trackManualResources(lifeCycle: LifeCycle) {
     startResource: startManualResource,
     stopResource: stopManualResource,
     stop,
-  }
-}
-
-function processResource(resource: ManualResource): RawRumEventCollectedData<RawRumResourceEvent> {
-  const rawRumEvent: RawRumResourceEvent = {
-    date: resource.startClocks.timeStamp,
-    type: RumEventType.RESOURCE,
-    resource: {
-      id: resource.id,
-      type: resource.type,
-      url: resource.url,
-      duration: toServerDuration(resource.duration),
-      method: resource.method,
-      status_code: resource.statusCode,
-    },
-    _dd: {
-      discarded: false,
-    },
-    context: resource.context,
-  } as RawRumResourceEvent
-
-  return {
-    rawRumEvent,
-    startTime: resource.startClocks.relative,
-    duration: resource.duration,
-    domainContext: { isManual: true as const },
   }
 }
