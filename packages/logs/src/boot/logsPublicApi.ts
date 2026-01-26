@@ -1,13 +1,4 @@
-import type {
-  TrackingConsent,
-  PublicApi,
-  ContextManager,
-  Account,
-  Context,
-  User,
-  Telemetry,
-  AbstractHooks,
-} from '@datadog/browser-core'
+import type { TrackingConsent, PublicApi, ContextManager, Account, Context, User } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
   CustomerContextKey,
@@ -281,13 +272,12 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (initConfiguration, configuration, telemetry, hooks) => {
+    (initConfiguration, configuration, hooks) => {
       const startLogsResult = startLogsImpl(
         configuration,
         buildCommonContext,
         trackingConsentState,
         bufferedDataObservable,
-        telemetry,
         hooks
       )
 

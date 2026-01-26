@@ -13,7 +13,6 @@ import { sendToExtension } from '../../tools/sendToExtension'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
 import { combine } from '../../tools/mergeInto'
-import type { RawError } from '../error/error.types'
 import { NonErrorPrefix } from '../error/error.types'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { computeStackTrace } from '../../tools/stackTrace/computeStackTrace'
@@ -25,12 +24,12 @@ import {
   getEventBridge,
   createBatch,
 } from '../../transport'
-import type { Encoder } from '../../tools/encoder'
-import type { PageMayExitEvent } from '../../browser/pageMayExitObservable'
-import { DeflateEncoderStreamId } from '../deflate'
+import { createIdentityEncoder } from '../../tools/encoder'
+import { createPageMayExitObservable } from '../../browser/pageMayExitObservable'
 import type { AbstractHooks, RecursivePartial } from '../../tools/abstractHooks'
 import { HookNames, DISCARDED } from '../../tools/abstractHooks'
 import { globalObject, isWorkerEnvironment } from '../../tools/globalObject'
+import { noop } from '../../tools/utils/functionUtils'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import type {
   RawTelemetryConfiguration,
@@ -62,11 +61,6 @@ export interface Telemetry {
   stop: () => void
   enabled: boolean
   metricsEnabled: boolean
-  startTransport: (
-    reportError: (error: RawError) => void,
-    pageMayExitObservable: Observable<PageMayExitEvent>,
-    createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
-  ) => void
 }
 
 export const enum TelemetryMetrics {
@@ -94,56 +88,15 @@ export function getTelemetryObservable() {
 export function startTelemetry(
   telemetryService: TelemetryService,
   configuration: Configuration,
-  hooks: AbstractHooks,
-  transportDependencies?: {
-    reportError?: (error: RawError) => void
-    pageMayExitObservable?: Observable<PageMayExitEvent>
-    createEncoder?: (streamId: DeflateEncoderStreamId) => Encoder
-  }
+  hooks: AbstractHooks
 ): Telemetry {
   const observable = new Observable<TelemetryEvent & Context>()
-  let transportCleanup: (() => void) | undefined
-
   const { enabled, metricsEnabled } = startTelemetryCollection(telemetryService, configuration, hooks, observable)
-
-  // Start transport immediately only if all transport dependencies are provided
-  if (
-    transportDependencies &&
-    transportDependencies.reportError &&
-    transportDependencies.pageMayExitObservable &&
-    transportDependencies.createEncoder
-  ) {
-    const { stop } = startTelemetryTransport(
-      configuration,
-      transportDependencies.reportError,
-      transportDependencies.pageMayExitObservable,
-      transportDependencies.createEncoder,
-      observable
-    )
-    transportCleanup = stop
-  }
-
+  const { stop } = startTelemetryTransport(configuration, observable)
   return {
-    stop: () => {
-      transportCleanup?.()
-    },
+    stop,
     enabled,
     metricsEnabled,
-    startTransport: (reportError, pageMayExitObservable, createEncoder) => {
-      if (transportCleanup) {
-        // Already started, ignore
-        return
-      }
-
-      const { stop } = startTelemetryTransport(
-        configuration,
-        reportError,
-        pageMayExitObservable,
-        createEncoder,
-        observable
-      )
-      transportCleanup = stop
-    },
   }
 }
 
@@ -246,11 +199,8 @@ export function startTelemetryCollection(
   }
 }
 
-function startTelemetryTransport(
+export function startTelemetryTransport(
   configuration: Configuration,
-  reportError: (error: RawError) => void,
-  pageMayExitObservable: Observable<PageMayExitEvent>,
-  createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   telemetryObservable: Observable<TelemetryEvent & Context>
 ) {
   const cleanupTasks: Array<() => void> = []
@@ -264,10 +214,14 @@ function startTelemetryTransport(
       endpoints.push(configuration.replica.rumEndpointBuilder)
     }
     const telemetryBatch = createBatch({
-      encoder: createEncoder(DeflateEncoderStreamId.TELEMETRY),
-      request: createHttpRequest(endpoints, reportError),
+      encoder: createIdentityEncoder(),
+      request: createHttpRequest(
+        endpoints,
+        // Ignore transport errors for telemetry
+        noop
+      ),
       flushController: createFlushController({
-        pageMayExitObservable,
+        pageMayExitObservable: createPageMayExitObservable(configuration),
 
         // We don't use an actual session expire observable here, to make telemetry collection
         // independent of the session. This allows to start and send telemetry events earlier.

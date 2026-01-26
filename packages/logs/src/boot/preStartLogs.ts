@@ -1,4 +1,4 @@
-import type { TrackingConsentState, Telemetry } from '@datadog/browser-core'
+import type { TrackingConsentState } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   canUseEventBridge,
@@ -28,7 +28,6 @@ import type { StartLogsResult } from './startLogs'
 export type DoStartLogs = (
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
-  telemetry: Telemetry,
   hooks: Hooks
 ) => StartLogsResult
 
@@ -51,17 +50,16 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
-  let telemetry: Telemetry | undefined
   const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration || !telemetry || !trackingConsentState.isGranted()) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
       return
     }
 
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, telemetry, hooks)
+    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, hooks)
 
     bufferApiCalls.drain(startLogsResult)
   }
@@ -95,7 +93,7 @@ export function createPreStartStrategy(
 
       cachedConfiguration = configuration
 
-      telemetry = startTelemetry(TelemetryService.LOGS, configuration, hooks, {})
+      startTelemetry(TelemetryService.LOGS, configuration, hooks)
 
       // Instrument fetch to track network requests
       // This is needed in case the consent is not granted and some customer

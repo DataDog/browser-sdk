@@ -93,12 +93,6 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
-  if (telemetry) {
-    telemetry.startTransport(reportError, pageMayExitObservable, createEncoder)
-  }
-
-  cleanupTasks.push(telemetry.stop)
-
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
     : startRumSessionManagerStub()

@@ -51,6 +51,5 @@ export function createFakeTelemetryObject(): Telemetry {
     stop: noop,
     enabled: false,
     metricsEnabled: false,
-    startTransport: noop,
   }
 }

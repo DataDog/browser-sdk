@@ -1,10 +1,4 @@
-import type {
-  TrackingConsentState,
-  BufferedObservable,
-  BufferedData,
-  PageMayExitEvent,
-  Telemetry,
-} from '@datadog/browser-core'
+import type { TrackingConsentState, BufferedObservable, BufferedData, PageMayExitEvent } from '@datadog/browser-core'
 import {
   Observable,
   sendToExtension,
@@ -13,7 +7,6 @@ import {
   canUseEventBridge,
   startAccountContext,
   startGlobalContext,
-  createIdentityEncoder,
   startUserContext,
   isWorkerEnvironment,
 } from '@datadog/browser-core'
@@ -50,7 +43,6 @@ export function startLogs(
   // `trackingConsentState` set to "granted".
   trackingConsentState: TrackingConsentState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
-  telemetry: Telemetry,
   hooks: Hooks
 ) {
   const lifeCycle = new LifeCycle()
@@ -63,12 +55,6 @@ export function startLogs(
   const pageMayExitObservable = isWorkerEnvironment
     ? new Observable<PageMayExitEvent>()
     : createPageMayExitObservable(configuration)
-
-  if (telemetry) {
-    telemetry.startTransport(reportError, pageMayExitObservable, createIdentityEncoder)
-  }
-
-  cleanupTasks.push(telemetry.stop)
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()

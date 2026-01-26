@@ -23,7 +23,6 @@ import {
   mockClock,
   expireCookie,
   DEFAULT_FETCH_MOCK,
-  createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from '../domain/configuration'
@@ -68,7 +67,6 @@ function startLogsWithDefaults(
     () => COMMON_CONTEXT,
     trackingConsentState,
     new BufferedObservable<BufferedData>(100),
-    createFakeTelemetryObject(),
     createHooks()
   )
 

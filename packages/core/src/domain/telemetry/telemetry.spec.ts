@@ -1,12 +1,19 @@
+import type { TimeStamp } from '@datadog/browser-rum/internal'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
-import type { Configuration } from '../configuration'
+import { validateAndBuildConfiguration, type Configuration } from '../configuration'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
-import { setNavigatorOnLine, setNavigatorConnection, createHooks, waitNextMicrotask } from '../../../test'
-import { noop } from '../../tools/utils/functionUtils'
-import { createIdentityEncoder } from '../../tools/encoder'
+import {
+  setNavigatorOnLine,
+  setNavigatorConnection,
+  createHooks,
+  waitNextMicrotask,
+  interceptRequests,
+  registerCleanupTask,
+  createNewEvent,
+} from '../../../test'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
@@ -20,10 +27,10 @@ import {
   addTelemetryUsage,
   TelemetryService,
   startTelemetryCollection,
-  startTelemetry,
   addTelemetryMetrics,
   addTelemetryDebug,
   TelemetryMetrics,
+  startTelemetryTransport,
 } from './telemetry'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
@@ -69,10 +76,6 @@ function startAndSpyTelemetry(
 }
 
 describe('telemetry', () => {
-  beforeEach(() => {
-    resetTelemetry()
-  })
-
   afterEach(() => {
     resetTelemetry()
   })
@@ -440,58 +443,43 @@ describe('telemetry', () => {
   })
 })
 
-describe('telemetry with deferred transport', () => {
-  it('should start telemetry without transport dependencies', () => {
-    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration, createHooks())
+describe('startTelemetryTransport', () => {
+  it('should send telemetry events through transport', () => {
+    const interceptor = interceptRequests()
+    const telemetryObservable = new Observable<TelemetryEvent & Context>()
 
-    // Verify telemetry was started
-    expect(telemetry).toBeDefined()
-    expect(telemetry.enabled).toEqual(true)
-  })
-
-  it('should allow starting transport later', () => {
-    const telemetry = startTelemetry(TelemetryService.RUM, { telemetrySampleRate: 100 } as Configuration, createHooks())
-
-    // Should not throw when calling startTransport
-    expect(() => {
-      telemetry.startTransport(noop, new Observable(), createIdentityEncoder)
-    }).not.toThrow()
-  })
-
-  it('should ignore second call to startTransport', () => {
-    const telemetry = startTelemetry(
-      TelemetryService.RUM,
-      { telemetrySampleRate: 100 } as Configuration,
-      createHooks(),
-      {
-        reportError: noop,
-        pageMayExitObservable: new Observable(),
-        createEncoder: createIdentityEncoder,
-      }
+    const { stop } = startTelemetryTransport(
+      validateAndBuildConfiguration({ clientToken: 'xxx' })!,
+      telemetryObservable
     )
 
-    // Second call should be ignored (no error thrown)
-    expect(() => {
-      telemetry.startTransport(noop, new Observable(), createIdentityEncoder)
-    }).not.toThrow()
-  })
+    registerCleanupTask(stop)
 
-  it('should maintain backward compatibility with full dependencies', () => {
-    // Start with full dependencies (backward compatibility)
-    const telemetry = startTelemetry(
-      TelemetryService.RUM,
-      { telemetrySampleRate: 100 } as Configuration,
-      createHooks(),
-      {
-        reportError: noop,
-        pageMayExitObservable: new Observable(),
-        createEncoder: createIdentityEncoder,
-      }
-    )
+    // Trigger a telemetry event by notifying the observable
+    telemetryObservable.notify({
+      type: 'telemetry',
+      date: 123 as TimeStamp,
+      service: TelemetryService.RUM,
+      version: '0.0.0',
+      source: 'browser',
+      telemetry: {
+        type: TelemetryType.LOG,
+        status: StatusType.error,
+        message: 'test error',
+      },
+      _dd: {
+        format_version: 2,
+      },
+    })
 
-    // Should work without error
-    expect(telemetry).toBeDefined()
-    expect(telemetry.enabled).toEqual(true)
+    // Force the batch to flush by emulating a beforeunload event
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    expect(interceptor.requests.length).toBe(1)
+    const telemetryEvent = JSON.parse(interceptor.requests[0].body)
+    expect(telemetryEvent.type).toBe('telemetry')
+    expect(telemetryEvent.telemetry.type).toBe(TelemetryType.LOG)
+    expect(telemetryEvent.telemetry.status).toBe(StatusType.error)
   })
 })
 
