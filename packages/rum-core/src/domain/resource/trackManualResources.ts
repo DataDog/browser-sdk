@@ -5,6 +5,7 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { createManualEventLifecycle } from '../manualEventRegistry'
+import { sanitizeIfLongDataUrl } from './resourceUtils'
 
 export interface ResourceOptions {
   /**
@@ -83,7 +84,7 @@ export function trackManualResources(lifeCycle: LifeCycle) {
       resource: {
         id: generateUUID(),
         type: activeResource.type || ResourceTypeEnum.OTHER,
-        url: activeResource.url,
+        url: sanitizeIfLongDataUrl(activeResource.url),
         duration: toServerDuration(activeResource.duration),
         method: activeResource.method,
         status_code: options.statusCode,
