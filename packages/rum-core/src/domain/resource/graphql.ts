@@ -27,7 +27,7 @@ export function extractGraphQlMetadata(
   request: RequestCompleteEvent,
   graphQlConfig: GraphQlUrlOption
 ): GraphQlMetadata | undefined {
-  const metadata = extractGraphQlRequestMetadata(request.requestBody, graphQlConfig.trackPayload)
+  const metadata = extractGraphQlRequestMetadata(request.requestBody, graphQlConfig.trackPayload, request.url)
   if (!metadata) {
     return
   }
@@ -82,12 +82,19 @@ export function findGraphQlConfiguration(url: string, configuration: RumConfigur
 
 export function extractGraphQlRequestMetadata(
   requestBody: unknown,
-  trackPayload: boolean = false
+  trackPayload: boolean = false,
+  url?: string
 ): GraphQlMetadata | undefined {
-  if (!requestBody || typeof requestBody !== 'string') {
-    return
+  if (requestBody && typeof requestBody === 'string') {
+    return extractFromBody(requestBody, trackPayload)
   }
+  // Fallback for persisted queries
+  if (url) {
+    return extractFromUrlQueryParams(url, trackPayload)
+  }
+}
 
+function extractFromBody(requestBody: string, trackPayload: boolean): GraphQlMetadata | undefined {
   let graphqlBody: {
     query?: string
     operationName?: string
@@ -105,21 +112,64 @@ export function extractGraphQlRequestMetadata(
     return
   }
 
+  return buildGraphQlMetadata({
+    query: graphqlBody.query,
+    operationName: graphqlBody.operationName,
+    variables: graphqlBody.variables ? JSON.stringify(graphqlBody.variables) : undefined,
+    trackPayload,
+  })
+}
+
+function extractFromUrlQueryParams(url: string, trackPayload: boolean): GraphQlMetadata | undefined {
+  const queryStringIndex = url.indexOf('?')
+  if (queryStringIndex === -1) {
+    return
+  }
+
+  const searchParams = new URLSearchParams(url.slice(queryStringIndex + 1))
+  const variablesParam = searchParams.get('variables')
+
+  return buildGraphQlMetadata({
+    query: searchParams.get('query') || undefined,
+    operationName: searchParams.get('operationName') || undefined,
+    variables: parseVariablesParam(variablesParam),
+    trackPayload,
+  })
+}
+
+function parseVariablesParam(variablesParam: string | null): string | undefined {
+  if (!variablesParam) {
+    return
+  }
+  try {
+    // Parse to validate it's valid JSON, then keep the string
+    JSON.parse(variablesParam)
+    return variablesParam
+  } catch {
+    // Invalid JSON in variables, ignore
+  }
+}
+
+function buildGraphQlMetadata({
+  query,
+  operationName,
+  variables,
+  trackPayload,
+}: {
+  query?: string
+  operationName?: string
+  variables?: string
+  trackPayload: boolean
+}): GraphQlMetadata {
   let operationType: 'query' | 'mutation' | 'subscription' | undefined
   let payload: string | undefined
 
-  if (graphqlBody.query) {
-    const trimmedQuery = graphqlBody.query.trim()
+  if (query) {
+    const trimmedQuery = query.trim()
     operationType = getOperationType(trimmedQuery)
     if (trackPayload) {
       payload = safeTruncate(trimmedQuery, GRAPHQL_PAYLOAD_LIMIT, '...')
     }
-  }
-
-  const operationName = graphqlBody.operationName
-  let variables: string | undefined
-  if (graphqlBody.variables) {
-    variables = JSON.stringify(graphqlBody.variables)
   }
 
   return {
