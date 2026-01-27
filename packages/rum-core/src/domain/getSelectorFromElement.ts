@@ -249,10 +249,22 @@ export function isSelectorUniqueAmongSiblings(
     isSiblingMatching = (sibling) => sibling.querySelector(scopedSelector) !== null
   }
 
-  const parent = currentElement.parentElement!
-  let sibling = parent.firstElementChild
+  // Check siblings by iterating directly through previousElementSibling and nextElementSibling.
+  // This works even when parentElement is null (e.g., when parent is a DocumentFragment).
+
+  // Check previous siblings
+  let sibling = currentElement.previousElementSibling
   while (sibling) {
-    if (sibling !== currentElement && isSiblingMatching(sibling)) {
+    if (isSiblingMatching(sibling)) {
+      return false
+    }
+    sibling = sibling.previousElementSibling
+  }
+
+  // Check next siblings
+  sibling = currentElement.nextElementSibling
+  while (sibling) {
+    if (isSiblingMatching(sibling)) {
       return false
     }
     sibling = sibling.nextElementSibling
