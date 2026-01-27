@@ -1,3 +1,4 @@
+import type { Request } from '../../test'
 import {
   collectAsyncCalls,
   mockEndpointBuilder,
@@ -7,18 +8,17 @@ import {
   NETWORK_ERROR_FETCH_MOCK,
   wait,
 } from '../../test'
-import type { Request } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { addExperimentalFeatures, resetExperimentalFeatures, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { noop } from '../tools/utils/functionUtils'
+import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 import {
   createHttpRequest,
   fetchKeepAliveStrategy,
   fetchStrategy,
   RECOMMENDED_REQUEST_BYTES_LIMIT,
 } from './httpRequest'
-import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 
 describe('httpRequest', () => {
   const ENDPOINT_URL = 'http://my.website'
