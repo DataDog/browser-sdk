@@ -69,6 +69,7 @@ export function resetFetchObservable() {
 
 function createFetchObservable() {
   return new Observable<FetchContext>((observable) => {
+    // eslint-disable-next-line local-rules/disallow-zone-js-patched-values
     if (!globalObject.fetch) {
       return
     }

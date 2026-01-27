@@ -7,6 +7,7 @@ import {
   addTelemetryMetrics,
   TelemetryMetrics,
   isIndexableObject,
+  fetch,
 } from '@datadog/browser-core'
 import type { RumInitConfiguration } from './configuration'
 import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
