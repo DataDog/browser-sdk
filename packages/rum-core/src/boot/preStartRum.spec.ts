@@ -809,6 +809,50 @@ describe('preStartRum', () => {
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
   })
+
+  describe('telemetry', () => {
+    it('starts telemetry during init() by default', () => {
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not start telemetry until consent is granted', () => {
+      const trackingConsentState = createTrackingConsentState()
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({
+        trackingConsentState,
+      })
+
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        PUBLIC_API
+      )
+
+      expect(startTelemetrySpy).not.toHaveBeenCalled()
+
+      trackingConsentState.update(TrackingConsent.GRANTED)
+
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('starts telemetry only once', () => {
+      const trackingConsentState = createTrackingConsentState()
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({
+        trackingConsentState,
+      })
+
+      strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
+
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+
+      strategy.startView({ name: 'foo' })
+
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+  })
 })
 
 function createPreStartStrategyWithDefaults({
@@ -819,14 +863,16 @@ function createPreStartStrategyWithDefaults({
   trackingConsentState?: TrackingConsentState
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
+  const startTelemetrySpy = jasmine.createSpy().and.callFake(createFakeTelemetryObject)
   return {
     strategy: createPreStartStrategy(
       rumPublicApiOptions,
       trackingConsentState,
       createCustomVitalsState(),
       doStartRumSpy,
-      createFakeTelemetryObject
+      startTelemetrySpy
     ),
     doStartRumSpy,
+    startTelemetrySpy,
   }
 }

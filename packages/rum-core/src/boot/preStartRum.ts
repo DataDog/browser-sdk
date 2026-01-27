@@ -90,8 +90,13 @@ export function createPreStartStrategy(
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !telemetry || !trackingConsentState.isGranted()) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
       return
+    }
+
+    // Start telemetry only once, when we have consent and configuration
+    if (!telemetry) {
+      telemetry = startTelemetryImpl(TelemetryService.RUM, cachedConfiguration, hooks)
     }
 
     trackingConsentStateSubscription.unsubscribe()
@@ -158,8 +163,6 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
-
-    telemetry = startTelemetryImpl(TelemetryService.RUM, configuration, hooks)
 
     // Instrument fetch to track network requests
     // This is needed in case the consent is not granted and some customer

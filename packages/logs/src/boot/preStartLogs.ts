@@ -59,6 +59,8 @@ export function createPreStartStrategy(
       return
     }
 
+    startTelemetryImpl(TelemetryService.LOGS, cachedConfiguration, hooks)
+
     trackingConsentStateSubscription.unsubscribe()
     const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, hooks)
 
@@ -93,8 +95,6 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
-
-      startTelemetryImpl(TelemetryService.LOGS, configuration, hooks)
 
       // Instrument fetch to track network requests
       // This is needed in case the consent is not granted and some customer
