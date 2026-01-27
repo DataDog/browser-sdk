@@ -113,6 +113,49 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   remoteConfigurationProxy?: string | undefined
 
+  /**
+   * Enable Firebase Remote Config integration for live debugger functionality.
+   * When enabled, the SDK will listen to Firebase Remote Config values and set
+   * global context properties in `dd_<id>` format.
+   *
+   * @category Data Collection
+   * @defaultValue false
+   */
+  allowLiveDebugger?: boolean | undefined
+
+  /**
+   * The ID to use for live debugger global context properties.
+   * Global context properties will be set as `dd_<liveDebuggerId>`.
+   * If not provided, the live debugger ID will be obtained from Firebase Remote Config.
+   *
+   * @category Data Collection
+   */
+  liveDebuggerId?: string | undefined
+
+  /**
+   * Firebase configuration for Remote Config integration.
+   * If provided, the SDK will initialize Firebase Remote Config automatically.
+   * 
+   * @category Data Collection
+   */
+  firebaseConfig?: {
+    apiKey: string
+    authDomain: string
+    projectId: string
+    storageBucket?: string
+    messagingSenderId?: string
+    appId: string
+    measurementId?: string
+  } | undefined
+
+  /**
+   * Firebase SDK version to load (defaults to '10.7.1').
+   * Only used if firebaseConfig is provided.
+   * 
+   * @category Data Collection
+   */
+  firebaseVersion?: string | undefined
+
   // tracing options
   /**
    * A list of request URLs used to inject tracing headers.
@@ -321,6 +364,18 @@ export interface RumConfiguration extends Configuration {
   profilingSampleRate: number
   propagateTraceBaggage: boolean
   allowedGraphQlUrls: GraphQlUrlOption[]
+  allowLiveDebugger: boolean
+  liveDebuggerId: string | undefined
+  firebaseConfig?: {
+    apiKey: string
+    authDomain: string
+    projectId: string
+    storageBucket?: string
+    messagingSenderId?: string
+    appId: string
+    measurementId?: string
+  }
+  firebaseVersion?: string
 }
 
 export function validateAndBuildRumConfiguration(
@@ -400,6 +455,10 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     allowedGraphQlUrls,
+    allowLiveDebugger: !!initConfiguration.allowLiveDebugger,
+    liveDebuggerId: initConfiguration.liveDebuggerId,
+    firebaseConfig: initConfiguration.firebaseConfig,
+    firebaseVersion: initConfiguration.firebaseVersion || '10.7.1',
     ...baseConfiguration,
   }
 }

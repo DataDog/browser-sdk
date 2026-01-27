@@ -57,6 +57,8 @@ import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
+import { startFirebaseRemoteConfigIntegration } from '../domain/liveDebugger/firebaseRemoteConfig'
+import { monitorError } from '@datadog/browser-core'
 
 export type StartRum = typeof startRum
 export type StartRumResult = ReturnType<StartRum>
@@ -191,6 +193,16 @@ export function startRumEventCollection(
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
   const userContext = startUserContext(hooks, configuration, session, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
+
+  // Initialize Firebase Remote Config integration if enabled
+  if (configuration.allowLiveDebugger && configuration.liveDebuggerId) {
+    startFirebaseRemoteConfigIntegration(
+      globalContext,
+      configuration.liveDebuggerId,
+      configuration.firebaseConfig,
+      configuration.firebaseVersion
+    ).catch(monitorError)
+  }
 
   const actionCollection = startActionCollection(
     lifeCycle,

@@ -112,6 +112,7 @@ export function startLogs(
     accountContext,
     globalContext,
     userContext,
+    lifeCycle,
     stop: () => {
       cleanupTasks.forEach((task) => task())
     },
