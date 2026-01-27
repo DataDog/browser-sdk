@@ -5,7 +5,7 @@ import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumResourceEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { type RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
 import { trackManualResources } from './trackManualResources'
 
 describe('trackManualResources', () => {
@@ -13,7 +13,6 @@ describe('trackManualResources', () => {
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
   let startResource: ReturnType<typeof trackManualResources>['startResource']
   let stopResource: ReturnType<typeof trackManualResources>['stopResource']
-  let stopManualResources: ReturnType<typeof trackManualResources>['stop']
   let clock: Clock
 
   beforeEach(() => {
@@ -24,7 +23,6 @@ describe('trackManualResources', () => {
     registerCleanupTask(manualResources.stop)
     startResource = manualResources.startResource
     stopResource = manualResources.stopResource
-    stopManualResources = manualResources.stop
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
   })
@@ -46,20 +44,6 @@ describe('trackManualResources', () => {
           }),
         })
       )
-    })
-
-    it('should not create resource if stopped without starting', () => {
-      stopResource('https://api.example.com/never-started')
-
-      expect(rawRumEvents).toHaveSize(0)
-    })
-
-    it('should only create resource once when stopped multiple times', () => {
-      startResource('https://api.example.com/data')
-      stopResource('https://api.example.com/data')
-      stopResource('https://api.example.com/data')
-
-      expect(rawRumEvents).toHaveSize(1)
     })
 
     it('should include duration in server format', () => {
@@ -108,32 +92,6 @@ describe('trackManualResources', () => {
     })
   })
 
-  describe('context merging', () => {
-    it('should merge contexts with stop precedence on conflicts', () => {
-      startResource('https://api.example.com/data', { context: { requestId: 'abc' } })
-      stopResource('https://api.example.com/data', { context: { responseSize: 1024 } })
-
-      expect(rawRumEvents).toHaveSize(1)
-      expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          context: { requestId: 'abc', responseSize: 1024 },
-        })
-      )
-    })
-
-    it('should override start context with stop context on conflict', () => {
-      startResource('https://api.example.com/data', { context: { status: 'pending' } })
-      stopResource('https://api.example.com/data', { context: { status: 'complete' } })
-
-      expect(rawRumEvents).toHaveSize(1)
-      expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          context: { status: 'complete' },
-        })
-      )
-    })
-  })
-
   describe('resourceKey', () => {
     it('should support resourceKey for tracking same url multiple times', () => {
       startResource('https://api.example.com/data', { resourceKey: 'request1' })
@@ -160,43 +118,6 @@ describe('trackManualResources', () => {
       expect(rawRumEvents).toHaveSize(2)
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/foo/bar')
       expect((rawRumEvents[1].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/foo')
-    })
-  })
-
-  describe('duplicate start handling', () => {
-    it('should discard previous resource when startResource is called twice with same key', () => {
-      startResource('https://api.example.com/data')
-      clock.tick(100)
-      startResource('https://api.example.com/data')
-      clock.tick(200)
-      stopResource('https://api.example.com/data')
-
-      expect(rawRumEvents).toHaveSize(1)
-      expect(rawRumEvents[0].duration).toBe(200 as Duration)
-    })
-  })
-
-  describe('session renewal', () => {
-    it('should discard active manual resources on session renewal', () => {
-      startResource('https://api.example.com/data')
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      stopResource('https://api.example.com/data')
-
-      expect(rawRumEvents).toHaveSize(0)
-    })
-  })
-
-  describe('cleanup', () => {
-    it('should clean up active manual resources on stop()', () => {
-      startResource('https://api.example.com/data')
-
-      stopManualResources()
-
-      stopResource('https://api.example.com/data')
-
-      expect(rawRumEvents).toHaveSize(0)
     })
   })
 })

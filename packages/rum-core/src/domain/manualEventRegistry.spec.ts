@@ -193,8 +193,9 @@ describe('createManualEventLifecycle', () => {
   })
 
   describe('SESSION_RENEWED handling', () => {
-    it('should clear all entries on session renewal', () => {
-      const lifecycle = createManualEventLifecycle<{ value: string }>(lifeCycle)
+    it('should clear all entries on session renewal and call onDiscard for each entry', () => {
+      const onDiscard = jasmine.createSpy('onDiscard')
+      const lifecycle = createManualEventLifecycle<{ value: string }>(lifeCycle, onDiscard)
       registerCleanupTask(lifecycle.stopAll)
 
       const startClocks = clocksNow()
@@ -206,24 +207,9 @@ describe('createManualEventLifecycle', () => {
       const stopClocks = clocksNow()
       expect(lifecycle.remove('key1', stopClocks, {})).toBeUndefined()
       expect(lifecycle.remove('key2', stopClocks, {})).toBeUndefined()
-    })
-
-    it('should call onDiscard for each entry on session renewal', () => {
-      const onDiscard = jasmine.createSpy('onDiscard')
-      const lifecycle = createManualEventLifecycle<{ value: string }>(lifeCycle, onDiscard)
-      registerCleanupTask(lifecycle.stopAll)
-
-      const startClocks = clocksNow()
-      const data1 = { value: 'data1' }
-      const data2 = { value: 'data2' }
-      lifecycle.add('key1', startClocks, data1)
-      lifecycle.add('key2', startClocks, data2)
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
       expect(onDiscard).toHaveBeenCalledTimes(2)
-      expect(onDiscard).toHaveBeenCalledWith(data1)
-      expect(onDiscard).toHaveBeenCalledWith(data2)
+      expect(onDiscard).toHaveBeenCalledWith({ value: 'data1' })
+      expect(onDiscard).toHaveBeenCalledWith({ value: 'data2' })
     })
 
     it('should allow new entries after session renewal', () => {
