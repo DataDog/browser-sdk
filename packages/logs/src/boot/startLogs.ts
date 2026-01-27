@@ -1,6 +1,5 @@
-import type { TrackingConsentState, BufferedObservable, BufferedData, PageMayExitEvent } from '@datadog/browser-core'
+import type { TrackingConsentState, BufferedObservable, BufferedData } from '@datadog/browser-core'
 import {
-  Observable,
   sendToExtension,
   createPageMayExitObservable,
   willSyntheticsInjectRum,
@@ -8,7 +7,6 @@ import {
   startAccountContext,
   startGlobalContext,
   startUserContext,
-  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
@@ -51,10 +49,7 @@ export function startLogs(
   lifeCycle.subscribe(LifeCycleEventType.LOG_COLLECTED, (log) => sendToExtension('logs', log))
 
   const reportError = startReportError(lifeCycle)
-  // Page exit is not observable in worker environments (no window/document events)
-  const pageMayExitObservable = isWorkerEnvironment
-    ? new Observable<PageMayExitEvent>()
-    : createPageMayExitObservable(configuration)
+  const pageMayExitObservable = createPageMayExitObservable(configuration)
 
   const session =
     configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()
