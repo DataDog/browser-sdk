@@ -50,12 +50,7 @@ function startAndSpyTelemetry(
   const telemetry = startTelemetryCollection(
     TelemetryService.RUM,
     {
-      site: 'datadoghq.com',
-      service: 'test-service',
-      env: 'test-env',
-      version: '0.0.0',
       telemetrySampleRate: 100,
-      telemetryConfigurationSampleRate: 100,
       telemetryUsageSampleRate: 100,
       ...configuration,
     } as Configuration,
@@ -303,6 +298,21 @@ describe('telemetry', () => {
       expect(events[0].application!.id).toEqual('bar')
       expect(events[1].application!.id).toEqual('bar')
       expect(events[1].session!.id).toEqual('123')
+    })
+
+    it('should apply telemetry hook on events collected before telemetry is started', async () => {
+      addTelemetryDebug('debug 1')
+
+      const { hooks, getTelemetryEvents } = startAndSpyTelemetry()
+
+      hooks.register(HookNames.AssembleTelemetry, () => ({
+        application: {
+          id: 'bar',
+        },
+      }))
+
+      const events = await getTelemetryEvents()
+      expect(events[0].application!.id).toEqual('bar')
     })
   })
 

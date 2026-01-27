@@ -4,9 +4,6 @@ let onMonitorErrorCollected: undefined | ((error: unknown) => void)
 let debugMode = false
 
 export function startMonitorErrorCollection(newOnMonitorErrorCollected: (error: unknown) => void) {
-  if (onMonitorErrorCollected) {
-    return // Already collecting, idempotent
-  }
   onMonitorErrorCollected = newOnMonitorErrorCollected
 }
 
