@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { evalInWindow } from '../../evalInWindow'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
 import { Columns } from '../columns'
+import type { JsonValueDescriptor } from '../json'
 import { Json } from '../json'
 import { TabBase } from '../tabBase'
 import { createLogger } from '../../../common/logger'
@@ -11,6 +12,61 @@ import { formatDate } from '../../formatNumber'
 import { useSettings } from '../../hooks/useSettings'
 
 const logger = createLogger('infosTab')
+
+function buildLogExpression(descriptor: JsonValueDescriptor, sdkType: 'rum' | 'logs'): string {
+  const evaluationPath = descriptor.evaluationPath
+  const sdkGlobal = sdkType === 'rum' ? 'DD_RUM' : 'DD_LOGS'
+  const sdkName = sdkType === 'rum' ? 'RUM' : 'Logs'
+
+  return `
+    (function() {
+      const config = window.${sdkGlobal}?.getInitConfiguration?.();
+      if (!config) {
+        console.warn('[${sdkName}] SDK not found');
+        return;
+      }
+      
+      // Navigate the path to get the value
+      let value = config;
+      const pathParts = '${evaluationPath}'.split('.');
+      
+      for (const key of pathParts) {
+        if (!value || typeof value !== 'object') {
+          console.warn('[${sdkName}] Property not found at path: ${evaluationPath}');
+          return;
+        }
+        
+        // Handle array indices (numeric keys)
+        if (Array.isArray(value)) {
+          const index = parseInt(key, 10);
+          if (isNaN(index) || index < 0 || index >= value.length) {
+            console.warn('[${sdkName}] Invalid array index at path: ${evaluationPath}');
+            return;
+          }
+          value = value[index];
+        } else {
+          if (!(key in value)) {
+            console.warn('[${sdkName}] Property not found at path: ${evaluationPath}');
+            return;
+          }
+          value = value[key];
+        }
+      }
+      
+      console.log('[${sdkName}] ${evaluationPath}:', value);
+    })()
+  `
+}
+
+function createRevealFunctionLocation(sdkType: 'rum' | 'logs') {
+  return (descriptor: JsonValueDescriptor) => {
+    const logExpression = buildLogExpression(descriptor, sdkType)
+
+    evalInWindow(logExpression).catch((error) => {
+      logger.error('Failed to log function:', error)
+    })
+  }
+}
 
 export function InfosTab() {
   const infos = useSdkInfos()
@@ -83,6 +139,7 @@ export function InfosTab() {
                   setSetting('rumConfigurationOverride', value)
                 }}
                 isOverridden={!!settings.rumConfigurationOverride}
+                onRevealFunctionLocation={createRevealFunctionLocation('rum')}
               />
               <Entry name="Internal context" value={infos.rum.internalContext} />
               <Entry name="Global context" value={infos.rum.globalContext} />
@@ -114,6 +171,7 @@ export function InfosTab() {
                   setSetting('logsConfigurationOverride', value)
                 }}
                 isOverridden={!!settings.logsConfigurationOverride}
+                onRevealFunctionLocation={createRevealFunctionLocation('logs')}
               />
               <Entry name="Global context" value={infos.logs.globalContext} />
               <Entry name="User" value={infos.logs.user} />
@@ -150,11 +208,13 @@ function Entry({
   value,
   isOverridden = false,
   onChange,
+  onRevealFunctionLocation,
 }: {
   name: string
   value: any
   isOverridden?: boolean
   onChange?: (value: object | null) => void
+  onRevealFunctionLocation?: (descriptor: JsonValueDescriptor) => void
 }) {
   const [edited, setEdited] = useState(false)
   const [newValue, setNewValue] = React.useState<string | null>()
@@ -220,7 +280,7 @@ function Entry({
             )}
           </div>
           {!edited ? (
-            <Json value={value} />
+            <Json value={value} onRevealFunctionLocation={onRevealFunctionLocation} />
           ) : (
             <JsonInput
               style={{ marginTop: '5px' }}
@@ -281,9 +341,14 @@ function tryParseJson(value: string) {
 }
 
 function serializeJson(value: object) {
-  // replacer to remove function attributes that have been serialized as empty object by useSdkInfos() (ex: beforeSend)
-  const replacer = (key: string, val: unknown) =>
-    key !== '' && !Array.isArray(val) && typeof val === 'object' && val && !Object.keys(val).length ? undefined : val
+  // replacer to remove function attributes that have been serialized with metadata by useSdkInfos() (ex: beforeSend)
+  const replacer = (key: string, val: unknown) => {
+    // Filter out function metadata objects
+    if (key !== '' && !Array.isArray(val) && typeof val === 'object' && val && (val as any).__type === 'function') {
+      return undefined
+    }
+    return val
+  }
 
   return JSON.stringify(value, replacer, 2)
 }

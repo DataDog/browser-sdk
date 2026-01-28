@@ -21,6 +21,7 @@ import {
 import type { LogsConfiguration } from '../domain/configuration'
 import { validateAndBuildLogsConfiguration } from '../domain/configuration'
 import { Logger } from '../domain/logger'
+import { createHooks } from '../domain/hooks'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { LogsEvent } from '../logsEvent.types'
 import { createLogsSessionManagerMock } from '../../test/mockLogsSessionManager'
@@ -61,7 +62,8 @@ function startLogsWithDefaults(
     sessionManager,
     () => COMMON_CONTEXT,
     trackingConsentState,
-    new BufferedObservable<BufferedData>(100)
+    new BufferedObservable<BufferedData>(100),
+    createHooks()
   )
 
   registerCleanupTask(stop)

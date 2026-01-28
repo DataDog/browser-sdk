@@ -4,8 +4,10 @@ import {
   getTelemetryObservable,
   resetTelemetry,
   type RawTelemetryEvent,
+  type Telemetry,
 } from '../../src/domain/telemetry'
 import { registerCleanupTask } from '../registerCleanupTask'
+import { noop } from '../../src/tools/utils/functionUtils'
 
 export interface MockTelemetry {
   getEvents: () => Promise<RawTelemetryEvent[]>
@@ -41,5 +43,13 @@ export function startMockTelemetry() {
     reset: () => {
       events.length = 0
     },
+  }
+}
+
+export function createFakeTelemetryObject(): Telemetry {
+  return {
+    stop: noop,
+    enabled: false,
+    metricsEnabled: false,
   }
 }

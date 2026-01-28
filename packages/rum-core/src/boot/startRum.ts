@@ -6,12 +6,11 @@ import type {
   TrackingConsentState,
   BufferedData,
   BufferedObservable,
+  Telemetry,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
-  TelemetryService,
-  startTelemetry,
   canUseEventBridge,
   addTelemetryDebug,
   startAccountContext,
@@ -50,7 +49,6 @@ import type { SdkName } from '../domain/contexts/defaultContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
-import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
@@ -74,11 +72,12 @@ export function startRum(
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
+  telemetry: Telemetry,
+  hooks: Hooks,
   sdkName?: SdkName
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
-  const hooks = createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
@@ -97,15 +96,6 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
-  const telemetry = startTelemetry(
-    TelemetryService.RUM,
-    configuration,
-    hooks,
-    reportError,
-    pageMayExitObservable,
-    createEncoder
-  )
-  cleanupTasks.push(telemetry.stop)
 
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
@@ -257,6 +247,8 @@ export function startRumEventCollection(
 
   return {
     addAction: actionCollection.addAction,
+    startAction: actionCollection.startAction,
+    stopAction: actionCollection.stopAction,
     addEvent: eventCollection.addEvent,
     addError,
     addTiming,

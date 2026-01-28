@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test'
-import { createTest, html, waitForServersIdle } from '../../lib/framework'
+import { createTest, html, waitForServersIdle, waitForRequests } from '../../lib/framework'
+
+function hasActionId(event: { action?: { id?: string | string[] } }, actionId: string): boolean {
+  return [event.action?.id].flat().includes(actionId)
+}
 
 test.describe('action collection', () => {
   createTest('track a click action')
@@ -564,5 +568,158 @@ test.describe('action collection with shadow DOM', () => {
       const actionEvents = intakeRegistry.rumActionEvents
       expect(actionEvents).toHaveLength(1)
       expect(actionEvents[0].action?.target?.name).toBe('Shadow Button')
+    })
+})
+
+test.describe('custom actions with startAction/stopAction', () => {
+  createTest('track a custom action with startAction/stopAction')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('checkout')
+        window.DD_RUM!.stopAction('checkout')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.target?.name).toBe('checkout')
+      expect(actionEvents[0].action.type).toBe('custom')
+      expect(actionEvents[0].action.id).toBeDefined()
+    })
+
+  createTest('associate an error to a custom action')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('checkout')
+        window.DD_RUM!.addError(new Error('Payment failed'))
+        window.DD_RUM!.stopAction('checkout')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      const errorEvents = intakeRegistry.rumErrorEvents
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.error?.count).toBe(1)
+      expect(actionEvents[0].action.frustration?.type).toContain('error_click')
+      expect(errorEvents.length).toBeGreaterThanOrEqual(1)
+
+      const actionId = actionEvents[0].action.id
+      const relatedError = errorEvents.find((e) => hasActionId(e, actionId!))
+      expect(relatedError).toBeDefined()
+    })
+
+  createTest('associate a resource to a custom action')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('load-data')
+        void fetch('/ok')
+      })
+      await waitForRequests(page)
+      await page.evaluate(() => {
+        window.DD_RUM!.stopAction('load-data')
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      const resourceEvents = intakeRegistry.rumResourceEvents.filter((e) => e.resource.type === 'fetch')
+
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.resource?.count).toBe(1)
+      expect(actionEvents[0].action.frustration?.type).toEqual([])
+
+      const actionId = actionEvents[0].action.id
+      const relatedResource = resourceEvents.find((e) => hasActionId(e, actionId!))
+      expect(relatedResource).toBeDefined()
+    })
+
+  createTest('track multiple concurrent custom actions with actionKey')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('click', { actionKey: 'button1' })
+        window.DD_RUM!.startAction('click', { actionKey: 'button2' })
+        window.DD_RUM!.stopAction('click', { actionKey: 'button2' })
+        window.DD_RUM!.stopAction('click', { actionKey: 'button1' })
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(2)
+      expect(actionEvents[0].action.id).not.toBe(actionEvents[1].action.id)
+    })
+
+  createTest('merge contexts from start and stop')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        window.DD_RUM!.startAction('purchase', { context: { cart_id: 'abc123' } })
+        window.DD_RUM!.stopAction('purchase', { context: { total: 99.99 } })
+      })
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].context).toEqual(
+        expect.objectContaining({
+          cart_id: 'abc123',
+          total: 99.99,
+        })
+      )
+    })
+
+  createTest('preserve timing when startAction is called before init')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.startAction('pre_init_action')
+
+      setTimeout(() => {
+        window.DD_RUM!.init(configuration)
+        window.DD_RUM!.stopAction('pre_init_action')
+      }, 50)
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+      expect(actionEvents[0].action.target?.name).toBe('pre_init_action')
+      expect(actionEvents[0].action.loading_time).toBeGreaterThanOrEqual(40 * 1e6)
+    })
+
+  createTest('attribute errors and resources to action started before init')
+    .withRum({ enableExperimentalFeatures: ['start_stop_action'] })
+    .withRumInit((configuration) => {
+      window.DD_RUM!.startAction('pre_init_action')
+
+      setTimeout(() => {
+        window.DD_RUM!.init(configuration)
+
+        window.DD_RUM!.addError(new Error('Test error'))
+        void fetch('/ok')
+      }, 10)
+    })
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await waitForRequests(page)
+
+      await page.evaluate(() => {
+        window.DD_RUM!.stopAction('pre_init_action')
+      })
+
+      await flushEvents()
+
+      const actionEvents = intakeRegistry.rumActionEvents
+      expect(actionEvents).toHaveLength(1)
+
+      const actionId = actionEvents[0].action.id
+      const relatedError = intakeRegistry.rumErrorEvents.find((e) => hasActionId(e, actionId!))
+      expect(relatedError).toBeDefined()
+
+      const fetchResources = intakeRegistry.rumResourceEvents.filter((e) => e.resource.type === 'fetch')
+      const relatedFetch = fetchResources.find((e) => hasActionId(e, actionId!))
+      expect(relatedFetch).toBeDefined()
     })
 })

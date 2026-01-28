@@ -8,9 +8,9 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
-  resetExperimentalFeatures,
   resetFetchObservable,
   stopSessionManager,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -19,16 +19,18 @@ import {
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
+  mockExperimentalFeatures,
+  createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
-import type { HybridInitConfiguration, RumConfiguration, RumInitConfiguration } from '../domain/configuration'
+import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import { ActionType, VitalType } from '../rawRumEvent.types'
-import type { CustomAction } from '../domain/action/actionCollection'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
-import type { RumSessionManager } from '../domain/rumSessionManager'
-import type { RumPublicApi, Strategy } from './rumPublicApi'
+import type { ManualAction } from '../domain/action/trackManualActions'
+import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
+import type { DoStartRum } from './preStartRum'
 import { createPreStartStrategy } from './preStartRum'
 
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
@@ -39,19 +41,6 @@ const FAKE_WORKER = {} as DeflateWorker
 const PUBLIC_API = {} as RumPublicApi
 
 describe('preStartRum', () => {
-  let doStartRumSpy: jasmine.Spy<
-    (
-      configuration: RumConfiguration,
-      sessionManager: RumSessionManager,
-      deflateWorker: DeflateWorker | undefined,
-      initialViewOptions?: ViewOptions
-    ) => StartRumResult
-  >
-
-  beforeEach(() => {
-    doStartRumSpy = jasmine.createSpy()
-  })
-
   afterEach(() => {
     resetFetchObservable()
     stopSessionManager()
@@ -59,11 +48,12 @@ describe('preStartRum', () => {
 
   describe('configuration validation', () => {
     let strategy: Strategy
+    let doStartRumSpy: jasmine.Spy<DoStartRum>
     let displaySpy: jasmine.Spy
 
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
-      strategy = createPreStartStrategy({}, createTrackingConsentState(), createCustomVitalsState(), doStartRumSpy)
+      ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults())
     })
 
     it('should start when the configuration is valid', () => {
@@ -169,12 +159,7 @@ describe('preStartRum', () => {
     it('should not initialize if session cannot be handled and bridge is not present', () => {
       spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const displaySpy = spyOn(display, 'warn')
-      const strategy = createPreStartStrategy(
-        {},
-        createTrackingConsentState(),
-        createCustomVitalsState(),
-        doStartRumSpy
-      )
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(doStartRumSpy).not.toHaveBeenCalled()
       expect(displaySpy).toHaveBeenCalled()
@@ -184,14 +169,11 @@ describe('preStartRum', () => {
       it('when true, ignores init() call if Synthetics will inject its own instance of RUM', () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
 
-        const strategy = createPreStartStrategy(
-          {
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+          rumPublicApiOptions: {
             ignoreInitIfSyntheticsWillInjectRum: true,
           },
-          createTrackingConsentState(),
-          createCustomVitalsState(),
-          doStartRumSpy
-        )
+        })
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
         expect(doStartRumSpy).not.toHaveBeenCalled()
@@ -200,12 +182,7 @@ describe('preStartRum', () => {
       it('when undefined, ignores init() call if Synthetics will inject its own instance of RUM', () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
 
-        const strategy = createPreStartStrategy(
-          {},
-          createTrackingConsentState(),
-          createCustomVitalsState(),
-          doStartRumSpy
-        )
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
         expect(doStartRumSpy).not.toHaveBeenCalled()
@@ -214,14 +191,11 @@ describe('preStartRum', () => {
       it('when false, does not ignore init() call even if Synthetics will inject its own instance of RUM', () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
 
-        const strategy = createPreStartStrategy(
-          {
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+          rumPublicApiOptions: {
             ignoreInitIfSyntheticsWillInjectRum: false,
           },
-          createTrackingConsentState(),
-          createCustomVitalsState(),
-          doStartRumSpy
-        )
+        })
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
         expect(doStartRumSpy).toHaveBeenCalled()
@@ -231,19 +205,16 @@ describe('preStartRum', () => {
     describe('deflate worker', () => {
       let strategy: Strategy
       let startDeflateWorkerSpy: jasmine.Spy
+      let doStartRumSpy: jasmine.Spy<DoStartRum>
 
       beforeEach(() => {
         startDeflateWorkerSpy = jasmine.createSpy().and.returnValue(FAKE_WORKER)
-
-        strategy = createPreStartStrategy(
-          {
+        ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({
+          rumPublicApiOptions: {
             startDeflateWorker: startDeflateWorkerSpy,
             createDeflateEncoder: noop as any,
           },
-          createTrackingConsentState(),
-          createCustomVitalsState(),
-          doStartRumSpy
-        )
+        }))
       })
 
       describe('with compressIntakeRequests: false', () => {
@@ -305,6 +276,7 @@ describe('preStartRum', () => {
     describe('trackViews mode', () => {
       let clock: Clock | undefined
       let strategy: Strategy
+      let doStartRumSpy: jasmine.Spy<DoStartRum>
       let startViewSpy: jasmine.Spy<StartRumResult['startView']>
       let addTimingSpy: jasmine.Spy<StartRumResult['addTiming']>
       let setViewNameSpy: jasmine.Spy<StartRumResult['setViewName']>
@@ -313,12 +285,12 @@ describe('preStartRum', () => {
         startViewSpy = jasmine.createSpy('startView')
         addTimingSpy = jasmine.createSpy('addTiming')
         setViewNameSpy = jasmine.createSpy('setViewName')
+        ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults())
         doStartRumSpy.and.returnValue({
           startView: startViewSpy,
           addTiming: addTimingSpy,
           setViewName: setViewNameSpy,
         } as unknown as StartRumResult)
-        strategy = createPreStartStrategy({}, createTrackingConsentState(), createCustomVitalsState(), doStartRumSpy)
       })
 
       describe('when auto', () => {
@@ -368,12 +340,7 @@ describe('preStartRum', () => {
         })
 
         it('calling startView then init does not start rum if tracking consent is not granted', () => {
-          const strategy = createPreStartStrategy(
-            {},
-            createTrackingConsentState(),
-            createCustomVitalsState(),
-            doStartRumSpy
-          )
+          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
           strategy.startView({ name: 'foo' })
           strategy.init(
             {
@@ -454,16 +421,12 @@ describe('preStartRum', () => {
             json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
           })
         )
-        const strategy = createPreStartStrategy(
-          {},
-          createTrackingConsentState(),
-          createCustomVitalsState(),
-          (configuration) => {
-            expect(configuration.sessionSampleRate).toEqual(50)
-            done()
-            return {} as StartRumResult
-          }
-        )
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+        doStartRumSpy.and.callFake((configuration) => {
+          expect(configuration.sessionSampleRate).toEqual(50)
+          done()
+          return {} as StartRumResult
+        })
         strategy.init(
           {
             ...DEFAULT_INIT_CONFIGURATION,
@@ -477,12 +440,7 @@ describe('preStartRum', () => {
     describe('plugins', () => {
       it('calls the onInit method on provided plugins', () => {
         const plugin = { name: 'a', onInit: jasmine.createSpy() }
-        const strategy = createPreStartStrategy(
-          {},
-          createTrackingConsentState(),
-          createCustomVitalsState(),
-          doStartRumSpy
-        )
+        const { strategy } = createPreStartStrategyWithDefaults()
         const initConfiguration: RumInitConfiguration = { ...DEFAULT_INIT_CONFIGURATION, plugins: [plugin] }
         strategy.init(initConfiguration, PUBLIC_API)
 
@@ -500,12 +458,7 @@ describe('preStartRum', () => {
             initConfiguration.applicationId = 'application-id'
           },
         }
-        const strategy = createPreStartStrategy(
-          {},
-          createTrackingConsentState(),
-          createCustomVitalsState(),
-          doStartRumSpy
-        )
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
         strategy.init(
           {
             plugins: [plugin],
@@ -521,36 +474,21 @@ describe('preStartRum', () => {
 
   describe('getInternalContext', () => {
     it('returns undefined', () => {
-      const strategy = createPreStartStrategy(
-        {},
-        createTrackingConsentState(),
-        createCustomVitalsState(),
-        doStartRumSpy
-      )
+      const { strategy } = createPreStartStrategyWithDefaults()
       expect(strategy.getInternalContext()).toBe(undefined)
     })
   })
 
   describe('getViewContext', () => {
     it('returns empty object', () => {
-      const strategy = createPreStartStrategy(
-        {},
-        createTrackingConsentState(),
-        createCustomVitalsState(),
-        doStartRumSpy
-      )
+      const { strategy } = createPreStartStrategyWithDefaults()
       expect(strategy.getViewContext()).toEqual({})
     })
   })
 
   describe('stopSession', () => {
     it('does not buffer the call before starting RUM', () => {
-      const strategy = createPreStartStrategy(
-        {},
-        createTrackingConsentState(),
-        createCustomVitalsState(),
-        doStartRumSpy
-      )
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
       const stopSessionSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ stopSession: stopSessionSpy } as unknown as StartRumResult)
 
@@ -561,25 +499,21 @@ describe('preStartRum', () => {
   })
 
   describe('initConfiguration', () => {
-    let strategy: Strategy
     let initConfiguration: RumInitConfiguration
     let interceptor: ReturnType<typeof interceptRequests>
 
     beforeEach(() => {
       interceptor = interceptRequests()
-      strategy = createPreStartStrategy({}, createTrackingConsentState(), createCustomVitalsState(), doStartRumSpy)
       initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
     })
 
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
     it('is undefined before init', () => {
+      const { strategy } = createPreStartStrategyWithDefaults()
       expect(strategy.initConfiguration).toBe(undefined)
     })
 
     it('returns the user configuration after init', () => {
+      const { strategy } = createPreStartStrategyWithDefaults()
       strategy.init(initConfiguration, PUBLIC_API)
 
       expect(strategy.initConfiguration).toEqual(initConfiguration)
@@ -588,14 +522,11 @@ describe('preStartRum', () => {
     it('returns the user configuration even if skipInitIfSyntheticsWillInjectRum is true', () => {
       mockSyntheticsWorkerValues({ injectsRum: true })
 
-      const strategy = createPreStartStrategy(
-        {
+      const { strategy } = createPreStartStrategyWithDefaults({
+        rumPublicApiOptions: {
           ignoreInitIfSyntheticsWillInjectRum: true,
         },
-        createTrackingConsentState(),
-        createCustomVitalsState(),
-        doStartRumSpy
-      )
+      })
       strategy.init(initConfiguration, PUBLIC_API)
 
       expect(strategy.initConfiguration).toEqual(initConfiguration)
@@ -608,7 +539,8 @@ describe('preStartRum', () => {
           json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
         })
       )
-      const strategy = createPreStartStrategy({}, createTrackingConsentState(), createCustomVitalsState(), () => {
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+      doStartRumSpy.and.callFake(() => {
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
         done()
         return {} as StartRumResult
@@ -625,23 +557,24 @@ describe('preStartRum', () => {
 
   describe('buffers API calls before starting RUM', () => {
     let strategy: Strategy
+    let doStartRumSpy: jasmine.Spy<DoStartRum>
 
     beforeEach(() => {
-      strategy = createPreStartStrategy({}, createTrackingConsentState(), createCustomVitalsState(), doStartRumSpy)
+      ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults())
     })
 
     it('addAction', () => {
       const addActionSpy = jasmine.createSpy()
       doStartRumSpy.and.returnValue({ addAction: addActionSpy } as unknown as StartRumResult)
 
-      const customAction: CustomAction = {
+      const manualAction: Omit<ManualAction, 'id' | 'duration' | 'counts' | 'frustrationTypes'> = {
         name: 'foo',
         type: ActionType.CUSTOM,
         startClocks: clocksNow(),
       }
-      strategy.addAction(customAction)
+      strategy.addAction(manualAction)
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(addActionSpy).toHaveBeenCalledOnceWith(customAction)
+      expect(addActionSpy).toHaveBeenCalledOnceWith(manualAction)
     })
 
     it('addError', () => {
@@ -757,15 +690,51 @@ describe('preStartRum', () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
       expect(addOperationStepVitalSpy).toHaveBeenCalledOnceWith('foo', 'start', undefined, undefined)
     })
+
+    it('startAction / stopAction', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+
+      const startActionSpy = jasmine.createSpy()
+      const stopActionSpy = jasmine.createSpy()
+      doStartRumSpy.and.returnValue({
+        startAction: startActionSpy,
+        stopAction: stopActionSpy,
+      } as unknown as StartRumResult)
+
+      strategy.startAction('user_login', { type: ActionType.CUSTOM })
+      strategy.stopAction('user_login')
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(startActionSpy).toHaveBeenCalledWith(
+        'user_login',
+        jasmine.objectContaining({
+          type: ActionType.CUSTOM,
+        }),
+        jasmine.objectContaining({
+          relative: jasmine.any(Number),
+          timeStamp: jasmine.any(Number),
+        })
+      )
+      expect(stopActionSpy).toHaveBeenCalledWith(
+        'user_login',
+        undefined,
+        jasmine.objectContaining({
+          relative: jasmine.any(Number),
+          timeStamp: jasmine.any(Number),
+        })
+      )
+    })
   })
 
   describe('tracking consent', () => {
     let strategy: Strategy
+    let doStartRumSpy: jasmine.Spy<DoStartRum>
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
-      strategy = createPreStartStrategy({}, trackingConsentState, createCustomVitalsState(), doStartRumSpy)
+      ;({ strategy, doStartRumSpy } = createPreStartStrategyWithDefaults({ trackingConsentState }))
     })
 
     describe('basic methods instrumentation', () => {
@@ -842,4 +811,70 @@ describe('preStartRum', () => {
       expect(doStartRumSpy).not.toHaveBeenCalled()
     })
   })
+
+  describe('telemetry', () => {
+    it('starts telemetry during init() by default', () => {
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not start telemetry until consent is granted', () => {
+      const trackingConsentState = createTrackingConsentState()
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({
+        trackingConsentState,
+      })
+
+      strategy.init(
+        {
+          ...DEFAULT_INIT_CONFIGURATION,
+          trackingConsent: TrackingConsent.NOT_GRANTED,
+        },
+        PUBLIC_API
+      )
+
+      expect(startTelemetrySpy).not.toHaveBeenCalled()
+
+      trackingConsentState.update(TrackingConsent.GRANTED)
+
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('starts telemetry only once', () => {
+      const trackingConsentState = createTrackingConsentState()
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({
+        trackingConsentState,
+      })
+
+      strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
+
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+
+      strategy.startView({ name: 'foo' })
+
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+  })
 })
+
+function createPreStartStrategyWithDefaults({
+  rumPublicApiOptions = {},
+  trackingConsentState = createTrackingConsentState(),
+}: {
+  rumPublicApiOptions?: RumPublicApiOptions
+  trackingConsentState?: TrackingConsentState
+} = {}) {
+  const doStartRumSpy = jasmine.createSpy<DoStartRum>()
+  const startTelemetrySpy = jasmine.createSpy().and.callFake(createFakeTelemetryObject)
+  return {
+    strategy: createPreStartStrategy(
+      rumPublicApiOptions,
+      trackingConsentState,
+      createCustomVitalsState(),
+      doStartRumSpy,
+      startTelemetrySpy
+    ),
+    doStartRumSpy,
+    startTelemetrySpy,
+  }
+}

@@ -18,6 +18,7 @@ import {
   mockClock,
   mockEventBridge,
   registerCleanupTask,
+  createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../test'
 import { createRumSessionManagerMock, mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
@@ -169,6 +170,8 @@ describe('view events', () => {
       createTrackingConsentState(TrackingConsent.GRANTED),
       createCustomVitalsState(),
       new BufferedObservable<BufferedData>(100),
+      createFakeTelemetryObject(),
+      createHooks(),
       'rum'
     )
 

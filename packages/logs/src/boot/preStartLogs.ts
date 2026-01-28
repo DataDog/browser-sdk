@@ -15,7 +15,11 @@ import {
   buildGlobalContextManager,
   buildUserContextManager,
   willSyntheticsInjectRum,
+  startTelemetry,
+  TelemetryService,
 } from '@datadog/browser-core'
+import type { Hooks } from '../domain/hooks'
+import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
@@ -24,14 +28,18 @@ import { startLogsSessionManagerStub, startLogsSessionManager } from '../domain/
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
+export type DoStartLogs = (
+  initConfiguration: LogsInitConfiguration,
+  configuration: LogsConfiguration,
+  sessionManager: LogsSessionManager,
+  hooks: Hooks
+) => StartLogsResult
+
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: (
-    initConfiguration: LogsInitConfiguration,
-    configuration: LogsConfiguration,
-    sessionManager: LogsSessionManager
-  ) => StartLogsResult
+  doStartLogs: DoStartLogs,
+  startTelemetryImpl = startTelemetry
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
@@ -48,13 +56,18 @@ export function createPreStartStrategy(
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
   let sessionManager: LogsSessionManager | undefined
+  const hooks = createHooks()
+  const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
     if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager) {
       return
     }
 
-    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, sessionManager)
+    startTelemetryImpl(TelemetryService.LOGS, cachedConfiguration, hooks)
+
+    trackingConsentStateSubscription.unsubscribe()
+    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, sessionManager, hooks)
 
     bufferApiCalls.drain(startLogsResult)
   }
@@ -87,8 +100,9 @@ export function createPreStartStrategy(
       }
 
       cachedConfiguration = configuration
-      // Instrumuent fetch to track network requests
-      // This is needed in case the consent is not granted and some cutsomer
+
+      // Instrument fetch to track network requests
+      // This is needed in case the consent is not granted and some customer
       // library (Apollo Client) is storing uninstrumented fetch to be used later
       // The subscrption is needed so that the instrumentation process is completed
       initFetchObservable().subscribe(noop)
