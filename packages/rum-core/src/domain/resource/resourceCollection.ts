@@ -40,6 +40,7 @@ import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
 import type { GraphQlMetadata } from './graphql'
 import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
+import { trackManualResources } from './trackManualResources'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
@@ -83,10 +84,15 @@ export function startResourceCollection(
     })
   }
 
+  const manualResources = trackManualResources(lifeCycle)
+
   return {
+    startResource: manualResources.startResource,
+    stopResource: manualResources.stopResource,
     stop: () => {
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
+      manualResources.stop()
     },
   }
 }

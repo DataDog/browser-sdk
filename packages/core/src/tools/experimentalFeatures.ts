@@ -20,6 +20,7 @@ export enum ExperimentalFeature {
   SHORT_SESSION_INVESTIGATION = 'short_session_investigation',
   AVOID_FETCH_KEEPALIVE = 'avoid_fetch_keepalive',
   START_STOP_ACTION = 'start_stop_action',
+  START_STOP_RESOURCE = 'start_stop_resource',
   USE_CHANGE_RECORDS = 'use_change_records',
   SOURCE_CODE_CONTEXT = 'source_code_context',
 }
