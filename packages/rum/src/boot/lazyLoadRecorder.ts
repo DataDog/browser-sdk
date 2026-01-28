@@ -1,11 +1,10 @@
+import { mockable } from '@datadog/browser-core'
 import { reportScriptLoadingError } from '../domain/scriptLoadingError'
 import type { startRecording } from './startRecording'
 
-export async function lazyLoadRecorder(
-  importRecorderImpl = importRecorder
-): Promise<typeof startRecording | undefined> {
+export async function lazyLoadRecorder(): Promise<typeof startRecording | undefined> {
   try {
-    return await importRecorderImpl()
+    return await mockable(importRecorder)()
   } catch (error: unknown) {
     reportScriptLoadingError({
       error,
@@ -15,7 +14,7 @@ export async function lazyLoadRecorder(
   }
 }
 
-async function importRecorder() {
+export async function importRecorder() {
   const module = await import(/* webpackChunkName: "recorder" */ './startRecording')
   return module.startRecording
 }
