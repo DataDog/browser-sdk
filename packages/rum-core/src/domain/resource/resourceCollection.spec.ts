@@ -1,6 +1,6 @@
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
 import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumFetchResourceEventDomainContext, RumXhrResourceEventDomainContext } from '../../domainContext.types'
 import {
   collectAndValidateRawRumEvents,
@@ -20,6 +20,7 @@ import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
 import { createSpanIdentifier, createTraceIdentifier } from '../tracing/identifier'
 import { startResourceCollection } from './resourceCollection'
+import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
 const HANDLING_STACK_REGEX = /^Error: \n\s+at <anonymous> @/
 const baseConfiguration = mockRumConfiguration()
@@ -33,6 +34,7 @@ describe('resourceCollection', () => {
   let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
+    replaceMockable(retrieveInitialDocumentResourceTiming, noop)
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
     taskQueuePushSpy = spyOn(taskQueue, 'push')
@@ -40,8 +42,7 @@ describe('resourceCollection', () => {
       lifeCycle,
       { ...baseConfiguration, ...partialConfig },
       pageStateHistory,
-      taskQueue,
-      noop
+      taskQueue
     )
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)

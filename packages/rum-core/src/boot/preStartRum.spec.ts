@@ -9,6 +9,7 @@ import {
   createTrackingConsentState,
   DefaultPrivacyLevel,
   ExperimentalFeature,
+  startTelemetry,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -19,6 +20,7 @@ import {
   mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
   createFakeTelemetryObject,
+  replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -857,14 +859,13 @@ function createPreStartStrategyWithDefaults({
   trackingConsentState?: TrackingConsentState
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
-  const startTelemetrySpy = jasmine.createSpy().and.callFake(createFakeTelemetryObject)
+  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   return {
     strategy: createPreStartStrategy(
       rumPublicApiOptions,
       trackingConsentState,
       createCustomVitalsState(),
-      doStartRumSpy,
-      startTelemetrySpy
+      doStartRumSpy
     ),
     doStartRumSpy,
     startTelemetrySpy,

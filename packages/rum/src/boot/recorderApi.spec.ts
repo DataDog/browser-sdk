@@ -9,7 +9,13 @@ import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
-import { collectAsyncCalls, mockEventBridge, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
+import {
+  collectAsyncCalls,
+  mockEventBridge,
+  replaceMockableWithSpy,
+  registerCleanupTask,
+  startMockTelemetry,
+} from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import {
   createRumSessionManagerMock,
@@ -18,7 +24,7 @@ import {
   mockViewHistory,
 } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
-import { resetDeflateWorkerState } from '../domain/deflate'
+import { resetDeflateWorkerState, createDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import * as replayStats from '../domain/replayStats'
 import { type RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
@@ -47,7 +53,7 @@ describe('makeRecorderApi', () => {
   } = {}) {
     telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
-    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
+    createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).and.callFake(() => mockWorker)
     spyOn(display, 'error')
 
     lifeCycle = new LifeCycle()
@@ -71,7 +77,7 @@ describe('makeRecorderApi', () => {
       startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
     })
 
-    recorderApi = makeRecorderApi(loadRecorderSpy, createDeflateWorkerSpy)
+    recorderApi = makeRecorderApi(loadRecorderSpy)
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
