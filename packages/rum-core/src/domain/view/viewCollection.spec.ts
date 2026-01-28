@@ -185,6 +185,7 @@ describe('viewCollection', () => {
             timestamp: (10 * 1e6) as ServerDuration,
             target_selector: undefined,
             resource_url: undefined,
+            sub_parts: undefined,
           },
         },
         resource: {
