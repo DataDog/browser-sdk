@@ -1,4 +1,10 @@
-import { callbackAddsInstrumentation, type Clock, mockClock, mockEventBridge } from '@datadog/browser-core/test'
+import {
+  callbackAddsInstrumentation,
+  type Clock,
+  mockClock,
+  mockEventBridge,
+  createFakeTelemetryObject,
+} from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   ONE_SECOND,
@@ -8,10 +14,11 @@ import {
   resetFetchObservable,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
-import type { HybridInitConfiguration, LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
+import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { Strategy } from './logsPublicApi'
+import type { DoStartLogs } from './preStartLogs'
 import { createPreStartStrategy } from './preStartLogs'
 import type { StartLogsResult } from './startLogs'
 
@@ -19,26 +26,9 @@ const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx' }
 const INVALID_INIT_CONFIGURATION = {} as LogsInitConfiguration
 
 describe('preStartLogs', () => {
-  let doStartLogsSpy: jasmine.Spy<
-    (initConfiguration: LogsInitConfiguration, configuration: LogsConfiguration) => StartLogsResult
-  >
-  let handleLogSpy: jasmine.Spy<StartLogsResult['handleLog']>
-  let getCommonContextSpy: jasmine.Spy<() => CommonContext>
-  let strategy: Strategy
   let clock: Clock
 
-  function getLoggedMessage(index: number) {
-    const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
-    return { message, logger, handlingStack, savedCommonContext, savedDate }
-  }
-
   beforeEach(() => {
-    handleLogSpy = jasmine.createSpy()
-    doStartLogsSpy = jasmine.createSpy().and.returnValue({
-      handleLog: handleLogSpy,
-    } as unknown as StartLogsResult)
-    getCommonContextSpy = jasmine.createSpy()
-    strategy = createPreStartStrategy(getCommonContextSpy, createTrackingConsentState(), doStartLogsSpy)
     clock = mockClock()
   })
 
@@ -48,8 +38,11 @@ describe('preStartLogs', () => {
 
   describe('configuration validation', () => {
     let displaySpy: jasmine.Spy
+    let doStartLogsSpy: jasmine.Spy<DoStartLogs>
+    let strategy: Strategy
 
     beforeEach(() => {
+      ;({ strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults())
       displaySpy = spyOn(display, 'error')
     })
 
@@ -116,6 +109,7 @@ describe('preStartLogs', () => {
   })
 
   it('allows sending logs', () => {
+    const { strategy, handleLogSpy, getLoggedMessage } = createPreStartStrategyWithDefaults()
     strategy.handleLog(
       {
         status: StatusType.info,
@@ -132,11 +126,13 @@ describe('preStartLogs', () => {
   })
 
   it('returns undefined initial configuration', () => {
+    const { strategy } = createPreStartStrategyWithDefaults()
     expect(strategy.initConfiguration).toBeUndefined()
   })
 
   describe('save context when submitting a log', () => {
     it('saves the date', () => {
+      const { strategy, getLoggedMessage } = createPreStartStrategyWithDefaults()
       strategy.handleLog(
         {
           status: StatusType.info,
@@ -151,6 +147,7 @@ describe('preStartLogs', () => {
     })
 
     it('saves the URL', () => {
+      const { strategy, getLoggedMessage, getCommonContextSpy } = createPreStartStrategyWithDefaults()
       getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
       strategy.handleLog(
         {
@@ -165,6 +162,7 @@ describe('preStartLogs', () => {
     })
 
     it('saves the log context', () => {
+      const { strategy, getLoggedMessage } = createPreStartStrategyWithDefaults()
       const context = { foo: 'bar' }
       strategy.handleLog(
         {
@@ -184,18 +182,19 @@ describe('preStartLogs', () => {
 
   describe('internal context', () => {
     it('should return undefined if not initialized', () => {
-      const strategy = createPreStartStrategy(getCommonContextSpy, createTrackingConsentState(), doStartLogsSpy)
+      const { strategy } = createPreStartStrategyWithDefaults()
       expect(strategy.getInternalContext()).toBeUndefined()
     })
   })
 
   describe('tracking consent', () => {
     let strategy: Strategy
+    let doStartLogsSpy: jasmine.Spy<DoStartLogs>
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
       trackingConsentState = createTrackingConsentState()
-      strategy = createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy)
+      ;({ strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults({ trackingConsentState }))
     })
 
     describe('basic methods instrumentation', () => {
@@ -248,4 +247,55 @@ describe('preStartLogs', () => {
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
   })
+
+  describe('telemetry', () => {
+    it('starts telemetry during init() by default', () => {
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
+      strategy.init(DEFAULT_INIT_CONFIGURATION)
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+
+    it('does not start telemetry until consent is granted', () => {
+      const trackingConsentState = createTrackingConsentState()
+      const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({
+        trackingConsentState,
+      })
+
+      strategy.init({
+        ...DEFAULT_INIT_CONFIGURATION,
+        trackingConsent: TrackingConsent.NOT_GRANTED,
+      })
+
+      expect(startTelemetrySpy).not.toHaveBeenCalled()
+
+      trackingConsentState.update(TrackingConsent.GRANTED)
+
+      expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
+    })
+  })
 })
+
+function createPreStartStrategyWithDefaults({
+  trackingConsentState = createTrackingConsentState(),
+}: {
+  trackingConsentState?: TrackingConsentState
+} = {}) {
+  const handleLogSpy = jasmine.createSpy()
+  const doStartLogsSpy = jasmine.createSpy<DoStartLogs>().and.returnValue({
+    handleLog: handleLogSpy,
+  } as unknown as StartLogsResult)
+  const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
+  const startTelemetrySpy = jasmine.createSpy().and.callFake(createFakeTelemetryObject)
+
+  return {
+    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy, startTelemetrySpy),
+    startTelemetrySpy,
+    handleLogSpy,
+    doStartLogsSpy,
+    getCommonContextSpy,
+    getLoggedMessage: (index: number) => {
+      const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+      return { message, logger, handlingStack, savedCommonContext, savedDate }
+    },
+  }
+}

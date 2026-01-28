@@ -14,8 +14,12 @@ test.describe('transport', () => {
 
         // The last view update should be sent without compression
         const plainRequests = intakeRegistry.rumRequests.filter((request) => request.encoding === null)
-        expect(plainRequests).toHaveLength(1)
-        expect(plainRequests[0].events).toEqual(
+        expect(plainRequests).toHaveLength(2)
+        const telemetryEventsRequest = plainRequests.find((request) =>
+          request.events.some((event) => event.type === 'telemetry')
+        )
+        const rumEventsRequest = plainRequests.find((request) => request !== telemetryEventsRequest)
+        expect(rumEventsRequest!.events).toEqual(
           expect.arrayContaining([
             expect.objectContaining({
               type: 'view',
@@ -25,7 +29,7 @@ test.describe('transport', () => {
 
         // Other data should be sent encoded
         const deflateRequests = intakeRegistry.rumRequests.filter((request) => request.encoding === 'deflate')
-        expect(deflateRequests).toHaveLength(2)
+        expect(deflateRequests).toHaveLength(1)
         expect(deflateRequests.flatMap((request) => request.events).length).toBeGreaterThan(0)
       })
 

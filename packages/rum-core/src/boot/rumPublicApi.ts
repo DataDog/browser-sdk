@@ -14,6 +14,7 @@ import type {
   RumInternalContext,
   Telemetry,
   Encoder,
+  startTelemetry,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -558,7 +559,8 @@ export function makeRumPublicApi(
   startRumImpl: StartRum,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
-  options: RumPublicApiOptions = {}
+  options: RumPublicApiOptions = {},
+  startTelemetryImpl?: typeof startTelemetry
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
@@ -568,7 +570,7 @@ export function makeRumPublicApi(
     options,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions) => {
+    (configuration, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -583,6 +585,8 @@ export function makeRumPublicApi(
         trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
+        telemetry,
+        hooks,
         options.sdkName
       )
 
@@ -613,7 +617,8 @@ export function makeRumPublicApi(
       })
 
       return startRumResult
-    }
+    },
+    startTelemetryImpl
   )
   const getStrategy = () => strategy
 
