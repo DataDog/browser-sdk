@@ -94,13 +94,8 @@ export function createPreStartStrategy(
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !sessionManager) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
       return
-    }
-
-    // Start telemetry only once, when we have consent and configuration
-    if (!telemetry) {
-      telemetry = startTelemetryImpl(TelemetryService.RUM, cachedConfiguration, hooks)
     }
 
     trackingConsentStateSubscription.unsubscribe()
@@ -121,7 +116,14 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks)
+    const startRumResult = doStartRum(
+      cachedConfiguration,
+      sessionManager,
+      deflateWorker,
+      initialViewOptions,
+      telemetry,
+      hooks
+    )
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -177,6 +179,8 @@ export function createPreStartStrategy(
     trackingConsentState.tryToInit(configuration.trackingConsent)
 
     trackingConsentState.onGrantedOnce(() => {
+      telemetry = startTelemetryImpl(TelemetryService.RUM, configuration, hooks)
+
       if (canUseEventBridge()) {
         sessionManager = startRumSessionManagerStub()
         tryStartRum()

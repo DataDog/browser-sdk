@@ -64,8 +64,6 @@ export function createPreStartStrategy(
       return
     }
 
-    startTelemetryImpl(TelemetryService.LOGS, cachedConfiguration, hooks)
-
     trackingConsentStateSubscription.unsubscribe()
     const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, sessionManager, hooks)
 
@@ -110,6 +108,7 @@ export function createPreStartStrategy(
       trackingConsentState.tryToInit(configuration.trackingConsent)
 
       trackingConsentState.onGrantedOnce(() => {
+        startTelemetryImpl(TelemetryService.LOGS, configuration, hooks)
         if (configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()) {
           startLogsSessionManager(configuration, trackingConsentState, (newSessionManager) => {
             sessionManager = newSessionManager
