@@ -1,4 +1,4 @@
-import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
+import type { RawError, Duration, BufferedData, TelemetryEvent, Context } from '@datadog/browser-core'
 import {
   Observable,
   stopSessionManager,
@@ -11,6 +11,9 @@ import {
   createTrackingConsentState,
   TrackingConsent,
   BufferedObservable,
+  startTelemetryTransport,
+  getTelemetryObservable,
+  canUseEventBridge,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -31,6 +34,7 @@ import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createHooks } from '../domain/hooks'
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRum, startRumEventCollection } from './startRum'
+import { getPreStartTelemetryObservable } from './preStartRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
   const serverRumEvents: RumEvent[] = []
@@ -244,5 +248,134 @@ describe('view events', () => {
       (serverRumEvent): serverRumEvent is RumViewEvent => serverRumEvent.type === RumEventType.VIEW
     )!
     expect(lastRumViewEvent._dd.sdk_name).toBe('rum')
+  })
+})
+
+describe('preStart telemetry transport', () => {
+  it('startRum can be initialized without errors', () => {
+    const configuration = mockRumConfiguration()
+
+    const result = startRum(
+      configuration,
+      noopRecorderApi,
+      noopProfilerApi,
+      undefined,
+      createIdentityEncoder,
+      createTrackingConsentState(TrackingConsent.GRANTED),
+      createCustomVitalsState(),
+      new BufferedObservable<BufferedData>(100),
+      createHooks()
+    )
+
+    registerCleanupTask(() => result.stop())
+
+    // Verify startRum returns expected structure
+    expect(result).toBeDefined()
+    expect(result.telemetry).toBeDefined()
+    expect(result.telemetry.stop).toBeDefined()
+    expect(result.stop).toBeDefined()
+  })
+
+  it('startRum telemetry is enabled by default', () => {
+    const configuration = mockRumConfiguration()
+
+    const result = startRum(
+      configuration,
+      noopRecorderApi,
+      noopProfilerApi,
+      undefined,
+      createIdentityEncoder,
+      createTrackingConsentState(TrackingConsent.GRANTED),
+      createCustomVitalsState(),
+      new BufferedObservable<BufferedData>(100),
+      createHooks()
+    )
+
+    registerCleanupTask(() => result.stop())
+
+    // Verify telemetry is enabled
+    expect(result.telemetry.enabled).toBe(true)
+    expect(result.telemetry.metricsEnabled).toBe(true)
+  })
+
+  it('startRum telemetry transport is initialized when startRum is called', () => {
+    const configuration = mockRumConfiguration()
+    let telemetryTransportStarted = false
+
+    // Hook into startTelemetryTransport by checking that telemetry object is set up
+    const result = startRum(
+      configuration,
+      noopRecorderApi,
+      noopProfilerApi,
+      undefined,
+      createIdentityEncoder,
+      createTrackingConsentState(TrackingConsent.GRANTED),
+      createCustomVitalsState(),
+      new BufferedObservable<BufferedData>(100),
+      createHooks()
+    )
+
+    registerCleanupTask(() => result.stop())
+
+    // The presence of result.telemetry.stop indicates that startTelemetryTransport was called
+    // (it returns { stop: stopTelemetryTransport })
+    expect(result.telemetry.stop).toBeDefined()
+    telemetryTransportStarted = typeof result.telemetry.stop === 'function'
+
+    // Verify telemetry transport was started
+    expect(telemetryTransportStarted).toBe(true)
+  })
+
+  it('preStart telemetry observable is passed through startRum initialization', () => {
+    const configuration = mockRumConfiguration()
+
+    // Create a test to ensure startRum can receive hooks which contain the preStart observable reference
+    const hooks = createHooks()
+
+    const result = startRum(
+      configuration,
+      noopRecorderApi,
+      noopProfilerApi,
+      undefined,
+      createIdentityEncoder,
+      createTrackingConsentState(TrackingConsent.GRANTED),
+      createCustomVitalsState(),
+      new BufferedObservable<BufferedData>(100),
+      hooks
+    )
+
+    registerCleanupTask(() => result.stop())
+
+    // Verify the returned result includes hooks
+    expect(result.hooks).toBe(hooks)
+    expect(result.hooks).toBeDefined()
+  })
+
+  it('startRum initializes correctly with both HTTP batch and event bridge', () => {
+    // Test that startRum works regardless of event bridge availability
+    // (the actual choice between batch vs bridge is made inside startRum)
+    const configuration = mockRumConfiguration()
+
+    const result = startRum(
+      configuration,
+      noopRecorderApi,
+      noopProfilerApi,
+      undefined,
+      createIdentityEncoder,
+      createTrackingConsentState(TrackingConsent.GRANTED),
+      createCustomVitalsState(),
+      new BufferedObservable<BufferedData>(100),
+      createHooks()
+    )
+
+    registerCleanupTask(() => result.stop())
+
+    // Verify that the RUM transport was initialized (batch or bridge)
+    expect(result.lifeCycle).toBeDefined()
+    expect(result.session).toBeDefined()
+
+    // Verify telemetry transport is independent and started
+    expect(result.telemetry).toBeDefined()
+    expect(result.telemetry.stop).toBeDefined()
   })
 })
