@@ -162,4 +162,30 @@ test.describe('GraphQL tracking', () => {
       expect(resourceEvent.resource.graphql?.error_count).toBeUndefined()
       expect(resourceEvent.resource.graphql?.errors).toBeUndefined()
     })
+
+  createTest('track GraphQL GET request with persisted query')
+    .withRum(buildGraphQlConfig())
+    .run(async ({ intakeRegistry, flushEvents, page }) => {
+      await page.evaluate(() => {
+        const operationName = 'GetUser'
+        const variables = JSON.stringify({ id: '123' })
+        const extensions = JSON.stringify({
+          persistedQuery: { version: 1, sha256Hash: 'abc123' },
+        })
+        const url = `/graphql?operationName=${encodeURIComponent(operationName)}&variables=${encodeURIComponent(variables)}&extensions=${encodeURIComponent(extensions)}`
+
+        return window.fetch(url, { method: 'GET' })
+      })
+
+      await flushEvents()
+      const resourceEvent = intakeRegistry.rumResourceEvents.find((event) => event.resource.url.includes('/graphql'))!
+      expect(resourceEvent).toBeDefined()
+      expect(resourceEvent.resource.method).toBe('GET')
+      expect(resourceEvent.resource.graphql).toEqual({
+        operationType: undefined,
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: undefined,
+      })
+    })
 })

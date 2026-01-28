@@ -173,6 +173,62 @@ describe('GraphQL detection and metadata extraction', () => {
         payload: undefined,
       })
     })
+
+    it('should extract metadata from URL query params for GET requests with persisted queries', () => {
+      const url =
+        '/graphql?operationName=GetUser&variables=%7B%22id%22%3A%22123%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22abc123%22%7D%7D'
+
+      const result = extractGraphQlRequestMetadata(undefined, false, url)
+
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: undefined,
+      })
+    })
+
+    it('should prefer body over URL params when body is present', () => {
+      const requestBody = JSON.stringify({
+        query: 'query FromBody { user { id } }',
+        operationName: 'FromBody',
+      })
+      const url = '/graphql?operationName=FromUrl'
+
+      const result = extractGraphQlRequestMetadata(requestBody, true, url)
+
+      expect(result?.operationName).toBe('FromBody')
+    })
+
+    it('should return undefined when URL has no query params', () => {
+      const result = extractGraphQlRequestMetadata(undefined, false, '/graphql')
+
+      expect(result).toBeUndefined()
+    })
+
+    it('should return metadata with undefined fields for URL with unrelated query params', () => {
+      const result = extractGraphQlRequestMetadata(undefined, false, '/graphql?foo=bar&baz=qux')
+
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: undefined,
+        variables: undefined,
+        payload: undefined,
+      })
+    })
+
+    it('should extract query from URL params and detect operation type', () => {
+      const url = '/graphql?query=query%20GetUser%20%7B%20user%20%7D&operationName=GetUser'
+
+      const result = extractGraphQlRequestMetadata(undefined, true, url)
+
+      expect(result).toEqual({
+        operationType: 'query',
+        operationName: 'GetUser',
+        variables: undefined,
+        payload: 'query GetUser { user }',
+      })
+    })
   })
 
   describe('request payload truncation', () => {
