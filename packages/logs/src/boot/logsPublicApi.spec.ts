@@ -1,7 +1,6 @@
-import type { ContextManager, TimeStamp } from '@datadog/browser-core'
+import type { ContextManager } from '@datadog/browser-core'
 import { monitor, display, createContextManager, stopSessionManager, TrackingConsent } from '@datadog/browser-core'
 import { waitFor } from '@datadog/browser-core/test'
-import type { Logger, LogsMessage } from '../domain/logger'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import { createFakeTelemetryObject } from '../../../core/test'

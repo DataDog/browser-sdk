@@ -96,7 +96,6 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
-
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,

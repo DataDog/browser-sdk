@@ -1,7 +1,20 @@
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks, stopSessionManager, ExperimentalFeature } from '@datadog/browser-core'
+import {
+  ONE_SECOND,
+  display,
+  DefaultPrivacyLevel,
+  timeStampToClocks,
+  stopSessionManager,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { waitFor, mockClock, mockEventBridge, createFakeTelemetryObject, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import {
+  waitFor,
+  mockClock,
+  mockEventBridge,
+  createFakeTelemetryObject,
+  mockExperimentalFeatures,
+} from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
