@@ -14,7 +14,7 @@ beforeEach(() => {
   ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
   ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
   // prevent 'Some of your tests did a full page reload!' issue
-  window.onbeforeunload = () => 'stop'
+  //window.onbeforeunload = () => 'stop'
   startLeakDetection()
 })
 
