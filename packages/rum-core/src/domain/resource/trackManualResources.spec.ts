@@ -5,7 +5,9 @@ import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumResourceEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import { type RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
+import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { startEventTracker } from '../eventTracker'
+import type { ManualResourceData } from './trackManualResources'
 import { trackManualResources } from './trackManualResources'
 
 describe('trackManualResources', () => {
@@ -19,7 +21,8 @@ describe('trackManualResources', () => {
     clock = mockClock()
     lifeCycle = new LifeCycle()
 
-    const manualResources = trackManualResources(lifeCycle)
+    const resourceTracker = startEventTracker<ManualResourceData>(lifeCycle)
+    const manualResources = trackManualResources(lifeCycle, resourceTracker)
     registerCleanupTask(manualResources.stop)
     startResource = manualResources.startResource
     stopResource = manualResources.stopResource
@@ -118,6 +121,45 @@ describe('trackManualResources', () => {
       expect(rawRumEvents).toHaveSize(2)
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/foo/bar')
       expect((rawRumEvents[1].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/foo')
+    })
+  })
+
+  describe('session renewal', () => {
+    it('should emit partial resource on session renewal', () => {
+      startResource('https://api.example.com/data', { type: ResourceType.FETCH, method: 'POST' })
+
+      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.url).toBe('https://api.example.com/data')
+      expect(resourceEvent.resource.type).toBe(ResourceType.FETCH)
+      expect(resourceEvent.resource.method).toBe('POST')
+      expect(resourceEvent.resource.duration).toBeUndefined()
+    })
+
+    it('should emit partial resource when overwritten by same key', () => {
+      startResource('https://api.example.com/data', { type: ResourceType.XHR })
+      startResource('https://api.example.com/data', { type: ResourceType.FETCH })
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.type).toBe(ResourceType.XHR)
+      expect(resourceEvent.resource.duration).toBeUndefined()
+    })
+  })
+
+  describe('context merging', () => {
+    it('should merge contexts from start and stop', () => {
+      startResource('https://api.example.com/data', { context: { startKey: 'value1' } })
+      stopResource('https://api.example.com/data', { context: { stopKey: 'value2' } })
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.context).toEqual({
+        startKey: 'value1',
+        stopKey: 'value2',
+      })
     })
   })
 })

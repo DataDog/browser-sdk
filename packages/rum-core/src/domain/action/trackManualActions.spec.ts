@@ -9,7 +9,7 @@ import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '..
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startActionCollection } from './actionCollection'
-import type { ActionContexts } from './trackAction'
+import type { ActionContexts } from './actionCollection'
 
 describe('trackManualActions', () => {
   const lifeCycle = new LifeCycle()

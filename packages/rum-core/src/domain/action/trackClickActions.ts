@@ -1,5 +1,5 @@
 import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
-import { timeStampNow, Observable, getRelativeTime, relativeToClocks } from '@datadog/browser-core'
+import { timeStampNow, Observable, getRelativeTime, relativeToClocks, generateUUID } from '@datadog/browser-core'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -11,6 +11,8 @@ import { getNodePrivacyLevel } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import type { DiscardedEvent, EventTracker, StoppedEvent } from '../eventTracker'
+import type { ActionEventData } from './trackManualActions'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -19,7 +21,6 @@ import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
-import type { ActionTracker, TrackedAction } from './trackAction'
 
 interface ActionCounts {
   errorCount: number
@@ -51,7 +52,7 @@ export function trackClickActions(
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
-  actionTracker: ActionTracker
+  actionTracker: EventTracker<ActionEventData>
 ) {
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
@@ -158,7 +159,7 @@ function startClickAction(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  actionTracker: ActionTracker,
+  actionTracker: EventTracker<ActionEventData>,
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
@@ -278,15 +279,20 @@ export type Click = ReturnType<typeof newClick>
 
 function newClick(
   lifeCycle: LifeCycle,
-  actionTracker: ActionTracker,
+  actionTracker: EventTracker<ActionEventData>,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement
 ) {
-  const trackedAction: TrackedAction = actionTracker.createTrackedAction(relativeToClocks(startEvent.timeStamp))
+  const clickKey = generateUUID()
+  const startClocks = relativeToClocks(startEvent.timeStamp)
+
+  actionTracker.start(clickKey, startClocks, {}, { trackCounts: true })
 
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
+  let stoppedEvent: StoppedEvent<ActionEventData> | undefined
+  let discardedEvent: DiscardedEvent<ActionEventData> | undefined
   const frustrationTypes: FrustrationType[] = []
   const stopObservable = new Observable<void>()
 
@@ -296,11 +302,13 @@ function newClick(
     }
     activityEndTime = newActivityEndTime
     status = ClickStatus.STOPPED
-    if (activityEndTime) {
-      trackedAction.stop(getRelativeTime(activityEndTime))
+
+    if (activityEndTime !== undefined) {
+      stoppedEvent = actionTracker.stop(clickKey, relativeToClocks(getRelativeTime(activityEndTime)))
     } else {
-      trackedAction.discard()
+      discardedEvent = actionTracker.discard(clickKey)
     }
+
     stopObservable.notify()
   }
 
@@ -310,17 +318,22 @@ function newClick(
     stopObservable,
 
     get hasError() {
-      return trackedAction.counts.errorCount > 0
+      const counts = stoppedEvent?.counts ?? discardedEvent?.counts
+      return counts ? counts.errorCount > 0 : false
     },
     get hasPageActivity() {
-      return activityEndTime !== undefined
+      if (activityEndTime !== undefined) {
+        return true
+      }
+      const activity = getUserActivity()
+      return !!(activity.selection || activity.input || activity.scroll)
     },
     getUserActivity,
     addFrustration: (frustrationType: FrustrationType) => {
       frustrationTypes.push(frustrationType)
     },
     get startClocks() {
-      return trackedAction.startClocks
+      return startClocks
     },
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
@@ -333,12 +346,22 @@ function newClick(
         return
       }
 
+      if (!stoppedEvent && !discardedEvent) {
+        const endTime = activityEndTime ?? timeStampNow()
+        stoppedEvent = actionTracker.stop(clickKey, relativeToClocks(getRelativeTime(endTime)))
+      }
+
+      const eventData = stoppedEvent ?? discardedEvent
+      if (!eventData) {
+        return
+      }
+
       const clickAction: ClickAction = {
-        startClocks: trackedAction.startClocks,
-        duration: trackedAction.duration,
-        id: trackedAction.id,
+        id: eventData.id,
+        startClocks: eventData.startClocks,
+        duration: stoppedEvent && activityEndTime !== undefined ? stoppedEvent.duration : undefined,
+        counts: eventData.counts!,
         frustrationTypes,
-        counts: trackedAction.counts,
         events: domEvents ?? [startEvent],
         event: startEvent,
         ...clickActionBase,
@@ -349,7 +372,12 @@ function newClick(
     },
 
     discard: () => {
-      stop()
+      if (status !== ClickStatus.ONGOING) {
+        status = ClickStatus.FINALIZED
+        return
+      }
+
+      actionTracker.discard(clickKey)
       status = ClickStatus.FINALIZED
     },
   }

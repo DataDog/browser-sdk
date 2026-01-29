@@ -1,4 +1,4 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -19,13 +19,13 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
 import type { BrowserWindow } from '../privacy'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts, ActionTracker } from './trackAction'
+import type { EventTracker } from '../eventTracker'
+import { startEventTracker } from '../eventTracker'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 import { ActionNameSource } from './actionNameConstants'
-import { startActionTracker } from './trackAction'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -52,29 +52,29 @@ describe('trackClickActions', () => {
   let domMutationObservable: Observable<RumMutationRecord[]>
   let windowOpenObservable: Observable<void>
   let clock: Clock
-  let actionTracker: ActionTracker
+  let eventTracker: EventTracker<object>
 
   const { events, pushEvent } = eventsCollector<ClickAction>()
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
   let input: HTMLInputElement
-  let findActionId: ActionContexts['findActionId']
+  let findActionId: (startTime?: RelativeTime) => string | string[] | undefined
   let stopClickActionsTracking: () => void
 
   function startClickActionsTracking(partialConfig: Partial<RumConfiguration> = {}) {
     const subscription = lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-    actionTracker = startActionTracker(lifeCycle)
-    registerCleanupTask(() => actionTracker.stop())
+    eventTracker = startEventTracker<object>(lifeCycle)
+    registerCleanupTask(() => eventTracker.stopAll())
 
     const trackClickActionsResult = trackClickActions(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
       mockRumConfiguration(partialConfig),
-      actionTracker
+      eventTracker
     )
 
-    findActionId = actionTracker.findActionId
+    findActionId = eventTracker.findId
     stopClickActionsTracking = () => {
       trackClickActionsResult.stop()
       subscription.unsubscribe()

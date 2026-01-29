@@ -1,10 +1,10 @@
-import type { Context, ResourceType } from '@datadog/browser-core'
-import { clocksNow, generateUUID, ResourceType as ResourceTypeEnum, toServerDuration } from '@datadog/browser-core'
+import type { ClocksState, Context, ResourceType } from '@datadog/browser-core'
+import { clocksNow, elapsed, ResourceType as ResourceTypeEnum, toServerDuration } from '@datadog/browser-core'
 import type { RawRumResourceEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { createManualEventLifecycle } from '../manualEventRegistry'
+import type { EventTracker } from '../eventTracker'
 import { sanitizeIfLongDataUrl } from './resourceUtils'
 
 export interface ResourceOptions {
@@ -48,61 +48,82 @@ export interface ResourceStopOptions {
   resourceKey?: string
 }
 
-interface ManualResourceStart {
+export interface ManualResourceData {
   url: string
   type?: ResourceType
   method?: string
   context?: Context
 }
 
-export function trackManualResources(lifeCycle: LifeCycle) {
-  const lifecycle = createManualEventLifecycle<ManualResourceStart>(lifeCycle)
+export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: EventTracker<ManualResourceData>) {
+  function emitResource(
+    id: string,
+    startClocks: ClocksState,
+    data: ManualResourceData,
+    statusCode?: number,
+    endClocks?: ClocksState
+  ) {
+    const duration = endClocks ? elapsed(startClocks.relative, endClocks.relative) : undefined
+
+    const rawRumEvent: RawRumResourceEvent = {
+      date: startClocks.timeStamp,
+      type: RumEventType.RESOURCE,
+      resource: {
+        id,
+        type: data.type || ResourceTypeEnum.OTHER,
+        url: sanitizeIfLongDataUrl(data.url),
+        duration: duration !== undefined ? toServerDuration(duration) : undefined,
+        method: data.method,
+        status_code: statusCode,
+      },
+      _dd: {},
+      context: data.context,
+    }
+
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
+      rawRumEvent,
+      startTime: startClocks.relative,
+      duration,
+      domainContext: { isManual: true as const },
+    })
+  }
 
   function startManualResource(url: string, options: ResourceOptions = {}, startClocks = clocksNow()) {
     const lookupKey = options.resourceKey ?? url
 
-    lifecycle.add(lookupKey, startClocks, {
-      url,
-      type: options.type,
-      method: options.method,
-      context: options.context,
-    })
+    resourceTracker.start(
+      lookupKey,
+      startClocks,
+      {
+        url,
+        type: options.type,
+        method: options.method,
+        context: options.context,
+      },
+      {
+        onDiscard: (id, data) => {
+          emitResource(id, startClocks, data)
+        },
+      }
+    )
   }
 
   function stopManualResource(url: string, options: ResourceStopOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.resourceKey ?? url
 
-    const activeResource = lifecycle.remove(lookupKey, stopClocks, { context: options.context })
+    const stopped = resourceTracker.stop(lookupKey, stopClocks, {
+      context: options.context,
+    })
 
-    if (!activeResource) {
+    if (!stopped) {
       return
     }
 
-    const rawRumEvent: RawRumResourceEvent = {
-      date: activeResource.startClocks.timeStamp,
-      type: RumEventType.RESOURCE,
-      resource: {
-        id: generateUUID(),
-        type: activeResource.type || ResourceTypeEnum.OTHER,
-        url: sanitizeIfLongDataUrl(activeResource.url),
-        duration: toServerDuration(activeResource.duration),
-        method: activeResource.method,
-        status_code: options.statusCode,
-      },
-      _dd: {},
-      context: activeResource.context,
-    }
-
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      rawRumEvent,
-      startTime: activeResource.startClocks.relative,
-      duration: activeResource.duration,
-      domainContext: { isManual: true as const },
-    })
+    emitResource(stopped.id, stopped.startClocks, stopped.data, options.statusCode, stopClocks)
   }
 
   function stop() {
-    lifecycle.stopAll()
+    resourceTracker.stopAll()
   }
 
   return {

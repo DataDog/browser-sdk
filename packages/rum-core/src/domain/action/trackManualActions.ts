@@ -2,9 +2,10 @@ import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import { clocksNow, generateUUID } from '@datadog/browser-core'
 import type { ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } from '../../rawRumEvent.types'
-import type { LifeCycle } from '../lifeCycle'
-import { createManualEventLifecycle } from '../manualEventRegistry'
-import type { ActionCounts, ActionTracker, TrackedAction } from './trackAction'
+import type { EventTracker } from '../eventTracker'
+import type { EventCounts } from '../trackEventCounts'
+
+export type ActionCounts = EventCounts
 
 export interface ActionOptions {
   /**
@@ -37,59 +38,60 @@ export interface ManualAction {
   frustrationTypes: FrustrationType[]
 }
 
-interface ManualActionStart {
-  name: string
+export interface ActionEventData {
+  name?: string
   type?: ActionType
   context?: Context
-  trackedAction: TrackedAction
 }
 
 export function trackManualActions(
-  lifeCycle: LifeCycle,
-  actionTracker: ActionTracker,
+  actionTracker: EventTracker<ActionEventData>,
   onManualActionCompleted: (action: ManualAction) => void
 ) {
-  const lifecycle = createManualEventLifecycle<ManualActionStart>(lifeCycle, (data) => data.trackedAction.discard())
-
   function startManualAction(name: string, options: ActionOptions = {}, startClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
-    const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-    lifecycle.add(lookupKey, startClocks, {
-      name,
-      type: options.type,
-      context: options.context,
-      trackedAction,
-    })
+    actionTracker.start(
+      lookupKey,
+      startClocks,
+      {
+        name,
+        type: options.type,
+        context: options.context,
+      },
+      {
+        trackCounts: true,
+      }
+    )
   }
 
   function stopManualAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
 
-    const activeAction = lifecycle.remove(lookupKey, stopClocks, {
+    const stopped = actionTracker.stop(lookupKey, stopClocks, {
       type: options.type,
       context: options.context,
     })
 
-    if (!activeAction) {
+    if (!stopped) {
       return
     }
 
-    activeAction.trackedAction.stop(stopClocks.relative)
+    const { data } = stopped
 
     const frustrationTypes: FrustrationType[] = []
-    if (activeAction.trackedAction.counts.errorCount > 0) {
+    if (stopped.counts && stopped.counts.errorCount > 0) {
       frustrationTypes.push(FrustrationTypeEnum.ERROR_CLICK)
     }
 
     const manualAction: ManualAction = {
-      id: activeAction.trackedAction.id,
-      name: activeAction.name,
-      type: activeAction.type || ActionTypeEnum.CUSTOM,
-      startClocks: activeAction.startClocks,
-      duration: activeAction.duration,
-      context: activeAction.context,
-      counts: activeAction.trackedAction.counts,
+      id: stopped.id,
+      name: data.name!,
+      type: data.type || ActionTypeEnum.CUSTOM,
+      startClocks: stopped.startClocks,
+      duration: stopped.duration,
+      context: data.context,
+      counts: stopped.counts,
       frustrationTypes,
     }
 
@@ -100,14 +102,9 @@ export function trackManualActions(
     onManualActionCompleted({ id: generateUUID(), frustrationTypes: [], ...action })
   }
 
-  function stop() {
-    lifecycle.stopAll()
-  }
-
   return {
     addAction: addInstantAction,
     startAction: startManualAction,
     stopAction: stopManualAction,
-    stop,
   }
 }
