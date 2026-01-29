@@ -53,3 +53,14 @@ export function initInteractionCountPolyfill() {
  */
 export const getInteractionCount = () =>
   observer ? interactionCountEstimate : (window as BrowserWindow).performance.interactionCount! || 0
+
+export function resetInteractionCountPolyfill() {
+  if (observer) {
+    observer.disconnect()
+
+    observer = undefined
+    interactionCountEstimate = 0
+    minKnownInteractionId = Infinity
+    maxKnownInteractionId = 0
+  }
+}
