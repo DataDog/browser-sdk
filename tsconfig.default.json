@@ -22,6 +22,9 @@
     "test/e2e",
     "test/lib",
 
+    // Files included in ./test/unit/vite-experiment/tsconfig.json
+    "test/unit/vite-experiment",
+
     // Files included in ./test/performance/tsconfig.json
     "test/performance",
 
