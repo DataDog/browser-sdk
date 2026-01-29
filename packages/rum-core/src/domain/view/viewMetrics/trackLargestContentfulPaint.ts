@@ -77,13 +77,15 @@ export function trackLargestContentfulPaint(
         ? (getResourceEntries()?.find((e) => e.name === resourceUrl) as PerformanceResourceTiming | undefined)
         : undefined
 
-      let subParts;
-      const firstByte = getSafeFirstByte(getNavigationEntry())
+      let subParts
+      const navigationEntry = getNavigationEntry()
+      const firstByte = getSafeFirstByte(navigationEntry)
 
       if (firstByte !== undefined) {
-        const lcpRequestStart = Math.max(firstByte, lcpResourceEntry?.startTime || 0)
-        const lcpResponseEnd = Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0)
-        const lcpRenderTime = Math.max(lcpResponseEnd, lcpEntry.startTime);
+        const activationStart = (navigationEntry.activationStart || 0) as RelativeTime
+        const lcpRequestStart = Math.max(firstByte, getLcpResourceRequestStart(lcpResourceEntry, activationStart))
+        const lcpResponseEnd = Math.max(lcpRequestStart, getLcpResourceResponseEnd(lcpResourceEntry, activationStart))
+        const lcpRenderTime = Math.max(lcpResponseEnd, lcpEntry.startTime)
 
         subParts = {
           firstByte,
@@ -114,4 +116,32 @@ export function trackLargestContentfulPaint(
 // The property url report an empty string if the value is not available, we shouldn't report it in this case.
 function computeLcpEntryUrl(entry: RumLargestContentfulPaintTiming) {
   return entry.url === '' ? undefined : entry.url
+}
+
+/**
+ * Get the request start time for the LCP resource, adjusted for activation start.
+ * Prefers requestStart (more accurate for Timing-Allow-Origin resources) over startTime.
+ */
+function getLcpResourceRequestStart(
+  lcpResourceEntry: PerformanceResourceTiming | undefined,
+  activationStart: RelativeTime
+): RelativeTime {
+  if (!lcpResourceEntry) {
+    return 0 as RelativeTime
+  }
+  const requestStart = lcpResourceEntry.requestStart || lcpResourceEntry.startTime
+  return (requestStart - activationStart) as RelativeTime
+}
+
+/**
+ * Get the response end time for the LCP resource, adjusted for activation start.
+ */
+function getLcpResourceResponseEnd(
+  lcpResourceEntry: PerformanceResourceTiming | undefined,
+  activationStart: RelativeTime
+): RelativeTime {
+  if (!lcpResourceEntry) {
+    return 0 as RelativeTime
+  }
+  return (lcpResourceEntry.responseEnd - activationStart) as RelativeTime
 }
