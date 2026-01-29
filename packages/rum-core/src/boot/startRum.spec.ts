@@ -1,7 +1,6 @@
 import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
 import {
   Observable,
-  stopSessionManager,
   toServerDuration,
   ONE_SECOND,
   findLast,
@@ -19,6 +18,7 @@ import {
   mockClock,
   mockEventBridge,
   registerCleanupTask,
+  createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../test'
 import { createRumSessionManagerMock, mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
@@ -162,6 +162,7 @@ describe('view events', () => {
   function setupViewCollectionTest() {
     const startResult = startRum(
       mockRumConfiguration(),
+      createRumSessionManagerMock(),
       noopRecorderApi,
       noopProfilerApi,
       undefined,
@@ -169,6 +170,8 @@ describe('view events', () => {
       createTrackingConsentState(TrackingConsent.GRANTED),
       createCustomVitalsState(),
       new BufferedObservable<BufferedData>(100),
+      createFakeTelemetryObject(),
+      createHooks(),
       'rum'
     )
 
@@ -181,7 +184,6 @@ describe('view events', () => {
 
     registerCleanupTask(() => {
       stop()
-      stopSessionManager()
     })
   })
 

@@ -14,6 +14,7 @@ import type {
   RumInternalContext,
   Telemetry,
   Encoder,
+  startTelemetry,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -558,7 +559,8 @@ export function makeRumPublicApi(
   startRumImpl: StartRum,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
-  options: RumPublicApiOptions = {}
+  options: RumPublicApiOptions = {},
+  startTelemetryImpl?: typeof startTelemetry
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
@@ -568,7 +570,7 @@ export function makeRumPublicApi(
     options,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions) => {
+    (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -576,6 +578,7 @@ export function makeRumPublicApi(
 
       const startRumResult = startRumImpl(
         configuration,
+        sessionManager,
         recorderApi,
         profilerApi,
         initialViewOptions,
@@ -583,13 +586,15 @@ export function makeRumPublicApi(
         trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
+        telemetry,
+        hooks,
         options.sdkName
       )
 
       recorderApi.onRumStart(
         startRumResult.lifeCycle,
         configuration,
-        startRumResult.session,
+        sessionManager,
         startRumResult.viewHistory,
         deflateWorker,
         startRumResult.telemetry
@@ -599,7 +604,7 @@ export function makeRumPublicApi(
         startRumResult.lifeCycle,
         startRumResult.hooks,
         configuration,
-        startRumResult.session,
+        sessionManager,
         startRumResult.viewHistory,
         startRumResult.longTaskContexts,
         createEncoder
@@ -613,7 +618,8 @@ export function makeRumPublicApi(
       })
 
       return startRumResult
-    }
+    },
+    startTelemetryImpl
   )
   const getStrategy = () => strategy
 

@@ -1,4 +1,11 @@
-import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer } from '@datadog/browser-core'
+import type {
+  TrackingConsentState,
+  DeflateWorker,
+  Context,
+  ContextManager,
+  BoundedBuffer,
+  Telemetry,
+} from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   display,
@@ -18,7 +25,11 @@ import {
   buildUserContextManager,
   monitorError,
   sanitize,
+  startTelemetry,
+  TelemetryService,
 } from '@datadog/browser-core'
+import type { Hooks } from '../domain/hooks'
+import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
   validateAndBuildRumConfiguration,
@@ -33,19 +44,27 @@ import type {
   FailureReason,
 } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
+import type { RumSessionManager } from '../domain/rumSessionManager'
+import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
+
+export type DoStartRum = (
+  configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
+  deflateWorker: DeflateWorker | undefined,
+  initialViewOptions: ViewOptions | undefined,
+  telemetry: Telemetry,
+  hooks: Hooks
+) => StartRumResult
 
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
-  doStartRum: (
-    configuration: RumConfiguration,
-    deflateWorker: DeflateWorker | undefined,
-    initialViewOptions?: ViewOptions
-  ) => StartRumResult
+  doStartRum: DoStartRum,
+  startTelemetryImpl = startTelemetry
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
 
@@ -66,13 +85,16 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
+  let sessionManager: RumSessionManager | undefined
+  let telemetry: Telemetry | undefined
+  const hooks = createHooks()
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
       return
     }
 
@@ -94,7 +116,14 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions)
+    const startRumResult = doStartRum(
+      cachedConfiguration,
+      sessionManager,
+      deflateWorker,
+      initialViewOptions,
+      telemetry,
+      hooks
+    )
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -140,6 +169,7 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+
     // Instrument fetch to track network requests
     // This is needed in case the consent is not granted and some customer
     // library (Apollo Client) is storing uninstrumented fetch to be used later
@@ -147,7 +177,20 @@ export function createPreStartStrategy(
     initFetchObservable().subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
-    tryStartRum()
+
+    trackingConsentState.onGrantedOnce(() => {
+      telemetry = startTelemetryImpl(TelemetryService.RUM, configuration, hooks)
+
+      if (canUseEventBridge()) {
+        sessionManager = startRumSessionManagerStub()
+        tryStartRum()
+      } else {
+        startRumSessionManager(configuration, trackingConsentState, (newSessionManager) => {
+          sessionManager = newSessionManager
+          tryStartRum()
+        })
+      }
+    })
   }
 
   const addDurationVital = (vital: DurationVital) => {
