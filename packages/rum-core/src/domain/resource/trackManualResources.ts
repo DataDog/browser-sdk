@@ -101,8 +101,8 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
         context: options.context,
       },
       {
-        onDiscard: (id, data) => {
-          emitResource(id, startClocks, data)
+        onDiscard: (id, data, discardedStartClocks) => {
+          emitResource(id, discardedStartClocks, data)
         },
       }
     )

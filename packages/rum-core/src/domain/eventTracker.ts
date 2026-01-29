@@ -23,7 +23,7 @@ export type DiscardedEvent<TData> = BaseTrackedEvent<TData>
 
 export interface StartOptions<TData> {
   trackCounts?: boolean
-  onDiscard?: (id: string, data: TData) => void
+  onDiscard?: (id: string, data: TData, startClocks: ClocksState) => void
 }
 
 export interface EventTracker<TData> {
@@ -41,7 +41,7 @@ interface TrackedEventData<TData> {
   data: TData
   historyEntry: ValueHistoryEntry<string>
   eventCounts?: ReturnType<typeof trackEventCounts>
-  onDiscard?: (id: string, data: TData) => void
+  onDiscard?: (id: string, data: TData, startClocks: ClocksState) => void
 }
 
 export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TData> {
@@ -61,7 +61,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     }
 
     if (event.onDiscard) {
-      event.onDiscard(event.id, event.data)
+      event.onDiscard(event.id, event.data, event.startClocks)
     }
   }
 

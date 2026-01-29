@@ -820,15 +820,12 @@ describe('rum public api', () => {
 
       const startResourceSpy = jasmine.createSpy()
       const stopResourceSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
           startResource: startResourceSpy,
           stopResource: stopResourceSpy,
-        }),
-        noopRecorderApi,
-        noopProfilerApi
-      )
+        },
+      })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startResource('https://api.example.com/data', {
@@ -862,14 +859,11 @@ describe('rum public api', () => {
       mockExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
       const startResourceSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
           startResource: startResourceSpy,
-        }),
-        noopRecorderApi,
-        noopProfilerApi
-      )
+        },
+      })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startResource('https://api.example.com/data', {
@@ -892,15 +886,12 @@ describe('rum public api', () => {
     it('should not call startResource/stopResource when feature flag is disabled', () => {
       const startResourceSpy = jasmine.createSpy()
       const stopResourceSpy = jasmine.createSpy()
-      const rumPublicApi = makeRumPublicApi(
-        () => ({
-          ...noopStartRum(),
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
           startResource: startResourceSpy,
           stopResource: stopResourceSpy,
-        }),
-        noopRecorderApi,
-        noopProfilerApi
-      )
+        },
+      })
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startResource('https://api.example.com/data', { type: ResourceType.FETCH })

@@ -61,7 +61,7 @@ describe('eventTracker', () => {
       const stopped = tracker.stop('key1', clocksNow())
 
       expect(stopped?.data.value).toBe('updated')
-      expect(onDiscard).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'original' })
+      expect(onDiscard).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'original' }, startClocks)
     })
   })
 
@@ -108,12 +108,13 @@ describe('eventTracker', () => {
   describe('discard', () => {
     it('should remove event and call onDiscard callback', () => {
       const onDiscard = jasmine.createSpy('onDiscard')
-      tracker.start('key1', clocksNow(), { value: 'data1' }, { onDiscard })
+      const startClocks = clocksNow()
+      tracker.start('key1', startClocks, { value: 'data1' }, { onDiscard })
 
       tracker.discard('key1')
 
       expect(tracker.stop('key1', clocksNow())).toBeUndefined()
-      expect(onDiscard).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'data1' })
+      expect(onDiscard).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'data1' }, startClocks)
     })
   })
 
@@ -163,8 +164,8 @@ describe('eventTracker', () => {
 
       expect(tracker.stop('key1', clocksNow())).toBeUndefined()
       expect(tracker.stop('key2', clocksNow())).toBeUndefined()
-      expect(onDiscard1).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'data1' })
-      expect(onDiscard2).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'data2' })
+      expect(onDiscard1).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'data1' }, startClocks)
+      expect(onDiscard2).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'data2' }, startClocks)
     })
 
     it('should unsubscribe from session renewal events', () => {
