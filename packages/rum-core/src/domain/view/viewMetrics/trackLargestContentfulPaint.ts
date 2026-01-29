@@ -84,7 +84,11 @@ export function trackLargestContentfulPaint(
       if (firstByte !== undefined) {
         const activationStart = (navigationEntry.activationStart || 0) as RelativeTime
         const lcpRequestStart = Math.max(firstByte, getLcpResourceRequestStart(lcpResourceEntry, activationStart))
-        const lcpResponseEnd = Math.max(lcpRequestStart, getLcpResourceResponseEnd(lcpResourceEntry, activationStart))
+        // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
+        const lcpResponseEnd = Math.min(
+          lcpEntry.startTime,
+          Math.max(lcpRequestStart, getLcpResourceResponseEnd(lcpResourceEntry, activationStart))
+        )
         const lcpRenderTime = Math.max(lcpResponseEnd, lcpEntry.startTime)
 
         subParts = {
