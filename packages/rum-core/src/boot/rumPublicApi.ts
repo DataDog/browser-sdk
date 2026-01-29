@@ -14,7 +14,6 @@ import type {
   RumInternalContext,
   Telemetry,
   Encoder,
-  startTelemetry,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -35,6 +34,7 @@ import {
   startBufferingData,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  mockable,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -58,7 +58,8 @@ import type { SdkName } from '../domain/contexts/defaultContext'
 import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
 import type { ActionOptions } from '../domain/action/trackManualActions'
 import { createPreStartStrategy } from './preStartRum'
-import type { StartRum, StartRumResult } from './startRum'
+import type { StartRumResult } from './startRum'
+import { startRum } from './startRum'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -556,11 +557,9 @@ export interface Strategy {
 }
 
 export function makeRumPublicApi(
-  startRumImpl: StartRum,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
-  options: RumPublicApiOptions = {},
-  startTelemetryImpl?: typeof startTelemetry
+  options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
@@ -576,7 +575,7 @@ export function makeRumPublicApi(
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
           : createIdentityEncoder
 
-      const startRumResult = startRumImpl(
+      const startRumResult = mockable(startRum)(
         configuration,
         recorderApi,
         profilerApi,
@@ -617,8 +616,7 @@ export function makeRumPublicApi(
       })
 
       return startRumResult
-    },
-    startTelemetryImpl
+    }
   )
   const getStrategy = () => strategy
 
