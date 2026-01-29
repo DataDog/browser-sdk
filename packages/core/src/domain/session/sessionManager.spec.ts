@@ -624,6 +624,28 @@ describe('startSessionManager', () => {
       expectSessionToBeExpired(sessionManager)
     })
 
+    it('expires the session when tracking consent is withdrawn during async initialization', () => {
+      if (!isChromium()) {
+        pending('the lock is only enabled in Chromium')
+      }
+
+      // Set up a locked cookie to delay initialization
+      setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
+
+      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
+      void startSessionManagerWithDefaults({ trackingConsentState })
+
+      // Consent is revoked while waiting for lock
+      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
+
+      // Release the lock
+      setCookie(SESSION_STORE_KEY, 'id=abc123&first=tracked', DURATION)
+      clock.tick(LOCK_RETRY_DELAY)
+
+      // Session should be expired due to consent revocation
+      expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
+    })
+
     it('renews the session when tracking consent is granted', async () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })

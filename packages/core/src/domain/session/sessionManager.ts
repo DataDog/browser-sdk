@@ -69,9 +69,16 @@ export function startSessionManager<TrackingType extends string>(
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
 
-  // We expand/renew session unconditionally as tracking consent is always granted when the session
-  // manager is started.
+  // Tracking consent is always granted when the session manager is started, but it may be revoked
+  // during the async initialization (e.g., while waiting for cookie lock). We check
+  // consent status in the callback to handle this case.
   sessionStore.expandOrRenewSession(() => {
+    const hasConsent = trackingConsentState.isGranted()
+    if (!hasConsent) {
+      sessionStore.expire(hasConsent)
+      return
+    }
+
     sessionStore.renewObservable.subscribe(() => {
       sessionContextHistory.add(buildSessionContext(), relativeNow())
       renewObservable.notify()
