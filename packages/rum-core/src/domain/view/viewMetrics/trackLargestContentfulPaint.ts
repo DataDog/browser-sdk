@@ -83,7 +83,8 @@ export function trackLargestContentfulPaint(
 
       if (firstByte !== undefined) {
         const activationStart = (navigationEntry.activationStart || 0) as RelativeTime
-        const lcpRequestStart = Math.max(firstByte, getLcpResourceRequestStart(lcpResourceEntry, activationStart))
+        const adjustedFirstByte = getAdjustedFirstByte(firstByte, activationStart)
+        const lcpRequestStart = Math.max(adjustedFirstByte, getLcpResourceRequestStart(lcpResourceEntry, activationStart))
         // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
         const lcpResponseEnd = Math.min(
           lcpEntry.startTime,
@@ -91,8 +92,8 @@ export function trackLargestContentfulPaint(
         )
 
         subParts = {
-          firstByte,
-          loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
+          firstByte: adjustedFirstByte,
+          loadDelay: (lcpRequestStart - adjustedFirstByte) as RelativeTime,
           loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
           renderDelay: (lcpEntry.startTime - lcpResponseEnd) as RelativeTime,
         }
@@ -119,6 +120,14 @@ export function trackLargestContentfulPaint(
 // The property url report an empty string if the value is not available, we shouldn't report it in this case.
 function computeLcpEntryUrl(entry: RumLargestContentfulPaintTiming) {
   return entry.url === '' ? undefined : entry.url
+}
+
+/**
+ * Get the Time to First Byte (TTFB), adjusted for activation start.
+ * For prerendered pages, this represents the time from activation to first byte.
+ */
+function getAdjustedFirstByte(firstByte: RelativeTime, activationStart: RelativeTime): RelativeTime {
+  return Math.max(0, firstByte - activationStart) as RelativeTime
 }
 
 /**
