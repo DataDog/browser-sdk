@@ -83,12 +83,6 @@ export default {
     devtool: false,
     mode: 'development',
     plugins: webpackConfig.plugins,
-    optimization: {
-      // By default, karma-webpack creates a bundle with one entry point for each spec file, but
-      // with all dependencies shared.  Our test suite does not support sharing dependencies, each
-      // spec bundle should include its own copy of dependencies.
-      runtimeChunk: false,
-    },
     ignoreWarnings: [
       // we will see warnings about missing exports in some files
       // this is because we set transpileOnly option in ts-loader
