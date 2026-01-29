@@ -18,6 +18,32 @@
 
 ---
 
+## v6.26.0
+
+**Public Changes:**
+
+- ⚡️ Use native fetch to avoid Zone.js change detection in Angular apps ([#4117](https://github.com/DataDog/browser-sdk/pull/4117)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Support stylesheet serialization in Safari iOS 16.x ([#4126](https://github.com/DataDog/browser-sdk/pull/4126)) [RUM]
+- ⚗️ [RUM-11393] Add Start/StopAction API ([#4038](https://github.com/DataDog/browser-sdk/pull/4038))
+- ⚗️ [MFE] Source code context event enrichment ([#3926](https://github.com/DataDog/browser-sdk/pull/3926))
+- 📝 Add comprehensive AGENTS.md for Browser SDK, scripts, and E2E testing ([#4109](https://github.com/DataDog/browser-sdk/pull/4109))
+- 📝 Add new command for revising AGENTS.md with session learnings ([#4112](https://github.com/DataDog/browser-sdk/pull/4112))
+
+**Internal Changes:**
+
+- 🔊 extend or remove expired telemetry debug ([#4102](https://github.com/DataDog/browser-sdk/pull/4102))
+- ♻️ Update rum-events-format ([#4114](https://github.com/DataDog/browser-sdk/pull/4114))
+- 👷 Bump iOS version ([#4119](https://github.com/DataDog/browser-sdk/pull/4119))
+- 👷 improve check-schemas script ([#4123](https://github.com/DataDog/browser-sdk/pull/4123)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 Update all non-major dependencies ([#4116](https://github.com/DataDog/browser-sdk/pull/4116))
+- 👷 Handle function values for configuration in developer extension ([#4042](https://github.com/DataDog/browser-sdk/pull/4042))
+- 👷 Update react-router monorepo to v7 (major) ([#4100](https://github.com/DataDog/browser-sdk/pull/4100))
+- 👷 Update dependency recharts to v3 ([#4075](https://github.com/DataDog/browser-sdk/pull/4075))
+- 👷 Update dependency eslint-plugin-jsdoc to v62 ([#4098](https://github.com/DataDog/browser-sdk/pull/4098))
+- 👷 Update react monorepo to v19 ([#4101](https://github.com/DataDog/browser-sdk/pull/4101))
+- 👷 Update all non-major dependencies ([#4099](https://github.com/DataDog/browser-sdk/pull/4099)) [RUM-REACT]
+- 👷 Fix deployment gate timing to ensure 30-minute duration ([#4096](https://github.com/DataDog/browser-sdk/pull/4096))
+
 ## v6.25.4
 
 **Public Changes:**
