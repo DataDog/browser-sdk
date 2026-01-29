@@ -1,11 +1,11 @@
 import {
   callbackAddsInstrumentation,
+  collectAsyncCalls,
   type Clock,
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
   waitNextMicrotask,
-  waitFor,
   createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
@@ -56,7 +56,7 @@ describe('preStartLogs', () => {
     it('should start when the configuration is valid', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(displaySpy).not.toHaveBeenCalled()
-      await waitFor(() => doStartLogsSpy.calls.count() > 0, { timeout: 2000 })
+      await collectAsyncCalls(doStartLogsSpy, 1)
       expect(doStartLogsSpy).toHaveBeenCalled()
     })
 
@@ -128,7 +128,7 @@ describe('preStartLogs', () => {
 
     expect(handleLogSpy).not.toHaveBeenCalled()
     strategy.init(DEFAULT_INIT_CONFIGURATION)
-    await waitFor(() => handleLogSpy.calls.count() > 0, { timeout: 2000 })
+    await collectAsyncCalls(handleLogSpy, 1)
 
     expect(handleLogSpy.calls.all().length).toBe(1)
     expect(getLoggedMessage(0).message.message).toBe('message')
@@ -157,7 +157,7 @@ describe('preStartLogs', () => {
     })
 
     it('saves the URL', async () => {
-      const { strategy, getLoggedMessage, getCommonContextSpy } = createPreStartStrategyWithDefaults()
+      const { strategy, getLoggedMessage, getCommonContextSpy, handleLogSpy } = createPreStartStrategyWithDefaults()
       getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
       strategy.handleLog(
         {
@@ -168,12 +168,12 @@ describe('preStartLogs', () => {
       )
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
-      await waitFor(() => getLoggedMessage(0) !== undefined)
+      await collectAsyncCalls(handleLogSpy, 1)
       expect(getLoggedMessage(0).savedCommonContext!.view?.url).toEqual('url')
     })
 
     it('saves the log context', async () => {
-      const { strategy, getLoggedMessage } = createPreStartStrategyWithDefaults()
+      const { strategy, getLoggedMessage, handleLogSpy } = createPreStartStrategyWithDefaults()
       const context = { foo: 'bar' }
       strategy.handleLog(
         {
@@ -186,7 +186,7 @@ describe('preStartLogs', () => {
       context.foo = 'baz'
 
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      await waitFor(() => getLoggedMessage(0) !== undefined)
+      await collectAsyncCalls(handleLogSpy, 1)
 
       expect(getLoggedMessage(0).message.context!.foo).toEqual('bar')
     })
@@ -238,7 +238,7 @@ describe('preStartLogs', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         trackingConsent: TrackingConsent.NOT_GRANTED,
       })
-      await waitFor(() => doStartLogsSpy.calls.count() > 0, { timeout: 2000 })
+      await collectAsyncCalls(doStartLogsSpy, 1)
       expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
     })
 
@@ -253,7 +253,7 @@ describe('preStartLogs', () => {
 
     it('do not call startLogs when tracking consent state is updated after init', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      await waitFor(() => doStartLogsSpy.calls.count() > 0, { timeout: 2000 })
+      await collectAsyncCalls(doStartLogsSpy, 1)
       doStartLogsSpy.calls.reset()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
@@ -269,7 +269,7 @@ describe('preStartLogs', () => {
       const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
 
       strategy.init({ ...DEFAULT_INIT_CONFIGURATION, sessionSampleRate: 0 })
-      await waitFor(() => doStartLogsSpy.calls.count() > 0, { timeout: 2000 })
+      await collectAsyncCalls(doStartLogsSpy, 1)
       const sessionManager = doStartLogsSpy.calls.mostRecent().args[2]
       expect(sessionManager.findTrackedSession()).toBeUndefined()
     })
@@ -279,7 +279,7 @@ describe('preStartLogs', () => {
       const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
 
       strategy.init({ ...DEFAULT_INIT_CONFIGURATION, sessionSampleRate: 100 })
-      await waitFor(() => doStartLogsSpy.calls.count() > 0, { timeout: 2000 })
+      await collectAsyncCalls(doStartLogsSpy, 1)
       const sessionManager = doStartLogsSpy.calls.mostRecent().args[2]
       expect(sessionManager.findTrackedSession()).toBeTruthy()
     })
@@ -287,10 +287,10 @@ describe('preStartLogs', () => {
 
   describe('logs session creation', () => {
     it('creates a session on normal conditions', async () => {
-      const { strategy } = createPreStartStrategyWithDefaults()
+      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
-      await waitFor(() => getCookie(SESSION_STORE_KEY) !== undefined, { timeout: 2000 })
+      await collectAsyncCalls(doStartLogsSpy, 1)
       expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
     })
 
@@ -313,7 +313,7 @@ describe('preStartLogs', () => {
     it('starts telemetry during init() by default', async () => {
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      await waitFor(() => startTelemetrySpy.calls.count() > 0)
+      await collectAsyncCalls(startTelemetrySpy, 1)
       expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
     })
 
@@ -331,7 +331,7 @@ describe('preStartLogs', () => {
       expect(startTelemetrySpy).not.toHaveBeenCalled()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
-      await waitFor(() => startTelemetrySpy.calls.count() > 0)
+      await collectAsyncCalls(startTelemetrySpy, 1)
 
       expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
     })

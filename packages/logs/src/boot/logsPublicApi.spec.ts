@@ -1,6 +1,6 @@
 import type { ContextManager } from '@datadog/browser-core'
 import { monitor, display, createContextManager, stopSessionManager, TrackingConsent } from '@datadog/browser-core'
-import { waitFor } from '@datadog/browser-core/test'
+import { collectAsyncCalls } from '@datadog/browser-core/test'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import { createFakeTelemetryObject } from '../../../core/test'
@@ -56,7 +56,7 @@ describe('logs entry', () => {
     beforeEach(async () => {
       ;({ logsPublicApi, startLogsSpy } = makeLogsPublicApiWithDefaults())
       logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      await waitFor(() => startLogsSpy.calls.count() > 0)
+      await collectAsyncCalls(startLogsSpy, 1)
     })
 
     it('should have the current date, view and global context', () => {
@@ -75,11 +75,12 @@ describe('logs entry', () => {
   describe('post start API usages', () => {
     let logsPublicApi: LogsPublicApi
     let getLoggedMessage: ReturnType<typeof makeLogsPublicApiWithDefaults>['getLoggedMessage']
+    let startLogsSpy: jasmine.Spy<StartLogs>
 
     beforeEach(async () => {
-      ;({ logsPublicApi, getLoggedMessage } = makeLogsPublicApiWithDefaults())
+      ;({ logsPublicApi, getLoggedMessage, startLogsSpy } = makeLogsPublicApiWithDefaults())
       logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      await waitFor(() => getLoggedMessage(0) !== undefined || true)
+      await collectAsyncCalls(startLogsSpy, 1)
     })
 
     it('main logger logs a message', () => {

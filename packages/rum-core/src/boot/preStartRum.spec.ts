@@ -15,13 +15,13 @@ import {
 import type { Clock } from '@datadog/browser-core/test'
 import {
   callbackAddsInstrumentation,
+  collectAsyncCalls,
   interceptRequests,
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
   createFakeTelemetryObject,
-  waitFor,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -59,7 +59,7 @@ describe('preStartRum', () => {
 
     it('should start when the configuration is valid', async () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      await waitFor(() => doStartRumSpy.calls.any())
+      await collectAsyncCalls(doStartRumSpy, 1)
       expect(displaySpy).not.toHaveBeenCalled()
       expect(doStartRumSpy).toHaveBeenCalled()
     })
@@ -199,7 +199,7 @@ describe('preStartRum', () => {
           },
         })
         strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-        await waitFor(() => doStartRumSpy.calls.any())
+        await collectAsyncCalls(doStartRumSpy, 1)
 
         expect(doStartRumSpy).toHaveBeenCalled()
       })
@@ -223,7 +223,7 @@ describe('preStartRum', () => {
       describe('with compressIntakeRequests: false', () => {
         it('does not create a deflate worker', async () => {
           strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-          await waitFor(() => doStartRumSpy.calls.any())
+          await collectAsyncCalls(doStartRumSpy, 1)
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
           const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
@@ -240,7 +240,7 @@ describe('preStartRum', () => {
             },
             PUBLIC_API
           )
-          await waitFor(() => doStartRumSpy.calls.any())
+          await collectAsyncCalls(doStartRumSpy, 1)
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
           const worker: DeflateWorker | undefined = doStartRumSpy.calls.mostRecent().args[2]
@@ -315,7 +315,7 @@ describe('preStartRum', () => {
 
           clock.tick(20)
           strategy.init(AUTO_CONFIGURATION, PUBLIC_API)
-          await waitFor(() => startViewSpy.calls.any())
+          await collectAsyncCalls(startViewSpy, 1)
 
           expect(startViewSpy).toHaveBeenCalled()
           expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
@@ -339,7 +339,7 @@ describe('preStartRum', () => {
           expect(startViewSpy).not.toHaveBeenCalled()
 
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
-          await waitFor(() => doStartRumSpy.calls.any())
+          await collectAsyncCalls(doStartRumSpy, 1)
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
@@ -369,7 +369,7 @@ describe('preStartRum', () => {
 
           clock.tick(10)
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
-          await waitFor(() => doStartRumSpy.calls.any())
+          await collectAsyncCalls(doStartRumSpy, 1)
 
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
@@ -383,7 +383,7 @@ describe('preStartRum', () => {
           expect(startViewSpy).not.toHaveBeenCalled()
 
           strategy.startView({ name: 'foo' })
-          await waitFor(() => doStartRumSpy.calls.any())
+          await collectAsyncCalls(doStartRumSpy, 1)
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
           expect(initialViewOptions).toEqual({ name: 'foo' })
@@ -404,7 +404,7 @@ describe('preStartRum', () => {
 
           clock.tick(10)
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
-          await waitFor(() => addTimingSpy.calls.any())
+          await collectAsyncCalls(addTimingSpy, 2)
 
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
 
@@ -439,7 +439,7 @@ describe('preStartRum', () => {
           },
           PUBLIC_API
         )
-        await waitFor(() => doStartRumSpy.calls.any())
+        await collectAsyncCalls(doStartRumSpy, 1)
         expect(doStartRumSpy.calls.mostRecent().args[0].sessionSampleRate).toEqual(50)
       })
     })
