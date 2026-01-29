@@ -17,7 +17,6 @@ describe('logs entry', () => {
   afterEach(() => {
     stopSessionManager()
   })
-
   it('should add a `_setDebug` that works', () => {
     const displaySpy = spyOn(display, 'error')
     const { logsPublicApi } = makeLogsPublicApiWithDefaults()
