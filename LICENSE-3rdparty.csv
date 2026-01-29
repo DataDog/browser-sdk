@@ -25,6 +25,7 @@ dev,@types/node-forge,MIT,Copyright Microsoft Corporation
 dev,@types/pako,MIT,Copyright Microsoft Corporation
 dev,@types/react,MIT,Copyright Microsoft Corporation
 dev,@types/react-dom,MIT,Copyright Microsoft Corporation
+dev,@types/ws,MIT,Copyright Microsoft Corporation
 dev,@wxt-dev/module-react,MIT,Copyright (c) 2023 Aaron
 dev,@vitejs/plugin-react,MIT,Copyright (c) 2019-present Evan You & Vite Contributors
 dev,ajv,MIT,Copyright 2015-2017 Evgeny Poberezkin
@@ -76,4 +77,5 @@ dev,vite,MIT,Copyright (c) 2019-present, VoidZero Inc. and Vite contributors
 dev,webpack,MIT,Copyright JS Foundation and other contributors
 dev,webpack-cli,MIT,Copyright JS Foundation and other contributors
 dev,webpack-dev-middleware,MIT,Copyright JS Foundation and other contributors
+dev,ws,MIT,Copyright (c) 2011 Einar Otto Stangvik <einaros@gmail.com> Copyright (c) 2013 Arnout Kazemier and contributors Copyright (c) 2016 Luigi Pinca and contributors
 dev,wxt,MIT,Copyright (c) 2023 Aaron
