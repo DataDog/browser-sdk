@@ -333,7 +333,6 @@ describe('preStartRum', () => {
         })
 
         it('calling startView then init does not start rum if tracking consent is not granted', () => {
-          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
           strategy.startView({ name: 'foo' })
           strategy.init(
             {

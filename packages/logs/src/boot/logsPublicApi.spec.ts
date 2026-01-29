@@ -69,9 +69,18 @@ describe('logs entry', () => {
   describe('post start API usages', () => {
     let logsPublicApi: LogsPublicApi
     let getLoggedMessage: ReturnType<typeof makeLogsPublicApiWithDefaults>['getLoggedMessage']
+    let userContext: ContextManager
+    let accountContext: ContextManager
 
     beforeEach(() => {
-      ;({ logsPublicApi, getLoggedMessage } = makeLogsPublicApiWithDefaults())
+      userContext = createContextManager('mock')
+      accountContext = createContextManager('mock')
+      ;({ logsPublicApi, getLoggedMessage } = makeLogsPublicApiWithDefaults({
+        startLogsResult: {
+          userContext,
+          accountContext,
+        },
+      }))
       logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
     })
 
@@ -150,26 +159,11 @@ describe('logs entry', () => {
 
     describe('internal context', () => {
       it('should get the internal context', () => {
-        const { logsPublicApi } = makeLogsPublicApiWithDefaults()
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
         expect(logsPublicApi.getInternalContext()?.session_id).toEqual(mockSessionId)
       })
     })
 
     describe('user', () => {
-      let logsPublicApi: LogsPublicApi
-      let userContext: ContextManager
-      beforeEach(() => {
-        userContext = createContextManager('mock')
-        ;({ logsPublicApi } = makeLogsPublicApiWithDefaults({
-          startLogsResult: {
-            userContext,
-          },
-        }))
-
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      })
-
       it('should call setContext', () => {
         spyOn(userContext, 'setContext')
         logsPublicApi.setUser(2 as any)
@@ -196,19 +190,6 @@ describe('logs entry', () => {
     })
 
     describe('account', () => {
-      let logsPublicApi: LogsPublicApi
-      let accountContext: ContextManager
-      beforeEach(() => {
-        accountContext = createContextManager('mock')
-        ;({ logsPublicApi } = makeLogsPublicApiWithDefaults({
-          startLogsResult: {
-            accountContext,
-          },
-        }))
-
-        logsPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      })
-
       it('should call setContext', () => {
         spyOn(accountContext, 'setContext')
         logsPublicApi.setAccount(2 as any)
