@@ -89,13 +89,12 @@ export function trackLargestContentfulPaint(
           lcpEntry.startTime,
           Math.max(lcpRequestStart, getLcpResourceResponseEnd(lcpResourceEntry, activationStart))
         )
-        const lcpRenderTime = Math.max(lcpResponseEnd, lcpEntry.startTime)
 
         subParts = {
           firstByte,
           loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
           loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
-          renderDelay: (lcpRenderTime - lcpResponseEnd) as RelativeTime,
+          renderDelay: (lcpEntry.startTime - lcpResponseEnd) as RelativeTime,
         }
       }
 
