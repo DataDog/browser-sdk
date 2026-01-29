@@ -33,14 +33,29 @@ const FILES_SPECS = [
   'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
 ]
 
+const { values } = parseArgs({
+  allowPositionals: true,
+  strict: false,
+  options: {
+    spec: {
+      type: 'string',
+      multiple: true,
+    },
+    seed: {
+      type: 'string',
+    },
+  },
+})
+
 // eslint-disable-next-line import/no-default-export
 export default {
   basePath: '../..',
-  files: getFiles(),
+  files: [...FILES, ...(values.spec || FILES_SPECS)],
   frameworks: ['jasmine', 'webpack'],
   client: {
     jasmine: {
       random: true,
+      seed: values.seed,
       stopSpecOnExpectationFailure: true,
     },
   },
@@ -131,23 +146,4 @@ function overrideTsLoaderRule(module) {
   })
 
   return module
-}
-
-function getFiles() {
-  const { values } = parseArgs({
-    allowPositionals: true,
-    strict: false,
-    options: {
-      spec: {
-        type: 'string',
-        multiple: true,
-      },
-    },
-  })
-
-  if (values.spec) {
-    return FILES.concat(values.spec)
-  }
-
-  return FILES.concat(FILES_SPECS)
 }
