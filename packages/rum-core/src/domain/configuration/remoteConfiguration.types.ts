@@ -29,7 +29,7 @@ export type DynamicOption =
   | {
       rcSerializedType: 'dynamic'
       strategy: 'localStorage'
-      name: string
+      key: string
       extractor?: SerializedRegex
       [k: string]: unknown
     }
@@ -83,7 +83,7 @@ export interface RumSdkConfig {
       | {
           rcSerializedType: 'dynamic'
           strategy: 'localStorage'
-          name: string
+          key: string
           extractor?: SerializedRegex
           [k: string]: unknown
         }
