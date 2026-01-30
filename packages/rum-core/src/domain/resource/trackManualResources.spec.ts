@@ -1,7 +1,7 @@
-import type { Duration, ServerDuration } from '@datadog/browser-core'
-import { ResourceType } from '@datadog/browser-core'
+import type { Duration, ServerDuration, Payload } from '@datadog/browser-core'
+import { ResourceType, ExperimentalFeature } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumResourceEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -177,6 +177,28 @@ describe('trackManualResources', () => {
 
       expect(rawRumEvents).toHaveSize(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/data')
+    })
+  })
+
+  describe('intake URL filtering', () => {
+    it('should filter out Datadog intake requests to prevent self-instrumentation loops', () => {
+      const intakeUrl = SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', {} as Payload)
+      startResource(intakeUrl)
+      stopResource(intakeUrl)
+
+      expect(rawRumEvents).toHaveSize(0)
+    })
+
+    it('should allow tracking intake requests when TRACK_INTAKE_REQUESTS flag is enabled', () => {
+      mockExperimentalFeatures([ExperimentalFeature.TRACK_INTAKE_REQUESTS])
+      const intakeUrl = SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', {} as Payload)
+
+      startResource(intakeUrl)
+      clock.tick(100)
+      stopResource(intakeUrl)
+
+      expect(rawRumEvents).toHaveSize(1)
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe(intakeUrl)
     })
   })
 })

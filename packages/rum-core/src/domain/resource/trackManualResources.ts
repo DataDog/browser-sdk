@@ -5,7 +5,7 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { EventTracker } from '../eventTracker'
-import { sanitizeIfLongDataUrl } from './resourceUtils'
+import { isAllowedRequestUrl, sanitizeIfLongDataUrl } from './resourceUtils'
 
 export interface ResourceOptions {
   /**
@@ -89,7 +89,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
   }
 
   function startManualResource(url: string, options: ResourceOptions = {}, startClocks = clocksNow()) {
-    if (!url) {
+    if (!isAllowedRequestUrl(url)) {
       return
     }
 
