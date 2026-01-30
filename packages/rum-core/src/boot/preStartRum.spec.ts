@@ -299,8 +299,9 @@ describe('preStartRum', () => {
       })
 
       describe('when auto', () => {
-        it('should start rum at init', () => {
+        it('should start rum at init', async () => {
           strategy.init(AUTO_CONFIGURATION, PUBLIC_API)
+          await collectAsyncCalls(doStartRumSpy, 1)
 
           expect(doStartRumSpy).toHaveBeenCalled()
         })
@@ -315,6 +316,7 @@ describe('preStartRum', () => {
 
           clock.tick(20)
           strategy.init(AUTO_CONFIGURATION, PUBLIC_API)
+          await collectAsyncCalls(doStartRumSpy, 1)
           await collectAsyncCalls(startViewSpy, 1)
 
           expect(startViewSpy).toHaveBeenCalled()
@@ -370,6 +372,7 @@ describe('preStartRum', () => {
           clock.tick(10)
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
           await collectAsyncCalls(doStartRumSpy, 1)
+          await collectAsyncCalls(startViewSpy, 1)
 
           expect(doStartRumSpy).toHaveBeenCalled()
           const initialViewOptions: ViewOptions | undefined = doStartRumSpy.calls.argsFor(0)[3]
@@ -404,6 +407,7 @@ describe('preStartRum', () => {
 
           clock.tick(10)
           strategy.init(MANUAL_CONFIGURATION, PUBLIC_API)
+          await collectAsyncCalls(doStartRumSpy, 1)
           await collectAsyncCalls(addTimingSpy, 2)
 
           expect(addTimingSpy).toHaveBeenCalledTimes(2)
