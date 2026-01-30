@@ -16,7 +16,7 @@ contacts:
 ---
 schema-version: v1
 kind: integration-branch
-name: $NEXT_MAJOR_BRANCH
+name: v7
 team: rum-browser
 update_automatically: false # update_automatically is updating the integration branch on a schedule, instead we're updating it in a CI job for any commit to the base branch.
 reset_pattern: '' # This branch should never be reseted
