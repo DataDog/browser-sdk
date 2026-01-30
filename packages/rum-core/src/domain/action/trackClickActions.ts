@@ -378,6 +378,7 @@ function newClick(
       }
 
       actionTracker.discard(clickKey)
+      stopObservable.notify()
       status = ClickStatus.FINALIZED
     },
   }
