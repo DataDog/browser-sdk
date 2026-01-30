@@ -89,6 +89,10 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
   }
 
   function startManualResource(url: string, options: ResourceOptions = {}, startClocks = clocksNow()) {
+    if (!url) {
+      return
+    }
+
     const lookupKey = options.resourceKey ?? url
 
     resourceTracker.start(

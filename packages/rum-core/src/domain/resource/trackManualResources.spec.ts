@@ -162,4 +162,21 @@ describe('trackManualResources', () => {
       })
     })
   })
+
+  describe('invalid URL handling', () => {
+    it('should not crash or emit event when URL is undefined (oversized URL)', () => {
+      startResource(undefined as any)
+      stopResource(undefined as any)
+
+      expect(rawRumEvents).toHaveSize(0)
+    })
+
+    it('should handle stopping with undefined URL but valid resourceKey', () => {
+      startResource('https://api.example.com/data', { resourceKey: 'key1' })
+      stopResource(undefined as any, { resourceKey: 'key1' })
+
+      expect(rawRumEvents).toHaveSize(1)
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/data')
+    })
+  })
 })
