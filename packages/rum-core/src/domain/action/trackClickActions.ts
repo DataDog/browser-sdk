@@ -11,7 +11,7 @@ import { getNodePrivacyLevel } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { DiscardedEvent, EventTracker, StoppedEvent } from '../eventTracker'
+import type { EventTracker } from '../eventTracker'
 import type { ActionEventData } from './trackManualActions'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
@@ -291,8 +291,9 @@ function newClick(
 
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
-  let stoppedEvent: StoppedEvent<ActionEventData> | undefined
-  let discardedEvent: DiscardedEvent<ActionEventData> | undefined
+  let id: string | undefined
+  let duration: Duration | undefined
+  let counts: ActionCounts | undefined
   const frustrationTypes: FrustrationType[] = []
   const stopObservable = new Observable<void>()
 
@@ -303,10 +304,19 @@ function newClick(
     activityEndTime = newActivityEndTime
     status = ClickStatus.STOPPED
 
-    if (activityEndTime !== undefined) {
-      stoppedEvent = actionTracker.stop(clickKey, relativeToClocks(getRelativeTime(activityEndTime)))
+    if (activityEndTime) {
+      const stopped = actionTracker.stop(clickKey, relativeToClocks(getRelativeTime(activityEndTime)))
+      if (stopped) {
+        id = stopped.id
+        duration = stopped.duration
+        counts = stopped.counts
+      }
     } else {
-      discardedEvent = actionTracker.discard(clickKey)
+      const discarded = actionTracker.discard(clickKey)
+      if (discarded) {
+        id = discarded.id
+        counts = discarded.counts
+      }
     }
 
     stopObservable.notify()
@@ -318,11 +328,10 @@ function newClick(
     stopObservable,
 
     get hasError() {
-      const counts = stoppedEvent?.counts ?? discardedEvent?.counts
       return counts ? counts.errorCount > 0 : false
     },
     get hasPageActivity() {
-      if (activityEndTime !== undefined) {
+      if (activityEndTime) {
         return true
       }
       const activity = getUserActivity()
@@ -346,21 +355,15 @@ function newClick(
         return
       }
 
-      if (!stoppedEvent && !discardedEvent) {
-        const endTime = activityEndTime ?? timeStampNow()
-        stoppedEvent = actionTracker.stop(clickKey, relativeToClocks(getRelativeTime(endTime)))
-      }
-
-      const eventData = stoppedEvent ?? discardedEvent
-      if (!eventData) {
+      if (!id || !counts) {
         return
       }
 
       const clickAction: ClickAction = {
-        id: eventData.id,
-        startClocks: eventData.startClocks,
-        duration: stoppedEvent && activityEndTime !== undefined ? stoppedEvent.duration : undefined,
-        counts: eventData.counts!,
+        id,
+        startClocks,
+        duration,
+        counts,
         frustrationTypes,
         events: domEvents ?? [startEvent],
         event: startEvent,
@@ -372,13 +375,7 @@ function newClick(
     },
 
     discard: () => {
-      if (status !== ClickStatus.ONGOING) {
-        status = ClickStatus.FINALIZED
-        return
-      }
-
-      actionTracker.discard(clickKey)
-      stopObservable.notify()
+      stop()
       status = ClickStatus.FINALIZED
     },
   }
