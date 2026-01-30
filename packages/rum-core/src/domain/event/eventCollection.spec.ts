@@ -28,7 +28,7 @@ describe('eventCollection', () => {
         duration: 100,
       },
     }
-    const domainContext: RumEventDomainContext = { custom: 'context' }
+    const domainContext: RumEventDomainContext = {}
 
     eventCollection.addEvent(startTime, event, domainContext, duration)
 

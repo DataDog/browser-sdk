@@ -167,6 +167,7 @@ function processViewUpdate(
     duration: view.duration,
     domainContext: {
       location: view.location,
+      handlingStack: view.handlingStack,
     },
   }
 }
