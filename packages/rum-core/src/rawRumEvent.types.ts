@@ -96,6 +96,7 @@ export interface RawRumErrorEvent {
     id: string
     type?: string
     stack?: string
+    file?: string
     handling_stack?: string
     component_stack?: string
     fingerprint?: string
