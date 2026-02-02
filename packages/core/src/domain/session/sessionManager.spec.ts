@@ -23,7 +23,6 @@ import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { STORAGE_POLL_DELAY } from './sessionStore'
 import { createLock, LOCK_RETRY_DELAY } from './sessionStoreOperations'
 
-
 describe('startSessionManager', () => {
   const DURATION = 123456
   const STORE_TYPE: SessionStoreStrategyType = { type: SessionPersistence.COOKIE, cookieOptions: {} }

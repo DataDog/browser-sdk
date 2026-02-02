@@ -1,11 +1,5 @@
 import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
-import {
-  generateUUID,
-  isSampled,
-  Observable,
-  SESSION_NOT_TRACKED,
-  startSessionManager,
-} from '@datadog/browser-core'
+import { generateUUID, isSampled, Observable, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 
 export interface LogsSessionManager {

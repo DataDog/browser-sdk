@@ -51,7 +51,6 @@ describe('isSampled', () => {
       expect(isSampled(HIGH_HASH_UUID, 99.9999999999)).toBeTrue()
     })
   })
-
 })
 
 describe('sampleUsingKnuthFactor', () => {

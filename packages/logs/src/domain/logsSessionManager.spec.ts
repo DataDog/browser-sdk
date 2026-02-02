@@ -110,7 +110,9 @@ describe('logs session manager', () => {
       // simulate a click to renew the session
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
       clock.tick(STORAGE_POLL_DELAY)
-      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toEqual('00000000-0000-0000-0000-000000000001')
+      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toEqual(
+        '00000000-0000-0000-0000-000000000001'
+      )
       expect(logsSessionManager.findTrackedSession()!.id).toEqual('00000000-0000-0000-0000-000000000002')
     })
   })

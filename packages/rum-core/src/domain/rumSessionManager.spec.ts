@@ -23,11 +23,7 @@ import { mockRumConfiguration } from '../../test'
 import type { RumConfiguration } from './configuration'
 
 import type { RumSessionManager } from './rumSessionManager'
-import {
-  SessionReplayState,
-  startRumSessionManager,
-  startRumSessionManagerStub,
-} from './rumSessionManager'
+import { SessionReplayState, startRumSessionManager, startRumSessionManagerStub } from './rumSessionManager'
 
 describe('rum session manager', () => {
   const DURATION = 123456
