@@ -200,7 +200,6 @@ function computeViewPerformanceData(
       resource_url: largestContentfulPaint.resourceUrl,
       sub_parts: largestContentfulPaint?.subParts
         ? {
-            first_byte: toServerDuration(largestContentfulPaint.subParts.firstByte),
             load_delay: toServerDuration(largestContentfulPaint.subParts.loadDelay),
             load_time: toServerDuration(largestContentfulPaint.subParts.loadTime),
             render_delay: toServerDuration(largestContentfulPaint.subParts.renderDelay),

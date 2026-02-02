@@ -20,7 +20,6 @@ const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.NAVI
 })
 
 const mockSubParts = {
-  firstByte: 789 as RelativeTime,
   loadDelay: 0 as RelativeTime,
   loadTime: 0 as RelativeTime,
   renderDelay: 0 as RelativeTime,
@@ -268,7 +267,6 @@ describe('trackLargestContentfulPaint', () => {
 
       // lcpResponseEnd should be capped at 1200ms, not 5000ms
       expect(result.subParts).toEqual({
-        firstByte: 200 as RelativeTime,
         loadDelay: 300 as RelativeTime, // 500 - 200
         loadTime: 700 as RelativeTime, // 1200 (capped) - 500
         renderDelay: 0 as RelativeTime, // 1200 - 1200 (capped) = 0
@@ -320,7 +318,6 @@ describe('trackLargestContentfulPaint', () => {
         targetSelector: undefined,
         resourceUrl: 'https://example.com/image.jpg',
         subParts: {
-          firstByte: 200 as RelativeTime,
           loadDelay: 300 as RelativeTime, // 500 - 200
           loadTime: 500 as RelativeTime, // 1000 - 500 (not capped)
           renderDelay: 200 as RelativeTime, // 1200 - 1000
@@ -329,6 +326,7 @@ describe('trackLargestContentfulPaint', () => {
     })
 
     it('should ensure sum of subParts equals LCP value', () => {
+      const mockFirstByteValue = 100 as RelativeTime
       const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
 
       notifyEntries([
@@ -370,7 +368,7 @@ describe('trackLargestContentfulPaint', () => {
 
       // Validate: firstByte + loadDelay + loadTime + renderDelay = LCP value
       const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
-      expect(sum).toBe(result.value)
+      expect(sum + mockFirstByteValue).toBe(result.value)
     })
   })
 
@@ -419,7 +417,6 @@ describe('trackLargestContentfulPaint', () => {
         targetSelector: undefined,
         resourceUrl: 'https://example.com/image.jpg',
         subParts: {
-          firstByte: 200 as RelativeTime,
           loadDelay: 500 as RelativeTime, // 700 (requestStart) - 200, not 300 (startTime - 200)
           loadTime: 300 as RelativeTime, // 1000 - 700 (requestStart)
           renderDelay: 200 as RelativeTime, // 1200 - 1000
@@ -471,7 +468,6 @@ describe('trackLargestContentfulPaint', () => {
         targetSelector: undefined,
         resourceUrl: 'https://cdn.example.com/image.jpg',
         subParts: {
-          firstByte: 200 as RelativeTime,
           loadDelay: 300 as RelativeTime, // Falls back to: 500 (startTime) - 200
           loadTime: 500 as RelativeTime, // 1000 - 500 (startTime)
           renderDelay: 200 as RelativeTime, // 1200 - 1000
@@ -516,7 +512,6 @@ describe('trackLargestContentfulPaint', () => {
         targetSelector: undefined,
         resourceUrl: undefined,
         subParts: {
-          firstByte: 200 as RelativeTime,
           loadDelay: 0 as RelativeTime, // No resource, so max(firstByte, 0) - firstByte = 0
           loadTime: 0 as RelativeTime, // No resource, so max(firstByte, 0) - firstByte = 0
           renderDelay: 800 as RelativeTime, // 1000 - 200 (firstByte is used as lcpResponseEnd when no resource)
@@ -525,6 +520,7 @@ describe('trackLargestContentfulPaint', () => {
     })
 
     it('should handle cached resource with incomplete timing data', () => {
+      const mockFirstByteValue = 150 as RelativeTime
       const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
 
       notifyEntries([
@@ -566,7 +562,6 @@ describe('trackLargestContentfulPaint', () => {
       const result = lcpCallback.calls.mostRecent().args[0]
 
       expect(result.subParts).toEqual({
-        firstByte: 150 as RelativeTime,
         // lcpRequestStart = max(150, 400 - 0) = 400 (falls back to startTime)
         loadDelay: 250 as RelativeTime, // 400 - 150
         // lcpResponseEnd = min(800, max(400, 0 - 0)) = min(800, 400) = 400
@@ -576,7 +571,7 @@ describe('trackLargestContentfulPaint', () => {
 
 
       const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
-      expect(sum).toBe(result.value)
+      expect(sum + mockFirstByteValue).toBe(result.value)
     })
 
     it('should handle complex scenario: TAO resource + normal completion', () => {
@@ -624,7 +619,6 @@ describe('trackLargestContentfulPaint', () => {
         targetSelector: undefined,
         resourceUrl: 'https://example.com/product-image.jpg',
         subParts: {
-          firstByte: 100 as RelativeTime,
           // lcpRequestStart = max(100, 300) = 300
           loadDelay: 200 as RelativeTime, // 300 - 100
           // lcpResponseEnd = min(900, max(300, 700)) = 700
@@ -636,6 +630,7 @@ describe('trackLargestContentfulPaint', () => {
     })
 
     it('should handle resource that completes exactly at LCP time', () => {
+      const mockFirstByteValue = 100 as RelativeTime
       const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
 
       notifyEntries([
@@ -676,14 +671,13 @@ describe('trackLargestContentfulPaint', () => {
       const result = lcpCallback.calls.mostRecent().args[0]
 
       expect(result.subParts).toEqual({
-        firstByte: 100 as RelativeTime,
         loadDelay: 400 as RelativeTime, // 500 - 100
         loadTime: 700 as RelativeTime, // 1200 - 500
         renderDelay: 0 as RelativeTime, // 1200 - 1200 = 0 (no render delay)
       })
 
       const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
-      expect(sum).toBe(1200)
+      expect(sum + mockFirstByteValue).toBe(1200)
     })
   })
 })

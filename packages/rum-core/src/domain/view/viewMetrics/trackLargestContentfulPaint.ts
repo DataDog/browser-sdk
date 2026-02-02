@@ -16,7 +16,6 @@ export interface LargestContentfulPaint {
   targetSelector?: string
   resourceUrl?: string
   subParts?: {
-    firstByte: RelativeTime
     loadDelay: RelativeTime
     loadTime: RelativeTime
     renderDelay: RelativeTime
@@ -93,7 +92,6 @@ export function trackLargestContentfulPaint(
         )
 
         subParts = {
-          firstByte,
           loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
           loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
           renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,

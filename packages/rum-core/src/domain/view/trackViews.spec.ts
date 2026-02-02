@@ -593,7 +593,6 @@ describe('view metrics', () => {
               targetSelector: undefined,
               resourceUrl: undefined,
               subParts: {
-                firstByte: 123,
                 loadDelay: 0,
                 loadTime: 0,
                 renderDelay: 666,
