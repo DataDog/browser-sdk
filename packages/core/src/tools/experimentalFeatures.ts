@@ -22,6 +22,7 @@ export enum ExperimentalFeature {
   START_STOP_ACTION = 'start_stop_action',
   USE_CHANGE_RECORDS = 'use_change_records',
   SOURCE_CODE_CONTEXT = 'source_code_context',
+  COLLECT_LCP_SUBPARTS = 'collect_lcp_subparts',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()

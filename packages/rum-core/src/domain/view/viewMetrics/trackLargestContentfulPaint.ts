@@ -1,7 +1,15 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
+import {
+  DOM_EVENT,
+  ONE_MINUTE,
+  addEventListeners,
+  findLast,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import { getNavigationEntry, getResourceEntries, getSafeFirstByte } from '../../../browser/performanceUtils'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
@@ -14,6 +22,11 @@ export interface LargestContentfulPaint {
   value: RelativeTime
   targetSelector?: string
   resourceUrl?: string
+  subParts?: {
+    loadDelay: RelativeTime
+    loadTime: RelativeTime
+    renderDelay: RelativeTime
+  }
 }
 
 /**
@@ -64,10 +77,40 @@ export function trackLargestContentfulPaint(
         lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
       }
 
+      const resourceUrl = computeLcpEntryUrl(lcpEntry)
+
+      const lcpResourceEntry = resourceUrl
+        ? (getResourceEntries()?.find((e) => e.name === resourceUrl) as PerformanceResourceTiming | undefined)
+        : undefined
+
+      const lcpValue = Math.max(0, lcpEntry.startTime) as RelativeTime
+
+      let subParts
+      // TODO: Remove after testing
+      // eslint-disable-next-line no-constant-condition, no-constant-binary-expression
+      if (true || isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_LCP_SUBPARTS)) {
+        const navigationEntry = getNavigationEntry()
+        const firstByte = getSafeFirstByte(navigationEntry)
+
+        if (firstByte !== undefined) {
+          const lcpRequestStart = getLcpResourceRequestStart(lcpResourceEntry, firstByte)
+
+          // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
+          const lcpResponseEnd = Math.min(lcpValue, Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0))
+
+          subParts = {
+            loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
+            loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
+            renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,
+          }
+        }
+      }
+
       callback({
-        value: lcpEntry.startTime,
+        value: lcpValue,
         targetSelector: lcpTargetSelector,
-        resourceUrl: computeLcpEntryUrl(lcpEntry),
+        resourceUrl,
+        subParts,
       })
       biggestLcpSize = lcpEntry.size
     }
@@ -84,4 +127,20 @@ export function trackLargestContentfulPaint(
 // The property url report an empty string if the value is not available, we shouldn't report it in this case.
 function computeLcpEntryUrl(entry: RumLargestContentfulPaintTiming) {
   return entry.url === '' ? undefined : entry.url
+}
+
+/**
+ * Get the request start time for the LCP resource.
+ * Prefers requestStart (more accurate for Timing-Allow-Origin resources) over startTime.
+ * Returns firstByte when there's no resource (e.g., text elements) to ensure loadDelay is 0.
+ */
+function getLcpResourceRequestStart(
+  lcpResourceEntry: PerformanceResourceTiming | undefined,
+  firstByte: RelativeTime
+): RelativeTime {
+  if (!lcpResourceEntry) {
+    return firstByte
+  }
+  const requestStart = Math.max(firstByte, lcpResourceEntry.requestStart || lcpResourceEntry.startTime)
+  return requestStart as RelativeTime
 }
