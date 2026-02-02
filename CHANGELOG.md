@@ -18,6 +18,57 @@
 
 ---
 
+## v6.26.0
+
+**Public Changes:**
+
+- ⚡️ Use native fetch to avoid Zone.js change detection in Angular apps ([#4117](https://github.com/DataDog/browser-sdk/pull/4117)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Support stylesheet serialization in Safari iOS 16.x ([#4126](https://github.com/DataDog/browser-sdk/pull/4126)) [RUM]
+- ⚗️ [RUM-11393] Add Start/StopAction API ([#4038](https://github.com/DataDog/browser-sdk/pull/4038))
+- ⚗️ [MFE] Source code context event enrichment ([#3926](https://github.com/DataDog/browser-sdk/pull/3926))
+- 📝 Add comprehensive AGENTS.md for Browser SDK, scripts, and E2E testing ([#4109](https://github.com/DataDog/browser-sdk/pull/4109))
+- 📝 Add new command for revising AGENTS.md with session learnings ([#4112](https://github.com/DataDog/browser-sdk/pull/4112))
+
+**Internal Changes:**
+
+- 🔊 extend or remove expired telemetry debug ([#4102](https://github.com/DataDog/browser-sdk/pull/4102))
+- ♻️ Update rum-events-format ([#4114](https://github.com/DataDog/browser-sdk/pull/4114))
+- 👷 Bump iOS version ([#4119](https://github.com/DataDog/browser-sdk/pull/4119))
+- 👷 improve check-schemas script ([#4123](https://github.com/DataDog/browser-sdk/pull/4123)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 Update all non-major dependencies ([#4116](https://github.com/DataDog/browser-sdk/pull/4116))
+- 👷 Handle function values for configuration in developer extension ([#4042](https://github.com/DataDog/browser-sdk/pull/4042))
+- 👷 Update react-router monorepo to v7 (major) ([#4100](https://github.com/DataDog/browser-sdk/pull/4100))
+- 👷 Update dependency recharts to v3 ([#4075](https://github.com/DataDog/browser-sdk/pull/4075))
+- 👷 Update dependency eslint-plugin-jsdoc to v62 ([#4098](https://github.com/DataDog/browser-sdk/pull/4098))
+- 👷 Update react monorepo to v19 ([#4101](https://github.com/DataDog/browser-sdk/pull/4101))
+- 👷 Update all non-major dependencies ([#4099](https://github.com/DataDog/browser-sdk/pull/4099)) [RUM-REACT]
+- 👷 Fix deployment gate timing to ensure 30-minute duration ([#4096](https://github.com/DataDog/browser-sdk/pull/4096))
+
+## v6.25.4
+
+**Public Changes:**
+
+- 🐛 [PANA-5375] Treat Change records as full snapshots when appropriate ([#4078](https://github.com/DataDog/browser-sdk/pull/4078)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-13693] make sure click actions are sent on page exit ([#4070](https://github.com/DataDog/browser-sdk/pull/4070)) [RUM] [RUM-REACT] [RUM-SLIM]
+
+**Internal Changes:**
+
+- 👷 manage checkTelemetryError connexion pool ([#4094](https://github.com/DataDog/browser-sdk/pull/4094))
+- 👷 Update dependency globals to v17 ([#4074](https://github.com/DataDog/browser-sdk/pull/4074))
+- 👷 Update dependency vite to v7 ([#4076](https://github.com/DataDog/browser-sdk/pull/4076))
+- 👷 Update all non-major dependencies ([#4073](https://github.com/DataDog/browser-sdk/pull/4073))
+- 👷 do not rely on hardcoded list of DCs ([#4037](https://github.com/DataDog/browser-sdk/pull/4037))
+- 👷 Update dependency react-router to v7.12.0 [SECURITY] ([#4065](https://github.com/DataDog/browser-sdk/pull/4065)) [RUM-REACT]
+- 👷 handle rate limiting in checkTelemetryErrors ([#4069](https://github.com/DataDog/browser-sdk/pull/4069))
+- 👷 Update Node.js to v25 ([#3940](https://github.com/DataDog/browser-sdk/pull/3940))
+- 👷 Update dependency react-window to v2 ([#4052](https://github.com/DataDog/browser-sdk/pull/4052))
+- 🔧 Update deploy-\*.yml to use arch:amd64 runner ([#4086](https://github.com/DataDog/browser-sdk/pull/4086))
+- 🔧 fix deploy auto notification job dependency ([#4084](https://github.com/DataDog/browser-sdk/pull/4084))
+- ⚗️ [PANA-3971] Add a more compact experimental DOM mutation encoding ([#4060](https://github.com/DataDog/browser-sdk/pull/4060)) [RUM]
+- ⚗️ [PANA-5359] Support change records in the developer extension ([#4072](https://github.com/DataDog/browser-sdk/pull/4072))
+- ⚗️ [RUM-13259]Track action names in shadow dom ([#4044](https://github.com/DataDog/browser-sdk/pull/4044)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 📈 [PANA-5371] Add telemetry to help evaluate new DOM mutation encoding ([#4077](https://github.com/DataDog/browser-sdk/pull/4077)) [RUM]
+
 ## v6.25.3
 
 **Public Changes:**

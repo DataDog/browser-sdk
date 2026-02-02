@@ -10,7 +10,7 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { ViewHistoryEntry } from '../contexts/viewHistory'
-import type { DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startViewCollection } from './viewCollection'
@@ -258,7 +258,7 @@ describe('viewCollection', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual(
         jasmine.objectContaining({
@@ -279,7 +279,7 @@ describe('viewCollection', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBe(DISCARDED)
     })

@@ -1,19 +1,10 @@
-import type { Duration, ClocksState, RelativeTime, TimeStamp, ValueHistory } from '@datadog/browser-core'
-import {
-  timeStampNow,
-  Observable,
-  getRelativeTime,
-  ONE_MINUTE,
-  generateUUID,
-  elapsed,
-  createValueHistory,
-  relativeToClocks,
-} from '@datadog/browser-core'
+import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
+import { timeStampNow, Observable, getRelativeTime, relativeToClocks } from '@datadog/browser-core'
+import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
-import { trackEventCounts } from '../trackEventCounts'
 import { PAGE_ACTIVITY_VALIDATION_DELAY, waitPageActivityEnd } from '../waitPageActivityEnd'
 import { getSelectorFromElement } from '../getSelectorFromElement'
 import { getNodePrivacyLevel } from '../privacy'
@@ -28,6 +19,7 @@ import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
+import type { ActionTracker, TrackedAction } from './trackAction'
 
 interface ActionCounts {
   errorCount: number
@@ -54,27 +46,15 @@ export interface ClickAction {
   events: Event[]
 }
 
-export interface ActionContexts {
-  findActionId: (startTime?: RelativeTime) => string | string[] | undefined
-}
-
-type ClickActionIdHistory = ValueHistory<ClickAction['id']>
-
-export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
-
 export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration
+  configuration: RumConfiguration,
+  actionTracker: ActionTracker
 ) {
-  const history: ClickActionIdHistory = createValueHistory({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
-
-  lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    history.reset()
-  })
 
   lifeCycle.subscribe(LifeCycleEventType.VIEW_ENDED, stopClickChain)
   lifeCycle.subscribe(LifeCycleEventType.PAGE_MAY_EXIT, stopClickChain)
@@ -91,7 +71,7 @@ export function trackClickActions(
         lifeCycle,
         domMutationObservable,
         windowOpenObservable,
-        history,
+        actionTracker,
         stopObservable,
         appendClickToClickChain,
         clickActionBase,
@@ -102,17 +82,12 @@ export function trackClickActions(
     },
   })
 
-  const actionContexts: ActionContexts = {
-    findActionId: (startTime?: RelativeTime) => history.findAll(startTime),
-  }
-
   return {
     stop: () => {
       stopClickChain()
       stopObservable.notify()
       stopActionEventsListener()
     },
-    actionContexts,
   }
 
   function appendClickToClickChain(click: Click) {
@@ -142,10 +117,14 @@ function processPointerDown(
   pointerDownEvent: MouseEventOnElement,
   windowOpenObservable: Observable<void>
 ) {
+  const targetForPrivacy = configuration.betaTrackActionsInShadowDom
+    ? getEventTarget(pointerDownEvent)
+    : pointerDownEvent.target
+
   let nodePrivacyLevel: NodePrivacyLevel
 
   if (configuration.enablePrivacyForActionName) {
-    nodePrivacyLevel = getNodePrivacyLevel(pointerDownEvent.target, configuration.defaultPrivacyLevel)
+    nodePrivacyLevel = getNodePrivacyLevel(targetForPrivacy, configuration.defaultPrivacyLevel)
   } else {
     nodePrivacyLevel = NodePrivacyLevel.ALLOW
   }
@@ -179,7 +158,7 @@ function startClickAction(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  history: ClickActionIdHistory,
+  actionTracker: ActionTracker,
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
@@ -187,7 +166,7 @@ function startClickAction(
   getUserActivity: () => UserActivity,
   hadActivityOnPointerDown: () => boolean
 ) {
-  const click = newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent)
+  const click = newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent)
   appendClickToClickChain(click)
 
   const selector = clickActionBase?.target?.selector
@@ -248,13 +227,16 @@ function computeClickActionBase(
   nodePrivacyLevel: NodePrivacyLevel,
   configuration: RumConfiguration
 ): ClickActionBase {
-  const rect = event.target.getBoundingClientRect()
-  const selector = getSelectorFromElement(event.target, configuration.actionNameAttribute)
+  const selectorTarget = event.target
+  const rect = selectorTarget.getBoundingClientRect()
+  const selector = getSelectorFromElement(selectorTarget, configuration.actionNameAttribute)
+
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
 
-  const { name, nameSource } = getActionNameFromElement(event.target, configuration, nodePrivacyLevel)
+  const nameTarget = configuration.betaTrackActionsInShadowDom ? getEventTarget(event) : event.target
+  const { name, nameSource } = getActionNameFromElement(nameTarget, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
@@ -273,6 +255,16 @@ function computeClickActionBase(
   }
 }
 
+function getEventTarget(event: MouseEventOnElement): Element {
+  if (event.composed && isNodeShadowHost(event.target) && typeof event.composedPath === 'function') {
+    const composedPath = event.composedPath()
+    if (composedPath.length > 0 && composedPath[0] instanceof Element) {
+      return composedPath[0]
+    }
+  }
+  return event.target
+}
+
 const enum ClickStatus {
   // Initial state, the click is still ongoing.
   ONGOING,
@@ -286,20 +278,13 @@ export type Click = ReturnType<typeof newClick>
 
 function newClick(
   lifeCycle: LifeCycle,
-  history: ClickActionIdHistory,
+  actionTracker: ActionTracker,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement
 ) {
-  const id = generateUUID()
-  const startClocks = relativeToClocks(startEvent.timeStamp)
-  const historyEntry = history.add(id, startClocks.relative)
-  const eventCountsSubscription = trackEventCounts({
-    lifeCycle,
-    isChildEvent: (event) =>
-      event.action !== undefined &&
-      (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
-  })
+  const trackedAction: TrackedAction = actionTracker.createTrackedAction(relativeToClocks(startEvent.timeStamp))
+
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
   const frustrationTypes: FrustrationType[] = []
@@ -312,11 +297,10 @@ function newClick(
     activityEndTime = newActivityEndTime
     status = ClickStatus.STOPPED
     if (activityEndTime) {
-      historyEntry.close(getRelativeTime(activityEndTime))
+      trackedAction.stop(getRelativeTime(activityEndTime))
     } else {
-      historyEntry.remove()
+      trackedAction.discard()
     }
-    eventCountsSubscription.stop()
     stopObservable.notify()
   }
 
@@ -326,7 +310,7 @@ function newClick(
     stopObservable,
 
     get hasError() {
-      return eventCountsSubscription.eventCounts.errorCount > 0
+      return trackedAction.counts.errorCount > 0
     },
     get hasPageActivity() {
       return activityEndTime !== undefined
@@ -335,11 +319,13 @@ function newClick(
     addFrustration: (frustrationType: FrustrationType) => {
       frustrationTypes.push(frustrationType)
     },
-    startClocks,
+    get startClocks() {
+      return trackedAction.startClocks
+    },
 
     isStopped: () => status === ClickStatus.STOPPED || status === ClickStatus.FINALIZED,
 
-    clone: () => newClick(lifeCycle, history, getUserActivity, clickActionBase, startEvent),
+    clone: () => newClick(lifeCycle, actionTracker, getUserActivity, clickActionBase, startEvent),
 
     validate: (domEvents?: Event[]) => {
       stop()
@@ -347,17 +333,12 @@ function newClick(
         return
       }
 
-      const { resourceCount, errorCount, longTaskCount } = eventCountsSubscription.eventCounts
       const clickAction: ClickAction = {
-        duration: activityEndTime && elapsed(startClocks.timeStamp, activityEndTime),
-        startClocks,
-        id,
+        startClocks: trackedAction.startClocks,
+        duration: trackedAction.duration,
+        id: trackedAction.id,
         frustrationTypes,
-        counts: {
-          resourceCount,
-          errorCount,
-          longTaskCount,
-        },
+        counts: trackedAction.counts,
         events: domEvents ?? [startEvent],
         event: startEvent,
         ...clickActionBase,

@@ -17,6 +17,10 @@ const PROBLEMATIC_IDENTIFIERS = {
   // PR #1860
   addEventListener: 'Use `addEventListener` from @datadog/browser-core instead',
   removeEventListener: 'Use `addEventListener().stop` from @datadog/browser-core instead',
+
+  // Using the patched `fetch` from Zone.js triggers unnecessary Angular change detection cycles,
+  // see PR #4117.
+  fetch: 'Use `fetch` from @datadog/browser-core instead',
 }
 
 export default {

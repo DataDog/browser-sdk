@@ -1,10 +1,19 @@
+import type { TimeStamp } from '@datadog/browser-rum/internal'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
 import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
-import type { Configuration } from '../configuration'
+import { validateAndBuildConfiguration, type Configuration } from '../configuration'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
-import { setNavigatorOnLine, setNavigatorConnection, createHooks, waitNextMicrotask } from '../../../test'
+import {
+  setNavigatorOnLine,
+  setNavigatorConnection,
+  createHooks,
+  waitNextMicrotask,
+  interceptRequests,
+  registerCleanupTask,
+  createNewEvent,
+} from '../../../test'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
 import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
@@ -21,6 +30,7 @@ import {
   addTelemetryMetrics,
   addTelemetryDebug,
   TelemetryMetrics,
+  startTelemetryTransport,
 } from './telemetry'
 import type { TelemetryEvent } from './telemetryEvent.types'
 import { StatusType, TelemetryType } from './rawTelemetryEvent.types'
@@ -440,6 +450,46 @@ describe('telemetry', () => {
         }
       })
     })
+  })
+})
+
+describe('startTelemetryTransport', () => {
+  it('should send telemetry events through transport', () => {
+    const interceptor = interceptRequests()
+    const telemetryObservable = new Observable<TelemetryEvent & Context>()
+
+    const { stop } = startTelemetryTransport(
+      validateAndBuildConfiguration({ clientToken: 'xxx' })!,
+      telemetryObservable
+    )
+
+    registerCleanupTask(stop)
+
+    // Trigger a telemetry event by notifying the observable
+    telemetryObservable.notify({
+      type: 'telemetry',
+      date: 123 as TimeStamp,
+      service: TelemetryService.RUM,
+      version: '0.0.0',
+      source: 'browser',
+      telemetry: {
+        type: TelemetryType.LOG,
+        status: StatusType.error,
+        message: 'test error',
+      },
+      _dd: {
+        format_version: 2,
+      },
+    })
+
+    // Force the batch to flush by emulating a beforeunload event
+    window.dispatchEvent(createNewEvent('beforeunload'))
+
+    expect(interceptor.requests.length).toBe(1)
+    const telemetryEvent = JSON.parse(interceptor.requests[0].body)
+    expect(telemetryEvent.type).toBe('telemetry')
+    expect(telemetryEvent.telemetry.type).toBe(TelemetryType.LOG)
+    expect(telemetryEvent.telemetry.status).toBe(StatusType.error)
   })
 })
 
