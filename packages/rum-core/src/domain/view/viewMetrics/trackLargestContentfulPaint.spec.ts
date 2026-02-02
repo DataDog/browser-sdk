@@ -223,128 +223,6 @@ describe('trackLargestContentfulPaint', () => {
     })
   })
 
-  describe('LCP subParts with activationStart (prerendering)', () => {
-    it('should subtract activationStart from resource timings for prerendered pages', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      // Navigation with activationStart = 1000ms (prerendered page activated at 1000ms)
-      // responseStart happened during prerender at 1100ms (relative to navigation start)
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 1100 as RelativeTime,
-          activationStart: 1000 as RelativeTime,
-        }),
-      ])
-
-      // Resource loaded during prerender
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/hero.jpg',
-          startTime: 1200 as RelativeTime,
-          requestStart: 1200 as RelativeTime,
-          responseEnd: 1800 as RelativeTime,
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
-      })
-
-      // LCP occurs at 2000ms (relative to navigation start)
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 2000 as RelativeTime,
-          url: 'https://example.com/hero.jpg',
-        }),
-      ])
-
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 2000 as RelativeTime,
-        targetSelector: undefined,
-        resourceUrl: 'https://example.com/hero.jpg',
-        subParts: {
-          // adjustedFirstByte = max(0, responseStart - activationStart) = max(0, 1100 - 1000) = 100
-          firstByte: 100 as RelativeTime,
-          // lcpRequestStart = max(adjustedFirstByte, requestStart - activationStart)
-          //                 = max(100, 1200 - 1000) = max(100, 200) = 200
-          // loadDelay = lcpRequestStart - adjustedFirstByte = 200 - 100 = 100
-          loadDelay: 100 as RelativeTime,
-          // lcpResponseEnd = min(lcpTime, max(lcpRequestStart, responseEnd - activationStart))
-          //                = min(2000, max(200, 1800 - 1000))
-          //                = min(2000, max(200, 800)) = min(2000, 800) = 800
-          // loadTime = lcpResponseEnd - lcpRequestStart = 800 - 200 = 600
-          loadTime: 600 as RelativeTime,
-          // renderDelay = lcpTime - lcpResponseEnd = 2000 - 800 = 1200
-          renderDelay: 1200 as RelativeTime,
-        },
-      })
-    })
-
-    it('should handle activationStart = 0 for non-prerendered pages', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      // Navigation without activationStart (or activationStart = 0)
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 500 as RelativeTime,
-          activationStart: 0 as RelativeTime,
-        }),
-      ])
-
-      // Resource: starts at 600ms, ends at 800ms
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/image.jpg',
-          startTime: 600 as RelativeTime,
-          requestStart: 600 as RelativeTime,
-          responseEnd: 800 as RelativeTime,
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
-      })
-
-      // LCP at 900ms
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 900 as RelativeTime,
-          url: 'https://example.com/image.jpg',
-        }),
-      ])
-
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 900 as RelativeTime,
-        targetSelector: undefined,
-        resourceUrl: 'https://example.com/image.jpg',
-        subParts: {
-          firstByte: 500 as RelativeTime,
-          loadDelay: 100 as RelativeTime, // 600 - 500
-          loadTime: 200 as RelativeTime, // 800 - 600
-          renderDelay: 100 as RelativeTime, // 900 - 800
-        },
-      })
-    })
-  })
-
   describe('LCP subParts capping at LCP time', () => {
     it('should cap lcpResponseEnd at LCP time for resources that complete after LCP', () => {
       const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
@@ -603,70 +481,6 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   describe('LCP subParts', () => {
-    it('should correctly calculate subParts for prerendered page with video LCP', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      // Prerendered page: activated at 2000ms
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 2500 as RelativeTime,
-          activationStart: 2000 as RelativeTime,
-        }),
-      ])
-
-      // Video resource: continues downloading after LCP
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/hero-video.mp4',
-          startTime: 2600 as RelativeTime,
-          requestStart: 2700 as RelativeTime, // Prefer this over startTime
-          responseEnd: 10000 as RelativeTime, // Still downloading after LCP
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
-      })
-
-      // LCP occurs at 3500ms (first frame of video painted)
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 3500 as RelativeTime,
-          url: 'https://example.com/hero-video.mp4',
-        }),
-      ])
-
-      const result = lcpCallback.calls.mostRecent().args[0]
-
-      expect(result.value).toBe(3500 as RelativeTime)
-      expect(result.subParts).toEqual({
-        // adjustedFirstByte = max(0, 2500 - 2000) = 500
-        firstByte: 500 as RelativeTime,
-        // lcpRequestStart = max(500, 2700 - 2000) = max(500, 700) = 700
-        // loadDelay = 700 - 500 = 200
-        loadDelay: 200 as RelativeTime,
-        // lcpResponseEnd = min(3500, max(700, 10000 - 2000))
-        //                = min(3500, max(700, 8000))
-        //                = min(3500, 8000) = 3500 (capped!)
-        // loadTime = 3500 - 700 = 2800
-        loadTime: 2800 as RelativeTime,
-        // renderDelay = 3500 - 3500 = 0
-        renderDelay: 0 as RelativeTime,
-      })
-
-      const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
-      expect(sum).toBe(result.value)
-    })
-
     it('should handle LCP with no associated resource entry', () => {
       const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
 
@@ -765,14 +579,12 @@ describe('trackLargestContentfulPaint', () => {
       expect(sum).toBe(result.value)
     })
 
-    it('should handle complex scenario: prerendered + TAO resource + normal completion', () => {
+    it('should handle complex scenario: TAO resource + normal completion', () => {
       const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
 
-      // Prerendered page activated at 1500ms
       notifyEntries([
         createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 1600 as RelativeTime,
-          activationStart: 1500 as RelativeTime,
+          responseStart: 100 as RelativeTime,
         }),
       ])
 
@@ -780,9 +592,9 @@ describe('trackLargestContentfulPaint', () => {
       notifyEntries([
         createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
           name: 'https://example.com/product-image.jpg',
-          startTime: 1700 as RelativeTime, // Resource discovered
-          requestStart: 1800 as RelativeTime, // HTTP request started (prefer this)
-          responseEnd: 2200 as RelativeTime, // Download completed
+          startTime: 200 as RelativeTime, // Resource discovered
+          requestStart: 300 as RelativeTime, // HTTP request started (prefer this)
+          responseEnd: 700 as RelativeTime, // Download completed
         }),
       ])
 
@@ -802,25 +614,23 @@ describe('trackLargestContentfulPaint', () => {
       // LCP occurs after resource completes
       notifyEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 2500 as RelativeTime,
+          startTime: 900 as RelativeTime,
           url: 'https://example.com/product-image.jpg',
         }),
       ])
 
       expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 2500 as RelativeTime,
+        value: 900 as RelativeTime,
         targetSelector: undefined,
         resourceUrl: 'https://example.com/product-image.jpg',
         subParts: {
-          // adjustedFirstByte = max(0, 1600 - 1500) = 100
           firstByte: 100 as RelativeTime,
-          // lcpRequestStart = max(100, 1800 - 1500) = max(100, 300) = 300
+          // lcpRequestStart = max(100, 300) = 300
           loadDelay: 200 as RelativeTime, // 300 - 100
-          // lcpResponseEnd = min(2500, max(300, 2200 - 1500))
-          //                = min(2500, max(300, 700)) = min(2500, 700) = 700
+          // lcpResponseEnd = min(900, max(300, 700)) = 700
           loadTime: 400 as RelativeTime, // 700 - 300
-          // renderDelay = 2500 - 700 = 1800
-          renderDelay: 1800 as RelativeTime,
+          // renderDelay = 900 - 700 = 200
+          renderDelay: 200 as RelativeTime,
         },
       })
     })

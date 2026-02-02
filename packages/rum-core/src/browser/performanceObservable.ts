@@ -84,7 +84,6 @@ export interface RumPerformanceNavigationTiming extends Omit<RumPerformanceResou
   domContentLoadedEventEnd: RelativeTime
   domInteractive: RelativeTime
   loadEventEnd: RelativeTime
-  activationStart?: RelativeTime
 
   toJSON(): Omit<RumPerformanceNavigationTiming, 'toJSON'>
 }

@@ -81,26 +81,27 @@ export function trackLargestContentfulPaint(
       const navigationEntry = getNavigationEntry()
       const firstByte = getSafeFirstByte(navigationEntry)
 
+      const lcpValue = Math.max(0, lcpEntry.startTime) as RelativeTime
+
       if (firstByte !== undefined) {
-        const activationStart = (navigationEntry.activationStart || 0) as RelativeTime
-        const adjustedFirstByte = getAdjustedFirstByte(firstByte, activationStart)
-        const lcpRequestStart = Math.max(adjustedFirstByte, getLcpResourceRequestStart(lcpResourceEntry, activationStart))
+        const lcpRequestStart = getLcpResourceRequestStart(lcpResourceEntry, firstByte)
+
         // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
         const lcpResponseEnd = Math.min(
-          lcpEntry.startTime,
-          Math.max(lcpRequestStart, getLcpResourceResponseEnd(lcpResourceEntry, activationStart))
+          lcpValue,
+          Math.max(lcpRequestStart,  lcpResourceEntry?.responseEnd || 0)
         )
 
         subParts = {
-          firstByte: adjustedFirstByte,
-          loadDelay: (lcpRequestStart - adjustedFirstByte) as RelativeTime,
+          firstByte,
+          loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
           loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
-          renderDelay: (lcpEntry.startTime - lcpResponseEnd) as RelativeTime,
+          renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,
         }
       }
 
       callback({
-        value: lcpEntry.startTime,
+        value: lcpValue,
         targetSelector: lcpTargetSelector,
         resourceUrl,
         subParts,
@@ -123,37 +124,18 @@ function computeLcpEntryUrl(entry: RumLargestContentfulPaintTiming) {
 }
 
 /**
- * Get the Time to First Byte (TTFB), adjusted for activation start.
- * For prerendered pages, this represents the time from activation to first byte.
- */
-function getAdjustedFirstByte(firstByte: RelativeTime, activationStart: RelativeTime): RelativeTime {
-  return Math.max(0, firstByte - activationStart) as RelativeTime
-}
-
-/**
- * Get the request start time for the LCP resource, adjusted for activation start.
+ * Get the request start time for the LCP resource.
  * Prefers requestStart (more accurate for Timing-Allow-Origin resources) over startTime.
+ * Returns firstByte when there's no resource (e.g., text elements) to ensure loadDelay is 0.
  */
 function getLcpResourceRequestStart(
   lcpResourceEntry: PerformanceResourceTiming | undefined,
-  activationStart: RelativeTime
+  firstByte: RelativeTime
 ): RelativeTime {
   if (!lcpResourceEntry) {
-    return 0 as RelativeTime
+    return firstByte
   }
-  const requestStart = lcpResourceEntry.requestStart || lcpResourceEntry.startTime
-  return (requestStart - activationStart) as RelativeTime
+  const requestStart = Math.max(firstByte, lcpResourceEntry.requestStart || lcpResourceEntry.startTime)
+  return requestStart as RelativeTime
 }
 
-/**
- * Get the response end time for the LCP resource, adjusted for activation start.
- */
-function getLcpResourceResponseEnd(
-  lcpResourceEntry: PerformanceResourceTiming | undefined,
-  activationStart: RelativeTime
-): RelativeTime {
-  if (!lcpResourceEntry) {
-    return 0 as RelativeTime
-  }
-  return (lcpResourceEntry.responseEnd - activationStart) as RelativeTime
-}
