@@ -5,7 +5,7 @@ import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionSt
 let inMemorySessionState: SessionState = {}
 
 const expireSession = () => (inMemorySessionState = inMemorySessionState = { isExpired: '1' })
-const persistSession = (newState: SessionState) => (inMemorySessionState = Object.assign({}, newState))
+const persistSession = (newState: SessionState) => (inMemorySessionState = { ...newState })
 const retrieveSession = () => inMemorySessionState
 
 export function selectInMemorySessionStoreStrategy(): SessionStoreStrategyType {

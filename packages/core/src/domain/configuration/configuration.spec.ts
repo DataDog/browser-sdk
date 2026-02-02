@@ -7,10 +7,9 @@ import {
   isExperimentalFeatureEnabled,
   resetExperimentalFeatures,
 } from '../../tools/experimentalFeatures'
-import type { SessionStoreStrategyType } from '../session/storeStrategies/sessionStoreStrategy'
 import { SessionPersistence } from '../session/sessionConstants'
 import { TrackingConsent } from '../trackingConsent'
-import type { InitConfiguration, Configuration } from './configuration'
+import type { InitConfiguration } from './configuration'
 import { serializeConfiguration, validateAndBuildConfiguration } from './configuration'
 
 describe('validateAndBuildConfiguration', () => {

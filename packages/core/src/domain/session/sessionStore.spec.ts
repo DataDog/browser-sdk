@@ -142,6 +142,84 @@ describe('session store', () => {
       expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
     })
 
+    describe('sessionPersistence as array', () => {
+      it('returns the first available strategy from the array', () => {
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+        })
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.COOKIE }))
+      })
+
+      it('falls back to next strategy when first is unavailable', () => {
+        disableCookies()
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+        })
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+      })
+
+      it('falls back to in-memory when cookie and local storage are unavailable', () => {
+        disableCookies()
+        disableLocalStorage()
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: [
+            SessionPersistence.COOKIE,
+            SessionPersistence.LOCAL_STORAGE,
+            SessionPersistence.IN_MEMORY,
+          ],
+        })
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.IN_MEMORY }))
+      })
+
+      it('returns undefined when no strategy in array is available', () => {
+        disableCookies()
+        disableLocalStorage()
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE],
+        })
+        expect(sessionStoreStrategyType).toBeUndefined()
+      })
+
+      it('handles empty array', () => {
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: [],
+        })
+        expect(sessionStoreStrategyType).toBeUndefined()
+      })
+
+      it('handles array with single element', () => {
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: [SessionPersistence.LOCAL_STORAGE],
+        })
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+      })
+
+      it('stops at first available strategy and does not try subsequent ones', () => {
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: [SessionPersistence.LOCAL_STORAGE, SessionPersistence.COOKIE],
+        })
+        // Should return local storage (first available), not cookie
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
+      })
+
+      it('returns undefined and logs error if array contains invalid persistence type', () => {
+        const displayErrorSpy = spyOn(display, 'error')
+        const sessionStoreStrategyType = selectSessionStoreStrategyType({
+          ...DEFAULT_INIT_CONFIGURATION,
+          sessionPersistence: ['invalid' as SessionPersistence],
+        })
+        expect(sessionStoreStrategyType).toBeUndefined()
+        expect(displayErrorSpy).toHaveBeenCalledOnceWith("Invalid session persistence 'invalid'")
+      })
+    })
+
     describe('allowFallbackToLocalStorage (deprecated)', () => {
       it('should return a type cookie when cookies are available', () => {
         const sessionStoreStrategyType = selectSessionStoreStrategyType({
@@ -271,7 +349,7 @@ describe('session store', () => {
     describe('expand or renew session', () => {
       it(
         'when session not in cache, session not in store and new session tracked, ' +
-        'should create new session and trigger renew session ',
+          'should create new session and trigger renew session ',
         () => {
           setupSessionStore()
 
@@ -286,7 +364,7 @@ describe('session store', () => {
 
       it(
         'when session not in cache, session not in store and new session not tracked, ' +
-        'should store not tracked session and trigger renew session',
+          'should store not tracked session and trigger renew session',
         () => {
           setupSessionStore(EMPTY_SESSION_STATE, () => FakeTrackingType.NOT_TRACKED)
 
@@ -313,7 +391,7 @@ describe('session store', () => {
 
       it(
         'when session in cache, session not in store and new session tracked, ' +
-        'should expire session, create a new one and trigger renew session',
+          'should expire session, create a new one and trigger renew session',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
           resetSessionInStore()
@@ -331,7 +409,7 @@ describe('session store', () => {
 
       it(
         'when session in cache, session not in store and new session not tracked, ' +
-        'should expire session, store not tracked session and trigger renew session',
+          'should expire session, store not tracked session and trigger renew session',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), () => FakeTrackingType.NOT_TRACKED)
           resetSessionInStore()
@@ -348,7 +426,7 @@ describe('session store', () => {
 
       it(
         'when session not tracked in cache, session not in store and new session not tracked, ' +
-        'should expire session, store not tracked session and trigger renew session',
+          'should expire session, store not tracked session and trigger renew session',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.NOT_TRACKED), () => FakeTrackingType.NOT_TRACKED)
           resetSessionInStore()
@@ -378,7 +456,7 @@ describe('session store', () => {
 
       it(
         'when session in cache is different session than in store and store session is tracked, ' +
-        'should expire session, expand store session and trigger renew',
+          'should expire session, expand store session and trigger renew',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
           setSessionInStore(createSessionState(FakeTrackingType.TRACKED, SECOND_ID))
@@ -394,7 +472,7 @@ describe('session store', () => {
 
       it(
         'when session in cache is different session than in store and store session is not tracked, ' +
-        'should expire session, store not tracked session and trigger renew',
+          'should expire session, store not tracked session and trigger renew',
         () => {
           setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID), (rawTrackingType) =>
             rawTrackingType === FakeTrackingType.TRACKED ? FakeTrackingType.TRACKED : FakeTrackingType.NOT_TRACKED
