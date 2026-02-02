@@ -118,11 +118,10 @@ ci-image:
     - .base-configuration
     - .feature-branches
   when: manual
-  tags: ["docker-in-docker:amd64"]
-  image: $BUILD_STABLE_REGISTRY/docker:18.03.1
+  tags: ['arch:amd64']
+  image: $BUILD_STABLE_REGISTRY/images/docker:27.3.1
   script:
-    - docker build --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE .
-    - docker push $CI_IMAGE
+    - docker buildx build --platform linux/amd64 --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE --push .
 
 ########################################################################################################################
 # Tests
