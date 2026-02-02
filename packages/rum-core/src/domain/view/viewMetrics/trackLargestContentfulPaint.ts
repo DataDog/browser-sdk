@@ -86,7 +86,9 @@ export function trackLargestContentfulPaint(
       const lcpValue = Math.max(0, lcpEntry.startTime) as RelativeTime
 
       let subParts
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_LCP_SUBPARTS)) {
+      // TODO: Remove after testing
+      // eslint-disable-next-line no-constant-condition, no-constant-binary-expression
+      if (true || isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_LCP_SUBPARTS)) {
         const navigationEntry = getNavigationEntry()
         const firstByte = getSafeFirstByte(navigationEntry)
 
