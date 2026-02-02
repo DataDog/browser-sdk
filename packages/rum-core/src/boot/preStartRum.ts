@@ -27,6 +27,7 @@ import {
   sanitize,
   startTelemetry,
   TelemetryService,
+  mockable,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -60,8 +61,7 @@ export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
-  doStartRum: DoStartRum,
-  startTelemetryImpl = startTelemetry
+  doStartRum: DoStartRum
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
 
@@ -96,7 +96,7 @@ export function createPreStartStrategy(
 
     // Start telemetry only once, when we have consent and configuration
     if (!telemetry) {
-      telemetry = startTelemetryImpl(TelemetryService.RUM, cachedConfiguration, hooks)
+      telemetry = mockable(startTelemetry)(TelemetryService.RUM, cachedConfiguration, hooks)
     }
 
     trackingConsentStateSubscription.unsubscribe()

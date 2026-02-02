@@ -1,11 +1,12 @@
 import type { ContextManager } from '@datadog/browser-core'
-import { monitor, display, createContextManager, TrackingConsent } from '@datadog/browser-core'
+import { monitor, display, createContextManager, TrackingConsent, startTelemetry } from '@datadog/browser-core'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
-import { createFakeTelemetryObject } from '../../../core/test'
+import { createFakeTelemetryObject, replaceMockableWithSpy } from '../../../core/test'
 import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs, StartLogsResult } from './startLogs'
+import { startLogs } from './startLogs'
 
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', trackingConsent: TrackingConsent.GRANTED }
 
@@ -242,7 +243,7 @@ function makeLogsPublicApiWithDefaults({
   startLogsResult?: Partial<StartLogsResult>
 } = {}) {
   const handleLogSpy = jasmine.createSpy<StartLogsResult['handleLog']>()
-  const startLogsSpy = jasmine.createSpy<StartLogs>().and.callFake(() => ({
+  const startLogsSpy = replaceMockableWithSpy(startLogs).and.callFake(() => ({
     handleLog: handleLogSpy,
     getInternalContext,
     accountContext: {} as any,
@@ -257,9 +258,11 @@ function makeLogsPublicApiWithDefaults({
     return { message, logger, savedCommonContext, savedDate }
   }
 
+  replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+
   return {
     startLogsSpy,
-    logsPublicApi: makeLogsPublicApi(startLogsSpy, createFakeTelemetryObject),
+    logsPublicApi: makeLogsPublicApi(),
     getLoggedMessage,
   }
 }
