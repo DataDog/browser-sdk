@@ -1,12 +1,12 @@
 variables:
-  CURRENT_STAGING: staging-05
+  CURRENT_STAGING: staging-06
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 98
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
-  NEXT_MAJOR_BRANCH: ''
+  NEXT_MAJOR_BRANCH: 'v7'
   CHROME_PACKAGE_VERSION: 139.0.7258.66-1
   FF_TIMESTAMPS: 'true' # Enable timestamps for gitlab-ci logs
 

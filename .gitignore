@@ -27,3 +27,7 @@ docs/
 test-results/
 playwright-report/
 .vscode
+
+# Claude Code local files
+*.local.md
+.claude/settings.local.json

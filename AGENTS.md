@@ -99,3 +99,10 @@ Use gitmoji conventions (based on actual usage in this repo):
 - 🚨 **Linting** - Add/fix linter rules
 - 🧹 **Cleanup** - Minor cleanup, housekeeping
 - 🔊 **Logging** - Add/modify debug logs, telemetry
+
+## Git Workflow
+
+- Branch naming: `<username>/<feature>` (e.g., `john.doe/fix-session-bug`)
+- Always branch from `main` unless explicitly decided otherwise
+- PR title follows commit message convention (used when squashing to main)
+- PR template at `.github/PULL_REQUEST_TEMPLATE.md` - use it for all PRs
