@@ -2,7 +2,7 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../core/test'
 import { SessionType } from '../rumSessionManager'
-import type { Hooks } from '../hooks'
+import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from './syntheticsContext'
 
@@ -20,7 +20,7 @@ describe('getSyntheticsContext', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual({
         type: 'view',
@@ -42,7 +42,7 @@ describe('getSyntheticsContext', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual({
         type: 'view',
@@ -64,7 +64,7 @@ describe('getSyntheticsContext', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual({
         type: 'view',
@@ -86,7 +86,7 @@ describe('getSyntheticsContext', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBeUndefined()
     })
@@ -98,7 +98,7 @@ describe('getSyntheticsContext', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBeUndefined()
     })
@@ -110,7 +110,7 @@ describe('getSyntheticsContext', () => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'view',
         startTime: 0 as RelativeTime,
-      })
+      } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBeUndefined()
     })

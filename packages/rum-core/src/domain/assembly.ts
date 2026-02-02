@@ -16,7 +16,7 @@ import { LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ModifiableFieldPaths } from './limitModification'
 import { limitModification } from './limitModification'
-import type { Hooks } from './hooks'
+import type { Hooks, AssembleHookParams } from './hooks'
 
 const VIEW_MODIFIABLE_FIELD_PATHS: ModifiableFieldPaths = {
   'view.name': 'string',
@@ -95,9 +95,11 @@ export function startRumAssembly(
     ({ startTime, duration, rawRumEvent, domainContext }) => {
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: rawRumEvent.type,
+        rawRumEvent,
+        domainContext,
         startTime,
         duration,
-      })!
+      } as AssembleHookParams)!
 
       if (defaultRumEventAttributes === DISCARDED) {
         return

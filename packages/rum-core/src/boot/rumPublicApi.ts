@@ -14,6 +14,7 @@ import type {
   RumInternalContext,
   Telemetry,
   Encoder,
+  startTelemetry,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -32,6 +33,8 @@ import {
   CustomerContextKey,
   defineContextMethod,
   startBufferingData,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -53,6 +56,7 @@ import { callPluginsMethod } from '../domain/plugins'
 import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
+import type { ActionOptions } from '../domain/action/trackManualActions'
 import { createPreStartStrategy } from './preStartRum'
 import type { StartRum, StartRumResult } from './startRum'
 
@@ -167,6 +171,24 @@ export interface RumPublicApi extends PublicApi {
    * @param context - Context of the action
    */
   addAction: (name: string, context?: object) => void
+
+  /**
+   * [Experimental] Start an action, stored in `@action`
+   *
+   * @category Data Collection
+   * @param name - Name of the action
+   * @param options - Options of the action (@default type: 'custom')
+   */
+  startAction: (name: string, options?: ActionOptions) => void
+
+  /**
+   * [Experimental] Stop an action, stored in `@action`
+   *
+   * @category Data Collection
+   * @param name - Name of the action
+   * @param options - Options of the action
+   */
+  stopAction: (name: string, options?: ActionOptions) => void
 
   /**
    * Add a custom error, stored in `@error`.
@@ -523,6 +545,8 @@ export interface Strategy {
   accountContext: ContextManager
 
   addAction: StartRumResult['addAction']
+  startAction: StartRumResult['startAction']
+  stopAction: StartRumResult['stopAction']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
   startDurationVital: StartRumResult['startDurationVital']
@@ -535,7 +559,8 @@ export function makeRumPublicApi(
   startRumImpl: StartRum,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
-  options: RumPublicApiOptions = {}
+  options: RumPublicApiOptions = {},
+  startTelemetryImpl?: typeof startTelemetry
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
@@ -545,7 +570,7 @@ export function makeRumPublicApi(
     options,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions) => {
+    (configuration, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -560,6 +585,8 @@ export function makeRumPublicApi(
         trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
+        telemetry,
+        hooks,
         options.sdkName
       )
 
@@ -590,7 +617,8 @@ export function makeRumPublicApi(
       })
 
       return startRumResult
-    }
+    },
+    startTelemetryImpl
   )
   const getStrategy = () => strategy
 
@@ -652,6 +680,31 @@ export function makeRumPublicApi(
         addTelemetryUsage({ feature: 'add-action' })
       })
     },
+
+    startAction: monitor((name, options) => {
+      // Check feature flag only after init; pre-init calls should be buffered
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
+        return
+      }
+      // addTelemetryUsage({ feature: 'start-action' })
+      strategy.startAction(sanitize(name)!, {
+        type: sanitize(options && options.type) as ActionType | undefined,
+        context: sanitize(options && options.context) as Context,
+        actionKey: options && options.actionKey,
+      })
+    }),
+
+    stopAction: monitor((name, options) => {
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_ACTION)) {
+        return
+      }
+      // addTelemetryUsage({ feature: 'stop-action' })
+      strategy.stopAction(sanitize(name)!, {
+        type: sanitize(options && options.type) as ActionType | undefined,
+        context: sanitize(options && options.context) as Context,
+        actionKey: options && options.actionKey,
+      })
+    }),
 
     addError: (error, context) => {
       const handlingStack = createHandlingStack('error')

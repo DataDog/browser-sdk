@@ -1,5 +1,6 @@
 import type { EndpointBuilder } from '../domain/configuration'
 import type { Context } from '../tools/serialisation/context'
+import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
 import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/experimentalFeatures'

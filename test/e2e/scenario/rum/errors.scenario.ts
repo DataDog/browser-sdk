@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
 
 // Note: using `browser.execute` to throw exceptions may result in "Script error." being reported,
-// because WDIO is evaluating the script in a different context than the page.
+// Use createBody because `page.evaluate()` runs in a different context and breaks stack traces.
 function createBody(errorGenerator: string) {
   return html`
     <button>click me</button>
