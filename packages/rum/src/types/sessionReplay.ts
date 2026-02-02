@@ -419,7 +419,7 @@ export type AddDocTypeNodeChange = [
   '#doctype' | StringReference,
   StringOrStringReference,
   StringOrStringReference,
-  StringOrStringReference
+  StringOrStringReference,
 ]
 /**
  * Browser-specific. Schema representing a string, either expressed as a literal or as an index into the string table.
@@ -560,7 +560,7 @@ export type VisualViewportChange = [
   VisualViewportPageTop,
   VisualViewportWidth,
   VisualViewportHeight,
-  VisualViewportScale
+  VisualViewportScale,
 ]
 /**
  * The offset of the left edge of the visual viewport from the left edge of the layout viewport in CSS pixels.
