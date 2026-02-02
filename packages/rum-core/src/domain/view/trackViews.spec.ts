@@ -6,6 +6,8 @@ import {
   relativeToClocks,
   relativeNow,
   resetExperimentalFeatures,
+  addExperimentalFeatures,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
@@ -429,6 +431,9 @@ describe('view metrics', () => {
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
+    addExperimentalFeatures([ExperimentalFeature.COLLECT_LCP_SUBPARTS])
+    registerCleanupTask(resetExperimentalFeatures)
+
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     viewTest = setupViewTest({ lifeCycle })

@@ -1,5 +1,11 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
+import {
+  clocksOrigin,
+  DOM_EVENT,
+  ExperimentalFeature,
+  addExperimentalFeatures,
+  resetExperimentalFeatures,
+} from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   setPageVisibility,
@@ -53,6 +59,9 @@ describe('trackLargestContentfulPaint', () => {
   }
 
   beforeEach(() => {
+    addExperimentalFeatures([ExperimentalFeature.COLLECT_LCP_SUBPARTS])
+    registerCleanupTask(resetExperimentalFeatures)
+
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
     // Mock clock and advance time so that responseStart: 789 passes the getSafeFirstByte check
@@ -568,7 +577,6 @@ describe('trackLargestContentfulPaint', () => {
         loadTime: 0 as RelativeTime, // 400 - 400
         renderDelay: 400 as RelativeTime, // 800 - 400
       })
-
 
       const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
       expect(sum + mockFirstByteValue).toBe(result.value)

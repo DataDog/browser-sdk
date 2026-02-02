@@ -1,5 +1,12 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
+import {
+  DOM_EVENT,
+  ONE_MINUTE,
+  addEventListeners,
+  findLast,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
 import { getNavigationEntry, getResourceEntries, getSafeFirstByte } from '../../../browser/performanceUtils'
@@ -76,25 +83,24 @@ export function trackLargestContentfulPaint(
         ? (getResourceEntries()?.find((e) => e.name === resourceUrl) as PerformanceResourceTiming | undefined)
         : undefined
 
-      let subParts
-      const navigationEntry = getNavigationEntry()
-      const firstByte = getSafeFirstByte(navigationEntry)
-
       const lcpValue = Math.max(0, lcpEntry.startTime) as RelativeTime
 
-      if (firstByte !== undefined) {
-        const lcpRequestStart = getLcpResourceRequestStart(lcpResourceEntry, firstByte)
+      let subParts
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_LCP_SUBPARTS)) {
+        const navigationEntry = getNavigationEntry()
+        const firstByte = getSafeFirstByte(navigationEntry)
 
-        // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
-        const lcpResponseEnd = Math.min(
-          lcpValue,
-          Math.max(lcpRequestStart,  lcpResourceEntry?.responseEnd || 0)
-        )
+        if (firstByte !== undefined) {
+          const lcpRequestStart = getLcpResourceRequestStart(lcpResourceEntry, firstByte)
 
-        subParts = {
-          loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
-          loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
-          renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,
+          // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
+          const lcpResponseEnd = Math.min(lcpValue, Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0))
+
+          subParts = {
+            loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
+            loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
+            renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,
+          }
         }
       }
 
@@ -136,4 +142,3 @@ function getLcpResourceRequestStart(
   const requestStart = Math.max(firstByte, lcpResourceEntry.requestStart || lcpResourceEntry.startTime)
   return requestStart as RelativeTime
 }
-
