@@ -31,6 +31,7 @@ export interface EventTracker<TData> {
   start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions<TData>) => void
   stop: (key: string, stopClocks: ClocksState, data?: Partial<TData>) => StoppedEvent<TData> | undefined
   discard: (key: string) => DiscardedEvent<TData> | undefined
+  getCounts: (key: string) => EventCounts | undefined
   findId: (startTime?: RelativeTime) => string | string[] | undefined
   stopAll: () => void
 }
@@ -144,6 +145,10 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     }
   }
 
+  function getCounts(key: string): EventCounts | undefined {
+    return keyedEvents.get(key)?.eventCounts?.eventCounts
+  }
+
   function findId(startTime?: RelativeTime): string | string[] | undefined {
     const ids = history.findAll(startTime)
     return ids.length ? ids : undefined
@@ -159,6 +164,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     start,
     stop,
     discard,
+    getCounts,
     findId,
     stopAll: stopTracker,
   }

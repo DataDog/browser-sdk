@@ -337,14 +337,11 @@ function newClick(
     stopObservable,
 
     get hasError() {
-      return counts ? counts.errorCount > 0 : false
+      const currentCounts = counts ?? actionTracker.getCounts(clickKey)
+      return currentCounts ? currentCounts.errorCount > 0 : false
     },
     get hasPageActivity() {
-      if (activityEndTime) {
-        return true
-      }
-      const activity = getUserActivity()
-      return !!(activity.selection || activity.input || activity.scroll)
+      return activityEndTime !== undefined
     },
     getUserActivity,
     addFrustration: (frustrationType: FrustrationType) => {

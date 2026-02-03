@@ -1,7 +1,7 @@
 import type { Duration, ServerDuration, Payload } from '@datadog/browser-core'
 import { ResourceType, ExperimentalFeature } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { mockClock, SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents } from '../../../test'
 import type { RawRumResourceEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'

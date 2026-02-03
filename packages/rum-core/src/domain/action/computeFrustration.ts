@@ -10,7 +10,7 @@ export function computeFrustration(clicks: Click[], rageClick: Click) {
     if (clicks.some(isDead)) {
       rageClick.addFrustration(FrustrationType.DEAD_CLICK)
     }
-    if (rageClick.hasError || clicks.some((click) => click.hasError)) {
+    if (rageClick.hasError) {
       rageClick.addFrustration(FrustrationType.ERROR_CLICK)
     }
     return { isRage: true }
