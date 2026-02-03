@@ -47,6 +47,7 @@ import { startDurationVital, stopDurationVital } from '../domain/vital/vitalColl
 import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { callPluginsMethod } from '../domain/plugins'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
@@ -179,6 +180,7 @@ export function createPreStartStrategy(
     trackingConsentState.tryToInit(configuration.trackingConsent)
 
     trackingConsentState.onGrantedOnce(() => {
+      startTrackingConsentContext(hooks, trackingConsentState)
       telemetry = startTelemetryImpl(TelemetryService.RUM, configuration, hooks)
 
       if (canUseEventBridge()) {

@@ -7,8 +7,6 @@ import {
   noop,
   relativeNow,
   createIdentityEncoder,
-  createTrackingConsentState,
-  TrackingConsent,
   BufferedObservable,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -167,7 +165,6 @@ describe('view events', () => {
       noopProfilerApi,
       undefined,
       createIdentityEncoder,
-      createTrackingConsentState(TrackingConsent.GRANTED),
       createCustomVitalsState(),
       new BufferedObservable<BufferedData>(100),
       createFakeTelemetryObject(),

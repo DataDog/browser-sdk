@@ -3,7 +3,6 @@ import type {
   RawError,
   DeflateEncoderStreamId,
   Encoder,
-  TrackingConsentState,
   BufferedData,
   BufferedObservable,
   Telemetry,
@@ -47,7 +46,6 @@ import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
-import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
@@ -65,11 +63,6 @@ export function startRum(
   profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-
-  // `startRum` and its subcomponents assume tracking consent is granted initially and starts
-  // collecting logs unconditionally. As such, `startRum` should be called with a
-  // `trackingConsentState` set to "granted".
-  trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
@@ -111,7 +104,6 @@ export function startRum(
     startRumEventBridge(lifeCycle)
   }
 
-  startTrackingConsentContext(hooks, trackingConsentState)
 
   const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
   cleanupTasks.push(stopInitialViewMetricsTelemetry)

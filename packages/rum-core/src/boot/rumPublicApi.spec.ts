@@ -1021,7 +1021,7 @@ describe('rum public api', () => {
 
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       const calls = await collectAsyncCalls(startRumSpy, 1)
-      const sdkName = calls.argsFor(0)[11]
+      const sdkName = calls.argsFor(0)[10]
       expect(sdkName).toBe('rum-slim')
     })
   })

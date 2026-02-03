@@ -583,7 +583,6 @@ export function makeRumPublicApi(
         profilerApi,
         initialViewOptions,
         createEncoder,
-        trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
         telemetry,
