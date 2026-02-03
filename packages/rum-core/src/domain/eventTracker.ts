@@ -1,5 +1,6 @@
 import type { ClocksState, Duration, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
 import { ONE_MINUTE, generateUUID, createValueHistory, elapsed, combine } from '@datadog/browser-core'
+import type { RumActionEvent, RumErrorEvent, RumLongTaskEvent, RumResourceEvent } from '../rumEvent.types'
 import { LifeCycleEventType } from './lifeCycle'
 import type { LifeCycle } from './lifeCycle'
 import type { EventCounts } from './trackEventCounts'
@@ -7,27 +8,27 @@ import { trackEventCounts } from './trackEventCounts'
 
 export const EVENT_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
 
-interface BaseTrackedEvent<TData = object> {
+type BaseTrackedEvent<TData = object> = TData & {
   id: string
-  key: string
   startClocks: ClocksState
   counts?: EventCounts
-  data: TData
 }
 
-export interface StoppedEvent<TData> extends BaseTrackedEvent<TData> {
+export type StoppedEvent<TData> = BaseTrackedEvent<TData> & {
   duration: Duration
 }
 
 export type DiscardedEvent<TData> = BaseTrackedEvent<TData>
 
 export interface StartOptions<TData> {
-  trackCounts?: boolean
+  isChildEvent?: (
+    id: string
+  ) => (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean
   onDiscard?: (id: string, data: TData, startClocks: ClocksState) => void
 }
 
 export interface EventTracker<TData> {
-  start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions<TData>) => string
+  start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions<TData>) => void
   stop: (key: string, stopClocks: ClocksState, data?: Partial<TData>) => StoppedEvent<TData> | undefined
   discard: (key: string) => DiscardedEvent<TData> | undefined
   findId: (startTime?: RelativeTime) => string | string[] | undefined
@@ -49,37 +50,29 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
   const history = createValueHistory<string>({ expireDelay: EVENT_CONTEXT_TIME_OUT_DELAY })
   // Used by manual actions and resources that use named keys to match the start and stop calls.
   const keyedEvents = new Map<string, TrackedEventData<TData>>()
-  // Track active events counts subscriptions for cleanup.
-  const activeEventCountSubscriptions = new Set<ReturnType<typeof trackEventCounts>>()
 
   function discardEvent(event: TrackedEventData<TData>) {
+    keyedEvents.delete(event.key)
     event.historyEntry.remove()
 
-    if (event.eventCounts) {
-      event.eventCounts.stop()
-      activeEventCountSubscriptions.delete(event.eventCounts)
-    }
+    event.eventCounts?.stop()
 
     if (event.onDiscard) {
       event.onDiscard(event.id, event.data, event.startClocks)
     }
   }
 
-  function stopAll() {
+  function discardAll() {
     keyedEvents.forEach((event) => {
       discardEvent(event)
     })
-    keyedEvents.clear()
-
-    activeEventCountSubscriptions.forEach((sub) => sub.stop())
-    activeEventCountSubscriptions.clear()
 
     history.reset()
   }
 
-  const sessionRenewalSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, stopAll)
+  const sessionRenewalSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, discardAll)
 
-  function start(key: string, startClocks: ClocksState, data: TData, options?: StartOptions<TData>): string {
+  function start(key: string, startClocks: ClocksState, data: TData, options?: StartOptions<TData>) {
     const id = generateUUID()
 
     const historyEntry = history.add(id, startClocks.relative)
@@ -87,22 +80,14 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     const existing = keyedEvents.get(key)
     if (existing) {
       discardEvent(existing)
-      keyedEvents.delete(key)
     }
 
-    const eventCounts =
-      options?.trackCounts === true
-        ? trackEventCounts({
-            lifeCycle,
-            isChildEvent: (event) =>
-              event.action !== undefined &&
-              (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
-          })
-        : undefined
-
-    if (eventCounts) {
-      activeEventCountSubscriptions.add(eventCounts)
-    }
+    const eventCounts = options?.isChildEvent
+      ? trackEventCounts({
+          lifeCycle,
+          isChildEvent: options.isChildEvent(id),
+        })
+      : undefined
 
     keyedEvents.set(key, {
       id,
@@ -113,8 +98,6 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
       eventCounts,
       onDiscard: options?.onDiscard,
     })
-
-    return key
   }
 
   function stop(key: string, stopClocks: ClocksState, extraData?: Partial<TData>): StoppedEvent<TData> | undefined {
@@ -132,18 +115,14 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     const counts = event.eventCounts?.eventCounts
 
     keyedEvents.delete(key)
-    if (event.eventCounts) {
-      event.eventCounts.stop()
-      activeEventCountSubscriptions.delete(event.eventCounts)
-    }
+    event.eventCounts?.stop()
 
     return {
+      ...finalData,
       id: event.id,
-      key: event.key,
       startClocks: event.startClocks,
       duration,
       counts,
-      data: finalData,
     }
   }
 
@@ -155,15 +134,13 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
     const counts = event.eventCounts?.eventCounts
 
-    keyedEvents.delete(key)
     discardEvent(event)
 
     return {
+      ...event.data,
       id: event.id,
-      key: event.key,
       startClocks: event.startClocks,
       counts,
-      data: event.data,
     }
   }
 
@@ -174,7 +151,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
   function stopTracker() {
     sessionRenewalSubscription.unsubscribe()
-    stopAll()
+    discardAll()
     history.stop()
   }
 

@@ -95,7 +95,7 @@ export function startResourceCollection(
     stop: () => {
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
-      manualResources.stop()
+      resourceTracker.stopAll()
     },
   }
 }

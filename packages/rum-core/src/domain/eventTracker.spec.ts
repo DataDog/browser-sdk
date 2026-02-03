@@ -41,9 +41,9 @@ describe('eventTracker', () => {
       expect(stopped?.counts).toBeUndefined()
     })
 
-    it('should enable event counting when trackCounts is true', () => {
+    it('should enable event counting when isChildEvent is provided', () => {
       const startClocks = clocksNow()
-      tracker.start('key1', startClocks, { value: 'data' }, { trackCounts: true })
+      tracker.start('key1', startClocks, { value: 'data' }, { isChildEvent: () => () => true })
 
       const stopped = tracker.stop('key1', clocksNow())
 
@@ -60,7 +60,7 @@ describe('eventTracker', () => {
 
       const stopped = tracker.stop('key1', clocksNow())
 
-      expect(stopped?.data.value).toBe('updated')
+      expect(stopped?.value).toBe('updated')
       expect(onDiscard).toHaveBeenCalledOnceWith(jasmine.any(String), { value: 'original' }, startClocks)
     })
   })
@@ -79,11 +79,10 @@ describe('eventTracker', () => {
 
       expect(stopped).toEqual({
         id: jasmine.any(String),
-        key: 'key1',
         startClocks,
         duration: 500 as Duration,
         counts: undefined,
-        data: { value: 'data1' },
+        value: 'data1',
       })
     })
 
@@ -92,7 +91,12 @@ describe('eventTracker', () => {
 
       const stopped = tracker.stop('key1', clocksNow(), { extra: 'additional' })
 
-      expect(stopped?.data).toEqual({ value: 'original', extra: 'additional' })
+      expect(stopped).toEqual(
+        jasmine.objectContaining({
+          value: 'original',
+          extra: 'additional',
+        })
+      )
     })
 
     it('should not call onDiscard when stopping normally', () => {

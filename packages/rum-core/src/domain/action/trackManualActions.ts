@@ -56,11 +56,12 @@ export function trackManualActions(
       startClocks,
       {
         name,
-        type: options.type,
-        context: options.context,
+        ...options,
       },
       {
-        trackCounts: true,
+        isChildEvent: (id) => (event) =>
+          event.action !== undefined &&
+          (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
       }
     )
   }
@@ -68,16 +69,11 @@ export function trackManualActions(
   function stopManualAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
 
-    const stopped = actionTracker.stop(lookupKey, stopClocks, {
-      type: options.type,
-      context: options.context,
-    })
+    const stopped = actionTracker.stop(lookupKey, stopClocks, options)
 
     if (!stopped) {
       return
     }
-
-    const { data } = stopped
 
     const frustrationTypes: FrustrationType[] = []
     if (stopped.counts && stopped.counts.errorCount > 0) {
@@ -85,13 +81,9 @@ export function trackManualActions(
     }
 
     const manualAction: ManualAction = {
-      id: stopped.id,
-      name: data.name!,
-      type: data.type || ActionTypeEnum.CUSTOM,
-      startClocks: stopped.startClocks,
-      duration: stopped.duration,
-      context: data.context,
-      counts: stopped.counts,
+      ...stopped,
+      type: stopped.type || ActionTypeEnum.CUSTOM,
+      name: stopped.name!,
       frustrationTypes,
     }
 

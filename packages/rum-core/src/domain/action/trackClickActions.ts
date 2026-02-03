@@ -287,7 +287,16 @@ function newClick(
   const clickKey = generateUUID()
   const startClocks = relativeToClocks(startEvent.timeStamp)
 
-  actionTracker.start(clickKey, startClocks, {}, { trackCounts: true })
+  actionTracker.start(
+    clickKey,
+    startClocks,
+    {},
+    {
+      isChildEvent: (id) => (event) =>
+        event.action !== undefined &&
+        (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
+    }
+  )
 
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp

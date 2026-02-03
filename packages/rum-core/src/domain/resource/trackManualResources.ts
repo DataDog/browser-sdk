@@ -95,21 +95,10 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     const lookupKey = options.resourceKey ?? url
 
-    resourceTracker.start(
-      lookupKey,
-      startClocks,
-      {
-        url,
-        type: options.type,
-        method: options.method,
-        context: options.context,
-      },
-      {
-        onDiscard: (id, data, discardedStartClocks) => {
-          emitResource(id, discardedStartClocks, data)
-        },
-      }
-    )
+    resourceTracker.start(lookupKey, startClocks, {
+      url,
+      ...options,
+    })
   }
 
   function stopManualResource(url: string, options: ResourceStopOptions = {}, stopClocks = clocksNow()) {
@@ -123,16 +112,11 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
       return
     }
 
-    emitResource(stopped.id, stopped.startClocks, stopped.data, options.statusCode, stopClocks)
-  }
-
-  function stop() {
-    resourceTracker.stopAll()
+    emitResource(stopped.id, stopped.startClocks, stopped, options.statusCode, stopClocks)
   }
 
   return {
     startResource: startManualResource,
     stopResource: stopManualResource,
-    stop,
   }
 }
