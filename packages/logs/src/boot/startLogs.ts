@@ -1,4 +1,4 @@
-import type { TrackingConsentState, BufferedObservable, BufferedData } from '@datadog/browser-core'
+import type { BufferedObservable, BufferedData } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -24,7 +24,6 @@ import type { CommonContext } from '../rawLogsEvent.types'
 import type { Hooks } from '../domain/hooks'
 import { startRUMInternalContext } from '../domain/contexts/rumInternalContext'
 import { startSessionContext } from '../domain/contexts/sessionContext'
-import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 
 const LOGS_STORAGE_KEY = 'logs'
 
@@ -35,11 +34,6 @@ export function startLogs(
   configuration: LogsConfiguration,
   sessionManager: LogsSessionManager,
   getCommonContext: () => CommonContext,
-
-  // `startLogs` and its subcomponents assume tracking consent is granted initially and starts
-  // collecting logs unconditionally. As such, `startLogs` should be called with a
-  // `trackingConsentState` set to "granted".
-  trackingConsentState: TrackingConsentState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   hooks: Hooks
 ) {
@@ -51,7 +45,6 @@ export function startLogs(
   const reportError = startReportError(lifeCycle)
   const pageMayExitObservable = createPageMayExitObservable(configuration)
 
-  startTrackingConsentContext(hooks, trackingConsentState)
   // Start user and account context first to allow overrides from global context
   startSessionContext(hooks, configuration, sessionManager)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)

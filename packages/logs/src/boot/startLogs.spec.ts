@@ -2,8 +2,6 @@ import type { BufferedData, Payload } from '@datadog/browser-core'
 import {
   ErrorSource,
   display,
-  createTrackingConsentState,
-  TrackingConsent,
   STORAGE_POLL_DELAY,
   BufferedObservable,
   FLUSH_DURATION_LIMIT,
@@ -47,10 +45,7 @@ const COMMON_CONTEXT = {
 }
 const DEFAULT_PAYLOAD = {} as Payload
 
-function startLogsWithDefaults(
-  { configuration }: { configuration?: Partial<LogsConfiguration> } = {},
-  trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-) {
+function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
   const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
   const sessionManager = createLogsSessionManagerMock()
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
@@ -61,7 +56,6 @@ function startLogsWithDefaults(
     },
     sessionManager,
     () => COMMON_CONTEXT,
-    trackingConsentState,
     new BufferedObservable<BufferedData>(100),
     createHooks()
   )
@@ -251,32 +245,6 @@ describe('logs', () => {
 
       const firstRequest = getLoggedMessage(requests, 0)
       expect(firstRequest.view.url).toEqual('from-rum-context')
-    })
-  })
-
-  describe('tracking consent', () => {
-    it('should not send logs after tracking consent is revoked', async () => {
-      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-      const { handleLog, logger } = startLogsWithDefaults({}, trackingConsentState)
-
-      // Log a message with consent granted - should be sent
-      handleLog({ status: StatusType.info, message: 'message before revocation' }, logger)
-
-      clock.tick(FLUSH_DURATION_LIMIT)
-      await interceptor.waitForAllFetchCalls()
-      expect(requests.length).toEqual(1)
-      expect(getLoggedMessage(requests, 0).message).toBe('message before revocation')
-
-      // Revoke consent
-      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-
-      // Log another message - should not be sent
-      handleLog({ status: StatusType.info, message: 'message after revocation' }, logger)
-
-      clock.tick(FLUSH_DURATION_LIMIT)
-      await interceptor.waitForAllFetchCalls()
-      // Should still only have the first request
-      expect(requests.length).toEqual(1)
     })
   })
 })

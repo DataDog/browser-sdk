@@ -285,7 +285,6 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?:
         configuration,
         logsSessionManager,
         buildCommonContext,
-        trackingConsentState,
         bufferedDataObservable,
         hooks
       )

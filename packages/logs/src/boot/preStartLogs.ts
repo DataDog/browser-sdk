@@ -25,6 +25,7 @@ import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '.
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
 import { startLogsSessionManagerStub, startLogsSessionManager } from '../domain/logsSessionManager'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
@@ -108,6 +109,7 @@ export function createPreStartStrategy(
       trackingConsentState.tryToInit(configuration.trackingConsent)
 
       trackingConsentState.onGrantedOnce(() => {
+        startTrackingConsentContext(hooks, trackingConsentState)
         startTelemetryImpl(TelemetryService.LOGS, configuration, hooks)
         if (configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()) {
           startLogsSessionManager(configuration, trackingConsentState, (newSessionManager) => {

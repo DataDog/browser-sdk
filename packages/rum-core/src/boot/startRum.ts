@@ -104,7 +104,6 @@ export function startRum(
     startRumEventBridge(lifeCycle)
   }
 
-
   const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
   cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
