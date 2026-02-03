@@ -168,7 +168,7 @@ test.describe('remote configuration', () => {
     .withBody(html`
       <script>
         Object.defineProperty(window, 'localStorage', {
-          get: function() {
+          get: function () {
             throw new Error('localStorage is not available')
           },
           configurable: true,
