@@ -3,16 +3,16 @@ import { command } from '../lib/command.ts'
 import { fetchPR, getLastCommonCommit, LOCAL_BRANCH } from '../lib/gitUtils.ts'
 import { getBrowserStackUsername, getBrowserStackAccessKey } from '../lib/secrets.ts'
 
-// Patterns that should trigger BrowserStack tests
+// Patterns that should trigger BrowserStack tests (git pathspecs)
 const RELEVANT_FILE_PATTERNS = [
-  /^packages\//,
-  /^test\//,
-  /^developer-extension\//,
-  /^scripts\/test\//,
-  /^package\.json$/,
-  /^yarn\.lock$/,
-  /^tsconfig/,
-  /^webpack\.base\.ts$/,
+  'packages/*',
+  'test/*',
+  'developer-extension/*',
+  'scripts/test/*',
+  'package.json',
+  'yarn.lock',
+  'tsconfig*',
+  'webpack.base.ts',
 ]
 
 runMain(async () => {
@@ -40,17 +40,11 @@ runMain(async () => {
 })
 
 function hasRelevantChanges(baseCommit: string): boolean {
-  const changedFiles = command`git diff --name-only ${baseCommit} HEAD`.run()
+  const changedFiles = command`git diff --name-only ${baseCommit} HEAD -- ${RELEVANT_FILE_PATTERNS}`.run()
 
-  const files = changedFiles.trim().split('\n')
-
-  for (const file of files) {
-    for (const pattern of RELEVANT_FILE_PATTERNS) {
-      if (pattern.test(file)) {
-        printLog(`Matched file: ${file} (pattern: ${pattern})`)
-        return true
-      }
-    }
+  if (changedFiles.trim()) {
+    printLog(`Matched files:\n${changedFiles}`)
+    return true
   }
 
   return false
