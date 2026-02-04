@@ -64,7 +64,7 @@ describe('trackLargestContentfulPaint', () => {
 
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
-    // Mock clock and advance time so that responseStart: 789 passes the getSafeFirstByte check
+    // Mock clock and advance time so that responseStart: 789 passes the sanitizeFirstByte check
     // which requires responseStart <= relativeNow()
     clock = mockClock()
     clock.tick(1000)
@@ -201,7 +201,7 @@ describe('trackLargestContentfulPaint', () => {
   it('should not provide subParts if the first byte is not available', () => {
     const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
 
-    // Notify navigation entry with negative responseStart, which makes getSafeFirstByte return undefined
+    // Notify navigation entry with negative responseStart, which makes sanitizeFirstByte return undefined
     notifyEntries([
       createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
         responseStart: -1 as RelativeTime,

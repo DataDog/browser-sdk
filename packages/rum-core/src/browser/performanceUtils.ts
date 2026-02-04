@@ -50,7 +50,7 @@ export function computeTimingsFromDeprecatedPerformanceTiming() {
   return result as TimingsFromDeprecatedPerformanceTiming
 }
 
-export function getSafeFirstByte(entry: RelevantNavigationTiming) {
+export function sanitizeFirstByte(entry: RelevantNavigationTiming) {
   // In some cases the value reported is negative or is larger
   // than the current page time. Ignore these cases:
   // https://github.com/GoogleChrome/web-vitals/issues/137

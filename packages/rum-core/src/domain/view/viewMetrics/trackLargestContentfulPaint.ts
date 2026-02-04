@@ -9,7 +9,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { getNavigationEntry, getResourceEntries, getSafeFirstByte } from '../../../browser/performanceUtils'
+import { getNavigationEntry, getResourceEntries, sanitizeFirstByte } from '../../../browser/performanceUtils'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
@@ -88,7 +88,7 @@ export function trackLargestContentfulPaint(
       let subParts
       if (isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_LCP_SUBPARTS)) {
         const navigationEntry = getNavigationEntry()
-        const firstByte = getSafeFirstByte(navigationEntry)
+        const firstByte = sanitizeFirstByte(navigationEntry)
 
         if (firstByte !== undefined) {
           const lcpRequestStart = getLcpResourceRequestStart(lcpResourceEntry, firstByte)

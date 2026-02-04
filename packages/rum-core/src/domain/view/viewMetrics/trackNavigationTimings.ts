@@ -1,7 +1,7 @@
 import type { Duration, TimeoutId } from '@datadog/browser-core'
 import { setTimeout, runOnReadyState, clearTimeout } from '@datadog/browser-core'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
-import { getNavigationEntry, getSafeFirstByte } from '../../../browser/performanceUtils'
+import { getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'
 import type { RumConfiguration } from '../../configuration'
 
 export interface NavigationTimings {
@@ -39,7 +39,7 @@ function processNavigationEntry(entry: RelevantNavigationTiming): NavigationTimi
     domContentLoaded: entry.domContentLoadedEventEnd,
     domInteractive: entry.domInteractive,
     loadEvent: entry.loadEventEnd,
-    firstByte: getSafeFirstByte(entry),
+    firstByte: sanitizeFirstByte(entry),
   }
 }
 
