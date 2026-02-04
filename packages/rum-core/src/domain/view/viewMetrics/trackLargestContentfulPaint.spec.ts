@@ -33,6 +33,117 @@ interface StartLCPTrackingOptions {
   resources?: ResourceEntryOptions[]
 }
 
+interface SubPartsTestCase {
+  description: string
+  responseStart: RelativeTime
+  resource: ResourceEntryOptions
+  lcpTime: RelativeTime
+  expectedSubParts: {
+    loadDelay: RelativeTime
+    loadTime: RelativeTime
+    renderDelay: RelativeTime
+  }
+}
+
+const subPartsTestCases: SubPartsTestCase[] = [
+  {
+    description: 'should cap lcpResponseEnd at LCP time for resources that complete after LCP',
+    responseStart: 200 as RelativeTime,
+    resource: {
+      name: 'https://example.com/video.mp4',
+      startTime: 500 as RelativeTime,
+      requestStart: 500 as RelativeTime,
+      responseEnd: 5000 as RelativeTime, // Continues downloading long after LCP
+    },
+    lcpTime: 1200 as RelativeTime,
+    expectedSubParts: {
+      loadDelay: 300 as RelativeTime, // 500 - 200
+      loadTime: 700 as RelativeTime, // 1200 (capped) - 500
+      renderDelay: 0 as RelativeTime, // 1200 - 1200 (capped) = 0
+    },
+  },
+  {
+    description: 'should not cap lcpResponseEnd when resource completes before LCP',
+    responseStart: 200 as RelativeTime,
+    resource: {
+      name: 'https://example.com/image.jpg',
+      startTime: 500 as RelativeTime,
+      requestStart: 500 as RelativeTime,
+      responseEnd: 1000 as RelativeTime,
+    },
+    lcpTime: 1200 as RelativeTime,
+    expectedSubParts: {
+      loadDelay: 300 as RelativeTime, // 500 - 200
+      loadTime: 500 as RelativeTime, // 1000 - 500 (not capped)
+      renderDelay: 200 as RelativeTime, // 1200 - 1000
+    },
+  },
+  {
+    description: 'should prefer requestStart over startTime when available (TAO enabled)',
+    responseStart: 200 as RelativeTime,
+    resource: {
+      name: 'https://example.com/image.jpg',
+      startTime: 500 as RelativeTime, // Resource discovered at 500ms
+      requestStart: 700 as RelativeTime, // HTTP request started at 700ms (delayed)
+      responseEnd: 1000 as RelativeTime,
+    },
+    lcpTime: 1200 as RelativeTime,
+    expectedSubParts: {
+      loadDelay: 500 as RelativeTime, // 700 (requestStart) - 200, not 300 (startTime - 200)
+      loadTime: 300 as RelativeTime, // 1000 - 700 (requestStart)
+      renderDelay: 200 as RelativeTime, // 1200 - 1000
+    },
+  },
+  {
+    description: 'should fallback to startTime when requestStart is 0 (cross-origin without TAO)',
+    responseStart: 200 as RelativeTime,
+    resource: {
+      name: 'https://cdn.example.com/image.jpg',
+      startTime: 500 as RelativeTime,
+      requestStart: 0 as RelativeTime, // Not available (cross-origin without TAO)
+      responseEnd: 1000 as RelativeTime,
+    },
+    lcpTime: 1200 as RelativeTime,
+    expectedSubParts: {
+      loadDelay: 300 as RelativeTime, // Falls back to: 500 (startTime) - 200
+      loadTime: 500 as RelativeTime, // 1000 - 500 (startTime)
+      renderDelay: 200 as RelativeTime, // 1200 - 1000
+    },
+  },
+  {
+    description: 'should handle TAO resource with normal completion',
+    responseStart: 100 as RelativeTime,
+    resource: {
+      name: 'https://example.com/product-image.jpg',
+      startTime: 200 as RelativeTime, // Resource discovered
+      requestStart: 300 as RelativeTime, // HTTP request started (prefer this)
+      responseEnd: 700 as RelativeTime, // Download completed
+    },
+    lcpTime: 900 as RelativeTime,
+    expectedSubParts: {
+      loadDelay: 200 as RelativeTime, // 300 - 100
+      loadTime: 400 as RelativeTime, // 700 - 300
+      renderDelay: 200 as RelativeTime, // 900 - 700
+    },
+  },
+  {
+    description: 'should handle resource that completes exactly at LCP time',
+    responseStart: 100 as RelativeTime,
+    resource: {
+      name: 'https://example.com/sync-image.jpg',
+      startTime: 500 as RelativeTime,
+      requestStart: 500 as RelativeTime,
+      responseEnd: 1200 as RelativeTime, // Completes exactly at LCP time
+    },
+    lcpTime: 1200 as RelativeTime,
+    expectedSubParts: {
+      loadDelay: 400 as RelativeTime, // 500 - 100
+      loadTime: 700 as RelativeTime, // 1200 - 500
+      renderDelay: 0 as RelativeTime, // 1200 - 1200 = 0 (no render delay)
+    },
+  },
+]
+
 describe('trackLargestContentfulPaint', () => {
   let lcpCallback: jasmine.Spy<(lcp: LargestContentfulPaint) => void>
   let eventTarget: Window
@@ -251,303 +362,93 @@ describe('trackLargestContentfulPaint', () => {
     })
   })
 
-  describe('LCP subParts capping at LCP time', () => {
-    it('should cap lcpResponseEnd at LCP time for resources that complete after LCP', () => {
-      // Video resource that continues downloading after LCP occurs
-      startLCPTracking({
-        responseStart: 200 as RelativeTime,
-        resources: [
-          {
-            name: 'https://example.com/video.mp4',
-            startTime: 500 as RelativeTime,
-            requestStart: 500 as RelativeTime,
-            responseEnd: 5000 as RelativeTime, // Continues downloading long after LCP
-          },
-        ],
-      })
-
-      // LCP occurs at 1200ms (first frame painted)
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 1200 as RelativeTime,
-          url: 'https://example.com/video.mp4',
-        }),
-      ])
-
-      const result = lcpCallback.calls.mostRecent().args[0]
-
-      // lcpResponseEnd should be capped at 1200ms, not 5000ms
-      expect(result.subParts).toEqual({
-        loadDelay: 300 as RelativeTime, // 500 - 200
-        loadTime: 700 as RelativeTime, // 1200 (capped) - 500
-        renderDelay: 0 as RelativeTime, // 1200 - 1200 (capped) = 0
-      })
-    })
-
-    it('should not cap lcpResponseEnd when resource completes before LCP', () => {
-      // Normal resource that completes before LCP
-      startLCPTracking({
-        responseStart: 200 as RelativeTime,
-        resources: [
-          {
-            name: 'https://example.com/image.jpg',
-            startTime: 500 as RelativeTime,
-            requestStart: 500 as RelativeTime,
-            responseEnd: 1000 as RelativeTime,
-          },
-        ],
-      })
-
-      // LCP at 1200ms (after resource completes)
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 1200 as RelativeTime,
-          url: 'https://example.com/image.jpg',
-        }),
-      ])
-
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 1200 as RelativeTime,
-        targetSelector: undefined,
-        resourceUrl: 'https://example.com/image.jpg',
-        subParts: {
-          loadDelay: 300 as RelativeTime, // 500 - 200
-          loadTime: 500 as RelativeTime, // 1000 - 500 (not capped)
-          renderDelay: 200 as RelativeTime, // 1200 - 1000
-        },
-      })
-    })
-
-    it('should ensure sum of subParts equals LCP value', () => {
-      const mockFirstByteValue = 100 as RelativeTime
-
-      startLCPTracking({
-        responseStart: 100 as RelativeTime,
-        resources: [
-          {
-            name: 'https://example.com/resource.jpg',
-            startTime: 300 as RelativeTime,
-            requestStart: 300 as RelativeTime,
-            responseEnd: 800 as RelativeTime,
-          },
-        ],
-      })
-
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 1000 as RelativeTime,
-          url: 'https://example.com/resource.jpg',
-        }),
-      ])
-
-      const result = lcpCallback.calls.mostRecent().args[0]
-
-      // Validate: firstByte + loadDelay + loadTime + renderDelay = LCP value
-      const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
-      expect(sum + mockFirstByteValue).toBe(result.value)
-    })
-  })
-
-  describe('LCP subParts requestStart preference', () => {
-    it('should prefer requestStart over startTime when available', () => {
-      // Resource with both requestStart and startTime (TAO enabled)
-      startLCPTracking({
-        responseStart: 200 as RelativeTime,
-        resources: [
-          {
-            name: 'https://example.com/image.jpg',
-            startTime: 500 as RelativeTime, // Resource discovered at 500ms
-            requestStart: 700 as RelativeTime, // HTTP request started at 700ms (delayed)
-            responseEnd: 1000 as RelativeTime,
-          },
-        ],
-      })
-
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 1200 as RelativeTime,
-          url: 'https://example.com/image.jpg',
-        }),
-      ])
-
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 1200 as RelativeTime,
-        targetSelector: undefined,
-        resourceUrl: 'https://example.com/image.jpg',
-        subParts: {
-          loadDelay: 500 as RelativeTime, // 700 (requestStart) - 200, not 300 (startTime - 200)
-          loadTime: 300 as RelativeTime, // 1000 - 700 (requestStart)
-          renderDelay: 200 as RelativeTime, // 1200 - 1000
-        },
-      })
-    })
-
-    it('should fallback to startTime when requestStart is 0', () => {
-      // Cross-origin resource without TAO: requestStart = 0
-      startLCPTracking({
-        responseStart: 200 as RelativeTime,
-        resources: [
-          {
-            name: 'https://cdn.example.com/image.jpg',
-            startTime: 500 as RelativeTime,
-            requestStart: 0 as RelativeTime, // Not available (cross-origin without TAO)
-            responseEnd: 1000 as RelativeTime,
-          },
-        ],
-      })
-
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 1200 as RelativeTime,
-          url: 'https://cdn.example.com/image.jpg',
-        }),
-      ])
-
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 1200 as RelativeTime,
-        targetSelector: undefined,
-        resourceUrl: 'https://cdn.example.com/image.jpg',
-        subParts: {
-          loadDelay: 300 as RelativeTime, // Falls back to: 500 (startTime) - 200
-          loadTime: 500 as RelativeTime, // 1000 - 500 (startTime)
-          renderDelay: 200 as RelativeTime, // 1200 - 1000
-        },
-      })
-    })
-  })
-
   describe('LCP subParts', () => {
-    it('should handle LCP with no associated resource entry', () => {
-      startLCPTracking({
-        responseStart: 200 as RelativeTime,
-      })
+    subPartsTestCases.forEach(({ description, responseStart, resource, lcpTime, expectedSubParts }) => {
+      it(description, () => {
+        startLCPTracking({
+          responseStart,
+          resources: [resource],
+        })
 
-      // LCP with no resource URL (e.g., text, data URL, inline image)
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 1000 as RelativeTime,
-          url: '', // Empty URL = no resource
-        }),
-      ])
+        notifyPerformanceEntries([
+          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+            startTime: lcpTime,
+            url: resource.name,
+          }),
+        ])
 
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 1000 as RelativeTime,
-        targetSelector: undefined,
-        resourceUrl: undefined,
-        subParts: {
-          loadDelay: 0 as RelativeTime, // No resource, so max(firstByte, 0) - firstByte = 0
-          loadTime: 0 as RelativeTime, // No resource, so max(firstByte, 0) - firstByte = 0
-          renderDelay: 800 as RelativeTime, // 1000 - 200 (firstByte is used as lcpResponseEnd when no resource)
-        },
-      })
-    })
+        const result = lcpCallback.calls.mostRecent().args[0]
 
-    it('should handle cached resource with incomplete timing data', () => {
-      const mockFirstByteValue = 150 as RelativeTime
+        expect(result.subParts).toEqual(expectedSubParts)
 
-      // Cross-origin resource without TAO: limited timing info
-      startLCPTracking({
-        responseStart: 150 as RelativeTime,
-        resources: [
-          {
-            name: 'https://cdn.external.com/cached-image.jpg',
-            startTime: 400 as RelativeTime,
-            requestStart: 0 as RelativeTime, // Not available (cross-origin)
-            responseEnd: 0 as RelativeTime, // Not available (cached)
-          },
-        ],
-      })
-
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 800 as RelativeTime,
-          url: 'https://cdn.external.com/cached-image.jpg',
-        }),
-      ])
-
-      const result = lcpCallback.calls.mostRecent().args[0]
-
-      expect(result.subParts).toEqual({
-        // lcpRequestStart = max(150, 400 - 0) = 400 (falls back to startTime)
-        loadDelay: 250 as RelativeTime, // 400 - 150
-        // lcpResponseEnd = min(800, max(400, 0 - 0)) = min(800, 400) = 400
-        loadTime: 0 as RelativeTime, // 400 - 400
-        renderDelay: 400 as RelativeTime, // 800 - 400
-      })
-
-      const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
-      expect(sum + mockFirstByteValue).toBe(result.value)
-    })
-
-    it('should handle complex scenario: TAO resource + normal completion', () => {
-      // Same-origin resource with full timing info (TAO enabled)
-      startLCPTracking({
-        responseStart: 100 as RelativeTime,
-        resources: [
-          {
-            name: 'https://example.com/product-image.jpg',
-            startTime: 200 as RelativeTime, // Resource discovered
-            requestStart: 300 as RelativeTime, // HTTP request started (prefer this)
-            responseEnd: 700 as RelativeTime, // Download completed
-          },
-        ],
-      })
-
-      // LCP occurs after resource completes
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 900 as RelativeTime,
-          url: 'https://example.com/product-image.jpg',
-        }),
-      ])
-
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
-        value: 900 as RelativeTime,
-        targetSelector: undefined,
-        resourceUrl: 'https://example.com/product-image.jpg',
-        subParts: {
-          // lcpRequestStart = max(100, 300) = 300
-          loadDelay: 200 as RelativeTime, // 300 - 100
-          // lcpResponseEnd = min(900, max(300, 700)) = 700
-          loadTime: 400 as RelativeTime, // 700 - 300
-          // renderDelay = 900 - 700 = 200
-          renderDelay: 200 as RelativeTime,
-        },
+        // Validate: firstByte + loadDelay + loadTime + renderDelay = LCP value
+        const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
+        expect(sum + responseStart).toBe(result.value)
       })
     })
 
-    it('should handle resource that completes exactly at LCP time', () => {
-      const mockFirstByteValue = 100 as RelativeTime
+    describe('edge cases', () => {
+      it('should handle LCP with no associated resource entry', () => {
+        startLCPTracking({
+          responseStart: 200 as RelativeTime,
+        })
 
-      startLCPTracking({
-        responseStart: 100 as RelativeTime,
-        resources: [
-          {
-            name: 'https://example.com/sync-image.jpg',
-            startTime: 500 as RelativeTime,
-            requestStart: 500 as RelativeTime,
-            responseEnd: 1200 as RelativeTime, // Completes exactly at LCP time
+        // LCP with no resource URL (e.g., text, data URL, inline image)
+        notifyPerformanceEntries([
+          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+            startTime: 1000 as RelativeTime,
+            url: '', // Empty URL = no resource
+          }),
+        ])
+
+        expect(lcpCallback).toHaveBeenCalledOnceWith({
+          value: 1000 as RelativeTime,
+          targetSelector: undefined,
+          resourceUrl: undefined,
+          subParts: {
+            loadDelay: 0 as RelativeTime, // No resource, so max(firstByte, 0) - firstByte = 0
+            loadTime: 0 as RelativeTime, // No resource, so max(firstByte, 0) - firstByte = 0
+            renderDelay: 800 as RelativeTime, // 1000 - 200 (firstByte is used as lcpResponseEnd when no resource)
           },
-        ],
+        })
       })
 
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-          startTime: 1200 as RelativeTime,
-          url: 'https://example.com/sync-image.jpg',
-        }),
-      ])
+      it('should handle cached resource with incomplete timing data', () => {
+        const mockFirstByteValue = 150 as RelativeTime
 
-      const result = lcpCallback.calls.mostRecent().args[0]
+        // Cross-origin resource without TAO: limited timing info
+        startLCPTracking({
+          responseStart: 150 as RelativeTime,
+          resources: [
+            {
+              name: 'https://cdn.external.com/cached-image.jpg',
+              startTime: 400 as RelativeTime,
+              requestStart: 0 as RelativeTime, // Not available (cross-origin)
+              responseEnd: 0 as RelativeTime, // Not available (cached)
+            },
+          ],
+        })
 
-      expect(result.subParts).toEqual({
-        loadDelay: 400 as RelativeTime, // 500 - 100
-        loadTime: 700 as RelativeTime, // 1200 - 500
-        renderDelay: 0 as RelativeTime, // 1200 - 1200 = 0 (no render delay)
+        notifyPerformanceEntries([
+          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
+            startTime: 800 as RelativeTime,
+            url: 'https://cdn.external.com/cached-image.jpg',
+          }),
+        ])
+
+        const result = lcpCallback.calls.mostRecent().args[0]
+
+        expect(result.subParts).toEqual({
+          // lcpRequestStart = max(150, 400 - 0) = 400 (falls back to startTime)
+          loadDelay: 250 as RelativeTime, // 400 - 150
+          // lcpResponseEnd = min(800, max(400, 0 - 0)) = min(800, 400) = 400
+          loadTime: 0 as RelativeTime, // 400 - 400
+          renderDelay: 400 as RelativeTime, // 800 - 400
+        })
+
+        const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
+        expect(sum + mockFirstByteValue).toBe(result.value)
       })
-
-      const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
-      expect(sum + mockFirstByteValue).toBe(1200)
     })
   })
 })
