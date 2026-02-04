@@ -31,6 +31,31 @@ import {
   startRumSessionManagerStub,
 } from './rumSessionManager'
 
+// Mock Web Locks API to make session operations synchronous in tests
+function mockWebLocksForSyncExecution() {
+  const originalLocks = navigator.locks
+  const mockLocks = {
+    request: (_name: string, _options: LockOptions, callback: () => void) => {
+      callback()
+      return Promise.resolve()
+    },
+  }
+
+  Object.defineProperty(navigator, 'locks', {
+    value: mockLocks,
+    writable: true,
+    configurable: true,
+  })
+
+  registerCleanupTask(() => {
+    Object.defineProperty(navigator, 'locks', {
+      value: originalLocks,
+      writable: true,
+      configurable: true,
+    })
+  })
+}
+
 describe('rum session manager', () => {
   const DURATION = 123456
   let expireSessionSpy: jasmine.Spy
@@ -39,6 +64,7 @@ describe('rum session manager', () => {
 
   beforeEach(() => {
     clock = mockClock()
+    mockWebLocksForSyncExecution()
     expireSessionSpy = jasmine.createSpy('expireSessionSpy')
     renewSessionSpy = jasmine.createSpy('renewSessionSpy')
 

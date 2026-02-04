@@ -55,30 +55,21 @@ export function startRumSessionManager(
     (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
     trackingConsentState,
     (sessionManager) => {
-      sessionManager.sessionStateUpdateObservable.subscribe(({ previousState, newState }) => {
-        if (!previousState.forcedReplay && newState.forcedReplay) {
-          const sessionEntity = sessionManager.findSession()
-          if (sessionEntity) {
-            sessionEntity.isReplayForced = true
-          }
-        }
-      })
-
       onReady({
         findTrackedSession: (startTime) => {
-          const session = sessionManager.findSession(startTime)
-          if (!session || session.trackingType === RumTrackingType.NOT_TRACKED) {
+          const sessionState = sessionManager.findSessionState(startTime)
+          if (!sessionState?.id || sessionState[RUM_SESSION_KEY] === RumTrackingType.NOT_TRACKED) {
             return
           }
           return {
-            id: session.id,
+            id: sessionState.id,
             sessionReplay:
-              session.trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
+              sessionState[RUM_SESSION_KEY] === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
                 ? SessionReplayState.SAMPLED
-                : session.isReplayForced
+                : sessionState.forcedReplay
                   ? SessionReplayState.FORCED
                   : SessionReplayState.OFF,
-            anonymousId: session.anonymousId,
+            anonymousId: sessionState.anonymousId,
           }
         },
         expire: sessionManager.expire,

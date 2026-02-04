@@ -1,5 +1,4 @@
 import { Observable } from '../../tools/observable'
-import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { clocksOrigin, dateNow, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
@@ -14,7 +13,7 @@ import { getCurrentSite } from '../../browser/cookie'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { findLast } from '../../tools/utils/polyfills'
 import { monitorError } from '../../tools/monitor'
-import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
+import { SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
 import { toSessionState } from './sessionState'
@@ -23,11 +22,11 @@ import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { retrieveSessionFromLocalStorage } from './storeStrategies/sessionInLocalStorage'
 import { resetSessionStoreOperations } from './sessionStoreOperations'
 
-export interface SessionManager<TrackingType extends string> {
-  findSession: (
+export interface SessionManager {
+  findSessionState: (
     startTime?: RelativeTime,
     options?: { returnInactive: boolean }
-  ) => SessionContext<TrackingType> | undefined
+  ) => SessionState | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
@@ -35,23 +34,16 @@ export interface SessionManager<TrackingType extends string> {
   updateSessionState: (state: Partial<SessionState>) => void
 }
 
-export interface SessionContext<TrackingType extends string> extends Context {
-  id: string
-  trackingType: TrackingType
-  isReplayForced: boolean
-  anonymousId: string | undefined
-}
-
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
 const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
-export function startSessionManager<TrackingType extends string>(
+export function startSessionManager(
   configuration: Configuration,
   productKey: string,
-  computeTrackingType: (rawTrackingType?: string) => TrackingType,
+  computeTrackingType: (rawTrackingType?: string) => string,
   trackingConsentState: TrackingConsentState,
-  onReady: (sessionManager: SessionManager<TrackingType>) => void
+  onReady: (sessionManager: SessionManager) => void
 ) {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
@@ -65,10 +57,10 @@ export function startSessionManager<TrackingType extends string>(
   )
   stopCallbacks.push(() => sessionStore.stop())
 
-  const sessionContextHistory = createValueHistory<SessionContext<TrackingType>>({
+  const sessionStateHistory = createValueHistory<SessionState>({
     expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
   })
-  stopCallbacks.push(() => sessionContextHistory.stop())
+  stopCallbacks.push(() => sessionStateHistory.stop())
 
   // Tracking consent is always granted when the session manager is started, but it may be revoked
   // during the async initialization (e.g., while waiting for cookie lock). We check
@@ -80,16 +72,34 @@ export function startSessionManager<TrackingType extends string>(
       return
     }
 
+    let currentSessionEntry: ReturnType<typeof sessionStateHistory.add> | undefined
+
     sessionStore.renewObservable.subscribe(() => {
-      sessionContextHistory.add(buildSessionContext(), relativeNow())
+      const session = sessionStore.getSession()
+      if (session) {
+        currentSessionEntry = sessionStateHistory.add(session, relativeNow())
+      }
       renewObservable.notify()
     })
     sessionStore.expireObservable.subscribe(() => {
       expireObservable.notify()
-      sessionContextHistory.closeActive(relativeNow())
+      sessionStateHistory.closeActive(relativeNow())
+      currentSessionEntry = undefined
     })
 
-    sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
+    // Update the current session entry when the session state is updated (e.g., forcedReplay)
+    sessionStore.sessionStateUpdateObservable.subscribe(({ newState }) => {
+      if (currentSessionEntry) {
+        currentSessionEntry.value = newState
+      }
+    })
+
+    const initialSession = sessionStore.getSession()
+    if (initialSession) {
+      currentSessionEntry = sessionStateHistory.add(initialSession, clocksOrigin().relative)
+    } else {
+      reportUnexpectedSessionState(configuration).catch(() => void 0) // Ignore errors
+    }
     if (isExperimentalFeatureEnabled(ExperimentalFeature.SHORT_SESSION_INVESTIGATION)) {
       const session = sessionStore.getSession()
       if (session) {
@@ -114,7 +124,7 @@ export function startSessionManager<TrackingType extends string>(
     trackResume(configuration, () => sessionStore.restartSession())
 
     onReady({
-      findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
+      findSessionState: (startTime, options) => sessionStateHistory.find(startTime, options),
       renewObservable,
       expireObservable,
       sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
@@ -122,28 +132,6 @@ export function startSessionManager<TrackingType extends string>(
       updateSessionState: sessionStore.updateSessionState,
     })
   })
-
-  function buildSessionContext() {
-    const session = sessionStore.getSession()
-
-    if (!session) {
-      reportUnexpectedSessionState(configuration).catch(() => void 0) // Ignore errors
-
-      return {
-        id: 'invalid',
-        trackingType: SESSION_NOT_TRACKED as TrackingType,
-        isReplayForced: false,
-        anonymousId: undefined,
-      }
-    }
-
-    return {
-      id: session.id!,
-      trackingType: session[productKey] as TrackingType,
-      isReplayForced: !!session.forcedReplay,
-      anonymousId: session.anonymousId,
-    }
-  }
 }
 
 export function stopSessionManager() {
