@@ -38,7 +38,20 @@ export interface GenerateBundleOptions {
 }
 
 // CDN base URL for Datadog Browser SDK bundles
-const CDN_BASE = 'https://www.datadoghq-browser-agent.com/datadog-rum'
+// Format: https://www.datadoghq-browser-agent.com/{datacenter}/v{majorVersion}/datadog-{variant}.js
+const CDN_HOST = 'https://www.datadoghq-browser-agent.com'
+const DEFAULT_DATACENTER = 'us1'
+
+/**
+ * Get the major version number from a semver string (e.g., "6.26.0" -> 6)
+ */
+function getMajorVersion(version: string): number {
+  const major = parseInt(version.split('.')[0], 10)
+  if (isNaN(major)) {
+    throw new Error(`Invalid SDK version format: ${version}`)
+  }
+  return major
+}
 
 /**
  * Fetch remote configuration from Datadog servers.
@@ -78,15 +91,32 @@ export async function fetchConfig(options: FetchConfigOptions): Promise<{
 }
 
 /**
+ * Options for downloading SDK from CDN
+ */
+export interface DownloadSDKOptions {
+  /** SDK variant ('rum' or 'rum-slim') */
+  variant: SdkVariant
+  /** Datacenter to download from (default: 'us1') */
+  datacenter?: string
+}
+
+/**
  * Download pre-built SDK bundle from Datadog CDN.
  *
- * @param variant - SDK variant ('rum' or 'rum-slim')
+ * Downloads the minified SDK bundle for the specified variant and version.
+ * The version is automatically determined from the browserSdkVersion.
+ *
+ * @param options - Download options (variant, datacenter)
  * @returns Promise resolving to SDK JavaScript code as string
  * @throws Error if download fails (network error, 404, etc.)
  */
-export async function downloadSDK(variant: SdkVariant): Promise<string> {
+export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Promise<string> {
+  const variant = typeof options === 'string' ? options : options.variant
+  const datacenter = typeof options === 'string' ? DEFAULT_DATACENTER : (options.datacenter ?? DEFAULT_DATACENTER)
+
   const version = browserSdkVersion
-  const cdnUrl = `${CDN_BASE}-${variant}-v${version}.js`
+  const majorVersion = getMajorVersion(version)
+  const cdnUrl = `${CDN_HOST}/${datacenter}/v${majorVersion}/datadog-${variant}.js`
 
   return new Promise((resolve, reject) => {
     const request = https.get(cdnUrl, { timeout: 30000 }, (res) => {
@@ -96,7 +126,8 @@ export async function downloadSDK(variant: SdkVariant): Promise<string> {
         reject(
           new Error(
             `SDK bundle not found at ${cdnUrl}\n` +
-              `Check that variant "${variant}" and version "${version}" are correct.`
+              `Check that variant "${variant}" (major version: v${majorVersion}) is correct.\n` +
+              `Full SDK version: ${version}`
           )
         )
         return
