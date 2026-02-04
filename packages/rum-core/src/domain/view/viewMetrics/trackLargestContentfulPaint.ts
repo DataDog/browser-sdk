@@ -123,7 +123,9 @@ function computeLcpSubParts(
   }
 
   const lcpResourceEntry = resourceUrl ? findLcpResourceEntry(resourceUrl, lcpValue) : undefined
-  const lcpRequestStart = getLcpResourceRequestStart(lcpResourceEntry, firstByte)
+  const lcpRequestStart = lcpResourceEntry
+    ? (Math.max(firstByte, lcpResourceEntry.requestStart || lcpResourceEntry.startTime) as RelativeTime)
+    : firstByte
 
   // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
   const lcpResponseEnd = Math.min(lcpValue, Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0))
@@ -133,20 +135,4 @@ function computeLcpSubParts(
     loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
     renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,
   }
-}
-
-/**
- * Get the request start time for the LCP resource.
- * Prefers requestStart (more accurate for Timing-Allow-Origin resources) over startTime.
- * Returns firstByte when there's no resource (e.g., text elements) to ensure loadDelay is 0.
- */
-function getLcpResourceRequestStart(
-  lcpResourceEntry: PerformanceResourceTiming | undefined,
-  firstByte: RelativeTime
-): RelativeTime {
-  if (!lcpResourceEntry) {
-    return firstByte
-  }
-  const requestStart = Math.max(firstByte, lcpResourceEntry.requestStart || lcpResourceEntry.startTime)
-  return requestStart as RelativeTime
 }
