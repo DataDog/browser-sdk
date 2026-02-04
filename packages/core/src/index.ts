@@ -164,3 +164,10 @@ export * from './domain/connectivity'
 export * from './tools/stackTrace/handlingStack'
 export * from './tools/abstractHooks'
 export * from './domain/tags'
+export {
+  createCookieObservable,
+  createLocalStorageObservable,
+  WATCH_COOKIE_INTERVAL_DELAY,
+  type CookieObservable,
+  type CookieStoreWindow,
+} from './browser/storageObservable'
