@@ -78,29 +78,11 @@ export function trackLargestContentfulPaint(
       }
 
       const resourceUrl = computeLcpEntryUrl(lcpEntry)
-
-      const lcpResourceEntry = resourceUrl ? findLcpResourceEntry(resourceUrl, lcpEntry.startTime) : undefined
-
       const lcpValue = Math.max(0, lcpEntry.startTime) as RelativeTime
 
-      let subParts
-      if (isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_LCP_SUBPARTS)) {
-        const navigationEntry = getNavigationEntry()
-        const firstByte = sanitizeFirstByte(navigationEntry)
-
-        if (firstByte !== undefined) {
-          const lcpRequestStart = getLcpResourceRequestStart(lcpResourceEntry, firstByte)
-
-          // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
-          const lcpResponseEnd = Math.min(lcpValue, Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0))
-
-          subParts = {
-            loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
-            loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
-            renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,
-          }
-        }
-      }
+      const subParts = isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_LCP_SUBPARTS)
+        ? computeLcpSubParts(resourceUrl, lcpValue)
+        : undefined
 
       callback({
         value: lcpValue,
@@ -123,6 +105,34 @@ export function trackLargestContentfulPaint(
 // The property url report an empty string if the value is not available, we shouldn't report it in this case.
 function computeLcpEntryUrl(entry: RumLargestContentfulPaintTiming) {
   return entry.url === '' ? undefined : entry.url
+}
+
+/**
+ * Compute the LCP sub-parts breakdown (loadDelay, loadTime, renderDelay).
+ * Returns undefined if navigation timing data or TTFB is unavailable.
+ */
+function computeLcpSubParts(
+  resourceUrl: string | undefined,
+  lcpValue: RelativeTime
+): LargestContentfulPaint['subParts'] {
+  const navigationEntry = getNavigationEntry()
+  const firstByte = sanitizeFirstByte(navigationEntry)
+
+  if (firstByte === undefined) {
+    return undefined
+  }
+
+  const lcpResourceEntry = resourceUrl ? findLcpResourceEntry(resourceUrl, lcpValue) : undefined
+  const lcpRequestStart = getLcpResourceRequestStart(lcpResourceEntry, firstByte)
+
+  // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
+  const lcpResponseEnd = Math.min(lcpValue, Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0))
+
+  return {
+    loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
+    loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
+    renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,
+  }
 }
 
 /**
