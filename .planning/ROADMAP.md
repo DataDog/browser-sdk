@@ -51,11 +51,18 @@ Milestone 2 builds a Node.js tool that generates browser-ready bundles combining
   4. Tool supports both rum and rum-slim SDK variants
   5. Generated bundle can be loaded in browser without additional network requests
 
-**Plans**: TBD
+**Plans**: 05-PLAN.md
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [x] Task 1: Project Setup and Dependencies
+- [x] Task 2: Config Fetching Implementation
+- [x] Task 3: SDK Bundle Download from CDN
+- [x] Task 4: Code Generation with Template Literals
+- [x] Task 5: CLI Entry Point Implementation
+- [x] Task 6: Determinism Validation
+- [x] Task 7: Unit and Integration Testing
+
+**Status**: ✅ Complete (2026-02-04)
 
 #### Phase 6: Programmatic API & Integration
 
@@ -130,7 +137,7 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 2. Config Logic Extraction | v1.0 | Complete | Complete | Milestone 1 |
 | 3. SDK Integration Update | v1.0 | Complete | Complete | Milestone 1 |
 | 4. Testing & Types | v1.0 | Complete | Complete | Milestone 1 |
-| 5. Core Generator | v2.0 | 0/TBD | Not started | - |
+| 5. Core Generator | v2.0 | 7/7 | Complete | 2026-02-04 |
 | 6. API & Integration | v2.0 | 0/TBD | Not started | - |
 | 7. HTTP Endpoint | v2.0 | 0/TBD | Not started | - |
 | 8. Distribution & Testing | v2.0 | 0/TBD | Not started | - |
