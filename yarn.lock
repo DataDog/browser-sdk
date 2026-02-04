@@ -277,6 +277,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@datadog/browser-core@npm:6.26.0":
+  version: 6.26.0
+  resolution: "@datadog/browser-core@npm:6.26.0"
+  checksum: 10c0/4fa9f83073198f5f61a32c0e6fa424b442f8bd0cab8ae3817a4ff65c84e9650530c3befa4604ff244a8d42cde5fe74dd7d425774b6469acadfcbd659e3d46264
+  languageName: node
+  linkType: hard
+
 "@datadog/browser-core@npm:6.27.1, @datadog/browser-core@workspace:*, @datadog/browser-core@workspace:packages/core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-core@workspace:packages/core"
@@ -310,6 +317,14 @@ __metadata:
   peerDependenciesMeta:
     "@datadog/browser-rum":
       optional: true
+  languageName: unknown
+  linkType: soft
+
+"@datadog/browser-remote-config@workspace:packages/remote-config":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-remote-config@workspace:packages/remote-config"
+  dependencies:
+    "@datadog/browser-core": "npm:6.26.0"
   languageName: unknown
   linkType: soft
 
@@ -12293,7 +12308,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qs@npm:^6.14.0, qs@npm:^6.14.1, qs@npm:^6.4.0, qs@npm:~6.14.0":
+"qs@npm:^6.14.0, qs@npm:^6.4.0, qs@npm:~6.14.0":
+  version: 6.14.0
+  resolution: "qs@npm:6.14.0"
+  dependencies:
+    side-channel: "npm:^1.1.0"
+  checksum: 10c0/8ea5d91bf34f440598ee389d4a7d95820e3b837d3fd9f433871f7924801becaa0cd3b3b4628d49a7784d06a8aea9bc4554d2b6d8d584e2d221dc06238a42909c
+  languageName: node
+  linkType: hard
+
+"qs@npm:^6.14.1":
   version: 6.14.1
   resolution: "qs@npm:6.14.1"
   dependencies:
