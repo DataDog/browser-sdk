@@ -2,7 +2,6 @@ import type { ServerResponse } from 'http'
 import * as url from 'url'
 import cors from 'cors'
 import express from 'express'
-import type { RemoteConfiguration } from '@datadog/browser-rum-core'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
@@ -14,7 +13,7 @@ export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 export function createMockServerApp(
   servers: Servers,
   setup: string,
-  remoteConfiguration?: RemoteConfiguration,
+  remoteConfiguration?: unknown,
   worker?: WorkerOptions
 ): MockServerApp {
   const app = express()

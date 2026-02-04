@@ -96,20 +96,6 @@ export interface RumInitConfiguration extends InitConfiguration {
    */
   compressIntakeRequests?: boolean | undefined
 
-  /**
-   * [Internal option] Id of the remote configuration
-   *
-   * @internal
-   */
-  remoteConfigurationId?: string | undefined
-
-  /**
-   * [Internal option] set a proxy URL for the remote configuration
-   *
-   * @internal
-   */
-  remoteConfigurationProxy?: string | undefined
-
   // tracing options
   /**
    * A list of request URLs used to inject tracing headers.
@@ -551,9 +537,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
       ...plugin.getConfigurationTelemetry?.(),
     })),
     track_feature_flags_for_events: configuration.trackFeatureFlagsForEvents,
-    remote_configuration_id: configuration.remoteConfigurationId,
     profiling_sample_rate: configuration.profilingSampleRate,
-    use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
