@@ -21,14 +21,16 @@ import type { LargestContentfulPaint } from './trackLargestContentfulPaint'
 import { LCP_MAXIMUM_DELAY, trackLargestContentfulPaint } from './trackLargestContentfulPaint'
 import { trackFirstHidden } from './trackFirstHidden'
 
-const mockPerformanceEntry = createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-  responseStart: 789 as RelativeTime,
-})
+interface ResourceEntryOptions {
+  name: string
+  startTime: RelativeTime
+  requestStart: RelativeTime
+  responseEnd: RelativeTime
+}
 
-const mockSubParts = {
-  loadDelay: 0 as RelativeTime,
-  loadTime: 0 as RelativeTime,
-  renderDelay: 0 as RelativeTime,
+interface StartLCPTrackingOptions {
+  responseStart?: RelativeTime
+  resources?: ResourceEntryOptions[]
 }
 
 describe('trackLargestContentfulPaint', () => {
@@ -36,12 +38,24 @@ describe('trackLargestContentfulPaint', () => {
   let eventTarget: Window
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let clock: Clock
+  let mockSubParts: LargestContentfulPaint['subParts'];
 
-  function startLCPTracking() {
+  function startLCPTracking(options: StartLCPTrackingOptions = {}) {
+    const { responseStart = 789 as RelativeTime, resources = [] } = options
+
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     // This ensures getNavigationEntry() returns controlled values for subParts calculation.
-    notifyPerformanceEntries([mockPerformanceEntry])
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, { responseStart }),
+    ])
+
+    // Notify any resource entries before starting LCP tracking
+    for (const resource of resources) {
+      notifyPerformanceEntries([
+        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, resource),
+      ])
+    }
 
     const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
     const largestContentfulPaint = trackLargestContentfulPaint(
@@ -56,6 +70,12 @@ describe('trackLargestContentfulPaint', () => {
       largestContentfulPaint.stop()
       restorePageVisibility()
     })
+
+    mockSubParts = {
+      loadDelay: 0 as RelativeTime,
+      loadTime: 0 as RelativeTime,
+      renderDelay: 0 as RelativeTime,
+    }
   }
 
   beforeEach(() => {
@@ -233,39 +253,21 @@ describe('trackLargestContentfulPaint', () => {
 
   describe('LCP subParts capping at LCP time', () => {
     it('should cap lcpResponseEnd at LCP time for resources that complete after LCP', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 200 as RelativeTime,
-        }),
-      ])
-
       // Video resource that continues downloading after LCP occurs
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/video.mp4',
-          startTime: 500 as RelativeTime,
-          requestStart: 500 as RelativeTime,
-          responseEnd: 5000 as RelativeTime, // Continues downloading long after LCP
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 200 as RelativeTime,
+        resources: [
+          {
+            name: 'https://example.com/video.mp4',
+            startTime: 500 as RelativeTime,
+            requestStart: 500 as RelativeTime,
+            responseEnd: 5000 as RelativeTime, // Continues downloading long after LCP
+          },
+        ],
       })
 
       // LCP occurs at 1200ms (first frame painted)
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 1200 as RelativeTime,
           url: 'https://example.com/video.mp4',
@@ -283,39 +285,21 @@ describe('trackLargestContentfulPaint', () => {
     })
 
     it('should not cap lcpResponseEnd when resource completes before LCP', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 200 as RelativeTime,
-        }),
-      ])
-
       // Normal resource that completes before LCP
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/image.jpg',
-          startTime: 500 as RelativeTime,
-          requestStart: 500 as RelativeTime,
-          responseEnd: 1000 as RelativeTime,
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 200 as RelativeTime,
+        resources: [
+          {
+            name: 'https://example.com/image.jpg',
+            startTime: 500 as RelativeTime,
+            requestStart: 500 as RelativeTime,
+            responseEnd: 1000 as RelativeTime,
+          },
+        ],
       })
 
       // LCP at 1200ms (after resource completes)
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 1200 as RelativeTime,
           url: 'https://example.com/image.jpg',
@@ -336,37 +320,20 @@ describe('trackLargestContentfulPaint', () => {
 
     it('should ensure sum of subParts equals LCP value', () => {
       const mockFirstByteValue = 100 as RelativeTime
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
 
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 100 as RelativeTime,
-        }),
-      ])
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/resource.jpg',
-          startTime: 300 as RelativeTime,
-          requestStart: 300 as RelativeTime,
-          responseEnd: 800 as RelativeTime,
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 100 as RelativeTime,
+        resources: [
+          {
+            name: 'https://example.com/resource.jpg',
+            startTime: 300 as RelativeTime,
+            requestStart: 300 as RelativeTime,
+            responseEnd: 800 as RelativeTime,
+          },
+        ],
       })
 
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 1000 as RelativeTime,
           url: 'https://example.com/resource.jpg',
@@ -383,38 +350,20 @@ describe('trackLargestContentfulPaint', () => {
 
   describe('LCP subParts requestStart preference', () => {
     it('should prefer requestStart over startTime when available', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 200 as RelativeTime,
-        }),
-      ])
-
       // Resource with both requestStart and startTime (TAO enabled)
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/image.jpg',
-          startTime: 500 as RelativeTime, // Resource discovered at 500ms
-          requestStart: 700 as RelativeTime, // HTTP request started at 700ms (delayed)
-          responseEnd: 1000 as RelativeTime,
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 200 as RelativeTime,
+        resources: [
+          {
+            name: 'https://example.com/image.jpg',
+            startTime: 500 as RelativeTime, // Resource discovered at 500ms
+            requestStart: 700 as RelativeTime, // HTTP request started at 700ms (delayed)
+            responseEnd: 1000 as RelativeTime,
+          },
+        ],
       })
 
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 1200 as RelativeTime,
           url: 'https://example.com/image.jpg',
@@ -434,38 +383,20 @@ describe('trackLargestContentfulPaint', () => {
     })
 
     it('should fallback to startTime when requestStart is 0', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 200 as RelativeTime,
-        }),
-      ])
-
       // Cross-origin resource without TAO: requestStart = 0
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://cdn.example.com/image.jpg',
-          startTime: 500 as RelativeTime,
-          requestStart: 0 as RelativeTime, // Not available (cross-origin without TAO)
-          responseEnd: 1000 as RelativeTime,
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 200 as RelativeTime,
+        resources: [
+          {
+            name: 'https://cdn.example.com/image.jpg',
+            startTime: 500 as RelativeTime,
+            requestStart: 0 as RelativeTime, // Not available (cross-origin without TAO)
+            responseEnd: 1000 as RelativeTime,
+          },
+        ],
       })
 
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 1200 as RelativeTime,
           url: 'https://cdn.example.com/image.jpg',
@@ -487,29 +418,12 @@ describe('trackLargestContentfulPaint', () => {
 
   describe('LCP subParts', () => {
     it('should handle LCP with no associated resource entry', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 200 as RelativeTime,
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 200 as RelativeTime,
       })
 
       // LCP with no resource URL (e.g., text, data URL, inline image)
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 1000 as RelativeTime,
           url: '', // Empty URL = no resource
@@ -530,38 +444,21 @@ describe('trackLargestContentfulPaint', () => {
 
     it('should handle cached resource with incomplete timing data', () => {
       const mockFirstByteValue = 150 as RelativeTime
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 150 as RelativeTime,
-        }),
-      ])
 
       // Cross-origin resource without TAO: limited timing info
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://cdn.external.com/cached-image.jpg',
-          startTime: 400 as RelativeTime,
-          requestStart: 0 as RelativeTime, // Not available (cross-origin)
-          responseEnd: 0 as RelativeTime, // Not available (cached)
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 150 as RelativeTime,
+        resources: [
+          {
+            name: 'https://cdn.external.com/cached-image.jpg',
+            startTime: 400 as RelativeTime,
+            requestStart: 0 as RelativeTime, // Not available (cross-origin)
+            responseEnd: 0 as RelativeTime, // Not available (cached)
+          },
+        ],
       })
 
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 800 as RelativeTime,
           url: 'https://cdn.external.com/cached-image.jpg',
@@ -583,39 +480,21 @@ describe('trackLargestContentfulPaint', () => {
     })
 
     it('should handle complex scenario: TAO resource + normal completion', () => {
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 100 as RelativeTime,
-        }),
-      ])
-
       // Same-origin resource with full timing info (TAO enabled)
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/product-image.jpg',
-          startTime: 200 as RelativeTime, // Resource discovered
-          requestStart: 300 as RelativeTime, // HTTP request started (prefer this)
-          responseEnd: 700 as RelativeTime, // Download completed
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 100 as RelativeTime,
+        resources: [
+          {
+            name: 'https://example.com/product-image.jpg',
+            startTime: 200 as RelativeTime, // Resource discovered
+            requestStart: 300 as RelativeTime, // HTTP request started (prefer this)
+            responseEnd: 700 as RelativeTime, // Download completed
+          },
+        ],
       })
 
       // LCP occurs after resource completes
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 900 as RelativeTime,
           url: 'https://example.com/product-image.jpg',
@@ -639,37 +518,20 @@ describe('trackLargestContentfulPaint', () => {
 
     it('should handle resource that completes exactly at LCP time', () => {
       const mockFirstByteValue = 100 as RelativeTime
-      const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
 
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseStart: 100 as RelativeTime,
-        }),
-      ])
-
-      notifyEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/sync-image.jpg',
-          startTime: 500 as RelativeTime,
-          requestStart: 500 as RelativeTime,
-          responseEnd: 1200 as RelativeTime, // Completes exactly at LCP time
-        }),
-      ])
-
-      const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-      const largestContentfulPaint = trackLargestContentfulPaint(
-        mockRumConfiguration(),
-        firstHidden,
-        eventTarget,
-        lcpCallback
-      )
-
-      registerCleanupTask(() => {
-        firstHidden.stop()
-        largestContentfulPaint.stop()
+      startLCPTracking({
+        responseStart: 100 as RelativeTime,
+        resources: [
+          {
+            name: 'https://example.com/sync-image.jpg',
+            startTime: 500 as RelativeTime,
+            requestStart: 500 as RelativeTime,
+            responseEnd: 1200 as RelativeTime, // Completes exactly at LCP time
+          },
+        ],
       })
 
-      notifyEntries([
+      notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
           startTime: 1200 as RelativeTime,
           url: 'https://example.com/sync-image.jpg',
