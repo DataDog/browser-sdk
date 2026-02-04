@@ -149,7 +149,7 @@ describe('trackLargestContentfulPaint', () => {
   let eventTarget: Window
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let clock: Clock
-  let mockSubParts: LargestContentfulPaint['subParts'];
+  let mockSubParts: LargestContentfulPaint['subParts']
 
   function startLCPTracking(options: StartLCPTrackingOptions = {}) {
     const { responseStart = 789 as RelativeTime, resources = [] } = options
@@ -157,15 +157,11 @@ describe('trackLargestContentfulPaint', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     // This ensures getNavigationEntry() returns controlled values for subParts calculation.
-    notifyPerformanceEntries([
-      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, { responseStart }),
-    ])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, { responseStart })])
 
     // Notify any resource entries before starting LCP tracking
     for (const resource of resources) {
-      notifyPerformanceEntries([
-        createPerformanceEntry(RumPerformanceEntryType.RESOURCE, resource),
-      ])
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.RESOURCE, resource)])
     }
 
     const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
