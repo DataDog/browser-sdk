@@ -2,7 +2,7 @@ import { type RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
-import { RumPerformanceEntryType } from './performanceObservable'
+import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
 import { findLcpResourceEntry, getNavigationEntry } from './performanceUtils'
 
 describe('getNavigationEntry', () => {
@@ -63,7 +63,14 @@ describe('findLcpResourceEntry', () => {
     return mock
   }
 
+  function skipIfResourceTimingNotSupported() {
+    if (!supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)) {
+      pending('Resource Timing Event is not supported in this browser')
+    }
+  }
+
   it('should return undefined when no resource entries exist', () => {
+    skipIfResourceTimingNotSupported()
     setupResourceEntries([])
 
     const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
@@ -72,6 +79,7 @@ describe('findLcpResourceEntry', () => {
   })
 
   it('should return undefined when no matching URL is found', () => {
+    skipIfResourceTimingNotSupported()
     setupResourceEntries([
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
         name: 'https://example.com/foo.jpg',
@@ -85,6 +93,7 @@ describe('findLcpResourceEntry', () => {
   })
 
   it('should return the matching resource entry', () => {
+    skipIfResourceTimingNotSupported()
     setupResourceEntries([
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
         name: 'https://example.com/image.jpg',
@@ -99,6 +108,7 @@ describe('findLcpResourceEntry', () => {
   })
 
   it('should return the most recent matching entry when multiple entries exist for the same URL', () => {
+    skipIfResourceTimingNotSupported()
     setupResourceEntries([
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
         name: 'https://example.com/image.jpg',
@@ -119,6 +129,7 @@ describe('findLcpResourceEntry', () => {
   })
 
   it('should ignore resource entries that started after LCP time', () => {
+    skipIfResourceTimingNotSupported()
     setupResourceEntries([
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
         name: 'https://example.com/image.jpg',
@@ -139,6 +150,7 @@ describe('findLcpResourceEntry', () => {
   })
 
   it('should return the most recent entry that started before LCP when multiple valid entries exist', () => {
+    skipIfResourceTimingNotSupported()
     setupResourceEntries([
       // Preload request
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
@@ -164,6 +176,7 @@ describe('findLcpResourceEntry', () => {
   })
 
   it('should include resource entries that started exactly at LCP time', () => {
+    skipIfResourceTimingNotSupported()
     setupResourceEntries([
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
         name: 'https://example.com/image.jpg',
@@ -178,6 +191,7 @@ describe('findLcpResourceEntry', () => {
   })
 
   it('should not be confused by other resources with different URLs', () => {
+    skipIfResourceTimingNotSupported()
     setupResourceEntries([
       createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
         name: 'https://example.com/foo.jpg',
