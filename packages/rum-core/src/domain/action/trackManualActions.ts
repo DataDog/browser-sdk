@@ -39,7 +39,7 @@ export interface ManualAction {
 }
 
 export interface ActionEventData {
-  name?: string
+  name: string
   type?: ActionType
   context?: Context
 }
@@ -83,7 +83,6 @@ export function trackManualActions(
     const manualAction: ManualAction = {
       ...stopped,
       type: stopped.type || ActionTypeEnum.CUSTOM,
-      name: stopped.name!,
       frustrationTypes,
     }
 

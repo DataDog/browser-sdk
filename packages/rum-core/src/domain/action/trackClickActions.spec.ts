@@ -26,6 +26,7 @@ import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 import { ActionNameSource } from './actionNameConstants'
+import type { ActionEventData } from './trackManualActions'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -52,7 +53,7 @@ describe('trackClickActions', () => {
   let domMutationObservable: Observable<RumMutationRecord[]>
   let windowOpenObservable: Observable<void>
   let clock: Clock
-  let eventTracker: EventTracker<object>
+  let eventTracker: EventTracker<ActionEventData>
 
   const { events, pushEvent } = eventsCollector<ClickAction>()
   let button: HTMLButtonElement
@@ -63,7 +64,7 @@ describe('trackClickActions', () => {
 
   function startClickActionsTracking(partialConfig: Partial<RumConfiguration> = {}) {
     const subscription = lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-    eventTracker = startEventTracker<object>(lifeCycle)
+    eventTracker = startEventTracker<ActionEventData>(lifeCycle)
     registerCleanupTask(() => eventTracker.stopAll())
 
     const trackClickActionsResult = trackClickActions(

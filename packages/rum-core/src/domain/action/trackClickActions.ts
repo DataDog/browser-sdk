@@ -290,7 +290,7 @@ function newClick(
   actionTracker.start(
     clickKey,
     startClocks,
-    {},
+    { name: '' },
     {
       isChildEvent: (id) => (event) =>
         event.action !== undefined &&
