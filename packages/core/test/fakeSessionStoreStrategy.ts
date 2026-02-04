@@ -7,7 +7,6 @@ export function createFakeSessionStoreStrategy({
   initialSession = {},
 }: { isLockEnabled?: boolean; initialSession?: SessionState } = {}) {
   let session: SessionState = initialSession
-  const plannedRetrieveSessions: SessionState[] = []
 
   return {
     isLockEnabled,
@@ -16,20 +15,10 @@ export function createFakeSessionStoreStrategy({
       session = newSession
     }),
 
-    retrieveSession: jasmine.createSpy<() => SessionState>('retrieveSession').and.callFake(() => {
-      const plannedSession = plannedRetrieveSessions.shift()
-      if (plannedSession) {
-        session = plannedSession
-      }
-      return { ...session }
-    }),
+    retrieveSession: jasmine.createSpy<() => SessionState>('retrieveSession').and.callFake(() => ({ ...session })),
 
     expireSession: jasmine.createSpy('expireSession').and.callFake((previousSession) => {
       session = getExpiredSessionState(previousSession, { trackAnonymousUser: true } as Configuration)
     }),
-
-    planRetrieveSession: (index: number, fakeSession: SessionState) => {
-      plannedRetrieveSessions[index] = fakeSession
-    },
   }
 }

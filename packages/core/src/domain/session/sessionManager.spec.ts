@@ -14,7 +14,6 @@ import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
-import { isChromium } from '../../tools/utils/browserDetection'
 import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
 import {
@@ -26,7 +25,31 @@ import {
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { STORAGE_POLL_DELAY } from './sessionStore'
-import { createLock, LOCK_RETRY_DELAY } from './sessionStoreOperations'
+
+// Mock Web Locks API to make session operations synchronous in tests
+function mockWebLocksForSyncExecution() {
+  const originalLocks = navigator.locks
+  const mockLocks = {
+    request: (_name: string, _options: LockOptions, callback: () => void) => {
+      callback()
+      return Promise.resolve()
+    },
+  }
+
+  Object.defineProperty(navigator, 'locks', {
+    value: mockLocks,
+    writable: true,
+    configurable: true,
+  })
+
+  registerCleanupTask(() => {
+    Object.defineProperty(navigator, 'locks', {
+      value: originalLocks,
+      writable: true,
+      configurable: true,
+    })
+  })
+}
 
 const enum FakeTrackingType {
   NOT_TRACKED = SESSION_NOT_TRACKED,
@@ -89,6 +112,7 @@ describe('startSessionManager', () => {
 
   beforeEach(() => {
     clock = mockClock()
+    mockWebLocksForSyncExecution()
 
     registerCleanupTask(() => {
       // remove intervals first
@@ -624,28 +648,6 @@ describe('startSessionManager', () => {
       expectSessionToBeExpired(sessionManager)
     })
 
-    it('expires the session when tracking consent is withdrawn during async initialization', () => {
-      if (!isChromium()) {
-        pending('the lock is only enabled in Chromium')
-      }
-
-      // Set up a locked cookie to delay initialization
-      setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
-
-      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-      void startSessionManagerWithDefaults({ trackingConsentState })
-
-      // Consent is revoked while waiting for lock
-      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-
-      // Release the lock
-      setCookie(SESSION_STORE_KEY, 'id=abc123&first=tracked', DURATION)
-      clock.tick(LOCK_RETRY_DELAY)
-
-      // Session should be expired due to consent revocation
-      expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
-    })
-
     it('renews the session when tracking consent is granted', async () => {
       const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
       const sessionManager = await startSessionManagerWithDefaults({ trackingConsentState })
@@ -691,54 +693,11 @@ describe('startSessionManager', () => {
     })
   })
 
-  describe('delayed session manager initialization', () => {
-    it('starts the session manager synchronously if the session cookie is not locked', () => {
-      void startSessionManagerWithDefaults()
+  describe('session manager initialization', () => {
+    it('starts the session manager', async () => {
+      await startSessionManagerWithDefaults()
       expect(getSessionState(SESSION_STORE_KEY).id).toBeDefined()
       expect(getSessionState(SESSION_STORE_KEY)[FIRST_PRODUCT_KEY]).toEqual(FakeTrackingType.TRACKED)
-    })
-
-    it('delays the session manager initialization if the session cookie is locked', () => {
-      if (!isChromium()) {
-        pending('the lock is only enabled in Chromium')
-      }
-      setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
-      void startSessionManagerWithDefaults()
-      expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
-      expect(getSessionState(SESSION_STORE_KEY)[FIRST_PRODUCT_KEY]).not.toBeDefined()
-
-      // Remove the lock
-      setCookie(SESSION_STORE_KEY, 'id=abcde', DURATION)
-      clock.tick(LOCK_RETRY_DELAY)
-
-      expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcde')
-      expect(getSessionState(SESSION_STORE_KEY)[FIRST_PRODUCT_KEY]).toEqual(FakeTrackingType.TRACKED)
-    })
-
-    it('should call onReady callback with session manager after lock is released', () => {
-      if (!isChromium()) {
-        pending('the lock is only enabled in Chromium')
-      }
-
-      setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
-      const onReadySpy = jasmine.createSpy<(sessionManager: SessionManager<FakeTrackingType>) => void>('onReady')
-
-      startSessionManager(
-        { sessionStoreStrategyType: STORE_TYPE } as Configuration,
-        FIRST_PRODUCT_KEY,
-        () => FakeTrackingType.TRACKED,
-        createTrackingConsentState(TrackingConsent.GRANTED),
-        onReadySpy
-      )
-
-      expect(onReadySpy).not.toHaveBeenCalled()
-
-      // Remove lock
-      setCookie(SESSION_STORE_KEY, 'id=abc123', DURATION)
-      clock.tick(LOCK_RETRY_DELAY)
-
-      expect(onReadySpy).toHaveBeenCalledTimes(1)
-      expect(onReadySpy.calls.mostRecent().args[0].findSession).toBeDefined()
     })
   })
 
