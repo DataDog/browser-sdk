@@ -1,5 +1,5 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { getRelativeTime, isNumber, relativeNow } from '@datadog/browser-core'
+import { findLast, getRelativeTime, isNumber, relativeNow } from '@datadog/browser-core'
 import type { RelevantNavigationTiming } from '../domain/view/viewMetrics/trackNavigationTimings'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType, supportPerformanceTimingEvent } from './performanceObservable'
@@ -64,4 +64,27 @@ export function getResourceEntries() {
   }
 
   return undefined
+}
+
+/**
+ * Find the most relevant resource entry for an LCP element.
+ *
+ * Resource entries persist for the entire page lifetime and can include multiple requests
+ * for the same URL (preloads, cache-busting reloads, SPA route changes, etc.).
+ * This function returns the most recent matching entry that started before the LCP time,
+ * which is most likely the one that triggered the LCP paint.
+ */
+export function findLcpResourceEntry(
+  resourceUrl: string,
+  lcpStartTime: RelativeTime
+): PerformanceResourceTiming | undefined {
+  const entries = getResourceEntries()
+  if (!entries) {
+    return undefined
+  }
+
+  return findLast(
+    entries,
+    (entry): entry is PerformanceResourceTiming => entry.name === resourceUrl && entry.startTime <= lcpStartTime
+  )
 }

@@ -1,7 +1,9 @@
 import { type RelativeTime } from '@datadog/browser-core'
+import { registerCleanupTask } from '@datadog/browser-core/test'
+import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
 import { RumPerformanceEntryType } from './performanceObservable'
-import { getNavigationEntry } from './performanceUtils'
+import { findLcpResourceEntry, getNavigationEntry } from './performanceUtils'
 
 describe('getNavigationEntry', () => {
   it('returns the navigation entry', () => {
@@ -49,5 +51,156 @@ describe('getNavigationEntry', () => {
     if (navigationEntry.transferSize) {
       expect(navigationEntry.transferSize).toEqual(jasmine.any(Number))
     }
+  })
+})
+
+describe('findLcpResourceEntry', () => {
+  function setupResourceEntries(entries: PerformanceEntry[]) {
+    const mock = mockGlobalPerformanceBuffer(entries)
+    registerCleanupTask(() => {
+      // Cleanup is handled by mockGlobalPerformanceBuffer's spies being restored
+    })
+    return mock
+  }
+
+  it('should return undefined when no resource entries exist', () => {
+    setupResourceEntries([])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined when no matching URL is found', () => {
+    setupResourceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/foo.jpg',
+        startTime: 100 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return the matching resource entry', () => {
+    setupResourceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 100 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.name).toBe('https://example.com/image.jpg')
+  })
+
+  it('should return the most recent matching entry when multiple entries exist for the same URL', () => {
+    setupResourceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 100 as RelativeTime,
+        responseEnd: 200 as RelativeTime,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 500 as RelativeTime,
+        responseEnd: 600 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.startTime).toBe(500 as RelativeTime)
+  })
+
+  it('should ignore resource entries that started after LCP time', () => {
+    setupResourceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 100 as RelativeTime,
+        responseEnd: 200 as RelativeTime,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 1500 as RelativeTime,
+        responseEnd: 1600 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.startTime).toBe(100 as RelativeTime)
+  })
+
+  it('should return the most recent entry that started before LCP when multiple valid entries exist', () => {
+    setupResourceEntries([
+      // Preload request
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 100 as RelativeTime,
+      }),
+      // Actual image load
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 400 as RelativeTime,
+      }),
+      // After LCP, should be ignored
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 1500 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.startTime).toBe(400 as RelativeTime)
+  })
+
+  it('should include resource entries that started exactly at LCP time', () => {
+    setupResourceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 1000 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.startTime).toBe(1000 as RelativeTime)
+  })
+
+  it('should not be confused by other resources with different URLs', () => {
+    setupResourceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/foo.jpg',
+        startTime: 50 as RelativeTime,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 100 as RelativeTime,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/bar.jpg',
+        startTime: 150 as RelativeTime,
+      }),
+      createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
+        name: 'https://example.com/image.jpg',
+        startTime: 200 as RelativeTime,
+      }),
+    ])
+
+    const result = findLcpResourceEntry('https://example.com/image.jpg', 1000 as RelativeTime)
+
+    expect(result).toBeDefined()
+    expect(result!.startTime).toBe(200 as RelativeTime)
+    expect(result!.name).toBe('https://example.com/image.jpg')
   })
 })

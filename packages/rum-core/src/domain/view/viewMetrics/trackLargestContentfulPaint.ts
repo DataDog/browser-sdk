@@ -9,7 +9,7 @@ import {
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
-import { getNavigationEntry, getResourceEntries, sanitizeFirstByte } from '../../../browser/performanceUtils'
+import { findLcpResourceEntry, getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
@@ -79,9 +79,7 @@ export function trackLargestContentfulPaint(
 
       const resourceUrl = computeLcpEntryUrl(lcpEntry)
 
-      const lcpResourceEntry = resourceUrl
-        ? (getResourceEntries()?.find((e) => e.name === resourceUrl) as PerformanceResourceTiming | undefined)
-        : undefined
+      const lcpResourceEntry = resourceUrl ? findLcpResourceEntry(resourceUrl, lcpEntry.startTime) : undefined
 
       const lcpValue = Math.max(0, lcpEntry.startTime) as RelativeTime
 
