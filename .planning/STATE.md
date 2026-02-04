@@ -6,35 +6,35 @@ See: .planning/PROJECT.md (updated 2026-02-04)
 
 **Core value:** Enable developers to instrument web applications with zero initial requests to configuration endpoints
 
-**Current focus:** Phase 5 - Core Generator (Milestone 2)
+**Current focus:** Phase 6 - Programmatic API (Milestone 2)
 
 ## Current Position
 
-Phase: 5 of 8 (Core Generator)
-Plan: Ready to plan
-Status: Ready to plan
-Last activity: 2026-02-04 — Roadmap created for Milestone 2
+Phase: 6 of 8 (Programmatic API)
+Plan: Pending creation
+Status: Phase 5 complete, ready for Phase 6
+Last activity: 2026-02-04 — Phase 5 completed with 4 commits
 
-Progress: [████░░░░░░] 50% (Milestone 1 complete: Phases 1-4)
+Progress: [██████░░░░] 62.5% (Milestone 1 complete: Phases 1-4, Phase 5 complete)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 0 (Milestone 2)
-- Average duration: N/A
-- Total execution time: N/A
+- Total plans completed: 1 (Milestone 2)
+- Average duration: ~1 session
+- Total execution time: 1 session
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 5. Core Generator | 0/TBD | - | - |
+| 5. Core Generator | 7/7 ✅ | 1 session | 1 session |
 | 6. API & Integration | 0/TBD | - | - |
 | 7. HTTP Endpoint | 0/TBD | - | - |
 | 8. Distribution & Testing | 0/TBD | - | - |
 
 **Recent Trend:**
-- Milestone 2 starting — no execution data yet
+- Phase 5 completed in 1 session with all 7 tasks and 29 tests passing
 
 *Updated after each plan completion*
 
@@ -45,21 +45,23 @@ Progress: [████░░░░░░] 50% (Milestone 1 complete: Phases 1-4
 Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
-- Milestone 1: Extract remote config to standalone package (✓ Good — completed)
-- Milestone 2: Generate bundled SDK + config together (— Pending)
-- Milestone 2: Support both rum and rum-slim variants (— Pending)
-- Milestone 2: Datadog-hosted + self-hosted options (— Pending)
+- Milestone 1: Extract remote config to standalone package (✓ Complete)
+- Milestone 2: Generate bundled SDK + config together (✓ Complete — Phase 5)
+- Milestone 2: Support both rum and rum-slim variants (✓ Complete — Phase 5)
+- Milestone 2: Datadog-hosted + self-hosted options (— Pending — Phase 7)
+
+### Phase 5 Artifacts
+
+- **CLI Tool:** `scripts/build/generate-cdn-bundle.ts`
+- **Library:** `scripts/build/lib/bundleGenerator.ts`
+- **Tests:** 29 tests passing (17 unit + 12 CLI/integration)
+- **Summary:** `.planning/phases/05-core-generator/SUMMARY.md`
 
 ### Pending Todos
 
-None yet.
+None.
 
 ### Blockers/Concerns
-
-**Phase 5 Critical Risks (from research):**
-- Non-deterministic bundle output — must design for reproducibility from start
-- Monorepo dependency resolution mismatch — explicit esbuild configuration needed
-- Tree shaking eliminates embedded config — proper entry point structure required
 
 **Phase 6 Integration Risk:**
 - SDK initialization path for embedded config — SDK packages need new code path to detect and use embedded config instead of fetching
@@ -69,6 +71,7 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-04 — Roadmap creation
-Stopped at: Roadmap and STATE.md created, ready for Phase 5 planning
-Resume file: None
+Last session: 2026-02-04 — Phase 5 execution complete
+Stopped at: All 7 tasks completed, SUMMARY.md created
+Next: Phase 6 planning and execution
+Resume file: .planning/phases/05-core-generator/SUMMARY.md
