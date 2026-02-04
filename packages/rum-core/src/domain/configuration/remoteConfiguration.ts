@@ -92,7 +92,10 @@ export function applyRemoteConfiguration(
   const appliedConfiguration = { ...initConfiguration } as RumInitConfiguration & { [key: string]: unknown }
   SUPPORTED_FIELDS.forEach((option: string) => {
     if (option in rumRemoteConfiguration) {
-      appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
+      const resolvedValue = resolveConfigurationProperty(rumRemoteConfiguration[option])
+      if (resolvedValue !== undefined) {
+        appliedConfiguration[option] = resolvedValue
+      }
     }
   })
   ;(Object.keys(supportedContextManagers) as Array<keyof SupportedContextManagers>).forEach((context) => {
