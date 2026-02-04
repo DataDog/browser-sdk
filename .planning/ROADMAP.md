@@ -79,11 +79,14 @@ Plans:
   4. SDK at runtime uses embedded configuration without making network fetch
   5. Dynamic configuration values (cookies, DOM selectors) remain resolvable at browser runtime
 
-**Plans**: TBD
+**Plans**: 5 plans in 3 waves
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01: Programmatic API with input validation
+- [ ] 06-02: In-memory SDK caching for performance
+- [ ] 06-03: E2E tests for embedded config
+- [ ] 06-04: E2E tests for dynamic values
+- [ ] 06-05: API documentation and examples
 
 #### Phase 7: HTTP Endpoint
 
@@ -138,6 +141,6 @@ Phases execute in numeric order: 5 → 6 → 7 → 8
 | 3. SDK Integration Update | v1.0 | Complete | Complete | Milestone 1 |
 | 4. Testing & Types | v1.0 | Complete | Complete | Milestone 1 |
 | 5. Core Generator | v2.0 | 7/7 | Complete | 2026-02-04 |
-| 6. API & Integration | v2.0 | 0/TBD | Not started | - |
+| 6. API & Integration | v2.0 | 0/5 | Planning | - |
 | 7. HTTP Endpoint | v2.0 | 0/TBD | Not started | - |
 | 8. Distribution & Testing | v2.0 | 0/TBD | Not started | - |
