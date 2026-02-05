@@ -35,8 +35,10 @@ interface StartLCPTrackingOptions {
 interface SubPartsTestCase {
   description: string
   firstByte: number
-  resource: ResourceEntryOptions
+  resource?: ResourceEntryOptions
   lcpTime: number
+  // defaults to 'https://example.com/image.jpg', use '' for no resource
+  lcpUrl?: string
   expectedSubParts: {
     loadDelay: number
     loadTime: number
@@ -133,6 +135,34 @@ const subPartsTestCases: SubPartsTestCase[] = [
       loadDelay: 400, // 500 - 100
       loadTime: 700, // 1200 - 500
       renderDelay: 0, // 1200 - 1200 = 0 (no render delay)
+    },
+  },
+  {
+    description: 'should handle LCP with no associated resource entry (text, data URL, inline image)',
+    firstByte: 200,
+    lcpTime: 1000,
+    lcpUrl: '', // No resource
+    expectedSubParts: {
+      loadDelay: 0, // No resource, so max(firstByte, 0) - firstByte = 0
+      loadTime: 0, // No resource, so max(firstByte, 0) - firstByte = 0
+      renderDelay: 800, // 1000 - 200 (firstByte is used as lcpResponseEnd when no resource)
+    },
+  },
+  {
+    description: 'should handle cached resource with incomplete timing data (cross-origin without TAO)',
+    firstByte: 150,
+    resource: {
+      startTime: 400,
+      requestStart: 0, // Not available (cross-origin)
+      responseEnd: 0, // Not available (cached)
+    },
+    lcpTime: 800,
+    expectedSubParts: {
+      // lcpRequestStart = max(150, 400 - 0) = 400 (falls back to startTime)
+      loadDelay: 250, // 400 - 150
+      // lcpResponseEnd = min(800, max(400, 0 - 0)) = min(800, 400) = 400
+      loadTime: 0, // 400 - 400
+      renderDelay: 400, // 800 - 400
     },
   },
 ]
@@ -360,94 +390,31 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   describe('LCP subParts', () => {
-    subPartsTestCases.forEach(({ description, firstByte, resource, lcpTime, expectedSubParts }) => {
+    subPartsTestCases.forEach(({ description, firstByte, resource, lcpTime, lcpUrl, expectedSubParts }) => {
       it(description, () => {
         startLCPTracking({
           firstByte,
-          resources: [resource],
+          resources: resource ? [resource] : [],
         })
 
         notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
             startTime: lcpTime as RelativeTime,
-            url: 'https://example.com/image.jpg',
+            url: lcpUrl === undefined ? 'https://example.com/image.jpg' : lcpUrl,
           }),
         ])
 
         const result = lcpCallback.calls.mostRecent().args[0]
 
         expect(result.subParts).toEqual(expectedSubParts as {
-          loadDelay:  RelativeTime
-          loadTime:  RelativeTime
+          loadDelay: RelativeTime
+          loadTime: RelativeTime
           renderDelay: RelativeTime
         })
 
         // Validate: firstByte + loadDelay + loadTime + renderDelay = LCP value
         const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
         expect(sum + firstByte).toBe(result.value)
-      })
-    })
-
-    describe('edge cases', () => {
-      it('should handle LCP with no associated resource entry', () => {
-        startLCPTracking({
-          firstByte: 200 as RelativeTime,
-        })
-
-        // LCP with no resource URL (e.g., text, data URL, inline image)
-        notifyPerformanceEntries([
-          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-            startTime: 1000 as RelativeTime,
-            url: '', // Empty URL = no resource
-          }),
-        ])
-
-        expect(lcpCallback).toHaveBeenCalledOnceWith({
-          value: 1000 as RelativeTime,
-          targetSelector: undefined,
-          resourceUrl: undefined,
-          subParts: {
-            loadDelay: 0 as RelativeTime, // No resource, so max(firstByte, 0) - firstByte = 0
-            loadTime: 0 as RelativeTime, // No resource, so max(firstByte, 0) - firstByte = 0
-            renderDelay: 800 as RelativeTime, // 1000 - 200 (firstByte is used as lcpResponseEnd when no resource)
-          },
-        })
-      })
-
-      it('should handle cached resource with incomplete timing data', () => {
-        const mockFirstByteValue = 150 as RelativeTime
-
-        // Cross-origin resource without TAO: limited timing info
-        startLCPTracking({
-          firstByte: 150 as RelativeTime,
-          resources: [
-            {
-              startTime: 400 as RelativeTime,
-              requestStart: 0 as RelativeTime, // Not available (cross-origin)
-              responseEnd: 0 as RelativeTime, // Not available (cached)
-            },
-          ],
-        })
-
-        notifyPerformanceEntries([
-          createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
-            startTime: 800 as RelativeTime,
-            url: 'https://example.com/image.jpg',
-          }),
-        ])
-
-        const result = lcpCallback.calls.mostRecent().args[0]
-
-        expect(result.subParts).toEqual({
-          // lcpRequestStart = max(150, 400 - 0) = 400 (falls back to startTime)
-          loadDelay: 250 as RelativeTime, // 400 - 150
-          // lcpResponseEnd = min(800, max(400, 0 - 0)) = min(800, 400) = 400
-          loadTime: 0 as RelativeTime, // 400 - 400
-          renderDelay: 400 as RelativeTime, // 800 - 400
-        })
-
-        const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
-        expect(sum + mockFirstByteValue).toBe(result.value)
       })
     })
   })
