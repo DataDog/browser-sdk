@@ -115,8 +115,7 @@ function computeLcpSubParts(
   resourceUrl: string | undefined,
   lcpValue: RelativeTime
 ): LargestContentfulPaint['subParts'] {
-  const navigationEntry = getNavigationEntry()
-  const firstByte = sanitizeFirstByte(navigationEntry)
+  const firstByte = sanitizeFirstByte(getNavigationEntry())
 
   if (firstByte === undefined) {
     return undefined
