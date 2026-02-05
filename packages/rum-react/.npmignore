@@ -5,3 +5,4 @@
 /src/**/*.spec.ts
 /src/**/*.specHelper.ts
 !/react-router-v[6-7]/*
+!/nextjs/*

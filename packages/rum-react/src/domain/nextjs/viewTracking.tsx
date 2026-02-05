@@ -7,16 +7,9 @@ import { onRumInit } from '../reactPlugin'
  * Normalizes the pathname to use route patterns (e.g., /product/123 -> /product/:id).
  */
 export function normalizeViewName(pathname: string): string {
-  return (
-    pathname
-      // Replace UUID segments first (more specific pattern)
-      // Matches: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (8-4-4-4-12 hex digits)
-      // Match complete UUIDs followed by /, ?, #, or end of string
-      .replace(/\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(?=\/|[?#]|$)/gi, '/:uuid')
-      // Replace numeric segments (match complete numeric path segments)
-      // Followed by /, ?, #, or end of string (not hyphens or other characters)
-      .replace(/\/\d+(?=\/|[?#]|$)/g, '/:id')
-  )
+  return pathname
+    .replace(/\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}(?=\/|[?#]|$)/gi, '/:uuid')
+    .replace(/\/\d+(?=\/|[?#]|$)/g, '/:id')
 }
 
 /**
