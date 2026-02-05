@@ -82,7 +82,7 @@ describe('trackLargestContentfulPaint', () => {
   }
 
   beforeEach(() => {
-    addExperimentalFeatures([ExperimentalFeature.COLLECT_LCP_SUBPARTS])
+    addExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
     registerCleanupTask(resetExperimentalFeatures)
 
     lcpCallback = jasmine.createSpy()
@@ -222,29 +222,10 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   it('should not provide subParts if the first byte is not available', () => {
-    const { notifyPerformanceEntries: notifyEntries } = mockPerformanceObserver()
+    // Negative responseStart makes sanitizeFirstByte return undefined
+    startLCPTracking({ firstByte: -1 })
 
-    // Notify navigation entry with negative responseStart, which makes sanitizeFirstByte return undefined
-    notifyEntries([
-      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-        responseStart: -1 as RelativeTime,
-      }),
-    ])
-
-    const firstHidden = trackFirstHidden(mockRumConfiguration(), clocksOrigin())
-    const largestContentfulPaint = trackLargestContentfulPaint(
-      mockRumConfiguration(),
-      firstHidden,
-      eventTarget,
-      lcpCallback
-    )
-
-    registerCleanupTask(() => {
-      firstHidden.stop()
-      largestContentfulPaint.stop()
-    })
-
-    notifyEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
+    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
     expect(lcpCallback).toHaveBeenCalledOnceWith({
       value: 789 as RelativeTime,
