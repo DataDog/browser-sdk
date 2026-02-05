@@ -32,141 +32,6 @@ interface StartLCPTrackingOptions {
   resources?: ResourceEntryOptions[]
 }
 
-interface SubPartsTestCase {
-  description: string
-  firstByte: number
-  resource?: ResourceEntryOptions
-  lcpTime: number
-  // defaults to 'https://example.com/image.jpg', use '' for no resource
-  lcpUrl?: string
-  expectedSubParts: {
-    loadDelay: number
-    loadTime: number
-    renderDelay: number
-  }
-}
-
-const subPartsTestCases: SubPartsTestCase[] = [
-  {
-    description: 'should cap lcpResponseEnd at LCP time for resources that complete after LCP',
-    firstByte: 200,
-    resource: {
-      startTime: 500,
-      requestStart: 500,
-      responseEnd: 5000, // Continues downloading long after LCP
-    },
-    lcpTime: 1200,
-    expectedSubParts: {
-      loadDelay: 300, // 500 - 200
-      loadTime: 700, // 1200 (capped) - 500
-      renderDelay: 0, // 1200 - 1200 (capped) = 0
-    },
-  },
-  {
-    description: 'should not cap lcpResponseEnd when resource completes before LCP',
-    firstByte: 200,
-    resource: {
-      startTime: 500,
-      requestStart: 500,
-      responseEnd: 1000,
-    },
-    lcpTime: 1200,
-    expectedSubParts: {
-      loadDelay: 300, // 500 - 200
-      loadTime: 500, // 1000 - 500 (not capped)
-      renderDelay: 200, // 1200 - 1000
-    },
-  },
-  {
-    description: 'should prefer requestStart over startTime when available (TAO enabled)',
-    firstByte: 200,
-    resource: {
-      startTime: 500, // Resource discovered at 500ms
-      requestStart: 700, // HTTP request started at 700ms (delayed)
-      responseEnd: 1000,
-    },
-    lcpTime: 1200,
-    expectedSubParts: {
-      loadDelay: 500, // 700 (requestStart) - 200, not 300 (startTime - 200)
-      loadTime: 300, // 1000 - 700 (requestStart)
-      renderDelay: 200, // 1200 - 1000
-    },
-  },
-  {
-    description: 'should fallback to startTime when requestStart is 0 (cross-origin without TAO)',
-    firstByte: 200,
-    resource: {
-      startTime: 500,
-      requestStart: 0, // Not available (cross-origin without TAO)
-      responseEnd: 1000,
-    },
-    lcpTime: 1200,
-    expectedSubParts: {
-      loadDelay: 300, // Falls back to: 500 (startTime) - 200
-      loadTime: 500, // 1000 - 500 (startTime)
-      renderDelay: 200, // 1200 - 1000
-    },
-  },
-  {
-    description: 'should handle TAO resource with normal completion',
-    firstByte: 100,
-    resource: {
-      startTime: 200, // Resource discovered
-      requestStart: 300, // HTTP request started (prefer this)
-      responseEnd: 700, // Download completed
-    },
-    lcpTime: 900,
-    expectedSubParts: {
-      loadDelay: 200, // 300 - 100
-      loadTime: 400, // 700 - 300
-      renderDelay: 200, // 900 - 700
-    },
-  },
-  {
-    description: 'should handle resource that completes exactly at LCP time',
-    firstByte: 100,
-    resource: {
-      startTime: 500,
-      requestStart: 500,
-      responseEnd: 1200, // Completes exactly at LCP time
-    },
-    lcpTime: 1200,
-    expectedSubParts: {
-      loadDelay: 400, // 500 - 100
-      loadTime: 700, // 1200 - 500
-      renderDelay: 0, // 1200 - 1200 = 0 (no render delay)
-    },
-  },
-  {
-    description: 'should handle LCP with no associated resource entry (text, data URL, inline image)',
-    firstByte: 200,
-    lcpTime: 1000,
-    lcpUrl: '', // No resource
-    expectedSubParts: {
-      loadDelay: 0, // No resource, so max(firstByte, 0) - firstByte = 0
-      loadTime: 0, // No resource, so max(firstByte, 0) - firstByte = 0
-      renderDelay: 800, // 1000 - 200 (firstByte is used as lcpResponseEnd when no resource)
-    },
-  },
-  {
-    description: 'should handle cached resource with incomplete timing data (cross-origin without TAO)',
-    firstByte: 150,
-    resource: {
-      startTime: 400,
-      requestStart: 0, // Not available (cross-origin)
-      responseEnd: 0, // Not available (cached)
-    },
-    lcpTime: 800,
-    expectedSubParts: {
-      // lcpRequestStart = max(150, 400 - 0) = 400 (falls back to startTime)
-      loadDelay: 250, // 400 - 150
-      // lcpResponseEnd = min(800, max(400, 0 - 0)) = min(800, 400) = 400
-      loadTime: 0, // 400 - 400
-      renderDelay: 400, // 800 - 400
-    },
-  },
-]
-
 describe('trackLargestContentfulPaint', () => {
   let lcpCallback: jasmine.Spy<(lcp: LargestContentfulPaint) => void>
   let eventTarget: Window
@@ -390,7 +255,126 @@ describe('trackLargestContentfulPaint', () => {
   })
 
   describe('LCP subParts', () => {
-    subPartsTestCases.forEach(({ description, firstByte, resource, lcpTime, lcpUrl, expectedSubParts }) => {
+    [
+      {
+        description: 'should cap lcpResponseEnd at LCP time for resources that complete after LCP',
+        firstByte: 200,
+        resource: {
+          startTime: 500,
+          requestStart: 500,
+          responseEnd: 5000, // Continues downloading long after LCP
+        },
+        lcpTime: 1200,
+        expectedSubParts: {
+          loadDelay: 300, // 500 - 200
+          loadTime: 700, // 1200 (capped) - 500
+          renderDelay: 0, // 1200 - 1200 (capped) = 0
+        },
+      },
+      {
+        description: 'should not cap lcpResponseEnd when resource completes before LCP',
+        firstByte: 200,
+        resource: {
+          startTime: 500,
+          requestStart: 500,
+          responseEnd: 1000,
+        },
+        lcpTime: 1200,
+        expectedSubParts: {
+          loadDelay: 300, // 500 - 200
+          loadTime: 500, // 1000 - 500 (not capped)
+          renderDelay: 200, // 1200 - 1000
+        },
+      },
+      {
+        description: 'should prefer requestStart over startTime when available (TAO enabled)',
+        firstByte: 200,
+        resource: {
+          startTime: 500, // Resource discovered at 500ms
+          requestStart: 700, // HTTP request started at 700ms (delayed)
+          responseEnd: 1000,
+        },
+        lcpTime: 1200,
+        expectedSubParts: {
+          loadDelay: 500, // 700 (requestStart) - 200, not 300 (startTime - 200)
+          loadTime: 300, // 1000 - 700 (requestStart)
+          renderDelay: 200, // 1200 - 1000
+        },
+      },
+      {
+        description: 'should fallback to startTime when requestStart is 0 (cross-origin without TAO)',
+        firstByte: 200,
+        resource: {
+          startTime: 500,
+          requestStart: 0, // Not available (cross-origin without TAO)
+          responseEnd: 1000,
+        },
+        lcpTime: 1200,
+        expectedSubParts: {
+          loadDelay: 300, // Falls back to: 500 (startTime) - 200
+          loadTime: 500, // 1000 - 500 (startTime)
+          renderDelay: 200, // 1200 - 1000
+        },
+      },
+      {
+        description: 'should handle TAO resource with normal completion',
+        firstByte: 100,
+        resource: {
+          startTime: 200, // Resource discovered
+          requestStart: 300, // HTTP request started (prefer this)
+          responseEnd: 700, // Download completed
+        },
+        lcpTime: 900,
+        expectedSubParts: {
+          loadDelay: 200, // 300 - 100
+          loadTime: 400, // 700 - 300
+          renderDelay: 200, // 900 - 700
+        },
+      },
+      {
+        description: 'should handle resource that completes exactly at LCP time',
+        firstByte: 100,
+        resource: {
+          startTime: 500,
+          requestStart: 500,
+          responseEnd: 1200, // Completes exactly at LCP time
+        },
+        lcpTime: 1200,
+        expectedSubParts: {
+          loadDelay: 400, // 500 - 100
+          loadTime: 700, // 1200 - 500
+          renderDelay: 0, // 1200 - 1200 = 0 (no render delay)
+        },
+      },
+      {
+        description: 'should handle LCP with no associated resource entry (text, data URL, inline image)',
+        firstByte: 200,
+        lcpTime: 1000,
+        lcpUrl: '', // No resource
+        expectedSubParts: {
+          loadDelay: 0, // No resource, so max(firstByte, 0) - firstByte = 0
+          loadTime: 0, // No resource, so max(firstByte, 0) - firstByte = 0
+          renderDelay: 800, // 1000 - 200 (firstByte is used as lcpResponseEnd when no resource)
+        },
+      },
+      {
+        description: 'should handle cached resource with incomplete timing data (cross-origin without TAO)',
+        firstByte: 150,
+        resource: {
+          startTime: 400,
+          requestStart: 0, // Not available (cross-origin)
+          responseEnd: 0, // Not available (cached)
+        },
+        lcpTime: 800,
+        expectedSubParts: {
+          // lcpRequestStart = max(150, 400 - 0) = 400 (falls back to startTime)
+          loadDelay: 250, // 400 - 150
+          // lcpResponseEnd = min(800, max(400, 0 - 0)) = min(800, 400) = 400
+          loadTime: 0, // 400 - 400
+          renderDelay: 400, // 800 - 400
+        },
+      },
+    ].forEach(({ description, firstByte, resource, lcpTime, lcpUrl, expectedSubParts }) => {
       it(description, () => {
         startLCPTracking({
           firstByte,
