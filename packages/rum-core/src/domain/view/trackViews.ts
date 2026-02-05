@@ -50,6 +50,7 @@ export interface ViewEvent {
   version?: string
   context?: Context
   location: Readonly<Location>
+  handlingStack?: string
   commonViewMetrics: CommonViewMetrics
   initialViewMetrics: InitialViewMetrics
   customTimings: ViewCustomTimings
@@ -99,6 +100,7 @@ export interface ViewOptions {
   service?: RumInitConfiguration['service']
   version?: RumInitConfiguration['version']
   context?: Context
+  handlingStack?: string
 }
 
 export function trackViews(
@@ -228,6 +230,7 @@ function newView(
   const service = viewOptions?.service || configuration.service
   const version = viewOptions?.version || configuration.version
   const context = viewOptions?.context
+  const handlingStack = viewOptions?.handlingStack
 
   if (context) {
     contextManager.setContext(context)
@@ -323,6 +326,7 @@ function newView(
       context: contextManager.getContext(),
       loadingType,
       location,
+      handlingStack,
       startClocks,
       commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics,

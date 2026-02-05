@@ -224,6 +224,17 @@ describe('vitalCollection', () => {
         expect(rawRumEvents[0].domainContext).toEqual({})
       })
 
+      it('should create vital with handling stack', () => {
+        vitalCollection.startDurationVital('foo', {
+          handlingStack: 'Error\n    at foo\n    at bar',
+        })
+        vitalCollection.stopDurationVital('foo')
+
+        expect(rawRumEvents[0].domainContext).toEqual({
+          handlingStack: 'Error\n    at foo\n    at bar',
+        })
+      })
+
       it('should collect raw rum event from operation step vital', () => {
         mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
         vitalCollection.addOperationStepVital('foo', 'start')

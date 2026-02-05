@@ -864,6 +864,15 @@ describe('start view', () => {
     expect(getViewUpdate(1).duration).toBe(50 as Duration)
     expect(getViewUpdate(2).startClocks.relative).toBe(50 as RelativeTime)
   })
+
+  it('should create view with handling stack', () => {
+    const { startView, getViewUpdate } = viewTest
+
+    startView({ name: 'foo', handlingStack: 'Error\n    at foo\n    at bar' })
+
+    // The new view is at index 2 (after the initial view end and the new view start)
+    expect(getViewUpdate(2).handlingStack).toBe('Error\n    at foo\n    at bar')
+  })
 })
 
 describe('view event count', () => {
