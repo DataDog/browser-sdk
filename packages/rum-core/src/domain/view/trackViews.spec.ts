@@ -431,7 +431,7 @@ describe('view metrics', () => {
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
-    addExperimentalFeatures([ExperimentalFeature.COLLECT_LCP_SUBPARTS])
+    addExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
     registerCleanupTask(resetExperimentalFeatures)
 
     clock = mockClock()

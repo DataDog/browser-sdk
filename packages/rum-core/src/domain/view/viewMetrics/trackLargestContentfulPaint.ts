@@ -78,9 +78,9 @@ export function trackLargestContentfulPaint(
       }
 
       const resourceUrl = computeLcpEntryUrl(lcpEntry)
-      const lcpValue = Math.max(0, lcpEntry.startTime) as RelativeTime
+      const lcpValue = lcpEntry.startTime
 
-      const subParts = isExperimentalFeatureEnabled(ExperimentalFeature.COLLECT_LCP_SUBPARTS)
+      const subParts = isExperimentalFeatureEnabled(ExperimentalFeature.LCP_SUBPARTS)
         ? computeLcpSubParts(resourceUrl, lcpValue)
         : undefined
 
