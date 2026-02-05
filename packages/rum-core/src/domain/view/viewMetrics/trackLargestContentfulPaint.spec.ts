@@ -221,21 +221,21 @@ describe('trackLargestContentfulPaint', () => {
     })
   })
 
-  it('should not provide subParts if the first byte is not available', () => {
-    // Negative responseStart makes sanitizeFirstByte return undefined
-    startLCPTracking({ firstByte: -1 })
-
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
-
-    expect(lcpCallback).toHaveBeenCalledOnceWith({
-      value: 789 as RelativeTime,
-      targetSelector: undefined,
-      resourceUrl: undefined,
-      subParts: undefined,
-    })
-  })
-
   describe('LCP subParts', () => {
+    it('should not provide subParts if the first byte is not available', () => {
+      // Negative responseStart makes sanitizeFirstByte return undefined
+      startLCPTracking({ firstByte: -1 })
+
+      notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
+
+      expect(lcpCallback).toHaveBeenCalledOnceWith({
+        value: 789 as RelativeTime,
+        targetSelector: undefined,
+        resourceUrl: undefined,
+        subParts: undefined,
+      })
+    });
+
     [
       {
         description: 'should cap lcpResponseEnd at LCP time for resources that complete after LCP',
