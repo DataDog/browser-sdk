@@ -12,7 +12,8 @@ runMain(async () => {
     printLog('No pull requests found for the branch, reporting only (normal for main)')
   } else {
     const lastCommonCommit = getLastCommonCommit(githubPr.base.ref)
-    pr = new Pr(githubPr.number, lastCommonCommit)
+    // Truncate to 8 characters to match the format used in Datadog metrics
+    pr = new Pr(githubPr.number, lastCommonCommit.substring(0, 8))
   }
 
   printLog('Bundle sizes...')

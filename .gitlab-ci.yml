@@ -281,7 +281,7 @@ unit-bs:
       junit: test-report/unit-bs/*.xml
   script:
     - yarn
-    - ./scripts/test/ci-bs.sh test:unit
+    - node scripts/test/ci-bs.ts test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit-bs
 
@@ -301,7 +301,7 @@ e2e-bs:
       junit: test-report/e2e-bs/*.xml
   script:
     - yarn
-    - FORCE_COLOR=1 ./scripts/test/ci-bs.sh test:e2e:ci
+    - FORCE_COLOR=1 node scripts/test/ci-bs.ts test:e2e:ci
   after_script:
     - node ./scripts/test/export-test-result.ts e2e-bs
 
