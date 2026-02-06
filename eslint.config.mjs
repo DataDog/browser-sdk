@@ -61,6 +61,7 @@ export default tseslint.config(
           './test/e2e/tsconfig.json',
           './test/performance/tsconfig.json',
           './test/apps/**/tsconfig.json',
+          './test/unit/vite-experiment/tsconfig.json',
         ],
         sourceType: 'module',
 

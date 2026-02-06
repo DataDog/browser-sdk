@@ -42,7 +42,6 @@ export {
   startTelemetry,
   addTelemetryDebug,
   addTelemetryError,
-  resetTelemetry,
   TelemetryService,
   TelemetryMetrics,
   addTelemetryConfiguration,
@@ -106,7 +105,7 @@ export type { CookieStore, WeakRef, WeakRefConstructor } from './browser/browser
 export type { XhrCompleteContext, XhrStartContext } from './browser/xhrObservable'
 export { initXhrObservable } from './browser/xhrObservable'
 export type { FetchResolveContext, FetchStartContext, FetchContext } from './browser/fetchObservable'
-export { initFetchObservable, resetFetchObservable, ResponseBodyAction } from './browser/fetchObservable'
+export { initFetchObservable, ResponseBodyAction } from './browser/fetchObservable'
 export { fetch } from './browser/fetch'
 export type { PageMayExitEvent } from './browser/pageMayExitObservable'
 export { createPageMayExitObservable, PageExitReason, isPageExitReason } from './browser/pageMayExitObservable'
@@ -115,7 +114,7 @@ export { requestIdleCallback } from './tools/requestIdleCallback'
 export * from './tools/taskQueue'
 export * from './tools/timer'
 export type { ConsoleLog } from './domain/console/consoleObservable'
-export { initConsoleObservable, resetConsoleObservable } from './domain/console/consoleObservable'
+export { initConsoleObservable } from './domain/console/consoleObservable'
 export type { BoundedBuffer } from './tools/boundedBuffer'
 export { createBoundedBuffer } from './tools/boundedBuffer'
 export { catchUserErrors } from './tools/catchUserErrors'

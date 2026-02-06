@@ -1,5 +1,5 @@
 import type { RawError, Subscription } from '@datadog/browser-core'
-import { ErrorHandling, ErrorSource, Observable, clocksNow, resetConsoleObservable } from '@datadog/browser-core'
+import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
 import { ignoreConsoleLogs, mockClock } from '@datadog/browser-core/test'
 import { trackConsoleError } from './trackConsoleError'
 
@@ -18,7 +18,6 @@ describe('trackConsoleError', () => {
   })
 
   afterEach(() => {
-    resetConsoleObservable()
     subscription.unsubscribe()
   })
 
