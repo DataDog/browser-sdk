@@ -50,6 +50,7 @@ export type {
   RemoteConfiguration,
 } from './domain/configuration'
 export { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './domain/action/actionNameConstants'
+export type { ActionContexts, ActionContext } from './domain/action/trackAction'
 export { STABLE_ATTRIBUTES } from './domain/getSelectorFromElement'
 export * from './browser/htmlDomUtils'
 export { getSessionReplayUrl } from './domain/getSessionReplayUrl'
@@ -67,6 +68,8 @@ export type {
   DurationVitalStart,
   AddDurationVitalOptions,
   DurationVitalOptions,
+  VitalContext,
+  VitalContexts,
 } from './domain/vital/vitalCollection'
 export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes } from './domain/hooks'
 export { createHooks } from './domain/hooks'

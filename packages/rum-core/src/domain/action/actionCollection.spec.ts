@@ -1,6 +1,7 @@
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { addDuration, HookNames, Observable } from '@datadog/browser-core'
-import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
+import type { Clock } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType } from '../../rawRumEvent.types'
@@ -16,7 +17,10 @@ import type { ActionContexts } from './trackAction'
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()
   let hooks: Hooks
+  let clock: Clock
   let addAction: ReturnType<typeof startActionCollection>['addAction']
+  let startAction: ReturnType<typeof startActionCollection>['startAction']
+  let stopAction: ReturnType<typeof startActionCollection>['stopAction']
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
   let actionContexts: ActionContexts
 
@@ -24,6 +28,7 @@ describe('actionCollection', () => {
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
     hooks = createHooks()
+    clock = mockClock()
 
     const actionCollection = startActionCollection(
       lifeCycle,
@@ -34,6 +39,8 @@ describe('actionCollection', () => {
     )
     registerCleanupTask(actionCollection.stop)
     addAction = actionCollection.addAction
+    startAction = actionCollection.startAction
+    stopAction = actionCollection.stopAction
     actionContexts = actionCollection.actionContexts
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -167,6 +174,39 @@ describe('actionCollection', () => {
     expect(rawRumEvents[0].domainContext).toEqual({
       handlingStack: 'Error\n    at foo\n    at bar',
     })
+  })
+
+  it('should add instant actions to history', () => {
+    addAction({
+      name: 'foo',
+      startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      type: ActionType.CUSTOM,
+      context: { foo: 'bar' },
+    })
+
+    expect(actionContexts.findActions(1234 as RelativeTime, 100 as Duration)).toEqual([
+      {
+        id: jasmine.any(String),
+        label: 'foo',
+        duration: 0 as Duration,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      },
+    ])
+  })
+
+  it('should add actions with duration to history', () => {
+    startAction('foo', {}, { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp })
+    clock.tick(100)
+    stopAction('foo', {}, { relative: (1234 + 100) as RelativeTime, timeStamp: (123456789 + 100) as TimeStamp })
+
+    expect(actionContexts.findActions(1234 as RelativeTime, 100 as Duration)).toEqual([
+      {
+        id: jasmine.any(String),
+        label: 'foo',
+        duration: 100 as Duration,
+        startClocks: { relative: 1234 as RelativeTime, timeStamp: 123456789 as TimeStamp },
+      },
+    ])
   })
 
   describe('assembly hook', () => {

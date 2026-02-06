@@ -62,7 +62,7 @@ export function trackManualActions(
       activeManualActions.delete(lookupKey)
     }
 
-    const trackedAction = actionTracker.createTrackedAction(startClocks)
+    const trackedAction = actionTracker.createTrackedAction(startClocks, name)
 
     activeManualActions.set(lookupKey, {
       name,
@@ -104,6 +104,8 @@ export function trackManualActions(
 
   function addInstantAction(action: Omit<ManualAction, 'id' | 'duration' | 'counts' | 'frustrationTypes'>) {
     onManualActionCompleted({ id: generateUUID(), frustrationTypes: [], ...action })
+    const trackedAction = actionTracker.createTrackedAction(action.startClocks, action.name)
+    trackedAction.stop(action.startClocks.relative)
   }
 
   function stop() {
