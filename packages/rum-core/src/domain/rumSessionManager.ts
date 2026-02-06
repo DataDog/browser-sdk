@@ -1,4 +1,4 @@
-import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
+import type { RelativeTime, SessionState, TrackingConsentState } from '@datadog/browser-core'
 import {
   BridgeCapability,
   Observable,
@@ -63,12 +63,7 @@ export function startRumSessionManager(
           }
           return {
             id: sessionState.id,
-            sessionReplay:
-              sessionState[RUM_SESSION_KEY] === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
-                ? SessionReplayState.SAMPLED
-                : sessionState.forcedReplay
-                  ? SessionReplayState.FORCED
-                  : SessionReplayState.OFF,
+            sessionReplay: computeSessionReplayState(sessionState),
             anonymousId: sessionState.anonymousId,
           }
         },
@@ -117,4 +112,14 @@ function hasValidRumSession(trackingType?: string): trackingType is RumTrackingT
     trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY ||
     trackingType === RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
   )
+}
+
+function computeSessionReplayState(sessionState: SessionState): SessionReplayState {
+  if (sessionState[RUM_SESSION_KEY] === RumTrackingType.TRACKED_WITH_SESSION_REPLAY) {
+    return SessionReplayState.SAMPLED
+  }
+  if (sessionState.forcedReplay) {
+    return SessionReplayState.FORCED
+  }
+  return SessionReplayState.OFF
 }

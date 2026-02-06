@@ -35,7 +35,6 @@ export interface SessionManager {
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
-const SESSION_CONTEXT_TIMEOUT_DELAY = SESSION_TIME_OUT_DELAY
 let stopCallbacks: Array<() => void> = []
 
 export function startSessionManager(
@@ -58,12 +57,12 @@ export function startSessionManager(
   stopCallbacks.push(() => sessionStore.stop())
 
   const sessionStateHistory = createValueHistory<SessionState>({
-    expireDelay: SESSION_CONTEXT_TIMEOUT_DELAY,
+    expireDelay: SESSION_TIME_OUT_DELAY,
   })
   stopCallbacks.push(() => sessionStateHistory.stop())
 
   // Tracking consent is always granted when the session manager is started, but it may be revoked
-  // during the async initialization (e.g., while waiting for cookie lock). We check
+  // during the async initialization (e.g., while waiting for the Web Lock). We check
   // consent status in the callback to handle this case.
   sessionStore.expandOrRenewSession(() => {
     const hasConsent = trackingConsentState.isGranted()
