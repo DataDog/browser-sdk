@@ -46,6 +46,7 @@ export interface RemoteConfigurationMetrics extends Context {
   cookie?: RemoteConfigurationMetricCounters
   dom?: RemoteConfigurationMetricCounters
   js?: RemoteConfigurationMetricCounters
+  localStorage?: RemoteConfigurationMetricCounters
 }
 
 interface RemoteConfigurationMetricCounters {
@@ -91,7 +92,10 @@ export function applyRemoteConfiguration(
   const appliedConfiguration = { ...initConfiguration } as RumInitConfiguration & { [key: string]: unknown }
   SUPPORTED_FIELDS.forEach((option: string) => {
     if (option in rumRemoteConfiguration) {
-      appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
+      const resolvedValue = resolveConfigurationProperty(rumRemoteConfiguration[option])
+      if (resolvedValue !== undefined) {
+        appliedConfiguration[option] = resolvedValue
+      }
     }
   })
   ;(Object.keys(supportedContextManagers) as Array<keyof SupportedContextManagers>).forEach((context) => {
@@ -149,6 +153,9 @@ export function applyRemoteConfiguration(
       case 'js':
         resolvedValue = resolveJsValue(property)
         break
+      case 'localStorage':
+        resolvedValue = resolveLocalStorageValue(property)
+        break
       default:
         display.error(`Unsupported remote configuration: "strategy": "${strategy as string}"`)
         return
@@ -164,6 +171,18 @@ export function applyRemoteConfiguration(
     const value = getCookie(name)
     metrics.increment('cookie', value !== undefined ? 'success' : 'missing')
     return value
+  }
+
+  function resolveLocalStorageValue({ key }: { key: string }) {
+    let value: string | null
+    try {
+      value = localStorage.getItem(key)
+    } catch {
+      metrics.increment('localStorage', 'failure')
+      return
+    }
+    metrics.increment('localStorage', value !== null ? 'success' : 'missing')
+    return value ?? undefined
   }
 
   function resolveDomValue({ selector, attribute }: { selector: string; attribute?: string }) {
