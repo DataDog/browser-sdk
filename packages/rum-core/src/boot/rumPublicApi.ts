@@ -44,12 +44,14 @@ import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
+import type { ActionContexts } from '../domain/action/trackAction'
 import type {
   AddDurationVitalOptions,
   DurationVitalReference,
   DurationVitalOptions,
   FeatureOperationOptions,
   FailureReason,
+  VitalContexts,
 } from '../domain/vital/vitalCollection'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { callPluginsMethod } from '../domain/plugins'
@@ -508,6 +510,8 @@ export interface ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     longTaskContexts: LongTaskContexts,
+    actionContexts: ActionContexts,
+    vitalContexts: VitalContexts,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) => void
 }
@@ -606,6 +610,8 @@ export function makeRumPublicApi(
         startRumResult.session,
         startRumResult.viewHistory,
         startRumResult.longTaskContexts,
+        startRumResult.actionContexts,
+        startRumResult.vitalContexts,
         createEncoder
       )
 

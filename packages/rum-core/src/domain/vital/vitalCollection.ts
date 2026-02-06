@@ -1,12 +1,15 @@
-import type { ClocksState, Duration } from '@datadog/browser-core'
+import type { ClocksState, Duration, RelativeTime } from '@datadog/browser-core'
 import {
+  addDuration,
   clocksNow,
   combine,
+  createValueHistory,
   elapsed,
   ExperimentalFeature,
   generateUUID,
   isExperimentalFeatureEnabled,
   sanitize,
+  SESSION_TIME_OUT_DELAY,
   toServerDuration,
 } from '@datadog/browser-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
@@ -15,6 +18,8 @@ import type { RawRumVitalEvent } from '../../rawRumEvent.types'
 import { RumEventType, VitalType } from '../../rawRumEvent.types'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
+
+export const VITAL_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
 /**
  * Vital options
@@ -90,6 +95,17 @@ export interface OperationStepVital extends BaseVital {
   failureReason?: string
 }
 
+export interface VitalContext {
+  id: string
+  label: string
+  duration: Duration
+  startClocks: ClocksState
+}
+
+export interface VitalContexts {
+  findVitals: (startTime: RelativeTime, duration: Duration) => VitalContext[]
+}
+
 export interface CustomVitalsState {
   vitalsByName: Map<string, DurationVitalStart>
   vitalsByReference: WeakMap<DurationVitalReference, DurationVitalStart>
@@ -106,13 +122,29 @@ export function startVitalCollection(
   pageStateHistory: PageStateHistory,
   customVitalsState: CustomVitalsState
 ) {
+  const history = createValueHistory<VitalContext>({
+    expireDelay: VITAL_ID_HISTORY_TIME_OUT_DELAY,
+  })
+
   function isValid(vital: DurationVital) {
     return !pageStateHistory.wasInPageStateDuringPeriod(PageState.FROZEN, vital.startClocks.relative, vital.duration)
   }
 
   function addDurationVital(vital: DurationVital) {
     if (isValid(vital)) {
-      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
+      const processedVital = processVital(vital)
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processedVital)
+
+      history.add(
+        {
+          id: processedVital.rawRumEvent.vital.id,
+          label: vital.name,
+          duration: vital.duration,
+          startClocks: vital.startClocks,
+        },
+        vital.startClocks.relative
+      )
+      history.closeActive(addDuration(vital.startClocks.relative, vital.duration))
     }
   }
 
@@ -141,6 +173,10 @@ export function startVitalCollection(
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital))
   }
 
+  const vitalContexts: VitalContexts = {
+    findVitals: (startTime: RelativeTime, duration: Duration) => history.findAll(startTime, duration),
+  }
+
   return {
     addOperationStepVital,
     addDurationVital,
@@ -149,6 +185,7 @@ export function startVitalCollection(
     stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
       stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
     },
+    vitalContexts,
   }
 }
 

@@ -268,6 +268,8 @@ export function startRumEventCollection(
     userContext,
     accountContext,
     longTaskContexts,
+    actionContexts: actionCollection.actionContexts,
+    vitalContexts: vitalCollection.vitalContexts,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }
