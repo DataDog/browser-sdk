@@ -77,8 +77,7 @@ export function getLastCommonCommit(baseBranch: string): string {
   try {
     command`git fetch --depth=100 origin ${baseBranch}`.run()
     const commandOutput = command`git merge-base origin/${baseBranch} HEAD`.run()
-    // SHA commit is truncated to 8 characters as bundle sizes commit are exported in short format to logs for convenience and readability.
-    return commandOutput.trim().substring(0, 8)
+    return commandOutput.trim()
   } catch (error) {
     throw new Error('Failed to get last common commit', { cause: error })
   }
