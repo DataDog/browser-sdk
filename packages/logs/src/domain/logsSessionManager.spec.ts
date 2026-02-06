@@ -12,7 +12,13 @@ import {
   SessionPersistence,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, expireCookie, getSessionState, mockClock } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  expireCookie,
+  getSessionState,
+  mockClock,
+  mockWebLocksForSyncExecution,
+} from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
 import type { LogsSessionManager } from './logsSessionManager'
@@ -29,6 +35,7 @@ describe('logs session manager', () => {
 
   beforeEach(() => {
     clock = mockClock()
+    mockWebLocksForSyncExecution()
   })
 
   afterEach(() => {

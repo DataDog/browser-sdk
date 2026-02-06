@@ -1,3 +1,4 @@
+import { createCookieObservable, createLocalStorageObservable } from '../../browser/storageObservable'
 import { clearInterval, setInterval } from '../../tools/timer'
 import { Observable } from '../../tools/observable'
 import { ONE_SECOND, dateNow } from '../../tools/utils/timeUtils'
@@ -7,12 +8,14 @@ import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
+import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
 import {
   getExpiredSessionState,
   isSessionInExpiredState,
   isSessionInNotStartedState,
   isSessionStarted,
+  toSessionState,
 } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
@@ -91,6 +94,19 @@ export function startSessionStore<TrackingType extends string>(
   const expireObservable = new Observable<void>()
   const sessionStateUpdateObservable = new Observable<{ previousState: SessionState; newState: SessionState }>()
 
+  // Event-driven sync for cross-tab changes (instant notification)
+  const storageObservable =
+    sessionStoreStrategyType.type === SessionPersistence.COOKIE
+      ? createCookieObservable(configuration, SESSION_STORE_KEY)
+      : createLocalStorageObservable(configuration, SESSION_STORE_KEY)
+
+  const storageSubscription = storageObservable.subscribe((newValue) => {
+    const sessionState = toSessionState(newValue)
+    synchronizeSession(sessionState)
+  })
+
+  // Keep polling as fallback for same-tab changes (CookieStore doesn't fire for same-tab)
+  // and for browsers without CookieStore API
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState
 
@@ -246,6 +262,7 @@ export function startSessionStore<TrackingType extends string>(
       synchronizeSession(getExpiredSessionState(sessionCache, configuration))
     },
     stop: () => {
+      storageSubscription.unsubscribe()
       clearInterval(watchSessionTimeoutId)
     },
     updateSessionState,

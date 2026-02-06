@@ -6,17 +6,15 @@ import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { HookNames } from '../../tools/abstractHooks'
 import { removeStorageListeners } from '../context/storeContextManager'
 import type { Configuration } from '../configuration'
-import type { SessionContext } from '../session/sessionManager'
 import { startUserContext } from './userContext'
 
 describe('user context', () => {
   let userContext: ContextManager
   let hooks: Hooks
   const mockSessionManager = {
-    findTrackedSession: () =>
-      ({
-        anonymousId: 'device-123',
-      }) as SessionContext<string>,
+    findTrackedSession: () => ({
+      anonymousId: 'device-123',
+    }),
   }
 
   beforeEach(() => {

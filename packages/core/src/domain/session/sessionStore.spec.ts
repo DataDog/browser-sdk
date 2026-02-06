@@ -11,7 +11,6 @@ import {
   SessionPersistence,
 } from './sessionConstants'
 import type { SessionState } from './sessionState'
-import { LOCK_RETRY_DELAY, createLock } from './sessionStoreOperations'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',
@@ -203,7 +202,7 @@ describe('session store', () => {
         return
       }
 
-      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })
+      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession: initialState })
 
       sessionStoreManager = startSessionStore(
         sessionStoreStrategyType,
@@ -424,41 +423,6 @@ describe('session store', () => {
         expect(callbackSpy).toHaveBeenCalledTimes(1)
       })
 
-      it('should execute callback after lock is released', () => {
-        const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
-        if (sessionStoreStrategyType?.type !== SessionPersistence.COOKIE) {
-          fail('Unable to initialize cookie storage')
-          return
-        }
-
-        // Create a locked session state
-        const lockedSession: SessionState = {
-          ...createSessionState(FakeTrackingType.TRACKED, FIRST_ID),
-          lock: createLock(),
-        }
-
-        sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: lockedSession })
-
-        sessionStoreManager = startSessionStore(
-          sessionStoreStrategyType,
-          DEFAULT_CONFIGURATION,
-          PRODUCT_KEY,
-          () => FakeTrackingType.TRACKED,
-          sessionStoreStrategy
-        )
-
-        const callbackSpy = jasmine.createSpy('callback')
-        sessionStoreManager.expandOrRenewSession(callbackSpy)
-
-        expect(callbackSpy).not.toHaveBeenCalled()
-
-        // Remove the lock from the session
-        sessionStoreStrategy.planRetrieveSession(0, createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
-
-        clock.tick(LOCK_RETRY_DELAY)
-
-        expect(callbackSpy).toHaveBeenCalledTimes(1)
-      })
     })
 
     describe('expand session', () => {
@@ -524,7 +488,7 @@ describe('session store', () => {
         expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).not.toHaveBeenCalled()
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalled()
+        expect(sessionStoreStrategy.expireSession).toHaveBeenCalled()
       })
 
       it('when session in cache and session not in store, should expire session', () => {
@@ -536,7 +500,7 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expectSessionToBeExpiredInStore()
         expect(expireSpy).toHaveBeenCalled()
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalled()
+        expect(sessionStoreStrategy.expireSession).toHaveBeenCalled()
       })
 
       it('when session not in cache and session in store, should do nothing', () => {
@@ -573,26 +537,6 @@ describe('session store', () => {
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(expireSpy).toHaveBeenCalled()
         expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
-      })
-
-      it('when session in store is expired first and then get updated by another tab, should expire session in cache and not touch the store', () => {
-        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
-        resetSessionInStore()
-
-        // Simulate a new session being written to the store by another tab during the watch.
-        // Watch is reading the cookie twice so we need to plan the write of the cookie at the right index
-        sessionStoreStrategy.planRetrieveSession(1, createSessionState(FakeTrackingType.TRACKED, SECOND_ID))
-
-        clock.tick(STORAGE_POLL_DELAY)
-
-        // expires session in cache
-        expect(sessionStoreManager.getSession().id).toBeUndefined()
-        expect(expireSpy).toHaveBeenCalled()
-
-        // Does not touch the store
-        // The two calls to persist session are for the lock management, these can be ignored
-        expect(sessionStoreStrategy.persistSession).toHaveBeenCalledTimes(2)
-        expect(sessionStoreStrategy.expireSession).not.toHaveBeenCalled()
       })
 
       it('when session type in cache is different than session type in store, should expire session and not touch the store', () => {
@@ -643,7 +587,7 @@ describe('session store', () => {
       const computeTrackingType: (rawTrackingType?: string) => FakeTrackingType = () => FakeTrackingType.TRACKED
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
 
-      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })
+      sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession: initialState })
 
       const sessionStoreManager = startSessionStore(
         sessionStoreStrategyType!,

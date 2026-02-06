@@ -17,6 +17,7 @@ import {
   getSessionState,
   mockEventBridge,
   mockClock,
+  mockWebLocksForSyncExecution,
   registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
@@ -39,6 +40,7 @@ describe('rum session manager', () => {
 
   beforeEach(() => {
     clock = mockClock()
+    mockWebLocksForSyncExecution()
     expireSessionSpy = jasmine.createSpy('expireSessionSpy')
     renewSessionSpy = jasmine.createSpy('renewSessionSpy')
 

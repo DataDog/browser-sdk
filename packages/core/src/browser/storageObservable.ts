@@ -1,13 +1,9 @@
-import type { Configuration, CookieStore } from '@datadog/browser-core'
-import {
-  setInterval,
-  clearInterval,
-  Observable,
-  addEventListener,
-  ONE_SECOND,
-  findCommaSeparatedValue,
-  DOM_EVENT,
-} from '@datadog/browser-core'
+import { Observable } from '../tools/observable'
+import { setInterval, clearInterval } from '../tools/timer'
+import { ONE_SECOND } from '../tools/utils/timeUtils'
+import { findCommaSeparatedValue } from '../tools/utils/stringUtils'
+import { addEventListener, DOM_EVENT } from './addEventListener'
+import type { CookieStore } from './browser.types'
 
 export interface CookieStoreWindow {
   cookieStore?: CookieStore
@@ -15,7 +11,11 @@ export interface CookieStoreWindow {
 
 export type CookieObservable = ReturnType<typeof createCookieObservable>
 
-export function createCookieObservable(configuration: Configuration, cookieName: string) {
+interface EventListenerConfiguration {
+  allowUntrustedEvents?: boolean | undefined
+}
+
+export function createCookieObservable(configuration: EventListenerConfiguration, cookieName: string) {
   const detectCookieChangeStrategy = (window as CookieStoreWindow).cookieStore
     ? listenToCookieStoreChange(configuration)
     : watchCookieFallback
@@ -25,7 +25,7 @@ export function createCookieObservable(configuration: Configuration, cookieName:
   )
 }
 
-function listenToCookieStoreChange(configuration: Configuration) {
+function listenToCookieStoreChange(configuration: EventListenerConfiguration) {
   return (cookieName: string, callback: (event: string | undefined) => void) => {
     const listener = addEventListener(
       configuration,
@@ -49,10 +49,11 @@ function listenToCookieStoreChange(configuration: Configuration) {
 export const WATCH_COOKIE_INTERVAL_DELAY = ONE_SECOND
 
 function watchCookieFallback(cookieName: string, callback: (event: string | undefined) => void) {
-  const previousCookieValue = findCommaSeparatedValue(document.cookie, cookieName)
+  let previousCookieValue = findCommaSeparatedValue(document.cookie, cookieName)
   const watchCookieIntervalId = setInterval(() => {
     const cookieValue = findCommaSeparatedValue(document.cookie, cookieName)
     if (cookieValue !== previousCookieValue) {
+      previousCookieValue = cookieValue
       callback(cookieValue)
     }
   }, WATCH_COOKIE_INTERVAL_DELAY)
@@ -60,4 +61,18 @@ function watchCookieFallback(cookieName: string, callback: (event: string | unde
   return () => {
     clearInterval(watchCookieIntervalId)
   }
+}
+
+export function createLocalStorageObservable(
+  configuration: EventListenerConfiguration,
+  key: string
+): Observable<string | undefined> {
+  return new Observable((observable) => {
+    const { stop } = addEventListener(configuration, window, DOM_EVENT.STORAGE, (event) => {
+      if (event.key === key) {
+        observable.notify(event.newValue ?? undefined)
+      }
+    })
+    return stop
+  })
 }

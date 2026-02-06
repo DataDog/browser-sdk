@@ -32,11 +32,11 @@ export function startLogsSessionManager(
     (sessionManager) => {
       onReady({
         findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
-          const session = sessionManager.findSession(startTime, options)
-          return session && session.trackingType === LoggerTrackingType.TRACKED
+          const sessionState = sessionManager.findSessionState(startTime, options)
+          return sessionState && sessionState[LOGS_SESSION_KEY] === LoggerTrackingType.TRACKED
             ? {
-                id: session.id,
-                anonymousId: session.anonymousId,
+                id: sessionState.id,
+                anonymousId: sessionState.anonymousId,
               }
             : undefined
         },
