@@ -11,7 +11,7 @@ import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { LONG_TASK_START_TIME_CORRECTION, startActionCollection } from './actionCollection'
 import { ActionNameSource } from './actionNameConstants'
-import type { ActionContexts } from './trackAction'
+import type { ActionContexts } from './actionCollection'
 
 describe('actionCollection', () => {
   const lifeCycle = new LifeCycle()

@@ -1,0 +1,178 @@
+import type { Duration, ServerDuration, Payload } from '@datadog/browser-core'
+import { ResourceType, ExperimentalFeature } from '@datadog/browser-core'
+import type { Clock } from '@datadog/browser-core/test'
+import { mockClock, SPEC_ENDPOINTS, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import { collectAndValidateRawRumEvents } from '../../../test'
+import type { RawRumResourceEvent, RawRumEvent } from '../../rawRumEvent.types'
+import { RumEventType } from '../../rawRumEvent.types'
+import { type RawRumEventCollectedData, LifeCycle } from '../lifeCycle'
+import { startEventTracker } from '../eventTracker'
+import type { ManualResourceData } from './trackManualResources'
+import { trackManualResources } from './trackManualResources'
+
+describe('trackManualResources', () => {
+  let lifeCycle: LifeCycle
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
+  let startResource: ReturnType<typeof trackManualResources>['startResource']
+  let stopResource: ReturnType<typeof trackManualResources>['stopResource']
+  let clock: Clock
+
+  beforeEach(() => {
+    clock = mockClock()
+    lifeCycle = new LifeCycle()
+
+    const resourceTracker = startEventTracker<ManualResourceData>(lifeCycle)
+    const manualResources = trackManualResources(lifeCycle, resourceTracker)
+    startResource = manualResources.startResource
+    stopResource = manualResources.stopResource
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+  })
+
+  describe('basic functionality', () => {
+    it('should create resource with duration from url-based tracking', () => {
+      startResource('https://api.example.com/data')
+      clock.tick(500)
+      stopResource('https://api.example.com/data')
+
+      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents[0].duration).toBe(500 as Duration)
+      expect(rawRumEvents[0].rawRumEvent).toEqual(
+        jasmine.objectContaining({
+          type: RumEventType.RESOURCE,
+          resource: jasmine.objectContaining({
+            url: 'https://api.example.com/data',
+            type: ResourceType.OTHER,
+          }),
+        })
+      )
+    })
+
+    it('should include duration in server format', () => {
+      startResource('https://api.example.com/data')
+      clock.tick(500)
+      stopResource('https://api.example.com/data')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.duration).toBe((500 * 1e6) as ServerDuration)
+    })
+  })
+
+  describe('resource types', () => {
+    it('should default to "other" type when not specified', () => {
+      startResource('https://api.example.com/data')
+      stopResource('https://api.example.com/data')
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.type).toBe(ResourceType.OTHER)
+    })
+    ;[ResourceType.XHR, ResourceType.FETCH, ResourceType.IMAGE, ResourceType.JS, ResourceType.CSS].forEach(
+      (resourceType) => {
+        it(`should support ${resourceType} resource type`, () => {
+          startResource('https://api.example.com/data', { type: resourceType })
+          stopResource('https://api.example.com/data')
+
+          expect(rawRumEvents).toHaveSize(1)
+          const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+          expect(resourceEvent.resource.type).toBe(resourceType)
+        })
+      }
+    )
+  })
+
+  describe('method and status_code', () => {
+    it('should include method and status_code when provided', () => {
+      startResource('https://api.example.com/data', { method: 'POST' })
+      stopResource('https://api.example.com/data', { statusCode: 200 })
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.resource.method).toBe('POST')
+      expect(resourceEvent.resource.status_code).toBe(200)
+    })
+  })
+
+  describe('resourceKey', () => {
+    it('should support resourceKey for tracking same url multiple times', () => {
+      startResource('https://api.example.com/data', { resourceKey: 'request1' })
+      startResource('https://api.example.com/data', { resourceKey: 'request2' })
+
+      clock.tick(100)
+      stopResource('https://api.example.com/data', { resourceKey: 'request2' })
+
+      clock.tick(100)
+      stopResource('https://api.example.com/data', { resourceKey: 'request1' })
+
+      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents[0].duration).toBe(100 as Duration)
+      expect(rawRumEvents[1].duration).toBe(200 as Duration)
+    })
+
+    it('should not collide between url and resourceKey', () => {
+      startResource('https://api.example.com/foo/bar')
+      startResource('https://api.example.com/foo', { resourceKey: 'bar' })
+
+      stopResource('https://api.example.com/foo/bar')
+      stopResource('https://api.example.com/foo', { resourceKey: 'bar' })
+
+      expect(rawRumEvents).toHaveSize(2)
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/foo/bar')
+      expect((rawRumEvents[1].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/foo')
+    })
+  })
+
+  describe('context merging', () => {
+    it('should merge contexts from start and stop', () => {
+      startResource('https://api.example.com/data', { context: { startKey: 'value1' } })
+      stopResource('https://api.example.com/data', { context: { stopKey: 'value2' } })
+
+      expect(rawRumEvents).toHaveSize(1)
+      const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
+      expect(resourceEvent.context).toEqual({
+        startKey: 'value1',
+        stopKey: 'value2',
+      })
+    })
+  })
+
+  describe('invalid URL handling', () => {
+    it('should not crash or emit event when URL is undefined (oversized URL)', () => {
+      startResource(undefined as any)
+      stopResource(undefined as any)
+
+      expect(rawRumEvents).toHaveSize(0)
+    })
+
+    it('should handle stopping with undefined URL but valid resourceKey', () => {
+      startResource('https://api.example.com/data', { resourceKey: 'key1' })
+      stopResource(undefined as any, { resourceKey: 'key1' })
+
+      expect(rawRumEvents).toHaveSize(1)
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/data')
+    })
+  })
+
+  describe('intake URL filtering', () => {
+    it('should filter out Datadog intake requests to prevent self-instrumentation loops', () => {
+      const intakeUrl = SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', {} as Payload)
+      startResource(intakeUrl)
+      stopResource(intakeUrl)
+
+      expect(rawRumEvents).toHaveSize(0)
+    })
+
+    it('should allow tracking intake requests when TRACK_INTAKE_REQUESTS flag is enabled', () => {
+      mockExperimentalFeatures([ExperimentalFeature.TRACK_INTAKE_REQUESTS])
+      const intakeUrl = SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', {} as Payload)
+
+      startResource(intakeUrl)
+      clock.tick(100)
+      stopResource(intakeUrl)
+
+      expect(rawRumEvents).toHaveSize(1)
+      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe(intakeUrl)
+    })
+  })
+})
