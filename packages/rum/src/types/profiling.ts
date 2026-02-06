@@ -1,4 +1,3 @@
-/* eslint-disable */
 /**
  * DO NOT MODIFY IT BY HAND. Run `yarn json-schemas:sync` instead.
  */
@@ -71,6 +70,32 @@ export interface ProfileCommonProperties {
     readonly id: string[]
   }
   /**
+   * Action properties.
+   */
+  readonly action?: {
+    /**
+     * Array of action IDs.
+     */
+    readonly id: string[]
+    /**
+     * Array of action labels.
+     */
+    readonly label: string[]
+  }
+  /**
+   * Vital properties.
+   */
+  readonly vital?: {
+    /**
+     * Array of vital IDs.
+     */
+    readonly id: string[]
+    /**
+     * Array of vital labels.
+     */
+    readonly label: string[]
+  }
+  /**
    * List of attachment filenames.
    */
   readonly attachments: string[]
@@ -134,6 +159,14 @@ export interface BrowserProfilerTrace {
    * List of detected navigation entries.
    */
   readonly views: RumViewEntry[]
+  /**
+   * List of detected actions.
+   */
+  readonly actions: RumProfilerActionEntry[]
+  /**
+   * List of detected duration vitals.
+   */
+  readonly vitals: RumProfilerVitalEntry[]
 }
 /**
  * Schema of a profiler frame from the JS Self-Profiling API.
@@ -204,7 +237,7 @@ export interface RumProfilerLongTaskEntry {
    */
   readonly id?: string
   /**
-   * Duration in ns of the long task or long animation frame.
+   * Duration in ms of the long task or long animation frame.
    */
   readonly duration: number
   /**
@@ -226,4 +259,21 @@ export interface RumViewEntry {
    * RUM view name.
    */
   readonly viewName?: string
+}
+
+// This will be replaced once rum-events-format is updated to
+// generate proper types
+
+export interface RumProfilerActionEntry {
+  readonly id: string
+  readonly label: string
+  readonly duration: number
+  startClocks: ClocksState
+}
+
+export interface RumProfilerVitalEntry {
+  readonly id: string
+  readonly label: string
+  readonly duration: number
+  startClocks: ClocksState
 }
