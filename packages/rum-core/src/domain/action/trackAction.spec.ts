@@ -18,7 +18,7 @@ describe('trackAction', () => {
   describe('createTrackedAction', () => {
     it('should have an ID, start clocks and event counts to zero', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
+      const trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
 
       expect(trackedAction.id).toBeDefined()
       expect(trackedAction.startClocks).toBe(startClocks)
@@ -29,8 +29,8 @@ describe('trackAction', () => {
 
     it('should create distinct IDs for each tracked action', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const action1 = actionTracker.createTrackedAction(startClocks)
-      const action2 = actionTracker.createTrackedAction(startClocks)
+      const action1 = actionTracker.createTrackedAction(startClocks, 'test action 1')
+      const action2 = actionTracker.createTrackedAction(startClocks, 'test action 2')
 
       expect(action1.id).not.toBe(action2.id)
     })
@@ -41,7 +41,7 @@ describe('trackAction', () => {
 
     beforeEach(() => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      trackedAction = actionTracker.createTrackedAction(startClocks)
+      trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
     })
 
     it('should count child events associated with the action', () => {
@@ -84,14 +84,14 @@ describe('trackAction', () => {
 
     it('should return the action ID when one action is active', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
+      const trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
 
       expect(actionTracker.findActionId()).toEqual([trackedAction.id])
     })
 
     it('should return undefined for actions that were stopped without end time', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
+      const trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
 
       trackedAction.stop(200 as RelativeTime)
 
@@ -100,7 +100,7 @@ describe('trackAction', () => {
 
     it('should return the action ID for events within the action time range', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
+      const trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
 
       trackedAction.stop(200 as RelativeTime)
 
@@ -109,7 +109,7 @@ describe('trackAction', () => {
 
     it('should return undefined for events outside the action time range', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
+      const trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
 
       trackedAction.stop(200 as RelativeTime)
 
@@ -117,8 +117,14 @@ describe('trackAction', () => {
     })
 
     it('should return array of IDs when multiple actions are active', () => {
-      const action1 = actionTracker.createTrackedAction({ relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp })
-      const action2 = actionTracker.createTrackedAction({ relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp })
+      const action1 = actionTracker.createTrackedAction(
+        { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp },
+        'test action 1'
+      )
+      const action2 = actionTracker.createTrackedAction(
+        { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp },
+        'test action 2'
+      )
 
       const result = actionTracker.findActionId()
 
@@ -131,7 +137,7 @@ describe('trackAction', () => {
   describe('discard', () => {
     it('should remove the action from history', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
+      const trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
 
       trackedAction.discard()
 
@@ -140,7 +146,7 @@ describe('trackAction', () => {
 
     it('should stop counting events after discard', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
+      const trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
 
       trackedAction.discard()
 
@@ -156,7 +162,7 @@ describe('trackAction', () => {
 
   describe('session renewal', () => {
     it('should clear all action IDs on session renewal', () => {
-      actionTracker.createTrackedAction({ relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp })
+      actionTracker.createTrackedAction({ relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }, 'test action')
 
       expect(actionTracker.findActionId()).toBeDefined()
 
@@ -167,7 +173,7 @@ describe('trackAction', () => {
 
     it('should stop event counting on session renewal', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
-      const trackedAction = actionTracker.createTrackedAction(startClocks)
+      const trackedAction = actionTracker.createTrackedAction(startClocks, 'test action')
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
         type: RumEventType.ERROR,
@@ -191,10 +197,13 @@ describe('trackAction', () => {
 
   describe('stop', () => {
     it('should clean up all resources', () => {
-      const trackedAction = actionTracker.createTrackedAction({
-        relative: 100 as RelativeTime,
-        timeStamp: 1000 as TimeStamp,
-      })
+      const trackedAction = actionTracker.createTrackedAction(
+        {
+          relative: 100 as RelativeTime,
+          timeStamp: 1000 as TimeStamp,
+        },
+        'test action'
+      )
 
       expect(actionTracker.findActionId()).toEqual([trackedAction.id])
 
@@ -204,10 +213,13 @@ describe('trackAction', () => {
     })
 
     it('should stop all active event count subscriptions', () => {
-      const trackedAction = actionTracker.createTrackedAction({
-        relative: 100 as RelativeTime,
-        timeStamp: 1000 as TimeStamp,
-      })
+      const trackedAction = actionTracker.createTrackedAction(
+        {
+          relative: 100 as RelativeTime,
+          timeStamp: 1000 as TimeStamp,
+        },
+        'test action'
+      )
 
       actionTracker.stop()
 

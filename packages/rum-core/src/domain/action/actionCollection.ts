@@ -54,6 +54,7 @@ export function startActionCollection(
 
   const actionContexts: ActionContexts = {
     findActionId: actionTracker.findActionId,
+    findActions: actionTracker.findActions,
   }
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {

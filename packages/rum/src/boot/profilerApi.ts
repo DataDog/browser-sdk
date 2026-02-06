@@ -6,6 +6,8 @@ import type {
   ProfilerApi,
   Hooks,
   LongTaskContexts,
+  ActionContexts,
+  VitalContexts,
 } from '@datadog/browser-rum-core'
 import type { DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import { isSampled } from '@datadog/browser-rum-core'
@@ -25,6 +27,8 @@ export function makeProfilerApi(): ProfilerApi {
     sessionManager: RumSessionManager,
     viewHistory: ViewHistory,
     longTaskContexts: LongTaskContexts,
+    actionContexts: ActionContexts,
+    vitalContexts: VitalContexts,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) {
     const session = sessionManager.findTrackedSession() // Check if the session is tracked.
@@ -67,6 +71,8 @@ export function makeProfilerApi(): ProfilerApi {
           sessionManager,
           profilingContextManager,
           longTaskContexts,
+          actionContexts,
+          vitalContexts,
           createEncoder,
           viewHistory,
           undefined

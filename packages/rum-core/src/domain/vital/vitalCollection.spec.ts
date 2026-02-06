@@ -285,5 +285,38 @@ describe('vitalCollection', () => {
         expect((rawRumEvents[0].rawRumEvent as RawRumVitalEvent).context).toEqual({ foo: 'bar' })
       })
     })
+
+    it('should track duration vital contexts', () => {
+      const now = clocksNow()
+
+      vitalCollection.addDurationVital({
+        name: 'foo',
+        type: VitalType.DURATION,
+        startClocks: now,
+        duration: 100 as Duration,
+        context: { foo: 'bar' },
+        description: 'baz',
+      })
+
+      const vitals = vitalCollection.vitalContexts.findVitals(now.relative, 100 as Duration)
+      expect(vitals).toEqual([
+        {
+          id: jasmine.any(String),
+          label: 'foo',
+          duration: 100 as Duration,
+          startClocks: now,
+        },
+      ])
+    })
+
+    it('should not track operation step vital contexts', () => {
+      mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+
+      const now = clocksNow()
+      vitalCollection.addOperationStepVital('foo', 'start')
+
+      const vitals = vitalCollection.vitalContexts.findVitals(now.relative, 100 as Duration)
+      expect(vitals).toEqual([])
+    })
   })
 })

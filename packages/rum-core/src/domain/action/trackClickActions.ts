@@ -283,7 +283,10 @@ function newClick(
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement
 ) {
-  const trackedAction: TrackedAction = actionTracker.createTrackedAction(relativeToClocks(startEvent.timeStamp))
+  const trackedAction: TrackedAction = actionTracker.createTrackedAction(
+    relativeToClocks(startEvent.timeStamp),
+    clickActionBase.name
+  )
 
   let status = ClickStatus.ONGOING
   let activityEndTime: undefined | TimeStamp
