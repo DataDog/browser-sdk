@@ -38,6 +38,7 @@ describe('trackLargestContentfulPaint', () => {
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let clock: Clock
   let mockSubParts: LargestContentfulPaint['subParts']
+  const mockResourceName = 'https://example.com/image.jpg'
 
   function startLCPTracking(options: StartLCPTrackingOptions = {}) {
     const { firstByte = 789, resources = [] } = options
@@ -52,7 +53,7 @@ describe('trackLargestContentfulPaint', () => {
     for (const resource of resources) {
       notifyPerformanceEntries([
         createPerformanceEntry(RumPerformanceEntryType.RESOURCE, {
-          name: 'https://example.com/image.jpg',
+          name: mockResourceName,
           startTime: resource.startTime as RelativeTime,
           requestStart: resource.requestStart as RelativeTime,
           responseEnd: resource.responseEnd as RelativeTime,
@@ -365,7 +366,7 @@ describe('trackLargestContentfulPaint', () => {
         notifyPerformanceEntries([
           createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT, {
             startTime: lcpTime as RelativeTime,
-            url: lcpUrl === undefined ? 'https://example.com/image.jpg' : lcpUrl,
+            url: lcpUrl === undefined ? mockResourceName : lcpUrl,
           }),
         ])
 
