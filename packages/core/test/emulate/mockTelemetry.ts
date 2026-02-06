@@ -2,7 +2,6 @@ import { startMonitorErrorCollection } from '../../src/tools/monitor'
 import {
   addTelemetryError,
   getTelemetryObservable,
-  resetTelemetry,
   type RawTelemetryEvent,
   type Telemetry,
 } from '../../src/domain/telemetry'
@@ -16,7 +15,6 @@ export interface MockTelemetry {
 }
 
 export function startMockTelemetry() {
-  resetTelemetry()
   const events: RawTelemetryEvent[] = []
 
   const telemetryObservable = getTelemetryObservable()
@@ -29,7 +27,6 @@ export function startMockTelemetry() {
 
   registerCleanupTask(() => {
     subscription.unsubscribe()
-    resetTelemetry()
   })
 
   function getEvents() {

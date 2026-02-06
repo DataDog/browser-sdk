@@ -20,7 +20,6 @@ import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { HookNames } from '../../tools/abstractHooks'
 import {
   addTelemetryError,
-  resetTelemetry,
   scrubCustomerFrames,
   formatError,
   addTelemetryConfiguration,
@@ -71,10 +70,6 @@ function startAndSpyTelemetry(
 }
 
 describe('telemetry', () => {
-  afterEach(() => {
-    resetTelemetry()
-  })
-
   it('collects "monitor" errors', async () => {
     const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {

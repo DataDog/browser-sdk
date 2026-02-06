@@ -24,6 +24,9 @@ yarn test:unit
 # Run specific test file
 yarn test:unit --spec packages/core/src/path/to/feature.spec.ts
 
+# Run tests on a specific seed
+yarn test:unit --seed 123
+
 # setup E2E tests (installs Playwright and builds test apps)
 yarn test:e2e:init
 

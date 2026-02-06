@@ -33,14 +33,29 @@ const FILES_SPECS = [
   'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
 ]
 
+const { values } = parseArgs({
+  allowPositionals: true,
+  strict: false,
+  options: {
+    spec: {
+      type: 'string',
+      multiple: true,
+    },
+    seed: {
+      type: 'string',
+    },
+  },
+})
+
 // eslint-disable-next-line import/no-default-export
 export default {
   basePath: '../..',
-  files: getFiles(),
+  files: [...FILES, ...(values.spec || FILES_SPECS)],
   frameworks: ['jasmine', 'webpack'],
   client: {
     jasmine: {
       random: true,
+      seed: values.seed,
       stopSpecOnExpectationFailure: true,
     },
   },
@@ -68,12 +83,6 @@ export default {
     devtool: false,
     mode: 'development',
     plugins: webpackConfig.plugins,
-    optimization: {
-      // By default, karma-webpack creates a bundle with one entry point for each spec file, but
-      // with all dependencies shared.  Our test suite does not support sharing dependencies, each
-      // spec bundle should include its own copy of dependencies.
-      runtimeChunk: false,
-    },
     ignoreWarnings: [
       // we will see warnings about missing exports in some files
       // this is because we set transpileOnly option in ts-loader
@@ -131,23 +140,4 @@ function overrideTsLoaderRule(module) {
   })
 
   return module
-}
-
-function getFiles() {
-  const { values } = parseArgs({
-    allowPositionals: true,
-    strict: false,
-    options: {
-      spec: {
-        type: 'string',
-        multiple: true,
-      },
-    },
-  })
-
-  if (values.spec) {
-    return FILES.concat(values.spec)
-  }
-
-  return FILES.concat(FILES_SPECS)
 }

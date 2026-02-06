@@ -19,7 +19,7 @@ import type {
 } from '../../types'
 import { NodeType, RecordType, IncrementalSource } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
-import { getReplayStats, resetReplayStats } from '../replayStats'
+import { getReplayStats } from '../replayStats'
 import type { RecordAPI } from './record'
 import { record } from './record'
 import type { EmitRecordCallback } from './record.types'
@@ -351,7 +351,6 @@ describe('record', () => {
 
   describe('updates record replay stats', () => {
     it('when recording new records', () => {
-      resetReplayStats()
       startRecording()
 
       const records = getEmittedRecords()
