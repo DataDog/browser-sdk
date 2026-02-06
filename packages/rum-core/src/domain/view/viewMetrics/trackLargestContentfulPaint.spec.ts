@@ -46,7 +46,9 @@ describe('trackLargestContentfulPaint', () => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     // This ensures getNavigationEntry() returns controlled values for subParts calculation.
-    notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, { responseStart: firstByte as RelativeTime })])
+    notifyPerformanceEntries([
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, { responseStart: firstByte as RelativeTime }),
+    ])
 
     // Add resource entries to the global performance buffer so findLcpResourceEntry can find them
     // notifyPerformanceEntries adds entries to the global buffer via mockGlobalPerformanceBuffer
@@ -235,9 +237,8 @@ describe('trackLargestContentfulPaint', () => {
         resourceUrl: undefined,
         subParts: undefined,
       })
-    });
-
-    [
+    })
+    ;[
       {
         description: 'should cap lcpResponseEnd at LCP time for resources that complete after LCP',
         firstByte: 200,
@@ -372,11 +373,13 @@ describe('trackLargestContentfulPaint', () => {
 
         const result = lcpCallback.calls.mostRecent().args[0]
 
-        expect(result.subParts).toEqual(expectedSubParts as {
-          loadDelay: RelativeTime
-          loadTime: RelativeTime
-          renderDelay: RelativeTime
-        })
+        expect(result.subParts).toEqual(
+          expectedSubParts as {
+            loadDelay: RelativeTime
+            loadTime: RelativeTime
+            renderDelay: RelativeTime
+          }
+        )
 
         // Validate: firstByte + loadDelay + loadTime + renderDelay = LCP value
         const sum = Object.values(result.subParts!).reduce((acc, curr) => acc + curr, 0)
