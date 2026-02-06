@@ -23,6 +23,13 @@ export interface ReactPluginConfiguration {
    * ```
    */
   router?: boolean
+
+  /**
+   * Enable Next.js App Router integration. Make sure to use the DatadogRumProvider from
+   * {@link @datadog/browser-rum-react/nextjs! | @datadog/browser-rum-react/nextjs}
+   * to enable automatic view tracking.
+   */
+  nextjs?: boolean
 }
 
 /**
@@ -61,7 +68,7 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}): React
       for (const subscriber of onRumInitSubscribers) {
         subscriber(globalConfiguration, globalPublicApi)
       }
-      if (configuration.router) {
+      if (configuration.router || configuration.nextjs) {
         initConfiguration.trackViewsManually = true
       }
     },
@@ -74,7 +81,7 @@ export function reactPlugin(configuration: ReactPluginConfiguration = {}): React
       }
     },
     getConfigurationTelemetry() {
-      return { router: !!configuration.router }
+      return { router: !!configuration.router, nextjs: !!configuration.nextjs }
     },
   } satisfies RumPlugin
 }

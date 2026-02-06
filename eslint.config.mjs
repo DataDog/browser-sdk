@@ -35,6 +35,7 @@ export default tseslint.config(
       'docs',
       'developer-extension/.wxt',
       'developer-extension/.output',
+      'test/apps/nextjs-app-router',
     ],
   },
 
