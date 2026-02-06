@@ -721,12 +721,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:19.2.8":
-  version: 19.2.8
-  resolution: "@types/react@npm:19.2.8"
+"@types/react@npm:19.2.9":
+  version: 19.2.9
+  resolution: "@types/react@npm:19.2.9"
   dependencies:
     csstype: "npm:^3.2.2"
-  checksum: 10c0/832834998c4ee971fca72ecf1eb95dc924ad3931a2112c687a4dae498aabd115c5fa4db09186853e34a646226b0223808c8f867df03d17601168f9cf119448de
+  checksum: 10c0/91c6839edd10ebdab4cd686d2a744e6ae078ed5831a36d48284ae92df0463c89bda1084ffdd2e6445f0716236c2c6ae0828b82f70720727632331695f4581d2a
   languageName: node
   linkType: hard
 
@@ -1041,10 +1041,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globals@npm:17.0.0":
-  version: 17.0.0
-  resolution: "globals@npm:17.0.0"
-  checksum: 10c0/e3c169fdcb0fc6755707b697afb367bea483eb29992cfc0de1637382eb893146e17f8f96db6d7453e3696b478a7863ae2000e6c71cd2f4061410285106d3847a
+"globals@npm:17.1.0":
+  version: 17.1.0
+  resolution: "globals@npm:17.1.0"
+  checksum: 10c0/4a4a17847676a09f164b8bdce7df105a4f484d6d44586e374087ba9ec7089cbf4c578b8648838dee9917074199c542ce157ea3c07b266f708dfb1652010900c8
   languageName: node
   linkType: hard
 
@@ -1395,21 +1395,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:7.12.0":
-  version: 7.12.0
-  resolution: "react-router-dom@npm:7.12.0"
+"react-router-dom@npm:7.13.0":
+  version: 7.13.0
+  resolution: "react-router-dom@npm:7.13.0"
   dependencies:
-    react-router: "npm:7.12.0"
+    react-router: "npm:7.13.0"
   peerDependencies:
     react: ">=18"
     react-dom: ">=18"
-  checksum: 10c0/48cb6e5d47e9aa91dd3982555bb84512d7048a7d1fc676a182c444d470f00b3cf9bef311c1c0f8fbc711c95cc5b3dde39b26cf8ec7feb3ebaf21a00e4cef6816
+  checksum: 10c0/759bd5e7fe7b5baba50a0264724188707682d217cad8eac702a55e0b1abebf295be014dd3bfaff8e3c2def9dfaa23e6ded3f908feab84df766e9b82cc3774e98
   languageName: node
   linkType: hard
 
-"react-router@npm:7.12.0":
-  version: 7.12.0
-  resolution: "react-router@npm:7.12.0"
+"react-router@npm:7.13.0":
+  version: 7.13.0
+  resolution: "react-router@npm:7.13.0"
   dependencies:
     cookie: "npm:^1.0.1"
     set-cookie-parser: "npm:^2.6.0"
@@ -1419,7 +1419,7 @@ __metadata:
   peerDependenciesMeta:
     react-dom:
       optional: true
-  checksum: 10c0/abde366f716cb3961a5a390c278375c0591bace5773e1b4420001f0a913b4dd53d490e7dea866acebcac2c0fa07378aa83702769d449449027406ed517a8ea00
+  checksum: 10c0/397cb009bc83d071269c8f9323bbfe1f856721fde75e39b29fe0ddfe7564ebdc3b8bbb85768321cae92ec28b406e8fac7eab7e232d0738b3b1c092e2764e4307
   languageName: node
   linkType: hard
 
@@ -1427,13 +1427,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "react-shopist@workspace:."
   dependencies:
-    "@types/react": "npm:19.2.8"
+    "@types/react": "npm:19.2.9"
     "@types/react-dom": "npm:19.2.3"
     "@vitejs/plugin-react": "npm:5.1.2"
-    globals: "npm:17.0.0"
+    globals: "npm:17.1.0"
     react: "npm:19.2.3"
     react-dom: "npm:19.2.3"
-    react-router-dom: "npm:7.12.0"
+    react-router-dom: "npm:7.13.0"
     typescript: "npm:5.9.3"
     vite: "npm:7.3.1"
   languageName: unknown
