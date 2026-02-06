@@ -1,4 +1,4 @@
-import { isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
+import { buildUrl, isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
 import type { RumConfiguration, GraphQlUrlOption } from '../configuration'
 import type { RequestCompleteEvent } from '../requestCollection'
 
@@ -6,6 +6,12 @@ import type { RequestCompleteEvent } from '../requestCollection'
  * arbitrary value, byte precision not needed
  */
 const GRAPHQL_PAYLOAD_LIMIT = 32 * ONE_KIBI_BYTE
+
+interface RawGraphQlMetadata {
+  query?: string
+  operationName?: string
+  variables?: string
+}
 
 export interface GraphQlError {
   message: string
@@ -27,7 +33,7 @@ export function extractGraphQlMetadata(
   request: RequestCompleteEvent,
   graphQlConfig: GraphQlUrlOption
 ): GraphQlMetadata | undefined {
-  const metadata = extractGraphQlRequestMetadata(request.requestBody, graphQlConfig.trackPayload)
+  const metadata = extractGraphQlRequestMetadata(request, graphQlConfig.trackPayload)
   if (!metadata) {
     return
   }
@@ -81,9 +87,25 @@ export function findGraphQlConfiguration(url: string, configuration: RumConfigur
 }
 
 export function extractGraphQlRequestMetadata(
-  requestBody: unknown,
+  request: Pick<RequestCompleteEvent, 'method' | 'url' | 'requestBody'>,
   trackPayload: boolean = false
 ): GraphQlMetadata | undefined {
+  let rawMetadata: RawGraphQlMetadata | undefined
+
+  if (request.method === 'POST') {
+    rawMetadata = extractFromBody(request.requestBody)
+  } else if (request.method === 'GET') {
+    rawMetadata = extractFromUrlQueryParams(request.url)
+  }
+
+  if (!rawMetadata) {
+    return
+  }
+
+  return sanitizeGraphQlMetadata(rawMetadata, trackPayload)
+}
+
+function extractFromBody(requestBody: unknown): RawGraphQlMetadata | undefined {
   if (!requestBody || typeof requestBody !== 'string') {
     return
   }
@@ -105,26 +127,49 @@ export function extractGraphQlRequestMetadata(
     return
   }
 
+  return {
+    query: graphqlBody.query,
+    operationName: graphqlBody.operationName,
+    variables: graphqlBody.variables ? JSON.stringify(graphqlBody.variables) : undefined,
+  }
+}
+
+function extractFromUrlQueryParams(url: string): RawGraphQlMetadata {
+  const searchParams = buildUrl(url).searchParams
+
+  return {
+    query: searchParams.get('query') || undefined,
+    operationName: searchParams.get('operationName') || undefined,
+    variables: searchParams.get('variables') || undefined,
+  }
+}
+
+function sanitizeGraphQlMetadata(rawMetadata: RawGraphQlMetadata, trackPayload: boolean): GraphQlMetadata {
   let operationType: 'query' | 'mutation' | 'subscription' | undefined
   let payload: string | undefined
+  let variables: string | undefined
 
-  if (graphqlBody.query) {
-    const trimmedQuery = graphqlBody.query.trim()
+  if (rawMetadata.query) {
+    const trimmedQuery = rawMetadata.query.trim()
     operationType = getOperationType(trimmedQuery)
     if (trackPayload) {
       payload = safeTruncate(trimmedQuery, GRAPHQL_PAYLOAD_LIMIT, '...')
     }
   }
 
-  const operationName = graphqlBody.operationName
-  let variables: string | undefined
-  if (graphqlBody.variables) {
-    variables = JSON.stringify(graphqlBody.variables)
+  if (rawMetadata.variables) {
+    try {
+      // Parse to validate it's valid JSON, then keep the string
+      JSON.parse(rawMetadata.variables)
+      variables = rawMetadata.variables
+    } catch {
+      // Invalid JSON in variables, ignore
+    }
   }
 
   return {
     operationType,
-    operationName,
+    operationName: rawMetadata.operationName,
     variables,
     payload,
   }
