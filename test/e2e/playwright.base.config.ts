@@ -1,7 +1,7 @@
 import path from 'path'
 import type { ReporterDescription, Config } from '@playwright/test'
 import { getTestReportDirectory } from '../envUtils'
-import { DEV_SERVER_BASE_URL } from './lib/helpers/playwright'
+import { DEV_SERVER_BASE_URL, NEXTJS_APP_URL } from './lib/helpers/playwright'
 
 const isCi = !!process.env.CI
 const isLocal = !isCi
@@ -32,12 +32,21 @@ export const config: Config = {
   },
 
   webServer: isLocal
-    ? {
-        stdout: 'pipe',
-        cwd: path.join(__dirname, '../..'),
-        command: 'yarn dev',
-        url: DEV_SERVER_BASE_URL,
-        reuseExistingServer: true,
-      }
+    ? [
+        {
+          stdout: 'pipe',
+          cwd: path.join(__dirname, '../..'),
+          command: 'yarn dev',
+          url: DEV_SERVER_BASE_URL,
+          reuseExistingServer: true,
+        },
+        {
+          stdout: 'pipe',
+          cwd: path.join(__dirname, '../apps/nextjs-app-router'),
+          command: 'yarn dev',
+          url: NEXTJS_APP_URL,
+          reuseExistingServer: true,
+        },
+      ]
     : undefined,
 }

@@ -32,15 +32,22 @@ yarn dev
 
 App available at http://localhost:3000
 
-## Important Notes
-
-- **Always clear cache**: Yarn caches `.tgz` files by hash. Run `yarn cache clean --all` before reinstalling.
-- **Remove node_modules**: Required for a clean install after repacking.
-- **Clear Next.js cache**: If you see stale code, run `rm -rf .next`
-
 ## Test Routes
 
 - `/` - Home page
 - `/user/42` - Dynamic route (normalizes to `/user/:id`)
 - `/tracked` - Component tracking demo
 - `/error-test` - Error boundary testing
+
+## E2E Tests
+
+E2E tests are in `test/e2e/scenario/nextjs.scenario.ts`.
+
+### Running E2E Tests
+
+```bash
+# From repo root - starts both dev servers automatically
+yarn test:e2e -g "nextjs"
+```
+
+The Playwright config automatically starts the Next.js dev server on port 3000.
