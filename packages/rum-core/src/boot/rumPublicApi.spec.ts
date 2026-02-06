@@ -618,7 +618,7 @@ describe('rum public api', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView('foo')
       const calls = await collectAsyncCalls(startViewSpy, 1)
-      expect(calls.argsFor(0)[0]).toEqual({ name: 'foo',  handlingStack: jasmine.any(String) })
+      expect(calls.argsFor(0)[0]).toEqual({ name: 'foo', handlingStack: jasmine.any(String) })
     })
 
     it('should call RUM results startView with the view options', async () => {
