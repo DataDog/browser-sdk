@@ -12,7 +12,13 @@ import {
   SessionPersistence,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, expireCookie, getSessionState, mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import {
+  createNewEvent,
+  expireCookie,
+  getSessionState,
+  mockClock,
+  mockWebLocksForSyncExecution,
+} from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
 import type { LogsSessionManager } from './logsSessionManager'
@@ -22,31 +28,6 @@ import {
   startLogsSessionManager,
   startLogsSessionManagerStub,
 } from './logsSessionManager'
-
-// Mock Web Locks API to make session operations synchronous in tests
-function mockWebLocksForSyncExecution() {
-  const originalLocks = navigator.locks
-  const mockLocks = {
-    request: (_name: string, _options: LockOptions, callback: () => void) => {
-      callback()
-      return Promise.resolve()
-    },
-  }
-
-  Object.defineProperty(navigator, 'locks', {
-    value: mockLocks,
-    writable: true,
-    configurable: true,
-  })
-
-  registerCleanupTask(() => {
-    Object.defineProperty(navigator, 'locks', {
-      value: originalLocks,
-      writable: true,
-      configurable: true,
-    })
-  })
-}
 
 describe('logs session manager', () => {
   const DURATION = 123456
