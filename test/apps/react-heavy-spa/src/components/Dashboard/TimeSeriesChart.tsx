@@ -14,7 +14,11 @@ interface TimeSeriesChartProps {
 }
 
 export default function TimeSeriesChart({ data, loading = false }: TimeSeriesChartProps) {
-  const formatTimestamp = (timestamp: number) => {
+  const formatTimestamp = (label: React.ReactNode): string => {
+    if (typeof label !== 'number') throw new Error('Unexpected label')
+
+    // Convert label to number (it will be the timestamp value from data)
+    const timestamp = Number(label)
     const date = new Date(timestamp)
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
   }

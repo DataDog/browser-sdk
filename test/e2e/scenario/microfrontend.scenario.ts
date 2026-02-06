@@ -166,6 +166,47 @@ test.describe('microfrontend', () => {
       expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
     })
 
+  createTest('expose handling stack for DD_RUM.startView')
+    .withRum(RUM_CONFIG)
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+
+      function testHandlingStack() {
+        window.DD_RUM!.startView({ name: 'test-view' })
+      }
+
+      testHandlingStack()
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const event = intakeRegistry.rumViewEvents.find((event) => event.view.name === 'test-view')
+
+      expect(event).toBeTruthy()
+      expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
+    })
+
+  createTest('expose handling stack for DD_RUM.startDurationVital')
+    .withRum(RUM_CONFIG)
+    .withRumInit((configuration) => {
+      window.DD_RUM!.init(configuration)
+
+      function testHandlingStack() {
+        const ref = window.DD_RUM!.startDurationVital('test-vital')
+        window.DD_RUM!.stopDurationVital(ref)
+      }
+
+      testHandlingStack()
+    })
+    .run(async ({ intakeRegistry, flushEvents }) => {
+      await flushEvents()
+
+      const event = intakeRegistry.rumVitalEvents.find((event) => event.vital.name === 'test-vital')
+
+      expect(event).toBeTruthy()
+      expect(event?.context?.handlingStack).toMatch(HANDLING_STACK_REGEX)
+    })
+
   test.describe('console apis', () => {
     createTest('expose handling stack for console.log')
       .withLogs(LOGS_CONFIG)
@@ -374,6 +415,32 @@ test.describe('microfrontend', () => {
         )
 
         expect(longTaskEvent).toMatchObject({ service: 'mf-service', version: '0.1.0' })
+      })
+
+    createTest('manual views should have service and version from source code context')
+      .withRum(RUM_CONFIG)
+      .withBody(createBody("window.DD_RUM.startView({ name: 'test-view' })"))
+      .run(async ({ intakeRegistry, flushEvents, page, baseUrl }) => {
+        await setSourceCodeContext(page, baseUrl)
+        await page.locator('button').click()
+        await flushEvents()
+
+        const viewEvent = intakeRegistry.rumViewEvents.find((event) => event.view.name === 'test-view')
+        expect(viewEvent).toMatchObject({ service: 'mf-service', version: '0.1.0' })
+      })
+
+    createTest('duration vitals should have service and version from source code context')
+      .withRum(RUM_CONFIG)
+      .withBody(
+        createBody("const ref = window.DD_RUM.startDurationVital('test-vital'); window.DD_RUM.stopDurationVital(ref)")
+      )
+      .run(async ({ intakeRegistry, flushEvents, page, baseUrl }) => {
+        await setSourceCodeContext(page, baseUrl)
+        await page.locator('button').click()
+        await flushEvents()
+
+        const vitalEvent = intakeRegistry.rumVitalEvents.find((event) => event.vital.name === 'test-vital')
+        expect(vitalEvent).toMatchObject({ service: 'mf-service', version: '0.1.0' })
       })
   })
 })

@@ -593,7 +593,7 @@ describe('rum public api', () => {
       })
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
       rumPublicApi.startView('foo')
-      expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo' })
+      expect(startViewSpy.calls.argsFor(0)[0]).toEqual({ name: 'foo', handlingStack: jasmine.any(String) })
     })
 
     it('should call RUM results startView with the view options', () => {
@@ -610,6 +610,7 @@ describe('rum public api', () => {
         service: 'bar',
         version: 'baz',
         context: { foo: 'bar' },
+        handlingStack: jasmine.any(String),
       })
     })
   })
@@ -685,6 +686,7 @@ describe('rum public api', () => {
       expect(startDurationVitalSpy).toHaveBeenCalledWith('foo', {
         description: 'description-value',
         context: { foo: 'bar' },
+        handlingStack: jasmine.any(String),
       })
     })
   })
@@ -827,6 +829,7 @@ describe('rum public api', () => {
         duration: 100,
         context: { foo: 'bar' },
         description: 'description-value',
+        handlingStack: jasmine.any(String),
         type: VitalType.DURATION,
       })
     })
