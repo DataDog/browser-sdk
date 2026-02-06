@@ -2,22 +2,15 @@ import type { SessionStoreStrategy } from './storeStrategies/sessionStoreStrateg
 import type { SessionState } from './sessionState'
 import { expandSessionState, isSessionInExpiredState } from './sessionState'
 
-export interface Operations {
+interface Operations {
   process: (sessionState: SessionState) => SessionState | undefined
   after?: (sessionState: SessionState) => void
 }
 
 const WEB_LOCKS_NAME = 'dd_session'
 
-let operationQueue: Array<{
-  operations: Operations
-  sessionStoreStrategy: SessionStoreStrategy
-}> = []
-let isProcessing = false
-
 export function resetSessionStoreOperations() {
-  operationQueue = []
-  isProcessing = false
+  // No-op: Web Locks API handles queuing natively. Kept for test imports.
 }
 
 export function processSessionStoreOperations(operations: Operations, sessionStoreStrategy: SessionStoreStrategy) {
@@ -25,28 +18,13 @@ export function processSessionStoreOperations(operations: Operations, sessionSto
   const useWebLocks = isLockEnabled && 'locks' in navigator
 
   if (useWebLocks) {
-    // Use Web Locks API - queue operations to process asynchronously
-    operationQueue.push({ operations, sessionStoreStrategy })
-    processNextOperation()
+    void navigator.locks.request(WEB_LOCKS_NAME, { mode: 'exclusive' }, () => {
+      executeOperations(operations, sessionStoreStrategy)
+    })
   } else {
     // No lock needed - execute synchronously for backwards compatibility
     executeOperations(operations, sessionStoreStrategy)
   }
-}
-
-function processNextOperation() {
-  if (isProcessing || operationQueue.length === 0) {
-    return
-  }
-
-  isProcessing = true
-  const { operations, sessionStoreStrategy } = operationQueue.shift()!
-
-  void navigator.locks.request(WEB_LOCKS_NAME, { mode: 'exclusive' }, () => {
-    executeOperations(operations, sessionStoreStrategy)
-    isProcessing = false
-    processNextOperation()
-  })
 }
 
 function executeOperations(operations: Operations, sessionStoreStrategy: SessionStoreStrategy) {
