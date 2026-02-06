@@ -75,7 +75,6 @@ describe('makeRecorderApi', () => {
 
     registerCleanupTask(() => {
       resetDeflateWorkerState()
-      replayStats.resetReplayStats()
     })
   }
 

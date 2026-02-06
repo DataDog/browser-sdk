@@ -8,7 +8,6 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
-  resetFetchObservable,
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -40,10 +39,6 @@ const FAKE_WORKER = {} as DeflateWorker
 const PUBLIC_API = {} as RumPublicApi
 
 describe('preStartRum', () => {
-  afterEach(() => {
-    resetFetchObservable()
-  })
-
   describe('configuration validation', () => {
     let strategy: Strategy
     let doStartRumSpy: jasmine.Spy<DoStartRum>

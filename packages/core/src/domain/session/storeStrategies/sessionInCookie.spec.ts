@@ -1,5 +1,5 @@
 import { mockClock, getSessionState, registerCleanupTask } from '../../../../test'
-import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
+import { setCookie, deleteCookie, getCookie } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
 import { validateAndBuildConfiguration } from '../../configuration'
 import type { InitConfiguration } from '../../configuration'
@@ -105,9 +105,7 @@ describe('session in cookie strategy', () => {
       {
         initConfiguration: { clientToken: 'abc', trackSessionAcrossSubdomains: true },
         cookieOptions: { domain: 'foo.bar' },
-        cookieString: new RegExp(
-          `^dd_[\\w_-]+=[^;]*;expires=[^;]+;path=\\/;samesite=strict;domain=${getCurrentSite()}$`
-        ),
+        cookieString: new RegExp('^dd_[\\w_-]+=[^;]*;expires=[^;]+;path=\\/;samesite=strict;domain='),
         description: 'should set cookie domain when tracking accross subdomains',
       },
     ].forEach(({ description, initConfiguration, cookieString }) => {

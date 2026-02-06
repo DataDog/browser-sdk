@@ -1,7 +1,7 @@
-import { display, resetTelemetry } from '@datadog/browser-core'
+import { display } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
+import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreateDeflateWorker } from './deflateWorker'
 import { startDeflateWorker, resetDeflateWorkerState, INITIALIZATION_TIME_OUT_DELAY } from './deflateWorker'
@@ -79,10 +79,6 @@ describe('startDeflateWorker', () => {
       CSP_ERROR = new DOMException(
         "Failed to construct 'Worker': Access to the script at 'blob:https://example.org/9aadbb61-effe-41ee-aa76-fc607053d642' is denied by the document's Content Security Policy."
       )
-
-      registerCleanupTask(() => {
-        resetTelemetry()
-      })
     })
 
     describe('Chrome and Safari behavior: exception during worker creation', () => {
@@ -203,10 +199,6 @@ describe('startDeflateWorker', () => {
     beforeEach(() => {
       displaySpy = spyOn(display, 'error')
       telemetry = startMockTelemetry()
-    })
-
-    afterEach(() => {
-      resetTelemetry()
     })
 
     it('displays an error message when the worker creation throws an unknown error', () => {
