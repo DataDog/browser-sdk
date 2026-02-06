@@ -11,3 +11,8 @@ export const PROD_REPLAY_SANDBOX_URL = `${PROD_REPLAY_SANDBOX_ORIGIN}/${PROD_REP
 
 export const DEV_REPLAY_SANDBOX_ORIGIN = 'https://localhost:8443'
 export const DEV_REPLAY_SANDBOX_URL = `${DEV_REPLAY_SANDBOX_ORIGIN}/static-apps/replay-sandbox/public/index.html`
+
+export const CDN_BASE_URL = 'https://www.datadoghq-browser-agent.com'
+export const CDN_RUM_URL = `${CDN_BASE_URL}/us1/v6/datadog-rum.js`
+export const CDN_RUM_SLIM_URL = `${CDN_BASE_URL}/us1/v6/datadog-rum-slim.js`
+export const CDN_LOGS_URL = `${CDN_BASE_URL}/us1/v6/datadog-logs.js`
