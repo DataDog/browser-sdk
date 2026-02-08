@@ -17,26 +17,14 @@ import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
 import { isChromium } from '../../tools/utils/browserDetection'
 import type { SessionManager } from './sessionManager'
 import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
-import {
-  SESSION_EXPIRATION_DELAY,
-  SESSION_NOT_TRACKED,
-  SESSION_TIME_OUT_DELAY,
-  SessionPersistence,
-} from './sessionConstants'
+import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { STORAGE_POLL_DELAY } from './sessionStore'
 import { createLock, LOCK_RETRY_DELAY } from './sessionStoreOperations'
 
-const enum FakeTrackingType {
-  NOT_TRACKED = SESSION_NOT_TRACKED,
-  TRACKED = 'tracked',
-}
-
 describe('startSessionManager', () => {
   const DURATION = 123456
-  const FIRST_PRODUCT_KEY = 'first'
-  const SECOND_PRODUCT_KEY = 'second'
   const STORE_TYPE: SessionStoreStrategyType = { type: SessionPersistence.COOKIE, cookieOptions: {} }
   let clock: Clock
 
@@ -50,41 +38,21 @@ describe('startSessionManager', () => {
     clock.tick(STORAGE_POLL_DELAY)
   }
 
-  function expectSessionIdToBe(sessionManager: SessionManager<FakeTrackingType>, sessionId: string) {
+  function expectSessionIdToBe(sessionManager: SessionManager, sessionId: string) {
     expect(sessionManager.findSession()!.id).toBe(sessionId)
     expect(getSessionState(SESSION_STORE_KEY).id).toBe(sessionId)
   }
 
-  function expectSessionIdToBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
+  function expectSessionIdToBeDefined(sessionManager: SessionManager) {
     expect(sessionManager.findSession()!.id).toMatch(/^[a-f0-9-]+$/)
-    expect(sessionManager.findSession()?.isExpired).toBeUndefined()
 
     expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/^[a-f0-9-]+$/)
     expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
   }
 
-  function expectSessionToBeExpired(sessionManager: SessionManager<FakeTrackingType>) {
+  function expectSessionToBeExpired(sessionManager: SessionManager) {
     expect(sessionManager.findSession()).toBeUndefined()
     expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
-  }
-
-  function expectSessionIdToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>) {
-    expect(sessionManager.findSession()!.id).toBeUndefined()
-    expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
-  }
-
-  function expectTrackingTypeToBe(
-    sessionManager: SessionManager<FakeTrackingType>,
-    productKey: string,
-    trackingType: FakeTrackingType
-  ) {
-    expect(sessionManager.findSession()!.trackingType).toEqual(trackingType)
-    expect(getSessionState(SESSION_STORE_KEY)[productKey]).toEqual(trackingType)
-  }
-
-  function expectTrackingTypeToNotBeDefined(sessionManager: SessionManager<FakeTrackingType>, productKey: string) {
-    expect(sessionManager.findSession()?.trackingType).toBeUndefined()
-    expect(getSessionState(SESSION_STORE_KEY)[productKey]).toBeUndefined()
   }
 
   beforeEach(() => {
@@ -100,13 +68,12 @@ describe('startSessionManager', () => {
 
   describe('resume from a frozen tab ', () => {
     it('when session in store, do nothing', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&first=tracked', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=abcdef', DURATION)
       const sessionManager = await startSessionManagerWithDefaults()
 
       window.dispatchEvent(createNewEvent(DOM_EVENT.RESUME))
 
       expectSessionIdToBe(sessionManager, 'abcdef')
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.TRACKED)
     })
 
     it('when session not in store, reinitialize a session in store', async () => {
@@ -124,71 +91,18 @@ describe('startSessionManager', () => {
   })
 
   describe('cookie management', () => {
-    it('when tracked, should store tracking type and session id', async () => {
+    it('should store session id', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       expectSessionIdToBeDefined(sessionManager)
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.TRACKED)
     })
 
-    it('when not tracked should store tracking type', async () => {
-      const sessionManager = await startSessionManagerWithDefaults({
-        computeTrackingType: () => FakeTrackingType.NOT_TRACKED,
-      })
-
-      expectSessionIdToNotBeDefined(sessionManager)
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
-    })
-
-    it('when tracked should keep existing tracking type and session id', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&first=tracked', DURATION)
+    it('should keep existing session id', async () => {
+      setCookie(SESSION_STORE_KEY, 'id=abcdef', DURATION)
 
       const sessionManager = await startSessionManagerWithDefaults()
 
       expectSessionIdToBe(sessionManager, 'abcdef')
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.TRACKED)
-    })
-
-    it('when not tracked should keep existing tracking type', async () => {
-      setCookie(SESSION_STORE_KEY, `first=${SESSION_NOT_TRACKED}`, DURATION)
-
-      const sessionManager = await startSessionManagerWithDefaults({
-        computeTrackingType: () => FakeTrackingType.NOT_TRACKED,
-      })
-
-      expectSessionIdToNotBeDefined(sessionManager)
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
-    })
-  })
-
-  describe('computeTrackingType', () => {
-    let spy: (rawTrackingType?: string) => FakeTrackingType
-
-    beforeEach(() => {
-      spy = jasmine.createSpy().and.returnValue(FakeTrackingType.TRACKED)
-    })
-
-    it('should be called with an empty value if the cookie is not defined', async () => {
-      await startSessionManagerWithDefaults({ computeTrackingType: spy })
-      expect(spy).toHaveBeenCalledWith(undefined)
-    })
-
-    it('should be called with an invalid value if the cookie has an invalid value', async () => {
-      setCookie(SESSION_STORE_KEY, 'first=invalid', DURATION)
-      await startSessionManagerWithDefaults({ computeTrackingType: spy })
-      expect(spy).toHaveBeenCalledWith('invalid')
-    })
-
-    it('should be called with TRACKED', async () => {
-      setCookie(SESSION_STORE_KEY, 'first=tracked', DURATION)
-      await startSessionManagerWithDefaults({ computeTrackingType: spy })
-      expect(spy).toHaveBeenCalledWith(FakeTrackingType.TRACKED)
-    })
-
-    it('should be called with NOT_TRACKED', async () => {
-      setCookie(SESSION_STORE_KEY, `first=${SESSION_NOT_TRACKED}`, DURATION)
-      await startSessionManagerWithDefaults({ computeTrackingType: spy })
-      expect(spy).toHaveBeenCalledWith(FakeTrackingType.NOT_TRACKED)
     })
   })
 
@@ -203,13 +117,11 @@ describe('startSessionManager', () => {
       expect(renewSessionSpy).not.toHaveBeenCalled()
 
       expectSessionToBeExpired(sessionManager)
-      expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
 
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
       expect(renewSessionSpy).toHaveBeenCalled()
       expectSessionIdToBeDefined(sessionManager)
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.TRACKED)
     })
 
     it('should not renew on visibility after expiration', async () => {
@@ -248,8 +160,8 @@ describe('startSessionManager', () => {
   describe('multiple startSessionManager calls', () => {
     it('should re-use the same session id', async () => {
       const [firstSessionManager, secondSessionManager] = await Promise.all([
-        startSessionManagerWithDefaults({ productKey: FIRST_PRODUCT_KEY }),
-        startSessionManagerWithDefaults({ productKey: SECOND_PRODUCT_KEY }),
+        startSessionManagerWithDefaults(),
+        startSessionManagerWithDefaults(),
       ])
 
       const idA = firstSessionManager.findSession()!.id
@@ -258,50 +170,10 @@ describe('startSessionManager', () => {
       expect(idA).toBe(idB)
     })
 
-    it('should not erase other session type', async () => {
-      await startSessionManagerWithDefaults({ productKey: FIRST_PRODUCT_KEY })
-
-      // schedule an expandOrRenewSession
-      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
-
-      clock.tick(STORAGE_POLL_DELAY / 2)
-
-      // expand first session cookie cache
-      document.dispatchEvent(createNewEvent(DOM_EVENT.VISIBILITY_CHANGE))
-
-      await startSessionManagerWithDefaults({ productKey: SECOND_PRODUCT_KEY })
-
-      // cookie correctly set
-      expect(getSessionState(SESSION_STORE_KEY).first).toBeDefined()
-      expect(getSessionState(SESSION_STORE_KEY).second).toBeDefined()
-
-      clock.tick(STORAGE_POLL_DELAY / 2)
-
-      // scheduled expandOrRenewSession should not use cached value
-      expect(getSessionState(SESSION_STORE_KEY).first).toBeDefined()
-      expect(getSessionState(SESSION_STORE_KEY).second).toBeDefined()
-    })
-
-    it('should have independent tracking types', async () => {
-      const [firstSessionManager, secondSessionManager] = await Promise.all([
-        startSessionManagerWithDefaults({
-          productKey: FIRST_PRODUCT_KEY,
-          computeTrackingType: () => FakeTrackingType.TRACKED,
-        }),
-        startSessionManagerWithDefaults({
-          productKey: SECOND_PRODUCT_KEY,
-          computeTrackingType: () => FakeTrackingType.NOT_TRACKED,
-        }),
-      ])
-
-      expect(firstSessionManager.findSession()!.trackingType).toEqual(FakeTrackingType.TRACKED)
-      expect(secondSessionManager.findSession()!.trackingType).toEqual(FakeTrackingType.NOT_TRACKED)
-    })
-
     it('should notify each expire and renew observables', async () => {
       const [firstSessionManager, secondSessionManager] = await Promise.all([
-        startSessionManagerWithDefaults({ productKey: FIRST_PRODUCT_KEY }),
-        startSessionManagerWithDefaults({ productKey: SECOND_PRODUCT_KEY }),
+        startSessionManagerWithDefaults(),
+        startSessionManagerWithDefaults(),
       ])
 
       const expireSessionASpy = jasmine.createSpy()
@@ -343,7 +215,7 @@ describe('startSessionManager', () => {
     })
 
     it('should renew an existing timed out session', async () => {
-      setCookie(SESSION_STORE_KEY, `id=abcde&first=tracked&created=${Date.now() - SESSION_TIME_OUT_DELAY}`, DURATION)
+      setCookie(SESSION_STORE_KEY, `id=abcde&created=${Date.now() - SESSION_TIME_OUT_DELAY}`, DURATION)
 
       const sessionManager = await startSessionManagerWithDefaults()
       const expireSessionSpy = jasmine.createSpy()
@@ -355,7 +227,7 @@ describe('startSessionManager', () => {
     })
 
     it('should not add created date to an existing session from an older versions', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcde&first=tracked', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=abcde', DURATION)
 
       const sessionManager = await startSessionManagerWithDefaults()
 
@@ -404,27 +276,6 @@ describe('startSessionManager', () => {
       expect(expireSessionSpy).toHaveBeenCalled()
     })
 
-    it('should expand not tracked session duration on activity', async () => {
-      const sessionManager = await startSessionManagerWithDefaults({
-        computeTrackingType: () => FakeTrackingType.NOT_TRACKED,
-      })
-      const expireSessionSpy = jasmine.createSpy()
-      sessionManager.expireObservable.subscribe(expireSessionSpy)
-
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
-
-      clock.tick(SESSION_EXPIRATION_DELAY - 10)
-      document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
-
-      clock.tick(10)
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
-      expect(expireSessionSpy).not.toHaveBeenCalled()
-
-      clock.tick(SESSION_EXPIRATION_DELAY)
-      expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
-      expect(expireSessionSpy).toHaveBeenCalled()
-    })
-
     it('should expand session on visibility', async () => {
       setPageVisibility('visible')
 
@@ -443,29 +294,6 @@ describe('startSessionManager', () => {
 
       clock.tick(10)
       expectSessionToBeExpired(sessionManager)
-      expect(expireSessionSpy).toHaveBeenCalled()
-    })
-
-    it('should expand not tracked session on visibility', async () => {
-      setPageVisibility('visible')
-
-      const sessionManager = await startSessionManagerWithDefaults({
-        computeTrackingType: () => FakeTrackingType.NOT_TRACKED,
-      })
-      const expireSessionSpy = jasmine.createSpy()
-      sessionManager.expireObservable.subscribe(expireSessionSpy)
-
-      clock.tick(3 * VISIBILITY_CHECK_DELAY)
-      setPageVisibility('hidden')
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
-      expect(expireSessionSpy).not.toHaveBeenCalled()
-
-      clock.tick(SESSION_EXPIRATION_DELAY - 10)
-      expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
-      expect(expireSessionSpy).not.toHaveBeenCalled()
-
-      clock.tick(10)
-      expectTrackingTypeToNotBeDefined(sessionManager, FIRST_PRODUCT_KEY)
       expect(expireSessionSpy).toHaveBeenCalled()
     })
   })
@@ -530,7 +358,6 @@ describe('startSessionManager', () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
       expect(sessionManager.findSession()!.id).toBeDefined()
-      expect(sessionManager.findSession()!.trackingType).toBeDefined()
     })
 
     it('should return the session context corresponding to startTime', async () => {
@@ -539,7 +366,6 @@ describe('startSessionManager', () => {
       // 0s to 10s: first session
       clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
       const firstSessionId = sessionManager.findSession()!.id
-      const firstSessionTrackingType = sessionManager.findSession()!.trackingType
       expireSessionCookie()
 
       // 10s to 20s: no session
@@ -549,13 +375,10 @@ describe('startSessionManager', () => {
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
       clock.tick(10 * ONE_SECOND)
       const secondSessionId = sessionManager.findSession()!.id
-      const secondSessionTrackingType = sessionManager.findSession()!.trackingType
 
       expect(sessionManager.findSession(clock.relative(5 * ONE_SECOND))!.id).toBe(firstSessionId)
-      expect(sessionManager.findSession(clock.relative(5 * ONE_SECOND))!.trackingType).toBe(firstSessionTrackingType)
       expect(sessionManager.findSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
       expect(sessionManager.findSession(clock.relative(25 * ONE_SECOND))!.id).toBe(secondSessionId)
-      expect(sessionManager.findSession(clock.relative(25 * ONE_SECOND))!.trackingType).toBe(secondSessionTrackingType)
     })
 
     describe('option `returnInactive` is true', () => {
@@ -695,7 +518,7 @@ describe('startSessionManager', () => {
     it('starts the session manager synchronously if the session cookie is not locked', () => {
       void startSessionManagerWithDefaults()
       expect(getSessionState(SESSION_STORE_KEY).id).toBeDefined()
-      expect(getSessionState(SESSION_STORE_KEY)[FIRST_PRODUCT_KEY]).toEqual(FakeTrackingType.TRACKED)
+      // Tracking type is no longer stored in cookies - computed on demand
     })
 
     it('delays the session manager initialization if the session cookie is locked', () => {
@@ -705,14 +528,13 @@ describe('startSessionManager', () => {
       setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
       void startSessionManagerWithDefaults()
       expect(getSessionState(SESSION_STORE_KEY).id).toBeUndefined()
-      expect(getSessionState(SESSION_STORE_KEY)[FIRST_PRODUCT_KEY]).not.toBeDefined()
 
       // Remove the lock
       setCookie(SESSION_STORE_KEY, 'id=abcde', DURATION)
       clock.tick(LOCK_RETRY_DELAY)
 
       expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcde')
-      expect(getSessionState(SESSION_STORE_KEY)[FIRST_PRODUCT_KEY]).toEqual(FakeTrackingType.TRACKED)
+      // Tracking type is no longer stored in cookies - computed on demand
     })
 
     it('should call onReady callback with session manager after lock is released', () => {
@@ -721,12 +543,10 @@ describe('startSessionManager', () => {
       }
 
       setCookie(SESSION_STORE_KEY, `lock=${createLock()}`, DURATION)
-      const onReadySpy = jasmine.createSpy<(sessionManager: SessionManager<FakeTrackingType>) => void>('onReady')
+      const onReadySpy = jasmine.createSpy<(sessionManager: SessionManager) => void>('onReady')
 
       startSessionManager(
         { sessionStoreStrategyType: STORE_TYPE } as Configuration,
-        FIRST_PRODUCT_KEY,
-        () => FakeTrackingType.TRACKED,
         createTrackingConsentState(TrackingConsent.GRANTED),
         onReadySpy
       )
@@ -744,23 +564,17 @@ describe('startSessionManager', () => {
 
   function startSessionManagerWithDefaults({
     configuration,
-    productKey = FIRST_PRODUCT_KEY,
-    computeTrackingType = () => FakeTrackingType.TRACKED,
     trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED),
   }: {
     configuration?: Partial<Configuration>
-    productKey?: string
-    computeTrackingType?: () => FakeTrackingType
     trackingConsentState?: TrackingConsentState
   } = {}) {
-    return new Promise<SessionManager<FakeTrackingType>>((resolve) => {
+    return new Promise<SessionManager>((resolve) => {
       startSessionManager(
         {
           sessionStoreStrategyType: STORE_TYPE,
           ...configuration,
         } as Configuration,
-        productKey,
-        computeTrackingType,
         trackingConsentState,
         resolve
       )

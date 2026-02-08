@@ -16,12 +16,7 @@ import { createNewEvent, expireCookie, getSessionState, mockClock } from '@datad
 
 import type { LogsConfiguration } from './configuration'
 import type { LogsSessionManager } from './logsSessionManager'
-import {
-  LOGS_SESSION_KEY,
-  LoggerTrackingType,
-  startLogsSessionManager,
-  startLogsSessionManagerStub,
-} from './logsSessionManager'
+import { startLogsSessionManager, startLogsSessionManagerStub } from './logsSessionManager'
 
 describe('logs session manager', () => {
   const DURATION = 123456
@@ -38,39 +33,35 @@ describe('logs session manager', () => {
     clock.tick(new Date().getTime())
   })
 
-  it('when tracked should store tracking type and session id', async () => {
-    await startLogsSessionManagerWithDefaults()
+  it('when tracked should store session id', async () => {
+    const logsSessionManager = await startLogsSessionManagerWithDefaults()
 
     expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]+/)
-    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
+    // Tracking type is computed on demand, not stored
+    expect(logsSessionManager.findTrackedSession()).toBeDefined()
   })
 
-  it('when not tracked should store tracking type', async () => {
-    await startLogsSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
+  it('when not tracked should still store session id and compute tracking type on demand', async () => {
+    const logsSessionManager = await startLogsSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
 
-    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.NOT_TRACKED)
+    // Session ID is always stored now
+    expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]+/)
     expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
+    // Tracking type is computed on demand
+    expect(logsSessionManager.findTrackedSession()).toBeUndefined()
   })
 
-  it('when tracked should keep existing tracking type and session id', async () => {
-    setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
+  it('when tracked should keep existing session id', async () => {
+    setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
 
-    await startLogsSessionManagerWithDefaults()
+    const logsSessionManager = await startLogsSessionManagerWithDefaults()
 
-    expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcdef')
-    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
-  })
-
-  it('when not tracked should keep existing tracking type', async () => {
-    setCookie(SESSION_STORE_KEY, 'logs=0', DURATION)
-
-    await startLogsSessionManagerWithDefaults()
-
-    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.NOT_TRACKED)
+    expect(getSessionState(SESSION_STORE_KEY).id).toBe('00000000-0000-0000-0000-000000abcdef')
+    expect(logsSessionManager.findTrackedSession()!.id).toBe('00000000-0000-0000-0000-000000abcdef')
   })
 
   it('should renew on activity after expiration', async () => {
-    await startLogsSessionManagerWithDefaults()
+    const logsSessionManager = await startLogsSessionManagerWithDefaults()
 
     expireCookie()
     expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
@@ -79,24 +70,24 @@ describe('logs session manager', () => {
     document.body.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
 
     expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]+/)
-    expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
+    expect(logsSessionManager.findTrackedSession()).toBeDefined()
   })
 
   describe('findTrackedSession', () => {
     it('should return the current active session', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
       const logsSessionManager = await startLogsSessionManagerWithDefaults()
-      expect(logsSessionManager.findTrackedSession()!.id).toBe('abcdef')
+      expect(logsSessionManager.findTrackedSession()!.id).toBe('00000000-0000-0000-0000-000000abcdef')
     })
 
     it('should return undefined if the session is not tracked', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=0', DURATION)
-      const logsSessionManager = await startLogsSessionManagerWithDefaults()
+      setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
+      const logsSessionManager = await startLogsSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
       expect(logsSessionManager.findTrackedSession()).toBeUndefined()
     })
 
     it('should not return the current session if it has expired by default', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
       const logsSessionManager = await startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
       expireCookie()
@@ -112,15 +103,17 @@ describe('logs session manager', () => {
     })
 
     it('should return session corresponding to start time', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000000001', DURATION)
       const logsSessionManager = await startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
-      setCookie(SESSION_STORE_KEY, 'id=bar&logs=1', DURATION)
+      setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000000002', DURATION)
       // simulate a click to renew the session
       document.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
       clock.tick(STORAGE_POLL_DELAY)
-      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toEqual('foo')
-      expect(logsSessionManager.findTrackedSession()!.id).toEqual('bar')
+      expect(logsSessionManager.findTrackedSession(0 as RelativeTime)!.id).toEqual(
+        '00000000-0000-0000-0000-000000000001'
+      )
+      expect(logsSessionManager.findTrackedSession()!.id).toEqual('00000000-0000-0000-0000-000000000002')
     })
   })
 
@@ -140,10 +133,11 @@ describe('logs session manager', () => {
 })
 
 describe('logger session stub', () => {
-  it('isTracked is computed at each init and getId is always undefined', () => {
+  it('isTracked is computed at each init and returns session id when tracked', () => {
     const firstLogsSessionManager = startLogsSessionManagerStub({ sessionSampleRate: 100 } as LogsConfiguration)
     expect(firstLogsSessionManager.findTrackedSession()).toBeDefined()
-    expect(firstLogsSessionManager.findTrackedSession()!.id).toBeUndefined()
+    // Stub mode now generates a session ID for deterministic sampling
+    expect(firstLogsSessionManager.findTrackedSession()!.id).toBeDefined()
 
     const secondLogsSessionManager = startLogsSessionManagerStub({ sessionSampleRate: 0 } as LogsConfiguration)
     expect(secondLogsSessionManager.findTrackedSession()).toBeUndefined()
