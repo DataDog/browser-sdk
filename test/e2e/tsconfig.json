@@ -11,6 +11,7 @@
     "lib": ["ES2022", "DOM"],
     "module": "preserve",
     "types": ["node", "ajv"],
+    "lib": ["WebWorker"],
     "allowJs": true,
     "noEmit": true,
     "allowImportingTsExtensions": true
