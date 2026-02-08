@@ -44,12 +44,16 @@ import type {
   FailureReason,
 } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
+import type { RumSessionManager } from '../domain/rumSessionManager'
+import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { callPluginsMethod } from '../domain/plugins'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export type DoStartRum = (
   configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
   deflateWorker: DeflateWorker | undefined,
   initialViewOptions: ViewOptions | undefined,
   telemetry: Telemetry,
@@ -82,6 +86,7 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
+  let sessionManager: RumSessionManager | undefined
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
 
@@ -90,13 +95,8 @@ export function createPreStartStrategy(
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedInitConfiguration || !cachedConfiguration || !sessionManager || !telemetry) {
       return
-    }
-
-    // Start telemetry only once, when we have consent and configuration
-    if (!telemetry) {
-      telemetry = startTelemetryImpl(TelemetryService.RUM, cachedConfiguration, hooks)
     }
 
     trackingConsentStateSubscription.unsubscribe()
@@ -117,7 +117,14 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions, telemetry, hooks)
+    const startRumResult = doStartRum(
+      cachedConfiguration,
+      sessionManager,
+      deflateWorker,
+      initialViewOptions,
+      telemetry,
+      hooks
+    )
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -171,7 +178,21 @@ export function createPreStartStrategy(
     initFetchObservable().subscribe(noop)
 
     trackingConsentState.tryToInit(configuration.trackingConsent)
-    tryStartRum()
+
+    trackingConsentState.onGrantedOnce(() => {
+      startTrackingConsentContext(hooks, trackingConsentState)
+      telemetry = startTelemetryImpl(TelemetryService.RUM, configuration, hooks)
+
+      if (canUseEventBridge()) {
+        sessionManager = startRumSessionManagerStub()
+        tryStartRum()
+      } else {
+        startRumSessionManager(configuration, trackingConsentState, (newSessionManager) => {
+          sessionManager = newSessionManager
+          tryStartRum()
+        })
+      }
+    })
   }
 
   const addDurationVital = (vital: DurationVital) => {

@@ -280,11 +280,11 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?:
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (initConfiguration, configuration, hooks) => {
+    (initConfiguration, configuration, logsSessionManager, hooks) => {
       const startLogsResult = startLogsImpl(
         configuration,
+        logsSessionManager,
         buildCommonContext,
-        trackingConsentState,
         bufferedDataObservable,
         hooks
       )

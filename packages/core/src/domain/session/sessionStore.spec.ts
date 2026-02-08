@@ -11,6 +11,7 @@ import {
   SessionPersistence,
 } from './sessionConstants'
 import type { SessionState } from './sessionState'
+import { LOCK_RETRY_DELAY, createLock } from './sessionStoreOperations'
 
 const enum FakeTrackingType {
   TRACKED = 'tracked',
@@ -412,6 +413,51 @@ describe('session store', () => {
         expectSessionToBeExpiredInStore()
         expect(sessionStoreManager.getSession().id).toBeUndefined()
         expect(renewSpy).not.toHaveBeenCalled()
+      })
+
+      it('should execute callback after session expansion', () => {
+        setupSessionStore(createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+
+        const callbackSpy = jasmine.createSpy('callback')
+        sessionStoreManager.expandOrRenewSession(callbackSpy)
+
+        expect(callbackSpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should execute callback after lock is released', () => {
+        const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
+        if (sessionStoreStrategyType?.type !== SessionPersistence.COOKIE) {
+          fail('Unable to initialize cookie storage')
+          return
+        }
+
+        // Create a locked session state
+        const lockedSession: SessionState = {
+          ...createSessionState(FakeTrackingType.TRACKED, FIRST_ID),
+          lock: createLock(),
+        }
+
+        sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: lockedSession })
+
+        sessionStoreManager = startSessionStore(
+          sessionStoreStrategyType,
+          DEFAULT_CONFIGURATION,
+          PRODUCT_KEY,
+          () => FakeTrackingType.TRACKED,
+          sessionStoreStrategy
+        )
+
+        const callbackSpy = jasmine.createSpy('callback')
+        sessionStoreManager.expandOrRenewSession(callbackSpy)
+
+        expect(callbackSpy).not.toHaveBeenCalled()
+
+        // Remove the lock from the session
+        sessionStoreStrategy.planRetrieveSession(0, createSessionState(FakeTrackingType.TRACKED, FIRST_ID))
+
+        clock.tick(LOCK_RETRY_DELAY)
+
+        expect(callbackSpy).toHaveBeenCalledTimes(1)
       })
     })
 

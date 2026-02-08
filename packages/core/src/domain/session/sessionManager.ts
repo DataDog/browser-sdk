@@ -21,6 +21,7 @@ import { toSessionState } from './sessionState'
 import { retrieveSessionCookie } from './storeStrategies/sessionInCookie'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
 import { retrieveSessionFromLocalStorage } from './storeStrategies/sessionInLocalStorage'
+import { resetSessionStoreOperations } from './sessionStoreOperations'
 
 export interface SessionManager<TrackingType extends string> {
   findSession: (
@@ -49,8 +50,9 @@ export function startSessionManager<TrackingType extends string>(
   configuration: Configuration,
   productKey: string,
   computeTrackingType: (rawTrackingType?: string) => TrackingType,
-  trackingConsentState: TrackingConsentState
-): SessionManager<TrackingType> {
+  trackingConsentState: TrackingConsentState,
+  onReady: (sessionManager: SessionManager<TrackingType>) => void
+) {
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
@@ -68,41 +70,58 @@ export function startSessionManager<TrackingType extends string>(
   })
   stopCallbacks.push(() => sessionContextHistory.stop())
 
-  sessionStore.renewObservable.subscribe(() => {
-    sessionContextHistory.add(buildSessionContext(), relativeNow())
-    renewObservable.notify()
-  })
-  sessionStore.expireObservable.subscribe(() => {
-    expireObservable.notify()
-    sessionContextHistory.closeActive(relativeNow())
-  })
-
-  // We expand/renew session unconditionally as tracking consent is always granted when the session
-  // manager is started.
-  sessionStore.expandOrRenewSession()
-  sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.SHORT_SESSION_INVESTIGATION)) {
-    const session = sessionStore.getSession()
-    if (session) {
-      detectSessionIdChange(configuration, session)
+  // Tracking consent is always granted when the session manager is started, but it may be revoked
+  // during the async initialization (e.g., while waiting for cookie lock). We check
+  // consent status in the callback to handle this case.
+  sessionStore.expandOrRenewSession(() => {
+    const hasConsent = trackingConsentState.isGranted()
+    if (!hasConsent) {
+      sessionStore.expire(hasConsent)
+      return
     }
-  }
 
-  trackingConsentState.observable.subscribe(() => {
-    if (trackingConsentState.isGranted()) {
-      sessionStore.expandOrRenewSession()
-    } else {
-      sessionStore.expire(false)
-    }
-  })
+    sessionStore.renewObservable.subscribe(() => {
+      sessionContextHistory.add(buildSessionContext(), relativeNow())
+      renewObservable.notify()
+    })
+    sessionStore.expireObservable.subscribe(() => {
+      expireObservable.notify()
+      sessionContextHistory.closeActive(relativeNow())
+    })
 
-  trackActivity(configuration, () => {
-    if (trackingConsentState.isGranted()) {
-      sessionStore.expandOrRenewSession()
+    sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.SHORT_SESSION_INVESTIGATION)) {
+      const session = sessionStore.getSession()
+      if (session) {
+        detectSessionIdChange(configuration, session)
+      }
     }
+
+    trackingConsentState.observable.subscribe(() => {
+      if (trackingConsentState.isGranted()) {
+        sessionStore.expandOrRenewSession()
+      } else {
+        sessionStore.expire(false)
+      }
+    })
+
+    trackActivity(configuration, () => {
+      if (trackingConsentState.isGranted()) {
+        sessionStore.expandOrRenewSession()
+      }
+    })
+    trackVisibility(configuration, () => sessionStore.expandSession())
+    trackResume(configuration, () => sessionStore.restartSession())
+
+    onReady({
+      findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
+      renewObservable,
+      expireObservable,
+      sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
+      expire: sessionStore.expire,
+      updateSessionState: sessionStore.updateSessionState,
+    })
   })
-  trackVisibility(configuration, () => sessionStore.expandSession())
-  trackResume(configuration, () => sessionStore.restartSession())
 
   function buildSessionContext() {
     const session = sessionStore.getSession()
@@ -125,20 +144,12 @@ export function startSessionManager<TrackingType extends string>(
       anonymousId: session.anonymousId,
     }
   }
-
-  return {
-    findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
-    renewObservable,
-    expireObservable,
-    sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
-    expire: sessionStore.expire,
-    updateSessionState: sessionStore.updateSessionState,
-  }
 }
 
 export function stopSessionManager() {
   stopCallbacks.forEach((e) => e())
   stopCallbacks = []
+  resetSessionStoreOperations()
 }
 
 function trackActivity(configuration: Configuration, expandOrRenewSession: () => void) {

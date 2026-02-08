@@ -570,7 +570,7 @@ export function makeRumPublicApi(
     options,
     trackingConsentState,
     customVitalsState,
-    (configuration, deflateWorker, initialViewOptions, telemetry, hooks) => {
+    (configuration, sessionManager, deflateWorker, initialViewOptions, telemetry, hooks) => {
       const createEncoder =
         deflateWorker && options.createDeflateEncoder
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
@@ -578,11 +578,11 @@ export function makeRumPublicApi(
 
       const startRumResult = startRumImpl(
         configuration,
+        sessionManager,
         recorderApi,
         profilerApi,
         initialViewOptions,
         createEncoder,
-        trackingConsentState,
         customVitalsState,
         bufferedDataObservable,
         telemetry,
@@ -593,7 +593,7 @@ export function makeRumPublicApi(
       recorderApi.onRumStart(
         startRumResult.lifeCycle,
         configuration,
-        startRumResult.session,
+        sessionManager,
         startRumResult.viewHistory,
         deflateWorker,
         startRumResult.telemetry
@@ -603,7 +603,7 @@ export function makeRumPublicApi(
         startRumResult.lifeCycle,
         startRumResult.hooks,
         configuration,
-        startRumResult.session,
+        sessionManager,
         startRumResult.viewHistory,
         startRumResult.longTaskContexts,
         createEncoder
