@@ -313,6 +313,14 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@datadog/browser-remote-config@workspace:packages/remote-config":
+  version: 0.0.0-use.local
+  resolution: "@datadog/browser-remote-config@workspace:packages/remote-config"
+  dependencies:
+    "@datadog/browser-core": "npm:6.26.0"
+  languageName: unknown
+  linkType: soft
+
 "@datadog/browser-rum-core@npm:6.26.0, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"

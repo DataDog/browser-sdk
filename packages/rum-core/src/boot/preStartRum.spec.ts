@@ -405,36 +405,6 @@ describe('preStartRum', () => {
       })
     })
 
-    describe('remote configuration', () => {
-      let interceptor: ReturnType<typeof interceptRequests>
-
-      beforeEach(() => {
-        interceptor = interceptRequests()
-      })
-
-      it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
-        interceptor.withFetch(() =>
-          Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
-          })
-        )
-        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-        doStartRumSpy.and.callFake((configuration) => {
-          expect(configuration.sessionSampleRate).toEqual(50)
-          done()
-          return {} as StartRumResult
-        })
-        strategy.init(
-          {
-            ...DEFAULT_INIT_CONFIGURATION,
-            remoteConfigurationId: '123',
-          },
-          PUBLIC_API
-        )
-      })
-    })
-
     describe('plugins', () => {
       it('calls the onInit method on provided plugins', () => {
         const plugin = { name: 'a', onInit: jasmine.createSpy() }
@@ -498,10 +468,8 @@ describe('preStartRum', () => {
 
   describe('initConfiguration', () => {
     let initConfiguration: RumInitConfiguration
-    let interceptor: ReturnType<typeof interceptRequests>
 
     beforeEach(() => {
-      interceptor = interceptRequests()
       initConfiguration = { ...DEFAULT_INIT_CONFIGURATION, service: 'my-service', version: '1.4.2', env: 'dev' }
     })
 
@@ -528,28 +496,6 @@ describe('preStartRum', () => {
       strategy.init(initConfiguration, PUBLIC_API)
 
       expect(strategy.initConfiguration).toEqual(initConfiguration)
-    })
-
-    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
-      interceptor.withFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
-        })
-      )
-      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.and.callFake(() => {
-        expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
-        done()
-        return {} as StartRumResult
-      })
-      strategy.init(
-        {
-          ...DEFAULT_INIT_CONFIGURATION,
-          remoteConfigurationId: '123',
-        },
-        PUBLIC_API
-      )
     })
   })
 
