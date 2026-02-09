@@ -73,7 +73,7 @@ export function startActionCollection(
 
     const actionId = actionContexts.findActionId(correctedStartTime)
 
-    if (!actionId) {
+    if (!actionId.length) {
       return SKIPPED
     }
 

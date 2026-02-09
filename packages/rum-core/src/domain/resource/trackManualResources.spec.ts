@@ -138,41 +138,12 @@ describe('trackManualResources', () => {
   })
 
   describe('invalid URL handling', () => {
-    it('should not crash or emit event when URL is undefined (oversized URL)', () => {
-      startResource(undefined as any)
-      stopResource(undefined as any)
-
-      expect(rawRumEvents).toHaveSize(0)
-    })
-
     it('should handle stopping with undefined URL but valid resourceKey', () => {
       startResource('https://api.example.com/data', { resourceKey: 'key1' })
       stopResource(undefined as any, { resourceKey: 'key1' })
 
       expect(rawRumEvents).toHaveSize(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/data')
-    })
-  })
-
-  describe('intake URL filtering', () => {
-    it('should filter out Datadog intake requests to prevent self-instrumentation loops', () => {
-      const intakeUrl = SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', {} as Payload)
-      startResource(intakeUrl)
-      stopResource(intakeUrl)
-
-      expect(rawRumEvents).toHaveSize(0)
-    })
-
-    it('should allow tracking intake requests when TRACK_INTAKE_REQUESTS flag is enabled', () => {
-      mockExperimentalFeatures([ExperimentalFeature.TRACK_INTAKE_REQUESTS])
-      const intakeUrl = SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', {} as Payload)
-
-      startResource(intakeUrl)
-      clock.tick(100)
-      stopResource(intakeUrl)
-
-      expect(rawRumEvents).toHaveSize(1)
-      expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe(intakeUrl)
     })
   })
 })

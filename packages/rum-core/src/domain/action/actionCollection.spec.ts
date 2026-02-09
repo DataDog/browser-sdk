@@ -172,7 +172,7 @@ describe('actionCollection', () => {
   describe('assembly hook', () => {
     ;[RumEventType.RESOURCE, RumEventType.LONG_TASK, RumEventType.ERROR].forEach((eventType) => {
       it(`should add action properties on ${eventType} from the context`, () => {
-        const actionId = '1'
+        const actionId = ['1']
         spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
         const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType,
@@ -184,7 +184,7 @@ describe('actionCollection', () => {
     })
     ;[RumEventType.VIEW, RumEventType.VITAL].forEach((eventType) => {
       it(`should not add action properties on ${eventType} from the context`, () => {
-        const actionId = '1'
+        const actionId = ['1']
         spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
         const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
           eventType,
@@ -212,22 +212,22 @@ describe('actionCollection', () => {
 
   describe('assemble telemetry hook', () => {
     it('should add action id', () => {
-      const actionId = '1'
+      const actionId = ['1']
       spyOn(actionContexts, 'findActionId').and.returnValue(actionId)
       const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
-
-      expect(telemetryEventAttributes.action?.id).toEqual(actionId)
+      // todo: fix telemetry event type
+      expect(telemetryEventAttributes.action?.id).toEqual(actionId as unknown as string)
     })
 
     it('should not add action id if the action is not found', () => {
-      spyOn(actionContexts, 'findActionId').and.returnValue(undefined)
+      spyOn(actionContexts, 'findActionId').and.returnValue([])
       const telemetryEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
         startTime: 0 as RelativeTime,
       }) as DefaultTelemetryEventAttributes
 
-      expect(telemetryEventAttributes.action?.id).toBeUndefined()
+      expect(telemetryEventAttributes.action?.id).toEqual([] as unknown as string)
     })
   })
 })
