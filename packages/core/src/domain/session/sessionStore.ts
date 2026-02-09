@@ -107,7 +107,7 @@ export function getSessionStoreStrategy(
     ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
     : sessionStoreStrategyType.type === SessionPersistence.LOCAL_STORAGE
       ? initLocalStorageStrategy(configuration)
-      : initInMemorySessionStoreStrategy()
+      : initInMemorySessionStoreStrategy(configuration)
 }
 
 /**
