@@ -5,7 +5,7 @@ import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { EventTracker } from '../eventTracker'
-import { isAllowedRequestUrl, sanitizeIfLongDataUrl } from './resourceUtils'
+import { sanitizeIfLongDataUrl } from './resourceUtils'
 
 export interface ResourceOptions {
   /**
@@ -89,10 +89,6 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
   }
 
   function startManualResource(url: string, options: ResourceOptions = {}, startClocks = clocksNow()) {
-    if (!isAllowedRequestUrl(url)) {
-      return
-    }
-
     const lookupKey = options.resourceKey ?? url
 
     resourceTracker.start(lookupKey, startClocks, {

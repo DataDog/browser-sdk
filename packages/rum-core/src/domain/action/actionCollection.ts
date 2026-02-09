@@ -8,16 +8,15 @@ import { LifeCycleEventType } from '../lifeCycle'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { startEventTracker } from '../eventTracker'
 import { trackClickActions } from './trackClickActions'
 import type { ClickAction } from './trackClickActions'
 import { trackManualActions } from './trackManualActions'
-import type { ActionEventData, ManualAction } from './trackManualActions'
+import type { ManualAction } from './trackManualActions'
 
 export type AutoAction = ClickAction
 
 export interface ActionContexts {
-  findActionId: (startTime?: RelativeTime) => string | string[] | undefined
+  findActionId: (startTime?: RelativeTime) => string[]
 }
 
 export const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
@@ -29,9 +28,6 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  // Shared event tracker for both click and manual actions
-  const actionTracker = startEventTracker<ActionEventData>(lifeCycle)
-
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
     (action) => {
@@ -40,23 +36,22 @@ export function startActionCollection(
   )
 
   let stopClickActions: () => void = noop
+  let clickActions: ReturnType<typeof trackClickActions> | undefined
 
   if (configuration.trackUserInteractions) {
-    ;({ stop: stopClickActions } = trackClickActions(
-      lifeCycle,
-      domMutationObservable,
-      windowOpenObservable,
-      configuration,
-      actionTracker
-    ))
+    clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration)
   }
 
-  const manualActions = trackManualActions(actionTracker, (action) => {
+  const manualActions = trackManualActions(lifeCycle, (action) => {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
   })
 
   const actionContexts: ActionContexts = {
-    findActionId: actionTracker.findId,
+    findActionId: (startTime?: RelativeTime) => {
+      const manualActionId = manualActions.findActionId(startTime)
+      const clickActionId = clickActions?.findActionId(startTime) ?? []
+      return [...manualActionId, ...clickActionId]
+    },
   }
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
@@ -91,7 +86,8 @@ export function startActionCollection(
   hooks.register(
     HookNames.AssembleTelemetry,
     ({ startTime }): DefaultTelemetryEventAttributes => ({
-      action: { id: actionContexts.findActionId(startTime) as string },
+      // todo: fix telemetry event type
+      action: { id: actionContexts.findActionId(startTime) as unknown as string },
     })
   )
 
@@ -103,7 +99,8 @@ export function startActionCollection(
     stop: () => {
       unsubscribeAutoAction()
       stopClickActions()
-      actionTracker.stopAll()
+      manualActions.stop()
+      clickActions?.stop()
     },
   }
 }

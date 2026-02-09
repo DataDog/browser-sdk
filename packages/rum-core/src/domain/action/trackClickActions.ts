@@ -11,8 +11,7 @@ import { getNodePrivacyLevel } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { EventTracker } from '../eventTracker'
-import type { ActionEventData } from './trackManualActions'
+import { DiscardedEvent, startEventTracker, StoppedEvent, type EventTracker } from '../eventTracker'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -51,9 +50,9 @@ export function trackClickActions(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  configuration: RumConfiguration,
-  actionTracker: EventTracker<ActionEventData>
+  configuration: RumConfiguration
 ) {
+  const actionTracker = startEventTracker<ClickActionBase>(lifeCycle)
   const stopObservable = new Observable<void>()
   let currentClickChain: ClickChain | undefined
 
@@ -88,7 +87,9 @@ export function trackClickActions(
       stopClickChain()
       stopObservable.notify()
       stopActionEventsListener()
+      actionTracker.stopAll()
     },
+    findActionId: actionTracker.findId,
   }
 
   function appendClickToClickChain(click: Click) {
@@ -159,7 +160,7 @@ function startClickAction(
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
-  actionTracker: EventTracker<ActionEventData>,
+  actionTracker: EventTracker<ClickActionBase>,
   stopObservable: Observable<void>,
   appendClickToClickChain: (click: Click) => void,
   clickActionBase: ClickActionBase,
@@ -279,7 +280,7 @@ export type Click = ReturnType<typeof newClick>
 
 function newClick(
   lifeCycle: LifeCycle,
-  actionTracker: EventTracker<ActionEventData>,
+  actionTracker: EventTracker<ClickActionBase>,
   getUserActivity: () => UserActivity,
   clickActionBase: ClickActionBase,
   startEvent: MouseEventOnElement
@@ -287,46 +288,27 @@ function newClick(
   const clickKey = generateUUID()
   const startClocks = relativeToClocks(startEvent.timeStamp)
 
-  actionTracker.start(
-    clickKey,
-    startClocks,
-    { name: '' },
-    {
-      isChildEvent: (id) => (event) =>
-        event.action !== undefined &&
-        (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
-    }
-  )
+  actionTracker.start(clickKey, startClocks, clickActionBase, {
+    isChildEvent: (id) => (event) =>
+      event.action !== undefined &&
+      (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
+  })
 
   let status = ClickStatus.ONGOING
-  let activityEndTime: undefined | TimeStamp
-  let id: string | undefined
-  let duration: Duration | undefined
-  let counts: ActionCounts | undefined
+  let actionTrackerFinishedEvent: StoppedEvent<ClickActionBase> | DiscardedEvent<ClickActionBase> | undefined
   const frustrationTypes: FrustrationType[] = []
   const stopObservable = new Observable<void>()
 
-  function stop(newActivityEndTime?: TimeStamp) {
+  function stop(activityEndTime?: TimeStamp) {
     if (status !== ClickStatus.ONGOING) {
       return
     }
-    activityEndTime = newActivityEndTime
+
     status = ClickStatus.STOPPED
 
-    if (activityEndTime) {
-      const stopped = actionTracker.stop(clickKey, relativeToClocks(getRelativeTime(activityEndTime)))
-      if (stopped) {
-        id = stopped.id
-        duration = stopped.duration
-        counts = stopped.counts
-      }
-    } else {
-      const discarded = actionTracker.discard(clickKey)
-      if (discarded) {
-        id = discarded.id
-        counts = discarded.counts
-      }
-    }
+    actionTrackerFinishedEvent = activityEndTime
+      ? actionTracker.stop(clickKey, relativeToClocks(getRelativeTime(activityEndTime)))
+      : actionTracker.discard(clickKey)
 
     stopObservable.notify()
   }
@@ -337,11 +319,10 @@ function newClick(
     stopObservable,
 
     get hasError() {
-      const currentCounts = counts ?? actionTracker.getCounts(clickKey)
-      return currentCounts ? currentCounts.errorCount > 0 : false
+      return actionTrackerFinishedEvent && actionTrackerFinishedEvent.counts!.errorCount > 0
     },
     get hasPageActivity() {
-      return activityEndTime !== undefined
+      return actionTrackerFinishedEvent && 'duration' in actionTrackerFinishedEvent
     },
     getUserActivity,
     addFrustration: (frustrationType: FrustrationType) => {
@@ -361,19 +342,16 @@ function newClick(
         return
       }
 
-      if (!id || !counts) {
+      if (!actionTrackerFinishedEvent) {
         return
       }
 
       const clickAction: ClickAction = {
-        id,
-        startClocks,
-        duration,
-        counts,
         frustrationTypes,
         events: domEvents ?? [startEvent],
         event: startEvent,
-        ...clickActionBase,
+        ...actionTrackerFinishedEvent,
+        counts: actionTrackerFinishedEvent.counts!, // This is needed to satisfy the type checker
       }
 
       lifeCycle.notify(LifeCycleEventType.AUTO_ACTION_COMPLETED, clickAction)

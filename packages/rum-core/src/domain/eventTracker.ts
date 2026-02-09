@@ -24,15 +24,13 @@ export interface StartOptions<TData> {
   isChildEvent?: (
     id: string
   ) => (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean
-  onDiscard?: (id: string, data: TData, startClocks: ClocksState) => void
 }
 
 export interface EventTracker<TData> {
   start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions<TData>) => void
   stop: (key: string, stopClocks: ClocksState, data?: Partial<TData>) => StoppedEvent<TData> | undefined
   discard: (key: string) => DiscardedEvent<TData> | undefined
-  getCounts: (key: string) => EventCounts | undefined
-  findId: (startTime?: RelativeTime) => string | string[] | undefined
+  findId: (startTime?: RelativeTime) => string[]
   stopAll: () => void
 }
 
@@ -43,7 +41,6 @@ interface TrackedEventData<TData> {
   data: TData
   historyEntry: ValueHistoryEntry<string>
   eventCounts?: ReturnType<typeof trackEventCounts>
-  onDiscard?: (id: string, data: TData, startClocks: ClocksState) => void
 }
 
 export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TData> {
@@ -52,20 +49,15 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
   // Used by manual actions and resources that use named keys to match the start and stop calls.
   const keyedEvents = new Map<string, TrackedEventData<TData>>()
 
-  function discardEvent(event: TrackedEventData<TData>) {
+  function cleanUpEvent(event: TrackedEventData<TData>) {
     keyedEvents.delete(event.key)
-    event.historyEntry.remove()
 
     event.eventCounts?.stop()
-
-    if (event.onDiscard) {
-      event.onDiscard(event.id, event.data, event.startClocks)
-    }
   }
 
   function discardAll() {
     keyedEvents.forEach((event) => {
-      discardEvent(event)
+      cleanUpEvent(event)
     })
 
     history.reset()
@@ -80,7 +72,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
     const existing = keyedEvents.get(key)
     if (existing) {
-      discardEvent(existing)
+      cleanUpEvent(existing)
     }
 
     const eventCounts = options?.isChildEvent
@@ -97,7 +89,6 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
       data,
       historyEntry,
       eventCounts,
-      onDiscard: options?.onDiscard,
     })
   }
 
@@ -115,8 +106,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
     const counts = event.eventCounts?.eventCounts
 
-    keyedEvents.delete(key)
-    event.eventCounts?.stop()
+    cleanUpEvent(event)
 
     return {
       ...finalData,
@@ -135,7 +125,9 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
     const counts = event.eventCounts?.eventCounts
 
-    discardEvent(event)
+    cleanUpEvent(event)
+
+    event.historyEntry.remove()
 
     return {
       ...event.data,
@@ -145,13 +137,8 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     }
   }
 
-  function getCounts(key: string): EventCounts | undefined {
-    return keyedEvents.get(key)?.eventCounts?.eventCounts
-  }
-
-  function findId(startTime?: RelativeTime): string | string[] | undefined {
-    const ids = history.findAll(startTime)
-    return ids.length ? ids : undefined
+  function findId(startTime?: RelativeTime): string[] {
+    return history.findAll(startTime)
   }
 
   function stopTracker() {
@@ -164,7 +151,6 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     start,
     stop,
     discard,
-    getCounts,
     findId,
     stopAll: stopTracker,
   }

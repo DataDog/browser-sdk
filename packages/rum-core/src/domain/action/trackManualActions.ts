@@ -2,8 +2,9 @@ import type { ClocksState, Context, Duration } from '@datadog/browser-core'
 import { clocksNow, generateUUID } from '@datadog/browser-core'
 import type { ActionType, FrustrationType } from '../../rawRumEvent.types'
 import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } from '../../rawRumEvent.types'
-import type { EventTracker } from '../eventTracker'
 import type { EventCounts } from '../trackEventCounts'
+import { startEventTracker } from '../eventTracker'
+import type { LifeCycle } from '../lifeCycle'
 
 export type ActionCounts = EventCounts
 
@@ -44,10 +45,8 @@ export interface ActionEventData {
   context?: Context
 }
 
-export function trackManualActions(
-  actionTracker: EventTracker<ActionEventData>,
-  onManualActionCompleted: (action: ManualAction) => void
-) {
+export function trackManualActions(lifeCycle: LifeCycle, onManualActionCompleted: (action: ManualAction) => void) {
+  const actionTracker = startEventTracker<ActionEventData>(lifeCycle)
   function startManualAction(name: string, options: ActionOptions = {}, startClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
 
@@ -97,5 +96,7 @@ export function trackManualActions(
     addAction: addInstantAction,
     startAction: startManualAction,
     stopAction: stopManualAction,
+    findActionId: actionTracker.findId,
+    stop: actionTracker.stopAll,
   }
 }
