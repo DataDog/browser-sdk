@@ -84,12 +84,12 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean | undefined
 
   /**
-   * Which storage strategy to use for persisting sessions. Can be 'cookie', 'local-storage', or 'in-memory'.
+   * Which storage strategy to use for persisting sessions. Can be 'cookie', 'local-storage', or 'memory'.
    * When an array is provided, the SDK will attempt each persistence type in the order specified.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
    *
-   * Note: 'in-memory' option is only for use with single-page applications. All page loads will start a new session, likely resulting in an increase in total number of RUM sessions
+   * Note: 'memory' option is only for use with single-page applications. All page loads will start a new session, likely resulting in an increase in total number of RUM sessions
    *
    * @category Session Persistence
    * @defaultValue "cookie"

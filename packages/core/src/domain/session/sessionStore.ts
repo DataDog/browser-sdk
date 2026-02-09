@@ -17,7 +17,7 @@ import {
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
-import { initInMemorySessionStoreStrategy, selectInMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
+import { initMemorySessionStoreStrategy, selectMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -90,8 +90,8 @@ function selectStrategyForPersistence(
     case SessionPersistence.LOCAL_STORAGE:
       return selectLocalStorageStrategy()
 
-    case SessionPersistence.IN_MEMORY:
-      return selectInMemorySessionStoreStrategy()
+    case SessionPersistence.MEMORY:
+      return selectMemorySessionStoreStrategy()
 
     default:
       display.error(`Invalid session persistence '${String(persistence)}'`)
@@ -107,7 +107,7 @@ export function getSessionStoreStrategy(
     ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
     : sessionStoreStrategyType.type === SessionPersistence.LOCAL_STORAGE
       ? initLocalStorageStrategy(configuration)
-      : initInMemorySessionStoreStrategy(configuration)
+      : initMemorySessionStoreStrategy(configuration)
 }
 
 /**

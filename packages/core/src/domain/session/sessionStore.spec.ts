@@ -119,13 +119,13 @@ describe('session store', () => {
       })
     })
 
-    describe('sessionPersistence: in-memory', () => {
-      it('returns in-memory strategy when sessionPersistence is in-memory', () => {
+    describe('sessionPersistence: memory', () => {
+      it('returns memory strategy when sessionPersistence is memory', () => {
         const sessionStoreStrategyType = selectSessionStoreStrategyType({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: SessionPersistence.IN_MEMORY,
+          sessionPersistence: SessionPersistence.MEMORY,
         })
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.IN_MEMORY }))
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
       })
     })
 
@@ -158,18 +158,14 @@ describe('session store', () => {
         expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.LOCAL_STORAGE }))
       })
 
-      it('falls back to in-memory when cookie and local storage are unavailable', () => {
+      it('falls back to memory when cookie and local storage are unavailable', () => {
         disableCookies()
         disableLocalStorage()
         const sessionStoreStrategyType = selectSessionStoreStrategyType({
           ...DEFAULT_INIT_CONFIGURATION,
-          sessionPersistence: [
-            SessionPersistence.COOKIE,
-            SessionPersistence.LOCAL_STORAGE,
-            SessionPersistence.IN_MEMORY,
-          ],
+          sessionPersistence: [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE, SessionPersistence.MEMORY],
         })
-        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.IN_MEMORY }))
+        expect(sessionStoreStrategyType).toEqual(jasmine.objectContaining({ type: SessionPersistence.MEMORY }))
       })
 
       it('returns undefined when no strategy in array is available', () => {

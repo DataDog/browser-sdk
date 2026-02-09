@@ -8,19 +8,19 @@ import type { SessionStoreStrategy, SessionStoreStrategyType } from './sessionSt
 
 /**
  * Key used to store session state in the global object.
- * This allows RUM and Logs SDKs to share the same session when using in-memory storage.
+ * This allows RUM and Logs SDKs to share the same session when using memory storage.
  */
-export const IN_MEMORY_SESSION_STORE_KEY = '_DD_SESSION'
+export const MEMORY_SESSION_STORE_KEY = '_DD_SESSION'
 
 interface GlobalObjectWithSession {
-  [IN_MEMORY_SESSION_STORE_KEY]?: SessionState
+  [MEMORY_SESSION_STORE_KEY]?: SessionState
 }
 
-export function selectInMemorySessionStoreStrategy(): SessionStoreStrategyType {
-  return { type: SessionPersistence.IN_MEMORY }
+export function selectMemorySessionStoreStrategy(): SessionStoreStrategyType {
+  return { type: SessionPersistence.MEMORY }
 }
 
-export function initInMemorySessionStoreStrategy(configuration: Configuration): SessionStoreStrategy {
+export function initMemorySessionStoreStrategy(configuration: Configuration): SessionStoreStrategy {
   return {
     expireSession: (sessionState: SessionState) => expireSessionFromMemory(sessionState, configuration),
     isLockEnabled: false,
@@ -31,15 +31,15 @@ export function initInMemorySessionStoreStrategy(configuration: Configuration): 
 
 function retrieveFromMemory(): SessionState {
   const globalObject = getGlobalObject<GlobalObjectWithSession>()
-  if (!globalObject[IN_MEMORY_SESSION_STORE_KEY]) {
-    globalObject[IN_MEMORY_SESSION_STORE_KEY] = {}
+  if (!globalObject[MEMORY_SESSION_STORE_KEY]) {
+    globalObject[MEMORY_SESSION_STORE_KEY] = {}
   }
-  return shallowClone([IN_MEMORY_SESSION_STORE_KEY])
+  return shallowClone(globalObject[MEMORY_SESSION_STORE_KEY])
 }
 
 function persistInMemory(state: SessionState): void {
   const globalObject = getGlobalObject<GlobalObjectWithSession>()
-  globalObject[IN_MEMORY_SESSION_STORE_KEY] = shallowClone(state)
+  globalObject[MEMORY_SESSION_STORE_KEY] = shallowClone(state)
 }
 
 function expireSessionFromMemory(previousSessionState: SessionState, configuration: Configuration) {

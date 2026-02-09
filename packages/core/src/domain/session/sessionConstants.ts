@@ -10,7 +10,7 @@ export const SESSION_NOT_TRACKED = '0'
  */
 export const SessionPersistence = {
   COOKIE: 'cookie',
-  IN_MEMORY: 'in-memory',
+  MEMORY: 'memory',
   LOCAL_STORAGE: 'local-storage',
 } as const
 
