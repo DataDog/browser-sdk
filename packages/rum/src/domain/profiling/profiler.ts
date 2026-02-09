@@ -61,15 +61,38 @@ export function createRumProfiler(
 
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
 
-  // Stops the profiler when session expires
+  // Flags to handle race condition between SESSION_EXPIRED and SESSION_RENEWED.
+  // When SESSION_RENEWED fires while stopProfiling() is still in progress, the state check
+  // (instance.state === 'stopped') fails because the async stop hasn't completed yet.
+  // We use these flags to detect this situation and defer the restart until stop completes.
+  let stoppingForSessionExpiration = false
+  let sessionRenewedWhileStopping = false
+
   lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-    stopProfiling('session-expired').catch(monitorError)
+    stoppingForSessionExpiration = true
+    sessionRenewedWhileStopping = false
+    stopProfiling('session-expired')
+      .then(() => {
+        // stopProfiling is async, so SESSION_RENEWED may have fired while we were stopping.
+        // If so, sessionRenewedWhileStopping was set to true by the SESSION_RENEWED handler,
+        // and we need to restart here since the handler couldn't do it directly.
+        if (sessionRenewedWhileStopping) {
+          sessionRenewedWhileStopping = false
+          start()
+        }
+        stoppingForSessionExpiration = false
+      })
+      .catch(monitorError)
   })
 
-  // Start the profiler again when session is renewed
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
-    if (instance.state === 'stopped' && instance.stateReason === 'session-expired') {
-      start() // Only restart the profiler if it was stopped due to session expiration. Avoid restarting the profiler if it was stopped manually by the user.
+    if (stoppingForSessionExpiration) {
+      // stopProfiling() is still in progress - we can't restart now.
+      // Set flag so the SESSION_EXPIRED handler restarts after stop completes.
+      sessionRenewedWhileStopping = true
+    } else if (instance.state === 'stopped' && instance.stateReason === 'session-expired') {
+      // Normal case: profiler already stopped, restart it.
+      start()
     }
   })
 

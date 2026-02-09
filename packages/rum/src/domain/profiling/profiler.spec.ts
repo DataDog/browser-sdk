@@ -572,6 +572,40 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
   })
 
+  it('should restart profiling when session renews while stop is still in progress', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Session expires while profiler is running
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    // At this point, the async stopProfilerInstance is in progress
+    // The state should still be 'running' because the await hasn't completed
+    expect(profiler.isRunning()).toBe(true)
+
+    // Session renews IMMEDIATELY - before stopProfilerInstance completes its async work
+    // This simulates the race condition where user activity triggers renewal
+    // while the profiler is still collecting data during stop
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    // Allow all async operations to complete
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // The profiler should have restarted despite the race condition
+    expect(profiler.isRunning()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Clean up
+    await profiler.stop()
+    await waitForBoolean(() => profiler.isStopped())
+  })
+
   it('should restart profiling when session expires while paused and then renews', async () => {
     const { profiler, profilingContextManager } = setupProfiler()
 
