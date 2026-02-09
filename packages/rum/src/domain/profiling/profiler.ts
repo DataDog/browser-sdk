@@ -255,6 +255,11 @@ export function createRumProfiler(
   }
 
   async function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
+    if (instance.state === 'paused') {
+      // If paused, profiler data was already collected during pause, just update state
+      instance = { state: 'stopped', stateReason }
+      return
+    }
     if (instance.state !== 'running') {
       return
     }

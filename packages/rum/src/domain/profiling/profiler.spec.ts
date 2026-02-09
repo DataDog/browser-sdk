@@ -571,6 +571,43 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
   })
+
+  it('should restart profiling when session expires while paused and then renews', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Pause the profiler by hiding the tab
+    setVisibilityState('hidden')
+
+    // Wait for profiler to pause
+    await waitForBoolean(() => profiler.isPaused())
+
+    // Session expires while profiler is paused
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    // Wait for profiler to stop
+    await waitForBoolean(() => profiler.isStopped())
+
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Session is renewed
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    // Wait for profiler to restart
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Clean up
+    await profiler.stop()
+    await waitForBoolean(() => profiler.isStopped())
+  })
 })
 
 function waitForBoolean(booleanCallback: () => boolean) {
