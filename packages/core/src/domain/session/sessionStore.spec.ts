@@ -121,8 +121,6 @@ describe('session store', () => {
 
     describe('sessionPersistence: in-memory', () => {
       it('returns in-memory strategy when sessionPersistence is in-memory', () => {
-        disableLocalStorage()
-        disableCookies()
         const sessionStoreStrategyType = selectSessionStoreStrategyType({
           ...DEFAULT_INIT_CONFIGURATION,
           sessionPersistence: SessionPersistence.IN_MEMORY,
