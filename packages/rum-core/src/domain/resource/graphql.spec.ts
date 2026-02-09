@@ -94,7 +94,10 @@ describe('GraphQL detection and metadata extraction', () => {
     })
 
     it('should return undefined for invalid JSON in POST body', () => {
-      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody: 'not valid json' }, true)
+      const result = extractGraphQlRequestMetadata(
+        { method: 'POST', url: '/graphql', requestBody: 'not valid json' },
+        true
+      )
       expect(result).toBeUndefined()
     })
 
@@ -203,7 +206,10 @@ describe('GraphQL detection and metadata extraction', () => {
     })
 
     it('should return metadata with undefined fields for GET request with URL that has no GraphQL params', () => {
-      const result = extractGraphQlRequestMetadata({ method: 'GET', url: 'http://example.com/graphql', requestBody: undefined }, false)
+      const result = extractGraphQlRequestMetadata(
+        { method: 'GET', url: 'http://example.com/graphql', requestBody: undefined },
+        false
+      )
 
       expect(result).toEqual({
         operationType: undefined,
@@ -214,7 +220,10 @@ describe('GraphQL detection and metadata extraction', () => {
     })
 
     it('should return metadata with undefined fields for GET request with URL with unrelated query params', () => {
-      const result = extractGraphQlRequestMetadata({ method: 'GET', url: 'http://example.com/graphql?foo=bar&baz=qux', requestBody: undefined }, false)
+      const result = extractGraphQlRequestMetadata(
+        { method: 'GET', url: 'http://example.com/graphql?foo=bar&baz=qux', requestBody: undefined },
+        false
+      )
 
       expect(result).toEqual({
         operationType: undefined,
@@ -239,7 +248,10 @@ describe('GraphQL detection and metadata extraction', () => {
 
     it('should return undefined for unsupported HTTP methods', () => {
       const requestBody = JSON.stringify({ query: 'query GetUser { user { id } }' })
-      const result = extractGraphQlRequestMetadata({ method: 'PUT', url: 'http://example.com/graphql', requestBody }, true)
+      const result = extractGraphQlRequestMetadata(
+        { method: 'PUT', url: 'http://example.com/graphql', requestBody },
+        true
+      )
       expect(result).toBeUndefined()
     })
   })
