@@ -1,4 +1,4 @@
-import { SESSION_STORE_KEY } from '@datadog/browser-core'
+import { SESSION_STORE_KEY, MEMORY_SESSION_STORE_KEY } from '@datadog/browser-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
@@ -211,6 +211,21 @@ test.describe('Session Stores', () => {
       })
   })
 
+  test.describe('Memory', () => {
+    createTest('uses memory to store the session')
+      .withLogs({ sessionPersistence: 'memory' })
+      .withRum({ sessionPersistence: 'memory' })
+      .run(async ({ page }) => {
+        const sessionId = await getSessionIdFromMemory(page)
+
+        const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
+        const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
+
+        expect(logsContext?.session_id).toBe(sessionId)
+        expect(rumContext?.session_id).toBe(sessionId)
+      })
+  })
+
   createTest('allowFallbackToLocalStorage (deprecated)')
     .withLogs({ allowFallbackToLocalStorage: true })
     .withRum({ allowFallbackToLocalStorage: true })
@@ -224,11 +239,33 @@ test.describe('Session Stores', () => {
       expect(logsContext?.session_id).toBe(sessionId)
       expect(rumContext?.session_id).toBe(sessionId)
     })
+
+  createTest('sessionPersistence fallback')
+    .withLogs({ sessionPersistence: ['local-storage', 'memory'] })
+    .withRum({ sessionPersistence: ['local-storage', 'memory'] })
+    .withHead(DISABLE_LOCAL_STORAGE)
+    .run(async ({ page }) => {
+      const sessionId = await getSessionIdFromMemory(page)
+
+      const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
+      const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
+
+      expect(logsContext?.session_id).toBe(sessionId)
+      expect(rumContext?.session_id).toBe(sessionId)
+    })
 })
 
 async function getSessionIdFromLocalStorage(page: Page): Promise<string | undefined> {
   const sessionStateString = await page.evaluate((key) => window.localStorage.getItem(key), SESSION_STORE_KEY)
   return sessionStateString?.match(SESSION_ID_REGEX)?.[1]
+}
+
+async function getSessionIdFromMemory(page: Page): Promise<string | undefined> {
+  const sessionState = await page.evaluate(
+    (key) => (window as any)[key] as { id: string } | undefined,
+    MEMORY_SESSION_STORE_KEY
+  )
+  return sessionState?.id
 }
 
 async function getSessionIdFromCookie(browserContext: BrowserContext): Promise<string | undefined> {
