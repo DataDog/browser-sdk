@@ -10,8 +10,7 @@ The extension is available to **Datadog employees** on the [Chrome Web Store](ht
 
 ### By loading the extension unpacked
 
-The packed extension is not (yet?) published publicly. You will need to clone this repository and
-build the extension manually.
+You will need to clone this repository and build the extension manually.
 
 ```
 $ git clone https://github.com/DataDog/browser-sdk
@@ -20,13 +19,25 @@ $ yarn
 $ yarn build
 ```
 
-Then, in Google Chrome:
+There are two ways to use the extension:
 
-- Open the _Extension Management_ page by navigating to [chrome://extensions](chrome://extensions).
-- Enable _Developer Mode_ by clicking the toggle switch next to _Developer mode_.
-- Click the _LOAD UNPACKED_ button and select the `browser-sdk/developer-extension/dist`
-  directory.
-- Open devtools and the extension features are located on the `Browser SDK` panel.
+#### Option A: Use the auto-launched browser (recommended for development)
+
+1. cd into the `developer-extension` folder.
+2. Run `yarn dev`.
+3. A Chrome browser window with the developer extension loaded opens automatically.
+4. After you make a change, right-click on the extension UI and select **"Reload frame"** to see your updates.
+
+#### Option B: Load the unpacked extension manually
+
+If you prefer to load the extension into your own Chrome profile:
+
+1. Run `yarn build` from the `developer-extension` folder.
+2. In Chrome, go to [chrome://extensions](chrome://extensions), enable **Developer Mode**, click **Load unpacked**.
+3. Navigate to the `developer-extension` folder.
+4. Press **⌘ + Shift + .** to reveal hidden files.
+5. Open the `.output/chrome-mv3/` folder.
+6. Open devtools — the extension features are located on the **Browser SDK** panel.
 
 ## Features
 
@@ -100,3 +111,5 @@ To work on the developer extension and debug it easily:
 2. Run `yarn dev`.
 
 3. A Chrome browser window with the developer extension loaded opens.
+
+> **Tip:** If you are running `yarn dev` and want to load the extension into your own Chrome profile, you can load the `.output/chrome-mv3-dev/` folder instead of `.output/chrome-mv3/`. This dev build includes hot reload support.
