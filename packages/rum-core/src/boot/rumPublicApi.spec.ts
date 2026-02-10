@@ -1,12 +1,5 @@
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  display,
-  DefaultPrivacyLevel,
-  timeStampToClocks,
-  stopSessionManager,
-  ExperimentalFeature,
-} from '@datadog/browser-core'
+import { ONE_SECOND, display, DefaultPrivacyLevel, timeStampToClocks, ExperimentalFeature } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
@@ -15,7 +8,7 @@ import {
   createFakeTelemetryObject,
   mockExperimentalFeatures,
 } from '@datadog/browser-core/test'
-import { noopRecorderApi, noopProfilerApi } from '../../test'
+import { noopRecorderApi, noopProfilerApi, createRumStartSessionManagerMock } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
@@ -56,10 +49,6 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
-  afterEach(() => {
-    stopSessionManager()
-  })
-
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
@@ -1052,7 +1041,8 @@ function makeRumPublicApiWithDefaults({
       { ...noopRecorderApi, ...recorderApi },
       { ...noopProfilerApi, ...profilerApi },
       rumPublicApiOptions,
-      createFakeTelemetryObject
+      createFakeTelemetryObject,
+      createRumStartSessionManagerMock()
     ),
   }
 }

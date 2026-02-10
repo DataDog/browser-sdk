@@ -15,7 +15,7 @@ import {
   display,
   resetFetchObservable,
 } from '@datadog/browser-core'
-import { createLogsSessionManagerMock } from '../../test/mockLogsSessionManager'
+import { createLogStartSessionManagerMock } from '../../test/mockLogsSessionManager'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
@@ -306,7 +306,7 @@ function createPreStartStrategyWithDefaults({
       trackingConsentState,
       doStartLogsSpy,
       startTelemetrySpy,
-      (_config, _consent, onReady) => onReady(createLogsSessionManagerMock())
+      createLogStartSessionManagerMock()
     ),
     startTelemetrySpy,
     handleLogSpy,
