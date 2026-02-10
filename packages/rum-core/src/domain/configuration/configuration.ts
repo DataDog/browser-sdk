@@ -548,6 +548,9 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     remote_configuration_id: configuration.remoteConfigurationId,
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
+    use_soft_navigation:
+      Array.isArray(configuration.enableExperimentalFeatures) &&
+      configuration.enableExperimentalFeatures.includes('soft_navigation'),
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }
