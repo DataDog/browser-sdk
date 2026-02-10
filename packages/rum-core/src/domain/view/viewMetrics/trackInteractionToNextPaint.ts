@@ -1,4 +1,4 @@
-import { elapsed, noop, ONE_MINUTE } from '@datadog/browser-core'
+import { elapsed, noop, ONE_MINUTE, ExperimentalFeature, isExperimentalFeatureEnabled } from '@datadog/browser-core'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   createPerformanceObservable,
@@ -67,6 +67,7 @@ export function trackInteractionToNextPaint(
   let interactionToNextPaint = -1 as Duration
   let interactionToNextPaintTargetSelector: string | undefined
   let interactionToNextPaintStartTime: Duration | undefined
+  let interactionToNextPaintSubParts: InteractionToNextPaint['subParts'] | undefined
 
   // Entry grouping for subparts calculation
   const groupsByInteractionId = new Map<number, EntriesGroup>()
@@ -116,6 +117,36 @@ export function trackInteractionToNextPaint(
     })
   }
 
+  function computeInpSubParts(
+    entry: RumPerformanceEventTiming | RumFirstInputTiming,
+    inpDuration: Duration
+  ): InteractionToNextPaint['subParts'] | undefined {
+    if (!entry.processingStart || !entry.processingEnd) {
+      return undefined
+    }
+
+    // Get group timing by interactionId (or use individual entry if no group)
+    const group = entry.interactionId ? groupsByInteractionId.get(entry.interactionId) : undefined
+
+    const { startTime, processingStart, processingEnd: processingEndRaw } = group || entry;
+
+    // Prevents reported value to happen before processingStart.
+    // We group values around startTime +/- RENDER_TIME_GROUPING_THRESHOLD duration so some entries can be before processingStart.
+    const nextPaintTime = Math.max(
+      (entry.startTime + inpDuration) as RelativeTime,
+      processingStart
+    ) as RelativeTime
+
+    // Clamp processingEnd to not exceed nextPaintTime
+    const processingEnd = Math.min(processingEndRaw, nextPaintTime) as RelativeTime
+
+    return {
+      inputDelay: elapsed(startTime, processingStart),
+      processingDuration: elapsed(processingStart, processingEnd),
+      presentationDelay: elapsed(processingEnd, nextPaintTime),
+    }
+  }
+
   function handleEntries(entries: Array<RumPerformanceEventTiming | RumFirstInputTiming>) {
     for (const entry of entries) {
       if (
@@ -130,15 +161,23 @@ export function trackInteractionToNextPaint(
     }
 
     const newInteraction = longestInteractions.estimateP98Interaction()
-    if (newInteraction && newInteraction.duration !== interactionToNextPaint) {
+
+    if (newInteraction) {
+      if (newInteraction.duration !== interactionToNextPaint) {
       interactionToNextPaint = newInteraction.duration
       interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
       interactionToNextPaintTargetSelector = getInteractionSelector(newInteraction.startTime)
+
       if (!interactionToNextPaintTargetSelector && newInteraction.target && isElementNode(newInteraction.target)) {
         interactionToNextPaintTargetSelector = getSelectorFromElement(
           newInteraction.target,
           configuration.actionNameAttribute
         )
+        }
+      }
+
+      if (isExperimentalFeatureEnabled(ExperimentalFeature.INP_SUBPARTS)) {
+        interactionToNextPaintSubParts = computeInpSubParts(newInteraction, interactionToNextPaint)
       }
     }
   }
@@ -165,6 +204,7 @@ export function trackInteractionToNextPaint(
           value: Math.min(interactionToNextPaint, MAX_INP_VALUE) as Duration,
           targetSelector: interactionToNextPaintTargetSelector,
           time: interactionToNextPaintStartTime,
+          subParts: interactionToNextPaintSubParts,
         }
       } else if (getViewInteractionCount()) {
         return {
