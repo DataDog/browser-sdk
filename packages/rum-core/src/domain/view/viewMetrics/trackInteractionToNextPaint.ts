@@ -164,15 +164,15 @@ export function trackInteractionToNextPaint(
 
     if (newInteraction) {
       if (newInteraction.duration !== interactionToNextPaint) {
-      interactionToNextPaint = newInteraction.duration
-      interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
-      interactionToNextPaintTargetSelector = getInteractionSelector(newInteraction.startTime)
+        interactionToNextPaint = newInteraction.duration
+        interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
+        interactionToNextPaintTargetSelector = getInteractionSelector(newInteraction.startTime)
 
-      if (!interactionToNextPaintTargetSelector && newInteraction.target && isElementNode(newInteraction.target)) {
-        interactionToNextPaintTargetSelector = getSelectorFromElement(
-          newInteraction.target,
-          configuration.actionNameAttribute
-        )
+        if (!interactionToNextPaintTargetSelector && newInteraction.target && isElementNode(newInteraction.target)) {
+          interactionToNextPaintTargetSelector = getSelectorFromElement(
+            newInteraction.target,
+            configuration.actionNameAttribute
+          )
         }
       }
 
@@ -219,6 +219,7 @@ export function trackInteractionToNextPaint(
     stop: () => {
       eventSubscription.unsubscribe()
       firstInputSubscription.unsubscribe()
+      groupsByInteractionId.clear()
     },
   }
 }
