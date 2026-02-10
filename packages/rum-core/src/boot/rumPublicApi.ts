@@ -647,11 +647,14 @@ export function makeRumPublicApi(
   const startView: {
     (name?: string): void
     (options: ViewOptions): void
-  } = monitor((options?: string | ViewOptions) => {
-    const sanitizedOptions = typeof options === 'object' ? options : { name: options }
-    strategy.startView(sanitizedOptions)
-    addTelemetryUsage({ feature: 'start-view' })
-  })
+  } = (options?: string | ViewOptions) => {
+    const handlingStack = createHandlingStack('view')
+    callMonitored(() => {
+      const sanitizedOptions = typeof options === 'object' ? options : { name: options }
+      strategy.startView({ ...sanitizedOptions, handlingStack })
+      addTelemetryUsage({ feature: 'start-view' })
+    })
+  }
 
   const rumPublicApi: RumPublicApi = makePublicApi<RumPublicApi>({
     init: (initConfiguration) => {
@@ -886,25 +889,33 @@ export function makeRumPublicApi(
 
     stopSessionReplayRecording: monitor(() => recorderApi.stop()),
 
-    addDurationVital: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'add-duration-vital' })
-      strategy.addDurationVital({
-        name: sanitize(name)!,
-        type: VitalType.DURATION,
-        startClocks: timeStampToClocks(options.startTime as TimeStamp),
-        duration: options.duration as Duration,
-        context: sanitize(options && options.context) as Context,
-        description: sanitize(options && options.description) as string | undefined,
+    addDurationVital: (name, options) => {
+      const handlingStack = createHandlingStack('vital')
+      callMonitored(() => {
+        addTelemetryUsage({ feature: 'add-duration-vital' })
+        strategy.addDurationVital({
+          name: sanitize(name)!,
+          type: VitalType.DURATION,
+          startClocks: timeStampToClocks(options.startTime as TimeStamp),
+          duration: options.duration as Duration,
+          context: sanitize(options && options.context) as Context,
+          description: sanitize(options && options.description) as string | undefined,
+          handlingStack,
+        })
       })
-    }),
+    },
 
-    startDurationVital: monitor((name, options) => {
-      addTelemetryUsage({ feature: 'start-duration-vital' })
-      return strategy.startDurationVital(sanitize(name)!, {
-        context: sanitize(options && options.context) as Context,
-        description: sanitize(options && options.description) as string | undefined,
-      })
-    }),
+    startDurationVital: (name, options) => {
+      const handlingStack = createHandlingStack('vital')
+      return callMonitored(() => {
+        addTelemetryUsage({ feature: 'start-duration-vital' })
+        return strategy.startDurationVital(sanitize(name)!, {
+          context: sanitize(options && options.context) as Context,
+          description: sanitize(options && options.description) as string | undefined,
+          handlingStack,
+        })
+      }) as DurationVitalReference
+    },
 
     stopDurationVital: monitor((nameOrRef, options) => {
       addTelemetryUsage({ feature: 'stop-duration-vital' })

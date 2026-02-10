@@ -76,6 +76,14 @@ export function getChromeWebStoreRefreshToken(): string {
   return getSecretKey('ci.browser-sdk.chrome_web_store.refresh_token')
 }
 
+export function getBrowserStackUsername(): string {
+  return getSecretKey('ci.browser-sdk.bs_username')
+}
+
+export function getBrowserStackAccessKey(): string {
+  return getSecretKey('ci.browser-sdk.bs_access_key')
+}
+
 function getSecretKey(name: string): string {
   return command`
     aws ssm get-parameter --region=us-east-1 --with-decryption --query=Parameter.Value --out=text --name=${name}

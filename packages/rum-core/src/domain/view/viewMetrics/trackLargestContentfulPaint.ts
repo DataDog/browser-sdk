@@ -1,7 +1,15 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import { DOM_EVENT, ONE_MINUTE, addEventListeners, findLast } from '@datadog/browser-core'
+import {
+  DOM_EVENT,
+  ONE_MINUTE,
+  addEventListeners,
+  findLast,
+  ExperimentalFeature,
+  isExperimentalFeatureEnabled,
+} from '@datadog/browser-core'
 import type { RumConfiguration } from '../../configuration'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../../../browser/performanceObservable'
+import { findLcpResourceEntry, getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'
 import type { RumLargestContentfulPaintTiming } from '../../../browser/performanceObservable'
 import { getSelectorFromElement } from '../../getSelectorFromElement'
 import type { FirstHidden } from './trackFirstHidden'
@@ -14,6 +22,11 @@ export interface LargestContentfulPaint {
   value: RelativeTime
   targetSelector?: string
   resourceUrl?: string
+  subParts?: {
+    loadDelay: RelativeTime
+    loadTime: RelativeTime
+    renderDelay: RelativeTime
+  }
 }
 
 /**
@@ -64,10 +77,18 @@ export function trackLargestContentfulPaint(
         lcpTargetSelector = getSelectorFromElement(lcpEntry.element, configuration.actionNameAttribute)
       }
 
+      const resourceUrl = computeLcpEntryUrl(lcpEntry)
+      const lcpValue = lcpEntry.startTime
+
+      const subParts = isExperimentalFeatureEnabled(ExperimentalFeature.LCP_SUBPARTS)
+        ? computeLcpSubParts(resourceUrl, lcpValue)
+        : undefined
+
       callback({
-        value: lcpEntry.startTime,
+        value: lcpValue,
         targetSelector: lcpTargetSelector,
-        resourceUrl: computeLcpEntryUrl(lcpEntry),
+        resourceUrl,
+        subParts,
       })
       biggestLcpSize = lcpEntry.size
     }
@@ -84,4 +105,33 @@ export function trackLargestContentfulPaint(
 // The property url report an empty string if the value is not available, we shouldn't report it in this case.
 function computeLcpEntryUrl(entry: RumLargestContentfulPaintTiming) {
   return entry.url === '' ? undefined : entry.url
+}
+
+/**
+ * Compute the LCP sub-parts breakdown (loadDelay, loadTime, renderDelay).
+ * Returns undefined if navigation timing data or TTFB is unavailable.
+ */
+function computeLcpSubParts(
+  resourceUrl: string | undefined,
+  lcpValue: RelativeTime
+): LargestContentfulPaint['subParts'] {
+  const firstByte = sanitizeFirstByte(getNavigationEntry())
+
+  if (firstByte === undefined) {
+    return undefined
+  }
+
+  const lcpResourceEntry = resourceUrl ? findLcpResourceEntry(resourceUrl, lcpValue) : undefined
+  const lcpRequestStart = lcpResourceEntry
+    ? (Math.max(firstByte, lcpResourceEntry.requestStart || lcpResourceEntry.startTime) as RelativeTime)
+    : firstByte
+
+  // Cap at LCP time to handle resources that continue downloading after LCP (e.g., videos)
+  const lcpResponseEnd = Math.min(lcpValue, Math.max(lcpRequestStart, lcpResourceEntry?.responseEnd || 0))
+
+  return {
+    loadDelay: (lcpRequestStart - firstByte) as RelativeTime,
+    loadTime: (lcpResponseEnd - lcpRequestStart) as RelativeTime,
+    renderDelay: (lcpValue - lcpResponseEnd) as RelativeTime,
+  }
 }

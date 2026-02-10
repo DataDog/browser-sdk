@@ -167,6 +167,7 @@ function processViewUpdate(
     duration: view.duration,
     domainContext: {
       location: view.location,
+      handlingStack: view.handlingStack,
     },
   }
 }
@@ -198,6 +199,13 @@ function computeViewPerformanceData(
       timestamp: toServerDuration(largestContentfulPaint.value),
       target_selector: largestContentfulPaint.targetSelector,
       resource_url: largestContentfulPaint.resourceUrl,
+      sub_parts: largestContentfulPaint.subParts
+        ? {
+            load_delay: toServerDuration(largestContentfulPaint.subParts.loadDelay),
+            load_time: toServerDuration(largestContentfulPaint.subParts.loadTime),
+            render_delay: toServerDuration(largestContentfulPaint.subParts.renderDelay),
+          }
+        : undefined,
     },
   }
 }

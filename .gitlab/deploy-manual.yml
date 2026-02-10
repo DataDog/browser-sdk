@@ -98,7 +98,7 @@ optional_step-deploy-to-new-datacenter:
 # Notify
 ########################################################################################################################
 
-include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v1/template.yml'
+include: 'https://gitlab-templates.ddbuild.io/slack-notifier/v3-sdm/template.yml'
 
 .prepare_notification:
   extends: .slack-notifier-base

@@ -6,6 +6,8 @@ import {
   relativeToClocks,
   relativeNow,
   resetExperimentalFeatures,
+  addExperimentalFeatures,
+  ExperimentalFeature,
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
@@ -429,6 +431,9 @@ describe('view metrics', () => {
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
+    addExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
+    registerCleanupTask(resetExperimentalFeatures)
+
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
     viewTest = setupViewTest({ lifeCycle })
@@ -588,7 +593,16 @@ describe('view metrics', () => {
           jasmine.objectContaining({
             firstContentfulPaint: 123 as Duration,
             navigationTimings: jasmine.any(Object),
-            largestContentfulPaint: { value: 789 as Duration, targetSelector: undefined, resourceUrl: undefined },
+            largestContentfulPaint: {
+              value: 789 as Duration,
+              targetSelector: undefined,
+              resourceUrl: undefined,
+              subParts: {
+                loadDelay: 0,
+                loadTime: 0,
+                renderDelay: 666,
+              },
+            },
           })
         )
       })
@@ -863,6 +877,15 @@ describe('start view', () => {
 
     expect(getViewUpdate(1).duration).toBe(50 as Duration)
     expect(getViewUpdate(2).startClocks.relative).toBe(50 as RelativeTime)
+  })
+
+  it('should create view with handling stack', () => {
+    const { startView, getViewUpdate } = viewTest
+
+    startView({ name: 'foo', handlingStack: 'Error\n    at foo\n    at bar' })
+
+    // The new view is at index 2 (after the initial view end and the new view start)
+    expect(getViewUpdate(2).handlingStack).toBe('Error\n    at foo\n    at bar')
   })
 })
 

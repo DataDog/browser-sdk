@@ -14,15 +14,13 @@ import { buildRootUploadPath, buildDatacenterUploadPath, buildBundleFolder, pack
  */
 
 async function getSitesByVersion(version: string): Promise<string[]> {
-  switch (version) {
-    case 'staging':
-      return ['datad0g.com', 'datadoghq.com']
-    case 'canary':
-      return ['datadoghq.com']
-    default: {
-      return (await getAllDatacentersMetadata()).map((dc) => dc.site)
-    }
+  if (version === 'staging') {
+    return ['datad0g.com', 'datadoghq.com']
   }
+  if (version.endsWith('canary')) {
+    return ['datadoghq.com']
+  }
+  return (await getAllDatacentersMetadata()).map((dc) => dc.site)
 }
 
 if (!process.env.NODE_TEST_CONTEXT) {

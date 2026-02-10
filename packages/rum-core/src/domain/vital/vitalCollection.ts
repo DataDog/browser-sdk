@@ -34,8 +34,14 @@ export interface VitalOptions {
 /**
  * Duration vital options
  */
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface DurationVitalOptions extends VitalOptions {}
+
+export interface DurationVitalOptions extends VitalOptions {
+  /**
+   * Handling stack (internal use only)
+   */
+  handlingStack?: string
+}
+
 export interface FeatureOperationOptions extends VitalOptions {
   operationKey?: string
 }
@@ -64,11 +70,13 @@ export interface DurationVitalReference {
 export interface DurationVitalStart extends DurationVitalOptions {
   name: string
   startClocks: ClocksState
+  handlingStack?: string
 }
 
 interface BaseVital extends VitalOptions {
   name: string
   startClocks: ClocksState
+  handlingStack?: string
 }
 export interface DurationVital extends BaseVital {
   type: typeof VitalType.DURATION
@@ -200,11 +208,12 @@ function buildDurationVital(
     duration: elapsed(startClocks.timeStamp, stopClocks.timeStamp),
     context: combine(vitalStart.context, stopOptions.context),
     description: stopOptions.description ?? vitalStart.description,
+    handlingStack: vitalStart.handlingStack,
   }
 }
 
 function processVital(vital: DurationVital | OperationStepVital): RawRumEventCollectedData<RawRumVitalEvent> {
-  const { startClocks, type, name, description, context } = vital
+  const { startClocks, type, name, description, context, handlingStack } = vital
   const vitalData = {
     id: generateUUID(),
     type,
@@ -228,6 +237,6 @@ function processVital(vital: DurationVital | OperationStepVital): RawRumEventCol
     },
     startTime: startClocks.relative,
     duration: type === VitalType.DURATION ? vital.duration : undefined,
-    domainContext: {},
+    domainContext: handlingStack ? { handlingStack } : {},
   }
 }

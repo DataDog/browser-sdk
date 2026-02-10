@@ -205,6 +205,11 @@ export interface ViewPerformanceData {
     timestamp: ServerDuration
     target_selector?: string
     resource_url?: string
+    sub_parts?: {
+      load_delay: ServerDuration
+      load_time: ServerDuration
+      render_delay: ServerDuration
+    }
   }
 }
 

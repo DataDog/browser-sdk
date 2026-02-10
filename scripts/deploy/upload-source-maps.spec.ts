@@ -228,7 +228,54 @@ describe('upload-source-maps', () => {
       },
     ])
 
-    // upload the source maps
+    // upload the source maps only to datadoghq.com
+    assert.deepEqual(getSourceMapCommands(), [
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/logs/bundle --service browser-logs-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-logs/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/rum/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+      {
+        command:
+          'datadog-ci sourcemaps upload packages/rum-slim/bundle --service browser-rum-sdk --release-version dev --minified-path-prefix / --project-path @datadog/browser-rum-slim/ --repository-url https://www.github.com/datadog/browser-sdk',
+        env: ENV_PROD,
+      },
+    ])
+  })
+
+  it('should upload versioned canary packages source maps (e.g. v7-canary)', async () => {
+    await uploadSourceMaps('v7-canary', ['root'])
+
+    // rename the files with the version suffix
+    assert.deepEqual(getFileRenamingCommands(), [
+      {
+        command: 'mv packages/logs/bundle/datadog-logs.js packages/logs/bundle/datadog-logs-v7-canary.js',
+      },
+      {
+        command: 'mv packages/logs/bundle/datadog-logs.js.map packages/logs/bundle/datadog-logs-v7-canary.js.map',
+      },
+      {
+        command: 'mv packages/rum/bundle/datadog-rum.js packages/rum/bundle/datadog-rum-v7-canary.js',
+      },
+      {
+        command: 'mv packages/rum/bundle/datadog-rum.js.map packages/rum/bundle/datadog-rum-v7-canary.js.map',
+      },
+      {
+        command:
+          'mv packages/rum-slim/bundle/datadog-rum-slim.js packages/rum-slim/bundle/datadog-rum-slim-v7-canary.js',
+      },
+      {
+        command:
+          'mv packages/rum-slim/bundle/datadog-rum-slim.js.map packages/rum-slim/bundle/datadog-rum-slim-v7-canary.js.map',
+      },
+    ])
+
+    // upload the source maps only to datadoghq.com (same as plain 'canary')
     assert.deepEqual(getSourceMapCommands(), [
       {
         command:

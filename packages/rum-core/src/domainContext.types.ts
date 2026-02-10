@@ -24,6 +24,7 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
 
 export interface RumViewEventDomainContext {
   location: Readonly<Location>
+  handlingStack?: string
 }
 
 export interface RumActionEventDomainContext {
@@ -69,5 +70,6 @@ export interface RumLongTaskEventDomainContext {
   performanceEntry: PerformanceEntry
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface RumVitalEventDomainContext {}
+export interface RumVitalEventDomainContext {
+  handlingStack?: string
+}
