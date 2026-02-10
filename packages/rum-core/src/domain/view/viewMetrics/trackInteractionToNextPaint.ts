@@ -155,7 +155,7 @@ export function trackInteractionToNextPaint(
         longestInteractions.process(entry)
 
         if (isExperimentalFeatureEnabled(ExperimentalFeature.INP_SUBPARTS)) {
-        groupEntriesByRenderTime(entry)
+          groupEntriesByRenderTime(entry)
         }
       }
     }
@@ -177,7 +177,7 @@ export function trackInteractionToNextPaint(
       }
 
       if (isExperimentalFeatureEnabled(ExperimentalFeature.INP_SUBPARTS)) {
-        interactionToNextPaintSubParts = computeInpSubParts(newInteraction, interactionToNextPaint)
+        interactionToNextPaintSubParts = computeInpSubParts(newInteraction, sanitizeInpValue(interactionToNextPaint))
       }
     }
   }
@@ -201,7 +201,7 @@ export function trackInteractionToNextPaint(
       // but the view interaction count > 0 then report 0
       if (interactionToNextPaint >= 0) {
         return {
-          value: Math.min(interactionToNextPaint, MAX_INP_VALUE) as Duration,
+          value: sanitizeInpValue(interactionToNextPaint),
           targetSelector: interactionToNextPaintTargetSelector,
           time: interactionToNextPaintStartTime,
           subParts: interactionToNextPaintSubParts,
@@ -266,6 +266,10 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
       return longestInteractions[interactionIndex]
     },
   }
+}
+
+function sanitizeInpValue(inpValue: Duration) {
+  return Math.min(inpValue, MAX_INP_VALUE) as Duration
 }
 
 export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
