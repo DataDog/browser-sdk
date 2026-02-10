@@ -69,7 +69,9 @@ To get up to speed with WebExtensions for devtools, read the [Extend the develop
 
 ### Development setup
 
-From the `developer-extension` folder, run `yarn build` then `yarn dev`. There are two ways to work with the extension:
+From the `developer-extension` folder, run `yarn build` then `yarn dev`. 
+
+There are two ways to work with the extension:
 
 #### Option A: Use the auto-launched browser (recommended)
 
