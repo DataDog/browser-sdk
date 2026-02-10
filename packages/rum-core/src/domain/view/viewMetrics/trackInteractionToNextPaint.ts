@@ -22,6 +22,11 @@ export interface InteractionToNextPaint {
   value: Duration
   targetSelector?: string
   time?: Duration
+  subParts?: {
+    inputDelay: Duration
+    processingDuration: Duration
+    presentationDelay: Duration
+  }
 }
 /**
  * Track the interaction to next paint (INP).
