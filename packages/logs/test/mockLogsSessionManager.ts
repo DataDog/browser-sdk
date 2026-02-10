@@ -1,5 +1,6 @@
 import { Observable } from '@datadog/browser-core'
-import { LoggerTrackingType, type LogsSessionManager } from '../src/domain/logsSessionManager'
+import type { startLogsSessionManager, LogsSessionManager } from '../src/domain/logsSessionManager'
+import { LoggerTrackingType } from '../src/domain/logsSessionManager'
 
 export interface LogsSessionManagerMock extends LogsSessionManager {
   setId(id: string): LogsSessionManager
@@ -38,4 +39,8 @@ export function createLogsSessionManagerMock(): LogsSessionManagerMock {
       return this
     },
   }
+}
+
+export function createLogStartSessionManagerMock(): typeof startLogsSessionManager {
+  return (_config, _consent, onReady) => onReady(createLogsSessionManagerMock())
 }
