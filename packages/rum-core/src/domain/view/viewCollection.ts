@@ -89,7 +89,7 @@ function processViewUpdate(
   // startClocks.relative because the SDK detects the URL change (via history.pushState override)
   // slightly before Chrome finalizes the soft-navigation entry. Use findAll with a small tolerance
   // window to account for this timing offset.
-  const SOFT_NAV_TIMING_TOLERANCE = 5 as Duration
+  const SOFT_NAV_TIMING_TOLERANCE = 50 as Duration
   const isSoftNavigation =
     view.loadingType === ViewLoadingType.ROUTE_CHANGE
       ? softNavigationContexts.findAll(view.startClocks.relative, SOFT_NAV_TIMING_TOLERANCE).length > 0
