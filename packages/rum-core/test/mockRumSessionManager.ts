@@ -45,6 +45,7 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       this.expireObservable.notify()
     },
     expireObservable: new Observable(),
+    renewObservable: new Observable(),
     setId(newId) {
       id = newId
       return this

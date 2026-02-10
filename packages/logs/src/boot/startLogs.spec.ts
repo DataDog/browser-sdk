@@ -2,14 +2,7 @@ import type { BufferedData, Payload } from '@datadog/browser-core'
 import {
   ErrorSource,
   display,
-  stopSessionManager,
-  getCookie,
-  SESSION_STORE_KEY,
-  createTrackingConsentState,
-  TrackingConsent,
-  setCookie,
   STORAGE_POLL_DELAY,
-  ONE_MINUTE,
   BufferedObservable,
   FLUSH_DURATION_LIMIT,
 } from '@datadog/browser-core'
@@ -18,10 +11,8 @@ import {
   interceptRequests,
   mockEndpointBuilder,
   mockEventBridge,
-  mockSyntheticsWorkerValues,
   registerCleanupTask,
   mockClock,
-  expireCookie,
   DEFAULT_FETCH_MOCK,
 } from '@datadog/browser-core/test'
 
@@ -31,6 +22,7 @@ import { Logger } from '../domain/logger'
 import { createHooks } from '../domain/hooks'
 import { StatusType } from '../domain/logger/isAuthorized'
 import type { LogsEvent } from '../logsEvent.types'
+import { createLogsSessionManagerMock } from '../../test/mockLogsSessionManager'
 import { startLogs } from './startLogs'
 
 function getLoggedMessage(requests: Request[], index: number) {
@@ -53,19 +45,17 @@ const COMMON_CONTEXT = {
 }
 const DEFAULT_PAYLOAD = {} as Payload
 
-function startLogsWithDefaults(
-  { configuration }: { configuration?: Partial<LogsConfiguration> } = {},
-  trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-) {
+function startLogsWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
   const endpointBuilder = mockEndpointBuilder('https://localhost/v1/input/log')
+  const sessionManager = createLogsSessionManagerMock()
   const { handleLog, stop, globalContext, accountContext, userContext } = startLogs(
     {
       ...validateAndBuildLogsConfiguration({ clientToken: 'xxx', service: 'service', telemetrySampleRate: 0 })!,
       logsEndpointBuilder: endpointBuilder,
       ...configuration,
     },
+    sessionManager,
     () => COMMON_CONTEXT,
-    trackingConsentState,
     new BufferedObservable<BufferedData>(100),
     createHooks()
   )
@@ -74,7 +64,7 @@ function startLogsWithDefaults(
 
   const logger = new Logger(handleLog)
 
-  return { handleLog, logger, endpointBuilder, globalContext, accountContext, userContext }
+  return { handleLog, logger, endpointBuilder, globalContext, accountContext, userContext, sessionManager }
 }
 
 describe('logs', () => {
@@ -90,7 +80,6 @@ describe('logs', () => {
 
   afterEach(() => {
     delete window.DD_RUM
-    stopSessionManager()
   })
 
   describe('request', () => {
@@ -162,30 +151,6 @@ describe('logs', () => {
     })
   })
 
-  describe('sampling', () => {
-    it('should be applied when event bridge is present (rate 0)', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
-
-      const { handleLog, logger } = startLogsWithDefaults({
-        configuration: { sessionSampleRate: 0 },
-      })
-      handleLog(DEFAULT_MESSAGE, logger)
-
-      expect(sendSpy).not.toHaveBeenCalled()
-    })
-
-    it('should be applied when event bridge is present (rate 100)', () => {
-      const sendSpy = spyOn(mockEventBridge(), 'send')
-
-      const { handleLog, logger } = startLogsWithDefaults({
-        configuration: { sessionSampleRate: 100 },
-      })
-      handleLog(DEFAULT_MESSAGE, logger)
-
-      expect(sendSpy).toHaveBeenCalled()
-    })
-  })
-
   it('should not print the log twice when console handler is enabled', () => {
     const consoleLogSpy = spyOn(console, 'log')
     const displayLogSpy = spyOn(display, 'log')
@@ -200,35 +165,15 @@ describe('logs', () => {
     expect(displayLogSpy).not.toHaveBeenCalled()
   })
 
-  describe('logs session creation', () => {
-    it('creates a session on normal conditions', () => {
-      startLogsWithDefaults()
-      expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
-    })
-
-    it('does not create a session if event bridge is present', () => {
-      mockEventBridge()
-      startLogsWithDefaults()
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
-    })
-
-    it('does not create a session if synthetics worker will inject RUM', () => {
-      mockSyntheticsWorkerValues({ injectsRum: true })
-      startLogsWithDefaults()
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
-    })
-  })
-
   describe('session lifecycle', () => {
     it('sends logs without session id when the session expires ', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', ONE_MINUTE)
-      const { handleLog, logger } = startLogsWithDefaults()
+      const { handleLog, logger, sessionManager } = startLogsWithDefaults()
 
       interceptor.withFetch(DEFAULT_FETCH_MOCK, DEFAULT_FETCH_MOCK)
 
       handleLog({ status: StatusType.info, message: 'message 1' }, logger)
 
-      expireCookie()
+      sessionManager.expire()
       clock.tick(STORAGE_POLL_DELAY * 2)
 
       handleLog({ status: StatusType.info, message: 'message 2' }, logger)
@@ -241,7 +186,7 @@ describe('logs', () => {
 
       expect(requests.length).toEqual(2)
       expect(firstRequest.message).toEqual('message 1')
-      expect(firstRequest.session_id).toEqual('foo')
+      expect(firstRequest.session_id).toEqual('session-id')
 
       expect(secondRequest.message).toEqual('message 2')
       expect(secondRequest.session_id).toBeUndefined()
@@ -300,32 +245,6 @@ describe('logs', () => {
 
       const firstRequest = getLoggedMessage(requests, 0)
       expect(firstRequest.view.url).toEqual('from-rum-context')
-    })
-  })
-
-  describe('tracking consent', () => {
-    it('should not send logs after tracking consent is revoked', async () => {
-      const trackingConsentState = createTrackingConsentState(TrackingConsent.GRANTED)
-      const { handleLog, logger } = startLogsWithDefaults({}, trackingConsentState)
-
-      // Log a message with consent granted - should be sent
-      handleLog({ status: StatusType.info, message: 'message before revocation' }, logger)
-
-      clock.tick(FLUSH_DURATION_LIMIT)
-      await interceptor.waitForAllFetchCalls()
-      expect(requests.length).toEqual(1)
-      expect(getLoggedMessage(requests, 0).message).toBe('message before revocation')
-
-      // Revoke consent
-      trackingConsentState.update(TrackingConsent.NOT_GRANTED)
-
-      // Log another message - should not be sent
-      handleLog({ status: StatusType.info, message: 'message after revocation' }, logger)
-
-      clock.tick(FLUSH_DURATION_LIMIT)
-      await interceptor.waitForAllFetchCalls()
-      // Should still only have the first request
-      expect(requests.length).toEqual(1)
     })
   })
 })
