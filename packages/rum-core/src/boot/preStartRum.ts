@@ -183,15 +183,13 @@ export function createPreStartStrategy(
       startTrackingConsentContext(hooks, trackingConsentState)
       telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, hooks)
 
-      if (canUseEventBridge()) {
-        sessionManager = startRumSessionManagerStub()
+      const startSessionManagerFn = canUseEventBridge()
+        ? startRumSessionManagerStub
+        : mockable(startRumSessionManager)
+      startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
+        sessionManager = newSessionManager
         tryStartRum()
-      } else {
-        startRumSessionManager(configuration, trackingConsentState, (newSessionManager) => {
-          sessionManager = newSessionManager
-          tryStartRum()
-        })
-      }
+      })
     })
   }
 

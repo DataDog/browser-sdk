@@ -14,7 +14,6 @@ import {
   addTelemetryConfiguration,
   buildGlobalContextManager,
   buildUserContextManager,
-  willSyntheticsInjectRum,
   startTelemetry,
   TelemetryService,
   mockable,
@@ -25,7 +24,7 @@ import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configu
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { LogsSessionManager } from '../domain/logsSessionManager'
-import { startLogsSessionManagerStub, startLogsSessionManager } from '../domain/logsSessionManager'
+import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
@@ -111,15 +110,13 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
-        if (configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()) {
-          startLogsSessionManager(configuration, trackingConsentState, (newSessionManager) => {
-            sessionManager = newSessionManager
-            tryStartLogs()
-          })
-        } else {
-          sessionManager = startLogsSessionManagerStub(configuration)
+        const startSessionManagerFn = canUseEventBridge()
+          ? startLogsSessionManagerStub
+          : mockable(startLogsSessionManager)
+        startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
+          sessionManager = newSessionManager
           tryStartLogs()
-        }
+        })
       })
     },
 

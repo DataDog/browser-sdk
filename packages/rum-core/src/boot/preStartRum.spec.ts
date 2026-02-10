@@ -3,7 +3,6 @@ import {
   type Duration,
   type TimeStamp,
   type TrackingConsentState,
-  stopSessionManager,
   display,
   getTimeStamp,
   noop,
@@ -33,6 +32,7 @@ import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import type { ManualAction } from '../domain/action/trackManualActions'
+import { createRumSessionManagerMock } from '../../test'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import type { DoStartRum } from './preStartRum'
@@ -46,10 +46,6 @@ const FAKE_WORKER = {} as DeflateWorker
 const PUBLIC_API = {} as RumPublicApi
 
 describe('preStartRum', () => {
-  afterEach(() => {
-    stopSessionManager()
-  })
-
   describe('configuration validation', () => {
     let strategy: Strategy
     let doStartRumSpy: jasmine.Spy<DoStartRum>
@@ -898,7 +894,8 @@ function createPreStartStrategyWithDefaults({
       rumPublicApiOptions,
       trackingConsentState,
       createCustomVitalsState(),
-      doStartRumSpy
+      doStartRumSpy,
+      (_config, _consent, onReady) => onReady(createRumSessionManagerMock())
     ),
     doStartRumSpy,
     startTelemetrySpy,
