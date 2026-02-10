@@ -17,6 +17,7 @@ import {
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
 import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
+import { initMemorySessionStoreStrategy, selectMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
 export interface SessionStore {
   expandOrRenewSession: () => void
@@ -40,28 +41,61 @@ export const STORAGE_POLL_DELAY = ONE_SECOND
 
 /**
  * Selects the correct session store strategy type based on the configuration and storage
- * availability.
+ * availability. When an array is provided, tries each persistence type in order until one
+ * successfully initializes.
  */
 export function selectSessionStoreStrategyType(
   initConfiguration: InitConfiguration
 ): SessionStoreStrategyType | undefined {
-  switch (initConfiguration.sessionPersistence) {
+  const { sessionPersistence } = initConfiguration
+
+  const persistenceList = normalizePersistenceList(sessionPersistence, initConfiguration)
+
+  for (const persistence of persistenceList) {
+    const strategyType = selectStrategyForPersistence(persistence, initConfiguration)
+    if (strategyType !== undefined) {
+      return strategyType
+    }
+  }
+
+  return undefined
+}
+
+function normalizePersistenceList(
+  sessionPersistence: SessionPersistence | SessionPersistence[] | undefined,
+  initConfiguration: InitConfiguration
+): SessionPersistence[] {
+  if (Array.isArray(sessionPersistence)) {
+    return sessionPersistence
+  }
+
+  if (sessionPersistence !== undefined) {
+    return [sessionPersistence]
+  }
+
+  // Legacy default behavior: cookie first, with optional localStorage fallback
+  return initConfiguration.allowFallbackToLocalStorage
+    ? [SessionPersistence.COOKIE, SessionPersistence.LOCAL_STORAGE]
+    : [SessionPersistence.COOKIE]
+}
+
+function selectStrategyForPersistence(
+  persistence: SessionPersistence,
+  initConfiguration: InitConfiguration
+): SessionStoreStrategyType | undefined {
+  switch (persistence) {
     case SessionPersistence.COOKIE:
       return selectCookieStrategy(initConfiguration)
 
     case SessionPersistence.LOCAL_STORAGE:
       return selectLocalStorageStrategy()
 
-    case undefined: {
-      let sessionStoreStrategyType = selectCookieStrategy(initConfiguration)
-      if (!sessionStoreStrategyType && initConfiguration.allowFallbackToLocalStorage) {
-        sessionStoreStrategyType = selectLocalStorageStrategy()
-      }
-      return sessionStoreStrategyType
-    }
+    case SessionPersistence.MEMORY:
+      return selectMemorySessionStoreStrategy()
 
     default:
-      display.error(`Invalid session persistence '${String(initConfiguration.sessionPersistence)}'`)
+      display.error(`Invalid session persistence '${String(persistence)}'`)
+      return undefined
   }
 }
 
@@ -71,7 +105,9 @@ export function getSessionStoreStrategy(
 ) {
   return sessionStoreStrategyType.type === SessionPersistence.COOKIE
     ? initCookieStrategy(configuration, sessionStoreStrategyType.cookieOptions)
-    : initLocalStorageStrategy(configuration)
+    : sessionStoreStrategyType.type === SessionPersistence.LOCAL_STORAGE
+      ? initLocalStorageStrategy(configuration)
+      : initMemorySessionStoreStrategy(configuration)
 }
 
 /**
