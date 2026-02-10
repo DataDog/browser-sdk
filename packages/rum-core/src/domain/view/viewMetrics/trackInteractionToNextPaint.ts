@@ -18,6 +18,8 @@ const MAX_INTERACTION_ENTRIES = 10
 // Arbitrary value to cap INP outliers
 export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
 
+const RENDER_TIME_GROUPING_THRESHOLD = 8 as Duration
+
 export interface InteractionToNextPaint {
   value: Duration
   targetSelector?: string
@@ -28,6 +30,16 @@ export interface InteractionToNextPaint {
     presentationDelay: Duration
   }
 }
+
+interface EntriesGroup {
+  startTime: RelativeTime
+  processingStart: RelativeTime
+  processingEnd: RelativeTime
+  // Reference time use for grouping, set once for each group
+  referenceRenderTime: RelativeTime
+  entries: Array<RumPerformanceEventTiming | RumFirstInputTiming>
+}
+
 /**
  * Track the interaction to next paint (INP).
  * To avoid outliers, return the p98 worst interaction of the view.
@@ -56,6 +68,54 @@ export function trackInteractionToNextPaint(
   let interactionToNextPaintTargetSelector: string | undefined
   let interactionToNextPaintStartTime: Duration | undefined
 
+  // Entry grouping for subparts calculation
+  const groupsByInteractionId = new Map<number, EntriesGroup>()
+
+  function updateGroupWithEntry(group: EntriesGroup, entry: RumPerformanceEventTiming | RumFirstInputTiming) {
+    group.startTime = Math.min(entry.startTime, group.startTime) as RelativeTime
+
+    // For each group, we keep the biggest interval possible between processingStart and processingEnd
+    group.processingStart = Math.min(entry.processingStart, group.processingStart) as RelativeTime
+    group.processingEnd = Math.max(entry.processingEnd, group.processingEnd) as RelativeTime
+    group.entries.push(entry)
+  }
+
+  function groupEntriesByRenderTime(entry: RumPerformanceEventTiming | RumFirstInputTiming) {
+    if (!entry.interactionId || !entry.processingStart || !entry.processingEnd) {
+      return
+    }
+
+    const renderTime = (entry.startTime + entry.duration) as RelativeTime
+
+    // Check if this interactionId already has a group
+    const existingGroup = groupsByInteractionId.get(entry.interactionId)
+
+    if (existingGroup) {
+      // Update existing group with MIN/MAX values (keep original referenceRenderTime)
+      updateGroupWithEntry(existingGroup, entry)
+      return
+    }
+
+    // Try to find a group within 8ms window to merge with (different interactionId, same frame)
+    for (const [, group] of groupsByInteractionId.entries()) {
+      if (Math.abs(renderTime - group.referenceRenderTime) <= RENDER_TIME_GROUPING_THRESHOLD) {
+        updateGroupWithEntry(group, entry)
+        // Also store under this entry's interactionId for easy lookup
+        groupsByInteractionId.set(entry.interactionId, group)
+        return
+      }
+    }
+
+    // Create new group
+    groupsByInteractionId.set(entry.interactionId, {
+      startTime: entry.startTime,
+      processingStart: entry.processingStart,
+      processingEnd: entry.processingEnd,
+      referenceRenderTime: renderTime,
+      entries: [entry],
+    })
+  }
+
   function handleEntries(entries: Array<RumPerformanceEventTiming | RumFirstInputTiming>) {
     for (const entry of entries) {
       if (
@@ -65,6 +125,7 @@ export function trackInteractionToNextPaint(
         entry.startTime <= viewEnd
       ) {
         longestInteractions.process(entry)
+        groupEntriesByRenderTime(entry)
       }
     }
 
