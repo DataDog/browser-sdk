@@ -114,19 +114,13 @@ export function startSessionManager<TrackingType extends string>(
     trackResume(configuration, () => sessionStore.restartSession())
 
     onReady({
-      findSession: () => {
-        /* noop */
-      },
-      renewObservable: new Observable(),
-      expireObservable: new Observable(),
-      sessionStateUpdateObservable: new Observable(),
-      expire: () => {
-        /* noop */
-      },
-      updateSessionState: () => {
-        /* noop */
-      },
-    } as SessionManager<TrackingType>)
+      findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
+      renewObservable,
+      expireObservable,
+      sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
+      expire: sessionStore.expire,
+      updateSessionState: sessionStore.updateSessionState,
+    })
   })
 
   function buildSessionContext() {
