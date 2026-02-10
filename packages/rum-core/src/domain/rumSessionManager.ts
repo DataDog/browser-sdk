@@ -93,18 +93,22 @@ export function startRumSessionManager(
 /**
  * Start a tracked replay session stub
  */
-export function startRumSessionManagerStub(): RumSessionManager {
+export function startRumSessionManagerStub(
+  _configuration: RumConfiguration,
+  _trackingConsentState: TrackingConsentState,
+  onReady: (sessionManager: RumSessionManager) => void
+): void {
   const session: RumSession = {
     id: '00000000-aaaa-0000-aaaa-000000000000',
     sessionReplay: bridgeSupports(BridgeCapability.RECORDS) ? SessionReplayState.SAMPLED : SessionReplayState.OFF,
   }
-  return {
+  onReady({
     findTrackedSession: () => session,
     expire: noop,
     expireObservable: new Observable(),
     renewObservable: new Observable(),
     setForcedReplay: noop,
-  }
+  })
 }
 
 function computeTrackingType(configuration: RumConfiguration, rawTrackingType?: string) {

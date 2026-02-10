@@ -14,7 +14,6 @@ import {
   addTelemetryConfiguration,
   buildGlobalContextManager,
   buildUserContextManager,
-  willSyntheticsInjectRum,
   startTelemetry,
   TelemetryService,
 } from '@datadog/browser-core'
@@ -23,8 +22,7 @@ import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
-import type { LogsSessionManager } from '../domain/logsSessionManager'
-import { startLogsSessionManagerStub, startLogsSessionManager } from '../domain/logsSessionManager'
+import type { LogsSessionManager, startLogsSessionManager } from '../domain/logsSessionManager'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
@@ -40,7 +38,8 @@ export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
   doStartLogs: DoStartLogs,
-  startTelemetryImpl = startTelemetry
+  startTelemetryImpl = startTelemetry,
+  startLogsSessionManagerImpl: typeof startLogsSessionManager
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
@@ -111,15 +110,10 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         startTelemetryImpl(TelemetryService.LOGS, configuration, hooks)
-        if (configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()) {
-          startLogsSessionManager(configuration, trackingConsentState, (newSessionManager) => {
-            sessionManager = newSessionManager
-            tryStartLogs()
-          })
-        } else {
-          sessionManager = startLogsSessionManagerStub(configuration)
+        startLogsSessionManagerImpl(configuration, trackingConsentState, (newSessionManager) => {
+          sessionManager = newSessionManager
           tryStartLogs()
-        }
+        })
       })
     },
 

@@ -46,13 +46,15 @@ export function startLogsSessionManager(
   )
 }
 
-export function startLogsSessionManagerStub(configuration: LogsConfiguration): LogsSessionManager {
-  const isTracked = computeTrackingType(configuration) === LoggerTrackingType.TRACKED
-  const session = isTracked ? {} : undefined
-  return {
-    findTrackedSession: () => session,
+export function startLogsSessionManagerStub(
+  _configuration: LogsConfiguration,
+  _trackingConsentState: TrackingConsentState,
+  onReady: (sessionManager: LogsSessionManager) => void
+): void {
+  onReady({
+    findTrackedSession: () => ({}),
     expireObservable: new Observable(),
-  }
+  })
 }
 
 function computeTrackingType(configuration: LogsConfiguration, rawTrackingType?: string) {
