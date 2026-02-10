@@ -128,14 +128,11 @@ export function trackInteractionToNextPaint(
     // Get group timing by interactionId (or use individual entry if no group)
     const group = entry.interactionId ? groupsByInteractionId.get(entry.interactionId) : undefined
 
-    const { startTime, processingStart, processingEnd: processingEndRaw } = group || entry;
+    const { startTime, processingStart, processingEnd: processingEndRaw } = group || entry
 
     // Prevents reported value to happen before processingStart.
     // We group values around startTime +/- RENDER_TIME_GROUPING_THRESHOLD duration so some entries can be before processingStart.
-    const nextPaintTime = Math.max(
-      (entry.startTime + inpDuration) as RelativeTime,
-      processingStart
-    ) as RelativeTime
+    const nextPaintTime = Math.max((entry.startTime + inpDuration) as RelativeTime, processingStart) as RelativeTime
 
     // Clamp processingEnd to not exceed nextPaintTime
     const processingEnd = Math.min(processingEndRaw, nextPaintTime) as RelativeTime

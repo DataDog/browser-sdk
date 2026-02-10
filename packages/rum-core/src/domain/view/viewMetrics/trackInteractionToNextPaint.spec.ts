@@ -112,7 +112,7 @@ describe('trackInteractionToNextPaint', () => {
     expect(getInteractionToNextPaint()).toEqual({
       value: 100 as Duration,
       targetSelector: undefined,
-      time: 1 as Duration,
+      time: 1 as RelativeTime,
       subParts: undefined,
     })
   })
@@ -128,7 +128,7 @@ describe('trackInteractionToNextPaint', () => {
     expect(getInteractionToNextPaint()).toEqual({
       value: MAX_INP_VALUE,
       targetSelector: undefined,
-      time: 1 as Duration,
+      time: 1 as RelativeTime,
       subParts: undefined,
     })
   })
@@ -145,7 +145,7 @@ describe('trackInteractionToNextPaint', () => {
     expect(getInteractionToNextPaint()).toEqual({
       value: 98 as Duration,
       targetSelector: undefined,
-      time: 98 as Duration,
+      time: 98 as RelativeTime,
       subParts: undefined,
     })
   })
@@ -167,7 +167,7 @@ describe('trackInteractionToNextPaint', () => {
     expect(getInteractionToNextPaint()).toEqual({
       value: 40 as Duration,
       targetSelector: undefined,
-      time: 1 as Duration,
+      time: 1 as RelativeTime,
       subParts: undefined,
     })
   })
@@ -185,7 +185,7 @@ describe('trackInteractionToNextPaint', () => {
     expect(getInteractionToNextPaint()).toEqual({
       value: 100 as Duration,
       targetSelector: undefined,
-      time: 100 as Duration,
+      time: 100 as RelativeTime,
       subParts: undefined,
     })
   })
@@ -289,7 +289,6 @@ describe('trackInteractionToNextPaint', () => {
 
       expect(getInteractionToNextPaint()).toEqual({ value: 0 as Duration })
     })
-
     ;[
       {
         description: 'should calculate INP subparts correctly',
