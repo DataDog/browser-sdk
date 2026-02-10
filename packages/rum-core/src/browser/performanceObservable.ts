@@ -28,6 +28,7 @@ export enum RumPerformanceEntryType {
   NAVIGATION = 'navigation',
   PAINT = 'paint',
   RESOURCE = 'resource',
+  SOFT_NAVIGATION = 'soft-navigation',
   VISIBILITY_STATE = 'visibility-state',
 }
 
@@ -179,6 +180,15 @@ export interface RumFirstHiddenTiming {
   toJSON(): Omit<RumFirstHiddenTiming, 'toJSON'>
 }
 
+export interface RumSoftNavigationEntry {
+  entryType: RumPerformanceEntryType.SOFT_NAVIGATION
+  name: string
+  startTime: RelativeTime
+  navigationId: string
+  duration?: Duration
+  toJSON(): Omit<RumSoftNavigationEntry, 'toJSON'>
+}
+
 export type RumPerformanceEntry =
   | RumPerformanceResourceTiming
   | RumPerformanceLongTaskTiming
@@ -190,6 +200,7 @@ export type RumPerformanceEntry =
   | RumPerformanceEventTiming
   | RumLayoutShiftTiming
   | RumFirstHiddenTiming
+  | RumSoftNavigationEntry
 
 export interface EntryTypeToReturnType {
   [RumPerformanceEntryType.EVENT]: RumPerformanceEventTiming
@@ -201,6 +212,7 @@ export interface EntryTypeToReturnType {
   [RumPerformanceEntryType.LONG_ANIMATION_FRAME]: RumPerformanceLongAnimationFrameTiming
   [RumPerformanceEntryType.NAVIGATION]: RumPerformanceNavigationTiming
   [RumPerformanceEntryType.RESOURCE]: RumPerformanceResourceTiming
+  [RumPerformanceEntryType.SOFT_NAVIGATION]: RumSoftNavigationEntry
   [RumPerformanceEntryType.VISIBILITY_STATE]: RumFirstHiddenTiming
 }
 

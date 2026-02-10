@@ -475,6 +475,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        * Whether the beta encode cookie options is enabled
        */
       beta_encode_cookie_options?: boolean
+      /**
+       * Whether soft navigation tracking experimental feature is enabled
+       */
+      use_soft_navigation?: boolean
       [k: string]: unknown
     }
     [k: string]: unknown
