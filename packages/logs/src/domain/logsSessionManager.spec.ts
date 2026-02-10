@@ -23,7 +23,7 @@ import {
   startLogsSessionManagerStub,
 } from './logsSessionManager'
 
-xdescribe('logs session manager', () => {
+describe('logs session manager', () => {
   const DURATION = 123456
   let clock: Clock
 

@@ -33,7 +33,7 @@ const enum FakeTrackingType {
   TRACKED = 'tracked',
 }
 
-xdescribe('startSessionManager', () => {
+describe('startSessionManager', () => {
   const DURATION = 123456
   const FIRST_PRODUCT_KEY = 'first'
   const SECOND_PRODUCT_KEY = 'second'
