@@ -153,7 +153,10 @@ export function trackInteractionToNextPaint(
         entry.startTime <= viewEnd
       ) {
         longestInteractions.process(entry)
+
+        if (isExperimentalFeatureEnabled(ExperimentalFeature.INP_SUBPARTS)) {
         groupEntriesByRenderTime(entry)
+        }
       }
     }
 
