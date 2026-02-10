@@ -275,10 +275,16 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?: typeof startTelemetry): LogsPublicApi {
+export function makeLogsPublicApi(
+  startLogsImpl: StartLogs,
+  startTelemetryImpl?: typeof startTelemetry,
+  startSessionManagerImpl?: typeof startLogsSessionManager
+): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
-  const startSessionManagerImpl = canUseEventBridge() ? startLogsSessionManagerStub : startLogsSessionManager
+  if (!startSessionManagerImpl) {
+    startSessionManagerImpl = canUseEventBridge() ? startLogsSessionManagerStub : startLogsSessionManager
+  }
 
   let strategy = createPreStartStrategy(
     buildCommonContext,

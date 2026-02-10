@@ -562,12 +562,15 @@ export function makeRumPublicApi(
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
   options: RumPublicApiOptions = {},
-  startTelemetryImpl?: typeof startTelemetry
+  startTelemetryImpl?: typeof startTelemetry,
+  startSessionManagerImpl?: typeof startRumSessionManager
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
   const bufferedDataObservable = startBufferingData().observable
-  const startSessionManagerImpl = canUseEventBridge() ? startRumSessionManagerStub : startRumSessionManager
+  if (!startSessionManagerImpl) {
+    startSessionManagerImpl = canUseEventBridge() ? startRumSessionManagerStub : startRumSessionManager
+  }
 
   let strategy = createPreStartStrategy(
     options,
