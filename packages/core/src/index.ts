@@ -136,6 +136,7 @@ export { readBytesFromStream } from './tools/readBytesFromStream'
 export type { SessionState } from './domain/session/sessionState'
 export { STORAGE_POLL_DELAY } from './domain/session/sessionStore'
 export { SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionStoreStrategy'
+export { MEMORY_SESSION_STORE_KEY } from './domain/session/storeStrategies/sessionInMemory'
 export {
   willSyntheticsInjectRum,
   getSyntheticsTestId,
