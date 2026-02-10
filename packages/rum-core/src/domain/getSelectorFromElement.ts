@@ -8,7 +8,7 @@ import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameC
  * Note: This is NOT a valid CSS selector, it's an internal marker that requires custom
  * parsing logic.
  */
-export const SHADOW_DOM_MARKER = '::shadow>'
+export const SHADOW_DOM_MARKER = '::shadow '
 
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:
