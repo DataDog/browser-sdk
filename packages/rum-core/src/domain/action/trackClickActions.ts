@@ -11,7 +11,8 @@ import { getNodePrivacyLevel } from '../privacy'
 import { NodePrivacyLevel } from '../privacyConstants'
 import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { DiscardedEvent, startEventTracker, StoppedEvent, type EventTracker } from '../eventTracker'
+import { startEventTracker } from '../eventTracker'
+import type { StoppedEvent, DiscardedEvent, EventTracker } from '../eventTracker'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -20,6 +21,7 @@ import type { MouseEventOnElement, UserActivity } from './listenActionEvents'
 import { listenActionEvents } from './listenActionEvents'
 import { computeFrustration } from './computeFrustration'
 import { CLICK_ACTION_MAX_DURATION, updateInteractionSelector } from './interactionSelectorCache'
+import { isActionChildEvent } from './isActionChildEvent'
 
 interface ActionCounts {
   errorCount: number
@@ -288,11 +290,7 @@ function newClick(
   const clickKey = generateUUID()
   const startClocks = relativeToClocks(startEvent.timeStamp)
 
-  actionTracker.start(clickKey, startClocks, clickActionBase, {
-    isChildEvent: (id) => (event) =>
-      event.action !== undefined &&
-      (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
-  })
+  actionTracker.start(clickKey, startClocks, clickActionBase, { isChildEvent: isActionChildEvent })
 
   let status = ClickStatus.ONGOING
   let actionTrackerFinishedEvent: StoppedEvent<ClickActionBase> | DiscardedEvent<ClickActionBase> | undefined
@@ -319,7 +317,8 @@ function newClick(
     stopObservable,
 
     get hasError() {
-      return actionTrackerFinishedEvent && actionTrackerFinishedEvent.counts!.errorCount > 0
+      const currentCounts = actionTrackerFinishedEvent?.counts ?? actionTracker.getCounts(clickKey)
+      return currentCounts ? currentCounts.errorCount > 0 : false
     },
     get hasPageActivity() {
       return actionTrackerFinishedEvent && 'duration' in actionTrackerFinishedEvent

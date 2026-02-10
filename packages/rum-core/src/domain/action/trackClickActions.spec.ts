@@ -10,7 +10,7 @@ import {
   PageExitReason,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'

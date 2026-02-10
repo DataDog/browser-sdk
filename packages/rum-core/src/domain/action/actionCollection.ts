@@ -35,7 +35,7 @@ export function startActionCollection(
     }
   )
 
-  let stopClickActions: () => void = noop
+  const stopClickActions: () => void = noop
   let clickActions: ReturnType<typeof trackClickActions> | undefined
 
   if (configuration.trackUserInteractions) {
@@ -50,7 +50,7 @@ export function startActionCollection(
     findActionId: (startTime?: RelativeTime) => {
       const manualActionId = manualActions.findActionId(startTime)
       const clickActionId = clickActions?.findActionId(startTime) ?? []
-      return [...manualActionId, ...clickActionId]
+      return manualActionId.concat(clickActionId)
     },
   }
 

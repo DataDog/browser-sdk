@@ -20,16 +20,17 @@ export type StoppedEvent<TData> = BaseTrackedEvent<TData> & {
 
 export type DiscardedEvent<TData> = BaseTrackedEvent<TData>
 
-export interface StartOptions<TData> {
+export interface StartOptions {
   isChildEvent?: (
     id: string
   ) => (event: RumActionEvent | RumErrorEvent | RumLongTaskEvent | RumResourceEvent) => boolean
 }
 
 export interface EventTracker<TData> {
-  start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions<TData>) => void
+  start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions) => void
   stop: (key: string, stopClocks: ClocksState, data?: Partial<TData>) => StoppedEvent<TData> | undefined
   discard: (key: string) => DiscardedEvent<TData> | undefined
+  getCounts: (key: string) => EventCounts | undefined
   findId: (startTime?: RelativeTime) => string[]
   stopAll: () => void
 }
@@ -65,7 +66,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
   const sessionRenewalSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, discardAll)
 
-  function start(key: string, startClocks: ClocksState, data: TData, options?: StartOptions<TData>) {
+  function start(key: string, startClocks: ClocksState, data: TData, options?: StartOptions) {
     const id = generateUUID()
 
     const historyEntry = history.add(id, startClocks.relative)
@@ -141,6 +142,10 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     return history.findAll(startTime)
   }
 
+  function getCounts(key: string): EventCounts | undefined {
+    return keyedEvents.get(key)?.eventCounts?.eventCounts
+  }
+
   function stopTracker() {
     sessionRenewalSubscription.unsubscribe()
     discardAll()
@@ -151,6 +156,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
     start,
     stop,
     discard,
+    getCounts,
     findId,
     stopAll: stopTracker,
   }

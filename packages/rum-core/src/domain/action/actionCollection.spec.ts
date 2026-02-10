@@ -197,7 +197,7 @@ describe('actionCollection', () => {
 
     it('should add action properties on long task from the context when the start time is slightly before the action start time', () => {
       const longTaskStartTime = 100 as RelativeTime
-      const findActionIdSpy = spyOn(actionContexts, 'findActionId')
+      const findActionIdSpy = spyOn(actionContexts, 'findActionId').and.returnValue([])
 
       hooks.triggerHook(HookNames.Assemble, {
         eventType: RumEventType.LONG_TASK,

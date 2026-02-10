@@ -5,6 +5,7 @@ import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } 
 import type { EventCounts } from '../trackEventCounts'
 import { startEventTracker } from '../eventTracker'
 import type { LifeCycle } from '../lifeCycle'
+import { isActionChildEvent } from './isActionChildEvent'
 
 export type ActionCounts = EventCounts
 
@@ -57,11 +58,7 @@ export function trackManualActions(lifeCycle: LifeCycle, onManualActionCompleted
         name,
         ...options,
       },
-      {
-        isChildEvent: (id) => (event) =>
-          event.action !== undefined &&
-          (Array.isArray(event.action.id) ? event.action.id.includes(id) : event.action.id === id),
-      }
+      { isChildEvent: isActionChildEvent }
     )
   }
 

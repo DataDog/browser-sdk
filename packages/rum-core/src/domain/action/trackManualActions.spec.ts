@@ -71,7 +71,7 @@ describe('trackManualActions', () => {
 
       expect(rawRumEvents).toHaveSize(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.id).toEqual((actionId as string[])[0])
+      expect(actionEvent.action.id).toEqual(actionId[0])
     })
 
     it('should include loading_time for timed manual actions', () => {
@@ -154,7 +154,7 @@ describe('trackManualActions', () => {
 
       const actionIds = actionContexts.findActionId()
       expect(Array.isArray(actionIds)).toBeTrue()
-      expect((actionIds as string[]).length).toBe(2)
+      expect(actionIds.length).toBe(2)
 
       stopAction('foo bar')
       stopAction('foo', { actionKey: 'bar' })
