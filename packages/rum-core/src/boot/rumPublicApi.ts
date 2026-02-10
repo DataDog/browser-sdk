@@ -19,6 +19,7 @@ import type {
 import {
   ContextManagerMethod,
   addTelemetryUsage,
+  canUseEventBridge,
   deepClone,
   makePublicApi,
   monitor,
@@ -40,6 +41,7 @@ import {
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
 import type { RumSessionManager } from '../domain/rumSessionManager'
+import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -565,6 +567,7 @@ export function makeRumPublicApi(
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
   const bufferedDataObservable = startBufferingData().observable
+  const startSessionManagerImpl = canUseEventBridge() ? startRumSessionManagerStub : startRumSessionManager
 
   let strategy = createPreStartStrategy(
     options,
@@ -618,7 +621,8 @@ export function makeRumPublicApi(
 
       return startRumResult
     },
-    startTelemetryImpl
+    startTelemetryImpl,
+    startSessionManagerImpl
   )
   const getStrategy = () => strategy
 

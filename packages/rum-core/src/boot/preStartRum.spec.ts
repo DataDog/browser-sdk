@@ -9,7 +9,6 @@ import {
   createTrackingConsentState,
   DefaultPrivacyLevel,
   resetFetchObservable,
-  stopSessionManager,
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -29,6 +28,7 @@ import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import type { ManualAction } from '../domain/action/trackManualActions'
+import { createRumSessionManagerMock } from '../../test'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import type { DoStartRum } from './preStartRum'
@@ -44,7 +44,6 @@ const PUBLIC_API = {} as RumPublicApi
 describe('preStartRum', () => {
   afterEach(() => {
     resetFetchObservable()
-    stopSessionManager()
   })
 
   describe('configuration validation', () => {
@@ -897,7 +896,8 @@ function createPreStartStrategyWithDefaults({
       trackingConsentState,
       createCustomVitalsState(),
       doStartRumSpy,
-      startTelemetrySpy
+      startTelemetrySpy,
+      (_config, _consent, onReady) => onReady(createRumSessionManagerMock())
     ),
     doStartRumSpy,
     startTelemetrySpy,
