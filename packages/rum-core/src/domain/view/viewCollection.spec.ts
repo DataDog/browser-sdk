@@ -350,13 +350,13 @@ describe('viewCollection', () => {
 
     it('should annotate route_change view with is_soft_navigation when soft-nav entry exists at query time', () => {
       const softNavContexts: SoftNavigationContexts = {
-        findSoftNavigationByTime: (startTime: RelativeTime) => {
+        findSoftNavigationByTime: () => undefined,
+        findAll: (startTime?: RelativeTime) => {
           if (startTime === (1234 as RelativeTime)) {
-            return { navigationId: 'nav-1', name: 'https://example.com/page', startTime: 1230 as RelativeTime }
+            return [{ navigationId: 'nav-1', name: 'https://example.com/page', startTime: 1235 as RelativeTime }]
           }
-          return undefined
+          return []
         },
-        findAll: () => [],
       }
       setupViewCollectionWithSoftNav(softNavContexts)
 
@@ -374,13 +374,13 @@ describe('viewCollection', () => {
       let softNavAvailable = false
       const viewStartTime = 1234 as RelativeTime
       const softNavContexts: SoftNavigationContexts = {
-        findSoftNavigationByTime: (startTime: RelativeTime) => {
+        findSoftNavigationByTime: () => undefined,
+        findAll: (startTime?: RelativeTime) => {
           if (softNavAvailable && startTime === viewStartTime) {
-            return { navigationId: 'nav-1', name: 'https://example.com/page', startTime: 1230 as RelativeTime }
+            return [{ navigationId: 'nav-1', name: 'https://example.com/page', startTime: 1235 as RelativeTime }]
           }
-          return undefined
+          return []
         },
-        findAll: () => [],
       }
       setupViewCollectionWithSoftNav(softNavContexts)
 
@@ -413,16 +413,16 @@ describe('viewCollection', () => {
       const viewAStartTime = 1000 as RelativeTime
       const viewBStartTime = 1100 as RelativeTime
       const softNavContexts: SoftNavigationContexts = {
-        findSoftNavigationByTime: (startTime: RelativeTime) => {
+        findSoftNavigationByTime: () => undefined,
+        findAll: (startTime?: RelativeTime) => {
           if (startTime === viewAStartTime) {
-            return { navigationId: 'nav-a', name: 'https://example.com/page-a', startTime: 998 as RelativeTime }
+            return [{ navigationId: 'nav-a', name: 'https://example.com/page-a', startTime: 1002 as RelativeTime }]
           }
           if (startTime === viewBStartTime) {
-            return { navigationId: 'nav-b', name: 'https://example.com/page-b', startTime: 1098 as RelativeTime }
+            return [{ navigationId: 'nav-b', name: 'https://example.com/page-b', startTime: 1102 as RelativeTime }]
           }
-          return undefined
+          return []
         },
-        findAll: () => [],
       }
       setupViewCollectionWithSoftNav(softNavContexts)
 
@@ -472,12 +472,8 @@ describe('viewCollection', () => {
 
     it('should not annotate initial_load view even when soft-nav entry matches time range', () => {
       const softNavContexts: SoftNavigationContexts = {
-        findSoftNavigationByTime: () => ({
-          navigationId: 'nav-1',
-          name: 'https://example.com/page',
-          startTime: 1230 as RelativeTime,
-        }),
-        findAll: () => [],
+        findSoftNavigationByTime: () => undefined,
+        findAll: () => [{ navigationId: 'nav-1', name: 'https://example.com/page', startTime: 1235 as RelativeTime }],
       }
       setupViewCollectionWithSoftNav(softNavContexts)
 
@@ -491,12 +487,13 @@ describe('viewCollection', () => {
 
     it('should preserve all existing view fields when is_soft_navigation is set', () => {
       const softNavContexts: SoftNavigationContexts = {
-        findSoftNavigationByTime: () => ({
-          navigationId: 'nav-1',
-          name: 'https://example.com/page',
-          startTime: 1230 as RelativeTime,
-        }),
-        findAll: () => [],
+        findSoftNavigationByTime: () => undefined,
+        findAll: (startTime?: RelativeTime) => {
+          if (startTime === (1234 as RelativeTime)) {
+            return [{ navigationId: 'nav-1', name: 'https://example.com/page', startTime: 1235 as RelativeTime }]
+          }
+          return []
+        },
       }
       setupViewCollectionWithSoftNav(softNavContexts)
 

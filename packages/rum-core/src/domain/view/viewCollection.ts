@@ -85,9 +85,14 @@ function processViewUpdate(
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
   const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
+  // The soft-navigation PerformanceEntry's startTime can be a few milliseconds after the view's
+  // startClocks.relative because the SDK detects the URL change (via history.pushState override)
+  // slightly before Chrome finalizes the soft-navigation entry. Use findAll with a small tolerance
+  // window to account for this timing offset.
+  const SOFT_NAV_TIMING_TOLERANCE = 5 as Duration
   const isSoftNavigation =
     view.loadingType === ViewLoadingType.ROUTE_CHANGE
-      ? softNavigationContexts.findSoftNavigationByTime(view.startClocks.relative) !== undefined
+      ? softNavigationContexts.findAll(view.startClocks.relative, SOFT_NAV_TIMING_TOLERANCE).length > 0
       : false
   const viewEvent: RawRumViewEvent = {
     _dd: {
