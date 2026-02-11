@@ -18,7 +18,7 @@ export const mockableReplacements = new Map<unknown, unknown>()
  */
 export function mockable<T>(value: T): T {
   // In test builds, return a wrapper that checks for mocks at call time
-  if (__BUILD_ENV__SDK_VERSION__ === 'test' && mockableReplacements.get(value)) {
+  if (__BUILD_ENV__SDK_VERSION__ === 'test' && mockableReplacements.has(value)) {
     return mockableReplacements.get(value)! as T
   }
   // In production, return the value as-is
