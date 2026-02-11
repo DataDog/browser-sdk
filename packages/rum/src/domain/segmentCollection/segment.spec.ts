@@ -5,7 +5,7 @@ import { registerCleanupTask } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreationReason, BrowserRecord, SegmentContext, BrowserSegment, BrowserSegmentMetadata } from '../../types'
 import { RecordType } from '../../types'
-import { getReplayStats, resetReplayStats } from '../replayStats'
+import { getReplayStats } from '../replayStats'
 import { createDeflateEncoder } from '../deflate'
 import type { SerializationStats } from '../record'
 import type { AddRecordCallback, FlushCallback, Segment } from './segment'
@@ -42,7 +42,6 @@ describe('Segment', () => {
     worker = new MockWorker()
     encoder = createDeflateEncoder(configuration, worker, DeflateEncoderStreamId.REPLAY)
     setDebugMode(true)
-    resetReplayStats()
 
     registerCleanupTask(() => {
       setDebugMode(false)
@@ -299,10 +298,6 @@ describe('Segment', () => {
   })
 
   describe('updates segment replay stats', () => {
-    beforeEach(() => {
-      resetReplayStats()
-    })
-
     it('when creating a segment', () => {
       createTestSegment()
       worker.processAllMessages()

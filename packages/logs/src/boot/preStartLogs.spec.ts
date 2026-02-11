@@ -6,13 +6,7 @@ import {
   createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  TrackingConsent,
-  createTrackingConsentState,
-  display,
-  resetFetchObservable,
-} from '@datadog/browser-core'
+import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
@@ -30,10 +24,6 @@ describe('preStartLogs', () => {
 
   beforeEach(() => {
     clock = mockClock()
-  })
-
-  afterEach(() => {
-    resetFetchObservable()
   })
 
   describe('configuration validation', () => {

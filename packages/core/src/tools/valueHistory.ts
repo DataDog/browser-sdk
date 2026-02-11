@@ -30,7 +30,7 @@ export interface ValueHistory<Value> {
   stop: () => void
 }
 
-let cleanupHistoriesInterval: TimeoutId | null = null
+let cleanupHistoriesInterval: TimeoutId | undefined
 
 const cleanupTasks: Set<() => void> = new Set()
 
@@ -143,9 +143,20 @@ export function createValueHistory<Value>({
     cleanupTasks.delete(clearExpiredValues)
     if (cleanupTasks.size === 0 && cleanupHistoriesInterval) {
       clearInterval(cleanupHistoriesInterval)
-      cleanupHistoriesInterval = null
+      cleanupHistoriesInterval = undefined
     }
   }
 
   return { add, find, closeActive, findAll, reset, stop }
+}
+
+/**
+ * Reset all global state. This is useful for testing to ensure clean state between tests.
+ *
+ * @internal
+ */
+export function resetValueHistoryGlobals() {
+  cleanupTasks.clear()
+  clearInterval(cleanupHistoriesInterval)
+  cleanupHistoriesInterval = undefined
 }
