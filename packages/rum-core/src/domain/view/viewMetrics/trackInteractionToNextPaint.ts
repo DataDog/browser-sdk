@@ -80,7 +80,7 @@ export function trackInteractionToNextPaint(
   }
 
   function groupEntriesByRenderTime(entry: RumPerformanceEventTiming | RumFirstInputTiming) {
-    if (!entry.interactionId || !entry.processingStart || !entry.processingEnd) {
+    if (entry.interactionId === undefined || !entry.processingStart || !entry.processingEnd) {
       return
     }
 
@@ -118,7 +118,7 @@ export function trackInteractionToNextPaint(
     entry: RumPerformanceEventTiming | RumFirstInputTiming,
     inpDuration: Duration
   ): InteractionToNextPaint['subParts'] | undefined {
-    if (!entry.processingStart || !entry.processingEnd || !entry.interactionId) {
+    if (!entry.processingStart || !entry.processingEnd || entry.interactionId === undefined) {
       return undefined
     }
 
