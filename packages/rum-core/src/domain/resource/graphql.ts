@@ -124,8 +124,7 @@ function extractFromBody(requestBody: unknown): RawGraphQlMetadata | undefined {
 function extractFromUrlQueryParams(url: string): RawGraphQlMetadata {
   const searchParams = buildUrl(url).searchParams
   const variablesParam = searchParams.get('variables')
-  const variables =
-    variablesParam && tryJsonParse(variablesParam) !== undefined ? variablesParam : undefined
+  const variables = variablesParam && tryJsonParse(variablesParam) !== undefined ? variablesParam : undefined
 
   return {
     query: searchParams.get('query') || undefined,
