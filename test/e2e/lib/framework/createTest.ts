@@ -298,8 +298,20 @@ function createTestContext(
       }
     },
     evaluateInWorker: async (fn: () => void) => {
-      await page.evaluate((code) => {
-        window.myServiceWorker.active?.postMessage({ __type: 'evaluate', code })
+      await page.evaluate(async (code) => {
+        const { active, installing, waiting } = window.myServiceWorker
+        const worker = active ?? (await waitForActivation(installing ?? waiting!))
+        worker.postMessage({ __type: 'evaluate', code })
+
+        function waitForActivation(sw: ServiceWorker): Promise<ServiceWorker> {
+          return new Promise((resolve) => {
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'activated') {
+                resolve(sw)
+              }
+            })
+          })
+        }
       }, `(${fn.toString()})()`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
