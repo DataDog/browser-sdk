@@ -50,13 +50,7 @@ export function extractGraphQlMetadata(
 }
 
 export function parseGraphQlResponse(responseText: string): GraphQlError[] | undefined {
-  let response: unknown
-  try {
-    response = JSON.parse(responseText)
-  } catch {
-    // Invalid JSON response
-    return
-  }
+  const response = tryJsonParse<unknown>(responseText)
 
   if (!response || typeof response !== 'object') {
     return
@@ -110,18 +104,11 @@ function extractFromBody(requestBody: unknown): RawGraphQlMetadata | undefined {
     return
   }
 
-  let graphqlBody: {
+  const graphqlBody = tryJsonParse<{
     query?: string
     operationName?: string
     variables?: unknown
-  }
-
-  try {
-    graphqlBody = JSON.parse(requestBody)
-  } catch {
-    // Not valid JSON
-    return
-  }
+  }>(requestBody)
 
   if (!graphqlBody) {
     return
@@ -136,11 +123,14 @@ function extractFromBody(requestBody: unknown): RawGraphQlMetadata | undefined {
 
 function extractFromUrlQueryParams(url: string): RawGraphQlMetadata {
   const searchParams = buildUrl(url).searchParams
+  const variablesParam = searchParams.get('variables')
+  const variables =
+    variablesParam && tryJsonParse(variablesParam) !== undefined ? variablesParam : undefined
 
   return {
     query: searchParams.get('query') || undefined,
     operationName: searchParams.get('operationName') || undefined,
-    variables: searchParams.get('variables') || undefined,
+    variables,
   }
 }
 
@@ -158,13 +148,7 @@ function sanitizeGraphQlMetadata(rawMetadata: RawGraphQlMetadata, trackPayload: 
   }
 
   if (rawMetadata.variables) {
-    try {
-      // Parse to validate it's valid JSON, then keep the string
-      JSON.parse(rawMetadata.variables)
-      variables = rawMetadata.variables
-    } catch {
-      // Invalid JSON in variables, ignore
-    }
+    variables = rawMetadata.variables
   }
 
   return {
@@ -177,4 +161,12 @@ function sanitizeGraphQlMetadata(rawMetadata: RawGraphQlMetadata, trackPayload: 
 
 function getOperationType(query: string) {
   return query.match(/^\s*(query|mutation|subscription)\b/i)?.[1] as 'query' | 'mutation' | 'subscription' | undefined
+}
+
+function tryJsonParse<T = unknown>(text: string): T | undefined {
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    return undefined
+  }
 }

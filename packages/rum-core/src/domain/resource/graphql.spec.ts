@@ -246,6 +246,19 @@ describe('GraphQL detection and metadata extraction', () => {
       })
     })
 
+    it('should omit variables for GET request when URL variables param is invalid JSON', () => {
+      const url = 'http://example.com/graphql?operationName=GetUser&variables=not-valid-json'
+
+      const result = extractGraphQlRequestMetadata({ method: 'GET', url, requestBody: undefined }, false)
+
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: 'GetUser',
+        variables: undefined,
+        payload: undefined,
+      })
+    })
+
     it('should return undefined for unsupported HTTP methods', () => {
       const requestBody = JSON.stringify({ query: 'query GetUser { user { id } }' })
       const result = extractGraphQlRequestMetadata(
