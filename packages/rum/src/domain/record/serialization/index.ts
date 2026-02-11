@@ -1,4 +1,6 @@
-export { createRootInsertionCursor } from './insertionCursor'
+export type { ChangeConverter, MutationLog, NodeIdRemapper } from './conversions'
+export { createChangeConverter, createCopyingNodeIdRemapper, createIdentityNodeIdRemapper } from './conversions'
+export { createChildInsertionCursor, createRootInsertionCursor } from './insertionCursor'
 export { getElementInputValue } from './serializationUtils'
 export { serializeDocument } from './serializeDocument'
 export { serializeNode } from './serializeNode'
