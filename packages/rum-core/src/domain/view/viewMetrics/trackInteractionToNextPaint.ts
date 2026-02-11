@@ -121,25 +121,30 @@ export function trackInteractionToNextPaint(
     entry: RumPerformanceEventTiming | RumFirstInputTiming,
     inpDuration: Duration
   ): InteractionToNextPaint['subParts'] | undefined {
-    if (!entry.processingStart || !entry.processingEnd) {
+    if (!entry.processingStart || !entry.processingEnd || !entry.interactionId) {
       return undefined
     }
 
-    // Get group timing by interactionId (or use individual entry if no group)
-    const group = entry.interactionId ? groupsByInteractionId.get(entry.interactionId) : undefined
+    const group = groupsByInteractionId.get(entry.interactionId)
 
-    const { startTime, processingStart, processingEnd: processingEndRaw } = group || entry
+    // Shouldn't happen since entries are grouped before p98 calculation.
+    if (!group) {
+      return undefined
+    }
 
-    // Prevents reported value to happen before processingStart.
-    // We group values around startTime +/- RENDER_TIME_GROUPING_THRESHOLD duration so some entries can be before processingStart.
-    const nextPaintTime = Math.max((entry.startTime + inpDuration) as RelativeTime, processingStart) as RelativeTime
+    // Use group.startTime consistently to ensure subparts sum to inpDuration
+    // Math.max prevents nextPaintTime from being before processingStart (Chrome implementation)
+    const nextPaintTime = Math.max(
+      (group.startTime + inpDuration) as RelativeTime,
+      group.processingStart
+    ) as RelativeTime
 
     // Clamp processingEnd to not exceed nextPaintTime
-    const processingEnd = Math.min(processingEndRaw, nextPaintTime) as RelativeTime
+    const processingEnd = Math.min(group.processingEnd, nextPaintTime) as RelativeTime
 
     return {
-      inputDelay: elapsed(startTime, processingStart),
-      processingDuration: elapsed(processingStart, processingEnd),
+      inputDelay: elapsed(group.startTime, group.processingStart),
+      processingDuration: elapsed(group.processingStart, processingEnd),
       presentationDelay: elapsed(processingEnd, nextPaintTime),
     }
   }
