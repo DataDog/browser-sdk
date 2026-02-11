@@ -15,6 +15,7 @@ import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, expireCookie, getSessionState, mockClock } from '@datadog/browser-core/test'
 
 import type { LogsConfiguration } from './configuration'
+import type { LogsSessionManager } from './logsSessionManager'
 import {
   LOGS_SESSION_KEY,
   LoggerTrackingType,
@@ -37,39 +38,39 @@ describe('logs session manager', () => {
     clock.tick(new Date().getTime())
   })
 
-  it('when tracked should store tracking type and session id', () => {
-    startLogsSessionManagerWithDefaults()
+  it('when tracked should store tracking type and session id', async () => {
+    await startLogsSessionManagerWithDefaults()
 
     expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]+/)
     expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
   })
 
-  it('when not tracked should store tracking type', () => {
-    startLogsSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
+  it('when not tracked should store tracking type', async () => {
+    await startLogsSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
 
     expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.NOT_TRACKED)
     expect(getSessionState(SESSION_STORE_KEY).isExpired).toBeUndefined()
   })
 
-  it('when tracked should keep existing tracking type and session id', () => {
+  it('when tracked should keep existing tracking type and session id', async () => {
     setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
 
-    startLogsSessionManagerWithDefaults()
+    await startLogsSessionManagerWithDefaults()
 
     expect(getSessionState(SESSION_STORE_KEY).id).toBe('abcdef')
     expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.TRACKED)
   })
 
-  it('when not tracked should keep existing tracking type', () => {
+  it('when not tracked should keep existing tracking type', async () => {
     setCookie(SESSION_STORE_KEY, 'logs=0', DURATION)
 
-    startLogsSessionManagerWithDefaults()
+    await startLogsSessionManagerWithDefaults()
 
     expect(getSessionState(SESSION_STORE_KEY)[LOGS_SESSION_KEY]).toBe(LoggerTrackingType.NOT_TRACKED)
   })
 
-  it('should renew on activity after expiration', () => {
-    startLogsSessionManagerWithDefaults()
+  it('should renew on activity after expiration', async () => {
+    await startLogsSessionManagerWithDefaults()
 
     expireCookie()
     expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
@@ -82,37 +83,37 @@ describe('logs session manager', () => {
   })
 
   describe('findTrackedSession', () => {
-    it('should return the current active session', () => {
+    it('should return the current active session', async () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
-      const logsSessionManager = startLogsSessionManagerWithDefaults()
+      const logsSessionManager = await startLogsSessionManagerWithDefaults()
       expect(logsSessionManager.findTrackedSession()!.id).toBe('abcdef')
     })
 
-    it('should return undefined if the session is not tracked', () => {
+    it('should return undefined if the session is not tracked', async () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=0', DURATION)
-      const logsSessionManager = startLogsSessionManagerWithDefaults()
+      const logsSessionManager = await startLogsSessionManagerWithDefaults()
       expect(logsSessionManager.findTrackedSession()).toBeUndefined()
     })
 
-    it('should not return the current session if it has expired by default', () => {
+    it('should not return the current session if it has expired by default', async () => {
       setCookie(SESSION_STORE_KEY, 'id=abcdef&logs=1', DURATION)
-      const logsSessionManager = startLogsSessionManagerWithDefaults()
+      const logsSessionManager = await startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
       expect(logsSessionManager.findTrackedSession()).toBeUndefined()
     })
 
-    it('should return the current session if it has expired when returnExpired = true', () => {
-      const logsSessionManager = startLogsSessionManagerWithDefaults()
+    it('should return the current session if it has expired when returnExpired = true', async () => {
+      const logsSessionManager = await startLogsSessionManagerWithDefaults()
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
       expect(logsSessionManager.findTrackedSession(relativeNow(), { returnInactive: true })).toBeDefined()
     })
 
-    it('should return session corresponding to start time', () => {
+    it('should return session corresponding to start time', async () => {
       setCookie(SESSION_STORE_KEY, 'id=foo&logs=1', DURATION)
-      const logsSessionManager = startLogsSessionManagerWithDefaults()
+      const logsSessionManager = await startLogsSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
       setCookie(SESSION_STORE_KEY, 'id=bar&logs=1', DURATION)
       // simulate a click to renew the session
@@ -124,14 +125,17 @@ describe('logs session manager', () => {
   })
 
   function startLogsSessionManagerWithDefaults({ configuration }: { configuration?: Partial<LogsConfiguration> } = {}) {
-    return startLogsSessionManager(
-      {
-        sessionSampleRate: 100,
-        sessionStoreStrategyType: { type: SessionPersistence.COOKIE, cookieOptions: {} },
-        ...configuration,
-      } as LogsConfiguration,
-      createTrackingConsentState(TrackingConsent.GRANTED)
-    )
+    return new Promise<LogsSessionManager>((resolve) => {
+      startLogsSessionManager(
+        {
+          sessionSampleRate: 100,
+          sessionStoreStrategyType: { type: SessionPersistence.COOKIE, cookieOptions: {} },
+          ...configuration,
+        } as LogsConfiguration,
+        createTrackingConsentState(TrackingConsent.GRANTED),
+        resolve
+      )
+    })
   }
 })
 
