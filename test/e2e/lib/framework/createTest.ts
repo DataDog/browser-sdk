@@ -38,7 +38,7 @@ interface TestContext {
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
-  interactWithWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
+  evaluateInWorker: (fn: () => void) => Promise<void>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -134,16 +134,7 @@ class TestBuilder {
   withWorker(worker: Worker) {
     this.worker = worker
 
-    const params = []
-    if (worker.importScripts) {
-      params.push('importScripts=true')
-    }
-    if (worker.nativeLog) {
-      params.push('nativeLog=true')
-    }
-
-    const query = params.length > 0 ? `?${params.join('&')}` : ''
-    const url = `/sw.js${query}`
+    const url = worker.importScripts ? '/sw.js?importScripts=true' : '/sw.js'
 
     const options = !worker.importScripts ? '{ type: "module" }' : '{}'
 
@@ -263,7 +254,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration, setupOptions.worker))
+    servers.base.bindServerApp(
+      createMockServerApp(servers, setup, setupOptions.remoteConfiguration, setupOptions.worker)
+    )
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(browserLogs, testContext)
@@ -305,8 +298,10 @@ function createTestContext(
         browserLogsManager.clear()
       }
     },
-    interactWithWorker: async (cb: (worker: ServiceWorker) => void) => {
-      await page.evaluate(`(${cb.toString()})(window.myServiceWorker.active)`)
+    evaluateInWorker: async (fn: () => void) => {
+      await page.evaluate((code) => {
+        window.myServiceWorker.active?.postMessage({ __type: 'evaluate', code })
+      }, `(${fn.toString()})()`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
     flushEvents: () => flushEvents(page),

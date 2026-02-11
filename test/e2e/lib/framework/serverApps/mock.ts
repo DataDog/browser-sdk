@@ -54,7 +54,6 @@ export function createMockServerApp(
       workerSetup(
         {
           importScripts: Boolean(query.importScripts),
-          nativeLog: Boolean(query.nativeLog),
           rumConfiguration: worker?.rumConfiguration,
           logsConfiguration: worker?.logsConfiguration,
         },

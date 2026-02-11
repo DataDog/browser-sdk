@@ -31,7 +31,6 @@ export interface SetupOptions {
 
 export interface WorkerOptions {
   importScripts?: boolean
-  nativeLog?: boolean
   rumConfiguration?: RumInitConfiguration
   logsConfiguration?: LogsInitConfiguration
 }
@@ -217,23 +216,22 @@ export function workerSetup(options: WorkerOptions, servers: Servers) {
   if (options.logsConfiguration) {
     setup += js`
       ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
-      DD_LOGS._setDebug(true)
       DD_LOGS.init(${formatConfiguration(options.logsConfiguration, servers)})
-      `
+    `
   }
 
   if (options.rumConfiguration) {
     setup += js`
       ${options.importScripts ? js`importScripts('/datadog-rum.js');` : js`import '/datadog-rum.js';`}
-      DD_RUM._setDebug(true)
       DD_RUM.init(${formatConfiguration(options.rumConfiguration, servers)})
     `
   }
 
   setup += js`
     self.addEventListener('message', (event) => {
-      const message = event.data;
-      ${!options.nativeLog && options.logsConfiguration ? js`DD_LOGS.logger.log(message);` : js`console.log(message);`}
+    if (event.data.__type === 'evaluate') {
+        new Function(event.data.code)();
+      }
     });
   `
 

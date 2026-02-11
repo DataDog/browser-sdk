@@ -319,17 +319,28 @@ test.describe('Synthetics Browser Test', () => {
 test.describe('Service workers Rum', () => {
   createTest('service worker with worker logs - esm')
     .withWorker(createWorker().withRum())
-    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
       test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
       await flushEvents()
 
       expect(intakeRegistry.rumEvents).toHaveLength(0)
+      withBrowserLogs((logs) => {
+        const errorLogs = logs.filter((log) => log.level === 'error')
+        const warnLogs = logs.filter(
+          (log) =>
+            log.message.includes('Datadog Browser SDK: No storage available for session. We will not send any data') &&
+            log.level === 'warning'
+        )
+
+        expect(errorLogs).toHaveLength(0)
+        expect(warnLogs).toHaveLength(1)
+      })
     })
 
   createTest('service worker with worker logs - importScripts')
     .withWorker(createWorker({ importScripts: true }).withRum())
-    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
+    .run(async ({ flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
       test.skip(
         browserName === 'webkit',
         'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
@@ -338,20 +349,17 @@ test.describe('Service workers Rum', () => {
       await flushEvents()
 
       expect(intakeRegistry.rumEvents).toHaveLength(0)
-    })
+      withBrowserLogs((logs) => {
+        const errorLogs = logs.filter((log) => log.level === 'error')
+        const warnLogs = logs.filter(
+          (log) =>
+            log.message.includes('Datadog Browser SDK: No storage available for session. We will not send any data') &&
+            log.level === 'warning'
+        )
 
-  createTest('service worker console forwarding')
-    .withWorker(createWorker({ importScripts: true, nativeLog: true }).withRum())
-    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
-      test.skip(
-        browserName === 'webkit',
-        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
-      )
-
-      await flushEvents()
-
-      // Expect logs for console, error, and report events from service worker
-      expect(intakeRegistry.rumEvents).toHaveLength(0)
+        expect(errorLogs).toHaveLength(0)
+        expect(warnLogs).toHaveLength(1)
+      })
     })
 })
 

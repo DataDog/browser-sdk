@@ -4,7 +4,6 @@ import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helper
 
 interface WorkerOptions {
   importScripts?: boolean
-  nativeLog?: boolean
 }
 
 export function createWorker(options: WorkerOptions = {}) {
@@ -13,13 +12,11 @@ export function createWorker(options: WorkerOptions = {}) {
 
 export class Worker {
   public importScripts: boolean
-  public nativeLog: boolean
   public rumConfiguration: RumInitConfiguration | undefined
   public logsConfiguration: LogsInitConfiguration | undefined
 
-  constructor({ importScripts = false, nativeLog = false }: WorkerOptions = {}) {
+  constructor({ importScripts = false }: WorkerOptions = {}) {
     this.importScripts = importScripts
-    this.nativeLog = nativeLog
   }
 
   withRum(rumInitConfiguration: Partial<RumInitConfiguration> = {}) {
