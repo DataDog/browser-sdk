@@ -1,5 +1,9 @@
-import type { DeflateWorker, Duration, TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
+  type DeflateWorker,
+  type Duration,
+  type TimeStamp,
+  type TrackingConsentState,
+  stopSessionManager,
   display,
   getTimeStamp,
   noop,
@@ -8,8 +12,6 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
-  resetFetchObservable,
-  stopSessionManager,
   ExperimentalFeature,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -43,7 +45,6 @@ const PUBLIC_API = {} as RumPublicApi
 
 describe('preStartRum', () => {
   afterEach(() => {
-    resetFetchObservable()
     stopSessionManager()
   })
 

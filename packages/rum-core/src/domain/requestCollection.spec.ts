@@ -1,5 +1,5 @@
 import type { Payload } from '@datadog/browser-core'
-import { RequestType, resetFetchObservable } from '@datadog/browser-core'
+import { RequestType } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
 import { registerCleanupTask, SPEC_ENDPOINTS, mockFetch, mockXhr, withXhr } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
@@ -41,7 +41,6 @@ describe('collect fetch', () => {
 
     registerCleanupTask(() => {
       stopFetchTracking()
-      resetFetchObservable()
     })
   })
 
@@ -340,10 +339,6 @@ describe('collect xhr', () => {
 describe('GraphQL response text collection', () => {
   const FAKE_GRAPHQL_URL = 'http://fake-url/graphql'
 
-  beforeEach(() => {
-    resetFetchObservable()
-  })
-
   function setupGraphQlFetchTest(trackResponseErrors: boolean) {
     const mockFetchManager = mockFetch()
     const completeSpy = jasmine.createSpy('requestComplete')
@@ -357,7 +352,6 @@ describe('GraphQL response text collection', () => {
     const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
     registerCleanupTask(() => {
       stop()
-      resetFetchObservable()
     })
 
     return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }

@@ -24,6 +24,32 @@
 
 - 👷 bump all packages to version to v7.0.0-alpha.0
 
+## v6.27.0
+
+**Public Changes:**
+
+- ✨ [RUM-11654] Add in-memory session persistence option ([#4124](https://github.com/DataDog/browser-sdk/pull/4124)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-14142] Add source code context to vitals and manual view ([#4137](https://github.com/DataDog/browser-sdk/pull/4137)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-13741] Fix sibling uniqueness check for elements in DocumentFragment ([#4115](https://github.com/DataDog/browser-sdk/pull/4115)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ⚗️ [RUM-13818] Collect LCP subparts ([#4104](https://github.com/DataDog/browser-sdk/pull/4104)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 fix code coverage upload ([#4155](https://github.com/DataDog/browser-sdk/pull/4155))
+- 👷 Fix source maps upload for versioned canary builds ([#4146](https://github.com/DataDog/browser-sdk/pull/4146))
+- 👷 Lock file maintenance ([#4141](https://github.com/DataDog/browser-sdk/pull/4141))
+- 👷 Update all non-major dependencies ([#4138](https://github.com/DataDog/browser-sdk/pull/4138)) [RUM-REACT]
+- 👷 skip BrowserStack tests for non-code changes ([#4136](https://github.com/DataDog/browser-sdk/pull/4136))
+- 👷 Update dependency @playwright/test to v1.58.0 ([#4139](https://github.com/DataDog/browser-sdk/pull/4139))
+- 👷 Bump slack-notifier version ([#4142](https://github.com/DataDog/browser-sdk/pull/4142))
+- 👷 Use RUM Profiling Schema from RUM-Events-Format ([#4080](https://github.com/DataDog/browser-sdk/pull/4080)) [RUM]
+- 👷 set NEXT_MAJOR_BRANCH to v7 ([#4132](https://github.com/DataDog/browser-sdk/pull/4132))
+- 🔧 Use hardcoded v7 instead of $NEXT_MAJOR_BRANCH variable ([#4135](https://github.com/DataDog/browser-sdk/pull/4135))
+- 🔧 Add integration-branch config for v7 ([#4134](https://github.com/DataDog/browser-sdk/pull/4134))
+- 🔧 Ignore Claude Code local files ([#4130](https://github.com/DataDog/browser-sdk/pull/4130))
+- ci: Removing usage of legacy runners ([#4106](https://github.com/DataDog/browser-sdk/pull/4106))
+- ♻️ move telemetry to pre-start step ([#4107](https://github.com/DataDog/browser-sdk/pull/4107)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
 ## v6.26.0
 
 **Public Changes:**

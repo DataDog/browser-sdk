@@ -132,3 +132,12 @@ function abortXhr({ target: xhr }: InstrumentedMethodCall<XMLHttpRequest, 'abort
     context.isAborted = true
   }
 }
+
+/**
+ * Reset the XHR observable global state. This is useful for testing to ensure clean state between tests.
+ *
+ * @internal
+ */
+export function resetXhrObservable() {
+  xhrObservable = undefined
+}

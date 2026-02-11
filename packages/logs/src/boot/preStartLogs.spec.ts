@@ -8,15 +8,15 @@ import {
   waitNextMicrotask,
   createFakeTelemetryObject,
 } from '@datadog/browser-core/test'
-import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
-  ONE_SECOND,
+  type TimeStamp,
+  type TrackingConsentState,
   SESSION_STORE_KEY,
+  ONE_SECOND,
   TrackingConsent,
   createTrackingConsentState,
   display,
   getCookie,
-  resetFetchObservable,
   stopSessionManager,
 } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
@@ -39,7 +39,6 @@ describe('preStartLogs', () => {
   })
 
   afterEach(() => {
-    resetFetchObservable()
     stopSessionManager()
   })
 
