@@ -229,7 +229,7 @@ export function workerSetup(options: WorkerOptions, servers: Servers) {
 
   setup += js`
     self.addEventListener('message', (event) => {
-    if (event.data.__type === 'evaluate') {
+      if (event.data.__type === 'evaluate') {
         new Function(event.data.code)();
       }
     });

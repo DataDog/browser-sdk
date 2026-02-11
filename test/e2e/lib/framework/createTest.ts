@@ -135,8 +135,7 @@ class TestBuilder {
     this.worker = worker
 
     const url = worker.importScripts ? '/sw.js?importScripts=true' : '/sw.js'
-
-    const options = !worker.importScripts ? '{ type: "module" }' : '{}'
+    const options = worker.importScripts ? '{}' : '{ type: "module" }'
 
     // Service workers require HTTPS or localhost due to browser security restrictions
     this.hostName = 'localhost'

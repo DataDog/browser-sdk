@@ -1,6 +1,6 @@
 import type { Context } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'
-import type { IntakeRegistry } from '../../lib/framework'
+import type { IntakeRegistry, BrowserLog } from '../../lib/framework'
 import { createTest, createWorker } from '../../lib/framework'
 
 test.describe('API calls and events around init', () => {
@@ -317,28 +317,16 @@ test.describe('Synthetics Browser Test', () => {
 })
 
 test.describe('Service workers Rum', () => {
-  createTest('service worker with worker logs - esm')
+  createTest('service worker with worker rum - esm')
     .withWorker(createWorker().withRum())
     .run(async ({ flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
       test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
       await flushEvents()
-
-      expect(intakeRegistry.rumEvents).toHaveLength(0)
-      withBrowserLogs((logs) => {
-        const errorLogs = logs.filter((log) => log.level === 'error')
-        const warnLogs = logs.filter(
-          (log) =>
-            log.message.includes('Datadog Browser SDK: No storage available for session. We will not send any data') &&
-            log.level === 'warning'
-        )
-
-        expect(errorLogs).toHaveLength(0)
-        expect(warnLogs).toHaveLength(1)
-      })
+      expectNoRumEventsWithSessionWarning(intakeRegistry, withBrowserLogs)
     })
 
-  createTest('service worker with worker logs - importScripts')
+  createTest('service worker with worker rum - importScripts')
     .withWorker(createWorker({ importScripts: true }).withRum())
     .run(async ({ flushEvents, intakeRegistry, browserName, withBrowserLogs }) => {
       test.skip(
@@ -347,21 +335,22 @@ test.describe('Service workers Rum', () => {
       )
 
       await flushEvents()
-
-      expect(intakeRegistry.rumEvents).toHaveLength(0)
-      withBrowserLogs((logs) => {
-        const errorLogs = logs.filter((log) => log.level === 'error')
-        const warnLogs = logs.filter(
-          (log) =>
-            log.message.includes('Datadog Browser SDK: No storage available for session. We will not send any data') &&
-            log.level === 'warning'
-        )
-
-        expect(errorLogs).toHaveLength(0)
-        expect(warnLogs).toHaveLength(1)
-      })
+      expectNoRumEventsWithSessionWarning(intakeRegistry, withBrowserLogs)
     })
 })
+
+const NO_SESSION_WARNING = 'Datadog Browser SDK: No storage available for session. We will not send any data'
+
+function expectNoRumEventsWithSessionWarning(
+  intakeRegistry: IntakeRegistry,
+  withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
+) {
+  expect(intakeRegistry.rumEvents).toHaveLength(0)
+  withBrowserLogs((logs) => {
+    expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
+    expect(logs.filter((log) => log.message.includes(NO_SESSION_WARNING) && log.level === 'warning')).toHaveLength(1)
+  })
+}
 
 function expectToHaveErrors(
   events: IntakeRegistry,
