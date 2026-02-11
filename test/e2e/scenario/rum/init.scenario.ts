@@ -1,7 +1,7 @@
 import type { Context } from '@datadog/browser-core'
 import { test, expect } from '@playwright/test'
 import type { IntakeRegistry } from '../../lib/framework'
-import { createTest } from '../../lib/framework'
+import { createTest, createWorker } from '../../lib/framework'
 
 test.describe('API calls and events around init', () => {
   createTest('should display a console log when calling init without configuration')
@@ -313,6 +313,45 @@ test.describe('Synthetics Browser Test', () => {
     .run(async ({ intakeRegistry, flushEvents }) => {
       await flushEvents()
       expect(intakeRegistry.rumViewEvents).toHaveLength(0)
+    })
+})
+
+test.describe('Service workers Rum', () => {
+  createTest('service worker with worker logs - esm')
+    .withWorker(createWorker().withRum())
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
+      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumEvents).toHaveLength(0)
+    })
+
+  createTest('service worker with worker logs - importScripts')
+    .withWorker(createWorker({ importScripts: true }).withRum())
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
+      test.skip(
+        browserName === 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
+      await flushEvents()
+
+      expect(intakeRegistry.rumEvents).toHaveLength(0)
+    })
+
+  createTest('service worker console forwarding')
+    .withWorker(createWorker({ importScripts: true, nativeLog: true }).withRum())
+    .run(async ({ flushEvents, intakeRegistry, browserName }) => {
+      test.skip(
+        browserName === 'webkit',
+        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+      )
+
+      await flushEvents()
+
+      // Expect logs for console, error, and report events from service worker
+      expect(intakeRegistry.rumEvents).toHaveLength(0)
     })
 })
 

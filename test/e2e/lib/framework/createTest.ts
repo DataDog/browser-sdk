@@ -18,12 +18,8 @@ import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
+import type { Worker } from './createWorker'
 import { isBrowserStack } from './environment'
-
-interface LogsWorkerOptions {
-  importScript?: boolean
-  nativeLog?: boolean
-}
 
 export function createTest(title: string) {
   return new TestBuilder(title)
@@ -62,7 +58,7 @@ class TestBuilder {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   } = {}
-  private useServiceWorker: boolean = false
+  private worker: Worker | undefined
   private hostName?: string
 
   constructor(private title: string) {}
@@ -135,37 +131,33 @@ class TestBuilder {
     return this
   }
 
-  withWorker({ importScript = false, nativeLog = false }: LogsWorkerOptions = {}) {
-    if (!this.useServiceWorker) {
-      this.useServiceWorker = true
+  withWorker(worker: Worker) {
+    this.worker = worker
 
-      const isModule = !importScript
-
-      const params = []
-      if (importScript) {
-        params.push('importScripts=true')
-      }
-      if (nativeLog) {
-        params.push('nativeLog=true')
-      }
-
-      const query = params.length > 0 ? `?${params.join('&')}` : ''
-      const url = `/sw.js${query}`
-
-      const options = isModule ? '{ type: "module" }' : '{}'
-
-      // Service workers require HTTPS or localhost due to browser security restrictions
-      this.hostName = 'localhost'
-      this.withBody(html`
-        <script>
-          if (!window.myServiceWorker && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.register('${url}', ${options}).then((registration) => {
-              window.myServiceWorker = registration
-            })
-          }
-        </script>
-      `)
+    const params = []
+    if (worker.importScripts) {
+      params.push('importScripts=true')
     }
+    if (worker.nativeLog) {
+      params.push('nativeLog=true')
+    }
+
+    const query = params.length > 0 ? `?${params.join('&')}` : ''
+    const url = `/sw.js${query}`
+
+    const options = !worker.importScripts ? '{ type: "module" }' : '{}'
+
+    // Service workers require HTTPS or localhost due to browser security restrictions
+    this.hostName = 'localhost'
+    this.withBody(html`
+      <script>
+        if (!window.myServiceWorker && 'serviceWorker' in navigator) {
+          navigator.serviceWorker.register('${url}', ${options}).then((registration) => {
+            window.myServiceWorker = registration
+          })
+        }
+      </script>
+    `)
 
     return this
   }
@@ -194,6 +186,7 @@ class TestBuilder {
       testFixture: this.testFixture,
       extension: this.extension,
       hostName: this.hostName,
+      worker: this.worker,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -270,7 +263,7 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
+    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration, setupOptions.worker))
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(browserLogs, testContext)

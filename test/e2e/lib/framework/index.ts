@@ -1,6 +1,7 @@
 export { createTest } from './createTest'
 export { DEFAULT_RUM_CONFIGURATION, DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 export { createExtension } from './createExtension'
+export { createWorker } from './createWorker'
 export { bundleSetup, html, npmSetup, reactSetup, formatConfiguration, createCrossOriginScriptUrls } from './pageSetups'
 export { IntakeRegistry } from './intakeRegistry'
 export { getTestServers, waitForServersIdle } from './httpServers'
