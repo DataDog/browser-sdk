@@ -37,7 +37,6 @@ interface EntriesGroup {
   processingEnd: RelativeTime
   // Reference time use for grouping, set once for each group
   referenceRenderTime: RelativeTime
-  entries: Array<RumPerformanceEventTiming | RumFirstInputTiming>
 }
 
 /**
@@ -78,7 +77,6 @@ export function trackInteractionToNextPaint(
     // For each group, we keep the biggest interval possible between processingStart and processingEnd
     group.processingStart = Math.min(entry.processingStart, group.processingStart) as RelativeTime
     group.processingEnd = Math.max(entry.processingEnd, group.processingEnd) as RelativeTime
-    group.entries.push(entry)
   }
 
   function groupEntriesByRenderTime(entry: RumPerformanceEventTiming | RumFirstInputTiming) {
@@ -113,7 +111,6 @@ export function trackInteractionToNextPaint(
       processingStart: entry.processingStart,
       processingEnd: entry.processingEnd,
       referenceRenderTime: renderTime,
-      entries: [entry],
     })
   }
 
