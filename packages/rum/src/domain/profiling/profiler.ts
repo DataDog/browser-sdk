@@ -14,12 +14,14 @@ import {
 } from '@datadog/browser-core'
 
 import type {
+  ActionContexts,
   LifeCycle,
   LongTaskContexts,
   RumConfiguration,
   RumSessionManager,
   TransportPayload,
   ViewHistory,
+  VitalContexts,
 } from '@datadog/browser-rum-core'
 import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
@@ -49,6 +51,8 @@ export function createRumProfiler(
   session: RumSessionManager,
   profilingContextManager: ProfilingContextManager,
   longTaskContexts: LongTaskContexts,
+  actionContexts: ActionContexts,
+  vitalContexts: VitalContexts,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
@@ -230,6 +234,8 @@ export function createRumProfiler(
         const endClocks = clocksNow()
         const duration = elapsed(startClocks.timeStamp, endClocks.timeStamp)
         const longTasks = longTaskContexts.findLongTasks(startClocks.relative, duration)
+        const actions = actionContexts.findActions(startClocks.relative, duration)
+        const vitals = vitalContexts.findVitals(startClocks.relative, duration)
         const isBelowDurationThreshold = duration < profilerConfiguration.minProfileDurationMs
         const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
@@ -245,6 +251,8 @@ export function createRumProfiler(
             endClocks,
             clocksOrigin: clocksOrigin(),
             longTasks,
+            actions,
+            vitals,
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           })

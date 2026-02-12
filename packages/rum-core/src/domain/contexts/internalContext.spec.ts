@@ -1,4 +1,5 @@
-import { noop, type RelativeTime } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import { noop } from '@datadog/browser-core'
 import { buildLocation } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumSessionManager } from '../rumSessionManager'
@@ -25,6 +26,14 @@ describe('internal context', () => {
 
     actionContexts = {
       findActionId: jasmine.createSpy('findActionId').and.returnValue('7890'),
+      findActions: jasmine.createSpy('findActions').and.returnValue([
+        {
+          id: '7890',
+          label: 'test action',
+          duration: 100 as Duration,
+          startClocks: { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp },
+        },
+      ]),
     }
 
     fakeLocation = buildLocation('/foo')

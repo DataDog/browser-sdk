@@ -1,11 +1,11 @@
 import type { ClocksState, Duration, RelativeTime, ValueHistoryEntry } from '@datadog/browser-core'
-import { ONE_MINUTE, generateUUID, createValueHistory, elapsed } from '@datadog/browser-core'
+import { SESSION_TIME_OUT_DELAY, generateUUID, createValueHistory, elapsed } from '@datadog/browser-core'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LifeCycle } from '../lifeCycle'
 import type { EventCounts } from '../trackEventCounts'
 import { trackEventCounts } from '../trackEventCounts'
 
-export const ACTION_CONTEXT_TIME_OUT_DELAY = 5 * ONE_MINUTE // arbitrary
+export const ACTION_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 
 export type ActionCounts = EventCounts
 
@@ -18,18 +18,27 @@ export interface TrackedAction {
   discard: () => void
 }
 
+export interface ActionContext {
+  id: string
+  label: string
+  duration: Duration
+  startClocks: ClocksState
+}
+
 export interface ActionContexts {
   findActionId: (startTime?: RelativeTime) => string | string[] | undefined
+  findActions: (startTime: RelativeTime, duration: Duration) => ActionContext[]
 }
 
 export interface ActionTracker {
-  createTrackedAction: (startClocks: ClocksState) => TrackedAction
+  createTrackedAction: (startClocks: ClocksState, actionName: string) => TrackedAction
   findActionId: (startTime?: RelativeTime) => string | string[] | undefined
+  findActions: (startTime: RelativeTime, duration: Duration) => ActionContext[]
   stop: () => void
 }
 
 export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
-  const history = createValueHistory<string>({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
+  const history = createValueHistory<ActionContext>({ expireDelay: ACTION_CONTEXT_TIME_OUT_DELAY })
   const activeEventCountSubscriptions = new Set<ReturnType<typeof trackEventCounts>>()
 
   const sessionRenewalSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
@@ -38,9 +47,12 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     activeEventCountSubscriptions.clear()
   })
 
-  function createTrackedAction(startClocks: ClocksState): TrackedAction {
+  function createTrackedAction(startClocks: ClocksState, actionName: string): TrackedAction {
     const id = generateUUID()
-    const historyEntry: ValueHistoryEntry<string> = history.add(id, startClocks.relative)
+    const historyEntry: ValueHistoryEntry<ActionContext> = history.add(
+      { id, label: actionName, duration: 0 as Duration, startClocks },
+      startClocks.relative
+    )
     let duration: Duration | undefined
 
     const eventCountsSubscription = trackEventCounts({
@@ -68,6 +80,7 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
       stop(endTime: RelativeTime) {
         historyEntry.close(endTime)
         duration = elapsed(startClocks.relative, endTime)
+        historyEntry.value.duration = duration
         cleanup()
       },
       discard() {
@@ -78,8 +91,12 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
   }
 
   function findActionId(startTime?: RelativeTime): string | string[] | undefined {
-    const ids = history.findAll(startTime)
-    return ids.length ? ids : undefined
+    const actionContexts = history.findAll(startTime)
+    return actionContexts.length ? actionContexts.map(({ id }) => id) : undefined
+  }
+
+  function findActions(startTime: RelativeTime, duration: Duration) {
+    return history.findAll(startTime, duration)
   }
 
   function stop() {
@@ -90,5 +107,5 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
     history.stop()
   }
 
-  return { createTrackedAction, findActionId, stop }
+  return { createTrackedAction, findActionId, findActions, stop }
 }
