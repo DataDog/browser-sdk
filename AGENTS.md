@@ -76,6 +76,8 @@ scripts/             # Build, deploy, release automation
 - Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Test framework: Jasmine + Karma
+- Prefer `collectAsyncCalls(spy, n)` over `waitFor(() => spy.calls.count() > 0)` for waiting on spy calls
+- Don't destructure methods from `spy.calls` (e.g., `argsFor`, `mostRecent`) - use `calls.argsFor()` to avoid `@typescript-eslint/unbound-method` errors
 
 ## Commit Messages
 

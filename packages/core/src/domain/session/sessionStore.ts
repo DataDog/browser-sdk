@@ -20,7 +20,7 @@ import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
 import { initMemorySessionStoreStrategy, selectMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
 export interface SessionStore {
-  expandOrRenewSession: () => void
+  expandOrRenewSession: (callback?: () => void) => void
   expandSession: () => void
   getSession: () => SessionState
   restartSession: () => void
@@ -130,30 +130,34 @@ export function startSessionStore<TrackingType extends string>(
   const watchSessionTimeoutId = setInterval(watchSession, STORAGE_POLL_DELAY)
   let sessionCache: SessionState
 
+  const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(
+    (callback?: () => void) => {
+      processSessionStoreOperations(
+        {
+          process: (sessionState) => {
+            if (isSessionInNotStartedState(sessionState)) {
+              return
+            }
+
+            const synchronizedSession = synchronizeSession(sessionState)
+            expandOrRenewSessionState(synchronizedSession)
+            return synchronizedSession
+          },
+          after: (sessionState) => {
+            if (isSessionStarted(sessionState) && !hasSessionInCache()) {
+              renewSessionInCache(sessionState)
+            }
+            sessionCache = sessionState
+            callback?.()
+          },
+        },
+        sessionStoreStrategy
+      )
+    },
+    STORAGE_POLL_DELAY
+  )
+
   startSession()
-
-  const { throttled: throttledExpandOrRenewSession, cancel: cancelExpandOrRenewSession } = throttle(() => {
-    processSessionStoreOperations(
-      {
-        process: (sessionState) => {
-          if (isSessionInNotStartedState(sessionState)) {
-            return
-          }
-
-          const synchronizedSession = synchronizeSession(sessionState)
-          expandOrRenewSessionState(synchronizedSession)
-          return synchronizedSession
-        },
-        after: (sessionState) => {
-          if (isSessionStarted(sessionState) && !hasSessionInCache()) {
-            renewSessionInCache(sessionState)
-          }
-          sessionCache = sessionState
-        },
-      },
-      sessionStoreStrategy
-    )
-  }, STORAGE_POLL_DELAY)
 
   function expandSession() {
     processSessionStoreOperations(
@@ -201,7 +205,7 @@ export function startSessionStore<TrackingType extends string>(
     return sessionState
   }
 
-  function startSession() {
+  function startSession(callback?: () => void) {
     processSessionStoreOperations(
       {
         process: (sessionState) => {
@@ -212,6 +216,7 @@ export function startSessionStore<TrackingType extends string>(
         },
         after: (sessionState) => {
           sessionCache = sessionState
+          callback?.()
         },
       },
       sessionStoreStrategy

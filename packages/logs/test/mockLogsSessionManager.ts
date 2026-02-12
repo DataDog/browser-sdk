@@ -20,7 +20,7 @@ export function createLogsSessionManagerMock(): LogsSessionManagerMock {
     },
     findTrackedSession: (_startTime, options) => {
       if (sessionStatus === LoggerTrackingType.TRACKED && (sessionIsActive || options?.returnInactive)) {
-        return { id }
+        return { id, anonymousId: 'device-123' }
       }
     },
     expireObservable: new Observable(),
