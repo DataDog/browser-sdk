@@ -260,6 +260,11 @@ export function createRumProfiler(
       return
     }
     if (instance.state !== 'running') {
+      // Update stateReason when already stopped and the user explicitly stops the profiler,
+      // so that SESSION_RENEWED does not override the user's intent.
+      if (instance.state === 'stopped' && stateReason === 'stopped-by-user') {
+        instance = { state: 'stopped', stateReason }
+      }
       return
     }
 
