@@ -4,9 +4,10 @@ import {
   mockClock,
   mockEventBridge,
   createFakeTelemetryObject,
+  replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
-import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display } from '@datadog/browser-core'
+import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display, startTelemetry } from '@datadog/browser-core'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
@@ -275,10 +276,10 @@ function createPreStartStrategyWithDefaults({
     handleLog: handleLogSpy,
   } as unknown as StartLogsResult)
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
-  const startTelemetrySpy = jasmine.createSpy().and.callFake(createFakeTelemetryObject)
+  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
 
   return {
-    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy, startTelemetrySpy),
+    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),
     startTelemetrySpy,
     handleLogSpy,
     doStartLogsSpy,
