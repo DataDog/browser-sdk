@@ -522,6 +522,9 @@ describe('profiler', () => {
     // Wait for data collection to complete (async fire-and-forget)
     await waitForBoolean(() => interceptor.requests.length >= 2)
 
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 2)
+
     // Should have collected data from both sessions (before expiration and after renewal)
     expect(interceptor.requests.length).toBe(2)
   })
@@ -563,6 +566,7 @@ describe('profiler', () => {
     // Stop profiler (sync)
     profiler.stop()
     expect(profiler.isStopped()).toBe(true)
+
 
     // Should have collected data from: initial session + first renewal + second renewal = 3 profiles
     await waitForBoolean(() => interceptor.requests.length >= 3)
@@ -651,6 +655,7 @@ describe('profiler', () => {
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
     expect(profiler.isStopped()).toBe(true)
+
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Session is renewed
@@ -658,6 +663,7 @@ describe('profiler', () => {
 
     // Wait for profiler to restart
     await waitForBoolean(() => profiler.isRunning())
+
     expect(profilingContextManager.get()?.status).toBe('running')
 
     // Clean up
