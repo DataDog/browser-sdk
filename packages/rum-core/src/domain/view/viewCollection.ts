@@ -192,6 +192,13 @@ function computeViewPerformanceData(
       duration: toServerDuration(interactionToNextPaint.value),
       timestamp: toServerDuration(interactionToNextPaint.time),
       target_selector: interactionToNextPaint.targetSelector,
+      sub_parts: interactionToNextPaint.subParts
+        ? {
+            input_delay: toServerDuration(interactionToNextPaint.subParts.inputDelay),
+            processing_duration: toServerDuration(interactionToNextPaint.subParts.processingDuration),
+            presentation_delay: toServerDuration(interactionToNextPaint.subParts.presentationDelay),
+          }
+        : undefined,
     },
     lcp: largestContentfulPaint && {
       timestamp: toServerDuration(largestContentfulPaint.value),
