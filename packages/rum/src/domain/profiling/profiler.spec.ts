@@ -567,7 +567,6 @@ describe('profiler', () => {
     profiler.stop()
     expect(profiler.isStopped()).toBe(true)
 
-
     // Should have collected data from: initial session + first renewal + second renewal = 3 profiles
     await waitForBoolean(() => interceptor.requests.length >= 3)
     expect(interceptor.requests.length).toBe(3)
