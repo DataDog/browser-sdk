@@ -250,6 +250,10 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       use_excluded_activity_urls?: boolean
       /**
+       * Whether the attribute unmask allowlist is used for Session Replay
+       */
+      use_attr_unmask_allowlist?: boolean
+      /**
        * Whether the Worker is loaded from an external URL
        */
       use_worker_url?: boolean

@@ -163,6 +163,12 @@ export function shouldMaskAttribute(
   if (nodePrivacyLevel !== NodePrivacyLevel.MASK && nodePrivacyLevel !== NodePrivacyLevel.MASK_UNLESS_ALLOWLISTED) {
     return false
   }
+
+  const attrUnmaskAllowlist: string[] = configuration.attrUnmaskAllowlist ?? []
+  if (attrUnmaskAllowlist.includes(attributeName)) {
+    return false
+  }
+
   if (
     attributeName === PRIVACY_ATTR_NAME ||
     STABLE_ATTRIBUTES.includes(attributeName) ||

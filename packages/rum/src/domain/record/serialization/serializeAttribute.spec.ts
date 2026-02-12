@@ -7,7 +7,7 @@ import {
 } from '@datadog/browser-rum-core'
 import { serializeAttribute, MAX_ATTRIBUTE_VALUE_CHAR_LENGTH } from './serializeAttribute'
 
-const DEFAULT_CONFIGURATION = {} as RumConfiguration
+const DEFAULT_CONFIGURATION = { attrUnmaskAllowlist: [] as string[] } as RumConfiguration
 
 describe('serializeAttribute', () => {
   it('truncates "data:" URIs after long string length', () => {

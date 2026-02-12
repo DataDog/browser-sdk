@@ -613,6 +613,7 @@ describe('serializeRumConfiguration', () => {
       traceSampleRate: 50,
       traceContextInjection: TraceContextInjection.ALL,
       defaultPrivacyLevel: 'allow',
+      attrUnmaskAllowlist: [],
       enablePrivacyForActionName: false,
       subdomain: 'foo',
       sessionReplaySampleRate: 60,
@@ -639,6 +640,7 @@ describe('serializeRumConfiguration', () => {
             | 'workerUrl'
             | 'allowedTracingUrls'
             | 'excludedActivityUrls'
+            | 'attrUnmaskAllowlist'
             | 'remoteConfigurationProxy'
             | 'allowedGraphQlUrls'
         ? `use_${CamelToSnakeCase<Key>}`
@@ -675,6 +677,7 @@ describe('serializeRumConfiguration', () => {
       start_session_replay_recording_manually: true,
       action_name_attribute: 'test-id',
       default_privacy_level: 'allow',
+      use_attr_unmask_allowlist: false,
       enable_privacy_for_action_name: false,
       track_resources: true,
       track_long_task: true,
