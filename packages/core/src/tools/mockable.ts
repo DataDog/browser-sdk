@@ -10,11 +10,17 @@ export const mockableReplacements = new Map<unknown, unknown>()
  * @example
  * // In source file:
  * import { mockable } from '../tools/mockable'
- * export const getNavigationEntry = mockable(() => performance.getEntriesByType('navigation')[0])
+ * export function formatNavigationEntry(): string {
+ *   const navigationEntry = mockable(getNavigationEntry)()
+ *   ...
+ * }
  *
  * // In test file:
- * import { mockValue } from '@datadog/browser-core/test'
- * mockValue(getNavigationEntry, () => FAKE_NAVIGATION_ENTRY)
+ * import { replaceMockable } from '@datadog/browser-core/test'
+ * it('...', () => {
+ *   replaceMockable(getNavigationEntry, () => FAKE_NAVIGATION_ENTRY)
+ *   expect(formatNavigationEntry()).toEqual(...)
+ * })
  */
 export function mockable<T>(value: T): T {
   // In test builds, return a wrapper that checks for mocks at call time
