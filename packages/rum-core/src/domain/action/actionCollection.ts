@@ -1,4 +1,4 @@
-import type { Duration, Observable } from '@datadog/browser-core'
+import type { Duration, Observable, RelativeTime } from '@datadog/browser-core'
 import { noop, toServerDuration, SKIPPED, HookNames, addDuration } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RawRumActionEvent } from '../../rawRumEvent.types'
@@ -10,12 +10,14 @@ import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks 
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { trackClickActions } from './trackClickActions'
 import type { ClickAction } from './trackClickActions'
-import { startActionTracker } from './trackAction'
-import type { ActionContexts } from './trackAction'
 import { trackManualActions } from './trackManualActions'
 import type { ManualAction } from './trackManualActions'
 
 export type AutoAction = ClickAction
+
+export interface ActionContexts {
+  findActionId: (startTime?: RelativeTime) => string[]
+}
 
 export const LONG_TASK_START_TIME_CORRECTION = 1 as Duration
 
@@ -26,9 +28,6 @@ export function startActionCollection(
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration
 ) {
-  // Shared action tracker for both click and manual actions
-  const actionTracker = startActionTracker(lifeCycle)
-
   const { unsubscribe: unsubscribeAutoAction } = lifeCycle.subscribe(
     LifeCycleEventType.AUTO_ACTION_COMPLETED,
     (action) => {
@@ -36,24 +35,23 @@ export function startActionCollection(
     }
   )
 
-  let stopClickActions: () => void = noop
+  const stopClickActions: () => void = noop
+  let clickActions: ReturnType<typeof trackClickActions> | undefined
 
   if (configuration.trackUserInteractions) {
-    ;({ stop: stopClickActions } = trackClickActions(
-      lifeCycle,
-      domMutationObservable,
-      windowOpenObservable,
-      configuration,
-      actionTracker
-    ))
+    clickActions = trackClickActions(lifeCycle, domMutationObservable, windowOpenObservable, configuration)
   }
 
-  const manualActions = trackManualActions(lifeCycle, actionTracker, (action) => {
+  const manualActions = trackManualActions(lifeCycle, (action) => {
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processAction(action))
   })
 
   const actionContexts: ActionContexts = {
-    findActionId: actionTracker.findActionId,
+    findActionId: (startTime?: RelativeTime) => {
+      const manualActionId = manualActions.findActionId(startTime)
+      const clickActionId = clickActions?.findActionId(startTime) ?? []
+      return manualActionId.concat(clickActionId)
+    },
   }
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
@@ -75,7 +73,7 @@ export function startActionCollection(
 
     const actionId = actionContexts.findActionId(correctedStartTime)
 
-    if (!actionId) {
+    if (!actionId.length) {
       return SKIPPED
     }
 
@@ -88,7 +86,8 @@ export function startActionCollection(
   hooks.register(
     HookNames.AssembleTelemetry,
     ({ startTime }): DefaultTelemetryEventAttributes => ({
-      action: { id: actionContexts.findActionId(startTime) as string },
+      // todo: fix telemetry event type
+      action: { id: actionContexts.findActionId(startTime) as unknown as string },
     })
   )
 
@@ -101,7 +100,7 @@ export function startActionCollection(
       unsubscribeAutoAction()
       stopClickActions()
       manualActions.stop()
-      actionTracker.stop()
+      clickActions?.stop()
     },
   }
 }
