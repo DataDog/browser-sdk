@@ -323,7 +323,9 @@ test.describe('Service workers Rum', () => {
       test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
       await flushEvents()
-      expectNoRumEventsWithSessionWarning(intakeRegistry, withBrowserLogs)
+
+      expect(intakeRegistry.rumEvents).toHaveLength(0)
+      withBrowserLogs((logs) => expectNoSessionWarning(browserName, logs))
     })
 
   createTest('service worker with worker rum - importScripts')
@@ -335,21 +337,21 @@ test.describe('Service workers Rum', () => {
       )
 
       await flushEvents()
-      expectNoRumEventsWithSessionWarning(intakeRegistry, withBrowserLogs)
+
+      expect(intakeRegistry.rumEvents).toHaveLength(0)
+      withBrowserLogs((logs) => expectNoSessionWarning(browserName, logs))
     })
 })
 
 const NO_SESSION_WARNING = 'Datadog Browser SDK: No storage available for session. We will not send any data'
 
-function expectNoRumEventsWithSessionWarning(
-  intakeRegistry: IntakeRegistry,
-  withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => void
-) {
-  expect(intakeRegistry.rumEvents).toHaveLength(0)
-  withBrowserLogs((logs) => {
-    expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
+function expectNoSessionWarning(browserName: string, logs: BrowserLog[]) {
+  // Firefox does not propagate the service worker's console to the main page's console
+  if (browserName !== 'firefox') {
     expect(logs.filter((log) => log.message.includes(NO_SESSION_WARNING) && log.level === 'warning')).toHaveLength(1)
-  })
+  }
+
+  expect(logs.filter((log) => log.level === 'error')).toHaveLength(0)
 }
 
 function expectToHaveErrors(
