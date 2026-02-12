@@ -45,9 +45,9 @@ import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  taskQueue = createTaskQueue()
+  pageStateHistory: PageStateHistory
 ) {
+  const taskQueue = mockable(createTaskQueue)()
   let requestRegistry: RequestRegistry | undefined
   const isEarlyRequestCollectionEnabled = configuration.trackEarlyRequests
 

@@ -8,10 +8,13 @@ import { registerCleanupTask } from './registerCleanupTask'
  * @param value - The original value (must be the same reference passed to mockable())
  * @param replacement - The mock replacement
  * @example
- * import { mockValue } from '@datadog/browser-core/test'
+ * import { replaceMockable } from '@datadog/browser-core/test'
  * import { trackRuntimeError } from '../domain/error/trackRuntimeError'
  *
- * mockValue(trackRuntimeError, () => new Observable<RawError>())
+ * it('...', () => {
+ *   replaceMockable(trackRuntimeError, () => new Observable<RawError>())
+ *   // ... test code ...
+ * })
  */
 export function replaceMockable<T>(value: T, replacement: T): void {
   if (mockableReplacements.has(value)) {
@@ -30,13 +33,14 @@ export function replaceMockable<T>(value: T, replacement: T): void {
  * @param value - The original function (must be the same reference passed to mockable())
  * @returns A Jasmine spy that can be used for assertions
  * @example
- * import { mockWithSpy } from '@datadog/browser-core/test'
+ * import { replaceMockableWithSpy } from '@datadog/browser-core/test'
  * import { trackRuntimeError } from '../domain/error/trackRuntimeError'
  *
- * const spy = mockWithSpy(trackRuntimeError)
- * spy.and.returnValue(new Observable<RawError>())
- * // ... test code ...
- * expect(spy).toHaveBeenCalled()
+ * it('...', () => {
+ *   const spy = replaceMockableWithSpy(trackRuntimeError)
+ *   // ... test code ...
+ *   expect(spy).toHaveBeenCalled()
+ * })
  */
 export function replaceMockableWithSpy<T extends (...args: any[]) => any>(value: T): jasmine.Spy<T> {
   const spy = jasmine.createSpy<T>()

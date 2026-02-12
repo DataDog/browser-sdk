@@ -37,13 +37,9 @@ describe('resourceCollection', () => {
     replaceMockable(retrieveInitialDocumentResourceTiming, noop)
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
+    replaceMockable(createTaskQueue, () => taskQueue)
     taskQueuePushSpy = spyOn(taskQueue, 'push')
-    const startResult = startResourceCollection(
-      lifeCycle,
-      { ...baseConfiguration, ...partialConfig },
-      pageStateHistory,
-      taskQueue
-    )
+    const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig }, pageStateHistory)
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
 
