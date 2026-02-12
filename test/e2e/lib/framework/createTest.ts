@@ -13,7 +13,7 @@ import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import type { SetupFactory, SetupOptions } from './pageSetups'
+import type { CallerLocation, SetupFactory, SetupOptions } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
@@ -26,7 +26,7 @@ interface LogsWorkerOptions {
 }
 
 export function createTest(title: string) {
-  return new TestBuilder(title)
+  return new TestBuilder(title, captureCallerLocation())
 }
 
 interface TestContext {
@@ -65,7 +65,10 @@ class TestBuilder {
   private useServiceWorker: boolean = false
   private hostName?: string
 
-  constructor(private title: string) {}
+  constructor(
+    private title: string,
+    private callerLocation: CallerLocation | undefined
+  ) {}
 
   withRum(rumInitConfiguration?: Partial<RumInitConfiguration>) {
     this.rumConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumInitConfiguration }
@@ -194,6 +197,7 @@ class TestBuilder {
       testFixture: this.testFixture,
       extension: this.extension,
       hostName: this.hostName,
+      callerLocation: this.callerLocation,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -220,6 +224,31 @@ class TestBuilder {
   }
 }
 
+/**
+ * Captures the location of the caller's caller (i.e. the scenario file that called run()).
+ * This is used to override Playwright's default location detection so that test output
+ * shows the scenario file instead of createTest.ts.
+ */
+function captureCallerLocation(): CallerLocation | undefined {
+  const error = new Error()
+  const lines = error.stack?.split('\n')
+  if (!lines || lines.length < 4) {
+    return undefined
+  }
+
+  // Stack layout:
+  // [0] "Error"
+  // [1] "    at captureCallerLocation (...)"
+  // [2] "    at createTest (...)"
+  // [3] "    at <scenario file> (...)"
+  const frame = lines[3]
+  const match = frame?.match(/\((.+):(\d+):(\d+)\)/) ?? frame?.match(/at (.+):(\d+):(\d+)/)
+  if (match) {
+    return { file: match[1], line: Number(match[2]), column: Number(match[3]) }
+  }
+  return undefined
+}
+
 function declareTestsForSetups(
   title: string,
   setups: Array<{ factory: SetupFactory; name?: string }>,
@@ -239,9 +268,30 @@ function declareTestsForSetups(
   }
 }
 
+/**
+ * Resolves the Playwright test function to use for declaring a test.
+ *
+ * When a callerLocation is available, accesses Playwright's internal TestTypeImpl via its
+ * private Symbol to call _createTest() directly with a custom location. This makes test
+ * output point to the scenario file instead of createTest.ts.
+ */
+function resolveTestFunction(setupOptions: SetupOptions): typeof test {
+  const testFn = setupOptions.testFixture ?? test
+  const testTypeSymbol = Object.getOwnPropertySymbols(testFn).find((s) => s.description === 'testType')
+
+  if (setupOptions.callerLocation && testTypeSymbol) {
+    const testTypeImpl = (testFn as any)[testTypeSymbol]
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return testTypeImpl._createTest.bind(testTypeImpl, 'default', setupOptions.callerLocation)
+  }
+
+  return testFn
+}
+
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  const testFixture = setupOptions.testFixture ?? test
-  testFixture(title, async ({ page, context }) => {
+  const testFixture = resolveTestFunction(setupOptions)
+
+  testFixture(title, async ({ page, context }: { page: Page; context: BrowserContext }) => {
     const browserName = getBrowserName(test.info().project.name)
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
