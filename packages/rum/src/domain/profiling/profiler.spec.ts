@@ -19,6 +19,7 @@ import {
   DEFAULT_FETCH_MOCK,
   readFormDataRequest,
   mockClock,
+  waitNextMicrotask,
 } from '@datadog/browser-core/test'
 import { LONG_TASK_ID_HISTORY_TIME_OUT_DELAY } from 'packages/rum-core/src/domain/longTask/longTaskCollection'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
@@ -135,12 +136,10 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Stop collection of profile.
+    // Stop collection of profile (sync - state changes immediately)
     profiler.stop()
 
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
@@ -185,11 +184,10 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Stop collection of profile.
+    // Stop collection of profile (sync - state changes immediately)
     profiler.stop()
 
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
@@ -228,10 +226,13 @@ describe('profiler', () => {
       entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
     })
 
-    // Stop first profiling session.
+    // Stop first profiling session (sync - state changes immediately)
     clock.tick(105)
     profiler.stop()
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
+
+    // Flush microtasks for first session's data collection
+    await waitNextMicrotask()
 
     // start a new profiling session
     profiler.start()
@@ -246,17 +247,18 @@ describe('profiler', () => {
 
     clock.tick(500)
 
-    // stop the second profiling session
+    // stop the second profiling session (sync - state changes immediately)
     profiler.stop()
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Data collection uses Promises (microtasks), not setTimeout.
     // With mockClock(), we can't use waitForBoolean (which polls via setTimeout).
-    // Instead, flush microtasks by awaiting a resolved Promise.
-    await Promise.resolve()
+    // Flush microtasks: one for profiler.stop() Promise, one for transport.send()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
 
     expect(interceptor.requests.length).toBe(2)
-    expect(profilingContextManager.get()?.status).toBe('stopped')
 
     const requestOne = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
     const requestTwo = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
@@ -324,12 +326,10 @@ describe('profiler', () => {
       },
     })
 
-    // Stop collection of profile.
+    // Stop collection of profile (sync - state changes immediately)
     profiler.stop()
 
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
@@ -415,11 +415,10 @@ describe('profiler', () => {
     await waitForBoolean(() => profiler.isRunning())
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Stop collection of profile.
+    // Stop collection of profile (sync - state changes immediately)
     profiler.stop()
 
-    // Wait for stop of collection.
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
@@ -443,12 +442,10 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Notify that the session has expired
+    // Notify that the session has expired (sync - state changes immediately)
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
-    // Wait for profiler to stop
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
@@ -468,17 +465,14 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Notify that the session has expired
+    // Notify that the session has expired (sync - state changes immediately)
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
-    // Wait for profiler to stop
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Change visibility to hidden and back to visible
     setVisibilityState('hidden')
-    await waitForBoolean(() => profiler.isStopped())
 
     setVisibilityState('visible')
 
@@ -500,12 +494,10 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Notify that the session has expired
+    // Notify that the session has expired (sync - state changes immediately)
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
-    // Wait for profiler to stop
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Wait for data collection to complete (async fire-and-forget)
@@ -522,10 +514,13 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Stop profiler and verify it collected data from the new session
+    // Stop profiler and verify it collected data from the new session (sync)
     profiler.stop()
 
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
+
+    // Wait for data collection to complete (async fire-and-forget)
+    await waitForBoolean(() => interceptor.requests.length >= 2)
 
     // Wait for data collection to complete (async fire-and-forget)
     await waitForBoolean(() => interceptor.requests.length >= 2)
@@ -544,35 +539,33 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // First cycle: expire and renew
+    // First cycle: expire and renew (sync - state changes immediately)
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
+
     await waitForBoolean(() => interceptor.requests.length >= 1)
     expect(interceptor.requests.length).toBe(1)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
     await waitForBoolean(() => profiler.isRunning())
-
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Second cycle: expire and renew again
+    // Second cycle: expire and renew again (sync)
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
+
     await waitForBoolean(() => interceptor.requests.length >= 2)
     expect(interceptor.requests.length).toBe(2)
 
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
     await waitForBoolean(() => profiler.isRunning())
-
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Stop profiler
+    // Stop profiler (sync)
     profiler.stop()
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
 
     // Should have collected data from: initial session + first renewal + second renewal = 3 profiles
     await waitForBoolean(() => interceptor.requests.length >= 3)
@@ -589,11 +582,10 @@ describe('profiler', () => {
 
     expect(profilingContextManager.get()?.status).toBe('running')
 
-    // Manually stop the profiler (not via session expiration)
+    // Manually stop the profiler (not via session expiration) - sync
     profiler.stop()
 
-    await waitForBoolean(() => profiler.isStopped())
-
+    expect(profiler.isStopped()).toBe(true)
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
     // Notify that the session has been renewed
@@ -639,7 +631,7 @@ describe('profiler', () => {
 
     // Clean up
     profiler.stop()
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
   })
 
   it('should restart profiling when session expires while paused and then renews', async () => {
@@ -658,11 +650,10 @@ describe('profiler', () => {
     // Wait for profiler to pause
     await waitForBoolean(() => profiler.isPaused())
 
-    // Session expires while profiler is paused
+    // Session expires while profiler is paused (sync - state changes immediately)
     lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
 
-    // Wait for profiler to stop
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
 
     expect(profilingContextManager.get()?.status).toBe('stopped')
 
@@ -676,7 +667,7 @@ describe('profiler', () => {
 
     // Clean up
     profiler.stop()
-    await waitForBoolean(() => profiler.isStopped())
+    expect(profiler.isStopped()).toBe(true)
   })
 })
 
