@@ -27,6 +27,13 @@ export interface SetupOptions {
     logsConfiguration?: LogsInitConfiguration
   }
   hostName?: string
+  callerLocation?: CallerLocation
+}
+
+export interface CallerLocation {
+  file: string
+  line: number
+  column: number
 }
 
 export interface WorkerOptions {
