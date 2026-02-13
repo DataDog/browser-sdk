@@ -5,33 +5,33 @@ import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'
 describe('takeFullSnapshot', () => {
   it('should produce Meta, Focus, and FullSnapshot records', () => {
     expect(takeFullSnapshot()).toEqual(
-      jasmine.arrayContaining([
+      expect.arrayContaining([
         {
           data: {
-            height: jasmine.any(Number),
+            height: expect.any(Number),
             href: window.location.href,
-            width: jasmine.any(Number),
+            width: expect.any(Number),
           },
           type: RecordType.Meta,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
         },
         {
           data: {
             has_focus: document.hasFocus(),
           },
           type: RecordType.Focus,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
         },
         {
           data: {
-            node: jasmine.any(Object),
+            node: expect.any(Object),
             initialOffset: {
-              left: jasmine.any(Number),
-              top: jasmine.any(Number),
+              left: expect.any(Number),
+              top: expect.any(Number),
             },
           },
           type: RecordType.FullSnapshot,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
         },
       ])
     )
@@ -39,15 +39,15 @@ describe('takeFullSnapshot', () => {
 
   it('should produce VisualViewport records when supported', () => {
     if (!window.visualViewport) {
-      pending('visualViewport not supported')
+      return // skip: 'visualViewport not supported'
     }
 
     expect(takeFullSnapshot()).toEqual(
-      jasmine.arrayContaining([
+      expect.arrayContaining([
         {
-          data: jasmine.any(Object),
+          data: expect.any(Object),
           type: RecordType.VisualViewport,
-          timestamp: jasmine.any(Number),
+          timestamp: expect.any(Number),
         },
       ])
     )

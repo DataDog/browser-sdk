@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import React, { useEffect, useLayoutEffect, act } from 'react'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
@@ -27,7 +28,7 @@ describe('UNSTABLE_ReactComponentTracker', () => {
   })
 
   it('should call addDurationVital after the component rendering', () => {
-    const addDurationVitalSpy = jasmine.createSpy()
+    const addDurationVitalSpy = vi.fn()
     initializeReactPlugin({
       publicApi: {
         addDurationVital: addDurationVitalSpy,
@@ -41,7 +42,7 @@ describe('UNSTABLE_ReactComponentTracker', () => {
     )
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(1)
-    const [name, options] = addDurationVitalSpy.calls.mostRecent().args
+    const [name, options] = addDurationVitalSpy.mock.lastCall
     expect(name).toBe('reactComponentRender')
     expect(options).toEqual({
       description: 'ChildComponent',
@@ -58,7 +59,7 @@ describe('UNSTABLE_ReactComponentTracker', () => {
   })
 
   it('should call addDurationVital on rerender', () => {
-    const addDurationVitalSpy = jasmine.createSpy()
+    const addDurationVitalSpy = vi.fn()
     initializeReactPlugin({
       publicApi: {
         addDurationVital: addDurationVitalSpy,
@@ -88,7 +89,7 @@ describe('UNSTABLE_ReactComponentTracker', () => {
     })
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(2)
-    const options = addDurationVitalSpy.calls.mostRecent().args[1]
+    const options = addDurationVitalSpy.mock.lastCall[1]
     expect(options).toEqual({
       description: 'ChildComponent',
       startTime: clock.timeStamp(TOTAL_DURATION + 1),

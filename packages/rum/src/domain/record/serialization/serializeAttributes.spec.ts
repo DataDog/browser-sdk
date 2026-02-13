@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { isSafari } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -532,7 +533,7 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an accessible external stylesheet
-    spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
+    vi.spyOn(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').mockReturnValue({
       cssRules: [{ cssText: 'p { margin: 0; }' } as CSSRule] as unknown as CSSRuleList,
     } as CSSStyleSheet)
 
@@ -543,7 +544,7 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an inaccessible external stylesheet
-    spyOnProperty(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').and.returnValue({
+    vi.spyOn(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').mockReturnValue({
       get cssRules(): CSSRuleList {
         throw new Error('Cannot access rules')
       },

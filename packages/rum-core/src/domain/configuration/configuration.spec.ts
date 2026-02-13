@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import type { InitConfiguration } from '@datadog/browser-core'
 import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
 import type {
@@ -12,12 +13,12 @@ import { DEFAULT_PROPAGATOR_TYPES, serializeRumConfiguration, validateAndBuildRu
 const DEFAULT_INIT_CONFIGURATION = { clientToken: 'xxx', applicationId: 'xxx' }
 
 describe('validateAndBuildRumConfiguration', () => {
-  let displayErrorSpy: jasmine.Spy<typeof display.error>
-  let displayWarnSpy: jasmine.Spy<typeof display.warn>
+  let displayErrorSpy: Mock<typeof display.error>
+  let displayWarnSpy: Mock<typeof display.warn>
 
   beforeEach(() => {
-    displayErrorSpy = spyOn(display, 'error')
-    displayWarnSpy = spyOn(display, 'warn')
+    displayErrorSpy = vi.spyOn(display, 'error')
+    displayWarnSpy = vi.spyOn(display, 'warn')
   })
 
   describe('applicationId', () => {
@@ -25,7 +26,8 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, applicationId: undefined as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith(
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith(
         'Application ID is not configured, no RUM data will be collected.'
       )
     })
@@ -47,16 +49,18 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith(
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith(
         'Session Replay Sample Rate should be a number between 0 and 100'
       )
 
-      displayErrorSpy.calls.reset()
+      displayErrorSpy.mockClear()
 
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 200 })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith(
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith(
         'Session Replay Sample Rate should be a number between 0 and 100'
       )
     })
@@ -77,11 +81,13 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith('Trace Sample Rate should be a number between 0 and 100')
 
-      displayErrorSpy.calls.reset()
+      displayErrorSpy.mockClear()
       expect(validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, traceSampleRate: 200 })).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Trace Sample Rate should be a number between 0 and 100')
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith('Trace Sample Rate should be a number between 0 and 100')
     })
   })
 
@@ -203,14 +209,16 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingUrls: ['foo'] })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Service needs to be configured when tracing is enabled')
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith('Service needs to be configured when tracing is enabled')
     })
 
     it('does not validate the configuration if an incorrect value is provided', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, allowedTracingUrls: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Allowed Tracing URLs should be an array')
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith('Allowed Tracing URLs should be an array')
     })
   })
 
@@ -245,7 +253,8 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, excludedActivityUrls: 'foo' as any })
       ).toBeUndefined()
-      expect(displayErrorSpy).toHaveBeenCalledOnceWith('Excluded Activity Urls should be an array')
+      expect(displayErrorSpy).toHaveBeenCalledTimes(1)
+      expect(displayErrorSpy).toHaveBeenCalledWith('Excluded Activity Urls should be an array')
     })
   })
 
@@ -456,7 +465,7 @@ describe('validateAndBuildRumConfiguration', () => {
           ],
         }
         expect(serializeRumConfiguration(complexTracingConfig).selected_tracing_propagators).toEqual(
-          jasmine.arrayWithExactContents(['datadog', 'b3', 'b3multi', 'tracecontext'])
+          expect.arrayContaining(['datadog', 'b3', 'b3multi', 'tracecontext'])
         )
       })
 
@@ -526,7 +535,8 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         trackFeatureFlagsForEvents: 123 as any,
       })!
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith('trackFeatureFlagsForEvents should be an array')
+      expect(displayWarnSpy).toHaveBeenCalledTimes(1)
+      expect(displayWarnSpy).toHaveBeenCalledWith('trackFeatureFlagsForEvents should be an array')
     })
   })
 
@@ -594,7 +604,8 @@ describe('validateAndBuildRumConfiguration', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         allowedGraphQlUrls: 'not-an-array' as any,
       })
-      expect(displayWarnSpy).toHaveBeenCalledOnceWith('allowedGraphQlUrls should be an array')
+      expect(displayWarnSpy).toHaveBeenCalledTimes(1)
+      expect(displayWarnSpy).toHaveBeenCalledWith('allowedGraphQlUrls should be an array')
     })
   })
 })

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
@@ -6,14 +7,14 @@ import type { Tracker } from './tracker.types'
 
 describe('trackViewEnd', () => {
   let lifeCycle: LifeCycle
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
-  let flushMutationsCallback: jasmine.Spy<() => void>
+  let emitRecordCallback: Mock<EmitRecordCallback>
+  let flushMutationsCallback: Mock<() => void>
   let viewEndTracker: Tracker
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    emitRecordCallback = jasmine.createSpy()
-    flushMutationsCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
+    flushMutationsCallback = vi.fn()
     viewEndTracker = trackViewEnd(lifeCycle, emitRecordCallback, flushMutationsCallback)
   })
 
@@ -26,7 +27,7 @@ describe('trackViewEnd', () => {
 
     expect(flushMutationsCallback).toHaveBeenCalledWith()
     expect(emitRecordCallback).toHaveBeenCalledWith({
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       type: RecordType.ViewEnd,
     })
   })

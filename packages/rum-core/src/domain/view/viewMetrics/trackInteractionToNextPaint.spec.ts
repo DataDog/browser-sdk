@@ -59,7 +59,7 @@ describe('trackInteractionToNextPaint', () => {
 
   beforeEach(() => {
     if (!isInteractionToNextPaintSupported()) {
-      pending('No INP support')
+      return // skip: 'No INP support'
     }
   })
 

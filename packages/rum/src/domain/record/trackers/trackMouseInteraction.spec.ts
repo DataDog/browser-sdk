@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import { DOM_EVENT } from '@datadog/browser-core'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../../../rum-core/test'
@@ -10,7 +11,7 @@ import { trackMouseInteraction } from './trackMouseInteraction'
 import type { Tracker } from './tracker.types'
 
 describe('trackMouseInteraction', () => {
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitRecordCallback: Mock<EmitRecordCallback>
   let mouseInteractionTracker: Tracker
   let scope: RecordingScope
   let a: HTMLAnchorElement
@@ -22,7 +23,7 @@ describe('trackMouseInteraction', () => {
     scope = createRecordingScopeForTesting()
     takeFullSnapshotForTesting(scope)
 
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     mouseInteractionTracker = trackMouseInteraction(emitRecordCallback, scope)
     registerCleanupTask(() => {
       mouseInteractionTracker.stop()
@@ -33,15 +34,15 @@ describe('trackMouseInteraction', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.CLICK, { clientX: 0, clientY: 0 }))
 
     expect(emitRecordCallback).toHaveBeenCalledWith({
-      id: jasmine.any(Number),
+      id: expect.any(Number),
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.MouseInteraction,
         type: MouseInteractionType.Click,
-        id: jasmine.any(Number),
-        x: jasmine.any(Number),
-        y: jasmine.any(Number),
+        id: expect.any(Number),
+        x: expect.any(Number),
+        y: expect.any(Number),
       },
     })
   })
@@ -53,13 +54,13 @@ describe('trackMouseInteraction', () => {
     expect(emitRecordCallback).toHaveBeenCalledWith({
       id: scope.eventIds.getOrInsert(pointerupEvent),
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.MouseInteraction,
         type: MouseInteractionType.MouseUp,
-        id: jasmine.any(Number),
-        x: jasmine.any(Number),
-        y: jasmine.any(Number),
+        id: expect.any(Number),
+        x: expect.any(Number),
+        y: expect.any(Number),
       },
     })
   })
@@ -75,13 +76,13 @@ describe('trackMouseInteraction', () => {
     a.dispatchEvent(createNewEvent(DOM_EVENT.BLUR))
 
     expect(emitRecordCallback).toHaveBeenCalledWith({
-      id: jasmine.any(Number),
+      id: expect.any(Number),
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.MouseInteraction,
         type: MouseInteractionType.Blur,
-        id: jasmine.any(Number),
+        id: expect.any(Number),
       },
     })
   })
@@ -92,7 +93,7 @@ describe('trackMouseInteraction', () => {
 
     beforeEach(() => {
       if (!window.visualViewport) {
-        pending('no visualViewport')
+        return // skip: 'no visualViewport'
       }
 
       coordinatesComputed = false

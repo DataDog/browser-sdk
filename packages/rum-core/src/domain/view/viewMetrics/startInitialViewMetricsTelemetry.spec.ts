@@ -56,14 +56,14 @@ describe('startInitialViewMetricsTelemetry', () => {
   it('should collect initial view metrics telemetry', async () => {
     startInitialViewMetricsTelemetryCollection()
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
   })
 
   it('should not collect initial view metrics telemetry twice', async () => {
     startInitialViewMetricsTelemetryCollection()
 
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
     telemetry.reset()
 
     generateViewUpdateWithInitialViewMetrics({
@@ -86,7 +86,7 @@ describe('startInitialViewMetricsTelemetry', () => {
     telemetry.reset()
 
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
   })
 
   it('should not collect initial view metrics telemetry until navigation timings are known', async () => {
@@ -100,7 +100,7 @@ describe('startInitialViewMetricsTelemetry', () => {
     telemetry.reset()
 
     generateViewUpdateWithInitialViewMetrics(VIEW_METRICS)
-    expect(await telemetry.getEvents()).toEqual([jasmine.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
+    expect(await telemetry.getEvents()).toEqual([expect.objectContaining(TELEMETRY_FOR_VIEW_METRICS)])
   })
 
   it('should not collect initial view metrics telemetry when telemetry is disabled', async () => {

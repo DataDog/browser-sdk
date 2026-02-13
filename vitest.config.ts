@@ -31,6 +31,10 @@ export default defineConfig({
 
   define: buildEnvDefines,
 
+  optimizeDeps: {
+    include: ['pako'],
+  },
+
   test: {
     browser: {
       enabled: true,

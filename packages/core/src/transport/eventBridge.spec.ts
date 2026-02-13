@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import { mockEventBridge } from '../../test'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { BrowserWindowWithEventBridge } from './eventBridge'
@@ -32,11 +33,11 @@ describe('canUseEventBridge', () => {
 })
 
 describe('event bridge send', () => {
-  let sendSpy: jasmine.Spy<(msg: string) => void>
+  let sendSpy: Mock<(msg: string) => void>
 
   beforeEach(() => {
     const eventBridge = mockEventBridge()
-    sendSpy = spyOn(eventBridge, 'send')
+    sendSpy = vi.spyOn(eventBridge, 'send')
   })
 
   it('should serialize sent events without view', () => {
@@ -44,7 +45,8 @@ describe('event bridge send', () => {
 
     eventBridge.send('view', { foo: 'bar' })
 
-    expect(sendSpy).toHaveBeenCalledOnceWith('{"eventType":"view","event":{"foo":"bar"}}')
+    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(sendSpy).toHaveBeenCalledWith('{"eventType":"view","event":{"foo":"bar"}}')
   })
 
   it('should serialize sent events with view', () => {
@@ -52,7 +54,8 @@ describe('event bridge send', () => {
 
     eventBridge.send('view', { foo: 'bar' }, '123')
 
-    expect(sendSpy).toHaveBeenCalledOnceWith('{"eventType":"view","event":{"foo":"bar"},"view":{"id":"123"}}')
+    expect(sendSpy).toHaveBeenCalledTimes(1)
+    expect(sendSpy).toHaveBeenCalledWith('{"eventType":"view","event":{"foo":"bar"},"view":{"id":"123"}}')
   })
 })
 

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import { createFakeSessionStoreStrategy, mockClock } from '../../../test'
 import type { SessionState } from './sessionState'
 import { expandSessionState } from './sessionState'
@@ -14,33 +15,33 @@ const EXPIRED_SESSION: SessionState = { isExpired: '1', anonymousId: '0' }
 describe('sessionStoreOperations', () => {
   let initialSession: SessionState
   let otherSession: SessionState
-  let processSpy: jasmine.Spy<jasmine.Func>
-  let afterSpy: jasmine.Spy<jasmine.Func>
+  let processSpy: Mock<(...args: any[]) => any>
+  let afterSpy: Mock<(...args: any[]) => any>
   const now = Date.now()
 
   beforeEach(() => {
     initialSession = { id: '123', created: String(now) }
     otherSession = { id: '456', created: String(now + 100) }
-    processSpy = jasmine.createSpy('process')
-    afterSpy = jasmine.createSpy('after')
+    processSpy = vi.fn()
+    afterSpy = vi.fn()
   })
 
   describe('with lock access disabled', () => {
     it('should persist session when process returns a value', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession })
-      processSpy.and.returnValue({ ...otherSession })
+      processSpy.mockReturnValue({ ...otherSession })
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
       expect(processSpy).toHaveBeenCalledWith(initialSession)
-      const expectedSession = { ...otherSession, expire: jasmine.any(String) }
+      const expectedSession = { ...otherSession, expire: expect.any(String) }
       expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
       expect(afterSpy).toHaveBeenCalledWith(expectedSession)
     })
 
     it('should clear session when process returns an expired session', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession })
-      processSpy.and.returnValue(EXPIRED_SESSION)
+      processSpy.mockReturnValue(EXPIRED_SESSION)
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
@@ -51,7 +52,7 @@ describe('sessionStoreOperations', () => {
 
     it('should not persist session when process returns undefined', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession })
-      processSpy.and.returnValue(undefined)
+      processSpy.mockReturnValue(undefined)
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
@@ -62,12 +63,12 @@ describe('sessionStoreOperations', () => {
 
     it('LOCK_MAX_TRIES value should not influence the behavior when lock mechanism is not enabled', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: false, initialSession })
-      processSpy.and.returnValue({ ...otherSession })
+      processSpy.mockReturnValue({ ...otherSession })
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy, LOCK_MAX_TRIES)
 
       expect(processSpy).toHaveBeenCalledWith(initialSession)
-      const expectedSession = { ...otherSession, expire: jasmine.any(String) }
+      const expectedSession = { ...otherSession, expire: expect.any(String) }
       expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
       expect(afterSpy).toHaveBeenCalledWith(expectedSession)
     })
@@ -76,19 +77,19 @@ describe('sessionStoreOperations', () => {
   describe('with lock access enabled', () => {
     it('should persist session when process returns a value', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
-      processSpy.and.returnValue({ ...otherSession })
+      processSpy.mockReturnValue({ ...otherSession })
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
       expect(processSpy).toHaveBeenCalledWith(initialSession)
-      const expectedSession = { ...otherSession, expire: jasmine.any(String) }
+      const expectedSession = { ...otherSession, expire: expect.any(String) }
       expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
       expect(afterSpy).toHaveBeenCalledWith(expectedSession)
     })
 
     it('should clear session when process returns an expired session', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
-      processSpy.and.returnValue(EXPIRED_SESSION)
+      processSpy.mockReturnValue(EXPIRED_SESSION)
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
@@ -100,7 +101,7 @@ describe('sessionStoreOperations', () => {
 
     it('should not persist session when process returns undefined', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
-      processSpy.and.returnValue(undefined)
+      processSpy.mockReturnValue(undefined)
 
       processSessionStoreOperations({ process: processSpy, after: afterSpy }, sessionStoreStrategy)
 
@@ -137,7 +138,7 @@ describe('sessionStoreOperations', () => {
           ...initialSession,
           other: 'other',
         })
-        processSpy.and.callFake((session) => ({ ...session, processed: 'processed' }) as SessionState)
+        processSpy.mockImplementation((session) => ({ ...session, processed: 'processed' }) as SessionState)
 
         processSessionStoreOperations(
           {
@@ -147,7 +148,7 @@ describe('sessionStoreOperations', () => {
               expect(processSpy).toHaveBeenCalledWith({
                 ...initialSession,
                 other: 'other',
-                expire: jasmine.any(String),
+                expire: expect.any(String),
               })
 
               // end state with session 'other' and 'processed' value
@@ -155,7 +156,7 @@ describe('sessionStoreOperations', () => {
                 ...initialSession,
                 other: 'other',
                 processed: 'processed',
-                expire: jasmine.any(String),
+                expire: expect.any(String),
               }
               expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
               expect(afterSession).toEqual(expectedSession)

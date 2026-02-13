@@ -76,7 +76,7 @@ describe('computeFrustration', () => {
   })
 
   function getFrustrations(click: FakeClick) {
-    return click.addFrustration.calls.allArgs().map((args) => args[0])
+    return click.addFrustration.mock.calls.map((args) => args[0])
   }
 })
 

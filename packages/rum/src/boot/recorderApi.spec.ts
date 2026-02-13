@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import type {
   DeflateEncoder,
   DeflateWorker,
@@ -34,11 +35,11 @@ import type { StartRecording } from './postStartStrategy'
 describe('makeRecorderApi', () => {
   let lifeCycle: LifeCycle
   let recorderApi: RecorderApi
-  let startRecordingSpy: jasmine.Spy
-  let loadRecorderSpy: jasmine.Spy<() => Promise<StartRecording>>
-  let stopRecordingSpy: jasmine.Spy<() => void>
+  let startRecordingSpy: Mock
+  let loadRecorderSpy: Mock<() => Promise<StartRecording>>
+  let stopRecordingSpy: Mock<() => void>
   let mockWorker: MockWorker
-  let createDeflateWorkerSpy: jasmine.Spy<CreateDeflateWorker>
+  let createDeflateWorkerSpy: Mock<CreateDeflateWorker>
   let rumInit: (options?: { worker?: DeflateWorker }) => void
   let telemetry: MockTelemetry
 
@@ -53,19 +54,18 @@ describe('makeRecorderApi', () => {
   } = {}) {
     telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
-    createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).and.callFake(() => mockWorker)
-    spyOn(display, 'error')
+    createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).mockImplementation(() => mockWorker)
+    vi.spyOn(display, 'error')
 
     lifeCycle = new LifeCycle()
-    stopRecordingSpy = jasmine.createSpy('stopRecording')
-    startRecordingSpy = jasmine.createSpy('startRecording')
-    loadRecorderSpy = jasmine.createSpy('loadRecorder')
+    stopRecordingSpy = vi.fn()
+    startRecordingSpy = vi.fn()
 
     if (loadRecorderError) {
-      loadRecorderSpy.and.resolveTo(undefined)
+      loadRecorderSpy = vi.fn().mockResolvedValue(undefined)
     } else {
       // Workaround because using resolveTo(startRecordingSpy) was not working
-      loadRecorderSpy.and.resolveTo((...args: any) => {
+      loadRecorderSpy = vi.fn().mockResolvedValue((...args: any) => {
         startRecordingSpy(...args)
         return {
           stop: stopRecordingSpy,
@@ -199,7 +199,7 @@ describe('makeRecorderApi', () => {
     })
 
     it('should start recording if session is tracked without session replay when forced', async () => {
-      const setForcedReplaySpy = jasmine.createSpy()
+      const setForcedReplaySpy = vi.fn()
 
       setupRecorderApi({
         sessionManager: {
@@ -244,7 +244,7 @@ describe('makeRecorderApi', () => {
       setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
 
-      createDeflateWorkerSpy.and.throwError('Crash')
+      createDeflateWorkerSpy.mockImplementation(() => { throw 'Crash' })
       recorderApi.start()
 
       expect(loadRecorderSpy).toHaveBeenCalled()
@@ -253,8 +253,8 @@ describe('makeRecorderApi', () => {
       expect(startRecordingSpy).not.toHaveBeenCalled()
       const events = await telemetry.getEvents()
       expect(events).toEqual([
-        jasmine.objectContaining({
-          error: jasmine.anything(),
+        expect.objectContaining({
+          error: expect.anything(),
         }),
         expectedRecorderInitTelemetry({ result: 'deflate-encoder-load-failed' }),
       ])
@@ -279,14 +279,14 @@ describe('makeRecorderApi', () => {
 
       await collectAsyncCalls(startRecordingSpy, 1)
 
-      const firstCallDeflateEncoder: DeflateEncoder = startRecordingSpy.calls.mostRecent().args[4]
+      const firstCallDeflateEncoder: DeflateEncoder = startRecordingSpy.mock.lastCall[4]
       firstCallDeflateEncoder.write('foo')
 
       recorderApi.stop()
       recorderApi.start()
       await collectAsyncCalls(startRecordingSpy, 2)
 
-      const secondCallDeflateEncoder: DeflateEncoder = startRecordingSpy.calls.mostRecent().args[4]
+      const secondCallDeflateEncoder: DeflateEncoder = startRecordingSpy.mock.lastCall[4]
       secondCallDeflateEncoder.write('foo')
 
       const writeMessages = mockWorker.pendingMessages.filter(
@@ -695,10 +695,10 @@ function expectedRecorderInitTelemetry(overrides: Partial<RecorderInitMetrics> =
     message: 'Recorder init metrics',
     metrics: {
       forced: false,
-      loadRecorderModuleDuration: jasmine.any(Number),
-      recorderInitDuration: jasmine.any(Number),
+      loadRecorderModuleDuration: expect.any(Number),
+      recorderInitDuration: expect.any(Number),
       result: 'succeeded',
-      waitForDocReadyDuration: jasmine.any(Number),
+      waitForDocReadyDuration: expect.any(Number),
       ...overrides,
     },
   }

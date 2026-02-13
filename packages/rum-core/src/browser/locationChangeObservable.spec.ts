@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { createLocationChangeObservable } from './locationChangeObservable'
@@ -8,7 +9,7 @@ describe('locationChangeObservable', () => {
 
     history.pushState({}, '', '/foo?bar=qux')
 
-    const locationChanges = observer.calls.argsFor(0)[0]
+    const locationChanges = observer.mock.calls[0][0]
     expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
     expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
   })
@@ -17,7 +18,7 @@ describe('locationChangeObservable', () => {
     const observer = setup()
 
     function hashChangeCallback() {
-      const locationChanges = observer.calls.argsFor(0)[0]
+      const locationChanges = observer.mock.calls[0][0]
       expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
       expect(locationChanges.newLocation.href).toMatch(/\/foo#bar$/)
 
@@ -43,7 +44,7 @@ describe('locationChangeObservable', () => {
 
     history.pushState({}, '', '/foo?bar=qux')
 
-    const locationChanges = observer.calls.argsFor(0)[0]
+    const locationChanges = observer.mock.calls[0][0]
     expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
     expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
     expect(wrapperSpy).toHaveBeenCalled()
@@ -55,7 +56,7 @@ describe('locationChangeObservable', () => {
 
     history.pushState({}, '', '/foo?bar=qux')
 
-    const locationChanges = observer.calls.argsFor(0)[0]
+    const locationChanges = observer.mock.calls[0][0]
     expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
     expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
     expect(wrapperSpy).toHaveBeenCalled()
@@ -68,7 +69,7 @@ function setup() {
   history.pushState({}, '', '/foo')
 
   const observable = createLocationChangeObservable({} as RumConfiguration)
-  const observer = jasmine.createSpy('obs')
+  const observer = vi.fn()
   const subscription = observable.subscribe(observer)
 
   registerCleanupTask(() => {
@@ -80,7 +81,7 @@ function setup() {
 }
 
 function setupHistoryInstancePushStateWrapper() {
-  const wrapperSpy = jasmine.createSpy('wrapperSpy')
+  const wrapperSpy = vi.fn()
   const originalPushState = history.pushState.bind(history)
 
   history.pushState = (...args) => {
@@ -97,7 +98,7 @@ function setupHistoryInstancePushStateWrapper() {
 }
 
 function setupHistoryPrototypePushStateWrapper() {
-  const wrapperSpy = jasmine.createSpy('wrapperSpy')
+  const wrapperSpy = vi.fn()
   const originalPushState = History.prototype.pushState.bind(history)
 
   History.prototype.pushState = (...args) => {

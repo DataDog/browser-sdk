@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { MockFetch, MockFetchManager } from '../../test'
 import { registerCleanupTask, mockFetch } from '../../test'
 import type { Subscription } from '../tools/observable'
@@ -80,7 +81,7 @@ describe('fetch proxy', () => {
 
   it('should track fetch aborted by AbortController', (done) => {
     if (!window.AbortController) {
-      pending('AbortController is not supported')
+      return // skip: 'AbortController is not supported'
     }
 
     const controller = new AbortController()
@@ -181,9 +182,9 @@ describe('fetch proxy', () => {
 
   it('should keep promise resolved behavior for Response', (done) => {
     const mockFetchPromise = fetch(FAKE_URL)
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     mockFetchPromise.then(spy).catch(() => {
-      fail('Should not have thrown an error!')
+      throw new Error('Should not have thrown an error!')
     })
     mockFetchPromise.resolveWith({ status: 500 })
 
@@ -195,9 +196,9 @@ describe('fetch proxy', () => {
 
   it('should keep promise resolved behavior for any other type', (done) => {
     const mockFetchPromise = fetch(FAKE_URL)
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     mockFetchPromise.then(spy).catch(() => {
-      fail('Should not have thrown an error!')
+      throw new Error('Should not have thrown an error!')
     })
     mockFetchPromise.resolveWith('response' as any)
 
@@ -209,7 +210,7 @@ describe('fetch proxy', () => {
 
   it('should keep promise rejected behavior for Error', (done) => {
     const mockFetchPromise = fetch(FAKE_URL)
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     mockFetchPromise.catch(spy)
     mockFetchPromise.rejectWith(new Error('fetch error'))
 
@@ -221,7 +222,7 @@ describe('fetch proxy', () => {
 
   it('should keep promise rejected behavior for any other type', (done) => {
     const mockFetchPromise = fetch(FAKE_URL)
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     mockFetchPromise.catch(spy)
     mockFetchPromise.rejectWith('fetch error' as any)
 

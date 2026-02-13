@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { Clock } from '../../../test'
 import { mockClock } from '../../../test'
 import { relativeToClocks, ONE_MINUTE } from '../../tools/utils/timeUtils'
@@ -37,12 +38,13 @@ describe('createEventRateLimiter', () => {
   })
 
   it('calls the "onLimitReached" callback with the raw "limit reached" error when the limit is reached', () => {
-    const onLimitReachedSpy = jasmine.createSpy<(rawError: RawError) => void>()
+    const onLimitReachedSpy = vi.fn<(rawError: RawError) => void>()
     eventLimiter = createEventRateLimiter('error', onLimitReachedSpy, limit)
 
     eventLimiter.isLimitReached()
     eventLimiter.isLimitReached()
-    expect(onLimitReachedSpy).toHaveBeenCalledOnceWith({
+    expect(onLimitReachedSpy).toHaveBeenCalledTimes(1)
+    expect(onLimitReachedSpy).toHaveBeenCalledWith({
       message: 'Reached max number of errors by minute: 1',
       source: 'agent',
       startClocks: relativeToClocks(clock.relative(0)),
@@ -63,7 +65,7 @@ describe('createEventRateLimiter', () => {
   })
 
   it('does not call the "onLimitReached" callback more than once when the limit is reached', () => {
-    const onLimitReachedSpy = jasmine.createSpy<(rawError: RawError) => void>()
+    const onLimitReachedSpy = vi.fn<(rawError: RawError) => void>()
     eventLimiter = createEventRateLimiter('error', onLimitReachedSpy, limit)
 
     eventLimiter.isLimitReached()

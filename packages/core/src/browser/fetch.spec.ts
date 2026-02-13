@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { type MockZoneJs, mockZoneJs } from '../../test'
 import { fetch } from './fetch'
 
@@ -9,8 +10,8 @@ describe('fetch', () => {
   })
 
   it('does not use the Zone.js function', async () => {
-    const nativeFetchSpy = spyOn(window, 'fetch')
-    const zoneJsFetchSpy = jasmine.createSpy('zoneJsFetch')
+    const nativeFetchSpy = vi.spyOn(window, 'fetch')
+    const zoneJsFetchSpy = vi.fn()
 
     zoneJs.replaceProperty(window, 'fetch', zoneJsFetchSpy)
 
@@ -21,8 +22,8 @@ describe('fetch', () => {
   })
 
   it('calls the native fetch function with correct arguments', async () => {
-    const nativeFetchSpy = spyOn(window, 'fetch')
-    const zoneJsFetchSpy = jasmine.createSpy('zoneJsFetch')
+    const nativeFetchSpy = vi.spyOn(window, 'fetch')
+    const zoneJsFetchSpy = vi.fn()
 
     zoneJs.replaceProperty(window, 'fetch', zoneJsFetchSpy)
 
@@ -33,8 +34,8 @@ describe('fetch', () => {
 
   it('returns the response from native fetch', async () => {
     const mockResponse = new Response('test response', { status: 200 })
-    spyOn(window, 'fetch').and.returnValue(Promise.resolve(mockResponse))
-    const zoneJsFetchSpy = jasmine.createSpy('zoneJsFetch').and.returnValue(Promise.resolve(new Response()))
+    vi.spyOn(window, 'fetch').mockReturnValue(Promise.resolve(mockResponse))
+    const zoneJsFetchSpy = vi.fn().mockReturnValue(Promise.resolve(new Response()))
 
     zoneJs.replaceProperty(window, 'fetch', zoneJsFetchSpy)
 

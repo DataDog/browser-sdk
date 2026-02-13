@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
 
 describe('identifier', () => {
@@ -38,7 +39,7 @@ describe('toPaddedHexadecimalString', () => {
 })
 
 function mockRandomValues(cb: (buffer: Uint8Array) => void) {
-  spyOn(window.crypto, 'getRandomValues').and.callFake((bufferView) => {
+  vi.spyOn(window.crypto, 'getRandomValues').mockImplementation((bufferView) => {
     cb(new Uint8Array(bufferView.buffer))
     return bufferView
   })

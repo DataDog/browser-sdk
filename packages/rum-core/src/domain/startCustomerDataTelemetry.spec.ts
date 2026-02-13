@@ -60,7 +60,7 @@ describe('customerDataTelemetry', () => {
     clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(await telemetry.getEvents()).toEqual([
-      jasmine.objectContaining({
+      expect.objectContaining({
         type: 'log',
         status: 'debug',
         message: 'Customer data measures',
@@ -85,7 +85,7 @@ describe('customerDataTelemetry', () => {
     generateBatch({ eventNumber: 10, contextBytesCount: 10, batchBytesCount: 10 })
     clock.tick(MEASURES_PERIOD_DURATION)
     expect(await telemetry.getEvents()).toEqual([
-      jasmine.objectContaining({
+      expect.objectContaining({
         type: 'log',
         status: 'debug',
         message: 'Customer data measures',
@@ -112,8 +112,8 @@ describe('customerDataTelemetry', () => {
     clock.tick(MEASURES_PERIOD_DURATION)
 
     expect(await telemetry.getEvents()).toEqual([
-      jasmine.objectContaining({
-        batchMessagesCount: jasmine.objectContaining({ sum: 1 }),
+      expect.objectContaining({
+        batchMessagesCount: expect.objectContaining({ sum: 1 }),
       }),
     ])
   })

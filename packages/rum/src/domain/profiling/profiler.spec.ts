@@ -266,13 +266,13 @@ describe('profiler', () => {
     expect(traceOne.longTasks).toEqual([
       {
         id: 'long-task-id-2',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
       {
         id: 'long-task-id-1',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 50 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },
@@ -282,7 +282,7 @@ describe('profiler', () => {
     expect(traceTwo.longTasks).toEqual([
       {
         id: 'long-task-id-3',
-        startClocks: jasmine.any(Object),
+        startClocks: expect.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
       },

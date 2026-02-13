@@ -148,10 +148,10 @@ describe('urlContexts', () => {
       } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           view: {
-            url: jasmine.any(String),
-            referrer: jasmine.any(String),
+            url: expect.any(String),
+            referrer: expect.any(String),
           },
         })
       )

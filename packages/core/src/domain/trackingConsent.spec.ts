@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { TrackingConsent, createTrackingConsentState } from './trackingConsent'
 
 describe('createTrackingConsentState', () => {
@@ -23,7 +24,7 @@ describe('createTrackingConsentState', () => {
   })
 
   it('notifies when the consent is updated', () => {
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     const trackingConsentState = createTrackingConsentState()
     trackingConsentState.observable.subscribe(spy)
     trackingConsentState.update(TrackingConsent.GRANTED)

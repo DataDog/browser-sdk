@@ -110,7 +110,7 @@ Error: foo
 
   it('should get the order of functions called right', () => {
     if (isSafari()) {
-      pending()
+      return // skip: 
     }
     function foo() {
       return bar()

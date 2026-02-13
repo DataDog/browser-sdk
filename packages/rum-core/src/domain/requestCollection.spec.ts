@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import type { Payload } from '@datadog/browser-core'
 import { RequestType } from '@datadog/browser-core'
 import type { MockFetch, MockFetchManager } from '@datadog/browser-core/test'
@@ -16,15 +17,15 @@ describe('collect fetch', () => {
   const FAKE_URL = 'http://fake-url/'
   let fetch: MockFetch
   let mockFetchManager: MockFetchManager
-  let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
-  let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
+  let startSpy: Mock<(requestStartEvent: RequestStartEvent) => void>
+  let completeSpy: Mock<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stopFetchTracking: () => void
 
   beforeEach(() => {
     mockFetchManager = mockFetch()
 
-    startSpy = jasmine.createSpy('requestStart')
-    completeSpy = jasmine.createSpy('requestComplete')
+    startSpy = vi.fn()
+    completeSpy = vi.fn()
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
@@ -48,7 +49,7 @@ describe('collect fetch', () => {
     fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     mockFetchManager.whenAllComplete(() => {
-      expect(startSpy).toHaveBeenCalledWith({ requestIndex: jasmine.any(Number) as unknown as number, url: FAKE_URL })
+      expect(startSpy).toHaveBeenCalledWith({ requestIndex: expect.any(Number) as unknown as number, url: FAKE_URL })
       done()
     })
   })
@@ -57,7 +58,7 @@ describe('collect fetch', () => {
     fetch(FAKE_URL).resolveWith({ status: 200 })
 
     mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      const request = completeSpy.mock.calls[0][0]
 
       expect(request.type).toEqual(RequestType.FETCH)
       expect(request.method).toEqual('GET')
@@ -72,7 +73,7 @@ describe('collect fetch', () => {
     fetch(FAKE_URL).resolveWith({ status: 200, bodyUsed: true })
 
     mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      const request = completeSpy.mock.calls[0][0]
 
       expect(request.type).toEqual(RequestType.FETCH)
       expect(request.method).toEqual('GET')
@@ -87,7 +88,7 @@ describe('collect fetch', () => {
     fetch(FAKE_URL).resolveWith({ status: 200, bodyDisturbed: true })
 
     mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      const request = completeSpy.mock.calls[0][0]
 
       expect(request.type).toEqual(RequestType.FETCH)
       expect(request.method).toEqual('GET')
@@ -102,7 +103,7 @@ describe('collect fetch', () => {
     fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      const request = completeSpy.mock.calls[0][0]
 
       expect(request.type).toEqual(RequestType.FETCH)
       expect(request.method).toEqual('GET')
@@ -117,8 +118,8 @@ describe('collect fetch', () => {
     fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     mockFetchManager.whenAllComplete(() => {
-      const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
-      const completeRequestIndex = completeSpy.calls.argsFor(0)[0].requestIndex
+      const startRequestIndex = startSpy.mock.calls[0][0].requestIndex
+      const completeRequestIndex = completeSpy.mock.calls[0][0].requestIndex
 
       expect(completeRequestIndex).toBe(startRequestIndex)
       done()
@@ -143,7 +144,7 @@ describe('collect fetch', () => {
       fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
 
       mockFetchManager.whenAllComplete(() => {
-        const request = completeSpy.calls.argsFor(0)[0]
+        const request = completeSpy.mock.calls[0][0]
 
         expect(request.traceId).toBeDefined()
         done()
@@ -154,7 +155,7 @@ describe('collect fetch', () => {
       fetch(FAKE_URL).abort()
 
       mockFetchManager.whenAllComplete(() => {
-        const request = completeSpy.calls.argsFor(0)[0]
+        const request = completeSpy.mock.calls[0][0]
 
         expect(request.traceId).toBeDefined()
         done()
@@ -165,7 +166,7 @@ describe('collect fetch', () => {
       fetch(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
 
       mockFetchManager.whenAllComplete(() => {
-        const request = completeSpy.calls.argsFor(0)[0]
+        const request = completeSpy.mock.calls[0][0]
 
         expect(request.status).toEqual(0)
         expect(request.traceId).toBeUndefined()
@@ -176,15 +177,15 @@ describe('collect fetch', () => {
 })
 
 describe('collect xhr', () => {
-  let startSpy: jasmine.Spy<(requestStartEvent: RequestStartEvent) => void>
-  let completeSpy: jasmine.Spy<(requestCompleteEvent: RequestCompleteEvent) => void>
+  let startSpy: Mock<(requestStartEvent: RequestStartEvent) => void>
+  let completeSpy: Mock<(requestCompleteEvent: RequestCompleteEvent) => void>
   let stopXhrTracking: () => void
 
   beforeEach(() => {
     const configuration = mockRumConfiguration()
     mockXhr()
-    startSpy = jasmine.createSpy('requestStart')
-    completeSpy = jasmine.createSpy('requestComplete')
+    startSpy = vi.fn()
+    completeSpy = vi.fn()
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_STARTED, startSpy)
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
@@ -211,8 +212,8 @@ describe('collect xhr', () => {
       },
       onComplete() {
         expect(startSpy).toHaveBeenCalledWith({
-          requestIndex: jasmine.any(Number) as unknown as number,
-          url: jasmine.stringMatching(/\/ok$/) as unknown as string,
+          requestIndex: expect.any(Number) as unknown as number,
+          url: expect.stringMatching(/\/ok$/) as unknown as string,
         })
         done()
       },
@@ -227,7 +228,7 @@ describe('collect xhr', () => {
         xhr.complete(200, 'ok')
       },
       onComplete() {
-        const request = completeSpy.calls.argsFor(0)[0]
+        const request = completeSpy.mock.calls[0][0]
 
         expect(request.type).toEqual(RequestType.XHR)
         expect(request.method).toEqual('GET')
@@ -247,8 +248,8 @@ describe('collect xhr', () => {
         xhr.complete(200)
       },
       onComplete() {
-        const startRequestIndex = startSpy.calls.argsFor(0)[0].requestIndex
-        const completeRequestIndex = completeSpy.calls.argsFor(0)[0].requestIndex
+        const startRequestIndex = startSpy.mock.calls[0][0].requestIndex
+        const completeRequestIndex = completeSpy.mock.calls[0][0].requestIndex
 
         expect(completeRequestIndex).toBe(startRequestIndex)
         done()
@@ -279,7 +280,7 @@ describe('collect xhr', () => {
         xhr.complete(0)
       },
       onComplete() {
-        const request = completeSpy.calls.argsFor(0)[0]
+        const request = completeSpy.mock.calls[0][0]
         expect(request.status).toEqual(0)
         expect(request.traceId).toEqual(undefined)
         done()
@@ -296,7 +297,7 @@ describe('collect xhr', () => {
           xhr.complete(200)
         },
         onComplete() {
-          const request = completeSpy.calls.argsFor(0)[0]
+          const request = completeSpy.mock.calls[0][0]
           expect(request.traceId).toBeDefined()
           done()
         },
@@ -311,7 +312,7 @@ describe('collect xhr', () => {
           xhr.abort()
         },
         onComplete() {
-          const request = completeSpy.calls.argsFor(0)[0]
+          const request = completeSpy.mock.calls[0][0]
           expect(request.traceId).toBeDefined()
           done()
         },
@@ -326,7 +327,7 @@ describe('collect xhr', () => {
           xhr.complete(0)
         },
         onComplete() {
-          const request = completeSpy.calls.argsFor(0)[0]
+          const request = completeSpy.mock.calls[0][0]
           expect(request.status).toEqual(0)
           expect(request.traceId).toBeUndefined()
           done()
@@ -341,14 +342,14 @@ describe('GraphQL response text collection', () => {
 
   function setupGraphQlFetchTest(trackResponseErrors: boolean) {
     const mockFetchManager = mockFetch()
-    const completeSpy = jasmine.createSpy('requestComplete')
+    const completeSpy = vi.fn()
     const lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.REQUEST_COMPLETED, completeSpy)
 
     const configuration = mockRumConfiguration({
       allowedGraphQlUrls: [{ match: /\/graphql$/, trackResponseErrors }],
     })
-    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: jasmine.createSpy() }
+    const tracerStub: Partial<Tracer> = { clearTracingIfNeeded, traceFetch: vi.fn() }
     const { stop } = trackFetch(lifeCycle, configuration, tracerStub as Tracer)
     registerCleanupTask(() => {
       stop()
@@ -374,7 +375,7 @@ describe('GraphQL response text collection', () => {
     })
 
     mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      const request = completeSpy.mock.calls[0][0]
       expect(request.responseBody).toBe(responseBody)
       done()
     })
@@ -397,7 +398,7 @@ describe('GraphQL response text collection', () => {
     })
 
     mockFetchManager.whenAllComplete(() => {
-      const request = completeSpy.calls.argsFor(0)[0]
+      const request = completeSpy.mock.calls[0][0]
       expect(request.responseBody).toBeUndefined()
       done()
     })

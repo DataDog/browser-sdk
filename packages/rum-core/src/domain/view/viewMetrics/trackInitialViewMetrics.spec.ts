@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { clocksOrigin } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -9,17 +10,17 @@ import { trackInitialViewMetrics } from './trackInitialViewMetrics'
 
 describe('trackInitialViewMetrics', () => {
   let clock: Clock
-  let scheduleViewUpdateSpy: jasmine.Spy<() => void>
+  let scheduleViewUpdateSpy: Mock<() => void>
   let trackInitialViewMetricsResult: ReturnType<typeof trackInitialViewMetrics>
-  let setLoadEventSpy: jasmine.Spy<(loadEvent: Duration) => void>
+  let setLoadEventSpy: Mock<(loadEvent: Duration) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
     const configuration = mockRumConfiguration()
-    scheduleViewUpdateSpy = jasmine.createSpy()
-    setLoadEventSpy = jasmine.createSpy()
+    scheduleViewUpdateSpy = vi.fn()
+    setLoadEventSpy = vi.fn()
     clock = mockClock()
 
     trackInitialViewMetricsResult = trackInitialViewMetrics(
@@ -43,7 +44,7 @@ describe('trackInitialViewMetrics', () => {
 
     expect(scheduleViewUpdateSpy).toHaveBeenCalledTimes(3)
     expect(trackInitialViewMetricsResult.initialViewMetrics).toEqual({
-      navigationTimings: jasmine.any(Object),
+      navigationTimings: expect.any(Object),
       firstContentfulPaint: 123 as Duration,
       firstInput: {
         delay: 100 as Duration,
@@ -61,6 +62,7 @@ describe('trackInitialViewMetrics', () => {
 
     clock.tick(0)
 
-    expect(setLoadEventSpy).toHaveBeenCalledOnceWith(jasmine.any(Number))
+    expect(setLoadEventSpy).toHaveBeenCalledTimes(1)
+    expect(setLoadEventSpy).toHaveBeenCalledWith(expect.any(Number))
   })
 })

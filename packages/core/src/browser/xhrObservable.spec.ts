@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { Configuration } from '../domain/configuration'
 import { withXhr, mockXhr } from '../../test'
 import type { Subscription } from '../tools/observable'
@@ -47,7 +48,7 @@ describe('xhr observable', () => {
         expect(request.url).toContain('/ok')
         expect(request.status).toBe(200)
         expect(request.isAborted).toBe(false)
-        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(expect.any(Number))
         expect(request.handlingStack).toBeDefined()
         done()
       },
@@ -83,7 +84,7 @@ describe('xhr observable', () => {
         expect(request.url).toContain('/expected-404')
         expect(request.status).toBe(404)
         expect(request.isAborted).toBe(false)
-        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(expect.any(Number))
         expect(request.handlingStack).toBeDefined()
         done()
       },
@@ -103,7 +104,7 @@ describe('xhr observable', () => {
         expect(request.url).toContain('/throw')
         expect(request.status).toBe(500)
         expect(request.isAborted).toBe(false)
-        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(expect.any(Number))
         expect(request.handlingStack).toBeDefined()
         done()
       },
@@ -123,7 +124,7 @@ describe('xhr observable', () => {
         expect(request.url).toBe('http://foo.bar/qux')
         expect(request.status).toBe(0)
         expect(request.isAborted).toBe(false)
-        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(expect.any(Number))
         expect(request.handlingStack).toBeDefined()
         done()
       },
@@ -138,7 +139,7 @@ describe('xhr observable', () => {
             xhr.abort()
           }
         }
-        spyOn(xhr, 'onreadystatechange').and.callThrough()
+        vi.spyOn(xhr, 'onreadystatechange').and.callThrough()
         xhr.open('GET', '/ok')
         xhr.send()
         xhr.complete(200, 'ok')
@@ -149,7 +150,7 @@ describe('xhr observable', () => {
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
         expect(request.status).toBe(200)
-        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(expect.any(Number))
         expect(request.isAborted).toBe(false)
         expect(xhr.status).toBe(0)
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
@@ -171,7 +172,7 @@ describe('xhr observable', () => {
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/ok')
         expect(request.status).toBe(0)
-        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(expect.any(Number))
         expect(request.isAborted).toBe(true)
         expect(xhr.status).toBe(0)
         expect(request.handlingStack).toBeDefined()
@@ -183,7 +184,7 @@ describe('xhr observable', () => {
   it('should track request with onreadystatechange overridden before open', (done) => {
     withXhr({
       setup(xhr) {
-        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.onreadystatechange = vi.fn()
         xhr.open('GET', '/ok')
         xhr.send()
         xhr.complete(200, 'ok')
@@ -194,7 +195,7 @@ describe('xhr observable', () => {
         expect(request.url).toContain('/ok')
         expect(request.status).toBe(200)
         expect(request.isAborted).toBe(false)
-        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(expect.any(Number))
         expect(xhr.onreadystatechange).toHaveBeenCalled()
         expect(request.handlingStack).toBeDefined()
         done()
@@ -207,7 +208,7 @@ describe('xhr observable', () => {
       setup(xhr) {
         xhr.open('GET', '/ok')
         xhr.send()
-        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.onreadystatechange = vi.fn()
         xhr.complete(200, 'ok')
       },
       onComplete(xhr) {
@@ -216,7 +217,7 @@ describe('xhr observable', () => {
         expect(request.url).toContain('/ok')
         expect(request.status).toBe(200)
         expect(request.isAborted).toBe(false)
-        expect(request.duration).toEqual(jasmine.any(Number))
+        expect(request.duration).toEqual(expect.any(Number))
         expect(xhr.onreadystatechange).toHaveBeenCalled()
         expect(request.handlingStack).toBeDefined()
         done()
@@ -276,7 +277,7 @@ describe('xhr observable', () => {
           xhr.send()
           xhr.complete(400, 'ok')
         }
-        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.onreadystatechange = vi.fn()
         xhr.addEventListener('load', onLoad)
         xhr.open('GET', '/ok?request=1')
         xhr.send()
@@ -289,7 +290,7 @@ describe('xhr observable', () => {
         expect(firstRequest.url).toContain('/ok?request=1')
         expect(firstRequest.status).toBe(200)
         expect(firstRequest.isAborted).toBe(false)
-        expect(firstRequest.duration).toEqual(jasmine.any(Number))
+        expect(firstRequest.duration).toEqual(expect.any(Number))
         expect(firstRequest.handlingStack).toBeDefined()
 
         const secondRequest = requests[1]
@@ -297,7 +298,7 @@ describe('xhr observable', () => {
         expect(secondRequest.url).toContain('/ok?request=2')
         expect(secondRequest.status).toBe(400)
         expect(secondRequest.isAborted).toBe(false)
-        expect(secondRequest.duration).toEqual(jasmine.any(Number))
+        expect(secondRequest.duration).toEqual(expect.any(Number))
         expect(secondRequest.handlingStack).toBeDefined()
 
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(2)
@@ -388,11 +389,11 @@ describe('xhr observable', () => {
       setup(xhr) {
         xhr.open(null, '/ok')
         xhr.send()
-        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.onreadystatechange = vi.fn()
         xhr.complete(200, 'ok')
         xhr.open(undefined, '/ok')
         xhr.send()
-        xhr.onreadystatechange = jasmine.createSpy()
+        xhr.onreadystatechange = vi.fn()
         xhr.complete(200, 'ok')
       },
       onComplete() {

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { mockRumConfiguration } from '../../../test'
@@ -8,12 +9,12 @@ import { startDisplayContext } from './displayContext'
 
 describe('displayContext', () => {
   let displayContext: DisplayContext
-  let requestAnimationFrameSpy: jasmine.Spy
+  let requestAnimationFrameSpy: Mock
   let hooks: Hooks
 
   beforeEach(() => {
     hooks = createHooks()
-    requestAnimationFrameSpy = spyOn(window, 'requestAnimationFrame').and.callFake((callback) => {
+    requestAnimationFrameSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
       callback(1)
       return 1
     })
@@ -37,8 +38,8 @@ describe('displayContext', () => {
         type: 'view',
         display: {
           viewport: {
-            width: jasmine.any(Number),
-            height: jasmine.any(Number),
+            width: expect.any(Number),
+            height: expect.any(Number),
           },
         },
       })

@@ -10,7 +10,7 @@ describe('internal context', () => {
   it('should return internal context corresponding to startTime', () => {
     const sessionManagerMock = createLogsSessionManagerMock().setTracked()
     expect(startInternalContext(sessionManagerMock).get()).toEqual({
-      session_id: jasmine.any(String),
+      session_id: expect.any(String),
     })
   })
 })

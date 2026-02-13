@@ -1,15 +1,16 @@
+import { vi, type Mock } from 'vitest'
 import { display } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import { replaceMockable, startMockTelemetry } from '@datadog/browser-core/test'
 import { lazyLoadRecorder, importRecorder } from './lazyLoadRecorder'
 
 describe('lazyLoadRecorder', () => {
-  let displaySpy: jasmine.Spy
+  let displaySpy: Mock
   let telemetry: MockTelemetry
 
   beforeEach(() => {
     telemetry = startMockTelemetry()
-    displaySpy = spyOn(display, 'error')
+    displaySpy = vi.spyOn(display, 'error')
   })
 
   it('should report a console error and metrics but no telemetry error if CSP blocks the module', async () => {
@@ -17,8 +18,8 @@ describe('lazyLoadRecorder', () => {
     replaceMockable(importRecorder, () => Promise.reject(loadRecorderError))
     await lazyLoadRecorder()
 
-    expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Recorder failed to start'), loadRecorderError)
-    expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Please make sure CSP is correctly configured'))
+    expect(displaySpy).toHaveBeenCalledWith(expect.stringContaining('Recorder failed to start'), loadRecorderError)
+    expect(displaySpy).toHaveBeenCalledWith(expect.stringContaining('Please make sure CSP is correctly configured'))
     expect(await telemetry.getEvents()).toEqual([])
   })
 
@@ -27,7 +28,7 @@ describe('lazyLoadRecorder', () => {
     replaceMockable(importRecorder, () => Promise.reject(loadRecorderError))
     await lazyLoadRecorder()
 
-    expect(displaySpy).toHaveBeenCalledWith(jasmine.stringContaining('Recorder failed to start'), loadRecorderError)
+    expect(displaySpy).toHaveBeenCalledWith(expect.stringContaining('Recorder failed to start'), loadRecorderError)
     expect(await telemetry.getEvents()).toEqual([])
   })
 })

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from 'packages/rum-core/src/domain/lifeCycle'
@@ -14,13 +15,13 @@ import type { Tracker } from './tracker.types'
 describe('trackFrustration', () => {
   const lifeCycle = new LifeCycle()
   let frustrationTracker: Tracker
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback<FrustrationRecord>>
+  let emitRecordCallback: Mock<EmitRecordCallback<FrustrationRecord>>
   let mouseEvent: MouseEvent
   let rumData: RawRumEventCollectedData<RawRumActionEvent>
   let scope: RecordingScope
 
   beforeEach(() => {
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     scope = createRecordingScopeForTesting()
 
     mouseEvent = new MouseEvent('pointerup')
@@ -33,7 +34,7 @@ describe('trackFrustration', () => {
   })
 
   function getLatestFrustrationRecord(): FrustrationRecord {
-    return emitRecordCallback.calls.mostRecent()?.args[0]
+    return emitRecordCallback.mock.lastCall?.[0]
   }
 
   it('calls callback if the raw data inserted is a click action', () => {

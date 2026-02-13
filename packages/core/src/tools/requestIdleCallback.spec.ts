@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { mockClock, registerCleanupTask, type Clock } from '../../test'
 import { MAX_TASK_TIME, requestIdleCallbackShim, requestIdleCallback } from './requestIdleCallback'
 
@@ -6,7 +7,7 @@ describe('requestIdleCallback', () => {
     const clock = mockClock()
     removeGlobalRequestIdleCallback()
 
-    const spy = jasmine.createSpy<(deadline: IdleDeadline) => void>()
+    const spy = vi.fn<(deadline: IdleDeadline) => void>()
 
     requestIdleCallback(spy)
     expect(spy).not.toHaveBeenCalled()
@@ -24,19 +25,20 @@ describe('requestIdleCallbackShim', () => {
   })
 
   it('calls the callback asynchronously', () => {
-    const spy = jasmine.createSpy<(deadline: IdleDeadline) => void>()
+    const spy = vi.fn<(deadline: IdleDeadline) => void>()
     requestIdleCallbackShim(spy)
     expect(spy).not.toHaveBeenCalled()
     clock.tick(0)
-    expect(spy).toHaveBeenCalledOnceWith({ didTimeout: false, timeRemaining: jasmine.any(Function) })
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(spy).toHaveBeenCalledWith({ didTimeout: false, timeRemaining: expect.any(Function) })
   })
 
   it('notifies the remaining time', () => {
-    const spy = jasmine.createSpy<(deadline: IdleDeadline) => void>()
+    const spy = vi.fn<(deadline: IdleDeadline) => void>()
     requestIdleCallbackShim(spy)
 
     clock.tick(10)
-    const deadline = spy.calls.mostRecent().args[0]
+    const deadline = spy.mock.lastCall[0]
 
     expect(deadline.timeRemaining()).toBe(MAX_TASK_TIME - 10)
 
@@ -48,7 +50,7 @@ describe('requestIdleCallbackShim', () => {
   })
 
   it('cancels the callback when calling the stop function', () => {
-    const spy = jasmine.createSpy<(deadline: IdleDeadline) => void>()
+    const spy = vi.fn<(deadline: IdleDeadline) => void>()
     const stop = requestIdleCallbackShim(spy)
     stop()
     clock.tick(0)

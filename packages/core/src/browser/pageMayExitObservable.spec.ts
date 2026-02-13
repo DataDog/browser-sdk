@@ -1,14 +1,15 @@
+import { vi, type Mock } from 'vitest'
 import type { Configuration } from '../domain/configuration'
 import { createNewEvent, restorePageVisibility, setPageVisibility, registerCleanupTask } from '../../test'
 import type { PageMayExitEvent } from './pageMayExitObservable'
 import { PageExitReason, createPageMayExitObservable } from './pageMayExitObservable'
 
 describe('createPageMayExitObservable', () => {
-  let onExitSpy: jasmine.Spy<(event: PageMayExitEvent) => void>
+  let onExitSpy: Mock<(event: PageMayExitEvent) => void>
   let configuration: Configuration
 
   beforeEach(() => {
-    onExitSpy = jasmine.createSpy()
+    onExitSpy = vi.fn()
     configuration = {} as Configuration
     registerCleanupTask(createPageMayExitObservable(configuration).subscribe(onExitSpy).unsubscribe)
   })
@@ -20,19 +21,22 @@ describe('createPageMayExitObservable', () => {
   it('notifies when the page fires beforeunload', () => {
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.UNLOADING })
+    expect(onExitSpy).toHaveBeenCalledTimes(1)
+    expect(onExitSpy).toHaveBeenCalledWith({ reason: PageExitReason.UNLOADING })
   })
 
   it('notifies when the page becomes hidden', () => {
     emulatePageVisibilityChange('hidden')
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.HIDDEN })
+    expect(onExitSpy).toHaveBeenCalledTimes(1)
+    expect(onExitSpy).toHaveBeenCalledWith({ reason: PageExitReason.HIDDEN })
   })
 
   it('notifies when the page becomes frozen', () => {
     window.dispatchEvent(createNewEvent('freeze'))
 
-    expect(onExitSpy).toHaveBeenCalledOnceWith({ reason: PageExitReason.FROZEN })
+    expect(onExitSpy).toHaveBeenCalledTimes(1)
+    expect(onExitSpy).toHaveBeenCalledWith({ reason: PageExitReason.FROZEN })
   })
 
   it('notifies multiple times', () => {

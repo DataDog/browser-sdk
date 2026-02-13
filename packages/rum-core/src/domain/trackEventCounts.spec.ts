@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { objectValues } from '@datadog/browser-core'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { FrustrationType, RumEventType } from '../rawRumEvent.types'
@@ -76,7 +77,7 @@ describe('trackEventCounts', () => {
   })
 
   it('invokes a potential callback when a count is increased', () => {
-    const spy = jasmine.createSpy<() => void>()
+    const spy = vi.fn<() => void>()
     trackEventCounts({ lifeCycle, isChildEvent: () => true, onChange: spy })
 
     notifyCollectedRawRumEvent({ type: RumEventType.RESOURCE })

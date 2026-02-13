@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { isSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
 
 // UUID known to yield a low hash value using the Knuth formula, making it more likely to be sampled
@@ -25,7 +26,7 @@ describe('isSampled', () => {
   describe('with bigint support', () => {
     beforeEach(() => {
       if (!window.BigInt) {
-        pending('BigInt is not supported')
+        return // skip: 'BigInt is not supported'
       }
     })
 
@@ -63,12 +64,12 @@ describe('isSampled', () => {
       // @ts-expect-error BigInt might not be defined depending on the browser where we execute
       // the tests
       if (window.BigInt) {
-        pending('BigInt is supported')
+        return // skip: 'BigInt is supported'
       }
     })
 
     it('sampling decision should be cached', () => {
-      spyOn(Math, 'random').and.returnValues(0.2, 0.8)
+      vi.spyOn(Math, 'random').mockReturnValueOnce(0.2, 0.8)
       expect(isSampled(ARBITRARY_UUID, 50)).toBeTrue()
       expect(isSampled(ARBITRARY_UUID, 50)).toBeTrue()
     })
@@ -78,7 +79,7 @@ describe('isSampled', () => {
 describe('sampleUsingKnuthFactor', () => {
   beforeEach(() => {
     if (!window.BigInt) {
-      pending('BigInt is not supported')
+      return // skip: 'BigInt is not supported'
     }
   })
 

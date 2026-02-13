@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { elapsed, ONE_SECOND } from '@datadog/browser-core'
@@ -20,7 +21,7 @@ interface StartCLSTrackingArgs {
 
 describe('trackCumulativeLayoutShift', () => {
   let originalSupportedEntryTypes: PropertyDescriptor | undefined
-  let clsCallback: jasmine.Spy<(csl: CumulativeLayoutShift) => void>
+  let clsCallback: Mock<(csl: CumulativeLayoutShift) => void>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   function startCLSTracking({
@@ -29,7 +30,7 @@ describe('trackCumulativeLayoutShift', () => {
   }: Partial<StartCLSTrackingArgs> = {}) {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
 
-    clsCallback = jasmine.createSpy()
+    clsCallback = vi.fn()
     originalSupportedEntryTypes = Object.getOwnPropertyDescriptor(PerformanceObserver, 'supportedEntryTypes')
     Object.defineProperty(PerformanceObserver, 'supportedEntryTypes', {
       get: () => (isLayoutShiftSupported ? ['layout-shift'] : []),
@@ -47,13 +48,14 @@ describe('trackCumulativeLayoutShift', () => {
 
   beforeEach(() => {
     if (!isLayoutShiftSupported()) {
-      pending('No LayoutShift API support')
+      return // skip: 'No LayoutShift API support'
     }
   })
 
   it('should be initialized to 0', () => {
     startCLSTracking()
-    expect(clsCallback).toHaveBeenCalledOnceWith({ value: 0 })
+    expect(clsCallback).toHaveBeenCalledTimes(1)
+    expect(clsCallback).toHaveBeenCalledWith({ value: 0 })
   })
 
   it('should be initialized to undefined if layout-shift is not supported', () => {
@@ -73,13 +75,13 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+    expect(clsCallback.mock.lastCall[0]).toEqual({
       value: 0.3,
       time: 2 as RelativeTime,
       targetSelector: undefined,
       previousRect: undefined,
       currentRect: undefined,
-      devicePixelRatio: jasmine.any(Number),
+      devicePixelRatio: expect.any(Number),
     })
   })
 
@@ -90,7 +92,7 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(1)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+    expect(clsCallback.mock.lastCall[0]).toEqual({
       value: 0,
     })
   })
@@ -102,7 +104,7 @@ describe('trackCumulativeLayoutShift', () => {
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 1.11111111111 })])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
-    expect(clsCallback.calls.mostRecent().args[0].value).toEqual(2.3457)
+    expect(clsCallback.mock.lastCall[0].value).toEqual(2.3457)
   })
 
   it('should ignore entries with recent input', () => {
@@ -115,7 +117,7 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(1)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+    expect(clsCallback.mock.lastCall[0]).toEqual({
       value: 0,
     })
   })
@@ -138,13 +140,13 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+    expect(clsCallback.mock.lastCall[0]).toEqual({
       value: 0.3,
       time: 1 as RelativeTime,
       targetSelector: undefined,
       previousRect: undefined,
       currentRect: undefined,
-      devicePixelRatio: jasmine.any(Number),
+      devicePixelRatio: expect.any(Number),
     })
   })
 
@@ -160,13 +162,13 @@ describe('trackCumulativeLayoutShift', () => {
     } // window 1: { value: 0.6, time: 999 } | window 2: { value: 0.1, time: 5994(6*999) }
 
     expect(clsCallback).toHaveBeenCalledTimes(7)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+    expect(clsCallback.mock.lastCall[0]).toEqual({
       value: 0.6,
       time: 999 as RelativeTime,
       targetSelector: undefined,
       previousRect: undefined,
       currentRect: undefined,
-      devicePixelRatio: jasmine.any(Number),
+      devicePixelRatio: expect.any(Number),
     })
   })
 
@@ -215,13 +217,13 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(4)
-    expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+    expect(clsCallback.mock.lastCall[0]).toEqual({
       value: 0.5,
       time: 5002 as RelativeTime,
       targetSelector: undefined,
       previousRect: undefined,
       currentRect: undefined,
-      devicePixelRatio: jasmine.any(Number),
+      devicePixelRatio: expect.any(Number),
     })
   })
 
@@ -234,7 +236,7 @@ describe('trackCumulativeLayoutShift', () => {
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: shiftStart }),
     ])
 
-    expect(clsCallback.calls.mostRecent().args[0].time).toEqual(elapsed(viewStart, shiftStart))
+    expect(clsCallback.mock.lastCall[0].time).toEqual(elapsed(viewStart, shiftStart))
   })
 
   describe('cls target element', () => {
@@ -266,7 +268,7 @@ describe('trackCumulativeLayoutShift', () => {
       ])
 
       expect(clsCallback).toHaveBeenCalledTimes(2)
-      expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual('#div-element')
+      expect(clsCallback.mock.lastCall[0].targetSelector).toEqual('#div-element')
     })
 
     it('should not return the target element when the element is detached from the DOM before the performance entry event is triggered', () => {
@@ -279,7 +281,7 @@ describe('trackCumulativeLayoutShift', () => {
         }),
       ])
 
-      expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.2)
+      expect(clsCallback.mock.lastCall[0].value).toEqual(0.2)
       // second session window
       // first shift with an element
       const divElement = appendElement('<div id="div-element"></div>')
@@ -299,8 +301,8 @@ describe('trackCumulativeLayoutShift', () => {
         }),
       ])
 
-      expect(clsCallback.calls.mostRecent().args[0].value).toEqual(0.2)
-      expect(clsCallback.calls.mostRecent().args[0].targetSelector).toEqual(undefined)
+      expect(clsCallback.mock.lastCall[0].value).toEqual(0.2)
+      expect(clsCallback.mock.lastCall[0].targetSelector).toEqual(undefined)
     })
 
     it('should get the target element, time, and rects of the largest layout shift', () => {
@@ -343,13 +345,13 @@ describe('trackCumulativeLayoutShift', () => {
       ])
 
       expect(clsCallback).toHaveBeenCalledTimes(4)
-      expect(clsCallback.calls.mostRecent().args[0]).toEqual({
+      expect(clsCallback.mock.lastCall[0]).toEqual({
         value: 0.5,
         time: 1 as RelativeTime,
         targetSelector: '#div-element',
         previousRect: { x: 0, y: 0, width: 10, height: 10 },
         currentRect: { x: 50, y: 50, width: 10, height: 10 },
-        devicePixelRatio: jasmine.any(Number),
+        devicePixelRatio: expect.any(Number),
       })
     })
   })

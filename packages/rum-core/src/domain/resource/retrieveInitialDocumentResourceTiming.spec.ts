@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { replaceMockable } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockDocumentReadyState, mockRumConfiguration } from '../../../test'
@@ -24,7 +25,7 @@ describe('rum initial document resource', () => {
 
   it('waits until the document is interactive to notify the resource', () => {
     const { triggerOnDomLoaded } = mockDocumentReadyState()
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     retrieveInitialDocumentResourceTiming(mockRumConfiguration(), spy)
     expect(spy).not.toHaveBeenCalled()
     triggerOnDomLoaded()

@@ -26,7 +26,7 @@ describe('viewportObservable', () => {
     window.dispatchEvent(createNewEvent('resize'))
     clock.tick(200)
 
-    expect(viewportDimension).toEqual({ width: jasmine.any(Number), height: jasmine.any(Number) })
+    expect(viewportDimension).toEqual({ width: expect.any(Number), height: expect.any(Number) })
   })
 
   describe('get layout width and height has similar native behaviour', () => {
