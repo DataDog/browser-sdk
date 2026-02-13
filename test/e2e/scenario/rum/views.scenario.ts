@@ -66,6 +66,26 @@ test.describe('rum views', () => {
         expect(viewEvent).toBeDefined()
         expect(viewEvent.view.loading_time).toBeGreaterThan(0)
       })
+
+    createTest('has a manual loading time')
+      .withRum()
+      .withBody(SPINNER)
+      .run(async ({ flushEvents, intakeRegistry, page }) => {
+        await page.evaluate(
+          () =>
+            new Promise<void>((resolve) => {
+              setTimeout(() => {
+                window.DD_RUM!.addViewLoadingTime()
+                resolve()
+              }, 200)
+            })
+        )
+
+        await flushEvents()
+        const viewEvent = intakeRegistry.rumViewEvents.at(-1)
+        expect(viewEvent).toBeDefined()
+        expect(viewEvent!.view.loading_time).toBeGreaterThanOrEqual(200 * 1e6)
+      })
   })
 
   createTest('send performance first input delay')

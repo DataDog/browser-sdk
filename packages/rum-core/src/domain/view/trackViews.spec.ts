@@ -783,6 +783,149 @@ describe('view custom timings', () => {
   })
 })
 
+describe('manual loading time', () => {
+  const lifeCycle = new LifeCycle()
+  let clock: Clock
+  let viewTest: ViewTest
+
+  beforeEach(() => {
+    clock = mockClock()
+    viewTest = setupViewTest({ lifeCycle })
+
+    registerCleanupTask(() => {
+      viewTest.stop()
+    })
+  })
+
+  it('should set loading time on the current view', () => {
+    const { getViewUpdate, getViewUpdateCount, addLoadingTime } = viewTest
+
+    clock.tick(500)
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe(clock.relative(500))
+  })
+
+  it('should not overwrite loading time by default on subsequent calls', () => {
+    const { getViewUpdate, getViewUpdateCount, addLoadingTime } = viewTest
+
+    clock.tick(100)
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200)
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe(firstValue)
+  })
+
+  it('should overwrite loading time when overwrite is true', () => {
+    const { getViewUpdate, getViewUpdateCount, addLoadingTime } = viewTest
+
+    clock.tick(100)
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200)
+    addLoadingTime(undefined, true)
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.commonViewMetrics.loadingTime).not.toBe(firstValue)
+  })
+
+  it('should not set loading time when the session has expired', () => {
+    clock.tick(0) // run immediate timeouts (mostly for `trackNavigationTimings`)
+    const { getViewUpdateCount, addLoadingTime } = viewTest
+
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    const previousCount = getViewUpdateCount()
+
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewUpdateCount()).toBe(previousCount)
+  })
+
+  it('should compute loading time relative to route-change view start', () => {
+    const { getViewUpdate, getViewUpdateCount, startView, addLoadingTime } = viewTest
+
+    clock.tick(2000)
+    startView()
+
+    clock.tick(500)
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe(500 as Duration)
+  })
+
+  it('should suppress auto-detected loading time after manual call', () => {
+    const { getViewUpdate, getViewUpdateCount, addLoadingTime } = viewTest
+
+    clock.tick(100)
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const manualValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(PAGE_ACTIVITY_END_DELAY)
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe(manualValue)
+  })
+
+  it('should start with clean overwrite state on new view', () => {
+    const { getViewUpdate, getViewUpdateCount, startView, addLoadingTime } = viewTest
+
+    clock.tick(100)
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    startView()
+
+    clock.tick(200)
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBeDefined()
+  })
+
+  it('should trigger a view update after addLoadingTime', () => {
+    const { getViewUpdateCount, addLoadingTime } = viewTest
+
+    const countBefore = getViewUpdateCount()
+
+    addLoadingTime()
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    expect(getViewUpdateCount()).toBeGreaterThan(countBefore)
+  })
+})
+
 describe('start view', () => {
   const lifeCycle = new LifeCycle()
   let clock: Clock

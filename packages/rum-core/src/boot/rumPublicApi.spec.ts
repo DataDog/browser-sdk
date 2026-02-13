@@ -14,6 +14,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addError: () => undefined,
   addEvent: () => undefined,
   addTiming: () => undefined,
+  addLoadingTime: () => ({ overwritten: false as const }),
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
   setViewContext: () => undefined,
@@ -541,6 +542,42 @@ describe('rum public api', () => {
       expect(addTimingSpy.calls.argsFor(0)[0]).toEqual('foo')
       expect(addTimingSpy.calls.argsFor(0)[1]).toBe(12 as RelativeTime)
       expect(displaySpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('addViewLoadingTime', () => {
+    let addLoadingTimeSpy: jasmine.Spy<ReturnType<StartRum>['addLoadingTime']>
+    let rumPublicApi: RumPublicApi
+
+    beforeEach(() => {
+      addLoadingTimeSpy = jasmine.createSpy()
+      ;({ rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          addLoadingTime: addLoadingTimeSpy,
+        },
+      }))
+    })
+
+    it('should call addLoadingTime with timestamp and no overwrite by default', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.addViewLoadingTime()
+
+      expect(addLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number), false)
+    })
+
+    it('should pass overwrite true when specified', () => {
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+
+      rumPublicApi.addViewLoadingTime({ overwrite: true })
+
+      expect(addLoadingTimeSpy).toHaveBeenCalledOnceWith(jasmine.any(Number), true)
+    })
+
+    it('should not throw when called before init', () => {
+      expect(() => rumPublicApi.addViewLoadingTime()).not.toThrow()
+
+      expect(addLoadingTimeSpy).not.toHaveBeenCalled()
     })
   })
 
