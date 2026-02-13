@@ -24,6 +24,24 @@
 
 - 👷 bump all packages to version to v7.0.0-alpha.0
 
+## v6.27.1
+
+**Public Changes:**
+
+- 🐛 Changed tracked action to accept ClocksState ([#4177](https://github.com/DataDog/browser-sdk/pull/4177)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM Profiler] Fix profiler stuck in "stopped" mode when session expires ([#4152](https://github.com/DataDog/browser-sdk/pull/4152)) [RUM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#4150](https://github.com/DataDog/browser-sdk/pull/4150)) [FLAGGING] [RUM-REACT] [WORKER]
+- 👷 Show actual scenario file locations in E2E test output ([#4166](https://github.com/DataDog/browser-sdk/pull/4166))
+- 👷 Update dependency @playwright/test to v1.58.1 ([#4151](https://github.com/DataDog/browser-sdk/pull/4151))
+- 👷 Update build process in developer-extension ([#4153](https://github.com/DataDog/browser-sdk/pull/4153))
+- 👷 allow gh-worker-dd-devflow bots to bypass CLA check ([#4161](https://github.com/DataDog/browser-sdk/pull/4161))
+- ✅ fix flaky test ([#4168](https://github.com/DataDog/browser-sdk/pull/4168)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ improve unit test setup ([#4149](https://github.com/DataDog/browser-sdk/pull/4149)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [PANA-5945] Support child list InsertionCursors ([#4163](https://github.com/DataDog/browser-sdk/pull/4163)) [RUM]
+
 ## v6.27.0
 
 **Public Changes:**
