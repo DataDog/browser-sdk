@@ -1,4 +1,4 @@
-import { waitAfterNextPaint } from 'packages/core/test'
+import { waitAfterNextPaint } from '@datadog/browser-core/test'
 import { getScrollX, getScrollY } from './scroll'
 
 describe('scroll', () => {

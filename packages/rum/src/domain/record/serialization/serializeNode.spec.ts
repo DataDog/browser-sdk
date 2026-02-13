@@ -803,7 +803,7 @@ describe('serializeNode', () => {
           }
         }
         const styleSheet = new FakeCSSStyleSheet()
-        vi.spyOn(styleSheet, 'cssRules', 'get').mockImplementation(() => { throw new DOMException('cors issue', 'SecurityError' }))
+        vi.spyOn(styleSheet, 'cssRules', 'get').mockImplementation(() => { throw new DOMException('cors issue', 'SecurityError' ) })
 
         Object.defineProperty(document, 'styleSheets', {
           value: [styleSheet],

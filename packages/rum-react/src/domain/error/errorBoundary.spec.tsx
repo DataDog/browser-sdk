@@ -28,7 +28,7 @@ describe('ErrorBoundary', () => {
 
   it('renders the fallback function component when an error occurs', () => {
     const fallbackSpy = vi.fn<FallbackFunctionComponent>().mockReturnValue('fallback')
-    const ComponentSpy = vi.fn().mockImplementation(() => { throw new Error('error' }))
+    const ComponentSpy = vi.fn().mockImplementation(() => { throw new Error('error' ) })
     const container = appendComponent(
       <ErrorBoundary fallback={fallbackSpy}>
         <ComponentSpy />
@@ -57,7 +57,7 @@ describe('ErrorBoundary', () => {
       }
     }
 
-    const ComponentSpy = vi.fn().mockImplementation(() => { throw new Error('error' }))
+    const ComponentSpy = vi.fn().mockImplementation(() => { throw new Error('error' ) })
     const container = appendComponent(
       <ErrorBoundary fallback={FallbackComponent}>
         <ComponentSpy />
@@ -68,7 +68,7 @@ describe('ErrorBoundary', () => {
 
   it('resets the error when resetError is called', () => {
     const fallbackSpy = vi.fn<FallbackFunctionComponent>().mockReturnValue('fallback')
-    const ComponentSpy = vi.fn().mockImplementation(() => { throw new Error('error' }))
+    const ComponentSpy = vi.fn().mockImplementation(() => { throw new Error('error' ) })
     const container = appendComponent(
       <ErrorBoundary fallback={fallbackSpy}>
         <ComponentSpy />
