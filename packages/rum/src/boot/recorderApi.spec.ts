@@ -589,7 +589,7 @@ describe('makeRecorderApi', () => {
 
       mockWorker.processAllMessages()
 
-      expect(recorderApi.isRecording()).toBeFalse()
+      expect(recorderApi.isRecording()).toBe(false)
     })
 
     it('is false when the worker is not yet initialized', async () => {
@@ -597,7 +597,7 @@ describe('makeRecorderApi', () => {
       rumInit()
       await collectAsyncCalls(startRecordingSpy, 1)
 
-      expect(recorderApi.isRecording()).toBeFalse()
+      expect(recorderApi.isRecording()).toBe(false)
     })
 
     it('is false when the worker failed to initialize', async () => {
@@ -607,7 +607,7 @@ describe('makeRecorderApi', () => {
 
       mockWorker.dispatchErrorEvent()
 
-      expect(recorderApi.isRecording()).toBeFalse()
+      expect(recorderApi.isRecording()).toBe(false)
     })
 
     it('is true when recording is started and the worker is initialized', async () => {
@@ -617,7 +617,7 @@ describe('makeRecorderApi', () => {
 
       mockWorker.processAllMessages()
 
-      expect(recorderApi.isRecording()).toBeTrue()
+      expect(recorderApi.isRecording()).toBe(true)
     })
 
     it('is false before the DOM is loaded', async () => {
@@ -629,14 +629,14 @@ describe('makeRecorderApi', () => {
 
       mockWorker.processAllMessages()
 
-      expect(recorderApi.isRecording()).toBeFalse()
+      expect(recorderApi.isRecording()).toBe(false)
 
       triggerOnDomLoaded()
       await collectAsyncCalls(startRecordingSpy, 1)
 
       mockWorker.processAllMessages()
 
-      expect(recorderApi.isRecording()).toBeTrue()
+      expect(recorderApi.isRecording()).toBe(true)
     })
   })
 

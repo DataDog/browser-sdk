@@ -6,25 +6,25 @@ describe('syntheticsWorkerValues', () => {
     it('returns false if nothing is defined', () => {
       mockSyntheticsWorkerValues({}, 'globals')
 
-      expect(willSyntheticsInjectRum()).toBeFalse()
+      expect(willSyntheticsInjectRum()).toBe(false)
     })
 
     it('returns false if the INJECTS_RUM global variable is false', () => {
       mockSyntheticsWorkerValues({ injectsRum: false }, 'globals')
 
-      expect(willSyntheticsInjectRum()).toBeFalse()
+      expect(willSyntheticsInjectRum()).toBe(false)
     })
 
     it('returns true if the INJECTS_RUM global variable is truthy', () => {
       mockSyntheticsWorkerValues({ injectsRum: true }, 'globals')
 
-      expect(willSyntheticsInjectRum()).toBeTrue()
+      expect(willSyntheticsInjectRum()).toBe(true)
     })
 
     it('returns true if the INJECTS_RUM cookie is truthy', () => {
       mockSyntheticsWorkerValues({ injectsRum: true }, 'cookies')
 
-      expect(willSyntheticsInjectRum()).toBeTrue()
+      expect(willSyntheticsInjectRum()).toBe(true)
     })
   })
 

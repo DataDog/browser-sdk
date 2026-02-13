@@ -18,8 +18,8 @@ describe('computeFrustration', () => {
   })
 
   it('returns whether the clicks are considered as rage', () => {
-    expect(computeFrustration(clicksConsideredAsRage, rageClick).isRage).toBeTrue()
-    expect(computeFrustration(clicks, rageClick).isRage).toBeFalse()
+    expect(computeFrustration(clicksConsideredAsRage, rageClick).isRage).toBe(true)
+    expect(computeFrustration(clicks, rageClick).isRage).toBe(false)
   })
 
   describe('if clicks are considered as rage', () => {

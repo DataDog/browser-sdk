@@ -574,9 +574,9 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toContain(expect.arrayContaining(['X-B3-TraceId']))
-      expect(context.init!.headers).toContain(expect.arrayContaining(['X-B3-SpanId']))
-      expect(context.init!.headers).toContain(expect.arrayContaining(['X-B3-Sampled']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['X-B3-TraceId']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['X-B3-SpanId']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['X-B3-Sampled']))
 
       expect(context.init!.headers).toEqual(
         expect.arrayContaining([
@@ -586,10 +586,10 @@ describe('tracer', () => {
         ])
       )
 
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['x-datadog-sampling-priority']))
     })
 
     it('should add headers for b3 (single) and tracecontext propagators', () => {
@@ -621,11 +621,11 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['b3']))
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['traceparent']))
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['tracestate']))
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).not.toContain(expect.arrayContaining(['X-B3-TraceId']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['b3']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['traceparent']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['tracestate']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).not.toContainEqual(expect.arrayContaining(['X-B3-TraceId']))
     })
     it('should not add headers when trace not sampled and config set to sampled', () => {
       const tracer = startTracerWithDefaults({
@@ -652,10 +652,10 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['x-datadog-sampling-priority']))
     })
 
     it('should add headers when trace not sampled and config set to all', () => {
@@ -669,10 +669,10 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).toContainEqual(expect.arrayContaining(['x-datadog-sampling-priority']))
     })
   })
 

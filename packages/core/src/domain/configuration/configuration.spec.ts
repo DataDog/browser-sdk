@@ -34,10 +34,10 @@ describe('validateAndBuildConfiguration', () => {
         clientToken,
         enableExperimentalFeatures: ['bar', undefined as any, null as any, 11 as any],
       })
-      expect(isExperimentalFeatureEnabled('bar' as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(undefined as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(null as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(11 as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled('bar' as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(undefined as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(null as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(11 as any)).toBe(false)
     })
   })
 
@@ -148,7 +148,7 @@ describe('validateAndBuildConfiguration', () => {
         }
       }
       const configuration = validateAndBuildConfiguration({ clientToken, beforeSend })!
-      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBeFalse()
+      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBe(false)
       expect(configuration.beforeSend!({ view: { url: '/bar' } }, {})).toBeUndefined()
     })
 
@@ -166,22 +166,22 @@ describe('validateAndBuildConfiguration', () => {
 
   describe('allowUntrustedEvents', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.allowUntrustedEvents).toBeFalse()
+      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.allowUntrustedEvents).toBe(false)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: true })!.allowUntrustedEvents
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: false })!.allowUntrustedEvents
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: 'foo' as any })!.allowUntrustedEvents
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
