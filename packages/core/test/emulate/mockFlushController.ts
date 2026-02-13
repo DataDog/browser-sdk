@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { Observable } from '../../src/tools/observable'
 import type { FlushEvent, FlushController, FlushReason } from '../../src/transport'
 
@@ -9,20 +10,20 @@ export function createMockFlushController() {
   let currentBytesCount = 0
 
   return {
-    notifyBeforeAddMessage: jasmine
-      .createSpy<FlushController['notifyBeforeAddMessage']>()
-      .and.callFake((messageBytesCount) => {
+    notifyBeforeAddMessage: vi
+      .fn<FlushController['notifyBeforeAddMessage']>()
+      .mockImplementation((messageBytesCount) => {
         currentBytesCount += messageBytesCount
         currentMessagesCount += 1
       }),
-    notifyAfterAddMessage: jasmine
-      .createSpy<FlushController['notifyAfterAddMessage']>()
-      .and.callFake((messageBytesCountDiff = 0) => {
+    notifyAfterAddMessage: vi
+      .fn<FlushController['notifyAfterAddMessage']>()
+      .mockImplementation((messageBytesCountDiff = 0) => {
         currentBytesCount += messageBytesCountDiff
       }),
-    notifyAfterRemoveMessage: jasmine
-      .createSpy<FlushController['notifyAfterRemoveMessage']>()
-      .and.callFake((messageBytesCount) => {
+    notifyAfterRemoveMessage: vi
+      .fn<FlushController['notifyAfterRemoveMessage']>()
+      .mockImplementation((messageBytesCount) => {
         currentBytesCount -= messageBytesCount
         currentMessagesCount -= 1
       }),

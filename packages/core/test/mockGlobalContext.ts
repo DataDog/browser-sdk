@@ -1,11 +1,12 @@
+import { vi } from 'vitest'
 import type { ContextManager } from '../src/domain/context/contextManager'
 
 export function mockContextManager() {
   return {
     getContext: () => ({}),
-    setContext: jasmine.createSpy(),
-    setContextProperty: jasmine.createSpy(),
-    removeContextProperty: jasmine.createSpy(),
-    clearContext: jasmine.createSpy(),
+    setContext: vi.fn(),
+    setContextProperty: vi.fn(),
+    removeContextProperty: vi.fn(),
+    clearContext: vi.fn(),
   } as unknown as ContextManager
 }
