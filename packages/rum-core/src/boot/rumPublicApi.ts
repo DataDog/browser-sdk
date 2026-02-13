@@ -568,6 +568,7 @@ export function makeRumPublicApi(
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
   const bufferedDataObservable = startBufferingData().observable
+
   if (!startSessionManagerImpl) {
     startSessionManagerImpl = canUseEventBridge() ? startRumSessionManagerStub : startRumSessionManager
   }
