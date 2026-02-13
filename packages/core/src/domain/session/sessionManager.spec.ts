@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import {
   createNewEvent,
   expireCookie,
@@ -163,7 +164,7 @@ describe('startSessionManager', () => {
     let spy: (rawTrackingType?: string) => FakeTrackingType
 
     beforeEach(() => {
-      spy = jasmine.createSpy().and.returnValue(FakeTrackingType.TRACKED)
+      spy = vi.fn().mockReturnValue(FakeTrackingType.TRACKED)
     })
 
     it('should be called with an empty value if the cookie is not defined', () => {
@@ -193,7 +194,7 @@ describe('startSessionManager', () => {
   describe('session renewal', () => {
     it('should renew on activity after expiration', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const renewSessionSpy = jasmine.createSpy()
+      const renewSessionSpy = vi.fn()
       sessionManager.renewObservable.subscribe(renewSessionSpy)
 
       expireSessionCookie()
@@ -212,7 +213,7 @@ describe('startSessionManager', () => {
 
     it('should not renew on visibility after expiration', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const renewSessionSpy = jasmine.createSpy()
+      const renewSessionSpy = vi.fn()
       sessionManager.renewObservable.subscribe(renewSessionSpy)
 
       expireSessionCookie()
@@ -225,7 +226,7 @@ describe('startSessionManager', () => {
 
     it('should not renew on activity if cookie is deleted by a 3rd party', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const renewSessionSpy = jasmine.createSpy('renewSessionSpy')
+      const renewSessionSpy = vi.fn()
       sessionManager.renewObservable.subscribe(renewSessionSpy)
 
       deleteSessionCookie()
@@ -294,15 +295,15 @@ describe('startSessionManager', () => {
 
     it('should notify each expire and renew observables', () => {
       const firstSessionManager = startSessionManagerWithDefaults({ productKey: FIRST_PRODUCT_KEY })
-      const expireSessionASpy = jasmine.createSpy()
+      const expireSessionASpy = vi.fn()
       firstSessionManager.expireObservable.subscribe(expireSessionASpy)
-      const renewSessionASpy = jasmine.createSpy()
+      const renewSessionASpy = vi.fn()
       firstSessionManager.renewObservable.subscribe(renewSessionASpy)
 
       const secondSessionManager = startSessionManagerWithDefaults({ productKey: SECOND_PRODUCT_KEY })
-      const expireSessionBSpy = jasmine.createSpy()
+      const expireSessionBSpy = vi.fn()
       secondSessionManager.expireObservable.subscribe(expireSessionBSpy)
-      const renewSessionBSpy = jasmine.createSpy()
+      const renewSessionBSpy = vi.fn()
       secondSessionManager.renewObservable.subscribe(renewSessionBSpy)
 
       expireSessionCookie()
@@ -322,7 +323,7 @@ describe('startSessionManager', () => {
   describe('session timeout', () => {
     it('should expire the session when the time out delay is reached', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       expect(sessionManager.findSession()).toBeDefined()
@@ -337,7 +338,7 @@ describe('startSessionManager', () => {
       setCookie(SESSION_STORE_KEY, `id=abcde&first=tracked&created=${Date.now() - SESSION_TIME_OUT_DELAY}`, DURATION)
 
       const sessionManager = startSessionManagerWithDefaults()
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       expect(sessionManager.findSession()!.id).not.toBe('abcde')
@@ -366,7 +367,7 @@ describe('startSessionManager', () => {
 
     it('should expire the session after expiration delay', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       expectSessionIdToBeDefined(sessionManager)
@@ -378,7 +379,7 @@ describe('startSessionManager', () => {
 
     it('should expand duration on activity', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       expectSessionIdToBeDefined(sessionManager)
@@ -399,7 +400,7 @@ describe('startSessionManager', () => {
       const sessionManager = startSessionManagerWithDefaults({
         computeTrackingType: () => FakeTrackingType.NOT_TRACKED,
       })
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       expectTrackingTypeToBe(sessionManager, FIRST_PRODUCT_KEY, FakeTrackingType.NOT_TRACKED)
@@ -420,7 +421,7 @@ describe('startSessionManager', () => {
       setPageVisibility('visible')
 
       const sessionManager = startSessionManagerWithDefaults()
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       clock.tick(3 * VISIBILITY_CHECK_DELAY)
@@ -443,7 +444,7 @@ describe('startSessionManager', () => {
       const sessionManager = startSessionManagerWithDefaults({
         computeTrackingType: () => FakeTrackingType.NOT_TRACKED,
       })
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       clock.tick(3 * VISIBILITY_CHECK_DELAY)
@@ -464,7 +465,7 @@ describe('startSessionManager', () => {
   describe('manual session expiration', () => {
     it('expires the session when calling expire()', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       sessionManager.expire()
@@ -475,7 +476,7 @@ describe('startSessionManager', () => {
 
     it('notifies expired session only once when calling expire() multiple times', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       sessionManager.expire()
@@ -487,7 +488,7 @@ describe('startSessionManager', () => {
 
     it('notifies expired session only once when calling expire() after the session has been expired', () => {
       const sessionManager = startSessionManagerWithDefaults()
-      const expireSessionSpy = jasmine.createSpy()
+      const expireSessionSpy = vi.fn()
       sessionManager.expireObservable.subscribe(expireSessionSpy)
 
       clock.tick(SESSION_EXPIRATION_DELAY)
@@ -645,7 +646,7 @@ describe('startSessionManager', () => {
 
   describe('session state update', () => {
     it('should notify session manager update observable', () => {
-      const sessionStateUpdateSpy = jasmine.createSpy()
+      const sessionStateUpdateSpy = vi.fn()
       const sessionManager = startSessionManagerWithDefaults()
       sessionManager.sessionStateUpdateObservable.subscribe(sessionStateUpdateSpy)
 
@@ -654,7 +655,7 @@ describe('startSessionManager', () => {
       expectSessionIdToBeDefined(sessionManager)
       expect(sessionStateUpdateSpy).toHaveBeenCalledTimes(1)
 
-      const callArgs = sessionStateUpdateSpy.calls.argsFor(0)[0]
+      const callArgs = sessionStateUpdateSpy.mock.calls[0][0]
       expect(callArgs.previousState.extra).toBeUndefined()
       expect(callArgs.newState.extra).toBe('extra')
     })

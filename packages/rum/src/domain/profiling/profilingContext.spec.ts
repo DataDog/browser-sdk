@@ -20,7 +20,7 @@ describe('Profiling Context', () => {
       } as AssembleHookParams)
 
       expect(eventAttributes).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           _dd: {
             profiling: { status: 'running' },
           },

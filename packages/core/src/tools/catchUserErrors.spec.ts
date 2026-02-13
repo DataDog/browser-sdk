@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { catchUserErrors } from './catchUserErrors'
 import { display } from './display'
 
@@ -8,7 +9,7 @@ describe('catchUserErrors', () => {
   })
 
   it('logs errors using console.error and returns undefined', () => {
-    const displaySpy = spyOn(display, 'error')
+    const displaySpy = vi.spyOn(display, 'error')
     const myError = 'Ooops!'
     const wrappedFn = catchUserErrors(() => {
       // eslint-disable-next-line @typescript-eslint/only-throw-error

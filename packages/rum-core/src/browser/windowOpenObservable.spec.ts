@@ -1,11 +1,12 @@
+import { vi } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createWindowOpenObservable } from './windowOpenObservable'
 
 describe('windowOpenObservable', () => {
   it('should notify observer on `window.open` call', () => {
     const original = window.open
-    window.open = jasmine.createSpy()
-    const spy = jasmine.createSpy()
+    window.open = vi.fn()
+    const spy = vi.fn()
 
     const { observable, stop } = createWindowOpenObservable()
     const { unsubscribe } = observable.subscribe(spy)

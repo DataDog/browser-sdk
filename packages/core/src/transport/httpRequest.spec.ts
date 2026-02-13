@@ -112,7 +112,7 @@ describe('httpRequest', () => {
 
     it('should use sendBeacon when the bytes count is correct', () => {
       if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
+        return // skip: 'no sendBeacon support'
       }
 
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
@@ -132,7 +132,7 @@ describe('httpRequest', () => {
 
     it('should fallback to fetch when sendBeacon is not queued', async () => {
       if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
+        return // skip: 'no sendBeacon support'
       }
       interceptor.withSendBeacon(() => false)
 
@@ -146,7 +146,7 @@ describe('httpRequest', () => {
 
     it('should fallback to fetch when sendBeacon throws', async () => {
       if (!interceptor.isSendBeaconSupported()) {
-        pending('no sendBeacon support')
+        return // skip: 'no sendBeacon support'
       }
       let sendBeaconCalled = false
       interceptor.withSendBeacon(() => {

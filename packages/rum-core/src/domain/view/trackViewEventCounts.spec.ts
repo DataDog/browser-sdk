@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
@@ -9,7 +10,7 @@ describe('trackViewEventCounts', () => {
   let onChange: () => void
 
   beforeEach(() => {
-    onChange = jasmine.createSpy('onChange')
+    onChange = vi.fn()
 
     const viewEventCountsTracking = trackViewEventCounts(lifeCycle, 'view-id', onChange)
     registerCleanupTask(viewEventCountsTracking.stop)

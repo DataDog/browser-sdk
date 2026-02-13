@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { appendElement, appendText } from '../../test'
 import {
   isTextNode,
@@ -151,7 +152,7 @@ describe('forEachChildNodes', () => {
       <div>toto<span></span><!-- --></div>
     `)
 
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     forEachChildNodes(container, spy)
     expect(spy).toHaveBeenCalledTimes(3)
   })
@@ -160,21 +161,21 @@ describe('forEachChildNodes', () => {
     const container = appendElement('<div></div>')
     const shadowRoot = container.attachShadow({ mode: 'open' })
 
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     forEachChildNodes(container, spy)
     expect(spy).toHaveBeenCalledTimes(1)
-    expect(spy.calls.argsFor(0)[0]).toBe(shadowRoot)
+    expect(spy.mock.calls[0][0]).toBe(shadowRoot)
   })
 
   it('should iterate over the the shadow root and direct children for a node that is a host', () => {
     const container = appendElement('<div><span></span></div>')
     const shadowRoot = container.attachShadow({ mode: 'open' })
 
-    const spy = jasmine.createSpy()
+    const spy = vi.fn()
     forEachChildNodes(container, spy)
     expect(spy).toHaveBeenCalledTimes(2)
-    expect(spy.calls.argsFor(0)[0]).toBe(container.childNodes[0])
-    expect(spy.calls.argsFor(1)[0]).toBe(shadowRoot)
+    expect(spy.mock.calls[0][0]).toBe(container.childNodes[0])
+    expect(spy.mock.calls[1][0]).toBe(shadowRoot)
   })
 })
 

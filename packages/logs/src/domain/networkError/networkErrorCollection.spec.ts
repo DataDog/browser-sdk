@@ -53,7 +53,7 @@ describe('network error collection', () => {
     mockFetchManager.whenAllComplete(() => {
       expect(rawLogsEvents[0].rawLogsEvent).toEqual({
         message: 'Fetch error GET http://fake.com/',
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         status: StatusType.error,
         origin: ErrorSource.NETWORK,
         error: {
@@ -100,7 +100,7 @@ describe('network error collection', () => {
       expect(rawLogsEvents.length).toEqual(1)
       expect(rawLogsEvents[0].domainContext).toEqual({
         isAborted: true,
-        handlingStack: jasmine.any(String),
+        handlingStack: expect.any(String),
       })
       done()
     })

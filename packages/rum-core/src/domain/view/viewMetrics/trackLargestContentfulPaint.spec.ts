@@ -1,5 +1,6 @@
+import { vi, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
-import { clocksOrigin, DOM_EVENT } from '@datadog/browser-core'
+import { addExperimentalFeatures, clocksOrigin, DOM_EVENT, ExperimentalFeature } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   setPageVisibility,
@@ -27,7 +28,7 @@ interface StartLCPTrackingOptions {
 }
 
 describe('trackLargestContentfulPaint', () => {
-  let lcpCallback: jasmine.Spy<(lcp: LargestContentfulPaint) => void>
+  let lcpCallback: Mock<(lcp: LargestContentfulPaint) => void>
   let eventTarget: Window
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let clock: Clock
@@ -79,7 +80,9 @@ describe('trackLargestContentfulPaint', () => {
   }
 
   beforeEach(() => {
-    lcpCallback = jasmine.createSpy()
+    addExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
+
+    lcpCallback = vi.fn()
     eventTarget = document.createElement('div') as unknown as Window
     // Mock clock and advance time so that responseStart: 789 passes the sanitizeFirstByte check
     // which requires responseStart <= relativeNow()
@@ -91,7 +94,8 @@ describe('trackLargestContentfulPaint', () => {
     startLCPTracking()
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith({
+    expect(lcpCallback).toHaveBeenCalledTimes(1)
+    expect(lcpCallback).toHaveBeenCalledWith({
       value: 789 as RelativeTime,
       targetSelector: undefined,
       resourceUrl: undefined,
@@ -107,7 +111,8 @@ describe('trackLargestContentfulPaint', () => {
       }),
     ])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith({
+    expect(lcpCallback).toHaveBeenCalledTimes(1)
+    expect(lcpCallback).toHaveBeenCalledWith({
       value: 789 as RelativeTime,
       targetSelector: '#lcp-target-element',
       resourceUrl: undefined,
@@ -123,7 +128,8 @@ describe('trackLargestContentfulPaint', () => {
       }),
     ])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith({
+    expect(lcpCallback).toHaveBeenCalledTimes(1)
+    expect(lcpCallback).toHaveBeenCalledWith({
       value: 789 as RelativeTime,
       targetSelector: undefined,
       resourceUrl: 'https://example.com/lcp-resource',
@@ -176,7 +182,8 @@ describe('trackLargestContentfulPaint', () => {
       }),
     ])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith(jasmine.objectContaining({ value: 1 }))
+    expect(lcpCallback).toHaveBeenCalledTimes(1)
+    expect(lcpCallback).toHaveBeenCalledWith(expect.objectContaining({ value: 1 }))
   })
 
   it('should notify multiple times when the size is bigger than the previous entry', () => {
@@ -195,8 +202,8 @@ describe('trackLargestContentfulPaint', () => {
       }),
     ])
     expect(lcpCallback).toHaveBeenCalledTimes(2)
-    expect(lcpCallback.calls.first().args[0]).toEqual(jasmine.objectContaining({ value: 1 }))
-    expect(lcpCallback.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({ value: 2 }))
+    expect(lcpCallback.mock.calls[0][0]).toEqual(expect.objectContaining({ value: 1 }))
+    expect(lcpCallback.mock.lastCall[0]).toEqual(expect.objectContaining({ value: 2 }))
   })
 
   it('should return undefined when LCP entry has an empty string as url', () => {
@@ -207,7 +214,8 @@ describe('trackLargestContentfulPaint', () => {
       }),
     ])
 
-    expect(lcpCallback).toHaveBeenCalledOnceWith({
+    expect(lcpCallback).toHaveBeenCalledTimes(1)
+    expect(lcpCallback).toHaveBeenCalledWith({
       value: 789 as RelativeTime,
       targetSelector: undefined,
       resourceUrl: undefined,
@@ -222,7 +230,8 @@ describe('trackLargestContentfulPaint', () => {
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LARGEST_CONTENTFUL_PAINT)])
 
-      expect(lcpCallback).toHaveBeenCalledOnceWith({
+      expect(lcpCallback).toHaveBeenCalledTimes(1)
+      expect(lcpCallback).toHaveBeenCalledWith({
         value: 789 as RelativeTime,
         targetSelector: undefined,
         resourceUrl: undefined,
@@ -362,7 +371,7 @@ describe('trackLargestContentfulPaint', () => {
           }),
         ])
 
-        const result = lcpCallback.calls.mostRecent().args[0]
+        const result = lcpCallback.mock.lastCall[0]
 
         expect(result.subParts).toEqual(
           expectedSubParts as {

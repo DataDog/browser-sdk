@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import {
   callbackAddsInstrumentation,
   type Clock,
@@ -28,13 +29,13 @@ describe('preStartLogs', () => {
   })
 
   describe('configuration validation', () => {
-    let displaySpy: jasmine.Spy
-    let doStartLogsSpy: jasmine.Spy<DoStartLogs>
+    let displaySpy: Mock
+    let doStartLogsSpy: Mock<DoStartLogs>
     let strategy: Strategy
 
     beforeEach(() => {
       ;({ strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults())
-      displaySpy = spyOn(display, 'error')
+      displaySpy = vi.spyOn(display, 'error')
     })
 
     it('should start when the configuration is valid', () => {
@@ -112,7 +113,7 @@ describe('preStartLogs', () => {
     expect(handleLogSpy).not.toHaveBeenCalled()
     strategy.init(DEFAULT_INIT_CONFIGURATION)
 
-    expect(handleLogSpy.calls.all().length).toBe(1)
+    expect(handleLogSpy.mock.calls.length).toBe(1)
     expect(getLoggedMessage(0).message.message).toBe('message')
   })
 
@@ -139,7 +140,7 @@ describe('preStartLogs', () => {
 
     it('saves the URL', () => {
       const { strategy, getLoggedMessage, getCommonContextSpy } = createPreStartStrategyWithDefaults()
-      getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
+      getCommonContextSpy.mockReturnValue({ view: { url: 'url' } } as unknown as CommonContext)
       strategy.handleLog(
         {
           status: StatusType.info,
@@ -180,7 +181,7 @@ describe('preStartLogs', () => {
 
   describe('tracking consent', () => {
     let strategy: Strategy
-    let doStartLogsSpy: jasmine.Spy<DoStartLogs>
+    let doStartLogsSpy: Mock<DoStartLogs>
     let trackingConsentState: TrackingConsentState
 
     beforeEach(() => {
@@ -231,7 +232,7 @@ describe('preStartLogs', () => {
 
     it('do not call startLogs when tracking consent state is updated after init', () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      doStartLogsSpy.calls.reset()
+      doStartLogsSpy.mockClear()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
 
@@ -271,12 +272,12 @@ function createPreStartStrategyWithDefaults({
 }: {
   trackingConsentState?: TrackingConsentState
 } = {}) {
-  const handleLogSpy = jasmine.createSpy()
-  const doStartLogsSpy = jasmine.createSpy<DoStartLogs>().and.returnValue({
+  const handleLogSpy = vi.fn()
+  const doStartLogsSpy = vi.fn<DoStartLogs>().mockReturnValue({
     handleLog: handleLogSpy,
   } as unknown as StartLogsResult)
-  const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
-  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  const getCommonContextSpy = vi.fn<() => CommonContext>()
+  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).mockImplementation(createFakeTelemetryObject)
 
   return {
     strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),
@@ -285,7 +286,7 @@ function createPreStartStrategyWithDefaults({
     doStartLogsSpy,
     getCommonContextSpy,
     getLoggedMessage: (index: number) => {
-      const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.calls.argsFor(index)
+      const [message, logger, handlingStack, savedCommonContext, savedDate] = handleLogSpy.mock.calls[index]
       return { message, logger, handlingStack, savedCommonContext, savedDate }
     },
   }

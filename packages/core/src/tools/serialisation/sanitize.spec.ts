@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { display } from '../display'
 import { registerCleanupTask } from '../../../test'
 import { sanitize } from './sanitize'
@@ -38,7 +39,7 @@ describe('sanitize', () => {
         const bigint = bigIntFunction(2)
         expect(sanitize(bigint)).toEqual('[BigInt] 2')
       } else {
-        pending('BigInt is not supported on this browser')
+        return // skip: 'BigInt is not supported on this browser'
       }
     })
 
@@ -48,7 +49,7 @@ describe('sanitize', () => {
         const symbol = symbolFunction('description')
         expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
       } else {
-        pending('Symbol is not supported on this browser')
+        return // skip: 'Symbol is not supported on this browser'
       }
     })
   })
@@ -194,7 +195,7 @@ describe('sanitize', () => {
 
   describe('toJson functions handling', () => {
     it('should use toJSON functions if available on root object', () => {
-      const toJSON = jasmine.createSpy('toJSON', () => 'Specific').and.callThrough()
+      const toJSON = vi.fn() => 'Specific').and.callThrough()
       const obj = { a: 1, b: 2, toJSON }
 
       expect(sanitize(obj)).toEqual('Specific')
@@ -202,7 +203,7 @@ describe('sanitize', () => {
     })
 
     it('should use toJSON functions if available on nested objects', () => {
-      const toJSON = jasmine.createSpy('toJSON', () => ({ d: 4 })).and.callThrough()
+      const toJSON = vi.fn() => ({ d: 4 })).and.callThrough()
       const obj = { a: 1, b: 2, c: { a: 3, toJSON } }
 
       expect(sanitize(obj)).toEqual({ a: 1, b: 2, c: { d: 4 } })
@@ -215,8 +216,8 @@ describe('sanitize', () => {
     })
 
     it('should not use toJSON methods added to arrays and objects prototypes', () => {
-      const toJSONArray = jasmine.createSpy('toJSONArray', () => 'Array').and.callThrough()
-      const toJSONObject = jasmine.createSpy('toJSONObject', () => 'Object').and.callThrough()
+      const toJSONArray = vi.fn() => 'Array').and.callThrough()
+      const toJSONObject = vi.fn() => 'Object').and.callThrough()
       ;(Array.prototype as any).toJSON = toJSONArray
       ;(Object.prototype as any).toJSON = toJSONObject
 
@@ -241,7 +242,7 @@ describe('sanitize', () => {
 
   describe('maxSize verification', () => {
     it('should return nothing if a simple type is over max size ', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       const str = 'A not so long string...'
 
       expect(sanitize(str, 5)).toBe(undefined)
@@ -249,7 +250,7 @@ describe('sanitize', () => {
     })
 
     it('should stop cloning if an object container type reaches max size', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       const obj = { a: 'abc', b: 'def', c: 'ghi' } // Length of 31 after JSON.stringify
       const sanitized = sanitize(obj, 21)
       expect(sanitized).toEqual({ a: 'abc', b: 'def' }) // Length of 21 after JSON.stringify
@@ -257,7 +258,7 @@ describe('sanitize', () => {
     })
 
     it('should stop cloning if an array container type reaches max size', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       const obj = [1, 2, 3, 4] // Length of 9 after JSON.stringify
       const sanitized = sanitize(obj, 5)
       expect(sanitized).toEqual([1, 2]) // Length of 5 after JSON.stringify
@@ -266,7 +267,7 @@ describe('sanitize', () => {
 
     it('should count size properly when array contains undefined values', () => {
       // This is a special case: JSON.stringify([undefined]) => '[null]'
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       const arr = [undefined, undefined] // Length of 11 after JSON.stringify
       const sanitized = sanitize(arr, 10)
       expect(sanitized).toEqual([undefined])
@@ -274,7 +275,7 @@ describe('sanitize', () => {
     })
 
     it('should count size properly when an object contains properties with undefined values', () => {
-      const displaySpy = spyOn(display, 'warn')
+      const displaySpy = vi.spyOn(display, 'warn')
       const obj = { a: undefined, b: 42 } // Length of 8 after JSON.stringify
       const sanitized = sanitize(obj, 8)
       expect(sanitized).toEqual({ a: undefined, b: 42 })

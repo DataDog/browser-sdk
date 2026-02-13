@@ -114,14 +114,14 @@ describe('trackClickActions', () => {
     clock.tick(EXPIRE_DELAY)
     const domEvent = createNewEvent('pointerup', { target: document.createElement('button') })
     expect(events).toEqual([
-      jasmine.objectContaining({
-        counts: jasmine.objectContaining({
+      expect.objectContaining({
+        counts: expect.objectContaining({
           errorCount: 0,
           longTaskCount: 0,
           resourceCount: 0,
         }),
         duration: BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY as Duration,
-        id: jasmine.any(String),
+        id: expect.any(String),
         name: 'Click me',
         nameSource: ActionNameSource.TEXT_CONTENT,
         startClocks: {
@@ -167,7 +167,7 @@ describe('trackClickActions', () => {
     expect(events.length).toBe(1)
     const clickAction = events[0]
     expect(clickAction.counts).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         errorCount: 2,
         longTaskCount: 0,
         resourceCount: 0,
@@ -376,7 +376,7 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
       expect(events[0].frustrationTypes).toEqual(
-        jasmine.arrayWithExactContents([
+        expect.arrayContaining([
           FrustrationType.DEAD_CLICK,
           FrustrationType.ERROR_CLICK,
           FrustrationType.RAGE_CLICK,
@@ -406,7 +406,7 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
       expect(events[0].frustrationTypes).toEqual(
-        jasmine.arrayWithExactContents([FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK])
+        expect.arrayContaining([FrustrationType.ERROR_CLICK, FrustrationType.DEAD_CLICK])
       )
     })
   })

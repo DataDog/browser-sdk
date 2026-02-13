@@ -51,9 +51,9 @@ describe('trackManualActions', () => {
       expect(rawRumEvents).toHaveSize(1)
       expect(rawRumEvents[0].duration).toBe(500 as Duration)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           type: RumEventType.ACTION,
-          action: jasmine.objectContaining({
+          action: expect.objectContaining({
             target: { name: 'user_login' },
             type: ActionType.CUSTOM,
           }),
@@ -93,9 +93,9 @@ describe('trackManualActions', () => {
 
         expect(rawRumEvents).toHaveSize(1)
         expect(rawRumEvents[0].rawRumEvent).toEqual(
-          jasmine.objectContaining({
+          expect.objectContaining({
             type: RumEventType.ACTION,
-            action: jasmine.objectContaining({
+            action: expect.objectContaining({
               type: actionType,
             }),
           })
@@ -115,22 +115,45 @@ describe('trackManualActions', () => {
 
       expect(rawRumEvents).toHaveSize(3)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.SCROLL }),
+        expect.objectContaining({
+          action: expect.objectContaining({ type: ActionType.SCROLL }),
         })
       )
       expect(rawRumEvents[1].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.SWIPE }),
+        expect.objectContaining({
+          action: expect.objectContaining({ type: ActionType.SWIPE }),
         })
       )
       expect(rawRumEvents[2].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ type: ActionType.CUSTOM }),
+        expect.objectContaining({
+          action: expect.objectContaining({ type: ActionType.CUSTOM }),
         })
       )
     })
   })
+
+  describe('context merging', () => {
+    it('should merge contexts with stop precedence on conflicts', () => {
+      startAction('action1', { context: { cart: 'abc' } })
+      stopAction('action1', { context: { total: 100 } })
+
+      startAction('action2', { context: { status: 'pending' } })
+      stopAction('action2', { context: { status: 'complete' } })
+
+      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents[0].rawRumEvent).toEqual(
+        expect.objectContaining({
+          context: { cart: 'abc', total: 100 },
+        })
+      )
+      expect(rawRumEvents[1].rawRumEvent).toEqual(
+        expect.objectContaining({
+          context: { status: 'complete' },
+        })
+      )
+    })
+  })
+
 
   describe('actionKey', () => {
     it('should support actionKey for tracking same name multiple times', () => {
@@ -161,13 +184,13 @@ describe('trackManualActions', () => {
 
       expect(rawRumEvents).toHaveSize(2)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ target: { name: 'foo bar' } }),
+        expect.objectContaining({
+          action: expect.objectContaining({ target: { name: 'foo bar' } }),
         })
       )
       expect(rawRumEvents[1].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          action: jasmine.objectContaining({ target: { name: 'foo' } }),
+        expect.objectContaining({
+          action: expect.objectContaining({ target: { name: 'foo' } }),
         })
       )
     })

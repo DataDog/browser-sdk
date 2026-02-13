@@ -11,7 +11,7 @@ describe('serializeStyleSheets', () => {
 
   beforeEach(() => {
     if (!isAdoptedStyleSheetsSupported()) {
-      pending('no adoptedStyleSheets support')
+      return // skip: 'no adoptedStyleSheets support'
     }
     stats = createSerializationStats()
     transaction = createSerializationTransactionForTesting({ stats })

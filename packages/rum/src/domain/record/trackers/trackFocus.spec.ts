@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'
@@ -7,10 +8,10 @@ import type { Tracker } from './tracker.types'
 
 describe('trackFocus', () => {
   let focusTracker: Tracker
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitRecordCallback: Mock<EmitRecordCallback>
 
   beforeEach(() => {
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     focusTracker = trackFocus(emitRecordCallback, createRecordingScopeForTesting())
     registerCleanupTask(() => {
       focusTracker.stop()
@@ -18,24 +19,26 @@ describe('trackFocus', () => {
   })
 
   it('collects focus', () => {
-    spyOn(document, 'hasFocus').and.returnValue(true)
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true)
     window.dispatchEvent(createNewEvent('focus'))
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       data: { has_focus: true },
       type: RecordType.Focus,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
     })
   })
 
   it('collects blur', () => {
-    spyOn(document, 'hasFocus').and.returnValue(false)
+    vi.spyOn(document, 'hasFocus').mockReturnValue(false)
     window.dispatchEvent(createNewEvent('blur'))
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       data: { has_focus: false },
       type: RecordType.Focus,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
     })
   })
 })

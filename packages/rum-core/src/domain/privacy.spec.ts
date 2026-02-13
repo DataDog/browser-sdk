@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { appendElement } from '../../test'
 import {
   NodePrivacyLevel,
@@ -118,7 +119,7 @@ describe('getNodePrivacyLevel', () => {
       const node = document.createElement('div')
       ancestor.appendChild(node)
 
-      const parentNodeGetterSpy = spyOnProperty(node, 'parentNode').and.returnValue(ancestor)
+      const parentNodeGetterSpy = vi.spyOn(node, 'parentNode').mockReturnValue(ancestor)
 
       const cache = new Map()
       cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)

@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { ContextManager, ContextValue } from '@datadog/browser-core'
 import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
@@ -125,9 +126,9 @@ describe('tracer', () => {
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(xhr.headers).toEqual(
-        jasmine.objectContaining({
-          b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-0$/),
-          traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-00$/),
+        expect.objectContaining({
+          b3: expect.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-0$/),
+          traceparent: expect.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-00$/),
           tracestate: 'dd=s:0;o:rum',
           'X-B3-Sampled': '0',
         })
@@ -172,9 +173,9 @@ describe('tracer', () => {
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(xhr.headers).toEqual(
-        jasmine.objectContaining({
-          'X-B3-TraceId': jasmine.stringMatching(/^[0-9a-f]{16}$/),
-          'X-B3-SpanId': jasmine.stringMatching(/^[0-9a-f]{16}$/),
+        expect.objectContaining({
+          'X-B3-TraceId': expect.stringMatching(/^[0-9a-f]{16}$/),
+          'X-B3-SpanId': expect.stringMatching(/^[0-9a-f]{16}$/),
           'X-B3-Sampled': '1',
         })
       )
@@ -195,9 +196,9 @@ describe('tracer', () => {
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
 
       expect(xhr.headers).toEqual(
-        jasmine.objectContaining({
-          b3: jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/),
-          traceparent: jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
+        expect.objectContaining({
+          b3: expect.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/),
+          traceparent: expect.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/),
           tracestate: 'dd=s:1;o:rum',
         })
       )
@@ -332,7 +333,7 @@ describe('tracer', () => {
     })
 
     it('should display an error when a matching function throws', () => {
-      const displaySpy = spyOn(display, 'error')
+      const displaySpy = vi.spyOn(display, 'error')
       const tracer = startTracerWithDefaults({
         initConfiguration: {
           allowedTracingUrls: [
@@ -573,22 +574,22 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['X-B3-TraceId']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['X-B3-SpanId']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['X-B3-Sampled']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['X-B3-TraceId']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['X-B3-SpanId']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['X-B3-Sampled']))
 
       expect(context.init!.headers).toEqual(
-        jasmine.arrayContaining([
-          ['X-B3-TraceId', jasmine.stringMatching(/^[0-9a-f]{16}$/)],
-          ['X-B3-SpanId', jasmine.stringMatching(/^[0-9a-f]{16}$/)],
+        expect.arrayContaining([
+          ['X-B3-TraceId', expect.stringMatching(/^[0-9a-f]{16}$/)],
+          ['X-B3-SpanId', expect.stringMatching(/^[0-9a-f]{16}$/)],
           ['X-B3-Sampled', '1'],
         ])
       )
 
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-sampling-priority']))
     })
 
     it('should add headers for b3 (single) and tracecontext propagators', () => {
@@ -602,9 +603,9 @@ describe('tracer', () => {
       tracer.traceFetch(context)
 
       expect(context.init!.headers).toEqual(
-        jasmine.arrayContaining([
-          ['b3', jasmine.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/)],
-          ['traceparent', jasmine.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)],
+        expect.arrayContaining([
+          ['b3', expect.stringMatching(/^[0-9a-f]{16}-[0-9a-f]{16}-1$/)],
+          ['traceparent', expect.stringMatching(/^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-01$/)],
           ['tracestate', 'dd=s:1;o:rum'],
         ])
       )
@@ -620,11 +621,11 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['b3']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['traceparent']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['tracestate']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).not.toContain(jasmine.arrayContaining(['X-B3-TraceId']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['b3']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['traceparent']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['tracestate']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).not.toContain(expect.arrayContaining(['X-B3-TraceId']))
     })
     it('should not add headers when trace not sampled and config set to sampled', () => {
       const tracer = startTracerWithDefaults({
@@ -651,10 +652,10 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-sampling-priority']))
     })
 
     it('should add headers when trace not sampled and config set to all', () => {
@@ -668,10 +669,10 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceFetch(context)
 
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-origin']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-parent-id']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-trace-id']))
-      expect(context.init!.headers).toContain(jasmine.arrayContaining(['x-datadog-sampling-priority']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-origin']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-parent-id']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-trace-id']))
+      expect(context.init!.headers).toContain(expect.arrayContaining(['x-datadog-sampling-priority']))
     })
   })
 

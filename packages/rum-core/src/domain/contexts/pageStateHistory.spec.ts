@@ -128,7 +128,7 @@ describe('pageStateHistory', () => {
         } as AssembleHookParams)
         expect(defaultRumEventAttributes).toEqual({
           type: 'view',
-          _dd: { page_states: jasmine.any(Array) },
+          _dd: { page_states: expect.any(Array) },
         })
       })
 

@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -10,7 +11,7 @@ describe('trackBfcacheMetrics', () => {
   beforeEach(() => {
     clock = mockClock()
 
-    spyOn(window, 'requestAnimationFrame').and.callFake((cb: FrameRequestCallback): number => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback): number => {
       cb(performance.now())
       return 0
     })
@@ -24,7 +25,7 @@ describe('trackBfcacheMetrics', () => {
     const pageshow = createPageshowEvent() as PageTransitionEvent
 
     const metrics: InitialViewMetrics = {}
-    const scheduleSpy = jasmine.createSpy('schedule')
+    const scheduleSpy = vi.fn()
 
     clock.tick(50)
 

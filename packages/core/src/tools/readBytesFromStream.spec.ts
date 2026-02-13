@@ -39,9 +39,9 @@ describe('readBytesFromStream', () => {
       await readBytesFromStream(stream, {
         collectStreamBody: true,
       })
-      fail('Should have thrown an error')
+      throw new Error('Should have thrown an error')
     } catch (error) {
-      expect(error).toEqual(jasmine.any(Error))
+      expect(error).toEqual(expect.any(Error))
     }
   })
 

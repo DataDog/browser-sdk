@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MediaInteractionType, RecordType } from '../../../types'
@@ -9,7 +10,7 @@ import type { Tracker } from './tracker.types'
 
 describe('trackMediaInteraction', () => {
   let mediaInteractionTracker: Tracker
-  let emitRecordCallback: jasmine.Spy<EmitRecordCallback>
+  let emitRecordCallback: Mock<EmitRecordCallback>
   let audio: HTMLAudioElement
 
   beforeEach(() => {
@@ -18,7 +19,7 @@ describe('trackMediaInteraction', () => {
     const scope = createRecordingScopeForTesting()
     takeFullSnapshotForTesting(scope)
 
-    emitRecordCallback = jasmine.createSpy()
+    emitRecordCallback = vi.fn()
     mediaInteractionTracker = trackMediaInteraction(emitRecordCallback, scope)
     registerCleanupTask(() => {
       mediaInteractionTracker.stop()
@@ -28,12 +29,13 @@ describe('trackMediaInteraction', () => {
   it('collects play interactions', () => {
     audio.dispatchEvent(createNewEvent('play', { target: audio }))
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.MediaInteraction,
-        id: jasmine.any(Number) as unknown as number,
+        id: expect.any(Number) as unknown as number,
         type: MediaInteractionType.Play,
       },
     })
@@ -42,12 +44,13 @@ describe('trackMediaInteraction', () => {
   it('collects pause interactions', () => {
     audio.dispatchEvent(createNewEvent('pause', { target: audio }))
 
-    expect(emitRecordCallback).toHaveBeenCalledOnceWith({
+    expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+    expect(emitRecordCallback).toHaveBeenCalledWith({
       type: RecordType.IncrementalSnapshot,
-      timestamp: jasmine.any(Number),
+      timestamp: expect.any(Number),
       data: {
         source: IncrementalSource.MediaInteraction,
-        id: jasmine.any(Number) as unknown as number,
+        id: expect.any(Number) as unknown as number,
         type: MediaInteractionType.Pause,
       },
     })

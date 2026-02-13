@@ -66,7 +66,7 @@ describe('segmentTelemetry', () => {
         generateReplayRequest({ result, isFullSnapshot: true })
 
         expect(await telemetry.getEvents()).toEqual([
-          jasmine.objectContaining({
+          expect.objectContaining({
             type: 'log',
             status: 'debug',
             message: 'Segment network request metrics',
@@ -112,7 +112,7 @@ describe('segmentTelemetry', () => {
       generateReplayRequest({ result, isFullSnapshot: false })
 
       expect(await telemetry.getEvents()).toEqual([
-        jasmine.objectContaining({
+        expect.objectContaining({
           type: 'log',
           status: 'debug',
           message: 'Segment network request metrics',

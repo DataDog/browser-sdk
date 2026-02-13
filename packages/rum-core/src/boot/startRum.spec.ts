@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
 import {
   Observable,
@@ -213,7 +214,7 @@ describe('view events', () => {
 
   it('sends a view update on page unload when bridge is present', () => {
     const eventBridge = mockEventBridge()
-    const sendSpy = spyOn(eventBridge, 'send')
+    const sendSpy = vi.spyOn(eventBridge, 'send')
 
     const VIEW_DURATION = ONE_SECOND as Duration
 
@@ -222,7 +223,7 @@ describe('view events', () => {
     clock.tick(VIEW_DURATION - relativeNow())
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    const lastBridgeMessage = JSON.parse(sendSpy.calls.mostRecent().args[0]) as {
+    const lastBridgeMessage = JSON.parse(sendSpy.mock.lastCall[0]) as {
       eventType: 'rum'
       event: RumEvent
     }

@@ -1,3 +1,4 @@
+import { vi, type Mock } from 'vitest'
 import type { BufferedData, RawError } from '@datadog/browser-core'
 import { ErrorSource, ErrorHandling, Observable, BufferedDataType, clocksNow } from '@datadog/browser-core'
 import { registerCleanupTask } from '../../../../core/test'
@@ -39,12 +40,12 @@ const RAW_ERROR: RawError = {
 }
 
 describe('runtime error collection', () => {
-  let onErrorSpy: jasmine.Spy
+  let onErrorSpy: Mock
   let originalOnErrorHandler: OnErrorEventHandler
 
   beforeEach(() => {
     originalOnErrorHandler = window.onerror
-    onErrorSpy = jasmine.createSpy()
+    onErrorSpy = vi.fn()
     window.onerror = onErrorSpy
   })
 
@@ -61,10 +62,10 @@ describe('runtime error collection', () => {
     })
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       error: {
         kind: 'Error',
-        stack: jasmine.any(String),
+        stack: expect.any(String),
         causes: undefined,
         handling: ErrorHandling.UNHANDLED,
         fingerprint: undefined,
@@ -102,22 +103,22 @@ describe('runtime error collection', () => {
     })
 
     expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       error: {
         kind: 'Error',
-        stack: jasmine.any(String),
+        stack: expect.any(String),
         handling: ErrorHandling.UNHANDLED,
         causes: [
           {
             source: ErrorSource.SOURCE,
             type: 'Error',
-            stack: jasmine.any(String),
+            stack: expect.any(String),
             message: 'Mid level error',
           },
           {
             source: ErrorSource.SOURCE,
             type: 'TypeError',
-            stack: jasmine.any(String),
+            stack: expect.any(String),
             message: 'Low level error',
           },
         ],

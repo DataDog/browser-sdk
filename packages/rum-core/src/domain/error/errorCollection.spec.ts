@@ -38,14 +38,14 @@ describe('error collection', () => {
         error: new Error('foo'),
         message: 'foo',
         type: 'Error',
-        stack: jasmine.stringMatching('Error: foo'),
+        stack: expect.stringMatching('Error: foo'),
       },
       {
         testCase: 'an error subclass via prototype',
         error: new (SubErrorViaPrototype as unknown as { new (message: string): Error })('bar'),
         message: 'bar',
         type: 'Error',
-        stack: jasmine.stringMatching('Error: bar'),
+        stack: expect.stringMatching('Error: bar'),
       },
       {
         testCase: 'a string',
@@ -75,9 +75,9 @@ describe('error collection', () => {
         expect(rawRumEvents.length).toBe(1)
         expect(rawRumEvents[0]).toEqual({
           rawRumEvent: {
-            date: jasmine.any(Number),
+            date: expect.any(Number),
             error: {
-              id: jasmine.any(String),
+              id: expect.any(String),
               message,
               source: ErrorSource.CUSTOM,
               stack,
@@ -242,9 +242,9 @@ describe('error collection', () => {
 
       expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         error: {
-          id: jasmine.any(String),
+          id: expect.any(String),
           message: 'hello',
           source: ErrorSource.CUSTOM,
           stack: 'bar',
