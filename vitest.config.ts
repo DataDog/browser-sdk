@@ -14,6 +14,11 @@ const buildEnvDefines: Record<string, string> = {
 export default defineConfig({
   resolve: {
     alias: {
+      // Test utility subpath imports (must come before main package aliases)
+      '@datadog/browser-core/test': path.resolve('./packages/core/test'),
+      '@datadog/browser-rum-core/test': path.resolve('./packages/rum-core/test'),
+
+      // Main package aliases (matching tsconfig.base.json paths)
       '@datadog/browser-core': path.resolve('./packages/core/src'),
       '@datadog/browser-flagging': path.resolve('./packages/flagging/src/entries/main'),
       '@datadog/browser-logs': path.resolve('./packages/logs/src/entries/main'),
