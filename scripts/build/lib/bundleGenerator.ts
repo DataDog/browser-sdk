@@ -26,9 +26,9 @@ export interface FetchConfigOptions {
 }
 
 /**
- * Options for generating combined bundle
+ * Options for the low-level generateCombinedBundle() function.
  */
-export interface GenerateBundleOptions {
+export interface CombineBundleOptions {
   sdkCode: string
   config: {
     applicationId: string
@@ -37,10 +37,30 @@ export interface GenerateBundleOptions {
   variant: SdkVariant
 }
 
+/**
+ * Options for the high-level generateBundle() API function.
+ *
+ * @property applicationId - Datadog application ID (required). Get this from Datadog UI > RUM > Settings
+ * @property remoteConfigurationId - Remote configuration ID (required). Get this from Datadog UI > Remote Configuration
+ * @property variant - SDK variant: 'rum' for full SDK, 'rum-slim' for lightweight version
+ * @property site - Datadog site (optional, default: 'datadoghq.com'). Use 'datadoghq.eu' for EU region
+ * @property datacenter - CDN datacenter for SDK download (optional, default: 'us1')
+ */
+export interface GenerateBundleOptions {
+  applicationId: string
+  remoteConfigurationId: string
+  variant: SdkVariant
+  site?: string
+  datacenter?: string
+}
+
 // CDN base URL for Datadog Browser SDK bundles
 // Format: https://www.datadoghq-browser-agent.com/{datacenter}/v{majorVersion}/datadog-{variant}.js
 const CDN_HOST = 'https://www.datadoghq-browser-agent.com'
 const DEFAULT_DATACENTER = 'us1'
+
+// In-memory cache for SDK downloads to avoid re-fetching in watch mode
+const sdkCache = new Map<string, string>()
 
 /**
  * Get the major version number from a semver string (e.g., "6.26.0" -> 6)
@@ -116,9 +136,16 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
 
   const version = browserSdkVersion
   const majorVersion = getMajorVersion(version)
+
+  const cacheKey = `${variant}-${majorVersion}`
+  const cached = sdkCache.get(cacheKey)
+  if (cached) {
+    return cached
+  }
+
   const cdnUrl = `${CDN_HOST}/${datacenter}/v${majorVersion}/datadog-${variant}.js`
 
-  return new Promise((resolve, reject) => {
+  const sdkCode = await new Promise<string>((resolve, reject) => {
     const request = https.get(cdnUrl, { timeout: 30000 }, (res) => {
       let data = ''
 
@@ -156,6 +183,9 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
       reject(new Error(`Timeout downloading SDK from CDN (30s):\n` + `URL: ${cdnUrl}`))
     })
   })
+
+  sdkCache.set(cacheKey, sdkCode)
+  return sdkCode
 }
 
 /**
@@ -169,7 +199,7 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
  * @param options - Bundle generation options
  * @returns Generated JavaScript bundle as string
  */
-export function generateCombinedBundle(options: GenerateBundleOptions): string {
+export function generateCombinedBundle(options: CombineBundleOptions): string {
   const { sdkCode, config, variant } = options
 
   // Use JSON.stringify for deterministic serialization
@@ -203,4 +233,83 @@ export function generateCombinedBundle(options: GenerateBundleOptions): string {
   }
 })();
 `
+}
+
+const VALID_VARIANTS: SdkVariant[] = ['rum', 'rum-slim']
+
+/**
+ * Generate a browser-ready bundle combining SDK and embedded remote configuration.
+ *
+ * Downloads the Datadog Browser SDK and fetches remote configuration, then combines
+ * them into a single JavaScript file that initializes the SDK without additional
+ * network requests.
+ *
+ * @param options - Configuration options for bundle generation
+ * @returns Promise resolving to the generated JavaScript bundle as a string
+ * @throws Error if input validation fails or network requests fail
+ *
+ * @example
+ * ```typescript
+ * import { generateBundle } from './bundleGenerator'
+ *
+ * const bundle = await generateBundle({
+ *   applicationId: 'your-app-id',
+ *   remoteConfigurationId: 'your-config-id',
+ *   variant: 'rum'
+ * })
+ *
+ * await writeFile('./datadog-bundle.js', bundle)
+ * ```
+ */
+export async function generateBundle(options: GenerateBundleOptions): Promise<string> {
+  if (!options.applicationId || typeof options.applicationId !== 'string') {
+    throw new Error("Option 'applicationId' is required and must be a non-empty string.")
+  }
+
+  if (!options.remoteConfigurationId || typeof options.remoteConfigurationId !== 'string') {
+    throw new Error(
+      "Option 'remoteConfigurationId' is required and must be a non-empty string. " +
+        'Get this from Datadog UI > Remote Configuration.'
+    )
+  }
+
+  if (!VALID_VARIANTS.includes(options.variant)) {
+    throw new Error(
+      `Option 'variant' must be 'rum' or 'rum-slim', got '${String(options.variant)}'. ` +
+        'Check your build configuration.'
+    )
+  }
+
+  if (options.site !== undefined && typeof options.site !== 'string') {
+    throw new Error("Option 'site' must be a string when provided (e.g. 'datadoghq.com' or 'datadoghq.eu').")
+  }
+
+  if (options.datacenter !== undefined && typeof options.datacenter !== 'string') {
+    throw new Error("Option 'datacenter' must be a string when provided (e.g. 'us1').")
+  }
+
+  const configResult = await fetchConfig({
+    applicationId: options.applicationId,
+    remoteConfigurationId: options.remoteConfigurationId,
+    site: options.site,
+  })
+
+  const sdkCode = await downloadSDK({
+    variant: options.variant,
+    datacenter: options.datacenter,
+  })
+
+  return generateCombinedBundle({
+    sdkCode,
+    config: configResult.value!,
+    variant: options.variant,
+  })
+}
+
+/**
+ * Clear the in-memory SDK cache. Exported for testing only.
+ * @internal
+ */
+export function clearSdkCache(): void {
+  sdkCache.clear()
 }

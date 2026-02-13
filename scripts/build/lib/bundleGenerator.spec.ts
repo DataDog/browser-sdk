@@ -7,7 +7,16 @@
 
 import { describe, it, mock, beforeEach } from 'node:test'
 import assert from 'node:assert'
-import { generateCombinedBundle, type SdkVariant, type GenerateBundleOptions } from './bundleGenerator.ts'
+import https from 'node:https'
+import { EventEmitter } from 'node:events'
+import {
+  generateCombinedBundle,
+  generateBundle,
+  downloadSDK,
+  clearSdkCache,
+  type SdkVariant,
+  type CombineBundleOptions,
+} from './bundleGenerator.ts'
 
 describe('generateCombinedBundle', () => {
   const mockSdkCode = 'window.DD_RUM = { init: function(config) { this.config = config; } };'
@@ -143,7 +152,7 @@ describe('determinism', () => {
   }
 
   it('produces identical output for identical inputs', () => {
-    const options: GenerateBundleOptions = {
+    const options: CombineBundleOptions = {
       sdkCode: mockSdkCode,
       config: mockConfig,
       variant: 'rum',
@@ -156,7 +165,7 @@ describe('determinism', () => {
   })
 
   it('produces identical output across multiple runs', () => {
-    const options: GenerateBundleOptions = {
+    const options: CombineBundleOptions = {
       sdkCode: mockSdkCode,
       config: mockConfig,
       variant: 'rum-slim',
@@ -304,5 +313,229 @@ describe('edge cases', () => {
     })
 
     assert.ok(bundle.includes('"service": null'), 'Null values should be included')
+  })
+})
+
+describe('generateBundle() input validation', () => {
+  it('throws if applicationId is missing', async () => {
+    await assert.rejects(
+      () =>
+        generateBundle({
+          applicationId: '',
+          remoteConfigurationId: 'cfg-1',
+          variant: 'rum',
+        }),
+      (error: Error) => {
+        assert.ok(error.message.includes('applicationId'), 'Error should mention applicationId')
+        assert.ok(error.message.includes('required'), 'Error should mention required')
+        return true
+      }
+    )
+  })
+
+  it('throws if applicationId is not a string', async () => {
+    await assert.rejects(
+      () =>
+        generateBundle({
+          applicationId: 123 as unknown as string,
+          remoteConfigurationId: 'cfg-1',
+          variant: 'rum',
+        }),
+      (error: Error) => {
+        assert.ok(error.message.includes('applicationId'), 'Error should mention applicationId')
+        return true
+      }
+    )
+  })
+
+  it('throws if remoteConfigurationId is missing', async () => {
+    await assert.rejects(
+      () =>
+        generateBundle({
+          applicationId: 'app-1',
+          remoteConfigurationId: '',
+          variant: 'rum',
+        }),
+      (error: Error) => {
+        assert.ok(error.message.includes('remoteConfigurationId'), 'Error should mention remoteConfigurationId')
+        assert.ok(error.message.includes('required'), 'Error should mention required')
+        return true
+      }
+    )
+  })
+
+  it('throws if remoteConfigurationId is not a string', async () => {
+    await assert.rejects(
+      () =>
+        generateBundle({
+          applicationId: 'app-1',
+          remoteConfigurationId: null as unknown as string,
+          variant: 'rum',
+        }),
+      (error: Error) => {
+        assert.ok(error.message.includes('remoteConfigurationId'), 'Error should mention remoteConfigurationId')
+        return true
+      }
+    )
+  })
+
+  it('throws if variant is invalid', async () => {
+    await assert.rejects(
+      () =>
+        generateBundle({
+          applicationId: 'app-1',
+          remoteConfigurationId: 'cfg-1',
+          variant: 'invalid' as SdkVariant,
+        }),
+      (error: Error) => {
+        assert.ok(error.message.includes('variant'), 'Error should mention variant')
+        assert.ok(error.message.includes('rum'), 'Error should suggest valid values')
+        assert.ok(error.message.includes('rum-slim'), 'Error should suggest valid values')
+        assert.ok(error.message.includes('invalid'), 'Error should include the invalid value')
+        return true
+      }
+    )
+  })
+
+  it('throws if site is not a string when provided', async () => {
+    await assert.rejects(
+      () =>
+        generateBundle({
+          applicationId: 'app-1',
+          remoteConfigurationId: 'cfg-1',
+          variant: 'rum',
+          site: 123 as unknown as string,
+        }),
+      (error: Error) => {
+        assert.ok(error.message.includes('site'), 'Error should mention site')
+        return true
+      }
+    )
+  })
+
+  it('throws if datacenter is not a string when provided', async () => {
+    await assert.rejects(
+      () =>
+        generateBundle({
+          applicationId: 'app-1',
+          remoteConfigurationId: 'cfg-1',
+          variant: 'rum',
+          datacenter: false as unknown as string,
+        }),
+      (error: Error) => {
+        assert.ok(error.message.includes('datacenter'), 'Error should mention datacenter')
+        return true
+      }
+    )
+  })
+
+  it('validation errors are thrown before any network requests', async () => {
+    // If validation fails, fetchConfig and downloadSDK should never be called.
+    // We verify this by confirming error is thrown synchronously-ish (no network timeout).
+    const start = Date.now()
+    await assert.rejects(
+      () =>
+        generateBundle({
+          applicationId: '',
+          remoteConfigurationId: 'cfg-1',
+          variant: 'rum',
+        }),
+      Error
+    )
+    const elapsed = Date.now() - start
+    assert.ok(elapsed < 100, `Validation should be fast (took ${elapsed}ms), proving no network call was made`)
+  })
+})
+
+describe('downloadSDK() caching', () => {
+  function createMockResponse(data: string, statusCode = 200) {
+    const response = new EventEmitter() as EventEmitter & { statusCode: number }
+    response.statusCode = statusCode
+    process.nextTick(() => {
+      response.emit('data', data)
+      response.emit('end')
+    })
+    return response
+  }
+
+  beforeEach(() => {
+    clearSdkCache()
+    mock.restoreAll()
+  })
+
+  it('caches SDK after first download', async () => {
+    let callCount = 0
+    mock.method(https, 'get', (_url: string, _opts: unknown, cb: (res: unknown) => void) => {
+      callCount++
+      cb(createMockResponse('/* SDK CODE */'))
+      return new EventEmitter()
+    })
+
+    const result = await downloadSDK('rum')
+    assert.strictEqual(result, '/* SDK CODE */')
+    assert.strictEqual(callCount, 1, 'https.get should be called once')
+  })
+
+  it('returns cached SDK on second call without network request', async () => {
+    let callCount = 0
+    mock.method(https, 'get', (_url: string, _opts: unknown, cb: (res: unknown) => void) => {
+      callCount++
+      cb(createMockResponse('/* SDK CODE */'))
+      return new EventEmitter()
+    })
+
+    const result1 = await downloadSDK('rum')
+    const result2 = await downloadSDK('rum')
+    assert.strictEqual(result1, result2, 'Same SDK code returned from cache')
+    assert.strictEqual(callCount, 1, 'https.get should only be called once (cache hit on second call)')
+  })
+
+  it('caches different variants separately', async () => {
+    let callCount = 0
+    mock.method(https, 'get', (url: string, _opts: unknown, cb: (res: unknown) => void) => {
+      callCount++
+      const variant = url.includes('rum-slim') ? 'slim' : 'full'
+      cb(createMockResponse(`/* SDK ${variant} */`))
+      return new EventEmitter()
+    })
+
+    const rum = await downloadSDK('rum')
+    const rumSlim = await downloadSDK('rum-slim')
+    const rumAgain = await downloadSDK('rum')
+
+    assert.strictEqual(rum, '/* SDK full */')
+    assert.strictEqual(rumSlim, '/* SDK slim */')
+    assert.strictEqual(rumAgain, '/* SDK full */')
+    assert.strictEqual(callCount, 2, 'Only 2 network requests (one per variant)')
+  })
+
+  it('cache hit is fast compared to network fetch', async () => {
+    mock.method(https, 'get', (_url: string, _opts: unknown, cb: (res: unknown) => void) => {
+      cb(createMockResponse('/* SDK CODE */'))
+      return new EventEmitter()
+    })
+
+    await downloadSDK('rum')
+
+    const start = Date.now()
+    await downloadSDK('rum')
+    const elapsed = Date.now() - start
+
+    assert.ok(elapsed < 5, `Cache hit should be fast (took ${elapsed}ms)`)
+  })
+
+  it('clearSdkCache empties the cache', async () => {
+    let callCount = 0
+    mock.method(https, 'get', (_url: string, _opts: unknown, cb: (res: unknown) => void) => {
+      callCount++
+      cb(createMockResponse('/* SDK CODE */'))
+      return new EventEmitter()
+    })
+
+    await downloadSDK('rum')
+    clearSdkCache()
+    await downloadSDK('rum')
+
+    assert.strictEqual(callCount, 2, 'After cache clear, network request should be made again')
   })
 })
