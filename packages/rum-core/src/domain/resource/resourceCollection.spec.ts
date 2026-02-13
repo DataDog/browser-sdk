@@ -349,7 +349,7 @@ describe('resourceCollection', () => {
         runTasks()
 
         expect(rawRumEvents.length).toBe(1)
-        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBe(true)
       })
 
       it('should collect a resource from a completed XHR request', () => {
@@ -364,7 +364,7 @@ describe('resourceCollection', () => {
         })
 
         expect(rawRumEvents.length).toBe(1)
-        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBe(true)
       })
     })
   })

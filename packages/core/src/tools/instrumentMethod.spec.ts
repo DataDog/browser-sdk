@@ -55,7 +55,7 @@ describe('instrumentMethod', () => {
     const instrumentationSpy = vi.fn()
     instrumentMethod(object, 'onevent', instrumentationSpy)
 
-    expect('onevent' in object).toBeFalse()
+    expect('onevent' in object).toBe(false)
   })
 
   it('calls the instrumentation with method target and parameters', () => {

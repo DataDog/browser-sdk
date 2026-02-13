@@ -757,7 +757,7 @@ describe('preStartRum', () => {
           })
             .toMethod(window, 'fetch')
             .whenCalled()
-        ).toBeTrue()
+        ).toBe(true)
       })
     })
 

@@ -105,7 +105,7 @@ describe('longTaskCollection', () => {
 
       const longTask = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task
       const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime, 100 as Duration)
-      expect(longTasks).toContain({
+      expect(longTasks).toContainEqual({
         id: longTask.id,
         startClocks: expect.objectContaining({ relative: entry.startTime }),
         duration: entry.duration,
@@ -166,7 +166,7 @@ describe('longTaskCollection', () => {
 
       const longTask = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task
       const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime, 100 as Duration)
-      expect(longTasks).toContain({
+      expect(longTasks).toContainEqual({
         id: longTask.id,
         startClocks: expect.objectContaining({ relative: entry.startTime }),
         duration: entry.duration,

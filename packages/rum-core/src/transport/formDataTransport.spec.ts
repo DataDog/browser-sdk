@@ -28,7 +28,7 @@ describe('createFormDataTransport', () => {
 
     await transport.send(payload)
 
-    expect(interceptor.requests).toHaveSize(1)
+    expect(interceptor.requests).toHaveLength(1)
     expect(interceptor.requests[0].body).toBeInstanceOf(FormData)
     expect(await readFormDataRequest(interceptor.requests[0])).toEqual(payload)
   })

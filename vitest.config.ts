@@ -59,6 +59,9 @@ export default defineConfig({
     // (matches Jasmine's global API surface)
     globals: true,
 
+    // Auto-restore all spies after each test (matches Jasmine's auto-restore behavior)
+    restoreMocks: true,
+
     setupFiles: ['./test/unit/vitest.setup.ts'],
 
     // Match Karma's randomized test order

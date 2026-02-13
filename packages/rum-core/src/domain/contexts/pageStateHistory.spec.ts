@@ -245,10 +245,10 @@ describe('pageStateHistory', () => {
       pageStateHistory = startPageStateHistory(hooks, configuration)
       registerCleanupTask(pageStateHistory.stop)
 
-      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)).toBeTrue()
+      expect(pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)).toBe(true)
       expect(
         pageStateHistory.wasInPageStateDuringPeriod(PageState.HIDDEN, 15 as RelativeTime, 5 as Duration)
-      ).toBeTrue()
+      ).toBe(true)
     })
 
     it('should not backfill if visibility-state is not supported', () => {
@@ -261,7 +261,7 @@ describe('pageStateHistory', () => {
 
       expect(
         pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)
-      ).toBeFalse()
+      ).toBe(false)
     })
   })
 })

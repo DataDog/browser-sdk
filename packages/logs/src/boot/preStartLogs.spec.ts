@@ -200,7 +200,7 @@ describe('preStartLogs', () => {
           })
             .toMethod(window, 'fetch')
             .whenCalled()
-        ).toBeTrue()
+        ).toBe(true)
       })
     })
 

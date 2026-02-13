@@ -75,7 +75,7 @@ describe('endpointBuilder', () => {
         'fetch',
         DEFAULT_PAYLOAD
       )
-      expect(endpoint.startsWith(`${location.origin}/path?ddforward`)).toBeTrue()
+      expect(endpoint.startsWith(`${location.origin}/path?ddforward`)).toBe(true)
     })
 
     it('should allow to fully control the proxy url', () => {

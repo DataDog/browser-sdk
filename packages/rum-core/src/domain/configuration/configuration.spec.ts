@@ -260,49 +260,49 @@ describe('validateAndBuildRumConfiguration', () => {
 
   describe('trackUserInteractions', () => {
     it('defaults to true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackUserInteractions).toBe(true)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: true })!
           .trackUserInteractions
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: false })!
           .trackUserInteractions
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackUserInteractions: 'foo' as any })!
           .trackUserInteractions
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
   describe('trackViewsManually', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackViewsManually).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackViewsManually).toBe(false)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: true })!
           .trackViewsManually
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: false })!
           .trackViewsManually
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackViewsManually: 'foo' as any })!
           .trackViewsManually
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
@@ -311,25 +311,25 @@ describe('validateAndBuildRumConfiguration', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 0 })!
           .startSessionReplayRecordingManually
-      ).toBeTrue()
+      ).toBe(true)
     })
 
     it('defaults to false if sessionReplaySampleRate is not 0', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 50 })!
           .startSessionReplayRecordingManually
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, startSessionReplayRecordingManually: true })!
           .startSessionReplayRecordingManually
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, startSessionReplayRecordingManually: false })!
           .startSessionReplayRecordingManually
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
@@ -338,7 +338,7 @@ describe('validateAndBuildRumConfiguration', () => {
           ...DEFAULT_INIT_CONFIGURATION,
           startSessionReplayRecordingManually: 'foo' as any,
         })!.startSessionReplayRecordingManually
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
@@ -381,59 +381,59 @@ describe('validateAndBuildRumConfiguration', () => {
 
   describe('enablePrivacyForActionName', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBe(false)
     })
 
     it('is true when the option is true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBeFalse()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.enablePrivacyForActionName).toBe(false)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, enablePrivacyForActionName: true })!
           .enablePrivacyForActionName
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
   describe('trackResources', () => {
     it('defaults to true', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackResources).toBe(true)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: true })!.trackResources
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: false })!.trackResources
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackResources: 'foo' as any })!
           .trackResources
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
   describe('trackLongTasks', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBeTrue()
+      expect(validateAndBuildRumConfiguration(DEFAULT_INIT_CONFIGURATION)!.trackLongTasks).toBe(true)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: true })!.trackLongTasks
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: false })!.trackLongTasks
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, trackLongTasks: 'foo' as any })!
           .trackLongTasks
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 

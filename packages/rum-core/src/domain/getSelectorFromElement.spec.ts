@@ -163,7 +163,7 @@ describe('getSelectorFromElement', () => {
 describe('isSelectorUniqueAmongSiblings', () => {
   it('returns true when the element is alone', () => {
     const element = appendElement('<div></div>')
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBe(true)
   })
 
   it('returns false when a sibling element matches the element selector', () => {
@@ -171,7 +171,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
       <div target></div>
       <div></div>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeFalse()
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBe(false)
   })
 
   it('returns true when the element selector does not match any sibling', () => {
@@ -179,7 +179,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
       <div target></div>
       <span></span>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', undefined)).toBe(true)
   })
 
   it('returns false when the child selector matches an element in a sibling', () => {
@@ -191,7 +191,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
         <hr>
       </div>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeFalse()
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBe(false)
   })
 
   it('returns true when the current element selector does not match the sibling', () => {
@@ -203,7 +203,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
         <hr>
       </h1>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBe(true)
   })
 
   it('the selector should not consider elements deep in the tree', () => {
@@ -217,7 +217,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
         </div>
       </h1>
     `)
-    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(element, 'DIV', 'HR')).toBe(true)
   })
 
   it('returns false when element is in DocumentFragment with matching siblings', () => {
@@ -228,7 +228,7 @@ describe('isSelectorUniqueAmongSiblings', () => {
     fragment.appendChild(div2)
 
     // The function should return false because div2 matches 'DIV' selector
-    expect(isSelectorUniqueAmongSiblings(div1, 'DIV', undefined)).toBeFalse()
+    expect(isSelectorUniqueAmongSiblings(div1, 'DIV', undefined)).toBe(false)
   })
 
   it('returns true when element is in DocumentFragment with no matching siblings', () => {
@@ -236,6 +236,6 @@ describe('isSelectorUniqueAmongSiblings', () => {
     const div = document.createElement('div')
     fragment.appendChild(div)
 
-    expect(isSelectorUniqueAmongSiblings(div, 'DIV', undefined)).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(div, 'DIV', undefined)).toBe(true)
   })
 })

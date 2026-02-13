@@ -116,12 +116,12 @@ describe('trackMouseInteraction', () => {
 
     it('should compute x/y coordinates for click record', () => {
       a.dispatchEvent(createNewEvent(DOM_EVENT.CLICK))
-      expect(coordinatesComputed).toBeTrue()
+      expect(coordinatesComputed).toBe(true)
     })
 
     it('should not compute x/y coordinates for blur record', () => {
       a.dispatchEvent(createNewEvent(DOM_EVENT.BLUR))
-      expect(coordinatesComputed).toBeFalse()
+      expect(coordinatesComputed).toBe(false)
     })
   })
 })
