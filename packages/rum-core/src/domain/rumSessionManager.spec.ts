@@ -234,11 +234,19 @@ describe('rum session manager', () => {
 describe('rum session manager stub', () => {
   it('should return a tracked session with replay allowed when the event bridge support records', () => {
     mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
-    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.SAMPLED)
+    let sessionManager: RumSessionManager | undefined
+    startRumSessionManagerStub({} as RumConfiguration, createTrackingConsentState(TrackingConsent.GRANTED), (sm) => {
+      sessionManager = sm
+    })
+    expect(sessionManager!.findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.SAMPLED)
   })
 
   it('should return a tracked session without replay allowed when the event bridge support records', () => {
     mockEventBridge({ capabilities: [] })
-    expect(startRumSessionManagerStub().findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.OFF)
+    let sessionManager: RumSessionManager | undefined
+    startRumSessionManagerStub({} as RumConfiguration, createTrackingConsentState(TrackingConsent.GRANTED), (sm) => {
+      sessionManager = sm
+    })
+    expect(sessionManager!.findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.OFF)
   })
 })

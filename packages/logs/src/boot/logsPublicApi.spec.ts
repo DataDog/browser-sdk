@@ -1,6 +1,7 @@
 import type { ContextManager } from '@datadog/browser-core'
-import { monitor, display, createContextManager, stopSessionManager, TrackingConsent } from '@datadog/browser-core'
+import { monitor, display, createContextManager, TrackingConsent } from '@datadog/browser-core'
 import { collectAsyncCalls } from '@datadog/browser-core/test'
+import { createLogStartSessionManagerMock } from '../../test/mockLogsSessionManager'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
 import { createFakeTelemetryObject } from '../../../core/test'
@@ -14,9 +15,6 @@ const mockSessionId = 'some-session-id'
 const getInternalContext = () => ({ session_id: mockSessionId })
 
 describe('logs entry', () => {
-  afterEach(() => {
-    stopSessionManager()
-  })
   it('should add a `_setDebug` that works', () => {
     const displaySpy = spyOn(display, 'error')
     const { logsPublicApi } = makeLogsPublicApiWithDefaults()
@@ -266,7 +264,7 @@ function makeLogsPublicApiWithDefaults({
 
   return {
     startLogsSpy,
-    logsPublicApi: makeLogsPublicApi(startLogsSpy, createFakeTelemetryObject),
+    logsPublicApi: makeLogsPublicApi(startLogsSpy, createFakeTelemetryObject, createLogStartSessionManagerMock()),
     getLoggedMessage,
   }
 }

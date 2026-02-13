@@ -27,6 +27,7 @@ import {
   sanitize,
   startTelemetry,
   TelemetryService,
+  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -44,8 +45,7 @@ import type {
   FailureReason,
 } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
-import type { RumSessionManager } from '../domain/rumSessionManager'
-import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
+import type { RumSessionManager, startRumSessionManager } from '../domain/rumSessionManager'
 import { callPluginsMethod } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
@@ -65,7 +65,8 @@ export function createPreStartStrategy(
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   doStartRum: DoStartRum,
-  startTelemetryImpl = startTelemetry
+  startTelemetryImpl = startTelemetry,
+  startRumSessionManagerImpl: typeof startRumSessionManager
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
 
@@ -183,15 +184,15 @@ export function createPreStartStrategy(
       startTrackingConsentContext(hooks, trackingConsentState)
       telemetry = startTelemetryImpl(TelemetryService.RUM, configuration, hooks)
 
-      if (canUseEventBridge()) {
-        sessionManager = startRumSessionManagerStub()
-        tryStartRum()
-      } else {
-        startRumSessionManager(configuration, trackingConsentState, (newSessionManager) => {
-          sessionManager = newSessionManager
-          tryStartRum()
-        })
+      if (isWorkerEnvironment) {
+        display.warn('The RUM SDK is not supported in a web or service worker environment.')
+        return
       }
+
+      startRumSessionManagerImpl(configuration, trackingConsentState, (newSessionManager) => {
+        sessionManager = newSessionManager
+        tryStartRum()
+      })
     })
   }
 

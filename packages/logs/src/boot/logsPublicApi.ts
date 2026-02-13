@@ -11,6 +11,7 @@ import {
   ContextManagerMethod,
   CustomerContextKey,
   addTelemetryUsage,
+  canUseEventBridge,
   makePublicApi,
   monitor,
   sanitize,
@@ -27,6 +28,7 @@ import type { StatusType } from '../domain/logger/isAuthorized'
 import { Logger } from '../domain/logger'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
+import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import type { StartLogs, StartLogsResult } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
 
@@ -273,9 +275,17 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?: typeof startTelemetry): LogsPublicApi {
+export function makeLogsPublicApi(
+  startLogsImpl: StartLogs,
+  startTelemetryImpl?: typeof startTelemetry,
+  startSessionManagerImpl?: typeof startLogsSessionManager
+): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
+
+  if (!startSessionManagerImpl) {
+    startSessionManagerImpl = canUseEventBridge() ? startLogsSessionManagerStub : startLogsSessionManager
+  }
 
   let strategy = createPreStartStrategy(
     buildCommonContext,
@@ -292,7 +302,8 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?:
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)
       return startLogsResult
     },
-    startTelemetryImpl
+    startTelemetryImpl,
+    startSessionManagerImpl
   )
 
   const getStrategy = () => strategy
