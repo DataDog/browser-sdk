@@ -12,12 +12,16 @@ import { browserSdkVersion } from '../../lib/browserSdkVersion.ts'
 export type { RumRemoteConfiguration, RemoteConfigResult } from '@datadog/browser-remote-config'
 
 /**
- * SDK variant types supported by the generator
+ * Supported SDK variants.
+ *
+ * - `'rum'`: Full SDK with all features (RUM, session replay, profiling)
+ * - `'rum-slim'`: Lightweight SDK with core RUM features only
  */
 export type SdkVariant = 'rum' | 'rum-slim'
 
 /**
- * Options for fetching remote configuration
+ * Options for fetching remote configuration.
+ * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export interface FetchConfigOptions {
   applicationId: string
@@ -79,8 +83,9 @@ function getMajorVersion(version: string): number {
  * Uses the @datadog/browser-remote-config package to fetch and validate configuration.
  *
  * @param options - Configuration options including applicationId and remoteConfigurationId
- * @returns Promise resolving to the remote configuration
+ * @returns Promise resolving to the remote configuration result
  * @throws Error if configuration cannot be fetched or is invalid
+ * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export async function fetchConfig(options: FetchConfigOptions): Promise<{
   ok: boolean
@@ -111,7 +116,8 @@ export async function fetchConfig(options: FetchConfigOptions): Promise<{
 }
 
 /**
- * Options for downloading SDK from CDN
+ * Options for downloading SDK from CDN.
+ * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export interface DownloadSDKOptions {
   /** SDK variant ('rum' or 'rum-slim') */
@@ -125,10 +131,12 @@ export interface DownloadSDKOptions {
  *
  * Downloads the minified SDK bundle for the specified variant and version.
  * The version is automatically determined from the browserSdkVersion.
+ * Results are cached in-memory; repeated calls with the same variant skip the network request.
  *
- * @param options - Download options (variant, datacenter)
+ * @param options - SDK variant string or download options object
  * @returns Promise resolving to SDK JavaScript code as string
- * @throws Error if download fails (network error, 404, etc.)
+ * @throws Error if download fails (network error, 404, timeout)
+ * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Promise<string> {
   const variant = typeof options === 'string' ? options : options.variant
@@ -196,8 +204,9 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
  * 2. Includes the SDK code
  * 3. Auto-initializes the SDK with the embedded config
  *
- * @param options - Bundle generation options
+ * @param options - Bundle generation options (sdkCode, config, variant)
  * @returns Generated JavaScript bundle as string
+ * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export function generateCombinedBundle(options: CombineBundleOptions): string {
   const { sdkCode, config, variant } = options
