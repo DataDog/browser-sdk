@@ -14,7 +14,7 @@ export interface TrackedAction {
   startClocks: ClocksState
   duration: Duration | undefined
   counts: ActionCounts
-  stop: (endTime: RelativeTime) => void
+  stop: (endClocks: ClocksState) => void
   discard: () => void
 }
 
@@ -65,9 +65,9 @@ export function startActionTracker(lifeCycle: LifeCycle): ActionTracker {
       get counts() {
         return eventCountsSubscription.eventCounts
       },
-      stop(endTime: RelativeTime) {
-        historyEntry.close(endTime)
-        duration = elapsed(startClocks.relative, endTime)
+      stop(endClocks: ClocksState) {
+        historyEntry.close(endClocks.relative)
+        duration = elapsed(startClocks.timeStamp, endClocks.timeStamp)
         cleanup()
       },
       discard() {

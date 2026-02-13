@@ -80,7 +80,7 @@ export function trackManualActions(
       return
     }
 
-    activeAction.trackedAction.stop(stopClocks.relative)
+    activeAction.trackedAction.stop(stopClocks)
 
     const frustrationTypes: FrustrationType[] = []
     if (activeAction.trackedAction.counts.errorCount > 0) {
