@@ -3,7 +3,7 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["jasmine"],
+    "types": ["vitest/globals"],
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
