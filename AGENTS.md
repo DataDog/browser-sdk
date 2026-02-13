@@ -77,6 +77,28 @@ scripts/             # Build, deploy, release automation
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
 - Test framework: Jasmine + Karma
 
+### Naming Conventions
+
+- Use **camelCase** for all internal variables and object properties
+- Conversion to snake_case/pascal_case happens at the serialization boundary (just before sending events)
+- Never use snake_case in internal code, even if the final event format requires it
+
+### TypeScript Patterns
+
+- Prefer **TypeScript type narrowing** over runtime type assertions (e.g., don't use `typeof x === 'object'` when proper return types can express the shape)
+- Use discriminated unions and return types to make invalid states unrepresentable at compile time
+
+### Telemetry Usage
+
+- `addTelemetryUsage` tracks **which public API the customer calls and which options they pass** (static call-site information)
+- Do NOT include runtime state analysis (e.g., whether a view was active, whether a value was overwritten) in telemetry usage — that belongs elsewhere
+
+### Auto-Generated Files
+
+- **NEVER manually edit auto-generated files.** They have a `DO NOT MODIFY IT BY HAND` comment at the top — respect it
+- Example: `telemetryEvent.types.ts` is generated from the `rum-events-format` schema repository
+- Any changes to these files require a **corresponding PR in the upstream source repo first**, then regeneration
+
 ## Commit Messages
 
 Use gitmoji conventions (based on actual usage in this repo):
