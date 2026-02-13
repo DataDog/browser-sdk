@@ -202,6 +202,7 @@ export function startRumEventCollection(
 
   const {
     addTiming,
+    addLoadingTime,
     startView,
     setViewName,
     setViewContext,
@@ -252,6 +253,7 @@ export function startRumEventCollection(
     addEvent: eventCollection.addEvent,
     addError,
     addTiming,
+    addLoadingTime,
     addFeatureFlagEvaluation: featureFlagContexts.addFeatureFlagEvaluation,
     startView,
     setViewContext,
