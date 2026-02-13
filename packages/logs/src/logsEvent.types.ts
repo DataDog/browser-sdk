@@ -160,6 +160,16 @@ export interface LogsEvent {
     name?: string
     [k: string]: unknown
   }
+  /**
+   * Internal properties
+   */
+  _dd?: {
+    /**
+     * UUID identifying the browser tab
+     */
+    browser_tab_id?: string
+    [k: string]: unknown
+  }
 
   [k: string]: unknown
 }

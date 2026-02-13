@@ -1511,6 +1511,10 @@ export interface CommonProperties {
      * SDK name (e.g. 'logs', 'rum', 'rum-slim', etc.)
      */
     readonly sdk_name?: string
+    /**
+     * UUID identifying the browser tab
+     */
+    readonly browser_tab_id?: string
     [k: string]: unknown
   }
   /**
