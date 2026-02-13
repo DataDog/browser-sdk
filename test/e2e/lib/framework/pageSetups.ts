@@ -26,6 +26,7 @@ export interface SetupOptions {
     logsConfiguration?: LogsInitConfiguration
   }
   hostName?: string
+  nextjsApp?: boolean
   worker?: WorkerOptions
   callerLocation?: CallerLocation
 }
