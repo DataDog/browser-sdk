@@ -22,10 +22,10 @@ yarn build:apps
 yarn test:unit
 
 # Run specific test file
-yarn test:unit --spec packages/core/src/path/to/feature.spec.ts
+yarn vitest run packages/core/src/path/to/feature.spec.ts
 
 # Run tests on a specific seed
-yarn test:unit --seed 123
+yarn vitest run --sequence.seed 123
 
 # setup E2E tests (installs Playwright and builds test apps)
 yarn test:e2e:init
@@ -64,7 +64,7 @@ test/
 ├── apps/            # Test apps for E2E and performance testing
 ├── e2e/             # Playwright E2E test scenarios
 ├── performance/     # Performance benchmarking tests
-└── unit/            # Karma/Jasmine unit test configuration
+└── unit/            # Vitest unit test configuration
 
 scripts/             # Build, deploy, release automation
 ```
@@ -73,9 +73,9 @@ scripts/             # Build, deploy, release automation
 
 ### Unit Tests
 
-- Test framework: Jasmine + Karma. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
-- Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
+- Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
+- Test framework: Vitest (browser mode with Playwright)
 - Mock values/functions: wrap with `mockable()` in source, use `replaceMockable()` or `replaceMockableWithSpy()` in tests (auto-cleanup)
 
 ### Naming Conventions

@@ -66,7 +66,7 @@ export default defineConfig({
       shuffle: true,
     },
 
-    // Fail fast on first expectation failure (matches Karma's stopSpecOnExpectationFailure)
-    bail: 1,
+    // Note: Karma used stopSpecOnExpectationFailure, but Vitest's bail stops the entire run.
+    // Use --bail on CLI when needed for fast feedback during development.
   },
 })
