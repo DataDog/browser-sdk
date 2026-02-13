@@ -1,3 +1,5 @@
+import { afterEach } from 'vitest'
+
 type CleanupTask = () => unknown
 
 const cleanupTasks: CleanupTask[] = []
