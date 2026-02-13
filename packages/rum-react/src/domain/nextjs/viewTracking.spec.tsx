@@ -1,8 +1,21 @@
-import React, { act, useState } from 'react'
 import { display } from '@datadog/browser-core'
-import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
-import { startNextjsView, usePathnameTracker } from './viewTracking'
+import { startNextjsView, normalizeViewName } from './viewTracking'
+
+describe('normalizeViewName', () => {
+  ;[
+    ['/product/123', '/product/:id'],
+    ['/user/abc12345-1234-1234-1234-123456789012', '/user/:uuid'],
+    ['/about', '/about'],
+    ['/', '/'],
+    ['/orders/456/items/789', '/orders/:id/items/:id'],
+    ['/user/ABC12345-1234-1234-1234-123456789012/profile', '/user/:uuid/profile'],
+  ].forEach(([pathname, expected]) => {
+    it(`normalizes ${pathname} to ${expected}`, () => {
+      expect(normalizeViewName(pathname)).toBe(expected)
+    })
+  })
+})
 
 describe('startNextjsView', () => {
   let startViewSpy: jasmine.Spy<(name?: string | object) => void>
@@ -65,58 +78,5 @@ describe('startNextjsView', () => {
 
     expect(warnSpy).toHaveBeenCalled()
     expect(localStartViewSpy).not.toHaveBeenCalled()
-  })
-})
-
-describe('usePathnameTracker', () => {
-  let startViewSpy: jasmine.Spy<(name?: string | object) => void>
-  let usePathnameSpy: jasmine.Spy<() => string>
-
-  beforeEach(() => {
-    startViewSpy = jasmine.createSpy()
-    initializeReactPlugin({
-      configuration: {
-        nextjs: true,
-      },
-      publicApi: {
-        startView: startViewSpy,
-      },
-    })
-
-    usePathnameSpy = jasmine.createSpy('usePathname').and.returnValue('/')
-  })
-
-  function TestComponent() {
-    usePathnameTracker(usePathnameSpy)
-    return null
-  }
-
-  it('calls startNextjsView on mount', () => {
-    usePathnameSpy.and.returnValue('/product/123')
-
-    appendComponent(<TestComponent />)
-
-    expect(startViewSpy).toHaveBeenCalledOnceWith('/product/:id')
-  })
-
-  it('does not create duplicate views on re-render with same pathname', () => {
-    usePathnameSpy.and.returnValue('/product/123')
-
-    function ReRenderingComponent() {
-      const [, setCounter] = useState(0)
-      usePathnameTracker(usePathnameSpy)
-
-      return <button onClick={() => setCounter((c) => c + 1)}>Re-render</button>
-    }
-
-    const container = appendComponent(<ReRenderingComponent />)
-    expect(startViewSpy).toHaveBeenCalledTimes(1)
-
-    const button = container.querySelector('button') as HTMLButtonElement
-    act(() => {
-      button.click()
-    })
-
-    expect(startViewSpy).toHaveBeenCalledTimes(1)
   })
 })

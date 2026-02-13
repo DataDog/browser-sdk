@@ -2,6 +2,20 @@ import { test, expect } from '@playwright/test'
 import { createTest } from '../lib/framework'
 
 test.describe('nextjs app router', () => {
+  createTest('should track initial view')
+    .withRum()
+    .withNextjsApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to User 42')
+      await page.waitForURL('**/user/42')
+
+      await flushEvents()
+
+      const viewEvents = intakeRegistry.rumViewEvents
+      const homeView = viewEvents.find((e) => e.view.name === '/' && e.view.loading_type === 'initial_load')
+      expect(homeView).toBeDefined()
+    })
+
   createTest('should normalize dynamic route to /user/:id')
     .withRum()
     .withNextjsApp()
@@ -23,6 +37,39 @@ test.describe('nextjs app router', () => {
       const userView = viewEvents.find((e) => e.view.name === '/user/:id')
       expect(userView).toBeDefined()
       expect(userView?.view.loading_type).toBe('route_change')
+    })
+
+  createTest('should track SPA navigation with loading_time')
+    .withRum()
+    .withNextjsApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to User 42')
+      await page.waitForURL('**/user/42')
+
+      await flushEvents()
+
+      const viewEvents = intakeRegistry.rumViewEvents
+      const userView = viewEvents.find((e) => e.view.name === '/user/:id' && e.view.loading_type === 'route_change')
+      expect(userView).toBeDefined()
+      expect(userView?.view.loading_time).toBeDefined()
+      expect(userView?.view.loading_time).toBeGreaterThan(0)
+    })
+
+  createTest('should track back navigation via popstate')
+    .withRum()
+    .withNextjsApp()
+    .run(async ({ page, flushEvents, intakeRegistry }) => {
+      await page.click('text=Go to User 42')
+      await page.waitForURL('**/user/42')
+
+      await page.goBack()
+      await page.waitForURL('**/localhost:3000/')
+
+      await flushEvents()
+
+      const viewEvents = intakeRegistry.rumViewEvents
+      // Should have at least 3 views: initial /, /user/:id, and back to /
+      expect(viewEvents.filter((e) => e.view.name === '/').length).toBeGreaterThanOrEqual(2)
     })
 
   createTest('should send a react component render vital event')

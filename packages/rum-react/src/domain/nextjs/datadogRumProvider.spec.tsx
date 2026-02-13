@@ -1,11 +1,13 @@
 import React from 'react'
+import { registerCleanupTask } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { DatadogRumProvider } from './datadogRumProvider'
 
 describe('DatadogRumProvider', () => {
   let startViewSpy: jasmine.Spy<(name?: string | object) => void>
-  let usePathnameSpy: jasmine.Spy<() => string>
+  let originalPushState: History['pushState']
+  let originalReplaceState: History['replaceState']
 
   beforeEach(() => {
     startViewSpy = jasmine.createSpy()
@@ -18,12 +20,18 @@ describe('DatadogRumProvider', () => {
       },
     })
 
-    usePathnameSpy = jasmine.createSpy('usePathname').and.returnValue('/')
+    originalPushState = history.pushState.bind(history)
+    originalReplaceState = history.replaceState.bind(history)
+
+    registerCleanupTask(() => {
+      history.pushState = originalPushState
+      history.replaceState = originalReplaceState
+    })
   })
 
   it('renders children correctly', () => {
     const container = appendComponent(
-      <DatadogRumProvider usePathname={usePathnameSpy}>
+      <DatadogRumProvider>
         <div data-testid="test-child">Test Content</div>
       </DatadogRumProvider>
     )
@@ -34,21 +42,32 @@ describe('DatadogRumProvider', () => {
     expect(child!.parentElement).toBe(container)
   })
 
-  it('calls usePathnameTracker', () => {
-    usePathnameSpy.and.returnValue('/product/123')
-
+  it('starts initial view on mount', () => {
     appendComponent(
-      <DatadogRumProvider usePathname={usePathnameSpy}>
+      <DatadogRumProvider>
         <div>Content</div>
       </DatadogRumProvider>
     )
 
-    expect(startViewSpy).toHaveBeenCalledOnceWith('/product/:id')
+    expect(startViewSpy).toHaveBeenCalledWith(window.location.pathname)
+  })
+
+  it('starts a new view on navigation', () => {
+    appendComponent(
+      <DatadogRumProvider>
+        <div>Content</div>
+      </DatadogRumProvider>
+    )
+
+    startViewSpy.calls.reset()
+    history.pushState({}, '', '/new-page')
+
+    expect(startViewSpy).toHaveBeenCalledWith('/new-page')
   })
 
   it('renders multiple children', () => {
     const container = appendComponent(
-      <DatadogRumProvider usePathname={usePathnameSpy}>
+      <DatadogRumProvider>
         <div data-testid="child-1">Child 1</div>
         <div data-testid="child-2">Child 2</div>
         <div data-testid="child-3">Child 3</div>

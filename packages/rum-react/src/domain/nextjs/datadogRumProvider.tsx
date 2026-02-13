@@ -1,43 +1,36 @@
 'use client'
 
-import React, { type ReactNode } from 'react'
-import { usePathname as nextUsePathname } from 'next/navigation'
-import { usePathnameTracker } from './viewTracking'
+import React, { type ReactNode, useEffect, useRef } from 'react'
+import { setupHistoryTracking } from './historyTracking'
+import { startNextjsView } from './viewTracking'
 
 export interface DatadogRumProviderProps {
   /**
    * The children components to render.
    */
-
   children: ReactNode
-
-  /**
-   * @internal - For dependency injection in tests.
-   */
-  usePathname?: () => string
 }
 
-/**
- * Provider component for Next.js App Router that automatically tracks navigation.
- * Wrap your application with this component to enable automatic view tracking.
- *
- * @example
- * ```tsx
- * // app/layout.tsx
- * import { DatadogRumProvider } from '@datadog/browser-rum-react/nextjs'
- *
- * export default function RootLayout({ children }) {
- *   return (
- *     <html>
- *       <body>
- *         <DatadogRumProvider>{children}</DatadogRumProvider>
- *       </body>
- *     </html>
- *   )
- * }
- * ```
- */
-export function DatadogRumProvider({ children, usePathname = nextUsePathname }: DatadogRumProviderProps) {
-  usePathnameTracker(usePathname)
+export function DatadogRumProvider({ children }: DatadogRumProviderProps) {
+  const isSetupRef = useRef(false)
+
+  useEffect(() => {
+    if (isSetupRef.current) {
+      return
+    }
+    isSetupRef.current = true
+
+    startNextjsView(window.location.pathname)
+
+    const cleanup = setupHistoryTracking((pathname) => {
+      startNextjsView(pathname)
+    })
+
+    return () => {
+      cleanup()
+      isSetupRef.current = false
+    }
+  }, [])
+
   return <>{children}</>
 }

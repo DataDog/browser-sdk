@@ -1,5 +1,3 @@
-import { useRef, useEffect } from 'react'
-import { usePathname as nextUsePathname } from 'next/navigation'
 import { display } from '@datadog/browser-core'
 import { onRumInit } from '../reactPlugin'
 
@@ -13,7 +11,9 @@ export function normalizeViewName(pathname: string): string {
 }
 
 /**
- * Starts a new RUM view.
+ * Starts a new RUM view with the given pathname.
+ *
+ * @internal
  */
 export function startNextjsView(pathname: string) {
   onRumInit((configuration, rumPublicApi) => {
@@ -25,19 +25,4 @@ export function startNextjsView(pathname: string) {
     const viewName = normalizeViewName(pathname)
     rumPublicApi.startView(viewName)
   })
-}
-
-/**
- * Tracks navigation changes and starts a new RUM view for each new pathname.
- */
-export function usePathnameTracker(usePathname = nextUsePathname) {
-  const pathname = usePathname()
-  const pathnameRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    if (pathnameRef.current !== pathname) {
-      pathnameRef.current = pathname
-      startNextjsView(pathname)
-    }
-  }, [pathname])
 }
