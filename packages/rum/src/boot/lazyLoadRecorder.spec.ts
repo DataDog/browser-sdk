@@ -7,7 +7,6 @@ import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } fr
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { resetDeflateWorkerState } from '../domain/deflate'
 import { MockWorker } from '../../test'
-import * as replayStats from '../domain/replayStats'
 import { makeRecorderApi } from './recorderApi'
 import type { StartRecording } from './postStartStrategy'
 import { lazyLoadRecorder } from './lazyLoadRecorder'
@@ -86,7 +85,6 @@ describe('lazyLoadRecorder', () => {
 
     registerCleanupTask(() => {
       resetDeflateWorkerState()
-      replayStats.resetReplayStats()
     })
   }
 

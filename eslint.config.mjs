@@ -34,7 +34,7 @@ export default tseslint.config(
       '**/playwright-report',
       'docs',
       'developer-extension/.wxt',
-      'developer-extension/.output',
+      'developer-extension/dist',
       'test/apps/nextjs-app-router',
     ],
   },

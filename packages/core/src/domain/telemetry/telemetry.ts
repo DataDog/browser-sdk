@@ -8,7 +8,7 @@ import { buildTags } from '../tags'
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1_FED } from '../intakeSites'
 import { BufferedObservable, Observable } from '../../tools/observable'
 import { clocksNow } from '../../tools/utils/timeUtils'
-import { displayIfDebugEnabled, startMonitorErrorCollection, resetMonitor } from '../../tools/monitor'
+import { displayIfDebugEnabled, startMonitorErrorCollection } from '../../tools/monitor'
 import { sendToExtension } from '../../tools/sendToExtension'
 import { performDraw } from '../../tools/utils/numberUtils'
 import { jsonStringify } from '../../tools/serialisation/jsonStringify'
@@ -247,7 +247,6 @@ function getRuntimeEnvInfo(): RuntimeEnvInfo {
 
 export function resetTelemetry() {
   telemetryObservable = undefined
-  resetMonitor()
 }
 
 /**

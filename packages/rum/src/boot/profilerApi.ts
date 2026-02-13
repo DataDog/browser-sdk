@@ -79,7 +79,7 @@ export function makeProfilerApi(): ProfilerApi {
   return {
     onRumStart,
     stop: () => {
-      profiler?.stop().catch(monitorError)
+      profiler?.stop()
     },
   }
 }
