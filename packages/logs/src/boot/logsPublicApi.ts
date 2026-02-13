@@ -21,7 +21,6 @@ import {
   defineContextMethod,
   startBufferingData,
   callMonitored,
-  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -285,8 +284,7 @@ export function makeLogsPublicApi(
   const bufferedDataObservable = startBufferingData().observable
 
   if (!startSessionManagerImpl) {
-    startSessionManagerImpl =
-      canUseEventBridge() || isWorkerEnvironment ? startLogsSessionManagerStub : startLogsSessionManager
+    startSessionManagerImpl = canUseEventBridge() ? startLogsSessionManagerStub : startLogsSessionManager
   }
 
   let strategy = createPreStartStrategy(
