@@ -5,6 +5,7 @@ import { throttle } from '../../tools/utils/functionUtils'
 import { generateUUID } from '../../tools/utils/stringUtils'
 import type { InitConfiguration, Configuration } from '../configuration'
 import { display } from '../../tools/display'
+import { isWorkerEnvironment } from '../../tools/globalObject'
 import { selectCookieStrategy, initCookieStrategy } from './storeStrategies/sessionInCookie'
 import type { SessionStoreStrategy, SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import type { SessionState } from './sessionState'
@@ -47,7 +48,17 @@ export const STORAGE_POLL_DELAY = ONE_SECOND
 export function selectSessionStoreStrategyType(
   initConfiguration: InitConfiguration
 ): SessionStoreStrategyType | undefined {
-  const { sessionPersistence } = initConfiguration
+  let sessionPersistence = initConfiguration.sessionPersistence
+
+  /**
+   * Force memory persistence in worker environment since cookie and localStorage are not available
+   * TODO: make it work when we start using Cookie Store API
+   *
+   * @see https://developer.mozilla.org/en-US/docs/Web/API/CookieStore
+   */
+  if (isWorkerEnvironment) {
+    sessionPersistence = SessionPersistence.MEMORY
+  }
 
   const persistenceList = normalizePersistenceList(sessionPersistence, initConfiguration)
 

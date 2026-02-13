@@ -28,6 +28,7 @@ import {
   startTelemetry,
   TelemetryService,
   mockable,
+  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -182,6 +183,11 @@ export function createPreStartStrategy(
     trackingConsentState.onGrantedOnce(() => {
       startTrackingConsentContext(hooks, trackingConsentState)
       telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, hooks)
+
+      if (isWorkerEnvironment) {
+        display.warn('The RUM SDK is not supported in a web or service worker environment.')
+        return
+      }
 
       const startSessionManagerFn = canUseEventBridge()
         ? startRumSessionManagerStub
