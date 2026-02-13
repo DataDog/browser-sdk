@@ -1,4 +1,4 @@
-import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'
@@ -34,6 +34,16 @@ describe('trackAction', () => {
 
       expect(action1.id).not.toBe(action2.id)
     })
+
+    it('should compute duration from timestamps, not relative times', () => {
+      const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
+      const trackedAction = actionTracker.createTrackedAction(startClocks)
+
+      const endClocks = { relative: 300 as RelativeTime, timeStamp: 1050 as TimeStamp }
+      trackedAction.stop(endClocks)
+
+      expect(trackedAction.duration).toBe(50 as Duration)
+    })
   })
 
   describe('event counting', () => {
@@ -65,7 +75,7 @@ describe('trackAction', () => {
     })
 
     it('should stop counting events after action is stopped', () => {
-      trackedAction.stop(200 as RelativeTime)
+      trackedAction.stop({ relative: 200 as RelativeTime, timeStamp: 1100 as TimeStamp })
 
       lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
         type: RumEventType.ERROR,
@@ -93,7 +103,7 @@ describe('trackAction', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
       const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-      trackedAction.stop(200 as RelativeTime)
+      trackedAction.stop({ relative: 200 as RelativeTime, timeStamp: 1100 as TimeStamp })
 
       expect(actionTracker.findActionId()).toBeUndefined()
     })
@@ -102,7 +112,7 @@ describe('trackAction', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
       const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-      trackedAction.stop(200 as RelativeTime)
+      trackedAction.stop({ relative: 200 as RelativeTime, timeStamp: 1100 as TimeStamp })
 
       expect(actionTracker.findActionId(150 as RelativeTime)).toEqual([trackedAction.id])
     })
@@ -111,7 +121,7 @@ describe('trackAction', () => {
       const startClocks = { relative: 100 as RelativeTime, timeStamp: 1000 as TimeStamp }
       const trackedAction = actionTracker.createTrackedAction(startClocks)
 
-      trackedAction.stop(200 as RelativeTime)
+      trackedAction.stop({ relative: 200 as RelativeTime, timeStamp: 1100 as TimeStamp })
 
       expect(actionTracker.findActionId(250 as RelativeTime)).toBeUndefined()
     })
