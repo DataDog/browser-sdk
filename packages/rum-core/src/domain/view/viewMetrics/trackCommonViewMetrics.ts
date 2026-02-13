@@ -28,6 +28,7 @@ export function trackCommonViewMetrics(
   viewStart: ClocksState
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
+  let isLoadingTimeSetManually = false
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -37,8 +38,10 @@ export function trackCommonViewMetrics(
     loadingType,
     viewStart,
     (newLoadingTime) => {
-      commonViewMetrics.loadingTime = newLoadingTime
-      scheduleViewUpdate()
+      if (!isLoadingTimeSetManually) {
+        commonViewMetrics.loadingTime = newLoadingTime
+        scheduleViewUpdate()
+      }
     }
   )
 
@@ -73,6 +76,27 @@ export function trackCommonViewMetrics(
     getCommonViewMetrics: () => {
       commonViewMetrics.interactionToNextPaint = getInteractionToNextPaint()
       return commonViewMetrics
+    },
+    setManualLoadingTime: (loadingTime: Duration) => {
+      const hadPreviousManual = isLoadingTimeSetManually
+      const hadAutoValue = !isLoadingTimeSetManually && commonViewMetrics.loadingTime !== undefined
+
+      // Stop auto-detection entirely on first manual call (CONTEXT decision)
+      if (!isLoadingTimeSetManually) {
+        stopLoadingTimeTracking()
+      }
+
+      isLoadingTimeSetManually = true
+      commonViewMetrics.loadingTime = loadingTime
+
+      // Return overwrite source for Phase 2 telemetry
+      if (hadPreviousManual) {
+        return { overwritten: 'manual' as const }
+      }
+      if (hadAutoValue) {
+        return { overwritten: 'auto' as const }
+      }
+      return { overwritten: false as const }
     },
   }
 }
