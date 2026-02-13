@@ -69,9 +69,7 @@ export function takeFullSnapshot(
   })
 
   if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_CHANGE_RECORDS)) {
-    if (kind === SerializationKind.SUBSEQUENT_FULL_SNAPSHOT) {
-      scope.resetIds()
-    }
+    scope.resetIds()
     serializeChangesInTransaction(
       kind,
       emitRecord,
