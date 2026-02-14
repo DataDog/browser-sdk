@@ -746,6 +746,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@eslint/js@npm:10.0.0":
+  version: 10.0.0
+  resolution: "@eslint/js@npm:10.0.0"
+  checksum: 10c0/4e209a56b9813d5a198f48bbf012e8f9c5103b0e2abd09a47a8915f06954921be6aad2ed0e1d0940b81aa750c3d5f141fc81581b022a74318c08d37c3db79a1e
+  languageName: node
+  linkType: hard
+
 "@eslint/js@npm:9.39.2":
   version: 9.39.2
   resolution: "@eslint/js@npm:9.39.2"
@@ -4447,7 +4454,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "browser-sdk@workspace:."
   dependencies:
-    "@eslint/js": "npm:9.39.2"
+    "@eslint/js": "npm:10.0.0"
     "@jsdevtools/coverage-istanbul-loader": "npm:3.0.5"
     "@playwright/test": "npm:1.58.1"
     "@swc/core": "npm:1.15.11"
