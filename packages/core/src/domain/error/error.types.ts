@@ -30,6 +30,7 @@ export interface RawError {
   message: string
   type?: string
   stack?: string
+  file?: string
   source: ErrorSource
   originalError?: unknown
   handling?: ErrorHandling
