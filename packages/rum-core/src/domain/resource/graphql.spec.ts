@@ -42,14 +42,14 @@ describe('GraphQL detection and metadata extraction', () => {
   })
 
   describe('extractGraphQlRequestMetadata', () => {
-    it('should extract query operation type and name', () => {
+    it('should extract query operation type and name from POST request body', () => {
       const requestBody = JSON.stringify({
         query: 'query GetUser { user { id name } }',
         operationName: 'GetUser',
         variables: { id: '123' },
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
 
       expect(result).toEqual({
         operationType: 'query',
@@ -66,7 +66,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: {},
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
 
       expect(result).toEqual({
         operationType: 'query',
@@ -83,7 +83,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: null,
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
 
       expect(result).toEqual({
         operationType: 'query',
@@ -93,14 +93,17 @@ describe('GraphQL detection and metadata extraction', () => {
       })
     })
 
-    it('should return undefined for invalid JSON', () => {
-      const result = extractGraphQlRequestMetadata('not valid json', true)
+    it('should return undefined for invalid JSON in POST body', () => {
+      const result = extractGraphQlRequestMetadata(
+        { method: 'POST', url: '/graphql', requestBody: 'not valid json' },
+        true
+      )
       expect(result).toBeUndefined()
     })
 
-    it('should return metadata with undefined fields for non-GraphQL request body', () => {
+    it('should return metadata with undefined fields for non-GraphQL POST request body', () => {
       const requestBody = JSON.stringify({ data: 'some data' })
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
       expect(result).toEqual({
         operationType: undefined,
         operationName: undefined,
@@ -116,7 +119,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: { id: '123' },
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
 
       expect(result).toEqual({
         operationType: 'query',
@@ -133,7 +136,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: { id: '123' },
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
       expect(result).toEqual({
         operationType: undefined,
         operationName: 'GetUser',
@@ -149,7 +152,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: { id: '123' },
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
       expect(result).toEqual({
         operationType: undefined,
         operationName: 'GetUser',
@@ -158,13 +161,13 @@ describe('GraphQL detection and metadata extraction', () => {
       })
     })
 
-    it('should extract operation name and variables when query is absent', () => {
+    it('should extract operation name and variables when query is absent in POST body', () => {
       const requestBody = JSON.stringify({
         operationName: 'GetUser',
         variables: { id: '123' },
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
 
       expect(result).toEqual({
         operationType: undefined,
@@ -172,6 +175,97 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: '{"id":"123"}',
         payload: undefined,
       })
+    })
+
+    it('should extract metadata from URL query params for GET requests with persisted queries', () => {
+      const url =
+        'http://example.com/graphql?operationName=GetUser&variables=%7B%22id%22%3A%22123%22%7D&extensions=%7B%22persistedQuery%22%3A%7B%22version%22%3A1%2C%22sha256Hash%22%3A%22abc123%22%7D%7D'
+
+      const result = extractGraphQlRequestMetadata({ method: 'GET', url, requestBody: undefined }, false)
+
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: 'GetUser',
+        variables: '{"id":"123"}',
+        payload: undefined,
+      })
+    })
+
+    it('should use body for POST and URL params for GET', () => {
+      const requestBody = JSON.stringify({
+        query: 'query FromBody { user { id } }',
+        operationName: 'FromBody',
+      })
+      const url = 'http://example.com/graphql?operationName=FromUrl'
+
+      const postResult = extractGraphQlRequestMetadata({ method: 'POST', url, requestBody }, true)
+      expect(postResult?.operationName).toBe('FromBody')
+
+      const getResult = extractGraphQlRequestMetadata({ method: 'GET', url, requestBody }, true)
+      expect(getResult?.operationName).toBe('FromUrl')
+    })
+
+    it('should return metadata with undefined fields for GET request with URL that has no GraphQL params', () => {
+      const result = extractGraphQlRequestMetadata(
+        { method: 'GET', url: 'http://example.com/graphql', requestBody: undefined },
+        false
+      )
+
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: undefined,
+        variables: undefined,
+        payload: undefined,
+      })
+    })
+
+    it('should return metadata with undefined fields for GET request with URL with unrelated query params', () => {
+      const result = extractGraphQlRequestMetadata(
+        { method: 'GET', url: 'http://example.com/graphql?foo=bar&baz=qux', requestBody: undefined },
+        false
+      )
+
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: undefined,
+        variables: undefined,
+        payload: undefined,
+      })
+    })
+
+    it('should extract query from URL params and detect operation type for GET requests', () => {
+      const url = 'http://example.com/graphql?query=query%20GetUser%20%7B%20user%20%7D&operationName=GetUser'
+
+      const result = extractGraphQlRequestMetadata({ method: 'GET', url, requestBody: undefined }, true)
+
+      expect(result).toEqual({
+        operationType: 'query',
+        operationName: 'GetUser',
+        variables: undefined,
+        payload: 'query GetUser { user }',
+      })
+    })
+
+    it('should omit variables for GET request when URL variables param is invalid JSON', () => {
+      const url = 'http://example.com/graphql?operationName=GetUser&variables=not-valid-json'
+
+      const result = extractGraphQlRequestMetadata({ method: 'GET', url, requestBody: undefined }, false)
+
+      expect(result).toEqual({
+        operationType: undefined,
+        operationName: 'GetUser',
+        variables: undefined,
+        payload: undefined,
+      })
+    })
+
+    it('should return undefined for unsupported HTTP methods', () => {
+      const requestBody = JSON.stringify({ query: 'query GetUser { user { id } }' })
+      const result = extractGraphQlRequestMetadata(
+        { method: 'PUT', url: 'http://example.com/graphql', requestBody },
+        true
+      )
+      expect(result).toBeUndefined()
     })
   })
 
@@ -182,7 +276,7 @@ describe('GraphQL detection and metadata extraction', () => {
         query: shortQuery,
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
 
       expect(result?.payload).toBe(shortQuery)
     })
@@ -193,7 +287,7 @@ describe('GraphQL detection and metadata extraction', () => {
         query: longQuery,
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, true)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, true)
 
       expect(result?.payload?.length).toBe(32768 + 3)
       expect(result?.payload?.endsWith('...')).toBe(true)
@@ -207,7 +301,7 @@ describe('GraphQL detection and metadata extraction', () => {
         variables: { id: '123' },
       })
 
-      const result = extractGraphQlRequestMetadata(requestBody, false)
+      const result = extractGraphQlRequestMetadata({ method: 'POST', url: '/graphql', requestBody }, false)
 
       expect(result).toEqual({
         operationType: 'query',
@@ -292,6 +386,8 @@ describe('GraphQL detection and metadata extraction', () => {
       })
 
       const request: RequestCompleteEvent = {
+        method: 'POST',
+        url: '/graphql',
         requestBody,
         responseBody: JSON.stringify({
           errors: [{ message: 'Not found' }],
@@ -315,6 +411,8 @@ describe('GraphQL detection and metadata extraction', () => {
       })
 
       const request: RequestCompleteEvent = {
+        method: 'POST',
+        url: '/graphql',
         requestBody,
       } as RequestCompleteEvent
 
@@ -335,6 +433,8 @@ describe('GraphQL detection and metadata extraction', () => {
       })
 
       const request: RequestCompleteEvent = {
+        method: 'POST',
+        url: '/graphql',
         requestBody,
         responseBody: JSON.stringify({
           errors: [{ message: 'Error 1' }, { message: 'Error 2' }],
