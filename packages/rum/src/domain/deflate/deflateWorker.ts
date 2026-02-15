@@ -1,5 +1,5 @@
 import type { DeflateWorker, DeflateWorkerResponse } from '@datadog/browser-core'
-import { addTelemetryError, display, addEventListener, setTimeout, ONE_SECOND } from '@datadog/browser-core'
+import { addTelemetryError, display, addEventListener, setTimeout, ONE_SECOND, mockable } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import { reportScriptLoadingError } from '../scriptLoadingError'
 
@@ -41,7 +41,7 @@ type DeflateWorkerState =
 
 export type CreateDeflateWorker = typeof createDeflateWorker
 
-function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
+export function createDeflateWorker(configuration: RumConfiguration): DeflateWorker {
   return new Worker(configuration.workerUrl || URL.createObjectURL(new Blob([__BUILD_ENV__WORKER_STRING__])))
 }
 
@@ -50,12 +50,11 @@ let state: DeflateWorkerState = { status: DeflateWorkerStatus.Nil }
 export function startDeflateWorker(
   configuration: RumConfiguration,
   source: string,
-  onInitializationFailure: () => void,
-  createDeflateWorkerImpl = createDeflateWorker
+  onInitializationFailure: () => void
 ) {
   if (state.status === DeflateWorkerStatus.Nil) {
     // doStartDeflateWorker updates the state to "loading" or "error"
-    doStartDeflateWorker(configuration, source, createDeflateWorkerImpl)
+    doStartDeflateWorker(configuration, source)
   }
 
   switch (state.status) {
@@ -87,13 +86,9 @@ export function getDeflateWorkerStatus() {
  *
  * more details: https://bugzilla.mozilla.org/show_bug.cgi?id=1736865#c2
  */
-export function doStartDeflateWorker(
-  configuration: RumConfiguration,
-  source: string,
-  createDeflateWorkerImpl = createDeflateWorker
-) {
+export function doStartDeflateWorker(configuration: RumConfiguration, source: string) {
   try {
-    const worker = createDeflateWorkerImpl(configuration)
+    const worker = mockable(createDeflateWorker)(configuration)
     const { stop: removeErrorListener } = addEventListener(configuration, worker, 'error', (error) => {
       onError(configuration, source, error)
     })

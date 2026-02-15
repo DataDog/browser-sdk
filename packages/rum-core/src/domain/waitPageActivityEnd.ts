@@ -1,5 +1,5 @@
 import type { Subscription, TimeoutId, TimeStamp } from '@datadog/browser-core'
-import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout } from '@datadog/browser-core'
+import { matchList, monitor, Observable, timeStampNow, setTimeout, clearTimeout, mockable } from '@datadog/browser-core'
 import { createPerformanceObservable, RumPerformanceEntryType } from '../browser/performanceObservable'
 import type { RumMutationRecord } from '../browser/domMutationObservable'
 import { isElementNode } from '../browser/htmlDomUtils'
@@ -58,20 +58,13 @@ export function waitPageActivityEnd(
   pageActivityEndCallback: (event: PageActivityEndEvent) => void,
   maxDuration?: number
 ) {
-  const pageActivityObservable = createPageActivityObservable(
+  const pageActivityObservable = mockable(createPageActivityObservable)(
     lifeCycle,
     domMutationObservable,
     windowOpenObservable,
     configuration
   )
-  return doWaitPageActivityEnd(pageActivityObservable, pageActivityEndCallback, maxDuration)
-}
 
-export function doWaitPageActivityEnd(
-  pageActivityObservable: Observable<PageActivityEvent>,
-  pageActivityEndCallback: (event: PageActivityEndEvent) => void,
-  maxDuration?: number
-) {
   let pageActivityEndTimeoutId: TimeoutId
   let hasCompleted = false
 

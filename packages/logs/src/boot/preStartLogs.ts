@@ -16,6 +16,7 @@ import {
   buildUserContextManager,
   startTelemetry,
   TelemetryService,
+  mockable,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -34,8 +35,7 @@ export type DoStartLogs = (
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: DoStartLogs,
-  startTelemetryImpl = startTelemetry
+  doStartLogs: DoStartLogs
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
@@ -59,7 +59,7 @@ export function createPreStartStrategy(
       return
     }
 
-    startTelemetryImpl(TelemetryService.LOGS, cachedConfiguration, hooks)
+    mockable(startTelemetry)(TelemetryService.LOGS, cachedConfiguration, hooks)
 
     trackingConsentStateSubscription.unsubscribe()
     const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, hooks)

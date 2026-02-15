@@ -1,10 +1,15 @@
 import { display } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
-import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
+import { mockClock, startMockTelemetry, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { MockWorker } from '../../../test'
 import type { CreateDeflateWorker } from './deflateWorker'
-import { startDeflateWorker, resetDeflateWorkerState, INITIALIZATION_TIME_OUT_DELAY } from './deflateWorker'
+import {
+  startDeflateWorker,
+  resetDeflateWorkerState,
+  INITIALIZATION_TIME_OUT_DELAY,
+  createDeflateWorker,
+} from './deflateWorker'
 
 // Arbitrary stream ids used for tests
 const TEST_STREAM_ID = 5
@@ -21,18 +26,13 @@ describe('startDeflateWorker', () => {
     configuration?: Partial<RumConfiguration>
     source?: string
   } = {}) {
-    return startDeflateWorker(
-      configuration as RumConfiguration,
-      source,
-      onInitializationFailureSpy,
-      createDeflateWorkerSpy
-    )
+    return startDeflateWorker(configuration as RumConfiguration, source, onInitializationFailureSpy)
   }
 
   beforeEach(() => {
     mockWorker = new MockWorker()
     onInitializationFailureSpy = jasmine.createSpy('onInitializationFailureSpy')
-    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
+    createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).and.callFake(() => mockWorker)
   })
 
   afterEach(() => {

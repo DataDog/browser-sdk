@@ -9,10 +9,10 @@ import { resetMonitor } from '../src/tools/monitor'
 import { resetTelemetry } from '../src/domain/telemetry'
 import { startLeakDetection } from './leakDetection'
 import type { BuildEnvWindow } from './buildEnv'
+;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
+;(window as any).IS_REACT_ACT_ENVIRONMENT = true
 
 beforeEach(() => {
-  ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
-  ;(window as any).IS_REACT_ACT_ENVIRONMENT = true
   // prevent 'Some of your tests did a full page reload!' issue
   window.onbeforeunload = () => 'stop'
   startLeakDetection()
