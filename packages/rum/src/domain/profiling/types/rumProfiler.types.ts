@@ -1,6 +1,6 @@
 import type { TimeoutId, ClocksState } from '@datadog/browser-core'
-import type { LongTaskContext } from '@datadog/browser-rum-core'
 import type { RumViewEntry } from '../../../types'
+import type { LongTaskContext } from '../longTaskHistory'
 import type { Profiler } from './profilerApi.types'
 
 /**
