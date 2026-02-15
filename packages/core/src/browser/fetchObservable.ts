@@ -9,6 +9,8 @@ import type { GlobalObject } from '../tools/globalObject'
 import { globalObject } from '../tools/globalObject'
 import { readBytesFromStream } from '../tools/readBytesFromStream'
 import { tryToClone } from '../tools/utils/responseUtils'
+import type { NormalizedHeaders } from '../tools/headers'
+import { normalizeFetchResponseHeaders, normalizeRequestInitHeaders } from '../tools/headers'
 
 interface FetchContextBase {
   method: string
@@ -17,6 +19,7 @@ interface FetchContextBase {
   init?: RequestInit
   url: string
   handlingStack?: string
+  requestHeaders?: NormalizedHeaders
 }
 
 export interface FetchStartContext extends FetchContextBase {
@@ -31,6 +34,7 @@ export interface FetchResolveContext extends FetchContextBase {
   responseType?: string
   isAborted: boolean
   error?: Error
+  responseHeaders?: NormalizedHeaders
 }
 
 export type FetchContext = FetchStartContext | FetchResolveContext
@@ -105,6 +109,7 @@ function beforeSend(
     startClocks,
     url,
     handlingStack,
+    requestHeaders: normalizeRequestInitHeaders(init),
   }
 
   observable.notify(context)
@@ -143,6 +148,7 @@ async function afterSend(
   context.status = response.status
   context.responseType = response.type
   context.isAborted = false
+  context.responseHeaders = normalizeFetchResponseHeaders(response)
 
   const responseBodyCondition = responseBodyActionGetters.reduce(
     (action, getter) => Math.max(action, getter(context)),

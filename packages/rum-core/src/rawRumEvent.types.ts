@@ -59,6 +59,10 @@ export interface RawRumResourceEvent {
     url: string
     method?: string
     status_code?: number
+    headers?: {
+      request?: NetworkHeaders
+      response?: NetworkHeaders
+    }
     size?: number
     encoded_body_size?: number
     decoded_body_size?: number
@@ -82,6 +86,11 @@ export interface RawRumResourceEvent {
     discarded: boolean
     page_states?: PageStateServerEntry[]
   }
+}
+
+export interface NetworkHeaders {
+  skipped?: string[]
+  [k: string]: string | string[] | undefined
 }
 
 export interface ResourceEntryDetailsElement {
