@@ -532,11 +532,13 @@ export type TelemetryCommonFeaturesUsage =
 /**
  * Schema of browser specific features usage
  */
+// [MANUAL] AddViewLoadingTime added pending upstream rum-events-format schema sync
 export type TelemetryBrowserFeaturesUsage =
   | StartSessionReplayRecording
   | StartDurationVital
   | StopDurationVital
   | AddDurationVital
+  | AddViewLoadingTime
 /**
  * Schema of mobile specific features usage
  */

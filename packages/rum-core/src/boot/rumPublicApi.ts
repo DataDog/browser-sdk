@@ -35,6 +35,7 @@ import {
   startBufferingData,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  timeStampNow,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -214,6 +215,20 @@ export interface RumPublicApi extends PublicApi {
    * @param [time] - Epoch timestamp of the custom timing (if not set, will use current time)
    */
   addTiming: (name: string, time?: number) => void
+
+  /**
+   * Manually set the current view's loading time.
+   *
+   * Call this method when the view has finished loading. The loading time is computed as the
+   * elapsed time since the view started. By default, the first call sets the loading time and
+   * subsequent calls are no-ops. Use `{ overwrite: true }` to replace a previously set value.
+   *
+   * See [Override RUM View Loading Time](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/) for further information.
+   *
+   * @category Data Collection
+   * @param options - Options. Set `overwrite: true` to replace a previously set loading time.
+   */
+  addViewLoadingTime: (options?: { overwrite?: boolean }) => void
 
   /**
    * Set the global context information to all events, stored in `@context`
@@ -533,6 +548,7 @@ export interface Strategy {
   getInternalContext: StartRumResult['getInternalContext']
   stopSession: StartRumResult['stopSession']
   addTiming: StartRumResult['addTiming']
+  addLoadingTime: StartRumResult['addLoadingTime']
   startView: StartRumResult['startView']
   setViewName: StartRumResult['setViewName']
 
@@ -725,6 +741,20 @@ export function makeRumPublicApi(
     addTiming: monitor((name, time) => {
       // TODO: next major decide to drop relative time support or update its behaviour
       strategy.addTiming(sanitize(name)!, time as RelativeTime | TimeStamp | undefined)
+    }),
+
+    addViewLoadingTime: monitor((options?: { overwrite?: boolean }) => {
+      const callTimestamp = timeStampNow()
+      const result = strategy.addLoadingTime(callTimestamp, options?.overwrite ?? false)
+
+      // For pre-start buffered calls, result is undefined so we emit best-guess default values.
+      const isResult = result && typeof result === 'object'
+      addTelemetryUsage({
+        feature: 'addViewLoadingTime',
+        no_view: false,
+        no_active_view: isResult && 'no_active_view' in result,
+        overwritten: isResult && 'overwritten' in result && result.overwritten !== false,
+      })
     }),
 
     setGlobalContext: defineContextMethod(
