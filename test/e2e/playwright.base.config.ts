@@ -31,22 +31,24 @@ export const config: Config = {
     trace: isCi ? 'off' : 'retain-on-failure',
   },
 
-  webServer: isLocal
-    ? [
-        {
-          stdout: 'pipe',
-          cwd: path.join(__dirname, '../..'),
-          command: 'yarn dev',
-          url: DEV_SERVER_BASE_URL,
-          reuseExistingServer: true,
-        },
-        {
-          stdout: 'pipe',
-          cwd: path.join(__dirname, '../apps/nextjs-app-router'),
-          command: 'yarn dev',
-          url: NEXTJS_APP_URL,
-          reuseExistingServer: true,
-        },
-      ]
-    : undefined,
+  webServer: [
+    ...(isLocal
+      ? [
+          {
+            stdout: 'pipe' as const,
+            cwd: path.join(__dirname, '../..'),
+            command: 'yarn dev',
+            url: DEV_SERVER_BASE_URL,
+            reuseExistingServer: true,
+          },
+        ]
+      : []),
+    {
+      stdout: 'pipe' as const,
+      cwd: path.join(__dirname, '../apps/nextjs-app-router'),
+      command: isLocal ? 'yarn dev' : 'yarn start',
+      url: NEXTJS_APP_URL,
+      reuseExistingServer: true,
+    },
+  ],
 }

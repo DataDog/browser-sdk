@@ -6,27 +6,27 @@ __metadata:
   cacheKey: 10c0
 
 "@datadog/browser-core@file:../../../packages/core/package.tgz::locator=nextjs-app-router%40workspace%3A.":
-  version: 6.26.0
-  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=ea9131&locator=nextjs-app-router%40workspace%3A."
-  checksum: 10c0/ba5a8807673090631e74ff2863705acd7973bf61361cd0b39e32e9290bd2213ced13b81467dc7db5eca23d799b63164a443ef678c605212cf9f521cf643ec0f8
+  version: 6.27.1
+  resolution: "@datadog/browser-core@file:../../../packages/core/package.tgz#../../../packages/core/package.tgz::hash=1c42fb&locator=nextjs-app-router%40workspace%3A."
+  checksum: 10c0/87975b5069b59e9e0400e78a9db676137f3e52fae8fb3146c128527c760837c553960340505027b78c19ceeb9693fb79d70a8289781f2810be3bb22142c30ff9
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz::locator=nextjs-app-router%40workspace%3A.":
-  version: 6.26.0
-  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=76632d&locator=nextjs-app-router%40workspace%3A."
+  version: 6.27.1
+  resolution: "@datadog/browser-rum-core@file:../../../packages/rum-core/package.tgz#../../../packages/rum-core/package.tgz::hash=7c1f38&locator=nextjs-app-router%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.26.0"
-  checksum: 10c0/d94abf41063da0dd758f96c33d5cd8984545ca16f425185e8aee2fe0f96a5d3e74eb777a52c27c2d60657fb533af4381ea9dec9a989fedb3742926e613fb73b1
+    "@datadog/browser-core": "npm:6.27.1"
+  checksum: 10c0/b1516087d4082125ba9da1d0f7ae6f392d7e896bd5c932069d9af2fe617bc58508140065d7c69b54b896be6df26b55bce32c3a81e81d858bef8eaef4e854ca0c
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz::locator=nextjs-app-router%40workspace%3A.":
-  version: 6.26.0
-  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=4d43e7&locator=nextjs-app-router%40workspace%3A."
+  version: 6.27.1
+  resolution: "@datadog/browser-rum-react@file:../../../packages/rum-react/package.tgz#../../../packages/rum-react/package.tgz::hash=01176f&locator=nextjs-app-router%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.26.0"
-    "@datadog/browser-rum-core": "npm:6.26.0"
+    "@datadog/browser-core": "npm:6.27.1"
+    "@datadog/browser-rum-core": "npm:6.27.1"
   peerDependencies:
     next: ">=13"
     react: 18 || 19
@@ -45,22 +45,22 @@ __metadata:
       optional: true
     react-router-dom:
       optional: true
-  checksum: 10c0/b4985eaff23eeea495158bf6ce4521eff483c4dfe59a3e3d6b2801e95a6961c19034603883b26bf21cd98fe716a05462b3a5cf5f9cb1b6f8b3d3b8e9675af0ef
+  checksum: 10c0/88f9c4e95376c805df6c2d4344cfd2c41a8c891df1b4420a8e798e7069f5653dbba67853fc141ba1bf22e6d91ba0950cc2a4a48d5bb70146abc2004b277a5f9b
   languageName: node
   linkType: hard
 
 "@datadog/browser-rum@file:../../../packages/rum/package.tgz::locator=nextjs-app-router%40workspace%3A.":
-  version: 6.26.0
-  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=a251ae&locator=nextjs-app-router%40workspace%3A."
+  version: 6.27.1
+  resolution: "@datadog/browser-rum@file:../../../packages/rum/package.tgz#../../../packages/rum/package.tgz::hash=fcaac5&locator=nextjs-app-router%40workspace%3A."
   dependencies:
-    "@datadog/browser-core": "npm:6.26.0"
-    "@datadog/browser-rum-core": "npm:6.26.0"
+    "@datadog/browser-core": "npm:6.27.1"
+    "@datadog/browser-rum-core": "npm:6.27.1"
   peerDependencies:
-    "@datadog/browser-logs": 6.26.0
+    "@datadog/browser-logs": 6.27.1
   peerDependenciesMeta:
     "@datadog/browser-logs":
       optional: true
-  checksum: 10c0/82268f16e68538f9909fba68389f10acf294fc45c943d16568addb03671ea843a18e34de2de15cb6c80c4fb67e78cdb1d2a79be53f017666bcec6db4790971bf
+  checksum: 10c0/1f4a18c17f069e10116a4eec745f80c3dd43ce2868cab3eefddc341e836f532b3b5d3c6c2ed5e547a96715fae24cf472969dd83207a7d970c2b7dad02c1c4d36
   languageName: node
   linkType: hard
 
