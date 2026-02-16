@@ -11,7 +11,9 @@ export function mockClock() {
   const timeStampStart = Date.now()
   const relativeStart = timeStampStart - timeOrigin
 
-  vi.spyOn(performance, 'now').mockImplementation(() => Date.now() - timeOrigin)
+  // Note: vi.useFakeTimers() already mocks performance.now() — no separate spy needed.
+  // Adding vi.spyOn on top would conflict with restoreMocks, which restores the spy to a
+  // stale fake timer implementation after vi.useRealTimers() has already cleaned up.
 
   registerCleanupTask(() => vi.useRealTimers())
 

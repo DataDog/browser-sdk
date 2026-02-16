@@ -464,7 +464,7 @@ describe('rum assembly', () => {
 
     it('should get session state from event start', () => {
       const sessionManager = createRumSessionManagerMock()
-      vi.spyOn(sessionManager, 'findTrackedSession').and.callThrough()
+      vi.spyOn(sessionManager, 'findTrackedSession')
       const { lifeCycle } = setupAssemblyTestWithDefaults({ sessionManager })
 
       notifyRawRumEvent(lifeCycle, {

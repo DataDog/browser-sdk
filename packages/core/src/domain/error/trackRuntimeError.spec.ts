@@ -55,6 +55,10 @@ describe('instrumentOnError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnError = async (callback: () => void) => {
+    // Ensure window.onerror is a function before spying (it's null by default and vi.spyOn requires a function)
+    if (!window.onerror) {
+      window.onerror = () => {}
+    }
     const onErrorSpy = vi.spyOn(window as any, 'onerror')
     const callbackSpy = vi.fn<UnhandledErrorCallback>()
     const { stop } = instrumentOnError(callbackSpy)

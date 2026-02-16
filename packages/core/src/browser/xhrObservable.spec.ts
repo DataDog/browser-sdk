@@ -139,7 +139,7 @@ describe('xhr observable', () => {
             xhr.abort()
           }
         }
-        vi.spyOn(xhr, 'onreadystatechange').and.callThrough()
+        vi.spyOn(xhr, 'onreadystatechange')
         xhr.open('GET', '/ok')
         xhr.send()
         xhr.complete(200, 'ok')
