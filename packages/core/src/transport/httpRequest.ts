@@ -3,7 +3,6 @@ import type { Context } from '../tools/serialisation/context'
 import { fetch } from '../browser/fetch'
 import { monitor, monitorError } from '../tools/monitor'
 import type { RawError } from '../domain/error/error.types'
-import { isExperimentalFeatureEnabled, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { Observable } from '../tools/observable'
 import { ONE_KIBI_BYTE } from '../tools/utils/byteUtils'
 import { newRetryState, sendWithRetryStrategy } from './sendWithRetryStrategy'
@@ -87,11 +86,7 @@ export function createHttpRequest<Body extends Payload = Payload>(
           payload,
           retryState,
           (payload, onResponse) => {
-            if (isExperimentalFeatureEnabled(ExperimentalFeature.AVOID_FETCH_KEEPALIVE)) {
-              fetchStrategy(endpointBuilder, payload, onResponse)
-            } else {
-              fetchKeepAliveStrategy(endpointBuilder, bytesLimit, payload, onResponse)
-            }
+            fetchStrategy(endpointBuilder, payload, onResponse)
           },
           endpointBuilder.trackType,
           reportError,

@@ -10,7 +10,6 @@ import {
 } from '../../test'
 import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
-import { addExperimentalFeatures, resetExperimentalFeatures, ExperimentalFeature } from '../tools/experimentalFeatures'
 import { noop } from '../tools/utils/functionUtils'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 import {
@@ -47,16 +46,12 @@ describe('httpRequest', () => {
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
 
-    it('should use fetch keepalive when the bytes count is correct', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
+    it('should use fetch for intake requests', async () => {
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('fetch-keepalive')
+      expect(requests[0].type).toBe('fetch')
     })
 
     it('should use fetch over fetch keepalive when the bytes count is too high', async () => {
@@ -67,27 +62,7 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to fetch when fetch keepalive is not queued', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      const fetchSpy = interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK, DEFAULT_FETCH_MOCK)
-
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
-
-      await interceptor.waitForAllFetchCalls()
-      await collectAsyncCalls(fetchSpy, 2)
-      expect(requests.length).toEqual(2)
-      expect(requests[0].type).toBe('fetch-keepalive')
-      expect(requests[1].type).toBe('fetch')
-    })
-
     it('should use retry strategy', async () => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
       const fetchSpy = interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK, DEFAULT_FETCH_MOCK)
 
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
@@ -352,49 +327,5 @@ describe('httpRequest intake parameters', () => {
 
     expect(requestId1).not.toBe(requestId2)
     expect(requests.length).toEqual(2)
-  })
-})
-
-describe('httpRequest with AVOID_FETCH_KEEPALIVE feature flag', () => {
-  const ENDPOINT_URL = 'http://my.website'
-  let interceptor: ReturnType<typeof interceptRequests>
-  let requests: Request[]
-  let endpointBuilder: EndpointBuilder
-  let request: HttpRequest
-
-  beforeEach(() => {
-    interceptor = interceptRequests()
-    requests = interceptor.requests
-    endpointBuilder = mockEndpointBuilder(ENDPOINT_URL)
-  })
-
-  afterEach(() => {
-    resetExperimentalFeatures()
-  })
-
-  it('should use regular fetch (without keepalive) when feature flag is enabled', async () => {
-    addExperimentalFeatures([ExperimentalFeature.AVOID_FETCH_KEEPALIVE])
-    request = createHttpRequest([endpointBuilder], noop)
-
-    request.send({ data: '{"foo":"bar"}', bytesCount: 10 })
-    await interceptor.waitForAllFetchCalls()
-
-    expect(requests.length).toEqual(1)
-    expect(requests[0].type).toBe('fetch')
-    expect(requests[0].url).toContain(ENDPOINT_URL)
-  })
-
-  it('should use fetch keepalive when feature flag is not enabled', async () => {
-    if (!interceptor.isFetchKeepAliveSupported()) {
-      pending('no fetch keepalive support')
-    }
-
-    request = createHttpRequest([endpointBuilder], noop)
-
-    request.send({ data: '{"foo":"bar"}', bytesCount: 10 })
-    await interceptor.waitForAllFetchCalls()
-
-    expect(requests.length).toEqual(1)
-    expect(requests[0].type).toBe('fetch-keepalive')
   })
 })
