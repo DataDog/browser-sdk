@@ -23,7 +23,7 @@ import {
   waitNextMicrotask,
   replaceMockable,
 } from '@datadog/browser-core/test'
-import { LONG_TASK_ID_HISTORY_TIME_OUT_DELAY } from '@datadog/browser-rum-core/src/domain/longTask/longTaskCollection'
+import { LONG_TASK_ID_HISTORY_TIME_OUT_DELAY } from '../../../../rum-core/src/domain/longTask/longTaskCollection'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'
