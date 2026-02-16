@@ -92,12 +92,7 @@ export function applyRemoteConfiguration(
   const appliedConfiguration = { ...initConfiguration } as RumInitConfiguration & { [key: string]: unknown }
   SUPPORTED_FIELDS.forEach((option: string) => {
     if (option in rumRemoteConfiguration) {
-      const resolvedValue = resolveConfigurationProperty(rumRemoteConfiguration[option])
-      // Skip undefined values to preserve init config fallbacks when any dynamic strategy
-      // (cookie, dom, js, localStorage) fails to resolve.
-      if (resolvedValue !== undefined) {
-        appliedConfiguration[option] = resolvedValue
-      }
+      appliedConfiguration[option] = resolveConfigurationProperty(rumRemoteConfiguration[option])
     }
   })
   ;(Object.keys(supportedContextManagers) as Array<keyof SupportedContextManagers>).forEach((context) => {

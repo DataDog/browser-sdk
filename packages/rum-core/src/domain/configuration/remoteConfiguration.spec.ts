@@ -229,7 +229,7 @@ describe('remoteConfiguration', () => {
     it('should display an error if an unsupported `strategy` is provided', () => {
       expectAppliedRemoteConfigurationToBe(
         { version: { rcSerializedType: 'dynamic', strategy: 'foo' as any } as any },
-        {} // version should not be set when resolution fails
+        { version: undefined }
       )
       expect(displaySpy).toHaveBeenCalledWith('Unsupported remote configuration: "strategy": "foo"')
     })
@@ -245,10 +245,10 @@ describe('remoteConfiguration', () => {
         expect(metrics.get().cookie).toEqual({ success: 1 })
       })
 
-      it('should resolve to undefined if the cookie is missing', () => {
+      it('should not be set if the cookie is missing', () => {
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(metrics.get().cookie).toEqual({ missing: 1 })
       })
@@ -294,7 +294,7 @@ describe('remoteConfiguration', () => {
       it('should resolve to undefined and display an error if the selector is invalid', () => {
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '' } },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid selector in the remote configuration: ''")
         expect(metrics.get().dom).toEqual({ failure: 1 })
@@ -303,7 +303,7 @@ describe('remoteConfiguration', () => {
       it('should resolve to undefined if the element is missing', () => {
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#missing' } },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(metrics.get().dom).toEqual({ missing: 1 })
       })
@@ -320,7 +320,7 @@ describe('remoteConfiguration', () => {
       it('should resolve to undefined if the element attribute is missing', () => {
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#version2', attribute: 'missing' } },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(metrics.get().dom).toEqual({ missing: 1 })
       })
@@ -329,7 +329,7 @@ describe('remoteConfiguration', () => {
         appendElement('<input id="pwd" type="password" value="foo" />')
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'dom', selector: '#pwd', attribute: 'value' } },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Forbidden element selected by the remote configuration: '#pwd'")
       })
@@ -443,7 +443,7 @@ describe('remoteConfiguration', () => {
           {
             version: { rcSerializedType: 'dynamic', strategy: 'js', path: '.' },
           },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid JSON path in the remote configuration: '.'")
         expect(metrics.get().js).toEqual({ failure: 1 })
@@ -462,7 +462,7 @@ describe('remoteConfiguration', () => {
           {
             version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo.bar' },
           },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Error accessing: 'foo.bar'", new Error('foo'))
         expect(metrics.get().js).toEqual({ failure: 1 })
@@ -473,7 +473,7 @@ describe('remoteConfiguration', () => {
           {
             version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'missing' },
           },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(metrics.get().js).toEqual({ missing: 1 })
       })
@@ -488,7 +488,7 @@ describe('remoteConfiguration', () => {
           {
             version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo.missing' },
           },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(metrics.get().js).toEqual({ missing: 1 })
       })
@@ -503,7 +503,7 @@ describe('remoteConfiguration', () => {
           {
             version: { rcSerializedType: 'dynamic', strategy: 'js', path: 'foo[0]' },
           },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(metrics.get().js).toEqual({ missing: 1 })
       })
@@ -540,28 +540,11 @@ describe('remoteConfiguration', () => {
         )
       })
 
-      it('should not override init config when localStorage key is missing', () => {
+      it('should resolve to undefined if the localStorage key is missing', () => {
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'non_existent_key' } },
-          {} // version should not be set at all when resolution fails
+          { version: undefined }
         )
-        expect(metrics.get().localStorage).toEqual({ missing: 1 })
-      })
-
-      it('should preserve init config value when localStorage key is missing', () => {
-        const initConfigWithVersion = { ...DEFAULT_INIT_CONFIGURATION, version: 'init-version' }
-        const rumRemoteConfiguration: RumRemoteConfiguration = {
-          applicationId: 'yyy',
-          version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'non_existent_key' },
-        }
-
-        expect(
-          applyRemoteConfiguration(initConfigWithVersion, rumRemoteConfiguration, supportedContextManagers, metrics)
-        ).toEqual({
-          ...initConfigWithVersion,
-          applicationId: 'yyy',
-          // version should remain 'init-version', not undefined
-        })
         expect(metrics.get().localStorage).toEqual({ missing: 1 })
       })
     })
@@ -613,7 +596,7 @@ describe('remoteConfiguration', () => {
               extractor: { rcSerializedType: 'regex', value: 'foo' },
             },
           },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
       })
 
@@ -627,7 +610,7 @@ describe('remoteConfiguration', () => {
               extractor: { rcSerializedType: 'regex', value: 'Hello(?|!)' },
             },
           },
-          {} // version should not be set when resolution fails
+          { version: undefined }
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
       })

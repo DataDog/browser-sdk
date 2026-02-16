@@ -141,7 +141,6 @@ test.describe('remote configuration', () => {
   createTest('should resolve to undefined when localStorage key is missing')
     .withRum({
       remoteConfigurationId: 'e2e',
-      version: 'fallback-version',
     })
     .withRemoteConfiguration({
       rum: {
@@ -151,13 +150,12 @@ test.describe('remote configuration', () => {
     })
     .run(async ({ page }) => {
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
-      expect(initConfiguration.version).toBe('fallback-version')
+      expect(initConfiguration.version).toBeUndefined()
     })
 
   createTest('should handle localStorage access failure gracefully')
     .withRum({
       remoteConfigurationId: 'e2e',
-      version: 'fallback-version',
     })
     .withRemoteConfiguration({
       rum: {
@@ -177,7 +175,7 @@ test.describe('remote configuration', () => {
     `)
     .run(async ({ page }) => {
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
-      expect(initConfiguration.version).toBe('fallback-version')
+      expect(initConfiguration.version).toBeUndefined()
     })
 
   createTest('should resolve user context')
