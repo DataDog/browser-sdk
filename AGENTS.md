@@ -71,11 +71,12 @@ scripts/             # Build, deploy, release automation
 
 ## Critical Patterns
 
-### Test-Driven Development
+### Unit Tests
 
-- Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
+- Test framework: Jasmine + Karma. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
+- Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
-- Test framework: Jasmine + Karma
+- Mock values/functions: wrap with `mockable()` in source, use `replaceMockable()` or `replaceMockableWithSpy()` in tests (auto-cleanup)
 
 ## Commit Messages
 

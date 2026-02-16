@@ -1,5 +1,5 @@
 import type { Duration, TimeoutId } from '@datadog/browser-core'
-import { setTimeout, runOnReadyState, clearTimeout } from '@datadog/browser-core'
+import { setTimeout, runOnReadyState, clearTimeout, mockable } from '@datadog/browser-core'
 import type { RumPerformanceNavigationTiming } from '../../../browser/performanceObservable'
 import { getNavigationEntry, sanitizeFirstByte } from '../../../browser/performanceUtils'
 import type { RumConfiguration } from '../../configuration'
@@ -21,11 +21,10 @@ export type RelevantNavigationTiming = Pick<
 
 export function trackNavigationTimings(
   configuration: RumConfiguration,
-  callback: (timings: NavigationTimings) => void,
-  getNavigationEntryImpl: () => RelevantNavigationTiming = getNavigationEntry
+  callback: (timings: NavigationTimings) => void
 ) {
   return waitAfterLoadEvent(configuration, () => {
-    const entry = getNavigationEntryImpl()
+    const entry = mockable(getNavigationEntry)()
 
     if (!isIncompleteNavigation(entry)) {
       callback(processNavigationEntry(entry))
