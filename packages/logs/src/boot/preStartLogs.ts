@@ -17,7 +17,6 @@ import {
   startTelemetry,
   TelemetryService,
   mockable,
-  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -116,8 +115,9 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
-        const startSessionManagerFn =
-          canUseEventBridge() || isWorkerEnvironment ? startLogsSessionManagerStub : mockable(startLogsSessionManager)
+        const startSessionManagerFn = canUseEventBridge()
+          ? startLogsSessionManagerStub
+          : mockable(startLogsSessionManager)
         startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
           sessionManager = newSessionManager
           tryStartLogs()
