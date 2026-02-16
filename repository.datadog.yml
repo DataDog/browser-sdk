@@ -30,3 +30,9 @@ team: ci-platforms
 enabled_strategies:
   - yarn_berry_strategy
 preprocess: true
+---
+schema-version: v2
+kind: adms # Automated Dependency Management Service
+auto-version-updates:
+  disabled:
+    reason: We use renovate for now
