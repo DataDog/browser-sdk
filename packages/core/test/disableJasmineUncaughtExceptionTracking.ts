@@ -1,9 +1,13 @@
-import { vi } from 'vitest'
+import { registerCleanupTask } from './registerCleanupTask'
 
 /**
  * Disable uncaught error handling. This is useful for test cases throwing exceptions or
  * unhandled rejections that are expected to be caught somehow.
  */
 export function disableJasmineUncaughtExceptionTracking() {
-  vi.spyOn(window as any, 'onerror').mockImplementation(() => {})
+  const originalOnerror = window.onerror
+  window.onerror = () => {}
+  registerCleanupTask(() => {
+    window.onerror = originalOnerror
+  })
 }

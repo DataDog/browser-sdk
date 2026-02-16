@@ -195,7 +195,7 @@ describe('sanitize', () => {
 
   describe('toJson functions handling', () => {
     it('should use toJSON functions if available on root object', () => {
-      const toJSON = vi.fn() => 'Specific').and.callThrough()
+      const toJSON = vi.fn().mockImplementation(() => 'Specific')
       const obj = { a: 1, b: 2, toJSON }
 
       expect(sanitize(obj)).toEqual('Specific')
@@ -203,7 +203,7 @@ describe('sanitize', () => {
     })
 
     it('should use toJSON functions if available on nested objects', () => {
-      const toJSON = vi.fn() => ({ d: 4 })).and.callThrough()
+      const toJSON = vi.fn().mockImplementation(() => ({ d: 4 }))
       const obj = { a: 1, b: 2, c: { a: 3, toJSON } }
 
       expect(sanitize(obj)).toEqual({ a: 1, b: 2, c: { d: 4 } })
@@ -216,8 +216,8 @@ describe('sanitize', () => {
     })
 
     it('should not use toJSON methods added to arrays and objects prototypes', () => {
-      const toJSONArray = vi.fn() => 'Array').and.callThrough()
-      const toJSONObject = vi.fn() => 'Object').and.callThrough()
+      const toJSONArray = vi.fn().mockImplementation(() => 'Array')
+      const toJSONObject = vi.fn().mockImplementation(() => 'Object')
       ;(Array.prototype as any).toJSON = toJSONArray
       ;(Object.prototype as any).toJSON = toJSONObject
 

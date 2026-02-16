@@ -37,8 +37,8 @@ describe('internal context', () => {
       }),
       stop: noop,
     }
-    findSessionSpy = vi.spyOn(sessionManager, 'findTrackedSession').and.callThrough()
-    findUrlSpy = vi.spyOn(urlContexts, 'findUrl').and.callThrough()
+    findSessionSpy = vi.spyOn(sessionManager, 'findTrackedSession')
+    findUrlSpy = vi.spyOn(urlContexts, 'findUrl')
 
     return startInternalContext('appId', sessionManager, viewHistory, actionContexts, urlContexts)
   }

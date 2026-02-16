@@ -143,7 +143,7 @@ describe('view lifecycle', () => {
   beforeEach(() => {
     clock = mockClock()
     lifeCycle = new LifeCycle()
-    notifySpy = vi.spyOn(lifeCycle, 'notify').and.callThrough()
+    notifySpy = vi.spyOn(lifeCycle, 'notify')
 
     viewTest = setupViewTest(
       { lifeCycle, initialLocation: '/foo' },
