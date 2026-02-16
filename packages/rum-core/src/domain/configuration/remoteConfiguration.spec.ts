@@ -254,6 +254,58 @@ describe('remoteConfiguration', () => {
       })
     })
 
+    describe('localStorage strategy', () => {
+      const STORAGE_KEY = 'dd-test'
+
+      afterEach(() => {
+        localStorage.removeItem(STORAGE_KEY);
+      })
+
+      it('should resolve a configuration value from localStorage', () => {
+        localStorage.setItem(STORAGE_KEY, 'userId')
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: STORAGE_KEY } },
+          { version: 'userId' }
+        )
+        expect(metrics.get().localStorage).toEqual({ success: 1 })
+      })
+
+      it('should resolve to null if the localStorage key is missing', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: STORAGE_KEY } },
+          { version: null }
+        )
+        expect(metrics.get().localStorage).toEqual({ missing: 1 })
+      })
+
+      it('should resolve a configuration value from localStorage with an attribute', () => {
+        localStorage.setItem(STORAGE_KEY, '{"userId":"dd-test"}')
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: STORAGE_KEY, attribute: 'userId' } },
+          { version: 'dd-test' }
+        )
+        expect(metrics.get().localStorage).toEqual({ success: 1 })
+      })
+
+      it('should resolve to null if the localStorage key contains a serialized object that does not contain the attribute', () => {
+        localStorage.setItem(STORAGE_KEY, '{"userInfo":"dd-test"}')
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: STORAGE_KEY, attribute: 'userId' } },
+          { version: null }
+        )
+        expect(metrics.get().localStorage).toEqual({ missing: 1 })
+      })
+
+      it('should display a warning if the localStorage key does  not contain a serialized object but an attribute is passed', () => {
+        localStorage.setItem(STORAGE_KEY, 'userId')
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: STORAGE_KEY, attribute: 'userId' } },
+          { version: 'userId' }
+        )
+        expect(displaySpy).toHaveBeenCalledWith("Invalid JSON attribute for localStorage key: 'dd-test'")
+      })      
+    })
+
     describe('dom strategy', () => {
       beforeEach(() => {
         appendElement(`<div>
@@ -510,12 +562,16 @@ describe('remoteConfiguration', () => {
     })
 
     describe('with extractor', () => {
+      const STORAGE_KEY = 'extractor_storage'
+
       beforeEach(() => {
         setCookie(COOKIE_NAME, 'my-version-123', ONE_MINUTE)
+        localStorage.setItem(STORAGE_KEY, 'storage-version-456')
       })
 
       afterEach(() => {
         deleteCookie(COOKIE_NAME)
+        localStorage.removeItem(STORAGE_KEY)
       })
 
       it('should resolve to the match on the value', () => {
@@ -574,15 +630,47 @@ describe('remoteConfiguration', () => {
         )
         expect(displaySpy).toHaveBeenCalledWith("Invalid regex in the remote configuration: 'Hello(?|!)'")
       })
+
+      it('should resolve localStorage value with extractor to the match', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'localStorage',
+              key: STORAGE_KEY,
+              extractor: { rcSerializedType: 'regex', value: '\\d+' },
+            },
+          },
+          { version: '456' }
+        )
+      })
+
+      it('should resolve localStorage value with extractor to the capture group', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'localStorage',
+              key: STORAGE_KEY,
+              extractor: { rcSerializedType: 'regex', value: 'storage-version-(\\d+)' },
+            },
+          },
+          { version: '456' }
+        )
+      })
     })
 
     describe('supported contexts', () => {
+      const STORAGE_KEY = 'context_storage'
+
       beforeEach(() => {
         setCookie(COOKIE_NAME, 'first.second', ONE_MINUTE)
+        localStorage.setItem(STORAGE_KEY, 'user-id-789')
       })
 
       afterEach(() => {
         deleteCookie(COOKIE_NAME)
+        localStorage.removeItem(STORAGE_KEY)
       })
 
       it('should be resolved from the provided configuration', () => {
@@ -617,6 +705,29 @@ describe('remoteConfiguration', () => {
         })
       })
 
+      it('should resolve user context from localStorage', () => {
+        localStorage.setItem(STORAGE_KEY, 'userId789')
+        expectAppliedRemoteConfigurationToBe(
+          {
+            user: [
+              {
+                key: 'id',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'localStorage',
+                  key: STORAGE_KEY,
+                  extractor: { rcSerializedType: 'regex', value: 'userId(\\d+)' },
+                },
+              },
+            ],
+          },
+          {}
+        )
+        expect(supportedContextManagers.user.getContext()).toEqual({
+          id: '789',
+        })
+      })
+
       it('unresolved property should be set to undefined', () => {
         expectAppliedRemoteConfigurationToBe(
           {
@@ -637,14 +748,38 @@ describe('remoteConfiguration', () => {
           foo: undefined,
         })
       })
+
+      it('unresolved localStorage property should be set to undefined', () => {
+        expectAppliedRemoteConfigurationToBe(
+          {
+            context: [
+              {
+                key: 'bar',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'localStorage',
+                  key: 'missing-storage-key',
+                },
+              },
+            ],
+          },
+          {}
+        )
+        expect(supportedContextManagers.context.getContext()).toEqual({
+          bar: null,
+        })
+      })
     })
 
     describe('metrics', () => {
       it('should report resolution stats', () => {
+        const STORAGE_KEY = 'metrics_storage_key'
         setCookie(COOKIE_NAME, 'my-version', ONE_MINUTE)
+        localStorage.setItem(STORAGE_KEY, 'storage-value')
         root.foo = '123'
         registerCleanupTask(() => {
           deleteCookie(COOKIE_NAME)
+          localStorage.removeItem(STORAGE_KEY)
           delete root.foo
         })
 
@@ -676,6 +811,22 @@ describe('remoteConfiguration', () => {
                 },
               },
               {
+                key: 'existing-storage',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'localStorage',
+                  key: STORAGE_KEY,
+                },
+              },
+              {
+                key: 'missing-storage',
+                value: {
+                  rcSerializedType: 'dynamic',
+                  strategy: 'localStorage',
+                  key: 'missing-storage-key',
+                },
+              },
+              {
                 key: 'existing-js',
                 value: {
                   rcSerializedType: 'dynamic',
@@ -690,6 +841,7 @@ describe('remoteConfiguration', () => {
         expect(metrics.get()).toEqual(
           jasmine.objectContaining({
             cookie: { success: 2, missing: 1 },
+            localStorage: { success: 1, missing: 1 },
             js: { success: 1 },
           })
         )
