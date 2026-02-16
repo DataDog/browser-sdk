@@ -12,6 +12,7 @@ import {
   isNonEmptyArray,
   isIndexableObject,
 } from '@datadog/browser-core'
+import { supportPerformanceTimingEvent, RumPerformanceEntryType } from '../../browser/performanceObservable'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import type { RumEvent } from '../../rumEvent.types'
 import type { RumPlugin } from '../plugins'
@@ -548,6 +549,10 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     remote_configuration_id: configuration.remoteConfigurationId,
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
+    use_soft_navigation:
+      Array.isArray(configuration.enableExperimentalFeatures) &&
+      configuration.enableExperimentalFeatures.includes('soft_navigation'),
+    supports_soft_navigation: supportPerformanceTimingEvent(RumPerformanceEntryType.SOFT_NAVIGATION),
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

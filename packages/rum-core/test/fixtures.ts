@@ -275,6 +275,15 @@ export function createPerformanceEntry<T extends RumPerformanceEntryType>(
       }
       break
 
+    case RumPerformanceEntryType.SOFT_NAVIGATION:
+      entry = {
+        entryType: RumPerformanceEntryType.SOFT_NAVIGATION,
+        name: 'https://example.com/page',
+        startTime: 5000 as RelativeTime,
+        navigationId: 'abc123',
+      }
+      break
+
     default:
       throw new Error(`Unsupported entryType fixture: ${entryType}`)
   }
