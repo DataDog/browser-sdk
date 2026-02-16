@@ -10,13 +10,7 @@ import {
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
-import {
-  ONE_SECOND,
-  TrackingConsent,
-  createTrackingConsentState,
-  display,
-  startTelemetry,
-} from '@datadog/browser-core'
+import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display, startTelemetry } from '@datadog/browser-core'
 import { createLogStartSessionManagerMock } from '../../test/mockLogsSessionManager'
 import { startLogsSessionManager } from '../domain/logsSessionManager'
 import type { CommonContext } from '../rawLogsEvent.types'
@@ -301,11 +295,7 @@ function createPreStartStrategyWithDefaults({
   replaceMockable(startLogsSessionManager, createLogStartSessionManagerMock())
 
   return {
-    strategy: createPreStartStrategy(
-      getCommonContextSpy,
-      trackingConsentState,
-      doStartLogsSpy
-    ),
+    strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),
     startTelemetrySpy,
     handleLogSpy,
     doStartLogsSpy,

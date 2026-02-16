@@ -189,9 +189,7 @@ export function createPreStartStrategy(
         return
       }
 
-      const startSessionManagerFn = canUseEventBridge()
-        ? startRumSessionManagerStub
-        : mockable(startRumSessionManager)
+      const startSessionManagerFn = canUseEventBridge() ? startRumSessionManagerStub : mockable(startRumSessionManager)
       startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
         sessionManager = newSessionManager
         tryStartRum()

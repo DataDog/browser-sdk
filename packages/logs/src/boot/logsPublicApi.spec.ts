@@ -1,11 +1,5 @@
 import type { ContextManager } from '@datadog/browser-core'
-import {
-  monitor,
-  display,
-  createContextManager,
-  TrackingConsent,
-  startTelemetry,
-} from '@datadog/browser-core'
+import { monitor, display, createContextManager, TrackingConsent, startTelemetry } from '@datadog/browser-core'
 import { collectAsyncCalls } from '@datadog/browser-core/test'
 import { createLogStartSessionManagerMock } from '../../test/mockLogsSessionManager'
 import { startLogsSessionManager } from '../domain/logsSessionManager'
