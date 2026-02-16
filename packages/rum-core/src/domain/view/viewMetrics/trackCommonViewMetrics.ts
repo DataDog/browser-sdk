@@ -81,7 +81,6 @@ export function trackCommonViewMetrics(
       const hadPreviousManual = isLoadingTimeSetManually
       const hadAutoValue = !isLoadingTimeSetManually && commonViewMetrics.loadingTime !== undefined
 
-      // Stop auto-detection entirely on first manual call (CONTEXT decision)
       if (!isLoadingTimeSetManually) {
         stopLoadingTimeTracking()
       }
@@ -89,7 +88,6 @@ export function trackCommonViewMetrics(
       isLoadingTimeSetManually = true
       commonViewMetrics.loadingTime = loadingTime
 
-      // Return overwrite source for Phase 2 telemetry
       if (hadPreviousManual) {
         return { overwritten: 'manual' as const }
       }

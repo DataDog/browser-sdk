@@ -223,8 +223,6 @@ export interface RumPublicApi extends PublicApi {
    * elapsed time since the view started. By default, the first call sets the loading time and
    * subsequent calls are no-ops. Use `{ overwrite: true }` to replace a previously set value.
    *
-   * See [Override RUM View Loading Time](https://docs.datadoghq.com/real_user_monitoring/browser/advanced_configuration/) for further information.
-   *
    * @category Data Collection
    * @param options - Options. Set `overwrite: true` to replace a previously set loading time.
    */
