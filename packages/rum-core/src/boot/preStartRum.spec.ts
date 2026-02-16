@@ -159,15 +159,6 @@ describe('preStartRum', () => {
   })
 
   describe('init', () => {
-    it('should not initialize if session cannot be handled and bridge is not present', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const displaySpy = spyOn(display, 'warn')
-      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(doStartRumSpy).not.toHaveBeenCalled()
-      expect(displaySpy).toHaveBeenCalled()
-    })
-
     describe('skipInitIfSyntheticsWillInjectRum option', () => {
       it('when true, ignores init() call if Synthetics will inject its own instance of RUM', () => {
         mockSyntheticsWorkerValues({ injectsRum: true })

@@ -150,11 +150,6 @@ export function createPreStartStrategy(
       return
     }
 
-    if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
-      display.warn('No storage available for session. We will not send any data.')
-      return
-    }
-
     if (configuration.compressIntakeRequests && !eventBridgeAvailable && startDeflateWorker) {
       deflateWorker = startDeflateWorker(
         configuration,
