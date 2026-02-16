@@ -38,10 +38,8 @@
  * ```
  */
 
-// Export Next.js-specific functionality
 export { DatadogRumProvider } from '../domain/nextjs'
 export type { DatadogRumProviderProps } from '../domain/nextjs'
-
 // Re-export shared functionality from main package
 export { ErrorBoundary, addReactError } from '../domain/error'
 export type { ErrorBoundaryProps, ErrorBoundaryFallback } from '../domain/error'

@@ -1,10 +1,3 @@
-/**
- * History API interception for tracking client-side navigations.
- *
- * This module intercepts browser History API methods (pushState, replaceState)
- * and the popstate event to detect navigation changes in SPAs like Next.js.
- */
-
 import { buildUrl, addEventListener, DOM_EVENT } from '@datadog/browser-core'
 
 type NavigationCallback = (pathname: string) => void
