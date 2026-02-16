@@ -1,12 +1,4 @@
-import type {
-  TrackingConsent,
-  PublicApi,
-  ContextManager,
-  Account,
-  Context,
-  User,
-  startTelemetry,
-} from '@datadog/browser-core'
+import type { TrackingConsent, PublicApi, ContextManager, Account, Context, User } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
   CustomerContextKey,
@@ -20,6 +12,7 @@ import {
   defineContextMethod,
   startBufferingData,
   callMonitored,
+  mockable,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -27,7 +20,8 @@ import type { StatusType } from '../domain/logger/isAuthorized'
 import { Logger } from '../domain/logger'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
-import type { StartLogs, StartLogsResult } from './startLogs'
+import type { StartLogsResult } from './startLogs'
+import { startLogs } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
 
 export interface LoggerConfiguration {
@@ -273,7 +267,7 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?: typeof startTelemetry): LogsPublicApi {
+export function makeLogsPublicApi(): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
 
@@ -281,7 +275,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?:
     buildCommonContext,
     trackingConsentState,
     (initConfiguration, configuration, logsSessionManager, hooks) => {
-      const startLogsResult = startLogsImpl(
+      const startLogsResult = mockable(startLogs)(
         configuration,
         logsSessionManager,
         buildCommonContext,
@@ -291,8 +285,7 @@ export function makeLogsPublicApi(startLogsImpl: StartLogs, startTelemetryImpl?:
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)
       return startLogsResult
-    },
-    startTelemetryImpl
+    }
   )
 
   const getStrategy = () => strategy

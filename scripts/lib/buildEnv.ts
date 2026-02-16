@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import fs from 'node:fs'
 import path from 'node:path'
 import { execSync } from 'node:child_process'
 import { browserSdkVersion } from './browserSdkVersion.ts'
@@ -24,6 +24,8 @@ const BUILD_MODES: BuildMode[] = [
  */
 const SDK_SETUPS: SdkSetup[] = ['npm', 'cdn']
 
+const WORKER_PATH = path.join(import.meta.dirname, '../../packages/worker')
+
 const buildEnvCache = new Map<string, string>()
 
 type BuildEnvFactories = {
@@ -47,12 +49,10 @@ const buildEnvFactories: BuildEnvFactories = {
   },
   SDK_SETUP: () => getSdkSetup(),
   WORKER_STRING: () => {
-    const workerPath = path.join(import.meta.dirname, '../../packages/worker')
-    // Make sure the worker is built
-    // TODO: Improve overall built time by rebuilding the worker only if its sources have changed?
-    // TODO: Improve developer experience during tests by detecting worker source changes?
-    command`yarn build`.withCurrentWorkingDirectory(workerPath).run()
-    return readFileSync(path.join(workerPath, 'bundle/worker.js'), {
+    if (needsWorkerRebuild()) {
+      command`yarn build`.withCurrentWorkingDirectory(WORKER_PATH).run()
+    }
+    return fs.readFileSync(path.join(WORKER_PATH, 'bundle/worker.js'), {
       encoding: 'utf-8',
     })
   },
@@ -89,4 +89,20 @@ function getSdkSetup(): SdkSetup {
   }
   console.log(`Invalid SDK setup "${process.env.SDK_SETUP}". Possible SDK setups are: ${SDK_SETUPS.join(', ')}`)
   process.exit(1)
+}
+
+function needsWorkerRebuild(): boolean {
+  const bundlePath = path.join(WORKER_PATH, 'bundle/worker.js')
+
+  if (!fs.existsSync(bundlePath)) {
+    return true
+  }
+
+  const bundleMtime = fs.statSync(bundlePath).mtimeMs
+
+  return fs.globSync('src/**/*', { cwd: WORKER_PATH }).some((file) => {
+    const filePath = path.join(WORKER_PATH, file)
+    const stats = fs.statSync(filePath)
+    return stats.isFile() && stats.mtimeMs > bundleMtime
+  })
 }

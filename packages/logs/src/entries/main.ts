@@ -10,7 +10,6 @@
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { LogsPublicApi } from '../boot/logsPublicApi'
 import { makeLogsPublicApi } from '../boot/logsPublicApi'
-import { startLogs } from '../boot/startLogs'
 
 export type { InternalContext } from '../domain/contexts/internalContext'
 export type { LogsMessage } from '../domain/logger'
@@ -57,7 +56,7 @@ export type {
  * @see {@link DatadogLogs}
  * @see [Browser Log Collection](https://docs.datadoghq.com/logs/log_collection/javascript/)
  */
-export const datadogLogs = makeLogsPublicApi(startLogs)
+export const datadogLogs = makeLogsPublicApi()
 
 interface BrowserWindow extends Window {
   DD_LOGS?: LogsPublicApi

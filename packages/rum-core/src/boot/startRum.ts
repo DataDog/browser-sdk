@@ -153,7 +153,7 @@ export function startRumEventCollection(
   const cleanupTasks: Array<() => void> = []
 
   const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(configuration, location)
+  const locationChangeObservable = createLocationChangeObservable(configuration)
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
@@ -162,7 +162,7 @@ export function startRumEventCollection(
   cleanupTasks.push(() => pageStateHistory.stop())
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, sessionManager, recorderApi, viewHistory)
@@ -202,7 +202,6 @@ export function startRumEventCollection(
     lifeCycle,
     hooks,
     configuration,
-    location,
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,

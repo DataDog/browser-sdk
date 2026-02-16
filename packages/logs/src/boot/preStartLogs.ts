@@ -17,6 +17,7 @@ import {
   willSyntheticsInjectRum,
   startTelemetry,
   TelemetryService,
+  mockable,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -39,8 +40,7 @@ export type DoStartLogs = (
 export function createPreStartStrategy(
   getCommonContext: () => CommonContext,
   trackingConsentState: TrackingConsentState,
-  doStartLogs: DoStartLogs,
-  startTelemetryImpl = startTelemetry
+  doStartLogs: DoStartLogs
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartLogsResult>()
 
@@ -110,7 +110,7 @@ export function createPreStartStrategy(
 
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
-        startTelemetryImpl(TelemetryService.LOGS, configuration, hooks)
+        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
         if (configuration.sessionStoreStrategyType && !canUseEventBridge() && !willSyntheticsInjectRum()) {
           startLogsSessionManager(configuration, trackingConsentState, (newSessionManager) => {
             sessionManager = newSessionManager
