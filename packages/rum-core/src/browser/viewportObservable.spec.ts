@@ -49,7 +49,7 @@ describe('viewportObservable', () => {
         // Some devices don't follow specification of including scrollbars
         { width: window.innerWidth, height: window.innerHeight },
         { width: document.documentElement.clientWidth, height: document.documentElement.clientHeight },
-      ]).toContain(getViewportDimension())
+      ]).toContainEqual(getViewportDimension())
     })
   })
 })
