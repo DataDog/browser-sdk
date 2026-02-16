@@ -25,6 +25,7 @@ import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-ru
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
   RumProfilerInstance,
+  RumProfilerRunningInstance,
   Profiler,
   RUMProfiler,
   RUMProfilerConfiguration,
@@ -63,13 +64,13 @@ export function createRumProfiler(
 
   // Stops the profiler when session expires
   lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, () => {
-    stopProfiling('session-expired').catch(monitorError)
+    stopProfiling('session-expired')
   })
 
   // Start the profiler again when session is renewed
   lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, () => {
     if (instance.state === 'stopped' && instance.stateReason === 'session-expired') {
-      start() // Only restart the profiler if it was stopped due to session expiration. Avoid restarting the profiler if it was stopped manually by the user.
+      start()
     }
   })
 
@@ -102,13 +103,13 @@ export function createRumProfiler(
   }
 
   // Public API to manually stop the profiler.
-  async function stop() {
-    await stopProfiling('stopped-by-user')
+  function stop() {
+    stopProfiling('stopped-by-user')
   }
 
-  async function stopProfiling(reason: RumProfilerStoppedInstance['stateReason']) {
-    // Stop current profiler instance
-    await stopProfilerInstance(reason)
+  function stopProfiling(reason: RumProfilerStoppedInstance['stateReason']) {
+    // Stop current profiler instance (data collection happens async in background)
+    stopProfilerInstance(reason)
 
     // Cleanup global listeners
     globalCleanupTasks.forEach((task) => task())
@@ -162,8 +163,10 @@ export function createRumProfiler(
       throw new Error('RUM Profiler is not supported in this browser.')
     }
 
-    // Don't wait for data collection to start next instance
-    collectProfilerInstance(instance).catch(monitorError)
+    // Collect data from previous running instance (fire-and-forget)
+    if (instance.state === 'running') {
+      collectProfilerInstance(instance)
+    }
 
     const { cleanupTasks } = addEventListeners(instance)
 
@@ -212,20 +215,16 @@ export function createRumProfiler(
     profiler.addEventListener('samplebufferfull', handleSampleBufferFull)
   }
 
-  async function collectProfilerInstance(lastInstance: RumProfilerInstance) {
-    if (lastInstance.state !== 'running') {
-      return
-    }
-
+  function collectProfilerInstance(runningInstance: RumProfilerRunningInstance) {
     // Cleanup instance
-    clearTimeout(lastInstance.timeoutId)
-    lastInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
+    clearTimeout(runningInstance.timeoutId)
+    runningInstance.profiler.removeEventListener('samplebufferfull', handleSampleBufferFull)
 
     // Store instance data snapshot in local variables to use in async callback
-    const { startClocks, views } = lastInstance
+    const { startClocks, views } = runningInstance
 
     // Stop current profiler to get trace
-    await lastInstance.profiler
+    runningInstance.profiler
       .stop()
       .then((trace) => {
         const endClocks = clocksNow()
@@ -254,30 +253,45 @@ export function createRumProfiler(
       .catch(monitorError)
   }
 
-  async function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
+  function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
+    if (instance.state === 'paused') {
+      // If paused, profiler data was already collected during pause, just update state
+      instance = { state: 'stopped', stateReason }
+      return
+    }
     if (instance.state !== 'running') {
       return
     }
-    await onPauseOrStopProfilerInstance()
+
+    // Capture the running instance before changing state
+    const runningInstance = instance
+
+    // Update state synchronously so SESSION_RENEWED check works immediately
     instance = { state: 'stopped', stateReason }
+
+    // Cleanup instance-specific tasks (e.g., view listener)
+    runningInstance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
+
+    // Collect and send profile data in background - doesn't block state transitions
+    collectProfilerInstance(runningInstance)
   }
 
-  async function pauseProfilerInstance() {
+  function pauseProfilerInstance() {
     if (instance.state !== 'running') {
       return
     }
-    await onPauseOrStopProfilerInstance()
+
+    // Capture the running instance before changing state
+    const runningInstance = instance
+
+    // Update state synchronously
     instance = { state: 'paused' }
-  }
 
-  async function onPauseOrStopProfilerInstance() {
-    if (instance.state !== 'running') {
-      return
-    }
-    // Cleanup tasks
-    instance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
+    // Cleanup instance-specific tasks
+    runningInstance.cleanupTasks.forEach((cleanupTask) => cleanupTask())
 
-    await collectProfilerInstance(instance)
+    // Collect and send profile data in background
+    collectProfilerInstance(runningInstance)
   }
 
   function collectViewEntry(viewEntry: RumViewEntry | undefined): void {
@@ -307,7 +321,7 @@ export function createRumProfiler(
       // paused by visibility change and stopped by user.
       // If profiler is paused by the visibility change, we should resume when
       // tab becomes visible again. That's not the case when user stops the profiler.
-      pauseProfilerInstance().catch(monitorError)
+      pauseProfilerInstance()
     } else if (document.visibilityState === 'visible' && instance.state === 'paused') {
       // Resume when tab becomes visible again
       startNextProfilerInstance()

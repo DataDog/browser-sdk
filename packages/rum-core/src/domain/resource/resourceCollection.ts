@@ -7,6 +7,7 @@ import {
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
+  mockable,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -47,10 +48,9 @@ import { trackManualResources } from './trackManualResources'
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  taskQueue = createTaskQueue(),
-  retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
+  pageStateHistory: PageStateHistory
 ) {
+  const taskQueue = mockable(createTaskQueue)()
   let requestRegistry: RequestRegistry | undefined
   const isEarlyRequestCollectionEnabled = configuration.trackEarlyRequests
 
@@ -73,7 +73,7 @@ export function startResourceCollection(
     }
   })
 
-  retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
+  mockable(retrieveInitialDocumentResourceTiming)(configuration, (timing) => {
     handleResource(() => processResourceEntry(timing, configuration, pageStateHistory, requestRegistry))
   })
 

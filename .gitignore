@@ -11,7 +11,7 @@ browserstack.err
 package.tgz
 docs/
 *.tsbuildinfo
-/developer-extension/.output
+/developer-extension/dist
 /developer-extension/.wxt
 
 # https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored

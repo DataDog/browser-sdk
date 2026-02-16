@@ -48,7 +48,7 @@ export type RumProfilerInstance = RumProfilerStoppedInstance | RumProfilerPaused
 
 export interface RUMProfiler {
   start: () => void
-  stop: () => Promise<void>
+  stop: () => void
   isStopped: () => boolean
   isRunning: () => boolean
   isPaused: () => boolean

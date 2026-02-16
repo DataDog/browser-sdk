@@ -1,7 +1,8 @@
 import { relativeNow, type Duration, type RelativeTime } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, replaceMockable } from '@datadog/browser-core/test'
 import { mockDocumentReadyState, mockRumConfiguration } from '../../../../test'
+import { getNavigationEntry } from '../../../browser/performanceUtils'
 import type { NavigationTimings, RelevantNavigationTiming } from './trackNavigationTimings'
 import { trackNavigationTimings } from './trackNavigationTimings'
 
@@ -36,7 +37,8 @@ describe('trackNavigationTimings', () => {
   })
 
   it('notifies navigation timings after the load event', () => {
-    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback, () => FAKE_NAVIGATION_ENTRY))
+    replaceMockable(getNavigationEntry, () => FAKE_NAVIGATION_ENTRY)
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
 
     clock.tick(0)
 
@@ -50,10 +52,11 @@ describe('trackNavigationTimings', () => {
   })
 
   it('does not report "firstByte" if "responseStart" is negative', () => {
-    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback, () => ({
+    replaceMockable(getNavigationEntry, () => ({
       ...FAKE_NAVIGATION_ENTRY,
       responseStart: -1 as RelativeTime,
-    })))
+    }))
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
 
     clock.tick(0)
 
@@ -61,10 +64,11 @@ describe('trackNavigationTimings', () => {
   })
 
   it('does not report "firstByte" if "responseStart" is in the future', () => {
-    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback, () => ({
+    replaceMockable(getNavigationEntry, () => ({
       ...FAKE_NAVIGATION_ENTRY,
       responseStart: (relativeNow() + 1) as RelativeTime,
-    })))
+    }))
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
 
     clock.tick(0)
 
@@ -72,8 +76,9 @@ describe('trackNavigationTimings', () => {
   })
 
   it('wait for the load event to provide navigation timing', () => {
+    replaceMockable(getNavigationEntry, () => FAKE_NAVIGATION_ENTRY)
     mockDocumentReadyState()
-    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback, () => FAKE_NAVIGATION_ENTRY))
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
 
     clock.tick(0)
 
@@ -81,11 +86,8 @@ describe('trackNavigationTimings', () => {
   })
 
   it('discard incomplete navigation timing', () => {
-    ;({ stop } = trackNavigationTimings(
-      mockRumConfiguration(),
-      navigationTimingsCallback,
-      () => FAKE_INCOMPLETE_NAVIGATION_ENTRY
-    ))
+    replaceMockable(getNavigationEntry, () => FAKE_INCOMPLETE_NAVIGATION_ENTRY)
+    ;({ stop } = trackNavigationTimings(mockRumConfiguration(), navigationTimingsCallback))
 
     clock.tick(0)
 

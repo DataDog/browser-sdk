@@ -1,5 +1,5 @@
 import type { Duration, ClocksState, TimeStamp } from '@datadog/browser-core'
-import { timeStampNow, Observable, getRelativeTime, relativeToClocks, generateUUID } from '@datadog/browser-core'
+import { timeStampNow, Observable, timeStampToClocks, relativeToClocks, generateUUID } from '@datadog/browser-core'
 import { isNodeShadowHost } from '../../browser/htmlDomUtils'
 import type { FrustrationType } from '../../rawRumEvent.types'
 import { ActionType } from '../../rawRumEvent.types'
@@ -305,7 +305,7 @@ function newClick(
     status = ClickStatus.STOPPED
 
     actionTrackerFinishedEvent = activityEndTime
-      ? actionTracker.stop(clickKey, relativeToClocks(getRelativeTime(activityEndTime)))
+      ? actionTracker.stop(clickKey, timeStampToClocks(activityEndTime))
       : actionTracker.discard(clickKey)
 
     stopObservable.notify()

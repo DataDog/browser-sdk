@@ -86,7 +86,6 @@ describe('viewCollection', () => {
       lifeCycle,
       hooks,
       mockRumConfiguration(partialConfiguration),
-      location,
       domMutationObservable,
       windowOpenObservable,
       locationChangeObservable,

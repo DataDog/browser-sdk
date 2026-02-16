@@ -1,12 +1,8 @@
 import { mockCookies } from '../../test'
-import { getCurrentSite, resetGetCurrentSite } from './cookie'
+import { getCurrentSite } from './cookie'
 
 describe('cookie', () => {
   describe('getCurrentSite', () => {
-    beforeEach(() => {
-      resetGetCurrentSite()
-    })
-
     it('returns the eTLD+1 for example.com', () => {
       mockCookies()
       expect(getCurrentSite('example.com')).toBe('example.com')

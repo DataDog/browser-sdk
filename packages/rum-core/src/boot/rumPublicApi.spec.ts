@@ -6,15 +6,22 @@ import {
   timeStampToClocks,
   ExperimentalFeature,
   ResourceType,
+  startTelemetry,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createFakeTelemetryObject, mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
+import {
+  createFakeTelemetryObject,
+  mockClock,
+  mockExperimentalFeatures,
+  replaceMockableWithSpy,
+} from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi } from '../../test'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
 import { makeRumPublicApi } from './rumPublicApi'
 import type { StartRum } from './startRum'
+import { startRum } from './startRum'
 
 const noopStartRum = (): ReturnType<StartRum> => ({
   addAction: () => undefined,
@@ -1095,18 +1102,17 @@ function makeRumPublicApiWithDefaults({
   startRumResult?: Partial<ReturnType<StartRum>>
   rumPublicApiOptions?: RumPublicApiOptions
 } = {}) {
-  const startRumSpy = jasmine.createSpy<StartRum>().and.callFake(() => ({
+  const startRumSpy = replaceMockableWithSpy(startRum).and.callFake(() => ({
     ...noopStartRum(),
     ...startRumResult,
   }))
+  replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   return {
     startRumSpy,
     rumPublicApi: makeRumPublicApi(
-      startRumSpy,
       { ...noopRecorderApi, ...recorderApi },
       { ...noopProfilerApi, ...profilerApi },
-      rumPublicApiOptions,
-      createFakeTelemetryObject
+      rumPublicApiOptions
     ),
   }
 }
