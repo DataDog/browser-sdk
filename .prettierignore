@@ -10,3 +10,4 @@ yarn.lock
 /developer-extension/.output
 /developer-extension/.wxt
 /test/apps/nextjs-app-router/.next
+/test/apps/nextjs-app-router/next-env.d.ts

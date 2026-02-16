@@ -12,6 +12,7 @@ export interface DatadogRumProviderProps {
 }
 
 export function DatadogRumProvider({ children }: DatadogRumProviderProps) {
+  // This ref is needed because of React <StrictMode>.
   const isSetupRef = useRef(false)
 
   useEffect(() => {
@@ -22,14 +23,9 @@ export function DatadogRumProvider({ children }: DatadogRumProviderProps) {
 
     startNextjsView(window.location.pathname)
 
-    const cleanup = setupHistoryTracking((pathname) => {
+    setupHistoryTracking((pathname) => {
       startNextjsView(pathname)
     })
-
-    return () => {
-      cleanup()
-      isSetupRef.current = false
-    }
   }, [])
 
   return <>{children}</>

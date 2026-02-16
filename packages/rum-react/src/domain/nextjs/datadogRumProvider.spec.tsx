@@ -1,13 +1,10 @@
 import React from 'react'
-import { registerCleanupTask } from '../../../../core/test'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { DatadogRumProvider } from './datadogRumProvider'
 
 describe('DatadogRumProvider', () => {
   let startViewSpy: jasmine.Spy<(name?: string | object) => void>
-  let originalPushState: History['pushState']
-  let originalReplaceState: History['replaceState']
 
   beforeEach(() => {
     startViewSpy = jasmine.createSpy()
@@ -18,14 +15,6 @@ describe('DatadogRumProvider', () => {
       publicApi: {
         startView: startViewSpy,
       },
-    })
-
-    originalPushState = history.pushState.bind(history)
-    originalReplaceState = history.replaceState.bind(history)
-
-    registerCleanupTask(() => {
-      history.pushState = originalPushState
-      history.replaceState = originalReplaceState
     })
   })
 

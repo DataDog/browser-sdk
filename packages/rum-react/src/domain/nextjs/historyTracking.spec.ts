@@ -3,21 +3,14 @@ import { setupHistoryTracking } from './historyTracking'
 
 describe('setupHistoryTracking', () => {
   let onNavigationSpy: jasmine.Spy<(pathname: string) => void>
-  let cleanup: () => void
-  let originalPushState: History['pushState']
-  let originalReplaceState: History['replaceState']
+  let stopHistoryTracking: () => void
 
   beforeEach(() => {
     onNavigationSpy = jasmine.createSpy('onNavigation')
-    originalPushState = history.pushState.bind(history)
-    originalReplaceState = history.replaceState.bind(history)
+    stopHistoryTracking = setupHistoryTracking(onNavigationSpy)
 
     registerCleanupTask(() => {
-      if (cleanup) {
-        cleanup()
-      }
-      history.pushState = originalPushState
-      history.replaceState = originalReplaceState
+      stopHistoryTracking()
     })
   })
   ;[
@@ -26,8 +19,6 @@ describe('setupHistoryTracking', () => {
     { method: 'pushState' as const, url: '/user/42?tab=profile', expected: '/user/42' },
   ].forEach(({ method, url, expected }) => {
     it(`calls callback with ${expected} when ${method} is called with ${url}`, () => {
-      cleanup = setupHistoryTracking(onNavigationSpy)
-
       history[method]({}, '', url)
 
       expect(onNavigationSpy).toHaveBeenCalledWith(expected)
@@ -35,16 +26,12 @@ describe('setupHistoryTracking', () => {
   })
 
   it('calls callback on popstate event', () => {
-    cleanup = setupHistoryTracking(onNavigationSpy)
-
     window.dispatchEvent(new PopStateEvent('popstate'))
 
     expect(onNavigationSpy).toHaveBeenCalledWith(window.location.pathname)
   })
 
   it('does not call callback when URL is null', () => {
-    cleanup = setupHistoryTracking(onNavigationSpy)
-
     history.pushState({ data: 'test' }, '')
 
     expect(onNavigationSpy).not.toHaveBeenCalled()
@@ -55,8 +42,7 @@ describe('setupHistoryTracking', () => {
     { name: 'popstate', trigger: () => window.dispatchEvent(new PopStateEvent('popstate')) },
   ].forEach(({ name, trigger }) => {
     it(`does not call callback after cleanup when ${name} is triggered`, () => {
-      cleanup = setupHistoryTracking(onNavigationSpy)
-      cleanup()
+      stopHistoryTracking()
 
       trigger()
 
@@ -65,8 +51,6 @@ describe('setupHistoryTracking', () => {
   })
 
   it('tracks multiple navigations', () => {
-    cleanup = setupHistoryTracking(onNavigationSpy)
-
     history.pushState({}, '', '/page1')
     history.pushState({}, '', '/page2')
     history.replaceState({}, '', '/page3')

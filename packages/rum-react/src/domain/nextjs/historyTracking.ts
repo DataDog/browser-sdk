@@ -1,17 +1,15 @@
-import { buildUrl, addEventListener, DOM_EVENT } from '@datadog/browser-core'
+import { buildUrl, addEventListener, instrumentMethod, DOM_EVENT } from '@datadog/browser-core'
 
 type NavigationCallback = (pathname: string) => void
 
 /**
  * Sets up History API interception to track client-side navigations.
+ * This is needed so that we can track navigations and not have race conditions with the browser.
  *
  * @param onNavigation - Callback invoked with the new pathname on each navigation
- * @returns Cleanup function to remove interception and event listeners
+ * @returns Object with a `stop` method to remove interception and event listeners
  */
 export function setupHistoryTracking(onNavigation: NavigationCallback): () => void {
-  const originalPushState = history.pushState.bind(history)
-  const originalReplaceState = history.replaceState.bind(history)
-
   function handleStateChange(_state: unknown, _unused: string, url?: string | URL | null) {
     if (url) {
       const pathname = buildUrl(String(url), window.location.href).pathname
@@ -23,21 +21,22 @@ export function setupHistoryTracking(onNavigation: NavigationCallback): () => vo
     onNavigation(window.location.pathname)
   }
 
-  // Intercept pushState
-  history.pushState = function (...args: Parameters<typeof history.pushState>) {
-    const result = originalPushState(...args)
-    handleStateChange(...args)
-    return result
-  }
+  const { stop: stopInstrumentingPushState } = instrumentMethod(
+    getHistoryInstrumentationTarget('pushState'),
+    'pushState',
+    ({ parameters, onPostCall }) => {
+      onPostCall(() => handleStateChange(...parameters))
+    }
+  )
 
-  // Intercept replaceState
-  history.replaceState = function (...args: Parameters<typeof history.replaceState>) {
-    const result = originalReplaceState(...args)
-    handleStateChange(...args)
-    return result
-  }
+  const { stop: stopInstrumentingReplaceState } = instrumentMethod(
+    getHistoryInstrumentationTarget('replaceState'),
+    'replaceState',
+    ({ parameters, onPostCall }) => {
+      onPostCall(() => handleStateChange(...parameters))
+    }
+  )
 
-  // Listen for back/forward navigation
   const { stop: stopPopStateListener } = addEventListener(
     { allowUntrustedEvents: true },
     window,
@@ -45,10 +44,13 @@ export function setupHistoryTracking(onNavigation: NavigationCallback): () => vo
     handlePopState
   )
 
-  // Return cleanup function
   return () => {
-    history.pushState = originalPushState
-    history.replaceState = originalReplaceState
+    stopInstrumentingPushState()
+    stopInstrumentingReplaceState()
     stopPopStateListener()
   }
+}
+
+function getHistoryInstrumentationTarget(methodName: 'pushState' | 'replaceState') {
+  return Object.prototype.hasOwnProperty.call(history, methodName) ? history : History.prototype
 }
