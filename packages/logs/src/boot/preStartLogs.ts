@@ -100,6 +100,11 @@ export function createPreStartStrategy(
 
       cachedConfiguration = configuration
 
+      if (!canUseEventBridge() && !configuration.sessionStoreStrategyType) {
+        display.warn('No storage available for session. We will not send any data.')
+        return
+      }
+
       // Instrument fetch to track network requests
       // This is needed in case the consent is not granted and some customer
       // library (Apollo Client) is storing uninstrumented fetch to be used later
