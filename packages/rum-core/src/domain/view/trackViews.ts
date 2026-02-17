@@ -71,6 +71,7 @@ export interface ViewCreatedEvent {
   version?: string
   context?: Context
   startClocks: ClocksState
+  url?: string
 }
 
 export interface BeforeViewUpdateEvent {
@@ -102,6 +103,7 @@ export interface ViewOptions {
   version?: RumInitConfiguration['version']
   context?: Context
   handlingStack?: string
+  url?: string
 }
 
 export function trackViews(
@@ -241,6 +243,7 @@ function newView(
     service,
     version,
     context,
+    url: viewOptions?.url,
   }
   lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, viewCreatedEvent)
   lifeCycle.notify(LifeCycleEventType.VIEW_CREATED, viewCreatedEvent)
