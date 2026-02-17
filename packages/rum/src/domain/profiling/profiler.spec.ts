@@ -21,6 +21,7 @@ import {
   readFormDataRequest,
   mockClock,
   waitNextMicrotask,
+  replaceMockable,
 } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
@@ -31,7 +32,7 @@ import type { ProfilerTrace } from './types'
 import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import type { ProfileEventPayload } from './transport/assembly'
-import type { LongTaskContext } from './longTaskHistory'
+import { createLongTaskHistory, type LongTaskContext } from './longTaskHistory'
 
 describe('profiler', () => {
   // Store the original pathname
@@ -91,6 +92,7 @@ describe('profiler', () => {
     const longTaskHistory = createValueHistory<LongTaskContext>({
       expireDelay: ONE_DAY,
     })
+    replaceMockable(createLongTaskHistory, () => longTaskHistory)
 
     // Start collection of profile.
     const profiler = createRumProfiler(
@@ -106,8 +108,7 @@ describe('profiler', () => {
         collectIntervalMs: 60000, // 1min
         minNumberOfSamples: 0,
         minProfileDurationMs: 0,
-      },
-      longTaskHistory
+      }
     )
     return {
       profiler,

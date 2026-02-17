@@ -1,4 +1,4 @@
-import type { Encoder, ValueHistory } from '@datadog/browser-core'
+import type { Encoder } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -11,6 +11,7 @@ import {
   clocksNow,
   elapsed,
   DeflateEncoderStreamId,
+  mockable,
 } from '@datadog/browser-core'
 
 import type {
@@ -34,7 +35,6 @@ import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { assembleProfilingPayload } from './transport/assembly'
-import type { LongTaskContext } from './longTaskHistory'
 import { createLongTaskHistory } from './longTaskHistory'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
@@ -51,8 +51,7 @@ export function createRumProfiler(
   profilingContextManager: ProfilingContextManager,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
-  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION,
-  longTaskHistory: Pick<ValueHistory<LongTaskContext>, 'findAll'> = createLongTaskHistory(lifeCycle)
+  profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
 ): RUMProfiler {
   const transport = createFormDataTransport(configuration, lifeCycle, createEncoder, DeflateEncoderStreamId.PROFILING)
 
@@ -60,6 +59,7 @@ export function createRumProfiler(
 
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
+  const longTaskHistory = mockable(createLongTaskHistory)(lifeCycle)
 
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
 
