@@ -1,4 +1,4 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   addDuration,
   clocksNow,
@@ -10,7 +10,7 @@ import {
   PageExitReason,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { createNewEvent, mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { createNewEvent, mockClock, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { createFakeClick, createMutationRecord, mockRumConfiguration } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
@@ -19,13 +19,11 @@ import { PAGE_ACTIVITY_VALIDATION_DELAY } from '../waitPageActivityEnd'
 import type { RumConfiguration } from '../configuration'
 import type { BrowserWindow } from '../privacy'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import type { ActionContexts, ActionTracker } from './trackAction'
 import type { ClickAction } from './trackClickActions'
 import { finalizeClicks, trackClickActions } from './trackClickActions'
 import { MAX_DURATION_BETWEEN_CLICKS } from './clickChain'
 import { getInteractionSelector, CLICK_ACTION_MAX_DURATION } from './interactionSelectorCache'
 import { ActionNameSource } from './actionNameConstants'
-import { startActionTracker } from './trackAction'
 
 // Used to wait some time after the creation of an action
 const BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY = PAGE_ACTIVITY_VALIDATION_DELAY * 0.8
@@ -52,29 +50,25 @@ describe('trackClickActions', () => {
   let domMutationObservable: Observable<RumMutationRecord[]>
   let windowOpenObservable: Observable<void>
   let clock: Clock
-  let actionTracker: ActionTracker
 
   const { events, pushEvent } = eventsCollector<ClickAction>()
   let button: HTMLButtonElement
   let emptyElement: HTMLHRElement
   let input: HTMLInputElement
-  let findActionId: ActionContexts['findActionId']
+  let findActionId: (startTime?: RelativeTime) => string[]
   let stopClickActionsTracking: () => void
 
   function startClickActionsTracking(partialConfig: Partial<RumConfiguration> = {}) {
     const subscription = lifeCycle.subscribe(LifeCycleEventType.AUTO_ACTION_COMPLETED, pushEvent)
-    actionTracker = startActionTracker(lifeCycle)
-    registerCleanupTask(() => actionTracker.stop())
 
     const trackClickActionsResult = trackClickActions(
       lifeCycle,
       domMutationObservable,
       windowOpenObservable,
-      mockRumConfiguration(partialConfig),
-      actionTracker
+      mockRumConfiguration(partialConfig)
     )
 
-    findActionId = actionTracker.findActionId
+    findActionId = trackClickActionsResult.findActionId
     stopClickActionsTracking = () => {
       trackClickActionsResult.stop()
       subscription.unsubscribe()
@@ -209,11 +203,11 @@ describe('trackClickActions', () => {
   it('discards any click action with a negative duration', () => {
     startClickActionsTracking()
     emulateClick({ activity: { delay: -1 } })
-    expect(findActionId()!.length).toEqual(2)
+    expect(findActionId().length).toEqual(2)
     clock.tick(EXPIRE_DELAY)
 
     expect(events).toEqual([])
-    expect(findActionId()).toBeUndefined()
+    expect(findActionId()).toEqual([])
   })
 
   it('ongoing click action is stopped on view end', () => {
@@ -266,7 +260,7 @@ describe('trackClickActions', () => {
     clock.tick(EXPIRE_DELAY)
     expect(events.length).toBe(1)
     expect(events[0].frustrationTypes).toEqual([FrustrationType.DEAD_CLICK])
-    expect(findActionId()).toBeUndefined()
+    expect(findActionId()).toEqual([])
   })
 
   it('does not set a duration for dead clicks', () => {
@@ -281,7 +275,7 @@ describe('trackClickActions', () => {
   it('collect click actions even if it fails to find a name', () => {
     startClickActionsTracking()
     emulateClick({ activity: {}, target: emptyElement })
-    expect(findActionId()!.length).toBeGreaterThan(0)
+    expect(findActionId().length).toBeGreaterThan(0)
     clock.tick(EXPIRE_DELAY)
 
     expect(events.length).toBe(1)

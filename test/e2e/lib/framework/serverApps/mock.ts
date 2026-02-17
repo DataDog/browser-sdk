@@ -136,6 +136,11 @@ export function createMockServerApp(
     }
   })
 
+  app.get('/graphql', (_req, res) => {
+    res.header('Content-Type', 'application/json')
+    res.json({ data: { result: 'success' } })
+  })
+
   app.get('/redirect', (req, res) => {
     const redirectUri = url.parse(req.originalUrl)
     res.redirect(`ok${redirectUri.search!}`)
