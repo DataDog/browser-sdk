@@ -22,7 +22,7 @@ describe('DatadogRumProvider', () => {
 
   it('renders children correctly', () => {
     const container = appendComponent(
-      <DatadogRumProvider>
+      <DatadogRumProvider pathname="/">
         <div data-testid="test-child">Test Content</div>
       </DatadogRumProvider>
     )
@@ -35,30 +35,27 @@ describe('DatadogRumProvider', () => {
 
   it('starts initial view on mount', () => {
     appendComponent(
-      <DatadogRumProvider>
+      <DatadogRumProvider pathname="/home">
         <div>Content</div>
       </DatadogRumProvider>
     )
 
-    expect(startViewSpy).toHaveBeenCalledWith(window.location.pathname)
+    expect(startViewSpy).toHaveBeenCalledWith('/home')
   })
 
-  it('starts a new view on navigation', () => {
+  it('starts initial view with normalized name using params', () => {
     appendComponent(
-      <DatadogRumProvider>
+      <DatadogRumProvider pathname="/user/42" params={{ id: '42' }}>
         <div>Content</div>
       </DatadogRumProvider>
     )
 
-    startViewSpy.calls.reset()
-    history.pushState({}, '', '/new-page')
-
-    expect(startViewSpy).toHaveBeenCalledWith('/new-page')
+    expect(startViewSpy).toHaveBeenCalledWith('/user/:id')
   })
 
   it('renders multiple children', () => {
     const container = appendComponent(
-      <DatadogRumProvider>
+      <DatadogRumProvider pathname="/">
         <div data-testid="child-1">Child 1</div>
         <div data-testid="child-2">Child 2</div>
         <div data-testid="child-3">Child 3</div>

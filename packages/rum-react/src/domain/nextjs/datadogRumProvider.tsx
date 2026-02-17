@@ -1,26 +1,40 @@
 'use client'
 
-import React, { type ReactNode, useEffect } from 'react'
-import { setupHistoryTracking } from './historyTracking'
-import { startNextjsView } from './viewTracking'
+import React, { type ReactNode, useEffect, useRef } from 'react'
+import { usePathname, useParams } from 'next/navigation'
+import { computeViewName, startNextjsView } from './viewTracking'
 
 export interface DatadogRumProviderProps {
   /**
    * The children components to render.
    */
   children: ReactNode
+  /**
+   * Override the current pathname for testing.
+   */
+  pathname?: string
+  /**
+   * Override the current route params for testing.
+   */
+  params?: Record<string, string | string[]>
 }
 
-export function DatadogRumProvider({ children }: DatadogRumProviderProps) {
+export function DatadogRumProvider({ children, pathname: pathnameProp, params: paramsProp }: DatadogRumProviderProps) {
+  const hookPathname = usePathname()
+  const hookParams = useParams()
+  const pathname = pathnameProp ?? hookPathname
+  const params = paramsProp ?? hookParams ?? {}
+  const previousPathnameRef = useRef<string | undefined>(undefined)
+
   useEffect(() => {
-    startNextjsView(window.location.pathname)
+    if (previousPathnameRef.current === pathname) {
+      return
+    }
+    previousPathnameRef.current = pathname
 
-    const stopHistoryTracking = setupHistoryTracking((pathname) => {
-      startNextjsView(pathname)
-    })
-
-    return stopHistoryTracking
-  }, [])
+    const viewName = computeViewName(pathname, params)
+    startNextjsView(viewName)
+  }, [pathname, params])
 
   return <>{children}</>
 }
