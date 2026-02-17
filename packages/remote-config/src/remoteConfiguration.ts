@@ -1,17 +1,9 @@
-import {
-  display,
-  buildEndpointHost,
-  getCookie,
-  isIndexableObject,
-  fetch,
-} from '@datadog/browser-core'
-import type { RumSdkConfig, DynamicOption, ContextItem } from './remoteConfiguration.types'
+import { display, buildEndpointHost, getCookie, isIndexableObject, fetch } from '@datadog/browser-core'
+import type { RumSdkConfig, DynamicOption } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
 
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
-
-type FetchRemoteConfigurationResult = { ok: true; value: RumRemoteConfiguration } | { ok: false; error: Error }
 
 export interface RemoteConfigResult {
   ok: boolean
@@ -24,9 +16,12 @@ const REMOTE_CONFIGURATION_VERSION = 'v1'
 /**
  * Fetch remote configuration from Datadog servers.
  *
- * @param options Configuration options for fetching remote configuration
+ * @param options - Configuration options for fetching remote configuration
+ * @param options.applicationId - Datadog application ID
+ * @param options.remoteConfigurationId - Remote configuration ID
+ * @param options.remoteConfigurationProxy - Optional proxy URL for remote configuration
+ * @param options.site - Optional Datadog site
  * @returns Promise with result containing the remote configuration or error
- *
  * @example
  * ```ts
  * const result = await fetchRemoteConfiguration({
@@ -75,9 +70,12 @@ export async function fetchRemoteConfiguration(options: {
 /**
  * Build the endpoint URL for remote configuration fetch.
  *
- * @param options Configuration options
+ * @param options - Configuration options
+ * @param options.applicationId - Datadog application ID
+ * @param options.remoteConfigurationId - Remote configuration ID
+ * @param options.remoteConfigurationProxy - Optional proxy URL for remote configuration
+ * @param options.site - Optional Datadog site
  * @returns The endpoint URL
- *
  * @example
  * ```ts
  * const url = buildEndpoint({
@@ -96,7 +94,9 @@ export function buildEndpoint(options: {
   if (options.remoteConfigurationProxy) {
     return options.remoteConfigurationProxy
   }
-  const host = buildEndpointHost('rum', { site: options.site } as any)
+  // buildEndpointHost only uses `site` from the config, but its signature requires full InitConfiguration.
+  // We use a targeted type assertion since we only need the site for building the host.
+  const host = buildEndpointHost('rum', { site: options.site } as { site: string | undefined; clientToken: string })
   return `https://sdk-configuration.${host}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(options.remoteConfigurationId)}.json`
 }
 
@@ -108,6 +108,7 @@ export function buildEndpoint(options: {
 /**
  * Resolve dynamic configuration values (cookies, DOM selectors, JS paths).
  * This is exposed for internal SDK use and advanced test scenarios.
+ *
  * @internal
  */
 export function resolveDynamicValues(
@@ -138,7 +139,9 @@ export function resolveDynamicValues(
     }
     const result: { [key: string]: unknown } = {}
     for (const key in configValue) {
-      result[key] = resolveDynamicValues(configValue[key], options)
+      if (Object.prototype.hasOwnProperty.call(configValue, key)) {
+        result[key] = resolveDynamicValues(configValue[key], options)
+      }
     }
     return result
   }
@@ -215,10 +218,7 @@ function isForbidden(element: Element, attribute: string | undefined) {
   return element.getAttribute('type') === 'password' && attribute === 'value'
 }
 
-function resolveJsValue(
-  { path }: { path: string },
-  options: { onJs?: (value: unknown) => void } = {}
-): unknown {
+function resolveJsValue({ path }: { path: string }, options: { onJs?: (value: unknown) => void } = {}): unknown {
   let current = window as unknown as { [key: string]: unknown }
   const pathParts = parseJsonPath(path)
   if (pathParts.length === 0) {

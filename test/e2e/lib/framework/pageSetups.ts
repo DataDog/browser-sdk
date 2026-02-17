@@ -1,5 +1,6 @@
 import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RemoteConfiguration } from '@datadog/browser-remote-config'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
 import { isBrowserStack, isContinuousIntegration } from './environment'
@@ -11,7 +12,7 @@ export interface SetupOptions {
   logs?: LogsInitConfiguration
   logsInit: (initConfiguration: LogsInitConfiguration) => void
   rumInit: (initConfiguration: RumInitConfiguration) => void
-  remoteConfiguration?: unknown
+  remoteConfiguration?: RemoteConfiguration
   eventBridge: boolean
   head?: string
   body?: string

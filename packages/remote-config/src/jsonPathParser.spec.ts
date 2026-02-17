@@ -32,7 +32,7 @@ describe('jsonPathParser', () => {
       it('should parse paths starting with bracket notation', () => {
         expect(parseJsonPath("['foo']")).toEqual(['foo'])
         expect(parseJsonPath("['foo'].bar")).toEqual(['foo', 'bar'])
-        expect(parseJsonPath("[0].foo")).toEqual(['0', 'foo'])
+        expect(parseJsonPath('[0].foo')).toEqual(['0', 'foo'])
       })
 
       it('should handle identifiers with special characters', () => {
@@ -44,7 +44,7 @@ describe('jsonPathParser', () => {
       })
 
       it('should handle escaped characters in bracket notation', () => {
-        expect(parseJsonPath("['foo\\'bar']")).toEqual(['foo\'bar'])
+        expect(parseJsonPath("['foo\\'bar']")).toEqual(["foo'bar"])
         expect(parseJsonPath('["foo\\"bar"]')).toEqual(['foo"bar'])
         expect(parseJsonPath("['foo\\\\bar']")).toEqual(['foo\\bar'])
         expect(parseJsonPath("['foo\\nbar']")).toEqual(['foo\nbar'])
@@ -61,7 +61,7 @@ describe('jsonPathParser', () => {
         expect(parseJsonPath('["foo"]')).toEqual(['foo'])
         expect(parseJsonPath("['foo']['bar']")).toEqual(['foo', 'bar'])
         expect(parseJsonPath('["foo"]["bar"]')).toEqual(['foo', 'bar'])
-        expect(parseJsonPath("['foo'][\"bar\"]")).toEqual(['foo', 'bar'])
+        expect(parseJsonPath('[\'foo\']["bar"]')).toEqual(['foo', 'bar'])
       })
 
       it('should parse complex real-world-like paths', () => {
@@ -97,7 +97,7 @@ describe('jsonPathParser', () => {
       })
 
       it('should return empty array for mismatched quotes', () => {
-        expect(parseJsonPath("['foo\"]")).toEqual([])
+        expect(parseJsonPath('[\'foo"]')).toEqual([])
         expect(parseJsonPath('[\"foo\']')).toEqual([])
       })
 

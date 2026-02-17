@@ -32,10 +32,7 @@ import {
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
-import {
-  validateAndBuildRumConfiguration,
-  serializeRumConfiguration,
-} from '../domain/configuration'
+import { validateAndBuildRumConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
   DurationVital,

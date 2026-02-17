@@ -21,7 +21,7 @@ import { fetchRemoteConfiguration } from '@datadog/browser-remote-config'
 
 const result = await fetchRemoteConfiguration({
   applicationId: 'your-app-id',
-  remoteConfigurationId: 'your-remote-config-id'
+  remoteConfigurationId: 'your-remote-config-id',
 })
 
 if (result.ok) {
@@ -41,7 +41,7 @@ import { datadogRum } from '@datadog/browser-rum'
 // Fetch remote configuration
 const remoteConfigResult = await fetchRemoteConfiguration({
   applicationId: 'your-app-id',
-  remoteConfigurationId: 'your-remote-config-id'
+  remoteConfigurationId: 'your-remote-config-id',
 })
 
 // Merge with local configuration
@@ -70,7 +70,7 @@ If you need to route requests through a custom proxy:
 const result = await fetchRemoteConfiguration({
   applicationId: 'your-app-id',
   remoteConfigurationId: 'your-remote-config-id',
-  remoteConfigurationProxy: 'https://your-proxy.com/config'
+  remoteConfigurationProxy: 'https://your-proxy.com/config',
 })
 ```
 
@@ -81,6 +81,7 @@ const result = await fetchRemoteConfiguration({
 Fetches remote configuration from Datadog servers.
 
 **Parameters:**
+
 - `applicationId` (string): Your Datadog application ID
 - `remoteConfigurationId` (string): The ID of the remote configuration
 - `remoteConfigurationProxy` (string, optional): Custom proxy URL
@@ -89,9 +90,7 @@ Fetches remote configuration from Datadog servers.
 **Returns:** Promise<RemoteConfigResult>
 
 ```typescript
-type RemoteConfigResult =
-  | { ok: true; value: RumRemoteConfiguration }
-  | { ok: false; error: Error }
+type RemoteConfigResult = { ok: true; value: RumRemoteConfiguration } | { ok: false; error: Error }
 ```
 
 ### `buildEndpoint(options)`
@@ -99,6 +98,7 @@ type RemoteConfigResult =
 Constructs the endpoint URL for remote configuration fetch.
 
 **Parameters:**
+
 - Same as `fetchRemoteConfiguration`
 
 **Returns:** string (the endpoint URL)

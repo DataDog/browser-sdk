@@ -11,7 +11,7 @@ import { writeFile } from 'node:fs/promises'
 const bundle = await generateBundle({
   applicationId: 'your-app-id',
   remoteConfigurationId: 'your-config-id',
-  variant: 'rum'
+  variant: 'rum',
 })
 
 await writeFile('./datadog-bundle.js', bundle)
@@ -25,24 +25,24 @@ Generate a browser-ready bundle combining SDK and embedded remote configuration.
 
 **Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `applicationId` | `string` | Yes | Datadog application ID |
-| `remoteConfigurationId` | `string` | Yes | Remote configuration ID |
-| `variant` | `'rum' \| 'rum-slim'` | Yes | SDK variant (full or lightweight) |
-| `site` | `string` | No | Datadog site (default: `'datadoghq.com'`, use `'datadoghq.eu'` for EU) |
-| `datacenter` | `string` | No | CDN datacenter (default: `'us1'`) |
+| Parameter               | Type                  | Required | Description                                                            |
+| ----------------------- | --------------------- | -------- | ---------------------------------------------------------------------- |
+| `applicationId`         | `string`              | Yes      | Datadog application ID                                                 |
+| `remoteConfigurationId` | `string`              | Yes      | Remote configuration ID                                                |
+| `variant`               | `'rum' \| 'rum-slim'` | Yes      | SDK variant (full or lightweight)                                      |
+| `site`                  | `string`              | No       | Datadog site (default: `'datadoghq.com'`, use `'datadoghq.eu'` for EU) |
+| `datacenter`            | `string`              | No       | CDN datacenter (default: `'us1'`)                                      |
 
 **Returns:** `Promise<string>` — Generated JavaScript bundle
 
 **Errors:**
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `applicationId is required` | Missing required parameter | Provide your Datadog application ID from RUM > Settings |
-| `Invalid variant` | variant is not `'rum'` or `'rum-slim'` | Use one of the two supported variants |
-| `Failed to fetch remote configuration` | Config ID invalid or doesn't exist | Verify `remoteConfigurationId` in Datadog UI > Remote Configuration |
-| `SDK bundle not found` | Invalid variant or SDK version | Check variant spelling and ensure SDK version is available |
+| Error                                  | Cause                                  | Solution                                                            |
+| -------------------------------------- | -------------------------------------- | ------------------------------------------------------------------- |
+| `applicationId is required`            | Missing required parameter             | Provide your Datadog application ID from RUM > Settings             |
+| `Invalid variant`                      | variant is not `'rum'` or `'rum-slim'` | Use one of the two supported variants                               |
+| `Failed to fetch remote configuration` | Config ID invalid or doesn't exist     | Verify `remoteConfigurationId` in Datadog UI > Remote Configuration |
+| `SDK bundle not found`                 | Invalid variant or SDK version         | Check variant spelling and ensure SDK version is available          |
 
 ## Build Tool Integration Examples
 
@@ -58,7 +58,7 @@ import { writeFile } from 'node:fs/promises'
 const bundle = await generateBundle({
   applicationId: process.env.DATADOG_APP_ID!,
   remoteConfigurationId: process.env.DATADOG_CONFIG_ID!,
-  variant: 'rum'
+  variant: 'rum',
 })
 
 await writeFile('./public/datadog-rum.js', bundle)
@@ -107,9 +107,9 @@ module.exports = {
     new DatadogBundlePlugin({
       applicationId: process.env.DATADOG_APP_ID,
       remoteConfigurationId: process.env.DATADOG_CONFIG_ID,
-      variant: 'rum'
-    })
-  ]
+      variant: 'rum',
+    }),
+  ],
 }
 ```
 
@@ -129,12 +129,12 @@ export default defineConfig({
         const bundle = await generateBundle({
           applicationId: process.env.DATADOG_APP_ID!,
           remoteConfigurationId: process.env.DATADOG_CONFIG_ID!,
-          variant: 'rum'
+          variant: 'rum',
         })
         await writeFile('./public/datadog-rum.js', bundle)
-      }
-    }
-  ]
+      },
+    },
+  ],
 })
 ```
 
@@ -143,20 +143,22 @@ export default defineConfig({
 ### Getting Your IDs
 
 **Application ID:**
+
 1. Go to Datadog UI > Real User Monitoring > Settings
 2. Copy the Application ID
 
 **Configuration ID:**
+
 1. Go to Datadog UI > Remote Configuration
 2. Create or select a configuration
 3. Copy the Configuration ID
 
 ### Variants
 
-| Variant | Size | Features |
-|---------|------|----------|
-| `rum` | ~100KB minified | RUM collection, session replay, profiling |
-| `rum-slim` | ~50KB minified | Core RUM collection only |
+| Variant    | Size            | Features                                  |
+| ---------- | --------------- | ----------------------------------------- |
+| `rum`      | ~100KB minified | RUM collection, session replay, profiling |
+| `rum-slim` | ~50KB minified  | Core RUM collection only                  |
 
 ## Performance
 

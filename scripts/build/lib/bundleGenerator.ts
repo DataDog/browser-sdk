@@ -21,6 +21,7 @@ export type SdkVariant = 'rum' | 'rum-slim'
 
 /**
  * Options for fetching remote configuration.
+ *
  * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export interface FetchConfigOptions {
@@ -82,29 +83,38 @@ function getMajorVersion(version: string): number {
  *
  * Uses the @datadog/browser-remote-config package to fetch and validate configuration.
  *
+ * @internal Use {@link generateBundle} instead for end-to-end workflow.
  * @param options - Configuration options including applicationId and remoteConfigurationId
  * @returns Promise resolving to the remote configuration result
  * @throws Error if configuration cannot be fetched or is invalid
- * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export async function fetchConfig(options: FetchConfigOptions): Promise<{
-  ok: boolean
-  value?: {
+  ok: true
+  value: {
     applicationId: string
     [key: string]: unknown
   }
-  error?: Error
 }> {
   // Dynamic import to avoid issues with ESM/CJS interop in Node.js scripts
+  // eslint-disable-next-line import/no-extraneous-dependencies
   const { fetchRemoteConfiguration } = await import('@datadog/browser-remote-config')
 
-  const result = await fetchRemoteConfiguration({
-    applicationId: options.applicationId,
-    remoteConfigurationId: options.remoteConfigurationId,
-    site: options.site,
-  })
+  const CONFIG_FETCH_TIMEOUT_MS = 30_000
+  const result = await Promise.race([
+    fetchRemoteConfiguration({
+      applicationId: options.applicationId,
+      remoteConfigurationId: options.remoteConfigurationId,
+      site: options.site,
+    }),
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Timeout fetching remote configuration (${CONFIG_FETCH_TIMEOUT_MS}ms)`)),
+        CONFIG_FETCH_TIMEOUT_MS
+      )
+    ),
+  ])
 
-  if (!result.ok) {
+  if (!result.ok || !result.value) {
     throw new Error(
       `Failed to fetch remote configuration: ${result.error?.message}\n` +
         `Verify applicationId "${options.applicationId}" and ` +
@@ -112,11 +122,12 @@ export async function fetchConfig(options: FetchConfigOptions): Promise<{
     )
   }
 
-  return result
+  return { ok: true, value: result.value }
 }
 
 /**
  * Options for downloading SDK from CDN.
+ *
  * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export interface DownloadSDKOptions {
@@ -133,10 +144,10 @@ export interface DownloadSDKOptions {
  * The version is automatically determined from the browserSdkVersion.
  * Results are cached in-memory; repeated calls with the same variant skip the network request.
  *
+ * @internal Use {@link generateBundle} instead for end-to-end workflow.
  * @param options - SDK variant string or download options object
  * @returns Promise resolving to SDK JavaScript code as string
  * @throws Error if download fails (network error, 404, timeout)
- * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Promise<string> {
   const variant = typeof options === 'string' ? options : options.variant
@@ -145,7 +156,7 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
   const version = browserSdkVersion
   const majorVersion = getMajorVersion(version)
 
-  const cacheKey = `${variant}-${majorVersion}`
+  const cacheKey = `${variant}-${majorVersion}-${datacenter}`
   const cached = sdkCache.get(cacheKey)
   if (cached) {
     return cached
@@ -169,12 +180,12 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
       }
 
       if (!res.statusCode || res.statusCode >= 400) {
-        reject(new Error(`Failed to download SDK from CDN: HTTP ${res.statusCode}\n` + `URL: ${cdnUrl}`))
+        reject(new Error(`Failed to download SDK from CDN: HTTP ${res.statusCode}\nURL: ${cdnUrl}`))
         return
       }
 
       res.on('data', (chunk: Buffer | string) => {
-        data += chunk
+        data += String(chunk)
       })
 
       res.on('end', () => {
@@ -183,12 +194,12 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
     })
 
     request.on('error', (error: Error) => {
-      reject(new Error(`Network error downloading SDK from CDN:\n` + `URL: ${cdnUrl}\n` + `Error: ${error.message}`))
+      reject(new Error(`Network error downloading SDK from CDN:\nURL: ${cdnUrl}\nError: ${error.message}`))
     })
 
     request.on('timeout', () => {
       request.destroy()
-      reject(new Error(`Timeout downloading SDK from CDN (30s):\n` + `URL: ${cdnUrl}`))
+      reject(new Error(`Timeout downloading SDK from CDN (30s):\nURL: ${cdnUrl}`))
     })
   })
 
@@ -204,9 +215,9 @@ export async function downloadSDK(options: SdkVariant | DownloadSDKOptions): Pro
  * 2. Includes the SDK code
  * 3. Auto-initializes the SDK with the embedded config
  *
+ * @internal Use {@link generateBundle} instead for end-to-end workflow.
  * @param options - Bundle generation options (sdkCode, config, variant)
  * @returns Generated JavaScript bundle as string
- * @internal Use {@link generateBundle} instead for end-to-end workflow.
  */
 export function generateCombinedBundle(options: CombineBundleOptions): string {
   const { sdkCode, config, variant } = options
@@ -255,8 +266,6 @@ const VALID_VARIANTS: SdkVariant[] = ['rum', 'rum-slim']
  *
  * @param options - Configuration options for bundle generation
  * @returns Promise resolving to the generated JavaScript bundle as a string
- * @throws Error if input validation fails or network requests fail
- *
  * @example
  * ```typescript
  * import { generateBundle } from './bundleGenerator'
@@ -310,13 +319,14 @@ export async function generateBundle(options: GenerateBundleOptions): Promise<st
 
   return generateCombinedBundle({
     sdkCode,
-    config: configResult.value!,
+    config: configResult.value,
     variant: options.variant,
   })
 }
 
 /**
  * Clear the in-memory SDK cache. Exported for testing only.
+ *
  * @internal
  */
 export function clearSdkCache(): void {

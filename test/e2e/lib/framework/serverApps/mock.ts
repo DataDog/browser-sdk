@@ -1,5 +1,6 @@
 import type { ServerResponse } from 'http'
 import * as url from 'url'
+import type { RemoteConfiguration } from '@datadog/browser-remote-config'
 import cors from 'cors'
 import express from 'express'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
