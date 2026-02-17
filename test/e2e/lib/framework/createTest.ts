@@ -325,7 +325,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
 
     try {
       await runner(testContext)
-      tearDownPassedTest(testContext)
+      if (!setupOptions.nextjsApp) {
+        tearDownPassedTest(testContext)
+      }
     } finally {
       await tearDownTest(testContext)
     }
