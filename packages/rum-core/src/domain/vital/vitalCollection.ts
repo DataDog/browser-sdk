@@ -68,6 +68,7 @@ export interface DurationVitalReference {
 }
 
 export interface DurationVitalStart extends DurationVitalOptions {
+  id: string
   name: string
   startClocks: ClocksState
   handlingStack?: string
@@ -116,6 +117,12 @@ export function startVitalCollection(
     }
   }
 
+  function addDurationVitalWithId(vital: DurationVital, vitalId: string) {
+    if (isValid(vital)) {
+      lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processVital(vital, vitalId))
+    }
+  }
+
   function addOperationStepVital(
     name: string,
     stepType: 'start' | 'end',
@@ -145,19 +152,22 @@ export function startVitalCollection(
     addOperationStepVital,
     addDurationVital,
     startDurationVital: (name: string, options: DurationVitalOptions = {}) =>
-      startDurationVital(customVitalsState, name, options),
+      startDurationVital(customVitalsState, lifeCycle, name, options),
     stopDurationVital: (nameOrRef: string | DurationVitalReference, options: DurationVitalOptions = {}) => {
-      stopDurationVital(addDurationVital, customVitalsState, nameOrRef, options)
+      stopDurationVital(addDurationVitalWithId, customVitalsState, nameOrRef, options)
     },
   }
 }
 
 export function startDurationVital(
   { vitalsByName, vitalsByReference }: CustomVitalsState,
+  lifeCycle: LifeCycle,
   name: string,
   options: DurationVitalOptions = {}
 ) {
+  const vitalId = generateUUID()
   const vital = {
+    id: vitalId,
     name,
     startClocks: clocksNow(),
     ...options,
@@ -171,11 +181,13 @@ export function startDurationVital(
   // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
   vitalsByReference.set(reference, vital)
 
+  lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, vital)
+
   return reference
 }
 
 export function stopDurationVital(
-  stopCallback: (vital: DurationVital) => void,
+  stopCallback: (vital: DurationVital, vitalId: string) => void,
   { vitalsByName, vitalsByReference }: CustomVitalsState,
   nameOrRef: string | DurationVitalReference,
   options: DurationVitalOptions = {}
@@ -186,7 +198,7 @@ export function stopDurationVital(
     return
   }
 
-  stopCallback(buildDurationVital(vitalStart, vitalStart.startClocks, options, clocksNow()))
+  stopCallback(buildDurationVital(vitalStart, vitalStart.startClocks, options, clocksNow()), vitalStart.id)
 
   if (typeof nameOrRef === 'string') {
     vitalsByName.delete(nameOrRef)
@@ -212,10 +224,13 @@ function buildDurationVital(
   }
 }
 
-function processVital(vital: DurationVital | OperationStepVital): RawRumEventCollectedData<RawRumVitalEvent> {
+function processVital(
+  vital: DurationVital | OperationStepVital,
+  vitalId?: string
+): RawRumEventCollectedData<RawRumVitalEvent> {
   const { startClocks, type, name, description, context, handlingStack } = vital
   const vitalData = {
-    id: generateUUID(),
+    id: vitalId ?? generateUUID(),
     type,
     name,
     description,
