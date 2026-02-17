@@ -10,7 +10,7 @@ describe('fetch', () => {
   })
 
   it('does not use the Zone.js function', async () => {
-    const nativeFetchSpy = vi.spyOn(window, 'fetch')
+    const nativeFetchSpy = vi.spyOn(window, 'fetch').mockResolvedValue(new Response())
     const zoneJsFetchSpy = vi.fn()
 
     zoneJs.replaceProperty(window, 'fetch', zoneJsFetchSpy)
@@ -22,7 +22,7 @@ describe('fetch', () => {
   })
 
   it('calls the native fetch function with correct arguments', async () => {
-    const nativeFetchSpy = vi.spyOn(window, 'fetch')
+    const nativeFetchSpy = vi.spyOn(window, 'fetch').mockResolvedValue(new Response())
     const zoneJsFetchSpy = vi.fn()
 
     zoneJs.replaceProperty(window, 'fetch', zoneJsFetchSpy)

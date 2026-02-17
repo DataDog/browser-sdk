@@ -115,7 +115,13 @@ describe('getNodePrivacyLevel', () => {
       const node = document.createElement('div')
       ancestor.appendChild(node)
 
-      const parentNodeGetterSpy = vi.spyOn(node, 'parentNode').mockReturnValue(ancestor)
+      // Use Object.defineProperty instead of vi.spyOn — native DOM getters
+      // throw "Illegal invocation" when proxied through vi.spyOn.
+      const parentNodeGetterSpy = vi.fn(() => ancestor)
+      Object.defineProperty(node, 'parentNode', {
+        get: parentNodeGetterSpy,
+        configurable: true,
+      })
 
       const cache = new Map()
       cache.set(node, NodePrivacyLevel.MASK_USER_INPUT)
