@@ -1,4 +1,4 @@
-import { isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
+import { buildUrl, isNonEmptyArray, matchList, ONE_KIBI_BYTE, safeTruncate } from '@datadog/browser-core'
 import type { RumConfiguration, GraphQlUrlOption } from '../configuration'
 import type { RequestCompleteEvent } from '../requestCollection'
 
@@ -6,6 +6,12 @@ import type { RequestCompleteEvent } from '../requestCollection'
  * arbitrary value, byte precision not needed
  */
 const GRAPHQL_PAYLOAD_LIMIT = 32 * ONE_KIBI_BYTE
+
+interface RawGraphQlMetadata {
+  query?: string
+  operationName?: string
+  variables?: string
+}
 
 export interface GraphQlError {
   message: string
@@ -27,7 +33,7 @@ export function extractGraphQlMetadata(
   request: RequestCompleteEvent,
   graphQlConfig: GraphQlUrlOption
 ): GraphQlMetadata | undefined {
-  const metadata = extractGraphQlRequestMetadata(request.requestBody, graphQlConfig.trackPayload)
+  const metadata = extractGraphQlRequestMetadata(request, graphQlConfig.trackPayload)
   if (!metadata) {
     return
   }
@@ -44,13 +50,7 @@ export function extractGraphQlMetadata(
 }
 
 export function parseGraphQlResponse(responseText: string): GraphQlError[] | undefined {
-  let response: unknown
-  try {
-    response = JSON.parse(responseText)
-  } catch {
-    // Invalid JSON response
-    return
-  }
+  const response = tryJsonParse<unknown>(responseText)
 
   if (!response || typeof response !== 'object') {
     return
@@ -81,50 +81,78 @@ export function findGraphQlConfiguration(url: string, configuration: RumConfigur
 }
 
 export function extractGraphQlRequestMetadata(
-  requestBody: unknown,
+  request: Pick<RequestCompleteEvent, 'method' | 'url' | 'requestBody'>,
   trackPayload: boolean = false
 ): GraphQlMetadata | undefined {
+  let rawMetadata: RawGraphQlMetadata | undefined
+
+  if (request.method === 'POST') {
+    rawMetadata = extractFromBody(request.requestBody)
+  } else if (request.method === 'GET') {
+    rawMetadata = extractFromUrlQueryParams(request.url)
+  }
+
+  if (!rawMetadata) {
+    return
+  }
+
+  return sanitizeGraphQlMetadata(rawMetadata, trackPayload)
+}
+
+function extractFromBody(requestBody: unknown): RawGraphQlMetadata | undefined {
   if (!requestBody || typeof requestBody !== 'string') {
     return
   }
 
-  let graphqlBody: {
+  const graphqlBody = tryJsonParse<{
     query?: string
     operationName?: string
     variables?: unknown
-  }
-
-  try {
-    graphqlBody = JSON.parse(requestBody)
-  } catch {
-    // Not valid JSON
-    return
-  }
+  }>(requestBody)
 
   if (!graphqlBody) {
     return
   }
 
+  return {
+    query: graphqlBody.query,
+    operationName: graphqlBody.operationName,
+    variables: graphqlBody.variables ? JSON.stringify(graphqlBody.variables) : undefined,
+  }
+}
+
+function extractFromUrlQueryParams(url: string): RawGraphQlMetadata {
+  const searchParams = buildUrl(url).searchParams
+  const variablesParam = searchParams.get('variables')
+  const variables = variablesParam && tryJsonParse(variablesParam) !== undefined ? variablesParam : undefined
+
+  return {
+    query: searchParams.get('query') || undefined,
+    operationName: searchParams.get('operationName') || undefined,
+    variables,
+  }
+}
+
+function sanitizeGraphQlMetadata(rawMetadata: RawGraphQlMetadata, trackPayload: boolean): GraphQlMetadata {
   let operationType: 'query' | 'mutation' | 'subscription' | undefined
   let payload: string | undefined
+  let variables: string | undefined
 
-  if (graphqlBody.query) {
-    const trimmedQuery = graphqlBody.query.trim()
+  if (rawMetadata.query) {
+    const trimmedQuery = rawMetadata.query.trim()
     operationType = getOperationType(trimmedQuery)
     if (trackPayload) {
       payload = safeTruncate(trimmedQuery, GRAPHQL_PAYLOAD_LIMIT, '...')
     }
   }
 
-  const operationName = graphqlBody.operationName
-  let variables: string | undefined
-  if (graphqlBody.variables) {
-    variables = JSON.stringify(graphqlBody.variables)
+  if (rawMetadata.variables) {
+    variables = rawMetadata.variables
   }
 
   return {
     operationType,
-    operationName,
+    operationName: rawMetadata.operationName,
     variables,
     payload,
   }
@@ -132,4 +160,12 @@ export function extractGraphQlRequestMetadata(
 
 function getOperationType(query: string) {
   return query.match(/^\s*(query|mutation|subscription)\b/i)?.[1] as 'query' | 'mutation' | 'subscription' | undefined
+}
+
+function tryJsonParse<T = unknown>(text: string): T | undefined {
+  try {
+    return JSON.parse(text) as T
+  } catch {
+    return undefined
+  }
 }
