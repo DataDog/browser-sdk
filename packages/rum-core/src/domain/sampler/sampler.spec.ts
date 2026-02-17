@@ -24,9 +24,10 @@ describe('isSampled', () => {
   })
 
   describe('with bigint support', () => {
-    beforeEach(() => {
+    beforeEach((ctx) => {
       if (!window.BigInt) {
-        return // skip: 'BigInt is not supported'
+        ctx.skip()
+        return
       }
     })
 
@@ -60,11 +61,12 @@ describe('isSampled', () => {
   })
 
   describe('without bigint support', () => {
-    beforeEach(() => {
+    beforeEach((ctx) => {
       // @ts-expect-error BigInt might not be defined depending on the browser where we execute
       // the tests
       if (window.BigInt) {
-        return // skip: 'BigInt is supported'
+        ctx.skip()
+        return
       }
     })
 
@@ -77,9 +79,10 @@ describe('isSampled', () => {
 })
 
 describe('sampleUsingKnuthFactor', () => {
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!window.BigInt) {
-      return // skip: 'BigInt is not supported'
+      ctx.skip()
+      return
     }
   })
 

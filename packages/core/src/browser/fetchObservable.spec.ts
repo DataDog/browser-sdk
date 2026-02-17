@@ -79,9 +79,10 @@ describe('fetch proxy', () => {
     })
   }))
 
-  it('should track fetch aborted by AbortController', () => new Promise<void>((resolve) => {
+  it('should track fetch aborted by AbortController', (ctx) => new Promise<void>((resolve) => {
     if (!window.AbortController) {
-      return resolve() // skip: 'AbortController is not supported'
+      ctx.skip()
+      return resolve()
     }
 
     const controller = new AbortController()

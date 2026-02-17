@@ -11,9 +11,10 @@ describe('trackViewportResize', () => {
   let viewportResizeTracker: Tracker
   let emitRecordCallback: Mock<EmitRecordCallback>
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!window.visualViewport) {
-      return // skip: 'visualViewport not supported'
+      ctx.skip()
+      return
     }
 
     emitRecordCallback = vi.fn()

@@ -91,9 +91,10 @@ describe('trackMouseInteraction', () => {
   describe('forced layout issue', () => {
     let coordinatesComputed: boolean
 
-    beforeEach(() => {
+    beforeEach((ctx) => {
       if (!window.visualViewport) {
-        return // skip: 'no visualViewport'
+        ctx.skip()
+        return
       }
 
       coordinatesComputed = false

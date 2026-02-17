@@ -37,9 +37,10 @@ describe('takeFullSnapshot', () => {
     )
   })
 
-  it('should produce VisualViewport records when supported', () => {
+  it('should produce VisualViewport records when supported', (ctx) => {
     if (!window.visualViewport) {
-      return // skip: 'visualViewport not supported'
+      ctx.skip()
+      return
     }
 
     expect(takeFullSnapshot()).toEqual(

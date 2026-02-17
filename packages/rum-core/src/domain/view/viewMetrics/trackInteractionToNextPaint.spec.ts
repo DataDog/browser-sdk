@@ -57,9 +57,10 @@ describe('trackInteractionToNextPaint', () => {
     })
   }
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isInteractionToNextPaintSupported()) {
-      return // skip: 'No INP support'
+      ctx.skip()
+      return
     }
   })
 

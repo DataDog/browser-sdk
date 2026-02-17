@@ -33,24 +33,24 @@ describe('sanitize', () => {
       expect(sanitize(testFunction)).toBe('[Function] testFunction')
     })
 
-    it('should handle bigint', () => {
+    it('should handle bigint', (ctx) => {
       const bigIntFunction: (val: number) => any = (window as any).BigInt
-      if (typeof bigIntFunction === 'function') {
-        const bigint = bigIntFunction(2)
-        expect(sanitize(bigint)).toEqual('[BigInt] 2')
-      } else {
-        return // skip: 'BigInt is not supported on this browser'
+      if (typeof bigIntFunction !== 'function') {
+        ctx.skip()
+        return
       }
+      const bigint = bigIntFunction(2)
+      expect(sanitize(bigint)).toEqual('[BigInt] 2')
     })
 
-    it('shoud handle symbols', () => {
+    it('shoud handle symbols', (ctx) => {
       const symbolFunction: (description: string) => any = (window as any).Symbol
-      if (typeof symbolFunction === 'function') {
-        const symbol = symbolFunction('description')
-        expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
-      } else {
-        return // skip: 'Symbol is not supported on this browser'
+      if (typeof symbolFunction !== 'function') {
+        ctx.skip()
+        return
       }
+      const symbol = symbolFunction('description')
+      expect(sanitize(symbol)).toMatch(/\[Symbol\] (?:Symbol\()?description\)?/)
     })
   })
 

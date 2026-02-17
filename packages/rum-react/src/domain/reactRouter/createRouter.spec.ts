@@ -15,9 +15,10 @@ describe('createRouter', () => {
       let startViewSpy: Mock<(name?: string | object) => void>
       let router: ReturnType<typeof createMemoryRouter>
 
-      beforeEach(() => {
+      beforeEach((ctx) => {
         if (!window.AbortController) {
-          return // skip: 'createMemoryRouter relies on AbortController'
+          ctx.skip()
+          return
         }
 
         startViewSpy = vi.fn()

@@ -443,9 +443,10 @@ describe('view metrics', () => {
   })
 
   describe('common view metrics', () => {
-    it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', () => {
+    it('should be updated when notified with a PERFORMANCE_ENTRY_COLLECTED event (throttled)', (ctx) => {
       if (!isLayoutShiftSupported()) {
-        return // skip: 'CLS web vital not supported'
+        ctx.skip()
+        return
       }
       const { getViewUpdateCount, getViewUpdate } = viewTest
 
@@ -469,9 +470,10 @@ describe('view metrics', () => {
       })
     })
 
-    it('should not be updated after view end', () => {
+    it('should not be updated after view end', (ctx) => {
       if (!isLayoutShiftSupported()) {
-        return // skip: 'CLS web vital not supported'
+        ctx.skip()
+        return
       }
       const { getViewUpdate, getViewUpdateCount, getViewCreateCount, startView } = viewTest
       startView()

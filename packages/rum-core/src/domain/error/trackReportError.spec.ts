@@ -22,9 +22,10 @@ describe('trackReportError', () => {
   let cspEventListener: MockCspEventListener
   let configuration: RumConfiguration
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!window.ReportingObserver) {
-      return // skip: 'ReportingObserver not supported'
+      ctx.skip()
+      return
     }
     configuration = mockRumConfiguration()
     errorObservable = new Observable()

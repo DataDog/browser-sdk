@@ -423,9 +423,10 @@ describe('record', () => {
       expect(getEmittedRecords()[0].type).toBe(RecordType.Focus)
     })
 
-    it('visual viewport resize', () => {
+    it('visual viewport resize', (ctx) => {
       if (!window.visualViewport) {
-        return // skip: 'visualViewport not supported'
+        ctx.skip()
+        return
       }
 
       visualViewport!.dispatchEvent(createNewEvent('resize'))

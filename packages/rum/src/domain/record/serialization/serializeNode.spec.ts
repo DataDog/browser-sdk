@@ -1099,9 +1099,10 @@ describe('serializeDocumentNode handles', function testAllowDomTree() {
   })
 
   describe('with dynamic stylesheet', () => {
-    it('serializes a document with adoptedStyleSheets', () => {
+    it('serializes a document with adoptedStyleSheets', (ctx) => {
       if (!isAdoptedStyleSheetsSupported()) {
-        return // skip: 'no adoptedStyleSheets support'
+        ctx.skip()
+        return
       }
 
       const styleSheet = new window.CSSStyleSheet()

@@ -9,9 +9,10 @@ describe('serializeStyleSheets', () => {
   let stats: SerializationStats
   let transaction: SerializationTransaction
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isAdoptedStyleSheetsSupported()) {
-      return // skip: 'no adoptedStyleSheets support'
+      ctx.skip()
+      return
     }
     stats = createSerializationStats()
     transaction = createSerializationTransactionForTesting({ stats })

@@ -54,9 +54,10 @@ describe('getNavigationEntry', () => {
 })
 
 describe('findLcpResourceEntry', () => {
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!supportPerformanceTimingEvent(RumPerformanceEntryType.RESOURCE)) {
-      return // skip: 'Resource Timing Event is not supported in this browser'
+      ctx.skip()
+      return
     }
   })
 
