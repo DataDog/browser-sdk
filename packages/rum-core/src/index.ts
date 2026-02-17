@@ -16,6 +16,7 @@ export type {
   RumLongTaskEventDomainContext,
   RumErrorEventDomainContext,
   RumOtherResourceEventDomainContext,
+  RumManualResourceEventDomainContext,
   RumXhrResourceEventDomainContext,
   RumFetchResourceEventDomainContext,
   RumActionEventDomainContext,
