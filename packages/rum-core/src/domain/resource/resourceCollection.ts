@@ -25,6 +25,7 @@ import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { createSpanIdentifier } from '../tracing/identifier'
+import { startEventTracker } from '../eventTracker'
 import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
   computeResourceEntryDetails,
@@ -41,6 +42,8 @@ import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
 import type { GraphQlMetadata } from './graphql'
 import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
+import type { ManualResourceData } from './trackManualResources'
+import { trackManualResources } from './trackManualResources'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
@@ -83,10 +86,16 @@ export function startResourceCollection(
     })
   }
 
+  const resourceTracker = startEventTracker<ManualResourceData>(lifeCycle)
+  const manualResources = trackManualResources(lifeCycle, resourceTracker)
+
   return {
+    startResource: manualResources.startResource,
+    stopResource: manualResources.stopResource,
     stop: () => {
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
+      resourceTracker.stopAll()
     },
   }
 }

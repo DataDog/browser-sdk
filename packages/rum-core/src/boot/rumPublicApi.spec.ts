@@ -6,6 +6,7 @@ import {
   timeStampToClocks,
   stopSessionManager,
   ExperimentalFeature,
+  ResourceType,
   startTelemetry,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -54,6 +55,8 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addOperationStepVital: () => undefined,
   startAction: () => undefined,
   stopAction: () => undefined,
+  startResource: () => undefined,
+  stopResource: () => undefined,
 })
 const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
@@ -839,6 +842,94 @@ describe('rum public api', () => {
 
       expect(startActionSpy).not.toHaveBeenCalled()
       expect(stopActionSpy).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('startResource / stopResource', () => {
+    it('should call startResource and stopResource on the strategy', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
+
+      const startResourceSpy = jasmine.createSpy()
+      const stopResourceSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          startResource: startResourceSpy,
+          stopResource: stopResourceSpy,
+        },
+      })
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startResource('https://api.example.com/data', {
+        type: ResourceType.FETCH,
+        method: 'POST',
+        context: { requestId: 'abc' },
+      })
+      rumPublicApi.stopResource('https://api.example.com/data', {
+        statusCode: 200,
+        context: { responseSize: 1024 },
+      })
+
+      expect(startResourceSpy).toHaveBeenCalledWith(
+        'https://api.example.com/data',
+        jasmine.objectContaining({
+          type: ResourceType.FETCH,
+          method: 'POST',
+          context: { requestId: 'abc' },
+        })
+      )
+      expect(stopResourceSpy).toHaveBeenCalledWith(
+        'https://api.example.com/data',
+        jasmine.objectContaining({
+          statusCode: 200,
+          context: { responseSize: 1024 },
+        })
+      )
+    })
+
+    it('should sanitize startResource and stopResource inputs', () => {
+      mockExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
+
+      const startResourceSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          startResource: startResourceSpy,
+        },
+      })
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startResource('https://api.example.com/data', {
+        type: ResourceType.XHR,
+        method: 'GET',
+        context: { count: 123, nested: { foo: 'bar' } } as any,
+        resourceKey: 'resource_key',
+      })
+
+      expect(startResourceSpy.calls.argsFor(0)[1]).toEqual(
+        jasmine.objectContaining({
+          type: ResourceType.XHR,
+          method: 'GET',
+          context: { count: 123, nested: { foo: 'bar' } },
+          resourceKey: 'resource_key',
+        })
+      )
+    })
+
+    it('should not call startResource/stopResource when feature flag is disabled', () => {
+      const startResourceSpy = jasmine.createSpy()
+      const stopResourceSpy = jasmine.createSpy()
+      const { rumPublicApi } = makeRumPublicApiWithDefaults({
+        startRumResult: {
+          startResource: startResourceSpy,
+          stopResource: stopResourceSpy,
+        },
+      })
+
+      rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
+      rumPublicApi.startResource('https://api.example.com/data', { type: ResourceType.FETCH })
+      rumPublicApi.stopResource('https://api.example.com/data')
+
+      expect(startResourceSpy).not.toHaveBeenCalled()
+      expect(stopResourceSpy).not.toHaveBeenCalled()
     })
   })
 

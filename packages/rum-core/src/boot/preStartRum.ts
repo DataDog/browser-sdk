@@ -308,6 +308,16 @@ export function createPreStartStrategy(
       bufferApiCalls.add((startRumResult) => startRumResult.stopAction(name, options, stopClocks))
     },
 
+    startResource(url, options) {
+      const startClocks = clocksNow()
+      bufferApiCalls.add((startRumResult) => startRumResult.startResource(url, options, startClocks))
+    },
+
+    stopResource(url, options) {
+      const stopClocks = clocksNow()
+      bufferApiCalls.add((startRumResult) => startRumResult.stopResource(url, options, stopClocks))
+    },
+
     addError(providedError) {
       bufferApiCalls.add((startRumResult) => startRumResult.addError(providedError))
     },
