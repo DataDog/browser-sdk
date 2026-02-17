@@ -1,12 +1,14 @@
 import React from 'react'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
+import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
 import { DatadogRumProvider } from './datadogRumProvider'
 
 describe('DatadogRumProvider', () => {
   let startViewSpy: jasmine.Spy<(name?: string | object) => void>
 
   beforeEach(() => {
+    initReactOldBrowsersSupport()
     startViewSpy = jasmine.createSpy()
     initializeReactPlugin({
       configuration: {

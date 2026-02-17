@@ -1,6 +1,6 @@
 'use client'
 
-import React, { type ReactNode, useEffect, useRef } from 'react'
+import React, { type ReactNode, useEffect } from 'react'
 import { setupHistoryTracking } from './historyTracking'
 import { startNextjsView } from './viewTracking'
 
@@ -12,20 +12,14 @@ export interface DatadogRumProviderProps {
 }
 
 export function DatadogRumProvider({ children }: DatadogRumProviderProps) {
-  // This ref is needed because of React <StrictMode>.
-  const isSetupRef = useRef(false)
-
   useEffect(() => {
-    if (isSetupRef.current) {
-      return
-    }
-    isSetupRef.current = true
-
     startNextjsView(window.location.pathname)
 
-    setupHistoryTracking((pathname) => {
+    const stopHistoryTracking = setupHistoryTracking((pathname) => {
       startNextjsView(pathname)
     })
+
+    return stopHistoryTracking
   }, [])
 
   return <>{children}</>
