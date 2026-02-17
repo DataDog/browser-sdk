@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { catchUserErrors } from './catchUserErrors'
 import { display } from './display'
 

@@ -1,3 +1,4 @@
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from 'vitest'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   addDuration,

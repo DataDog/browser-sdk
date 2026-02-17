@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RumLayoutShiftAttribution } from '../../../browser/performanceObservable'
 import { getClsAttributionImpactedArea } from './getClsAttributionImpactedArea'
 import { isLayoutShiftSupported } from './trackCumulativeLayoutShift'

@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, test } from 'vitest'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { elapsed, relativeNow } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'

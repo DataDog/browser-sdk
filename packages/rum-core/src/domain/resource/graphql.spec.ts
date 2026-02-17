@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { mockRumConfiguration } from '../../../test'
 import type { RequestCompleteEvent } from '../requestCollection'
 import {

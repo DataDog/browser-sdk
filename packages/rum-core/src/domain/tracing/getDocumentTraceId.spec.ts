@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { TimeStamp } from '@datadog/browser-core'
 import {
   createDocumentTraceData,

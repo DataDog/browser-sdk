@@ -1,3 +1,4 @@
+import { describe, expect, it, test } from 'vitest'
 import { addExperimentalFeatures, type Duration, type RelativeTime, type ServerDuration } from '@datadog/browser-core'
 import { ExperimentalFeature } from '@datadog/browser-core'
 import { RumPerformanceEntryType, type RumPerformanceResourceTiming } from '../../browser/performanceObservable'

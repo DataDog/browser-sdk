@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { isAdoptedStyleSheetsSupported } from '@datadog/browser-core/test'
 import { createSerializationTransactionForTesting } from '../test/serialization.specHelper'
 import { serializeStyleSheets } from './serializeStyleSheets'

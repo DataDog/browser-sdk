@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksOrigin } from '@datadog/browser-core'
 import { registerCleanupTask, restorePageVisibility, setPageVisibility } from '@datadog/browser-core/test'

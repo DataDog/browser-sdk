@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames, relativeToClocks } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'

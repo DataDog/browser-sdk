@@ -1,3 +1,4 @@
+import { afterEach, describe, expect, it } from 'vitest'
 import { appendElement } from '../../test'
 import { getSelectorFromElement, isSelectorUniqueAmongSiblings, SHADOW_DOM_MARKER } from './getSelectorFromElement'
 

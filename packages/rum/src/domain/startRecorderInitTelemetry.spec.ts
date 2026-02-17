@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'

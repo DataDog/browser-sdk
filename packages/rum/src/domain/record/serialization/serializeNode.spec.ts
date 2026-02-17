@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
 import type { BrowserWindow } from '@datadog/browser-rum-core'
 import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
 import {

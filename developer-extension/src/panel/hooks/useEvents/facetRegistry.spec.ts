@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { isChromium } from '../../../../../packages/core/src/tools/utils/browserDetection'
 import { getAllFields } from './facetRegistry'
 

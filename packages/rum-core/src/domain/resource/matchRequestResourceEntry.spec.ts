@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks } from '@datadog/browser-core'
 import type { GlobalPerformanceBufferMock } from '../../../test'

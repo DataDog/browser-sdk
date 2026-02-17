@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
 import type { Duration, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../../domainContext.types'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'

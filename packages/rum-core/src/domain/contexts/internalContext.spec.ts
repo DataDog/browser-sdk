@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, describe, expect, it, type Mock } from 'vitest'
 import { noop, type RelativeTime } from '@datadog/browser-core'
 import { buildLocation } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../test'

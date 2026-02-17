@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
 import type { ContextManager } from '@datadog/browser-core'
 import { monitor, display, createContextManager, TrackingConsent, startTelemetry } from '@datadog/browser-core'
 import { HandlerType } from '../domain/logger'

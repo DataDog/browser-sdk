@@ -1,4 +1,5 @@
-import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
+import { describe, expect, it, test } from 'vitest'
+import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   collectAndValidateRawRumEvents,

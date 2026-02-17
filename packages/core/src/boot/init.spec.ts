@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { display } from '../tools/display'
 import { defineGlobal } from './init'
 

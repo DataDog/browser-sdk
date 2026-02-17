@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Configuration } from '../domain/configuration'
 import { withXhr, mockXhr } from '../../test'
 import type { Subscription } from '../tools/observable'

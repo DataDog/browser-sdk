@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Subscription } from '@datadog/browser-core'
 import { ONE_MINUTE, deleteCookie, setCookie } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'

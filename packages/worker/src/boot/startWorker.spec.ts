@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { DeflateWorkerAction, DeflateWorkerResponse } from '@datadog/browser-core'
 import type { WorkerScope } from './startWorker'
 import { startWorker } from './startWorker'

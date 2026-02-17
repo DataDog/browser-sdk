@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { isSampled, resetSampleDecisionCache, sampleUsingKnuthFactor } from './sampler'
 
 // UUID known to yield a low hash value using the Knuth formula, making it more likely to be sampled

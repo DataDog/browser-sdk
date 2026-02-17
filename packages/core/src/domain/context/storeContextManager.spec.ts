@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, test } from 'vitest'
 import type { Configuration } from '../configuration'
 import { createNewEvent } from '../../../test'
 import { DOM_EVENT } from '../../browser/addEventListener'

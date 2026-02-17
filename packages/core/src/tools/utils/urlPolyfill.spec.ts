@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { buildUrl, getPathName, isValidUrl, normalizeUrl, getPristineWindow } from './urlPolyfill'
 
 describe('normalize url', () => {

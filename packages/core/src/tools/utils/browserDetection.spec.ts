@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { combine } from '../mergeInto'
 import { Browser, detectBrowser } from './browserDetection'
 

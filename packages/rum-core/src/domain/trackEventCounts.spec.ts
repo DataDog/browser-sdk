@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { objectValues } from '@datadog/browser-core'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
 import { FrustrationType, RumEventType } from '../rawRumEvent.types'

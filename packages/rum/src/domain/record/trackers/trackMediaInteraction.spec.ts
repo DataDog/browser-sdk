@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { appendElement } from '../../../../../rum-core/test'
 import { IncrementalSource, MediaInteractionType, RecordType } from '../../../types'

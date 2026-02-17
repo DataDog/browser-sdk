@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import React, { act } from 'react'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { computeStackTrace, toStackTraceString } from '@datadog/browser-core'

@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { DefaultPrivacyLevel } from '@datadog/browser-core'
 import { collectAsyncCalls, registerCleanupTask } from '@datadog/browser-core/test'
 import {

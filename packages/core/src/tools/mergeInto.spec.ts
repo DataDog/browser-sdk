@@ -1,3 +1,4 @@
+import { describe, expect, it, test } from 'vitest'
 import { deepClone, mergeInto, combine } from './mergeInto'
 
 describe('mergeInto', () => {

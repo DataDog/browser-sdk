@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, describe, expect, it, type Mock } from 'vitest'
 import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'

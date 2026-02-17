@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { BufferedData, RawError } from '@datadog/browser-core'
 import { ErrorSource, ErrorHandling, Observable, BufferedDataType, clocksNow } from '@datadog/browser-core'
 import { registerCleanupTask } from '../../../../core/test'

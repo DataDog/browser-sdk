@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { mockZoneJs } from '../../test'
 
 import type { BrowserWindowWithZoneJs } from './getZoneJsOriginalValue'

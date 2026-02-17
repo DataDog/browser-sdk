@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it, test } from 'vitest'
 import { display } from '../display'
 import { registerCleanupTask } from '../../../test'
 import { sanitize } from './sanitize'

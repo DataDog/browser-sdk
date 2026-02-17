@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { ErrorHandling, ErrorSource, noop } from '@datadog/browser-core'
 import type { MockReportingObserver } from '@datadog/browser-core/test'
 import { mockReportingObserver } from '@datadog/browser-core/test'

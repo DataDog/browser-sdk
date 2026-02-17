@@ -1,3 +1,4 @@
+import { describe, expect, it, test } from 'vitest'
 import { startMockTelemetry, waitNextMicrotask } from '../../test'
 import { queueMicrotask } from './queueMicrotask'
 

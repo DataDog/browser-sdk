@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp, MatchOption } from '@datadog/browser-core'
 import {
   createTaskQueue,
@@ -846,7 +846,7 @@ describe('resourceCollection', () => {
       })
 
       it('should not emit telemetry when the max number of headers has not been reached', async () => {
-        spyOn(display, 'warn')
+        vi.spyOn(display, 'warn')
         const telemetry: MockTelemetry = startMockTelemetry()
         setupResourceCollection({ trackResourceHeaders: buildMatchHeadersForAllUrls(['x-header-0', 'x-header-1']) })
 

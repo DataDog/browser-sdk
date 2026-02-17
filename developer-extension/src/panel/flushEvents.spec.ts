@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Configuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '../../../packages/core/test'
 import type { PageMayExitEvent } from '../../../packages/core/src/browser/pageMayExitObservable'

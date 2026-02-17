@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { DISCARDED, HookNames } from '@datadog/browser-core'
 import type { LogsSessionManager } from '../logsSessionManager'

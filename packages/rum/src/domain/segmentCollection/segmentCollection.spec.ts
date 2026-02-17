@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { ClocksState, HttpRequest, HttpRequestEvent, TimeStamp } from '@datadog/browser-core'
 import { DeflateEncoderStreamId, Observable, PageExitReason } from '@datadog/browser-core'
 import type { ViewHistory, ViewHistoryEntry, RumConfiguration } from '@datadog/browser-rum-core'

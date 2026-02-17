@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { NodeType, RecordType, SnapshotFormat } from '../../types'
 import { appendElement } from '../../../../rum-core/test'
 import { takeFullSnapshot, takeNodeSnapshot } from './internalApi'

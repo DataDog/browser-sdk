@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { appendElement } from '../../test'
 import {
   NodePrivacyLevel,

@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it, test } from 'vitest'
 import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
 import {
   Observable,

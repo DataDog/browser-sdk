@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { type RelativeTime } from '@datadog/browser-core'
 import { createPerformanceEntry, mockGlobalPerformanceBuffer } from '../../test'
 import type { RumPerformanceNavigationTiming } from './performanceObservable'
