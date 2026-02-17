@@ -1,6 +1,6 @@
 import type { Subscription } from '@datadog/browser-core/src/tools/observable'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, createNewEvent, registerCleanupTask, waitAfterNextPaint } from '@datadog/browser-core/test'
+import { mockClock, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import type { ViewportDimension } from './viewportObservable'
 import { getViewportDimension, initViewportObservable } from './viewportObservable'
@@ -39,10 +39,9 @@ describe('viewportObservable', () => {
       // Add scrollbars
       document.body.style.setProperty('margin-bottom', '5000px')
       document.body.style.setProperty('margin-right', '5000px')
-      registerCleanupTask(async () => {
+      registerCleanupTask(() => {
         document.body.style.removeProperty('margin-bottom')
         document.body.style.removeProperty('margin-right')
-        await waitAfterNextPaint()
       })
 
       expect([

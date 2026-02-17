@@ -533,9 +533,14 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an accessible external stylesheet
-    vi.spyOn(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').mockReturnValue({
-      cssRules: [{ cssText: 'p { margin: 0; }' } as CSSRule] as unknown as CSSRuleList,
-    } as CSSStyleSheet)
+    // Use Object.defineProperty instead of vi.spyOn — native CSSImportRule getters
+    // throw "Illegal invocation" when proxied through vi.spyOn.
+    Object.defineProperty(styleNode.sheet!.cssRules[0], 'styleSheet', {
+      get: () => ({
+        cssRules: [{ cssText: 'p { margin: 0; }' } as CSSRule] as unknown as CSSRuleList,
+      }),
+      configurable: true,
+    })
 
     expect(getCssRulesString(styleNode.sheet)).toBe('p { margin: 0; }')
   })
@@ -544,11 +549,16 @@ describe('getCssRulesString', () => {
     styleNode.sheet!.insertRule(`@import url("${CSS_FILE_URL}");`)
 
     // Simulates an inaccessible external stylesheet
-    vi.spyOn(styleNode.sheet!.cssRules[0] as CSSImportRule, 'styleSheet').mockReturnValue({
-      get cssRules(): CSSRuleList {
-        throw new Error('Cannot access rules')
-      },
-    } as CSSStyleSheet)
+    // Use Object.defineProperty instead of vi.spyOn — native CSSImportRule getters
+    // throw "Illegal invocation" when proxied through vi.spyOn.
+    Object.defineProperty(styleNode.sheet!.cssRules[0], 'styleSheet', {
+      get: () => ({
+        get cssRules(): CSSRuleList {
+          throw new Error('Cannot access rules')
+        },
+      }),
+      configurable: true,
+    })
 
     expect(getCssRulesString(styleNode.sheet)).toBe(`@import url("${CSS_FILE_URL}");`)
   })
