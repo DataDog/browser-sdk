@@ -12,11 +12,7 @@ import type { EndpointBuilder } from '../domain/configuration'
 import { createEndpointBuilder } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
-import {
-  createHttpRequest,
-  fetchStrategy,
-  RECOMMENDED_REQUEST_BYTES_LIMIT,
-} from './httpRequest'
+import { createHttpRequest, fetchStrategy, RECOMMENDED_REQUEST_BYTES_LIMIT } from './httpRequest'
 
 describe('httpRequest', () => {
   const ENDPOINT_URL = 'http://my.website'
