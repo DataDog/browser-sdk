@@ -54,6 +54,10 @@ export function startSourceCodeContext(hooks: Hooks) {
   hooks.register(HookNames.Assemble, ({ domainContext, rawRumEvent }): DefaultRumEventAttributes | SKIPPED => {
     buildContextByFile()
 
+    if (rawRumEvent.type === 'view_update') {
+      return SKIPPED
+    }
+
     const url = getSourceUrl(domainContext, rawRumEvent)
 
     if (url) {
