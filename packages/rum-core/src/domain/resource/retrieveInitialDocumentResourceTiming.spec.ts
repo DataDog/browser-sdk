@@ -1,6 +1,8 @@
 import type { RelativeTime } from '@datadog/browser-core'
+import { replaceMockable } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockDocumentReadyState, mockRumConfiguration } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
+import { getNavigationEntry } from '../../browser/performanceUtils'
 import { FAKE_INITIAL_DOCUMENT } from './resourceUtils'
 import { retrieveInitialDocumentResourceTiming } from './retrieveInitialDocumentResourceTiming'
 
@@ -30,17 +32,16 @@ describe('rum initial document resource', () => {
   })
 
   it('uses the responseEnd to define the resource duration', (done) => {
-    retrieveInitialDocumentResourceTiming(
-      mockRumConfiguration(),
-      (timing) => {
-        expect(timing.duration).toBe(100 as RelativeTime)
-        done()
-      },
-      () =>
-        createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
-          responseEnd: 100 as RelativeTime,
-          duration: 200 as RelativeTime,
-        })
+    replaceMockable(getNavigationEntry, () =>
+      createPerformanceEntry(RumPerformanceEntryType.NAVIGATION, {
+        responseEnd: 100 as RelativeTime,
+        duration: 200 as RelativeTime,
+      })
     )
+
+    retrieveInitialDocumentResourceTiming(mockRumConfiguration(), (timing) => {
+      expect(timing.duration).toBe(100 as RelativeTime)
+      done()
+    })
   })
 })
