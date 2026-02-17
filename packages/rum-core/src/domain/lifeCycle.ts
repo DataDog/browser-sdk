@@ -6,6 +6,8 @@ import type { RequestCompleteEvent, RequestStartEvent } from './requestCollectio
 import type { AutoAction } from './action/actionCollection'
 import type { ViewEvent, ViewCreatedEvent, ViewEndedEvent, BeforeViewUpdateEvent } from './view/trackViews'
 import type { DurationVitalStart } from './vital/vitalCollection'
+import type { TrackedEventData } from './eventTracker'
+import type { ActionEventData } from './action/trackManualActions'
 
 export const enum LifeCycleEventType {
   // Contexts (like viewHistory) should be opened using prefixed BEFORE_XXX events and closed using prefixed AFTER_XXX events
@@ -36,6 +38,7 @@ export const enum LifeCycleEventType {
   RAW_RUM_EVENT_COLLECTED,
   RUM_EVENT_COLLECTED,
   RAW_ERROR_COLLECTED,
+  ACTION_STARTED,
   VITAL_STARTED,
 }
 
@@ -53,6 +56,7 @@ export const enum LifeCycleEventType {
 // * https://github.com/DataDog/browser-sdk/issues/2208
 // * https://github.com/microsoft/TypeScript/issues/54152
 declare const LifeCycleEventTypeAsConst: {
+  ACTION_STARTED: LifeCycleEventType.ACTION_STARTED
   AUTO_ACTION_COMPLETED: LifeCycleEventType.AUTO_ACTION_COMPLETED
   BEFORE_VIEW_CREATED: LifeCycleEventType.BEFORE_VIEW_CREATED
   VIEW_CREATED: LifeCycleEventType.VIEW_CREATED
@@ -74,6 +78,7 @@ declare const LifeCycleEventTypeAsConst: {
 // Note: this interface needs to be exported even if it is not used outside of this module, else TS
 // fails to build the rum-core package with error TS4058
 export interface LifeCycleEventMap {
+  [LifeCycleEventTypeAsConst.ACTION_STARTED]: TrackedEventData<ActionEventData>
   [LifeCycleEventTypeAsConst.AUTO_ACTION_COMPLETED]: AutoAction
   [LifeCycleEventTypeAsConst.BEFORE_VIEW_CREATED]: ViewCreatedEvent
   [LifeCycleEventTypeAsConst.VIEW_CREATED]: ViewCreatedEvent

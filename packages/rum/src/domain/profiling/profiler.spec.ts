@@ -33,6 +33,8 @@ import type { ProfilingContextManager } from './profilingContext'
 import { startProfilingContext } from './profilingContext'
 import type { ProfileEventPayload } from './transport/assembly'
 import { createLongTaskHistory, type LongTaskContext } from './longTaskHistory'
+import type { ActionContext } from './actionHistory'
+import { createActionHistory } from './actionHistory'
 import type { VitalContext } from './vitalHistory'
 import { createVitalHistory } from './vitalHistory'
 
@@ -75,6 +77,7 @@ describe('profiler', () => {
       sampleInterval: 10,
       longTasks: [],
       views: [],
+      actions: [],
       vitals: [],
     })
 
@@ -96,6 +99,11 @@ describe('profiler', () => {
       expireDelay: ONE_DAY,
     })
     replaceMockable(createLongTaskHistory, () => longTaskHistory)
+
+    const actionHistory = createValueHistory<ActionContext>({
+      expireDelay: ONE_DAY,
+    })
+    replaceMockable(createActionHistory, () => actionHistory)
 
     const vitalHistory = createValueHistory<VitalContext>({
       expireDelay: ONE_DAY,
@@ -124,6 +132,9 @@ describe('profiler', () => {
       mockedRumProfilerTrace,
       addLongTask: (longTask: LongTaskContext) => {
         longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
+      },
+      addAction: (action: ActionContext) => {
+        actionHistory.add(action, relativeNow()).close(addDuration(relativeNow(), action.duration))
       },
       addVital: (vital: VitalContext) => {
         vitalHistory.add(vital, relativeNow()).close(addDuration(relativeNow(), vital.duration))
@@ -296,6 +307,97 @@ describe('profiler', () => {
         startClocks: jasmine.any(Object),
         duration: 100 as Duration,
         entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+      },
+    ])
+  })
+
+  it('should collect actions happening during a profiling session', async () => {
+    const clock = mockClock()
+    const { profiler, profilingContextManager, addAction } = setupProfiler()
+
+    // Start collection of profile.
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+    addAction({
+      id: 'action-id-1',
+      label: 'action-label-1',
+      startClocks: clocksNow(),
+      duration: 50 as Duration,
+    })
+    clock.tick(50)
+
+    addAction({
+      id: 'action-id-2',
+      label: 'action-label-2',
+      startClocks: clocksNow(),
+      duration: 100 as Duration,
+    })
+
+    // Stop first profiling session (sync - state changes immediately)
+    clock.tick(105)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+
+    // Flush microtasks for first session's data collection
+    await waitNextMicrotask()
+
+    // start a new profiling session
+    profiler.start()
+    await waitForBoolean(() => profiler.isRunning())
+
+    addAction({
+      id: 'action-id-3',
+      label: 'action-label-3',
+      startClocks: clocksNow(),
+      duration: 100 as Duration,
+    })
+
+    clock.tick(500)
+
+    // stop the second profiling session (sync - state changes immediately)
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // Data collection uses Promises (microtasks), not setTimeout.
+    // With mockClock(), we can't use waitForBoolean (which polls via setTimeout).
+    // Flush microtasks: one for profiler.stop() Promise, one for transport.send()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(interceptor.requests.length).toBe(2)
+
+    const requestOne = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const requestTwo = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[1])
+
+    const traceOne = requestOne['wall-time.json']
+    const traceTwo = requestTwo['wall-time.json']
+
+    expect(requestOne.event.action?.id.length).toBe(2)
+    expect(traceOne.actions).toEqual([
+      {
+        id: 'action-id-2',
+        startClocks: jasmine.any(Object),
+        duration: 100 as Duration,
+        label: 'action-label-2',
+      },
+      {
+        id: 'action-id-1',
+        startClocks: jasmine.any(Object),
+        duration: 50 as Duration,
+        label: 'action-label-1',
+      },
+    ])
+
+    expect(requestTwo.event.action?.id.length).toBe(1)
+    expect(traceTwo.actions).toEqual([
+      {
+        id: 'action-id-3',
+        startClocks: jasmine.any(Object),
+        duration: 100 as Duration,
+        label: 'action-label-3',
       },
     ])
   })

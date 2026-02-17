@@ -27,7 +27,7 @@ export interface StartOptions {
 }
 
 export interface EventTracker<TData> {
-  start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions) => void
+  start: (key: string, startClocks: ClocksState, data: TData, options?: StartOptions) => TrackedEventData<TData>
   stop: (key: string, stopClocks: ClocksState, data?: Partial<TData>) => StoppedEvent<TData> | undefined
   discard: (key: string) => DiscardedEvent<TData> | undefined
   getCounts: (key: string) => EventCounts | undefined
@@ -35,7 +35,7 @@ export interface EventTracker<TData> {
   stopAll: () => void
 }
 
-interface TrackedEventData<TData> {
+export interface TrackedEventData<TData> {
   id: string
   key: string
   startClocks: ClocksState
@@ -66,7 +66,7 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
 
   const sessionRenewalSubscription = lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, discardAll)
 
-  function start(key: string, startClocks: ClocksState, data: TData, options?: StartOptions) {
+  function start(key: string, startClocks: ClocksState, data: TData, options?: StartOptions): TrackedEventData<TData> {
     const id = generateUUID()
 
     const historyEntry = history.add(id, startClocks.relative)
@@ -83,14 +83,17 @@ export function startEventTracker<TData>(lifeCycle: LifeCycle): EventTracker<TDa
         })
       : undefined
 
-    keyedEvents.set(key, {
+    const trackedEventData: TrackedEventData<TData> = {
       id,
       key,
       startClocks,
       data,
       historyEntry,
       eventCounts,
-    })
+    }
+
+    keyedEvents.set(key, trackedEventData)
+    return trackedEventData
   }
 
   function stop(key: string, stopClocks: ClocksState, extraData?: Partial<TData>): StoppedEvent<TData> | undefined {

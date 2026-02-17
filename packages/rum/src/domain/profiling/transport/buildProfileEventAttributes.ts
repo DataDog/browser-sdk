@@ -1,4 +1,4 @@
-import type { BrowserProfilerTrace, RumViewEntry } from '../../../types'
+import type { BrowserProfilerTrace, RumProfilerVitalEntry, RumViewEntry } from '../../../types'
 
 export interface ProfileEventAttributes {
   application: {
@@ -13,6 +13,10 @@ export interface ProfileEventAttributes {
   }
   long_task?: {
     id: string[]
+  }
+  action?: {
+    id: string[]
+    label: string[]
   }
   vital?: {
     id: string[]
@@ -39,6 +43,9 @@ export function buildProfileEventAttributes(
 
   const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
 
+  const actionIds: string[] =
+    profilerTrace.actions?.map((longTask) => longTask.id).filter((id) => id !== undefined) ?? []
+
   const { ids: vitalIds, labels: vitalLabels } = extractVitalIdsAndLabels(profilerTrace.vitals)
 
   const attributes: ProfileEventAttributes = { application: { id: applicationId } }
@@ -51,6 +58,9 @@ export function buildProfileEventAttributes(
   }
   if (longTaskIds.length) {
     attributes.long_task = { id: longTaskIds }
+  }
+  if (actionIds.length) {
+    attributes.action = { id: actionIds, label: [] }
   }
   if (vitalIds.length) {
     attributes.vital = { id: vitalIds, label: vitalLabels }
