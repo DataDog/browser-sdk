@@ -74,7 +74,24 @@ function storeSessionCookie(
  * If there is no match, return the first cookie, because that's how `getCookie()` works
  */
 export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionState {
-  return retrieveSessionCookieFromEncodedCookie(cookieOptions)
+  const cookies = getCookies(SESSION_STORE_KEY)
+  const opts = encodeCookieOptions(cookieOptions)
+
+  let sessionState: SessionState | undefined
+
+  // reverse the cookies so that if there is no match, the cookie returned is the first one
+  for (const cookie of cookies.reverse()) {
+    sessionState = toSessionState(cookie)
+
+    if (sessionState.c === opts) {
+      break
+    }
+  }
+
+  // remove the cookie options from the session state as this is not part of the session state
+  delete sessionState?.c
+
+  return sessionState ?? {}
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
@@ -107,30 +124,4 @@ function encodeCookieOptions(cookieOptions: CookieOptions): string {
   /* eslint-enable no-bitwise */
 
   return byte.toString(16) // Convert to hex string
-}
-
-/**
- * Retrieve the session state from the cookie that was set with the same cookie options.
- * If there is no match, fallback to the first cookie, (because that's how `getCookie()` works)
- * and this allows to keep the current session id when we release this feature.
- */
-function retrieveSessionCookieFromEncodedCookie(cookieOptions: CookieOptions): SessionState {
-  const cookies = getCookies(SESSION_STORE_KEY)
-  const opts = encodeCookieOptions(cookieOptions)
-
-  let sessionState: SessionState | undefined
-
-  // reverse the cookies so that if there is no match, the cookie returned is the first one
-  for (const cookie of cookies.reverse()) {
-    sessionState = toSessionState(cookie)
-
-    if (sessionState.c === opts) {
-      break
-    }
-  }
-
-  // remove the cookie options from the session state as this is not part of the session state
-  delete sessionState?.c
-
-  return sessionState ?? {}
 }
