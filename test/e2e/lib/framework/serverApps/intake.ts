@@ -5,13 +5,14 @@ import express from 'express'
 
 import cors from 'cors'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
-import type { BrowserSegment } from '@datadog/browser-rum/src/types'
+import type { BrowserProfileEvent, BrowserProfilerTrace, BrowserSegment } from '@datadog/browser-rum/src/types'
 import type {
   IntakeRegistry,
   IntakeRequest,
   LogsIntakeRequest,
   ReplayIntakeRequest,
   RumIntakeRequest,
+  ProfileIntakeRequest,
 } from '../intakeRegistry'
 
 interface IntakeRequestInfos {
@@ -65,7 +66,7 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
   let intakeType: IntakeRequest['intakeType']
   // pathname = /api/v2/rum
   const endpoint = pathname.split(/[/?]/)[3]
-  if (endpoint === 'logs' || endpoint === 'rum' || endpoint === 'replay') {
+  if (endpoint === 'logs' || endpoint === 'rum' || endpoint === 'replay' || endpoint === 'profile') {
     intakeType = endpoint
   } else {
     throw new Error("Can't find intake type")
@@ -78,9 +79,13 @@ function computeIntakeRequestInfos(req: express.Request): IntakeRequestInfos {
 }
 
 function readIntakeRequest(req: express.Request, infos: IntakeRequestInfos): Promise<IntakeRequest> {
-  return infos.intakeType === 'replay'
-    ? readReplayIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'replay' })
-    : readRumOrLogsIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'rum' | 'logs' })
+  if (infos.intakeType === 'replay') {
+    return readReplayIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'replay' })
+  }
+  if (infos.intakeType === 'profile') {
+    return readProfileIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'profile' })
+  }
+  return readRumOrLogsIntakeRequest(req, infos as IntakeRequestInfos & { intakeType: 'rum' | 'logs' })
 }
 
 async function readRumOrLogsIntakeRequest(
@@ -158,6 +163,58 @@ function readReplayIntakeRequest(
   })
 }
 
+function readProfileIntakeRequest(
+  req: express.Request,
+  infos: IntakeRequestInfos & { intakeType: 'profile' }
+): Promise<ProfileIntakeRequest> {
+  return new Promise((resolve, reject) => {
+    let eventPromise: Promise<BrowserProfileEvent>
+    let tracePromise: Promise<{
+      trace: BrowserProfilerTrace
+      encoding: string | null
+      filename: string
+      mimetype: string
+    }>
+
+    req.busboy.on('file', (name, stream, info) => {
+      const { filename, mimeType } = info
+      if (name === 'event') {
+        eventPromise = readStream(stream).then((data) => JSON.parse(data.toString()) as BrowserProfileEvent)
+      } else if (name === 'wall-time.json') {
+        tracePromise = readStream(stream).then((data) => {
+          let encoding: string | null
+          if (isDeflateEncoded(data)) {
+            encoding = 'deflate'
+            data = inflateSync(data)
+          } else {
+            encoding = null
+          }
+          return {
+            trace: JSON.parse(data.toString()) as BrowserProfilerTrace,
+            encoding,
+            filename,
+            mimetype: mimeType,
+          }
+        })
+      } else {
+        // Skip other attachments
+        stream.resume()
+      }
+    })
+
+    req.busboy.on('finish', () => {
+      Promise.all([eventPromise, tracePromise])
+        .then(([event, { trace, ...traceFile }]) => ({
+          ...infos,
+          event,
+          trace,
+          traceFile,
+        }))
+        .then(resolve, reject)
+    })
+  })
+}
+
 function forwardIntakeRequestToDatadog(req: express.Request): Promise<any> {
   return new Promise((resolve, reject) => {
     const ddforward = req.query.ddforward! as string
@@ -193,4 +250,12 @@ function readStream(stream: NodeJS.ReadableStream): Promise<Buffer> {
       resolve(Buffer.concat(buffers))
     })
   })
+}
+
+function isDeflateEncoded(buffer: Buffer): boolean {
+  // Check for deflate/zlib magic numbers
+  // 0x78 0x01 - No Compression/low
+  // 0x78 0x9C - Default Compression
+  // 0x78 0xDA - Best Compression
+  return buffer.length >= 2 && buffer[0] === 0x78 && (buffer[1] === 0x01 || buffer[1] === 0x9c || buffer[1] === 0xda)
 }
