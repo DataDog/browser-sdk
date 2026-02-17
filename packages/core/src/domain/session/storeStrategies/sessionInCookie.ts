@@ -1,7 +1,7 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie, getCookie } from '../../../browser/cookie'
+import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration, Configuration } from '../../configuration'
 import { tryOldCookiesMigration } from '../oldCookiesMigration'
 import {
@@ -33,7 +33,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
     isLockEnabled: isChromium(),
     persistSession: (sessionState: SessionState) =>
       storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
-    retrieveSession: () => retrieveSessionCookie(cookieOptions, configuration),
+    retrieveSession: () => retrieveSessionCookie(cookieOptions),
     expireSession: (sessionState: SessionState) =>
       storeSessionCookie(
         cookieOptions,
@@ -54,16 +54,12 @@ function storeSessionCookie(
   sessionState: SessionState,
   defaultTimeout: number
 ) {
-  let sessionStateString = toSessionString(sessionState)
-
-  if (configuration.betaEncodeCookieOptions) {
-    sessionStateString = toSessionString({
-      ...sessionState,
-      // deleting a cookie is writing a new cookie with an empty value
-      // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
-      ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
-    })
-  }
+  const sessionStateString = toSessionString({
+    ...sessionState,
+    // deleting a cookie is writing a new cookie with an empty value
+    // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
+    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
+  })
 
   setCookie(
     SESSION_STORE_KEY,
@@ -77,14 +73,8 @@ function storeSessionCookie(
  * Retrieve the session state from the cookie that was set with the same cookie options
  * If there is no match, return the first cookie, because that's how `getCookie()` works
  */
-export function retrieveSessionCookie(cookieOptions: CookieOptions, configuration: Configuration): SessionState {
-  if (configuration.betaEncodeCookieOptions) {
-    return retrieveSessionCookieFromEncodedCookie(cookieOptions)
-  }
-
-  const sessionString = getCookie(SESSION_STORE_KEY)
-  const sessionState = toSessionState(sessionString)
-  return sessionState
+export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionState {
+  return retrieveSessionCookieFromEncodedCookie(cookieOptions)
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
