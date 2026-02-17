@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { display } from '@datadog/browser-core'
 import {
   createMemoryRouter as createMemoryRouterV6,

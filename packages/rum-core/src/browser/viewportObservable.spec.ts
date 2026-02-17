@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Subscription } from '@datadog/browser-core/src/tools/observable'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'

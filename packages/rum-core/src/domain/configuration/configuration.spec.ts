@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
 import type { InitConfiguration } from '@datadog/browser-core'
 import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
 import type {

@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { EncoderResult, Uint8ArrayBuffer } from '@datadog/browser-core'
 import { noop, DeflateEncoderStreamId } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'

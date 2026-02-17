@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { replaceMockable } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockDocumentReadyState, mockRumConfiguration } from '../../../test'

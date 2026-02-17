@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { createNewEvent } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
 import type { ActionEventsHooks } from './listenActionEvents'

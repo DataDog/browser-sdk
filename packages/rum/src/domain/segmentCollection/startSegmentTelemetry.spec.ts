@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
 import { addExperimentalFeatures, ExperimentalFeature, Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'

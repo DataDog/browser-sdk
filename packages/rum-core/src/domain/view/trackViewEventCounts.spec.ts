@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'

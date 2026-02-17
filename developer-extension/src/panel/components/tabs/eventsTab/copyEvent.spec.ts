@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { TelemetryEvent } from '../../../../../../packages/core/src/domain/telemetry'
 import type { LogsEvent } from '../../../../../../packages/logs/src/logsEvent.types'
 import type { RumEvent } from '../../../../../../packages/rum-core/src/rumEvent.types'

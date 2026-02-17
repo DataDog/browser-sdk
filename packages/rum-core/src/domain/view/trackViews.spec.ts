@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   PageExitReason,

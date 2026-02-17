@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { computeStackTrace, toStackTraceString } from '@datadog/browser-core'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'

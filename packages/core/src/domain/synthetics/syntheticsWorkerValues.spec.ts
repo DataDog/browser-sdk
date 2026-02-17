@@ -1,3 +1,4 @@
+import { describe, expect, it, test } from 'vitest'
 import { mockSyntheticsWorkerValues } from '../../../test'
 import { getSyntheticsResultId, getSyntheticsTestId, willSyntheticsInjectRum } from './syntheticsWorkerValues'
 

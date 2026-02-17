@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, test } from 'vitest'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import {
   STABLE_ATTRIBUTES,

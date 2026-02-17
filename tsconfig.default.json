@@ -3,7 +3,6 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "types": ["vitest/globals"],
     "allowImportingTsExtensions": true,
     "noEmit": true
   },

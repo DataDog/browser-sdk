@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, test } from 'vitest'
 import { ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'

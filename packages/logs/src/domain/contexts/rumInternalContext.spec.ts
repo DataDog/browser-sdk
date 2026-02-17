@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, test } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '@datadog/browser-core/test'

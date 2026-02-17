@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { mockClock, registerCleanupTask, type Clock } from '../../test'
 import { MAX_TASK_TIME, requestIdleCallbackShim, requestIdleCallback } from './requestIdleCallback'
 

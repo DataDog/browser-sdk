@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { display } from '@datadog/browser-core'
 import type { RumConfiguration } from '@datadog/browser-rum-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'

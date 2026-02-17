@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import type { RumPublicApi } from '../boot/rumPublicApi'
 import type { RumInitConfiguration } from './configuration'
 import type { RumPlugin } from './plugins'

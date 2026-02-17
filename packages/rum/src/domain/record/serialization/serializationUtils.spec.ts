@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { NodePrivacyLevel } from '@datadog/browser-rum-core'
 import { getElementInputValue, switchToAbsoluteUrl } from './serializationUtils'
 

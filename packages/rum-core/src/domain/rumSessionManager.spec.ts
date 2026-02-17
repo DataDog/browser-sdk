@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import {
   STORAGE_POLL_DELAY,

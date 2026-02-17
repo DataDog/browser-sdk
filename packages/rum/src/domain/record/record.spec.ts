@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
 import { DefaultPrivacyLevel, findLast, noop } from '@datadog/browser-core'
 import type { RumConfiguration, ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'

@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import type { InitConfiguration } from '../domain/configuration'
 import { display } from '../tools/display'
 import { displayAlreadyInitializedError } from './displayAlreadyInitializedError'

@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { ServerDuration, Duration, RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
 import type { Clock } from '../../../../core/test'

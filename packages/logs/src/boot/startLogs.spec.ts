@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, test } from 'vitest'
 import type { BufferedData, Payload } from '@datadog/browser-core'
 import {
   ErrorSource,

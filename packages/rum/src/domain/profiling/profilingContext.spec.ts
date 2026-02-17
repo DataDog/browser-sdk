@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { RumEventType, createHooks } from '@datadog/browser-rum-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'

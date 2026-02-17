@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { createPerformanceEntry } from '../../../test'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'

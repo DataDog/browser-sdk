@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { mockEventBridge } from '../../test'
 import { DefaultPrivacyLevel } from '../domain/configuration'
 import type { BrowserWindowWithEventBridge } from './eventBridge'

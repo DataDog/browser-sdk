@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Hooks } from '../../../test'
 import { createHooks, registerCleanupTask } from '../../../test'
 import { mockRumConfiguration } from '../../../../rum-core/test'

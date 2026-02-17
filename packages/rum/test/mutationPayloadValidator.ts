@@ -1,4 +1,4 @@
-import { getGlobalObject } from '@datadog/browser-core'
+import { expect as vitestExpect } from 'vitest'
 import { NodeType, IncrementalSource } from '../src/types'
 import type {
   SerializedNodeWithId,
@@ -12,9 +12,6 @@ import type {
 } from '../src/types'
 import { findAllIncrementalSnapshots, findFullSnapshot } from './segments'
 import { findTextNode, findElementWithTagName, findElementWithIdAttribute } from './nodes'
-
-// Should match both jasmine and playwright 'expect' functions
-type Expect = (actual: any) => { toEqual(expected: any): void }
 
 interface NodeSelector {
   // Select the first node with the given tag name from the initial full snapshot
@@ -128,7 +125,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     validate: (
       payload: BrowserMutationPayload,
       expected: ExpectedMutationsPayload,
-      { expect = getGlobalObject<{ expect: Expect }>().expect }: { expect?: Expect } = {}
+      { expect = vitestExpect }: { expect?: (actual: any) => any } = {}
     ) => {
       payload = removeUndefinedValues(payload)
 
@@ -209,7 +206,10 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
  * Validate the first and only mutation record of a segment against the expected text, attribute,
  * add and remove mutations.
  */
-export function createMutationPayloadValidatorFromSegment(segment: BrowserSegment, options?: { expect?: Expect }) {
+export function createMutationPayloadValidatorFromSegment(
+  segment: BrowserSegment,
+  options?: { expect?: (actual: any) => any }
+) {
   const fullSnapshot = findFullSnapshot(segment)!
   if (!fullSnapshot) {
     throw new Error('Full snapshot not found')

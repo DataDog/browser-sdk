@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { createBoundedBuffer } from './boundedBuffer'
 
 describe('BoundedBuffer', () => {

@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { replaceMockable, STACK_WITH_INIT_IN_EXTENSION, STACK_WITH_INIT_IN_PAGE } from '../../test'
 import { display } from '../tools/display'
 import {

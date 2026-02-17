@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Context, RelativeTime } from '@datadog/browser-core'
 import { relativeToClocks, CLEAR_OLD_VALUES_INTERVAL } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'

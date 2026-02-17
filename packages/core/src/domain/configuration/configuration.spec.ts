@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RumEvent } from '../../../../rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'

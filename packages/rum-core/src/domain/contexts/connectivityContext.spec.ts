@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { setNavigatorOnLine, setNavigatorConnection } from '@datadog/browser-core/test'
 import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'

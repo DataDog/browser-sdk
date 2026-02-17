@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { TimeStamp } from '@datadog/browser-core'
 import { ConsoleApiName, timeStampNow, ErrorSource, originalConsoleMethods } from '@datadog/browser-core'
 import { mockClock } from '@datadog/browser-core/test'

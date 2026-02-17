@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { setNavigatorOnLine, setNavigatorConnection } from '../../../test'
 import { getConnectivity } from './connectivity'
 

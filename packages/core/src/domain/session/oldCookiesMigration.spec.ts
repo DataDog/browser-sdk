@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { getCookie, resetInitCookies, setCookie } from '../../browser/cookie'
 import { getSessionState } from '../../../test'
 import type { Configuration } from '../configuration'

@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { ContextManager, ContextValue } from '@datadog/browser-core'
 import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'

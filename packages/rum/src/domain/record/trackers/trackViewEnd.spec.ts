@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import { RecordType } from '../../../types'
 import type { EmitRecordCallback } from '../record.types'

@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import React, { act } from 'react'
 
 import { toStackTraceString, computeStackTrace } from '@datadog/browser-core'

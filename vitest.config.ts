@@ -64,10 +64,6 @@ export default defineConfig({
       '**/node_modules/**',
     ],
 
-    // Enable globals so existing spec files can use describe/it/expect without imports
-    // (matches Jasmine's global API surface)
-    globals: true,
-
     // Auto-restore all spies after each test (matches Jasmine's auto-restore behavior)
     restoreMocks: true,
 

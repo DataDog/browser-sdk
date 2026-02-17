@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RawRumActionEvent } from '@datadog/browser-rum-core'
 import { ActionType, LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { RawRumEventCollectedData } from '@datadog/browser-rum-core/src/domain/lifeCycle'

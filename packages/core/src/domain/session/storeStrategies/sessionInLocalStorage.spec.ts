@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, test } from 'vitest'
 import type { Configuration } from '../../configuration'
 import { SessionPersistence } from '../sessionConstants'
 import { toSessionState } from '../sessionState'

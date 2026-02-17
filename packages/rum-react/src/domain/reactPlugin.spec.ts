@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, afterEach, describe, expect, it } from 'vitest'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { onRumInit, reactPlugin, resetReactPlugin } from './reactPlugin'
 

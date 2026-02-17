@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { mockClock, mockRequestIdleCallback } from '../../test'
 import { createTaskQueue, MAX_EXECUTION_TIME_ON_TIMEOUT } from './taskQueue'
 

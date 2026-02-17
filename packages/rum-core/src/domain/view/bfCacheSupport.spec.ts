@@ -1,4 +1,4 @@
-import { vi } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { createNewEvent, registerCleanupTask } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../../test'
 import { onBFCacheRestore } from './bfCacheSupport'

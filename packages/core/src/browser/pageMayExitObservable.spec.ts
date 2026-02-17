@@ -1,4 +1,4 @@
-import { vi, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Configuration } from '../domain/configuration'
 import { createNewEvent, restorePageVisibility, setPageVisibility, registerCleanupTask } from '../../test'
 import type { PageMayExitEvent } from './pageMayExitObservable'
