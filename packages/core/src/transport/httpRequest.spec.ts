@@ -14,7 +14,6 @@ import { noop } from '../tools/utils/functionUtils'
 import type { HttpRequest, HttpRequestEvent } from './httpRequest'
 import {
   createHttpRequest,
-  fetchKeepAliveStrategy,
   fetchStrategy,
   RECOMMENDED_REQUEST_BYTES_LIMIT,
 } from './httpRequest'
@@ -87,58 +86,6 @@ describe('httpRequest', () => {
       expect(requests[0].body).toEqual(payloadData)
       expect(requests[1].url).toContain('http://my.website2')
       expect(requests[1].body).toEqual(payloadData)
-    })
-  })
-
-  describe('fetchKeepAliveStrategy onResponse', () => {
-    it('should be called with intake response when fetch is used', (done) => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        RECOMMENDED_REQUEST_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
-    })
-
-    it('should be called with intake response when fallback to fetch due fetch keepalive not queued', (done) => {
-      if (!interceptor.isFetchKeepAliveSupported()) {
-        pending('no fetch keepalive support')
-      }
-
-      interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK, TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        RECOMMENDED_REQUEST_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
-    })
-
-    it('should be called with intake response when fallback to fetch due to size', (done) => {
-      interceptor.withFetch(TOO_MANY_REQUESTS_FETCH_MOCK)
-
-      fetchKeepAliveStrategy(
-        endpointBuilder,
-        RECOMMENDED_REQUEST_BYTES_LIMIT,
-        { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: RECOMMENDED_REQUEST_BYTES_LIMIT },
-        (response) => {
-          expect(response).toEqual({ status: 429, type: 'cors' })
-          done()
-        }
-      )
     })
   })
 
