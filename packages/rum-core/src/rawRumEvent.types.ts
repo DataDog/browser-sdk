@@ -79,9 +79,10 @@ export interface RawRumResourceEvent {
     trace_id?: string
     span_id?: string // not available for initial document tracing
     rule_psr?: number
-    discarded: boolean
+    discarded?: boolean
     page_states?: PageStateServerEntry[]
   }
+  context?: Context
 }
 
 export interface ResourceEntryDetailsElement {
