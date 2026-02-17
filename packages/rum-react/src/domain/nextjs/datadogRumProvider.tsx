@@ -2,6 +2,7 @@
 
 import React, { type ReactNode, useEffect, useRef } from 'react'
 import { usePathname, useParams } from 'next/navigation'
+import { mockable } from '@datadog/browser-core'
 import { computeViewName, startNextjsView } from './viewTracking'
 
 export interface DatadogRumProviderProps {
@@ -9,21 +10,11 @@ export interface DatadogRumProviderProps {
    * The children components to render.
    */
   children: ReactNode
-  /**
-   * Override the current pathname for testing.
-   */
-  pathname?: string
-  /**
-   * Override the current route params for testing.
-   */
-  params?: Record<string, string | string[]>
 }
 
-export function DatadogRumProvider({ children, pathname: pathnameProp, params: paramsProp }: DatadogRumProviderProps) {
-  const hookPathname = usePathname()
-  const hookParams = useParams()
-  const pathname = pathnameProp ?? hookPathname
-  const params = paramsProp ?? hookParams ?? {}
+export function DatadogRumProvider({ children }: DatadogRumProviderProps) {
+  const pathname = mockable(usePathname)()
+  const params = mockable(useParams)() ?? {}
   const previousPathnameRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {

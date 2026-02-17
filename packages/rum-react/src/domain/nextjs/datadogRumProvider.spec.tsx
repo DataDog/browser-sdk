@@ -1,4 +1,6 @@
 import React from 'react'
+import { replaceMockable } from '@datadog/browser-core/test'
+import { usePathname, useParams } from 'next/navigation'
 import { appendComponent } from '../../../test/appendComponent'
 import { initializeReactPlugin } from '../../../test/initializeReactPlugin'
 import { initReactOldBrowsersSupport } from '../../../test/reactOldBrowsersSupport'
@@ -21,8 +23,11 @@ describe('DatadogRumProvider', () => {
   })
 
   it('renders children correctly', () => {
+    replaceMockable(usePathname, () => '/')
+    replaceMockable(useParams, () => ({}))
+
     const container = appendComponent(
-      <DatadogRumProvider pathname="/">
+      <DatadogRumProvider>
         <div data-testid="test-child">Test Content</div>
       </DatadogRumProvider>
     )
@@ -34,8 +39,11 @@ describe('DatadogRumProvider', () => {
   })
 
   it('starts initial view on mount', () => {
+    replaceMockable(usePathname, () => '/home')
+    replaceMockable(useParams, () => ({}))
+
     appendComponent(
-      <DatadogRumProvider pathname="/home">
+      <DatadogRumProvider>
         <div>Content</div>
       </DatadogRumProvider>
     )
@@ -44,8 +52,11 @@ describe('DatadogRumProvider', () => {
   })
 
   it('starts initial view with normalized name using params', () => {
+    replaceMockable(usePathname, () => '/user/42')
+    replaceMockable(useParams, () => ({ id: '42' }))
+
     appendComponent(
-      <DatadogRumProvider pathname="/user/42" params={{ id: '42' }}>
+      <DatadogRumProvider>
         <div>Content</div>
       </DatadogRumProvider>
     )
@@ -54,8 +65,11 @@ describe('DatadogRumProvider', () => {
   })
 
   it('renders multiple children', () => {
+    replaceMockable(usePathname, () => '/')
+    replaceMockable(useParams, () => ({}))
+
     const container = appendComponent(
-      <DatadogRumProvider pathname="/">
+      <DatadogRumProvider>
         <div data-testid="child-1">Child 1</div>
         <div data-testid="child-2">Child 2</div>
         <div data-testid="child-3">Child 3</div>
