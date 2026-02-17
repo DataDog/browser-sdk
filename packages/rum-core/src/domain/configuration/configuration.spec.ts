@@ -633,11 +633,7 @@ describe('serializeRumConfiguration', () => {
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
       ? MapInitConfigurationKey<Key>
-      : Key extends
-            | 'workerUrl'
-            | 'allowedTracingUrls'
-            | 'excludedActivityUrls'
-            | 'allowedGraphQlUrls'
+      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls' | 'allowedGraphQlUrls'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility

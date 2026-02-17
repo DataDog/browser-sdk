@@ -52,10 +52,7 @@ describe('CLI argument validation', () => {
     const result = runCLI([])
 
     assert.strictEqual(result.exitCode, 1, 'Should exit with code 1')
-    assert.ok(
-      result.stdout.includes('Missing required arguments'),
-      'Should indicate missing arguments'
-    )
+    assert.ok(result.stdout.includes('Missing required arguments'), 'Should indicate missing arguments')
     assert.ok(result.stdout.includes('--applicationId'), 'Should list missing applicationId')
     assert.ok(result.stdout.includes('--configId'), 'Should list missing configId')
     assert.ok(result.stdout.includes('--variant'), 'Should list missing variant')
@@ -70,62 +67,34 @@ describe('CLI argument validation', () => {
   })
 
   it('exits with error when invalid variant is provided', () => {
-    const result = runCLI([
-      '--applicationId', 'test-app',
-      '--configId', 'test-config',
-      '--variant', 'invalid-variant',
-    ])
+    const result = runCLI(['--applicationId', 'test-app', '--configId', 'test-config', '--variant', 'invalid-variant'])
 
     assert.strictEqual(result.exitCode, 1, 'Should exit with code 1')
-    assert.ok(
-      result.stdout.includes('Invalid variant'),
-      'Should indicate invalid variant'
-    )
-    assert.ok(
-      result.stdout.includes('rum') && result.stdout.includes('rum-slim'),
-      'Should suggest valid variants'
-    )
+    assert.ok(result.stdout.includes('Invalid variant'), 'Should indicate invalid variant')
+    assert.ok(result.stdout.includes('rum') && result.stdout.includes('rum-slim'), 'Should suggest valid variants')
   })
 
   it('accepts valid rum variant', () => {
     // This will fail at fetch stage, but validates variant was accepted
-    const result = runCLI([
-      '--applicationId', 'test-app',
-      '--configId', 'invalid-config-id',
-      '--variant', 'rum',
-    ])
+    const result = runCLI(['--applicationId', 'test-app', '--configId', 'invalid-config-id', '--variant', 'rum'])
 
     // Should fail with exit code 2 (network/runtime error), not 1 (validation error)
     assert.strictEqual(result.exitCode, 2, 'Should exit with code 2 for runtime error')
-    assert.ok(
-      !result.stdout.includes('Invalid variant'),
-      'Should not show invalid variant error'
-    )
+    assert.ok(!result.stdout.includes('Invalid variant'), 'Should not show invalid variant error')
   })
 
   it('accepts valid rum-slim variant', () => {
     // This will fail at fetch stage, but validates variant was accepted
-    const result = runCLI([
-      '--applicationId', 'test-app',
-      '--configId', 'invalid-config-id',
-      '--variant', 'rum-slim',
-    ])
+    const result = runCLI(['--applicationId', 'test-app', '--configId', 'invalid-config-id', '--variant', 'rum-slim'])
 
     // Should fail with exit code 2 (network/runtime error), not 1 (validation error)
     assert.strictEqual(result.exitCode, 2, 'Should exit with code 2 for runtime error')
-    assert.ok(
-      !result.stdout.includes('Invalid variant'),
-      'Should not show invalid variant error'
-    )
+    assert.ok(!result.stdout.includes('Invalid variant'), 'Should not show invalid variant error')
   })
 
   it('accepts short flags', () => {
     // This will fail at fetch stage, but validates short flags are parsed
-    const result = runCLI([
-      '-a', 'test-app',
-      '-c', 'invalid-config-id',
-      '-v', 'rum',
-    ])
+    const result = runCLI(['-a', 'test-app', '-c', 'invalid-config-id', '-v', 'rum'])
 
     // Should fail with exit code 2 (network/runtime error), not 1 (validation error)
     assert.strictEqual(result.exitCode, 2, 'Should exit with code 2 for runtime error')
@@ -135,16 +104,17 @@ describe('CLI argument validation', () => {
 describe('error handling', () => {
   it('provides helpful error message for invalid config ID', () => {
     const result = runCLI([
-      '--applicationId', 'test-app',
-      '--configId', 'definitely-not-a-valid-config-id',
-      '--variant', 'rum',
+      '--applicationId',
+      'test-app',
+      '--configId',
+      'definitely-not-a-valid-config-id',
+      '--variant',
+      'rum',
     ])
 
     assert.strictEqual(result.exitCode, 2, 'Should exit with code 2')
     assert.ok(
-      result.stdout.includes('Failed to fetch') ||
-      result.stdout.includes('Error') ||
-      result.stdout.includes('error'),
+      result.stdout.includes('Failed to fetch') || result.stdout.includes('Error') || result.stdout.includes('error'),
       'Should show error message'
     )
   })
@@ -155,17 +125,10 @@ describe('output format', () => {
   // For now, we verify the output structure expectations
 
   it('includes progress messages when generating', () => {
-    const result = runCLI([
-      '--applicationId', 'test-app',
-      '--configId', 'test-config',
-      '--variant', 'rum',
-    ])
+    const result = runCLI(['--applicationId', 'test-app', '--configId', 'test-config', '--variant', 'rum'])
 
     // First step should show "Fetching remote configuration..."
-    assert.ok(
-      result.stdout.includes('Fetching remote configuration'),
-      'Should show fetching message'
-    )
+    assert.ok(result.stdout.includes('Fetching remote configuration'), 'Should show fetching message')
   })
 })
 
@@ -236,9 +199,6 @@ describe('integration: generateCombinedBundle output validation', () => {
     }, 'Bundle should execute without throwing')
 
     // Verify the SDK was "initialized" with our config
-    assert.ok(
-      mockWindow.DD_RUM !== undefined,
-      'DD_RUM should be defined after bundle execution'
-    )
+    assert.ok(mockWindow.DD_RUM !== undefined, 'DD_RUM should be defined after bundle execution')
   })
 })

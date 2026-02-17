@@ -107,9 +107,7 @@ describe('generateCombinedBundle', () => {
   it('handles config with nested objects', () => {
     const configWithNested = {
       applicationId: 'test-app-id',
-      allowedTracingUrls: [
-        { match: { rcSerializedType: 'string' as const, value: 'https://example.com' } },
-      ],
+      allowedTracingUrls: [{ match: { rcSerializedType: 'string' as const, value: 'https://example.com' } }],
     }
 
     const bundle = generateCombinedBundle({
@@ -507,6 +505,25 @@ describe('downloadSDK() caching', () => {
     assert.strictEqual(rumSlim, '/* SDK slim */')
     assert.strictEqual(rumAgain, '/* SDK full */')
     assert.strictEqual(callCount, 2, 'Only 2 network requests (one per variant)')
+  })
+
+  it('caches different datacenters separately', async () => {
+    let callCount = 0
+    mock.method(https, 'get', (url: string, _opts: unknown, cb: (res: unknown) => void) => {
+      callCount++
+      const dc = url.includes('eu1') ? 'eu1' : 'us1'
+      cb(createMockResponse(`/* SDK ${dc} */`))
+      return new EventEmitter()
+    })
+
+    const us1 = await downloadSDK({ variant: 'rum', datacenter: 'us1' })
+    const eu1 = await downloadSDK({ variant: 'rum', datacenter: 'eu1' })
+    const us1Again = await downloadSDK({ variant: 'rum', datacenter: 'us1' })
+
+    assert.strictEqual(us1, '/* SDK us1 */')
+    assert.strictEqual(eu1, '/* SDK eu1 */')
+    assert.strictEqual(us1Again, '/* SDK us1 */')
+    assert.strictEqual(callCount, 2, 'Only 2 network requests (one per datacenter)')
   })
 
   it('cache hit is fast compared to network fetch', async () => {

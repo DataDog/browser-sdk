@@ -493,7 +493,7 @@ describe('remoteConfiguration', () => {
     })
 
     it('should handle escaped quotes', () => {
-      expect(parseJsonPath("['foo\\'bar']")).toEqual(['foo\'bar'])
+      expect(parseJsonPath("['foo\\'bar']")).toEqual(["foo'bar"])
     })
   })
 })

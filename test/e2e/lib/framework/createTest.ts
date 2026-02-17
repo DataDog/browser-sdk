@@ -1,4 +1,5 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
+import type { RemoteConfiguration } from '@datadog/browser-remote-config'
 import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
@@ -47,7 +48,7 @@ class TestBuilder {
   private rumConfiguration: RumInitConfiguration | undefined = undefined
   private alsoRunWithRumSlim = false
   private logsConfiguration: LogsInitConfiguration | undefined = undefined
-  private remoteConfiguration?: unknown = undefined
+  private remoteConfiguration?: RemoteConfiguration = undefined
   private head = ''
   private body = ''
   private basePath = ''
@@ -129,7 +130,7 @@ class TestBuilder {
     return this
   }
 
-  withRemoteConfiguration(remoteConfiguration: unknown) {
+  withRemoteConfiguration(remoteConfiguration: RemoteConfiguration) {
     this.remoteConfiguration = remoteConfiguration
     return this
   }
