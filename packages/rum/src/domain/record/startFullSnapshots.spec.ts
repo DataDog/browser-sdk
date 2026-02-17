@@ -80,9 +80,10 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: Brow
     )
   })
 
-  it('full snapshot records should contain visualViewport when supported', () => {
+  it('full snapshot records should contain visualViewport when supported', (ctx) => {
     if (!window.visualViewport) {
-      return // skip: 'visualViewport not supported'
+      ctx.skip()
+      return
     }
     const record = emitRecordCallback.mock.lastCall[0]
 

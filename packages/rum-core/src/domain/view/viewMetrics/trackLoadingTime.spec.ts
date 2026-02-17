@@ -166,9 +166,10 @@ describe('trackLoadingTime', () => {
     expect(loadingTimeCallback).not.toHaveBeenCalled()
   })
 
-  it('should not discard loading time if page was hidden before the view start', () => {
+  it('should not discard loading time if page was hidden before the view start', (ctx) => {
     if (!supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
-      return // skip: 'Performance Timing Event is not supported'
+      ctx.skip()
+      return
     }
 
     performanceBufferMock.addPerformanceEntry({
@@ -186,9 +187,10 @@ describe('trackLoadingTime', () => {
     expect(loadingTimeCallback).toHaveBeenCalled()
   })
 
-  it('should discard loading time if page was hidden during the loading time', () => {
+  it('should discard loading time if page was hidden during the loading time', (ctx) => {
     if (!supportPerformanceTimingEvent(RumPerformanceEntryType.VISIBILITY_STATE)) {
-      return // skip: 'Performance Timing Event is not supported'
+      ctx.skip()
+      return
     }
 
     clock.tick(RANDOM_VIEW_START)

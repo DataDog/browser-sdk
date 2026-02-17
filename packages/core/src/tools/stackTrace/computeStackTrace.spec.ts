@@ -108,9 +108,10 @@ Error: foo
     expect(computeStackTrace(null).message).toBeUndefined()
   })
 
-  it('should get the order of functions called right', () => {
+  it('should get the order of functions called right', (ctx) => {
     if (isSafari()) {
-      return // skip: 
+      ctx.skip()
+      return
     }
     function foo() {
       return bar()

@@ -2,9 +2,10 @@ import { isChromium } from '../../../../../packages/core/src/tools/utils/browser
 import { getAllFields } from './facetRegistry'
 
 describe('getAllFields', () => {
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isChromium()) {
-      return // skip: 'Extension only supported in chromium'
+      ctx.skip()
+      return
     }
   })
 

@@ -110,9 +110,10 @@ describe('httpRequest', () => {
       expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
     })
 
-    it('should use sendBeacon when the bytes count is correct', () => {
+    it('should use sendBeacon when the bytes count is correct', (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        return // skip: 'no sendBeacon support'
+        ctx.skip()
+        return
       }
 
       request.sendOnExit({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
@@ -130,9 +131,10 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to fetch when sendBeacon is not queued', async () => {
+    it('should fallback to fetch when sendBeacon is not queued', async (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        return // skip: 'no sendBeacon support'
+        ctx.skip()
+        return
       }
       interceptor.withSendBeacon(() => false)
 
@@ -144,9 +146,10 @@ describe('httpRequest', () => {
       expect(requests[0].type).toBe('fetch')
     })
 
-    it('should fallback to fetch when sendBeacon throws', async () => {
+    it('should fallback to fetch when sendBeacon throws', async (ctx) => {
       if (!interceptor.isSendBeaconSupported()) {
-        return // skip: 'no sendBeacon support'
+        ctx.skip()
+        return
       }
       let sendBeaconCalled = false
       interceptor.withSendBeacon(() => {
@@ -263,3 +266,4 @@ describe('httpRequest intake parameters', () => {
     expect(requests.length).toEqual(2)
   })
 })
+

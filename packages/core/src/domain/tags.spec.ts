@@ -20,9 +20,10 @@ describe('buildTags', () => {
 
 describe('buildTag warning', () => {
   let displaySpy: Mock<typeof display.warn>
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!supportUnicodePropertyEscapes()) {
-      return // skip: 'Unicode property escapes are not supported'
+      ctx.skip()
+      return
     }
 
     displaySpy = vi.spyOn(display, 'warn')

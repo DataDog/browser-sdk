@@ -3,9 +3,10 @@ import { getClsAttributionImpactedArea } from './getClsAttributionImpactedArea'
 import { isLayoutShiftSupported } from './trackCumulativeLayoutShift'
 
 describe('getClsAttributionImpactedArea', () => {
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isLayoutShiftSupported()) {
-      return // skip: 'No LayoutShift API support'
+      ctx.skip()
+      return
     }
   })
   it('should calculate the impacted area when rectangles do not overlap', () => {

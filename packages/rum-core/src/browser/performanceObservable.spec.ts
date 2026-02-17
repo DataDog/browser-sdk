@@ -13,9 +13,10 @@ describe('performanceObservable', () => {
   let observableCallback: Mock
   let clock: Clock
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!window.PerformanceObserver) {
-      return // skip: 'PerformanceObserver not supported'
+      ctx.skip()
+      return
     }
     observableCallback = vi.fn()
     clock = mockClock()

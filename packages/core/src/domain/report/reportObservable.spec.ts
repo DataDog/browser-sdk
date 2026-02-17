@@ -14,9 +14,10 @@ describe('report observable', () => {
   let notifyReport: Mock<(reportError: RawReportError) => void>
   let configuration: Configuration
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!window.ReportingObserver) {
-      return // skip: 'ReportingObserver not supported'
+      ctx.skip()
+      return
     }
     configuration = {} as Configuration
     reportingObserver = mockReportingObserver()

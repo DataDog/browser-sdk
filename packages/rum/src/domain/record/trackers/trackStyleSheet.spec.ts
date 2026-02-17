@@ -108,9 +108,10 @@ describe('trackStyleSheet', () => {
         })
       })
 
-      it('should not create record when inserting into a detached CSSGroupingRule', () => {
+      it('should not create record when inserting into a detached CSSGroupingRule', (ctx) => {
         if (isFirefox()) {
-          return // skip: 'Firefox does not support inserting rules in detached group'
+          ctx.skip()
+          return
         }
 
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')
@@ -146,9 +147,10 @@ describe('trackStyleSheet', () => {
         })
       })
 
-      it('should not create record when removing from a detached CSSGroupingRule', () => {
+      it('should not create record when removing from a detached CSSGroupingRule', (ctx) => {
         if (isFirefox()) {
-          return // skip: 'Firefox does not support inserting rules in detached group'
+          ctx.skip()
+          return
         }
 
         styleSheet.insertRule('@media cond-2 { @media cond-1 { .nest-1 { color: #ccc } } }')

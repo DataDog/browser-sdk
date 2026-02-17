@@ -46,9 +46,10 @@ describe('trackCumulativeLayoutShift', () => {
     })
   }
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isLayoutShiftSupported()) {
-      return // skip: 'No LayoutShift API support'
+      ctx.skip()
+      return
     }
   })
 
