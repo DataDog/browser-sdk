@@ -1,4 +1,4 @@
-import type { Duration, RelativeTime, ServerDuration } from '@datadog/browser-core'
+import type { RelativeTime, ServerDuration } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   collectAndValidateRawRumEvents,
@@ -8,7 +8,7 @@ import {
 } from '../../../test'
 import type { RumPerformanceEntry } from '../../browser/performanceObservable'
 import { RumPerformanceEntryType } from '../../browser/performanceObservable'
-import type { RawRumEvent, RawRumLongTaskEvent } from '../../rawRumEvent.types'
+import type { RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, RumLongTaskEntryType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle } from '../lifeCycle'
@@ -49,7 +49,7 @@ describe('longTaskCollection', () => {
 
       notifyPerformanceEntries([performanceLongAnimationFrameTiming])
 
-      expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+      expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         long_task: {
@@ -98,21 +98,6 @@ describe('longTaskCollection', () => {
       expect(rawRumEvents.length).toBe(1)
     })
 
-    it('should track long animation frame contexts', () => {
-      const longTaskCollection = setupLongTaskCollection()
-      const entry = createPerformanceEntry(RumPerformanceEntryType.LONG_ANIMATION_FRAME)
-      notifyPerformanceEntries([entry])
-
-      const longTask = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task
-      const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime, 100 as Duration)
-      expect(longTasks).toContain({
-        id: longTask.id,
-        startClocks: jasmine.objectContaining({ relative: entry.startTime }),
-        duration: entry.duration,
-        entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
-      })
-    })
-
     it('should not collect when trackLongTasks=false', () => {
       setupLongTaskCollection({ trackLongTasks: false })
 
@@ -127,7 +112,7 @@ describe('longTaskCollection', () => {
       setupLongTaskCollection({ supportedEntryType: RumPerformanceEntryType.LONG_TASK })
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
 
-      expect(rawRumEvents[0].startTime).toBe(1234 as RelativeTime)
+      expect(rawRumEvents[0].startClocks.relative).toBe(1234 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
         date: jasmine.any(Number),
         long_task: {
@@ -156,21 +141,6 @@ describe('longTaskCollection', () => {
 
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
       expect(rawRumEvents.length).toBe(1)
-    })
-
-    it('should track long tasks contexts', () => {
-      const longTaskCollection = setupLongTaskCollection({ supportedEntryType: RumPerformanceEntryType.LONG_TASK })
-      const entry = createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)
-      notifyPerformanceEntries([entry])
-
-      const longTask = (rawRumEvents[0].rawRumEvent as RawRumLongTaskEvent).long_task
-      const longTasks = longTaskCollection.longTaskContexts.findLongTasks(1234 as RelativeTime, 100 as Duration)
-      expect(longTasks).toContain({
-        id: longTask.id,
-        startClocks: jasmine.objectContaining({ relative: entry.startTime }),
-        duration: entry.duration,
-        entryType: RumPerformanceEntryType.LONG_TASK,
-      })
     })
 
     it('should not collect when trackLongTasks=false', () => {

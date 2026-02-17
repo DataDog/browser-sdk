@@ -11,11 +11,11 @@ import {
   clocksNow,
   elapsed,
   DeflateEncoderStreamId,
+  mockable,
 } from '@datadog/browser-core'
 
 import type {
   LifeCycle,
-  LongTaskContexts,
   RumConfiguration,
   RumSessionManager,
   TransportPayload,
@@ -35,6 +35,7 @@ import { getNumberOfSamples } from './utils/getNumberOfSamples'
 import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { assembleProfilingPayload } from './transport/assembly'
+import { createLongTaskHistory } from './longTaskHistory'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -48,7 +49,6 @@ export function createRumProfiler(
   lifeCycle: LifeCycle,
   session: RumSessionManager,
   profilingContextManager: ProfilingContextManager,
-  longTaskContexts: LongTaskContexts,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
   profilerConfiguration: RUMProfilerConfiguration = DEFAULT_RUM_PROFILER_CONFIGURATION
@@ -59,6 +59,7 @@ export function createRumProfiler(
 
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
+  const longTaskHistory = mockable(createLongTaskHistory)(lifeCycle)
 
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
 
@@ -229,7 +230,7 @@ export function createRumProfiler(
       .then((trace) => {
         const endClocks = clocksNow()
         const duration = elapsed(startClocks.timeStamp, endClocks.timeStamp)
-        const longTasks = longTaskContexts.findLongTasks(startClocks.relative, duration)
+        const longTasks = longTaskHistory.findAll(startClocks.relative, duration)
         const isBelowDurationThreshold = duration < profilerConfiguration.minProfileDurationMs
         const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 

@@ -109,7 +109,7 @@ describe('viewCollection', () => {
     setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
-    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[rawRumEvents.length - 1].startClocks.relative).toBe(1234 as RelativeTime)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
         document_version: 3,

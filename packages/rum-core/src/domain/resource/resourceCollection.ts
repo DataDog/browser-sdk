@@ -174,7 +174,7 @@ function assembleResource(
   )
 
   return {
-    startTime: startClocks.relative,
+    startClocks,
     duration,
     rawRumEvent: resourceEvent,
     domainContext: getResourceDomainContext(entry, request),

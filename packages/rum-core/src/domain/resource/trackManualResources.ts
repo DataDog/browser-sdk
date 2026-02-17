@@ -82,7 +82,7 @@ export function trackManualResources(lifeCycle: LifeCycle, resourceTracker: Even
 
     lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
       rawRumEvent,
-      startTime: startClocks.relative,
+      startClocks,
       duration,
       domainContext: { isManual: true as const },
     })

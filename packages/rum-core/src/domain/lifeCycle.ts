@@ -1,4 +1,4 @@
-import type { Context, Duration, PageMayExitEvent, RawError, RelativeTime } from '@datadog/browser-core'
+import type { ClocksState, Context, Duration, PageMayExitEvent, RawError } from '@datadog/browser-core'
 import { AbstractLifeCycle } from '@datadog/browser-core'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent, AssembledRumEvent } from '../rawRumEvent.types'
@@ -92,7 +92,7 @@ export interface LifeCycleEventMap {
 }
 
 export interface RawRumEventCollectedData<E extends RawRumEvent = RawRumEvent> {
-  startTime: RelativeTime
+  startClocks: ClocksState
   duration?: Duration
   rawRumEvent: E
   domainContext: RumEventDomainContext<E['type']>
