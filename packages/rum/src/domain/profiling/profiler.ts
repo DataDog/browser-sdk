@@ -36,6 +36,7 @@ import type { ProfilingContextManager } from './profilingContext'
 import { getCustomOrDefaultViewName } from './utils/getCustomOrDefaultViewName'
 import { assembleProfilingPayload } from './transport/assembly'
 import { createLongTaskHistory } from './longTaskHistory'
+import { createVitalHistory } from './vitalHistory'
 
 export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
   sampleIntervalMs: 10, // Sample stack trace every 10ms
@@ -60,6 +61,7 @@ export function createRumProfiler(
   // Global clean-up tasks for listeners that are not specific to a profiler instance (eg. visibility change, before unload)
   const globalCleanupTasks: Array<() => void> = []
   const longTaskHistory = mockable(createLongTaskHistory)(lifeCycle)
+  const vitalHistory = mockable(createVitalHistory)(lifeCycle)
 
   let instance: RumProfilerInstance = { state: 'stopped', stateReason: 'initializing' }
 
@@ -231,6 +233,7 @@ export function createRumProfiler(
         const endClocks = clocksNow()
         const duration = elapsed(startClocks.timeStamp, endClocks.timeStamp)
         const longTasks = longTaskHistory.findAll(startClocks.relative, duration)
+        const vitals = vitalHistory.findAll(startClocks.relative, duration)
         const isBelowDurationThreshold = duration < profilerConfiguration.minProfileDurationMs
         const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
 
@@ -246,6 +249,7 @@ export function createRumProfiler(
             endClocks,
             clocksOrigin: clocksOrigin(),
             longTasks,
+            vitals,
             views,
             sampleInterval: profilerConfiguration.sampleIntervalMs,
           })

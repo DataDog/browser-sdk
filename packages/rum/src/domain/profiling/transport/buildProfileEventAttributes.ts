@@ -14,6 +14,10 @@ export interface ProfileEventAttributes {
   long_task?: {
     id: string[]
   }
+  vital?: {
+    id: string[]
+    label: string[]
+  }
 }
 
 /**
@@ -35,6 +39,8 @@ export function buildProfileEventAttributes(
 
   const longTaskIds: string[] = profilerTrace.longTasks.map((longTask) => longTask.id).filter((id) => id !== undefined)
 
+  const { ids: vitalIds, labels: vitalLabels } = extractVitalIdsAndLabels(profilerTrace.vitals)
+
   const attributes: ProfileEventAttributes = { application: { id: applicationId } }
 
   if (sessionId) {
@@ -45,6 +51,9 @@ export function buildProfileEventAttributes(
   }
   if (longTaskIds.length) {
     attributes.long_task = { id: longTaskIds }
+  }
+  if (vitalIds.length) {
+    attributes.vital = { id: vitalIds, label: vitalLabels }
   }
   return attributes
 }
@@ -61,6 +70,27 @@ function extractViewIdsAndNames(views: RumViewEntry[]): { ids: string[]; names: 
 
   // Remove duplicates
   result.names = Array.from(new Set(result.names))
+
+  return result
+}
+
+function extractVitalIdsAndLabels(vitals?: RumProfilerVitalEntry[]): {
+  ids: string[]
+  labels: string[]
+} {
+  const result: { ids: string[]; labels: string[] } = { ids: [], labels: [] }
+
+  if (!vitals) {
+    return result
+  }
+
+  for (const vital of vitals) {
+    result.ids.push(vital.id)
+    result.labels.push(vital.label)
+  }
+
+  // Remove duplicates
+  result.labels = Array.from(new Set(result.labels))
 
   return result
 }

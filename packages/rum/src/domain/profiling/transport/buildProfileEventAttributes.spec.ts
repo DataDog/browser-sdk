@@ -35,6 +35,7 @@ describe('buildProfileEventAttributes', () => {
       sampleInterval: 10,
       views: [],
       longTasks: [],
+      vitals: [],
       resources: [],
       frames: [],
       stacks: [],
