@@ -5,17 +5,23 @@ import { registerCleanupTask } from '../registerCleanupTask'
 export type Clock = ReturnType<typeof mockClock>
 
 export function mockClock() {
-  vi.useFakeTimers()
-
+  // Capture navigationStart BEFORE vi.useFakeTimers() — fake timers reset performance.now() to 0
   const timeOrigin = performance.timing.navigationStart // @see getNavigationStart() in timeUtils.ts
+
+  vi.useFakeTimers()
   const timeStampStart = Date.now()
   const relativeStart = timeStampStart - timeOrigin
 
-  // Note: vi.useFakeTimers() already mocks performance.now() — no separate spy needed.
-  // Adding vi.spyOn on top would conflict with restoreMocks, which restores the spy to a
-  // stale fake timer implementation after vi.useRealTimers() has already cleaned up.
+  // vi.useFakeTimers() resets performance.now() to 0, but the SDK expects
+  // performance.now() ≈ Date.now() - navigationStart. Override it directly
+  // (not via vi.spyOn which conflicts with restoreMocks).
+  const fakePerformanceNow = performance.now
+  performance.now = () => Date.now() - timeOrigin
 
-  registerCleanupTask(() => vi.useRealTimers())
+  registerCleanupTask(() => {
+    performance.now = fakePerformanceNow
+    vi.useRealTimers()
+  })
 
   return {
     /**

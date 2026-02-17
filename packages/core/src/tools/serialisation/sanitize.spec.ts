@@ -67,7 +67,7 @@ describe('sanitize', () => {
       expect(sanitize(node)).toBe('[HTMLDivElement]')
     })
 
-    it('should serialize events', (done) => {
+    it('should serialize events', () => new Promise<void>((resolve) => {
       const button = document.createElement('button')
       document.body.appendChild(button)
 
@@ -84,13 +84,13 @@ describe('sanitize', () => {
             target: '[HTMLButtonElement]',
             currentTarget: '[HTMLDocument]',
           })
-          done()
+          resolve()
         },
         { once: true }
       )
 
       button.click()
-    })
+    }))
 
     it('should serialize errors as JSON.stringify does', () => {
       // Explicitely keep the previous behavior to avoid breaking changes in 4.x

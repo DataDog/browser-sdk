@@ -45,16 +45,16 @@ describe('collect fetch', () => {
     })
   })
 
-  it('should notify on request start', (done) => {
+  it('should notify on request start', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     mockFetchManager.whenAllComplete(() => {
       expect(startSpy).toHaveBeenCalledWith({ requestIndex: expect.any(Number) as unknown as number, url: FAKE_URL })
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should notify on request without body', (done) => {
+  it('should notify on request without body', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 200 })
 
     mockFetchManager.whenAllComplete(() => {
@@ -65,11 +65,11 @@ describe('collect fetch', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(200)
       expect(request.handlingStack).toBeDefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should notify on request with body used by another instrumentation', (done) => {
+  it('should notify on request with body used by another instrumentation', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 200, bodyUsed: true })
 
     mockFetchManager.whenAllComplete(() => {
@@ -80,11 +80,11 @@ describe('collect fetch', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(200)
       expect(request.handlingStack).toBeDefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should notify on request with body disturbed', (done) => {
+  it('should notify on request with body disturbed', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 200, bodyDisturbed: true })
 
     mockFetchManager.whenAllComplete(() => {
@@ -95,11 +95,11 @@ describe('collect fetch', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(200)
       expect(request.handlingStack).toBeDefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should notify on request complete', (done) => {
+  it('should notify on request complete', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     mockFetchManager.whenAllComplete(() => {
@@ -110,11 +110,11 @@ describe('collect fetch', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(500)
       expect(request.handlingStack).toBeDefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should assign a request id', (done) => {
+  it('should assign a request id', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     mockFetchManager.whenAllComplete(() => {
@@ -122,11 +122,11 @@ describe('collect fetch', () => {
       const completeRequestIndex = completeSpy.mock.calls[0][0].requestIndex
 
       expect(completeRequestIndex).toBe(startRequestIndex)
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should ignore intake requests', (done) => {
+  it('should ignore intake requests', () => new Promise<void>((resolve) => {
     fetch(SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD)).resolveWith({
       status: 200,
       responseText: 'foo',
@@ -135,34 +135,34 @@ describe('collect fetch', () => {
     mockFetchManager.whenAllComplete(() => {
       expect(startSpy).not.toHaveBeenCalled()
       expect(completeSpy).not.toHaveBeenCalled()
-      done()
+      resolve()
     })
-  })
+  }))
 
   describe('tracing', () => {
-    it('should trace requests by default', (done) => {
+    it('should trace requests by default', () => new Promise<void>((resolve) => {
       fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
 
       mockFetchManager.whenAllComplete(() => {
         const request = completeSpy.mock.calls[0][0]
 
         expect(request.traceId).toBeDefined()
-        done()
+        resolve()
       })
-    })
+    }))
 
-    it('should trace aborted requests', (done) => {
+    it('should trace aborted requests', () => new Promise<void>((resolve) => {
       fetch(FAKE_URL).abort()
 
       mockFetchManager.whenAllComplete(() => {
         const request = completeSpy.mock.calls[0][0]
 
         expect(request.traceId).toBeDefined()
-        done()
+        resolve()
       })
-    })
+    }))
 
-    it('should not trace requests ending with status 0', (done) => {
+    it('should not trace requests ending with status 0', () => new Promise<void>((resolve) => {
       fetch(FAKE_URL).resolveWith({ status: 0, responseText: 'fetch cancelled' })
 
       mockFetchManager.whenAllComplete(() => {
@@ -170,9 +170,9 @@ describe('collect fetch', () => {
 
         expect(request.status).toEqual(0)
         expect(request.traceId).toBeUndefined()
-        done()
+        resolve()
       })
-    })
+    }))
   })
 })
 
@@ -203,7 +203,7 @@ describe('collect xhr', () => {
     })
   })
 
-  it('should notify on request start', (done) => {
+  it('should notify on request start', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
@@ -215,12 +215,12 @@ describe('collect xhr', () => {
           requestIndex: expect.any(Number) as unknown as number,
           url: expect.stringMatching(/\/ok$/) as unknown as string,
         })
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should notify on request complete', (done) => {
+  it('should notify on request complete', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
@@ -235,12 +235,12 @@ describe('collect xhr', () => {
         expect(request.url).toContain('/ok')
         expect(request.status).toEqual(200)
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should assign a request id', (done) => {
+  it('should assign a request id', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
@@ -252,12 +252,12 @@ describe('collect xhr', () => {
         const completeRequestIndex = completeSpy.mock.calls[0][0].requestIndex
 
         expect(completeRequestIndex).toBe(startRequestIndex)
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should ignore intake requests', (done) => {
+  it('should ignore intake requests', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', SPEC_ENDPOINTS.rumEndpointBuilder.build('fetch', DEFAULT_PAYLOAD))
@@ -267,12 +267,12 @@ describe('collect xhr', () => {
       onComplete() {
         expect(startSpy).not.toHaveBeenCalled()
         expect(completeSpy).not.toHaveBeenCalled()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should not trace cancelled requests', (done) => {
+  it('should not trace cancelled requests', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
@@ -283,13 +283,13 @@ describe('collect xhr', () => {
         const request = completeSpy.mock.calls[0][0]
         expect(request.status).toEqual(0)
         expect(request.traceId).toEqual(undefined)
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
   describe('tracing', () => {
-    it('should trace requests by default', (done) => {
+    it('should trace requests by default', () => new Promise<void>((resolve) => {
       withXhr({
         setup(xhr) {
           xhr.open('GET', '/ok')
@@ -299,12 +299,12 @@ describe('collect xhr', () => {
         onComplete() {
           const request = completeSpy.mock.calls[0][0]
           expect(request.traceId).toBeDefined()
-          done()
+          resolve()
         },
       })
-    })
+    }))
 
-    it('should trace aborted requests', (done) => {
+    it('should trace aborted requests', () => new Promise<void>((resolve) => {
       withXhr({
         setup(xhr) {
           xhr.open('GET', '/ok')
@@ -314,12 +314,12 @@ describe('collect xhr', () => {
         onComplete() {
           const request = completeSpy.mock.calls[0][0]
           expect(request.traceId).toBeDefined()
-          done()
+          resolve()
         },
       })
-    })
+    }))
 
-    it('should not trace requests ending with status 0', (done) => {
+    it('should not trace requests ending with status 0', () => new Promise<void>((resolve) => {
       withXhr({
         setup(xhr) {
           xhr.open('GET', '/ok')
@@ -330,10 +330,10 @@ describe('collect xhr', () => {
           const request = completeSpy.mock.calls[0][0]
           expect(request.status).toEqual(0)
           expect(request.traceId).toBeUndefined()
-          done()
+          resolve()
         },
       })
-    })
+    }))
   })
 })
 
@@ -358,7 +358,7 @@ describe('GraphQL response text collection', () => {
     return { mockFetchManager, completeSpy, fetch: window.fetch as MockFetch }
   }
 
-  it('should collect responseBody when trackResponseErrors is enabled', (done) => {
+  it('should collect responseBody when trackResponseErrors is enabled', () => new Promise<void>((resolve) => {
     const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(true)
 
     const responseBody = JSON.stringify({
@@ -377,11 +377,11 @@ describe('GraphQL response text collection', () => {
     mockFetchManager.whenAllComplete(() => {
       const request = completeSpy.mock.calls[0][0]
       expect(request.responseBody).toBe(responseBody)
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should not collect responseBody when trackResponseErrors is disabled', (done) => {
+  it('should not collect responseBody when trackResponseErrors is disabled', () => new Promise<void>((resolve) => {
     const { mockFetchManager, completeSpy, fetch } = setupGraphQlFetchTest(false)
 
     const responseBody = JSON.stringify({
@@ -400,7 +400,7 @@ describe('GraphQL response text collection', () => {
     mockFetchManager.whenAllComplete(() => {
       const request = completeSpy.mock.calls[0][0]
       expect(request.responseBody).toBeUndefined()
-      done()
+      resolve()
     })
-  })
+  }))
 })
