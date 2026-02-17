@@ -186,6 +186,14 @@ export interface RumInitConfiguration extends InitConfiguration {
   enablePrivacyForActionName?: boolean | undefined // TODO next major: remove this option and make privacy for action name the default behavior
 
   /**
+   * Respects the browser's Do Not Track (DNT) setting. When enabled, the SDK will not initialize if the user has enabled Do Not Track (navigator.doNotTrack === '1').
+   *
+   * @category Privacy
+   * @defaultValue false
+   */
+  respectDoNotTrack?: boolean | undefined
+
+  /**
    * Enables automatic collection of users actions.
    *
    * See [Tracking User Actions](https://docs.datadoghq.com/real_user_monitoring/browser/tracking_user_actions) for further information.
@@ -306,6 +314,7 @@ export interface RumConfiguration extends Configuration {
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
   enablePrivacyForActionName: boolean
+  respectDoNotTrack: boolean
   sessionReplaySampleRate: number
   startSessionReplayRecordingManually: boolean
   trackUserInteractions: boolean
@@ -392,6 +401,7 @@ export function validateAndBuildRumConfiguration(
       ? initConfiguration.defaultPrivacyLevel
       : DefaultPrivacyLevel.MASK,
     enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
+    respectDoNotTrack: !!initConfiguration.respectDoNotTrack,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
       : TraceContextInjection.SAMPLED,

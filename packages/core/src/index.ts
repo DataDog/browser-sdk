@@ -11,6 +11,7 @@ export {
 export * from './domain/intakeSites'
 export type { TrackingConsentState } from './domain/trackingConsent'
 export { TrackingConsent, createTrackingConsentState } from './domain/trackingConsent'
+export { isTrackingAllowedByBrowser } from './domain/doNotTrack'
 export {
   isExperimentalFeatureEnabled,
   addExperimentalFeatures,

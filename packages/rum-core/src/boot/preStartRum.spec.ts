@@ -21,6 +21,7 @@ import {
   mockExperimentalFeatures,
   createFakeTelemetryObject,
   replaceMockableWithSpy,
+  registerCleanupTask,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -806,6 +807,64 @@ describe('preStartRum', () => {
     })
   })
 
+  describe('do not track', () => {
+    let originalDoNotTrack: string | null | undefined
+
+    beforeEach(() => {
+      originalDoNotTrack = navigator.doNotTrack
+
+      registerCleanupTask(() => {
+        Object.defineProperty(navigator, 'doNotTrack', {
+          value: originalDoNotTrack,
+          writable: true,
+          configurable: true,
+        })
+      })
+    })
+
+    it('does not start rum if respectDoNotTrack is enabled and navigator.doNotTrack === "1"', () => {
+      Object.defineProperty(navigator, 'doNotTrack', {
+        value: '1',
+        writable: true,
+        configurable: true,
+      })
+
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectDoNotTrack: true }, PUBLIC_API)
+
+      expect(doStartRumSpy).not.toHaveBeenCalled()
+    })
+
+    it('starts rum if respectDoNotTrack is enabled but navigator.doNotTrack === "0"', () => {
+      Object.defineProperty(navigator, 'doNotTrack', {
+        value: '0',
+        writable: true,
+        configurable: true,
+      })
+
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, respectDoNotTrack: true }, PUBLIC_API)
+
+      expect(doStartRumSpy).toHaveBeenCalled()
+    })
+
+    it('starts rum even if navigator.doNotTrack === "1" when respectDoNotTrack is false (default)', () => {
+      Object.defineProperty(navigator, 'doNotTrack', {
+        value: '1',
+        writable: true,
+        configurable: true,
+      })
+
+      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+
+      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
+
+      expect(doStartRumSpy).toHaveBeenCalled()
+    })
+  })
+
   describe('telemetry', () => {
     it('starts telemetry during init() by default', () => {
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
@@ -853,7 +912,7 @@ describe('preStartRum', () => {
 
 function createPreStartStrategyWithDefaults({
   rumPublicApiOptions = {},
-  trackingConsentState = createTrackingConsentState(),
+  trackingConsentState = createTrackingConsentState()
 }: {
   rumPublicApiOptions?: RumPublicApiOptions
   trackingConsentState?: TrackingConsentState

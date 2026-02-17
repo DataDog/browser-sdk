@@ -28,6 +28,7 @@ import {
   startTelemetry,
   TelemetryService,
   mockable,
+  isTrackingAllowedByBrowser,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -90,7 +91,12 @@ export function createPreStartStrategy(
   const emptyContext: Context = {}
 
   function tryStartRum() {
-    if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
+    if (
+      !cachedInitConfiguration ||
+      !cachedConfiguration ||
+      !trackingConsentState.isGranted() ||
+      (cachedConfiguration.respectDoNotTrack && !isTrackingAllowedByBrowser())
+    ) {
       return
     }
 
