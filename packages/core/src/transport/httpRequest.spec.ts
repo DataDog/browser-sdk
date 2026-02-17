@@ -33,27 +33,18 @@ describe('httpRequest', () => {
   })
 
   describe('send', () => {
-    it('should use fetch when fetch keepalive is not available', async () => {
-      interceptor.withRequest(false)
-
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
+    it('should use fetch to send intake payload to the endpoint', async () => {
+      const payloadData = '{"foo":"bar1"}\n{"foo":"bar2"}'
+      request.send({ data: payloadData, bytesCount: 10 })
       await interceptor.waitForAllFetchCalls()
 
       expect(requests.length).toEqual(1)
       expect(requests[0].type).toBe('fetch')
       expect(requests[0].url).toContain(ENDPOINT_URL)
-      expect(requests[0].body).toEqual('{"foo":"bar1"}\n{"foo":"bar2"}')
+      expect(requests[0].body).toEqual(payloadData)
     })
 
-    it('should use fetch for intake requests', async () => {
-      request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 })
-      await interceptor.waitForAllFetchCalls()
-
-      expect(requests.length).toEqual(1)
-      expect(requests[0].type).toBe('fetch')
-    })
-
-    it('should use fetch over fetch keepalive when the bytes count is too high', async () => {
+    it('should use fetch for payloads exceeding the bytes limit', async () => {
       request.send({ data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: RECOMMENDED_REQUEST_BYTES_LIMIT })
       await interceptor.waitForAllFetchCalls()
 
