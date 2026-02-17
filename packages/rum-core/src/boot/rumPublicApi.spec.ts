@@ -4,7 +4,6 @@ import {
   display,
   DefaultPrivacyLevel,
   timeStampToClocks,
-  stopSessionManager,
   ExperimentalFeature,
   ResourceType,
   startTelemetry,
@@ -16,9 +15,11 @@ import {
   mockEventBridge,
   createFakeTelemetryObject,
   mockExperimentalFeatures,
+  replaceMockable,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
-import { noopRecorderApi, noopProfilerApi } from '../../test'
+import { noopRecorderApi, noopProfilerApi, createRumStartSessionManagerMock } from '../../test'
+import { startRumSessionManager } from '../domain/rumSessionManager'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
@@ -62,10 +63,6 @@ const DEFAULT_INIT_CONFIGURATION = { applicationId: 'xxx', clientToken: 'xxx' }
 const FAKE_WORKER = {} as DeflateWorker
 
 describe('rum public api', () => {
-  afterEach(() => {
-    stopSessionManager()
-  })
-
   describe('init', () => {
     describe('deflate worker', () => {
       let rumPublicApi: RumPublicApi
@@ -1140,6 +1137,7 @@ function makeRumPublicApiWithDefaults({
     ...startRumResult,
   }))
   replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  replaceMockable(startRumSessionManager, createRumStartSessionManagerMock())
   return {
     startRumSpy,
     rumPublicApi: makeRumPublicApi(

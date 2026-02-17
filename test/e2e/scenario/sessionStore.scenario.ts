@@ -29,16 +29,20 @@ test.describe('Session Stores', () => {
         expect(rumContext?.session_id).toBe(cookieSessionId)
       })
 
-    createTest('when cookies are unavailable, Logs should start, but not RUM')
+    createTest('when cookies are unavailable, SDKs should not start')
       .withLogs()
       .withRum()
       .withHead(DISABLE_COOKIES)
-      .run(async ({ page }) => {
+      .run(async ({ page, withBrowserLogs }) => {
         const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
 
-        expect(logsContext).not.toBeUndefined()
+        expect(logsContext).toBeUndefined()
         expect(rumContext).toBeUndefined()
+
+        withBrowserLogs((logs) => {
+          expect(logs.filter((logs) => logs.message.includes('No storage available for session'))).toHaveLength(2)
+        })
       })
 
     test.describe('trackSessionAcrossSubdomains: false', () => {
@@ -198,16 +202,20 @@ test.describe('Session Stores', () => {
         expect(rumContext?.session_id).toBe(sessionId)
       })
 
-    createTest('when localStorage is unavailable, Logs should start, but not RUM')
+    createTest('when localStorage is unavailable, SDKs should not start')
       .withLogs({ sessionPersistence: 'local-storage' })
       .withRum({ sessionPersistence: 'local-storage' })
       .withHead(DISABLE_LOCAL_STORAGE)
-      .run(async ({ page }) => {
+      .run(async ({ page, withBrowserLogs }) => {
         const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
 
-        expect(logsContext).not.toBeUndefined()
+        expect(logsContext).toBeUndefined()
         expect(rumContext).toBeUndefined()
+
+        withBrowserLogs((logs) => {
+          expect(logs.filter((logs) => logs.message.includes('No storage available for session'))).toHaveLength(2)
+        })
       })
   })
 

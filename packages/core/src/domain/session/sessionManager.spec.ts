@@ -10,6 +10,7 @@ import {
 import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import { DOM_EVENT } from '../../browser/addEventListener'
+import { display } from '../../tools/display'
 import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
@@ -95,6 +96,24 @@ describe('startSessionManager', () => {
       stopSessionManager()
       // flush pending callbacks to avoid random failures
       clock.tick(ONE_HOUR)
+    })
+  })
+
+  describe('initialization', () => {
+    it('should not start if no session store available', () => {
+      const displayWarnSpy = spyOn(display, 'warn')
+      const onReadySpy = jasmine.createSpy('onReady')
+
+      startSessionManager(
+        { sessionStoreStrategyType: undefined } as Configuration,
+        FIRST_PRODUCT_KEY,
+        () => FakeTrackingType.TRACKED,
+        createTrackingConsentState(TrackingConsent.GRANTED),
+        onReadySpy
+      )
+
+      expect(displayWarnSpy).toHaveBeenCalledWith('No storage available for session. We will not send any data.')
+      expect(onReadySpy).not.toHaveBeenCalled()
     })
   })
 

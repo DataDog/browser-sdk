@@ -3,7 +3,6 @@ import {
   type Duration,
   type TimeStamp,
   type TrackingConsentState,
-  stopSessionManager,
   display,
   getTimeStamp,
   noop,
@@ -25,6 +24,7 @@ import {
   mockSyntheticsWorkerValues,
   mockExperimentalFeatures,
   createFakeTelemetryObject,
+  replaceMockable,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -33,6 +33,8 @@ import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import type { ManualAction } from '../domain/action/trackManualActions'
+import { createRumStartSessionManagerMock } from '../../test'
+import { startRumSessionManager } from '../domain/rumSessionManager'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import type { DoStartRum } from './preStartRum'
@@ -46,10 +48,6 @@ const FAKE_WORKER = {} as DeflateWorker
 const PUBLIC_API = {} as RumPublicApi
 
 describe('preStartRum', () => {
-  afterEach(() => {
-    stopSessionManager()
-  })
-
   describe('configuration validation', () => {
     let strategy: Strategy
     let doStartRumSpy: jasmine.Spy<DoStartRum>
@@ -161,15 +159,6 @@ describe('preStartRum', () => {
   })
 
   describe('init', () => {
-    it('should not initialize if session cannot be handled and bridge is not present', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      const displaySpy = spyOn(display, 'warn')
-      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
-      expect(doStartRumSpy).not.toHaveBeenCalled()
-      expect(displaySpy).toHaveBeenCalled()
-    })
-
     describe('skipInitIfSyntheticsWillInjectRum option', () => {
       it('when true, ignores init() call if Synthetics will inject its own instance of RUM', () => {
         mockSyntheticsWorkerValues({ injectsRum: true })
@@ -893,6 +882,7 @@ function createPreStartStrategyWithDefaults({
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  replaceMockable(startRumSessionManager, createRumStartSessionManagerMock())
   return {
     strategy: createPreStartStrategy(
       rumPublicApiOptions,

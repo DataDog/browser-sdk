@@ -29,6 +29,7 @@ test.describe('logs', () => {
 
         expect(intakeRegistry.logsRequests).toHaveLength(1)
         expect(intakeRegistry.logsEvents[0].message).toBe('Some message')
+        expect(intakeRegistry.logsEvents[0].session_id).toBeDefined()
       })
 
     createTest('service worker with worker logs - importScripts')
@@ -47,6 +48,7 @@ test.describe('logs', () => {
 
         expect(intakeRegistry.logsRequests).toHaveLength(1)
         expect(intakeRegistry.logsEvents[0].message).toBe('Other message')
+        expect(intakeRegistry.logsEvents[0].session_id).toBeDefined()
       })
 
     createTest('service worker console forwarding')
@@ -66,6 +68,7 @@ test.describe('logs', () => {
         // Expect logs for console, error, and report events from service worker
         expect(intakeRegistry.logsRequests).toHaveLength(1)
         expect(intakeRegistry.logsEvents[0].message).toBe('SW console log test')
+        expect(intakeRegistry.logsEvents[0].session_id).toBeDefined()
       })
   })
 

@@ -4,22 +4,15 @@ import {
   type Clock,
   mockClock,
   mockEventBridge,
-  mockSyntheticsWorkerValues,
   waitNextMicrotask,
   createFakeTelemetryObject,
+  replaceMockable,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
-import {
-  SESSION_STORE_KEY,
-  getCookie,
-  stopSessionManager,
-  ONE_SECOND,
-  TrackingConsent,
-  createTrackingConsentState,
-  display,
-  startTelemetry,
-} from '@datadog/browser-core'
+import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display, startTelemetry } from '@datadog/browser-core'
+import { createLogStartSessionManagerMock } from '../../test/mockLogsSessionManager'
+import { startLogsSessionManager } from '../domain/logsSessionManager'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
@@ -37,10 +30,6 @@ describe('preStartLogs', () => {
 
   beforeEach(() => {
     clock = mockClock()
-  })
-
-  afterEach(() => {
-    stopSessionManager()
   })
 
   describe('configuration validation', () => {
@@ -263,52 +252,6 @@ describe('preStartLogs', () => {
     })
   })
 
-  describe('sampling', () => {
-    it('should be applied when event bridge is present (rate 0)', async () => {
-      mockEventBridge()
-      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
-
-      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, sessionSampleRate: 0 })
-      await collectAsyncCalls(doStartLogsSpy, 1)
-      const sessionManager = doStartLogsSpy.calls.mostRecent().args[2]
-      expect(sessionManager.findTrackedSession()).toBeUndefined()
-    })
-
-    it('should be applied when event bridge is present (rate 100)', async () => {
-      mockEventBridge()
-      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
-
-      strategy.init({ ...DEFAULT_INIT_CONFIGURATION, sessionSampleRate: 100 })
-      await collectAsyncCalls(doStartLogsSpy, 1)
-      const sessionManager = doStartLogsSpy.calls.mostRecent().args[2]
-      expect(sessionManager.findTrackedSession()).toBeTruthy()
-    })
-  })
-
-  describe('logs session creation', () => {
-    it('creates a session on normal conditions', async () => {
-      const { strategy, doStartLogsSpy } = createPreStartStrategyWithDefaults()
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
-
-      await collectAsyncCalls(doStartLogsSpy, 1)
-      expect(getCookie(SESSION_STORE_KEY)).toBeDefined()
-    })
-
-    it('does not create a session if event bridge is present', () => {
-      mockEventBridge()
-      const { strategy } = createPreStartStrategyWithDefaults()
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
-    })
-
-    it('does not create a session if synthetics worker will inject RUM', () => {
-      mockSyntheticsWorkerValues({ injectsRum: true })
-      const { strategy } = createPreStartStrategyWithDefaults()
-      strategy.init(DEFAULT_INIT_CONFIGURATION)
-      expect(getCookie(SESSION_STORE_KEY)).toBeUndefined()
-    })
-  })
-
   describe('telemetry', () => {
     it('starts telemetry during init() by default', async () => {
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
@@ -349,6 +292,7 @@ function createPreStartStrategyWithDefaults({
   } as unknown as StartLogsResult)
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
+  replaceMockable(startLogsSessionManager, createLogStartSessionManagerMock())
 
   return {
     strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),

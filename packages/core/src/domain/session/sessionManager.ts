@@ -14,6 +14,8 @@ import { getCurrentSite } from '../../browser/cookie'
 import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { findLast } from '../../tools/utils/polyfills'
 import { monitorError } from '../../tools/monitor'
+import { isWorkerEnvironment } from '../../tools/globalObject'
+import { display } from '../../tools/display'
 import { SESSION_NOT_TRACKED, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -56,9 +58,13 @@ export function startSessionManager<TrackingType extends string>(
   const renewObservable = new Observable<void>()
   const expireObservable = new Observable<void>()
 
-  // TODO - Improve configuration type and remove assertion
+  if (!configuration.sessionStoreStrategyType) {
+    display.warn('No storage available for session. We will not send any data.')
+    return
+  }
+
   const sessionStore = startSessionStore(
-    configuration.sessionStoreStrategyType!,
+    configuration.sessionStoreStrategyType,
     configuration,
     productKey,
     computeTrackingType
@@ -105,13 +111,15 @@ export function startSessionManager<TrackingType extends string>(
       }
     })
 
-    trackActivity(configuration, () => {
-      if (trackingConsentState.isGranted()) {
-        sessionStore.expandOrRenewSession()
-      }
-    })
-    trackVisibility(configuration, () => sessionStore.expandSession())
-    trackResume(configuration, () => sessionStore.restartSession())
+    if (!isWorkerEnvironment) {
+      trackActivity(configuration, () => {
+        if (trackingConsentState.isGranted()) {
+          sessionStore.expandOrRenewSession()
+        }
+      })
+      trackVisibility(configuration, () => sessionStore.expandSession())
+      trackResume(configuration, () => sessionStore.restartSession())
+    }
 
     onReady({
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),

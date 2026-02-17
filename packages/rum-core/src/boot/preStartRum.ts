@@ -28,6 +28,7 @@ import {
   startTelemetry,
   TelemetryService,
   mockable,
+  isWorkerEnvironment,
 } from '@datadog/browser-core'
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
@@ -149,11 +150,6 @@ export function createPreStartStrategy(
       return
     }
 
-    if (!eventBridgeAvailable && !configuration.sessionStoreStrategyType) {
-      display.warn('No storage available for session. We will not send any data.')
-      return
-    }
-
     if (configuration.compressIntakeRequests && !eventBridgeAvailable && startDeflateWorker) {
       deflateWorker = startDeflateWorker(
         configuration,
@@ -183,15 +179,16 @@ export function createPreStartStrategy(
       startTrackingConsentContext(hooks, trackingConsentState)
       telemetry = mockable(startTelemetry)(TelemetryService.RUM, configuration, hooks)
 
-      if (canUseEventBridge()) {
-        sessionManager = startRumSessionManagerStub()
-        tryStartRum()
-      } else {
-        startRumSessionManager(configuration, trackingConsentState, (newSessionManager) => {
-          sessionManager = newSessionManager
-          tryStartRum()
-        })
+      if (isWorkerEnvironment) {
+        display.warn('The RUM SDK is not supported in a web or service worker environment.')
+        return
       }
+
+      const startSessionManagerFn = canUseEventBridge() ? startRumSessionManagerStub : mockable(startRumSessionManager)
+      startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
+        sessionManager = newSessionManager
+        tryStartRum()
+      })
     })
   }
 
