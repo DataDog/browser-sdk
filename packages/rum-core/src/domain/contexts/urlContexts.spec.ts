@@ -22,7 +22,7 @@ describe('urlContexts', () => {
     const setupResult = setupLocationObserver('http://fake-url.com')
 
     changeLocation = setupResult.changeLocation
-    urlContexts = startUrlContexts(lifeCycle, hooks, setupResult.locationChangeObservable, setupResult.fakeLocation)
+    urlContexts = startUrlContexts(lifeCycle, hooks, setupResult.locationChangeObservable)
 
     registerCleanupTask(() => {
       urlContexts.stop()

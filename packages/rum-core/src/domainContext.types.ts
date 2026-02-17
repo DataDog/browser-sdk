@@ -9,7 +9,11 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
   : T extends typeof RumEventType.ACTION
     ? RumActionEventDomainContext
     : T extends typeof RumEventType.RESOURCE
-      ? RumFetchResourceEventDomainContext | RumXhrResourceEventDomainContext | RumOtherResourceEventDomainContext
+      ?
+          | RumFetchResourceEventDomainContext
+          | RumXhrResourceEventDomainContext
+          | RumOtherResourceEventDomainContext
+          | RumManualResourceEventDomainContext
       : T extends typeof RumEventType.ERROR
         ? RumErrorEventDomainContext
         : T extends typeof RumEventType.LONG_TASK
@@ -47,6 +51,14 @@ export interface RumXhrResourceEventDomainContext {
 
 export interface RumOtherResourceEventDomainContext {
   performanceEntry: PerformanceEntry
+}
+
+export interface RumManualResourceEventDomainContext {
+  /**
+   * Manual resources created via startResource/stopResource do not have
+   * a performance entry or request/response objects.
+   */
+  isManual: true
 }
 
 export interface RumErrorEventDomainContext {

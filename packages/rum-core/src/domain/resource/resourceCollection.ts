@@ -7,6 +7,7 @@ import {
   toServerDuration,
   relativeToClocks,
   createTaskQueue,
+  mockable,
 } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type { RumPerformanceResourceTiming } from '../../browser/performanceObservable'
@@ -24,6 +25,7 @@ import type { RequestCompleteEvent } from '../requestCollection'
 import type { PageStateHistory } from '../contexts/pageStateHistory'
 import { PageState } from '../contexts/pageStateHistory'
 import { createSpanIdentifier } from '../tracing/identifier'
+import { startEventTracker } from '../eventTracker'
 import { matchRequestResourceEntry } from './matchRequestResourceEntry'
 import {
   computeResourceEntryDetails,
@@ -40,14 +42,15 @@ import type { RequestRegistry } from './requestRegistry'
 import { createRequestRegistry } from './requestRegistry'
 import type { GraphQlMetadata } from './graphql'
 import { extractGraphQlMetadata, findGraphQlConfiguration } from './graphql'
+import type { ManualResourceData } from './trackManualResources'
+import { trackManualResources } from './trackManualResources'
 
 export function startResourceCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  pageStateHistory: PageStateHistory,
-  taskQueue = createTaskQueue(),
-  retrieveInitialDocumentResourceTimingImpl = retrieveInitialDocumentResourceTiming
+  pageStateHistory: PageStateHistory
 ) {
+  const taskQueue = mockable(createTaskQueue)()
   let requestRegistry: RequestRegistry | undefined
   const isEarlyRequestCollectionEnabled = configuration.trackEarlyRequests
 
@@ -70,7 +73,7 @@ export function startResourceCollection(
     }
   })
 
-  retrieveInitialDocumentResourceTimingImpl(configuration, (timing) => {
+  mockable(retrieveInitialDocumentResourceTiming)(configuration, (timing) => {
     handleResource(() => processResourceEntry(timing, configuration, pageStateHistory, requestRegistry))
   })
 
@@ -83,10 +86,16 @@ export function startResourceCollection(
     })
   }
 
+  const resourceTracker = startEventTracker<ManualResourceData>(lifeCycle)
+  const manualResources = trackManualResources(lifeCycle, resourceTracker)
+
   return {
+    startResource: manualResources.startResource,
+    stopResource: manualResources.stopResource,
     stop: () => {
       taskQueue.stop()
       performanceResourceSubscription.unsubscribe()
+      resourceTracker.stopAll()
     },
   }
 }

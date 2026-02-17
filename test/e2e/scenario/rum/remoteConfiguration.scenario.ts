@@ -93,6 +93,91 @@ test.describe('remote configuration', () => {
       expect(initConfiguration.version).toBe('js-version')
     })
 
+  createTest('should resolve an option value from localStorage')
+    .withRum({
+      remoteConfigurationId: 'e2e',
+    })
+    .withRemoteConfiguration({
+      rum: {
+        applicationId: 'e2e',
+        version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'dd_app_version' },
+      },
+    })
+    .withBody(html`
+      <script>
+        localStorage.setItem('dd_app_version', 'localStorage-version')
+      </script>
+    `)
+    .run(async ({ page }) => {
+      const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+      expect(initConfiguration.version).toBe('localStorage-version')
+    })
+
+  createTest('should resolve an option value from localStorage with an extractor')
+    .withRum({
+      remoteConfigurationId: 'e2e',
+    })
+    .withRemoteConfiguration({
+      rum: {
+        applicationId: 'e2e',
+        version: {
+          rcSerializedType: 'dynamic',
+          strategy: 'localStorage',
+          key: 'dd_app_version',
+          extractor: { rcSerializedType: 'regex', value: '\\d+\\.\\d+\\.\\d+' },
+        },
+      },
+    })
+    .withBody(html`
+      <script>
+        localStorage.setItem('dd_app_version', 'version-1.2.3-beta')
+      </script>
+    `)
+    .run(async ({ page }) => {
+      const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+      expect(initConfiguration.version).toBe('1.2.3')
+    })
+
+  createTest('should resolve to undefined when localStorage key is missing')
+    .withRum({
+      remoteConfigurationId: 'e2e',
+    })
+    .withRemoteConfiguration({
+      rum: {
+        applicationId: 'e2e',
+        version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'non_existent_key' },
+      },
+    })
+    .run(async ({ page }) => {
+      const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+      expect(initConfiguration.version).toBeUndefined()
+    })
+
+  createTest('should handle localStorage access failure gracefully')
+    .withRum({
+      remoteConfigurationId: 'e2e',
+    })
+    .withRemoteConfiguration({
+      rum: {
+        applicationId: 'e2e',
+        version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'dd_app_version' },
+      },
+    })
+    .withBody(html`
+      <script>
+        Object.defineProperty(window, 'localStorage', {
+          get: function () {
+            throw new Error('localStorage is not available')
+          },
+          configurable: true,
+        })
+      </script>
+    `)
+    .run(async ({ page }) => {
+      const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
+      expect(initConfiguration.version).toBeUndefined()
+    })
+
   createTest('should resolve user context')
     .withRum({
       remoteConfigurationId: 'e2e',

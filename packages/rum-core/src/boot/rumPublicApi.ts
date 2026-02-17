@@ -14,7 +14,7 @@ import type {
   RumInternalContext,
   Telemetry,
   Encoder,
-  startTelemetry,
+  ResourceType,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -35,6 +35,7 @@ import {
   startBufferingData,
   isExperimentalFeatureEnabled,
   ExperimentalFeature,
+  mockable,
 } from '@datadog/browser-core'
 
 import type { LifeCycle } from '../domain/lifeCycle'
@@ -57,8 +58,10 @@ import type { Hooks } from '../domain/hooks'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import type { LongTaskContexts } from '../domain/longTask/longTaskCollection'
 import type { ActionOptions } from '../domain/action/trackManualActions'
+import type { ResourceOptions, ResourceStopOptions } from '../domain/resource/trackManualResources'
 import { createPreStartStrategy } from './preStartRum'
-import type { StartRum, StartRumResult } from './startRum'
+import type { StartRumResult } from './startRum'
+import { startRum } from './startRum'
 
 export interface StartRecordingOptions {
   force: boolean
@@ -189,6 +192,24 @@ export interface RumPublicApi extends PublicApi {
    * @param options - Options of the action
    */
   stopAction: (name: string, options?: ActionOptions) => void
+
+  /**
+   * [Experimental] Start tracking a resource, stored in `@resource`
+   *
+   * @category Data Collection
+   * @param url - URL of the resource
+   * @param options - Options of the resource (@default type: 'other')
+   */
+  startResource: (url: string, options?: ResourceOptions) => void
+
+  /**
+   * [Experimental] Stop tracking a resource, stored in `@resource`
+   *
+   * @category Data Collection
+   * @param url - URL of the resource
+   * @param options - Options of the resource
+   */
+  stopResource: (url: string, options?: ResourceStopOptions) => void
 
   /**
    * Add a custom error, stored in `@error`.
@@ -547,6 +568,8 @@ export interface Strategy {
   addAction: StartRumResult['addAction']
   startAction: StartRumResult['startAction']
   stopAction: StartRumResult['stopAction']
+  startResource: StartRumResult['startResource']
+  stopResource: StartRumResult['stopResource']
   addError: StartRumResult['addError']
   addFeatureFlagEvaluation: StartRumResult['addFeatureFlagEvaluation']
   startDurationVital: StartRumResult['startDurationVital']
@@ -556,11 +579,9 @@ export interface Strategy {
 }
 
 export function makeRumPublicApi(
-  startRumImpl: StartRum,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
-  options: RumPublicApiOptions = {},
-  startTelemetryImpl?: typeof startTelemetry
+  options: RumPublicApiOptions = {}
 ): RumPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const customVitalsState = createCustomVitalsState()
@@ -576,7 +597,7 @@ export function makeRumPublicApi(
           ? (streamId: DeflateEncoderStreamId) => options.createDeflateEncoder!(configuration, deflateWorker, streamId)
           : createIdentityEncoder
 
-      const startRumResult = startRumImpl(
+      const startRumResult = mockable(startRum)(
         configuration,
         recorderApi,
         profilerApi,
@@ -617,8 +638,7 @@ export function makeRumPublicApi(
       })
 
       return startRumResult
-    },
-    startTelemetryImpl
+    }
   )
   const getStrategy = () => strategy
 
@@ -706,6 +726,32 @@ export function makeRumPublicApi(
         type: sanitize(options && options.type) as ActionType | undefined,
         context: sanitize(options && options.context) as Context,
         actionKey: options && options.actionKey,
+      })
+    }),
+
+    startResource: monitor((url, options) => {
+      // Check feature flag only after init; pre-init calls should be buffered
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
+        return
+      }
+      // addTelemetryUsage({ feature: 'start-resource' })
+      strategy.startResource(sanitize(url)!, {
+        type: sanitize(options && options.type) as ResourceType | undefined,
+        method: sanitize(options && options.method) as string | undefined,
+        context: sanitize(options && options.context) as Context,
+        resourceKey: options && options.resourceKey,
+      })
+    }),
+
+    stopResource: monitor((url, options) => {
+      if (strategy.initConfiguration && !isExperimentalFeatureEnabled(ExperimentalFeature.START_STOP_RESOURCE)) {
+        return
+      }
+      // addTelemetryUsage({ feature: 'stop-resource' })
+      strategy.stopResource(sanitize(url)!, {
+        statusCode: options && options.statusCode,
+        context: sanitize(options && options.context) as Context,
+        resourceKey: options && options.resourceKey,
       })
     }),
 

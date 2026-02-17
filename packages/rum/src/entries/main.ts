@@ -9,7 +9,7 @@
 // Keep the following in sync with packages/rum-slim/src/entries/main.ts
 import { defineGlobal, getGlobalObject } from '@datadog/browser-core'
 import type { RumPublicApi } from '@datadog/browser-rum-core'
-import { makeRumPublicApi, startRum } from '@datadog/browser-rum-core'
+import { makeRumPublicApi } from '@datadog/browser-rum-core'
 import { makeRecorderApi } from '../boot/recorderApi'
 import { createDeflateEncoder, startDeflateWorker } from '../domain/deflate'
 import { lazyLoadRecorder } from '../boot/lazyLoadRecorder'
@@ -83,7 +83,7 @@ const profilerApi = makeProfilerApi()
  * @see {@link DatadogRum}
  * @see [RUM Browser Monitoring Setup](https://docs.datadoghq.com/real_user_monitoring/browser/)
  */
-export const datadogRum = makeRumPublicApi(startRum, recorderApi, profilerApi, {
+export const datadogRum = makeRumPublicApi(recorderApi, profilerApi, {
   startDeflateWorker,
   createDeflateEncoder,
   sdkName: 'rum',
