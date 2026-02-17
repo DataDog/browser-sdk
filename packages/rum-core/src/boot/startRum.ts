@@ -43,6 +43,7 @@ import type { CustomVitalsState } from '../domain/vital/vitalCollection'
 import { startVitalCollection } from '../domain/vital/vitalCollection'
 import { startCiVisibilityContext } from '../domain/contexts/ciVisibilityContext'
 import { startLongTaskCollection } from '../domain/longTask/longTaskCollection'
+import { startSoftNavigationCollection } from '../domain/softNavigation/softNavigationCollection'
 import { startSyntheticsContext } from '../domain/contexts/syntheticsContext'
 import { startRumAssembly } from '../domain/assembly'
 import { startSessionContext } from '../domain/contexts/sessionContext'
@@ -200,6 +201,16 @@ export function startRumEventCollection(
 
   startRumAssembly(configuration, lifeCycle, hooks, reportError)
 
+  const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
+  cleanupTasks.push(stopResourceCollection)
+
+  const { stop: stopLongTaskCollection, longTaskContexts } = startLongTaskCollection(lifeCycle, configuration)
+  cleanupTasks.push(stopLongTaskCollection)
+
+  const { stop: stopSoftNavigationCollection, softNavigationContexts } =
+    startSoftNavigationCollection(configuration)
+  cleanupTasks.push(stopSoftNavigationCollection)
+
   const {
     addTiming,
     startView,
@@ -217,18 +228,13 @@ export function startRumEventCollection(
     locationChangeObservable,
     recorderApi,
     viewHistory,
+    softNavigationContexts,
     initialViewOptions
   )
 
   startSourceCodeContext(hooks)
 
   cleanupTasks.push(stopViewCollection)
-
-  const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
-  cleanupTasks.push(stopResourceCollection)
-
-  const { stop: stopLongTaskCollection, longTaskContexts } = startLongTaskCollection(lifeCycle, configuration)
-  cleanupTasks.push(stopLongTaskCollection)
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
 
@@ -267,6 +273,7 @@ export function startRumEventCollection(
     userContext,
     accountContext,
     longTaskContexts,
+    softNavigationContexts,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

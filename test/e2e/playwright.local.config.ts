@@ -19,6 +19,15 @@ function getConfig(browser: string, device: string) {
       sessionName: device,
       name: browser,
     },
-    use: devices[device],
+    use: {
+      ...devices[device],
+      ...(browser === 'chromium'
+        ? {
+            launchOptions: {
+              args: ['--enable-features=SoftNavigationHeuristics'],
+            },
+          }
+        : {}),
+    },
   }
 }

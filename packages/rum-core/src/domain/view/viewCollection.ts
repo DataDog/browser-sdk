@@ -1,9 +1,19 @@
 import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
-import { getTimeZone, DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import {
+  getTimeZone,
+  DISCARDED,
+  HookNames,
+  isEmptyObject,
+  isExperimentalFeatureEnabled,
+  ExperimentalFeature,
+  mapValues,
+  toServerDuration,
+} from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
-import { RumEventType } from '../../rawRumEvent.types'
+import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
+import type { SoftNavigationContexts } from '../softNavigation/softNavigationCollection'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
@@ -25,10 +35,14 @@ export function startViewCollection(
   locationChangeObservable: Observable<LocationChange>,
   recorderApi: RecorderApi,
   viewHistory: ViewHistory,
+  softNavigationContexts: SoftNavigationContexts,
   initialViewOptions?: ViewOptions
 ) {
   lifeCycle.subscribe(LifeCycleEventType.VIEW_UPDATED, (view) =>
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processViewUpdate(view, configuration, recorderApi))
+    lifeCycle.notify(
+      LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
+      processViewUpdate(view, configuration, recorderApi, softNavigationContexts)
+    )
   )
 
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | DISCARDED => {
@@ -73,10 +87,20 @@ export function startViewCollection(
 function processViewUpdate(
   view: ViewEvent,
   configuration: RumConfiguration,
-  recorderApi: RecorderApi
+  recorderApi: RecorderApi,
+  softNavigationContexts: SoftNavigationContexts
 ): RawRumEventCollectedData<RawRumViewEvent> {
   const replayStats = recorderApi.getReplayStats(view.id)
   const clsDevicePixelRatio = view.commonViewMetrics?.cumulativeLayoutShift?.devicePixelRatio
+  // The soft-navigation PerformanceEntry's startTime can be a few milliseconds after the view's
+  // startClocks.relative because the SDK detects the URL change (via history.pushState override)
+  // slightly before Chrome finalizes the soft-navigation entry. Use findAll with a small tolerance
+  // window to account for this timing offset.
+  const SOFT_NAV_TIMING_TOLERANCE = 50 as Duration
+  const isSoftNavigation =
+    view.loadingType === ViewLoadingType.ROUTE_CHANGE
+      ? softNavigationContexts.findAll(view.startClocks.relative, SOFT_NAV_TIMING_TOLERANCE).length > 0
+      : false
   const viewEvent: RawRumViewEvent = {
     _dd: {
       document_version: view.documentVersion,
@@ -117,6 +141,9 @@ function processViewUpdate(
       interaction_to_next_paint_time: toServerDuration(view.commonViewMetrics.interactionToNextPaint?.time),
       interaction_to_next_paint_target_selector: view.commonViewMetrics.interactionToNextPaint?.targetSelector,
       is_active: view.isActive,
+      ...(isExperimentalFeatureEnabled(ExperimentalFeature.SOFT_NAVIGATION)
+        ? { navigation: { soft: isSoftNavigation } }
+        : {}),
       name: view.name,
       largest_contentful_paint: toServerDuration(view.initialViewMetrics.largestContentfulPaint?.value),
       largest_contentful_paint_target_selector: view.initialViewMetrics.largestContentfulPaint?.targetSelector,

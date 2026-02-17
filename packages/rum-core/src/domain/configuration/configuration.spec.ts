@@ -631,6 +631,7 @@ describe('serializeRumConfiguration', () => {
       profilingSampleRate: 42,
       propagateTraceBaggage: true,
       betaTrackActionsInShadowDom: true,
+      enableExperimentalFeatures: ['soft_navigation'],
     }
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
@@ -646,7 +647,7 @@ describe('serializeRumConfiguration', () => {
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
           : // The following options are not reported as telemetry. Please avoid adding more of them.
             // TODO: Add betaTrackActionsInShadowDom to rum-events-format and remove from this exclusion
-            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom'
+            Key extends 'applicationId' | 'subdomain' | 'betaTrackActionsInShadowDom' | 'enableExperimentalFeatures'
             ? never
             : CamelToSnakeCase<Key>
     // By specifying the type here, we can ensure that serializeConfiguration is returning an
@@ -656,6 +657,8 @@ describe('serializeRumConfiguration', () => {
       | 'selected_tracing_propagators'
       | 'use_track_graph_ql_payload'
       | 'use_track_graph_ql_response_errors'
+      | 'use_soft_navigation'
+      | 'supports_soft_navigation'
     > = serializeRumConfiguration(exhaustiveRumInitConfiguration)
 
     expect(serializedConfiguration).toEqual({
@@ -687,6 +690,8 @@ describe('serializeRumConfiguration', () => {
       remote_configuration_id: '123',
       use_remote_configuration_proxy: true,
       profiling_sample_rate: 42,
+      use_soft_navigation: true,
+      supports_soft_navigation: jasmine.any(Boolean),
     })
   })
 })
