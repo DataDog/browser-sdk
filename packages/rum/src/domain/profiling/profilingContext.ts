@@ -13,7 +13,12 @@ export function startProfilingContext(hooks: Hooks): ProfilingContextManager {
   }
 
   hooks.register(HookNames.Assemble, ({ eventType }) => {
-    if (eventType !== RumEventType.VIEW && eventType !== RumEventType.LONG_TASK) {
+    if (
+      eventType !== RumEventType.VIEW &&
+      eventType !== RumEventType.LONG_TASK &&
+      eventType !== RumEventType.ACTION &&
+      eventType !== RumEventType.VITAL
+    ) {
       return SKIPPED
     }
 
