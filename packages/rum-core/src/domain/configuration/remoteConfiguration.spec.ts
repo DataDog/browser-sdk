@@ -245,7 +245,7 @@ describe('remoteConfiguration', () => {
         expect(metrics.get().cookie).toEqual({ success: 1 })
       })
 
-      it('should not be set if the cookie is missing', () => {
+      it('should resolve to undefined if the cookie is missing', () => {
         expectAppliedRemoteConfigurationToBe(
           { version: { rcSerializedType: 'dynamic', strategy: 'cookie', name: COOKIE_NAME } },
           { version: undefined }
