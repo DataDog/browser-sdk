@@ -149,6 +149,9 @@ export function applyRemoteConfiguration(
       case 'js':
         resolvedValue = resolveJsValue(property)
         break
+      case 'localStorage':
+        resolvedValue = resolveLocalStorageValue(property)
+        break
       default:
         display.error(`Unsupported remote configuration: "strategy": "${strategy as string}"`)
         return
@@ -163,6 +166,24 @@ export function applyRemoteConfiguration(
   function resolveCookieValue({ name }: { name: string }) {
     const value = getCookie(name)
     metrics.increment('cookie', value !== undefined ? 'success' : 'missing')
+    return value
+  }
+
+  function resolveLocalStorageValue({ key, attribute }: { key: string; attribute?: string }) {
+    let value = localStorage.getItem(key)
+
+    if (value !== null && attribute) {
+      try {
+        const valueObject = JSON.parse(value)
+        value = valueObject[attribute] ?? null; 
+      } catch {
+        display.error(`Invalid JSON attribute for localStorage key: '${key}'`)
+        metrics.increment('localStorage', 'missing')
+        return value;
+      }
+    }
+
+    metrics.increment('localStorage', value !== null  ? 'success' : 'missing')
     return value
   }
 
@@ -231,10 +252,11 @@ export function initMetrics() {
       if (!metrics[metricName]) {
         metrics[metricName] = {}
       }
-      if (!metrics[metricName][type]) {
-        metrics[metricName][type] = 0
+      const counter = metrics[metricName] as RemoteConfigurationMetricCounters
+      if (!counter[type]) {
+        counter[type] = 0
       }
-      metrics[metricName][type] = metrics[metricName][type] + 1
+      counter[type] = counter[type] + 1
     },
   }
 }

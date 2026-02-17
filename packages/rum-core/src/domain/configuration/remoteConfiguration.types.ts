@@ -26,6 +26,14 @@ export type DynamicOption =
       extractor?: SerializedRegex
       [k: string]: unknown
     }
+    | {
+        rcSerializedType: 'dynamic'
+        strategy: 'localStorage'
+        key: string
+        attribute?: string
+        extractor?: SerializedRegex
+        [k: string]: unknown
+      }
 
 /**
  * RUM Browser & Mobile SDKs Remote Configuration properties
