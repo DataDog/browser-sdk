@@ -77,23 +77,23 @@ describe('httpRequest', () => {
   })
 
   describe('fetchStrategy onResponse', () => {
-    it('should be called with intake response', (done) => {
+    it('should be called with intake response', () => new Promise<void>((resolve) => {
       interceptor.withFetch(DEFAULT_FETCH_MOCK)
 
       fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
         expect(response).toEqual({ status: 200, type: 'cors' })
-        done()
+        resolve()
       })
-    })
+    }))
 
-    it('should be called with status 0 when fetch fails', (done) => {
+    it('should be called with status 0 when fetch fails', () => new Promise<void>((resolve) => {
       interceptor.withFetch(NETWORK_ERROR_FETCH_MOCK)
 
       fetchStrategy(endpointBuilder, { data: '{"foo":"bar1"}\n{"foo":"bar2"}', bytesCount: 10 }, (response) => {
         expect(response).toEqual({ status: 0 })
-        done()
+        resolve()
       })
-    })
+    }))
   })
 
   describe('sendOnExit', () => {

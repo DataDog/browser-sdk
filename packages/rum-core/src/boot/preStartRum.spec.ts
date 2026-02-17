@@ -410,7 +410,7 @@ describe('preStartRum', () => {
         interceptor = interceptRequests()
       })
 
-      it('should start with the remote configuration when a remoteConfigurationId is provided', (done) => {
+      it('should start with the remote configuration when a remoteConfigurationId is provided', () => new Promise<void>((resolve) => {
         interceptor.withFetch(() =>
           Promise.resolve({
             ok: true,
@@ -420,7 +420,7 @@ describe('preStartRum', () => {
         const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
         doStartRumSpy.mockImplementation((configuration) => {
           expect(configuration.sessionSampleRate).toEqual(50)
-          done()
+          resolve()
           return {} as StartRumResult
         })
         strategy.init(
@@ -430,7 +430,7 @@ describe('preStartRum', () => {
           },
           PUBLIC_API
         )
-      })
+      }))
     })
 
     describe('plugins', () => {
@@ -528,7 +528,7 @@ describe('preStartRum', () => {
       expect(strategy.initConfiguration).toEqual(initConfiguration)
     })
 
-    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', (done) => {
+    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', () => new Promise<void>((resolve) => {
       interceptor.withFetch(() =>
         Promise.resolve({
           ok: true,
@@ -538,7 +538,7 @@ describe('preStartRum', () => {
       const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
       doStartRumSpy.mockImplementation(() => {
         expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
-        done()
+        resolve()
         return {} as StartRumResult
       })
       strategy.init(
@@ -548,7 +548,7 @@ describe('preStartRum', () => {
         },
         PUBLIC_API
       )
-    })
+    }))
   })
 
   describe('buffers API calls before starting RUM', () => {

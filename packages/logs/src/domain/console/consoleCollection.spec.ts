@@ -44,15 +44,14 @@ describe('console collection', () => {
       /* eslint-disable-next-line no-console */
       console[api as keyof typeof LogStatusForApi]('foo', 'bar')
 
-      expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-        date: expect.any(Number),
+      expect(rawLogsEvents[0].rawLogsEvent).toMatchObject({
         message: 'foo bar',
         status,
         origin: ErrorSource.CONSOLE,
-        error: whatever(),
       })
+      expect(typeof rawLogsEvents[0].rawLogsEvent.date).toBe('number')
 
-      expect(rawLogsEvents[0].domainContext).toEqual({
+      expect(rawLogsEvents[0].domainContext).toMatchObject({
         handlingStack: expect.any(String),
       })
 

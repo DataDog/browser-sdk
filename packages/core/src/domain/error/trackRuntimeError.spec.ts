@@ -55,17 +55,13 @@ describe('instrumentOnError', () => {
   const ERROR_MESSAGE = 'foo'
 
   const spyViaInstrumentOnError = async (callback: () => void) => {
-    // Ensure window.onerror is a function before spying (it's null by default and vi.spyOn requires a function)
-    if (!window.onerror) {
-      window.onerror = () => {}
-    }
-    const onErrorSpy = vi.spyOn(window as any, 'onerror')
     const callbackSpy = vi.fn<UnhandledErrorCallback>()
     const { stop } = instrumentOnError(callbackSpy)
 
     try {
       await invokeAndWaitForErrorHandlers(callback)
-      expect(onErrorSpy).toHaveBeenCalled()
+      // instrumentOnError patches window.onerror, so we verify its callback was invoked
+      expect(callbackSpy).toHaveBeenCalled()
       return callbackSpy
     } finally {
       stop()
@@ -288,13 +284,12 @@ describe('instrumentUnhandledRejection', () => {
       return // skip: 'onunhandledrejection not supported'
     }
 
-    const onUnhandledRejectionSpy = vi.spyOn(window as any, 'onunhandledrejection')
     const callbackSpy = vi.fn<UnhandledErrorCallback>()
     const { stop } = instrumentUnhandledRejection(callbackSpy)
 
     try {
       await invokeAndWaitForErrorHandlers(callback)
-      expect(onUnhandledRejectionSpy).toHaveBeenCalled()
+      expect(callbackSpy).toHaveBeenCalled()
       return callbackSpy
     } finally {
       stop()

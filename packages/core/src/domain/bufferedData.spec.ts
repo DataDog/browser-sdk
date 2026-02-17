@@ -6,7 +6,7 @@ import { ErrorHandling, ErrorSource, type RawError } from './error/error.types'
 import { trackRuntimeError } from './error/trackRuntimeError'
 
 describe('startBufferingData', () => {
-  it('collects runtime errors', (done) => {
+  it('collects runtime errors', () => new Promise<void>((resolve) => {
     const runtimeErrorObservable = new Observable<RawError>()
     replaceMockable(trackRuntimeError, () => runtimeErrorObservable)
     const { observable, stop } = startBufferingData()
@@ -30,7 +30,7 @@ describe('startBufferingData', () => {
         type: BufferedDataType.RUNTIME_ERROR,
         error: rawError,
       })
-      done()
+      resolve()
     })
-  })
+  }))
 })

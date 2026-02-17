@@ -35,7 +35,7 @@ describe('xhr observable', () => {
     })
   }
 
-  it('should track successful request', (done) => {
+  it('should track successful request', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
@@ -50,12 +50,12 @@ describe('xhr observable', () => {
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(expect.any(Number))
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should sanitize request method', (done) => {
+  it('should sanitize request method', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('get', '/ok')
@@ -66,12 +66,12 @@ describe('xhr observable', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track client error', (done) => {
+  it('should track client error', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/expected-404')
@@ -86,12 +86,12 @@ describe('xhr observable', () => {
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(expect.any(Number))
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track server error', (done) => {
+  it('should track server error', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/throw')
@@ -106,12 +106,12 @@ describe('xhr observable', () => {
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(expect.any(Number))
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track network error', (done) => {
+  it('should track network error', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', 'http://foo.bar/qux')
@@ -126,12 +126,12 @@ describe('xhr observable', () => {
         expect(request.isAborted).toBe(false)
         expect(request.duration).toEqual(expect.any(Number))
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track successful request aborted', (done) => {
+  it('should track successful request aborted', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.onreadystatechange = () => {
@@ -155,12 +155,12 @@ describe('xhr observable', () => {
         expect(xhr.status).toBe(0)
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(1)
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track aborted requests', (done) => {
+  it('should track aborted requests', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
@@ -176,12 +176,12 @@ describe('xhr observable', () => {
         expect(request.isAborted).toBe(true)
         expect(xhr.status).toBe(0)
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track request with onreadystatechange overridden before open', (done) => {
+  it('should track request with onreadystatechange overridden before open', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.onreadystatechange = vi.fn()
@@ -198,12 +198,12 @@ describe('xhr observable', () => {
         expect(request.duration).toEqual(expect.any(Number))
         expect(xhr.onreadystatechange).toHaveBeenCalled()
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track request with onreadystatechange overridden after open', (done) => {
+  it('should track request with onreadystatechange overridden after open', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', '/ok')
@@ -220,12 +220,12 @@ describe('xhr observable', () => {
         expect(request.duration).toEqual(expect.any(Number))
         expect(xhr.onreadystatechange).toHaveBeenCalled()
         expect(request.handlingStack).toBeDefined()
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should allow to enhance the context', (done) => {
+  it('should allow to enhance the context', () => new Promise<void>((resolve) => {
     type CustomContext = XhrContext & { foo: string }
     contextEditionSubscription = initXhrObservable(configuration).subscribe((rawContext) => {
       const context = rawContext as CustomContext
@@ -242,12 +242,12 @@ describe('xhr observable', () => {
       onComplete() {
         const request = requests[0]
         expect((request as CustomContext).foo).toBe('bar')
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should not break xhr opened before the instrumentation', (done) => {
+  it('should not break xhr opened before the instrumentation', () => new Promise<void>((resolve) => {
     requestsTrackingSubscription.unsubscribe()
     withXhr({
       setup(xhr) {
@@ -258,12 +258,12 @@ describe('xhr observable', () => {
       },
       onComplete() {
         expect(requests.length).toBe(0)
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track multiple requests with the same xhr instance', (done) => {
+  it('should track multiple requests with the same xhr instance', () => new Promise<void>((resolve) => {
     let listeners: { [k: string]: Array<(event: Event) => void> }
     withXhr({
       setup(xhr) {
@@ -304,12 +304,12 @@ describe('xhr observable', () => {
         expect(xhr.onreadystatechange).toHaveBeenCalledTimes(2)
         expect(listeners.load.length).toBe(0)
         expect(listeners.loadend.length).toBe(0)
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track request to undefined url', (done) => {
+  it('should track request to undefined url', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', undefined)
@@ -321,12 +321,12 @@ describe('xhr observable', () => {
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/undefined')
         expect(request.status).toBe(404)
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track request to null url', (done) => {
+  it('should track request to null url', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', null)
@@ -338,12 +338,12 @@ describe('xhr observable', () => {
         expect(request.method).toBe('GET')
         expect(request.url).toContain('/null')
         expect(request.status).toBe(404)
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
-  it('should track request to URL object', (done) => {
+  it('should track request to URL object', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open('GET', new URL('http://example.com/path'))
@@ -354,13 +354,13 @@ describe('xhr observable', () => {
         const request = requests[0]
         expect(request.method).toBe('GET')
         expect(request.url).toBe('http://example.com/path')
-        done()
+        resolve()
       },
     })
-  })
+  }))
 
   describe('when unsubscribing', () => {
-    it('should stop tracking requests', (done) => {
+    it('should stop tracking requests', () => new Promise<void>((resolve) => {
       requestsTrackingSubscription.unsubscribe()
 
       withXhr({
@@ -371,10 +371,10 @@ describe('xhr observable', () => {
         },
         onComplete() {
           expect(requests.length).toBe(0)
-          done()
+          resolve()
         },
       })
-    })
+    }))
 
     it('should restore original XMLHttpRequest methods', () => {
       requestsTrackingSubscription.unsubscribe()
@@ -384,7 +384,7 @@ describe('xhr observable', () => {
     })
   })
 
-  it('should track request with undefined or null methods', (done) => {
+  it('should track request with undefined or null methods', () => new Promise<void>((resolve) => {
     withXhr({
       setup(xhr) {
         xhr.open(null, '/ok')
@@ -399,8 +399,8 @@ describe('xhr observable', () => {
       onComplete() {
         expect(requests[0].method).toBe('NULL')
         expect(requests[1].method).toBe('UNDEFINED')
-        done()
+        resolve()
       },
     })
-  })
+  }))
 })

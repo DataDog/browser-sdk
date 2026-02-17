@@ -14,7 +14,7 @@ describe('locationChangeObservable', () => {
     expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
   })
 
-  it('should notify observers on hashchange', (done) => {
+  it('should notify observers on hashchange', () => new Promise<void>((resolve) => {
     const observer = setup()
 
     function hashChangeCallback() {
@@ -23,12 +23,12 @@ describe('locationChangeObservable', () => {
       expect(locationChanges.newLocation.href).toMatch(/\/foo#bar$/)
 
       window.removeEventListener('hashchange', hashChangeCallback)
-      done()
+      resolve()
     }
     window.addEventListener('hashchange', hashChangeCallback)
 
     window.location.hash = '#bar'
-  })
+  }))
 
   it('should not notify if the url has not changed', () => {
     const observer = setup()

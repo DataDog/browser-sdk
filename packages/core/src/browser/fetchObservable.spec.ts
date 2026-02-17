@@ -35,7 +35,7 @@ describe('fetch proxy', () => {
     })
   })
 
-  it('should track server error', (done) => {
+  it('should track server error', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 500, responseText: 'fetch error' })
 
     mockFetchManager.whenAllComplete(() => {
@@ -45,11 +45,11 @@ describe('fetch proxy', () => {
       expect(request.status).toEqual(500)
       expect(request.isAborted).toBe(false)
       expect(request.handlingStack).toBeDefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should track refused fetch', (done) => {
+  it('should track refused fetch', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).rejectWith(new Error('fetch error'))
 
     mockFetchManager.whenAllComplete(() => {
@@ -60,11 +60,11 @@ describe('fetch proxy', () => {
       expect(request.isAborted).toBe(false)
       expect(request.error).toEqual(new Error('fetch error'))
       expect(request.handlingStack).toBeDefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should track aborted fetch', (done) => {
+  it('should track aborted fetch', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).abort()
 
     mockFetchManager.whenAllComplete(() => {
@@ -75,13 +75,13 @@ describe('fetch proxy', () => {
       expect(request.isAborted).toBe(true)
       expect(request.error).toEqual(new DOMException('The user aborted a request', 'AbortError'))
       expect(request.handlingStack).toBeDefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should track fetch aborted by AbortController', (done) => {
+  it('should track fetch aborted by AbortController', () => new Promise<void>((resolve) => {
     if (!window.AbortController) {
-      return // skip: 'AbortController is not supported'
+      return resolve() // skip: 'AbortController is not supported'
     }
 
     const controller = new AbortController()
@@ -96,11 +96,11 @@ describe('fetch proxy', () => {
       expect(request.isAborted).toBe(true)
       expect(request.error).toEqual(controller.signal.reason)
       expect(request.handlingStack).toBeDefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should track opaque fetch', (done) => {
+  it('should track opaque fetch', () => new Promise<void>((resolve) => {
     // https://fetch.spec.whatwg.org/#concept-filtered-response-opaque
     fetch(FAKE_URL).resolveWith({ status: 0, type: 'opaque' })
 
@@ -110,11 +110,11 @@ describe('fetch proxy', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(0)
       expect(request.isAborted).toBe(false)
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should track client error', (done) => {
+  it('should track client error', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 400, responseText: 'Not found' })
 
     mockFetchManager.whenAllComplete(() => {
@@ -123,11 +123,11 @@ describe('fetch proxy', () => {
       expect(request.url).toEqual(FAKE_URL)
       expect(request.status).toEqual(400)
       expect(request.isAborted).toBe(false)
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should get method from input', (done) => {
+  it('should get method from input', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).resolveWith({ status: 500 })
     fetch(new Request(FAKE_URL)).resolveWith({ status: 500 })
     fetch(new Request(FAKE_URL, { method: 'PUT' })).resolveWith({ status: 500 })
@@ -153,11 +153,11 @@ describe('fetch proxy', () => {
       expect(requests[9].method).toEqual('NULL')
       expect(requests[10].method).toEqual('GET')
 
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should get the normalized url from input', (done) => {
+  it('should get the normalized url from input', () => new Promise<void>((resolve) => {
     fetch(FAKE_URL).rejectWith(new Error('fetch error'))
     fetch(new Request(FAKE_URL)).rejectWith(new Error('fetch error'))
     fetch(null as any).rejectWith(new Error('fetch error'))
@@ -176,11 +176,11 @@ describe('fetch proxy', () => {
       expect(requests[3].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
       expect(requests[4].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
       expect(requests[5].url).toEqual(NORMALIZED_FAKE_RELATIVE_URL)
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should keep promise resolved behavior for Response', (done) => {
+  it('should keep promise resolved behavior for Response', () => new Promise<void>((resolve) => {
     const mockFetchPromise = fetch(FAKE_URL)
     const spy = vi.fn()
     mockFetchPromise.then(spy).catch(() => {
@@ -190,11 +190,11 @@ describe('fetch proxy', () => {
 
     setTimeout(() => {
       expect(spy).toHaveBeenCalled()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should keep promise resolved behavior for any other type', (done) => {
+  it('should keep promise resolved behavior for any other type', () => new Promise<void>((resolve) => {
     const mockFetchPromise = fetch(FAKE_URL)
     const spy = vi.fn()
     mockFetchPromise.then(spy).catch(() => {
@@ -204,11 +204,11 @@ describe('fetch proxy', () => {
 
     setTimeout(() => {
       expect(spy).toHaveBeenCalled()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should keep promise rejected behavior for Error', (done) => {
+  it('should keep promise rejected behavior for Error', () => new Promise<void>((resolve) => {
     const mockFetchPromise = fetch(FAKE_URL)
     const spy = vi.fn()
     mockFetchPromise.catch(spy)
@@ -216,11 +216,11 @@ describe('fetch proxy', () => {
 
     setTimeout(() => {
       expect(spy).toHaveBeenCalled()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should keep promise rejected behavior for any other type', (done) => {
+  it('should keep promise rejected behavior for any other type', () => new Promise<void>((resolve) => {
     const mockFetchPromise = fetch(FAKE_URL)
     const spy = vi.fn()
     mockFetchPromise.catch(spy)
@@ -228,11 +228,11 @@ describe('fetch proxy', () => {
 
     setTimeout(() => {
       expect(spy).toHaveBeenCalled()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should allow to enhance the context', (done) => {
+  it('should allow to enhance the context', () => new Promise<void>((resolve) => {
     type CustomContext = FetchContext & { foo: string }
     contextEditionSubscription = initFetchObservable().subscribe((rawContext) => {
       const context = rawContext as CustomContext
@@ -244,21 +244,21 @@ describe('fetch proxy', () => {
 
     mockFetchManager.whenAllComplete(() => {
       expect((requests[0] as CustomContext).foo).toBe('bar')
-      done()
+      resolve()
     })
-  })
+  }))
 
   describe('when unsubscribing', () => {
-    it('should stop tracking requests', (done) => {
+    it('should stop tracking requests', () => new Promise<void>((resolve) => {
       requestsTrackingSubscription.unsubscribe()
 
       fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'ok' })
 
       mockFetchManager.whenAllComplete(() => {
         expect(requests).toEqual([])
-        done()
+        resolve()
       })
-    })
+    }))
 
     it('should restore original window.fetch', () => {
       requestsTrackingSubscription.unsubscribe()
@@ -291,29 +291,29 @@ describe('fetch proxy with ResponseBodyAction', () => {
     resetFetchObservable()
   })
 
-  it('should collect response body with COLLECT action', (done) => {
+  it('should collect response body with COLLECT action', () => new Promise<void>((resolve) => {
     setupFetchTracking(() => ResponseBodyAction.COLLECT)
 
     fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
     mockFetchManager.whenAllComplete(() => {
       expect(requests[0].responseBody).toBe('response body content')
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should not collect response body with WAIT or IGNORE action', (done) => {
+  it('should not collect response body with WAIT or IGNORE action', () => new Promise<void>((resolve) => {
     setupFetchTracking(() => ResponseBodyAction.WAIT)
 
     fetch(FAKE_URL).resolveWith({ status: 200, responseText: 'response body content' })
 
     mockFetchManager.whenAllComplete(() => {
       expect(requests[0].responseBody).toBeUndefined()
-      done()
+      resolve()
     })
-  })
+  }))
 
-  it('should use the highest priority action when multiple getters are registered', (done) => {
+  it('should use the highest priority action when multiple getters are registered', () => new Promise<void>((resolve) => {
     setupFetchTracking(() => ResponseBodyAction.WAIT)
 
     initFetchObservable({
@@ -329,7 +329,7 @@ describe('fetch proxy with ResponseBodyAction', () => {
 
     mockFetchManager.whenAllComplete(() => {
       expect(requests[0].responseBody).toBe('response body content')
-      done()
+      resolve()
     })
-  })
+  }))
 })

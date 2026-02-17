@@ -127,7 +127,7 @@ describe('sessionStoreOperations', () => {
         lockConflictOnRetrievedSessionIndex: 3,
       },
     ].forEach(({ description, lockConflictOnRetrievedSessionIndex }) => {
-      it(description, (done) => {
+      it(description, () => new Promise<void>((resolve) => {
         expandSessionState(initialSession)
         const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
         sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex, {
@@ -160,12 +160,12 @@ describe('sessionStoreOperations', () => {
               }
               expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
               expect(afterSession).toEqual(expectedSession)
-              done()
+              resolve()
             },
           },
           sessionStoreStrategy
         )
-      })
+      }))
     })
 
     it('should abort after a max number of retry', () => {
@@ -184,7 +184,7 @@ describe('sessionStoreOperations', () => {
       expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
     })
 
-    it('should execute cookie accesses in order', (done) => {
+    it('should execute cookie accesses in order', () => new Promise<void>((resolve) => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({
         isLockEnabled: true,
         initialSession: { ...initialSession, lock: createLock() },
@@ -204,12 +204,12 @@ describe('sessionStoreOperations', () => {
           after: (session) => {
             expect(session.value).toBe('foobar')
             expect(afterSpy).toHaveBeenCalled()
-            done()
+            resolve()
           },
         },
         sessionStoreStrategy
       )
-    })
+    }))
 
     it('ignores locks set by an older version of the SDK (without creation date)', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({
