@@ -1,8 +1,8 @@
 import { clocksOrigin } from '@datadog/browser-core'
+import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../../types'
 import type { LongTaskContext } from '../longTaskHistory'
 import { buildProfileEventAttributes, type ProfileEventAttributes } from './buildProfileEventAttributes'
-import { RumPerformanceEntryType } from '@datadog/browser-rum-core'
 
 describe('buildProfileEventAttributes', () => {
   const applicationId = 'test-app-id'
