@@ -23,13 +23,15 @@ describe('longTaskHistory', () => {
     it('should add long task IDs to history when RAW_RUM_EVENT_COLLECTED is triggered with long_task event', () => {
       const history = createLongTaskHistory(lifeCycle)
 
+      const startClocks = relativeToClocks(10 as RelativeTime)
+
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.LONG_TASK, {
           long_task: {
             id: 'long-task-123',
           },
         }),
-        startClocks: relativeToClocks(10 as RelativeTime),
+        startClocks,
         duration: 20 as Duration,
         domainContext: fakeDomainContext,
       })
@@ -37,7 +39,7 @@ describe('longTaskHistory', () => {
       expect(history.findAll(5 as RelativeTime, 30 as RelativeTime)).toEqual([
         {
           id: 'long-task-123',
-          startClocks: relativeToClocks(10 as RelativeTime),
+          startClocks,
           duration: 20 as Duration,
           entryType: RumPerformanceEntryType.LONG_TASK,
         },
