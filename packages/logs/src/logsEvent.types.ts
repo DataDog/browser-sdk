@@ -160,12 +160,6 @@ export interface LogsEvent {
     name?: string
     [k: string]: unknown
   }
-  /**
-   * Internal properties
-   */
-  _dd?: {
-    [k: string]: unknown
-  }
 
   [k: string]: unknown
 }
