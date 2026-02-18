@@ -152,6 +152,7 @@ test.describe('embedded configuration with dynamic values', () => {
     })
 
     // Bundle should be valid JavaScript even with complex dynamic values
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
     expect(() => new Function(bundle)).not.toThrow()
   })
 })

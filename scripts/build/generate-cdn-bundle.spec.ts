@@ -5,12 +5,9 @@
  * Uses Node.js built-in test runner (node:test).
  */
 
-import { describe, it, mock, beforeEach } from 'node:test'
+import { describe, it } from 'node:test'
 import assert from 'node:assert'
 import { spawnSync } from 'node:child_process'
-import * as fs from 'node:fs'
-import * as path from 'node:path'
-import * as os from 'node:os'
 
 const CLI_PATH = './scripts/build/generate-cdn-bundle.ts'
 
@@ -156,9 +153,8 @@ describe('integration: generateCombinedBundle output validation', () => {
     })
 
     // Verify it's valid JavaScript
-    assert.doesNotThrow(() => {
-      new Function(bundle)
-    }, 'Generated bundle should be valid JavaScript')
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+    assert.doesNotThrow(() => new Function(bundle), 'Generated bundle should be valid JavaScript')
 
     // Verify structure
     assert.ok(bundle.includes('Datadog Browser SDK'), 'Should have header comment')
@@ -192,7 +188,8 @@ describe('integration: generateCombinedBundle output validation', () => {
     }
 
     // Create a function that executes the bundle with our mock window
-    const executeBundle = new Function('window', bundle)
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+    const executeBundle = new Function('window', bundle) as (w: unknown) => void
 
     assert.doesNotThrow(() => {
       executeBundle(mockWindow)
