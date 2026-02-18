@@ -70,12 +70,14 @@ describe('remoteConfiguration', () => {
       })
 
       expect(result.ok).toBe(true)
-      expect(result.value).toEqual({
-        applicationId: 'my-app',
-        sessionSampleRate: 50,
-        sessionReplaySampleRate: 75,
-        env: 'production',
-      })
+      if (result.ok) {
+        expect(result.value).toEqual({
+          applicationId: 'my-app',
+          sessionSampleRate: 50,
+          sessionReplaySampleRate: 75,
+          env: 'production',
+        })
+      }
     })
 
     it('should return error on network failure', async () => {
@@ -87,8 +89,10 @@ describe('remoteConfiguration', () => {
       })
 
       expect(result.ok).toBe(false)
-      expect(result.error).toBeDefined()
-      expect(result.error?.message).toBe('Error fetching the remote configuration.')
+      if (!result.ok) {
+        expect(result.error).toBeDefined()
+        expect(result.error.message).toBe('Error fetching the remote configuration.')
+      }
     })
 
     it('should return error on HTTP error response', async () => {
@@ -105,7 +109,9 @@ describe('remoteConfiguration', () => {
       })
 
       expect(result.ok).toBe(false)
-      expect(result.error).toBeDefined()
+      if (!result.ok) {
+        expect(result.error).toBeDefined()
+      }
     })
 
     it('should return error if response has no rum config', async () => {
@@ -122,7 +128,9 @@ describe('remoteConfiguration', () => {
       })
 
       expect(result.ok).toBe(false)
-      expect(result.error?.message).toBe('No remote configuration for RUM.')
+      if (!result.ok) {
+        expect(result.error.message).toBe('No remote configuration for RUM.')
+      }
     })
 
     it('should parse JSON response correctly', async () => {
@@ -149,8 +157,10 @@ describe('remoteConfiguration', () => {
       })
 
       expect(result.ok).toBe(true)
-      expect(result.value?.service).toBe('my-service')
-      expect(result.value?.traceSampleRate).toBe(50)
+      if (result.ok) {
+        expect(result.value.service).toBe('my-service')
+        expect(result.value.traceSampleRate).toBe(50)
+      }
     })
 
     it('should pass signal to fetch', async () => {

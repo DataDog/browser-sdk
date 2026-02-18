@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { generateCombinedBundle } from '../../../../scripts/build/lib/bundleGenerator'
+import { generateCombinedBundle } from '@datadog/browser-sdk-endpoint'
 
 test.describe('embedded configuration with dynamic values', () => {
   test('preserves cookie dynamic value markers in generated bundle', () => {

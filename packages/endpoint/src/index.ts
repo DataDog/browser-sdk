@@ -1,7 +1,7 @@
-export { generateBundle, generateCombinedBundle, fetchConfig } from './bundleGenerator'
-export type { GenerateBundleOptions, CombineBundleOptions, FetchConfigOptions } from './bundleGenerator'
+export { generateBundle, generateCombinedBundle, fetchConfig } from './bundleGenerator.ts'
+export type { GenerateBundleOptions, CombineBundleOptions, FetchConfigOptions } from './bundleGenerator.ts'
 
-export { downloadSDK, clearSdkCache } from './sdkDownloader'
-export type { DownloadSDKOptions, SdkVariant } from './sdkDownloader'
+export { downloadSDK, clearSdkCache } from './sdkDownloader.ts'
+export type { DownloadSDKOptions, SdkVariant } from './sdkDownloader.ts'
 
 export type { RumRemoteConfiguration, RemoteConfigResult } from '@datadog/browser-remote-config'
