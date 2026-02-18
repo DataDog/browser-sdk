@@ -10,6 +10,7 @@ import {
   DefaultPrivacyLevel,
   ExperimentalFeature,
   startTelemetry,
+  addExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -18,7 +19,6 @@ import {
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
-  mockExperimentalFeatures,
   createFakeTelemetryObject,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
@@ -686,7 +686,7 @@ describe('preStartRum', () => {
     })
 
     it('startAction / stopAction', () => {
-      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = jasmine.createSpy()
       const stopActionSpy = jasmine.createSpy()

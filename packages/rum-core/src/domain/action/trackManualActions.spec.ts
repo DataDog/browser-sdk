@@ -1,7 +1,7 @@
 import type { Duration, ServerDuration } from '@datadog/browser-core'
-import { ExperimentalFeature, Observable } from '@datadog/browser-core'
+import { addExperimentalFeatures, ExperimentalFeature, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
@@ -21,7 +21,7 @@ describe('trackManualActions', () => {
 
   beforeEach(() => {
     clock = mockClock()
-    mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+    addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()

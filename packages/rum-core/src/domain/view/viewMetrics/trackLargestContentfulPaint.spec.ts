@@ -1,11 +1,5 @@
 import type { RelativeTime } from '@datadog/browser-core'
-import {
-  clocksOrigin,
-  DOM_EVENT,
-  ExperimentalFeature,
-  addExperimentalFeatures,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { clocksOrigin, DOM_EVENT, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
   setPageVisibility,
@@ -86,7 +80,6 @@ describe('trackLargestContentfulPaint', () => {
 
   beforeEach(() => {
     addExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
-    registerCleanupTask(resetExperimentalFeatures)
 
     lcpCallback = jasmine.createSpy()
     eventTarget = document.createElement('div') as unknown as Window
