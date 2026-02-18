@@ -46,9 +46,7 @@ describe('rum session manager', () => {
 
   describe('cookie storage', () => {
     it('when tracked with session replay should store session id', async () => {
-      const rumSessionManager = await startRumSessionManagerWithDefaults({
-        configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 },
-      })
+      const rumSessionManager = await startRumSessionManagerWithDefaults()
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -60,7 +58,7 @@ describe('rum session manager', () => {
 
     it('when tracked without session replay should store session id', async () => {
       const rumSessionManager = await startRumSessionManagerWithDefaults({
-        configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 0 },
+        configuration: { sessionReplaySampleRate: 0 },
       })
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
@@ -96,9 +94,7 @@ describe('rum session manager', () => {
     it('should renew on activity after expiration', async () => {
       setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
 
-      const rumSessionManager = await startRumSessionManagerWithDefaults({
-        configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 },
-      })
+      const rumSessionManager = await startRumSessionManagerWithDefaults()
 
       expireCookie()
       expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
@@ -196,7 +192,7 @@ describe('rum session manager', () => {
       }) => {
         it(description, async () => {
           const rumSessionManager = await startRumSessionManagerWithDefaults({
-            configuration: { sessionSampleRate: 100, sessionReplaySampleRate },
+            configuration: { sessionReplaySampleRate },
           })
           expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(expectSessionReplay)
         })
@@ -208,8 +204,8 @@ describe('rum session manager', () => {
     return new Promise<RumSessionManager>((resolve) => {
       startRumSessionManager(
         mockRumConfiguration({
-          sessionSampleRate: 50,
-          sessionReplaySampleRate: 50,
+          sessionSampleRate: 100,
+          sessionReplaySampleRate: 100,
           trackResources: true,
           trackLongTasks: true,
           ...configuration,
