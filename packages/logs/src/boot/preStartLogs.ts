@@ -23,12 +23,16 @@ import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
+import type { LogsSessionManager } from '../domain/logsSessionManager'
+import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
+import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
 
 export type DoStartLogs = (
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
+  sessionManager: LogsSessionManager,
   hooks: Hooks
 ) => StartLogsResult
 
@@ -51,18 +55,17 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
+  let sessionManager: LogsSessionManager | undefined
   const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
   function tryStartLogs() {
-    if (!cachedConfiguration || !cachedInitConfiguration || !trackingConsentState.isGranted()) {
+    if (!cachedConfiguration || !cachedInitConfiguration || !sessionManager) {
       return
     }
 
-    mockable(startTelemetry)(TelemetryService.LOGS, cachedConfiguration, hooks)
-
     trackingConsentStateSubscription.unsubscribe()
-    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, hooks)
+    const startLogsResult = doStartLogs(cachedInitConfiguration, cachedConfiguration, sessionManager, hooks)
 
     bufferApiCalls.drain(startLogsResult)
   }
@@ -103,7 +106,18 @@ export function createPreStartStrategy(
       initFetchObservable().subscribe(noop)
 
       trackingConsentState.tryToInit(configuration.trackingConsent)
-      tryStartLogs()
+
+      trackingConsentState.onGrantedOnce(() => {
+        startTrackingConsentContext(hooks, trackingConsentState)
+        mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
+        const startSessionManagerFn = canUseEventBridge()
+          ? startLogsSessionManagerStub
+          : mockable(startLogsSessionManager)
+        startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
+          sessionManager = newSessionManager
+          tryStartLogs()
+        })
+      })
     },
 
     get initConfiguration() {
