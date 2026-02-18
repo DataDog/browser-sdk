@@ -3,9 +3,8 @@ import { playwright } from '@vitest/browser-playwright'
 import path from 'node:path'
 
 // Build env variables that should be replaced at compile time (same as webpack.base.ts)
-// Note: SDK_VERSION is intentionally NOT defined here — tests set it at runtime via
-// window.__BUILD_ENV__SDK_VERSION__ (see test/unit/vitest.setup.ts)
 const buildEnvDefines: Record<string, string> = {
+  __BUILD_ENV__SDK_VERSION__: JSON.stringify('test'),
   __BUILD_ENV__SDK_SETUP__: JSON.stringify('npm'),
   // Worker string is built from packages/worker — provide empty string for unit tests
   __BUILD_ENV__WORKER_STRING__: JSON.stringify(''),

@@ -281,7 +281,7 @@ describe('trackManualActions', () => {
 
       lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
-      expect(actionContexts.findActionId()).toBeUndefined()
+      expect(actionContexts.findActionId()).toHaveLength(0)
 
       stopAction('cross-session-action')
 
@@ -318,7 +318,7 @@ describe('trackManualActions', () => {
 
       stopActionCollection()
 
-      expect(actionContexts.findActionId()).toBeUndefined()
+      expect(actionContexts.findActionId()).toHaveLength(0)
 
       stopAction('active-when-stopped')
 
