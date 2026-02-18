@@ -28,7 +28,7 @@ describe('featureFlagContexts', () => {
   })
 
   describe('assemble hook', () => {
-    it('should add feature flag evaluations on VIEW and ERROR by default ', () => {
+    it('should add feature flag evaluations on VIEW, VIEW_UPDATE, and ERROR by default ', () => {
       lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
         startClocks: relativeToClocks(0 as RelativeTime),
       } as ViewCreatedEvent)
@@ -39,6 +39,10 @@ describe('featureFlagContexts', () => {
         eventType: 'view',
         startTime: 0 as RelativeTime,
       } as AssembleHookParams)
+      const defaultViewUpdateAttributes = hooks.triggerHook(HookNames.Assemble, {
+        eventType: 'view_update' as any,
+        startTime: 0 as RelativeTime,
+      } as AssembleHookParams)
       const defaultErrorAttributes = hooks.triggerHook(HookNames.Assemble, {
         eventType: 'error',
         startTime: 0 as RelativeTime,
@@ -46,6 +50,13 @@ describe('featureFlagContexts', () => {
 
       expect(defaultViewAttributes).toEqual({
         type: 'view',
+        feature_flags: {
+          feature: 'foo',
+        },
+      })
+
+      expect(defaultViewUpdateAttributes).toEqual({
+        type: "view_update" as any,
         feature_flags: {
           feature: 'foo',
         },
