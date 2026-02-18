@@ -1,4 +1,4 @@
-import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
+import { DISCARDED, HookNames, Observable, resetExperimentalFeatures, addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
@@ -303,5 +303,139 @@ describe('viewCollection', () => {
 
       expect(telemetryEventAttributes.view?.id).toBeUndefined()
     })
+  })
+})
+
+describe('partial view updates', () => {
+  let lifeCycle: LifeCycle
+  let hooks: Hooks
+  let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>>
+
+  function setupViewCollection(partialConfiguration: Partial<RumConfiguration> = {}) {
+    lifeCycle = new LifeCycle()
+    hooks = createHooks()
+    const viewHistory = mockViewHistory()
+    const domMutationObservable = new Observable<RumMutationRecord[]>()
+    const windowOpenObservable = new Observable<void>()
+    const locationChangeObservable = new Observable<LocationChange>()
+    mockClock()
+
+    const collectionResult = startViewCollection(
+      lifeCycle,
+      hooks,
+      mockRumConfiguration(partialConfiguration),
+      domMutationObservable,
+      windowOpenObservable,
+      locationChangeObservable,
+      noopRecorderApi,
+      viewHistory
+    )
+
+    rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
+
+    registerCleanupTask(() => {
+      collectionResult.stop()
+      viewHistory.stop()
+    })
+    return collectionResult
+  }
+
+  beforeEach(() => {
+    
+    addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
+    registerCleanupTask(resetExperimentalFeatures)
+  })
+
+  it('should emit full VIEW event on first update for a view', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+
+    expect(rawRumEvents.length).toBe(1)
+    expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.VIEW)
+  })
+
+  it('should emit VIEW_UPDATE on subsequent updates for the same view', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...VIEW,
+      documentVersion: 4,
+      eventCounts: { ...VIEW.eventCounts, errorCount: 15 },
+    })
+
+    expect(rawRumEvents.length).toBe(2)
+    expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.VIEW)
+    expect(rawRumEvents[1].rawRumEvent.type).toBe(RumEventType.VIEW_UPDATE)
+  })
+
+  it('should include only changed fields in VIEW_UPDATE', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...VIEW,
+      documentVersion: 4,
+      eventCounts: { ...VIEW.eventCounts, errorCount: 15 },
+    })
+
+    const updateEvent = rawRumEvents[1].rawRumEvent as any
+    expect(updateEvent.type).toBe(RumEventType.VIEW_UPDATE)
+    expect(updateEvent.view.error).toEqual({ count: 15 })
+    expect(updateEvent._dd.document_version).toBe(4)
+    // Unchanged fields should not be present
+    expect(updateEvent.view.action).toBeUndefined()
+    expect(updateEvent.view.resource).toBeUndefined()
+  })
+
+  it('should not emit event when no fields changed', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW) // identical
+
+    expect(rawRumEvents.length).toBe(1) // only the initial VIEW
+  })
+
+  it('should emit full VIEW event when view.id changes', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...VIEW,
+      id: 'new-view-id',
+      documentVersion: 1,
+    })
+
+    expect(rawRumEvents.length).toBe(2)
+    expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.VIEW)
+    expect(rawRumEvents[1].rawRumEvent.type).toBe(RumEventType.VIEW)
+  })
+
+  it('should emit only VIEW events when feature flag is OFF', () => {
+    
+    resetExperimentalFeatures() // Ensure OFF
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...VIEW,
+      documentVersion: 4,
+      eventCounts: { ...VIEW.eventCounts, errorCount: 15 },
+    })
+
+    expect(rawRumEvents.length).toBe(2)
+    expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.VIEW)
+    expect(rawRumEvents[1].rawRumEvent.type).toBe(RumEventType.VIEW)
+  })
+
+  it('should have monotonically increasing document_version across view and view_update', () => {
+    setupViewCollection()
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, documentVersion: 1 })
+    lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+      ...VIEW,
+      documentVersion: 2,
+      eventCounts: { ...VIEW.eventCounts, errorCount: 15 },
+    })
+
+    const firstEvent = rawRumEvents[0].rawRumEvent as RawRumViewEvent
+    const secondEvent = rawRumEvents[1].rawRumEvent as any
+    expect(firstEvent._dd.document_version).toBe(1)
+    expect(secondEvent._dd.document_version).toBe(2)
   })
 })

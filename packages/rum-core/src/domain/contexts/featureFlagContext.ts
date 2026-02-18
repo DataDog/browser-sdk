@@ -43,6 +43,7 @@ export function startFeatureFlagContexts(
   hooks.register(HookNames.Assemble, ({ startTime, eventType }): DefaultRumEventAttributes | SKIPPED => {
     const trackFeatureFlagsForEvents = (configuration.trackFeatureFlagsForEvents as RumEventType[]).concat([
       RumEventType.VIEW,
+      RumEventType.VIEW_UPDATE,
       RumEventType.ERROR,
     ])
     if (!trackFeatureFlagsForEvents.includes(eventType as RumEventType)) {
