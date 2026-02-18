@@ -1,6 +1,6 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
-import { resetExperimentalFeatures, elapsed, ONE_SECOND } from '@datadog/browser-core'
+import { elapsed, ONE_SECOND } from '@datadog/browser-core'
 import {
   appendElement,
   appendText,
@@ -238,10 +238,6 @@ describe('trackCumulativeLayoutShift', () => {
   })
 
   describe('cls target element', () => {
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
     it('should return the first target element selector amongst all the shifted nodes', () => {
       startCLSTracking()
       const textNode = appendText('text')
