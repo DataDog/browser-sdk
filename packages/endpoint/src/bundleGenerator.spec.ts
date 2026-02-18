@@ -87,10 +87,9 @@ describe('generateCombinedBundle', () => {
       variant: 'rum',
     })
 
-    // This will throw if JavaScript is invalid
-    assert.doesNotThrow(() => {
-      new Function(bundle)
-    }, 'Generated code should be valid JavaScript')
+    // Verify JavaScript is syntactically valid
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+    assert.doesNotThrow(() => new Function(bundle), 'Generated code should be valid JavaScript')
   })
 
   it('handles config with nested objects', () => {
@@ -122,9 +121,8 @@ describe('generateCombinedBundle', () => {
     })
 
     // JSON.stringify should properly escape special characters
-    assert.doesNotThrow(() => {
-      new Function(bundle)
-    }, 'Generated code with special chars should be valid JavaScript')
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+    assert.doesNotThrow(() => new Function(bundle), 'Generated code with special chars should be valid JavaScript')
   })
 })
 
@@ -208,21 +206,9 @@ describe('determinism', () => {
       env: 'test',
     }
 
-    const config2 = {
-      env: 'test',
-      applicationId: 'test',
-      sessionSampleRate: 100,
-    }
-
     const bundle1 = generateCombinedBundle({
       sdkCode: mockSdkCode,
       config: config1,
-      variant: 'rum',
-    })
-
-    const bundle2 = generateCombinedBundle({
-      sdkCode: mockSdkCode,
-      config: config2,
       variant: 'rum',
     })
 
@@ -251,9 +237,8 @@ describe('edge cases', () => {
     })
 
     assert.ok(bundle.includes('// SDK bundle (rum) from CDN'), 'Should include SDK comment')
-    assert.doesNotThrow(() => {
-      new Function(bundle)
-    }, 'Empty SDK code should still produce valid JavaScript')
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+    assert.doesNotThrow(() => new Function(bundle), 'Empty SDK code should still produce valid JavaScript')
   })
 
   it('handles minimal config', () => {
@@ -264,9 +249,8 @@ describe('edge cases', () => {
     })
 
     assert.ok(bundle.includes('"applicationId": "minimal-app"'), 'Should contain minimal config')
-    assert.doesNotThrow(() => {
-      new Function(bundle)
-    }, 'Minimal config should produce valid JavaScript')
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+    assert.doesNotThrow(() => new Function(bundle), 'Minimal config should produce valid JavaScript')
   })
 
   it('handles config with undefined values (they are omitted by JSON.stringify)', () => {

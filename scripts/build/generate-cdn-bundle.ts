@@ -5,13 +5,6 @@
  * 1. Fetching remote configuration from Datadog servers
  * 2. Downloading pre-built SDK from Datadog CDN
  * 3. Combining them into a single JavaScript file
- *
- * Usage:
- *   npx tsx scripts/build/generate-cdn-bundle.ts \
- *     --applicationId YOUR_APP_ID \
- *     --configId YOUR_CONFIG_ID \
- *     --variant rum \
- *     --output ./datadog-rum-bundle.js
  */
 
 import { parseArgs } from 'node:util'
@@ -70,9 +63,15 @@ runMain(async () => {
 
   // Validate required arguments
   const missingArgs: string[] = []
-  if (!values.applicationId) missingArgs.push('--applicationId')
-  if (!values.configId) missingArgs.push('--configId')
-  if (!values.variant) missingArgs.push('--variant')
+  if (!values.applicationId) {
+    missingArgs.push('--applicationId')
+  }
+  if (!values.configId) {
+    missingArgs.push('--configId')
+  }
+  if (!values.variant) {
+    missingArgs.push('--variant')
+  }
 
   if (missingArgs.length > 0) {
     printError(`Missing required arguments: ${missingArgs.join(', ')}`)

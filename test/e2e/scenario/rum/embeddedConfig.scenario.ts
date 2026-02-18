@@ -1,15 +1,6 @@
-import * as fs from 'node:fs'
-import * as path from 'node:path'
-import { test, expect } from '@playwright/test'
-import { createTest, bundleSetup, html } from '../../lib/framework'
 import { generateCombinedBundle } from '@datadog/browser-sdk-endpoint'
-
-const ROOT = path.join(__dirname, '../../../..')
-
-function readSdkBundle(variant: 'rum' | 'rum-slim' = 'rum'): string {
-  const bundlePath = path.join(ROOT, `packages/${variant}/bundle/datadog-${variant}.js`)
-  return fs.readFileSync(bundlePath, 'utf-8')
-}
+import { test, expect } from '@playwright/test'
+import { createTest } from '../../lib/framework'
 
 test.describe('embedded configuration', () => {
   createTest('should load SDK with embedded config and expose getInitConfiguration')
@@ -60,6 +51,7 @@ test.describe('embedded configuration', () => {
     })
 
     // Bundle is valid JavaScript
+    // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
     expect(() => new Function(bundle)).not.toThrow()
 
     // Bundle contains the embedded config
@@ -119,7 +111,7 @@ test.describe('embedded configuration', () => {
     .withRum({
       sessionSampleRate: 100,
     })
-    .run(async ({ page, servers }) => {
+    .run(async ({ page, servers: _servers }) => {
       // The SDK with embedded config (via .withRum()) should not fetch remote config
       // since no remoteConfigurationId is provided
       const configRequests: string[] = []
