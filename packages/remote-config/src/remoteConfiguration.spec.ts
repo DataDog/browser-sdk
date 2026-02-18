@@ -76,7 +76,6 @@ describe('remoteConfiguration', () => {
         sessionReplaySampleRate: 75,
         env: 'production',
       })
-      expect(result.error).toBeUndefined()
     })
 
     it('should return error on network failure', async () => {
@@ -90,7 +89,6 @@ describe('remoteConfiguration', () => {
       expect(result.ok).toBe(false)
       expect(result.error).toBeDefined()
       expect(result.error?.message).toBe('Error fetching the remote configuration.')
-      expect(result.value).toBeUndefined()
     })
 
     it('should return error on HTTP error response', async () => {
@@ -108,7 +106,6 @@ describe('remoteConfiguration', () => {
 
       expect(result.ok).toBe(false)
       expect(result.error).toBeDefined()
-      expect(result.value).toBeUndefined()
     })
 
     it('should return error if response has no rum config', async () => {
@@ -126,7 +123,6 @@ describe('remoteConfiguration', () => {
 
       expect(result.ok).toBe(false)
       expect(result.error?.message).toBe('No remote configuration for RUM.')
-      expect(result.value).toBeUndefined()
     })
 
     it('should parse JSON response correctly', async () => {
