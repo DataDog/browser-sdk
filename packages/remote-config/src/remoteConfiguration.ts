@@ -17,6 +17,7 @@ const REMOTE_CONFIGURATION_VERSION = 'v1'
  * @param options.remoteConfigurationId - Remote configuration ID
  * @param options.remoteConfigurationProxy - Optional proxy URL for remote configuration
  * @param options.site - Optional Datadog site
+ * @param options.signal - Optional AbortSignal for cancellation
  * @returns Promise with result containing the remote configuration or error
  * @example
  * ```ts
@@ -37,10 +38,11 @@ export async function fetchRemoteConfiguration(options: {
   remoteConfigurationId: string
   remoteConfigurationProxy?: string
   site?: string
+  signal?: AbortSignal
 }): Promise<RemoteConfigResult> {
   let response: Response | undefined
   try {
-    response = await fetch(buildEndpoint(options))
+    response = await fetch(buildEndpoint(options), { signal: options.signal })
   } catch {
     response = undefined
   }
