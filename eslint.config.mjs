@@ -470,6 +470,32 @@ export default tseslint.config(
   },
 
   {
+    files: [SPEC_FILES],
+    ignores: ['packages/core/src/tools/experimentalFeatures.spec.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@datadog/browser-core',
+              importNames: ['addExperimentalFeatures', 'resetExperimentalFeatures'],
+              message: 'Use `mockExperimentalFeatures` from `@datadog/browser-core/test` instead for proper cleanup.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['**/experimentalFeatures'],
+              importNames: ['addExperimentalFeatures', 'resetExperimentalFeatures'],
+              message: 'Use `mockExperimentalFeatures` from `@datadog/browser-core/test` instead for proper cleanup.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+
+  {
     files: ['packages/core/src/tools/**/*.ts'],
     ignores: [SPEC_FILES],
     rules: {
