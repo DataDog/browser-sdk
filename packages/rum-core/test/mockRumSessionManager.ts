@@ -1,8 +1,7 @@
-import { Observable } from '@datadog/browser-core'
-import type { startRumSessionManager, RumSessionManager } from '../src/domain/rumSessionManager'
-import { SessionReplayState } from '../src/domain/rumSessionManager'
+import type { SessionManager, startSessionManager } from '@datadog/browser-core'
+import { Observable, noop } from '@datadog/browser-core'
 
-export interface RumSessionManagerMock extends RumSessionManager {
+export interface RumSessionManagerMock extends SessionManager {
   setId(id: string): RumSessionManagerMock
   setNotTracked(): RumSessionManagerMock
   setTrackedWithoutSessionReplay(): RumSessionManagerMock
@@ -10,7 +9,7 @@ export interface RumSessionManagerMock extends RumSessionManager {
   setForcedReplay(): RumSessionManagerMock
 }
 
-const DEFAULT_ID = 'session-id'
+const DEFAULT_ID = '00000000-aaaa-0000-aaaa-000000000000'
 const enum SessionStatus {
   TRACKED_WITH_SESSION_REPLAY,
   TRACKED_WITHOUT_SESSION_REPLAY,
@@ -23,6 +22,14 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
   let sessionStatus: SessionStatus = SessionStatus.TRACKED_WITH_SESSION_REPLAY
   let forcedReplay: boolean = false
   return {
+    findSession: () => {
+      if (
+        sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY ||
+        sessionStatus === SessionStatus.TRACKED_WITHOUT_SESSION_REPLAY
+      ) {
+        return { id, isReplayForced: forcedReplay, anonymousId: 'device-123' }
+      }
+    },
     findTrackedSession() {
       if (
         sessionStatus !== SessionStatus.TRACKED_WITH_SESSION_REPLAY &&
@@ -32,13 +39,8 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       }
       return {
         id,
-        sessionReplay:
-          sessionStatus === SessionStatus.TRACKED_WITH_SESSION_REPLAY
-            ? SessionReplayState.SAMPLED
-            : forcedReplay
-              ? SessionReplayState.FORCED
-              : SessionReplayState.OFF,
         anonymousId: 'device-123',
+        isReplayForced: forcedReplay,
       }
     },
     expire() {
@@ -47,6 +49,8 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
     },
     expireObservable: new Observable(),
     renewObservable: new Observable(),
+    sessionStateUpdateObservable: new Observable(),
+    updateSessionState: noop,
     setId(newId) {
       id = newId
       return this
@@ -70,6 +74,6 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
   }
 }
 
-export function createRumStartSessionManagerMock(): typeof startRumSessionManager {
+export function createRumStartSessionManagerMock(): typeof startSessionManager {
   return (_config, _consent, onReady) => onReady(createRumSessionManagerMock())
 }

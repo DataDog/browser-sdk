@@ -15,6 +15,7 @@ import type {
   Telemetry,
   Encoder,
   ResourceType,
+  SessionManager,
 } from '@datadog/browser-core'
 import {
   ContextManagerMethod,
@@ -40,7 +41,6 @@ import {
 
 import type { LifeCycle } from '../domain/lifeCycle'
 import type { ViewHistory } from '../domain/contexts/viewHistory'
-import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { ReplayStats } from '../rawRumEvent.types'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
@@ -509,7 +509,7 @@ export interface RecorderApi {
   onRumStart: (
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
+    sessionManager: SessionManager,
     viewHistory: ViewHistory,
     deflateWorker: DeflateWorker | undefined,
     telemetry: Telemetry
@@ -525,7 +525,7 @@ export interface ProfilerApi {
     lifeCycle: LifeCycle,
     hooks: Hooks,
     configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
+    sessionManager: SessionManager,
     viewHistory: ViewHistory,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) => void

@@ -1,5 +1,5 @@
-import type { ClocksState } from '@datadog/browser-core'
-import type { RumConfiguration, RumSession } from '@datadog/browser-rum-core'
+import type { ClocksState, TrackedSession } from '@datadog/browser-core'
+import type { RumConfiguration } from '@datadog/browser-rum-core'
 
 import { getSessionReplayUrl, getDatadogSiteUrl } from './getSessionReplayUrl'
 
@@ -31,7 +31,7 @@ describe('getSessionReplayUrl', () => {
     [
       {
         testCase: 'session, no view, no error',
-        session: { id: 'session-id-1' } as RumSession,
+        session: { id: 'session-id-1' } as TrackedSession,
         viewContext: undefined,
         errorType: undefined,
         expected: 'https://app.datadoghq.com/rum/replay/sessions/session-id-1?',
@@ -49,7 +49,7 @@ describe('getSessionReplayUrl', () => {
     [
       {
         testCase: 'session, view, no error',
-        session: { id: 'session-id-2' } as RumSession,
+        session: { id: 'session-id-2' } as TrackedSession,
         viewContext: { id: 'view-id-1', startClocks: { relative: 0, timeStamp: 1234 } as ClocksState },
         errorType: undefined,
         expected: 'https://app.datadoghq.com/rum/replay/sessions/session-id-2?seed=view-id-1&from=1234',
@@ -58,7 +58,7 @@ describe('getSessionReplayUrl', () => {
     [
       {
         testCase: 'session, view, error',
-        session: { id: 'session-id-3' } as RumSession,
+        session: { id: 'session-id-3' } as TrackedSession,
         viewContext: { id: 'view-id-2', startClocks: { relative: 0, timeStamp: 1234 } as ClocksState },
         errorType: 'titi',
         expected: 'https://app.datadoghq.com/rum/replay/sessions/session-id-3?error-type=titi&seed=view-id-2&from=1234',

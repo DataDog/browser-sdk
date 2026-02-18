@@ -1,4 +1,4 @@
-import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
+import type { ClocksState, RelativeTime, SessionManager, TimeStamp } from '@datadog/browser-core'
 import {
   ErrorSource,
   HookNames,
@@ -25,7 +25,6 @@ import type { RawRumEventCollectedData } from './lifeCycle'
 import { LifeCycle, LifeCycleEventType } from './lifeCycle'
 import type { RumConfiguration } from './configuration'
 import type { ViewHistory } from './contexts/viewHistory'
-import type { RumSessionManager } from './rumSessionManager'
 import { startSessionContext } from './contexts/sessionContext'
 import { createHooks } from './hooks'
 
@@ -471,7 +470,7 @@ describe('rum assembly', () => {
         startClocks: relativeToClocks(123 as RelativeTime),
       })
 
-      expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
+      expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(100, 123 as RelativeTime)
     })
   })
   ;[
@@ -587,7 +586,7 @@ function notifyRawRumEvent<E extends RawRumEvent>(
 
 interface AssemblyTestParams {
   partialConfiguration?: Partial<RumConfiguration>
-  sessionManager?: RumSessionManager
+  sessionManager?: SessionManager
   ciVisibilityContext?: Record<string, string>
   findView?: ViewHistory['findView']
   eventRateLimit?: number
@@ -609,9 +608,10 @@ function setupAssemblyTestWithDefaults({
   })
   const recorderApi = noopRecorderApi
   const viewHistory = { ...mockViewHistory(), findView: () => findView() }
-  startGlobalContext(hooks, mockRumConfiguration(), 'rum', true)
-  startSessionContext(hooks, rumSessionManager, recorderApi, viewHistory)
-  startRumAssembly(mockRumConfiguration(partialConfiguration), lifeCycle, hooks, reportErrorSpy, eventRateLimit)
+  const configuration = mockRumConfiguration(partialConfiguration)
+  startGlobalContext(hooks, configuration, 'rum', true)
+  startSessionContext(hooks, configuration, rumSessionManager, recorderApi, viewHistory)
+  startRumAssembly(configuration, lifeCycle, hooks, reportErrorSpy, eventRateLimit)
 
   registerCleanupTask(() => {
     subscription.unsubscribe()

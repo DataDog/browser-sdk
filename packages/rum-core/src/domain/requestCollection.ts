@@ -6,6 +6,7 @@ import type {
   FetchStartContext,
   FetchResolveContext,
   ContextManager,
+  SessionManager,
 } from '@datadog/browser-core'
 import {
   RequestType,
@@ -15,7 +16,6 @@ import {
   initXhrObservable,
   timeStampNow,
 } from '@datadog/browser-core'
-import type { RumSessionManager } from '..'
 import type { RumConfiguration } from './configuration'
 import type { LifeCycle } from './lifeCycle'
 import { LifeCycleEventType } from './lifeCycle'
@@ -68,7 +68,7 @@ let nextRequestIndex = 1
 export function startRequestCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   userContext: ContextManager,
   accountContext: ContextManager
 ) {

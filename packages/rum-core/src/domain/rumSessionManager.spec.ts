@@ -1,14 +1,15 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, SessionManager, TrackedSession } from '@datadog/browser-core'
 import {
   STORAGE_POLL_DELAY,
   SESSION_STORE_KEY,
   setCookie,
   stopSessionManager,
+  startSessionManager,
+  startSessionManagerStub,
   ONE_SECOND,
   DOM_EVENT,
   createTrackingConsentState,
   TrackingConsent,
-  BridgeCapability,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -18,15 +19,13 @@ import {
   HIGH_HASH_UUID,
   LOW_HASH_UUID,
   MID_HASH_UUID,
-  mockEventBridge,
   mockClock,
   registerCleanupTask,
 } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import type { RumConfiguration } from './configuration'
 
-import type { RumSessionManager } from './rumSessionManager'
-import { SessionReplayState, startRumSessionManager, startRumSessionManagerStub } from './rumSessionManager'
+import { SessionReplayState, computeSessionReplayState } from './sessionReplayState'
 
 describe('rum session manager', () => {
   const DURATION = 123456
@@ -48,31 +47,18 @@ describe('rum session manager', () => {
   })
 
   describe('cookie storage', () => {
-    it('when tracked with session replay should store session id', async () => {
-      const rumSessionManager = await startRumSessionManagerWithDefaults()
+    it('when tracked should store session id', async () => {
+      const { sessionManager } = await startSessionManagerWithDefaults()
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
 
       expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
-      // Tracking type is computed on demand, not stored
-      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.SAMPLED)
-    })
-
-    it('when tracked without session replay should store session id', async () => {
-      const rumSessionManager = await startRumSessionManagerWithDefaults({
-        configuration: { sessionReplaySampleRate: 0 },
-      })
-
-      expect(expireSessionSpy).not.toHaveBeenCalled()
-      expect(renewSessionSpy).not.toHaveBeenCalled()
-      expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
-      // Tracking type is computed on demand, not stored
-      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
+      expect(sessionManager.findTrackedSession(100)!.id).toBeDefined()
     })
 
     it('when not tracked should still store session id and compute tracking type on demand', async () => {
-      const rumSessionManager = await startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
+      const { sessionManager } = await startSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
@@ -80,24 +66,24 @@ describe('rum session manager', () => {
       expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
       expect(getSessionState(SESSION_STORE_KEY).isExpired).not.toBeDefined()
       // Tracking type is computed on demand
-      expect(rumSessionManager.findTrackedSession()).toBeUndefined()
+      expect(sessionManager.findTrackedSession(0)).toBeUndefined()
     })
 
     it('when tracked should keep existing session id', async () => {
       setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
 
-      const rumSessionManager = await startRumSessionManagerWithDefaults()
+      const { sessionManager } = await startSessionManagerWithDefaults()
 
       expect(expireSessionSpy).not.toHaveBeenCalled()
       expect(renewSessionSpy).not.toHaveBeenCalled()
       expect(getSessionState(SESSION_STORE_KEY).id).toBe('00000000-0000-0000-0000-000000abcdef')
-      expect(rumSessionManager.findTrackedSession()!.id).toBe('00000000-0000-0000-0000-000000abcdef')
+      expect(sessionManager.findTrackedSession(100)!.id).toBe('00000000-0000-0000-0000-000000abcdef')
     })
 
     it('should renew on activity after expiration', async () => {
       setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
 
-      const rumSessionManager = await startRumSessionManagerWithDefaults()
+      const { sessionManager } = await startSessionManagerWithDefaults()
 
       expireCookie()
       expect(getSessionState(SESSION_STORE_KEY).isExpired).toBe('1')
@@ -110,64 +96,38 @@ describe('rum session manager', () => {
       expect(expireSessionSpy).toHaveBeenCalled()
       expect(renewSessionSpy).toHaveBeenCalled()
       expect(getSessionState(SESSION_STORE_KEY).id).toMatch(/[a-f0-9-]/)
-      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.SAMPLED)
+      expect(sessionManager.findTrackedSession(100)!.id).toBeDefined()
     })
   })
 
-  describe('findSession', () => {
+  describe('findTrackedSession', () => {
     it('should return the current session', async () => {
       setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
-      const rumSessionManager = await startRumSessionManagerWithDefaults()
-      expect(rumSessionManager.findTrackedSession()!.id).toBe('00000000-0000-0000-0000-000000abcdef')
+      const { sessionManager } = await startSessionManagerWithDefaults()
+      expect(sessionManager.findTrackedSession(100)!.id).toBe('00000000-0000-0000-0000-000000abcdef')
     })
 
     it('should return undefined if the session is not tracked', async () => {
       setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
-      const rumSessionManager = await startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
-      expect(rumSessionManager.findTrackedSession()).toBe(undefined)
+      const { sessionManager } = await startSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
+      expect(sessionManager.findTrackedSession(0)).toBe(undefined)
     })
 
     it('should return undefined if the session has expired', async () => {
-      const rumSessionManager = await startRumSessionManagerWithDefaults()
+      const { sessionManager } = await startSessionManagerWithDefaults()
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
-      expect(rumSessionManager.findTrackedSession()).toBe(undefined)
+      expect(sessionManager.findTrackedSession(100)).toBe(undefined)
     })
 
     it('should return session corresponding to start time', async () => {
       setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
-      const rumSessionManager = await startRumSessionManagerWithDefaults()
+      const { sessionManager } = await startSessionManagerWithDefaults()
       clock.tick(10 * ONE_SECOND)
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
-      expect(rumSessionManager.findTrackedSession()).toBeUndefined()
-      expect(rumSessionManager.findTrackedSession(0 as RelativeTime)!.id).toBe('00000000-0000-0000-0000-000000abcdef')
-    })
-
-    it('should return session with SAMPLED replay state when fully tracked', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
-      const rumSessionManager = await startRumSessionManagerWithDefaults({
-        configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 100 },
-      })
-      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.SAMPLED)
-    })
-
-    it('should return session with OFF replay state when tracked without replay', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
-      const rumSessionManager = await startRumSessionManagerWithDefaults({
-        configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 0 },
-      })
-      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
-    })
-
-    it('should update current entity when replay recording is forced', async () => {
-      setCookie(SESSION_STORE_KEY, 'id=00000000-0000-0000-0000-000000abcdef', DURATION)
-      const rumSessionManager = await startRumSessionManagerWithDefaults({
-        configuration: { sessionSampleRate: 100, sessionReplaySampleRate: 0 },
-      })
-      rumSessionManager.setForcedReplay()
-
-      expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.FORCED)
+      expect(sessionManager.findTrackedSession(100)).toBeUndefined()
+      expect(sessionManager.findTrackedSession(100, 0 as RelativeTime)!.id).toBe('00000000-0000-0000-0000-000000abcdef')
     })
   })
 
@@ -181,114 +141,91 @@ describe('rum session manager', () => {
 
       it('should track a session whose ID has a low hash, even with a low sessionSampleRate', async () => {
         setCookie(SESSION_STORE_KEY, `id=${LOW_HASH_UUID}`, DURATION)
-        const rumSessionManager = await startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 1 } })
-        expect(rumSessionManager.findTrackedSession()).toBeDefined()
+        const { sessionManager } = await startSessionManagerWithDefaults({ configuration: { sessionSampleRate: 1 } })
+        expect(sessionManager.findTrackedSession(1)).toBeDefined()
       })
 
       it('should not track a session whose ID has a high hash, even with a high sessionSampleRate', async () => {
         setCookie(SESSION_STORE_KEY, `id=${HIGH_HASH_UUID}`, DURATION)
-        const rumSessionManager = await startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 99 } })
-        expect(rumSessionManager.findTrackedSession()).toBeUndefined()
-      })
-
-      it('should sample replay for a session whose ID has a low hash, even with a low sessionReplaySampleRate', async () => {
-        setCookie(SESSION_STORE_KEY, `id=${LOW_HASH_UUID}`, DURATION)
-        const rumSessionManager = await startRumSessionManagerWithDefaults({
-          configuration: { sessionReplaySampleRate: 1 },
-        })
-        expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.SAMPLED)
-      })
-
-      it('should not sample replay for a session whose ID has a high hash, even with a high sessionReplaySampleRate', async () => {
-        setCookie(SESSION_STORE_KEY, `id=${HIGH_HASH_UUID}`, DURATION)
-        const rumSessionManager = await startRumSessionManagerWithDefaults({
-          configuration: { sessionReplaySampleRate: 99 },
-        })
-        expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
-      })
-
-      it('should apply the correction factor for chained sampling on the replay sample rate', async () => {
-        // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and sessionReplaySampleRate=60:
-        // - Without correction: isSampled(id, 60) → true (50.7 < 60)
-        // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
-        setCookie(SESSION_STORE_KEY, `id=${MID_HASH_UUID}`, DURATION)
-        const rumSessionManager = await startRumSessionManagerWithDefaults({
-          configuration: { sessionSampleRate: 60, sessionReplaySampleRate: 60 },
-        })
-        expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
+        const { sessionManager } = await startSessionManagerWithDefaults({ configuration: { sessionSampleRate: 99 } })
+        expect(sessionManager.findTrackedSession(99)).toBeUndefined()
       })
     })
   })
 
-  describe('session behaviors', () => {
-    ;[
-      {
-        description: 'TRACKED_WITH_SESSION_REPLAY should have replay',
-        sessionReplaySampleRate: 100,
-        expectSessionReplay: SessionReplayState.SAMPLED,
-      },
-      {
-        description: 'TRACKED_WITHOUT_SESSION_REPLAY should have no replay',
-        sessionReplaySampleRate: 0,
-        expectSessionReplay: SessionReplayState.OFF,
-      },
-    ].forEach(
-      ({
-        description,
-        sessionReplaySampleRate,
-        expectSessionReplay,
-      }: {
-        description: string
-        sessionReplaySampleRate: number
-        expectSessionReplay: SessionReplayState
-      }) => {
-        it(description, async () => {
-          const rumSessionManager = await startRumSessionManagerWithDefaults({
-            configuration: { sessionReplaySampleRate },
-          })
-          expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(expectSessionReplay)
-        })
-      }
-    )
-  })
-
-  function startRumSessionManagerWithDefaults({ configuration }: { configuration?: Partial<RumConfiguration> } = {}) {
-    return new Promise<RumSessionManager>((resolve) => {
-      startRumSessionManager(
-        mockRumConfiguration({
-          sessionSampleRate: 100,
-          sessionReplaySampleRate: 100,
-          trackResources: true,
-          trackLongTasks: true,
-          ...configuration,
-        }),
-        createTrackingConsentState(TrackingConsent.GRANTED),
-        (sessionManager) => {
-          sessionManager.expireObservable.subscribe(expireSessionSpy)
-          sessionManager.renewObservable.subscribe(renewSessionSpy)
-          resolve(sessionManager)
-        }
-      )
+  function startSessionManagerWithDefaults({ configuration }: { configuration?: Partial<RumConfiguration> } = {}) {
+    const rumConfiguration = mockRumConfiguration({
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 100,
+      trackResources: true,
+      trackLongTasks: true,
+      ...configuration,
+    })
+    return new Promise<{ sessionManager: SessionManager; configuration: RumConfiguration }>((resolve) => {
+      startSessionManager(rumConfiguration, createTrackingConsentState(TrackingConsent.GRANTED), (sessionManager) => {
+        sessionManager.expireObservable.subscribe(expireSessionSpy)
+        sessionManager.renewObservable.subscribe(renewSessionSpy)
+        resolve({ sessionManager, configuration: rumConfiguration })
+      })
     })
   }
 })
 
-describe('rum session manager stub', () => {
-  it('should return a tracked session with replay allowed when the event bridge support records', () => {
-    mockEventBridge({ capabilities: [BridgeCapability.RECORDS] })
-    let sessionManager: RumSessionManager | undefined
-    startRumSessionManagerStub({} as RumConfiguration, createTrackingConsentState(TrackingConsent.GRANTED), (sm) => {
-      sessionManager = sm
+describe('computeSessionReplayState', () => {
+  describe('with bigint support', () => {
+    beforeEach(() => {
+      if (!window.BigInt) {
+        pending('BigInt is not supported')
+      }
     })
-    expect(sessionManager!.findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.SAMPLED)
-  })
 
-  it('should return a tracked session without replay allowed when the event bridge support records', () => {
-    mockEventBridge({ capabilities: [] })
-    let sessionManager: RumSessionManager | undefined
-    startRumSessionManagerStub({} as RumConfiguration, createTrackingConsentState(TrackingConsent.GRANTED), (sm) => {
+    it('should return SAMPLED when replay is sampled in', () => {
+      const session: TrackedSession = { id: LOW_HASH_UUID, anonymousId: undefined, isReplayForced: false }
+      const configuration = mockRumConfiguration({ sessionSampleRate: 100, sessionReplaySampleRate: 100 })
+      expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.SAMPLED)
+    })
+
+    it('should return OFF when replay is sampled out', () => {
+      const session: TrackedSession = { id: HIGH_HASH_UUID, anonymousId: undefined, isReplayForced: false }
+      const configuration = mockRumConfiguration({ sessionSampleRate: 100, sessionReplaySampleRate: 99 })
+      expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.OFF)
+    })
+
+    it('should return FORCED when replay is forced', () => {
+      const session: TrackedSession = { id: HIGH_HASH_UUID, anonymousId: undefined, isReplayForced: true }
+      const configuration = mockRumConfiguration({ sessionSampleRate: 100, sessionReplaySampleRate: 0 })
+      expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.FORCED)
+    })
+
+    it('should apply the correction factor for chained sampling on the replay sample rate', () => {
+      // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and sessionReplaySampleRate=60:
+      // - Without correction: isSampled(id, 60) → true (50.7 < 60)
+      // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
+      const session: TrackedSession = { id: MID_HASH_UUID, anonymousId: undefined, isReplayForced: false }
+      const configuration = mockRumConfiguration({ sessionSampleRate: 60, sessionReplaySampleRate: 60 })
+      expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.OFF)
+    })
+
+    it('should sample replay for a session whose ID has a low hash, even with a low sessionReplaySampleRate', () => {
+      const session: TrackedSession = { id: LOW_HASH_UUID, anonymousId: undefined, isReplayForced: false }
+      const configuration = mockRumConfiguration({ sessionSampleRate: 100, sessionReplaySampleRate: 1 })
+      expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.SAMPLED)
+    })
+
+    it('should not sample replay for a session whose ID has a high hash, even with a high sessionReplaySampleRate', () => {
+      const session: TrackedSession = { id: HIGH_HASH_UUID, anonymousId: undefined, isReplayForced: false }
+      const configuration = mockRumConfiguration({ sessionSampleRate: 100, sessionReplaySampleRate: 99 })
+      expect(computeSessionReplayState(session, configuration)).toBe(SessionReplayState.OFF)
+    })
+  })
+})
+
+describe('session manager stub', () => {
+  it('should return a tracked session', () => {
+    let sessionManager: SessionManager | undefined
+    startSessionManagerStub((sm) => {
       sessionManager = sm
     })
-    expect(sessionManager!.findTrackedSession()!.sessionReplay).toEqual(SessionReplayState.OFF)
+    expect(sessionManager!.findTrackedSession(100)!.id).toBeDefined()
   })
 })

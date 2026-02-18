@@ -1,7 +1,7 @@
 import { getInitCookie, HookNames, SKIPPED } from '@datadog/browser-core'
 import type { Configuration } from '@datadog/browser-core'
 import { createCookieObservable } from '../../browser/cookieObservable'
-import { SessionType } from '../rumSessionManager'
+import { SessionType } from '../sessionReplayState'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 
 export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-execution-id'
