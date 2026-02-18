@@ -1,12 +1,11 @@
 import type {
   LifeCycle,
   ViewHistory,
-  RumSessionManager,
   RumConfiguration,
   ProfilerApi,
   Hooks,
 } from '@datadog/browser-rum-core'
-import type { DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
+import type { SessionManager, DeflateEncoderStreamId, Encoder } from '@datadog/browser-core'
 import { monitorError, correctedChildSampleRate, isSampled, mockable } from '@datadog/browser-core'
 import type { RUMProfiler } from '../domain/profiling/types'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
@@ -20,11 +19,11 @@ export function makeProfilerApi(): ProfilerApi {
     lifeCycle: LifeCycle,
     hooks: Hooks,
     configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
+    sessionManager: SessionManager,
     viewHistory: ViewHistory,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) {
-    const session = sessionManager.findTrackedSession() // Check if the session is tracked.
+    const session = sessionManager.findTrackedSession(configuration.sessionSampleRate) // Check if the session is tracked.
 
     if (!session) {
       // No session tracked, no profiling.
