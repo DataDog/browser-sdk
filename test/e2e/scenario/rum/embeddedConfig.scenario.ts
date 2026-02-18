@@ -2,7 +2,7 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { test, expect } from '@playwright/test'
 import { createTest, bundleSetup, html } from '../../lib/framework'
-import { generateCombinedBundle } from '../../../../scripts/build/lib/bundleGenerator'
+import { generateCombinedBundle } from '@datadog/browser-sdk-endpoint'
 
 const ROOT = path.join(__dirname, '../../../..')
 

@@ -18,7 +18,7 @@ const CLI_PATH = './scripts/build/generate-cdn-bundle.ts'
  * Helper to run the CLI with given arguments
  */
 function runCLI(args: string[]): { stdout: string; stderr: string; exitCode: number | null } {
-  const result = spawnSync('npx', ['tsx', CLI_PATH, ...args], {
+  const result = spawnSync('node', [CLI_PATH, ...args], {
     encoding: 'utf-8',
     timeout: 30000,
   })
@@ -137,7 +137,7 @@ describe('integration: generateCombinedBundle output validation', () => {
   // without requiring actual network calls
 
   it('generated bundle template produces valid JavaScript', async () => {
-    const { generateCombinedBundle } = await import('./lib/bundleGenerator.ts')
+    const { generateCombinedBundle } = await import('../../packages/endpoint/src/bundleGenerator.ts')
 
     const bundle = generateCombinedBundle({
       sdkCode: `
@@ -168,7 +168,7 @@ describe('integration: generateCombinedBundle output validation', () => {
   })
 
   it('generated bundle executes without error in simulated browser environment', async () => {
-    const { generateCombinedBundle } = await import('./lib/bundleGenerator.ts')
+    const { generateCombinedBundle } = await import('../../packages/endpoint/src/bundleGenerator.ts')
 
     const bundle = generateCombinedBundle({
       sdkCode: `

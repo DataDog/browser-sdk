@@ -17,7 +17,7 @@
 import { parseArgs } from 'node:util'
 import * as fs from 'node:fs/promises'
 import { runMain, printLog, printError } from '../lib/executionUtils.ts'
-import { fetchConfig, downloadSDK, generateCombinedBundle, type SdkVariant } from '@datadog/browser-sdk-endpoint'
+import { fetchConfig, downloadSDK, generateCombinedBundle, type SdkVariant } from '../../packages/endpoint/src/index.ts'
 
 function printHelp(): void {
   console.log(`
