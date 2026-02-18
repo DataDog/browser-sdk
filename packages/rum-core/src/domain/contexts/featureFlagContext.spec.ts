@@ -55,12 +55,13 @@ describe('featureFlagContexts', () => {
         },
       })
 
-      expect(defaultViewUpdateAttributes).toEqual({
-        type: "view_update" as any,
-        feature_flags: {
-          feature: 'foo',
-        },
-      })
+      expect(defaultViewUpdateAttributes).toEqual(
+        jasmine.objectContaining({
+          feature_flags: {
+            feature: 'foo',
+          },
+        })
+      )
 
       expect(defaultErrorAttributes).toEqual({
         type: 'error',

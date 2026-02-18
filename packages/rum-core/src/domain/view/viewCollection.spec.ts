@@ -1,4 +1,11 @@
-import { DISCARDED, HookNames, Observable, resetExperimentalFeatures, addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
+import {
+  DISCARDED,
+  HookNames,
+  Observable,
+  resetExperimentalFeatures,
+  addExperimentalFeatures,
+  ExperimentalFeature,
+} from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
@@ -342,7 +349,6 @@ describe('partial view updates', () => {
   }
 
   beforeEach(() => {
-    
     addExperimentalFeatures([ExperimentalFeature.PARTIAL_VIEW_UPDATES])
     registerCleanupTask(resetExperimentalFeatures)
   })
@@ -410,7 +416,6 @@ describe('partial view updates', () => {
   })
 
   it('should emit only VIEW events when feature flag is OFF', () => {
-    
     resetExperimentalFeatures() // Ensure OFF
     setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
