@@ -241,6 +241,9 @@ export function startSessionStore<TrackingType extends string>(
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
     }
+    if (configuration.trackAnonymousUser && !sessionState.anonymousId) {
+      sessionState.anonymousId = generateUUID()
+    }
   }
 
   function hasSessionInCache() {
