@@ -1475,6 +1475,8 @@ export interface CommonProperties {
     readonly sdk_name?: string
     /**
      * UUID identifying the browser tab
+     * TODO: Added via submodule update. Once `browser_tab_id` is in the upstream
+     * `_common-schema.json`, future `yarn json-schemas:sync` runs will preserve it.
      */
     readonly browser_tab_id?: string
     [k: string]: unknown
