@@ -1,3 +1,4 @@
+// eslint-disable-next-line local-rules/disallow-side-effects -- Node.js build tool, not browser SDK
 import { fetchRemoteConfiguration } from '@datadog/browser-remote-config'
 import { downloadSDK } from './sdkDownloader.ts'
 import type { SdkVariant } from './sdkDownloader.ts'
