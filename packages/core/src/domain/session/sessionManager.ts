@@ -16,6 +16,9 @@ import { findLast } from '../../tools/utils/polyfills'
 import { monitorError } from '../../tools/monitor'
 import { isWorkerEnvironment } from '../../tools/globalObject'
 import { display } from '../../tools/display'
+import { generateUUID } from '../../tools/utils/stringUtils'
+import { noop } from '../../tools/utils/functionUtils'
+import { isSampled } from '../sampler'
 import { SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import { startSessionStore } from './sessionStore'
 import type { SessionState } from './sessionState'
@@ -27,11 +30,22 @@ import { resetSessionStoreOperations } from './sessionStoreOperations'
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
+  findTrackedSession: (
+    sampleRate: number,
+    startTime?: RelativeTime,
+    options?: { returnInactive: boolean }
+  ) => TrackedSession | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
   expire: () => void
   updateSessionState: (state: Partial<SessionState>) => void
+}
+
+export interface TrackedSession {
+  id: string
+  anonymousId: string | undefined
+  isReplayForced: boolean
 }
 
 export interface SessionContext extends Context {
@@ -83,6 +97,12 @@ export function startSessionManager(
       expireObservable.notify()
       sessionContextHistory.closeActive(relativeNow())
     })
+    sessionStore.sessionStateUpdateObservable.subscribe(({ newState }) => {
+      const currentContext = sessionContextHistory.find()
+      if (currentContext) {
+        currentContext.isReplayForced = !!newState.forcedReplay
+      }
+    })
 
     sessionContextHistory.add(buildSessionContext(), clocksOrigin().relative)
     if (isExperimentalFeatureEnabled(ExperimentalFeature.SHORT_SESSION_INVESTIGATION)) {
@@ -112,6 +132,20 @@ export function startSessionManager(
 
     onReady({
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
+      findTrackedSession: (sampleRate, startTime, options) => {
+        const session = sessionContextHistory.find(startTime, options)
+        if (!session || session.id === 'invalid') {
+          return
+        }
+        if (!isSampled(session.id, sampleRate)) {
+          return
+        }
+        return {
+          id: session.id,
+          anonymousId: session.anonymousId,
+          isReplayForced: session.isReplayForced,
+        }
+      },
       renewObservable,
       expireObservable,
       sessionStateUpdateObservable: sessionStore.sessionStateUpdateObservable,
@@ -139,6 +173,37 @@ export function startSessionManager(
       anonymousId: session.anonymousId,
     }
   }
+}
+
+export function startSessionManagerStub(onReady: (sessionManager: SessionManager) => void): void {
+  const stubSessionId = generateUUID()
+  const sessionContext: SessionContext = {
+    id: stubSessionId,
+    isReplayForced: false,
+    anonymousId: undefined,
+  }
+  onReady({
+    findSession: () => sessionContext,
+    findTrackedSession: (sampleRate) => {
+      if (!isSampled(stubSessionId, sampleRate)) {
+        return
+      }
+      return {
+        id: stubSessionId,
+        anonymousId: sessionContext.anonymousId,
+        isReplayForced: sessionContext.isReplayForced,
+      }
+    },
+    renewObservable: new Observable(),
+    expireObservable: new Observable(),
+    sessionStateUpdateObservable: new Observable(),
+    expire: noop,
+    updateSessionState: (state) => {
+      if (state.forcedReplay) {
+        sessionContext.isReplayForced = true
+      }
+    },
+  })
 }
 
 export function stopSessionManager() {

@@ -529,6 +529,56 @@ describe('startSessionManager', () => {
       expect(callArgs.previousState.extra).toBeUndefined()
       expect(callArgs.newState.extra).toBe('extra')
     })
+
+    it('should rebuild session context when state is updated', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      expect(sessionManager.findSession()!.isReplayForced).toBe(false)
+
+      sessionManager.updateSessionState({ forcedReplay: '1' })
+
+      expect(sessionManager.findSession()!.isReplayForced).toBe(true)
+    })
+  })
+
+  describe('findTrackedSession', () => {
+    it('should return undefined when session is not sampled', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      expect(sessionManager.findTrackedSession(0)).toBeUndefined()
+    })
+
+    it('should return the session when sampled', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      const session = sessionManager.findTrackedSession(100)
+      expect(session).toBeDefined()
+      expect(session!.id).toBeDefined()
+    })
+
+    it('should pass through startTime and options', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      // 0s to 10s: first session
+      clock.tick(10 * ONE_SECOND - STORAGE_POLL_DELAY)
+      expireSessionCookie()
+
+      // 10s to 20s: no session
+      clock.tick(10 * ONE_SECOND)
+
+      expect(sessionManager.findTrackedSession(100, clock.relative(5 * ONE_SECOND))).toBeDefined()
+      expect(sessionManager.findTrackedSession(100, clock.relative(15 * ONE_SECOND))).toBeUndefined()
+    })
+
+    it('should return isReplayForced from the session context', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+
+      expect(sessionManager.findTrackedSession(100)!.isReplayForced).toBe(false)
+
+      sessionManager.updateSessionState({ forcedReplay: '1' })
+
+      expect(sessionManager.findTrackedSession(100)!.isReplayForced).toBe(true)
+    })
   })
 
   describe('delayed session manager initialization', () => {
