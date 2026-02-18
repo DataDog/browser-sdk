@@ -25,6 +25,11 @@ import type { RumConfiguration } from './configuration'
 import type { RumSessionManager } from './rumSessionManager'
 import { SessionReplayState, startRumSessionManager, startRumSessionManagerStub } from './rumSessionManager'
 
+// UUID known to yield a low hash value using the Knuth formula, making it more likely to be sampled
+const LOW_HASH_UUID = '29a4b5e3-9859-4290-99fa-4bc4a1a348b9'
+// UUID known to yield a high hash value using the Knuth formula, making it less likely to be sampled
+const HIGH_HASH_UUID = '5321b54a-d6ec-4b24-996d-dd70c617e09a'
+
 describe('rum session manager', () => {
   const DURATION = 123456
   let expireSessionSpy: jasmine.Spy
@@ -165,6 +170,44 @@ describe('rum session manager', () => {
       rumSessionManager.setForcedReplay()
 
       expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.FORCED)
+    })
+  })
+
+  describe('deterministic sampling', () => {
+    describe('with bigint support', () => {
+      beforeEach(() => {
+        if (!window.BigInt) {
+          pending('BigInt is not supported')
+        }
+      })
+
+      it('should track a session whose ID has a low hash, even with a low sessionSampleRate', async () => {
+        setCookie(SESSION_STORE_KEY, `id=${LOW_HASH_UUID}`, DURATION)
+        const rumSessionManager = await startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 1 } })
+        expect(rumSessionManager.findTrackedSession()).toBeDefined()
+      })
+
+      it('should not track a session whose ID has a high hash, even with a high sessionSampleRate', async () => {
+        setCookie(SESSION_STORE_KEY, `id=${HIGH_HASH_UUID}`, DURATION)
+        const rumSessionManager = await startRumSessionManagerWithDefaults({ configuration: { sessionSampleRate: 99 } })
+        expect(rumSessionManager.findTrackedSession()).toBeUndefined()
+      })
+
+      it('should sample replay for a session whose ID has a low hash, even with a low sessionReplaySampleRate', async () => {
+        setCookie(SESSION_STORE_KEY, `id=${LOW_HASH_UUID}`, DURATION)
+        const rumSessionManager = await startRumSessionManagerWithDefaults({
+          configuration: { sessionReplaySampleRate: 1 },
+        })
+        expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.SAMPLED)
+      })
+
+      it('should not sample replay for a session whose ID has a high hash, even with a high sessionReplaySampleRate', async () => {
+        setCookie(SESSION_STORE_KEY, `id=${HIGH_HASH_UUID}`, DURATION)
+        const rumSessionManager = await startRumSessionManagerWithDefaults({
+          configuration: { sessionReplaySampleRate: 99 },
+        })
+        expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
+      })
     })
   })
 

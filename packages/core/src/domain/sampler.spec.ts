@@ -10,10 +10,6 @@ const HIGH_HASH_UUID = '5321b54a-d6ec-4b24-996d-dd70c617e09a'
 const ARBITRARY_UUID = '1ff81c8c-6e32-473b-869b-55af08048323'
 
 describe('isSampled', () => {
-  beforeEach(() => {
-    resetSampleDecisionCache()
-  })
-
   it('returns true when sampleRate is 100', () => {
     expect(isSampled(ARBITRARY_UUID, 100)).toBeTrue()
   })
