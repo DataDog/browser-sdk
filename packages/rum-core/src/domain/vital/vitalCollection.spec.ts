@@ -97,12 +97,8 @@ describe('vitalCollection', () => {
         stopDurationVital(cbSpy, vitalsState, vitalRef1)
 
         expect(cbSpy).toHaveBeenCalledTimes(2)
-        expect(cbSpy.mock.calls[0]).toEqual([
-          expect.objectContaining({ description: 'component 2', duration: 100 }),
-        ])
-        expect(cbSpy.mock.calls[1]).toEqual([
-          expect.objectContaining({ description: 'component 1', duration: 300 }),
-        ])
+        expect(cbSpy.mock.calls[0]).toEqual([expect.objectContaining({ description: 'component 2', duration: 100 })])
+        expect(cbSpy.mock.calls[1]).toEqual([expect.objectContaining({ description: 'component 1', duration: 300 })])
       })
 
       it('should merge startDurationVital and stopDurationVital description', () => {

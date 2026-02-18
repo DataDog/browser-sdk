@@ -1,4 +1,4 @@
-import { vi, afterEach, beforeEach, describe, expect, it, test } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Configuration } from '../../configuration'
 import { SessionPersistence } from '../sessionConstants'
 import { toSessionState } from '../sessionState'
@@ -26,7 +26,9 @@ describe('session in local storage strategy', () => {
   })
 
   it('should report local storage as not available', () => {
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw 'Unavailable' })
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw 'Unavailable'
+    })
     const available = selectLocalStorageStrategy()
     expect(available).toBeUndefined()
   })

@@ -1,4 +1,4 @@
-import { vi, afterEach, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Subscription } from '@datadog/browser-core'
 import { Observable, ONE_SECOND } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'

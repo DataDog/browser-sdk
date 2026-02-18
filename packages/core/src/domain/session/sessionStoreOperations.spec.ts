@@ -127,45 +127,49 @@ describe('sessionStoreOperations', () => {
         lockConflictOnRetrievedSessionIndex: 3,
       },
     ].forEach(({ description, lockConflictOnRetrievedSessionIndex }) => {
-      it(description, () => new Promise<void>((resolve) => {
-        expandSessionState(initialSession)
-        const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
-        sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex, {
-          ...initialSession,
-          lock: createLock(),
-        })
-        sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex + 1, {
-          ...initialSession,
-          other: 'other',
-        })
-        processSpy.mockImplementation((session) => ({ ...session, processed: 'processed' }) as SessionState)
+      it(
+        description,
+        () =>
+          new Promise<void>((resolve) => {
+            expandSessionState(initialSession)
+            const sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession })
+            sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex, {
+              ...initialSession,
+              lock: createLock(),
+            })
+            sessionStoreStrategy.planRetrieveSession(lockConflictOnRetrievedSessionIndex + 1, {
+              ...initialSession,
+              other: 'other',
+            })
+            processSpy.mockImplementation((session) => ({ ...session, processed: 'processed' }) as SessionState)
 
-        processSessionStoreOperations(
-          {
-            process: processSpy,
-            after: (afterSession) => {
-              // session with 'other' value on process
-              expect(processSpy).toHaveBeenCalledWith({
-                ...initialSession,
-                other: 'other',
-                expire: expect.any(String),
-              })
+            processSessionStoreOperations(
+              {
+                process: processSpy,
+                after: (afterSession) => {
+                  // session with 'other' value on process
+                  expect(processSpy).toHaveBeenCalledWith({
+                    ...initialSession,
+                    other: 'other',
+                    expire: expect.any(String),
+                  })
 
-              // end state with session 'other' and 'processed' value
-              const expectedSession = {
-                ...initialSession,
-                other: 'other',
-                processed: 'processed',
-                expire: expect.any(String),
-              }
-              expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
-              expect(afterSession).toEqual(expectedSession)
-              resolve()
-            },
-          },
-          sessionStoreStrategy
-        )
-      }))
+                  // end state with session 'other' and 'processed' value
+                  const expectedSession = {
+                    ...initialSession,
+                    other: 'other',
+                    processed: 'processed',
+                    expire: expect.any(String),
+                  }
+                  expect(sessionStoreStrategy.retrieveSession()).toEqual(expectedSession)
+                  expect(afterSession).toEqual(expectedSession)
+                  resolve()
+                },
+              },
+              sessionStoreStrategy
+            )
+          })
+      )
     })
 
     it('should abort after a max number of retry', () => {
@@ -184,32 +188,33 @@ describe('sessionStoreOperations', () => {
       expect(sessionStoreStrategy.persistSession).not.toHaveBeenCalled()
     })
 
-    it('should execute cookie accesses in order', () => new Promise<void>((resolve) => {
-      const sessionStoreStrategy = createFakeSessionStoreStrategy({
-        isLockEnabled: true,
-        initialSession: { ...initialSession, lock: createLock() },
-      })
-      sessionStoreStrategy.planRetrieveSession(1, initialSession)
+    it('should execute cookie accesses in order', () =>
+      new Promise<void>((resolve) => {
+        const sessionStoreStrategy = createFakeSessionStoreStrategy({
+          isLockEnabled: true,
+          initialSession: { ...initialSession, lock: createLock() },
+        })
+        sessionStoreStrategy.planRetrieveSession(1, initialSession)
 
-      processSessionStoreOperations(
-        {
-          process: (session) => ({ ...session, value: 'foo' }),
-          after: afterSpy,
-        },
-        sessionStoreStrategy
-      )
-      processSessionStoreOperations(
-        {
-          process: (session) => ({ ...session, value: `${session.value || ''}bar` }),
-          after: (session) => {
-            expect(session.value).toBe('foobar')
-            expect(afterSpy).toHaveBeenCalled()
-            resolve()
+        processSessionStoreOperations(
+          {
+            process: (session) => ({ ...session, value: 'foo' }),
+            after: afterSpy,
           },
-        },
-        sessionStoreStrategy
-      )
-    }))
+          sessionStoreStrategy
+        )
+        processSessionStoreOperations(
+          {
+            process: (session) => ({ ...session, value: `${session.value || ''}bar` }),
+            after: (session) => {
+              expect(session.value).toBe('foobar')
+              expect(afterSpy).toHaveBeenCalled()
+              resolve()
+            },
+          },
+          sessionStoreStrategy
+        )
+      }))
 
     it('ignores locks set by an older version of the SDK (without creation date)', () => {
       const sessionStoreStrategy = createFakeSessionStoreStrategy({

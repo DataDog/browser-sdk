@@ -5,13 +5,16 @@
 ## Test Framework
 
 **Runner:**
+
 - Karma 6.4.4
 - Config: `test/unit/karma.base.conf.js`, `test/unit/karma.local.conf.js`, `test/unit/karma.bs.conf.js`
 
 **Assertion Library:**
+
 - Jasmine 3.99.1 (built-in with Karma)
 
 **Run Commands:**
+
 ```bash
 yarn test                       # Run unit tests in watch mode
 yarn test:unit                  # Run all unit tests once
@@ -24,16 +27,19 @@ yarn test:e2e:init              # Build and prepare E2E tests
 ## Test File Organization
 
 **Location:**
+
 - Co-located with source files: `packages/*/src/**/*.spec.ts`
 - Dedicated test utilities: `packages/core/test/**/*.ts`
 - E2E tests: `test/e2e/**/*.ts` (Playwright)
 - Performance tests: `test/performance/**/*.ts`
 
 **Naming:**
+
 - Unit tests: `*.spec.ts` or `*.spec.tsx` (React components)
 - Test helpers: camelCase without `.spec` suffix (e.g., `mockClock.ts`, `fakeSessionStoreStrategy.ts`)
 
 **Structure:**
+
 ```
 packages/core/
 ├── src/
@@ -55,6 +61,7 @@ packages/core/
 ## Test Structure
 
 **Suite Organization:**
+
 ```typescript
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
@@ -87,6 +94,7 @@ describe('module name', () => {
 ```
 
 **Patterns:**
+
 - Use `describe()` to group related tests by module/feature
 - Nested `describe()` blocks for sub-features or scenarios
 - `beforeEach()` for test setup
@@ -100,6 +108,7 @@ describe('module name', () => {
 **Patterns:**
 
 **Spy Creation:**
+
 ```typescript
 // Basic spy
 const callback = jasmine.createSpy('callback name')
@@ -122,6 +131,7 @@ spyOn(performance, 'now').and.callFake(() => Date.now() - timeOrigin)
 ```
 
 **Clock Mocking:**
+
 ```typescript
 import type { Clock } from '@datadog/browser-core/test'
 import { mockClock } from '@datadog/browser-core/test'
@@ -138,6 +148,7 @@ it('advances time', () => {
 ```
 
 **XHR/Fetch Mocking:**
+
 ```typescript
 import { mockFetch } from '@datadog/browser-core/test'
 
@@ -146,6 +157,7 @@ const fetch = mockFetch()
 ```
 
 **Event Target Mocking:**
+
 ```typescript
 import { mockEventTarget } from '@datadog/browser-core/test'
 
@@ -154,6 +166,7 @@ eventTarget.addEventListener('click', handler)
 ```
 
 **What to Mock:**
+
 - External dependencies (APIs, browser APIs)
 - Time-dependent functions (use `mockClock()`)
 - Global objects that change state
@@ -161,6 +174,7 @@ eventTarget.addEventListener('click', handler)
 - Browser APIs not available in test environment
 
 **What NOT to Mock:**
+
 - Pure utility functions
 - Simple data transformations
 - Type definitions
@@ -170,6 +184,7 @@ eventTarget.addEventListener('click', handler)
 ## Fixtures and Factories
 
 **Test Data:**
+
 ```typescript
 // Inline fixture data
 const FAKE_CSP_VIOLATION_EVENT = {
@@ -198,6 +213,7 @@ function buildLocation(url: string): Location {
 ```
 
 **Location:**
+
 - Shared fixtures in `packages/core/test/` directory
 - Inline fixtures for test-specific data
 - Factory functions prefixed with `create*`, `build*`, `fake*`, or `mock*`
@@ -207,6 +223,7 @@ function buildLocation(url: string): Location {
 **Requirements:** Not explicitly enforced (no minimum threshold configured)
 
 **View Coverage:**
+
 ```bash
 # Coverage is collected via karma-coverage-istanbul-reporter
 # Reports generated in coverage/ directory when tests run
@@ -214,6 +231,7 @@ yarn test:unit
 ```
 
 **Configuration:**
+
 - Istanbul coverage via `@jsdevtools/coverage-istanbul-loader`
 - Configured in `test/unit/karma.base.conf.js`
 - Coverage for source files only (excludes test files)
@@ -221,6 +239,7 @@ yarn test:unit
 ## Test Types
 
 **Unit Tests:**
+
 - Scope: Individual functions, modules, and classes
 - Located: Co-located with source files (`*.spec.ts`)
 - Approach: Isolated testing with mocked dependencies
@@ -228,12 +247,14 @@ yarn test:unit
 - Run via Karma in actual browsers (Chrome by default)
 
 **Integration Tests:**
+
 - Scope: Module interactions within packages
 - Approach: Testing multiple modules together with minimal mocking
 - Located: Same as unit tests but with broader scope
 - Test real observable patterns, event lifecycle, session management flows
 
 **E2E Tests:**
+
 - Framework: Playwright 1.57.0
 - Scope: Full browser scenarios, user flows
 - Located: `test/e2e/**/*.ts`
@@ -243,6 +264,7 @@ yarn test:unit
 ## Common Patterns
 
 **Async Testing:**
+
 ```typescript
 import { waitNextMicrotask } from '@datadog/browser-core/test'
 
@@ -265,6 +287,7 @@ it('handles callbacks', (done) => {
 ```
 
 **Error Testing:**
+
 ```typescript
 it('throws error for invalid input', () => {
   expect(() => {
@@ -295,6 +318,7 @@ it('formats error correctly', () => {
 ```
 
 **Observable Testing:**
+
 ```typescript
 import { Observable } from './observable'
 
@@ -319,6 +343,7 @@ it('allows unsubscribe', () => {
 ```
 
 **Parameterized Tests:**
+
 ```typescript
 ;[
   {
@@ -343,10 +368,11 @@ it('allows unsubscribe', () => {
 ```
 
 **Jasmine Matchers:**
+
 ```typescript
 // Common matchers used in codebase
-expect(value).toBe(expected)                    // Strict equality
-expect(value).toEqual(expected)                 // Deep equality
+expect(value).toBe(expected) // Strict equality
+expect(value).toEqual(expected) // Deep equality
 expect(value).toBeDefined()
 expect(value).toBeUndefined()
 expect(fn).toHaveBeenCalled()
@@ -379,6 +405,7 @@ expect(value).toEqual(jasmine.any(String))
 - `fakeSessionStoreStrategy()` - Mock session storage
 
 **Usage Example:**
+
 ```typescript
 import { mockClock, registerCleanupTask, waitNextMicrotask } from '@datadog/browser-core/test'
 
@@ -395,6 +422,7 @@ beforeEach(() => {
 ## Webpack Configuration
 
 **Test Build:**
+
 - Mode: development
 - Module bundling: Each spec gets own bundle (no shared dependencies)
 - Source maps: Enabled via `karma-sourcemap-loader`
@@ -404,6 +432,7 @@ beforeEach(() => {
 ## Karma Configuration
 
 **Special Features:**
+
 - Random test execution order (`jasmine.random: true`)
 - Stop on first failure (`stopSpecOnExpectationFailure: true`)
 - Custom reporters:
@@ -416,24 +445,28 @@ beforeEach(() => {
 ## Best Practices
 
 **Test Organization:**
+
 - Group tests logically with nested `describe()` blocks
 - Use descriptive test names that explain behavior
 - Keep tests focused on single behavior
 - Use `beforeEach()` for common setup
 
 **Assertions:**
+
 - Prefer specific matchers over generic ones
 - One logical assertion per test (can have multiple expect calls)
 - Use `jasmine.objectContaining()` for partial object matches
 - Use `jasmine.any(Type)` for type checking unknown values
 
 **Cleanup:**
+
 - Use `registerCleanupTask()` from test utilities for automatic cleanup
 - Unsubscribe from observables in tests
 - Clear timers and intervals
 - Reset spies if reused
 
 **Performance:**
+
 - Avoid unnecessary waits or delays
 - Mock time-dependent code with `mockClock()`
 - Keep tests fast (unit tests < 100ms each)
@@ -441,4 +474,4 @@ beforeEach(() => {
 
 ---
 
-*Testing analysis: 2026-01-21*
+_Testing analysis: 2026-01-21_

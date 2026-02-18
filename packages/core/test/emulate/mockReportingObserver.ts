@@ -53,11 +53,9 @@ export type MockCspEventListener = ReturnType<typeof mockCspEventListener>
 export function mockCspEventListener() {
   // eslint-disable-next-line @typescript-eslint/unbound-method
   const originalAddEventListener = EventTarget.prototype.addEventListener
-  EventTarget.prototype.addEventListener = vi
-    .fn()
-    .mockImplementation((_type: string, listener: EventListener) => {
-      listeners.push(listener)
-    }) as any
+  EventTarget.prototype.addEventListener = vi.fn().mockImplementation((_type: string, listener: EventListener) => {
+    listeners.push(listener)
+  }) as any
 
   registerCleanupTask(() => {
     EventTarget.prototype.addEventListener = originalAddEventListener

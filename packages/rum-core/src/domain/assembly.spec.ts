@@ -1,4 +1,4 @@
-import { vi, beforeEach, describe, expect, it, test } from 'vitest'
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
   ErrorSource,

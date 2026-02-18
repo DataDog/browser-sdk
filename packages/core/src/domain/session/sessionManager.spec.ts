@@ -1,4 +1,4 @@
-import { vi, afterEach, beforeEach, describe, expect, it, test } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it } from 'vitest'
 import {
   createNewEvent,
   expireCookie,

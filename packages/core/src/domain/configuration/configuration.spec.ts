@@ -129,7 +129,9 @@ describe('validateAndBuildConfiguration', () => {
 
     it('should not contain any strategy if both cookies and local storage are unavailable', () => {
       vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
-      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw 'unavailable' })
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw 'unavailable'
+      })
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toBeUndefined()
     })

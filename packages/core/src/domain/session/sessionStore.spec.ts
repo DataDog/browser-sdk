@@ -269,7 +269,9 @@ describe('session store', () => {
       vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
     }
     function disableLocalStorage() {
-      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw 'unavailable' })
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw 'unavailable'
+      })
     }
   })
 

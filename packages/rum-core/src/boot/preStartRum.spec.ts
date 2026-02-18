@@ -1,4 +1,4 @@
-import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { DeflateWorker, Duration, TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import {
   display,
@@ -410,27 +410,28 @@ describe('preStartRum', () => {
         interceptor = interceptRequests()
       })
 
-      it('should start with the remote configuration when a remoteConfigurationId is provided', () => new Promise<void>((resolve) => {
-        interceptor.withFetch(() =>
-          Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+      it('should start with the remote configuration when a remoteConfigurationId is provided', () =>
+        new Promise<void>((resolve) => {
+          interceptor.withFetch(() =>
+            Promise.resolve({
+              ok: true,
+              json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+            })
+          )
+          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+          doStartRumSpy.mockImplementation((configuration) => {
+            expect(configuration.sessionSampleRate).toEqual(50)
+            resolve()
+            return {} as StartRumResult
           })
-        )
-        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-        doStartRumSpy.mockImplementation((configuration) => {
-          expect(configuration.sessionSampleRate).toEqual(50)
-          resolve()
-          return {} as StartRumResult
-        })
-        strategy.init(
-          {
-            ...DEFAULT_INIT_CONFIGURATION,
-            remoteConfigurationId: '123',
-          },
-          PUBLIC_API
-        )
-      }))
+          strategy.init(
+            {
+              ...DEFAULT_INIT_CONFIGURATION,
+              remoteConfigurationId: '123',
+            },
+            PUBLIC_API
+          )
+        }))
     })
 
     describe('plugins', () => {
@@ -528,27 +529,28 @@ describe('preStartRum', () => {
       expect(strategy.initConfiguration).toEqual(initConfiguration)
     })
 
-    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', () => new Promise<void>((resolve) => {
-      interceptor.withFetch(() =>
-        Promise.resolve({
-          ok: true,
-          json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+    it('returns the initConfiguration with the remote configuration when a remoteConfigurationId is provided', () =>
+      new Promise<void>((resolve) => {
+        interceptor.withFetch(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ rum: { sessionSampleRate: 50 } }),
+          })
+        )
+        const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
+        doStartRumSpy.mockImplementation(() => {
+          expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
+          resolve()
+          return {} as StartRumResult
         })
-      )
-      const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
-      doStartRumSpy.mockImplementation(() => {
-        expect(strategy.initConfiguration?.sessionSampleRate).toEqual(50)
-        resolve()
-        return {} as StartRumResult
-      })
-      strategy.init(
-        {
-          ...DEFAULT_INIT_CONFIGURATION,
-          remoteConfigurationId: '123',
-        },
-        PUBLIC_API
-      )
-    }))
+        strategy.init(
+          {
+            ...DEFAULT_INIT_CONFIGURATION,
+            remoteConfigurationId: '123',
+          },
+          PUBLIC_API
+        )
+      }))
   })
 
   describe('buffers API calls before starting RUM', () => {

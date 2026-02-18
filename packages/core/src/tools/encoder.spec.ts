@@ -1,4 +1,4 @@
-import { vi, describe, expect, it, test } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { createIdentityEncoder } from './encoder'
 import { noop } from './utils/functionUtils'
 
