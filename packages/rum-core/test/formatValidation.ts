@@ -23,11 +23,7 @@ export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
 }
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
-  // Skip validation for VIEW_UPDATE events until rum-events-format adds the schema.
-  // When the schema PR lands and RumViewUpdateEvent is generated, the @ts-expect-error
-  // below will cause a typecheck failure — remove this skip and enable validation.
-  // @ts-expect-error RumViewUpdateEvent does not exist yet in generated schema types
-  type _ViewUpdateSchemaCheck = import('../src/rumEvent.types').RumViewUpdateEvent
+  // TODO: Remove this skip when rum-events-format adds the view_update schema.
   if (rawRumEvent.type === RumEventType.VIEW_UPDATE) {
     return
   }

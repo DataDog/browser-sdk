@@ -1,6 +1,6 @@
+import { deepClone, isEmptyObject } from '@datadog/browser-core'
 import type { RawRumViewEvent, RawRumViewUpdateEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
-import { deepClone, isEmptyObject } from '@datadog/browser-core'
 
 /**
  * Compare two values for deep equality
@@ -126,10 +126,7 @@ function diffMerge(
 
     // Object comparison - recurse (no options propagation: replaceKeys/appendKeys apply only at top level)
     if (typeof currentVal === 'object' && lastSentVal && typeof lastSentVal === 'object') {
-      const nestedDiff = diffMerge(
-        currentVal as Record<string, unknown>,
-        lastSentVal as Record<string, unknown>
-      )
+      const nestedDiff = diffMerge(currentVal as Record<string, unknown>, lastSentVal as Record<string, unknown>)
       if (nestedDiff && !isEmptyObject(nestedDiff)) {
         result[key] = nestedDiff
       }
@@ -190,21 +187,17 @@ export function computeViewDiff(
   }
 
   // Diff view.* (MERGE, with custom_timings as REPLACE)
-  const viewDiff = diffMerge(
-    current.view as Record<string, unknown>,
-    lastSent.view as Record<string, unknown>,
-    { replaceKeys: new Set(['custom_timings']) }
-  )
+  const viewDiff = diffMerge(current.view as Record<string, unknown>, lastSent.view as Record<string, unknown>, {
+    replaceKeys: new Set(['custom_timings']),
+  })
   if (viewDiff) {
     Object.assign(diff.view, viewDiff)
   }
 
   // Diff _dd.* (MERGE, with page_states as APPEND)
-  const ddDiff = diffMerge(
-    current._dd as Record<string, unknown>,
-    lastSent._dd as Record<string, unknown>,
-    { appendKeys: new Set(['page_states']) }
-  )
+  const ddDiff = diffMerge(current._dd as Record<string, unknown>, lastSent._dd as Record<string, unknown>, {
+    appendKeys: new Set(['page_states']),
+  })
   if (ddDiff) {
     // Remove document_version from ddDiff (already in required fields)
     delete ddDiff.document_version

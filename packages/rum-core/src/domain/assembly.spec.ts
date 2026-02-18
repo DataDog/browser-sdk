@@ -329,21 +329,21 @@ describe('rum assembly', () => {
       })
     })
 
-      it('should not allow dismissing view_update events', () => {
-        const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
-          partialConfiguration: {
-            beforeSend: () => false,
-          },
-        })
-
-        const displaySpy = spyOn(display, 'warn')
-        notifyRawRumEvent(lifeCycle, {
-          rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE),
-        })
-
-        expect(serverRumEvents.length).toBe(1)
-        expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view events using beforeSend!")
+    it('should not allow dismissing view_update events', () => {
+      const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({
+        partialConfiguration: {
+          beforeSend: () => false,
+        },
       })
+
+      const displaySpy = spyOn(display, 'warn')
+      notifyRawRumEvent(lifeCycle, {
+        rawRumEvent: createRawRumEvent(RumEventType.VIEW_UPDATE),
+      })
+
+      expect(serverRumEvents.length).toBe(1)
+      expect(displaySpy).toHaveBeenCalledWith("Can't dismiss view events using beforeSend!")
+    })
 
     it('should not dismiss when true is returned', () => {
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({

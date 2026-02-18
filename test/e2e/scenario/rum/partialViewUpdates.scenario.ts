@@ -1,10 +1,22 @@
 import { test, expect } from '@playwright/test'
 import { createTest, html } from '../../lib/framework'
+import type { IntakeRegistry } from '../../lib/framework'
+
+// Loose type for view_update events received at the intake (no generated schema type yet)
+interface ViewUpdateEvent {
+  type: string
+  date: number
+  application: { id: string }
+  session: { id: string }
+  view: { id: string; is_active?: boolean; [key: string]: unknown }
+  _dd: { document_version: number; [key: string]: unknown }
+  [key: string]: unknown
+}
 
 // Helper: extract view_update events from all RUM events
 // (intakeRegistry.rumViewEvents only returns type==='view')
-function getViewUpdateEvents(intakeRegistry: { rumEvents: any[] }) {
-  return intakeRegistry.rumEvents.filter((e: any) => e.type === 'view_update')
+function getViewUpdateEvents(intakeRegistry: IntakeRegistry): ViewUpdateEvent[] {
+  return intakeRegistry.rumEvents.filter((e) => (e.type as string) === 'view_update') as unknown as ViewUpdateEvent[]
 }
 
 test.describe('partial view updates', () => {
@@ -49,9 +61,9 @@ test.describe('partial view updates', () => {
 
       // Collect all view-related events (view + view_update) sorted by document_version
       const allViewRelatedEvents = [
-        ...intakeRegistry.rumViewEvents,
-        ...getViewUpdateEvents(intakeRegistry),
-      ].sort((a: any, b: any) => a._dd.document_version - b._dd.document_version)
+        ...intakeRegistry.rumViewEvents.map((e) => ({ _dd: e._dd })),
+        ...getViewUpdateEvents(intakeRegistry).map((e) => ({ _dd: e._dd })),
+      ].sort((a, b) => a._dd.document_version - b._dd.document_version)
 
       expect(allViewRelatedEvents.length).toBeGreaterThanOrEqual(2)
 
@@ -154,9 +166,7 @@ test.describe('partial view updates', () => {
 
       // Find the view_update that marks the first view as inactive
       const firstViewId = intakeRegistry.rumViewEvents[0].view.id
-      const endEvent = viewUpdateEvents.find(
-        (e: any) => e.view.id === firstViewId && e.view.is_active === false
-      )
+      const endEvent = viewUpdateEvents.find((e) => e.view.id === firstViewId && e.view.is_active === false)
       expect(endEvent).toBeDefined()
     })
 })

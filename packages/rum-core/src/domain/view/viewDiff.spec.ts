@@ -1,7 +1,7 @@
+import type { ServerDuration, TimeStamp } from '@datadog/browser-core'
 import type { RawRumViewEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
 import { computeViewDiff, createViewDiffTracker } from './viewDiff'
-import type { ServerDuration, TimeStamp } from '@datadog/browser-core'
 
 function createBaseViewEvent(overrides?: Partial<RawRumViewEvent>): RawRumViewEvent {
   return {

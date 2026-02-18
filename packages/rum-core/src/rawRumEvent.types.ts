@@ -21,7 +21,6 @@ import type {
   RumVitalEvent,
 } from './rumEvent.types'
 
-
 export const RumEventType = {
   ACTION: 'action',
   ERROR: 'error',
