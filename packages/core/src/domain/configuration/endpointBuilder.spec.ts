@@ -1,6 +1,6 @@
 import type { Payload } from '../../transport'
 import type { InitConfiguration } from './configuration'
-import { createEndpointBuilder } from './endpointBuilder'
+import { buildSiteHost, createEndpointBuilder } from './endpointBuilder'
 
 const DEFAULT_PAYLOAD = {} as Payload
 
@@ -169,5 +169,27 @@ describe('endpointBuilder', () => {
       const endpoint = createEndpointBuilder(config, 'rum').build('fetch', DEFAULT_PAYLOAD)
       expect(endpoint).toContain('ddsource=unity')
     })
+  })
+})
+
+describe('buildSiteHost', () => {
+  it('should return default US1 host when no site provided', () => {
+    expect(buildSiteHost()).toBe('browser-intake-datadoghq.com')
+  })
+
+  it('should return US1 host for datadoghq.com', () => {
+    expect(buildSiteHost('datadoghq.com')).toBe('browser-intake-datadoghq.com')
+  })
+
+  it('should return EU host for datadoghq.eu', () => {
+    expect(buildSiteHost('datadoghq.eu')).toBe('browser-intake-datadoghq.eu')
+  })
+
+  it('should return fed staging host', () => {
+    expect(buildSiteHost('dd0g-gov.com')).toBe('http-intake.logs.dd0g-gov.com')
+  })
+
+  it('should handle multi-part domains', () => {
+    expect(buildSiteHost('us3.datadoghq.com')).toBe('browser-intake-us3-datadoghq.com')
   })
 })
