@@ -33,7 +33,7 @@ describe('report observable', () => {
       consoleSubscription = initReportObservable(configuration, [type]).subscribe(notifyReport)
       reportingObserver.raiseReport(type)
 
-      const [report] = notifyReport.mock.lastCall
+      const [report] = notifyReport.mock.lastCall!
 
       expect(report).toEqual(
         expect.objectContaining({
@@ -48,7 +48,7 @@ describe('report observable', () => {
     consoleSubscription = initReportObservable(configuration, [RawReportType.intervention]).subscribe(notifyReport)
     reportingObserver.raiseReport(RawReportType.intervention)
 
-    const [report] = notifyReport.mock.lastCall
+    const [report] = notifyReport.mock.lastCall!
 
     expect(report.stack).toEqual(`NavigatorVibrate: foo bar
   at <anonymous> @ http://foo.bar/index.js:20:10`)

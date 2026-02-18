@@ -64,7 +64,7 @@ describe('Segment', () => {
     expect(addRecordCallbackSpy).toHaveBeenCalledTimes(1)
     expect(flushCallbackSpy).toHaveBeenCalledTimes(1)
 
-    expect(parseSegment(flushCallbackSpy.mock.lastCall[2].output)).toEqual({
+    expect(parseSegment(flushCallbackSpy.mock.lastCall![2].output)).toEqual({
       source: 'browser' as const,
       creation_reason: 'init' as const,
       end: 10,

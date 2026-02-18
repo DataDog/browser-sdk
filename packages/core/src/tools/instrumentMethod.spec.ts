@@ -72,8 +72,8 @@ describe('instrumentMethod', () => {
       onPostCall: expect.any(Function),
       handlingStack: undefined,
     })
-    expect(instrumentationSpy.mock.lastCall[0].parameters[0]).toBe(2)
-    expect(instrumentationSpy.mock.lastCall[0].parameters[1]).toBe(3)
+    expect(instrumentationSpy.mock.lastCall![0].parameters[0]).toBe(2)
+    expect(instrumentationSpy.mock.lastCall![0].parameters[1]).toBe(3)
   })
 
   it('allows replacing a parameter', () => {
@@ -127,7 +127,7 @@ describe('instrumentMethod', () => {
 
     foo()
 
-    expect(instrumentationSpy.mock.lastCall[0].handlingStack).toEqual(
+    expect(instrumentationSpy.mock.lastCall![0].handlingStack).toEqual(
       expect.stringMatching(/^HandlingStack: instrumented method\n {2}at foo @/)
     )
   })
@@ -271,7 +271,7 @@ describe('instrumentSetter', () => {
 
   it('does not use the Zone.js setTimeout function', () => {
     const zoneJsSetTimeoutSpy = vi.fn()
-    zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
+    zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy as any)
 
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })

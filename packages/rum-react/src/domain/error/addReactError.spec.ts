@@ -53,7 +53,7 @@ describe('addReactError', () => {
 
     addReactError(originalError, {})
 
-    expect(addEventSpy.mock.lastCall[1]).toEqual(
+    expect(addEventSpy.mock.lastCall![1]).toEqual(
       expect.objectContaining({
         context: {
           framework: 'react',

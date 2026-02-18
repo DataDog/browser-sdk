@@ -52,7 +52,7 @@ describe('startWorker', () => {
         listener({ data: message } as MessageEvent)
       }
     })
-    return workerScope.postMessage.mock.lastCall?.[0]
+    return workerScope.postMessage.mock.lastCall?.[0] as any
   }
 
   it('buffers data and responds with the buffer deflated result when writing', () => {

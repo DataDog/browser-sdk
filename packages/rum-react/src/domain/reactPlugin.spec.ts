@@ -33,8 +33,8 @@ describe('reactPlugin', () => {
     })
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
-    expect(callbackSpy.mock.lastCall[0]).toBe(pluginConfiguration)
-    expect(callbackSpy.mock.lastCall[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.mock.lastCall![0]).toBe(pluginConfiguration)
+    expect(callbackSpy.mock.lastCall![1]).toBe(PUBLIC_API)
   })
 
   it('calls callbacks immediately if onInit was already invoked', () => {
@@ -48,8 +48,8 @@ describe('reactPlugin', () => {
     onRumInit(callbackSpy)
 
     expect(callbackSpy).toHaveBeenCalledTimes(1)
-    expect(callbackSpy.mock.lastCall[0]).toBe(pluginConfiguration)
-    expect(callbackSpy.mock.lastCall[1]).toBe(PUBLIC_API)
+    expect(callbackSpy.mock.lastCall![0]).toBe(pluginConfiguration)
+    expect(callbackSpy.mock.lastCall![1]).toBe(PUBLIC_API)
   })
 
   it('enforce manual view tracking when router is enabled', () => {

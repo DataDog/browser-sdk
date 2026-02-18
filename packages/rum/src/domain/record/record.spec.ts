@@ -482,6 +482,6 @@ export function getLastIncrementalSnapshotData<T extends BrowserIncrementalSnaps
     (record): record is BrowserIncrementalSnapshotRecord & { data: T } =>
       record.type === RecordType.IncrementalSnapshot && record.data.source === source
   )
-  expect(record).toBeTruthy(`Could not find IncrementalSnapshot/${source} in ${records.length} records`)
+  expect(record).toBeTruthy()
   return record!.data
 }

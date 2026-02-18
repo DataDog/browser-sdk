@@ -206,7 +206,7 @@ describe('actionCollection', () => {
         duration: 50 as Duration,
       } as AssembleHookParams)
 
-      const [correctedStartTime] = findActionIdSpy.mock.lastCall
+      const [correctedStartTime] = findActionIdSpy.mock.lastCall!
       expect(correctedStartTime).toEqual(addDuration(longTaskStartTime, LONG_TASK_START_TIME_CORRECTION))
     })
   })

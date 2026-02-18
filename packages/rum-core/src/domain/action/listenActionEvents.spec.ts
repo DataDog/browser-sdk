@@ -63,7 +63,7 @@ describe('listenActionEvents', () => {
     const context = {}
     actionEventsHooks.onPointerDown.mockReturnValue(context)
     emulateClick()
-    expect(actionEventsHooks.onPointerUp.mock.lastCall[0]).toBe(context)
+    expect(actionEventsHooks.onPointerUp.mock.lastCall![0]).toBe(context)
   })
 
   it('ignore "click" events if no "pointerdown" event happened since the previous "click" event', () => {
@@ -144,7 +144,7 @@ describe('listenActionEvents', () => {
     })
 
     function hasSelectionChanged() {
-      return actionEventsHooks.onPointerUp.mock.lastCall[2]().selection
+      return actionEventsHooks.onPointerUp.mock.lastCall![2]().selection
     }
 
     function emulateNodeSelection(
@@ -204,7 +204,7 @@ describe('listenActionEvents', () => {
       window.dispatchEvent(createNewEvent('input'))
     }
     function hasInputUserActivity() {
-      return actionEventsHooks.onPointerUp.mock.lastCall[2]().input
+      return actionEventsHooks.onPointerUp.mock.lastCall![2]().input
     }
   })
 
@@ -239,7 +239,7 @@ describe('listenActionEvents', () => {
       window.dispatchEvent(createNewEvent('scroll'))
     }
     function hasScrollUserActivity() {
-      return actionEventsHooks.onPointerUp.mock.lastCall[2]().scroll
+      return actionEventsHooks.onPointerUp.mock.lastCall![2]().scroll
     }
   })
 

@@ -34,7 +34,7 @@ describe('trackFrustration', () => {
   })
 
   function getLatestFrustrationRecord(): FrustrationRecord {
-    return emitRecordCallback.mock.lastCall?.[0]
+    return emitRecordCallback.mock.lastCall![0]
   }
 
   it('calls callback if the raw data inserted is a click action', () => {

@@ -243,7 +243,7 @@ describe('serializeDOMAttributes', () => {
         const attributes = serializeDOMAttributes(element, privacyLevel, transaction)
         const actual = attributes[attribute.name] as boolean | string | undefined
         const expected = expectedValueForPrivacyLevel(testCase, element, attribute, privacyLevel)
-        expect(actual).withContext(`${testCase.html} for ${privacyLevel}`).toEqual(expected)
+        expect(actual).toEqual(expected)
       }
     }
 
@@ -347,7 +347,7 @@ describe('serializeVirtualAttributes', () => {
     for (const privacyLevel of PRIVACY_LEVELS) {
       const actual = serializeVirtualAttributes(element, privacyLevel, transaction)
       const expected = privacyLevel === NodePrivacyLevel.HIDDEN ? {} : expectedWhenNotHidden
-      expect(actual).withContext(`${element.tagName} ${privacyLevel}`).toEqual(expected)
+      expect(actual).toEqual(expected)
       after?.(privacyLevel)
     }
   }

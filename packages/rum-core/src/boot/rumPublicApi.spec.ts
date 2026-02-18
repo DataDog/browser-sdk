@@ -77,7 +77,7 @@ describe('rum public api', () => {
           ...DEFAULT_INIT_CONFIGURATION,
           compressIntakeRequests: true,
         })
-        expect(recorderApiOnRumStartSpy.mock.lastCall[4]).toBe(FAKE_WORKER)
+        expect(recorderApiOnRumStartSpy.mock.lastCall![4]).toBe(FAKE_WORKER)
       })
     })
   })
@@ -648,7 +648,7 @@ describe('rum public api', () => {
 
     it('is started with the default defaultPrivacyLevel', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect(recorderApi.onRumStart.mock.lastCall[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
+      expect(recorderApi.onRumStart.mock.lastCall![1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK)
     })
 
     it('is started with the configured defaultPrivacyLevel', () => {
@@ -656,7 +656,7 @@ describe('rum public api', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT,
       })
-      expect(recorderApi.onRumStart.mock.lastCall[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
+      expect(recorderApi.onRumStart.mock.lastCall![1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
 
     it('public api calls are forwarded to the recorder api', () => {
@@ -671,7 +671,7 @@ describe('rum public api', () => {
 
     it('is started with the default startSessionReplayRecordingManually', () => {
       rumPublicApi.init(DEFAULT_INIT_CONFIGURATION)
-      expect(recorderApi.onRumStart.mock.lastCall[1].startSessionReplayRecordingManually).toBe(true)
+      expect(recorderApi.onRumStart.mock.lastCall![1].startSessionReplayRecordingManually).toBe(true)
     })
 
     it('is started with the configured startSessionReplayRecordingManually', () => {
@@ -679,7 +679,7 @@ describe('rum public api', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         startSessionReplayRecordingManually: false,
       })
-      expect(recorderApi.onRumStart.mock.lastCall[1].startSessionReplayRecordingManually).toBe(false)
+      expect(recorderApi.onRumStart.mock.lastCall![1].startSessionReplayRecordingManually).toBe(false)
     })
   })
 

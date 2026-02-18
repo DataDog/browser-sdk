@@ -218,7 +218,7 @@ describe('preStartRum', () => {
           strategy.init(DEFAULT_INIT_CONFIGURATION, PUBLIC_API)
 
           expect(startDeflateWorkerSpy).not.toHaveBeenCalled()
-          const worker: DeflateWorker | undefined = doStartRumSpy.mock.lastCall[1]
+          const worker: DeflateWorker | undefined = doStartRumSpy.mock.lastCall![1]
           expect(worker).toBeUndefined()
         })
       })
@@ -234,7 +234,7 @@ describe('preStartRum', () => {
           )
 
           expect(startDeflateWorkerSpy).toHaveBeenCalledTimes(1)
-          const worker: DeflateWorker | undefined = doStartRumSpy.mock.lastCall[1]
+          const worker: DeflateWorker | undefined = doStartRumSpy.mock.lastCall![1]
           expect(worker).toBeDefined()
         })
 
@@ -464,7 +464,7 @@ describe('preStartRum', () => {
         )
 
         expect(doStartRumSpy).toHaveBeenCalled()
-        expect(doStartRumSpy.mock.lastCall[0].applicationId).toBe('application-id')
+        expect(doStartRumSpy.mock.lastCall![0].applicationId).toBe('application-id')
       })
     })
   })

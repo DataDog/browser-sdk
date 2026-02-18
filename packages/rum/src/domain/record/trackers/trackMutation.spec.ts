@@ -197,7 +197,7 @@ describe('trackMutation', () => {
         ],
       })
 
-      expect(emitStatsCallback.mock.lastCall[0]).toEqual({
+      expect(emitStatsCallback.mock.lastCall![0]).toEqual({
         cssText: { count: 1, max: 21, sum: 21 },
         serializationDuration: expect.anything(),
       })

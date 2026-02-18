@@ -281,14 +281,14 @@ describe('makeRecorderApi', () => {
 
       await collectAsyncCalls(startRecordingSpy, 1)
 
-      const firstCallDeflateEncoder: DeflateEncoder = startRecordingSpy.mock.lastCall[4]
+      const firstCallDeflateEncoder: DeflateEncoder = startRecordingSpy.mock.lastCall![4]
       firstCallDeflateEncoder.write('foo')
 
       recorderApi.stop()
       recorderApi.start()
       await collectAsyncCalls(startRecordingSpy, 2)
 
-      const secondCallDeflateEncoder: DeflateEncoder = startRecordingSpy.mock.lastCall[4]
+      const secondCallDeflateEncoder: DeflateEncoder = startRecordingSpy.mock.lastCall![4]
       secondCallDeflateEncoder.write('foo')
 
       const writeMessages = mockWorker.pendingMessages.filter(

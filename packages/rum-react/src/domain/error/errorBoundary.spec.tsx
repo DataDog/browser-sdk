@@ -84,7 +84,7 @@ describe('ErrorBoundary', () => {
     // Don't throw the second time
     ComponentSpy.mockReturnValue('bar')
 
-    const { resetError } = fallbackSpy.mock.lastCall[0]
+    const { resetError } = fallbackSpy.mock.lastCall![0]
     act(() => {
       resetError()
     })

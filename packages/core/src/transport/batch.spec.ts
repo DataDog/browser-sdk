@@ -40,7 +40,7 @@ describe('batch', () => {
 
     flushController.notifyFlush()
 
-    expect(transport.send.mock.lastCall[0]).toEqual({
+    expect(transport.send.mock.lastCall![0]).toEqual({
       data: '{"message":"hello"}',
       bytesCount: SMALL_MESSAGE_BYTES_COUNT,
       encoding: undefined,
@@ -116,7 +116,7 @@ describe('batch', () => {
     batch.upsert({ message: '4' }, 'c')
     flushController.notifyFlush()
 
-    expect(transport.send.mock.lastCall[0]).toEqual({
+    expect(transport.send.mock.lastCall![0]).toEqual({
       data: '{"message":"2"}\n{"message":"3"}\n{"message":"4"}',
       bytesCount: expect.any(Number),
       encoding: undefined,
@@ -127,7 +127,7 @@ describe('batch', () => {
     batch.upsert({ message: '7' }, 'a')
     flushController.notifyFlush()
 
-    expect(transport.send.mock.lastCall[0]).toEqual({
+    expect(transport.send.mock.lastCall![0]).toEqual({
       data: '{"message":"5"}\n{"message":"6"}\n{"message":"7"}',
       bytesCount: expect.any(Number),
       encoding: undefined,
@@ -139,7 +139,7 @@ describe('batch', () => {
     batch.upsert({ message: '11' }, 'b')
     flushController.notifyFlush()
 
-    expect(transport.send.mock.lastCall[0]).toEqual({
+    expect(transport.send.mock.lastCall![0]).toEqual({
       data: '{"message":"10"}\n{"message":"11"}',
       bytesCount: expect.any(Number),
       encoding: undefined,
@@ -153,7 +153,7 @@ describe('batch', () => {
 
       flushController.notifyFlush()
 
-      expect(transport.send.mock.lastCall[0]).toEqual({
+      expect(transport.send.mock.lastCall![0]).toEqual({
         data: '{"message":"1"}\n{"message":"2"}',
         bytesCount: expect.any(Number),
         encoding: undefined,

@@ -9,7 +9,7 @@ const DOM_MUTATION_OBSERVABLE_DURATION = 16
 
 describe('domMutationObservable', () => {
   function domMutationSpec(mutate: (root: HTMLElement) => void, { expectedMutations }: { expectedMutations: number }) {
-    return (done: DoneFn) => {
+    return (done: () => void) => {
       const root = document.createElement('div')
       root.setAttribute('data-test', 'foo')
       root.appendChild(document.createElement('span'))

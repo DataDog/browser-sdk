@@ -58,7 +58,7 @@ describe('logs entry', () => {
     it('should have the current date, view and global context', () => {
       logsPublicApi.setGlobalContextProperty('foo', 'bar')
 
-      const getCommonContext = startLogsSpy.mock.lastCall[1]
+      const getCommonContext = startLogsSpy.mock.lastCall![1]
       expect(getCommonContext()).toEqual({
         view: {
           referrer: document.referrer,
