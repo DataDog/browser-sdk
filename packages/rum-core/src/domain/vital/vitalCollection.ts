@@ -161,7 +161,7 @@ export function startVitalCollection(
 
 export function startDurationVital(
   { vitalsByName, vitalsByReference }: CustomVitalsState,
-  lifeCycle: LifeCycle,
+  lifeCycle: LifeCycle | undefined, // the lifecycle might not be defined in case datadogRum is not initialized yet
   name: string,
   options: DurationVitalOptions = {}
 ) {
@@ -181,7 +181,9 @@ export function startDurationVital(
   // To avoid memory leaks caused by the creation of numerous references (e.g., from improper useEffect implementations), we use a WeakMap.
   vitalsByReference.set(reference, vital)
 
-  lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, vital)
+  if (lifeCycle) {
+    lifeCycle.notify(LifeCycleEventType.VITAL_STARTED, vital)
+  }
 
   return reference
 }
