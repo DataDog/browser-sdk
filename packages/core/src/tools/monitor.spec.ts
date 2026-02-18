@@ -163,7 +163,9 @@ describe('monitor', () => {
 
     it('displays errors thrown by the onMonitorErrorCollected callback', () => {
       setDebugMode(true)
-      onMonitorErrorCollectedSpy.mockImplementation(() => { throw new Error('unexpected') })
+      onMonitorErrorCollectedSpy.mockImplementation(() => {
+        throw new Error('unexpected')
+      })
       startMonitorErrorCollection(onMonitorErrorCollectedSpy)
 
       callMonitored(() => {

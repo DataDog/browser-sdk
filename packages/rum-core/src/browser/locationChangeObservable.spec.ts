@@ -14,21 +14,22 @@ describe('locationChangeObservable', () => {
     expect(locationChanges.newLocation.href).toMatch(/\/foo\?bar=qux$/)
   })
 
-  it('should notify observers on hashchange', () => new Promise<void>((resolve) => {
-    const observer = setup()
+  it('should notify observers on hashchange', () =>
+    new Promise<void>((resolve) => {
+      const observer = setup()
 
-    function hashChangeCallback() {
-      const locationChanges = observer.mock.calls[0][0]
-      expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
-      expect(locationChanges.newLocation.href).toMatch(/\/foo#bar$/)
+      function hashChangeCallback() {
+        const locationChanges = observer.mock.calls[0][0]
+        expect(locationChanges.oldLocation.href).toMatch(/\/foo$/)
+        expect(locationChanges.newLocation.href).toMatch(/\/foo#bar$/)
 
-      window.removeEventListener('hashchange', hashChangeCallback)
-      resolve()
-    }
-    window.addEventListener('hashchange', hashChangeCallback)
+        window.removeEventListener('hashchange', hashChangeCallback)
+        resolve()
+      }
+      window.addEventListener('hashchange', hashChangeCallback)
 
-    window.location.hash = '#bar'
-  }))
+      window.location.hash = '#bar'
+    }))
 
   it('should not notify if the url has not changed', () => {
     const observer = setup()

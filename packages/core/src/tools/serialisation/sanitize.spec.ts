@@ -1,4 +1,4 @@
-import { vi, describe, expect, it, test } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { display } from '../display'
 import { registerCleanupTask } from '../../../test'
 import { sanitize } from './sanitize'
@@ -67,30 +67,31 @@ describe('sanitize', () => {
       expect(sanitize(node)).toBe('[HTMLDivElement]')
     })
 
-    it('should serialize events', () => new Promise<void>((resolve) => {
-      const button = document.createElement('button')
-      document.body.appendChild(button)
+    it('should serialize events', () =>
+      new Promise<void>((resolve) => {
+        const button = document.createElement('button')
+        document.body.appendChild(button)
 
-      registerCleanupTask(() => {
-        document.body.removeChild(button)
-      })
+        registerCleanupTask(() => {
+          document.body.removeChild(button)
+        })
 
-      document.addEventListener(
-        'click',
-        (event) => {
-          expect(sanitize(event)).toEqual({
-            type: 'click',
-            isTrusted: false,
-            target: '[HTMLButtonElement]',
-            currentTarget: '[HTMLDocument]',
-          })
-          resolve()
-        },
-        { once: true }
-      )
+        document.addEventListener(
+          'click',
+          (event) => {
+            expect(sanitize(event)).toEqual({
+              type: 'click',
+              isTrusted: false,
+              target: '[HTMLButtonElement]',
+              currentTarget: '[HTMLDocument]',
+            })
+            resolve()
+          },
+          { once: true }
+        )
 
-      button.click()
-    }))
+        button.click()
+      }))
 
     it('should serialize errors as JSON.stringify does', () => {
       // Explicitely keep the previous behavior to avoid breaking changes in 4.x

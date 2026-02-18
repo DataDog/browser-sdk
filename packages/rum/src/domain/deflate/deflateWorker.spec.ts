@@ -84,27 +84,33 @@ describe('startDeflateWorker', () => {
 
     describe('Chrome and Safari behavior: exception during worker creation', () => {
       it('returns undefined when the worker creation throws an exception', () => {
-        createDeflateWorkerSpy.mockImplementation(() => { throw CSP_ERROR })
+        createDeflateWorkerSpy.mockImplementation(() => {
+          throw CSP_ERROR
+        })
         const worker = startDeflateWorkerWithDefaults()
         expect(worker).toBeUndefined()
       })
 
       it('displays CSP instructions when the worker creation throws a CSP error', () => {
-        createDeflateWorkerSpy.mockImplementation(() => { throw CSP_ERROR })
+        createDeflateWorkerSpy.mockImplementation(() => {
+          throw CSP_ERROR
+        })
         startDeflateWorkerWithDefaults()
-        expect(displaySpy).toHaveBeenCalledWith(
-          expect.stringContaining('Please make sure CSP is correctly configured')
-        )
+        expect(displaySpy).toHaveBeenCalledWith(expect.stringContaining('Please make sure CSP is correctly configured'))
       })
 
       it('does not report CSP errors to telemetry', async () => {
-        createDeflateWorkerSpy.mockImplementation(() => { throw CSP_ERROR })
+        createDeflateWorkerSpy.mockImplementation(() => {
+          throw CSP_ERROR
+        })
         startDeflateWorkerWithDefaults()
         expect(await telemetry.hasEvents()).toBe(false)
       })
 
       it('does not try to create a worker again after the creation failed', () => {
-        createDeflateWorkerSpy.mockImplementation(() => { throw CSP_ERROR })
+        createDeflateWorkerSpy.mockImplementation(() => {
+          throw CSP_ERROR
+        })
         startDeflateWorkerWithDefaults()
         createDeflateWorkerSpy.mockClear()
         startDeflateWorkerWithDefaults()
@@ -116,9 +122,7 @@ describe('startDeflateWorker', () => {
       it('displays ErrorEvent as CSP error', () => {
         startDeflateWorkerWithDefaults()
         mockWorker.dispatchErrorEvent()
-        expect(displaySpy).toHaveBeenCalledWith(
-          expect.stringContaining('Please make sure CSP is correctly configured')
-        )
+        expect(displaySpy).toHaveBeenCalledWith(expect.stringContaining('Please make sure CSP is correctly configured'))
       })
 
       it('calls the initialization failure callback when of an error occurs during loading', () => {
@@ -188,9 +192,7 @@ describe('startDeflateWorker', () => {
       startDeflateWorkerWithDefaults({ source: 'Foo' })
       clock.tick(INITIALIZATION_TIME_OUT_DELAY)
       expect(displaySpy).toHaveBeenCalledTimes(1)
-      expect(displaySpy).toHaveBeenCalledWith(
-        'Foo failed to start: a timeout occurred while initializing the Worker'
-      )
+      expect(displaySpy).toHaveBeenCalledWith('Foo failed to start: a timeout occurred while initializing the Worker')
     })
   })
 
@@ -205,7 +207,9 @@ describe('startDeflateWorker', () => {
     })
 
     it('displays an error message when the worker creation throws an unknown error', () => {
-      createDeflateWorkerSpy.mockImplementation(() => { throw UNKNOWN_ERROR })
+      createDeflateWorkerSpy.mockImplementation(() => {
+        throw UNKNOWN_ERROR
+      })
       startDeflateWorkerWithDefaults()
       expect(displaySpy).toHaveBeenCalledTimes(1)
       expect(displaySpy).toHaveBeenCalledWith(
@@ -215,7 +219,9 @@ describe('startDeflateWorker', () => {
     })
 
     it('displays a customized error message', () => {
-      createDeflateWorkerSpy.mockImplementation(() => { throw UNKNOWN_ERROR })
+      createDeflateWorkerSpy.mockImplementation(() => {
+        throw UNKNOWN_ERROR
+      })
       startDeflateWorkerWithDefaults({ source: 'Foo' })
       expect(displaySpy).toHaveBeenCalledTimes(1)
       expect(displaySpy).toHaveBeenCalledWith(
@@ -225,7 +231,9 @@ describe('startDeflateWorker', () => {
     })
 
     it('reports unknown errors to telemetry', async () => {
-      createDeflateWorkerSpy.mockImplementation(() => { throw UNKNOWN_ERROR })
+      createDeflateWorkerSpy.mockImplementation(() => {
+        throw UNKNOWN_ERROR
+      })
       startDeflateWorkerWithDefaults()
       expect(await telemetry.getEvents()).toEqual([
         {

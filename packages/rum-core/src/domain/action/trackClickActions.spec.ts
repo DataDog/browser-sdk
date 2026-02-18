@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import {
   addDuration,
@@ -375,11 +375,7 @@ describe('trackClickActions', () => {
       clock.tick(EXPIRE_DELAY)
       expect(events.length).toBe(1)
       expect(events[0].frustrationTypes).toEqual(
-        expect.arrayContaining([
-          FrustrationType.DEAD_CLICK,
-          FrustrationType.ERROR_CLICK,
-          FrustrationType.RAGE_CLICK,
-        ])
+        expect.arrayContaining([FrustrationType.DEAD_CLICK, FrustrationType.ERROR_CLICK, FrustrationType.RAGE_CLICK])
       )
     })
   })

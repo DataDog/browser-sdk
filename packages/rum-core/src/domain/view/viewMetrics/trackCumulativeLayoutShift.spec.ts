@@ -1,4 +1,4 @@
-import { vi, afterEach, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { elapsed, ONE_SECOND } from '@datadog/browser-core'

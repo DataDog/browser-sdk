@@ -1,4 +1,4 @@
-import { vi, afterEach, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type {
   DeflateEncoder,
   DeflateWorker,
@@ -244,7 +244,9 @@ describe('makeRecorderApi', () => {
       setupRecorderApi({ startSessionReplayRecordingManually: true })
       rumInit()
 
-      createDeflateWorkerSpy.mockImplementation(() => { throw 'Crash' })
+      createDeflateWorkerSpy.mockImplementation(() => {
+        throw 'Crash'
+      })
       recorderApi.start()
 
       expect(loadRecorderSpy).toHaveBeenCalled()

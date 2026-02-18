@@ -63,7 +63,7 @@ describe('endpointBuilder', () => {
         DEFAULT_PAYLOAD
       )
       expect(url).toContain('https://proxy.io/path?ddforward=')
-      expect(url).toContain(encodeURIComponent(`/api/v2/rum?ddsource=`))
+      expect(url).toContain(encodeURIComponent('/api/v2/rum?ddsource='))
       expect(url).toContain(encodeURIComponent(`&dd-api-key=${clientToken}`))
       expect(url).toContain(encodeURIComponent('&dd-evp-origin=browser'))
     })

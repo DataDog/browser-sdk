@@ -1,4 +1,4 @@
-import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
 import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'

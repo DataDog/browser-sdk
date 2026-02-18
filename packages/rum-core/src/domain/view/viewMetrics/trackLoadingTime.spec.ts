@@ -1,4 +1,4 @@
-import { vi, afterEach, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime, Duration } from '@datadog/browser-core'
 import { clocksNow, clocksOrigin, noop, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -152,9 +152,7 @@ describe('trackLoadingTime', () => {
     clock.tick(AFTER_PAGE_ACTIVITY_END_DELAY)
 
     expect(loadingTimeCallback).toHaveBeenCalledTimes(1)
-    expect(loadingTimeCallback).toHaveBeenCalledWith(
-      clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP)
-    )
+    expect(loadingTimeCallback).toHaveBeenCalledWith(clock.relative(BEFORE_PAGE_ACTIVITY_VALIDATION_DELAY + CLOCK_GAP))
   })
 
   it('should discard loading time if page is hidden before activity', () => {

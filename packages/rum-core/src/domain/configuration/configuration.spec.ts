@@ -1,4 +1,4 @@
-import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { InitConfiguration } from '@datadog/browser-core'
 import { DefaultPrivacyLevel, display, TraceContextInjection } from '@datadog/browser-core'
 import type {
@@ -27,9 +27,7 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, applicationId: undefined as any })
       ).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledTimes(1)
-      expect(displayErrorSpy).toHaveBeenCalledWith(
-        'Application ID is not configured, no RUM data will be collected.'
-      )
+      expect(displayErrorSpy).toHaveBeenCalledWith('Application ID is not configured, no RUM data will be collected.')
     })
   })
 
@@ -50,9 +48,7 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 'foo' as any })
       ).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledTimes(1)
-      expect(displayErrorSpy).toHaveBeenCalledWith(
-        'Session Replay Sample Rate should be a number between 0 and 100'
-      )
+      expect(displayErrorSpy).toHaveBeenCalledWith('Session Replay Sample Rate should be a number between 0 and 100')
 
       displayErrorSpy.mockClear()
 
@@ -60,9 +56,7 @@ describe('validateAndBuildRumConfiguration', () => {
         validateAndBuildRumConfiguration({ ...DEFAULT_INIT_CONFIGURATION, sessionReplaySampleRate: 200 })
       ).toBeUndefined()
       expect(displayErrorSpy).toHaveBeenCalledTimes(1)
-      expect(displayErrorSpy).toHaveBeenCalledWith(
-        'Session Replay Sample Rate should be a number between 0 and 100'
-      )
+      expect(displayErrorSpy).toHaveBeenCalledWith('Session Replay Sample Rate should be a number between 0 and 100')
     })
   })
 

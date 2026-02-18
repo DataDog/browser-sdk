@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, test } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { MockZoneJs } from '@datadog/browser-core/test'
 import { registerCleanupTask, mockZoneJs } from '@datadog/browser-core/test'
 import { createDOMMutationObservable, getMutationObserverConstructor } from './domMutationObservable'

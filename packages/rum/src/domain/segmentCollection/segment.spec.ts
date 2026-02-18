@@ -88,9 +88,7 @@ describe('Segment', () => {
     segment.addRecord(RECORD, addRecordCallbackSpy)
     worker.processAllMessages()
     expect(addRecordCallbackSpy).toHaveBeenCalledTimes(1)
-    expect(addRecordCallbackSpy).toHaveBeenCalledWith(
-      ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT
-    )
+    expect(addRecordCallbackSpy).toHaveBeenCalledWith(ENCODED_SEGMENT_HEADER_BYTES_COUNT + ENCODED_RECORD_BYTES_COUNT)
   })
 
   it('calls the flush callback with metadata and encoder output as argument', () => {

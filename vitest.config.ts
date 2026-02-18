@@ -1,6 +1,7 @@
-import { defineConfig } from 'vitest/config'
-import { playwright } from '@vitest/browser-playwright'
 import path from 'node:path'
+
+import { playwright } from '@vitest/browser-playwright'
+import { defineConfig } from 'vitest/config'
 
 // Build env variables that should be replaced at compile time (same as webpack.base.ts)
 const buildEnvDefines: Record<string, string> = {
@@ -47,10 +48,7 @@ export default defineConfig({
       instances: [{ browser: 'chromium' }],
     },
 
-    include: [
-      'packages/*/{src,test}/**/*.spec.{ts,tsx}',
-      'developer-extension/{src,test}/**/*.spec.{ts,tsx}',
-    ],
+    include: ['packages/*/{src,test}/**/*.spec.{ts,tsx}', 'developer-extension/{src,test}/**/*.spec.{ts,tsx}'],
 
     // Exclude the Karma-specific global setup file (replaced by vitest.setup.ts)
     exclude: [

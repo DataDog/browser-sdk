@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, test } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { ChangeType } from '../../../types'
 import type { StringId } from '../itemIds'
 import { createStringIds } from '../itemIds'

@@ -1,4 +1,4 @@
-import { describe, expect, it, test } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { createIdentityEncoder, DeflateEncoderStreamId as CoreDeflateEncoderStreamId } from '@datadog/browser-core'
 import { interceptRequests, readFormDataRequest } from '@datadog/browser-core/test'
 import { LifeCycle } from '../domain/lifeCycle'

@@ -1,4 +1,4 @@
-import { vi, describe, expect, it, test } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { mockClock, getSessionState, registerCleanupTask } from '../../../../test'
 import { setCookie, deleteCookie, getCookie } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'

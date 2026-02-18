@@ -1,4 +1,4 @@
-import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime, DeflateWorker, TimeStamp } from '@datadog/browser-core'
 import {
   ONE_SECOND,
@@ -656,9 +656,7 @@ describe('rum public api', () => {
         ...DEFAULT_INIT_CONFIGURATION,
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_USER_INPUT,
       })
-      expect(recorderApi.onRumStart.mock.lastCall[1].defaultPrivacyLevel).toBe(
-        DefaultPrivacyLevel.MASK_USER_INPUT
-      )
+      expect(recorderApi.onRumStart.mock.lastCall[1].defaultPrivacyLevel).toBe(DefaultPrivacyLevel.MASK_USER_INPUT)
     })
 
     it('public api calls are forwarded to the recorder api', () => {

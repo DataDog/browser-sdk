@@ -1,4 +1,4 @@
-import { vi, describe, expect, it, test } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import { display } from '../../tools/display'
 import type { PropertiesConfig } from './contextManager'
 import { createContextManager } from './contextManager'

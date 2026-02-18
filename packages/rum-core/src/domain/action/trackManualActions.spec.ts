@@ -78,7 +78,6 @@ describe('trackManualActions', () => {
       expect(rawRumEvents).toHaveLength(1)
     })
 
-
     it('should use consistent action ID from start to collected event', () => {
       startAction('checkout')
 
@@ -172,7 +171,6 @@ describe('trackManualActions', () => {
     })
   })
 
-
   describe('actionKey', () => {
     it('should support actionKey for tracking same name multiple times', () => {
       startAction('click', { actionKey: 'button1' })
@@ -195,7 +193,7 @@ describe('trackManualActions', () => {
 
       const actionIds = actionContexts.findActionId()
       expect(Array.isArray(actionIds)).toBe(true)
-      expect((actionIds as string[]).length).toBe(2)
+      expect(actionIds.length).toBe(2)
 
       stopAction('foo bar')
       stopAction('foo', { actionKey: 'bar' })
@@ -233,11 +231,10 @@ describe('trackManualActions', () => {
 
       expect(rawRumEvents).toHaveLength(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.id).toEqual((secondActionId as string[])[0])
+      expect(actionEvent.action.id).toEqual(secondActionId[0])
       expect(rawRumEvents[0].duration).toBe(200 as Duration)
     })
   })
-
 
   describe('event counting', () => {
     it('should include counts in the action event', () => {
@@ -325,7 +322,6 @@ describe('trackManualActions', () => {
       expect(rawRumEvents).toHaveLength(0)
     })
   })
-
 
   describe('frustration detection', () => {
     it('should include ERROR_CLICK frustration when action has errors', () => {

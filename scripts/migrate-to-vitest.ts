@@ -8,8 +8,7 @@
  * Default pattern: packages/**\/*.spec.{ts,tsx} + developer-extension/**\/*.spec.{ts,tsx}
  */
 
-import { readFileSync, writeFileSync } from 'node:fs'
-import { globSync } from 'node:fs'
+import { readFileSync, writeFileSync, globSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const args = process.argv.slice(2)
@@ -91,7 +90,10 @@ for (const file of specFiles) {
   // ─── spy.calls.all() → spy.mock.invocationCallOrder.map(...)  ───
   // This returns {args, returnValue}[] — complex. Convert to mock.calls-based patterns.
   // spy.calls.all().map(c => c.args[0]) → spy.mock.calls.map(c => c[0])
-  content = content.replace(/\.calls\.all\(\)\.map\(\((\w+)\)\s*=>\s*\1\.args\[(\d+)\]\)/g, '.mock.calls.map((c) => c[$2])')
+  content = content.replace(
+    /\.calls\.all\(\)\.map\(\((\w+)\)\s*=>\s*\1\.args\[(\d+)\]\)/g,
+    '.mock.calls.map((c) => c[$2])'
+  )
   // spy.calls.all().forEach(([eventName, listener]) => ...) — needs manual review
   // spy.calls.allArgs() → spy.mock.calls
   content = content.replace(/\.calls\.allArgs\(\)/g, '.mock.calls')
@@ -244,8 +246,11 @@ function findMatchingParen(str: string, openPos: number): number {
   let depth = 1
   let i = openPos + 1
   while (i < str.length && depth > 0) {
-    if (str[i] === '(') depth++
-    else if (str[i] === ')') depth--
+    if (str[i] === '(') {
+      depth++
+    } else if (str[i] === ')') {
+      depth--
+    }
     i++
   }
   return depth === 0 ? i - 1 : -1

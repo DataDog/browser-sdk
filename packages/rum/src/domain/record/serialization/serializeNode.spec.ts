@@ -1,4 +1,4 @@
-import { vi, afterEach, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { BrowserWindow } from '@datadog/browser-rum-core'
 import { isAdoptedStyleSheetsSupported, registerCleanupTask } from '@datadog/browser-core/test'
 import {
@@ -803,7 +803,9 @@ describe('serializeNode', () => {
           }
         }
         const styleSheet = new FakeCSSStyleSheet()
-        vi.spyOn(styleSheet, 'cssRules', 'get').mockImplementation(() => { throw new DOMException('cors issue', 'SecurityError' ) })
+        vi.spyOn(styleSheet, 'cssRules', 'get').mockImplementation(() => {
+          throw new DOMException('cors issue', 'SecurityError')
+        })
 
         Object.defineProperty(document, 'styleSheets', {
           value: [styleSheet],

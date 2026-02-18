@@ -1,4 +1,4 @@
-import { vi, beforeEach, describe, expect, it, test, type Mock } from 'vitest'
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import {
   callbackAddsInstrumentation,
   type Clock,
