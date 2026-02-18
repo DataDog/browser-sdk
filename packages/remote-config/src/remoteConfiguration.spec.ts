@@ -152,6 +152,24 @@ describe('remoteConfiguration', () => {
       expect(result.value?.service).toBe('my-service')
       expect(result.value?.traceSampleRate).toBe(50)
     })
+
+    it('should pass signal to fetch', async () => {
+      const controller = new AbortController()
+      const fetchSpy = interceptor.withFetch(() =>
+        Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ rum: { applicationId: 'my-app' } }),
+        })
+      )
+
+      await fetchRemoteConfiguration({
+        applicationId: 'my-app',
+        remoteConfigurationId: 'config-id',
+        signal: controller.signal,
+      })
+
+      expect(fetchSpy.calls.mostRecent().args[1]?.signal).toBe(controller.signal)
+    })
   })
 
   describe('resolveDynamicValues', () => {
