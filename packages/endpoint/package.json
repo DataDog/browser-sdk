@@ -1,0 +1,20 @@
+{
+  "name": "@datadog/browser-sdk-endpoint",
+  "version": "6.26.0",
+  "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "types": "cjs/index.d.ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules"
+  },
+  "dependencies": {
+    "@datadog/browser-remote-config": "6.26.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
