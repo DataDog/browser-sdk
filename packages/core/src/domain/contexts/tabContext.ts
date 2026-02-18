@@ -18,7 +18,7 @@ export function startTabContext(hooks: AbstractHooks) {
   }
 }
 
-export function retrieveOrCreateTabId(): string {
+function retrieveOrCreateTabId(): string {
   try {
     const existingId = sessionStorage.getItem(TAB_ID_STORAGE_KEY)
     if (existingId) {
