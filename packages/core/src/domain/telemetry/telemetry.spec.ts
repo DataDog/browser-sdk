@@ -2,7 +2,6 @@ import type { TimeStamp } from '@datadog/browser-rum/internal'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
-import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import { validateAndBuildConfiguration, type Configuration } from '../configuration'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
 import {
@@ -13,6 +12,7 @@ import {
   interceptRequests,
   registerCleanupTask,
   createNewEvent,
+  mockExperimentalFeatures,
 } from '../../../test'
 import type { Context } from '../../tools/serialisation/context'
 import { Observable } from '../../tools/observable'
@@ -87,10 +87,6 @@ describe('telemetry', () => {
   })
 
   describe('addTelemetryConfiguration', () => {
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
     it('should collects configuration when sampled', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry({
         telemetrySampleRate: 100,
@@ -200,7 +196,7 @@ describe('telemetry', () => {
   })
 
   it('should contains feature flags', async () => {
-    addExperimentalFeatures(['foo' as ExperimentalFeature])
+    mockExperimentalFeatures(['foo' as ExperimentalFeature])
     const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {
       throw new Error('message')

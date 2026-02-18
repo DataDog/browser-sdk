@@ -1,12 +1,7 @@
 import type { Telemetry, HttpRequestEvent, BandwidthStats } from '@datadog/browser-core'
-import {
-  addExperimentalFeatures,
-  ExperimentalFeature,
-  Observable,
-  resetExperimentalFeatures,
-} from '@datadog/browser-core'
+import { ExperimentalFeature, Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
-import { registerCleanupTask } from '@datadog/browser-core/test'
+import { mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
 import { startMockTelemetry } from '../../../../core/test'
 import { startSegmentTelemetry } from './startSegmentTelemetry'
 import type { ReplayPayload } from './buildReplayPayload'
@@ -51,16 +46,19 @@ describe('segmentTelemetry', () => {
     requestObservable = new Observable()
     telemetry = startMockTelemetry()
     ;({ stop: stopSegmentTelemetry } = startSegmentTelemetry({ metricsEnabled } as Telemetry, requestObservable))
-    registerCleanupTask(stopSegmentTelemetry)
+    registerCleanupTask(() => {
+      stopSegmentTelemetry?.()
+      telemetry.reset()
+    })
   }
 
-  it('should collect segment telemetry for all full snapshots', async () => {
-    setupSegmentTelemetryCollection()
+  for (const result of ['failure', 'queue-full', 'success'] as const) {
+    for (const enableChangeRecords of [true, false] as const) {
+      it(`should collect segment telemetry for ${result} full snapshot (change records: ${enableChangeRecords})`, async () => {
+        setupSegmentTelemetryCollection()
 
-    for (const result of ['failure', 'queue-full', 'success'] as const) {
-      for (const enableChangeRecords of [true, false] as const) {
         if (enableChangeRecords) {
-          addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
+          mockExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
         }
 
         generateReplayRequest({ result, isFullSnapshot: true })
@@ -99,17 +97,14 @@ describe('segmentTelemetry', () => {
             },
           }),
         ])
-
-        telemetry.reset()
-        resetExperimentalFeatures()
-      }
+      })
     }
-  })
+  }
 
-  it('should collect segment telemetry for failed incremental mutation requests', async () => {
-    setupSegmentTelemetryCollection()
+  for (const result of ['failure', 'queue-full'] as const) {
+    it(`should collect segment telemetry for ${result} incremental mutation requests`, async () => {
+      setupSegmentTelemetryCollection()
 
-    for (const result of ['failure', 'queue-full'] as const) {
       generateReplayRequest({ result, isFullSnapshot: false })
 
       expect(await telemetry.getEvents()).toEqual([
@@ -146,10 +141,8 @@ describe('segmentTelemetry', () => {
           },
         }),
       ])
-
-      telemetry.reset()
-    }
-  })
+    })
+  }
 
   it('should not collect segment telemetry for successful incremental mutation requests', async () => {
     setupSegmentTelemetryCollection()

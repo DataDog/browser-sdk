@@ -5,13 +5,11 @@ import {
   display,
   relativeToClocks,
   relativeNow,
-  resetExperimentalFeatures,
-  addExperimentalFeatures,
   ExperimentalFeature,
 } from '@datadog/browser-core'
 
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, registerCleanupTask, createNewEvent } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask, createNewEvent, mockExperimentalFeatures } from '@datadog/browser-core/test'
 import { createPerformanceEntry, mockPerformanceObserver } from '../../../test'
 import type { AssembledRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ViewLoadingType } from '../../rawRumEvent.types'
@@ -431,8 +429,7 @@ describe('view metrics', () => {
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
 
   beforeEach(() => {
-    addExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
-    registerCleanupTask(resetExperimentalFeatures)
+    mockExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
 
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
@@ -899,7 +896,6 @@ describe('view event count', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      resetExperimentalFeatures()
     })
   })
 
@@ -1057,7 +1053,6 @@ describe('service and version', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      resetExperimentalFeatures()
     })
   })
 

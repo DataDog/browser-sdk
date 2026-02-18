@@ -2,11 +2,7 @@ import type { RumEvent } from '../../../../rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
-import {
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-  resetExperimentalFeatures,
-} from '../../tools/experimentalFeatures'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { SessionPersistence } from '../session/sessionConstants'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
@@ -19,10 +15,6 @@ describe('validateAndBuildConfiguration', () => {
 
   beforeEach(() => {
     displaySpy = spyOn(display, 'error')
-  })
-
-  afterEach(() => {
-    resetExperimentalFeatures()
   })
 
   describe('experimentalFeatures', () => {
