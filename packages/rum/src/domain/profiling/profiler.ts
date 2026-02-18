@@ -112,8 +112,9 @@ export function createRumProfiler(
     // Stop current profiler instance (data collection happens async in background)
     stopProfilerInstance(reason)
 
-    // Cleanup global listeners
+    // Cleanup global listeners and reset the array to prevent accumulation across start/stop cycles
     globalCleanupTasks.forEach((task) => task())
+    globalCleanupTasks.length = 0
 
     // Update Profiling status once the Profiler has been stopped.
     profilingContextManager.set({ status: 'stopped', error_reason: undefined })
@@ -261,6 +262,11 @@ export function createRumProfiler(
       return
     }
     if (instance.state !== 'running') {
+      // Update stateReason when already stopped and the user explicitly stops the profiler,
+      // so that SESSION_RENEWED does not override the user's intent.
+      if (instance.state === 'stopped' && stateReason === 'stopped-by-user') {
+        instance = { state: 'stopped', stateReason }
+      }
       return
     }
 
