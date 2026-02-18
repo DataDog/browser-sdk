@@ -12,6 +12,12 @@ export function validateRumFormat(events: RumEvent[]) {
   instance.addSchema(allJsonSchemas)
 
   events.forEach((rumEvent) => {
+    // Skip validation for view_update events since they don't have a JSON schema yet
+    // @ts-expect-error view_update is not in the RumEvent type but may be present at runtime
+    if (rumEvent.type === 'view_update') {
+      return
+    }
+
     void instance.validate('rum-events-schema.json', rumEvent)
 
     if (instance.errors) {
