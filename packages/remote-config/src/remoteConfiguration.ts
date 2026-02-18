@@ -5,11 +5,7 @@ import { parseJsonPath } from './jsonPathParser'
 export type RemoteConfiguration = RumSdkConfig
 export type RumRemoteConfiguration = Exclude<RemoteConfiguration['rum'], undefined>
 
-export interface RemoteConfigResult {
-  ok: boolean
-  value?: RumRemoteConfiguration
-  error?: Error
-}
+export type RemoteConfigResult = { ok: true; value: RumRemoteConfiguration } | { ok: false; error: Error }
 
 const REMOTE_CONFIGURATION_VERSION = 'v1'
 
