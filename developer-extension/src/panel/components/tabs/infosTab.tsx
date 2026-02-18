@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import React, { useState } from 'react'
 import { evalInWindow } from '../../evalInWindow'
 import { useSdkInfos } from '../../hooks/useSdkInfos'
+import { computeLogsTrackingType, computeRumTrackingType } from '../../sampler'
 import { Columns } from '../columns'
 import type { JsonValueDescriptor } from '../json'
 import { Json } from '../json'
@@ -78,6 +79,12 @@ export function InfosTab() {
 
   const sessionId = infos.cookie?.id
 
+  const logsTrackingType =
+    infos.cookie?.logs ?? (sessionId && infos.logs?.config && computeLogsTrackingType(sessionId, infos.logs.config))
+
+  const rumTrackingType =
+    infos.cookie?.rum ?? (sessionId && infos.rum?.config && computeRumTrackingType(sessionId, infos.rum.config))
+
   return (
     <TabBase>
       <Columns>
@@ -87,14 +94,14 @@ export function InfosTab() {
               <Entry name="Id" value={infos.cookie.id} />
               <Entry
                 name="Logs"
-                value={infos.cookie.logs && formatSessionType(infos.cookie.logs, 'Not tracked', 'Tracked')}
+                value={logsTrackingType && formatSessionType(logsTrackingType, 'Not tracked', 'Tracked')}
               />
               <Entry
                 name="RUM"
                 value={
-                  infos.cookie.rum &&
+                  rumTrackingType &&
                   formatSessionType(
-                    infos.cookie.rum,
+                    rumTrackingType,
                     'Not tracked',
                     'Tracked with Session Replay',
                     'Tracked without Session Replay'
