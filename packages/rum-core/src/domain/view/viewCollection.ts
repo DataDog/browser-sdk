@@ -11,7 +11,7 @@ import {
 } from '@datadog/browser-core'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
-import type { RawRumViewEvent, RawRumViewUpdateEvent, ViewPerformanceData } from '../../rawRumEvent.types'
+import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
