@@ -4,6 +4,7 @@ import {
   Observable,
   SESSION_NOT_TRACKED,
   bridgeSupports,
+  correctedChildSampleRate,
   isSampled,
   noop,
   startSessionManager,
@@ -71,12 +72,7 @@ export function startRumSessionManager(
 
         return {
           id: session.id,
-          sessionReplay:
-            trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY
-              ? SessionReplayState.SAMPLED
-              : session.isReplayForced
-                ? SessionReplayState.FORCED
-                : SessionReplayState.OFF,
+          sessionReplay: computeSessionReplayState(trackingType, session.isReplayForced),
           anonymousId: session.anonymousId,
         }
       },
@@ -109,12 +105,27 @@ export function startRumSessionManagerStub(
   })
 }
 
+function computeSessionReplayState(trackingType: RumTrackingType, isReplayForced: boolean): SessionReplayState {
+  if (trackingType === RumTrackingType.TRACKED_WITH_SESSION_REPLAY) {
+    return SessionReplayState.SAMPLED
+  }
+  if (isReplayForced) {
+    return SessionReplayState.FORCED
+  }
+  return SessionReplayState.OFF
+}
+
 function computeTrackingType(configuration: RumConfiguration, sessionId: string): RumTrackingType {
   if (!isSampled(sessionId, configuration.sessionSampleRate)) {
     return RumTrackingType.NOT_TRACKED
   }
 
-  if (!isSampled(sessionId, configuration.sessionReplaySampleRate)) {
+  if (
+    !isSampled(
+      sessionId,
+      correctedChildSampleRate(configuration.sessionSampleRate, configuration.sessionReplaySampleRate)
+    )
+  ) {
     return RumTrackingType.TRACKED_WITHOUT_SESSION_REPLAY
   }
 

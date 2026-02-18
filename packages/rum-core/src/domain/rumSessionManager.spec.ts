@@ -29,6 +29,8 @@ import { SessionReplayState, startRumSessionManager, startRumSessionManagerStub 
 const LOW_HASH_UUID = '29a4b5e3-9859-4290-99fa-4bc4a1a348b9'
 // UUID known to yield a high hash value using the Knuth formula, making it less likely to be sampled
 const HIGH_HASH_UUID = '5321b54a-d6ec-4b24-996d-dd70c617e09a'
+// UUID known to yield a mid-range hash value (~50.7%) using the Knuth formula
+const MID_HASH_UUID = '88ef85ab-7902-45f0-b93b-2def1ec3e5fe'
 
 describe('rum session manager', () => {
   const DURATION = 123456
@@ -205,6 +207,17 @@ describe('rum session manager', () => {
         setCookie(SESSION_STORE_KEY, `id=${HIGH_HASH_UUID}`, DURATION)
         const rumSessionManager = await startRumSessionManagerWithDefaults({
           configuration: { sessionReplaySampleRate: 99 },
+        })
+        expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
+      })
+
+      it('should apply the correction factor for chained sampling on the replay sample rate', async () => {
+        // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and sessionReplaySampleRate=60:
+        // - Without correction: isSampled(id, 60) → true (50.7 < 60)
+        // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
+        setCookie(SESSION_STORE_KEY, `id=${MID_HASH_UUID}`, DURATION)
+        const rumSessionManager = await startRumSessionManagerWithDefaults({
+          configuration: { sessionSampleRate: 60, sessionReplaySampleRate: 60 },
         })
         expect(rumSessionManager.findTrackedSession()!.sessionReplay).toBe(SessionReplayState.OFF)
       })
