@@ -1,4 +1,4 @@
-import { display, buildEndpointHost, getCookie, isIndexableObject, fetch } from '@datadog/browser-core'
+import { display, buildSiteHost, getCookie, isIndexableObject, fetch } from '@datadog/browser-core'
 import type { RumSdkConfig, DynamicOption } from './remoteConfiguration.types'
 import { parseJsonPath } from './jsonPathParser'
 
@@ -92,9 +92,7 @@ export function buildEndpoint(options: {
   if (options.remoteConfigurationProxy) {
     return options.remoteConfigurationProxy
   }
-  // buildEndpointHost only uses `site` from the config, but its signature requires full InitConfiguration.
-  // We use a targeted type assertion since we only need the site for building the host.
-  const host = buildEndpointHost('rum', { site: options.site } as { site: string | undefined; clientToken: string })
+  const host = buildSiteHost(options.site)
   return `https://sdk-configuration.${host}/${REMOTE_CONFIGURATION_VERSION}/${encodeURIComponent(options.remoteConfigurationId)}.json`
 }
 
