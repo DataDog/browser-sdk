@@ -32,6 +32,7 @@ export function startRumBatch(
     if (serverRumEvent.type === RumEventType.VIEW) {
       batch.upsert(serverRumEvent, serverRumEvent.view.id)
     } else {
+      // All other event types (including VIEW_UPDATE) are appended
       batch.add(serverRumEvent)
     }
   })

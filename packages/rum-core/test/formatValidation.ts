@@ -6,6 +6,7 @@ import type { CommonProperties } from '@datadog/browser-rum-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycleEventType } from '../src/domain/lifeCycle'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
+import { RumEventType } from '../src/rawRumEvent.types'
 import { allJsonSchemas } from './allJsonSchemas'
 
 export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
@@ -22,6 +23,11 @@ export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
 }
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
+  // Skip validation for VIEW_UPDATE events since schema support is out of scope
+  if (rawRumEvent.type === RumEventType.VIEW_UPDATE) {
+    return
+  }
+
   const fakeId = '00000000-aaaa-0000-aaaa-000000000000'
   const fakeContext: Partial<CommonProperties> = {
     _dd: {

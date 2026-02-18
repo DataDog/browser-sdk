@@ -135,7 +135,8 @@ function shouldSend(
     const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
       beforeSend(event, domainContext)
     )
-    if (result === false && event.type !== RumEventType.VIEW) {
+    const eventType = event.type as RumEventType
+    if (result === false && eventType !== RumEventType.VIEW && eventType !== RumEventType.VIEW_UPDATE) {
       return false
     }
     if (result === false) {
