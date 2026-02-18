@@ -17,7 +17,7 @@
 import { parseArgs } from 'node:util'
 import * as fs from 'node:fs/promises'
 import { runMain, printLog, printError } from '../lib/executionUtils.ts'
-import { fetchConfig, downloadSDK, generateCombinedBundle, type SdkVariant } from './lib/bundleGenerator.ts'
+import { fetchConfig, downloadSDK, generateCombinedBundle, type SdkVariant } from '@datadog/browser-sdk-endpoint'
 
 function printHelp(): void {
   console.log(`
@@ -96,10 +96,6 @@ runMain(async () => {
       remoteConfigurationId: values.configId!,
       site: values.site,
     })
-
-    if (!configResult.value) {
-      throw new Error('Remote configuration returned empty value')
-    }
 
     // Step 2: Download SDK from CDN
     printLog(`Downloading SDK (${variant}) from CDN...`)
