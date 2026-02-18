@@ -13,6 +13,7 @@ import type { RumConfiguration } from '../configuration'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startEventTracker } from '../eventTracker'
 import type { StoppedEvent, DiscardedEvent, EventTracker } from '../eventTracker'
+import { getComposedPathSelector } from '../getComposedPathSelector'
 import type { ClickChain } from './clickChain'
 import { createClickChain } from './clickChain'
 import { getActionNameFromElement } from './getActionNameFromElement'
@@ -36,6 +37,7 @@ export interface ClickAction {
   nameSource: ActionNameSource
   target?: {
     selector: string | undefined
+    composed_path_selector?: string
     width: number
     height: number
   }
@@ -231,10 +233,12 @@ function computeClickActionBase(
   nodePrivacyLevel: NodePrivacyLevel,
   configuration: RumConfiguration
 ): ClickActionBase {
+  const eventPath = event.composedPath()
+
   const selectorTarget = event.target
   const rect = selectorTarget.getBoundingClientRect()
   const selector = getSelectorFromElement(selectorTarget, configuration.actionNameAttribute)
-
+  const composedPathSelector = getComposedPathSelector(eventPath, configuration.actionNameAttribute, configuration.allowedHtmlAttributes || [])
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
@@ -248,6 +252,7 @@ function computeClickActionBase(
       width: Math.round(rect.width),
       height: Math.round(rect.height),
       selector,
+      composed_path_selector: composedPathSelector ?? undefined,
     },
     position: {
       // Use clientX and Y because for SVG element offsetX and Y are relatives to the <svg> element

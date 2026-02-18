@@ -138,6 +138,13 @@ export interface InitConfiguration {
    */
   allowedTrackingOrigins?: MatchOption[] | undefined
 
+  /**
+   * Optional list of HTML attributes allowed to be used in the action selector collection.
+   * Matches attributes against the event target and its ancestors.
+   * If not provided, the SDK will use a default list of HTML attributes.
+   */
+  allowedHtmlAttributes?: MatchOption[] | undefined
+  
   // transport options
   /**
    * Optional proxy URL, for example: https://www.proxy.com/path.

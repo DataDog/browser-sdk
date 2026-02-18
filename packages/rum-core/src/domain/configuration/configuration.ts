@@ -321,6 +321,7 @@ export interface RumConfiguration extends Configuration {
   profilingSampleRate: number
   propagateTraceBaggage: boolean
   allowedGraphQlUrls: GraphQlUrlOption[]
+  allowedHtmlAttributes?: MatchOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -400,6 +401,7 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     allowedGraphQlUrls,
+    allowedHtmlAttributes: Array.isArray(initConfiguration.allowedHtmlAttributes) ? initConfiguration.allowedHtmlAttributes.filter(isMatchOption) : [],
     ...baseConfiguration,
   }
 }
