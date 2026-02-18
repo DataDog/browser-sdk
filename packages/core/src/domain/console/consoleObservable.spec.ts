@@ -34,7 +34,7 @@ import { initConsoleObservable } from './consoleObservable'
     it(`should notify ${api}`, () => {
       console[api]('foo', 'bar')
 
-      const consoleLog = notifyLog.mock.lastCall[0]
+      const consoleLog = notifyLog.mock.lastCall![0]
 
       expect(consoleLog).toEqual(
         expect.objectContaining({
@@ -52,13 +52,13 @@ import { initConsoleObservable } from './consoleObservable'
 
     it('should format error instance', () => {
       console[api](new TypeError('hello'))
-      const consoleLog = notifyLog.mock.lastCall[0]
+      const consoleLog = notifyLog.mock.lastCall![0]
       expect(consoleLog.message).toBe('TypeError: hello')
     })
 
     it('should stringify object parameters', () => {
       console[api]('Hello', { foo: 'bar' })
-      const consoleLog = notifyLog.mock.lastCall[0]
+      const consoleLog = notifyLog.mock.lastCall![0]
       expect(consoleLog.message).toBe('Hello {\n  "foo": "bar"\n}')
     })
 
@@ -99,13 +99,13 @@ describe('console error observable', () => {
       console.error('foo', 'bar')
     }
     triggerError()
-    const consoleLog = notifyLog.mock.lastCall[0]
+    const consoleLog = notifyLog.mock.lastCall![0]
     expect(consoleLog.handlingStack).toMatch(/^HandlingStack: console error\s+at triggerError (.|\n)*$/)
   })
 
   it('should extract stack from first error', () => {
     console.error(new TypeError('foo'), new TypeError('bar'))
-    const stack = notifyLog.mock.lastCall[0].error.stack
+    const stack = notifyLog.mock.lastCall![0].error.stack
     expect(stack).toContain('TypeError: foo')
   })
 
@@ -118,7 +118,7 @@ describe('console error observable', () => {
 
     console.error(error)
 
-    const consoleLog = notifyLog.mock.lastCall[0]
+    const consoleLog = notifyLog.mock.lastCall![0]
     expect(consoleLog.error.fingerprint).toBe('my-fingerprint')
   })
 
@@ -128,7 +128,7 @@ describe('console error observable', () => {
 
     console.error(error)
 
-    const consoleLog = notifyLog.mock.lastCall[0]
+    const consoleLog = notifyLog.mock.lastCall![0]
     expect(consoleLog.error.fingerprint).toBe('2')
   })
 
@@ -139,14 +139,14 @@ describe('console error observable', () => {
     const error = new Error('foo')
     ;(error as DatadogError).dd_context = { foo: 'bar' }
     console.error(error)
-    const consoleLog = notifyLog.mock.lastCall[0]
+    const consoleLog = notifyLog.mock.lastCall![0]
     expect(consoleLog.error.context).toEqual({ foo: 'bar' })
   })
 
   it('should report original error', () => {
     const error = new Error('foo')
     console.error(error)
-    const consoleLog = notifyLog.mock.lastCall[0]
+    const consoleLog = notifyLog.mock.lastCall![0]
     expect(consoleLog.error.originalError).toBe(error)
   })
 })

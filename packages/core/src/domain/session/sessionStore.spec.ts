@@ -69,7 +69,7 @@ function getStoreExpiration() {
 }
 
 function resetSessionInStore() {
-  sessionStoreStrategy.expireSession()
+  sessionStoreStrategy.expireSession(getSessionStoreState())
   sessionStoreStrategy.expireSession.mockClear()
 }
 

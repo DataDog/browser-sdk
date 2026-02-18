@@ -223,7 +223,7 @@ describe('view events', () => {
     clock.tick(VIEW_DURATION - relativeNow())
     window.dispatchEvent(createNewEvent('beforeunload'))
 
-    const lastBridgeMessage = JSON.parse(sendSpy.mock.lastCall[0]) as {
+    const lastBridgeMessage = JSON.parse(sendSpy.mock.lastCall![0]) as {
       eventType: 'rum'
       event: RumEvent
     }

@@ -76,7 +76,7 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
-    expect(clsCallback.mock.lastCall[0]).toEqual({
+    expect(clsCallback.mock.lastCall![0]).toEqual({
       value: 0.3,
       time: 2 as RelativeTime,
       targetSelector: undefined,
@@ -93,7 +93,7 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(1)
-    expect(clsCallback.mock.lastCall[0]).toEqual({
+    expect(clsCallback.mock.lastCall![0]).toEqual({
       value: 0,
     })
   })
@@ -105,7 +105,7 @@ describe('trackCumulativeLayoutShift', () => {
     notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 1.11111111111 })])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
-    expect(clsCallback.mock.lastCall[0].value).toEqual(2.3457)
+    expect(clsCallback.mock.lastCall![0].value).toEqual(2.3457)
   })
 
   it('should ignore entries with recent input', () => {
@@ -118,7 +118,7 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(1)
-    expect(clsCallback.mock.lastCall[0]).toEqual({
+    expect(clsCallback.mock.lastCall![0]).toEqual({
       value: 0,
     })
   })
@@ -141,7 +141,7 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(3)
-    expect(clsCallback.mock.lastCall[0]).toEqual({
+    expect(clsCallback.mock.lastCall![0]).toEqual({
       value: 0.3,
       time: 1 as RelativeTime,
       targetSelector: undefined,
@@ -163,7 +163,7 @@ describe('trackCumulativeLayoutShift', () => {
     } // window 1: { value: 0.6, time: 999 } | window 2: { value: 0.1, time: 5994(6*999) }
 
     expect(clsCallback).toHaveBeenCalledTimes(7)
-    expect(clsCallback.mock.lastCall[0]).toEqual({
+    expect(clsCallback.mock.lastCall![0]).toEqual({
       value: 0.6,
       time: 999 as RelativeTime,
       targetSelector: undefined,
@@ -218,7 +218,7 @@ describe('trackCumulativeLayoutShift', () => {
     ])
 
     expect(clsCallback).toHaveBeenCalledTimes(4)
-    expect(clsCallback.mock.lastCall[0]).toEqual({
+    expect(clsCallback.mock.lastCall![0]).toEqual({
       value: 0.5,
       time: 5002 as RelativeTime,
       targetSelector: undefined,
@@ -237,7 +237,7 @@ describe('trackCumulativeLayoutShift', () => {
       createPerformanceEntry(RumPerformanceEntryType.LAYOUT_SHIFT, { value: 0.1, startTime: shiftStart }),
     ])
 
-    expect(clsCallback.mock.lastCall[0].time).toEqual(elapsed(viewStart, shiftStart))
+    expect(clsCallback.mock.lastCall![0].time).toEqual(elapsed(viewStart, shiftStart))
   })
 
   describe('cls target element', () => {
@@ -269,7 +269,7 @@ describe('trackCumulativeLayoutShift', () => {
       ])
 
       expect(clsCallback).toHaveBeenCalledTimes(2)
-      expect(clsCallback.mock.lastCall[0].targetSelector).toEqual('#div-element')
+      expect(clsCallback.mock.lastCall![0].targetSelector).toEqual('#div-element')
     })
 
     it('should not return the target element when the element is detached from the DOM before the performance entry event is triggered', () => {
@@ -282,7 +282,7 @@ describe('trackCumulativeLayoutShift', () => {
         }),
       ])
 
-      expect(clsCallback.mock.lastCall[0].value).toEqual(0.2)
+      expect(clsCallback.mock.lastCall![0].value).toEqual(0.2)
       // second session window
       // first shift with an element
       const divElement = appendElement('<div id="div-element"></div>')
@@ -302,8 +302,8 @@ describe('trackCumulativeLayoutShift', () => {
         }),
       ])
 
-      expect(clsCallback.mock.lastCall[0].value).toEqual(0.2)
-      expect(clsCallback.mock.lastCall[0].targetSelector).toEqual(undefined)
+      expect(clsCallback.mock.lastCall![0].value).toEqual(0.2)
+      expect(clsCallback.mock.lastCall![0].targetSelector).toEqual(undefined)
     })
 
     it('should get the target element, time, and rects of the largest layout shift', () => {
@@ -346,7 +346,7 @@ describe('trackCumulativeLayoutShift', () => {
       ])
 
       expect(clsCallback).toHaveBeenCalledTimes(4)
-      expect(clsCallback.mock.lastCall[0]).toEqual({
+      expect(clsCallback.mock.lastCall![0]).toEqual({
         value: 0.5,
         time: 1 as RelativeTime,
         targetSelector: '#div-element',

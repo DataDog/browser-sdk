@@ -203,7 +203,7 @@ describe('trackLargestContentfulPaint', () => {
     ])
     expect(lcpCallback).toHaveBeenCalledTimes(2)
     expect(lcpCallback.mock.calls[0][0]).toEqual(expect.objectContaining({ value: 1 }))
-    expect(lcpCallback.mock.lastCall[0]).toEqual(expect.objectContaining({ value: 2 }))
+    expect(lcpCallback.mock.lastCall![0]).toEqual(expect.objectContaining({ value: 2 }))
   })
 
   it('should return undefined when LCP entry has an empty string as url', () => {
@@ -371,7 +371,7 @@ describe('trackLargestContentfulPaint', () => {
           }),
         ])
 
-        const result = lcpCallback.mock.lastCall[0]
+        const result = lcpCallback.mock.lastCall![0]
 
         expect(result.subParts).toEqual(
           expectedSubParts as {

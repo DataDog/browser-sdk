@@ -157,7 +157,7 @@ describe('logs', () => {
       clock.tick(FLUSH_DURATION_LIMIT)
 
       expect(requests.length).toEqual(0)
-      const [message] = sendSpy.mock.lastCall
+      const [message] = sendSpy.mock.lastCall!
       const parsedMessage = JSON.parse(message)
       expect(parsedMessage).toEqual({
         eventType: 'log',

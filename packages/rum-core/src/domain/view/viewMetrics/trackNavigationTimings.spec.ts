@@ -62,7 +62,7 @@ describe('trackNavigationTimings', () => {
 
     clock.tick(0)
 
-    expect(navigationTimingsCallback.mock.lastCall[0].firstByte).toBeUndefined()
+    expect(navigationTimingsCallback.mock.lastCall![0].firstByte).toBeUndefined()
   })
 
   it('does not report "firstByte" if "responseStart" is in the future', () => {
@@ -74,7 +74,7 @@ describe('trackNavigationTimings', () => {
 
     clock.tick(0)
 
-    expect(navigationTimingsCallback.mock.lastCall[0].firstByte).toBeUndefined()
+    expect(navigationTimingsCallback.mock.lastCall![0].firstByte).toBeUndefined()
   })
 
   it('wait for the load event to provide navigation timing', () => {

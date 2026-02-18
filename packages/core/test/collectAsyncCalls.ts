@@ -14,7 +14,7 @@ export function collectAsyncCalls<F extends (...args: any[]) => any>(
   return new Promise((resolve, reject) => {
     const checkCalls = () => {
       if (spy.mock.calls.length === expectedCallsCount) {
-        spy.mockImplementation(extraCallDetected as F)
+        spy.mockImplementation(extraCallDetected as any)
         resolve(wrapMockCalls(spy))
       } else if (spy.mock.calls.length > expectedCallsCount) {
         extraCallDetected()
@@ -25,7 +25,7 @@ export function collectAsyncCalls<F extends (...args: any[]) => any>(
 
     spy.mockImplementation((() => {
       checkCalls()
-    }) as F)
+    }) as any)
 
     function extraCallDetected() {
       const message = `Unexpected extra call (expected ${expectedCallsCount}, got ${spy.mock.calls.length})`

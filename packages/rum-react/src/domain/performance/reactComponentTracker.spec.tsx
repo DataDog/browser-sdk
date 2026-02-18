@@ -42,7 +42,7 @@ describe('UNSTABLE_ReactComponentTracker', () => {
     )
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(1)
-    const [name, options] = addDurationVitalSpy.mock.lastCall
+    const [name, options] = addDurationVitalSpy.mock.lastCall!
     expect(name).toBe('reactComponentRender')
     expect(options).toEqual({
       description: 'ChildComponent',
@@ -89,7 +89,7 @@ describe('UNSTABLE_ReactComponentTracker', () => {
     })
 
     expect(addDurationVitalSpy).toHaveBeenCalledTimes(2)
-    const options = addDurationVitalSpy.mock.lastCall[1]
+    const options = addDurationVitalSpy.mock.lastCall![1]
     expect(options).toEqual({
       description: 'ChildComponent',
       startTime: clock.timeStamp(TOTAL_DURATION + 1),

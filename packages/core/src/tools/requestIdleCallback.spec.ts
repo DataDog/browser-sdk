@@ -38,7 +38,7 @@ describe('requestIdleCallbackShim', () => {
     requestIdleCallbackShim(spy)
 
     clock.tick(10)
-    const deadline = spy.mock.lastCall[0]
+    const deadline = spy.mock.lastCall![0]
 
     expect(deadline.timeRemaining()).toBe(MAX_TASK_TIME - 10)
 

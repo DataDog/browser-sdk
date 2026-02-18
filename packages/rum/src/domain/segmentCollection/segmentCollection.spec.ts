@@ -56,8 +56,8 @@ describe('startSegmentCollection', () => {
     lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, { reason: PageExitReason.UNLOADING })
   }
 
-  function readMostRecentMetadata(spy: Mock<HttpRequest['send']>) {
-    return readMetadataFromReplayPayload(spy.mock.lastCall[0])
+  function readMostRecentMetadata(spy: Mock<(...args: any[]) => any>) {
+    return readMetadataFromReplayPayload(spy.mock.lastCall![0])
   }
 
   beforeEach(() => {
@@ -115,7 +115,7 @@ describe('startSegmentCollection', () => {
 
   it('includes metadata for segment telemetry in the segment payload', () => {
     addRecordAndFlushSegment()
-    expect(httpRequestSpy.sendOnExit.mock.lastCall[0]).toEqual({
+    expect(httpRequestSpy.sendOnExit.mock.lastCall![0]).toEqual({
       data: expect.anything(),
       bytesCount: expect.anything(),
       cssText: expect.anything(),

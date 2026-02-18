@@ -71,7 +71,7 @@ describe('isSampled', () => {
     })
 
     it('sampling decision should be cached', () => {
-      vi.spyOn(Math, 'random').mockReturnValueOnce(0.2, 0.8)
+      vi.spyOn(Math, 'random').mockReturnValueOnce(0.2).mockReturnValueOnce(0.8)
       expect(isSampled(ARBITRARY_UUID, 50)).toBe(true)
       expect(isSampled(ARBITRARY_UUID, 50)).toBe(true)
     })
@@ -103,9 +103,7 @@ describe('sampleUsingKnuthFactor', () => {
     ]
 
     for (const [identifier, sampleRate, expected] of inputs) {
-      expect(sampleUsingKnuthFactor(identifier, sampleRate))
-        .withContext(`identifier=${identifier}, sampleRate=${sampleRate}`)
-        .toBe(expected)
+      expect(sampleUsingKnuthFactor(identifier, sampleRate)).toBe(expected)
     }
   })
 

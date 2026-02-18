@@ -85,7 +85,7 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: Brow
       ctx.skip()
       return
     }
-    const record = emitRecordCallback.mock.lastCall[0]
+    const record = emitRecordCallback.mock.lastCall![0]
 
     expect(record).toEqual({
       data: expect.any(Object),
@@ -95,7 +95,7 @@ const describeStartFullSnapshotsWithExpectedSnapshot = (fullSnapshotRecord: Brow
   })
 
   it('full snapshot records should be emitted with serialization stats', () => {
-    const stats = emitStatsCallback.mock.lastCall[0]
+    const stats = emitStatsCallback.mock.lastCall![0]
     // In browser mode, the document may contain framework-injected styles.
     // Verify that at least the test's stylesheet was counted.
     expect(stats.cssText.count).toBeGreaterThanOrEqual(1)
