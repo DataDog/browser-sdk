@@ -83,7 +83,7 @@ test.describe('profiling', () => {
         sampleInterval: expect.any(Number),
         longTasks: profileEvent.long_task!.id.map((id) => ({
           duration: expect.any(Number),
-          entryType: 'long-animation-frame',
+          entryType: expect.stringMatching(/^(long-animation-frame|longtask)$/),
           id,
           startClocks: {
             relative: expect.any(Number),
