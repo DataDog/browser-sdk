@@ -13,6 +13,10 @@ const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'flagging', 'worker']
 
 runMain(() => {
   const app = express()
+  app.use((_req, res, next) => {
+    res.setHeader('Document-Policy', 'js-profiling')
+    next()
+  })
   app.use(createStaticSandboxApp())
   app.use('/react-app', createReactApp())
   app.listen(port, () => printLog(`Server listening on port ${port}.`))

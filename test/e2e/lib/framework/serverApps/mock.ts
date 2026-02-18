@@ -150,7 +150,7 @@ export function createMockServerApp(
     res.send(JSON.stringify(req.headers))
   })
 
-  app.get('/', (_req, res) => {
+  app.get('/', (req, res) => {
     res.header(
       'Content-Security-Policy',
       [
@@ -159,6 +159,9 @@ export function createMockServerApp(
         "worker-src blob: 'self'",
       ].join(';')
     )
+    if (req.query['js-profiling'] === 'true') {
+      res.header('Document-Policy', 'js-profiling')
+    }
     res.send(setup)
     res.end()
   })
