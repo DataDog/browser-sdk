@@ -1,4 +1,6 @@
+// eslint-disable-next-line local-rules/disallow-side-effects, local-rules/enforce-prod-deps-imports -- Node.js build tool
 import https from 'node:https'
+// eslint-disable-next-line local-rules/disallow-side-effects, local-rules/enforce-prod-deps-imports -- Node.js build tool
 import { createRequire } from 'node:module'
 
 export type SdkVariant = 'rum' | 'rum-slim'
