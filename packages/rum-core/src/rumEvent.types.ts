@@ -1776,6 +1776,8 @@ export interface CommonProperties {
     readonly sdk_name?: string
     /**
      * UUID identifying the browser tab
+     * TODO: Added via submodule update. Once `browser_tab_id` is in the upstream
+     * `_common-schema.json`, future `yarn json-schemas:sync` runs will preserve it.
      */
     readonly browser_tab_id?: string
     [k: string]: unknown
@@ -2020,24 +2022,6 @@ export interface ViewPerformanceData {
      * CSS selector path of the interacted element for the INP interaction
      */
     readonly target_selector?: string
-    /**
-     * Sub-parts of the INP
-     */
-    sub_parts?: {
-      /**
-       * Time from the start of the input event to the start of the processing of the event
-       */
-      readonly input_delay: number
-      /**
-       * Event handler execution time
-       */
-      readonly processing_time: number
-      /**
-       * Rendering time happening after processing
-       */
-      readonly presentation_delay: number
-      [k: string]: unknown
-    }
     [k: string]: unknown
   }
   /**
