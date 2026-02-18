@@ -28,7 +28,7 @@ export function trackCommonViewMetrics(
   viewStart: ClocksState
 ) {
   const commonViewMetrics: CommonViewMetrics = {}
-  let isLoadingTimeSetManually = false
+  let hasManualLoadingTime = false
 
   const { stop: stopLoadingTimeTracking, setLoadEvent } = trackLoadingTime(
     lifeCycle,
@@ -38,7 +38,7 @@ export function trackCommonViewMetrics(
     loadingType,
     viewStart,
     (newLoadingTime) => {
-      if (!isLoadingTimeSetManually) {
+      if (!hasManualLoadingTime) {
         commonViewMetrics.loadingTime = newLoadingTime
         scheduleViewUpdate()
       }
@@ -78,23 +78,11 @@ export function trackCommonViewMetrics(
       return commonViewMetrics
     },
     setManualLoadingTime: (loadingTime: Duration) => {
-      const hadPreviousManual = isLoadingTimeSetManually
-      const hadAutoValue = !isLoadingTimeSetManually && commonViewMetrics.loadingTime !== undefined
-
-      if (!isLoadingTimeSetManually) {
+      if (!hasManualLoadingTime) {
         stopLoadingTimeTracking()
       }
-
-      isLoadingTimeSetManually = true
+      hasManualLoadingTime = true
       commonViewMetrics.loadingTime = loadingTime
-
-      if (hadPreviousManual) {
-        return { overwritten: 'manual' as const }
-      }
-      if (hadAutoValue) {
-        return { overwritten: 'auto' as const }
-      }
-      return { overwritten: false as const }
     },
   }
 }

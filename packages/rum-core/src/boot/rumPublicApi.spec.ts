@@ -14,7 +14,7 @@ const noopStartRum = (): ReturnType<StartRum> => ({
   addError: () => undefined,
   addEvent: () => undefined,
   addTiming: () => undefined,
-  addLoadingTime: () => ({ overwritten: false as const }),
+  addLoadingTime: () => ({ noActiveView: false, overwritten: false }),
   addFeatureFlagEvaluation: () => undefined,
   startView: () => undefined,
   setViewContext: () => undefined,

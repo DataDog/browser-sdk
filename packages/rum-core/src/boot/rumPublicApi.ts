@@ -744,14 +744,11 @@ export function makeRumPublicApi(
     addViewLoadingTime: monitor((options?: { overwrite?: boolean }) => {
       const callTimestamp = timeStampNow()
       const result = strategy.addLoadingTime(callTimestamp, options?.overwrite ?? false)
-
-      // For pre-start buffered calls, result is undefined so we emit best-guess default values.
-      const isResult = result && typeof result === 'object'
       addTelemetryUsage({
         feature: 'addViewLoadingTime',
         no_view: false,
-        no_active_view: isResult && 'no_active_view' in result,
-        overwritten: isResult && 'overwritten' in result && result.overwritten !== false,
+        no_active_view: result?.noActiveView ?? false,
+        overwritten: result?.overwritten ?? false,
       })
     }),
 

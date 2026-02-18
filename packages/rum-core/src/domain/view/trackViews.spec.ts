@@ -924,6 +924,81 @@ describe('manual loading time', () => {
 
     expect(getViewUpdateCount()).toBeGreaterThan(countBefore)
   })
+
+  it('should stop auto-detection tracking after first manual loading time', () => {
+    const { getViewUpdate, getViewUpdateCount, addLoadingTime } = viewTest
+
+    clock.tick(100)
+    addLoadingTime() // first call -- should stop auto-detection tracking
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200)
+    addLoadingTime(undefined, true) // overwrite
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const overwrittenValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    // Let page activity end fire (would set auto-detected loading time if tracking wasn't stopped)
+    clock.tick(PAGE_ACTIVITY_END_DELAY)
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    // Auto-detection should not have replaced the overwritten value
+    const finalUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(finalUpdate.commonViewMetrics.loadingTime).toBe(overwrittenValue)
+    expect(finalUpdate.commonViewMetrics.loadingTime).not.toBe(firstValue)
+  })
+
+  it('should overwrite loading time on a route-change view with correct elapsed time', () => {
+    const { getViewUpdate, getViewUpdateCount, startView, addLoadingTime } = viewTest
+
+    clock.tick(2000) // 2s into session
+    startView() // new route-change view starts
+
+    clock.tick(300) // 300ms into new view
+    addLoadingTime() // first manual set: 300ms from view start
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200) // 200ms later (500ms + THROTTLE total from view start)
+    addLoadingTime(undefined, true) // overwrite
+
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+
+    const lastUpdate = getViewUpdate(getViewUpdateCount() - 1)
+    expect(lastUpdate.loadingType).toBe(ViewLoadingType.ROUTE_CHANGE)
+    expect(lastUpdate.commonViewMetrics.loadingTime).not.toBe(firstValue)
+    // Loading time should be relative to view start, not time origin
+    // Value = 300 + THROTTLE_VIEW_UPDATE_PERIOD + 200 (all ms from view start)
+    expect(lastUpdate.commonViewMetrics.loadingTime).toBe((300 + THROTTLE_VIEW_UPDATE_PERIOD + 200) as Duration)
+  })
+
+  it('should allow multiple overwrites, each replacing the previous value', () => {
+    const { getViewUpdate, getViewUpdateCount, addLoadingTime } = viewTest
+
+    clock.tick(100)
+    addLoadingTime() // first call: 100ms
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const firstValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(200)
+    addLoadingTime(undefined, true) // overwrite #1
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const secondValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    clock.tick(300)
+    addLoadingTime(undefined, true) // overwrite #2
+    clock.tick(THROTTLE_VIEW_UPDATE_PERIOD)
+    const thirdValue = getViewUpdate(getViewUpdateCount() - 1).commonViewMetrics.loadingTime
+
+    // Each value should be larger than the previous (more time elapsed)
+    expect(secondValue).toBeGreaterThan(firstValue as number)
+    expect(thirdValue).toBeGreaterThan(secondValue as number)
+    // Final value should be the cumulative elapsed time from time origin (initial view uses clocksOrigin)
+    expect(thirdValue).toBe(clock.relative(100 + THROTTLE_VIEW_UPDATE_PERIOD + 200 + THROTTLE_VIEW_UPDATE_PERIOD + 300))
+  })
 })
 
 describe('start view', () => {
