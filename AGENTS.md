@@ -76,6 +76,8 @@ scripts/             # Build, deploy, release automation
 - Test framework: Jasmine + Karma. Spec files co-located with implementation: `feature.ts` → `feature.spec.ts`
 - Focus tests with `fit()` / `fdescribe()`, skip with `xit()` / `xdescribe()`
 - Use `registerCleanupTask()` for cleanup, NOT `afterEach()`
+- Prefer `collectAsyncCalls(spy, n)` over `waitFor(() => spy.calls.count() > 0)` for waiting on spy calls
+- Don't destructure methods from `spy.calls` (e.g., `argsFor`, `mostRecent`) - use `calls.argsFor()` to avoid `@typescript-eslint/unbound-method` errors
 - Mock values/functions: wrap with `mockable()` in source, use `replaceMockable()` or `replaceMockableWithSpy()` in tests (auto-cleanup)
 
 ### Naming Conventions

@@ -1,15 +1,12 @@
 import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
 import {
   Observable,
-  stopSessionManager,
   toServerDuration,
   ONE_SECOND,
   findLast,
   noop,
   relativeNow,
   createIdentityEncoder,
-  createTrackingConsentState,
-  TrackingConsent,
   BufferedObservable,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -163,11 +160,11 @@ describe('view events', () => {
   function setupViewCollectionTest() {
     const startResult = startRum(
       mockRumConfiguration(),
+      createRumSessionManagerMock(),
       noopRecorderApi,
       noopProfilerApi,
       undefined,
       createIdentityEncoder,
-      createTrackingConsentState(TrackingConsent.GRANTED),
       createCustomVitalsState(),
       new BufferedObservable<BufferedData>(100),
       createFakeTelemetryObject(),
@@ -184,7 +181,6 @@ describe('view events', () => {
 
     registerCleanupTask(() => {
       stop()
-      stopSessionManager()
     })
   })
 

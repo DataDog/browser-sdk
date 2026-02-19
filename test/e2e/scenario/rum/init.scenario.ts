@@ -343,7 +343,7 @@ test.describe('Service workers Rum', () => {
     })
 })
 
-const NO_SESSION_WARNING = 'Datadog Browser SDK: No storage available for session. We will not send any data'
+const NO_SESSION_WARNING = 'Datadog Browser SDK: The RUM SDK is not supported in a web or service worker environment.'
 
 function expectNoSessionWarning(browserName: string, logs: BrowserLog[]) {
   // Firefox does not propagate the service worker's console to the main page's console
