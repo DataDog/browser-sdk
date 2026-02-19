@@ -15,7 +15,6 @@ import {
 import type { Clock } from '@datadog/browser-core/test'
 import {
   callbackAddsInstrumentation,
-  interceptRequests,
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,

@@ -98,7 +98,7 @@ describe('jsonPathParser', () => {
 
       it('should return empty array for mismatched quotes', () => {
         expect(parseJsonPath('[\'foo"]')).toEqual([])
-        expect(parseJsonPath('[\"foo\']')).toEqual([])
+        expect(parseJsonPath('["foo\']')).toEqual([])
       })
 
       it('should return empty array for invalid bracket combinations', () => {

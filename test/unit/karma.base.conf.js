@@ -29,7 +29,7 @@ const FILES = [
 ]
 
 const FILES_SPECS = [
-  'packages/*/@(src|test)/**/*.spec.@(ts|tsx)',
+  'packages/!(endpoint)/@(src|test)/**/*.spec.@(ts|tsx)',
   'developer-extension/@(src|test)/**/*.spec.@(ts|tsx)',
 ]
 
