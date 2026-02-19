@@ -1,11 +1,4 @@
-import {
-  callMonitored,
-  clocksNow,
-  ErrorHandling,
-  ErrorSource,
-  generateUUID,
-  mockable,
-} from '@datadog/browser-core'
+import { callMonitored, clocksNow, ErrorHandling, ErrorSource, generateUUID, mockable } from '@datadog/browser-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { onRumStart } from '../nextjsPlugin'
 
@@ -15,10 +8,7 @@ interface NextjsErrorContext {
   router: 'app' | 'pages'
 }
 
-export function reportNextjsError(
-  error: Error & { digest?: string },
-  resetOrStatusCode?: (() => void) | number
-) {
+export function reportNextjsError(error: Error & { digest?: string }, resetOrStatusCode?: (() => void) | number) {
   const startClocks = mockable(clocksNow)()
 
   const context: NextjsErrorContext = {
