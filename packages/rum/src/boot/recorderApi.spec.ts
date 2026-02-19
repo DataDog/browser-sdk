@@ -245,7 +245,7 @@ describe('makeRecorderApi', () => {
       rumInit()
 
       createDeflateWorkerSpy.mockImplementation(() => {
-        throw 'Crash'
+        throw new Error('Crash')
       })
       recorderApi.start()
 

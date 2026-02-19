@@ -129,6 +129,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     ) => {
       payload = removeUndefinedValues(payload)
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       expect(payload.adds).toEqual(
         (expected.adds || []).map(({ node, parent, next }) => ({
           node: node.toSerializedNodeWithId(),
@@ -136,13 +137,16 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
           nextId: next ? next.getId() : null,
         }))
       )
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       expect(payload.texts).toEqual((expected.texts || []).map(({ node, value }) => ({ id: node.getId(), value })))
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       expect(payload.removes).toEqual(
         (expected.removes || []).map(({ node, parent }) => ({
           id: node.getId(),
           parentId: parent.getId(),
         }))
       )
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       expect(payload.attributes).toEqual(
         (expected.attributes || []).map(({ node, attributes }) => ({
           id: node.getId(),

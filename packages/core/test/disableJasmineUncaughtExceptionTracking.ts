@@ -6,7 +6,7 @@ import { registerCleanupTask } from './registerCleanupTask'
  */
 export function disableJasmineUncaughtExceptionTracking() {
   const originalOnerror = window.onerror
-  window.onerror = () => {}
+  window.onerror = null
   registerCleanupTask(() => {
     window.onerror = originalOnerror
   })

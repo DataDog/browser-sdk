@@ -44,7 +44,7 @@ describe('isValidUrl', () => {
   it('should return the same result if the URL has been wrongfully overridden between calls', () => {
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
     vi.spyOn(window, 'URL').mockImplementation(() => {
-      throw 'wrong URL override'
+      throw new Error('wrong URL override')
     })
     expect(isValidUrl('http://www.datadoghq.com')).toBe(true)
   })

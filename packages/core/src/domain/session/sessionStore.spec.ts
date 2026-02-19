@@ -270,7 +270,7 @@ describe('session store', () => {
     }
     function disableLocalStorage() {
       vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-        throw 'unavailable'
+        throw new Error('unavailable')
       })
     }
   })
@@ -288,7 +288,6 @@ describe('session store', () => {
       const sessionStoreStrategyType = selectSessionStoreStrategyType(DEFAULT_INIT_CONFIGURATION)
       if (sessionStoreStrategyType?.type !== SessionPersistence.COOKIE) {
         throw new Error('Unable to initialize cookie storage')
-        return
       }
 
       sessionStoreStrategy = createFakeSessionStoreStrategy({ isLockEnabled: true, initialSession: initialState })

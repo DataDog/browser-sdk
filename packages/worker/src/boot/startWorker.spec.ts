@@ -52,6 +52,7 @@ describe('startWorker', () => {
         listener({ data: message } as MessageEvent)
       }
     })
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
     return workerScope.postMessage.mock.lastCall?.[0] as any
   }
 
