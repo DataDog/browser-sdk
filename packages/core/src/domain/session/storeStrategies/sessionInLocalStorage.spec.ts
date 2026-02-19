@@ -27,7 +27,7 @@ describe('session in local storage strategy', () => {
 
   it('should report local storage as not available', () => {
     vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw 'Unavailable'
+      throw new Error('Unavailable')
     })
     const available = selectLocalStorageStrategy()
     expect(available).toBeUndefined()

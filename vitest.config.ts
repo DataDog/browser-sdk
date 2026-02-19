@@ -50,9 +50,7 @@ export default defineConfig({
 
     include: ['packages/*/{src,test}/**/*.spec.{ts,tsx}', 'developer-extension/{src,test}/**/*.spec.{ts,tsx}'],
 
-    // Exclude the Karma-specific global setup file (replaced by vitest.setup.ts)
     exclude: [
-      'packages/core/test/forEach.spec.ts',
       // trackRuntimeError.spec.ts intentionally throws errors and unhandled rejections
       // which crash the Vitest browser page (no equivalent of Jasmine's uncaught exception handling)
       'packages/core/src/domain/error/trackRuntimeError.spec.ts',

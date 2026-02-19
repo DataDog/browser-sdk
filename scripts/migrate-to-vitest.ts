@@ -3,14 +3,15 @@
  * Automated Jasmine → Vitest migration script for spec files.
  *
  * Handles the mechanical API transformations. Run with:
- *   node scripts/migrate-to-vitest.ts [glob-pattern]
+ * node scripts/migrate-to-vitest.ts [glob-pattern]
  *
  * Default pattern: packages/**\/*.spec.{ts,tsx} + developer-extension/**\/*.spec.{ts,tsx}
  */
 
 import { readFileSync, writeFileSync, globSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { runMain } from './lib/executionUtils.ts'
 
+runMain(() => {
 const args = process.argv.slice(2)
 const dryRun = args.includes('--dry-run')
 const verbose = args.includes('--verbose')
@@ -25,8 +26,7 @@ const files =
         ...globSync('developer-extension/{src,test}/**/*.spec.{ts,tsx}'),
       ]
 
-// Exclude the Karma-only forEach.spec.ts
-const specFiles = files.filter((f) => !f.includes('forEach.spec.ts'))
+const specFiles = files
 
 let totalChanged = 0
 
@@ -177,7 +177,7 @@ for (const file of specFiles) {
       if (hasViImport) {
         content = content.replace(
           /import\s+\{([^}]*)\}\s+from\s+['"]vitest['"]/,
-          (match, imports) => `import {${imports}, type Mock } from 'vitest'`
+          (_match, imports) => `import {${imports}, type Mock } from 'vitest'`
         )
       } else {
         content = `import { type Mock } from 'vitest'\n${content}`
@@ -197,6 +197,7 @@ for (const file of specFiles) {
 }
 
 console.log(`\n${dryRun ? '[DRY RUN] Would change' : 'Changed'} ${totalChanged} of ${specFiles.length} files`)
+}) // runMain
 
 /**
  * Replace .toHaveBeenCalledOnceWith(args) with two assertions:

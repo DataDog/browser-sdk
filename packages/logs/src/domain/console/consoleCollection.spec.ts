@@ -162,15 +162,3 @@ describe('console collection', () => {
     })
   })
 })
-
-/**
- * Custom asymmetric matcher that matches any value including undefined and null.
- * Replaces Jasmine's custom asymmetricMatch-based matcher.
- */
-function whatever(): any {
-  return {
-    asymmetricMatch: () => true,
-    toString: () => 'Whatever',
-    toJSON: () => 'Whatever',
-  }
-}
