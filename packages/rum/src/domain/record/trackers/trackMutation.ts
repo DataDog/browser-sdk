@@ -1,11 +1,11 @@
 import type { TimeStamp } from '@datadog/browser-core'
-import { monitor, noop, timeStampNow } from '@datadog/browser-core'
+import { ExperimentalFeature, isExperimentalFeatureEnabled, monitor, noop, timeStampNow } from '@datadog/browser-core'
 import type { RumMutationRecord } from '@datadog/browser-rum-core'
 import { getMutationObserverConstructor } from '@datadog/browser-rum-core'
 import type { RecordingScope } from '../recordingScope'
 import { createMutationBatch } from '../mutationBatch'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
-import { serializeMutations } from '../serialization'
+import { serializeMutations, serializeMutationsAsChange } from '../serialization'
 import type { Tracker } from './tracker.types'
 
 export type MutationTracker = Tracker & { flush: () => void }
@@ -66,5 +66,7 @@ export function trackMutation(
 }
 
 function defaultSerializeMutationsCallback(): SerializeMutationsCallback {
-  return serializeMutations
+  return isExperimentalFeatureEnabled(ExperimentalFeature.USE_INCREMENTAL_CHANGE_RECORDS)
+    ? serializeMutationsAsChange
+    : serializeMutations
 }
