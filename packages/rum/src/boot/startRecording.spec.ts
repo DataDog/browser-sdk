@@ -15,7 +15,6 @@ import {
   collectAsyncCalls,
   createNewEvent,
   mockEventBridge,
-  mockExperimentalFeatures,
   registerCleanupTask,
 } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from '@datadog/browser-rum-core/src/domain/view/trackViews'

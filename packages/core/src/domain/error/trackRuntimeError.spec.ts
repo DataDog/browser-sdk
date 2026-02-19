@@ -82,7 +82,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [originalError, stack] = spy!.mock.lastCall!
+    const [originalError, stack] = spy.mock.lastCall!
     expect(originalError).toBe(error)
     expect(stack).toBeUndefined()
   })
@@ -93,7 +93,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [originalError, stack] = spy!.mock.lastCall!
+    const [originalError, stack] = spy.mock.lastCall!
     expect(originalError).toBe(error)
     expect(stack).toBeDefined()
   })
@@ -104,7 +104,7 @@ describe('instrumentOnError', () => {
       throw error
     })
 
-    const [originalError, stack] = spy!.mock.lastCall!
+    const [originalError, stack] = spy.mock.lastCall!
     expect(originalError).toBe(error)
     expect(stack).toBeDefined()
   })
@@ -141,7 +141,7 @@ describe('instrumentOnError', () => {
         window.onerror!(error, 'http://example.com', testLineNo, testColNo)
       })
 
-      const [originalError, stack] = spy!.mock.lastCall!
+      const [originalError, stack] = spy.mock.lastCall!
       expect(originalError).toBe(error)
       expect(stack).toBeDefined()
     })
@@ -313,7 +313,7 @@ describe('instrumentUnhandledRejection', () => {
       window.onunhandledrejection!({ reason } as PromiseRejectionEvent)
     })
 
-    const [originalError, stack] = spy!.mock.lastCall!
+    const [originalError, stack] = spy.mock.lastCall!
     expect(originalError).toBe(reason)
     expect(stack).toBeUndefined()
   })

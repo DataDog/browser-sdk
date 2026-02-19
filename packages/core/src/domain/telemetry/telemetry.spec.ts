@@ -1,4 +1,4 @@
-import { vi, afterEach, describe, expect, it } from 'vitest'
+import { vi, describe, expect, it } from 'vitest'
 import type { TimeStamp } from '@datadog/browser-rum/internal'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'

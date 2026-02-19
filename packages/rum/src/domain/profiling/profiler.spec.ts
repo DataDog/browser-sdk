@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { LongTaskContext, ViewHistoryEntry } from '@datadog/browser-rum-core'
+import type { ViewHistoryEntry } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, RumPerformanceEntryType, createHooks } from '@datadog/browser-rum-core'
 import type { Duration } from '@datadog/browser-core'
 import {
@@ -24,7 +24,6 @@ import {
   waitNextMicrotask,
   replaceMockable,
 } from '@datadog/browser-core/test'
-import { LONG_TASK_ID_HISTORY_TIME_OUT_DELAY } from '../../../../rum-core/src/domain/longTask/longTaskCollection'
 import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '../../../../rum-core/test'
 import { mockProfiler } from '../../../test'
 import type { BrowserProfilerTrace } from '../../types'

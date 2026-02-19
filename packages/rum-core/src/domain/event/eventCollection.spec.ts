@@ -34,7 +34,7 @@ describe('eventCollection', () => {
     eventCollection.addEvent(startTime, event, domainContext, duration)
 
     expect(notifySpy).toHaveBeenCalledWith(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
-      startClocks: { relative: startTime, timeStamp: jasmine.any(Number) },
+      startClocks: { relative: startTime, timeStamp: expect.any(Number) },
       rawRumEvent: event,
       domainContext,
       duration,
