@@ -4,6 +4,7 @@ import { getBuildInfos } from '../../../envUtils.ts'
 import packageJson from '../../../../package.json' with { type: 'json' }
 
 export const DEV_SERVER_BASE_URL = 'http://localhost:8080'
+export const NEXTJS_APP_URL = 'http://localhost:3000'
 
 export function getPlaywrightConfigBrowserName(name: string): PlaywrightWorkerOptions['browserName'] {
   if (name.includes('firefox')) {

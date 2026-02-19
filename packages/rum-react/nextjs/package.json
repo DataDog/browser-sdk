@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-react/nextjs",
+  "private": true,
+  "main": "../cjs/entries/nextjs.js",
+  "module": "../esm/entries/nextjs.js",
+  "types": "../cjs/entries/nextjs.d.ts"
+}

@@ -69,6 +69,13 @@ describe('reactPlugin', () => {
     const pluginConfiguration = { router: true }
     const plugin = reactPlugin(pluginConfiguration)
 
-    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true })
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, nextjs: false })
+  })
+
+  it('returns the configuration telemetry when nextjs is true', () => {
+    const pluginConfiguration = { nextjs: true }
+    const plugin = reactPlugin(pluginConfiguration)
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: false, nextjs: true })
   })
 })

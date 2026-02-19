@@ -9,6 +9,7 @@ import { BrowserLogsManager, deleteAllCookies, getBrowserName, sendXhr } from '.
 import { DEFAULT_LOGS_CONFIGURATION, DEFAULT_RUM_CONFIGURATION } from '../helpers/configuration'
 import { validateRumFormat } from '../helpers/validation'
 import type { BrowserConfiguration } from '../../../browsers.conf'
+import { NEXTJS_APP_URL } from '../helpers/playwright'
 import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
@@ -39,6 +40,7 @@ interface TestContext {
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
   evaluateInWorker: (fn: () => void) => Promise<void>
+  isNextjsApp: boolean
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -60,6 +62,7 @@ class TestBuilder {
   } = {}
   private worker: Worker | undefined
   private hostName?: string
+  private nextjsApp = false
 
   constructor(
     private title: string,
@@ -108,6 +111,12 @@ class TestBuilder {
 
   withReactApp(appName: string) {
     this.setups = [{ factory: (options, servers) => reactSetup(options, servers, appName) }]
+    return this
+  }
+
+  withNextjsApp() {
+    this.nextjsApp = true
+    this.setups = [{ factory: () => '' }]
     return this
   }
 
@@ -179,6 +188,7 @@ class TestBuilder {
       testFixture: this.testFixture,
       extension: this.extension,
       hostName: this.hostName,
+      nextjsApp: this.nextjsApp,
       worker: this.worker,
       callerLocation: this.callerLocation,
     }
@@ -302,17 +312,22 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     const testContext = createTestContext(servers, page, context, browserLogs, browserName, setupOptions)
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
-    const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(
-      createMockServerApp(servers, setup, setupOptions.remoteConfiguration, setupOptions.worker)
-    )
-    servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
+    // Next.js runs on its own server, only set up mock server for other test apps
+    if (!setupOptions.nextjsApp) {
+      const setup = factory(setupOptions, servers)
+      servers.base.bindServerApp(
+        createMockServerApp(servers, setup, setupOptions.remoteConfiguration, setupOptions.worker)
+      )
+      servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
+    }
 
-    await setUpTest(browserLogs, testContext)
+    await setUpTest(browserLogs, testContext, setupOptions, servers)
 
     try {
       await runner(testContext)
-      tearDownPassedTest(testContext)
+      if (!setupOptions.nextjsApp) {
+        tearDownPassedTest(testContext)
+      }
     } finally {
       await tearDownTest(testContext)
     }
@@ -325,12 +340,17 @@ function createTestContext(
   browserContext: BrowserContext,
   browserLogsManager: BrowserLogsManager,
   browserName: TestContext['browserName'],
-  { basePath, hostName }: SetupOptions
+  { basePath, hostName, nextjsApp }: SetupOptions
 ): TestContext {
-  const baseUrl = new URL(basePath, servers.base.origin)
+  let baseUrl: URL
 
-  if (hostName) {
-    baseUrl.hostname = hostName
+  if (nextjsApp) {
+    baseUrl = new URL(basePath, NEXTJS_APP_URL)
+  } else {
+    baseUrl = new URL(basePath, servers.base.origin)
+    if (hostName) {
+      baseUrl.hostname = hostName
+    }
   }
 
   return {
@@ -340,6 +360,7 @@ function createTestContext(
     page,
     browserContext,
     browserName,
+    isNextjsApp: !!nextjsApp,
     withBrowserLogs: (cb: (logs: BrowserLog[]) => void) => {
       try {
         cb(browserLogsManager.get())
@@ -365,7 +386,7 @@ function createTestContext(
       }, `(${fn.toString()})()`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
-    flushEvents: () => flushEvents(page),
+    flushEvents: () => flushEvents(page, nextjsApp ? NEXTJS_APP_URL : undefined),
     deleteAllCookies: () => deleteAllCookies(browserContext),
     sendXhr: (url: string, headers?: string[][]) => sendXhr(page, url, headers),
     getExtensionId: async () => {
@@ -380,7 +401,12 @@ function createTestContext(
   }
 }
 
-async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page, browserContext }: TestContext) {
+async function setUpTest(
+  browserLogsManager: BrowserLogsManager,
+  { baseUrl, page, browserContext }: TestContext,
+  setupOptions: SetupOptions,
+  servers: Servers
+) {
   browserContext.on('console', (msg) => {
     browserLogsManager.add({
       level: msg.type() as BrowserLog['level'],
@@ -398,6 +424,20 @@ async function setUpTest(browserLogsManager: BrowserLogsManager, { baseUrl, page
       timestamp: Date.now(),
     })
   })
+
+  // For Next.js apps, inject RUM configuration before navigation
+  if (setupOptions.nextjsApp && setupOptions.rum) {
+    const rumConfig = {
+      ...setupOptions.rum,
+      proxy: servers.intake.origin,
+    }
+    await page.addInitScript(
+      ({ config }) => {
+        ;(window as any).RUM_CONFIGURATION = config
+      },
+      { config: rumConfig }
+    )
+  }
 
   await page.goto(baseUrl)
   await waitForServersIdle()
