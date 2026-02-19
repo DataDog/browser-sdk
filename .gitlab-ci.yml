@@ -248,6 +248,8 @@ e2e-android:
   extends:
     - .base-configuration
     - .feature-branches
+  tags:
+    - 'docker-in-docker:amd64'
   image: $CI_IMAGE_ANDROID
   interruptible: true
   timeout: 20 minutes
