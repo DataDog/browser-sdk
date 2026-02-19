@@ -652,11 +652,8 @@ describe('profiler', () => {
 
     expect(profiler.isStopped()).toBe(true)
 
-    // Session is renewed
+    // Session is renewed — start() is called synchronously, so no need to wait
     lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-    // Wait a bit to ensure profiler doesn't restart
-    await new Promise((resolve) => setTimeout(resolve, 100))
 
     // Profiler should remain stopped - user's explicit stop should take priority over session expiration
     expect(profiler.isStopped()).toBe(true)

@@ -255,17 +255,17 @@ export function createRumProfiler(
   }
 
   function stopProfilerInstance(stateReason: RumProfilerStoppedInstance['stateReason']) {
-    if (instance.state === 'paused') {
-      // If paused, profiler data was already collected during pause, just update state
-      instance = { state: 'stopped', stateReason }
-      return
-    }
     if (instance.state !== 'running') {
-      // Update stateReason when already stopped and the user explicitly stops the profiler,
-      // so that SESSION_RENEWED does not override the user's intent.
-      if (instance.state === 'stopped' && stateReason === 'stopped-by-user') {
+      if (
+        // If paused, profiler data was already collected during pause, just update state
+        instance.state === 'paused' ||
+        // Update stateReason when already stopped and the user explicitly stops the profiler,
+        // so that SESSION_RENEWED does not override the user's intent.
+        (instance.state === 'stopped' && stateReason === 'stopped-by-user')
+      ) {
         instance = { state: 'stopped', stateReason }
       }
+
       return
     }
 
