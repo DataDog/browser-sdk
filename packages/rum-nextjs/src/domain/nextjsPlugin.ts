@@ -4,6 +4,8 @@ export interface NextjsPluginConfiguration {
   router: 'app' | 'pages'
 }
 
+export type NextjsPlugin = Pick<Required<RumPlugin>, 'name' | 'onInit' | 'onRumStart'>
+
 type InitSubscriber = (configuration: NextjsPluginConfiguration, rumPublicApi: RumPublicApi) => void
 type StartSubscriber = (addEvent: StartRumResult['addEvent']) => void
 
@@ -14,7 +16,7 @@ let globalAddEvent: StartRumResult['addEvent'] | undefined
 const onRumInitSubscribers: InitSubscriber[] = []
 const onRumStartSubscribers: StartSubscriber[] = []
 
-export function nextjsPlugin(configuration: NextjsPluginConfiguration): RumPlugin {
+export function nextjsPlugin(configuration: NextjsPluginConfiguration): NextjsPlugin {
   return {
     name: 'nextjs',
     onInit({ publicApi, initConfiguration }) {
