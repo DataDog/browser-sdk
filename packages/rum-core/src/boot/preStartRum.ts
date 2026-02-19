@@ -23,7 +23,6 @@ import {
   buildAccountContextManager,
   buildGlobalContextManager,
   buildUserContextManager,
-  monitorError,
   sanitize,
   startTelemetry,
   TelemetryService,
