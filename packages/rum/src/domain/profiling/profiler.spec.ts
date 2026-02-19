@@ -134,10 +134,10 @@ describe('profiler', () => {
         longTaskHistory.add(longTask, relativeNow()).close(addDuration(relativeNow(), longTask.duration))
       },
       addAction: (action: ActionContext) => {
-        actionHistory.add(action, relativeNow()).close(addDuration(relativeNow(), action.duration))
+        actionHistory.add(action, relativeNow()).close(addDuration(relativeNow(), action.duration ?? (0 as Duration)))
       },
       addVital: (vital: VitalContext) => {
-        vitalHistory.add(vital, relativeNow()).close(addDuration(relativeNow(), vital.duration))
+        vitalHistory.add(vital, relativeNow()).close(addDuration(relativeNow(), vital.duration ?? (0 as Duration)))
       },
     }
   }

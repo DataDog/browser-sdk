@@ -8,7 +8,7 @@ export const ACTION_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export interface ActionContext {
   id: string
   label: string
-  duration: Duration
+  duration?: Duration
   startClocks: ClocksState
 }
 
@@ -25,7 +25,7 @@ export function createActionHistory(lifeCycle: LifeCycle) {
         id: actionStart.id,
         label: '',
         startClocks: actionStart.startClocks,
-        duration: 0 as Duration,
+        duration: undefined,
       },
       actionStart.startClocks.relative
     )
