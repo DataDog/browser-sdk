@@ -2,11 +2,10 @@ import ajv from 'ajv'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import type { TimeStamp, Context } from '@datadog/browser-core'
 import { combine } from '@datadog/browser-core'
-import type { CommonProperties } from '@datadog/browser-rum-core'
+import type { CommonProperties, RumEvent } from '@datadog/browser-rum-core'
 import type { LifeCycle, RawRumEventCollectedData } from '../src/domain/lifeCycle'
 import { LifeCycleEventType } from '../src/domain/lifeCycle'
 import type { RawRumEvent } from '../src/rawRumEvent.types'
-import { RumEventType } from '../src/rawRumEvent.types'
 import { allJsonSchemas } from './allJsonSchemas'
 
 export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
@@ -23,8 +22,12 @@ export function collectAndValidateRawRumEvents(lifeCycle: LifeCycle) {
 }
 
 function validateRumEventFormat(rawRumEvent: RawRumEvent) {
-  // TODO: Remove this skip when rum-events-format adds the view_update schema.
-  if (rawRumEvent.type === RumEventType.VIEW_UPDATE) {
+  // VIEW_UPDATE events are not in the rum-events-format schema yet.
+  // Casting to RumEvent makes `=== 'view_update'` a TypeScript error (view_update is absent
+  // from the schema union). When the schema lands, this @ts-expect-error will break typecheck
+  // as a reminder to remove this skip and enable full validation.
+  // @ts-expect-error 'view_update' is not in the schema-generated RumEvent type yet
+  if ((rawRumEvent as unknown as RumEvent).type === 'view_update') {
     return
   }
 
