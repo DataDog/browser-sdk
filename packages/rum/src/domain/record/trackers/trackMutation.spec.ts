@@ -12,6 +12,8 @@ import type {
   Attributes,
   BrowserIncrementalSnapshotRecord,
   BrowserMutationPayload,
+  DocumentNode,
+  SerializedNodeWithId,
 } from '../../../types'
 import { NodeType } from '../../../types'
 import type { RecordingScope } from '../recordingScope'
@@ -20,7 +22,8 @@ import type { AddShadowRootCallBack, RemoveShadowRootCallBack } from '../shadowR
 import { appendElement, appendText } from '../../../../../rum-core/test'
 import type { EmitRecordCallback, EmitStatsCallback } from '../record.types'
 import { takeFullSnapshotForTesting } from '../test/serialization.specHelper'
-import { idsAreAssignedForNodeAndAncestors, sortAddedAndMovedNodes, trackMutation } from './trackMutation'
+import { serializeMutations } from '../serialization'
+import { trackMutation } from './trackMutation'
 import type { MutationTracker } from './trackMutation'
 
 describe('trackMutation', () => {
@@ -48,28 +51,49 @@ describe('trackMutation', () => {
     })
   }
 
-  function startMutationCollection(scope: RecordingScope): MutationTracker {
-    const mutationTracker = trackMutation(document, emitRecordCallback, emitStatsCallback, scope)
-    registerCleanupTask(() => {
-      mutationTracker.stop()
-    })
-    return mutationTracker
-  }
-
   function getLatestMutationPayload(): BrowserMutationPayload {
     const latestRecord = emitRecordCallback.calls.mostRecent()?.args[0] as BrowserIncrementalSnapshotRecord
     return latestRecord.data as BrowserMutationPayload
   }
 
+  function recordMutation(
+    mutation: () => void,
+    options: {
+      mutationBeforeTrackingStarts?: () => void
+      scope?: RecordingScope
+      skipFlush?: boolean
+    } = {}
+  ): {
+    mutationTracker: MutationTracker
+    serializedDocument: DocumentNode & SerializedNodeWithId
+  } {
+    const scope = options.scope || getRecordingScope()
+
+    const serializedDocument = takeFullSnapshotForTesting(scope)
+
+    if (options.mutationBeforeTrackingStarts) {
+      options.mutationBeforeTrackingStarts()
+    }
+
+    const mutationTracker = trackMutation(document, emitRecordCallback, emitStatsCallback, scope, serializeMutations)
+    registerCleanupTask(() => {
+      mutationTracker.stop()
+    })
+
+    mutation()
+
+    if (!options.skipFlush) {
+      mutationTracker.flush()
+    }
+
+    return { mutationTracker, serializedDocument }
+  }
+
   describe('childList mutation records', () => {
     it('emits a mutation when a node is appended to a known node', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      appendElement('<div></div>', sandbox)
-      mutationTracker.flush()
-
+      const { serializedDocument } = recordMutation(() => {
+        appendElement('<div></div>', sandbox)
+      })
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
       const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
@@ -83,14 +107,78 @@ describe('trackMutation', () => {
       })
     })
 
-    it('emits serialization stats with mutations', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
+    it('emits add node mutations in the expected order', () => {
+      const a = appendElement('<a></a>', sandbox)
+      const aa = appendElement('<aa></aa>', a)
+      const b = appendElement('<b></b>', sandbox)
+      const bb = appendElement('<bb></bb>', b)
+      const c = appendElement('<c></c>', sandbox)
+      const cc = appendElement('<cc></cc>', c)
 
+      const { serializedDocument } = recordMutation(() => {
+        const ab = document.createElement('ab')
+        const ac = document.createElement('ac')
+        const ba = document.createElement('ba')
+        const bc = document.createElement('bc')
+        const ca = document.createElement('ca')
+        const cb = document.createElement('cb')
+
+        cc.before(cb)
+        aa.after(ac)
+        bb.before(ba)
+        aa.after(ab)
+        cb.before(ca)
+        bb.after(bc)
+      })
+      expect(emitRecordCallback).toHaveBeenCalledTimes(1)
+
+      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const cb = expectNewNode({ type: NodeType.Element, tagName: 'cb' })
+      const ca = expectNewNode({ type: NodeType.Element, tagName: 'ca' })
+      const bc = expectNewNode({ type: NodeType.Element, tagName: 'bc' })
+      const ba = expectNewNode({ type: NodeType.Element, tagName: 'ba' })
+      const ac = expectNewNode({ type: NodeType.Element, tagName: 'ac' })
+      const ab = expectNewNode({ type: NodeType.Element, tagName: 'ab' })
+      validate(getLatestMutationPayload(), {
+        adds: [
+          {
+            parent: expectInitialNode({ tag: 'c' }),
+            node: cb,
+            next: expectInitialNode({ tag: 'cc' }),
+          },
+          {
+            parent: expectInitialNode({ tag: 'c' }),
+            node: ca,
+            next: cb,
+          },
+          {
+            parent: expectInitialNode({ tag: 'b' }),
+            node: bc,
+          },
+          {
+            parent: expectInitialNode({ tag: 'b' }),
+            node: ba,
+            next: expectInitialNode({ tag: 'bb' }),
+          },
+          {
+            parent: expectInitialNode({ tag: 'a' }),
+            node: ac,
+          },
+          {
+            parent: expectInitialNode({ tag: 'a' }),
+            node: ab,
+            next: ac,
+          },
+        ],
+      })
+    })
+
+    it('emits serialization stats with mutations', () => {
       const cssText = 'body { width: 100%; }'
-      appendElement(`<style>${cssText}</style>`, sandbox)
-      mutationTracker.flush()
+
+      const { serializedDocument } = recordMutation(() => {
+        appendElement(`<style>${cssText}</style>`, sandbox)
+      })
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
@@ -115,11 +203,12 @@ describe('trackMutation', () => {
     })
 
     it('processes mutations asynchronously', async () => {
-      const scope = getRecordingScope()
-      takeFullSnapshotForTesting(scope)
-      startMutationCollection(scope)
-
-      appendElement('<div></div>', sandbox)
+      recordMutation(
+        () => {
+          appendElement('<div></div>', sandbox)
+        },
+        { skipFlush: true }
+      )
 
       expect(emitRecordCallback).not.toHaveBeenCalled()
 
@@ -127,28 +216,40 @@ describe('trackMutation', () => {
     })
 
     it('does not emit a mutation when a node is appended to a unknown node', () => {
-      const scope = getRecordingScope()
+      const unknownNode = document.createElement('div')
+      registerCleanupTask(() => {
+        unknownNode.remove()
+      })
 
-      // Here, we don't call takeFullSnapshotForTesting(), so the sandbox is 'unknown'.
-      const mutationTracker = startMutationCollection(scope)
-
-      appendElement('<div></div>', sandbox)
-      mutationTracker.flush()
+      recordMutation(
+        () => {
+          appendElement('<div></div>', unknownNode)
+        },
+        {
+          mutationBeforeTrackingStarts() {
+            // Append the node after the full snapshot, but before tracking starts,
+            // rendering it 'unknown'.
+            sandbox.appendChild(unknownNode)
+          },
+        }
+      )
 
       expect(emitRecordCallback).not.toHaveBeenCalled()
     })
 
     it('emits buffered mutation records on flush', () => {
-      const scope = getRecordingScope()
-      takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      appendElement('<div></div>', sandbox)
+      const { mutationTracker } = recordMutation(
+        () => {
+          appendElement('<div></div>', sandbox)
+        },
+        {
+          skipFlush: true,
+        }
+      )
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(0)
 
       mutationTracker.flush()
-
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
     })
 
@@ -156,13 +257,10 @@ describe('trackMutation', () => {
       it('attribute mutations', () => {
         const element = appendElement('<div></div>', sandbox)
 
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        element.setAttribute('foo', 'bar')
-        sandbox.remove()
-        mutationTracker.flush()
+        recordMutation(() => {
+          element.setAttribute('foo', 'bar')
+          sandbox.remove()
+        })
 
         expect(getLatestMutationPayload().attributes).toEqual([])
       })
@@ -170,25 +268,19 @@ describe('trackMutation', () => {
       it('text mutations', () => {
         const textNode = appendText('text', sandbox)
 
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        textNode.data = 'bar'
-        sandbox.remove()
-        mutationTracker.flush()
+        recordMutation(() => {
+          textNode.data = 'bar'
+          sandbox.remove()
+        })
 
         expect(getLatestMutationPayload().texts).toEqual([])
       })
 
       it('add mutations', () => {
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        appendElement('<div><hr /></div>', sandbox)
-        sandbox.remove()
-        mutationTracker.flush()
+        recordMutation(() => {
+          appendElement('<div><hr /></div>', sandbox)
+          sandbox.remove()
+        })
 
         expect(getLatestMutationPayload().adds).toEqual([])
       })
@@ -196,13 +288,10 @@ describe('trackMutation', () => {
       it('remove mutations', () => {
         const element = appendElement('<div></div>', sandbox)
 
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        element.remove()
-        sandbox.remove()
-        mutationTracker.flush()
+        const { serializedDocument } = recordMutation(() => {
+          element.remove()
+          sandbox.remove()
+        })
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -225,15 +314,11 @@ describe('trackMutation', () => {
       it('attribute mutations', () => {
         const element = appendElement('<div></div>', sandbox)
 
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        element.remove()
-        sandbox.appendChild(element)
-
-        element.setAttribute('foo', 'bar')
-        mutationTracker.flush()
+        recordMutation(() => {
+          element.remove()
+          sandbox.appendChild(element)
+          element.setAttribute('foo', 'bar')
+        })
 
         expect(getLatestMutationPayload().attributes).toEqual([])
       })
@@ -241,15 +326,11 @@ describe('trackMutation', () => {
       it('text mutations', () => {
         const textNode = appendText('foo', sandbox)
 
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        textNode.remove()
-        sandbox.appendChild(textNode)
-
-        textNode.data = 'bar'
-        mutationTracker.flush()
+        recordMutation(() => {
+          textNode.remove()
+          sandbox.appendChild(textNode)
+          textNode.data = 'bar'
+        })
 
         expect(getLatestMutationPayload().texts).toEqual([])
       })
@@ -258,17 +339,14 @@ describe('trackMutation', () => {
         const child = appendElement('<a><b target/></a>', sandbox)
         const parent = child.parentElement!
 
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        // Generate a mutation on 'child'
-        child.remove()
-        parent.appendChild(child)
-        // Generate a mutation on 'parent'
-        parent.remove()
-        sandbox.appendChild(parent)
-        mutationTracker.flush()
+        const { serializedDocument } = recordMutation(() => {
+          // Generate a mutation on 'child'
+          child.remove()
+          parent.appendChild(child)
+          // Generate a mutation on 'parent'
+          parent.remove()
+          sandbox.appendChild(parent)
+        })
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
 
@@ -295,14 +373,10 @@ describe('trackMutation', () => {
       })
 
       it('remove mutations', () => {
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        const child = appendElement('<a><b target/></a>', sandbox)
-
-        child.remove()
-        mutationTracker.flush()
+        const { serializedDocument } = recordMutation(() => {
+          const child = appendElement('<a><b target/></a>', sandbox)
+          child.remove()
+        })
 
         const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -317,16 +391,11 @@ describe('trackMutation', () => {
     })
 
     it('emits only an "add" mutation when adding, removing then re-adding a child', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      const element = appendElement('<a></a>', sandbox)
-
-      element.remove()
-      sandbox.appendChild(element)
-
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        const element = appendElement('<a></a>', sandbox)
+        element.remove()
+        sandbox.appendChild(element)
+      })
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -342,14 +411,10 @@ describe('trackMutation', () => {
     it('emits an "add" and a "remove" mutation when moving a node', () => {
       const a = appendElement('<a></a><b/>', sandbox)
 
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      // Moves 'a' after 'b'
-      sandbox.appendChild(a)
-
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        // Moves 'a' after 'b'
+        sandbox.appendChild(a)
+      })
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -378,14 +443,10 @@ describe('trackMutation', () => {
       const a = span.nextElementSibling!
       const b = a.nextElementSibling!
 
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      a.appendChild(span)
-      b.appendChild(span)
-
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        a.appendChild(span)
+        b.appendChild(span)
+      })
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -405,13 +466,9 @@ describe('trackMutation', () => {
     })
 
     it('keep nodes order when adding multiple sibling nodes', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      appendElement('<a></a><b></b><c></c>', sandbox)
-
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        appendElement('<a></a><b></b><c></c>', sandbox)
+      })
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       const c = expectNewNode({ type: NodeType.Element, tagName: 'c' })
@@ -438,12 +495,12 @@ describe('trackMutation', () => {
     })
 
     it('respects the default privacy level setting', () => {
-      const scope = getRecordingScope(DefaultPrivacyLevel.MASK)
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      sandbox.innerText = 'foo bar'
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(
+        () => {
+          sandbox.innerText = 'foo bar'
+        },
+        { scope: getRecordingScope(DefaultPrivacyLevel.MASK) }
+      )
 
       const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -461,14 +518,12 @@ describe('trackMutation', () => {
 
     describe('for shadow DOM', () => {
       it('should call addShadowRoot when host is added', () => {
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        const host = appendElement('<div></div>', sandbox)
-        const shadowRoot = host.attachShadow({ mode: 'open' })
-        appendElement('<span></span>', shadowRoot)
-        mutationTracker.flush()
+        let shadowRoot: ShadowRoot
+        const { serializedDocument } = recordMutation(() => {
+          const host = appendElement('<div></div>', sandbox)
+          shadowRoot = host.attachShadow({ mode: 'open' })
+          appendElement('<span></span>', shadowRoot)
+        })
 
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
         const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
@@ -484,7 +539,7 @@ describe('trackMutation', () => {
             },
           ],
         })
-        expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot, jasmine.anything())
+        expect(addShadowRootSpy).toHaveBeenCalledOnceWith(shadowRoot!, jasmine.anything())
         expect(removeShadowRootSpy).not.toHaveBeenCalled()
       })
 
@@ -493,12 +548,10 @@ describe('trackMutation', () => {
         const shadowRoot = host.attachShadow({ mode: 'open' })
         appendElement('<span></span>', shadowRoot)
 
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
+        const { serializedDocument } = recordMutation(() => {
+          host.remove()
+        })
 
-        host.remove()
-        mutationTracker.flush()
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
 
@@ -520,12 +573,10 @@ describe('trackMutation', () => {
         const shadowRoot = host.attachShadow({ mode: 'open' })
         appendElement('<span></span>', shadowRoot)
 
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
+        const { serializedDocument } = recordMutation(() => {
+          host.parentElement!.remove()
+        })
 
-        host.parentElement!.remove()
-        mutationTracker.flush()
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
 
@@ -548,12 +599,10 @@ describe('trackMutation', () => {
         const childHost = appendElement('<span></span>', parentHost.querySelector('p')!)
         const childShadowRoot = childHost.attachShadow({ mode: 'open' })
 
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
+        const { serializedDocument } = recordMutation(() => {
+          parentHost.remove()
+        })
 
-        parentHost.remove()
-        mutationTracker.flush()
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
         expect(addShadowRootSpy).toHaveBeenCalledTimes(2)
 
@@ -585,12 +634,9 @@ describe('trackMutation', () => {
     })
 
     it('emits a mutation when a text node is changed', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      textNode.data = 'bar'
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        textNode.data = 'bar'
+      })
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
@@ -608,37 +654,31 @@ describe('trackMutation', () => {
     it('emits a mutation when an empty text node is changed', () => {
       textNode.data = ''
 
-      const scope = getRecordingScope()
-      takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      textNode.data = 'bar'
-      mutationTracker.flush()
+      recordMutation(() => {
+        textNode.data = 'bar'
+      })
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
     })
 
     it('does not emit a mutation when a text node keeps the same value', () => {
-      const scope = getRecordingScope()
-      takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      textNode.data = 'bar'
-      textNode.data = 'foo'
-      mutationTracker.flush()
+      recordMutation(() => {
+        textNode.data = 'bar'
+        textNode.data = 'foo'
+      })
 
       expect(emitRecordCallback).not.toHaveBeenCalled()
     })
 
     it('respects the default privacy level setting', () => {
       const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-
-      scope.configuration.defaultPrivacyLevel = DefaultPrivacyLevel.MASK
-      const mutationTracker = startMutationCollection(scope)
-
-      textNode.data = 'foo bar'
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(
+        () => {
+          scope.configuration.defaultPrivacyLevel = DefaultPrivacyLevel.MASK
+          textNode.data = 'foo bar'
+        },
+        { scope }
+      )
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -655,12 +695,12 @@ describe('trackMutation', () => {
       sandbox.setAttribute('data-dd-privacy', 'allow')
       const div = appendElement('<div>foo 81</div>', sandbox)
 
-      const scope = getRecordingScope(DefaultPrivacyLevel.MASK)
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      div.firstChild!.textContent = 'bazz 7'
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(
+        () => {
+          div.firstChild!.textContent = 'bazz 7'
+        },
+        { scope: getRecordingScope(DefaultPrivacyLevel.MASK) }
+      )
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
@@ -678,12 +718,9 @@ describe('trackMutation', () => {
 
   describe('attributes mutations', () => {
     it('emits a mutation when an attribute is changed', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      sandbox.setAttribute('foo', 'bar')
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        sandbox.setAttribute('foo', 'bar')
+      })
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
@@ -699,12 +736,9 @@ describe('trackMutation', () => {
     })
 
     it('emits a mutation with an empty string when an attribute is changed to an empty string', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      sandbox.setAttribute('foo', '')
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        sandbox.setAttribute('foo', '')
+      })
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -720,12 +754,9 @@ describe('trackMutation', () => {
     it('emits a mutation with `null` when an attribute is removed', () => {
       sandbox.setAttribute('foo', 'bar')
 
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      sandbox.removeAttribute('foo')
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        sandbox.removeAttribute('foo')
+      })
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -741,25 +772,19 @@ describe('trackMutation', () => {
     it('does not emit a mutation when an attribute keeps the same value', () => {
       sandbox.setAttribute('foo', 'bar')
 
-      const scope = getRecordingScope()
-      takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      sandbox.setAttribute('foo', 'biz')
-      sandbox.setAttribute('foo', 'bar')
-      mutationTracker.flush()
+      recordMutation(() => {
+        sandbox.setAttribute('foo', 'biz')
+        sandbox.setAttribute('foo', 'bar')
+      })
 
       expect(emitRecordCallback).not.toHaveBeenCalled()
     })
 
     it('reuse the same mutation when multiple attributes are changed', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      sandbox.setAttribute('foo1', 'biz')
-      sandbox.setAttribute('foo2', 'bar')
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        sandbox.setAttribute('foo1', 'biz')
+        sandbox.setAttribute('foo2', 'bar')
+      })
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -773,12 +798,12 @@ describe('trackMutation', () => {
     })
 
     it('respects the default privacy level setting', () => {
-      const scope = getRecordingScope(DefaultPrivacyLevel.MASK)
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      sandbox.setAttribute('data-foo', 'biz')
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(
+        () => {
+          sandbox.setAttribute('data-foo', 'biz')
+        },
+        { scope: getRecordingScope(DefaultPrivacyLevel.MASK) }
+      )
 
       const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -800,13 +825,9 @@ describe('trackMutation', () => {
     })
 
     it('skips ignored nodes when looking for the next id', () => {
-      const scope = getRecordingScope()
-      const serializedDocument = takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      sandbox.insertBefore(document.createElement('a'), ignoredElement)
-
-      mutationTracker.flush()
+      const { serializedDocument } = recordMutation(() => {
+        sandbox.insertBefore(document.createElement('a'), ignoredElement)
+      })
 
       const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
       validate(getLatestMutationPayload(), {
@@ -823,54 +844,36 @@ describe('trackMutation', () => {
       it('when adding an ignored node', () => {
         ignoredElement.remove()
 
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        sandbox.appendChild(ignoredElement)
-
-        mutationTracker.flush()
+        recordMutation(() => {
+          sandbox.appendChild(ignoredElement)
+        })
 
         expect(emitRecordCallback).not.toHaveBeenCalled()
       })
 
       it('when changing the attributes of an ignored node', () => {
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        ignoredElement.setAttribute('foo', 'bar')
-
-        mutationTracker.flush()
+        recordMutation(() => {
+          ignoredElement.setAttribute('foo', 'bar')
+        })
 
         expect(emitRecordCallback).not.toHaveBeenCalled()
       })
 
       it('when adding a new child node', () => {
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        appendElement("'function foo() {}'", ignoredElement)
-
-        mutationTracker.flush()
+        recordMutation(() => {
+          appendElement("'function foo() {}'", ignoredElement)
+        })
 
         expect(emitRecordCallback).not.toHaveBeenCalled()
       })
 
       it('when mutating a known child node', () => {
         const textNode = appendText('function foo() {}', sandbox)
-
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-
         ignoredElement.appendChild(textNode)
 
-        const mutationTracker = startMutationCollection(scope)
-
-        textNode.data = 'function bar() {}'
-
-        mutationTracker.flush()
+        recordMutation(() => {
+          textNode.data = 'function bar() {}'
+        })
 
         expect(emitRecordCallback).not.toHaveBeenCalled()
       })
@@ -878,13 +881,9 @@ describe('trackMutation', () => {
       it('when adding a known child node', () => {
         const textNode = appendText('function foo() {}', sandbox)
 
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        ignoredElement.appendChild(textNode)
-
-        mutationTracker.flush()
+        const { serializedDocument } = recordMutation(() => {
+          ignoredElement.appendChild(textNode)
+        })
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -900,12 +899,9 @@ describe('trackMutation', () => {
       it('when moving an ignored node', () => {
         const script = appendElement('<a></a><script target></script><b><b/>', sandbox)
 
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        sandbox.appendChild(script)
-        mutationTracker.flush()
+        recordMutation(() => {
+          sandbox.appendChild(script)
+        })
 
         expect(emitRecordCallback).not.toHaveBeenCalled()
       })
@@ -919,43 +915,29 @@ describe('trackMutation', () => {
     })
 
     it('does not emit attribute mutations on hidden nodes', () => {
-      const scope = getRecordingScope()
-      takeFullSnapshotForTesting(scope)
-      const mutationTracker = startMutationCollection(scope)
-
-      hiddenElement.setAttribute('foo', 'bar')
-
-      mutationTracker.flush()
+      recordMutation(() => {
+        hiddenElement.setAttribute('foo', 'bar')
+      })
 
       expect(emitRecordCallback).not.toHaveBeenCalled()
     })
 
     describe('does not emit mutations occurring in hidden node', () => {
       it('when adding a new node', () => {
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        appendElement('function foo() {}', hiddenElement)
-
-        mutationTracker.flush()
+        recordMutation(() => {
+          appendElement('function foo() {}', hiddenElement)
+        })
 
         expect(emitRecordCallback).not.toHaveBeenCalled()
       })
 
       it('when mutating a known child node', () => {
         const textNode = appendText('function foo() {}', sandbox)
-
-        const scope = getRecordingScope()
-        takeFullSnapshotForTesting(scope)
-
         hiddenElement.appendChild(textNode)
 
-        const mutationTracker = startMutationCollection(scope)
-
-        textNode.data = 'function bar() {}'
-
-        mutationTracker.flush()
+        recordMutation(() => {
+          textNode.data = 'function bar() {}'
+        })
 
         expect(emitRecordCallback).not.toHaveBeenCalled()
       })
@@ -963,13 +945,9 @@ describe('trackMutation', () => {
       it('when moving a known node into an hidden node', () => {
         const textNode = appendText('function foo() {}', sandbox)
 
-        const scope = getRecordingScope()
-        const serializedDocument = takeFullSnapshotForTesting(scope)
-        const mutationTracker = startMutationCollection(scope)
-
-        hiddenElement.appendChild(textNode)
-
-        mutationTracker.flush()
+        const { serializedDocument } = recordMutation(() => {
+          hiddenElement.appendChild(textNode)
+        })
 
         const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
         validate(getLatestMutationPayload(), {
@@ -1054,12 +1032,9 @@ describe('trackMutation', () => {
             sandbox.setAttribute(PRIVACY_ATTR_NAME, privacyAttributeValue)
           }
 
-          const scope = getRecordingScope()
-          const serializedDocument = takeFullSnapshotForTesting(scope)
-          const mutationTracker = startMutationCollection(scope)
-
-          sandbox.appendChild(input)
-          mutationTracker.flush()
+          const { serializedDocument } = recordMutation(() => {
+            sandbox.appendChild(input)
+          })
 
           const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
           validate(getLatestMutationPayload(), {
@@ -1086,12 +1061,9 @@ describe('trackMutation', () => {
           }
           sandbox.appendChild(input)
 
-          const scope = getRecordingScope()
-          const serializedDocument = takeFullSnapshotForTesting(scope)
-          const mutationTracker = startMutationCollection(scope)
-
-          input.setAttribute('value', 'bar')
-          mutationTracker.flush()
+          const { serializedDocument } = recordMutation(() => {
+            input.setAttribute('value', 'bar')
+          })
 
           if (expectedAttributesMutation) {
             const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
@@ -1104,115 +1076,5 @@ describe('trackMutation', () => {
         })
       })
     }
-  })
-})
-
-describe('sortAddedAndMovedNodes', () => {
-  let parent: Node
-  let a: Node
-  let aa: Node
-  let b: Node
-  let c: Node
-  let d: Node
-
-  beforeEach(() => {
-    // Create a tree like this:
-    //     parent
-    //     / | \ \
-    //    a  b c d
-    //    |
-    //    aa
-    a = document.createElement('a')
-    aa = document.createElement('aa')
-    b = document.createElement('b')
-    c = document.createElement('c')
-    d = document.createElement('d')
-    parent = document.createElement('parent')
-    parent.appendChild(a)
-    a.appendChild(aa)
-    parent.appendChild(b)
-    parent.appendChild(c)
-    parent.appendChild(d)
-  })
-
-  it('sorts siblings in reverse order', () => {
-    const nodes = [c, b, d, a]
-    sortAddedAndMovedNodes(nodes)
-    expect(nodes).toEqual([d, c, b, a])
-  })
-
-  it('sorts parents', () => {
-    const nodes = [a, parent, aa]
-    sortAddedAndMovedNodes(nodes)
-    expect(nodes).toEqual([parent, a, aa])
-  })
-
-  it('sorts parents first then siblings', () => {
-    const nodes = [c, aa, b, parent, d, a]
-    sortAddedAndMovedNodes(nodes)
-    expect(nodes).toEqual([parent, d, c, b, a, aa])
-  })
-})
-
-describe('idsAreAssignedForNodeAndAncestors', () => {
-  let scope: RecordingScope
-
-  beforeEach(() => {
-    scope = createRecordingScopeForTesting()
-  })
-
-  it('returns false for DOM Nodes that have not been assigned an id', () => {
-    expect(idsAreAssignedForNodeAndAncestors(document.createElement('div'), scope.nodeIds)).toBe(false)
-  })
-
-  it('returns true for DOM Nodes that have been assigned an id', () => {
-    const node = document.createElement('div')
-    scope.nodeIds.getOrInsert(node)
-    expect(idsAreAssignedForNodeAndAncestors(node, scope.nodeIds)).toBe(true)
-  })
-
-  it('returns false for DOM Nodes when an ancestor has not been assigned an id', () => {
-    const node = document.createElement('div')
-    scope.nodeIds.getOrInsert(node)
-
-    const parent = document.createElement('div')
-    parent.appendChild(node)
-    scope.nodeIds.getOrInsert(parent)
-
-    const grandparent = document.createElement('div')
-    grandparent.appendChild(parent)
-
-    expect(idsAreAssignedForNodeAndAncestors(node, scope.nodeIds)).toBe(false)
-  })
-
-  it('returns true for DOM Nodes when all ancestors have been assigned an id', () => {
-    const node = document.createElement('div')
-    scope.nodeIds.getOrInsert(node)
-
-    const parent = document.createElement('div')
-    parent.appendChild(node)
-    scope.nodeIds.getOrInsert(parent)
-
-    const grandparent = document.createElement('div')
-    grandparent.appendChild(parent)
-    scope.nodeIds.getOrInsert(grandparent)
-
-    expect(idsAreAssignedForNodeAndAncestors(node, scope.nodeIds)).toBe(true)
-  })
-
-  it('returns true for DOM Nodes in shadow subtrees', () => {
-    const node = document.createElement('div')
-    scope.nodeIds.getOrInsert(node)
-
-    const parent = document.createElement('div')
-    parent.appendChild(node)
-    scope.nodeIds.getOrInsert(parent)
-
-    const grandparent = document.createElement('div')
-    const shadowRoot = grandparent.attachShadow({ mode: 'open' })
-    shadowRoot.appendChild(parent)
-    scope.nodeIds.getOrInsert(grandparent)
-
-    expect(idsAreAssignedForNodeAndAncestors(node, scope.nodeIds)).toBe(true)
   })
 })
