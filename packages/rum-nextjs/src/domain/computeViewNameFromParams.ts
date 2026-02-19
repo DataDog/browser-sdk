@@ -17,7 +17,9 @@ export function computeViewNameFromParams(
   })
 
   for (const [paramName, paramValue] of sortedParams) {
-    if (paramValue === undefined) continue
+    if (paramValue === undefined) {
+      continue
+    }
 
     if (Array.isArray(paramValue)) {
       const joinedValue = paramValue.join('/')

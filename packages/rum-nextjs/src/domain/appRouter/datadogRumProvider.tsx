@@ -6,6 +6,8 @@ import { computeViewNameFromParams } from '../computeViewNameFromParams'
 import { startNextjsView } from '../startNextjsView'
 
 /**
+ * Tracks Next.js App Router views via `usePathname` and `useParams`.
+ *
  * @example
  * ```tsx
  * // app/components/datadog-rum-provider.tsx

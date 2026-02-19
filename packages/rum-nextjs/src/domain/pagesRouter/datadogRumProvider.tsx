@@ -5,6 +5,8 @@ import { useRouter } from 'next/router'
 import { startNextjsView } from '../startNextjsView'
 
 /**
+ * Tracks Next.js Pages Router views via `router.events`.
+ *
  * @example
  * ```tsx
  * // pages/_app.tsx

@@ -1,5 +1,5 @@
 import type { RelativeTime, TimeStamp } from '@datadog/browser-core'
-import { clocksNow, generateUUID } from '@datadog/browser-core'
+import { clocksNow, generateUUID, noop } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { RumEventType } from '@datadog/browser-rum-core'
 import { registerCleanupTask, replaceMockable } from '../../../../core/test'
@@ -24,7 +24,7 @@ describe('reportNextjsError', () => {
     const error = new Error('Test error')
     ;(error as any).digest = 'abc123'
 
-    reportNextjsError(error, () => {})
+    reportNextjsError(error, noop)
 
     expect(addEventSpy).toHaveBeenCalledOnceWith(
       FAKE_RELATIVE_TIME,
@@ -77,7 +77,7 @@ describe('reportNextjsError', () => {
     const addEventSpy = jasmine.createSpy()
     initializeNextjsPlugin({ addEvent: addEventSpy })
 
-    reportNextjsError(new Error('test'), () => {})
+    reportNextjsError(new Error('test'), noop)
 
     const event = addEventSpy.calls.mostRecent().args[1]
     expect(event.context.router).toBe('app')
@@ -107,7 +107,7 @@ describe('reportNextjsError', () => {
     const addEventSpy = jasmine.createSpy()
     initializeNextjsPlugin({ addEvent: addEventSpy })
 
-    reportNextjsError(new Error('test'), () => {})
+    reportNextjsError(new Error('test'), noop)
 
     const event = addEventSpy.calls.mostRecent().args[1]
     expect(event.context.digest).toBeUndefined()
@@ -116,7 +116,7 @@ describe('reportNextjsError', () => {
   it('queues the error if RUM has not started yet', () => {
     const addEventSpy = jasmine.createSpy()
 
-    reportNextjsError(new Error('queued error'), () => {})
+    reportNextjsError(new Error('queued error'), noop)
 
     expect(addEventSpy).not.toHaveBeenCalled()
 
