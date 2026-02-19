@@ -147,7 +147,7 @@ describe('vitalHistory', () => {
       const matchingVitals = history.findAll(10 as RelativeTime, 10 as RelativeTime)
 
       expect(matchingVitals[0].id).toEqual('vital-1')
-      expect(matchingVitals[0].duration).toEqual(0 as Duration)
+      expect(matchingVitals[0].duration).toBeUndefined()
     })
 
     it('should add a vital to the history when VITAL_STARTED is triggered, and close it when RAW_RUM_EVENT_COLLECTED is triggered', () => {
@@ -212,7 +212,7 @@ describe('vitalHistory', () => {
 
       expect(matchingVitals.map((vital) => vital.id)).toEqual(['vital-2', 'vital-1'])
 
-      expect(matchingVitals.map((vital) => vital.duration)).toEqual([20 as Duration, 0 as Duration])
+      expect(matchingVitals.map((vital) => vital.duration)).toEqual([20 as Duration, undefined])
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VITAL, {

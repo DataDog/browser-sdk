@@ -150,7 +150,7 @@ describe('actionHistory', () => {
       const matchingActions = history.findAll(10 as RelativeTime, 10 as RelativeTime)
 
       expect(matchingActions[0].id).toEqual('action-1')
-      expect(matchingActions[0].duration).toEqual(0 as Duration)
+      expect(matchingActions[0].duration).toBeUndefined()
     })
 
     it('should add a action to the history when ACTION_STARTED is triggered, and close it when RAW_RUM_EVENT_COLLECTED is triggered', () => {
@@ -237,7 +237,7 @@ describe('actionHistory', () => {
 
       expect(matchingActions.map((action) => action.id)).toEqual(['action-2', 'action-1'])
 
-      expect(matchingActions.map((action) => action.duration)).toEqual([20 as Duration, 0 as Duration])
+      expect(matchingActions.map((action) => action.duration)).toEqual([20 as Duration, undefined])
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION, {

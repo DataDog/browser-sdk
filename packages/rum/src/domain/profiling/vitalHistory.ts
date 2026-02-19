@@ -8,7 +8,7 @@ export const VITAL_ID_HISTORY_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export interface VitalContext {
   id: string
   label: string
-  duration: Duration
+  duration?: Duration
   startClocks: ClocksState
 }
 
@@ -24,7 +24,7 @@ export function createVitalHistory(lifeCycle: LifeCycle) {
       {
         id: vitalStart.id,
         startClocks: vitalStart.startClocks,
-        duration: 0 as Duration,
+        duration: undefined,
         label: vitalStart.name,
       },
       vitalStart.startClocks.relative

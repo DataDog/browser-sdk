@@ -262,7 +262,7 @@ export interface RumProfilerVitalEntry {
   /**
    * Duration in ms of the vital.
    */
-  readonly duration: number
+  readonly duration?: number
   startClocks: ClocksState
 }
 /**
@@ -280,7 +280,7 @@ export interface RumProfilerActionEntry {
   /**
    * Duration in ms of the duration vital.
    */
-  readonly duration: number
+  readonly duration?: number
   startClocks: ClocksState
 }
 /**
