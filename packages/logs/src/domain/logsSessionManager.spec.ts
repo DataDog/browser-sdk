@@ -139,6 +139,6 @@ describe('logger session stub', () => {
       sessionManager = sm
     })
     expect(sessionManager!.findTrackedSession()).toBeDefined()
-    expect(sessionManager!.findTrackedSession()!.id).toBeDefined()
+    expect(sessionManager!.findTrackedSession()!.id).toBeUndefined()
   })
 })

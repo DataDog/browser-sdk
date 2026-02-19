@@ -1,5 +1,7 @@
-import { MID_HASH_UUID, replaceMockableWithSpy } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration } from '@datadog/browser-rum-core/test'
+import { createHooks, MID_HASH_UUID, replaceMockableWithSpy } from '@datadog/browser-core/test'
+import { createRumSessionManagerMock, mockRumConfiguration, mockViewHistory } from '@datadog/browser-rum-core/test'
+import { LifeCycle } from '@datadog/browser-rum-core'
+import { createIdentityEncoder } from '@datadog/browser-core'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { makeProfilerApi } from './profilerApi'
 
@@ -19,13 +21,12 @@ describe('profilerApi', () => {
       const profilerApi = makeProfilerApi()
 
       profilerApi.onRumStart(
-        {} as any,
-        {} as any,
+        new LifeCycle(),
+        createHooks(),
         mockRumConfiguration({ sessionSampleRate: 60, profilingSampleRate: 60 }),
         createRumSessionManagerMock().setId(MID_HASH_UUID),
-        {} as any,
-        {} as any,
-        {} as any
+        mockViewHistory(),
+        createIdentityEncoder
       )
 
       expect(isProfilingSupportedSpy).not.toHaveBeenCalled()
