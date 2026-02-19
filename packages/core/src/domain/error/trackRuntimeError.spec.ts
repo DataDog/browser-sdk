@@ -313,7 +313,7 @@ describe('instrumentUnhandledRejection', () => {
       window.onunhandledrejection!({ reason } as PromiseRejectionEvent)
     })
 
-    const [originalError, stack] = spy.mock.lastCall!
+    const [originalError, stack] = spy!.mock.lastCall!
     expect(originalError).toBe(reason)
     expect(stack).toBeUndefined()
   })
