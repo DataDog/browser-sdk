@@ -111,7 +111,7 @@ export function serializeNodeAndVerifyChangeRecord(
     timeStampNow(),
     (transaction: ChangeSerializationTransaction) => {
       const cursor = createRootInsertionCursor(changeScope.nodeIds)
-      serializeNodeAsChange(cursor, node, parentNodePrivacyLevel, transaction)
+      serializeNodeAsChange(cursor, node, node.parentNode?.nodeName, parentNodePrivacyLevel, transaction)
     }
   )
 
