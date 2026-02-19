@@ -1,5 +1,6 @@
 import type { ContextManager, ContextValue } from '@datadog/browser-core'
 import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
+import { MID_HASH_UUID } from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../test'
 import { createRumSessionManagerMock } from '../../../test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
@@ -267,7 +268,6 @@ describe('tracer', () => {
       // MID_HASH_UUID has a hash of ~50.7%. With sessionSampleRate=60 and traceSampleRate=60:
       // - Without correction: isSampled(id, 60) → true (50.7 < 60)
       // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
-      const MID_HASH_UUID = '88ef85ab-7902-45f0-b93b-2def1ec3e5fe'
       const tracer = startTracerWithDefaults({
         initConfiguration: { sessionSampleRate: 60, traceSampleRate: 60 },
         sessionManager: createRumSessionManagerMock().setId(MID_HASH_UUID),

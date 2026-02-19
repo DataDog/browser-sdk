@@ -1,10 +1,7 @@
-import { replaceMockableWithSpy } from '@datadog/browser-core/test'
+import { MID_HASH_UUID, replaceMockableWithSpy } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock, mockRumConfiguration } from '@datadog/browser-rum-core/test'
 import { isProfilingSupported } from '../domain/profiling/profilingSupported'
 import { makeProfilerApi } from './profilerApi'
-
-// UUID known to yield a mid-range hash value (~50.7%) using the Knuth formula
-const MID_HASH_UUID = '88ef85ab-7902-45f0-b93b-2def1ec3e5fe'
 
 describe('profilerApi', () => {
   describe('deterministic sampling', () => {
