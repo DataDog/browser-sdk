@@ -1,7 +1,9 @@
+import type { TimeStamp } from '@datadog/browser-core'
 import { noop, timeStampNow } from '@datadog/browser-core'
 import { RecordType } from '../../../types'
 import type {
   BrowserChangeRecord,
+  BrowserFullSnapshotRecord,
   BrowserRecord,
   DocumentNode,
   ElementNode,
@@ -18,8 +20,7 @@ import type {
 import {
   serializeNode,
   SerializationKind,
-  serializeDocument,
-  serializeInTransaction,
+  serializeFullSnapshot,
   updateSerializationStats,
   serializeChangesInTransaction,
   createRootInsertionCursor,
@@ -56,19 +57,15 @@ export function createSerializationTransactionForTesting({
 }
 
 export function takeFullSnapshotForTesting(scope: RecordingScope): DocumentNode & SerializedNodeWithId {
-  let node: (DocumentNode & SerializedNodeWithId) | null
+  let node: DocumentNode & SerializedNodeWithId
+  const emitRecord = (record: BrowserRecord) => {
+    // Tests want to assert against the serialized node representation of the document,
+    // not the record that would contain it if we emitted it, so we just extract it here.
+    const fullSnapshotRecord = record as BrowserFullSnapshotRecord
+    node = fullSnapshotRecord.data.node as DocumentNode & SerializedNodeWithId
+  }
 
-  serializeInTransaction(
-    SerializationKind.INITIAL_FULL_SNAPSHOT,
-    noop,
-    noop,
-    scope,
-    (transaction: SerializationTransaction): void => {
-      // Tests want to assert against the serialized node representation of the document,
-      // not the record that would contain it if we emitted it, so don't bother emitting.
-      node = serializeDocument(document, transaction)
-    }
-  )
+  serializeFullSnapshot(0 as TimeStamp, SerializationKind.INITIAL_FULL_SNAPSHOT, document, emitRecord, noop, scope)
 
   return node!
 }
