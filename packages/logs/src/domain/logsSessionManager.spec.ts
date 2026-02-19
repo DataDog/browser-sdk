@@ -133,27 +133,12 @@ describe('logs session manager', () => {
 })
 
 describe('logger session stub', () => {
-  it('isTracked is computed at each init and returns session id when tracked', () => {
+  it('should return a tracked session', () => {
     let sessionManager: LogsSessionManager | undefined
-    startLogsSessionManagerStub(
-      { sessionSampleRate: 100 } as LogsConfiguration,
-      createTrackingConsentState(TrackingConsent.GRANTED),
-      (sm) => {
-        sessionManager = sm
-      }
-    )
+    startLogsSessionManagerStub({} as LogsConfiguration, createTrackingConsentState(TrackingConsent.GRANTED), (sm) => {
+      sessionManager = sm
+    })
     expect(sessionManager!.findTrackedSession()).toBeDefined()
-    // Stub mode now generates a session ID for deterministic sampling
     expect(sessionManager!.findTrackedSession()!.id).toBeDefined()
-
-    let sessionManager2: LogsSessionManager | undefined
-    startLogsSessionManagerStub(
-      { sessionSampleRate: 0 } as LogsConfiguration,
-      createTrackingConsentState(TrackingConsent.GRANTED),
-      (sm) => {
-        sessionManager2 = sm
-      }
-    )
-    expect(sessionManager2!.findTrackedSession()).toBeUndefined()
   })
 })

@@ -1,5 +1,5 @@
 import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
-import { generateUUID, isSampled, Observable, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
+import { isSampled, Observable, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
 
 export interface LogsSessionManager {
@@ -46,16 +46,12 @@ export function startLogsSessionManager(
 }
 
 export function startLogsSessionManagerStub(
-  configuration: LogsConfiguration,
+  _configuration: LogsConfiguration,
   _trackingConsentState: TrackingConsentState,
   onReady: (sessionManager: LogsSessionManager) => void
 ): void {
-  // Generate a session ID for deterministic sampling in stub mode
-  const stubSessionId = generateUUID()
-  const isTracked = computeTrackingType(configuration, stubSessionId) === LoggerTrackingType.TRACKED
-  const session: LogsSession | undefined = isTracked ? { id: stubSessionId } : undefined
   onReady({
-    findTrackedSession: () => session,
+    findTrackedSession: () => ({}),
     expireObservable: new Observable(),
   })
 }
