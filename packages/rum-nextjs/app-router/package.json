@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-nextjs/app-router",
+  "private": true,
+  "main": "../cjs/entries/appRouter.js",
+  "module": "../esm/entries/appRouter.js",
+  "types": "../cjs/entries/appRouter.d.ts"
+}

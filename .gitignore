@@ -33,3 +33,6 @@ playwright-report/
 # Claude Code local files
 *.local.md
 .claude/settings.local.json
+
+# Rum AI Toolkit
+.rum-ai-toolkit/

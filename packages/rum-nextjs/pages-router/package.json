@@ -1,0 +1,7 @@
+{
+  "name": "@datadog/browser-rum-nextjs/pages-router",
+  "private": true,
+  "main": "../cjs/entries/pagesRouter.js",
+  "module": "../esm/entries/pagesRouter.js",
+  "types": "../cjs/entries/pagesRouter.d.ts"
+}
