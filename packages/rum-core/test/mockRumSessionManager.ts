@@ -1,5 +1,6 @@
 import { Observable } from '@datadog/browser-core'
-import { SessionReplayState, type RumSessionManager } from '../src/domain/rumSessionManager'
+import type { startRumSessionManager, RumSessionManager } from '../src/domain/rumSessionManager'
+import { SessionReplayState } from '../src/domain/rumSessionManager'
 
 export interface RumSessionManagerMock extends RumSessionManager {
   setId(id: string): RumSessionManagerMock
@@ -45,6 +46,7 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       this.expireObservable.notify()
     },
     expireObservable: new Observable(),
+    renewObservable: new Observable(),
     setId(newId) {
       id = newId
       return this
@@ -66,4 +68,8 @@ export function createRumSessionManagerMock(): RumSessionManagerMock {
       return this
     },
   }
+}
+
+export function createRumStartSessionManagerMock(): typeof startRumSessionManager {
+  return (_config, _consent, onReady) => onReady(createRumSessionManagerMock())
 }

@@ -1,9 +1,8 @@
 import { isEmptyObject } from '../../../tools/utils/objectUtils'
 import { isChromium } from '../../../tools/utils/browserDetection'
 import type { CookieOptions } from '../../../browser/cookie'
-import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie, getCookie } from '../../../browser/cookie'
+import { getCurrentSite, areCookiesAuthorized, getCookies, setCookie } from '../../../browser/cookie'
 import type { InitConfiguration, Configuration } from '../../configuration'
-import { tryOldCookiesMigration } from '../oldCookiesMigration'
 import {
   SESSION_COOKIE_EXPIRATION_DELAY,
   SESSION_EXPIRATION_DELAY,
@@ -33,7 +32,7 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
     isLockEnabled: isChromium(),
     persistSession: (sessionState: SessionState) =>
       storeSessionCookie(cookieOptions, configuration, sessionState, SESSION_EXPIRATION_DELAY),
-    retrieveSession: () => retrieveSessionCookie(cookieOptions, configuration),
+    retrieveSession: () => retrieveSessionCookie(cookieOptions),
     expireSession: (sessionState: SessionState) =>
       storeSessionCookie(
         cookieOptions,
@@ -42,8 +41,6 @@ export function initCookieStrategy(configuration: Configuration, cookieOptions: 
         SESSION_TIME_OUT_DELAY
       ),
   }
-
-  tryOldCookiesMigration(cookieStore)
 
   return cookieStore
 }
@@ -54,16 +51,12 @@ function storeSessionCookie(
   sessionState: SessionState,
   defaultTimeout: number
 ) {
-  let sessionStateString = toSessionString(sessionState)
-
-  if (configuration.betaEncodeCookieOptions) {
-    sessionStateString = toSessionString({
-      ...sessionState,
-      // deleting a cookie is writing a new cookie with an empty value
-      // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
-      ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
-    })
-  }
+  const sessionStateString = toSessionString({
+    ...sessionState,
+    // deleting a cookie is writing a new cookie with an empty value
+    // we don't want to store the cookie options in this case otherwise the cookie will not be deleted
+    ...(!isEmptyObject(sessionState) ? { c: encodeCookieOptions(options) } : {}),
+  })
 
   setCookie(
     SESSION_STORE_KEY,
@@ -77,14 +70,25 @@ function storeSessionCookie(
  * Retrieve the session state from the cookie that was set with the same cookie options
  * If there is no match, return the first cookie, because that's how `getCookie()` works
  */
-export function retrieveSessionCookie(cookieOptions: CookieOptions, configuration: Configuration): SessionState {
-  if (configuration.betaEncodeCookieOptions) {
-    return retrieveSessionCookieFromEncodedCookie(cookieOptions)
+export function retrieveSessionCookie(cookieOptions: CookieOptions): SessionState {
+  const cookies = getCookies(SESSION_STORE_KEY)
+  const opts = encodeCookieOptions(cookieOptions)
+
+  let sessionState: SessionState | undefined
+
+  // reverse the cookies so that if there is no match, the cookie returned is the first one
+  for (const cookie of cookies.reverse()) {
+    sessionState = toSessionState(cookie)
+
+    if (sessionState.c === opts) {
+      break
+    }
   }
 
-  const sessionString = getCookie(SESSION_STORE_KEY)
-  const sessionState = toSessionState(sessionString)
-  return sessionState
+  // remove the cookie options from the session state as this is not part of the session state
+  delete sessionState?.c
+
+  return sessionState ?? {}
 }
 
 export function buildCookieOptions(initConfiguration: InitConfiguration): CookieOptions | undefined {
@@ -117,30 +121,4 @@ function encodeCookieOptions(cookieOptions: CookieOptions): string {
   /* eslint-enable no-bitwise */
 
   return byte.toString(16) // Convert to hex string
-}
-
-/**
- * Retrieve the session state from the cookie that was set with the same cookie options.
- * If there is no match, fallback to the first cookie, (because that's how `getCookie()` works)
- * and this allows to keep the current session id when we release this feature.
- */
-function retrieveSessionCookieFromEncodedCookie(cookieOptions: CookieOptions): SessionState {
-  const cookies = getCookies(SESSION_STORE_KEY)
-  const opts = encodeCookieOptions(cookieOptions)
-
-  let sessionState: SessionState | undefined
-
-  // reverse the cookies so that if there is no match, the cookie returned is the first one
-  for (const cookie of cookies.reverse()) {
-    sessionState = toSessionState(cookie)
-
-    if (sessionState.c === opts) {
-      break
-    }
-  }
-
-  // remove the cookie options from the session state as this is not part of the session state
-  delete sessionState?.c
-
-  return sessionState ?? {}
 }

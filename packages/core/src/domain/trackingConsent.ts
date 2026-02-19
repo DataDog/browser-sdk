@@ -11,10 +11,15 @@ export interface TrackingConsentState {
   update: (trackingConsent: TrackingConsent) => void
   isGranted: () => boolean
   observable: Observable<void>
+  onGrantedOnce: (callback: () => void) => void
 }
 
 export function createTrackingConsentState(currentConsent?: TrackingConsent): TrackingConsentState {
   const observable = new Observable<void>()
+
+  function isGranted() {
+    return currentConsent === TrackingConsent.GRANTED
+  }
 
   return {
     tryToInit(trackingConsent: TrackingConsent) {
@@ -22,13 +27,23 @@ export function createTrackingConsentState(currentConsent?: TrackingConsent): Tr
         currentConsent = trackingConsent
       }
     },
+    onGrantedOnce(fn) {
+      if (isGranted()) {
+        fn()
+      } else {
+        const subscription = observable.subscribe(() => {
+          if (isGranted()) {
+            fn()
+            subscription.unsubscribe()
+          }
+        })
+      }
+    },
     update(trackingConsent: TrackingConsent) {
       currentConsent = trackingConsent
       observable.notify()
     },
-    isGranted() {
-      return currentConsent === TrackingConsent.GRANTED
-    },
+    isGranted,
     observable,
   }
 }
