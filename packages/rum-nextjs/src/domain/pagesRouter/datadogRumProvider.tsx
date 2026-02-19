@@ -35,7 +35,9 @@ export function DatadogRumProvider({ children }: { children: React.ReactNode }) 
 
   useEffect(() => {
     startNextjsView(router.pathname)
+  }, [router.pathname])
 
+  useEffect(() => {
     const handleRouteChange = () => {
       startNextjsView(router.pathname)
     }
@@ -45,7 +47,7 @@ export function DatadogRumProvider({ children }: { children: React.ReactNode }) 
     return () => {
       router.events.off('routeChangeComplete', handleRouteChange)
     }
-  }, [])
+  })
 
   return <>{children}</>
 }
