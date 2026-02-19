@@ -5,7 +5,7 @@ const DEVICE_CONNECTION_TIMEOUT = 30_000
 const DEVICE_CONNECTION_RETRY_INTERVAL = 2_000
 
 export const test = base.extend<{ context: Awaited<ReturnType<typeof connectDevice>> }>({
-  context: async ({}, use) => {
+  context: async (_, use) => {
     const device = await connectDevice()
     const context = await device.launchBrowser()
     await use(context)

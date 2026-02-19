@@ -16,7 +16,7 @@ export default async function globalSetup() {
     'emulator',
     ['-avd', 'test_device', '-no-window', '-no-audio', '-no-snapshot', '-no-boot-anim', '-gpu', 'swiftshader_indirect'],
     {
-      stdio: 'ignore',
+      stdio: 'inherit',
       detached: true,
     }
   )
