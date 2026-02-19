@@ -3,6 +3,7 @@ import { noop, timeStampNow } from '@datadog/browser-core'
 import { RecordType } from '../../../types'
 import type {
   BrowserChangeRecord,
+  BrowserFullSnapshotRecord,
   BrowserRecord,
   DocumentNode,
   ElementNode,
