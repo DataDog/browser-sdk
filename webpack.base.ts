@@ -30,6 +30,8 @@ export default ({
         : // Include a content hash in chunk names in production.
           `chunks/[name]-[contenthash]-${filename}`,
     path: path.resolve('./bundle'),
+    chunkFormat: 'module',
+    chunkLoading: 'import',
   },
   target: ['web', 'es2018'],
   devtool: false,
