@@ -13,6 +13,7 @@ import { resetReplayStats } from '../../packages/rum/src/domain/replayStats'
 import { resetInteractionCountPolyfill } from '../../packages/rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
 import { resetMonitor } from '../../packages/core/src/tools/monitor'
 import { resetTelemetry } from '../../packages/core/src/domain/telemetry'
+import { resetExperimentalFeatures } from '../../packages/core/src/tools/experimentalFeatures'
 import type { BuildEnvWindow } from '../../packages/core/test'
 import { startLeakDetection } from '../../packages/core/test'
 
@@ -41,6 +42,7 @@ afterEach(() => {
   resetMonitor()
   resetTelemetry()
   resetInteractionCountPolyfill()
+  resetExperimentalFeatures()
 })
 
 function clearAllCookies() {
