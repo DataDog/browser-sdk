@@ -10,7 +10,9 @@
 import { parseArgs } from 'node:util'
 import * as fs from 'node:fs/promises'
 import { runMain, printLog, printError } from '../lib/executionUtils.ts'
-import { fetchConfig, downloadSDK, generateCombinedBundle, type SdkVariant } from '../../packages/endpoint/src/index.ts'
+import { fetchConfig, generateCombinedBundle } from '../../packages/endpoint/src/index.ts'
+import { downloadSDK } from '../../packages/endpoint/src/sdkDownloader.ts'
+import type { SdkVariant } from '../../packages/endpoint/src/sdkDownloader.ts'
 
 function printHelp(): void {
   console.log(`
