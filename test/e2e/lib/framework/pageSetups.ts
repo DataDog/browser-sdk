@@ -212,17 +212,49 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
 export function workerSetup(options: WorkerOptions, servers: Servers) {
   return js`
       ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
-      
+
       // Initialize DD_LOGS in service worker
       DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true }, servers)})
 
       // Handle messages from main thread
       self.addEventListener('message', (event) => {
         const message = event.data;
-        
+
         ${options.nativeLog ? js`console.log(message);` : js`DD_LOGS.logger.log(message);`}
       });
     `
+}
+
+export function microfrontendSetup(options: SetupOptions, servers: Servers) {
+  let header = options.head || ''
+  const body = options.body || ''
+
+  if (options.eventBridge) {
+    header += setupEventBridge(servers)
+  }
+
+  if (options.extension) {
+    header += setupExtension(options, servers)
+  }
+
+  const { rumScriptUrl } = createCrossOriginScriptUrls(servers, options)
+
+  if (options.rum) {
+    header += html`
+      <script type="text/javascript" src="${rumScriptUrl}"></script>
+      <script type="text/javascript">
+        DD_RUM.setGlobalContext(${JSON.stringify(options.context)})
+        ;(${options.rumInit.toString()})(${formatConfiguration(options.rum, servers)})
+      </script>
+    `
+  }
+
+  header += html` <script type="module" src="/microfrontend/shell.js"></script> `
+
+  return basePage({
+    header,
+    body,
+  })
 }
 
 export function basePage({ header, body }: { header?: string; body?: string }) {

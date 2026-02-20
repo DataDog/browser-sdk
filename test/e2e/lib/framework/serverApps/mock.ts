@@ -184,6 +184,13 @@ export function createMockServerApp(
     res.sendFile(getTestAppBundlePath(params.appName, originalUrl))
   })
 
+  app.get(/^\/microfrontend\/.*/, (req, res) => {
+    const { originalUrl } = req
+    // Remove the /microfrontend prefix from the URL since getTestAppBundlePath adds the app path
+    const filePath = originalUrl.replace(/^\/microfrontend/, '')
+    res.sendFile(getTestAppBundlePath('microfrontend', filePath))
+  })
+
   app.get('/config', (_req, res) => {
     res.send(JSON.stringify(remoteConfiguration))
   })
