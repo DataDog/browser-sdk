@@ -119,11 +119,7 @@ runMain(async () => {
 
     printLog('Done.')
   } catch (error) {
-    if (error instanceof Error) {
-      printError(error.message)
-    } else {
-      printError('An unknown error occurred')
-    }
+    printError(`Error: ${error instanceof Error ? error.message : String(error)}`)
     process.exit(2)
   }
 })
