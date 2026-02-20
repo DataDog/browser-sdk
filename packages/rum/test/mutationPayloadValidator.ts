@@ -127,7 +127,7 @@ export function createMutationPayloadValidator(
     validate: (
       payload: BrowserMutationPayload,
       expected: ExpectedMutationsPayload,
-      { expect = expectedExpect }: { expect?: (actual: any) => any } = {}
+      { expect = expectedExpect! }: { expect?: (actual: any) => any } = {}
     ) => {
       payload = removeUndefinedValues(payload)
 
