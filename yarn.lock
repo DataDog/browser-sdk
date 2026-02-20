@@ -313,7 +313,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@datadog/browser-rum-core@npm:6.27.1, @datadog/browser-rum-core@workspace:packages/rum-core":
+"@datadog/browser-rum-core@npm:6.27.1, @datadog/browser-rum-core@workspace:*, @datadog/browser-rum-core@workspace:packages/rum-core":
   version: 0.0.0-use.local
   resolution: "@datadog/browser-rum-core@workspace:packages/rum-core"
   dependencies:
@@ -390,6 +390,7 @@ __metadata:
     "@datadog/browser-core": "workspace:*"
     "@datadog/browser-logs": "workspace:*"
     "@datadog/browser-rum": "workspace:*"
+    "@datadog/browser-rum-core": "workspace:*"
     "@mantine/core": "npm:8.3.14"
     "@mantine/hooks": "npm:8.3.14"
     "@tabler/icons-react": "npm:3.36.1"
