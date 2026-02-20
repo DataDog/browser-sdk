@@ -99,7 +99,6 @@ describe('longTaskCollection', () => {
       expect(rawRumEvents.length).toBe(1)
     })
 
-
     it('should not collect when trackLongTasks=false', () => {
       setupLongTaskCollection({ trackLongTasks: false })
 
@@ -144,7 +143,6 @@ describe('longTaskCollection', () => {
       notifyPerformanceEntries([createPerformanceEntry(RumPerformanceEntryType.LONG_TASK)])
       expect(rawRumEvents.length).toBe(1)
     })
-
 
     it('should not collect when trackLongTasks=false', () => {
       setupLongTaskCollection({ supportedEntryType: RumPerformanceEntryType.LONG_TASK, trackLongTasks: false })
