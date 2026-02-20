@@ -1,6 +1,9 @@
 import os from 'os'
 
 export function getIp() {
+  if (process.env.ANDROID_E2E) {
+    return 'localhost'
+  }
   return (Object.values(os.networkInterfaces()) as os.NetworkInterfaceInfo[][])
     .flat()
     .find(({ family, internal }) => family === 'IPv4' && !internal)!.address

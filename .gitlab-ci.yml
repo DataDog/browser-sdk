@@ -2,8 +2,10 @@ variables:
   CURRENT_STAGING: staging-08
   APP: 'browser-sdk'
   CURRENT_CI_IMAGE: 100
+  CURRENT_ANDROID_CI_IMAGE: 1
   BUILD_STABLE_REGISTRY: 'registry.ddbuild.io'
   CI_IMAGE: '$BUILD_STABLE_REGISTRY/ci/$APP:$CURRENT_CI_IMAGE'
+  CI_IMAGE_ANDROID: '$BUILD_STABLE_REGISTRY/ci/$APP-android:$CURRENT_ANDROID_CI_IMAGE'
   GIT_REPOSITORY: 'git@github.com:DataDog/browser-sdk.git'
   MAIN_BRANCH: 'main'
   NEXT_MAJOR_BRANCH: 'v7'
@@ -123,6 +125,17 @@ ci-image:
   script:
     - docker buildx build --platform linux/amd64 --build-arg CHROME_PACKAGE_VERSION=$CHROME_PACKAGE_VERSION --tag $CI_IMAGE --push .
 
+ci-image-android:
+  stage: ci-image
+  extends:
+    - .base-configuration
+    - .feature-branches
+  when: manual
+  tags: ['arch:amd64']
+  image: $BUILD_STABLE_REGISTRY/images/docker:27.3.1
+  script:
+    - docker buildx build --platform linux/amd64 --build-arg BASE_IMAGE=$CI_IMAGE -f Dockerfile.android --tag $CI_IMAGE_ANDROID --push .
+
 ########################################################################################################################
 # Tests
 ########################################################################################################################
@@ -230,6 +243,30 @@ e2e:
     - FORCE_COLOR=1 yarn test:e2e:ci
   after_script:
     - node ./scripts/test/export-test-result.ts e2e
+
+e2e-android:
+  extends:
+    - .base-configuration
+    - .feature-branches
+  tags:
+    - 'docker-in-docker:amd64'
+  image: $CI_IMAGE_ANDROID
+  interruptible: true
+  timeout: 20 minutes
+  variables:
+    KUBERNETES_CPU_REQUEST: 4
+    KUBERNETES_CPU_LIMIT: 4
+    KUBERNETES_MEMORY_REQUEST: 8Gi
+    KUBERNETES_MEMORY_LIMIT: 8Gi
+  artifacts:
+    when: always
+    reports:
+      junit: test-report/e2e-android/*.xml
+  script:
+    - yarn
+    - yarn build
+    - yarn build:apps
+    - FORCE_COLOR=1 CI_JOB_NAME=e2e-android yarn test:e2e:android
 
 check-licenses:
   extends:

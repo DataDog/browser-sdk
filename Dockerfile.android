@@ -1,0 +1,40 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+
+ENV ANDROID_HOME=/opt/android-sdk
+ENV PATH="${ANDROID_HOME}/cmdline-tools/latest/bin:${ANDROID_HOME}/platform-tools:${ANDROID_HOME}/emulator:${PATH}"
+
+# Install dependencies for Android emulator
+RUN apt-get update && apt-get install -y -q --no-install-recommends \
+  libpulse0 \
+  libgl1 \
+  libnss3 \
+  libxcomposite1 \
+  libxcursor1 \
+  libxi6 \
+  libxtst6 \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install Android command-line tools
+RUN mkdir -p ${ANDROID_HOME}/cmdline-tools \
+  && cd ${ANDROID_HOME}/cmdline-tools \
+  && curl -sSfL https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o cmdline-tools.zip \
+  && unzip cmdline-tools.zip \
+  && mv cmdline-tools latest \
+  && rm cmdline-tools.zip
+
+# Accept Android SDK licenses
+RUN yes | sdkmanager --licenses
+
+# Install platform tools (adb), emulator, and system image
+RUN sdkmanager \
+  "platform-tools" \
+  "emulator" \
+  "platforms;android-34" \
+  "system-images;android-34;google_apis;x86_64"
+
+# Create AVD (Android Virtual Device)
+RUN echo no | avdmanager create avd \
+  -n test_device \
+  -k "system-images;android-34;google_apis;x86_64" \
+  -d pixel_7
