@@ -2,6 +2,8 @@ import {
   createNewEvent,
   expireCookie,
   getSessionState,
+  HIGH_HASH_UUID,
+  LOW_HASH_UUID,
   mockClock,
   registerCleanupTask,
   restorePageVisibility,
@@ -11,13 +13,13 @@ import type { Clock } from '../../../test'
 import { getCookie, setCookie } from '../../browser/cookie'
 import { DOM_EVENT } from '../../browser/addEventListener'
 import { display } from '../../tools/display'
-import { ONE_HOUR, ONE_SECOND } from '../../tools/utils/timeUtils'
+import { ONE_HOUR, ONE_SECOND, relativeNow } from '../../tools/utils/timeUtils'
 import type { Configuration } from '../configuration'
 import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
 import { isChromium } from '../../tools/utils/browserDetection'
 import type { SessionManager } from './sessionManager'
-import { startSessionManager, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
+import { startSessionManager, startSessionManagerStub, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'
@@ -579,6 +581,33 @@ describe('startSessionManager', () => {
 
       expect(sessionManager.findTrackedSession(100)!.isReplayForced).toBe(true)
     })
+
+    it('should return the session if it has expired when returnInactive = true', async () => {
+      const sessionManager = await startSessionManagerWithDefaults()
+      expireCookie()
+      clock.tick(STORAGE_POLL_DELAY)
+      expect(sessionManager.findTrackedSession(100, relativeNow(), { returnInactive: true })).toBeDefined()
+    })
+
+    describe('deterministic sampling', () => {
+      beforeEach(() => {
+        if (!window.BigInt) {
+          pending('BigInt is not supported')
+        }
+      })
+
+      it('should track a session whose ID has a low hash, even with a low sessionSampleRate', async () => {
+        setCookie(SESSION_STORE_KEY, `id=${LOW_HASH_UUID}`, DURATION)
+        const sessionManager = await startSessionManagerWithDefaults()
+        expect(sessionManager.findTrackedSession(1)).toBeDefined()
+      })
+
+      it('should not track a session whose ID has a high hash, even with a high sessionSampleRate', async () => {
+        setCookie(SESSION_STORE_KEY, `id=${HIGH_HASH_UUID}`, DURATION)
+        const sessionManager = await startSessionManagerWithDefaults()
+        expect(sessionManager.findTrackedSession(99)).toBeUndefined()
+      })
+    })
   })
 
   describe('delayed session manager initialization', () => {
@@ -647,4 +676,17 @@ describe('startSessionManager', () => {
       )
     })
   }
+})
+
+describe('startSessionManagerStub', () => {
+  it('isTracked is computed at each findTrackedSession call', () => {
+    let sessionManager: SessionManager | undefined
+    startSessionManagerStub((sm) => {
+      sessionManager = sm
+    })
+    expect(sessionManager!.findTrackedSession(100)).toBeDefined()
+    expect(sessionManager!.findTrackedSession(100)!.id).toBeDefined()
+
+    expect(sessionManager!.findTrackedSession(0)).toBeUndefined()
+  })
 })
