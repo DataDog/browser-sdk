@@ -1,8 +1,6 @@
 import type { RelativeTime, TrackingConsentState } from '@datadog/browser-core'
-import { Observable, performDraw, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
+import { isSampled, Observable, SESSION_NOT_TRACKED, startSessionManager } from '@datadog/browser-core'
 import type { LogsConfiguration } from './configuration'
-
-export const LOGS_SESSION_KEY = 'logs'
 
 export interface LogsSessionManager {
   findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => LogsSession | undefined
@@ -24,26 +22,27 @@ export function startLogsSessionManager(
   trackingConsentState: TrackingConsentState,
   onReady: (sessionManager: LogsSessionManager) => void
 ) {
-  startSessionManager(
-    configuration,
-    LOGS_SESSION_KEY,
-    (rawTrackingType) => computeTrackingType(configuration, rawTrackingType),
-    trackingConsentState,
-    (sessionManager) => {
-      onReady({
-        findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
-          const session = sessionManager.findSession(startTime, options)
-          return session && session.trackingType === LoggerTrackingType.TRACKED
-            ? {
-                id: session.id,
-                anonymousId: session.anonymousId,
-              }
-            : undefined
-        },
-        expireObservable: sessionManager.expireObservable,
-      })
-    }
-  )
+  startSessionManager(configuration, trackingConsentState, (sessionManager) => {
+    onReady({
+      findTrackedSession: (startTime?: RelativeTime, options = { returnInactive: false }) => {
+        const session = sessionManager.findSession(startTime, options)
+        if (!session || session.id === 'invalid') {
+          return
+        }
+
+        const trackingType = computeTrackingType(configuration, session.id)
+        if (trackingType === LoggerTrackingType.NOT_TRACKED) {
+          return
+        }
+
+        return {
+          id: session.id,
+          anonymousId: session.anonymousId,
+        }
+      },
+      expireObservable: sessionManager.expireObservable,
+    })
+  })
 }
 
 export function startLogsSessionManagerStub(
@@ -57,16 +56,10 @@ export function startLogsSessionManagerStub(
   })
 }
 
-function computeTrackingType(configuration: LogsConfiguration, rawTrackingType?: string) {
-  if (hasValidLoggerSession(rawTrackingType)) {
-    return rawTrackingType
-  }
-  if (!performDraw(configuration.sessionSampleRate)) {
+function computeTrackingType(configuration: LogsConfiguration, sessionId: string): LoggerTrackingType {
+  if (!isSampled(sessionId, configuration.sessionSampleRate)) {
     return LoggerTrackingType.NOT_TRACKED
   }
-  return LoggerTrackingType.TRACKED
-}
 
-function hasValidLoggerSession(trackingType?: string): trackingType is LoggerTrackingType {
-  return trackingType === LoggerTrackingType.NOT_TRACKED || trackingType === LoggerTrackingType.TRACKED
+  return LoggerTrackingType.TRACKED
 }

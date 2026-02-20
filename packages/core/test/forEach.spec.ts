@@ -8,6 +8,7 @@ import { resetReplayStats } from '../../rum/src/domain/replayStats'
 import { resetInteractionCountPolyfill } from '../../rum-core/src/domain/view/viewMetrics/interactionCountPolyfill'
 import { resetMonitor } from '../src/tools/monitor'
 import { resetTelemetry } from '../src/domain/telemetry'
+import { resetSampleDecisionCache } from '../src/domain/sampler'
 import { startLeakDetection } from './leakDetection'
 import type { BuildEnvWindow } from './buildEnv'
 ;(window as unknown as BuildEnvWindow).__BUILD_ENV__SDK_VERSION__ = 'test'
@@ -36,6 +37,7 @@ afterEach(() => {
   resetMonitor()
   resetTelemetry()
   resetInteractionCountPolyfill()
+  resetSampleDecisionCache()
   resetExperimentalFeatures()
 })
 

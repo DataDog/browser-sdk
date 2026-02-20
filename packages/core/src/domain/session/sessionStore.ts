@@ -17,7 +17,7 @@ import {
 } from './sessionState'
 import { initLocalStorageStrategy, selectLocalStorageStrategy } from './storeStrategies/sessionInLocalStorage'
 import { processSessionStoreOperations } from './sessionStoreOperations'
-import { SESSION_NOT_TRACKED, SessionPersistence } from './sessionConstants'
+import { SessionPersistence } from './sessionConstants'
 import { initMemorySessionStoreStrategy, selectMemorySessionStoreStrategy } from './storeStrategies/sessionInMemory'
 
 export interface SessionStore {
@@ -122,11 +122,9 @@ export function getSessionStoreStrategy(
  * - not tracked, the session does not have an id but it is updated along the user navigation
  * - inactive, no session in store or session expired, waiting for a renew session
  */
-export function startSessionStore<TrackingType extends string>(
+export function startSessionStore(
   sessionStoreStrategyType: SessionStoreStrategyType,
   configuration: Configuration,
-  productKey: string,
-  computeTrackingType: (rawTrackingType?: string) => TrackingType,
   sessionStoreStrategy: SessionStoreStrategy = getSessionStoreStrategy(sessionStoreStrategyType, configuration)
 ): SessionStore {
   const renewObservable = new Observable<void>()
@@ -234,24 +232,24 @@ export function startSessionStore<TrackingType extends string>(
       return false
     }
 
-    const trackingType = computeTrackingType(sessionState[productKey])
-    sessionState[productKey] = trackingType
-    delete sessionState.isExpired
-    if (trackingType !== SESSION_NOT_TRACKED && !sessionState.id) {
+    // Always store session ID for deterministic sampling
+    if (!sessionState.id) {
       sessionState.id = generateUUID()
       sessionState.created = String(dateNow())
     }
     if (configuration.trackAnonymousUser && !sessionState.anonymousId) {
       sessionState.anonymousId = generateUUID()
     }
+
+    delete sessionState.isExpired
   }
 
   function hasSessionInCache() {
-    return sessionCache?.[productKey] !== undefined
+    return sessionCache?.id !== undefined
   }
 
   function isSessionInCacheOutdated(sessionState: SessionState) {
-    return sessionCache.id !== sessionState.id || sessionCache[productKey] !== sessionState[productKey]
+    return sessionCache.id !== sessionState.id
   }
 
   function expireSessionInCache() {
