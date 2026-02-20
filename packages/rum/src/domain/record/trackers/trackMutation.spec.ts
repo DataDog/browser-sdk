@@ -103,7 +103,7 @@ describe('trackMutation', () => {
       })
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
-      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         adds: [
           {
@@ -139,7 +139,7 @@ describe('trackMutation', () => {
       })
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
-      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       const cb = expectNewNode({ type: NodeType.Element, tagName: 'cb' })
       const ca = expectNewNode({ type: NodeType.Element, tagName: 'ca' })
       const bc = expectNewNode({ type: NodeType.Element, tagName: 'bc' })
@@ -189,7 +189,7 @@ describe('trackMutation', () => {
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
-      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         adds: [
           {
@@ -300,7 +300,7 @@ describe('trackMutation', () => {
           sandbox.remove()
         })
 
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
         validate(getLatestMutationPayload(), {
           removes: [
             {
@@ -355,7 +355,7 @@ describe('trackMutation', () => {
           sandbox.appendChild(parent)
         })
 
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
 
         // Even if the mutation on 'child' comes first, we only take the 'parent' mutation into
         // account since it is embeds an up-to-date serialization of 'parent'
@@ -385,7 +385,7 @@ describe('trackMutation', () => {
           child.remove()
         })
 
-        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument, { expect })
         validate(getLatestMutationPayload(), {
           adds: [
             {
@@ -404,7 +404,7 @@ describe('trackMutation', () => {
         sandbox.appendChild(element)
       })
 
-      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         adds: [
           {
@@ -423,7 +423,7 @@ describe('trackMutation', () => {
         sandbox.appendChild(a)
       })
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         adds: [
           {
@@ -455,7 +455,7 @@ describe('trackMutation', () => {
         b.appendChild(span)
       })
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         adds: [
           {
@@ -477,7 +477,7 @@ describe('trackMutation', () => {
         appendElement('<a></a><b></b><c></c>', sandbox)
       })
 
-      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument, { expect })
       const c = expectNewNode({ type: NodeType.Element, tagName: 'c' })
       const b = expectNewNode({ type: NodeType.Element, tagName: 'b' })
       const a = expectNewNode({ type: NodeType.Element, tagName: 'a' })
@@ -509,7 +509,7 @@ describe('trackMutation', () => {
         { scope: getRecordingScope(DefaultPrivacyLevel.MASK) }
       )
 
-      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         adds: [
           {
@@ -533,7 +533,7 @@ describe('trackMutation', () => {
         })
 
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
-        const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
 
         const expectedHost = expectNewNode({ type: NodeType.Element, tagName: 'div' })
         const shadowRootNode = expectNewNode({ type: NodeType.DocumentFragment, isShadowRoot: true })
@@ -547,7 +547,7 @@ describe('trackMutation', () => {
           ],
         })
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
-        expect(addShadowRootSpy).toHaveBeenCalledWith(shadowRoot, expect.anything())
+        expect(addShadowRootSpy).toHaveBeenCalledWith(shadowRoot!, expect.anything())
         expect(removeShadowRootSpy).not.toHaveBeenCalled()
       })
 
@@ -563,7 +563,7 @@ describe('trackMutation', () => {
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
 
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
         validate(getLatestMutationPayload(), {
           removes: [
             {
@@ -589,7 +589,7 @@ describe('trackMutation', () => {
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
         expect(addShadowRootSpy).toHaveBeenCalledTimes(1)
 
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
         validate(getLatestMutationPayload(), {
           removes: [
             {
@@ -616,7 +616,7 @@ describe('trackMutation', () => {
         expect(emitRecordCallback).toHaveBeenCalledTimes(1)
         expect(addShadowRootSpy).toHaveBeenCalledTimes(2)
 
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
         validate(getLatestMutationPayload(), {
           removes: [
             {
@@ -650,7 +650,7 @@ describe('trackMutation', () => {
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         texts: [
           {
@@ -690,7 +690,7 @@ describe('trackMutation', () => {
         { scope }
       )
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         texts: [
           {
@@ -714,7 +714,7 @@ describe('trackMutation', () => {
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         texts: [
           {
@@ -734,7 +734,7 @@ describe('trackMutation', () => {
 
       expect(emitRecordCallback).toHaveBeenCalledTimes(1)
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         attributes: [
           {
@@ -750,7 +750,7 @@ describe('trackMutation', () => {
         sandbox.setAttribute('foo', '')
       })
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         attributes: [
           {
@@ -768,7 +768,7 @@ describe('trackMutation', () => {
         sandbox.removeAttribute('foo')
       })
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         attributes: [
           {
@@ -796,7 +796,7 @@ describe('trackMutation', () => {
         sandbox.setAttribute('foo2', 'bar')
       })
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         attributes: [
           {
@@ -815,7 +815,7 @@ describe('trackMutation', () => {
         { scope: getRecordingScope(DefaultPrivacyLevel.MASK) }
       )
 
-      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         attributes: [
           {
@@ -839,7 +839,7 @@ describe('trackMutation', () => {
         sandbox.insertBefore(document.createElement('a'), ignoredElement)
       })
 
-      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument)
+      const { validate, expectInitialNode, expectNewNode } = createMutationPayloadValidator(serializedDocument, { expect })
       validate(getLatestMutationPayload(), {
         adds: [
           {
@@ -895,7 +895,7 @@ describe('trackMutation', () => {
           ignoredElement.appendChild(textNode)
         })
 
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
         validate(getLatestMutationPayload(), {
           removes: [
             {
@@ -959,7 +959,7 @@ describe('trackMutation', () => {
           hiddenElement.appendChild(textNode)
         })
 
-        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+        const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
         validate(getLatestMutationPayload(), {
           removes: [
             {
@@ -1046,7 +1046,7 @@ describe('trackMutation', () => {
             sandbox.appendChild(input)
           })
 
-          const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+          const { validate, expectNewNode, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
           validate(getLatestMutationPayload(), {
             adds: [
               {
@@ -1076,7 +1076,7 @@ describe('trackMutation', () => {
           })
 
           if (expectedAttributesMutation) {
-            const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument)
+            const { validate, expectInitialNode } = createMutationPayloadValidator(serializedDocument, { expect })
             validate(getLatestMutationPayload(), {
               attributes: [{ node: expectInitialNode({ tag: 'input' }), attributes: expectedAttributesMutation }],
             })
