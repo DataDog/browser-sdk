@@ -39,8 +39,8 @@ export function startUrlContexts(
 
   let previousViewUrl: string | undefined
 
-  lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks }) => {
-    const viewUrl = mockable(location).href
+  lifeCycle.subscribe(LifeCycleEventType.BEFORE_VIEW_CREATED, ({ startClocks, url }) => {
+    const viewUrl = url || mockable(location).href
     urlContextHistory.add(
       buildUrlContext({
         url: viewUrl,

@@ -49,6 +49,26 @@ describe('urlContexts', () => {
     expect(urlContext.referrer).toBe(document.referrer)
   })
 
+  it('should use the provided url override instead of location', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: relativeToClocks(0 as RelativeTime),
+      url: 'https://example.com/overridden-path',
+    } as ViewCreatedEvent)
+
+    const urlContext = urlContexts.findUrl()!
+    expect(urlContext.url).toBe('https://example.com/overridden-path')
+    expect(urlContext.referrer).toBe(document.referrer)
+  })
+
+  it('should fall back to location.href when no url override is provided', () => {
+    lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
+      startClocks: relativeToClocks(0 as RelativeTime),
+    } as ViewCreatedEvent)
+
+    const urlContext = urlContexts.findUrl()!
+    expect(urlContext.url).toBe('http://fake-url.com/')
+  })
+
   it('should update url context on location change', () => {
     lifeCycle.notify(LifeCycleEventType.BEFORE_VIEW_CREATED, {
       startClocks: relativeToClocks(0 as RelativeTime),
