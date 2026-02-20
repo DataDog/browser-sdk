@@ -134,6 +134,7 @@ describe('trackClickActions', () => {
           selector: '#button',
           width: 100,
           height: 100,
+          composed_path_selector: undefined,
         },
         position: { x: 50, y: 50 },
         events: [domEvent],
@@ -659,6 +660,24 @@ describe('trackClickActions', () => {
 
       expect(events.length).toBe(1)
       expect(events[0].name).toBe('Shadow Button')
+    })
+  })
+
+  describe('when composed path selector is enabled', () => {
+    it('should return a composed_path_selector', () => {
+      addExperimentalFeatures([ExperimentalFeature.COMPOSED_PATH_SELECTOR])
+      startClickActionsTracking()
+      emulateClick({
+        target: button,
+        activity: {},
+        eventProperty: {
+          composed: true,
+          composedPath: () => [button, document.body, document],
+        },
+      })
+
+      clock.tick(EXPIRE_DELAY)
+      expect(events[0].target?.composed_path_selector).toBeDefined()
     })
   })
 })
