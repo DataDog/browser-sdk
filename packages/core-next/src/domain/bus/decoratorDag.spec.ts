@@ -1,17 +1,5 @@
-import type { DecoratorFactory } from './types'
 import { resolveDecoratorOrder } from './decoratorDag'
-
-function stubFactory(overrides: Partial<DecoratorFactory> & Pick<DecoratorFactory, 'name'>): DecoratorFactory {
-  return {
-    provides: [],
-    requires: [],
-    capabilities: { canDiscard: false },
-    create: () => ({
-      decorate: async () => ({ status: 'skipped' as const }),
-    }),
-    ...overrides,
-  }
-}
+import { stubFactory } from './testUtils'
 
 describe('resolveDecoratorOrder', () => {
   it('returns empty array for no factories', () => {

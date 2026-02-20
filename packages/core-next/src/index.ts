@@ -6,3 +6,4 @@
 export * from '@datadog/browser-core'
 
 export * from './domain/bus'
+export * from './domain/pipeline'
