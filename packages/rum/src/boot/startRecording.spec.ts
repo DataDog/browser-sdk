@@ -11,12 +11,7 @@ import {
 } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
-import {
-  collectAsyncCalls,
-  createNewEvent,
-  mockEventBridge,
-  registerCleanupTask,
-} from '@datadog/browser-core/test'
+import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from '@datadog/browser-rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'

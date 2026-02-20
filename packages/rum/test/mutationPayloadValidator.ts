@@ -1,4 +1,3 @@
-import { expect as vitestExpect } from 'vitest'
 import { NodeType, IncrementalSource } from '../src/types'
 import type {
   SerializedNodeWithId,
@@ -125,7 +124,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     validate: (
       payload: BrowserMutationPayload,
       expected: ExpectedMutationsPayload,
-      { expect = vitestExpect }: { expect?: (actual: any) => any } = {}
+      { expect = (globalThis as any).expect }: { expect?: (actual: any) => any } = {}
     ) => {
       payload = removeUndefinedValues(payload)
 
