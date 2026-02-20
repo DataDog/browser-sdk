@@ -95,7 +95,10 @@ type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>
  * * a 'validate' function to actually validate a mutation payload against an expected mutation
  * object.
  */
-export function createMutationPayloadValidator(initialDocument: SerializedNodeWithId) {
+export function createMutationPayloadValidator(
+  initialDocument: SerializedNodeWithId,
+  { expect: expectedExpect }: { expect?: (actual: any) => any } = {}
+) {
   let maxNodeId = findMaxNodeId(initialDocument)
 
   /**
@@ -124,7 +127,7 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     validate: (
       payload: BrowserMutationPayload,
       expected: ExpectedMutationsPayload,
-      { expect = (globalThis as any).expect }: { expect?: (actual: any) => any } = {}
+      { expect = expectedExpect }: { expect?: (actual: any) => any } = {}
     ) => {
       payload = removeUndefinedValues(payload)
 
