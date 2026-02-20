@@ -1,4 +1,3 @@
-import { downloadSDK } from './sdkDownloader.ts'
 import type { SdkVariant } from './sdkDownloader.ts'
 
 export type { SdkVariant } from './sdkDownloader.ts'
@@ -123,6 +122,7 @@ export async function generateBundle(options: GenerateBundleOptions): Promise<st
     site: options.site,
   })
 
+  const { downloadSDK } = await import('./sdkDownloader.ts')
   const sdkCode = await downloadSDK({
     variant: options.variant,
     datacenter: options.datacenter,
