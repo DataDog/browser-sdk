@@ -1,5 +1,3 @@
-// eslint-disable-next-line local-rules/disallow-side-effects -- Node.js build tool, not browser SDK
-import { fetchRemoteConfiguration } from '@datadog/browser-remote-config'
 import { downloadSDK } from './sdkDownloader.ts'
 import type { SdkVariant } from './sdkDownloader.ts'
 
@@ -38,6 +36,7 @@ export async function fetchConfig(options: FetchConfigOptions): Promise<{
     [key: string]: unknown
   }
 }> {
+  const { fetchRemoteConfiguration } = await import('@datadog/browser-remote-config')
   const result = await fetchRemoteConfiguration({
     applicationId: options.applicationId,
     remoteConfigurationId: options.remoteConfigurationId,
