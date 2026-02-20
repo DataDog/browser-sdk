@@ -85,6 +85,7 @@ export default defineConfig({
       provider: playwright(),
       instances: browserConfigurations.map((config) => ({
         browser: getPlaywrightBrowserName(config.name),
+        name: config.sessionName,
         playwright: {
           connectOptions: {
             wsEndpoint: `wss://cdp.browserstack.com/playwright?caps=${encodeURIComponent(JSON.stringify(getCapabilities(config)))}`,
