@@ -1,7 +1,6 @@
 import path from 'path'
 import type { ReporterDescription, Config } from '@playwright/test'
 import { getTestReportDirectory } from '../envUtils'
-import { DEV_SERVER_BASE_URL } from './lib/helpers/playwright'
 
 const isCi = !!process.env.CI
 const isLocal = !isCi
@@ -36,8 +35,9 @@ export const config: Config = {
         stdout: 'pipe',
         cwd: path.join(__dirname, '../..'),
         command: 'yarn dev',
-        url: DEV_SERVER_BASE_URL,
-        reuseExistingServer: true,
+        wait: {
+          stdout: /Server listening on port (?<dev_server_port>\d+)/,
+        },
       }
     : undefined,
 }

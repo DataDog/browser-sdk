@@ -20,7 +20,6 @@ export function startViewCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  location: Location,
   domMutationObservable: Observable<RumMutationRecord[]>,
   pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
@@ -61,7 +60,6 @@ export function startViewCollection(
   )
 
   return trackViews(
-    location,
     lifeCycle,
     domMutationObservable,
     pageOpenObservable,
@@ -163,10 +161,11 @@ function processViewUpdate(
 
   return {
     rawRumEvent: viewEvent,
-    startTime: view.startClocks.relative,
+    startClocks: view.startClocks,
     duration: view.duration,
     domainContext: {
       location: view.location,
+      handlingStack: view.handlingStack,
     },
   }
 }
@@ -198,6 +197,13 @@ function computeViewPerformanceData(
       timestamp: toServerDuration(largestContentfulPaint.value),
       target_selector: largestContentfulPaint.targetSelector,
       resource_url: largestContentfulPaint.resourceUrl,
+      sub_parts: largestContentfulPaint.subParts
+        ? {
+            load_delay: toServerDuration(largestContentfulPaint.subParts.loadDelay),
+            load_time: toServerDuration(largestContentfulPaint.subParts.loadTime),
+            render_delay: toServerDuration(largestContentfulPaint.subParts.renderDelay),
+          }
+        : undefined,
     },
   }
 }

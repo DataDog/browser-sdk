@@ -509,6 +509,46 @@ describe('remoteConfiguration', () => {
       })
     })
 
+    describe('localStorage strategy', () => {
+      const LOCAL_STORAGE_KEY = 'dd_test_version'
+
+      beforeEach(() => {
+        localStorage.setItem(LOCAL_STORAGE_KEY, 'my-version')
+        registerCleanupTask(() => localStorage.removeItem(LOCAL_STORAGE_KEY))
+      })
+
+      it('should resolve a configuration value from localStorage', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: LOCAL_STORAGE_KEY } },
+          { version: 'my-version' }
+        )
+        expect(metrics.get().localStorage).toEqual({ success: 1 })
+      })
+
+      it('should resolve a configuration value from localStorage with an extractor', () => {
+        localStorage.setItem(LOCAL_STORAGE_KEY, 'version-123')
+        expectAppliedRemoteConfigurationToBe(
+          {
+            version: {
+              rcSerializedType: 'dynamic',
+              strategy: 'localStorage',
+              key: LOCAL_STORAGE_KEY,
+              extractor: { rcSerializedType: 'regex', value: '\\d+' },
+            },
+          },
+          { version: '123' }
+        )
+      })
+
+      it('should resolve to undefined if the localStorage key is missing', () => {
+        expectAppliedRemoteConfigurationToBe(
+          { version: { rcSerializedType: 'dynamic', strategy: 'localStorage', key: 'non_existent_key' } },
+          { version: undefined }
+        )
+        expect(metrics.get().localStorage).toEqual({ missing: 1 })
+      })
+    })
+
     describe('with extractor', () => {
       beforeEach(() => {
         setCookie(COOKIE_NAME, 'my-version-123', ONE_MINUTE)

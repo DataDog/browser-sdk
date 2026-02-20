@@ -6,16 +6,11 @@ import {
   DeflateEncoderStreamId,
   Observable,
   ExperimentalFeature,
+  addExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { ViewCreatedEvent } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType, startViewHistory } from '@datadog/browser-rum-core'
-import {
-  collectAsyncCalls,
-  createNewEvent,
-  mockEventBridge,
-  mockExperimentalFeatures,
-  registerCleanupTask,
-} from '@datadog/browser-core/test'
+import { collectAsyncCalls, createNewEvent, mockEventBridge, registerCleanupTask } from '@datadog/browser-core/test'
 import type { ViewEndedEvent } from 'packages/rum-core/src/domain/view/trackViews'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import { appendElement, createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
@@ -25,7 +20,6 @@ import type { ReplayPayload } from '../domain/segmentCollection'
 import { setSegmentBytesLimit } from '../domain/segmentCollection'
 
 import { RecordType } from '../types'
-import { resetReplayStats } from '../domain/replayStats'
 import { createDeflateEncoder, resetDeflateWorkerState, startDeflateWorker } from '../domain/deflate'
 import { startRecording } from './startRecording'
 
@@ -41,7 +35,6 @@ describe('startRecording', () => {
 
   function setupStartRecording() {
     const configuration = mockRumConfiguration({ defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW })
-    resetReplayStats()
     const worker = startDeflateWorker(configuration, 'Session Replay', noop)
 
     requestSendSpy = jasmine.createSpy()
@@ -112,7 +105,7 @@ describe('startRecording', () => {
   })
 
   it('sends recorded segments with valid context when Change records are enabled', async () => {
-    mockExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
+    addExperimentalFeatures([ExperimentalFeature.USE_CHANGE_RECORDS])
     setupStartRecording()
     flushSegment(lifeCycle)
 

@@ -356,4 +356,23 @@ describe('getSelectorFromElement with shadow DOM', () => {
     const selector = getSelectorFromElement(button, undefined)
     expect(selector).toBe(`#foo${SHADOW_DOM_MARKER}#foo`)
   })
+
+  it('returns false when element is in DocumentFragment with matching siblings', () => {
+    const fragment = document.createDocumentFragment()
+    const div1 = document.createElement('div')
+    const div2 = document.createElement('div')
+    fragment.appendChild(div1)
+    fragment.appendChild(div2)
+
+    // The function should return false because div2 matches 'DIV' selector
+    expect(isSelectorUniqueAmongSiblings(div1, 'DIV', undefined)).toBeFalse()
+  })
+
+  it('returns true when element is in DocumentFragment with no matching siblings', () => {
+    const fragment = document.createDocumentFragment()
+    const div = document.createElement('div')
+    fragment.appendChild(div)
+
+    expect(isSelectorUniqueAmongSiblings(div, 'DIV', undefined)).toBeTrue()
+  })
 })

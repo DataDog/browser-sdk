@@ -1,5 +1,7 @@
+import { SESSION_STORE_KEY, SESSION_TIME_OUT_DELAY } from '@datadog/browser-core'
 import { RecordType } from '@datadog/browser-rum/src/types'
 import { test, expect } from '@playwright/test'
+import { setCookie } from '../../lib/helpers/browser'
 import { expireSession, findSessionCookie, renewSession } from '../../lib/helpers/session'
 import { createTest, waitForRequests } from '../../lib/framework'
 
@@ -162,6 +164,39 @@ test.describe('rum sessions', () => {
         expect(intakeRegistry.rumViewEvents[0].session.is_active).toBe(false)
         expect(intakeRegistry.logsEvents).toHaveLength(1)
         expect(intakeRegistry.replaySegments).toHaveLength(1)
+      })
+  })
+
+  test.describe('session cookie alteration', () => {
+    createTest('after cookie is altered to isExpired, a user interaction starts a new session with a new anonymous id')
+      .withRum()
+      .run(async ({ flushEvents, browserContext, page }) => {
+        const initialCookie = await findSessionCookie(browserContext)
+        const initialSessionId = initialCookie?.id
+        const initialAid = initialCookie?.aid
+
+        expect(initialSessionId).toBeDefined()
+        expect(initialAid).toBeDefined()
+
+        // Simulate cookie being altered to isExpired=1 without preserving aid
+        await setCookie(page, SESSION_STORE_KEY, 'isExpired=1', SESSION_TIME_OUT_DELAY)
+
+        // Cookies are cached for 1s, wait until the cache expires
+        await page.waitForTimeout(1100)
+
+        await page.locator('html').click()
+
+        // The session is not created right away, let's wait until we see a cookie
+        await page.waitForTimeout(1000)
+
+        await flushEvents()
+
+        const newCookie = await findSessionCookie(browserContext)
+        expect(newCookie?.isExpired).not.toEqual('1')
+        expect(newCookie?.id).toBeDefined()
+        expect(newCookie?.id).not.toEqual(initialSessionId)
+        expect(newCookie?.aid).toBeDefined()
+        expect(newCookie?.aid).not.toEqual(initialAid)
       })
   })
 

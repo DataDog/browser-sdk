@@ -15,8 +15,24 @@ contacts:
     contact: browser-sdk-deploy
 ---
 schema-version: v1
+kind: integration-branch
+name: v7
+team: rum-browser
+update_automatically: false # update_automatically is updating the integration branch on a schedule, instead we're updating it in a CI job for any commit to the base branch.
+reset_pattern: '' # This branch should never be reseted
+contacts:
+  - type: slack
+    contact: browser-sdk-deploy
+---
+schema-version: v1
 kind: buildimpactanalysis
 team: ci-platforms
 enabled_strategies:
   - yarn_berry_strategy
 preprocess: true
+---
+schema-version: v2
+kind: adms # Automated Dependency Management Service
+auto-version-updates:
+  disabled:
+    reason: We use renovate for now

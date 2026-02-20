@@ -98,7 +98,7 @@ test.describe('feature name', () => {
 - `.withRum(config?)` - Initialize RUM SDK with optional config
 - `.withLogs(config?)` - Initialize Logs SDK with optional config
 - `.withRumSlim()` - Also test with rum-slim variant
-- `.withWorker(options?)` - Test with Service Worker
+- `.withWorker(worker)` - Test with Service Worker (pass a `createWorker()` builder)
 
 **Custom Initialization:**
 
@@ -164,7 +164,7 @@ The `.run()` callback receives a `TestContext` object:
   // Utilities
   deleteAllCookies: () => Promise<void>
   sendXhr: (url, headers?) => Promise<string>
-  interactWithWorker: (cb) => Promise<void>
+  evaluateInWorker: (fn) => Promise<void>  // Execute code inside the service worker
   getExtensionId: () => Promise<string>
 }
 ```
@@ -224,6 +224,30 @@ createTest('should work in chromium only')
     // Test chromium-specific behavior
   })
 ```
+
+### Service Worker Testing
+
+Use `createWorker()` to configure a service worker with SDK products:
+
+```typescript
+import { createTest, createWorker } from '../lib/framework'
+
+createTest('worker with logs')
+  .withWorker(createWorker().withLogs({ forwardConsoleLogs: 'all' }))
+  .run(async ({ evaluateInWorker, flushEvents, intakeRegistry }) => {
+    await evaluateInWorker(() => {
+      DD_LOGS!.logger.log('hello from worker')
+    })
+    await flushEvents()
+    expect(intakeRegistry.logsEvents[0].message).toBe('hello from worker')
+  })
+```
+
+- `createWorker({ importScripts: true })` - Use `importScripts` instead of ES modules
+- `.withLogs(config?)` - Initialize Logs SDK in the worker
+- `.withRum(config?)` - Initialize RUM SDK in the worker
+- `evaluateInWorker(fn)` - Execute a function inside the service worker scope
+- ESM workers only work in Chromium; use `test.skip` for other browsers
 
 ### IntakeRegistry
 

@@ -188,7 +188,7 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
       /**
        * Configure the storage strategy for persisting sessions
        */
-      session_persistence?: 'local-storage' | 'cookie'
+      session_persistence?: 'local-storage' | 'cookie' | 'memory'
       /**
        * Whether contexts are stored in local storage
        */
@@ -528,6 +528,7 @@ export type TelemetryCommonFeaturesUsage =
   | ClearAccount
   | AddFeatureFlagEvaluation
   | AddOperationStepVital
+  | GraphQLRequest
 /**
  * Schema of browser specific features usage
  */
@@ -570,7 +571,15 @@ export interface CommonTelemetryProperties {
   /**
    * The source of this event
    */
-  readonly source: 'android' | 'ios' | 'browser' | 'flutter' | 'react-native' | 'unity' | 'kotlin-multiplatform'
+  readonly source:
+    | 'android'
+    | 'ios'
+    | 'browser'
+    | 'flutter'
+    | 'react-native'
+    | 'unity'
+    | 'kotlin-multiplatform'
+    | 'electron'
   /**
    * The version of the SDK generating the telemetry event
    */
@@ -864,6 +873,13 @@ export interface AddOperationStepVital {
    * Operations step type
    */
   action_type: 'start' | 'succeed' | 'fail'
+  [k: string]: unknown
+}
+export interface GraphQLRequest {
+  /**
+   * GraphQL request detected
+   */
+  feature: 'graphql-request'
   [k: string]: unknown
 }
 export interface StartSessionReplayRecording {

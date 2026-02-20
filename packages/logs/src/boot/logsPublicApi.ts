@@ -12,6 +12,7 @@ import {
   defineContextMethod,
   startBufferingData,
   callMonitored,
+  mockable,
 } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '../domain/configuration'
 import type { HandlerType } from '../domain/logger'
@@ -19,7 +20,8 @@ import type { StatusType } from '../domain/logger/isAuthorized'
 import { Logger } from '../domain/logger'
 import { buildCommonContext } from '../domain/contexts/commonContext'
 import type { InternalContext } from '../domain/contexts/internalContext'
-import type { StartLogs, StartLogsResult } from './startLogs'
+import type { StartLogsResult } from './startLogs'
+import { startLogs } from './startLogs'
 import { createPreStartStrategy } from './preStartLogs'
 
 export interface LoggerConfiguration {
@@ -265,19 +267,20 @@ export interface Strategy {
   handleLog: StartLogsResult['handleLog']
 }
 
-export function makeLogsPublicApi(startLogsImpl: StartLogs): LogsPublicApi {
+export function makeLogsPublicApi(): LogsPublicApi {
   const trackingConsentState = createTrackingConsentState()
   const bufferedDataObservable = startBufferingData().observable
 
   let strategy = createPreStartStrategy(
     buildCommonContext,
     trackingConsentState,
-    (initConfiguration, configuration) => {
-      const startLogsResult = startLogsImpl(
+    (initConfiguration, configuration, hooks) => {
+      const startLogsResult = mockable(startLogs)(
         configuration,
         buildCommonContext,
         trackingConsentState,
-        bufferedDataObservable
+        bufferedDataObservable,
+        hooks
       )
 
       strategy = createPostStartStrategy(initConfiguration, startLogsResult)

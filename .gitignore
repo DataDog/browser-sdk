@@ -11,8 +11,10 @@ browserstack.err
 package.tgz
 docs/
 *.tsbuildinfo
-/developer-extension/.output
+/developer-extension/dist
 /developer-extension/.wxt
+.env*
+!.env.example
 
 # https://yarnpkg.com/getting-started/qa#which-files-should-be-gitignored
 .pnp.*
@@ -27,3 +29,7 @@ docs/
 test-results/
 playwright-report/
 .vscode
+
+# Claude Code local files
+*.local.md
+.claude/settings.local.json

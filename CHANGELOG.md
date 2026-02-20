@@ -18,6 +18,76 @@
 
 ---
 
+## v6.27.1
+
+**Public Changes:**
+
+- 🐛 Changed tracked action to accept ClocksState ([#4177](https://github.com/DataDog/browser-sdk/pull/4177)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 [RUM Profiler] Fix profiler stuck in "stopped" mode when session expires ([#4152](https://github.com/DataDog/browser-sdk/pull/4152)) [RUM]
+
+**Internal Changes:**
+
+- 👷 Update all non-major dependencies ([#4150](https://github.com/DataDog/browser-sdk/pull/4150)) [FLAGGING] [RUM-REACT] [WORKER]
+- 👷 Show actual scenario file locations in E2E test output ([#4166](https://github.com/DataDog/browser-sdk/pull/4166))
+- 👷 Update dependency @playwright/test to v1.58.1 ([#4151](https://github.com/DataDog/browser-sdk/pull/4151))
+- 👷 Update build process in developer-extension ([#4153](https://github.com/DataDog/browser-sdk/pull/4153))
+- 👷 allow gh-worker-dd-devflow bots to bypass CLA check ([#4161](https://github.com/DataDog/browser-sdk/pull/4161))
+- ✅ fix flaky test ([#4168](https://github.com/DataDog/browser-sdk/pull/4168)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ improve unit test setup ([#4149](https://github.com/DataDog/browser-sdk/pull/4149)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [PANA-5945] Support child list InsertionCursors ([#4163](https://github.com/DataDog/browser-sdk/pull/4163)) [RUM]
+
+## v6.27.0
+
+**Public Changes:**
+
+- ✨ [RUM-11654] Add in-memory session persistence option ([#4124](https://github.com/DataDog/browser-sdk/pull/4124)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✨ [RUM-14142] Add source code context to vitals and manual view ([#4137](https://github.com/DataDog/browser-sdk/pull/4137)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-13741] Fix sibling uniqueness check for elements in DocumentFragment ([#4115](https://github.com/DataDog/browser-sdk/pull/4115)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ⚗️ [RUM-13818] Collect LCP subparts ([#4104](https://github.com/DataDog/browser-sdk/pull/4104)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 fix code coverage upload ([#4155](https://github.com/DataDog/browser-sdk/pull/4155))
+- 👷 Fix source maps upload for versioned canary builds ([#4146](https://github.com/DataDog/browser-sdk/pull/4146))
+- 👷 Lock file maintenance ([#4141](https://github.com/DataDog/browser-sdk/pull/4141))
+- 👷 Update all non-major dependencies ([#4138](https://github.com/DataDog/browser-sdk/pull/4138)) [RUM-REACT]
+- 👷 skip BrowserStack tests for non-code changes ([#4136](https://github.com/DataDog/browser-sdk/pull/4136))
+- 👷 Update dependency @playwright/test to v1.58.0 ([#4139](https://github.com/DataDog/browser-sdk/pull/4139))
+- 👷 Bump slack-notifier version ([#4142](https://github.com/DataDog/browser-sdk/pull/4142))
+- 👷 Use RUM Profiling Schema from RUM-Events-Format ([#4080](https://github.com/DataDog/browser-sdk/pull/4080)) [RUM]
+- 👷 set NEXT_MAJOR_BRANCH to v7 ([#4132](https://github.com/DataDog/browser-sdk/pull/4132))
+- 🔧 Use hardcoded v7 instead of $NEXT_MAJOR_BRANCH variable ([#4135](https://github.com/DataDog/browser-sdk/pull/4135))
+- 🔧 Add integration-branch config for v7 ([#4134](https://github.com/DataDog/browser-sdk/pull/4134))
+- 🔧 Ignore Claude Code local files ([#4130](https://github.com/DataDog/browser-sdk/pull/4130))
+- ci: Removing usage of legacy runners ([#4106](https://github.com/DataDog/browser-sdk/pull/4106))
+- ♻️ move telemetry to pre-start step ([#4107](https://github.com/DataDog/browser-sdk/pull/4107)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+## v6.26.0
+
+**Public Changes:**
+
+- ⚡️ Use native fetch to avoid Zone.js change detection in Angular apps ([#4117](https://github.com/DataDog/browser-sdk/pull/4117)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 Support stylesheet serialization in Safari iOS 16.x ([#4126](https://github.com/DataDog/browser-sdk/pull/4126)) [RUM]
+- ⚗️ [RUM-11393] Add Start/StopAction API ([#4038](https://github.com/DataDog/browser-sdk/pull/4038))
+- ⚗️ [MFE] Source code context event enrichment ([#3926](https://github.com/DataDog/browser-sdk/pull/3926))
+- 📝 Add comprehensive AGENTS.md for Browser SDK, scripts, and E2E testing ([#4109](https://github.com/DataDog/browser-sdk/pull/4109))
+- 📝 Add new command for revising AGENTS.md with session learnings ([#4112](https://github.com/DataDog/browser-sdk/pull/4112))
+
+**Internal Changes:**
+
+- 🔊 extend or remove expired telemetry debug ([#4102](https://github.com/DataDog/browser-sdk/pull/4102))
+- ♻️ Update rum-events-format ([#4114](https://github.com/DataDog/browser-sdk/pull/4114))
+- 👷 Bump iOS version ([#4119](https://github.com/DataDog/browser-sdk/pull/4119))
+- 👷 improve check-schemas script ([#4123](https://github.com/DataDog/browser-sdk/pull/4123)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 👷 Update all non-major dependencies ([#4116](https://github.com/DataDog/browser-sdk/pull/4116))
+- 👷 Handle function values for configuration in developer extension ([#4042](https://github.com/DataDog/browser-sdk/pull/4042))
+- 👷 Update react-router monorepo to v7 (major) ([#4100](https://github.com/DataDog/browser-sdk/pull/4100))
+- 👷 Update dependency recharts to v3 ([#4075](https://github.com/DataDog/browser-sdk/pull/4075))
+- 👷 Update dependency eslint-plugin-jsdoc to v62 ([#4098](https://github.com/DataDog/browser-sdk/pull/4098))
+- 👷 Update react monorepo to v19 ([#4101](https://github.com/DataDog/browser-sdk/pull/4101))
+- 👷 Update all non-major dependencies ([#4099](https://github.com/DataDog/browser-sdk/pull/4099)) [RUM-REACT]
+- 👷 Fix deployment gate timing to ensure 30-minute duration ([#4096](https://github.com/DataDog/browser-sdk/pull/4096))
+
 ## v6.25.4
 
 **Public Changes:**

@@ -86,7 +86,6 @@ describe('viewCollection', () => {
       lifeCycle,
       hooks,
       mockRumConfiguration(partialConfiguration),
-      location,
       domMutationObservable,
       windowOpenObservable,
       locationChangeObservable,
@@ -110,7 +109,7 @@ describe('viewCollection', () => {
     setupViewCollection()
     lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, VIEW)
 
-    expect(rawRumEvents[rawRumEvents.length - 1].startTime).toBe(1234 as RelativeTime)
+    expect(rawRumEvents[rawRumEvents.length - 1].startClocks.relative).toBe(1234 as RelativeTime)
     expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent).toEqual({
       _dd: {
         document_version: 3,
@@ -185,6 +184,7 @@ describe('viewCollection', () => {
             timestamp: (10 * 1e6) as ServerDuration,
             target_selector: undefined,
             resource_url: undefined,
+            sub_parts: undefined,
           },
         },
         resource: {

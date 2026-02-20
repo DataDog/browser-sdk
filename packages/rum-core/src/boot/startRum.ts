@@ -6,12 +6,11 @@ import type {
   TrackingConsentState,
   BufferedData,
   BufferedObservable,
+  Telemetry,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
-  TelemetryService,
-  startTelemetry,
   canUseEventBridge,
   addTelemetryDebug,
   startAccountContext,
@@ -52,7 +51,6 @@ import type { SdkName } from '../domain/contexts/defaultContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
-import { createHooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
@@ -74,11 +72,12 @@ export function startRum(
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
+  telemetry: Telemetry,
+  hooks: Hooks,
   sdkName?: SdkName
 ) {
   const cleanupTasks: Array<() => void> = []
   const lifeCycle = new LifeCycle()
-  const hooks = createHooks()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
 
@@ -93,16 +92,6 @@ export function startRum(
     lifeCycle.notify(LifeCycleEventType.PAGE_MAY_EXIT, event)
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
-
-  const telemetry = startTelemetry(
-    TelemetryService.RUM,
-    configuration,
-    hooks,
-    reportError,
-    pageMayExitObservable,
-    createEncoder
-  )
-  cleanupTasks.push(telemetry.stop)
 
   const session = !canUseEventBridge()
     ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
@@ -174,7 +163,7 @@ export function startRumEventCollection(
   const cleanupTasks: Array<() => void> = []
 
   const domMutationObservable = createDOMMutationObservable()
-  const locationChangeObservable = createLocationChangeObservable(configuration, location)
+  const locationChangeObservable = createLocationChangeObservable(configuration)
   const { observable: windowOpenObservable, stop: stopWindowOpen } = createWindowOpenObservable()
   cleanupTasks.push(stopWindowOpen)
 
@@ -183,7 +172,7 @@ export function startRumEventCollection(
   cleanupTasks.push(() => pageStateHistory.stop())
   const viewHistory = startViewHistory(lifeCycle)
   cleanupTasks.push(() => viewHistory.stop())
-  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable, location)
+  const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
   startSessionContext(hooks, session, recorderApi, viewHistory)
@@ -223,7 +212,6 @@ export function startRumEventCollection(
     lifeCycle,
     hooks,
     configuration,
-    location,
     domMutationObservable,
     windowOpenObservable,
     locationChangeObservable,
@@ -236,10 +224,10 @@ export function startRumEventCollection(
 
   cleanupTasks.push(stopViewCollection)
 
-  const { stop: stopResourceCollection } = startResourceCollection(lifeCycle, configuration, pageStateHistory)
-  cleanupTasks.push(stopResourceCollection)
+  const resourceCollection = startResourceCollection(lifeCycle, configuration, pageStateHistory)
+  cleanupTasks.push(resourceCollection.stop)
 
-  const { stop: stopLongTaskCollection, longTaskContexts } = startLongTaskCollection(lifeCycle, configuration)
+  const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
@@ -260,6 +248,8 @@ export function startRumEventCollection(
     addAction: actionCollection.addAction,
     startAction: actionCollection.startAction,
     stopAction: actionCollection.stopAction,
+    startResource: resourceCollection.startResource,
+    stopResource: resourceCollection.stopResource,
     addEvent: eventCollection.addEvent,
     addError,
     addTiming,
@@ -278,7 +268,6 @@ export function startRumEventCollection(
     globalContext,
     userContext,
     accountContext,
-    longTaskContexts,
     stop: () => cleanupTasks.forEach((task) => task()),
   }
 }

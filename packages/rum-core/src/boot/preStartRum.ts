@@ -1,4 +1,11 @@
-import type { TrackingConsentState, DeflateWorker, Context, ContextManager, BoundedBuffer } from '@datadog/browser-core'
+import type {
+  TrackingConsentState,
+  DeflateWorker,
+  Context,
+  ContextManager,
+  BoundedBuffer,
+  Telemetry,
+} from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   display,
@@ -18,7 +25,12 @@ import {
   buildUserContextManager,
   monitorError,
   sanitize,
+  startTelemetry,
+  TelemetryService,
+  mockable,
 } from '@datadog/browser-core'
+import type { Hooks } from '../domain/hooks'
+import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
 import {
   validateAndBuildRumConfiguration,
@@ -37,15 +49,19 @@ import { callPluginsMethod } from '../domain/plugins'
 import type { StartRumResult } from './startRum'
 import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
+export type DoStartRum = (
+  configuration: RumConfiguration,
+  deflateWorker: DeflateWorker | undefined,
+  initialViewOptions: ViewOptions | undefined,
+  telemetry: Telemetry,
+  hooks: Hooks
+) => StartRumResult
+
 export function createPreStartStrategy(
   { ignoreInitIfSyntheticsWillInjectRum = true, startDeflateWorker }: RumPublicApiOptions,
   trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
-  doStartRum: (
-    configuration: RumConfiguration,
-    deflateWorker: DeflateWorker | undefined,
-    initialViewOptions?: ViewOptions
-  ) => StartRumResult
+  doStartRum: DoStartRum
 ): Strategy {
   const bufferApiCalls = createBoundedBuffer<StartRumResult>()
 
@@ -66,6 +82,8 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
+  let telemetry: Telemetry | undefined
+  const hooks = createHooks()
 
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartRum)
 
@@ -74,6 +92,11 @@ export function createPreStartStrategy(
   function tryStartRum() {
     if (!cachedInitConfiguration || !cachedConfiguration || !trackingConsentState.isGranted()) {
       return
+    }
+
+    // Start telemetry only once, when we have consent and configuration
+    if (!telemetry) {
+      telemetry = mockable(startTelemetry)(TelemetryService.RUM, cachedConfiguration, hooks)
     }
 
     trackingConsentStateSubscription.unsubscribe()
@@ -94,7 +117,7 @@ export function createPreStartStrategy(
       initialViewOptions = firstStartViewCall.options
     }
 
-    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions)
+    const startRumResult = doStartRum(cachedConfiguration, deflateWorker, initialViewOptions, telemetry, hooks)
 
     bufferApiCalls.drain(startRumResult)
   }
@@ -140,6 +163,7 @@ export function createPreStartStrategy(
     }
 
     cachedConfiguration = configuration
+
     // Instrument fetch to track network requests
     // This is needed in case the consent is not granted and some customer
     // library (Apollo Client) is storing uninstrumented fetch to be used later
@@ -261,6 +285,16 @@ export function createPreStartStrategy(
     stopAction(name, options) {
       const stopClocks = clocksNow()
       bufferApiCalls.add((startRumResult) => startRumResult.stopAction(name, options, stopClocks))
+    },
+
+    startResource(url, options) {
+      const startClocks = clocksNow()
+      bufferApiCalls.add((startRumResult) => startRumResult.startResource(url, options, startClocks))
+    },
+
+    stopResource(url, options) {
+      const stopClocks = clocksNow()
+      bufferApiCalls.add((startRumResult) => startRumResult.stopResource(url, options, stopClocks))
     },
 
     addError(providedError) {

@@ -2,11 +2,7 @@ import type { RumEvent } from '../../../../rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
 import { DOCS_ORIGIN, MORE_DETAILS, display } from '../../tools/display'
-import {
-  ExperimentalFeature,
-  isExperimentalFeatureEnabled,
-  resetExperimentalFeatures,
-} from '../../tools/experimentalFeatures'
+import { ExperimentalFeature, isExperimentalFeatureEnabled } from '../../tools/experimentalFeatures'
 import { SessionPersistence } from '../session/sessionConstants'
 import { TrackingConsent } from '../trackingConsent'
 import type { InitConfiguration } from './configuration'
@@ -19,10 +15,6 @@ describe('validateAndBuildConfiguration', () => {
 
   beforeEach(() => {
     displaySpy = spyOn(display, 'error')
-  })
-
-  afterEach(() => {
-    resetExperimentalFeatures()
   })
 
   describe('experimentalFeatures', () => {
@@ -100,12 +92,39 @@ describe('validateAndBuildConfiguration', () => {
   })
 
   describe('sessionStoreStrategyType', () => {
-    it('is present in the returned configuration', () => {
+    it('allowFallbackToLocalStorage should not be enabled by default', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
       const configuration = validateAndBuildConfiguration({ clientToken })
-      expect(configuration!.sessionStoreStrategyType).toEqual({
+      expect(configuration?.sessionStoreStrategyType).toBeUndefined()
+    })
+
+    it('should contain cookie strategy in the configuration by default', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: false })
+      expect(configuration?.sessionStoreStrategyType).toEqual({
         type: SessionPersistence.COOKIE,
         cookieOptions: { secure: false, crossSite: false, partitioned: false },
       })
+    })
+
+    it('should contain cookie strategy in the configuration when fallback is enabled and cookies are available', () => {
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toEqual({
+        type: SessionPersistence.COOKIE,
+        cookieOptions: { secure: false, crossSite: false, partitioned: false },
+      })
+    })
+
+    it('should contain localStorage strategy in the configuration when localStorage fallback is enabled and cookies are not available', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
+    })
+
+    it('should not contain any strategy if both cookies and local storage are unavailable', () => {
+      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
+      const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
+      expect(configuration?.sessionStoreStrategyType).toBeUndefined()
     })
   })
 

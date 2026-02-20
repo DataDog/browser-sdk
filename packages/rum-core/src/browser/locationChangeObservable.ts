@@ -6,7 +6,7 @@ export interface LocationChange {
   newLocation: Readonly<Location>
 }
 
-export function createLocationChangeObservable(configuration: RumConfiguration, location: Location) {
+export function createLocationChangeObservable(configuration: RumConfiguration) {
   let currentLocation = shallowClone(location)
 
   return new Observable<LocationChange>((observable) => {

@@ -1,14 +1,11 @@
 import { display } from './display'
-import { callMonitored, monitor, monitored, startMonitorErrorCollection, resetMonitor, setDebugMode } from './monitor'
+import { callMonitored, monitor, monitored, startMonitorErrorCollection, setDebugMode } from './monitor'
 
 describe('monitor', () => {
   let onMonitorErrorCollectedSpy: jasmine.Spy<(error: unknown) => void>
 
   beforeEach(() => {
     onMonitorErrorCollectedSpy = jasmine.createSpy()
-  })
-  afterEach(() => {
-    resetMonitor()
   })
 
   describe('decorator', () => {

@@ -6,6 +6,7 @@ import type { RemoteConfiguration } from '@datadog/browser-rum-core'
 import { getSdkBundlePath, getTestAppBundlePath } from '../sdkBuilds'
 import type { MockServerApp, Servers } from '../httpServers'
 import { DEV_SERVER_BASE_URL } from '../../helpers/playwright'
+import type { WorkerOptions } from '../pageSetups'
 import { workerSetup } from '../pageSetups'
 
 export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
@@ -13,7 +14,8 @@ export const LARGE_RESPONSE_MIN_BYTE_SIZE = 100_000
 export function createMockServerApp(
   servers: Servers,
   setup: string,
-  remoteConfiguration?: RemoteConfiguration
+  remoteConfiguration?: RemoteConfiguration,
+  worker?: WorkerOptions
 ): MockServerApp {
   const app = express()
   let largeResponseBytesWritten = 0
@@ -48,9 +50,16 @@ export function createMockServerApp(
   app.get('/sw.js', (_req, res) => {
     const query = _req.query
 
-    res
-      .contentType('application/javascript')
-      .send(workerSetup({ importScripts: Boolean(query.importScripts), nativeLog: Boolean(query.nativeLog) }, servers))
+    res.contentType('application/javascript').send(
+      workerSetup(
+        {
+          importScripts: Boolean(query.importScripts),
+          rumConfiguration: worker?.rumConfiguration,
+          logsConfiguration: worker?.logsConfiguration,
+        },
+        servers
+      )
+    )
   })
 
   function generateLargeResponse(res: ServerResponse, chunkText: string) {
@@ -127,6 +136,11 @@ export function createMockServerApp(
     }
   })
 
+  app.get('/graphql', (_req, res) => {
+    res.header('Content-Type', 'application/json')
+    res.json({ data: { result: 'success' } })
+  })
+
   app.get('/redirect', (req, res) => {
     const redirectUri = url.parse(req.originalUrl)
     res.redirect(`ok${redirectUri.search!}`)
@@ -136,7 +150,7 @@ export function createMockServerApp(
     res.send(JSON.stringify(req.headers))
   })
 
-  app.get('/', (_req, res) => {
+  app.get('/', (req, res) => {
     res.header(
       'Content-Security-Policy',
       [
@@ -145,6 +159,9 @@ export function createMockServerApp(
         "worker-src blob: 'self'",
       ].join(';')
     )
+    if (req.query['js-profiling'] === 'true') {
+      res.header('Document-Policy', 'js-profiling')
+    }
     res.send(setup)
     res.end()
   })

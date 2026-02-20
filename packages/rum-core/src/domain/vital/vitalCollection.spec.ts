@@ -1,6 +1,6 @@
 import type { Duration } from '@datadog/browser-core'
-import { mockClock, mockExperimentalFeatures, type Clock } from '@datadog/browser-core/test'
-import { clocksNow, ExperimentalFeature } from '@datadog/browser-core'
+import { mockClock, type Clock } from '@datadog/browser-core/test'
+import { addExperimentalFeatures, clocksNow, ExperimentalFeature } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
@@ -208,7 +208,7 @@ describe('vitalCollection', () => {
         vitalCollection.startDurationVital('foo')
         vitalCollection.stopDurationVital('foo')
 
-        expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
+        expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
         expect(rawRumEvents[0].rawRumEvent).toEqual({
           date: jasmine.any(Number),
           vital: {
@@ -224,11 +224,22 @@ describe('vitalCollection', () => {
         expect(rawRumEvents[0].domainContext).toEqual({})
       })
 
+      it('should create vital with handling stack', () => {
+        vitalCollection.startDurationVital('foo', {
+          handlingStack: 'Error\n    at foo\n    at bar',
+        })
+        vitalCollection.stopDurationVital('foo')
+
+        expect(rawRumEvents[0].domainContext).toEqual({
+          handlingStack: 'Error\n    at foo\n    at bar',
+        })
+      })
+
       it('should collect raw rum event from operation step vital', () => {
-        mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+        addExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
         vitalCollection.addOperationStepVital('foo', 'start')
 
-        expect(rawRumEvents[0].startTime).toEqual(jasmine.any(Number))
+        expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
         expect(rawRumEvents[0].rawRumEvent).toEqual({
           date: jasmine.any(Number),
           vital: {
@@ -263,7 +274,7 @@ describe('vitalCollection', () => {
       })
 
       it('should create a operation step vital from add API', () => {
-        mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+        addExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
         vitalCollection.addOperationStepVital(
           'foo',
           'end',

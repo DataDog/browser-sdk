@@ -79,9 +79,10 @@ export interface RawRumResourceEvent {
     trace_id?: string
     span_id?: string // not available for initial document tracing
     rule_psr?: number
-    discarded: boolean
+    discarded?: boolean
     page_states?: PageStateServerEntry[]
   }
+  context?: Context
 }
 
 export interface ResourceEntryDetailsElement {
@@ -204,6 +205,11 @@ export interface ViewPerformanceData {
     timestamp: ServerDuration
     target_selector?: string
     resource_url?: string
+    sub_parts?: {
+      load_delay: ServerDuration
+      load_time: ServerDuration
+      render_delay: ServerDuration
+    }
   }
 }
 

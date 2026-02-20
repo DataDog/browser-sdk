@@ -26,6 +26,7 @@ import {
   setTimeout,
   Observable,
   createContextManager,
+  mockable,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
@@ -50,6 +51,7 @@ export interface ViewEvent {
   version?: string
   context?: Context
   location: Readonly<Location>
+  handlingStack?: string
   commonViewMetrics: CommonViewMetrics
   initialViewMetrics: InitialViewMetrics
   customTimings: ViewCustomTimings
@@ -99,10 +101,10 @@ export interface ViewOptions {
   service?: RumInitConfiguration['service']
   version?: RumInitConfiguration['version']
   context?: Context
+  handlingStack?: string
 }
 
 export function trackViews(
-  location: Location,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
@@ -135,7 +137,6 @@ export function trackViews(
       domMutationObservable,
       windowOpenObservable,
       configuration,
-      location,
       loadingType,
       startClocks,
       viewOptions
@@ -209,7 +210,6 @@ function newView(
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
-  initialLocation: Location,
   loadingType: ViewLoadingType,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
@@ -220,7 +220,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  const location = shallowClone(initialLocation)
+  const location = shallowClone(mockable(window.location))
   const contextManager = createContextManager()
 
   let sessionIsActive = true
@@ -228,6 +228,7 @@ function newView(
   const service = viewOptions?.service || configuration.service
   const version = viewOptions?.version || configuration.version
   const context = viewOptions?.context
+  const handlingStack = viewOptions?.handlingStack
 
   if (context) {
     contextManager.setContext(context)
@@ -323,6 +324,7 @@ function newView(
       context: contextManager.getContext(),
       loadingType,
       location,
+      handlingStack,
       startClocks,
       commonViewMetrics: getCommonViewMetrics(),
       initialViewMetrics,
