@@ -27,6 +27,7 @@ export default tseslint.config(
       'test/**/dist',
       'test/apps/react-heavy-spa',
       'test/apps/react-shopist-like',
+      'test/apps/microfrontend',
       'sandbox',
       'coverage',
       'rum-events-format',
