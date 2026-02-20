@@ -281,6 +281,15 @@ export interface RumInitConfiguration extends InitConfiguration {
    * @category Data Collection
    */
   allowedGraphQlUrls?: Array<MatchOption | GraphQlUrlOption> | undefined
+
+  /**
+   * A list of HTML attributes allowed to be used in the action selector collection.
+   * Matches attributes against the event target and its ancestors.
+   * If not provided, the SDK will use a default list of HTML attributes.
+   *
+   * @category Data Collection
+   */
+  allowedHtmlAttributes?: MatchOption[] | undefined
 }
 
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
@@ -321,6 +330,7 @@ export interface RumConfiguration extends Configuration {
   profilingSampleRate: number
   propagateTraceBaggage: boolean
   allowedGraphQlUrls: GraphQlUrlOption[]
+  allowedHtmlAttributes?: MatchOption[]
 }
 
 export function validateAndBuildRumConfiguration(
@@ -400,6 +410,9 @@ export function validateAndBuildRumConfiguration(
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
     propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
     allowedGraphQlUrls,
+    allowedHtmlAttributes: Array.isArray(initConfiguration.allowedHtmlAttributes)
+      ? initConfiguration.allowedHtmlAttributes.filter(isMatchOption)
+      : [],
     ...baseConfiguration,
   }
 }
@@ -548,6 +561,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     remote_configuration_id: configuration.remoteConfigurationId,
     profiling_sample_rate: configuration.profilingSampleRate,
     use_remote_configuration_proxy: !!configuration.remoteConfigurationProxy,
+    use_allowed_html_attributes: isNonEmptyArray(configuration.allowedHtmlAttributes),
     ...baseSerializedConfiguration,
   } satisfies RawTelemetryConfiguration
 }

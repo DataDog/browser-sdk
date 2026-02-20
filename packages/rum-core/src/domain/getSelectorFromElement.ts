@@ -77,7 +77,7 @@ export function getSelectorFromElement(
   return targetElementSelector
 }
 
-function isGeneratedValue(value: string) {
+export function isGeneratedValue(value: string) {
   // To compute the "URL path group", the backend replaces every URL path parts as a question mark
   // if it thinks the part is an identifier. The condition it uses is to checks whether a digit is
   // present.
@@ -88,7 +88,7 @@ function isGeneratedValue(value: string) {
   return /[0-9]/.test(value)
 }
 
-function getIDSelector(element: Element): string | undefined {
+export function getIDSelector(element: Element): string | undefined {
   if (element.id && !isGeneratedValue(element.id)) {
     return `#${CSS.escape(element.id)}`
   }
@@ -109,7 +109,7 @@ function getClassSelector(element: Element): string | undefined {
   }
 }
 
-function getTagNameSelector(element: Element): string {
+export function getTagNameSelector(element: Element): string {
   return CSS.escape(element.tagName)
 }
 
