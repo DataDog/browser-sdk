@@ -19,7 +19,12 @@ import type { TrackingConsentState } from '../trackingConsent'
 import { TrackingConsent, createTrackingConsentState } from '../trackingConsent'
 import { isChromium } from '../../tools/utils/browserDetection'
 import type { SessionManager } from './sessionManager'
-import { startSessionManager, startSessionManagerStub, stopSessionManager, VISIBILITY_CHECK_DELAY } from './sessionManager'
+import {
+  startSessionManager,
+  startSessionManagerStub,
+  stopSessionManager,
+  VISIBILITY_CHECK_DELAY,
+} from './sessionManager'
 import { SESSION_EXPIRATION_DELAY, SESSION_TIME_OUT_DELAY, SessionPersistence } from './sessionConstants'
 import type { SessionStoreStrategyType } from './storeStrategies/sessionStoreStrategy'
 import { SESSION_STORE_KEY } from './storeStrategies/sessionStoreStrategy'

@@ -14,12 +14,7 @@ import {
   mockable,
 } from '@datadog/browser-core'
 
-import type {
-  LifeCycle,
-  RumConfiguration,
-  TransportPayload,
-  ViewHistory,
-} from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, TransportPayload, ViewHistory } from '@datadog/browser-rum-core'
 import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
