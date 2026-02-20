@@ -163,6 +163,7 @@ test.describe('Session Stores', () => {
             const script = iframeWindow.document.createElement('script')
             script.async = true
             script.src = browserSdkUrl
+            script.crossOrigin = ''
             iframeWindow.document.head.appendChild(script)
           }),
         bundleUrl
