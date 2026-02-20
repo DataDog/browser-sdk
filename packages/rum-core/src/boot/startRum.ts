@@ -3,7 +3,6 @@ import type {
   RawError,
   DeflateEncoderStreamId,
   Encoder,
-  TrackingConsentState,
   BufferedData,
   BufferedObservable,
   Telemetry,
@@ -27,8 +26,6 @@ import { startActionCollection } from '../domain/action/actionCollection'
 import { startErrorCollection } from '../domain/error/errorCollection'
 import { startResourceCollection } from '../domain/resource/resourceCollection'
 import { startViewCollection } from '../domain/view/viewCollection'
-import type { RumSessionManager } from '../domain/rumSessionManager'
-import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { startRumBatch } from '../transport/startRumBatch'
 import { startRumEventBridge } from '../transport/startRumEventBridge'
 import { startUrlContexts } from '../domain/contexts/urlContexts'
@@ -49,11 +46,11 @@ import { startSessionContext } from '../domain/contexts/sessionContext'
 import { startConnectivityContext } from '../domain/contexts/connectivityContext'
 import type { SdkName } from '../domain/contexts/defaultContext'
 import { startDefaultContext } from '../domain/contexts/defaultContext'
-import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Hooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
+import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -61,15 +58,11 @@ export type StartRumResult = ReturnType<StartRum>
 
 export function startRum(
   configuration: RumConfiguration,
+  sessionManager: RumSessionManager,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
-
-  // `startRum` and its subcomponents assume tracking consent is granted initially and starts
-  // collecting logs unconditionally. As such, `startRum` should be called with a
-  // `trackingConsentState` set to "granted".
-  trackingConsentState: TrackingConsentState,
   customVitalsState: CustomVitalsState,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   telemetry: Telemetry,
@@ -80,6 +73,9 @@ export function startRum(
   const lifeCycle = new LifeCycle()
 
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (event) => sendToExtension('rum', event))
+
+  sessionManager.expireObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED))
+  sessionManager.renewObservable.subscribe(() => lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED))
 
   const reportError = (error: RawError) => {
     lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error })
@@ -93,17 +89,13 @@ export function startRum(
   })
   cleanupTasks.push(() => pageMayExitSubscription.unsubscribe())
 
-  const session = !canUseEventBridge()
-    ? startRumSessionManager(configuration, lifeCycle, trackingConsentState)
-    : startRumSessionManagerStub()
-
   if (!canUseEventBridge()) {
     const batch = startRumBatch(
       configuration,
       lifeCycle,
       reportError,
       pageMayExitObservable,
-      session.expireObservable,
+      sessionManager.expireObservable,
       createEncoder
     )
     cleanupTasks.push(() => batch.stop())
@@ -112,8 +104,6 @@ export function startRum(
     startRumEventBridge(lifeCycle)
   }
 
-  startTrackingConsentContext(hooks, trackingConsentState)
-
   const { stop: stopInitialViewMetricsTelemetry } = startInitialViewMetricsTelemetry(lifeCycle, telemetry)
   cleanupTasks.push(stopInitialViewMetricsTelemetry)
 
@@ -121,7 +111,7 @@ export function startRum(
     lifeCycle,
     hooks,
     configuration,
-    session,
+    sessionManager,
     recorderApi,
     initialViewOptions,
     customVitalsState,
@@ -138,8 +128,8 @@ export function startRum(
   return {
     ...startRumEventCollectionResult,
     lifeCycle,
-    session,
-    stopSession: () => session.expire(),
+    sessionManager,
+    stopSession: () => sessionManager.expire(),
     telemetry,
     stop: () => {
       cleanupTasks.forEach((task) => task())
@@ -152,7 +142,7 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  session: RumSessionManager,
+  sessionManager: RumSessionManager,
   recorderApi: RecorderApi,
   initialViewOptions: ViewOptions | undefined,
   customVitalsState: CustomVitalsState,
@@ -175,10 +165,10 @@ export function startRumEventCollection(
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  startSessionContext(hooks, session, recorderApi, viewHistory)
+  startSessionContext(hooks, sessionManager, recorderApi, viewHistory)
   startConnectivityContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(hooks, configuration, session, 'rum')
+  const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
   const actionCollection = startActionCollection(
@@ -232,13 +222,13 @@ export function startRumEventCollection(
 
   const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
 
-  startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
+  startRequestCollection(lifeCycle, configuration, sessionManager, userContext, accountContext)
 
   const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
 
   const internalContext = startInternalContext(
     configuration.applicationId,
-    session,
+    sessionManager,
     viewHistory,
     actionCollection.actionContexts,
     urlContexts
@@ -260,6 +250,8 @@ export function startRumEventCollection(
     getViewContext,
     setViewName,
     viewHistory,
+    sessionManager,
+    stopSession: () => sessionManager.expire(),
     getInternalContext: internalContext.get,
     startDurationVital: vitalCollection.startDurationVital,
     stopDurationVital: vitalCollection.stopDurationVital,

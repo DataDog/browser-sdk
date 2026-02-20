@@ -18,6 +18,12 @@
 
 ---
 
+## v7.0.0-alpha.0
+
+**Internal Changes:**
+
+- 👷 bump all packages to version to v7.0.0-alpha.0
+
 ## v6.27.1
 
 **Public Changes:**
