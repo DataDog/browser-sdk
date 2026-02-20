@@ -302,7 +302,7 @@ describe('tracer', () => {
             propagateTraceBaggage: true,
           },
         })
-        expect(baggage).toEqual('session.id=session-id,user.id=1234,account.id=5678')
+        expect(baggage).toEqual('session.id=00000000-aaaa-0000-aaaa-000000000000,user.id=1234,account.id=5678')
       })
 
       it('should not add baggage header when propagateTraceBaggage is false', () => {
@@ -321,7 +321,9 @@ describe('tracer', () => {
           },
           userId: '1234, 😀',
         })
-        expect(baggage).toBe('session.id=session-id,user.id=1234%2C%20%F0%9F%98%80,account.id=5678')
+        expect(baggage).toBe(
+          'session.id=00000000-aaaa-0000-aaaa-000000000000,user.id=1234%2C%20%F0%9F%98%80,account.id=5678'
+        )
       })
 
       it('skips non-string context values', () => {
@@ -331,7 +333,7 @@ describe('tracer', () => {
           },
           userId: 1234,
         })
-        expect(baggage).toBe('session.id=session-id,account.id=5678')
+        expect(baggage).toBe('session.id=00000000-aaaa-0000-aaaa-000000000000,account.id=5678')
       })
     })
 

@@ -1,4 +1,4 @@
-import type { Encoder } from '@datadog/browser-core'
+import type { Encoder, SessionManager } from '@datadog/browser-core'
 import {
   addEventListener,
   clearTimeout,
@@ -14,13 +14,7 @@ import {
   mockable,
 } from '@datadog/browser-core'
 
-import type {
-  LifeCycle,
-  RumConfiguration,
-  RumSessionManager,
-  TransportPayload,
-  ViewHistory,
-} from '@datadog/browser-rum-core'
+import type { LifeCycle, RumConfiguration, TransportPayload, ViewHistory } from '@datadog/browser-rum-core'
 import { createFormDataTransport, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { BrowserProfilerTrace, RumViewEntry } from '../../types'
 import type {
@@ -47,7 +41,7 @@ export const DEFAULT_RUM_PROFILER_CONFIGURATION: RUMProfilerConfiguration = {
 export function createRumProfiler(
   configuration: RumConfiguration,
   lifeCycle: LifeCycle,
-  session: RumSessionManager,
+  session: SessionManager,
   profilingContextManager: ProfilingContextManager,
   createEncoder: (streamId: DeflateEncoderStreamId) => Encoder,
   viewHistory: ViewHistory,
@@ -306,7 +300,7 @@ export function createRumProfiler(
 
   function handleProfilerTrace(trace: BrowserProfilerTrace): void {
     // Find current session to assign it to the Profile.
-    const sessionId = session.findTrackedSession()?.id
+    const sessionId = session.findTrackedSession(configuration.sessionSampleRate)?.id
     const payload = assembleProfilingPayload(trace, configuration, sessionId)
 
     void transport.send(payload as unknown as TransportPayload)

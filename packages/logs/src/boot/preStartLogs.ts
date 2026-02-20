@@ -1,4 +1,4 @@
-import type { TrackingConsentState } from '@datadog/browser-core'
+import type { TrackingConsentState, SessionManager } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
   canUseEventBridge,
@@ -14,6 +14,8 @@ import {
   addTelemetryConfiguration,
   buildGlobalContextManager,
   buildUserContextManager,
+  startSessionManager,
+  startSessionManagerStub,
   startTelemetry,
   TelemetryService,
   mockable,
@@ -23,8 +25,6 @@ import { createHooks } from '../domain/hooks'
 import type { LogsConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import { serializeLogsConfiguration, validateAndBuildLogsConfiguration } from '../domain/configuration'
 import type { CommonContext } from '../rawLogsEvent.types'
-import type { LogsSessionManager } from '../domain/logsSessionManager'
-import { startLogsSessionManager, startLogsSessionManagerStub } from '../domain/logsSessionManager'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { Strategy } from './logsPublicApi'
 import type { StartLogsResult } from './startLogs'
@@ -32,7 +32,7 @@ import type { StartLogsResult } from './startLogs'
 export type DoStartLogs = (
   initConfiguration: LogsInitConfiguration,
   configuration: LogsConfiguration,
-  sessionManager: LogsSessionManager,
+  sessionManager: SessionManager,
   hooks: Hooks
 ) => StartLogsResult
 
@@ -55,7 +55,7 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: LogsInitConfiguration | undefined
   let cachedConfiguration: LogsConfiguration | undefined
-  let sessionManager: LogsSessionManager | undefined
+  let sessionManager: SessionManager | undefined
   const hooks = createHooks()
   const trackingConsentStateSubscription = trackingConsentState.observable.subscribe(tryStartLogs)
 
@@ -110,13 +110,15 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
-        const startSessionManagerFn = canUseEventBridge()
-          ? startLogsSessionManagerStub
-          : mockable(startLogsSessionManager)
-        startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
+        const onSessionManagerReady = (newSessionManager: SessionManager) => {
           sessionManager = newSessionManager
           tryStartLogs()
-        })
+        }
+        if (canUseEventBridge()) {
+          startSessionManagerStub(onSessionManagerReady)
+        } else {
+          mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
+        }
       })
     },
 

@@ -8,6 +8,7 @@ import {
   ResourceType,
   startTelemetry,
   addExperimentalFeatures,
+  startSessionManager,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -19,7 +20,6 @@ import {
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import { noopRecorderApi, noopProfilerApi, createRumStartSessionManagerMock } from '../../test'
-import { startRumSessionManager } from '../domain/rumSessionManager'
 import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { DurationVitalReference } from '../domain/vital/vitalCollection'
 import type { RumPublicApi, RecorderApi, ProfilerApi, RumPublicApiOptions } from './rumPublicApi'
@@ -1136,7 +1136,7 @@ function makeRumPublicApiWithDefaults({
     ...startRumResult,
   }))
   replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
-  replaceMockable(startRumSessionManager, createRumStartSessionManagerMock())
+  replaceMockable(startSessionManager, createRumStartSessionManagerMock())
   return {
     startRumSpy,
     rumPublicApi: makeRumPublicApi(

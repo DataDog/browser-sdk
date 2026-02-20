@@ -1,4 +1,4 @@
-import type { BufferedObservable, BufferedData } from '@datadog/browser-core'
+import type { BufferedObservable, BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   sendToExtension,
   createPageMayExitObservable,
@@ -7,7 +7,6 @@ import {
   startGlobalContext,
   startUserContext,
 } from '@datadog/browser-core'
-import type { LogsSessionManager } from '../domain/logsSessionManager'
 import type { LogsConfiguration } from '../domain/configuration'
 import { startLogsAssembly } from '../domain/assembly'
 import { startConsoleCollection } from '../domain/console/consoleCollection'
@@ -32,7 +31,7 @@ export type StartLogsResult = ReturnType<StartLogs>
 
 export function startLogs(
   configuration: LogsConfiguration,
-  sessionManager: LogsSessionManager,
+  sessionManager: SessionManager,
   getCommonContext: () => CommonContext,
   bufferedDataObservable: BufferedObservable<BufferedData>,
   hooks: Hooks
@@ -48,7 +47,14 @@ export function startLogs(
   // Start user and account context first to allow overrides from global context
   startSessionContext(hooks, configuration, sessionManager)
   const accountContext = startAccountContext(hooks, configuration, LOGS_STORAGE_KEY)
-  const userContext = startUserContext(hooks, configuration, sessionManager, LOGS_STORAGE_KEY)
+  const userContext = startUserContext(
+    hooks,
+    configuration,
+    {
+      findTrackedSession: (startTime) => sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime),
+    },
+    LOGS_STORAGE_KEY
+  )
   const globalContext = startGlobalContext(hooks, configuration, LOGS_STORAGE_KEY, false)
   startRUMInternalContext(hooks)
 
@@ -74,7 +80,7 @@ export function startLogs(
     startLogsBridge(lifeCycle)
   }
 
-  const internalContext = startInternalContext(sessionManager)
+  const internalContext = startInternalContext(sessionManager, configuration.sessionSampleRate)
 
   return {
     handleLog,

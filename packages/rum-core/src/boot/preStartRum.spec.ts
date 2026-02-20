@@ -14,6 +14,7 @@ import {
   ExperimentalFeature,
   startTelemetry,
   addExperimentalFeatures,
+  startSessionManager,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -34,7 +35,6 @@ import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import type { ManualAction } from '../domain/action/trackManualActions'
 import { createRumStartSessionManagerMock } from '../../test'
-import { startRumSessionManager } from '../domain/rumSessionManager'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import type { DoStartRum } from './preStartRum'
@@ -882,7 +882,7 @@ function createPreStartStrategyWithDefaults({
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
-  replaceMockable(startRumSessionManager, createRumStartSessionManagerMock())
+  replaceMockable(startSessionManager, createRumStartSessionManagerMock())
   return {
     strategy: createPreStartStrategy(
       rumPublicApiOptions,

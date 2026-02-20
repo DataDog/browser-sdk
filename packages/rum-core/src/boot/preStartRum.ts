@@ -5,6 +5,7 @@ import type {
   ContextManager,
   BoundedBuffer,
   Telemetry,
+  SessionManager,
 } from '@datadog/browser-core'
 import {
   createBoundedBuffer,
@@ -25,6 +26,8 @@ import {
   buildUserContextManager,
   monitorError,
   sanitize,
+  startSessionManager,
+  startSessionManagerStub,
   startTelemetry,
   TelemetryService,
   mockable,
@@ -46,8 +49,6 @@ import type {
   FailureReason,
 } from '../domain/vital/vitalCollection'
 import { startDurationVital, stopDurationVital } from '../domain/vital/vitalCollection'
-import type { RumSessionManager } from '../domain/rumSessionManager'
-import { startRumSessionManager, startRumSessionManagerStub } from '../domain/rumSessionManager'
 import { callPluginsMethod } from '../domain/plugins'
 import { startTrackingConsentContext } from '../domain/contexts/trackingConsentContext'
 import type { StartRumResult } from './startRum'
@@ -55,7 +56,7 @@ import type { RumPublicApiOptions, Strategy } from './rumPublicApi'
 
 export type DoStartRum = (
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   deflateWorker: DeflateWorker | undefined,
   initialViewOptions: ViewOptions | undefined,
   telemetry: Telemetry,
@@ -87,7 +88,7 @@ export function createPreStartStrategy(
 
   let cachedInitConfiguration: RumInitConfiguration | undefined
   let cachedConfiguration: RumConfiguration | undefined
-  let sessionManager: RumSessionManager | undefined
+  let sessionManager: SessionManager | undefined
   let telemetry: Telemetry | undefined
   const hooks = createHooks()
 
@@ -184,11 +185,15 @@ export function createPreStartStrategy(
         return
       }
 
-      const startSessionManagerFn = canUseEventBridge() ? startRumSessionManagerStub : mockable(startRumSessionManager)
-      startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
+      const onSessionManagerReady = (newSessionManager: SessionManager) => {
         sessionManager = newSessionManager
         tryStartRum()
-      })
+      }
+      if (canUseEventBridge()) {
+        startSessionManagerStub(onSessionManagerReady)
+      } else {
+        mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
+      }
     })
   }
 

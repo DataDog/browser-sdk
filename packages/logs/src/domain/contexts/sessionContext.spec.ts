@@ -1,6 +1,5 @@
-import type { RelativeTime } from '@datadog/browser-core'
+import type { RelativeTime, SessionManager } from '@datadog/browser-core'
 import { DISCARDED, HookNames } from '@datadog/browser-core'
-import type { LogsSessionManager } from '../logsSessionManager'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { LogsConfiguration } from '../configuration'
@@ -9,7 +8,7 @@ import { startSessionContext } from './sessionContext'
 
 describe('session context', () => {
   let hooks: Hooks
-  let sessionManager: LogsSessionManager
+  let sessionManager: SessionManager
   const configuration = { service: 'foo' } as LogsConfiguration
 
   beforeEach(() => {

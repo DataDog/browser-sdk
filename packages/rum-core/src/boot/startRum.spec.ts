@@ -1,4 +1,4 @@
-import type { RawError, Duration, BufferedData } from '@datadog/browser-core'
+import type { RawError, Duration, BufferedData, SessionManager } from '@datadog/browser-core'
 import {
   Observable,
   toServerDuration,
@@ -27,7 +27,6 @@ import type { RumConfiguration } from '../domain/configuration'
 import { RumEventType } from '../rawRumEvent.types'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import { createHooks } from '../domain/hooks'
-import type { RumSessionManager } from '../domain/rumSessionManager'
 import { startRum, startRumEventCollection } from './startRum'
 
 function collectServerEvents(lifeCycle: LifeCycle) {
@@ -41,7 +40,7 @@ function collectServerEvents(lifeCycle: LifeCycle) {
 function startRumStub(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   reportError: (error: RawError) => void
 ) {
   const hooks = createHooks()

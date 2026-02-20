@@ -3,10 +3,11 @@ import type {
   DeflateWorker,
   DeflateWorkerAction,
   RawTelemetryEvent,
+  SessionManager,
   Telemetry,
 } from '@datadog/browser-core'
 import { BridgeCapability, display } from '@datadog/browser-core'
-import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
+import type { RecorderApi } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
 import {
@@ -46,10 +47,12 @@ describe('makeRecorderApi', () => {
     sessionManager,
     loadRecorderError,
     startSessionReplayRecordingManually,
+    sessionReplaySampleRate = 100,
   }: {
-    sessionManager?: RumSessionManager
+    sessionManager?: SessionManager
     loadRecorderError?: boolean
     startSessionReplayRecordingManually?: boolean
+    sessionReplaySampleRate?: number
   } = {}) {
     telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
@@ -75,6 +78,7 @@ describe('makeRecorderApi', () => {
 
     const configuration = mockRumConfiguration({
       startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
+      sessionReplaySampleRate,
     })
 
     recorderApi = makeRecorderApi(loadRecorderSpy)
@@ -82,7 +86,7 @@ describe('makeRecorderApi', () => {
       recorderApi.onRumStart(
         lifeCycle,
         configuration,
-        sessionManager ?? createRumSessionManagerMock().setId('1234'),
+        sessionManager ?? createRumSessionManagerMock(),
         mockViewHistory(),
         worker,
         { enabled: true, metricsEnabled: true } as Telemetry
@@ -92,6 +96,8 @@ describe('makeRecorderApi', () => {
     registerCleanupTask(() => {
       resetDeflateWorkerState()
     })
+
+    return configuration
   }
 
   describe('recorder boot', () => {
@@ -191,6 +197,7 @@ describe('makeRecorderApi', () => {
       setupRecorderApi({
         sessionManager: createRumSessionManagerMock().setTrackedWithoutSessionReplay(),
         startSessionReplayRecordingManually: true,
+        sessionReplaySampleRate: 0,
       })
       rumInit()
       recorderApi.start()
@@ -199,14 +206,15 @@ describe('makeRecorderApi', () => {
     })
 
     it('should start recording if session is tracked without session replay when forced', async () => {
-      const setForcedReplaySpy = jasmine.createSpy()
+      const updateSessionStateSpy = jasmine.createSpy()
 
       setupRecorderApi({
         sessionManager: {
           ...createRumSessionManagerMock().setTrackedWithoutSessionReplay(),
-          setForcedReplay: setForcedReplaySpy,
+          updateSessionState: updateSessionStateSpy,
         },
         startSessionReplayRecordingManually: true,
+        sessionReplaySampleRate: 0,
       })
 
       rumInit()
@@ -214,7 +222,7 @@ describe('makeRecorderApi', () => {
       await collectAsyncCalls(startRecordingSpy, 1)
 
       expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-      expect(setForcedReplaySpy).toHaveBeenCalledTimes(1)
+      expect(updateSessionStateSpy).toHaveBeenCalledWith({ forcedReplay: '1' })
       expect(await telemetry.getEvents()).toEqual([expectedRecorderInitTelemetry({ forced: true })])
     })
 
@@ -369,20 +377,29 @@ describe('makeRecorderApi', () => {
 
   describe('recorder lifecycle', () => {
     let sessionManager: RumSessionManagerMock
+    let configuration: ReturnType<typeof mockRumConfiguration>
     beforeEach(() => {
       sessionManager = createRumSessionManagerMock()
-      setupRecorderApi({ sessionManager })
+      configuration = setupRecorderApi({ sessionManager })
     })
+
+    function setReplayOn() {
+      configuration.sessionReplaySampleRate = 100
+    }
+
+    function setReplayOff() {
+      configuration.sessionReplaySampleRate = 0
+    }
 
     describe('when session renewal change the tracking type', () => {
       describe('from WITHOUT_REPLAY to WITH_REPLAY', () => {
         beforeEach(() => {
-          sessionManager.setTrackedWithoutSessionReplay()
+          setReplayOff()
         })
 
         it('starts recording if startSessionReplayRecording was called', async () => {
           rumInit()
-          sessionManager.setTrackedWithSessionReplay()
+          setReplayOn()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(startRecordingSpy).not.toHaveBeenCalled()
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -395,7 +412,7 @@ describe('makeRecorderApi', () => {
         it('does not starts recording if stopSessionReplayRecording was called', () => {
           rumInit()
           recorderApi.stop()
-          sessionManager.setTrackedWithSessionReplay()
+          setReplayOn()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
 
@@ -406,7 +423,7 @@ describe('makeRecorderApi', () => {
 
       describe('from WITHOUT_REPLAY to untracked', () => {
         beforeEach(() => {
-          sessionManager.setTrackedWithoutSessionReplay()
+          setReplayOff()
         })
 
         it('keeps not recording if startSessionReplayRecording was called', () => {
@@ -423,7 +440,7 @@ describe('makeRecorderApi', () => {
 
       describe('from WITHOUT_REPLAY to WITHOUT_REPLAY', () => {
         beforeEach(() => {
-          sessionManager.setTrackedWithoutSessionReplay()
+          setReplayOff()
         })
 
         it('keeps not recording if startSessionReplayRecording was called', () => {
@@ -438,16 +455,12 @@ describe('makeRecorderApi', () => {
       })
 
       describe('from WITH_REPLAY to WITHOUT_REPLAY', () => {
-        beforeEach(() => {
-          sessionManager.setTrackedWithSessionReplay()
-        })
-
         it('stops recording if startSessionReplayRecording was called', async () => {
           rumInit()
           await collectAsyncCalls(startRecordingSpy, 1)
 
           expect(startRecordingSpy).toHaveBeenCalledTimes(1)
-          sessionManager.setTrackedWithoutSessionReplay()
+          setReplayOff()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           expect(stopRecordingSpy).toHaveBeenCalled()
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
@@ -459,7 +472,7 @@ describe('makeRecorderApi', () => {
         it('prevents session recording to start if the session is renewed before the DOM is loaded', () => {
           const { triggerOnDomLoaded } = mockDocumentReadyState()
           rumInit()
-          sessionManager.setTrackedWithoutSessionReplay()
+          setReplayOff()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           triggerOnDomLoaded()
@@ -469,10 +482,6 @@ describe('makeRecorderApi', () => {
       })
 
       describe('from WITH_REPLAY to untracked', () => {
-        beforeEach(() => {
-          sessionManager.setTrackedWithSessionReplay()
-        })
-
         it('stops recording if startSessionReplayRecording was called', async () => {
           rumInit()
           await collectAsyncCalls(startRecordingSpy, 1)
@@ -487,10 +496,6 @@ describe('makeRecorderApi', () => {
       })
 
       describe('from WITH_REPLAY to WITH_REPLAY', () => {
-        beforeEach(() => {
-          sessionManager.setTrackedWithSessionReplay()
-        })
-
         it('keeps recording if startSessionReplayRecording was called', async () => {
           rumInit()
           await collectAsyncCalls(startRecordingSpy, 1)
@@ -555,6 +560,7 @@ describe('makeRecorderApi', () => {
         it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
           sessionManager.setTrackedWithoutSessionReplay()
+          setReplayOff()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(loadRecorderSpy).not.toHaveBeenCalled()

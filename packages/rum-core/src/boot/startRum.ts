@@ -6,6 +6,7 @@ import type {
   BufferedData,
   BufferedObservable,
   Telemetry,
+  SessionManager,
 } from '@datadog/browser-core'
 import {
   sendToExtension,
@@ -50,7 +51,6 @@ import type { Hooks } from '../domain/hooks'
 import { startEventCollection } from '../domain/event/eventCollection'
 import { startInitialViewMetricsTelemetry } from '../domain/view/viewMetrics/startInitialViewMetricsTelemetry'
 import { startSourceCodeContext } from '../domain/contexts/sourceCodeContext'
-import type { RumSessionManager } from '../domain/rumSessionManager'
 import type { RecorderApi, ProfilerApi } from './rumPublicApi'
 
 export type StartRum = typeof startRum
@@ -58,7 +58,7 @@ export type StartRumResult = ReturnType<StartRum>
 
 export function startRum(
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   recorderApi: RecorderApi,
   profilerApi: ProfilerApi,
   initialViewOptions: ViewOptions | undefined,
@@ -142,7 +142,7 @@ export function startRumEventCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  sessionManager: RumSessionManager,
+  sessionManager: SessionManager,
   recorderApi: RecorderApi,
   initialViewOptions: ViewOptions | undefined,
   customVitalsState: CustomVitalsState,
@@ -165,10 +165,17 @@ export function startRumEventCollection(
   const urlContexts = startUrlContexts(lifeCycle, hooks, locationChangeObservable)
   cleanupTasks.push(() => urlContexts.stop())
   const featureFlagContexts = startFeatureFlagContexts(lifeCycle, hooks, configuration)
-  startSessionContext(hooks, sessionManager, recorderApi, viewHistory)
+  startSessionContext(hooks, configuration, sessionManager, recorderApi, viewHistory)
   startConnectivityContext(hooks)
   const globalContext = startGlobalContext(hooks, configuration, 'rum', true)
-  const userContext = startUserContext(hooks, configuration, sessionManager, 'rum')
+  const userContext = startUserContext(
+    hooks,
+    configuration,
+    {
+      findTrackedSession: (startTime) => sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime),
+    },
+    'rum'
+  )
   const accountContext = startAccountContext(hooks, configuration, 'rum')
 
   const actionCollection = startActionCollection(
@@ -229,6 +236,7 @@ export function startRumEventCollection(
   const internalContext = startInternalContext(
     configuration.applicationId,
     sessionManager,
+    configuration.sessionSampleRate,
     viewHistory,
     actionCollection.actionContexts,
     urlContexts

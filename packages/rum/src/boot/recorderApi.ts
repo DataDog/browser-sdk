@@ -1,4 +1,4 @@
-import type { DeflateEncoder, DeflateWorker, Telemetry } from '@datadog/browser-core'
+import type { DeflateEncoder, DeflateWorker, Telemetry, SessionManager } from '@datadog/browser-core'
 import {
   canUseEventBridge,
   noop,
@@ -9,7 +9,6 @@ import {
 import type {
   LifeCycle,
   ViewHistory,
-  RumSessionManager,
   RecorderApi,
   RumConfiguration,
   StartRecordingOptions,
@@ -78,7 +77,7 @@ export function makeRecorderApi(loadRecorder: () => Promise<StartRecording | und
   function onRumStart(
     lifeCycle: LifeCycle,
     configuration: RumConfiguration,
-    sessionManager: RumSessionManager,
+    sessionManager: SessionManager,
     viewHistory: ViewHistory,
     worker: DeflateWorker | undefined,
     telemetry: Telemetry

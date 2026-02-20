@@ -91,7 +91,7 @@ describe('startRecording', () => {
       has_full_snapshot: true,
       records_count: recordsPerFullSnapshot(),
       session: {
-        id: 'session-id',
+        id: '00000000-aaaa-0000-aaaa-000000000000',
       },
       start: jasmine.any(Number),
       raw_segment_size: jasmine.any(Number),
@@ -120,7 +120,7 @@ describe('startRecording', () => {
       has_full_snapshot: true,
       records_count: recordsPerFullSnapshot(),
       session: {
-        id: 'session-id',
+        id: '00000000-aaaa-0000-aaaa-000000000000',
       },
       start: jasmine.any(Number),
       raw_segment_size: jasmine.any(Number),
@@ -169,7 +169,7 @@ describe('startRecording', () => {
 
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
-    sessionManager.setId('new-session-id').setTrackedWithSessionReplay()
+    sessionManager.setId('00000000-0000-0000-0000-000000000001').setTrackedWithSessionReplay()
     flushSegment(lifeCycle)
     document.body.dispatchEvent(createNewEvent('click', { clientX: 1, clientY: 2 }))
 
@@ -177,7 +177,7 @@ describe('startRecording', () => {
 
     const requests = await readSentRequests(1)
     expect(requests[0].event.records_count).toBe(1)
-    expect(requests[0].event.session.id).toBe('new-session-id')
+    expect(requests[0].event.session.id).toBe('00000000-0000-0000-0000-000000000001')
   })
 
   it('flushes pending mutations before ending the view', async () => {
