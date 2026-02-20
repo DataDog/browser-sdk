@@ -24,6 +24,7 @@ export enum ExperimentalFeature {
   SOURCE_CODE_CONTEXT = 'source_code_context',
   LCP_SUBPARTS = 'lcp_subparts',
   INP_SUBPARTS = 'inp_subparts',
+  COMPOSED_PATH_SELECTOR = 'composed_path_selector',
 }
 
 const enabledExperimentalFeatures: Set<ExperimentalFeature> = new Set()
