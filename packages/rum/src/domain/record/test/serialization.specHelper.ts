@@ -25,8 +25,8 @@ import {
   serializeChangesInTransaction,
   createRootInsertionCursor,
   serializeNodeAsChange,
+  createChangeConverter,
 } from '../serialization'
-import { convertChangeToFullSnapshot } from './changeConversions.specHelper'
 import { createRecordingScopeForTesting } from './recordingScope.specHelper'
 
 export function createSerializationTransactionForTesting({
@@ -123,14 +123,16 @@ export function serializeNodeAndVerifyChangeRecord(
     // When converted to a FullSnapshot record, serializeNodeAsChange()'s output should
     // match serializeNode() exactly.
     expect(changeRecord).not.toBeUndefined()
-    const converted = convertChangeToFullSnapshot(changeRecord!).data.node
-    expect(converted).toEqual(serializedNode)
+    const converter = createChangeConverter()
+    const convertedRecord = converter.convert(changeRecord!) as BrowserFullSnapshotRecord
+    const convertedNode = convertedRecord.data.node
+    expect(convertedNode).toEqual(serializedNode)
 
     // When stringified, serializeNodeAsChange()'s converted output should be
     // byte-for-byte identical to serializeNode()'s. (This test is stricter than the one
     // above, but produces error messages which are a lot harder to read, so it's worth
     // having both.)
-    expect(JSON.stringify(converted)).toEqual(JSON.stringify(serializedNode))
+    expect(JSON.stringify(convertedNode)).toEqual(JSON.stringify(serializedNode))
   }
 
   return serializedNode
