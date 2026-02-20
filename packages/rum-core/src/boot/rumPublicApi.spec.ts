@@ -7,6 +7,7 @@ import {
   ExperimentalFeature,
   ResourceType,
   startTelemetry,
+  addExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -14,7 +15,6 @@ import {
   mockClock,
   mockEventBridge,
   createFakeTelemetryObject,
-  mockExperimentalFeatures,
   replaceMockable,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
@@ -761,7 +761,7 @@ describe('rum public api', () => {
 
   describe('startAction / stopAction', () => {
     it('should call startAction and stopAction on the strategy', () => {
-      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = jasmine.createSpy()
       const stopActionSpy = jasmine.createSpy()
@@ -797,7 +797,7 @@ describe('rum public api', () => {
     })
 
     it('should sanitize startAction and stopAction inputs', () => {
-      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({
@@ -843,7 +843,7 @@ describe('rum public api', () => {
 
   describe('startResource / stopResource', () => {
     it('should call startResource and stopResource on the strategy', () => {
-      mockExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
+      addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
       const startResourceSpy = jasmine.createSpy()
       const stopResourceSpy = jasmine.createSpy()
@@ -883,7 +883,7 @@ describe('rum public api', () => {
     })
 
     it('should sanitize startResource and stopResource inputs', () => {
-      mockExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
+      addExperimentalFeatures([ExperimentalFeature.START_STOP_RESOURCE])
 
       const startResourceSpy = jasmine.createSpy()
       const { rumPublicApi } = makeRumPublicApiWithDefaults({

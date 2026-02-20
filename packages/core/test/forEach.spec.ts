@@ -1,3 +1,4 @@
+import { resetExperimentalFeatures } from '../src/tools/experimentalFeatures'
 import { resetValueHistoryGlobals } from '../src/tools/valueHistory'
 import { resetFetchObservable } from '../src/browser/fetchObservable'
 import { resetConsoleObservable } from '../src/domain/console/consoleObservable'
@@ -37,6 +38,7 @@ afterEach(() => {
   resetTelemetry()
   resetInteractionCountPolyfill()
   resetSampleDecisionCache()
+  resetExperimentalFeatures()
 })
 
 function clearAllCookies() {

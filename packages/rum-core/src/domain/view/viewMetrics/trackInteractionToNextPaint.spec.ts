@@ -1,5 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import { elapsed, relativeNow, resetExperimentalFeatures } from '@datadog/browser-core'
+import { elapsed, relativeNow } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   appendElement,
@@ -53,7 +53,6 @@ describe('trackInteractionToNextPaint', () => {
 
     registerCleanupTask(() => {
       interactionToNextPaintTracking.stop()
-      resetExperimentalFeatures()
       interactionCountMock.clear()
     })
   }

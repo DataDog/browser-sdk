@@ -89,6 +89,7 @@ test.describe('remote configuration', () => {
       </script>
     `)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.version).toBe('js-version')
     })
@@ -109,6 +110,7 @@ test.describe('remote configuration', () => {
       </script>
     `)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.version).toBe('localStorage-version')
     })
@@ -134,6 +136,7 @@ test.describe('remote configuration', () => {
       </script>
     `)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.version).toBe('1.2.3')
     })
@@ -149,6 +152,7 @@ test.describe('remote configuration', () => {
       },
     })
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.version).toBeUndefined()
     })
@@ -174,6 +178,7 @@ test.describe('remote configuration', () => {
       </script>
     `)
     .run(async ({ page }) => {
+      await waitForRemoteConfigurationToBeApplied(page)
       const initConfiguration = await page.evaluate(() => window.DD_RUM!.getInitConfiguration()!)
       expect(initConfiguration.version).toBeUndefined()
     })

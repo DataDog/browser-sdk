@@ -1,6 +1,6 @@
 import type { Duration } from '@datadog/browser-core'
-import { mockClock, mockExperimentalFeatures, type Clock } from '@datadog/browser-core/test'
-import { clocksNow, ExperimentalFeature } from '@datadog/browser-core'
+import { mockClock, type Clock } from '@datadog/browser-core/test'
+import { addExperimentalFeatures, clocksNow, ExperimentalFeature } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
 import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
@@ -236,7 +236,7 @@ describe('vitalCollection', () => {
       })
 
       it('should collect raw rum event from operation step vital', () => {
-        mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+        addExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
         vitalCollection.addOperationStepVital('foo', 'start')
 
         expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
@@ -274,7 +274,7 @@ describe('vitalCollection', () => {
       })
 
       it('should create a operation step vital from add API', () => {
-        mockExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
+        addExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
         vitalCollection.addOperationStepVital(
           'foo',
           'end',

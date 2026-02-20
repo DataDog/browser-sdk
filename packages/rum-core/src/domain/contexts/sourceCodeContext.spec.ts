@@ -1,8 +1,8 @@
-import { ExperimentalFeature, HookNames } from '@datadog/browser-core'
+import { addExperimentalFeatures, ExperimentalFeature, HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { mockExperimentalFeatures, registerCleanupTask } from '../../../../core/test'
+import { registerCleanupTask } from '../../../../core/test'
 import type { RawRumLongAnimationFrameEvent } from '../../rawRumEvent.types'
 import type { BrowserWindow } from './sourceCodeContext'
 import { startSourceCodeContext } from './sourceCodeContext'
@@ -59,7 +59,7 @@ describe('sourceCodeContext', () => {
 
   describe('assemble hook when FF enabled', () => {
     beforeEach(() => {
-      mockExperimentalFeatures([ExperimentalFeature.SOURCE_CODE_CONTEXT])
+      addExperimentalFeatures([ExperimentalFeature.SOURCE_CODE_CONTEXT])
     })
 
     it('should add source code context matching the error stack first frame URL', () => {
