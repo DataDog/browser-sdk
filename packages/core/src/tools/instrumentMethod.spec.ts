@@ -266,7 +266,7 @@ describe('instrumentSetter', () => {
 
   it('does not use the Zone.js setTimeout function', () => {
     const zoneJsSetTimeoutSpy = jasmine.createSpy()
-    zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy)
+    zoneJs.replaceProperty(window, 'setTimeout', zoneJsSetTimeoutSpy as unknown as typeof window.setTimeout)
 
     const object = {} as { foo: number }
     Object.defineProperty(object, 'foo', { set: noop, configurable: true })
