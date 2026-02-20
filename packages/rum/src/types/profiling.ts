@@ -24,6 +24,32 @@ export type BrowserProfileEvent = ProfileCommonProperties & {
      */
     readonly clock_drift: number
   }
+  /**
+   * Action properties.
+   */
+  readonly action?: {
+    /**
+     * Array of action IDs.
+     */
+    readonly id: string[]
+    /**
+     * Array of action labels.
+     */
+    readonly label: string[]
+  }
+  /**
+   * Vital properties.
+   */
+  readonly vital?: {
+    /**
+     * Array of vital IDs.
+     */
+    readonly id: string[]
+    /**
+     * Array of vital labels.
+     */
+    readonly label: string[]
+  }
 }
 
 /**
@@ -131,6 +157,14 @@ export interface BrowserProfilerTrace {
    */
   readonly longTasks: RumProfilerLongTaskEntry[]
   /**
+   * List of detected vital entries.
+   */
+  readonly vitals?: RumProfilerVitalEntry[]
+  /**
+   * List of detected action entries.
+   */
+  readonly actions?: RumProfilerActionEntry[]
+  /**
    * List of detected navigation entries.
    */
   readonly views: RumViewEntry[]
@@ -204,13 +238,49 @@ export interface RumProfilerLongTaskEntry {
    */
   readonly id?: string
   /**
-   * Duration in ns of the long task or long animation frame.
+   * Duration in ms of the long task or long animation frame.
    */
   readonly duration: number
   /**
    * Type of the event: long task or long animation frame
    */
   readonly entryType: 'longtask' | 'long-animation-frame'
+  startClocks: ClocksState
+}
+/**
+ * Schema of a vital entry recorded during profiling.
+ */
+export interface RumProfilerVitalEntry {
+  /**
+   * RUM Vital id.
+   */
+  readonly id: string
+  /**
+   * RUM Vital label.
+   */
+  readonly label: string
+  /**
+   * Duration in ms of the vital.
+   */
+  readonly duration?: number
+  startClocks: ClocksState
+}
+/**
+ * Schema of a action entry recorded during profiling.
+ */
+export interface RumProfilerActionEntry {
+  /**
+   * RUM Action id.
+   */
+  readonly id: string
+  /**
+   * RUM Action label.
+   */
+  readonly label: string
+  /**
+   * Duration in ms of the duration vital.
+   */
+  readonly duration?: number
   startClocks: ClocksState
 }
 /**

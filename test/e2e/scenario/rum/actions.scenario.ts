@@ -233,8 +233,8 @@ test.describe('action collection', () => {
       const viewEvents = intakeRegistry.rumViewEvents
       const originalViewEvent = viewEvents.find((view) => view.view.url.endsWith('/'))!
       const otherViewEvent = viewEvents.find((view) => view.view.url.endsWith('/other-view'))!
-      expect(originalViewEvent.view.action.count).toBe(1)
-      expect(otherViewEvent.view.action.count).toBe(0)
+      expect(originalViewEvent.view.action!.count).toBe(1)
+      expect(otherViewEvent.view.action!.count).toBe(0)
     })
 
   createTest('collect an "error click"')

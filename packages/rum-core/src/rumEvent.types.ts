@@ -13,6 +13,7 @@ export type RumEvent =
   | RumLongTaskEvent
   | RumResourceEvent
   | RumViewEvent
+  | RumViewUpdateEvent
   | RumVitalEvent
 /**
  * Schema of all properties of an Action event
@@ -676,15 +677,15 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly size?: number
       /**
-       * Size in octet of the resource before removing any applied content encodings
+       * Size in octet of the response body before removing any applied content encodings
        */
       readonly encoded_body_size?: number
       /**
-       * Size in octet of the resource after removing any applied encoding
+       * Size in octet of the response body after removing any applied encoding
        */
       readonly decoded_body_size?: number
       /**
-       * Size in octet of the fetched resource
+       * Size in octet of the fetched response resource
        */
       readonly transfer_size?: number
       /**
@@ -830,6 +831,38 @@ export type RumResourceEvent = CommonProperties &
         [k: string]: unknown
       }
       /**
+       * Request properties
+       */
+      readonly request?: {
+        /**
+         * Size in octet of the request body sent over the network (after encoding)
+         */
+        readonly encoded_body_size?: number
+        /**
+         * Size in octet of the request body before any encoding
+         */
+        readonly decoded_body_size?: number
+        /**
+         * HTTP headers of the resource request
+         */
+        readonly headers?: {
+          [k: string]: string
+        }
+        [k: string]: unknown
+      }
+      /**
+       * Response properties
+       */
+      readonly response?: {
+        /**
+         * HTTP headers of the resource response
+         */
+        readonly headers?: {
+          [k: string]: string
+        }
+        [k: string]: unknown
+      }
+      /**
        * GraphQL requests parameters
        */
       readonly graphql?: {
@@ -922,317 +955,123 @@ export type RumResourceEvent = CommonProperties &
  */
 export type RumViewEvent = CommonProperties &
   ViewContainerSchema &
-  StreamSchema & {
+  StreamSchema &
+  ViewProperties & {
     /**
      * RUM event type
      */
     readonly type: 'view'
     /**
-     * View properties
+     * Internal properties
      */
-    readonly view: {
+    readonly _dd: {
       /**
-       * Duration in ns to the view is considered loaded
+       * Version of the update of the view event
        */
-      readonly loading_time?: number
+      readonly document_version: number
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+/**
+ * Schema of all properties of a View Update event
+ */
+export type RumViewUpdateEvent = ViewContainerSchema &
+  StreamSchema &
+  ViewProperties & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'view_update'
+    /**
+     * Start of the event in ms from epoch
+     */
+    readonly date?: number
+    /**
+     * Application properties
+     */
+    readonly application: {
       /**
-       * Duration in ns from the moment the view was started until all the initial network requests settled
+       * UUID of the application
        */
-      readonly network_settled_time?: number
+      readonly id: string
       /**
-       * Duration in ns to from the last interaction on previous view to the moment the current view was displayed
+       * The user's current locale as a language tag (language + region), computed from their preferences and the app's supported languages, e.g. 'es-FR'.
        */
-      readonly interaction_to_next_view_time?: number
-      /**
-       * Type of the loading of the view
-       */
-      readonly loading_type?:
-        | 'initial_load'
-        | 'route_change'
-        | 'activity_display'
-        | 'activity_redisplay'
-        | 'fragment_display'
-        | 'fragment_redisplay'
-        | 'view_controller_display'
-        | 'view_controller_redisplay'
-      /**
-       * Time spent on the view in ns
-       */
-      readonly time_spent: number
-      /**
-       * @deprecated
-       * Duration in ns to the first rendering (deprecated in favor of `view.performance.fcp.timestamp`)
-       */
-      readonly first_contentful_paint?: number
-      /**
-       * @deprecated
-       * Duration in ns to the largest contentful paint (deprecated in favor of `view.performance.lcp.timestamp`)
-       */
-      readonly largest_contentful_paint?: number
-      /**
-       * @deprecated
-       * CSS selector path of the largest contentful paint element (deprecated in favor of `view.performance.lcp.target_selector`)
-       */
-      readonly largest_contentful_paint_target_selector?: string
-      /**
-       * @deprecated
-       * Duration in ns of the first input event delay (deprecated in favor of `view.performance.fid.duration`)
-       */
-      readonly first_input_delay?: number
-      /**
-       * @deprecated
-       * Duration in ns to the first input (deprecated in favor of `view.performance.fid.timestamp`)
-       */
-      readonly first_input_time?: number
-      /**
-       * @deprecated
-       * CSS selector path of the first input target element (deprecated in favor of `view.performance.fid.target_selector`)
-       */
-      readonly first_input_target_selector?: string
-      /**
-       * @deprecated
-       * Longest duration in ns between an interaction and the next paint (deprecated in favor of `view.performance.inp.duration`)
-       */
-      readonly interaction_to_next_paint?: number
-      /**
-       * @deprecated
-       * Duration in ns between start of the view and start of the INP (deprecated in favor of `view.performance.inp.timestamp`)
-       */
-      readonly interaction_to_next_paint_time?: number
-      /**
-       * @deprecated
-       * CSS selector path of the interacted element corresponding to INP (deprecated in favor of `view.performance.inp.target_selector`)
-       */
-      readonly interaction_to_next_paint_target_selector?: string
-      /**
-       * @deprecated
-       * Total layout shift score that occurred on the view (deprecated in favor of `view.performance.cls.score`)
-       */
-      readonly cumulative_layout_shift?: number
-      /**
-       * @deprecated
-       * Duration in ns between start of the view and start of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.timestamp`)
-       */
-      readonly cumulative_layout_shift_time?: number
-      /**
-       * @deprecated
-       * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.target_selector`)
-       */
-      readonly cumulative_layout_shift_target_selector?: string
-      /**
-       * Duration in ns to the complete parsing and loading of the document and its sub resources
-       */
-      readonly dom_complete?: number
-      /**
-       * Duration in ns to the complete parsing and loading of the document without its sub resources
-       */
-      readonly dom_content_loaded?: number
-      /**
-       * Duration in ns to the end of the parsing of the document
-       */
-      readonly dom_interactive?: number
-      /**
-       * Duration in ns to the end of the load event handler execution
-       */
-      readonly load_event?: number
-      /**
-       * Duration in ns to the response start of the document request
-       */
-      readonly first_byte?: number
-      /**
-       * User custom timings of the view. As timing name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
-       */
-      readonly custom_timings?: {
-        [k: string]: number
-      }
-      /**
-       * Whether the View corresponding to this event is considered active
-       */
-      readonly is_active?: boolean
-      /**
-       * Whether the View had a low average refresh rate
-       */
-      readonly is_slow_rendered?: boolean
-      /**
-       * Properties of the actions of the view
-       */
-      readonly action: {
-        /**
-         * Number of actions that occurred on the view
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the errors of the view
-       */
-      readonly error: {
-        /**
-         * Number of errors that occurred on the view
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the crashes of the view
-       */
-      readonly crash?: {
-        /**
-         * Number of crashes that occurred on the view
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the long tasks of the view
-       */
-      readonly long_task?: {
-        /**
-         * Number of long tasks that occurred on the view
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the frozen frames of the view
-       */
-      readonly frozen_frame?: {
-        /**
-         * Number of frozen frames that occurred on the view
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * List of slow frames during the view’s lifetime
-       */
-      readonly slow_frames?: {
-        /**
-         * Duration in ns between start of the view and the start of the slow frame
-         */
-        readonly start: number
-        /**
-         * Duration in ns of the slow frame
-         */
-        readonly duration: number
-        [k: string]: unknown
-      }[]
-      /**
-       * Properties of the resources of the view
-       */
-      readonly resource: {
-        /**
-         * Number of resources that occurred on the view
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * Properties of the frustrations of the view
-       */
-      readonly frustration?: {
-        /**
-         * Number of frustrations that occurred on the view
-         */
-        readonly count: number
-        [k: string]: unknown
-      }
-      /**
-       * List of the periods of time the user had the view in foreground (focused in the browser)
-       */
-      readonly in_foreground_periods?: {
-        /**
-         * Duration in ns between start of the view and start of foreground period
-         */
-        readonly start: number
-        /**
-         * Duration in ns of the view foreground period
-         */
-        readonly duration: number
-        [k: string]: unknown
-      }[]
-      /**
-       * Average memory used during the view lifetime (in bytes)
-       */
-      readonly memory_average?: number
-      /**
-       * Peak memory used during the view lifetime (in bytes)
-       */
-      readonly memory_max?: number
-      /**
-       * Total number of cpu ticks during the view’s lifetime
-       */
-      readonly cpu_ticks_count?: number
-      /**
-       * Average number of cpu ticks per second during the view’s lifetime
-       */
-      readonly cpu_ticks_per_second?: number
-      /**
-       * Average refresh rate during the view’s lifetime (in frames per second)
-       */
-      readonly refresh_rate_average?: number
-      /**
-       * Minimum refresh rate during the view’s lifetime (in frames per second)
-       */
-      readonly refresh_rate_min?: number
-      /**
-       * Rate of slow frames during the view’s lifetime (in milliseconds per second)
-       */
-      readonly slow_frames_rate?: number
-      /**
-       * Rate of freezes during the view’s lifetime (in seconds per hour)
-       */
-      readonly freeze_rate?: number
-      /**
-       * Time taken for Flutter 'build' methods.
-       */
-      flutter_build_time?: RumPerfMetric
-      /**
-       * Time taken for Flutter to rasterize the view.
-       */
-      flutter_raster_time?: RumPerfMetric
-      /**
-       * The JavaScript refresh rate for React Native
-       */
-      js_refresh_rate?: RumPerfMetric
-      /**
-       * Performance data. (Web Vitals, etc.)
-       */
-      performance?: ViewPerformanceData
-      /**
-       * Accessibility properties of the view
-       */
-      accessibility?: ViewAccessibilityProperties
+      readonly current_locale?: string
       [k: string]: unknown
     }
     /**
      * Session properties
      */
-    readonly session?: {
+    readonly session: {
       /**
-       * Whether this session is currently active. Set to false to manually stop a session
+       * UUID of the session
        */
-      readonly is_active?: boolean
+      readonly id: string
       /**
-       * Whether this session has been sampled for replay
+       * Type of the session
        */
-      readonly sampled_for_replay?: boolean
+      readonly type: 'user' | 'synthetics' | 'ci_test'
+      /**
+       * Whether this session has a replay
+       */
+      readonly has_replay?: boolean
       [k: string]: unknown
     }
     /**
-     * Feature flags properties
+     * The source of this event
      */
-    readonly feature_flags?: {
-      [k: string]: unknown
-    }
+    readonly source?:
+      | 'android'
+      | 'ios'
+      | 'browser'
+      | 'flutter'
+      | 'react-native'
+      | 'roku'
+      | 'unity'
+      | 'kotlin-multiplatform'
+      | 'electron'
     /**
-     * Privacy properties
+     * The service name for this application
      */
-    readonly privacy?: {
+    service?: string
+    /**
+     * The version for this application
+     */
+    version?: string
+    /**
+     * The build version for this application
+     */
+    readonly build_version?: string
+    /**
+     * Generated unique ID of the application build. Unlike version or build_version this field is not meant to be coming from the user, but rather generated by the tooling for each build.
+     */
+    readonly build_id?: string
+    /**
+     * Tags of the event in key:value format, separated by commas (e.g. 'env:prod,version:1.2.3')
+     */
+    readonly ddtags?: string
+    /**
+     * View properties
+     */
+    readonly view: {
       /**
-       * The replay privacy level
+       * UUID of the view
        */
-      readonly replay_level: 'allow' | 'mask' | 'mask-user-input'
+      readonly id: string
+      /**
+       * URL of the view
+       */
+      url: string
+      /**
+       * URL that linked to the initial view of the page
+       */
+      referrer?: string
+      /**
+       * User defined name of the view
+       */
+      name?: string
       [k: string]: unknown
     }
     /**
@@ -1244,45 +1083,28 @@ export type RumViewEvent = CommonProperties &
        */
       readonly document_version: number
       /**
-       * List of the page states during the view
+       * Version of the RUM event format
        */
-      readonly page_states?: {
-        /**
-         * Page state name
-         */
-        readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
-        /**
-         * Duration in ns between start of the view and start of the page state
-         */
-        readonly start: number
-        [k: string]: unknown
-      }[]
+      readonly format_version?: 2
       /**
-       * Debug metadata for Replay Sessions
+       * Session-related internal properties
        */
-      replay_stats?: {
+      session?: {
         /**
-         * The number of records produced during this view lifetime
+         * Session plan: 1 is the plan without replay, 2 is the plan with replay (deprecated)
          */
-        records_count?: number
+        plan?: 1 | 2
         /**
-         * The number of segments sent during this view lifetime
+         * The precondition that led to the creation of the session
          */
-        segments_count?: number
-        /**
-         * The total size in bytes of the segments sent during this view lifetime
-         */
-        segments_total_raw_size?: number
-        [k: string]: unknown
-      }
-      /**
-       * Additional information of the reported Cumulative Layout Shift
-       */
-      readonly cls?: {
-        /**
-         * Pixel ratio of the device where the layout shift was reported
-         */
-        readonly device_pixel_ratio?: number
+        readonly session_precondition?:
+          | 'user_app_launch'
+          | 'inactivity_timeout'
+          | 'max_duration'
+          | 'background_launch'
+          | 'prewarm'
+          | 'from_non_interactive_session'
+          | 'explicit_stop'
         [k: string]: unknown
       }
       /**
@@ -1290,43 +1112,247 @@ export type RumViewEvent = CommonProperties &
        */
       readonly configuration?: {
         /**
-         * Whether session replay recording configured to start manually
+         * The percentage of sessions tracked
          */
-        readonly start_session_replay_recording_manually?: boolean
+        readonly session_sample_rate?: number
+        /**
+         * The percentage of sessions with RUM & Session Replay pricing tracked
+         */
+        readonly session_replay_sample_rate?: number
+        /**
+         * The percentage of sessions profiled
+         */
+        readonly profiling_sample_rate?: number
+        /**
+         * The percentage of sessions with traced resources
+         */
+        readonly trace_sample_rate?: number
         [k: string]: unknown
       }
       /**
-       * Profiling context
+       * Browser SDK version
        */
-      profiling?: ProfilingInternalContextSchema
+      readonly browser_sdk_version?: string
+      /**
+       * SDK name (e.g. 'logs', 'rum', 'rum-slim', etc.)
+       */
+      readonly sdk_name?: string
+      [k: string]: unknown
+    }
+    /**
+     * User properties
+     */
+    readonly usr?: {
+      /**
+       * Identifier of the user
+       */
+      readonly id?: string
+      /**
+       * Name of the user
+       */
+      readonly name?: string
+      /**
+       * Email of the user
+       */
+      readonly email?: string
+      /**
+       * Identifier of the user across sessions
+       */
+      readonly anonymous_id?: string
+      [k: string]: unknown
+    }
+    /**
+     * Account properties
+     */
+    readonly account?: {
+      /**
+       * Identifier of the account
+       */
+      readonly id: string
+      /**
+       * Name of the account
+       */
+      readonly name?: string
+      [k: string]: unknown
+    }
+    /**
+     * Device connectivity properties
+     */
+    connectivity?: {
+      /**
+       * Status of the device connectivity
+       */
+      readonly status: 'connected' | 'not_connected' | 'maybe'
+      /**
+       * The list of available network interfaces
+       */
+      readonly interfaces?: (
+        | 'bluetooth'
+        | 'cellular'
+        | 'ethernet'
+        | 'wifi'
+        | 'wimax'
+        | 'mixed'
+        | 'other'
+        | 'unknown'
+        | 'none'
+      )[]
+      /**
+       * Cellular connection type reflecting the measured network performance
+       */
+      readonly effective_type?: 'slow-2g' | '2g' | '3g' | '4g'
+      /**
+       * Cellular connectivity properties
+       */
+      readonly cellular?: {
+        /**
+         * The type of a radio technology used for cellular connection
+         */
+        readonly technology?: string
+        /**
+         * The name of the SIM carrier
+         */
+        readonly carrier_name?: string
+        [k: string]: unknown
+      }
       [k: string]: unknown
     }
     /**
      * Display properties
      */
-    readonly display?: {
+    display?: {
       /**
-       * Scroll properties
+       * The viewport represents the rectangular area that is currently being viewed. Content outside the viewport is not visible onscreen until scrolled into view.
        */
-      readonly scroll?: {
+      readonly viewport?: {
         /**
-         * Distance between the top and the lowest point reached on this view (in pixels)
+         * Width of the viewport (in pixels)
          */
-        readonly max_depth: number
+        readonly width: number
         /**
-         * Page scroll top (scrolled distance) when the maximum scroll depth was reached for this view (in pixels)
+         * Height of the viewport (in pixels)
          */
-        readonly max_depth_scroll_top: number
-        /**
-         * Maximum page scroll height (total height) for this view (in pixels)
-         */
-        readonly max_scroll_height: number
-        /**
-         * Duration between the view start and the time the max scroll height was reached for this view (in nanoseconds)
-         */
-        readonly max_scroll_height_time: number
+        readonly height: number
         [k: string]: unknown
       }
+      [k: string]: unknown
+    }
+    /**
+     * Synthetics properties
+     */
+    readonly synthetics?: {
+      /**
+       * The identifier of the current Synthetics test
+       */
+      readonly test_id: string
+      /**
+       * The identifier of the current Synthetics test results
+       */
+      readonly result_id: string
+      /**
+       * Whether the event comes from a SDK instance injected by Synthetics
+       */
+      readonly injected?: boolean
+      [k: string]: unknown
+    }
+    /**
+     * CI Visibility properties
+     */
+    readonly ci_test?: {
+      /**
+       * The identifier of the current CI Visibility test execution
+       */
+      readonly test_execution_id: string
+      [k: string]: unknown
+    }
+    /**
+     * Operating system properties
+     */
+    os?: {
+      /**
+       * Operating system name, e.g. Android, iOS
+       */
+      readonly name: string
+      /**
+       * Full operating system version, e.g. 8.1.1
+       */
+      readonly version: string
+      /**
+       * Operating system build number, e.g. 15D21
+       */
+      readonly build?: string
+      /**
+       * Major operating system version, e.g. 8
+       */
+      readonly version_major: string
+      [k: string]: unknown
+    }
+    /**
+     * Device properties
+     */
+    device?: {
+      /**
+       * Device type info
+       */
+      readonly type?: 'mobile' | 'desktop' | 'tablet' | 'tv' | 'gaming_console' | 'bot' | 'other'
+      /**
+       * Device marketing name, e.g. Xiaomi Redmi Note 8 Pro, Pixel 5, etc.
+       */
+      readonly name?: string
+      /**
+       * Device SKU model, e.g. Samsung SM-988GN, etc. Quite often name and model can be the same.
+       */
+      readonly model?: string
+      /**
+       * Device marketing brand, e.g. Apple, OPPO, Xiaomi, etc.
+       */
+      readonly brand?: string
+      /**
+       * The CPU architecture of the device that is reporting the error
+       */
+      readonly architecture?: string
+      /**
+       * The user’s locale as a language tag combining language and region, e.g. 'en-US'.
+       */
+      readonly locale?: string
+      /**
+       * Ordered list of the user’s preferred system languages as IETF language tags.
+       */
+      readonly locales?: string[]
+      /**
+       * The device’s current time zone identifier, e.g. 'Europe/Berlin'.
+       */
+      readonly time_zone?: string
+      /**
+       * Current battery level of the device (0.0 to 1.0).
+       */
+      readonly battery_level?: number
+      /**
+       * Whether the device is in power saving mode.
+       */
+      readonly power_saving_mode?: boolean
+      /**
+       * Current screen brightness level (0.0 to 1.0).
+       */
+      readonly brightness_level?: number
+      /**
+       * Number of logical CPU cores available for scheduling on the device at runtime, as reported by the operating system.
+       */
+      readonly logical_cpu_count?: number
+      /**
+       * Total RAM in megabytes
+       */
+      readonly total_ram?: number
+      /**
+       * Whether the device is considered a low RAM device (Android)
+       */
+      readonly is_low_ram?: boolean
+      [k: string]: unknown
+    }
+    /**
+     * User provided context
+     */
+    context?: {
       [k: string]: unknown
     }
     [k: string]: unknown
@@ -1921,6 +1947,410 @@ export interface StreamSchema {
   [k: string]: unknown
 }
 /**
+ * Shared optional view-specific properties used by both view and view_update events
+ */
+export interface ViewProperties {
+  /**
+   * View properties
+   */
+  readonly view?: {
+    /**
+     * Duration in ns to the view is considered loaded
+     */
+    readonly loading_time?: number
+    /**
+     * Duration in ns from the moment the view was started until all the initial network requests settled
+     */
+    readonly network_settled_time?: number
+    /**
+     * Duration in ns to from the last interaction on previous view to the moment the current view was displayed
+     */
+    readonly interaction_to_next_view_time?: number
+    /**
+     * Type of the loading of the view
+     */
+    readonly loading_type?:
+      | 'initial_load'
+      | 'route_change'
+      | 'activity_display'
+      | 'activity_redisplay'
+      | 'fragment_display'
+      | 'fragment_redisplay'
+      | 'view_controller_display'
+      | 'view_controller_redisplay'
+    /**
+     * Time spent on the view in ns
+     */
+    readonly time_spent?: number
+    /**
+     * @deprecated
+     * Duration in ns to the first rendering (deprecated in favor of `view.performance.fcp.timestamp`)
+     */
+    readonly first_contentful_paint?: number
+    /**
+     * @deprecated
+     * Duration in ns to the largest contentful paint (deprecated in favor of `view.performance.lcp.timestamp`)
+     */
+    readonly largest_contentful_paint?: number
+    /**
+     * @deprecated
+     * CSS selector path of the largest contentful paint element (deprecated in favor of `view.performance.lcp.target_selector`)
+     */
+    readonly largest_contentful_paint_target_selector?: string
+    /**
+     * @deprecated
+     * Duration in ns of the first input event delay (deprecated in favor of `view.performance.fid.duration`)
+     */
+    readonly first_input_delay?: number
+    /**
+     * @deprecated
+     * Duration in ns to the first input (deprecated in favor of `view.performance.fid.timestamp`)
+     */
+    readonly first_input_time?: number
+    /**
+     * @deprecated
+     * CSS selector path of the first input target element (deprecated in favor of `view.performance.fid.target_selector`)
+     */
+    readonly first_input_target_selector?: string
+    /**
+     * @deprecated
+     * Longest duration in ns between an interaction and the next paint (deprecated in favor of `view.performance.inp.duration`)
+     */
+    readonly interaction_to_next_paint?: number
+    /**
+     * @deprecated
+     * Duration in ns between start of the view and start of the INP (deprecated in favor of `view.performance.inp.timestamp`)
+     */
+    readonly interaction_to_next_paint_time?: number
+    /**
+     * @deprecated
+     * CSS selector path of the interacted element corresponding to INP (deprecated in favor of `view.performance.inp.target_selector`)
+     */
+    readonly interaction_to_next_paint_target_selector?: string
+    /**
+     * @deprecated
+     * Total layout shift score that occurred on the view (deprecated in favor of `view.performance.cls.score`)
+     */
+    readonly cumulative_layout_shift?: number
+    /**
+     * @deprecated
+     * Duration in ns between start of the view and start of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.timestamp`)
+     */
+    readonly cumulative_layout_shift_time?: number
+    /**
+     * @deprecated
+     * CSS selector path of the first element (in document order) of the largest layout shift contributing to CLS (deprecated in favor of `view.performance.cls.target_selector`)
+     */
+    readonly cumulative_layout_shift_target_selector?: string
+    /**
+     * Duration in ns to the complete parsing and loading of the document and its sub resources
+     */
+    readonly dom_complete?: number
+    /**
+     * Duration in ns to the complete parsing and loading of the document without its sub resources
+     */
+    readonly dom_content_loaded?: number
+    /**
+     * Duration in ns to the end of the parsing of the document
+     */
+    readonly dom_interactive?: number
+    /**
+     * Duration in ns to the end of the load event handler execution
+     */
+    readonly load_event?: number
+    /**
+     * Duration in ns to the response start of the document request
+     */
+    readonly first_byte?: number
+    /**
+     * User custom timings of the view. As timing name is used as facet path, it must contain only letters, digits, or the characters - _ . @ $
+     */
+    readonly custom_timings?: {
+      [k: string]: number
+    }
+    /**
+     * Whether the View corresponding to this event is considered active
+     */
+    readonly is_active?: boolean
+    /**
+     * Whether the View had a low average refresh rate
+     */
+    readonly is_slow_rendered?: boolean
+    /**
+     * Properties of the actions of the view
+     */
+    readonly action?: {
+      /**
+       * Number of actions that occurred on the view
+       */
+      readonly count?: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of the errors of the view
+     */
+    readonly error?: {
+      /**
+       * Number of errors that occurred on the view
+       */
+      readonly count?: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of the crashes of the view
+     */
+    readonly crash?: {
+      /**
+       * Number of crashes that occurred on the view
+       */
+      readonly count?: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of the long tasks of the view
+     */
+    readonly long_task?: {
+      /**
+       * Number of long tasks that occurred on the view
+       */
+      readonly count?: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of the frozen frames of the view
+     */
+    readonly frozen_frame?: {
+      /**
+       * Number of frozen frames that occurred on the view
+       */
+      readonly count?: number
+      [k: string]: unknown
+    }
+    /**
+     * List of slow frames during the view's lifetime
+     */
+    readonly slow_frames?: {
+      /**
+       * Duration in ns between start of the view and the start of the slow frame
+       */
+      readonly start: number
+      /**
+       * Duration in ns of the slow frame
+       */
+      readonly duration: number
+      [k: string]: unknown
+    }[]
+    /**
+     * Properties of the resources of the view
+     */
+    readonly resource?: {
+      /**
+       * Number of resources that occurred on the view
+       */
+      readonly count?: number
+      [k: string]: unknown
+    }
+    /**
+     * Properties of the frustrations of the view
+     */
+    readonly frustration?: {
+      /**
+       * Number of frustrations that occurred on the view
+       */
+      readonly count?: number
+      [k: string]: unknown
+    }
+    /**
+     * List of the periods of time the user had the view in foreground (focused in the browser)
+     */
+    readonly in_foreground_periods?: {
+      /**
+       * Duration in ns between start of the view and start of foreground period
+       */
+      readonly start: number
+      /**
+       * Duration in ns of the view foreground period
+       */
+      readonly duration: number
+      [k: string]: unknown
+    }[]
+    /**
+     * Average memory used during the view lifetime (in bytes)
+     */
+    readonly memory_average?: number
+    /**
+     * Peak memory used during the view lifetime (in bytes)
+     */
+    readonly memory_max?: number
+    /**
+     * Total number of cpu ticks during the view's lifetime
+     */
+    readonly cpu_ticks_count?: number
+    /**
+     * Average number of cpu ticks per second during the view's lifetime
+     */
+    readonly cpu_ticks_per_second?: number
+    /**
+     * Average refresh rate during the view's lifetime (in frames per second)
+     */
+    readonly refresh_rate_average?: number
+    /**
+     * Minimum refresh rate during the view's lifetime (in frames per second)
+     */
+    readonly refresh_rate_min?: number
+    /**
+     * Rate of slow frames during the view's lifetime (in milliseconds per second)
+     */
+    readonly slow_frames_rate?: number
+    /**
+     * Rate of freezes during the view's lifetime (in seconds per hour)
+     */
+    readonly freeze_rate?: number
+    /**
+     * Time taken for Flutter 'build' methods.
+     */
+    flutter_build_time?: RumPerfMetric
+    /**
+     * Time taken for Flutter to rasterize the view.
+     */
+    flutter_raster_time?: RumPerfMetric
+    /**
+     * The JavaScript refresh rate for React Native
+     */
+    js_refresh_rate?: RumPerfMetric
+    /**
+     * Performance data. (Web Vitals, etc.)
+     */
+    performance?: ViewPerformanceData
+    /**
+     * Accessibility properties of the view
+     */
+    accessibility?: ViewAccessibilityProperties
+    [k: string]: unknown
+  }
+  /**
+   * Session properties
+   */
+  readonly session?: {
+    /**
+     * Whether this session is currently active. Set to false to manually stop a session
+     */
+    readonly is_active?: boolean
+    /**
+     * Whether this session has been sampled for replay
+     */
+    readonly sampled_for_replay?: boolean
+    [k: string]: unknown
+  }
+  /**
+   * Feature flags properties
+   */
+  readonly feature_flags?: {
+    [k: string]: unknown
+  }
+  /**
+   * Privacy properties
+   */
+  readonly privacy?: {
+    /**
+     * The replay privacy level
+     */
+    readonly replay_level?: 'allow' | 'mask' | 'mask-user-input'
+    [k: string]: unknown
+  }
+  /**
+   * Internal properties
+   */
+  readonly _dd?: {
+    /**
+     * List of the page states during the view
+     */
+    readonly page_states?: {
+      /**
+       * Page state name
+       */
+      readonly state: 'active' | 'passive' | 'hidden' | 'frozen' | 'terminated'
+      /**
+       * Duration in ns between start of the view and start of the page state
+       */
+      readonly start: number
+      [k: string]: unknown
+    }[]
+    /**
+     * Debug metadata for Replay Sessions
+     */
+    replay_stats?: {
+      /**
+       * The number of records produced during this view lifetime
+       */
+      records_count?: number
+      /**
+       * The number of segments sent during this view lifetime
+       */
+      segments_count?: number
+      /**
+       * The total size in bytes of the segments sent during this view lifetime
+       */
+      segments_total_raw_size?: number
+      [k: string]: unknown
+    }
+    /**
+     * Additional information of the reported Cumulative Layout Shift
+     */
+    readonly cls?: {
+      /**
+       * Pixel ratio of the device where the layout shift was reported
+       */
+      readonly device_pixel_ratio?: number
+      [k: string]: unknown
+    }
+    /**
+     * Subset of the SDK configuration options in use during its execution
+     */
+    readonly configuration?: {
+      /**
+       * Whether session replay recording configured to start manually
+       */
+      readonly start_session_replay_recording_manually?: boolean
+      [k: string]: unknown
+    }
+    /**
+     * Profiling context
+     */
+    profiling?: ProfilingInternalContextSchema
+    [k: string]: unknown
+  }
+  /**
+   * Display properties
+   */
+  readonly display?: {
+    /**
+     * Scroll properties
+     */
+    readonly scroll?: {
+      /**
+       * Distance between the top and the lowest point reached on this view (in pixels)
+       */
+      readonly max_depth?: number
+      /**
+       * Page scroll top (scrolled distance) when the maximum scroll depth was reached for this view (in pixels)
+       */
+      readonly max_depth_scroll_top?: number
+      /**
+       * Maximum page scroll height (total height) for this view (in pixels)
+       */
+      readonly max_scroll_height?: number
+      /**
+       * Duration between the view start and the time the max scroll height was reached for this view (in nanoseconds)
+       */
+      readonly max_scroll_height_time?: number
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+  [k: string]: unknown
+}
+/**
  * Schema of properties for a technical performance metric
  */
 export interface RumPerfMetric {
@@ -2016,6 +2446,24 @@ export interface ViewPerformanceData {
      * CSS selector path of the interacted element for the INP interaction
      */
     readonly target_selector?: string
+    /**
+     * Sub-parts of the INP
+     */
+    sub_parts?: {
+      /**
+       * Time from the start of the input event to the start of the processing of the event
+       */
+      readonly input_delay: number
+      /**
+       * Event handler execution time
+       */
+      readonly processing_time: number
+      /**
+       * Rendering time happening after processing
+       */
+      readonly presentation_delay: number
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   /**
