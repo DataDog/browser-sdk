@@ -1,5 +1,4 @@
-import type { RumPublicApi } from '@datadog/browser-rum-core'
-import type { RumInitConfiguration } from '@datadog/browser-rum-core'
+import type { RumPublicApi, RumInitConfiguration } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '../../../core/test'
 import { nextjsPlugin, resetNextjsPlugin } from './nextjsPlugin'
 import { addDurationVital } from './addDurationVital'
