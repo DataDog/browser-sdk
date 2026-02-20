@@ -153,6 +153,15 @@ export interface RumInitConfiguration extends InitConfiguration {
   defaultPrivacyLevel?: DefaultPrivacyLevel | undefined
 
   /**
+   * List of attribute names that should not be masked when privacy level is mask or mask-unless-allowlisted.
+   * Attributes in this list will be recorded with their original values in Session Replay.
+   *
+   * @category Privacy
+   * @defaultValue []
+   */
+  attrUnmaskAllowlist?: string[] | undefined
+
+  /**
    * If you are accessing Datadog through a custom subdomain, you can set `subdomain` to include your custom domain in the `getSessionReplayLink()` returned URL .
    *
    * See [Connect Session Replay To Your Third-Party Tools](https://docs.datadoghq.com/real_user_monitoring/guide/connect-session-replay-to-your-third-party-tools) for further information.
@@ -305,6 +314,7 @@ export interface RumConfiguration extends Configuration {
   compressIntakeRequests: boolean
   applicationId: string
   defaultPrivacyLevel: DefaultPrivacyLevel
+  attrUnmaskAllowlist: string[]
   enablePrivacyForActionName: boolean
   sessionReplaySampleRate: number
   startSessionReplayRecordingManually: boolean
@@ -351,6 +361,10 @@ export function validateAndBuildRumConfiguration(
     return
   }
 
+  if (initConfiguration.attrUnmaskAllowlist !== undefined && !Array.isArray(initConfiguration.attrUnmaskAllowlist)) {
+    display.warn('attrUnmaskAllowlist should be an array')
+  }
+
   const allowedTracingUrls = validateAndBuildTracingOptions(initConfiguration)
   if (!allowedTracingUrls) {
     return
@@ -391,6 +405,7 @@ export function validateAndBuildRumConfiguration(
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
       ? initConfiguration.defaultPrivacyLevel
       : DefaultPrivacyLevel.MASK,
+    attrUnmaskAllowlist: Array.isArray(initConfiguration.attrUnmaskAllowlist) ? initConfiguration.attrUnmaskAllowlist : [],
     enablePrivacyForActionName: !!initConfiguration.enablePrivacyForActionName,
     traceContextInjection: objectHasValue(TraceContextInjection, initConfiguration.traceContextInjection)
       ? initConfiguration.traceContextInjection
@@ -531,6 +546,7 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     selected_tracing_propagators: getSelectedTracingPropagators(configuration),
     default_privacy_level: configuration.defaultPrivacyLevel,
     enable_privacy_for_action_name: configuration.enablePrivacyForActionName,
+    use_attr_unmask_allowlist: isNonEmptyArray(configuration.attrUnmaskAllowlist),
     use_excluded_activity_urls: isNonEmptyArray(configuration.excludedActivityUrls),
     use_worker_url: !!configuration.workerUrl,
     compress_intake_requests: configuration.compressIntakeRequests,
