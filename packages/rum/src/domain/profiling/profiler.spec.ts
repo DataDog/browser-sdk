@@ -627,6 +627,35 @@ describe('profiler', () => {
     expect(profiler.isStopped()).toBe(true)
   })
 
+  it('should not restart profiling on session renewal if user called stop after session expiration', async () => {
+    const { profiler, profilingContextManager } = setupProfiler()
+
+    profiler.start()
+
+    // Wait for start of collection.
+    await waitForBoolean(() => profiler.isRunning())
+
+    expect(profilingContextManager.get()?.status).toBe('running')
+
+    // Session expires (sync - state changes immediately)
+    lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
+
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+
+    // User explicitly stops the profiler after session expiration
+    profiler.stop()
+
+    expect(profiler.isStopped()).toBe(true)
+
+    // Session is renewed — start() is called synchronously, so no need to wait
+    lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
+
+    // Profiler should remain stopped - user's explicit stop should take priority over session expiration
+    expect(profiler.isStopped()).toBe(true)
+    expect(profilingContextManager.get()?.status).toBe('stopped')
+  })
+
   it('should restart profiling when session expires while paused and then renews', async () => {
     const { profiler, profilingContextManager } = setupProfiler()
 
