@@ -2,6 +2,7 @@ import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
+import type { NextjsRouter } from '../helpers/playwright'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
@@ -26,6 +27,7 @@ export interface SetupOptions {
     logsConfiguration?: LogsInitConfiguration
   }
   hostName?: string
+  nextjsRouter?: NextjsRouter
   worker?: WorkerOptions
   callerLocation?: CallerLocation
 }

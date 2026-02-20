@@ -5,6 +5,18 @@ import packageJson from '../../../../package.json' with { type: 'json' }
 
 export const DEV_SERVER_BASE_URL = 'http://localhost:8080'
 
+export const enum NextjsRouter {
+  App = 'app',
+  Pages = 'pages',
+}
+
+export const NEXTJS_APP_URL = 'http://localhost:3000'
+export const NEXTJS_PAGES_URL = 'http://localhost:3001'
+
+export function getNextjsUrl(router: NextjsRouter): string {
+  return router === NextjsRouter.App ? NEXTJS_APP_URL : NEXTJS_PAGES_URL
+}
+
 export function getPlaywrightConfigBrowserName(name: string): PlaywrightWorkerOptions['browserName'] {
   if (name.includes('firefox')) {
     return 'firefox'

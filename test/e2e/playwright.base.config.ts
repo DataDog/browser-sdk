@@ -1,7 +1,7 @@
 import path from 'path'
 import type { ReporterDescription, Config } from '@playwright/test'
 import { getTestReportDirectory } from '../envUtils'
-import { DEV_SERVER_BASE_URL } from './lib/helpers/playwright'
+import { DEV_SERVER_BASE_URL, NEXTJS_APP_URL, NEXTJS_PAGES_URL } from './lib/helpers/playwright'
 
 const isCi = !!process.env.CI
 const isLocal = !isCi
@@ -31,13 +31,31 @@ export const config: Config = {
     trace: isCi ? 'off' : 'retain-on-failure',
   },
 
-  webServer: isLocal
-    ? {
-        stdout: 'pipe',
-        cwd: path.join(__dirname, '../..'),
-        command: 'yarn dev',
-        url: DEV_SERVER_BASE_URL,
-        reuseExistingServer: true,
-      }
-    : undefined,
+  webServer: [
+    ...(isLocal
+      ? [
+          {
+            stdout: 'pipe' as const,
+            cwd: path.join(__dirname, '../..'),
+            command: 'yarn dev',
+            url: DEV_SERVER_BASE_URL,
+            reuseExistingServer: true,
+          },
+        ]
+      : []),
+    {
+      stdout: 'pipe' as const,
+      cwd: path.join(__dirname, '../apps/nextjs-app-router'),
+      command: isLocal ? 'yarn dev' : 'yarn start',
+      url: NEXTJS_APP_URL,
+      reuseExistingServer: true,
+    },
+    {
+      stdout: 'pipe' as const,
+      cwd: path.join(__dirname, '../apps/nextjs-pages-router'),
+      command: isLocal ? 'yarn dev' : 'yarn start',
+      url: NEXTJS_PAGES_URL,
+      reuseExistingServer: true,
+    },
+  ],
 }
