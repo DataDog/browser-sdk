@@ -365,7 +365,7 @@ describe('getSelectorFromElement with shadow DOM', () => {
     fragment.appendChild(div2)
 
     // The function should return false because div2 matches 'DIV' selector
-    expect(isSelectorUniqueAmongSiblings(div1, 'DIV', undefined)).toBeFalse()
+    expect(isSelectorUniqueAmongSiblings(div1, document, 'DIV', undefined)).toBeFalse()
   })
 
   it('returns true when element is in DocumentFragment with no matching siblings', () => {
@@ -373,6 +373,6 @@ describe('getSelectorFromElement with shadow DOM', () => {
     const div = document.createElement('div')
     fragment.appendChild(div)
 
-    expect(isSelectorUniqueAmongSiblings(div, 'DIV', undefined)).toBeTrue()
+    expect(isSelectorUniqueAmongSiblings(div, document, 'DIV', undefined)).toBeTrue()
   })
 })
