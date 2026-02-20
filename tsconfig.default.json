@@ -16,6 +16,8 @@
     "**/webpack.*",
     "scripts",
     "test/envUtils.ts",
+    "test/unit/browsers.conf.ts",
+    "vitest.bs.config.ts",
 
     // Files included in ./test/e2e/tsconfig.json
     "test/e2e",
