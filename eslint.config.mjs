@@ -454,17 +454,25 @@ export default tseslint.config(
   },
 
   {
-    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js'],
+    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js', 'vitest.config.ts', 'vitest.bs.config.ts'],
     rules: {
-      // Webpack configuration files and eslint rules files are expected to use a default export.
+      // Webpack configuration files, eslint rules files, and vitest config are expected to use a default export.
       'import/no-default-export': 'off',
     },
   },
 
   {
-    files: ['test/e2e/**/*.ts', 'test/performance/**/*.ts'],
+    files: [
+      'test/e2e/**/*.ts',
+      'test/performance/**/*.ts',
+      SPEC_FILES,
+      'packages/*/test/**/*.ts',
+      'test/unit/**/*.ts',
+      'vitest.config.ts',
+      'vitest.bs.config.ts',
+    ],
     rules: {
-      // E2E codebase is importing @datadog/browser-* packages referenced by tsconfig.
+      // E2E, test utilities, and spec files import packages referenced by tsconfig or root devDependencies (vitest).
       'import/no-extraneous-dependencies': 'off',
     },
   },

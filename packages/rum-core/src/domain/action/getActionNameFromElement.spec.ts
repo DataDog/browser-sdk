@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { addExperimentalFeatures, ExperimentalFeature } from '@datadog/browser-core'
 import { appendElement, mockRumConfiguration } from '../../../test'
 import { NodePrivacyLevel } from '../privacyConstants'

@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { display } from '@datadog/browser-core'
 import {
   createMemoryRouter as createMemoryRouterV6,
@@ -29,7 +30,7 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
   describe(`startReactRouterView (${version})`, () => {
     describe('startReactRouterView', () => {
       it('creates a new view with the computed view name', () => {
-        const startViewSpy = jasmine.createSpy()
+        const startViewSpy = vi.fn()
         initializeReactPlugin({
           configuration: {
             router: true,
@@ -45,17 +46,19 @@ routerVersions.forEach(({ version, createMemoryRouter }) => {
           { route: { path: ':id' } },
         ] as unknown as AnyRouteMatch[])
 
-        expect(startViewSpy).toHaveBeenCalledOnceWith('/user/:id')
+        expect(startViewSpy).toHaveBeenCalledTimes(1)
+        expect(startViewSpy).toHaveBeenCalledWith('/user/:id')
       })
 
       it('displays a warning if the router integration is not enabled', () => {
-        const displayWarnSpy = spyOn(display, 'warn')
+        const displayWarnSpy = vi.spyOn(display, 'warn')
         initializeReactPlugin({
           configuration: {},
         })
 
         startReactRouterView([] as unknown as RouteMatchV6[] & RouteMatchV7[])
-        expect(displayWarnSpy).toHaveBeenCalledOnceWith(
+        expect(displayWarnSpy).toHaveBeenCalledTimes(1)
+        expect(displayWarnSpy).toHaveBeenCalledWith(
           '`router: true` is missing from the react plugin configuration, the view will not be tracked.'
         )
       })

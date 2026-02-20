@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import React, { act } from 'react'
 import * as rrdom6 from 'react-router-dom-6'
 import * as rrdom7 from 'react-router-dom'
@@ -46,12 +47,12 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
   }
 
   describe(`useRoutes (${version})`, () => {
-    let startViewSpy: jasmine.Spy<(name?: string | object) => void>
+    let startViewSpy: Mock<(name?: string | object) => void>
 
     beforeEach(() => {
       ignoreReactRouterDeprecationWarnings()
       initReactOldBrowsersSupport()
-      startViewSpy = jasmine.createSpy()
+      startViewSpy = vi.fn()
       initializeReactPlugin({
         configuration: {
           router: true,
@@ -76,7 +77,8 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/foo')
+      expect(startViewSpy).toHaveBeenCalledTimes(1)
+      expect(startViewSpy).toHaveBeenCalledWith('/foo')
     })
 
     it('renders the matching route', () => {
@@ -147,13 +149,14 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      startViewSpy.calls.reset()
+      startViewSpy.mockClear()
 
       await act(async () => {
         await navigate!('/bar')
       })
 
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/bar')
+      expect(startViewSpy).toHaveBeenCalledTimes(1)
+      expect(startViewSpy).toHaveBeenCalledWith('/bar')
     })
 
     it('does not start a new view if the URL is the same', async () => {
@@ -171,7 +174,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      startViewSpy.calls.reset()
+      startViewSpy.mockClear()
 
       await act(async () => {
         await navigate!('/foo')
@@ -195,7 +198,7 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      startViewSpy.calls.reset()
+      startViewSpy.mockClear()
 
       await act(async () => {
         await navigate!('/foo?bar=baz')
@@ -224,7 +227,8 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/foo')
+      expect(startViewSpy).toHaveBeenCalledTimes(1)
+      expect(startViewSpy).toHaveBeenCalledWith('/foo')
     })
 
     it('allows passing a location string', () => {
@@ -242,7 +246,8 @@ versions.forEach(({ version, MemoryRouter, useNavigate, useRoutes }) => {
         </MemoryRouter>
       )
 
-      expect(startViewSpy).toHaveBeenCalledOnceWith('/foo')
+      expect(startViewSpy).toHaveBeenCalledTimes(1)
+      expect(startViewSpy).toHaveBeenCalledWith('/foo')
     })
   })
 })

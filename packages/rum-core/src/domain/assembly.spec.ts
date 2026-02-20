@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import type { ClocksState, RelativeTime, TimeStamp } from '@datadog/browser-core'
 import {
   ErrorSource,
@@ -324,7 +325,7 @@ describe('rum assembly', () => {
           },
         })
 
-        const displaySpy = spyOn(display, 'warn')
+        const displaySpy = vi.spyOn(display, 'warn')
         notifyRawRumEvent(lifeCycle, {
           rawRumEvent: createRawRumEvent(RumEventType.VIEW, {
             view: { id: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee' },
@@ -463,7 +464,7 @@ describe('rum assembly', () => {
 
     it('should get session state from event start', () => {
       const sessionManager = createRumSessionManagerMock()
-      spyOn(sessionManager, 'findTrackedSession').and.callThrough()
+      vi.spyOn(sessionManager, 'findTrackedSession')
       const { lifeCycle } = setupAssemblyTestWithDefaults({ sessionManager })
 
       notifyRawRumEvent(lifeCycle, {
@@ -504,8 +505,8 @@ describe('rum assembly', () => {
         expect(serverRumEvents.length).toBe(1)
         expect(serverRumEvents[0].date).toBe(100)
         expect(reportErrorSpy).toHaveBeenCalledTimes(1)
-        expect(reportErrorSpy.calls.argsFor(0)[0]).toEqual(
-          jasmine.objectContaining({
+        expect(reportErrorSpy.mock.calls[0][0]).toEqual(
+          expect.objectContaining({
             message,
             source: ErrorSource.AGENT,
           })
@@ -601,7 +602,7 @@ function setupAssemblyTestWithDefaults({
 }: AssemblyTestParams = {}) {
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
-  const reportErrorSpy = jasmine.createSpy('reportError')
+  const reportErrorSpy = vi.fn()
   const rumSessionManager = sessionManager ?? createRumSessionManagerMock().setId('1234')
   const serverRumEvents: RumEvent[] = []
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {

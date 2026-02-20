@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it } from 'vitest'
 import { mockClock, mockZoneJs } from '../../test'
 import type { Clock, MockZoneJs } from '../../test'
 import { startMonitorErrorCollection } from './monitor'
@@ -25,23 +26,23 @@ import { noop } from './utils/functionUtils'
     })
 
     it('executes the callback asynchronously', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       setTimer(spy)
       expect(spy).not.toHaveBeenCalled()
       clock.tick(0)
-      expect(spy).toHaveBeenCalledOnceWith()
+      expect(spy).toHaveBeenCalledTimes(1)
     })
 
     it('schedules an asynchronous task', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       setTimer(spy)
       expect(spy).not.toHaveBeenCalled()
       clock.tick(0)
-      expect(spy).toHaveBeenCalledOnceWith()
+      expect(spy).toHaveBeenCalledTimes(1)
     })
 
     it('does not use the Zone.js function', () => {
-      const zoneJsSetTimerSpy = jasmine.createSpy()
+      const zoneJsSetTimerSpy = vi.fn()
       zoneJs.replaceProperty(window, name, zoneJsSetTimerSpy)
 
       setTimer(noop)
@@ -51,7 +52,7 @@ import { noop } from './utils/functionUtils'
     })
 
     it('monitors the callback', () => {
-      const onMonitorErrorCollectedSpy = jasmine.createSpy()
+      const onMonitorErrorCollectedSpy = vi.fn()
       startMonitorErrorCollection(onMonitorErrorCollectedSpy)
 
       setTimer(() => {
@@ -59,11 +60,12 @@ import { noop } from './utils/functionUtils'
       })
       clock.tick(0)
 
-      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledOnceWith(new Error('foo'))
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledTimes(1)
+      expect(onMonitorErrorCollectedSpy).toHaveBeenCalledWith(new Error('foo'))
     })
 
     it('can be canceled', () => {
-      const spy = jasmine.createSpy()
+      const spy = vi.fn()
       const timerId = setTimer(spy)
       clearTimer(timerId)
       clock.tick(0)

@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import {
   STORAGE_POLL_DELAY,
@@ -34,14 +35,14 @@ import {
 describe('rum session manager', () => {
   const DURATION = 123456
   let lifeCycle: LifeCycle
-  let expireSessionSpy: jasmine.Spy
-  let renewSessionSpy: jasmine.Spy
+  let expireSessionSpy: Mock
+  let renewSessionSpy: Mock
   let clock: Clock
 
   beforeEach(() => {
     clock = mockClock()
-    expireSessionSpy = jasmine.createSpy('expireSessionSpy')
-    renewSessionSpy = jasmine.createSpy('renewSessionSpy')
+    expireSessionSpy = vi.fn()
+    renewSessionSpy = vi.fn()
     lifeCycle = new LifeCycle()
     lifeCycle.subscribe(LifeCycleEventType.SESSION_EXPIRED, expireSessionSpy)
     lifeCycle.subscribe(LifeCycleEventType.SESSION_RENEWED, renewSessionSpy)

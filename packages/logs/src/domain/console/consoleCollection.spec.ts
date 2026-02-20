@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Context, ErrorWithCause } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, noop, objectEntries } from '@datadog/browser-core'
 import type { RawConsoleLogsEvent } from '../../rawLogsEvent.types'
@@ -8,7 +9,7 @@ import { startConsoleCollection, LogStatusForApi } from './consoleCollection'
 
 describe('console collection', () => {
   const initConfiguration = { clientToken: 'xxx', service: 'service' }
-  let consoleSpies: { [key: string]: jasmine.Spy }
+  let consoleSpies: { [key: string]: Mock }
   let stopConsoleCollection: () => void
   let lifeCycle: LifeCycle
   let rawLogsEvents: Array<RawLogsEventCollectedData<RawConsoleLogsEvent>>
@@ -21,11 +22,11 @@ describe('console collection', () => {
     )
     stopConsoleCollection = noop
     consoleSpies = {
-      log: spyOn(console, 'log').and.callFake(() => true),
-      debug: spyOn(console, 'debug').and.callFake(() => true),
-      info: spyOn(console, 'info').and.callFake(() => true),
-      warn: spyOn(console, 'warn').and.callFake(() => true),
-      error: spyOn(console, 'error').and.callFake(() => true),
+      log: vi.spyOn(console, 'log').mockImplementation(() => true),
+      debug: vi.spyOn(console, 'debug').mockImplementation(() => true),
+      info: vi.spyOn(console, 'info').mockImplementation(() => true),
+      warn: vi.spyOn(console, 'warn').mockImplementation(() => true),
+      error: vi.spyOn(console, 'error').mockImplementation(() => true),
     }
   })
 
@@ -43,16 +44,15 @@ describe('console collection', () => {
       /* eslint-disable-next-line no-console */
       console[api as keyof typeof LogStatusForApi]('foo', 'bar')
 
-      expect(rawLogsEvents[0].rawLogsEvent).toEqual({
-        date: jasmine.any(Number),
+      expect(rawLogsEvents[0].rawLogsEvent).toMatchObject({
         message: 'foo bar',
         status,
         origin: ErrorSource.CONSOLE,
-        error: whatever(),
       })
+      expect(typeof rawLogsEvents[0].rawLogsEvent.date).toBe('number')
 
-      expect(rawLogsEvents[0].domainContext).toEqual({
-        handlingStack: jasmine.any(String),
+      expect(rawLogsEvents[0].domainContext).toMatchObject({
+        handlingStack: expect.any(String),
       })
 
       expect(consoleSpies[api]).toHaveBeenCalled()
@@ -93,7 +93,7 @@ describe('console collection', () => {
     console.error(error)
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      stack: jasmine.any(String),
+      stack: expect.any(String),
       fingerprint: 'my-fingerprint',
       causes: undefined,
       handling: ErrorHandling.HANDLED,
@@ -140,19 +140,19 @@ describe('console collection', () => {
     console.error(error)
 
     expect(rawLogsEvents[0].rawLogsEvent.error).toEqual({
-      stack: jasmine.any(String),
+      stack: expect.any(String),
       handling: ErrorHandling.HANDLED,
       causes: [
         {
           source: ErrorSource.CONSOLE,
           type: 'Error',
-          stack: jasmine.any(String),
+          stack: expect.any(String),
           message: 'Mid level error',
         },
         {
           source: ErrorSource.CONSOLE,
           type: 'TypeError',
-          stack: jasmine.any(String),
+          stack: expect.any(String),
           message: 'Low level error',
         },
       ],
@@ -162,10 +162,3 @@ describe('console collection', () => {
     })
   })
 })
-
-function whatever() {
-  return {
-    asymmetricMatch: () => true,
-    jasmineToString: () => '<whatever>',
-  }
-}

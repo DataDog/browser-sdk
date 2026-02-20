@@ -1,4 +1,3 @@
-import { getGlobalObject } from '@datadog/browser-core'
 import { NodeType, IncrementalSource } from '../src/types'
 import type {
   SerializedNodeWithId,
@@ -12,9 +11,6 @@ import type {
 } from '../src/types'
 import { findAllIncrementalSnapshots, findFullSnapshot } from './segments'
 import { findTextNode, findElementWithTagName, findElementWithIdAttribute } from './nodes'
-
-// Should match both jasmine and playwright 'expect' functions
-type Expect = (actual: any) => { toEqual(expected: any): void }
 
 interface NodeSelector {
   // Select the first node with the given tag name from the initial full snapshot
@@ -99,7 +95,10 @@ type Optional<T, K extends keyof T> = Pick<Partial<T>, K> & Omit<T, K>
  * * a 'validate' function to actually validate a mutation payload against an expected mutation
  * object.
  */
-export function createMutationPayloadValidator(initialDocument: SerializedNodeWithId) {
+export function createMutationPayloadValidator(
+  initialDocument: SerializedNodeWithId,
+  { expect: expectedExpect }: { expect?: (actual: any) => any } = {}
+) {
   let maxNodeId = findMaxNodeId(initialDocument)
 
   /**
@@ -128,10 +127,11 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
     validate: (
       payload: BrowserMutationPayload,
       expected: ExpectedMutationsPayload,
-      { expect = getGlobalObject<{ expect: Expect }>().expect }: { expect?: Expect } = {}
+      { expect = expectedExpect! }: { expect?: (actual: any) => any } = {}
     ) => {
       payload = removeUndefinedValues(payload)
 
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       expect(payload.adds).toEqual(
         (expected.adds || []).map(({ node, parent, next }) => ({
           node: node.toSerializedNodeWithId(),
@@ -139,13 +139,16 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
           nextId: next ? next.getId() : null,
         }))
       )
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       expect(payload.texts).toEqual((expected.texts || []).map(({ node, value }) => ({ id: node.getId(), value })))
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       expect(payload.removes).toEqual(
         (expected.removes || []).map(({ node, parent }) => ({
           id: node.getId(),
           parentId: parent.getId(),
         }))
       )
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
       expect(payload.attributes).toEqual(
         (expected.attributes || []).map(({ node, attributes }) => ({
           id: node.getId(),
@@ -209,7 +212,10 @@ export function createMutationPayloadValidator(initialDocument: SerializedNodeWi
  * Validate the first and only mutation record of a segment against the expected text, attribute,
  * add and remove mutations.
  */
-export function createMutationPayloadValidatorFromSegment(segment: BrowserSegment, options?: { expect?: Expect }) {
+export function createMutationPayloadValidatorFromSegment(
+  segment: BrowserSegment,
+  options?: { expect?: (actual: any) => any }
+) {
   const fullSnapshot = findFullSnapshot(segment)!
   if (!fullSnapshot) {
     throw new Error('Full snapshot not found')

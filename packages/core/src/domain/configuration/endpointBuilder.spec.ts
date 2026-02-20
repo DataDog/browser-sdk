@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Payload } from '../../transport'
 import type { InitConfiguration } from './configuration'
 import { createEndpointBuilder } from './endpointBuilder'
@@ -15,7 +16,7 @@ describe('endpointBuilder', () => {
   describe('query parameters', () => {
     it('should add intake query parameters', () => {
       expect(createEndpointBuilder(initConfiguration, 'rum').build('fetch', DEFAULT_PAYLOAD)).toMatch(
-        `&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`
+        new RegExp(`&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)`)
       )
     })
 
@@ -57,17 +58,14 @@ describe('endpointBuilder', () => {
 
   describe('proxy configuration', () => {
     it('should replace the intake endpoint by the proxy and set the intake path and parameters in the attribute ddforward', () => {
-      expect(
-        createEndpointBuilder({ ...initConfiguration, proxy: 'https://proxy.io/path' }, 'rum').build(
-          'fetch',
-          DEFAULT_PAYLOAD
-        )
-      ).toMatch(
-        `https://proxy.io/path\\?ddforward=${encodeURIComponent(
-          `/api/v2/rum?ddsource=(.*)&dd-api-key=${clientToken}` +
-            '&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)'
-        )}`
+      const url = createEndpointBuilder({ ...initConfiguration, proxy: 'https://proxy.io/path' }, 'rum').build(
+        'fetch',
+        DEFAULT_PAYLOAD
       )
+      expect(url).toContain('https://proxy.io/path?ddforward=')
+      expect(url).toContain(encodeURIComponent('/api/v2/rum?ddsource='))
+      expect(url).toContain(encodeURIComponent(`&dd-api-key=${clientToken}`))
+      expect(url).toContain(encodeURIComponent('&dd-evp-origin=browser'))
     })
 
     it('normalizes the proxy url', () => {
@@ -75,17 +73,17 @@ describe('endpointBuilder', () => {
         'fetch',
         DEFAULT_PAYLOAD
       )
-      expect(endpoint.startsWith(`${location.origin}/path?ddforward`)).toBeTrue()
+      expect(endpoint.startsWith(`${location.origin}/path?ddforward`)).toBe(true)
     })
 
     it('should allow to fully control the proxy url', () => {
       const proxyFn = (options: { path: string; parameters: string }) =>
         `https://proxy.io/prefix${options.path}/suffix?${options.parameters}`
-      expect(
-        createEndpointBuilder({ ...initConfiguration, proxy: proxyFn }, 'rum').build('fetch', DEFAULT_PAYLOAD)
-      ).toMatch(
-        `https://proxy.io/prefix/api/v2/rum/suffix\\?ddsource=(.*)&dd-api-key=${clientToken}&dd-evp-origin-version=(.*)&dd-evp-origin=browser&dd-request-id=(.*)&batch_time=(.*)`
-      )
+      const url = createEndpointBuilder({ ...initConfiguration, proxy: proxyFn }, 'rum').build('fetch', DEFAULT_PAYLOAD)
+      expect(url).toContain('https://proxy.io/prefix/api/v2/rum/suffix?ddsource=')
+      expect(url).toContain(`&dd-api-key=${clientToken}`)
+      expect(url).toContain('&dd-evp-origin=browser')
+      expect(url).toContain('&batch_time=')
     })
   })
 

@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RawError, Subscription } from '@datadog/browser-core'
 import { ErrorHandling, ErrorSource, Observable, clocksNow } from '@datadog/browser-core'
 import { ignoreConsoleLogs, mockClock } from '@datadog/browser-core/test'
@@ -6,12 +7,12 @@ import { trackConsoleError } from './trackConsoleError'
 describe('trackConsoleError', () => {
   let errorObservable: Observable<RawError>
   let subscription: Subscription
-  let notifyLog: jasmine.Spy
+  let notifyLog: Mock
 
   beforeEach(() => {
     ignoreConsoleLogs('error', 'Error: foo')
     errorObservable = new Observable()
-    notifyLog = jasmine.createSpy('notifyLog')
+    notifyLog = vi.fn()
     trackConsoleError(errorObservable)
     subscription = errorObservable.subscribe(notifyLog)
     mockClock()
@@ -29,11 +30,11 @@ describe('trackConsoleError', () => {
 
     expect(notifyLog).toHaveBeenCalledWith({
       startClocks: clocksNow(),
-      message: jasmine.any(String),
-      stack: jasmine.any(String),
+      message: expect.any(String),
+      stack: expect.any(String),
       source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
-      handlingStack: jasmine.any(String),
+      handlingStack: expect.any(String),
       fingerprint: undefined,
       causes: undefined,
       context: undefined,
@@ -55,11 +56,11 @@ describe('trackConsoleError', () => {
 
     expect(notifyLog).toHaveBeenCalledWith({
       startClocks: clocksNow(),
-      message: jasmine.any(String),
-      stack: jasmine.any(String),
+      message: expect.any(String),
+      stack: expect.any(String),
       source: ErrorSource.CONSOLE,
       handling: ErrorHandling.HANDLED,
-      handlingStack: jasmine.any(String),
+      handlingStack: expect.any(String),
       fingerprint: 'my-fingerprint',
       causes: undefined,
       context: undefined,

@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RecordingScope } from '../recordingScope'
 import { createRecordingScopeForTesting } from '../test/recordingScope.specHelper'
 import { idsAreAssignedForNodeAndAncestors, sortAddedAndMovedNodes } from './serializeMutations'

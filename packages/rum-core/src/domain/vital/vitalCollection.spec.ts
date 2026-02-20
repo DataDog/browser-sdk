@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Duration } from '@datadog/browser-core'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
 import { addExperimentalFeatures, clocksNow, ExperimentalFeature } from '@datadog/browser-core'
@@ -17,11 +18,11 @@ describe('vitalCollection', () => {
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
   let clock: Clock
   let vitalCollection: ReturnType<typeof startVitalCollection>
-  let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
+  let wasInPageStateDuringPeriodSpy: Mock<(...args: any[]) => any>
 
   beforeEach(() => {
     clock = mockClock()
-    wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
+    wasInPageStateDuringPeriodSpy = vi.spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
     vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, vitalsState)
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -30,27 +31,29 @@ describe('vitalCollection', () => {
   describe('custom duration', () => {
     describe('startDurationVital', () => {
       it('should create duration vital from a vital reference', () => {
-        const cbSpy = jasmine.createSpy()
+        const cbSpy = vi.fn()
 
         const vitalRef = startDurationVital(vitalsState, 'foo')
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, vitalRef)
 
-        expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
+        expect(cbSpy).toHaveBeenCalledTimes(1)
+        expect(cbSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'foo', duration: 100 }))
       })
 
       it('should create duration vital from a vital name', () => {
-        const cbSpy = jasmine.createSpy()
+        const cbSpy = vi.fn()
 
         startDurationVital(vitalsState, 'foo')
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, 'foo')
 
-        expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
+        expect(cbSpy).toHaveBeenCalledTimes(1)
+        expect(cbSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'foo', duration: 100 }))
       })
 
       it('should only create a single duration vital from a vital name', () => {
-        const cbSpy = jasmine.createSpy()
+        const cbSpy = vi.fn()
 
         startDurationVital(vitalsState, 'foo')
         clock.tick(100)
@@ -58,11 +61,12 @@ describe('vitalCollection', () => {
         clock.tick(100)
         stopDurationVital(cbSpy, vitalsState, 'foo')
 
-        expect(cbSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo', duration: 100 }))
+        expect(cbSpy).toHaveBeenCalledTimes(1)
+        expect(cbSpy).toHaveBeenCalledWith(expect.objectContaining({ name: 'foo', duration: 100 }))
       })
 
       it('should not create multiple duration vitals by calling "stopDurationVital" on the same vital ref multiple times', () => {
-        const cbSpy = jasmine.createSpy()
+        const cbSpy = vi.fn()
 
         const vital = startDurationVital(vitalsState, 'foo')
         stopDurationVital(cbSpy, vitalsState, vital)
@@ -72,7 +76,7 @@ describe('vitalCollection', () => {
       })
 
       it('should not create multiple duration vitals by calling "stopDurationVital" on the same vital name multiple times', () => {
-        const cbSpy = jasmine.createSpy()
+        const cbSpy = vi.fn()
 
         startDurationVital(vitalsState, 'bar')
         stopDurationVital(cbSpy, vitalsState, 'bar')
@@ -82,7 +86,7 @@ describe('vitalCollection', () => {
       })
 
       it('should create multiple duration vitals from multiple vital refs', () => {
-        const cbSpy = jasmine.createSpy()
+        const cbSpy = vi.fn()
 
         const vitalRef1 = startDurationVital(vitalsState, 'foo', { description: 'component 1' })
         clock.tick(100)
@@ -93,16 +97,12 @@ describe('vitalCollection', () => {
         stopDurationVital(cbSpy, vitalsState, vitalRef1)
 
         expect(cbSpy).toHaveBeenCalledTimes(2)
-        expect(cbSpy.calls.argsFor(0)).toEqual([
-          jasmine.objectContaining({ description: 'component 2', duration: 100 }),
-        ])
-        expect(cbSpy.calls.argsFor(1)).toEqual([
-          jasmine.objectContaining({ description: 'component 1', duration: 300 }),
-        ])
+        expect(cbSpy.mock.calls[0]).toEqual([expect.objectContaining({ description: 'component 2', duration: 100 })])
+        expect(cbSpy.mock.calls[1]).toEqual([expect.objectContaining({ description: 'component 1', duration: 300 })])
       })
 
       it('should merge startDurationVital and stopDurationVital description', () => {
-        const cbSpy = jasmine.createSpy()
+        const cbSpy = vi.fn()
 
         startDurationVital(vitalsState, 'both-undefined')
         stopDurationVital(cbSpy, vitalsState, 'both-undefined')
@@ -117,14 +117,14 @@ describe('vitalCollection', () => {
         stopDurationVital(cbSpy, vitalsState, 'both-defined', { description: 'stop-defined' })
 
         expect(cbSpy).toHaveBeenCalledTimes(4)
-        expect(cbSpy.calls.argsFor(0)).toEqual([jasmine.objectContaining({ description: undefined })])
-        expect(cbSpy.calls.argsFor(1)).toEqual([jasmine.objectContaining({ description: 'start-defined' })])
-        expect(cbSpy.calls.argsFor(2)).toEqual([jasmine.objectContaining({ description: 'stop-defined' })])
-        expect(cbSpy.calls.argsFor(3)).toEqual([jasmine.objectContaining({ description: 'stop-defined' })])
+        expect(cbSpy.mock.calls[0]).toEqual([expect.objectContaining({ description: undefined })])
+        expect(cbSpy.mock.calls[1]).toEqual([expect.objectContaining({ description: 'start-defined' })])
+        expect(cbSpy.mock.calls[2]).toEqual([expect.objectContaining({ description: 'stop-defined' })])
+        expect(cbSpy.mock.calls[3]).toEqual([expect.objectContaining({ description: 'stop-defined' })])
       })
 
       it('should merge startDurationVital and stopDurationVital contexts', () => {
-        const cbSpy = jasmine.createSpy()
+        const cbSpy = vi.fn()
 
         const vitalRef1 = startDurationVital(vitalsState, 'both-undefined')
         stopDurationVital(cbSpy, vitalsState, vitalRef1)
@@ -150,11 +150,11 @@ describe('vitalCollection', () => {
         stopDurationVital(cbSpy, vitalsState, vitalRef5, { context: { precedence: 'stop' } })
 
         expect(cbSpy).toHaveBeenCalledTimes(5)
-        expect(cbSpy.calls.argsFor(0)[0].context).toEqual(undefined)
-        expect(cbSpy.calls.argsFor(1)[0].context).toEqual({ start: 'defined' })
-        expect(cbSpy.calls.argsFor(2)[0].context).toEqual({ stop: 'defined' })
-        expect(cbSpy.calls.argsFor(3)[0].context).toEqual({ start: 'defined', stop: 'defined' })
-        expect(cbSpy.calls.argsFor(4)[0].context).toEqual({ precedence: 'stop' })
+        expect(cbSpy.mock.calls[0][0].context).toEqual(undefined)
+        expect(cbSpy.mock.calls[1][0].context).toEqual({ start: 'defined' })
+        expect(cbSpy.mock.calls[2][0].context).toEqual({ stop: 'defined' })
+        expect(cbSpy.mock.calls[3][0].context).toEqual({ start: 'defined', stop: 'defined' })
+        expect(cbSpy.mock.calls[4][0].context).toEqual({ precedence: 'stop' })
       })
     })
 
@@ -192,7 +192,7 @@ describe('vitalCollection', () => {
       })
 
       it('should discard a vital for which a frozen state happened', () => {
-        wasInPageStateDuringPeriodSpy.and.returnValue(true)
+        wasInPageStateDuringPeriodSpy.mockReturnValue(true)
 
         vitalCollection.addDurationVital({
           name: 'foo',
@@ -208,11 +208,11 @@ describe('vitalCollection', () => {
         vitalCollection.startDurationVital('foo')
         vitalCollection.stopDurationVital('foo')
 
-        expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
+        expect(rawRumEvents[0].startClocks.relative).toEqual(expect.any(Number))
         expect(rawRumEvents[0].rawRumEvent).toEqual({
-          date: jasmine.any(Number),
+          date: expect.any(Number),
           vital: {
-            id: jasmine.any(String),
+            id: expect.any(String),
             type: VitalType.DURATION,
             name: 'foo',
             duration: 0,
@@ -239,11 +239,11 @@ describe('vitalCollection', () => {
         addExperimentalFeatures([ExperimentalFeature.FEATURE_OPERATION_VITAL])
         vitalCollection.addOperationStepVital('foo', 'start')
 
-        expect(rawRumEvents[0].startClocks.relative).toEqual(jasmine.any(Number))
+        expect(rawRumEvents[0].startClocks.relative).toEqual(expect.any(Number))
         expect(rawRumEvents[0].rawRumEvent).toEqual({
-          date: jasmine.any(Number),
+          date: expect.any(Number),
           vital: {
-            id: jasmine.any(String),
+            id: expect.any(String),
             type: VitalType.OPERATION_STEP,
             name: 'foo',
             step_type: 'start',

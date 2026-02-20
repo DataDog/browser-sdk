@@ -1,3 +1,4 @@
+import { vi, describe, expect, it } from 'vitest'
 import { mockClock, mockRequestIdleCallback } from '../../test'
 import { createTaskQueue, MAX_EXECUTION_TIME_ON_TIMEOUT } from './taskQueue'
 
@@ -5,7 +6,7 @@ describe('createTaskQueue', () => {
   it('runs the task using an idle callback', () => {
     const requestIdleCallbackMock = mockRequestIdleCallback()
     const taskQueue = createTaskQueue()
-    const task = jasmine.createSpy('task')
+    const task = vi.fn()
 
     taskQueue.push(task)
     expect(task).not.toHaveBeenCalled()
@@ -19,9 +20,9 @@ describe('createTaskQueue', () => {
     const requestIdleCallbackMock = mockRequestIdleCallback()
 
     // Each task takes 10ms to run
-    const task1 = jasmine.createSpy().and.callFake(() => clock.tick(10))
-    const task2 = jasmine.createSpy().and.callFake(() => clock.tick(10))
-    const task3 = jasmine.createSpy().and.callFake(() => clock.tick(10))
+    const task1 = vi.fn().mockImplementation(() => clock.tick(10))
+    const task2 = vi.fn().mockImplementation(() => clock.tick(10))
+    const task3 = vi.fn().mockImplementation(() => clock.tick(10))
 
     const taskQueue = createTaskQueue()
 
@@ -42,9 +43,9 @@ describe('createTaskQueue', () => {
     const clock = mockClock()
     const requestIdleCallbackMock = mockRequestIdleCallback()
 
-    const task1 = jasmine.createSpy().and.callFake(() => clock.tick(MAX_EXECUTION_TIME_ON_TIMEOUT - 10))
-    const task2 = jasmine.createSpy().and.callFake(() => clock.tick(20))
-    const task3 = jasmine.createSpy().and.callFake(() => clock.tick(20))
+    const task1 = vi.fn().mockImplementation(() => clock.tick(MAX_EXECUTION_TIME_ON_TIMEOUT - 10))
+    const task2 = vi.fn().mockImplementation(() => clock.tick(20))
+    const task3 = vi.fn().mockImplementation(() => clock.tick(20))
 
     const taskQueue = createTaskQueue()
 

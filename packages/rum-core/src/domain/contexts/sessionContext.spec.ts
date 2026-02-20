@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
 import type { RumSessionManagerMock } from '../../../test'
@@ -17,9 +18,9 @@ describe('session context', () => {
     startClocks: clocksNow(),
     sessionIsActive: false,
   }
-  let isRecordingSpy: jasmine.Spy
-  let getReplayStatsSpy: jasmine.Spy
-  let findViewSpy: jasmine.Spy
+  let isRecordingSpy: Mock
+  let getReplayStatsSpy: Mock
+  let findViewSpy: Mock
   const fakeStats = {
     segments_count: 4,
     records_count: 10,
@@ -33,15 +34,15 @@ describe('session context', () => {
     sessionManager.setId('123')
     const recorderApi = noopRecorderApi
 
-    isRecordingSpy = spyOn(recorderApi, 'isRecording')
-    getReplayStatsSpy = spyOn(recorderApi, 'getReplayStats')
-    findViewSpy = spyOn(viewHistory, 'findView').and.returnValue(fakeView)
+    isRecordingSpy = vi.spyOn(recorderApi, 'isRecording')
+    getReplayStatsSpy = vi.spyOn(recorderApi, 'getReplayStats')
+    findViewSpy = vi.spyOn(viewHistory, 'findView').mockReturnValue(fakeView)
 
     startSessionContext(hooks, sessionManager, recorderApi, viewHistory)
   })
 
   it('should set id and type', () => {
-    isRecordingSpy.and.returnValue(true)
+    isRecordingSpy.mockReturnValue(true)
 
     const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'action',
@@ -50,21 +51,21 @@ describe('session context', () => {
 
     expect(defaultRumEventAttributes).toEqual({
       type: 'action',
-      session: jasmine.objectContaining({
-        id: jasmine.any(String),
+      session: expect.objectContaining({
+        id: expect.any(String),
         type: SessionType.USER,
       }),
     })
   })
 
   it('should set hasReplay when recording has started (isRecording) on events', () => {
-    isRecordingSpy.and.returnValue(true)
+    isRecordingSpy.mockReturnValue(true)
     const eventWithHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'action',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
 
-    isRecordingSpy.and.returnValue(false)
+    isRecordingSpy.mockReturnValue(false)
     const eventWithoutHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'action',
       startTime: 0 as RelativeTime,
@@ -77,13 +78,13 @@ describe('session context', () => {
   })
 
   it('should set hasReplay when there are Replay stats on view events', () => {
-    getReplayStatsSpy.and.returnValue(fakeStats)
+    getReplayStatsSpy.mockReturnValue(fakeStats)
     const eventWithHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
 
-    getReplayStatsSpy.and.returnValue(undefined)
+    getReplayStatsSpy.mockReturnValue(undefined)
     const eventWithoutHasReplay = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
@@ -96,12 +97,12 @@ describe('session context', () => {
   })
 
   it('should set session.is_active when the session is active', () => {
-    findViewSpy.and.returnValue({ ...fakeView, sessionIsActive: true })
+    findViewSpy.mockReturnValue({ ...fakeView, sessionIsActive: true })
     const eventWithActiveSession = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
     } as AssembleHookParams) as DefaultRumEventAttributes
-    findViewSpy.and.returnValue({ ...fakeView, sessionIsActive: false })
+    findViewSpy.mockReturnValue({ ...fakeView, sessionIsActive: false })
     const eventWithoutActiveSession = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,
@@ -139,7 +140,7 @@ describe('session context', () => {
   })
 
   it('should discard the event if no view', () => {
-    findViewSpy.and.returnValue(undefined)
+    findViewSpy.mockReturnValue(undefined)
     const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
       eventType: 'view',
       startTime: 0 as RelativeTime,

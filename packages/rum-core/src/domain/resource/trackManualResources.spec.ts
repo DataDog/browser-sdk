@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Duration, ServerDuration } from '@datadog/browser-core'
 import { ResourceType } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
@@ -35,12 +36,12 @@ describe('trackManualResources', () => {
       clock.tick(500)
       stopResource('https://api.example.com/data')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       expect(rawRumEvents[0].duration).toBe(500 as Duration)
       expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           type: RumEventType.RESOURCE,
-          resource: jasmine.objectContaining({
+          resource: expect.objectContaining({
             url: 'https://api.example.com/data',
             type: ResourceType.OTHER,
           }),
@@ -53,7 +54,7 @@ describe('trackManualResources', () => {
       clock.tick(500)
       stopResource('https://api.example.com/data')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(resourceEvent.resource.duration).toBe((500 * 1e6) as ServerDuration)
     })
@@ -64,7 +65,7 @@ describe('trackManualResources', () => {
       startResource('https://api.example.com/data')
       stopResource('https://api.example.com/data')
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(resourceEvent.resource.type).toBe(ResourceType.OTHER)
     })
@@ -74,7 +75,7 @@ describe('trackManualResources', () => {
           startResource('https://api.example.com/data', { type: resourceType })
           stopResource('https://api.example.com/data')
 
-          expect(rawRumEvents).toHaveSize(1)
+          expect(rawRumEvents).toHaveLength(1)
           const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
           expect(resourceEvent.resource.type).toBe(resourceType)
         })
@@ -87,7 +88,7 @@ describe('trackManualResources', () => {
       startResource('https://api.example.com/data', { method: 'POST' })
       stopResource('https://api.example.com/data', { statusCode: 200 })
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(resourceEvent.resource.method).toBe('POST')
       expect(resourceEvent.resource.status_code).toBe(200)
@@ -105,7 +106,7 @@ describe('trackManualResources', () => {
       clock.tick(100)
       stopResource('https://api.example.com/data', { resourceKey: 'request1' })
 
-      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents).toHaveLength(2)
       expect(rawRumEvents[0].duration).toBe(100 as Duration)
       expect(rawRumEvents[1].duration).toBe(200 as Duration)
     })
@@ -117,7 +118,7 @@ describe('trackManualResources', () => {
       stopResource('https://api.example.com/foo/bar')
       stopResource('https://api.example.com/foo', { resourceKey: 'bar' })
 
-      expect(rawRumEvents).toHaveSize(2)
+      expect(rawRumEvents).toHaveLength(2)
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/foo/bar')
       expect((rawRumEvents[1].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/foo')
     })
@@ -128,7 +129,7 @@ describe('trackManualResources', () => {
       startResource('https://api.example.com/data', { context: { startKey: 'value1' } })
       stopResource('https://api.example.com/data', { context: { stopKey: 'value2' } })
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       const resourceEvent = rawRumEvents[0].rawRumEvent as RawRumResourceEvent
       expect(resourceEvent.context).toEqual({
         startKey: 'value1',
@@ -142,7 +143,7 @@ describe('trackManualResources', () => {
       startResource('https://api.example.com/data', { resourceKey: 'key1' })
       stopResource(undefined as any, { resourceKey: 'key1' })
 
-      expect(rawRumEvents).toHaveSize(1)
+      expect(rawRumEvents).toHaveLength(1)
       expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent).resource.url).toBe('https://api.example.com/data')
     })
   })

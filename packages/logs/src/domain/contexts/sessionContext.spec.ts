@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RelativeTime } from '@datadog/browser-core'
 import { DISCARDED, HookNames } from '@datadog/browser-core'
 import type { LogsSessionManager } from '../logsSessionManager'
@@ -25,7 +26,7 @@ describe('session context', () => {
         startTime: 0 as RelativeTime,
       }) as DefaultLogsEventAttributes
 
-      expect(defaultLogAttributes.service).toEqual(jasmine.any(String))
+      expect(defaultLogAttributes.service).toEqual(expect.any(String))
     })
 
     it('should discard logs if session is not tracked', () => {
@@ -46,9 +47,9 @@ describe('session context', () => {
       })
 
       expect(defaultLogAttributes).toEqual({
-        service: jasmine.any(String),
-        session_id: jasmine.any(String),
-        session: { id: jasmine.any(String) },
+        service: expect.any(String),
+        session_id: expect.any(String),
+        session: { id: expect.any(String) },
       })
     })
 
@@ -60,7 +61,7 @@ describe('session context', () => {
       })
 
       expect(defaultLogAttributes).toEqual({
-        service: jasmine.any(String),
+        service: expect.any(String),
         session_id: undefined,
         session: undefined,
       })
@@ -76,7 +77,7 @@ describe('session context', () => {
       })
 
       expect(defaultRumEventAttributes).toEqual({
-        session: { id: jasmine.any(String) },
+        session: { id: expect.any(String) },
       })
     })
 

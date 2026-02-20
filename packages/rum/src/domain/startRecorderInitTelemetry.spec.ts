@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { Telemetry, RawTelemetryEvent } from '@datadog/browser-core'
 import { Observable } from '@datadog/browser-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
@@ -142,10 +143,10 @@ function expectedRecorderInitTelemetry(overrides: Partial<RecorderInitMetrics> =
     message: 'Recorder init metrics',
     metrics: {
       forced: false,
-      loadRecorderModuleDuration: jasmine.any(Number),
-      recorderInitDuration: jasmine.any(Number),
+      loadRecorderModuleDuration: expect.any(Number),
+      recorderInitDuration: expect.any(Number),
       result: 'succeeded',
-      waitForDocReadyDuration: jasmine.any(Number),
+      waitForDocReadyDuration: expect.any(Number),
       ...overrides,
     },
   }

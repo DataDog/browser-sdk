@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { Clock } from '@datadog/browser-core/test'
 import type { RelativeTime } from '@datadog/browser-core'
@@ -148,10 +149,10 @@ describe('urlContexts', () => {
       } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toEqual(
-        jasmine.objectContaining({
+        expect.objectContaining({
           view: {
-            url: jasmine.any(String),
-            referrer: jasmine.any(String),
+            url: expect.any(String),
+            referrer: expect.any(String),
           },
         })
       )

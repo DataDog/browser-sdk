@@ -1,3 +1,4 @@
+import { vi, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { Duration, RelativeTime, ServerDuration, TaskQueue, TimeStamp } from '@datadog/browser-core'
 import { createTaskQueue, noop, RequestType, ResourceType } from '@datadog/browser-core'
 import { replaceMockable, registerCleanupTask } from '@datadog/browser-core/test'
@@ -28,17 +29,17 @@ const pageStateHistory = mockPageStateHistory()
 
 describe('resourceCollection', () => {
   let lifeCycle: LifeCycle
-  let wasInPageStateDuringPeriodSpy: jasmine.Spy<jasmine.Func>
+  let wasInPageStateDuringPeriodSpy: Mock<(...args: any[]) => any>
   let notifyPerformanceEntries: (entries: RumPerformanceEntry[]) => void
   let rawRumEvents: Array<RawRumEventCollectedData<RawRumEvent>> = []
-  let taskQueuePushSpy: jasmine.Spy<TaskQueue['push']>
+  let taskQueuePushSpy: Mock<TaskQueue['push']>
 
   function setupResourceCollection(partialConfig: Partial<RumConfiguration> = { trackResources: true }) {
     replaceMockable(retrieveInitialDocumentResourceTiming, noop)
     lifeCycle = new LifeCycle()
     const taskQueue = createTaskQueue()
     replaceMockable(createTaskQueue, () => taskQueue)
-    taskQueuePushSpy = spyOn(taskQueue, 'push')
+    taskQueuePushSpy = vi.spyOn(taskQueue, 'push')
     const startResult = startResourceCollection(lifeCycle, { ...baseConfiguration, ...partialConfig }, pageStateHistory)
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -50,7 +51,7 @@ describe('resourceCollection', () => {
 
   beforeEach(() => {
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
-    wasInPageStateDuringPeriodSpy = spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
+    wasInPageStateDuringPeriodSpy = vi.spyOn(pageStateHistory, 'wasInPageStateDuringPeriod')
   })
 
   it('should create resource from performance entry', () => {
@@ -69,9 +70,9 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number) as unknown as TimeStamp,
+      date: expect.any(Number) as unknown as TimeStamp,
       resource: {
-        id: jasmine.any(String),
+        id: expect.any(String),
         duration: (100 * 1e6) as ServerDuration,
         size: 51,
         encoded_body_size: 42,
@@ -79,8 +80,8 @@ describe('resourceCollection', () => {
         transfer_size: 63,
         type: ResourceType.IMAGE,
         url: 'https://resource.com/valid',
-        download: jasmine.any(Object),
-        first_byte: jasmine.any(Object),
+        download: expect.any(Object),
+        first_byte: expect.any(Object),
         status_code: 200,
         protocol: 'HTTP/1.0',
         delivery_type: 'cache',
@@ -116,9 +117,9 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       resource: {
-        id: jasmine.any(String),
+        id: expect.any(String),
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
@@ -142,9 +143,9 @@ describe('resourceCollection', () => {
     })
     expect(rawRumEvents[0].domainContext).toEqual({
       xhr,
-      performanceEntry: jasmine.any(Object),
+      performanceEntry: expect.any(Object),
       isAborted: false,
-      handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+      handlingStack: expect.stringMatching(HANDLING_STACK_REGEX),
     })
   })
 
@@ -209,8 +210,8 @@ describe('resourceCollection', () => {
           })
 
           expect(rawRumEvents[0].rawRumEvent).toEqual(
-            jasmine.objectContaining({
-              resource: jasmine.objectContaining({
+            expect.objectContaining({
+              resource: expect.objectContaining({
                 graphql: {
                   operationType: 'query',
                   operationName: 'GetUser',
@@ -257,8 +258,8 @@ describe('resourceCollection', () => {
           })
 
           expect(rawRumEvents[0].rawRumEvent).toEqual(
-            jasmine.objectContaining({
-              resource: jasmine.objectContaining({
+            expect.objectContaining({
+              resource: expect.objectContaining({
                 graphql: {
                   operationType: 'mutation',
                   operationName: 'CreateUser',
@@ -287,9 +288,9 @@ describe('resourceCollection', () => {
       expect(rawRumEvents.length).toBe(1)
       expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
       expect(rawRumEvents[0].rawRumEvent).toEqual({
-        date: jasmine.any(Number),
+        date: expect.any(Number),
         resource: {
-          id: jasmine.any(String),
+          id: expect.any(String),
           duration: (100 * 1e6) as ServerDuration,
           method: undefined,
           status_code: 200,
@@ -312,7 +313,7 @@ describe('resourceCollection', () => {
         },
       })
       expect(rawRumEvents[0].domainContext).toEqual({
-        performanceEntry: jasmine.any(Object),
+        performanceEntry: expect.any(Object),
       })
     })
   })
@@ -348,7 +349,7 @@ describe('resourceCollection', () => {
         runTasks()
 
         expect(rawRumEvents.length).toBe(1)
-        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBe(true)
       })
 
       it('should collect a resource from a completed XHR request', () => {
@@ -363,14 +364,14 @@ describe('resourceCollection', () => {
         })
 
         expect(rawRumEvents.length).toBe(1)
-        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBeTrue()
+        expect((rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd.discarded).toBe(true)
       })
     })
   })
 
   it('should not have a duration if a frozen state happens during the request and no performance entry matches', () => {
     setupResourceCollection()
-    wasInPageStateDuringPeriodSpy.and.returnValue(true)
+    wasInPageStateDuringPeriodSpy.mockReturnValue(true)
 
     notifyRequest({
       // For now, this behavior only happens when there is no performance entry matching the request
@@ -401,9 +402,9 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents[0].startClocks.relative).toBe(200 as RelativeTime)
     expect(rawRumEvents[0].rawRumEvent).toEqual({
-      date: jasmine.any(Number),
+      date: expect.any(Number),
       resource: {
-        id: jasmine.any(String),
+        id: expect.any(String),
         duration: (100 * 1e6) as ServerDuration,
         method: 'GET',
         status_code: 200,
@@ -427,13 +428,13 @@ describe('resourceCollection', () => {
       },
     })
     expect(rawRumEvents[0].domainContext).toEqual({
-      performanceEntry: jasmine.any(Object),
+      performanceEntry: expect.any(Object),
       response,
       requestInput: 'https://resource.com/valid',
       requestInit: { headers: { foo: 'bar' } },
       error: undefined,
       isAborted: false,
-      handlingStack: jasmine.stringMatching(HANDLING_STACK_REGEX),
+      handlingStack: expect.stringMatching(HANDLING_STACK_REGEX),
     })
   })
   ;[null, undefined, 42, {}].forEach((input: any) => {
@@ -458,7 +459,7 @@ describe('resourceCollection', () => {
     })
 
     expect(rawRumEvents[0].domainContext).toEqual(
-      jasmine.objectContaining({
+      expect.objectContaining({
         error,
       })
     )
@@ -480,7 +481,7 @@ describe('resourceCollection', () => {
       const privateFields = (rawRumEvents[0].rawRumEvent as RawRumResourceEvent)._dd
       expect(privateFields).toBeDefined()
       expect(privateFields.trace_id).toBe('1234')
-      expect(privateFields.span_id).toEqual(jasmine.any(String))
+      expect(privateFields.span_id).toEqual(expect.any(String))
     })
 
     it('should be processed from sampled completed request', () => {
@@ -600,17 +601,17 @@ describe('resourceCollection', () => {
 
     expect(rawRumEvents.length).toBe(0)
 
-    taskQueuePushSpy.calls.allArgs().forEach(([task], index) => {
+    taskQueuePushSpy.mock.calls.forEach(([task], index) => {
       task()
       expect(rawRumEvents.length).toBe(index + 1)
     })
   })
 
   function runTasks() {
-    taskQueuePushSpy.calls.allArgs().forEach(([task]) => {
+    taskQueuePushSpy.mock.calls.forEach(([task]) => {
       task()
     })
-    taskQueuePushSpy.calls.reset()
+    taskQueuePushSpy.mockClear()
   }
 
   function notifyRequest({

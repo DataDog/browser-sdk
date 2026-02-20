@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { Context } from '@datadog/browser-core'
 import { objectEntries } from '@datadog/browser-core'
 import type { ModifiableFieldPaths } from './limitModification'

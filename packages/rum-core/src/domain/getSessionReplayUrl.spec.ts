@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import type { ClocksState } from '@datadog/browser-core'
 import type { RumConfiguration, RumSession } from '@datadog/browser-rum-core'
 

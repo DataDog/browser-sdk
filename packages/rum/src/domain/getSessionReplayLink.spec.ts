@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { RumConfiguration, ViewHistory } from '@datadog/browser-rum-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import { createRumSessionManagerMock } from '../../../rum-core/test'

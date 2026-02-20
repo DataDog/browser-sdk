@@ -214,6 +214,7 @@ unit:
       junit: test-report/unit/*.xml
   script:
     - yarn
+    - yarn playwright install chromium
     - yarn test:unit
   after_script:
     - node ./scripts/test/export-test-result.ts unit

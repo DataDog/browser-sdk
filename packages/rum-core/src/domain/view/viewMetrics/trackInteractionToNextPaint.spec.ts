@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { elapsed, relativeNow } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
@@ -57,9 +58,10 @@ describe('trackInteractionToNextPaint', () => {
     })
   }
 
-  beforeEach(() => {
+  beforeEach((ctx) => {
     if (!isInteractionToNextPaintSupported()) {
-      pending('No INP support')
+      ctx.skip()
+      return
     }
   })
 

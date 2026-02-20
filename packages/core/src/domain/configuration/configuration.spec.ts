@@ -1,3 +1,4 @@
+import { vi, afterEach, beforeEach, describe, expect, it, type Mock } from 'vitest'
 import type { RumEvent } from '../../../../rum-core/src'
 import { EXHAUSTIVE_INIT_CONFIGURATION, SERIALIZED_EXHAUSTIVE_INIT_CONFIGURATION } from '../../../test'
 import type { ExtractTelemetryConfiguration, MapInitConfigurationKey } from '../../../test'
@@ -11,10 +12,10 @@ import { serializeConfiguration, validateAndBuildConfiguration } from './configu
 describe('validateAndBuildConfiguration', () => {
   const clientToken = 'some_client_token'
 
-  let displaySpy: jasmine.Spy<typeof display.error>
+  let displaySpy: Mock<typeof display.error>
 
   beforeEach(() => {
-    displaySpy = spyOn(display, 'error')
+    displaySpy = vi.spyOn(display, 'error')
   })
 
   describe('experimentalFeatures', () => {
@@ -33,22 +34,24 @@ describe('validateAndBuildConfiguration', () => {
         clientToken,
         enableExperimentalFeatures: ['bar', undefined as any, null as any, 11 as any],
       })
-      expect(isExperimentalFeatureEnabled('bar' as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(undefined as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(null as any)).toBeFalse()
-      expect(isExperimentalFeatureEnabled(11 as any)).toBeFalse()
+      expect(isExperimentalFeatureEnabled('bar' as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(undefined as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(null as any)).toBe(false)
+      expect(isExperimentalFeatureEnabled(11 as any)).toBe(false)
     })
   })
 
   describe('validate init configuration', () => {
     it('requires the InitConfiguration to be defined', () => {
       expect(validateAndBuildConfiguration(undefined as unknown as InitConfiguration)).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Client Token is not configured, we will not send any data.')
     })
 
     it('requires clientToken to be defined', () => {
       expect(validateAndBuildConfiguration({} as unknown as InitConfiguration)).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Client Token is not configured, we will not send any data.')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Client Token is not configured, we will not send any data.')
     })
 
     it("shouldn't display any error if the configuration is correct", () => {
@@ -60,15 +63,17 @@ describe('validateAndBuildConfiguration', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, sessionSampleRate: 'foo' } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Session Sample Rate should be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       expect(
         validateAndBuildConfiguration({ clientToken, sessionSampleRate: 200 } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Session Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Session Sample Rate should be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       validateAndBuildConfiguration({ clientToken: 'yes', sessionSampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
     })
@@ -77,15 +82,17 @@ describe('validateAndBuildConfiguration', () => {
       expect(
         validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 'foo' } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Telemetry Sample Rate should be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       expect(
         validateAndBuildConfiguration({ clientToken, telemetrySampleRate: 200 } as unknown as InitConfiguration)
       ).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Telemetry Sample Rate should be a number between 0 and 100')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Telemetry Sample Rate should be a number between 0 and 100')
 
-      displaySpy.calls.reset()
+      displaySpy.mockClear()
       validateAndBuildConfiguration({ clientToken: 'yes', telemetrySampleRate: 1 })
       expect(displaySpy).not.toHaveBeenCalled()
     })
@@ -93,7 +100,7 @@ describe('validateAndBuildConfiguration', () => {
 
   describe('sessionStoreStrategyType', () => {
     it('allowFallbackToLocalStorage should not be enabled by default', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
       const configuration = validateAndBuildConfiguration({ clientToken })
       expect(configuration?.sessionStoreStrategyType).toBeUndefined()
     })
@@ -115,14 +122,16 @@ describe('validateAndBuildConfiguration', () => {
     })
 
     it('should contain localStorage strategy in the configuration when localStorage fallback is enabled and cookies are not available', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toEqual({ type: SessionPersistence.LOCAL_STORAGE })
     })
 
     it('should not contain any strategy if both cookies and local storage are unavailable', () => {
-      spyOnProperty(document, 'cookie', 'get').and.returnValue('')
-      spyOn(Storage.prototype, 'getItem').and.throwError('unavailable')
+      vi.spyOn(document, 'cookie', 'get').mockReturnValue('')
+      vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new Error('unavailable')
+      })
       const configuration = validateAndBuildConfiguration({ clientToken, allowFallbackToLocalStorage: true })
       expect(configuration?.sessionStoreStrategyType).toBeUndefined()
     })
@@ -141,7 +150,7 @@ describe('validateAndBuildConfiguration', () => {
         }
       }
       const configuration = validateAndBuildConfiguration({ clientToken, beforeSend })!
-      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBeFalse()
+      expect(configuration.beforeSend!({ view: { url: '/foo' } }, {})).toBe(false)
       expect(configuration.beforeSend!({ view: { url: '/bar' } }, {})).toBeUndefined()
     })
 
@@ -159,22 +168,22 @@ describe('validateAndBuildConfiguration', () => {
 
   describe('allowUntrustedEvents', () => {
     it('defaults to false', () => {
-      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.allowUntrustedEvents).toBeFalse()
+      expect(validateAndBuildConfiguration({ clientToken: 'yes' })!.allowUntrustedEvents).toBe(false)
     })
 
     it('is set to provided value', () => {
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: true })!.allowUntrustedEvents
-      ).toBeTrue()
+      ).toBe(true)
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: false })!.allowUntrustedEvents
-      ).toBeFalse()
+      ).toBe(false)
     })
 
     it('the provided value is cast to boolean', () => {
       expect(
         validateAndBuildConfiguration({ clientToken: 'yes', allowUntrustedEvents: 'foo' as any })!.allowUntrustedEvents
-      ).toBeTrue()
+      ).toBe(true)
     })
   })
 
@@ -195,14 +204,16 @@ describe('validateAndBuildConfiguration', () => {
 
     it('rejects invalid values', () => {
       expect(validateAndBuildConfiguration({ clientToken: 'yes', trackingConsent: 'foo' as any })).toBeUndefined()
-      expect(displaySpy).toHaveBeenCalledOnceWith('Tracking Consent should be either "granted" or "not-granted"')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Tracking Consent should be either "granted" or "not-granted"')
     })
   })
 
   describe('site parameter validation', () => {
     it('should validate the site parameter', () => {
       validateAndBuildConfiguration({ clientToken, site: 'foo.com' as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith(
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith(
         `Site should be a valid Datadog site. ${MORE_DETAILS} ${DOCS_ORIGIN}/getting_started/site/.`
       )
     })
@@ -211,14 +222,16 @@ describe('validateAndBuildConfiguration', () => {
   describe('env parameter validation', () => {
     it('should validate the env parameter', () => {
       validateAndBuildConfiguration({ clientToken, env: false as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Env must be defined as a string')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Env must be defined as a string')
     })
   })
 
   describe('service parameter validation', () => {
     it('should validate the service parameter', () => {
       validateAndBuildConfiguration({ clientToken, service: 1 as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Service must be defined as a string')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Service must be defined as a string')
     })
 
     it('should not reject null', () => {
@@ -231,14 +244,16 @@ describe('validateAndBuildConfiguration', () => {
   describe('version parameter validation', () => {
     it('should validate the version parameter', () => {
       validateAndBuildConfiguration({ clientToken, version: 0 as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Version must be defined as a string')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Version must be defined as a string')
     })
   })
 
   describe('allowedTrackingOrigins parameter validation', () => {
     it('should validate the allowedTrackingOrigins parameter', () => {
       validateAndBuildConfiguration({ clientToken, allowedTrackingOrigins: 'foo' as any })
-      expect(displaySpy).toHaveBeenCalledOnceWith('Allowed Tracking Origins must be an array')
+      expect(displaySpy).toHaveBeenCalledTimes(1)
+      expect(displaySpy).toHaveBeenCalledWith('Allowed Tracking Origins must be an array')
     })
   })
 
