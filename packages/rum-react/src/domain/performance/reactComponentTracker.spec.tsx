@@ -57,6 +57,19 @@ describe('UNSTABLE_ReactComponentTracker', () => {
     })
   })
 
+  it('should use injected addDurationVital when provided as prop', () => {
+    const injectedSpy = jasmine.createSpy()
+
+    appendComponent(
+      <ReactComponentTracker name="ChildComponent" addDurationVital={injectedSpy}>
+        <ChildComponent clock={clock} />
+      </ReactComponentTracker>
+    )
+
+    expect(injectedSpy).toHaveBeenCalledTimes(1)
+    expect(injectedSpy.calls.mostRecent().args[0]).toBe('reactComponentRender')
+  })
+
   it('should call addDurationVital on rerender', () => {
     const addDurationVitalSpy = jasmine.createSpy()
     initializeReactPlugin({

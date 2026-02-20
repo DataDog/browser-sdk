@@ -1,6 +1,7 @@
+import type { RumPublicApi } from '@datadog/browser-rum-core'
 import * as React from 'react'
 import { createTimer } from './timer'
-import { addDurationVital } from './addDurationVital'
+import { addDurationVital as defaultAddDurationVital } from './addDurationVital'
 
 /**
  * Track the performance of a React component.
@@ -11,9 +12,11 @@ import { addDurationVital } from './addDurationVital'
 export const UNSTABLE_ReactComponentTracker = ({
   name: componentName,
   children,
+  addDurationVital = defaultAddDurationVital,
 }: {
   name: string
   children?: React.ReactNode
+  addDurationVital?: RumPublicApi['addDurationVital']
 }) => {
   const isFirstRender = React.useRef(true)
 
