@@ -5,6 +5,7 @@ import { ActionType as ActionTypeEnum, FrustrationType as FrustrationTypeEnum } 
 import type { EventCounts } from '../trackEventCounts'
 import { startEventTracker } from '../eventTracker'
 import type { LifeCycle } from '../lifeCycle'
+import { LifeCycleEventType } from '../lifeCycle'
 import { isActionChildEvent } from './isActionChildEvent'
 
 export type ActionCounts = EventCounts
@@ -51,7 +52,7 @@ export function trackManualActions(lifeCycle: LifeCycle, onManualActionCompleted
   function startManualAction(name: string, options: ActionOptions = {}, startClocks = clocksNow()) {
     const lookupKey = options.actionKey ?? name
 
-    actionTracker.start(
+    const startedManualAction = actionTracker.start(
       lookupKey,
       startClocks,
       {
@@ -60,6 +61,8 @@ export function trackManualActions(lifeCycle: LifeCycle, onManualActionCompleted
       },
       { isChildEvent: isActionChildEvent }
     )
+
+    lifeCycle.notify(LifeCycleEventType.ACTION_STARTED, startedManualAction)
   }
 
   function stopManualAction(name: string, options: ActionOptions = {}, stopClocks = clocksNow()) {

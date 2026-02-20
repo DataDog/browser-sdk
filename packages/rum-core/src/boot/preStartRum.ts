@@ -306,7 +306,7 @@ export function createPreStartStrategy(
     },
 
     startDurationVital(name, options) {
-      return startDurationVital(customVitalsState, name, options)
+      return startDurationVital(customVitalsState, undefined, name, options)
     },
 
     stopDurationVital(name, options) {
