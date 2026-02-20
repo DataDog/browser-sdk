@@ -35,6 +35,9 @@ export default tseslint.config(
       'docs',
       'developer-extension/.wxt',
       'developer-extension/dist',
+      'developer-extension/.output',
+      // Auto-generated file — do not lint
+      'packages/rum/src/types/profiling.ts',
     ],
   },
 
@@ -57,6 +60,7 @@ export default tseslint.config(
         project: [
           './tsconfig.default.json',
           './tsconfig.scripts.json',
+          './packages/endpoint/tsconfig.json',
           './developer-extension/tsconfig.json',
           './test/e2e/tsconfig.json',
           './test/performance/tsconfig.json',

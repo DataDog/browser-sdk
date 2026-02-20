@@ -1,0 +1,16 @@
+{
+  "name": "@datadog/browser-sdk-endpoint",
+  "version": "6.27.1",
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@datadog/browser-remote-config": "6.27.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

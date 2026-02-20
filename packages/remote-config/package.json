@@ -1,0 +1,25 @@
+{
+  "name": "@datadog/browser-remote-config",
+  "version": "6.27.1",
+  "license": "Apache-2.0",
+  "main": "cjs/index.js",
+  "module": "esm/index.js",
+  "types": "cjs/index.d.ts",
+  "scripts": {
+    "build": "node ../../scripts/build/build-package.ts --modules"
+  },
+  "dependencies": {
+    "@datadog/browser-core": "6.27.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataDog/browser-sdk.git",
+    "directory": "packages/remote-config"
+  },
+  "volta": {
+    "extends": "../../package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -624,8 +624,6 @@ describe('serializeRumConfiguration', () => {
       trackLongTasks: true,
       trackBfcacheViews: true,
       trackEarlyRequests: true,
-      remoteConfigurationId: '123',
-      remoteConfigurationProxy: 'config',
       plugins: [{ name: 'foo', getConfigurationTelemetry: () => ({ bar: true }) }],
       trackFeatureFlagsForEvents: ['vital'],
       profilingSampleRate: 42,
@@ -635,12 +633,7 @@ describe('serializeRumConfiguration', () => {
 
     type MapRumInitConfigurationKey<Key extends string> = Key extends keyof InitConfiguration
       ? MapInitConfigurationKey<Key>
-      : Key extends
-            | 'workerUrl'
-            | 'allowedTracingUrls'
-            | 'excludedActivityUrls'
-            | 'remoteConfigurationProxy'
-            | 'allowedGraphQlUrls'
+      : Key extends 'workerUrl' | 'allowedTracingUrls' | 'excludedActivityUrls' | 'allowedGraphQlUrls'
         ? `use_${CamelToSnakeCase<Key>}`
         : Key extends 'trackLongTasks'
           ? 'track_long_task' // We forgot the s, keeping this for backward compatibility
@@ -684,8 +677,6 @@ describe('serializeRumConfiguration', () => {
       compress_intake_requests: true,
       plugins: [{ name: 'foo', bar: true }],
       track_feature_flags_for_events: ['vital'],
-      remote_configuration_id: '123',
-      use_remote_configuration_proxy: true,
       profiling_sample_rate: 42,
     })
   })

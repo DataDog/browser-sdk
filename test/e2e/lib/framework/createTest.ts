@@ -1,5 +1,6 @@
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
-import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
+import type { RemoteConfiguration } from '@datadog/browser-remote-config'
+import type { RumInitConfiguration } from '@datadog/browser-rum-core'
 import type { BrowserContext, Page } from '@playwright/test'
 import { test, expect } from '@playwright/test'
 import { addTag, addTestOptimizationTags } from '../helpers/tags'

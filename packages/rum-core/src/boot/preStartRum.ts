@@ -23,7 +23,6 @@ import {
   buildAccountContextManager,
   buildGlobalContextManager,
   buildUserContextManager,
-  monitorError,
   sanitize,
   startTelemetry,
   TelemetryService,
@@ -32,11 +31,7 @@ import {
 import type { Hooks } from '../domain/hooks'
 import { createHooks } from '../domain/hooks'
 import type { RumConfiguration, RumInitConfiguration } from '../domain/configuration'
-import {
-  validateAndBuildRumConfiguration,
-  fetchAndApplyRemoteConfiguration,
-  serializeRumConfiguration,
-} from '../domain/configuration'
+import { validateAndBuildRumConfiguration, serializeRumConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
 import type {
   DurationVital,
@@ -216,17 +211,7 @@ export function createPreStartStrategy(
 
       callPluginsMethod(initConfiguration.plugins, 'onInit', { initConfiguration, publicApi })
 
-      if (initConfiguration.remoteConfigurationId) {
-        fetchAndApplyRemoteConfiguration(initConfiguration, { user: userContext, context: globalContext })
-          .then((initConfiguration) => {
-            if (initConfiguration) {
-              doInit(initConfiguration, errorStack)
-            }
-          })
-          .catch(monitorError)
-      } else {
-        doInit(initConfiguration, errorStack)
-      }
+      doInit(initConfiguration, errorStack)
     },
 
     get initConfiguration() {
