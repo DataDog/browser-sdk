@@ -110,17 +110,15 @@ export function createPreStartStrategy(
       trackingConsentState.onGrantedOnce(() => {
         startTrackingConsentContext(hooks, trackingConsentState)
         mockable(startTelemetry)(TelemetryService.LOGS, configuration, hooks)
-        const startSessionManagerFn = canUseEventBridge()
-          ? (
-              _configuration: LogsConfiguration,
-              _trackingConsentState: TrackingConsentState,
-              onReady: (sm: SessionManager) => void
-            ) => startSessionManagerStub(onReady)
-          : mockable(startSessionManager)
-        startSessionManagerFn(configuration, trackingConsentState, (newSessionManager) => {
+        const onSessionManagerReady = (newSessionManager: SessionManager) => {
           sessionManager = newSessionManager
           tryStartLogs()
-        })
+        }
+        if (canUseEventBridge()) {
+          startSessionManagerStub(onSessionManagerReady)
+        } else {
+          mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
+        }
       })
     },
 

@@ -185,16 +185,14 @@ export function createPreStartStrategy(
         return
       }
 
+      const onSessionManagerReady = (newSessionManager: SessionManager) => {
+        sessionManager = newSessionManager
+        tryStartRum()
+      }
       if (canUseEventBridge()) {
-        startSessionManagerStub((newSessionManager) => {
-          sessionManager = newSessionManager
-          tryStartRum()
-        })
+        startSessionManagerStub(onSessionManagerReady)
       } else {
-        mockable(startSessionManager)(configuration, trackingConsentState, (newSessionManager) => {
-          sessionManager = newSessionManager
-          tryStartRum()
-        })
+        mockable(startSessionManager)(configuration, trackingConsentState, onSessionManagerReady)
       }
     })
   }
