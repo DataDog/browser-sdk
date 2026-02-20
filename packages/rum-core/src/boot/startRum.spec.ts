@@ -7,7 +7,6 @@ import {
   ONE_SECOND,
   findLast,
   noop,
-  relativeNow,
   createIdentityEncoder,
   createTrackingConsentState,
   TrackingConsent,
@@ -157,7 +156,6 @@ describe('rum session keep alive', () => {
 })
 
 describe('view events', () => {
-  let clock: Clock
   let interceptor: ReturnType<typeof interceptRequests>
   let stop: () => void
 
@@ -181,7 +179,7 @@ describe('view events', () => {
   }
 
   beforeEach(() => {
-    clock = mockClock()
+    mockClock()
 
     registerCleanupTask(() => {
       stop()
@@ -198,7 +196,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
@@ -220,7 +218,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastBridgeMessage = JSON.parse(sendSpy.mock.lastCall![0]) as {
@@ -237,7 +235,7 @@ describe('view events', () => {
 
     setupViewCollectionTest()
 
-    clock.tick(VIEW_DURATION - relativeNow())
+    vi.setSystemTime(performance.timing.navigationStart + VIEW_DURATION)
     window.dispatchEvent(createNewEvent('beforeunload'))
 
     const lastRumEvents = interceptor.requests[interceptor.requests.length - 1].body
