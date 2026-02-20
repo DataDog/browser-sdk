@@ -454,7 +454,7 @@ export default tseslint.config(
   },
 
   {
-    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js', 'vitest.config.ts'],
+    files: ['**/webpack.*.{ts,mts}', 'eslint-local-rules/**/*.js', 'vitest.config.ts', 'vitest.bs.config.ts'],
     rules: {
       // Webpack configuration files, eslint rules files, and vitest config are expected to use a default export.
       'import/no-default-export': 'off',
@@ -469,6 +469,7 @@ export default tseslint.config(
       'packages/*/test/**/*.ts',
       'test/unit/**/*.ts',
       'vitest.config.ts',
+      'vitest.bs.config.ts',
     ],
     rules: {
       // E2E, test utilities, and spec files import packages referenced by tsconfig or root devDependencies (vitest).
