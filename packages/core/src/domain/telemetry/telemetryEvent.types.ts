@@ -476,6 +476,11 @@ export type TelemetryConfigurationEvent = CommonTelemetryProperties & {
        */
       beta_encode_cookie_options?: boolean
       [k: string]: unknown
+
+      /**
+       * Whether the allowed HTML attributes list is used
+       */
+      use_allowed_html_attributes?: boolean
     }
     [k: string]: unknown
   }
