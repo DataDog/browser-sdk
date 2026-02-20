@@ -11,16 +11,16 @@ import type { DecoratorFactory } from './types'
  * - A required key is not provided by any registered decorator
  * - A cycle is detected among the decorators
  */
-export function resolveDecoratorOrder<TParams, TAttributes>(
-  factories: Array<DecoratorFactory<TParams, TAttributes>>
-): Array<DecoratorFactory<TParams, TAttributes>> {
+export function resolveDecoratorOrder<TEvent, TAttributes>(
+  factories: Array<DecoratorFactory<TEvent, TAttributes>>
+): Array<DecoratorFactory<TEvent, TAttributes>> {
   if (factories.length === 0) {
     return []
   }
 
   // Build a map of provided key → factory name(s)
   const providerMap = new Map<string, string[]>()
-  const factoryByName = new Map<string, DecoratorFactory<TParams, TAttributes>>()
+  const factoryByName = new Map<string, DecoratorFactory<TEvent, TAttributes>>()
 
   for (const factory of factories) {
     if (factoryByName.has(factory.name)) {
@@ -79,7 +79,7 @@ export function resolveDecoratorOrder<TParams, TAttributes>(
     }
   }
 
-  const sorted: Array<DecoratorFactory<TParams, TAttributes>> = []
+  const sorted: Array<DecoratorFactory<TEvent, TAttributes>> = []
 
   while (queue.length > 0) {
     // Sort the queue for deterministic ordering among same-depth nodes

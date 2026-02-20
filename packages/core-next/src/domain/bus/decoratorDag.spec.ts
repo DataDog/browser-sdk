@@ -7,7 +7,7 @@ function stubFactory(overrides: Partial<DecoratorFactory> & Pick<DecoratorFactor
     requires: [],
     capabilities: { canDiscard: false },
     create: () => ({
-      decorate: () => ({ status: 'skipped' }),
+      decorate: async () => ({ status: 'skipped' as const }),
     }),
     ...overrides,
   }

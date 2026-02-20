@@ -6,25 +6,30 @@ import type { Subscription } from '@datadog/browser-core'
 
 /**
  * Factory for creating decorators.
- * TParams: the input observation parameters (e.g. RUM's DecorateParams)
+ * TEvent: the input event (e.g. RUM's DecorateEvent)
  * TAttributes: the partial event attributes each decorator can contribute
  */
-export interface DecoratorFactory<TParams = unknown, TAttributes = unknown> {
+export interface DecoratorFactory<TEvent = unknown, TAttributes = unknown> {
   readonly name: string
   readonly provides: readonly string[]
   readonly requires: readonly string[]
   readonly capabilities: {
     readonly canDiscard: boolean
   }
-  create(deps: DecoratorDeps): Decorator<TParams, TAttributes>
+  create(deps: DecoratorDeps): Decorator<TEvent, TAttributes>
 }
 
 export interface DecoratorDeps {
   [key: string]: unknown
 }
 
-export interface Decorator<TParams = unknown, TAttributes = unknown> {
-  decorate(params: TParams): DecoratorResult<TAttributes>
+export interface Decorator<TEvent = unknown, TAttributes = unknown> {
+  /**
+   * Decorates the given event.
+   * @param event - The event being decorated.
+   * @param accumulated - Attributes contributed by upstream decorators in this DAG pass (read-only snapshot).
+   */
+  decorate(event: TEvent, accumulated: Readonly<Partial<TAttributes>>): Promise<DecoratorResult<TAttributes>>
 }
 
 export type DecoratorResult<TAttributes = unknown> =
