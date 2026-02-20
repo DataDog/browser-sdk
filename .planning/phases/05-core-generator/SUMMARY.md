@@ -16,41 +16,45 @@ A Node.js CLI tool that generates bundled SDK + config code locally by:
 
 ### Files Created
 
-| File | Purpose |
-|------|---------|
-| `scripts/build/generate-cdn-bundle.ts` | CLI entry point |
-| `scripts/build/lib/bundleGenerator.ts` | Core generator library |
-| `scripts/build/lib/bundleGenerator.spec.ts` | Unit tests (17 tests) |
-| `scripts/build/generate-cdn-bundle.spec.ts` | CLI tests (12 tests) |
+| File                                        | Purpose                |
+| ------------------------------------------- | ---------------------- |
+| `scripts/build/generate-cdn-bundle.ts`      | CLI entry point        |
+| `scripts/build/lib/bundleGenerator.ts`      | Core generator library |
+| `scripts/build/lib/bundleGenerator.spec.ts` | Unit tests (17 tests)  |
+| `scripts/build/generate-cdn-bundle.spec.ts` | CLI tests (12 tests)   |
 
 ### Key Implementation Details
 
 **CDN URL Format:**
+
 ```
 https://www.datadoghq-browser-agent.com/{datacenter}/v{majorVersion}/datadog-{variant}.js
 ```
 
 **Generated Bundle Structure:**
+
 ```javascript
 /**
  * Datadog Browser SDK with Embedded Remote Configuration
  * SDK Variant: rum
  * SDK Version: 6.26.0
  */
-(function() {
-  'use strict';
+;(function () {
+  'use strict'
 
   // Embedded remote configuration
-  var __DATADOG_REMOTE_CONFIG__ = { /* config JSON */ };
+  var __DATADOG_REMOTE_CONFIG__ = {
+    /* config JSON */
+  }
 
   // SDK bundle (rum) from CDN
   /* ... minified SDK code ... */
 
   // Auto-initialize with embedded config
   if (typeof window !== 'undefined' && typeof window.DD_RUM !== 'undefined') {
-    window.DD_RUM.init(__DATADOG_REMOTE_CONFIG__);
+    window.DD_RUM.init(__DATADOG_REMOTE_CONFIG__)
   }
-})();
+})()
 ```
 
 ---
@@ -71,39 +75,39 @@ npx tsx scripts/build/generate-cdn-bundle.ts --help
 
 ### CLI Options
 
-| Option | Short | Required | Description |
-|--------|-------|----------|-------------|
-| `--applicationId` | `-a` | Yes | Datadog application ID |
-| `--configId` | `-c` | Yes | Remote configuration ID |
-| `--variant` | `-v` | Yes | SDK variant: `rum` or `rum-slim` |
-| `--output` | `-o` | No | Output file path (default: stdout) |
-| `--site` | `-s` | No | Datadog site (default: datadoghq.com) |
-| `--help` | `-h` | No | Show help message |
+| Option            | Short | Required | Description                           |
+| ----------------- | ----- | -------- | ------------------------------------- |
+| `--applicationId` | `-a`  | Yes      | Datadog application ID                |
+| `--configId`      | `-c`  | Yes      | Remote configuration ID               |
+| `--variant`       | `-v`  | Yes      | SDK variant: `rum` or `rum-slim`      |
+| `--output`        | `-o`  | No       | Output file path (default: stdout)    |
+| `--site`          | `-s`  | No       | Datadog site (default: datadoghq.com) |
+| `--help`          | `-h`  | No       | Show help message                     |
 
 ---
 
 ## Requirements Satisfied
 
-| Requirement | Status | Implementation |
-|-------------|--------|----------------|
-| GEN-01: Fetch remote config | ✅ | `fetchConfig()` uses `@datadog/browser-remote-config` |
-| GEN-02: Reference SDK bundles | ✅ | `downloadSDK()` downloads from CDN |
-| GEN-03: Generate single JS file | ✅ | `generateCombinedBundle()` creates IIFE wrapper |
-| GEN-04: Deterministic output | ✅ | No timestamps, deterministic JSON.stringify |
-| GEN-05: Support rum/rum-slim | ✅ | CLI accepts both variants |
-| GEN-06: Resolve dependencies | ✅ | Uses existing `@datadog/browser-remote-config` |
+| Requirement                     | Status | Implementation                                        |
+| ------------------------------- | ------ | ----------------------------------------------------- |
+| GEN-01: Fetch remote config     | ✅     | `fetchConfig()` uses `@datadog/browser-remote-config` |
+| GEN-02: Reference SDK bundles   | ✅     | `downloadSDK()` downloads from CDN                    |
+| GEN-03: Generate single JS file | ✅     | `generateCombinedBundle()` creates IIFE wrapper       |
+| GEN-04: Deterministic output    | ✅     | No timestamps, deterministic JSON.stringify           |
+| GEN-05: Support rum/rum-slim    | ✅     | CLI accepts both variants                             |
+| GEN-06: Resolve dependencies    | ✅     | Uses existing `@datadog/browser-remote-config`        |
 
 ---
 
 ## Success Criteria Met
 
-| Criterion | Status | Verification |
-|-----------|--------|--------------|
-| Tool fetches remote configuration | ✅ | Uses `@datadog/browser-remote-config` package |
-| Tool generates single JavaScript file | ✅ | Output is single IIFE-wrapped bundle |
-| Generated output is deterministic | ✅ | 5 determinism tests pass |
-| Tool supports both rum and rum-slim | ✅ | CLI validates and accepts both |
-| Generated bundle works in browser | ✅ | JavaScript syntax validated via `new Function()` |
+| Criterion                             | Status | Verification                                     |
+| ------------------------------------- | ------ | ------------------------------------------------ |
+| Tool fetches remote configuration     | ✅     | Uses `@datadog/browser-remote-config` package    |
+| Tool generates single JavaScript file | ✅     | Output is single IIFE-wrapped bundle             |
+| Generated output is deterministic     | ✅     | 5 determinism tests pass                         |
+| Tool supports both rum and rum-slim   | ✅     | CLI validates and accepts both                   |
+| Generated bundle works in browser     | ✅     | JavaScript syntax validated via `new Function()` |
 
 ---
 
@@ -112,11 +116,13 @@ npx tsx scripts/build/generate-cdn-bundle.ts --help
 **Total: 29 tests across 7 suites**
 
 ### bundleGenerator.spec.ts (17 tests)
+
 - `generateCombinedBundle`: 8 tests
 - `determinism`: 5 tests
 - `edge cases`: 4 tests
 
 ### generate-cdn-bundle.spec.ts (12 tests)
+
 - `CLI argument validation`: 8 tests
 - `error handling`: 1 test
 - `output format`: 1 test
@@ -136,6 +142,7 @@ npx tsx scripts/build/generate-cdn-bundle.ts --help
 ## Next Phase
 
 **Phase 6: Programmatic API** will:
+
 - Expose generator functions as a programmatic API
 - Enable integration with build tools (webpack plugins, Vite plugins)
 - Support configuration validation and type safety

@@ -164,6 +164,10 @@ describe('remoteConfiguration', () => {
     })
 
     it('should pass signal to fetch', async () => {
+      if (typeof AbortController === 'undefined') {
+        pending('AbortController not supported in this browser')
+        return
+      }
       const controller = new AbortController()
       const fetchSpy = interceptor.withFetch(() =>
         Promise.resolve({

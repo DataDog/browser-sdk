@@ -74,52 +74,54 @@ Deferred to future milestone. Not in current roadmap.
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
-| Real-time configuration updates | Requires polling infrastructure; v2 is pre-generated bundles |
-| Webpack plugin | Generic Node.js function sufficient; plugin can wrap it |
-| Build-time config resolution for dynamic values | Dynamic values (cookies, DOM) must be resolved at runtime |
-| Version pinning/lock files | Complexity deferred; customers manage versions |
-| Mobile SDK bundling | Web-first; mobile SDKs handled separately |
+| Feature                                         | Reason                                                       |
+| ----------------------------------------------- | ------------------------------------------------------------ |
+| Real-time configuration updates                 | Requires polling infrastructure; v2 is pre-generated bundles |
+| Webpack plugin                                  | Generic Node.js function sufficient; plugin can wrap it      |
+| Build-time config resolution for dynamic values | Dynamic values (cookies, DOM) must be resolved at runtime    |
+| Version pinning/lock files                      | Complexity deferred; customers manage versions               |
+| Mobile SDK bundling                             | Web-first; mobile SDKs handled separately                    |
 
 ## Traceability
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| GEN-01 | Phase 5 | Pending |
-| GEN-02 | Phase 5 | Pending |
-| GEN-03 | Phase 5 | Pending |
-| GEN-04 | Phase 5 | Pending |
-| GEN-05 | Phase 5 | Pending |
-| GEN-06 | Phase 5 | Pending |
-| API-01 | Phase 6 | Pending |
-| API-02 | Phase 6 | Pending |
-| API-03 | Phase 6 | Pending |
-| API-04 | Phase 6 | Pending |
-| API-05 | Phase 6 | Pending |
-| CONFIG-01 | Phase 6 | Pending |
-| CONFIG-02 | Phase 6 | Pending |
-| CONFIG-03 | Phase 6 | Pending |
-| CONFIG-04 | Phase 6 | Pending |
-| HTTP-01 | Phase 7 | Pending |
-| HTTP-02 | Phase 7 | Pending |
-| HTTP-03 | Phase 7 | Pending |
-| HTTP-04 | Phase 7 | Pending |
-| HTTP-05 | Phase 7 | Pending |
-| TEST-01 | Phase 8 | Pending |
-| TEST-02 | Phase 8 | Pending |
-| TEST-03 | Phase 8 | Pending |
-| TEST-04 | Phase 8 | Pending |
-| PKG-01 | Phase 8 | Pending |
-| PKG-02 | Phase 8 | Pending |
-| PKG-03 | Phase 8 | Pending |
-| PKG-04 | Phase 8 | Pending |
+| Requirement | Phase   | Status  |
+| ----------- | ------- | ------- |
+| GEN-01      | Phase 5 | Pending |
+| GEN-02      | Phase 5 | Pending |
+| GEN-03      | Phase 5 | Pending |
+| GEN-04      | Phase 5 | Pending |
+| GEN-05      | Phase 5 | Pending |
+| GEN-06      | Phase 5 | Pending |
+| API-01      | Phase 6 | Pending |
+| API-02      | Phase 6 | Pending |
+| API-03      | Phase 6 | Pending |
+| API-04      | Phase 6 | Pending |
+| API-05      | Phase 6 | Pending |
+| CONFIG-01   | Phase 6 | Pending |
+| CONFIG-02   | Phase 6 | Pending |
+| CONFIG-03   | Phase 6 | Pending |
+| CONFIG-04   | Phase 6 | Pending |
+| HTTP-01     | Phase 7 | Pending |
+| HTTP-02     | Phase 7 | Pending |
+| HTTP-03     | Phase 7 | Pending |
+| HTTP-04     | Phase 7 | Pending |
+| HTTP-05     | Phase 7 | Pending |
+| TEST-01     | Phase 8 | Pending |
+| TEST-02     | Phase 8 | Pending |
+| TEST-03     | Phase 8 | Pending |
+| TEST-04     | Phase 8 | Pending |
+| PKG-01      | Phase 8 | Pending |
+| PKG-02      | Phase 8 | Pending |
+| PKG-03      | Phase 8 | Pending |
+| PKG-04      | Phase 8 | Pending |
 
 **Coverage:**
+
 - v2 requirements: 28 total
 - Mapped to phases: 28
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-02-04*
-*Last updated: 2026-02-04 after roadmap creation for Milestone 2*
+
+_Requirements defined: 2026-02-04_
+_Last updated: 2026-02-04 after roadmap creation for Milestone 2_

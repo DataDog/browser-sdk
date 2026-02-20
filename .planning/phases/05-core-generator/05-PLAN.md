@@ -1,14 +1,16 @@
 # Phase 5: Core Generator - Execution Plan
 
 <!-- Frontmatter -->
+
 wave: 1
 depends_on: []
 files_modified:
-  - scripts/build/generate-cdn-bundle.ts
-  - scripts/build/lib/bundleGenerator.ts
-  - scripts/build/lib/bundleGenerator.spec.ts
-  - scripts/build/generate-cdn-bundle.spec.ts
-autonomous: true
+
+- scripts/build/generate-cdn-bundle.ts
+- scripts/build/lib/bundleGenerator.ts
+- scripts/build/lib/bundleGenerator.spec.ts
+- scripts/build/generate-cdn-bundle.spec.ts
+  autonomous: true
 
 ---
 
@@ -19,6 +21,7 @@ autonomous: true
 **Approach:** Build a CLI tool in `scripts/build/` that downloads pre-built SDK bundles from CDN, fetches remote configuration via `@datadog/browser-remote-config`, and combines them into a single JavaScript file using template literals.
 
 **Key Decisions from Research:**
+
 - Location: `scripts/build/generate-cdn-bundle.ts` following existing patterns (not a separate package yet)
 - SDK Bundles: Download pre-built SDK from CDN (e.g., `https://cdn.datadoghq.com/...rum-v7.0.0.min.js`)
 - Code generation: Template literals to wrap SDK + config in IIFE
@@ -82,25 +85,26 @@ autonomous: true
 import { fetchRemoteConfiguration, type RemoteConfigResult } from '@datadog/browser-remote-config'
 
 export interface FetchConfigOptions {
-  applicationId: string
-  remoteConfigurationId: string
-  site?: string
+applicationId: string
+remoteConfigurationId: string
+site?: string
 }
 
 export async function fetchConfig(options: FetchConfigOptions): Promise<RemoteConfigResult> {
-  const result = await fetchRemoteConfiguration(options)
+const result = await fetchRemoteConfiguration(options)
 
-  if (!result.ok) {
-    throw new Error(
-      `Failed to fetch remote configuration: ${result.error?.message}\n` +
-      `Verify applicationId "${options.applicationId}" and ` +
-      `configId "${options.remoteConfigurationId}" are correct.`
-    )
-  }
-
-  return result
+if (!result.ok) {
+throw new Error(
+`Failed to fetch remote configuration: ${result.error?.message}\n` +
+`Verify applicationId "${options.applicationId}" and ` +
+`configId "${options.remoteConfigurationId}" are correct.`
+)
 }
-```
+
+return result
+}
+
+````
   </code_example>
 </task>
 
@@ -178,8 +182,9 @@ export async function downloadSDK(variant: SdkVariant): Promise<string> {
     })
   })
 }
-```
-  </code_example>
+````
+
+</code_example>
 </task>
 
 <task id="4">
@@ -212,46 +217,48 @@ export async function downloadSDK(variant: SdkVariant): Promise<string> {
 import type { RumRemoteConfiguration } from '@datadog/browser-remote-config'
 
 export interface GenerateBundleOptions {
-  sdkCode: string
-  config: RumRemoteConfiguration
-  variant: SdkVariant
+sdkCode: string
+config: RumRemoteConfiguration
+variant: SdkVariant
 }
 
 export function generateCombinedBundle(options: GenerateBundleOptions): string {
-  const { sdkCode, config, variant } = options
+const { sdkCode, config, variant } = options
 
-  // Use JSON.stringify for deterministic serialization
-  // Note: config may contain dynamic values (cookies, DOM selectors)
-  // that will be resolved at runtime by resolveDynamicValues()
-  const configJson = JSON.stringify(config, null, 2)
+// Use JSON.stringify for deterministic serialization
+// Note: config may contain dynamic values (cookies, DOM selectors)
+// that will be resolved at runtime by resolveDynamicValues()
+const configJson = JSON.stringify(config, null, 2)
 
-  return `/**
- * Datadog Browser SDK with Embedded Remote Configuration
- * SDK Variant: ${variant}
- *
- * This bundle includes:
- * - Pre-fetched remote configuration
- * - Minified SDK code from CDN
- *
- * No additional network requests needed for SDK initialization.
- */
-(function() {
+return `/\*\*
+
+- Datadog Browser SDK with Embedded Remote Configuration
+- SDK Variant: ${variant}
+-
+- This bundle includes:
+- - Pre-fetched remote configuration
+- - Minified SDK code from CDN
+-
+- No additional network requests needed for SDK initialization.
+  \*/
+  (function() {
   'use strict';
 
-  // Embedded remote configuration
-  var __DATADOG_REMOTE_CONFIG__ = ${configJson};
+// Embedded remote configuration
+var **DATADOG_REMOTE_CONFIG** = ${configJson};
 
-  // SDK bundle (${variant}) - minified from CDN
-  ${sdkCode}
+// SDK bundle (${variant}) - minified from CDN
+${sdkCode}
 
-  // Auto-initialize with embedded config
-  if (typeof window !== 'undefined' && typeof window.DD_RUM !== 'undefined') {
-    window.DD_RUM.init(__DATADOG_REMOTE_CONFIG__.rum);
-  }
+// Auto-initialize with embedded config
+if (typeof window !== 'undefined' && typeof window.DD_RUM !== 'undefined') {
+window.DD_RUM.init(**DATADOG_REMOTE_CONFIG**.rum);
+}
 })();
 `
 }
-```
+
+````
   </code_example>
 </task>
 
@@ -373,8 +380,9 @@ Example:
     --output ./datadog-rum-bundle.js
 `)
 }
-```
-  </code_example>
+````
+
+</code_example>
 </task>
 
 <task id="6">
@@ -409,34 +417,35 @@ import assert from 'node:assert'
 import { generateCombinedBundle, type SdkVariant } from './bundleGenerator.ts'
 
 test('generateCombinedBundle produces deterministic output', () => {
-  const sdkCode = 'window.DD_RUM = { init: function() {} };'
-  const config = {
-    rum: {
-      applicationId: 'test-app-id',
-      clientToken: 'test-token',
-      sessionSampleRate: 100,
-    }
-  }
-  const variant: SdkVariant = 'rum'
+const sdkCode = 'window.DD_RUM = { init: function() {} };'
+const config = {
+rum: {
+applicationId: 'test-app-id',
+clientToken: 'test-token',
+sessionSampleRate: 100,
+}
+}
+const variant: SdkVariant = 'rum'
 
-  const bundle1 = generateCombinedBundle({ sdkCode, config, variant })
-  const bundle2 = generateCombinedBundle({ sdkCode, config, variant })
+const bundle1 = generateCombinedBundle({ sdkCode, config, variant })
+const bundle2 = generateCombinedBundle({ sdkCode, config, variant })
 
-  assert.strictEqual(bundle1, bundle2, 'Bundles should be byte-identical')
+assert.strictEqual(bundle1, bundle2, 'Bundles should be byte-identical')
 })
 
 test('bundle contains no build timestamps', () => {
-  const sdkCode = 'window.DD_RUM = { init: function() {} };'
-  const config = { rum: { applicationId: 'test' } }
+const sdkCode = 'window.DD_RUM = { init: function() {} };'
+const config = { rum: { applicationId: 'test' } }
 
-  const bundle = generateCombinedBundle({ sdkCode, config, variant: 'rum' })
+const bundle = generateCombinedBundle({ sdkCode, config, variant: 'rum' })
 
-  // Check for common timestamp patterns
-  assert.ok(!bundle.includes('Date.now()'), 'Should not contain Date.now()')
-  assert.ok(!/\d{13}/.test(bundle), 'Should not contain Unix timestamps')
-  assert.ok(!/202\d-\d{2}-\d{2}/.test(bundle), 'Should not contain ISO dates')
+// Check for common timestamp patterns
+assert.ok(!bundle.includes('Date.now()'), 'Should not contain Date.now()')
+assert.ok(!/\d{13}/.test(bundle), 'Should not contain Unix timestamps')
+assert.ok(!/202\d-\d{2}-\d{2}/.test(bundle), 'Should not contain ISO dates')
 })
-```
+
+````
   </code_example>
 </task>
 
@@ -531,8 +540,9 @@ describe('generateCombinedBundle', () => {
     }, 'Generated code should be valid JavaScript')
   })
 })
-```
-  </code_example>
+````
+
+</code_example>
 </task>
 
 ---
@@ -555,6 +565,7 @@ Task 1 (Setup)
 ```
 
 **Parallel execution possible:**
+
 - Tasks 2 and 3 can run in parallel after Task 1
   - Task 2: Fetch remote config from @datadog/browser-remote-config
   - Task 3: Download SDK from CDN
@@ -566,24 +577,24 @@ Task 1 (Setup)
 
 ### Requirement Coverage
 
-| Requirement | Task(s) | Verification |
-|-------------|---------|--------------|
-| GEN-01: Fetch remote config | Task 2 | fetchConfig function works with @datadog/browser-remote-config |
-| GEN-02: Reference SDK bundles | Task 3 | downloadSDK downloads pre-built SDK from CDN for rum and rum-slim |
-| GEN-03: Generate single JS file | Task 4 | generateCombinedBundle returns single file content |
-| GEN-04: Deterministic output | Task 6 | Same inputs produce identical output (tested) |
-| GEN-05: Support rum/rum-slim | Task 3, 5 | CLI accepts --variant, downloadSDK supports both |
-| GEN-06: Resolve dependencies | Task 1 | Script structure and imports resolve correctly |
+| Requirement                     | Task(s)   | Verification                                                      |
+| ------------------------------- | --------- | ----------------------------------------------------------------- |
+| GEN-01: Fetch remote config     | Task 2    | fetchConfig function works with @datadog/browser-remote-config    |
+| GEN-02: Reference SDK bundles   | Task 3    | downloadSDK downloads pre-built SDK from CDN for rum and rum-slim |
+| GEN-03: Generate single JS file | Task 4    | generateCombinedBundle returns single file content                |
+| GEN-04: Deterministic output    | Task 6    | Same inputs produce identical output (tested)                     |
+| GEN-05: Support rum/rum-slim    | Task 3, 5 | CLI accepts --variant, downloadSDK supports both                  |
+| GEN-06: Resolve dependencies    | Task 1    | Script structure and imports resolve correctly                    |
 
 ### Success Criteria Mapping
 
-| Success Criterion | Task(s) | How Verified |
-|-------------------|---------|--------------|
-| Tool fetches remote configuration | Task 2 | Unit test with real/mocked fetch |
+| Success Criterion                     | Task(s)   | How Verified                        |
+| ------------------------------------- | --------- | ----------------------------------- |
+| Tool fetches remote configuration     | Task 2    | Unit test with real/mocked fetch    |
 | Tool generates single JavaScript file | Task 4, 5 | CLI outputs single file to --output |
-| Output is deterministic | Task 6 | Test: generate twice, assert equal |
-| Supports rum and rum-slim | Task 3, 5 | CLI accepts both variants |
-| Bundle works in browser | Task 7 | Generated JS is syntactically valid |
+| Output is deterministic               | Task 6    | Test: generate twice, assert equal  |
+| Supports rum and rum-slim             | Task 3, 5 | CLI accepts both variants           |
+| Bundle works in browser               | Task 7    | Generated JS is syntactically valid |
 
 ---
 
@@ -596,7 +607,7 @@ Critical requirements that must be satisfied for phase completion:
 - must_have: Supports both rum and rum-slim variants — customer choice for bundle size
 - must_have: Single JavaScript file output — zero additional requests needed
 - must_have: Valid JavaScript output — must execute in browser without errors
-- must_have: Monorepo dependency resolution works — webpack resolves @datadog/* packages correctly
+- must_have: Monorepo dependency resolution works — webpack resolves @datadog/\* packages correctly
 
 ---
 
@@ -604,13 +615,13 @@ Critical requirements that must be satisfied for phase completion:
 
 ### Critical Risks (from PITFALLS.md)
 
-| Risk | Mitigation in Tasks |
-|------|---------------------|
-| Non-deterministic output | Task 6: explicit tests, no timestamps, deterministic JSON.stringify |
-| SDK CDN URL incorrect | Task 3: descriptive error message with URL if 404, suggests checking variant/version |
-| Network timeout | Task 3: 10 second timeout with retry information |
-| Config not embedded properly | Task 4: template literal ensures config is in output, not tree-shaken |
-| Dynamic values resolved at build time | Task 4: config passed to template, SDK resolves at runtime |
+| Risk                                  | Mitigation in Tasks                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------------------ |
+| Non-deterministic output              | Task 6: explicit tests, no timestamps, deterministic JSON.stringify                  |
+| SDK CDN URL incorrect                 | Task 3: descriptive error message with URL if 404, suggests checking variant/version |
+| Network timeout                       | Task 3: 10 second timeout with retry information                                     |
+| Config not embedded properly          | Task 4: template literal ensures config is in output, not tree-shaken                |
+| Dynamic values resolved at build time | Task 4: config passed to template, SDK resolves at runtime                           |
 
 ### Testing Strategy
 
@@ -660,30 +671,30 @@ yarn test:script
  * Datadog Browser SDK with Embedded Remote Configuration
  * SDK Variant: rum
  */
-(function() {
-  'use strict';
+;(function () {
+  'use strict'
 
   // Embedded remote configuration
   var __DATADOG_REMOTE_CONFIG__ = {
-    "rum": {
-      "applicationId": "abc123",
-      "sessionSampleRate": 100,
+    rum: {
+      applicationId: 'abc123',
+      sessionSampleRate: 100,
       // ... rest of config
-    }
-  };
+    },
+  }
 
   // SDK bundle (rum)
   // ... webpack-bundled SDK code ...
 
   // Auto-initialize with embedded config
   if (typeof window !== 'undefined' && typeof window.DD_RUM !== 'undefined') {
-    window.DD_RUM.init(__DATADOG_REMOTE_CONFIG__.rum);
+    window.DD_RUM.init(__DATADOG_REMOTE_CONFIG__.rum)
   }
-})();
+})()
 ```
 
 ---
 
-*Plan created: 2026-02-04*
-*Phase: 5 of 8 (Core Generator)*
-*Milestone: v2.0 Remote Config CDN Bundle*
+_Plan created: 2026-02-04_
+_Phase: 5 of 8 (Core Generator)_
+_Milestone: v2.0 Remote Config CDN Bundle_

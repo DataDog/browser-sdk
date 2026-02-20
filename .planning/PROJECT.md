@@ -42,6 +42,7 @@ This SDK evolved from a monolithic codebase. Recent work (Milestone 1) extracted
 Milestone 2 builds on this extraction by creating a code generation tool that allows customers to pre-generate SDK + config bundles, eliminating the fetch request entirely.
 
 **Current environment:**
+
 - Yarn v4 workspace monorepo with packages: core, rum-core, rum, rum-slim, logs, etc.
 - Playwright E2E testing framework
 - TypeScript with strict mode
@@ -56,12 +57,13 @@ Milestone 2 builds on this extraction by creating a code generation tool that al
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
+| Decision                                    | Rationale                           | Outcome                           |
+| ------------------------------------------- | ----------------------------------- | --------------------------------- |
 | Extract remote config to standalone package | Enable independent use by customers | ✓ Good — completed in Milestone 1 |
-| Generate bundled SDK + config together | Zero-request initialization | — Pending |
-| Support both rum and rum-slim variants | Customer choice for bundle size | — Pending |
-| Datadog-hosted + self-hosted options | Convenience + flexibility | — Pending |
+| Generate bundled SDK + config together      | Zero-request initialization         | — Pending                         |
+| Support both rum and rum-slim variants      | Customer choice for bundle size     | — Pending                         |
+| Datadog-hosted + self-hosted options        | Convenience + flexibility           | — Pending                         |
 
 ---
-*Last updated: 2026-02-04 after starting Milestone 2 planning*
+
+_Last updated: 2026-02-04 after starting Milestone 2 planning_

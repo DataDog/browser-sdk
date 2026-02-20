@@ -14,6 +14,7 @@ Phase 6 planning is complete. The phase delivers a high-level programmatic API (
 **Phase Goal:** Build tools can integrate generator programmatically and SDK uses embedded config at runtime
 
 **What was planned:**
+
 - 5 execution plans across 3 waves
 - 2 parallel foundation plans (API + caching)
 - 2 parallel testing plans (E2E basic + E2E dynamic)
@@ -28,6 +29,7 @@ Phase 6 planning is complete. The phase delivers a high-level programmatic API (
 ### Wave 1: Foundation (Parallel)
 
 #### Plan 01: Programmatic API with input validation
+
 - **Objective:** Export `generateBundle()` async function with input validation
 - **Tasks:** 2
   - Task 1: Implement API function wrapping existing workflow
@@ -37,6 +39,7 @@ Phase 6 planning is complete. The phase delivers a high-level programmatic API (
 - **Est. Context:** ~30%
 
 #### Plan 02: In-memory SDK caching for performance
+
 - **Objective:** Add Map-based cache to `downloadSDK()` for repeated calls
 - **Tasks:** 2
   - Task 1: Implement in-memory cache in downloadSDK()
@@ -49,6 +52,7 @@ Phase 6 planning is complete. The phase delivers a high-level programmatic API (
 ### Wave 2: E2E Testing (Parallel, after Wave 1)
 
 #### Plan 03: E2E tests for embedded config
+
 - **Objective:** Verify SDK loads and initializes from embedded config without network requests
 - **Tasks:** 2
   - Task 1: Create E2E test file with network blocking scenario
@@ -59,6 +63,7 @@ Phase 6 planning is complete. The phase delivers a high-level programmatic API (
 - **Depends on:** Plan 01 (needs `generateBundle()` API)
 
 #### Plan 04: E2E tests for dynamic values
+
 - **Objective:** Verify dynamic config values (cookies, DOM, JS paths) resolve at runtime
 - **Tasks:** 2
   - Task 1: Create E2E tests for cookie, DOM, JS path scenarios
@@ -71,6 +76,7 @@ Phase 6 planning is complete. The phase delivers a high-level programmatic API (
 ### Wave 3: Documentation (After Waves 1-2)
 
 #### Plan 05: API documentation and examples
+
 - **Objective:** Create comprehensive API documentation and build tool integration examples
 - **Tasks:** 2
   - Task 1: Add JSDoc comments to all exports in bundleGenerator.ts
@@ -86,17 +92,17 @@ Phase 6 planning is complete. The phase delivers a high-level programmatic API (
 
 All 9 Phase 6 requirements are mapped to plans:
 
-| Requirement | Description | Plan |
-|-------------|-------------|------|
-| API-01 | Node.js function can be imported | 01 |
-| API-02 | Function accepts options object | 01 |
-| API-03 | Function validates inputs/errors | 01 |
-| API-04 | SDK uses embedded config at runtime | 03 |
-| API-05 | Dynamic values resolvable at runtime | 04 |
-| CONFIG-01 | Bundle includes SDK + config | 03 |
-| CONFIG-02 | No SDK code changes needed | 03 |
-| CONFIG-03 | Dynamic values passed through | 04 |
-| CONFIG-04 | Version mismatch logging | Deferred to Phase 8 |
+| Requirement | Description                          | Plan                |
+| ----------- | ------------------------------------ | ------------------- |
+| API-01      | Node.js function can be imported     | 01                  |
+| API-02      | Function accepts options object      | 01                  |
+| API-03      | Function validates inputs/errors     | 01                  |
+| API-04      | SDK uses embedded config at runtime  | 03                  |
+| API-05      | Dynamic values resolvable at runtime | 04                  |
+| CONFIG-01   | Bundle includes SDK + config         | 03                  |
+| CONFIG-02   | No SDK code changes needed           | 03                  |
+| CONFIG-03   | Dynamic values passed through        | 04                  |
+| CONFIG-04   | Version mismatch logging             | Deferred to Phase 8 |
 
 ---
 
@@ -123,13 +129,13 @@ Plan 05 waits for Plans 01-02 verification
 **Total estimated context for all plans: ~115%**
 **Strategy:** Spread across 5 focused plans to keep each under 50%
 
-| Plan | Est. Context | Rationale |
-|------|--------------|-----------|
-| 01 | ~30% | API function + validation + unit tests |
-| 02 | ~20% | Simple cache Map + cache tests |
-| 03 | ~20% | E2E test setup + network blocking |
-| 04 | ~20% | E2E test scenarios (similar to 03) |
-| 05 | ~25% | Documentation + examples |
+| Plan | Est. Context | Rationale                              |
+| ---- | ------------ | -------------------------------------- |
+| 01   | ~30%         | API function + validation + unit tests |
+| 02   | ~20%         | Simple cache Map + cache tests         |
+| 03   | ~20%         | E2E test setup + network blocking      |
+| 04   | ~20%         | E2E test scenarios (similar to 03)     |
+| 05   | ~25%         | Documentation + examples               |
 
 Quality maintained throughout by keeping each plan focused and atomic.
 
@@ -170,6 +176,7 @@ Quality maintained throughout by keeping each plan focused and atomic.
 ## Execution Checklist
 
 **Pre-execution verification:**
+
 - [ ] Research document reviewed (@06-RESEARCH.md)
 - [ ] Requirements traced to plans (@REQUIREMENTS.md)
 - [ ] All 5 PLAN.md files created
@@ -177,24 +184,28 @@ Quality maintained throughout by keeping each plan focused and atomic.
 - [ ] Context budget confirmed
 
 **Wave 1 execution:**
+
 - [ ] Plan 01 executed (API + unit tests)
 - [ ] Plan 02 executed in parallel (caching)
 - [ ] Both verified: `yarn test:unit` passes
 - [ ] TypeScript compilation succeeds
 
 **Wave 2 execution (after Wave 1 verification):**
+
 - [ ] Plan 03 executed (E2E basic)
 - [ ] Plan 04 executed in parallel (E2E dynamic)
 - [ ] Both verified: `yarn test:e2e -g "embedded-config"` passes
 - [ ] Network blocking proves zero-request goal
 
 **Wave 3 execution (after Wave 2 verification):**
+
 - [ ] Plan 05 executed (documentation)
 - [ ] README verified for completeness
 - [ ] JSDoc in IDE shows autocomplete
 - [ ] Build tool examples are copy-paste ready
 
 **Phase completion:**
+
 - [ ] Create SUMMARY.md for Phase 6
 - [ ] Update STATE.md with completion
 - [ ] Ready for Phase 7 planning
