@@ -5,7 +5,7 @@ import { DevServerStatus, useDevServerStatus } from '../../hooks/useDevServerSta
 import { useSettings } from '../../hooks/useSettings'
 import { Columns } from '../columns'
 import { TabBase } from '../tabBase'
-import type { DevBundlesOverride, EventCollectionStrategy } from '../../../common/extension.types'
+import type { DevBundlesOverride, EventCollectionStrategy, InjectCdnProd } from '../../../common/extension.types'
 
 export function SettingsTab() {
   const sdkDevServerStatus = useDevServerStatus(DEV_LOGS_URL)
@@ -21,6 +21,7 @@ export function SettingsTab() {
       autoFlush,
       debugMode: debug,
       datadogMode,
+      injectCdnProd,
     },
     setSetting,
   ] = useSettings()
@@ -36,8 +37,11 @@ export function SettingsTab() {
                   <Group>
                     <Text>Browser SDK</Text>
                     <Box style={{ marginLeft: 'auto' }}>
-                      {sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles ? (
-                        <Badge color="blue">Overridden</Badge>
+                      {(sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles) ||
+                      (sdkDevServerStatus === DevServerStatus.AVAILABLE && useDevBundles && injectCdnProd === 'on') ? (
+                        <Badge color="blue">Injected Local Dev</Badge>
+                      ) : injectCdnProd === 'on' ? (
+                        <Badge color="blue">Injected CDN</Badge>
                       ) : sdkDevServerStatus === DevServerStatus.AVAILABLE ? (
                         <Badge color="green">Available</Badge>
                       ) : sdkDevServerStatus === DevServerStatus.CHECKING ? (
@@ -50,11 +54,30 @@ export function SettingsTab() {
                 </Accordion.Control>
                 <Accordion.Panel>
                   <Box>
-                    Use the local development version of the browser SDK. The development server must be running; to
-                    start it, run <Code>yarn dev</Code>.
+                    Use the local or production version of the browser SDK. For local development, the development
+                    server must be running; to start it, run <Code>yarn dev</Code>.
                   </Box>
 
                   <Space h="md" />
+
+                  <SettingItem
+                    input={
+                      <Group>
+                        <Text>CDN Prod Injection:</Text>
+                        <SegmentedControl
+                          color="violet"
+                          value={injectCdnProd || 'off'}
+                          size="xs"
+                          data={[
+                            { value: 'off', label: 'Off' },
+                            { value: 'on', label: 'On' },
+                          ]}
+                          onChange={(value) => setSetting('injectCdnProd', value as InjectCdnProd)}
+                        />
+                      </Group>
+                    }
+                    description={<>Inject the CDN Prod RUM and Logs bundles into the page.</>}
+                  />
 
                   <SettingItem
                     input={
@@ -66,7 +89,6 @@ export function SettingsTab() {
                           size="xs"
                           data={[
                             { value: 'off', label: 'Off' },
-                            { value: 'cdn', label: 'Redirect' },
                             { value: 'npm', label: 'Inject' },
                           ]}
                           onChange={(value) =>
@@ -77,9 +99,12 @@ export function SettingsTab() {
                     }
                     description={
                       <>
-                        Choose an override strategy. Network request redirection is reliable, but only works for CDN
-                        setups. Injecting the bundle into the page can work for both CDN and NPM setups, but it's not
-                        always reliable.
+                        Behavior:
+                        <ul>
+                          <li>Off / Redirect: Injects dev bundle and initializes</li>
+                          <li>On / Off: Injects and initializes Prod CDN SDK</li>
+                          <li>On / Redirect: Injects Prod CDN SDK, then redirects to dev server</li>
+                        </ul>
                       </>
                     }
                   />
