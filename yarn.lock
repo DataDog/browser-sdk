@@ -760,7 +760,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@eslint/plugin-kit@npm:^0.4.0, @eslint/plugin-kit@npm:^0.4.1":
+"@eslint/plugin-kit@npm:^0.4.1":
   version: 0.4.1
   resolution: "@eslint/plugin-kit@npm:0.4.1"
   dependencies:
@@ -4470,7 +4470,7 @@ __metadata:
     eslint-plugin-import: "npm:2.32.0"
     eslint-plugin-jasmine: "npm:4.2.2"
     eslint-plugin-jsdoc: "npm:62.5.1"
-    eslint-plugin-unicorn: "npm:62.0.0"
+    eslint-plugin-unicorn: "npm:63.0.0"
     express: "npm:5.2.1"
     globals: "npm:17.3.0"
     html-webpack-plugin: "npm:5.6.6"
@@ -6686,18 +6686,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint-plugin-unicorn@npm:62.0.0":
-  version: 62.0.0
-  resolution: "eslint-plugin-unicorn@npm:62.0.0"
+"eslint-plugin-unicorn@npm:63.0.0":
+  version: 63.0.0
+  resolution: "eslint-plugin-unicorn@npm:63.0.0"
   dependencies:
     "@babel/helper-validator-identifier": "npm:^7.28.5"
     "@eslint-community/eslint-utils": "npm:^4.9.0"
-    "@eslint/plugin-kit": "npm:^0.4.0"
     change-case: "npm:^5.4.4"
     ci-info: "npm:^4.3.1"
     clean-regexp: "npm:^1.0.0"
     core-js-compat: "npm:^3.46.0"
-    esquery: "npm:^1.6.0"
     find-up-simple: "npm:^1.0.1"
     globals: "npm:^16.4.0"
     indent-string: "npm:^5.0.0"
@@ -6710,7 +6708,7 @@ __metadata:
     strip-indent: "npm:^4.1.1"
   peerDependencies:
     eslint: ">=9.38.0"
-  checksum: 10c0/29a8651a75e088a774319f752320625ce8944da53011dca2f9ddcbf2e7297651e90139e808d702041b1df320706b1ecc32d04daef52ab105cb9e8d540e03a0d2
+  checksum: 10c0/bc3550322a2b008ea9252e1a94a4f12a6c96c4387be563a5d62b879078cbe6b01c957843d31ec7d09fd8d8cf287ac00f8b93666721ff916b0166d4e82c80926c
   languageName: node
   linkType: hard
 
@@ -6836,7 +6834,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esquery@npm:^1.5.0, esquery@npm:^1.6.0, esquery@npm:^1.7.0":
+"esquery@npm:^1.5.0, esquery@npm:^1.7.0":
   version: 1.7.0
   resolution: "esquery@npm:1.7.0"
   dependencies:
