@@ -1,0 +1,15 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "preserve",
+    "target": "ES2024",
+    "lib": ["ES2024", "DOM"],
+    "types": ["node", "jasmine", "vite/client"],
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noEmit": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["**/*.ts", "types/**/*.d.ts", "../../../scripts/lib/buildEnv.ts"]
+}
