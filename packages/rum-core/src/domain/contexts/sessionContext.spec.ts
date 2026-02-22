@@ -128,6 +128,20 @@ describe('session context', () => {
     expect(eventSampledOutForReplay.session!.sampled_for_replay).toBe(false)
   })
 
+  it('should set hasReplay and sampled_for_replay on view_update events', () => {
+    getReplayStatsSpy.and.returnValue(fakeStats)
+    sessionManager.setTrackedWithSessionReplay()
+
+    const viewUpdateAttributes = hooks.triggerHook(HookNames.Assemble, {
+      eventType: 'view_update',
+      startTime: 0 as RelativeTime,
+    } as AssembleHookParams) as DefaultRumEventAttributes
+
+    expect(getReplayStatsSpy).toHaveBeenCalled()
+    expect(viewUpdateAttributes.session!.has_replay).toEqual(true)
+    expect(viewUpdateAttributes.session!.sampled_for_replay).toBe(true)
+  })
+
   it('should discard the event if no session', () => {
     sessionManager.setNotTracked()
     const defaultRumEventAttributes = hooks.triggerHook(HookNames.Assemble, {
