@@ -1,4 +1,4 @@
-import { DISCARDED, HookNames, Observable } from '@datadog/browser-core'
+import { addExperimentalFeatures, DISCARDED, ExperimentalFeature, HookNames, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
@@ -281,6 +281,22 @@ describe('viewCollection', () => {
       } as AssembleHookParams)
 
       expect(defaultRumEventAttributes).toBe(DISCARDED)
+    })
+  })
+
+  describe('view_update feature flag', () => {
+    it('emits full view event for document_version=1', () => {
+      setupViewCollection()
+      addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE])
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, documentVersion: 1 })
+      expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent.type).toBe(RumEventType.VIEW)
+    })
+
+    it('emits view_update for document_version > 1 when flag enabled', () => {
+      setupViewCollection()
+      addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE])
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...VIEW, documentVersion: 2 })
+      expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent.type).toBe(RumEventType.VIEW_UPDATE)
     })
   })
 
