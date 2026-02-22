@@ -31,6 +31,8 @@ export function startRumBatch(
   lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent: AssembledRumEvent) => {
     if (serverRumEvent.type === RumEventType.VIEW) {
       batch.upsert(serverRumEvent, serverRumEvent.view.id)
+    } else if (serverRumEvent.type === RumEventType.VIEW_UPDATE) {
+      batch.add(serverRumEvent)
     } else {
       batch.add(serverRumEvent)
     }
