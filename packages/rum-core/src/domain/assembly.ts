@@ -83,6 +83,11 @@ export function startRumAssembly(
       ...VIEW_MODIFIABLE_FIELD_PATHS,
       ...ROOT_MODIFIABLE_FIELD_PATHS,
     },
+    [RumEventType.VIEW_UPDATE]: {
+      ...USER_CUSTOMIZABLE_FIELD_PATHS,
+      ...VIEW_MODIFIABLE_FIELD_PATHS,
+      ...ROOT_MODIFIABLE_FIELD_PATHS,
+    },
   }
   const eventRateLimiters = {
     [RumEventType.ERROR]: createEventRateLimiter(RumEventType.ERROR, reportError, eventRateLimit),
@@ -129,11 +134,11 @@ function shouldSend(
     const result = limitModification(event, modifiableFieldPathsByEvent[event.type], (event) =>
       beforeSend(event, domainContext)
     )
-    if (result === false && event.type !== RumEventType.VIEW) {
+    if (result === false && event.type !== RumEventType.VIEW && event.type !== RumEventType.VIEW_UPDATE) {
       return false
     }
     if (result === false) {
-      display.warn("Can't dismiss view events using beforeSend!")
+      display.warn("Can't dismiss view or view_update events using beforeSend!")
     }
   }
 

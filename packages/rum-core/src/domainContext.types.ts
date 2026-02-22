@@ -6,7 +6,9 @@ import type { RumEventType } from './rawRumEvent.types'
 
 export type RumEventDomainContext<T extends RumEventType = any> = T extends typeof RumEventType.VIEW
   ? RumViewEventDomainContext
-  : T extends typeof RumEventType.ACTION
+  : T extends typeof RumEventType.VIEW_UPDATE
+    ? RumViewEventDomainContext
+    : T extends typeof RumEventType.ACTION
     ? RumActionEventDomainContext
     : T extends typeof RumEventType.RESOURCE
       ?

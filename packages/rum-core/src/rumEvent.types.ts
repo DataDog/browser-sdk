@@ -13,6 +13,7 @@ export type RumEvent =
   | RumLongTaskEvent
   | RumResourceEvent
   | RumViewEvent
+  | RumViewUpdateEvent
   | RumVitalEvent
 /**
  * Schema of all properties of an Action event
@@ -1325,6 +1326,250 @@ export type RumViewEvent = CommonProperties &
          * Duration between the view start and the time the max scroll height was reached for this view (in nanoseconds)
          */
         readonly max_scroll_height_time: number
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    [k: string]: unknown
+  }
+/**
+ * Schema of all properties of a View Update event (partial view update containing only changed fields)
+ */
+export type RumViewUpdateEvent = CommonProperties &
+  ViewContainerSchema &
+  StreamSchema & {
+    /**
+     * RUM event type
+     */
+    readonly type: 'view_update'
+    /**
+     * View properties (only fields that changed since the last view event)
+     */
+    readonly view: {
+      /**
+       * Duration in ns to the view is considered loaded
+       */
+      readonly loading_time?: number
+      /**
+       * Duration in ns from the moment the view was started until all the initial network requests settled
+       */
+      readonly network_settled_time?: number
+      /**
+       * Duration in ns to from the last interaction on previous view to the moment the current view was displayed
+       */
+      readonly interaction_to_next_view_time?: number
+      /**
+       * Time spent on the view in ns
+       */
+      readonly time_spent: number
+      /**
+       * @deprecated
+       * Duration in ns to the first rendering (deprecated in favor of view.performance.fcp.timestamp)
+       */
+      readonly first_contentful_paint?: number
+      /**
+       * @deprecated
+       * Duration in ns to the largest contentful paint (deprecated in favor of view.performance.lcp.timestamp)
+       */
+      readonly largest_contentful_paint?: number
+      /**
+       * @deprecated
+       * CSS selector path of the largest contentful paint element
+       */
+      readonly largest_contentful_paint_target_selector?: string
+      /**
+       * @deprecated
+       * Duration in ns of the first input event delay (deprecated)
+       */
+      readonly first_input_delay?: number
+      /**
+       * @deprecated
+       * Duration in ns to the first input (deprecated)
+       */
+      readonly first_input_time?: number
+      /**
+       * @deprecated
+       * CSS selector path of the first input target element (deprecated)
+       */
+      readonly first_input_target_selector?: string
+      /**
+       * @deprecated
+       * Longest duration in ns between an interaction and the next paint (deprecated)
+       */
+      readonly interaction_to_next_paint?: number
+      /**
+       * @deprecated
+       * Duration in ns between start of the view and start of the INP (deprecated)
+       */
+      readonly interaction_to_next_paint_time?: number
+      /**
+       * @deprecated
+       * CSS selector path of the interacted element corresponding to INP (deprecated)
+       */
+      readonly interaction_to_next_paint_target_selector?: string
+      /**
+       * @deprecated
+       * Total layout shift score that occurred on the view (deprecated)
+       */
+      readonly cumulative_layout_shift?: number
+      /**
+       * @deprecated
+       * Duration in ns between start of the view and start of the largest layout shift contributing to CLS (deprecated)
+       */
+      readonly cumulative_layout_shift_time?: number
+      /**
+       * @deprecated
+       * CSS selector path of the first element of the largest layout shift contributing to CLS (deprecated)
+       */
+      readonly cumulative_layout_shift_target_selector?: string
+      /**
+       * Duration in ns to the complete parsing and loading of the document and its sub resources
+       */
+      readonly dom_complete?: number
+      /**
+       * Duration in ns to the complete parsing and loading of the document without its sub resources
+       */
+      readonly dom_content_loaded?: number
+      /**
+       * Duration in ns to the end of the parsing of the document
+       */
+      readonly dom_interactive?: number
+      /**
+       * Duration in ns to the end of the load event handler execution
+       */
+      readonly load_event?: number
+      /**
+       * Duration in ns to the response start of the document request
+       */
+      readonly first_byte?: number
+      /**
+       * User custom timings of the view
+       */
+      readonly custom_timings?: {
+        [k: string]: number
+      }
+      /**
+       * Whether the View corresponding to this event is considered active
+       */
+      readonly is_active: boolean
+      /**
+       * Properties of the actions of the view
+       */
+      readonly action?: {
+        /**
+         * Number of actions that occurred on the view
+         */
+        readonly count?: number
+        [k: string]: unknown
+      }
+      /**
+       * Properties of the errors of the view
+       */
+      readonly error?: {
+        /**
+         * Number of errors that occurred on the view
+         */
+        readonly count?: number
+        [k: string]: unknown
+      }
+      /**
+       * Properties of the long tasks of the view
+       */
+      readonly long_task?: {
+        /**
+         * Number of long tasks that occurred on the view
+         */
+        readonly count?: number
+        [k: string]: unknown
+      }
+      /**
+       * Properties of the resources of the view
+       */
+      readonly resource?: {
+        /**
+         * Number of resources that occurred on the view
+         */
+        readonly count?: number
+        [k: string]: unknown
+      }
+      /**
+       * Properties of the frustrations of the view
+       */
+      readonly frustration?: {
+        /**
+         * Number of frustrations that occurred on the view
+         */
+        readonly count?: number
+        [k: string]: unknown
+      }
+      /**
+       * Performance data. (Web Vitals, etc.)
+       */
+      performance?: ViewPerformanceData
+      [k: string]: unknown
+    }
+    /**
+     * Display properties
+     */
+    readonly display?: {
+      /**
+       * Scroll properties
+       */
+      readonly scroll?: {
+        /**
+         * Distance between the top and the lowest point reached on this view (in pixels)
+         */
+        readonly max_depth?: number
+        /**
+         * Page scroll top when the maximum scroll depth was reached (in pixels)
+         */
+        readonly max_depth_scroll_top?: number
+        /**
+         * Maximum page scroll height for this view (in pixels)
+         */
+        readonly max_scroll_height?: number
+        /**
+         * Duration between the view start and the time the max scroll height was reached (in nanoseconds)
+         */
+        readonly max_scroll_height_time?: number
+        [k: string]: unknown
+      }
+      [k: string]: unknown
+    }
+    /**
+     * Internal properties
+     */
+    readonly _dd: {
+      /**
+       * Version of the update of the view event
+       */
+      readonly document_version: number
+      /**
+       * Debug metadata for Replay Sessions
+       */
+      replay_stats?: {
+        /**
+         * The number of records produced during this view lifetime
+         */
+        records_count?: number
+        /**
+         * The number of segments sent during this view lifetime
+         */
+        segments_count?: number
+        /**
+         * The total size in bytes of the segments sent during this view lifetime
+         */
+        segments_total_raw_size?: number
+        [k: string]: unknown
+      }
+      /**
+       * Subset of the SDK configuration options in use during its execution
+       */
+      readonly configuration?: {
+        /**
+         * Whether session replay recording configured to start manually
+         */
+        readonly start_session_replay_recording_manually?: boolean
         [k: string]: unknown
       }
       [k: string]: unknown
