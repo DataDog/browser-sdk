@@ -46,6 +46,7 @@ export { getScrollX, getScrollY } from './browser/scroll'
 export type {
   RumInitConfiguration,
   RumConfiguration,
+  RumBeforeSend,
   FeatureFlagsForEvents,
   RemoteConfiguration,
 } from './domain/configuration'

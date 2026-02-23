@@ -16,7 +16,7 @@ export type { LogsMessage } from '../domain/logger'
 export { Logger, HandlerType } from '../domain/logger'
 export { StatusType } from '../domain/logger/isAuthorized'
 export type { LoggerConfiguration, LogsPublicApi as DatadogLogs } from '../boot/logsPublicApi'
-export type { LogsInitConfiguration } from '../domain/configuration'
+export type { LogsInitConfiguration, LogsBeforeSend } from '../domain/configuration'
 export type { LogsEvent } from '../logsEvent.types'
 export type {
   LogsEventDomainContext,
