@@ -483,10 +483,10 @@ describe('tracer', () => {
 
       expect(context.init).toBe(undefined)
       expect(context.input).not.toBe(request)
-      expect(headersAsArray((context.input as Request).headers)).toEqual([
-        ['foo', 'bar'],
-        ...tracingHeadersAsArrayFor(context.traceId!, context.spanId!, '1'),
-      ])
+      expect(toPlainObject((context.input as Request).headers)).toEqual({
+        foo: 'bar',
+        ...tracingHeadersFor(context.traceId!, context.spanId!, '1'),
+      })
       expect(headersAsArray(request.headers)).toEqual([['foo', 'bar']])
     })
 
@@ -740,6 +740,7 @@ function tracingHeadersFor(traceId: TraceIdentifier, spanId: SpanIdentifier, sam
     'x-datadog-parent-id': spanId.toString(),
     'x-datadog-sampling-priority': samplingPriority,
     'x-datadog-trace-id': traceId.toString(),
+    baggage: 'session.id=session-id,user.id=1234,account.id=5678',
   }
 }
 
