@@ -18,6 +18,7 @@ const MAX_INTERACTION_ENTRIES = 10
 // Arbitrary value to cap INP outliers
 export const MAX_INP_VALUE = (1 * ONE_MINUTE) as Duration
 
+// Event Timing API rounds duration values to the nearest 8 ms
 const RENDER_TIME_GROUPING_THRESHOLD = 8 as Duration
 
 export interface InteractionToNextPaint {
@@ -175,9 +176,12 @@ export function trackInteractionToNextPaint(
     const newInteraction = longestInteractions.estimateP98Interaction()
 
     if (newInteraction) {
-      if (newInteraction.duration !== interactionToNextPaint) {
+      const newStartTime = elapsed(viewStart, newInteraction.startTime)
+      // startTime catches identity changes when the p98 switches to a different interaction with the same duration,
+      // ensuring time, targetSelector and subParts always describe the same interaction.
+      if (newInteraction.duration !== interactionToNextPaint || newStartTime !== interactionToNextPaintStartTime) {
         interactionToNextPaint = newInteraction.duration
-        interactionToNextPaintStartTime = elapsed(viewStart, newInteraction.startTime)
+        interactionToNextPaintStartTime = newStartTime
         interactionToNextPaintTargetSelector = getInteractionSelector(newInteraction.startTime)
 
         if (!interactionToNextPaintTargetSelector && newInteraction.target && isElementNode(newInteraction.target)) {
@@ -189,6 +193,8 @@ export function trackInteractionToNextPaint(
       }
 
       if (isExperimentalFeatureEnabled(ExperimentalFeature.INP_SUBPARTS)) {
+        // Recomputed on every batch: the group for the p98 interaction may have been updated
+        // with new min/max timing even when the p98 identity (duration, startTime) is unchanged.
         interactionToNextPaintSubParts = computeInpSubParts(newInteraction, sanitizeInpValue(interactionToNextPaint))
       }
     }
