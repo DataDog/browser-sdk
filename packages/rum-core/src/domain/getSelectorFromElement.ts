@@ -1,4 +1,14 @@
+import { isNodeShadowRoot } from '../browser/htmlDomUtils'
 import { DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE } from './action/actionNameConstants'
+
+/**
+ * Marker used to indicate shadow DOM boundaries in selectors.
+ * Named after the deprecated Shadow DOM v0 '::shadow' pseudo-element which served the same
+ * purpose of marking entry into a shadow root.
+ * Note: This is NOT a valid CSS selector, it's an internal marker that requires custom
+ * parsing logic.
+ */
+export const SHADOW_DOM_MARKER = '::shadow '
 
 /**
  * Stable attributes are attributes that are commonly used to identify parts of a UI (ex:
@@ -37,6 +47,11 @@ const UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS: SelectorGetter[] = [
   getTagNameSelector,
 ]
 
+interface SubtreeTarget {
+  rootNode: Document | ShadowRoot
+  target: Element
+}
+
 export function getSelectorFromElement(
   targetElement: Element,
   actionNameAttribute: string | undefined
@@ -46,35 +61,82 @@ export function getSelectorFromElement(
     // parents, and we cannot determine if it's unique in the document.
     return
   }
-  let targetElementSelector: string | undefined
+
+  const subtrees = getAllSubtreeTargets(targetElement)
+  const selectorParts: string[] = []
+
+  for (const { rootNode, target } of subtrees) {
+    const selector = getSelectorFromElementWithinSubtree(target, rootNode, actionNameAttribute)
+    if (!selector) {
+      return undefined
+    }
+    selectorParts.push(selector)
+  }
+
+  return selectorParts.join(SHADOW_DOM_MARKER)
+}
+
+/**
+ * Returns all (rootNode, target) pairs from the document down to the element.
+ */
+function getAllSubtreeTargets(element: Element): SubtreeTarget[] {
+  const result: SubtreeTarget[] = []
+  let currentTarget: Element | undefined = element
+
+  while (currentTarget) {
+    const rootNode = currentTarget.getRootNode() as Document | ShadowRoot
+    result.push({ rootNode, target: currentTarget })
+
+    if (isNodeShadowRoot(rootNode)) {
+      currentTarget = rootNode.host
+    } else {
+      break
+    }
+  }
+
+  return result.reverse()
+}
+
+/**
+ * Computes a CSS selector for an element within a specific subtree (document or shadow root).
+ */
+function getSelectorFromElementWithinSubtree(
+  targetElement: Element,
+  rootNode: Document | ShadowRoot,
+  actionNameAttribute: string | undefined
+): string | undefined {
+  let currentSelector: string | undefined
   let currentElement: Element | null = targetElement
 
   while (currentElement && currentElement.nodeName !== 'HTML') {
     const globallyUniqueSelector = findSelector(
       currentElement,
+      rootNode,
       GLOBALLY_UNIQUE_SELECTOR_GETTERS,
-      isSelectorUniqueGlobally,
+      isSelectorUniqueWithinRoot,
       actionNameAttribute,
-      targetElementSelector
+      currentSelector
     )
     if (globallyUniqueSelector) {
-      return globallyUniqueSelector
+      return combineSelector(globallyUniqueSelector, currentSelector)
     }
 
     const uniqueSelectorAmongChildren = findSelector(
       currentElement,
+      rootNode,
       UNIQUE_AMONG_CHILDREN_SELECTOR_GETTERS,
       isSelectorUniqueAmongSiblings,
       actionNameAttribute,
-      targetElementSelector
+      currentSelector
     )
-    targetElementSelector =
-      uniqueSelectorAmongChildren || combineSelector(getPositionSelector(currentElement), targetElementSelector)
+
+    const elementSelector = uniqueSelectorAmongChildren || getPositionSelector(currentElement)
+    currentSelector = combineSelector(elementSelector, currentSelector)
 
     currentElement = currentElement.parentElement
   }
 
-  return targetElementSelector
+  return currentSelector
 }
 
 function isGeneratedValue(value: string) {
@@ -136,7 +198,9 @@ function getStableAttributeSelector(element: Element, actionNameAttribute: strin
 }
 
 function getPositionSelector(element: Element): string {
-  let sibling = element.parentElement!.firstElementChild
+  const parent = element.parentNode!
+
+  let sibling = parent.firstElementChild
   let elementIndex = 1
 
   while (sibling && sibling !== element) {
@@ -151,8 +215,14 @@ function getPositionSelector(element: Element): string {
 
 function findSelector(
   element: Element,
+  rootNode: Document | ShadowRoot,
   selectorGetters: SelectorGetter[],
-  predicate: (element: Element, elementSelector: string, childSelector: string | undefined) => boolean,
+  predicate: (
+    element: Element,
+    rootNode: Document | ShadowRoot,
+    elementSelector: string,
+    childSelector: string | undefined
+  ) => boolean,
   actionNameAttribute: string | undefined,
   childSelector: string | undefined
 ) {
@@ -161,21 +231,22 @@ function findSelector(
     if (!elementSelector) {
       continue
     }
-    if (predicate(element, elementSelector, childSelector)) {
-      return combineSelector(elementSelector, childSelector)
+    if (predicate(element, rootNode, elementSelector, childSelector)) {
+      return elementSelector
     }
   }
 }
 
 /**
- * Check whether the selector is unique among the whole document.
+ * Check whether the selector is unique within the root node (document or shadow root).
  */
-function isSelectorUniqueGlobally(
-  element: Element,
+function isSelectorUniqueWithinRoot(
+  _element: Element,
+  rootNode: Document | ShadowRoot,
   elementSelector: string,
   childSelector: string | undefined
 ): boolean {
-  return element.ownerDocument.querySelectorAll(combineSelector(elementSelector, childSelector)).length === 1
+  return rootNode.querySelectorAll(combineSelector(elementSelector, childSelector)).length === 1
 }
 
 /**
@@ -184,6 +255,7 @@ function isSelectorUniqueGlobally(
  *
  * @param currentElement - the element being considered while iterating over the target
  * element ancestors.
+ * @param _rootNode - the root node (document or shadow root) - unused but required for predicate signature.
  * @param currentElementSelector - a selector that matches the current element. That
  * selector is not a composed selector (i.e. it might be a single tag name, class name...).
  * @param childSelector - child selector is a selector that targets a descendant
@@ -234,6 +306,7 @@ function isSelectorUniqueGlobally(
  */
 export function isSelectorUniqueAmongSiblings(
   currentElement: Element,
+  _rootNode: Document | ShadowRoot,
   currentElementSelector: string,
   childSelector: string | undefined
 ): boolean {

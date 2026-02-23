@@ -231,16 +231,16 @@ function computeClickActionBase(
   nodePrivacyLevel: NodePrivacyLevel,
   configuration: RumConfiguration
 ): ClickActionBase {
-  const selectorTarget = event.target
-  const rect = selectorTarget.getBoundingClientRect()
-  const selector = getSelectorFromElement(selectorTarget, configuration.actionNameAttribute)
+  const target = configuration.betaTrackActionsInShadowDom ? getEventTarget(event) : event.target
+
+  const rect = target.getBoundingClientRect()
+  const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
   }
 
-  const nameTarget = configuration.betaTrackActionsInShadowDom ? getEventTarget(event) : event.target
-  const { name, nameSource } = getActionNameFromElement(nameTarget, configuration, nodePrivacyLevel)
+  const { name, nameSource } = getActionNameFromElement(target, configuration, nodePrivacyLevel)
 
   return {
     type: ActionType.CLICK,
