@@ -35,12 +35,13 @@ export function createActionHistory(lifeCycle: LifeCycle) {
 
   lifeCycle.subscribe(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, ({ rawRumEvent, startClocks, duration }) => {
     if (rawRumEvent.type === 'action') {
+      const durationForEntry = duration ?? (0 as Duration)
       if (startedActions.has(rawRumEvent.action.id)) {
         const actionHistoryEntry = startedActions.get(rawRumEvent.action.id)
 
         if (actionHistoryEntry) {
           actionHistoryEntry.value.duration = duration!
-          actionHistoryEntry.close(addDuration(startClocks.relative, duration!))
+          actionHistoryEntry.close(addDuration(startClocks.relative, durationForEntry))
           startedActions.delete(rawRumEvent.action.id)
         }
       } else {
@@ -54,7 +55,7 @@ export function createActionHistory(lifeCycle: LifeCycle) {
             },
             startClocks.relative
           )
-          .close(addDuration(startClocks.relative, duration!))
+          .close(addDuration(startClocks.relative, durationForEntry))
       }
     }
   })
