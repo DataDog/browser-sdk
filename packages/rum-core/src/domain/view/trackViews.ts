@@ -26,6 +26,7 @@ import {
   setTimeout,
   Observable,
   createContextManager,
+  mockable,
 } from '@datadog/browser-core'
 import type { ViewCustomTimings } from '../../rawRumEvent.types'
 import { ViewLoadingType } from '../../rawRumEvent.types'
@@ -104,7 +105,6 @@ export interface ViewOptions {
 }
 
 export function trackViews(
-  location: Location,
   lifeCycle: LifeCycle,
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
@@ -137,7 +137,6 @@ export function trackViews(
       domMutationObservable,
       windowOpenObservable,
       configuration,
-      location,
       loadingType,
       startClocks,
       viewOptions
@@ -211,7 +210,6 @@ function newView(
   domMutationObservable: Observable<RumMutationRecord[]>,
   windowOpenObservable: Observable<void>,
   configuration: RumConfiguration,
-  initialLocation: Location,
   loadingType: ViewLoadingType,
   startClocks: ClocksState = clocksNow(),
   viewOptions?: ViewOptions
@@ -222,7 +220,7 @@ function newView(
   const customTimings: ViewCustomTimings = {}
   let documentVersion = 0
   let endClocks: ClocksState | undefined
-  const location = shallowClone(initialLocation)
+  const location = shallowClone(mockable(window.location))
   const contextManager = createContextManager()
 
   let sessionIsActive = true

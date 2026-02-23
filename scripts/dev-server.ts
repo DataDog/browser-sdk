@@ -1,3 +1,4 @@
+import type { AddressInfo } from 'node:net'
 import express from 'express'
 import middleware from 'webpack-dev-middleware'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
@@ -7,16 +8,34 @@ import webpackBase from '../webpack.base.ts'
 import { printLog, runMain } from './lib/executionUtils.ts'
 
 const sandboxPath = './sandbox'
-const port = 8080
+const START_PORT = 8080
+const MAX_PORT = 8180
 
 const PACKAGES_WITH_BUNDLE = ['rum', 'rum-slim', 'logs', 'flagging', 'worker']
 
 runMain(() => {
   const app = express()
+  app.use((_req, res, next) => {
+    res.setHeader('Document-Policy', 'js-profiling')
+    next()
+  })
   app.use(createStaticSandboxApp())
   app.use('/react-app', createReactApp())
-  app.listen(port, () => printLog(`Server listening on port ${port}.`))
+  listenOnAvailablePort(app, START_PORT)
 })
+
+function listenOnAvailablePort(app: express.Application, port: number): void {
+  const server = app.listen(port)
+  server.on('listening', () => printLog(`Server listening on port ${(server.address() as AddressInfo).port}.`))
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE' && port < MAX_PORT) {
+      printLog(`Port ${port} is already in use, trying ${port + 1}...`)
+      server.close(() => listenOnAvailablePort(app, port + 1))
+    } else {
+      throw err
+    }
+  })
+}
 
 function createStaticSandboxApp(): express.Application {
   const app = express()

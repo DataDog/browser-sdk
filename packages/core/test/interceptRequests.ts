@@ -20,7 +20,7 @@ export function mockEndpointBuilder(url: string) {
 }
 
 export interface Request {
-  type: 'sendBeacon' | 'fetch' | 'fetch-keepalive'
+  type: 'sendBeacon' | 'fetch'
   url: string
   body: string
 }
@@ -53,7 +53,7 @@ export function interceptRequests() {
     }
 
     requests.push({
-      type: config?.keepalive ? 'fetch-keepalive' : 'fetch',
+      type: 'fetch',
       url: url as string,
       body: config?.body as string,
     })
@@ -68,10 +68,6 @@ export function interceptRequests() {
 
   function isSendBeaconSupported() {
     return !!navigator.sendBeacon
-  }
-
-  function isFetchKeepAliveSupported() {
-    return window.Request && 'keepalive' in new window.Request('')
   }
 
   registerCleanupTask(() => {
@@ -90,7 +86,6 @@ export function interceptRequests() {
   return {
     requests,
     isSendBeaconSupported,
-    isFetchKeepAliveSupported,
     waitForAllFetchCalls: () => endAllPromises,
     withSendBeacon(newSendBeacon: any) {
       navigator.sendBeacon = newSendBeacon

@@ -2,7 +2,6 @@ import { generateUUID, INTAKE_URL_PARAMETERS } from '@datadog/browser-core'
 import type { LogsInitConfiguration } from '@datadog/browser-logs'
 import type { RumInitConfiguration, RemoteConfiguration } from '@datadog/browser-rum-core'
 import type test from '@playwright/test'
-import { DEFAULT_LOGS_CONFIGURATION } from '../helpers/configuration'
 import { isBrowserStack, isContinuousIntegration } from './environment'
 import type { Servers } from './httpServers'
 
@@ -27,11 +26,20 @@ export interface SetupOptions {
     logsConfiguration?: LogsInitConfiguration
   }
   hostName?: string
+  worker?: WorkerOptions
+  callerLocation?: CallerLocation
+}
+
+export interface CallerLocation {
+  file: string
+  line: number
+  column: number
 }
 
 export interface WorkerOptions {
   importScripts?: boolean
-  nativeLog?: boolean
+  rumConfiguration?: RumInitConfiguration
+  logsConfiguration?: LogsInitConfiguration
 }
 
 export type SetupFactory = (options: SetupOptions, servers: Servers) => string
@@ -210,19 +218,31 @@ export function reactSetup(options: SetupOptions, servers: Servers, appName: str
 }
 
 export function workerSetup(options: WorkerOptions, servers: Servers) {
-  return js`
-      ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
-      
-      // Initialize DD_LOGS in service worker
-      DD_LOGS.init(${formatConfiguration({ ...DEFAULT_LOGS_CONFIGURATION, forwardConsoleLogs: 'all', forwardErrorsToLogs: true }, servers)})
+  let setup = ''
 
-      // Handle messages from main thread
-      self.addEventListener('message', (event) => {
-        const message = event.data;
-        
-        ${options.nativeLog ? js`console.log(message);` : js`DD_LOGS.logger.log(message);`}
-      });
+  if (options.logsConfiguration) {
+    setup += js`
+      ${options.importScripts ? js`importScripts('/datadog-logs.js');` : js`import '/datadog-logs.js';`}
+      DD_LOGS.init(${formatConfiguration(options.logsConfiguration, servers)})
     `
+  }
+
+  if (options.rumConfiguration) {
+    setup += js`
+      ${options.importScripts ? js`importScripts('/datadog-rum.js');` : js`import '/datadog-rum.js';`}
+      DD_RUM.init(${formatConfiguration(options.rumConfiguration, servers)})
+    `
+  }
+
+  setup += js`
+    self.addEventListener('message', (event) => {
+      if (event.data.__type === 'evaluate') {
+        new Function(event.data.code)();
+      }
+    });
+  `
+
+  return setup
 }
 
 export function basePage({ header, body }: { header?: string; body?: string }) {

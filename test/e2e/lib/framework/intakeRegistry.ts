@@ -14,7 +14,7 @@ import type {
   TelemetryConfigurationEvent,
   TelemetryUsageEvent,
 } from '@datadog/browser-core'
-import type { BrowserSegment } from '@datadog/browser-rum/src/types'
+import type { BrowserSegment, BrowserProfileEvent, BrowserProfilerTrace } from '@datadog/browser-rum/src/types'
 import type { BrowserSegmentMetadataAndSegmentSizes } from '@datadog/browser-rum/src/domain/segmentCollection'
 
 interface BaseIntakeRequest {
@@ -43,7 +43,18 @@ export type ReplayIntakeRequest = {
   }
 } & BaseIntakeRequest
 
-export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest
+export type ProfileIntakeRequest = {
+  intakeType: 'profile'
+  event: BrowserProfileEvent
+  trace: BrowserProfilerTrace
+  traceFile: {
+    filename: string
+    encoding: string | null
+    mimetype: string
+  }
+} & BaseIntakeRequest
+
+export type IntakeRequest = LogsIntakeRequest | RumIntakeRequest | ReplayIntakeRequest | ProfileIntakeRequest
 
 /**
  * Store data sent to the intake and expose helpers to access it.
@@ -150,6 +161,18 @@ export class IntakeRegistry {
   get replayRecords() {
     return this.replayRequests.flatMap((request) => request.segment.records)
   }
+
+  //
+  // Profiling
+  //
+
+  get profileRequests() {
+    return this.requests.filter(isProfileIntakeRequest)
+  }
+
+  get profileEvents() {
+    return this.profileRequests.map((request) => request.event)
+  }
 }
 
 function isLogsIntakeRequest(request: IntakeRequest): request is LogsIntakeRequest {
@@ -162,6 +185,10 @@ function isRumIntakeRequest(request: IntakeRequest): request is RumIntakeRequest
 
 function isReplayIntakeRequest(request: IntakeRequest): request is ReplayIntakeRequest {
   return request.intakeType === 'replay'
+}
+
+function isProfileIntakeRequest(request: IntakeRequest): request is ProfileIntakeRequest {
+  return request.intakeType === 'profile'
 }
 
 function isRumEvent(event: RumEvent | TelemetryEvent): event is RumEvent {

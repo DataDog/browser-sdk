@@ -59,7 +59,6 @@ describe('trackInteractionToNextPaint', () => {
 
     registerCleanupTask(() => {
       interactionToNextPaintTracking.stop()
-      resetExperimentalFeatures()
       interactionCountMock.clear()
     })
   }

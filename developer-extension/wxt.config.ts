@@ -3,6 +3,7 @@ import { getBuildEnvValue } from '../scripts/lib/buildEnv'
 
 // eslint-disable-next-line import/no-default-export
 export default defineConfig({
+  outDir: 'dist',
   modules: ['@wxt-dev/module-react'],
   entrypointsDir: 'src/entrypoints',
   manifest: {

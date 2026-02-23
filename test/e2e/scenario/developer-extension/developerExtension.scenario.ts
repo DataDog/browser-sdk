@@ -2,7 +2,7 @@ import path from 'path'
 import { expect, test } from '@playwright/test'
 import { createExtension, createTest } from '../../lib/framework'
 
-const developerExtensionPath = path.join(process.cwd(), 'developer-extension/.output/chrome-mv3')
+const developerExtensionPath = path.join(process.cwd(), 'developer-extension/dist/chrome-mv3')
 
 test.describe('developer extension', () => {
   createTest('should switch between tabs')

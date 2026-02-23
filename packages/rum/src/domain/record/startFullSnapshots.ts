@@ -1,30 +1,31 @@
-import { LifeCycleEventType, getScrollX, getScrollY, getViewportDimension } from '@datadog/browser-rum-core'
+import { LifeCycleEventType, getViewportDimension } from '@datadog/browser-rum-core'
 import type { LifeCycle } from '@datadog/browser-rum-core'
 import { ExperimentalFeature, isExperimentalFeatureEnabled, timeStampNow } from '@datadog/browser-core'
 import type { TimeStamp } from '@datadog/browser-core'
-import type { BrowserFullSnapshotRecord } from '../../types'
 import { RecordType } from '../../types'
-import type { ChangeSerializationTransaction, SerializationTransaction } from './serialization'
-import {
-  createRootInsertionCursor,
-  serializeChangesInTransaction,
-  serializeDocument,
-  serializeInTransaction,
-  serializeNodeAsChange,
-  SerializationKind,
-} from './serialization'
+import { SerializationKind, serializeFullSnapshotAsChange, serializeFullSnapshot } from './serialization'
 import { getVisualViewport } from './viewports'
 import type { RecordingScope } from './recordingScope'
 import type { EmitRecordCallback, EmitStatsCallback } from './record.types'
+
+export type SerializeFullSnapshotCallback = (
+  timestamp: TimeStamp,
+  kind: SerializationKind,
+  document: Document,
+  emitRecord: EmitRecordCallback,
+  emitStats: EmitStatsCallback,
+  scope: RecordingScope
+) => void
 
 export function startFullSnapshots(
   lifeCycle: LifeCycle,
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
   flushMutations: () => void,
-  scope: RecordingScope
+  scope: RecordingScope,
+  serialize: SerializeFullSnapshotCallback = defaultSerializeFullSnapshotCallback()
 ) {
-  takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope)
+  takeFullSnapshot(timeStampNow(), SerializationKind.INITIAL_FULL_SNAPSHOT, emitRecord, emitStats, scope, serialize)
 
   const { unsubscribe } = lifeCycle.subscribe(LifeCycleEventType.VIEW_CREATED, (view) => {
     flushMutations()
@@ -33,7 +34,8 @@ export function startFullSnapshots(
       SerializationKind.SUBSEQUENT_FULL_SNAPSHOT,
       emitRecord,
       emitStats,
-      scope
+      scope,
+      serialize
     )
   })
 
@@ -47,7 +49,8 @@ export function takeFullSnapshot(
   kind: SerializationKind,
   emitRecord: EmitRecordCallback,
   emitStats: EmitStatsCallback,
-  scope: RecordingScope
+  scope: RecordingScope,
+  serialize: SerializeFullSnapshotCallback = defaultSerializeFullSnapshotCallback()
 ): void {
   const { width, height } = getViewportDimension()
   emitRecord({
@@ -68,30 +71,7 @@ export function takeFullSnapshot(
     timestamp,
   })
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_CHANGE_RECORDS)) {
-    if (kind === SerializationKind.SUBSEQUENT_FULL_SNAPSHOT) {
-      scope.resetIds()
-    }
-    serializeChangesInTransaction(
-      kind,
-      emitRecord,
-      emitStats,
-      scope,
-      timestamp,
-      (transaction: ChangeSerializationTransaction) => {
-        serializeNodeAsChange(
-          createRootInsertionCursor(scope.nodeIds),
-          document,
-          scope.configuration.defaultPrivacyLevel,
-          transaction
-        )
-      }
-    )
-  } else {
-    serializeInTransaction(kind, emitRecord, emitStats, scope, (transaction: SerializationTransaction) => {
-      transaction.add(serializeFullSnapshotRecord(timestamp, transaction))
-    })
-  }
+  serialize(timestamp, kind, document, emitRecord, emitStats, scope)
 
   if (window.visualViewport) {
     emitRecord({
@@ -102,19 +82,8 @@ export function takeFullSnapshot(
   }
 }
 
-function serializeFullSnapshotRecord(
-  timestamp: TimeStamp,
-  transaction: SerializationTransaction
-): BrowserFullSnapshotRecord {
-  return {
-    data: {
-      node: serializeDocument(document, transaction),
-      initialOffset: {
-        left: getScrollX(),
-        top: getScrollY(),
-      },
-    },
-    type: RecordType.FullSnapshot,
-    timestamp,
-  }
+function defaultSerializeFullSnapshotCallback(): SerializeFullSnapshotCallback {
+  return isExperimentalFeatureEnabled(ExperimentalFeature.USE_CHANGE_RECORDS)
+    ? serializeFullSnapshotAsChange
+    : serializeFullSnapshot
 }

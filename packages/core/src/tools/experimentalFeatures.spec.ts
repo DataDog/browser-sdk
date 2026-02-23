@@ -3,17 +3,12 @@ import {
   addExperimentalFeatures,
   initFeatureFlags,
   isExperimentalFeatureEnabled,
-  resetExperimentalFeatures,
 } from './experimentalFeatures'
 
 const TEST_FEATURE_FLAG_ONE = 'foo' as ExperimentalFeature
 const TEST_FEATURE_FLAG_TWO = 'bar' as ExperimentalFeature
 
 describe('experimentalFeatures', () => {
-  afterEach(() => {
-    resetExperimentalFeatures()
-  })
-
   it('initial state is empty', () => {
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_ONE)).toBeFalse()
     expect(isExperimentalFeatureEnabled(TEST_FEATURE_FLAG_TWO)).toBeFalse()
@@ -41,7 +36,6 @@ describe('initFeatureFlags', () => {
 
   afterEach(() => {
     delete (ExperimentalFeature as any).FOO
-    resetExperimentalFeatures()
   })
 
   it('ignores unknown experimental features', () => {

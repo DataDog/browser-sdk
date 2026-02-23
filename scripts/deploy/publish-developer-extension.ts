@@ -17,7 +17,7 @@ runMain(async () => {
 
   printLog('Zipping extension files')
   const zipPath = path.resolve(ZIP_FILE_NAME)
-  command`zip -r ${zipPath} .`.withCurrentWorkingDirectory('developer-extension/.output/chrome-mv3').run()
+  command`zip -r ${zipPath} .`.withCurrentWorkingDirectory('developer-extension/dist/chrome-mv3').run()
 
   printLog('Publish Developer extension')
   await uploadAndPublish()

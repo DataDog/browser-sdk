@@ -84,14 +84,17 @@ export interface InitConfiguration {
   silentMultipleInit?: boolean | undefined
 
   /**
-   * Which storage strategy to use for persisting sessions. Can be either 'cookie' or 'local-storage'.
+   * Which storage strategy to use for persisting sessions. Can be 'cookie', 'local-storage', or 'memory'.
+   * When an array is provided, the SDK will attempt each persistence type in the order specified.
    *
    * Important: If you are using the RUM and Logs Browser SDKs, this option must be configured with identical values
+   *
+   * Note: 'memory' option is only for use with single-page applications. All page loads will start a new session, likely resulting in an increase in total number of RUM sessions
    *
    * @category Session Persistence
    * @defaultValue "cookie"
    */
-  sessionPersistence?: SessionPersistence | undefined
+  sessionPersistence?: SessionPersistence | SessionPersistence[] | undefined
 
   /**
    * Allows the use of localStorage when cookies cannot be set. This enables the RUM Browser SDK to run in environments that do not provide cookie support.
@@ -437,7 +440,9 @@ export function serializeConfiguration(initConfiguration: InitConfiguration) {
     silent_multiple_init: initConfiguration.silentMultipleInit,
     track_session_across_subdomains: initConfiguration.trackSessionAcrossSubdomains,
     track_anonymous_user: initConfiguration.trackAnonymousUser,
-    session_persistence: initConfiguration.sessionPersistence,
+    session_persistence: Array.isArray(initConfiguration.sessionPersistence)
+      ? initConfiguration.sessionPersistence[0]
+      : initConfiguration.sessionPersistence,
     allow_fallback_to_local_storage: !!initConfiguration.allowFallbackToLocalStorage,
     store_contexts_across_pages: !!initConfiguration.storeContextsAcrossPages,
     allow_untrusted_events: !!initConfiguration.allowUntrustedEvents,

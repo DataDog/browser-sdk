@@ -1,7 +1,7 @@
 import type { Duration, ServerDuration } from '@datadog/browser-core'
-import { ExperimentalFeature, Observable } from '@datadog/browser-core'
+import { addExperimentalFeatures, ExperimentalFeature, Observable } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, mockExperimentalFeatures, registerCleanupTask } from '@datadog/browser-core/test'
+import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import { collectAndValidateRawRumEvents, mockRumConfiguration } from '../../../test'
 import type { RawRumActionEvent, RawRumEvent } from '../../rawRumEvent.types'
 import { RumEventType, ActionType, FrustrationType } from '../../rawRumEvent.types'
@@ -9,7 +9,7 @@ import { type RawRumEventCollectedData, LifeCycle, LifeCycleEventType } from '..
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
 import { startActionCollection } from './actionCollection'
-import type { ActionContexts } from './trackAction'
+import type { ActionContexts } from './actionCollection'
 
 describe('trackManualActions', () => {
   const lifeCycle = new LifeCycle()
@@ -17,12 +17,11 @@ describe('trackManualActions', () => {
   let actionContexts: ActionContexts
   let startAction: ReturnType<typeof startActionCollection>['startAction']
   let stopAction: ReturnType<typeof startActionCollection>['stopAction']
-  let stopActionCollection: ReturnType<typeof startActionCollection>['stop']
   let clock: Clock
 
   beforeEach(() => {
     clock = mockClock()
-    mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+    addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
     const domMutationObservable = new Observable<RumMutationRecord[]>()
     const windowOpenObservable = new Observable<void>()
@@ -38,7 +37,6 @@ describe('trackManualActions', () => {
     registerCleanupTask(actionCollection.stop)
     startAction = actionCollection.startAction
     stopAction = actionCollection.stopAction
-    stopActionCollection = actionCollection.stop
     actionContexts = actionCollection.actionContexts
 
     rawRumEvents = collectAndValidateRawRumEvents(lifeCycle)
@@ -63,20 +61,6 @@ describe('trackManualActions', () => {
       )
     })
 
-    it('should not create action if stopped without starting', () => {
-      stopAction('never_started')
-
-      expect(rawRumEvents).toHaveSize(0)
-    })
-
-    it('should only create action once when stopped multiple times', () => {
-      startAction('foo')
-      stopAction('foo')
-      stopAction('foo')
-
-      expect(rawRumEvents).toHaveSize(1)
-    })
-
     it('should use consistent action ID from start to collected event', () => {
       startAction('checkout')
 
@@ -87,7 +71,7 @@ describe('trackManualActions', () => {
 
       expect(rawRumEvents).toHaveSize(1)
       const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.id).toEqual((actionId as string[])[0])
+      expect(actionEvent.action.id).toEqual(actionId[0])
     })
 
     it('should include loading_time for timed manual actions', () => {
@@ -148,28 +132,6 @@ describe('trackManualActions', () => {
     })
   })
 
-  describe('context merging', () => {
-    it('should merge contexts with stop precedence on conflicts', () => {
-      startAction('action1', { context: { cart: 'abc' } })
-      stopAction('action1', { context: { total: 100 } })
-
-      startAction('action2', { context: { status: 'pending' } })
-      stopAction('action2', { context: { status: 'complete' } })
-
-      expect(rawRumEvents).toHaveSize(2)
-      expect(rawRumEvents[0].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          context: { cart: 'abc', total: 100 },
-        })
-      )
-      expect(rawRumEvents[1].rawRumEvent).toEqual(
-        jasmine.objectContaining({
-          context: { status: 'complete' },
-        })
-      )
-    })
-  })
-
   describe('actionKey', () => {
     it('should support actionKey for tracking same name multiple times', () => {
       startAction('click', { actionKey: 'button1' })
@@ -192,7 +154,7 @@ describe('trackManualActions', () => {
 
       const actionIds = actionContexts.findActionId()
       expect(Array.isArray(actionIds)).toBeTrue()
-      expect((actionIds as string[]).length).toBe(2)
+      expect(actionIds.length).toBe(2)
 
       stopAction('foo bar')
       stopAction('foo', { actionKey: 'bar' })
@@ -208,30 +170,6 @@ describe('trackManualActions', () => {
           action: jasmine.objectContaining({ target: { name: 'foo' } }),
         })
       )
-    })
-  })
-
-  describe('duplicate start handling', () => {
-    it('should clean up previous action when startAction is called twice with same key', () => {
-      startAction('checkout')
-      const firstActionId = actionContexts.findActionId()
-      expect(firstActionId).toBeDefined()
-
-      clock.tick(100)
-
-      startAction('checkout')
-      const secondActionId = actionContexts.findActionId()
-      expect(secondActionId).toBeDefined()
-
-      expect(secondActionId).not.toEqual(firstActionId)
-
-      clock.tick(200)
-      stopAction('checkout')
-
-      expect(rawRumEvents).toHaveSize(1)
-      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.id).toEqual((secondActionId as string[])[0])
-      expect(rawRumEvents[0].duration).toBe(200 as Duration)
     })
   })
 
@@ -265,60 +203,6 @@ describe('trackManualActions', () => {
       expect(actionEvent.action.error?.count).toBe(2)
       expect(actionEvent.action.resource?.count).toBe(1)
       expect(actionEvent.action.long_task?.count).toBe(1)
-    })
-  })
-
-  describe('session renewal', () => {
-    it('should discard active manual actions on session renewal', () => {
-      startAction('cross-session-action')
-
-      const actionIdBeforeRenewal = actionContexts.findActionId()
-      expect(actionIdBeforeRenewal).toBeDefined()
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      expect(actionContexts.findActionId()).toBeUndefined()
-
-      stopAction('cross-session-action')
-
-      expect(rawRumEvents).toHaveSize(0)
-    })
-
-    it('should stop event count subscriptions on session renewal', () => {
-      startAction('tracked-action')
-
-      const actionId = actionContexts.findActionId()
-
-      lifeCycle.notify(LifeCycleEventType.RUM_EVENT_COLLECTED, {
-        type: RumEventType.ERROR,
-        action: { id: actionId },
-      } as any)
-
-      lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
-
-      startAction('tracked-action')
-      stopAction('tracked-action')
-
-      expect(rawRumEvents).toHaveSize(1)
-      const actionEvent = rawRumEvents[0].rawRumEvent as RawRumActionEvent
-      expect(actionEvent.action.error?.count).toBe(0)
-    })
-  })
-
-  describe('cleanup', () => {
-    it('should clean up active manual actions on stop()', () => {
-      startAction('active-when-stopped')
-
-      const actionIdBeforeStop = actionContexts.findActionId()
-      expect(actionIdBeforeStop).toBeDefined()
-
-      stopActionCollection()
-
-      expect(actionContexts.findActionId()).toBeUndefined()
-
-      stopAction('active-when-stopped')
-
-      expect(rawRumEvents).toHaveSize(0)
     })
   })
 

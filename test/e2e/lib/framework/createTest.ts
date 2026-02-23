@@ -13,20 +13,16 @@ import { IntakeRegistry } from './intakeRegistry'
 import { flushEvents } from './flushEvents'
 import type { Servers } from './httpServers'
 import { getTestServers, waitForServersIdle } from './httpServers'
-import type { SetupFactory, SetupOptions } from './pageSetups'
+import type { CallerLocation, SetupFactory, SetupOptions } from './pageSetups'
 import { html, DEFAULT_SETUPS, npmSetup, reactSetup } from './pageSetups'
 import { createIntakeServerApp } from './serverApps/intake'
 import { createMockServerApp } from './serverApps/mock'
 import type { Extension } from './createExtension'
+import type { Worker } from './createWorker'
 import { isBrowserStack } from './environment'
 
-interface LogsWorkerOptions {
-  importScript?: boolean
-  nativeLog?: boolean
-}
-
 export function createTest(title: string) {
-  return new TestBuilder(title)
+  return new TestBuilder(title, captureCallerLocation())
 }
 
 interface TestContext {
@@ -42,7 +38,7 @@ interface TestContext {
   flushEvents: () => Promise<void>
   deleteAllCookies: () => Promise<void>
   sendXhr: (url: string, headers?: string[][]) => Promise<string>
-  interactWithWorker: (cb: (worker: ServiceWorker) => void) => Promise<void>
+  evaluateInWorker: (fn: () => void) => Promise<void>
 }
 
 type TestRunner = (testContext: TestContext) => Promise<void> | void
@@ -62,10 +58,13 @@ class TestBuilder {
     rumConfiguration?: RumInitConfiguration
     logsConfiguration?: LogsInitConfiguration
   } = {}
-  private useServiceWorker: boolean = false
+  private worker: Worker | undefined
   private hostName?: string
 
-  constructor(private title: string) {}
+  constructor(
+    private title: string,
+    private callerLocation: CallerLocation | undefined
+  ) {}
 
   withRum(rumInitConfiguration?: Partial<RumInitConfiguration>) {
     this.rumConfiguration = { ...DEFAULT_RUM_CONFIGURATION, ...rumInitConfiguration }
@@ -135,37 +134,23 @@ class TestBuilder {
     return this
   }
 
-  withWorker({ importScript = false, nativeLog = false }: LogsWorkerOptions = {}) {
-    if (!this.useServiceWorker) {
-      this.useServiceWorker = true
+  withWorker(worker: Worker) {
+    this.worker = worker
 
-      const isModule = !importScript
+    const url = worker.importScripts ? '/sw.js?importScripts=true' : '/sw.js'
+    const options = worker.importScripts ? '{}' : '{ type: "module" }'
 
-      const params = []
-      if (importScript) {
-        params.push('importScripts=true')
-      }
-      if (nativeLog) {
-        params.push('nativeLog=true')
-      }
-
-      const query = params.length > 0 ? `?${params.join('&')}` : ''
-      const url = `/sw.js${query}`
-
-      const options = isModule ? '{ type: "module" }' : '{}'
-
-      // Service workers require HTTPS or localhost due to browser security restrictions
-      this.hostName = 'localhost'
-      this.withBody(html`
-        <script>
-          if (!window.myServiceWorker && 'serviceWorker' in navigator) {
-            navigator.serviceWorker.register('${url}', ${options}).then((registration) => {
-              window.myServiceWorker = registration
-            })
-          }
-        </script>
-      `)
-    }
+    // Service workers require HTTPS or localhost due to browser security restrictions
+    this.hostName = 'localhost'
+    this.withBody(html`
+      <script>
+        if (!window.myServiceWorker && 'serviceWorker' in navigator) {
+          navigator.serviceWorker.register('${url}', ${options}).then((registration) => {
+            window.myServiceWorker = registration
+          })
+        }
+      </script>
+    `)
 
     return this
   }
@@ -194,6 +179,8 @@ class TestBuilder {
       testFixture: this.testFixture,
       extension: this.extension,
       hostName: this.hostName,
+      worker: this.worker,
+      callerLocation: this.callerLocation,
     }
 
     if (this.alsoRunWithRumSlim) {
@@ -220,6 +207,31 @@ class TestBuilder {
   }
 }
 
+/**
+ * Captures the location of the caller's caller (i.e. the scenario file that called run()).
+ * This is used to override Playwright's default location detection so that test output
+ * shows the scenario file instead of createTest.ts.
+ */
+function captureCallerLocation(): CallerLocation | undefined {
+  const error = new Error()
+  const lines = error.stack?.split('\n')
+  if (!lines || lines.length < 4) {
+    return undefined
+  }
+
+  // Stack layout:
+  // [0] "Error"
+  // [1] "    at captureCallerLocation (...)"
+  // [2] "    at createTest (...)"
+  // [3] "    at <scenario file> (...)"
+  const frame = lines[3]
+  const match = frame?.match(/\((.+):(\d+):(\d+)\)/) ?? frame?.match(/at (.+):(\d+):(\d+)/)
+  if (match) {
+    return { file: match[1], line: Number(match[2]), column: Number(match[3]) }
+  }
+  return undefined
+}
+
 function declareTestsForSetups(
   title: string,
   setups: Array<{ factory: SetupFactory; name?: string }>,
@@ -239,9 +251,30 @@ function declareTestsForSetups(
   }
 }
 
+/**
+ * Resolves the Playwright test function to use for declaring a test.
+ *
+ * When a callerLocation is available, accesses Playwright's internal TestTypeImpl via its
+ * private Symbol to call _createTest() directly with a custom location. This makes test
+ * output point to the scenario file instead of createTest.ts.
+ */
+function resolveTestFunction(setupOptions: SetupOptions): typeof test {
+  const testFn = setupOptions.testFixture ?? test
+  const testTypeSymbol = Object.getOwnPropertySymbols(testFn).find((s) => s.description === 'testType')
+
+  if (setupOptions.callerLocation && testTypeSymbol) {
+    const testTypeImpl = (testFn as any)[testTypeSymbol]
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
+    return testTypeImpl._createTest.bind(testTypeImpl, 'default', setupOptions.callerLocation)
+  }
+
+  return testFn
+}
+
 function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFactory, runner: TestRunner) {
-  const testFixture = setupOptions.testFixture ?? test
-  testFixture(title, async ({ page, context }) => {
+  const testFixture = resolveTestFunction(setupOptions)
+
+  testFixture(title, async ({ page, context }: { page: Page; context: BrowserContext }) => {
     const browserName = getBrowserName(test.info().project.name)
     addTag('test.browserName', browserName)
     addTestOptimizationTags(test.info().project.metadata as BrowserConfiguration)
@@ -270,7 +303,9 @@ function declareTest(title: string, setupOptions: SetupOptions, factory: SetupFa
     servers.intake.bindServerApp(createIntakeServerApp(testContext.intakeRegistry))
 
     const setup = factory(setupOptions, servers)
-    servers.base.bindServerApp(createMockServerApp(servers, setup, setupOptions.remoteConfiguration))
+    servers.base.bindServerApp(
+      createMockServerApp(servers, setup, setupOptions.remoteConfiguration, setupOptions.worker)
+    )
     servers.crossOrigin.bindServerApp(createMockServerApp(servers, setup))
 
     await setUpTest(browserLogs, testContext)
@@ -312,8 +347,22 @@ function createTestContext(
         browserLogsManager.clear()
       }
     },
-    interactWithWorker: async (cb: (worker: ServiceWorker) => void) => {
-      await page.evaluate(`(${cb.toString()})(window.myServiceWorker.active)`)
+    evaluateInWorker: async (fn: () => void) => {
+      await page.evaluate(async (code) => {
+        const { active, installing, waiting } = window.myServiceWorker
+        const worker = active ?? (await waitForActivation(installing ?? waiting!))
+        worker.postMessage({ __type: 'evaluate', code })
+
+        function waitForActivation(sw: ServiceWorker): Promise<ServiceWorker> {
+          return new Promise((resolve) => {
+            sw.addEventListener('statechange', () => {
+              if (sw.state === 'activated') {
+                resolve(sw)
+              }
+            })
+          })
+        }
+      }, `(${fn.toString()})()`)
     },
     flushBrowserLogs: () => browserLogsManager.clear(),
     flushEvents: () => flushEvents(page),

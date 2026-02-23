@@ -2,7 +2,7 @@ import type { TimeStamp } from '@datadog/browser-rum/internal'
 import { NO_ERROR_STACK_PRESENT_MESSAGE } from '../error/error'
 import { callMonitored } from '../../tools/monitor'
 import type { ExperimentalFeature } from '../../tools/experimentalFeatures'
-import { resetExperimentalFeatures, addExperimentalFeatures } from '../../tools/experimentalFeatures'
+import { addExperimentalFeatures } from '../../tools/experimentalFeatures'
 import { validateAndBuildConfiguration, type Configuration } from '../configuration'
 import { INTAKE_SITE_US1_FED, INTAKE_SITE_US1 } from '../intakeSites'
 import {
@@ -20,7 +20,6 @@ import type { StackTrace } from '../../tools/stackTrace/computeStackTrace'
 import { HookNames } from '../../tools/abstractHooks'
 import {
   addTelemetryError,
-  resetTelemetry,
   scrubCustomerFrames,
   formatError,
   addTelemetryConfiguration,
@@ -71,10 +70,6 @@ function startAndSpyTelemetry(
 }
 
 describe('telemetry', () => {
-  afterEach(() => {
-    resetTelemetry()
-  })
-
   it('collects "monitor" errors', async () => {
     const { getTelemetryEvents } = startAndSpyTelemetry()
     callMonitored(() => {
@@ -92,10 +87,6 @@ describe('telemetry', () => {
   })
 
   describe('addTelemetryConfiguration', () => {
-    afterEach(() => {
-      resetExperimentalFeatures()
-    })
-
     it('should collects configuration when sampled', async () => {
       const { getTelemetryEvents } = startAndSpyTelemetry({
         telemetrySampleRate: 100,

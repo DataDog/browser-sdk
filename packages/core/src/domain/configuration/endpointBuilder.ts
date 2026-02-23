@@ -10,7 +10,6 @@ declare const __BUILD_ENV__SDK_VERSION__: string
 
 export type TrackType = 'logs' | 'rum' | 'replay' | 'profile' | 'exposures' | 'flagevaluation'
 export type ApiType =
-  | 'fetch-keepalive'
   | 'fetch'
   | 'beacon'
   // 'manual' reflects that the request have been sent manually, outside of the SDK (ex: via curl or

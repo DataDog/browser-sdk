@@ -36,8 +36,10 @@ export function createStyleSheetIds(): StyleSheetIds {
 
 export interface ItemIds<ItemType, ItemId extends number> {
   clear(this: void): void
+  delete(this: void, item: ItemType): void
   get(this: void, item: ItemType): ItemId | undefined
   getOrInsert(this: void, item: ItemType): ItemId
+  get nextId(): ItemId
   get size(): number
 }
 
@@ -50,6 +52,7 @@ function createWeakIdMap<ItemType extends object, ItemId extends number>(firstId
 }
 
 interface MapLike<Key, Value> {
+  delete(key: Key): void
   get(key: Key): Value | undefined
   set(key: Key, value: Value): void
 }
@@ -65,8 +68,14 @@ function createItemIds<ItemType, ItemId extends number>(
 
   return {
     clear(): void {
+      if (nextId === firstId) {
+        return
+      }
       map = createMap()
       nextId = firstId
+    },
+    delete(object: ItemType): void {
+      map.delete(object)
     },
     get,
     getOrInsert(object: ItemType): ItemId {
@@ -77,6 +86,9 @@ function createItemIds<ItemType, ItemId extends number>(
         map.set(object, id)
       }
       return id
+    },
+    get nextId(): ItemId {
+      return nextId
     },
     get size(): number {
       return nextId - firstId

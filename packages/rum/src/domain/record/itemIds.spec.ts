@@ -51,6 +51,33 @@ describe('ItemIds', () => {
         })
       })
 
+      describe('delete', () => {
+        it('allows an item to be re-inserted and receive a new id', () => {
+          const item = createItem()
+          expect(itemIds.getOrInsert(item)).toBe(firstId)
+          expect(itemIds.getOrInsert(item)).toBe(firstId)
+
+          itemIds.delete(item)
+
+          expect(itemIds.getOrInsert(item)).toBe((firstId + 1) as ItemId)
+          expect(itemIds.getOrInsert(item)).toBe((firstId + 1) as ItemId)
+        })
+
+        it('does not change the next assigned id', () => {
+          const item = createItem()
+          expect(itemIds.getOrInsert(item)).toBe(firstId)
+          expect(itemIds.getOrInsert(item)).toBe(firstId)
+          expect(itemIds.nextId).toBe((firstId + 1) as ItemId)
+
+          itemIds.delete(item)
+          expect(itemIds.nextId).toBe((firstId + 1) as ItemId)
+
+          const newItem = createItem()
+          expect(itemIds.getOrInsert(newItem)).toBe((firstId + 1) as ItemId)
+          expect(itemIds.getOrInsert(newItem)).toBe((firstId + 1) as ItemId)
+        })
+      })
+
       describe('get', () => {
         it('returns undefined for items that have not been assigned an id', () => {
           expect(itemIds.get(createItem())).toBe(undefined)
@@ -79,6 +106,21 @@ describe('ItemIds', () => {
           const itemId = itemIds.getOrInsert(item)
           expect(itemIds.getOrInsert(item)).toBe(itemId)
           expect(itemIds.get(item)).toBe(itemId)
+        })
+      })
+
+      describe('nextId getter', () => {
+        it('initially returns the first id', () => {
+          expect(itemIds.nextId).toBe(firstId)
+        })
+
+        it('increments after each insertion', () => {
+          for (let id = firstId; id < firstId + 3; id++) {
+            const item = createItem()
+            expect(itemIds.getOrInsert(item)).toBe(id)
+            expect(itemIds.getOrInsert(item)).toBe(id)
+            expect(itemIds.nextId).toBe((id + 1) as ItemId)
+          }
         })
       })
 

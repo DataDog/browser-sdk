@@ -5,7 +5,6 @@ import {
   display,
   relativeToClocks,
   relativeNow,
-  resetExperimentalFeatures,
   addExperimentalFeatures,
   ExperimentalFeature,
 } from '@datadog/browser-core'
@@ -432,7 +431,6 @@ describe('view metrics', () => {
 
   beforeEach(() => {
     addExperimentalFeatures([ExperimentalFeature.LCP_SUBPARTS])
-    registerCleanupTask(resetExperimentalFeatures)
 
     clock = mockClock()
     ;({ notifyPerformanceEntries } = mockPerformanceObserver())
@@ -899,7 +897,6 @@ describe('view event count', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      resetExperimentalFeatures()
     })
   })
 
@@ -1057,7 +1054,6 @@ describe('service and version', () => {
 
     registerCleanupTask(() => {
       viewTest.stop()
-      resetExperimentalFeatures()
     })
   })
 

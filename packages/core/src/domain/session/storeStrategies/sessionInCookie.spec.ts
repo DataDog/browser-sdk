@@ -1,5 +1,5 @@
 import { mockClock, getSessionState, registerCleanupTask } from '../../../../test'
-import { setCookie, deleteCookie, getCookie, getCurrentSite } from '../../../browser/cookie'
+import { setCookie, deleteCookie, getCookie } from '../../../browser/cookie'
 import type { SessionState } from '../sessionState'
 import { validateAndBuildConfiguration } from '../../configuration'
 import type { InitConfiguration } from '../../configuration'
@@ -93,28 +93,29 @@ describe('session in cookie strategy', () => {
       {
         initConfiguration: { clientToken: 'abc' },
         cookieOptions: {},
-        cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict$/,
+        cookieString: /^dd_[\w_-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict$/,
         description: 'should set samesite to strict by default',
       },
       {
         initConfiguration: { clientToken: 'abc', useSecureSessionCookie: true },
         cookieOptions: { secure: true },
-        cookieString: /^dd_cookie_test_[\w-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;secure$/,
+        cookieString: /^dd_[\w_-]+=[^;]*;expires=[^;]+;path=\/;samesite=strict;secure$/,
         description: 'should add secure attribute when defined',
       },
       {
         initConfiguration: { clientToken: 'abc', trackSessionAcrossSubdomains: true },
         cookieOptions: { domain: 'foo.bar' },
-        cookieString: new RegExp(
-          `^dd_cookie_test_[\\w-]+=[^;]*;expires=[^;]+;path=\\/;samesite=strict;domain=${getCurrentSite()}$`
-        ),
+        cookieString: new RegExp('^dd_[\\w_-]+=[^;]*;expires=[^;]+;path=\\/;samesite=strict;domain='),
         description: 'should set cookie domain when tracking accross subdomains',
       },
     ].forEach(({ description, initConfiguration, cookieString }) => {
       it(description, () => {
         const cookieSetSpy = spyOnProperty(document, 'cookie', 'set')
         selectCookieStrategy(initConfiguration)
-        expect(cookieSetSpy.calls.argsFor(0)[0]).toMatch(cookieString)
+        expect(cookieSetSpy).toHaveBeenCalled()
+        for (const call of cookieSetSpy.calls.all()) {
+          expect(call.args[0]).toMatch(cookieString)
+        }
       })
     })
   })

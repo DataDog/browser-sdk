@@ -9,7 +9,13 @@ import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi, RumSessionManager } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
 import type { MockTelemetry } from '@datadog/browser-core/test'
-import { collectAsyncCalls, mockEventBridge, registerCleanupTask, startMockTelemetry } from '@datadog/browser-core/test'
+import {
+  collectAsyncCalls,
+  mockEventBridge,
+  replaceMockableWithSpy,
+  registerCleanupTask,
+  startMockTelemetry,
+} from '@datadog/browser-core/test'
 import type { RumSessionManagerMock } from '../../../rum-core/test'
 import {
   createRumSessionManagerMock,
@@ -18,7 +24,7 @@ import {
   mockViewHistory,
 } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
-import { resetDeflateWorkerState } from '../domain/deflate'
+import { resetDeflateWorkerState, createDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
 import * as replayStats from '../domain/replayStats'
 import { type RecorderInitMetrics } from '../domain/startRecorderInitTelemetry'
@@ -38,30 +44,40 @@ describe('makeRecorderApi', () => {
 
   function setupRecorderApi({
     sessionManager,
+    loadRecorderError,
     startSessionReplayRecordingManually,
-  }: { sessionManager?: RumSessionManager; startSessionReplayRecordingManually?: boolean } = {}) {
+  }: {
+    sessionManager?: RumSessionManager
+    loadRecorderError?: boolean
+    startSessionReplayRecordingManually?: boolean
+  } = {}) {
     telemetry = startMockTelemetry()
     mockWorker = new MockWorker()
-    createDeflateWorkerSpy = jasmine.createSpy('createDeflateWorkerSpy').and.callFake(() => mockWorker)
+    createDeflateWorkerSpy = replaceMockableWithSpy(createDeflateWorker).and.callFake(() => mockWorker)
     spyOn(display, 'error')
 
     lifeCycle = new LifeCycle()
     stopRecordingSpy = jasmine.createSpy('stopRecording')
     startRecordingSpy = jasmine.createSpy('startRecording')
+    loadRecorderSpy = jasmine.createSpy('loadRecorder')
 
-    // Workaround because using resolveTo(startRecordingSpy) was not working
-    loadRecorderSpy = jasmine.createSpy('loadRecorder').and.resolveTo((...args: any) => {
-      startRecordingSpy(...args)
-      return {
-        stop: stopRecordingSpy,
-      }
-    })
+    if (loadRecorderError) {
+      loadRecorderSpy.and.resolveTo(undefined)
+    } else {
+      // Workaround because using resolveTo(startRecordingSpy) was not working
+      loadRecorderSpy.and.resolveTo((...args: any) => {
+        startRecordingSpy(...args)
+        return {
+          stop: stopRecordingSpy,
+        }
+      })
+    }
 
     const configuration = mockRumConfiguration({
       startSessionReplayRecordingManually: startSessionReplayRecordingManually ?? false,
     })
 
-    recorderApi = makeRecorderApi(loadRecorderSpy, createDeflateWorkerSpy)
+    recorderApi = makeRecorderApi(loadRecorderSpy)
     rumInit = ({ worker } = {}) => {
       recorderApi.onRumStart(
         lifeCycle,
@@ -75,7 +91,6 @@ describe('makeRecorderApi', () => {
 
     registerCleanupTask(() => {
       resetDeflateWorkerState()
-      replayStats.resetReplayStats()
     })
   }
 
@@ -211,6 +226,18 @@ describe('makeRecorderApi', () => {
       await collectAsyncCalls(startRecordingSpy, 1)
       expect(createDeflateWorkerSpy).not.toHaveBeenCalled()
       expect(startRecordingSpy).toHaveBeenCalled()
+    })
+
+    it('does not start recording if load fails', async () => {
+      setupRecorderApi({ loadRecorderError: true })
+      rumInit()
+
+      expect(loadRecorderSpy).toHaveBeenCalled()
+
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
+      const events = await telemetry.getEvents()
+      expect(events).toEqual([expectedRecorderInitTelemetry({ result: 'recorder-load-failed' })])
     })
 
     it('does not start recording if worker creation fails', async () => {

@@ -32,12 +32,13 @@ export function createRecordingScope(
   const nodeIds = createNodeIds()
   const stringIds = createStringIds()
   const styleSheetIds = createStyleSheetIds()
-  return {
+
+  const scope: RecordingScope = {
     resetIds(): void {
-      eventIds.clear()
-      nodeIds.clear()
-      stringIds.clear()
-      styleSheetIds.clear()
+      scope.eventIds.clear()
+      scope.nodeIds.clear()
+      scope.stringIds.clear()
+      scope.styleSheetIds.clear()
     },
 
     configuration,
@@ -48,4 +49,6 @@ export function createRecordingScope(
     stringIds,
     styleSheetIds,
   }
+
+  return scope
 }

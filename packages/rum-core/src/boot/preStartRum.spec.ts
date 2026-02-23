@@ -8,8 +8,9 @@ import {
   TrackingConsent,
   createTrackingConsentState,
   DefaultPrivacyLevel,
-  resetFetchObservable,
   ExperimentalFeature,
+  startTelemetry,
+  addExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import {
@@ -18,8 +19,8 @@ import {
   mockClock,
   mockEventBridge,
   mockSyntheticsWorkerValues,
-  mockExperimentalFeatures,
   createFakeTelemetryObject,
+  replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -40,10 +41,6 @@ const FAKE_WORKER = {} as DeflateWorker
 const PUBLIC_API = {} as RumPublicApi
 
 describe('preStartRum', () => {
-  afterEach(() => {
-    resetFetchObservable()
-  })
-
   describe('configuration validation', () => {
     let strategy: Strategy
     let doStartRumSpy: jasmine.Spy<DoStartRum>
@@ -338,7 +335,6 @@ describe('preStartRum', () => {
         })
 
         it('calling startView then init does not start rum if tracking consent is not granted', () => {
-          const { strategy, doStartRumSpy } = createPreStartStrategyWithDefaults()
           strategy.startView({ name: 'foo' })
           strategy.init(
             {
@@ -690,7 +686,7 @@ describe('preStartRum', () => {
     })
 
     it('startAction / stopAction', () => {
-      mockExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
+      addExperimentalFeatures([ExperimentalFeature.START_STOP_ACTION])
 
       const startActionSpy = jasmine.createSpy()
       const stopActionSpy = jasmine.createSpy()
@@ -863,14 +859,13 @@ function createPreStartStrategyWithDefaults({
   trackingConsentState?: TrackingConsentState
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
-  const startTelemetrySpy = jasmine.createSpy().and.callFake(createFakeTelemetryObject)
+  const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
   return {
     strategy: createPreStartStrategy(
       rumPublicApiOptions,
       trackingConsentState,
       createCustomVitalsState(),
-      doStartRumSpy,
-      startTelemetrySpy
+      doStartRumSpy
     ),
     doStartRumSpy,
     startTelemetrySpy,

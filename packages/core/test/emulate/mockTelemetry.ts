@@ -29,7 +29,6 @@ export function startMockTelemetry() {
 
   registerCleanupTask(() => {
     subscription.unsubscribe()
-    resetTelemetry()
   })
 
   function getEvents() {

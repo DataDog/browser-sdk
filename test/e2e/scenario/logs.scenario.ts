@@ -1,6 +1,7 @@
+import type { DatadogLogs } from '@datadog/browser-logs'
 import { DEFAULT_REQUEST_ERROR_RESPONSE_LENGTH_LIMIT } from '@datadog/browser-logs/src/domain/configuration'
 import { test, expect } from '@playwright/test'
-import { createTest } from '../lib/framework'
+import { createTest, createWorker } from '../lib/framework'
 import { APPLICATION_ID } from '../lib/helpers/configuration'
 
 const UNREACHABLE_URL = 'http://localhost:9999/unreachable'
@@ -9,60 +10,64 @@ declare global {
   interface Window {
     myServiceWorker: ServiceWorkerRegistration
   }
+  // Used in evaluateInWorker callbacks (code runs in the service worker global scope)
+  var DD_LOGS: DatadogLogs | undefined
 }
 
 test.describe('logs', () => {
-  createTest('service worker with worker logs - esm')
-    .withWorker()
-    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
-      test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
+  test.describe('service workers', () => {
+    createTest('service worker with worker logs - esm')
+      .withWorker(createWorker().withLogs())
+      .run(async ({ flushEvents, intakeRegistry, browserName, evaluateInWorker }) => {
+        test.skip(browserName !== 'chromium', 'Non-Chromium browsers do not support ES modules in Service Workers')
 
-      await interactWithWorker((worker) => {
-        worker.postMessage('Some message')
+        await evaluateInWorker(() => {
+          DD_LOGS!.logger.log('Some message')
+        })
+
+        await flushEvents()
+
+        expect(intakeRegistry.logsRequests).toHaveLength(1)
+        expect(intakeRegistry.logsEvents[0].message).toBe('Some message')
       })
 
-      await flushEvents()
+    createTest('service worker with worker logs - importScripts')
+      .withWorker(createWorker({ importScripts: true }).withLogs())
+      .run(async ({ flushEvents, intakeRegistry, browserName, evaluateInWorker }) => {
+        test.skip(
+          browserName === 'webkit',
+          'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+        )
 
-      expect(intakeRegistry.logsRequests).toHaveLength(1)
-      expect(intakeRegistry.logsEvents[0].message).toBe('Some message')
-    })
+        await evaluateInWorker(() => {
+          DD_LOGS!.logger.log('Other message')
+        })
 
-  createTest('service worker with worker logs - importScripts')
-    .withWorker({ importScript: true })
-    .run(async ({ flushEvents, intakeRegistry, browserName, interactWithWorker }) => {
-      test.skip(
-        browserName === 'webkit',
-        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
-      )
+        await flushEvents()
 
-      await interactWithWorker((worker) => {
-        worker.postMessage('Other message')
+        expect(intakeRegistry.logsRequests).toHaveLength(1)
+        expect(intakeRegistry.logsEvents[0].message).toBe('Other message')
       })
 
-      await flushEvents()
+    createTest('service worker console forwarding')
+      .withWorker(createWorker({ importScripts: true }).withLogs({ forwardConsoleLogs: 'all' }))
+      .run(async ({ flushEvents, intakeRegistry, evaluateInWorker, browserName }) => {
+        test.skip(
+          browserName === 'webkit',
+          'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
+        )
 
-      expect(intakeRegistry.logsRequests).toHaveLength(1)
-      expect(intakeRegistry.logsEvents[0].message).toBe('Other message')
-    })
+        await evaluateInWorker(() => {
+          console.log('SW console log test')
+        })
 
-  createTest('service worker console forwarding')
-    .withWorker({ importScript: true, nativeLog: true })
-    .run(async ({ flushEvents, intakeRegistry, interactWithWorker, browserName }) => {
-      test.skip(
-        browserName === 'webkit',
-        'BrowserStack overrides the localhost URL with bs-local.com and cannot be used to install a Service Worker'
-      )
+        await flushEvents()
 
-      await interactWithWorker((worker) => {
-        worker.postMessage('SW console log test')
+        // Expect logs for console, error, and report events from service worker
+        expect(intakeRegistry.logsRequests).toHaveLength(1)
+        expect(intakeRegistry.logsEvents[0].message).toBe('SW console log test')
       })
-
-      await flushEvents()
-
-      // Expect logs for console, error, and report events from service worker
-      expect(intakeRegistry.logsRequests).toHaveLength(1)
-      expect(intakeRegistry.logsEvents[0].message).toBe('SW console log test')
-    })
+  })
 
   createTest('send logs')
     .withLogs()

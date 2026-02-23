@@ -20,7 +20,6 @@ export function startViewCollection(
   lifeCycle: LifeCycle,
   hooks: Hooks,
   configuration: RumConfiguration,
-  location: Location,
   domMutationObservable: Observable<RumMutationRecord[]>,
   pageOpenObservable: Observable<void>,
   locationChangeObservable: Observable<LocationChange>,
@@ -61,7 +60,6 @@ export function startViewCollection(
   )
 
   return trackViews(
-    location,
     lifeCycle,
     domMutationObservable,
     pageOpenObservable,
@@ -163,7 +161,7 @@ function processViewUpdate(
 
   return {
     rawRumEvent: viewEvent,
-    startTime: view.startClocks.relative,
+    startClocks: view.startClocks,
     duration: view.duration,
     domainContext: {
       location: view.location,

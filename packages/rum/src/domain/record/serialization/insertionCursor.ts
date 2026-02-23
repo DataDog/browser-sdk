@@ -49,14 +49,40 @@ export interface InsertionCursor {
 
 /** Returns an InsertionCursor which starts positioned at the root of the document. */
 export function createRootInsertionCursor(nodeIds: NodeIds): InsertionCursor {
+  return createInsertionCursor(undefined, undefined, nodeIds)
+}
+
+/**
+ * Returns an InsertionCursor which starts positioned in the child list of the given
+ * parent node. If a next sibling is provided, the cursor points to the position
+ * immediately before the next sibling; otherwise, the cursor points to the end of the
+ * child list.
+ */
+export function createChildInsertionCursor(
+  parentId: NodeId,
+  nextSiblingId: NodeId | undefined,
+  nodeIds: NodeIds
+): InsertionCursor {
+  return createInsertionCursor(parentId, nextSiblingId, nodeIds)
+}
+
+function createInsertionCursor(
+  parentId: NodeId | undefined,
+  nextSiblingId: NodeId | undefined,
+  nodeIds: NodeIds
+): InsertionCursor {
   interface ChildListCursor {
-    parent: ChildListCursor | undefined
+    container: ChildListCursor | undefined
+    parentId: NodeId | undefined
     previousSiblingId: NodeId | undefined
+    nextSiblingId: NodeId | undefined
   }
 
   let cursor: ChildListCursor = {
-    parent: undefined,
+    container: undefined,
+    parentId,
     previousSiblingId: undefined,
+    nextSiblingId,
   }
 
   const computeInsertionPoint = (nodeId: NodeId): InsertionPoint => {
@@ -64,14 +90,17 @@ export function createRootInsertionCursor(nodeIds: NodeIds): InsertionCursor {
       // Use an AppendAfterPreviousInsertionPoint. (i.e., 0)
       return 0
     }
-
-    const parentId = cursor.parent?.previousSiblingId
-    if (parentId !== undefined) {
+    if (cursor.nextSiblingId !== undefined) {
+      // Use an InsertBeforeInsertionPoint. We identify the next sibling using a
+      // negative integer indicating the difference between the new node's id and its next
+      // sibling's id.
+      return cursor.nextSiblingId - nodeId
+    }
+    if (cursor.parentId !== undefined) {
       // Use an AppendChildInsertionPoint. We identify the parent node using a positive
       // integer indicating the difference between the new node's id and its parent's id.
-      return nodeId - parentId
+      return nodeId - cursor.parentId
     }
-
     // There's no parent. Use a RootInsertionPoint. (i.e., null)
     return null
   }
@@ -84,15 +113,17 @@ export function createRootInsertionCursor(nodeIds: NodeIds): InsertionCursor {
       return { nodeId, insertionPoint }
     },
     ascend(): void {
-      if (cursor.parent) {
-        cursor = cursor.parent
+      if (cursor.container) {
+        cursor = cursor.container
       }
     },
     descend(): void {
       if (cursor.previousSiblingId !== undefined) {
         cursor = {
-          parent: cursor,
+          container: cursor,
+          parentId: cursor.previousSiblingId,
           previousSiblingId: undefined,
+          nextSiblingId: undefined,
         }
       }
     },

@@ -1,6 +1,6 @@
 import type { Subscription } from '@datadog/browser-core/src/tools/observable'
 import type { Clock } from '@datadog/browser-core/test'
-import { mockClock, createNewEvent } from '@datadog/browser-core/test'
+import { mockClock, createNewEvent, registerCleanupTask, waitAfterNextPaint } from '@datadog/browser-core/test'
 import { mockRumConfiguration } from '../../test'
 import type { ViewportDimension } from './viewportObservable'
 import { getViewportDimension, initViewportObservable } from './viewportObservable'
@@ -22,13 +22,6 @@ describe('viewportObservable', () => {
     viewportSubscription.unsubscribe()
   })
 
-  const addVerticalScrollBar = () => {
-    document.body.style.setProperty('margin-bottom', '5000px')
-  }
-  const addHorizontalScrollBar = () => {
-    document.body.style.setProperty('margin-right', '5000px')
-  }
-
   it('should track viewport resize', () => {
     window.dispatchEvent(createNewEvent('resize'))
     clock.tick(200)
@@ -37,19 +30,21 @@ describe('viewportObservable', () => {
   })
 
   describe('get layout width and height has similar native behaviour', () => {
-    afterEach(() => {
-      document.body.style.removeProperty('margin-bottom')
-      document.body.style.removeProperty('margin-right')
-    })
-
     // innerWidth includes the thickness of the sidebar while `visualViewport.width` and clientWidth exclude it
     it('without scrollbars', () => {
       expect(getViewportDimension()).toEqual({ width: window.innerWidth, height: window.innerHeight })
     })
 
     it('with scrollbars', () => {
-      addHorizontalScrollBar()
-      addVerticalScrollBar()
+      // Add scrollbars
+      document.body.style.setProperty('margin-bottom', '5000px')
+      document.body.style.setProperty('margin-right', '5000px')
+      registerCleanupTask(async () => {
+        document.body.style.removeProperty('margin-bottom')
+        document.body.style.removeProperty('margin-right')
+        await waitAfterNextPaint()
+      })
+
       expect([
         // Some devices don't follow specification of including scrollbars
         { width: window.innerWidth, height: window.innerHeight },

@@ -1,6 +1,6 @@
 import type { RelativeTime, RumInternalContext } from '@datadog/browser-core'
 import type { RumSessionManager } from '../rumSessionManager'
-import type { ActionContexts } from '../action/trackAction'
+import type { ActionContexts } from '../action/actionCollection'
 import type { ViewHistory } from './viewHistory'
 import type { UrlContexts } from './urlContexts'
 

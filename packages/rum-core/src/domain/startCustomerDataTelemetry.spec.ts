@@ -1,5 +1,5 @@
 import type { FlushEvent, Context, Telemetry } from '@datadog/browser-core'
-import { Observable, resetExperimentalFeatures } from '@datadog/browser-core'
+import { Observable } from '@datadog/browser-core'
 import type { Clock, MockTelemetry } from '@datadog/browser-core/test'
 import { mockClock, startMockTelemetry } from '@datadog/browser-core/test'
 import type { AssembledRumEvent } from '../rawRumEvent.types'
@@ -50,10 +50,6 @@ describe('customerDataTelemetry', () => {
 
   beforeEach(() => {
     clock = mockClock()
-  })
-
-  afterEach(() => {
-    resetExperimentalFeatures()
   })
 
   it('should collect customer data telemetry', async () => {
