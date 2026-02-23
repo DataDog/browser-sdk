@@ -398,7 +398,7 @@ export function validateAndBuildRumConfiguration(
     plugins: initConfiguration.plugins || [],
     trackFeatureFlagsForEvents: initConfiguration.trackFeatureFlagsForEvents || [],
     profilingSampleRate: initConfiguration.profilingSampleRate ?? 0,
-    propagateTraceBaggage: !!initConfiguration.propagateTraceBaggage,
+    propagateTraceBaggage: initConfiguration.propagateTraceBaggage !== false,
     allowedGraphQlUrls,
     ...baseConfiguration,
   }
