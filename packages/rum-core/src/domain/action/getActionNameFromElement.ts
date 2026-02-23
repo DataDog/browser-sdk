@@ -247,22 +247,6 @@ function getTextualContent(
     defaultPrivacyLevel,
   } = rumConfiguration
 
-  return getTextualContentWithTreeWalker(
-    element,
-    userProgrammaticAttribute,
-    enablePrivacyForActionName,
-    defaultPrivacyLevel,
-    nodePrivacyLevelCache
-  )
-}
-
-function getTextualContentWithTreeWalker(
-  element: Element,
-  userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName: boolean,
-  defaultPrivacyLevel: NodePrivacyLevel,
-  nodePrivacyLevelCache: NodePrivacyLevelCache
-) {
   const walker = document.createTreeWalker(
     element,
     // eslint-disable-next-line no-bitwise
@@ -293,7 +277,7 @@ function getTextualContentWithTreeWalker(
 
   function rejectInvisibleOrMaskedElementsFilter(node: Node) {
     const nodeSelfPrivacyLevel = getNodePrivacyLevel(node, defaultPrivacyLevel, nodePrivacyLevelCache)
-    if (privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel)) {
+    if (enablePrivacyForActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel)) {
       return NodeFilter.FILTER_REJECT
     }
     if (isElementNode(node)) {
