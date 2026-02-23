@@ -1,10 +1,5 @@
 import type { Duration, RelativeTime } from '@datadog/browser-core'
-import {
-  elapsed,
-  relativeNow,
-  ExperimentalFeature,
-  addExperimentalFeatures,
-} from '@datadog/browser-core'
+import { elapsed, relativeNow, ExperimentalFeature, addExperimentalFeatures } from '@datadog/browser-core'
 import { registerCleanupTask } from '@datadog/browser-core/test'
 import {
   appendElement,
