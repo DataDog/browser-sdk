@@ -29,20 +29,16 @@ test.describe('Session Stores', () => {
         expect(rumContext?.session_id).toBe(cookieSessionId)
       })
 
-    createTest('when cookies are unavailable, SDKs should not start')
+    createTest('when cookies are unavailable, Logs should start, but not RUM')
       .withLogs()
       .withRum()
       .withHead(DISABLE_COOKIES)
-      .run(async ({ page, withBrowserLogs }) => {
+      .run(async ({ page }) => {
         const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
 
-        expect(logsContext).toBeUndefined()
+        expect(logsContext).not.toBeUndefined()
         expect(rumContext).toBeUndefined()
-
-        withBrowserLogs((logs) => {
-          expect(logs.filter((logs) => logs.message.includes('No storage available for session'))).toHaveLength(2)
-        })
       })
 
     test.describe('trackSessionAcrossSubdomains: false', () => {
@@ -111,13 +107,22 @@ test.describe('Session Stores', () => {
         })
     })
 
-    test.describe('RUM and Logs with conflicting cookie options', () => {
-      createTest('with different trackSessionAcrossSubdomains values')
-        .withRum({ trackSessionAcrossSubdomains: true })
-        .withLogs({ trackSessionAcrossSubdomains: false })
+    for (const betaEncodeCookieOptions of [true, false]) {
+      createTest(
+        betaEncodeCookieOptions
+          ? 'should not fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values when Encode Cookie Options is enabled'
+          : 'should fails when RUM and LOGS are initialized with different trackSessionAcrossSubdomains values when Encode Cookie Options is disabled'
+      )
+        .withRum({ trackSessionAcrossSubdomains: true, betaEncodeCookieOptions })
+        .withLogs({ trackSessionAcrossSubdomains: false, betaEncodeCookieOptions })
         .withHostName(FULL_HOSTNAME)
         .run(async ({ page }) => {
           await page.waitForTimeout(1000)
+
+          if (!betaEncodeCookieOptions) {
+            // ensure the test is failing when betaEncodeCookieOptions is disabled
+            test.fail()
+          }
 
           const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
             window.DD_RUM?.getInternalContext(),
@@ -128,12 +133,21 @@ test.describe('Session Stores', () => {
           expect(logsInternalContext).toBeDefined()
         })
 
-      createTest('with different usePartitionedCrossSiteSessionCookie values')
-        .withRum({ usePartitionedCrossSiteSessionCookie: true })
-        .withLogs({ usePartitionedCrossSiteSessionCookie: false })
+      createTest(
+        betaEncodeCookieOptions
+          ? 'should not fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values when Encode Cookie Options is enabled'
+          : 'should fails when RUM and LOGS are initialized with different usePartitionedCrossSiteSessionCookie values when Encode Cookie Options is disabled'
+      )
+        .withRum({ usePartitionedCrossSiteSessionCookie: true, betaEncodeCookieOptions })
+        .withLogs({ usePartitionedCrossSiteSessionCookie: false, betaEncodeCookieOptions })
         .withHostName(FULL_HOSTNAME)
         .run(async ({ page }) => {
           await page.waitForTimeout(1000)
+
+          if (!betaEncodeCookieOptions) {
+            // ensure the test is failing when betaEncodeCookieOptions is disabled
+            test.fail()
+          }
 
           const [rumInternalContext, logsInternalContext] = await page.evaluate(() => [
             window.DD_RUM?.getInternalContext(),
@@ -143,7 +157,7 @@ test.describe('Session Stores', () => {
           expect(rumInternalContext).toBeDefined()
           expect(logsInternalContext).toBeDefined()
         })
-    })
+    }
 
     async function injectSdkInAnIframe(page: Page, bundleUrl: string) {
       await page.evaluate(
@@ -163,7 +177,6 @@ test.describe('Session Stores', () => {
             const script = iframeWindow.document.createElement('script')
             script.async = true
             script.src = browserSdkUrl
-            script.crossOrigin = ''
             iframeWindow.document.head.appendChild(script)
           }),
         bundleUrl
@@ -185,20 +198,16 @@ test.describe('Session Stores', () => {
         expect(rumContext?.session_id).toBe(sessionId)
       })
 
-    createTest('when localStorage is unavailable, SDKs should not start')
+    createTest('when localStorage is unavailable, Logs should start, but not RUM')
       .withLogs({ sessionPersistence: 'local-storage' })
       .withRum({ sessionPersistence: 'local-storage' })
       .withHead(DISABLE_LOCAL_STORAGE)
-      .run(async ({ page, withBrowserLogs }) => {
+      .run(async ({ page }) => {
         const logsContext = await page.evaluate(() => window.DD_LOGS?.getInternalContext())
         const rumContext = await page.evaluate(() => window.DD_RUM?.getInternalContext())
 
-        expect(logsContext).toBeUndefined()
+        expect(logsContext).not.toBeUndefined()
         expect(rumContext).toBeUndefined()
-
-        withBrowserLogs((logs) => {
-          expect(logs.filter((logs) => logs.message.includes('No storage available for session'))).toHaveLength(2)
-        })
       })
   })
 

@@ -19,13 +19,8 @@ export const LOCK_MAX_TRIES = 100
 export const LOCK_EXPIRATION_DELAY = ONE_SECOND
 const LOCK_SEPARATOR = '--'
 
-let bufferedOperations: Operations[] = []
+const bufferedOperations: Operations[] = []
 let ongoingOperations: Operations | undefined
-
-export function resetSessionStoreOperations() {
-  bufferedOperations = []
-  ongoingOperations = undefined
-}
 
 export function processSessionStoreOperations(
   operations: Operations,

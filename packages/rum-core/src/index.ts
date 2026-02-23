@@ -70,6 +70,7 @@ export type {
 } from './domain/vital/vitalCollection'
 export type { Hooks, DefaultRumEventAttributes, DefaultTelemetryEventAttributes } from './domain/hooks'
 export { createHooks } from './domain/hooks'
+export { isSampled } from './domain/sampler/sampler'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'
 export type { TransportPayload } from './transport/formDataTransport'
 export { createFormDataTransport } from './transport/formDataTransport'

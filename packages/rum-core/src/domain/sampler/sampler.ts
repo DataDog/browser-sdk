@@ -1,12 +1,8 @@
-import { performDraw } from '../tools/utils/numberUtils'
-
-export function correctedChildSampleRate(parentRate: number, childRate: number): number {
-  return (parentRate * childRate) / 100
-}
+import { performDraw } from '@datadog/browser-core'
 
 const sampleDecisionCache: Map<number, { sessionId: string; decision: boolean }> = new Map()
 
-export function isSampled(sessionId: string, sampleRate: number): boolean {
+export function isSampled(sessionId: string, sampleRate: number) {
   // Shortcuts for common cases. This is not strictly necessary, but it makes the code faster for
   // customers willing to ingest all traces.
   if (sampleRate === 100) {
@@ -47,7 +43,7 @@ export function resetSampleDecisionCache() {
  * @param identifier - The identifier to use for sampling.
  * @param sampleRate - The sample rate in percentage between 0 and 100.
  */
-export function sampleUsingKnuthFactor(identifier: bigint, sampleRate: number): boolean {
+export function sampleUsingKnuthFactor(identifier: bigint, sampleRate: number) {
   // The formula is:
   //
   //   (identifier * knuthFactor) % 2^64 < sampleRate * 2^64

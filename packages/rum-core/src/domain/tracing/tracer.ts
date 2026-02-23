@@ -1,12 +1,5 @@
 import type { ContextManager } from '@datadog/browser-core'
-import {
-  objectEntries,
-  shallowClone,
-  matchList,
-  TraceContextInjection,
-  correctedChildSampleRate,
-  isSampled,
-} from '@datadog/browser-core'
+import { objectEntries, shallowClone, matchList, TraceContextInjection } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
 import type {
   RumFetchResolveContext,
@@ -15,6 +8,7 @@ import type {
   RumXhrStartContext,
 } from '../requestCollection'
 import type { RumSessionManager } from '../rumSessionManager'
+import { isSampled } from '../sampler/sampler'
 import type { PropagatorType } from './tracer.types'
 import type { SpanIdentifier, TraceIdentifier } from './identifier'
 import { createSpanIdentifier, createTraceIdentifier, toPaddedHexadecimalString } from './identifier'
@@ -131,10 +125,7 @@ function injectHeadersIfTracingAllowed(
     return
   }
 
-  const traceSampled = isSampled(
-    session.id,
-    correctedChildSampleRate(configuration.sessionSampleRate, configuration.traceSampleRate)
-  )
+  const traceSampled = isSampled(session.id, configuration.traceSampleRate)
 
   const shouldInjectHeaders = traceSampled || configuration.traceContextInjection === TraceContextInjection.ALL
   if (!shouldInjectHeaders) {

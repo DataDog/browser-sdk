@@ -1,18 +1,13 @@
 import {
   callbackAddsInstrumentation,
-  collectAsyncCalls,
   type Clock,
   mockClock,
   mockEventBridge,
-  waitNextMicrotask,
   createFakeTelemetryObject,
-  replaceMockable,
   replaceMockableWithSpy,
 } from '@datadog/browser-core/test'
 import type { TimeStamp, TrackingConsentState } from '@datadog/browser-core'
 import { ONE_SECOND, TrackingConsent, createTrackingConsentState, display, startTelemetry } from '@datadog/browser-core'
-import { createLogStartSessionManagerMock } from '../../test/mockLogsSessionManager'
-import { startLogsSessionManager } from '../domain/logsSessionManager'
 import type { CommonContext } from '../rawLogsEvent.types'
 import type { HybridInitConfiguration, LogsInitConfiguration } from '../domain/configuration'
 import type { Logger } from '../domain/logger'
@@ -42,10 +37,9 @@ describe('preStartLogs', () => {
       displaySpy = spyOn(display, 'error')
     })
 
-    it('should start when the configuration is valid', async () => {
+    it('should start when the configuration is valid', () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
       expect(displaySpy).not.toHaveBeenCalled()
-      await collectAsyncCalls(doStartLogsSpy, 1)
       expect(doStartLogsSpy).toHaveBeenCalled()
     })
 
@@ -105,7 +99,7 @@ describe('preStartLogs', () => {
     })
   })
 
-  it('allows sending logs', async () => {
+  it('allows sending logs', () => {
     const { strategy, handleLogSpy, getLoggedMessage } = createPreStartStrategyWithDefaults()
     strategy.handleLog(
       {
@@ -117,7 +111,6 @@ describe('preStartLogs', () => {
 
     expect(handleLogSpy).not.toHaveBeenCalled()
     strategy.init(DEFAULT_INIT_CONFIGURATION)
-    await collectAsyncCalls(handleLogSpy, 1)
 
     expect(handleLogSpy.calls.all().length).toBe(1)
     expect(getLoggedMessage(0).message.message).toBe('message')
@@ -130,7 +123,6 @@ describe('preStartLogs', () => {
 
   describe('save context when submitting a log', () => {
     it('saves the date', () => {
-      mockEventBridge()
       const { strategy, getLoggedMessage } = createPreStartStrategyWithDefaults()
       strategy.handleLog(
         {
@@ -145,8 +137,8 @@ describe('preStartLogs', () => {
       expect(getLoggedMessage(0).savedDate).toEqual((Date.now() - ONE_SECOND) as TimeStamp)
     })
 
-    it('saves the URL', async () => {
-      const { strategy, getLoggedMessage, getCommonContextSpy, handleLogSpy } = createPreStartStrategyWithDefaults()
+    it('saves the URL', () => {
+      const { strategy, getLoggedMessage, getCommonContextSpy } = createPreStartStrategyWithDefaults()
       getCommonContextSpy.and.returnValue({ view: { url: 'url' } } as unknown as CommonContext)
       strategy.handleLog(
         {
@@ -157,12 +149,11 @@ describe('preStartLogs', () => {
       )
       strategy.init(DEFAULT_INIT_CONFIGURATION)
 
-      await collectAsyncCalls(handleLogSpy, 1)
       expect(getLoggedMessage(0).savedCommonContext!.view?.url).toEqual('url')
     })
 
-    it('saves the log context', async () => {
-      const { strategy, getLoggedMessage, handleLogSpy } = createPreStartStrategyWithDefaults()
+    it('saves the log context', () => {
+      const { strategy, getLoggedMessage } = createPreStartStrategyWithDefaults()
       const context = { foo: 'bar' }
       strategy.handleLog(
         {
@@ -175,7 +166,6 @@ describe('preStartLogs', () => {
       context.foo = 'baz'
 
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(handleLogSpy, 1)
 
       expect(getLoggedMessage(0).message.context!.foo).toEqual('bar')
     })
@@ -221,13 +211,12 @@ describe('preStartLogs', () => {
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
-    it('starts logs if tracking consent is granted before init', async () => {
+    it('starts logs if tracking consent is granted before init', () => {
       trackingConsentState.update(TrackingConsent.GRANTED)
       strategy.init({
         ...DEFAULT_INIT_CONFIGURATION,
         trackingConsent: TrackingConsent.NOT_GRANTED,
       })
-      await collectAsyncCalls(doStartLogsSpy, 1)
       expect(doStartLogsSpy).toHaveBeenCalledTimes(1)
     })
 
@@ -240,27 +229,24 @@ describe('preStartLogs', () => {
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
 
-    it('do not call startLogs when tracking consent state is updated after init', async () => {
+    it('do not call startLogs when tracking consent state is updated after init', () => {
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(doStartLogsSpy, 1)
       doStartLogsSpy.calls.reset()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
-      await waitNextMicrotask()
 
       expect(doStartLogsSpy).not.toHaveBeenCalled()
     })
   })
 
   describe('telemetry', () => {
-    it('starts telemetry during init() by default', async () => {
+    it('starts telemetry during init() by default', () => {
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults()
       strategy.init(DEFAULT_INIT_CONFIGURATION)
-      await collectAsyncCalls(startTelemetrySpy, 1)
       expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
     })
 
-    it('does not start telemetry until consent is granted', async () => {
+    it('does not start telemetry until consent is granted', () => {
       const trackingConsentState = createTrackingConsentState()
       const { strategy, startTelemetrySpy } = createPreStartStrategyWithDefaults({
         trackingConsentState,
@@ -274,7 +260,6 @@ describe('preStartLogs', () => {
       expect(startTelemetrySpy).not.toHaveBeenCalled()
 
       trackingConsentState.update(TrackingConsent.GRANTED)
-      await collectAsyncCalls(startTelemetrySpy, 1)
 
       expect(startTelemetrySpy).toHaveBeenCalledTimes(1)
     })
@@ -292,7 +277,6 @@ function createPreStartStrategyWithDefaults({
   } as unknown as StartLogsResult)
   const getCommonContextSpy = jasmine.createSpy<() => CommonContext>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
-  replaceMockable(startLogsSessionManager, createLogStartSessionManagerMock())
 
   return {
     strategy: createPreStartStrategy(getCommonContextSpy, trackingConsentState, doStartLogsSpy),
