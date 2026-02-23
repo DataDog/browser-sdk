@@ -860,6 +860,58 @@ describe('profiler', () => {
     expect(profilingContextManager.get()?.status).toBe('stopped')
   })
 
+  it('should not include long tasks outside the profiling window when clocks drift', async () => {
+    const clock = mockClock()
+    const timeOrigin = performance.timing.navigationStart
+    const { profiler, addLongTask } = setupProfiler()
+
+    profiler.start()
+    expect(profiler.isRunning()).toBe(true)
+
+    // Add a long task at T=100ms (inside the profile window)
+    clock.tick(100)
+    addLongTask({
+      id: 'long-task-inside',
+      startClocks: clocksNow(),
+      duration: 50 as Duration,
+      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+    })
+
+    // Add a long task at T=1000ms (outside the actual profile relative window)
+    clock.tick(900)
+    addLongTask({
+      id: 'long-task-outside',
+      startClocks: clocksNow(),
+      duration: 50 as Duration,
+      entryType: RumPerformanceEntryType.LONG_ANIMATION_FRAME,
+    })
+
+    // Advance to T=1100ms
+    clock.tick(100)
+
+    // Simulate clock drift: Date.now() drifted 1000ms ahead of performance.now()
+    // This mimics NTP sync or system clock adjustments in production
+    ;(performance.now as jasmine.Spy).and.callFake(() => Date.now() - timeOrigin - 1000)
+
+    // Stop profiler — state changes synchronously, data collection is async via Promise
+    profiler.stop()
+    expect(profiler.isStopped()).toBe(true)
+
+    // Flush microtasks for profiler.stop() Promise and transport.send()
+    await waitNextMicrotask()
+    await waitNextMicrotask()
+
+    expect(interceptor.requests.length).toBe(1)
+    const request = await readFormDataRequest<ProfileEventPayload>(interceptor.requests[0])
+    const trace = request['wall-time.json']
+
+    // Should only include the long task that occurred during the actual profiling window.
+    // Without the fix (using timeStamp for duration), both long tasks would be included
+    // because the inflated timeStamp-based duration extends the query window.
+    expect(trace.longTasks.length).toBe(1)
+    expect(trace.longTasks[0].id).toBe('long-task-inside')
+  })
+
   it('should restart profiling when session expires while paused and then renews', async () => {
     const { profiler, profilingContextManager } = setupProfiler()
 
