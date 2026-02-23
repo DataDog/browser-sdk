@@ -160,6 +160,45 @@ test.describe('logs', () => {
       })
     })
 
+  createTest('do not send XHR network errors for aborted requests')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs, page }) => {
+      await page.evaluate(
+        (unreachableUrl) =>
+          new Promise<void>((resolve) => {
+            const xhr = new XMLHttpRequest()
+            xhr.addEventListener('abort', () => resolve())
+            xhr.open('GET', unreachableUrl)
+            xhr.send()
+            xhr.abort()
+          }),
+        UNREACHABLE_URL
+      )
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(0)
+      withBrowserLogs(() => {
+        // Aborting a request may still trigger CSP or connection errors in some browsers
+      })
+    })
+
+  createTest('do not send fetch network errors for aborted requests')
+    .withLogs({ forwardErrorsToLogs: true })
+    .run(async ({ intakeRegistry, flushEvents, withBrowserLogs, page }) => {
+      await page.evaluate((unreachableUrl) => {
+        const controller = new AbortController()
+        const p = fetch(unreachableUrl, { signal: controller.signal }).catch(() => undefined)
+        controller.abort()
+        return p
+      }, UNREACHABLE_URL)
+
+      await flushEvents()
+      expect(intakeRegistry.logsEvents).toHaveLength(0)
+      withBrowserLogs(() => {
+        // Aborting a request may still trigger CSP or connection errors in some browsers
+      })
+    })
+
   createTest('keep only the first bytes of the response')
     .withLogs({ forwardErrorsToLogs: true })
     .run(async ({ intakeRegistry, baseUrl, servers, flushEvents, page, withBrowserLogs, browserName }) => {
