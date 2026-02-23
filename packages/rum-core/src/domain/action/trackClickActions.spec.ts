@@ -6,9 +6,7 @@ import {
   relativeNow,
   DefaultPrivacyLevel,
   Observable,
-  ExperimentalFeature,
   PageExitReason,
-  addExperimentalFeatures,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
 import { createNewEvent, mockClock } from '@datadog/browser-core/test'
@@ -479,7 +477,6 @@ describe('trackClickActions', () => {
     })
 
     it('should mask action name when defaultPrivacyLevel is mask_unless_allowlisted and not in allowlist', () => {
-      addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.MASK_UNLESS_ALLOWLISTED,
         enablePrivacyForActionName: true,
@@ -524,7 +521,6 @@ describe('trackClickActions', () => {
     })
 
     it('should use allowlist masking when defaultPrivacyLevel is allow and node privacy level is mask-unless-allowlisted', () => {
-      addExperimentalFeatures([ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME])
       button.setAttribute('data-dd-privacy', 'mask-unless-allowlisted')
       startClickActionsTracking({
         defaultPrivacyLevel: DefaultPrivacyLevel.ALLOW,
