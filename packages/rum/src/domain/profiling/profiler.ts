@@ -229,7 +229,7 @@ export function createRumProfiler(
       .stop()
       .then((trace) => {
         const endClocks = clocksNow()
-        const duration = elapsed(startClocks.timeStamp, endClocks.timeStamp)
+        const duration = elapsed(startClocks.relative, endClocks.relative)
         const longTasks = longTaskHistory.findAll(startClocks.relative, duration)
         const isBelowDurationThreshold = duration < profilerConfiguration.minProfileDurationMs
         const isBelowSampleThreshold = getNumberOfSamples(trace.samples) < profilerConfiguration.minNumberOfSamples
