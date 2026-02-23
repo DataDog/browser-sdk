@@ -43,7 +43,7 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
   })
 
   function isNetworkError(request: XhrCompleteContext | FetchResolveContext) {
-    return !isIntakeUrl(request.url) && (isRejected(request) || isServerError(request.status))
+    return !isIntakeUrl(request.url) && !request.isAborted && (isRejected(request) || isServerError(request.status))
   }
 
   function handleResponse(type: RequestType, request: XhrCompleteContext | FetchResolveContext) {
