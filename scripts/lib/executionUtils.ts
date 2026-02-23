@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process'
+import { fetch, type RequestInit, type Response } from 'undici'
 
 /**
  * Helper to run executables asynchronously, in a shell. This function does not prevent Shell

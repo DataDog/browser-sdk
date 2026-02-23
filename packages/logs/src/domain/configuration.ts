@@ -45,7 +45,7 @@ export interface LogsInitConfiguration extends InitConfiguration {
    *
    * @category Data Collection
    */
-  beforeSend?: ((event: LogsEvent, context: LogsEventDomainContext) => boolean) | undefined
+  beforeSend?: LogsBeforeSend | undefined
 
   /**
    * Forward console.error logs, uncaught exceptions and network errors to Datadog.
@@ -77,6 +77,15 @@ export interface LogsInitConfiguration extends InitConfiguration {
    */
   usePciIntake?: boolean
 }
+
+/**
+ * Function called before a Log event is sent to Datadog. See {@link LogsInitConfiguration.beforeSend}
+ *
+ * @param event - The log event
+ * @param context - The log event domain context
+ * @returns true if the event should be sent to Datadog, false otherwise
+ */
+export type LogsBeforeSend = (event: LogsEvent, context: LogsEventDomainContext) => boolean
 
 export type HybridInitConfiguration = Omit<LogsInitConfiguration, 'clientToken'>
 
