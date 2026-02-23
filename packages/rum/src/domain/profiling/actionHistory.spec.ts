@@ -22,6 +22,7 @@ describe('actionHistory', () => {
 
     it('should add action information to history when RAW_RUM_EVENT_COLLECTED is triggered with action event', () => {
       const history = createActionHistory(lifeCycle)
+      const startClocks = relativeToClocks(10 as RelativeTime)
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.ACTION, {
@@ -30,7 +31,7 @@ describe('actionHistory', () => {
             duration: 20 as Duration,
           },
         }),
-        startClocks: relativeToClocks(10 as RelativeTime),
+        startClocks,
         duration: 20 as Duration,
         domainContext: fakeDomainContext,
       })
@@ -39,7 +40,7 @@ describe('actionHistory', () => {
         {
           id: 'action-123',
           label: '',
-          startClocks: relativeToClocks(10 as RelativeTime),
+          startClocks,
           duration: 20 as Duration,
         },
       ])
