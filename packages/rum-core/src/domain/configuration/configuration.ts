@@ -71,11 +71,8 @@ export interface RumInitConfiguration extends InitConfiguration {
    * See [Enrich And Control Browser RUM Data With beforeSend](https://docs.datadoghq.com/real_user_monitoring/guide/enrich-and-control-rum-data) for further information.
    *
    * @category Data Collection
-   * @param event - The RUM event
-   * @param context - The RUM event domain context providing access to native browser data based on the event type (e.g. error, performance entry).
-   * @returns true if the event should be sent to Datadog, false otherwise
    */
-  beforeSend?: ((event: RumEvent, context: RumEventDomainContext) => boolean) | undefined
+  beforeSend?: RumBeforeSend | undefined
 
   /**
    * A list of request origins ignored when computing the page activity.
@@ -286,6 +283,15 @@ export interface RumInitConfiguration extends InitConfiguration {
 export type HybridInitConfiguration = Omit<RumInitConfiguration, 'applicationId' | 'clientToken'>
 
 export type FeatureFlagsForEvents = 'vital' | 'action' | 'long_task' | 'resource'
+
+/**
+ * Function called before a RUM event is sent to Datadog. See {@link RumInitConfiguration.beforeSend}
+ *
+ * @param event - The RUM event
+ * @param context - The RUM event domain context providing access to native browser data based on the event type (e.g. error, performance entry).
+ * @returns true if the event should be sent to Datadog, false otherwise
+ */
+export type RumBeforeSend = (event: RumEvent, context: RumEventDomainContext) => boolean
 
 export interface GraphQlUrlOption {
   match: MatchOption
