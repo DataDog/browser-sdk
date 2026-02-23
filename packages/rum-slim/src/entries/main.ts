@@ -28,7 +28,6 @@ export type RumGlobal = RumPublicApi
 export type {
   RumPublicApi as DatadogRum,
   RumInitConfiguration,
-  RumBeforeSend,
   ViewOptions,
   StartRecordingOptions,
   AddDurationVitalOptions,

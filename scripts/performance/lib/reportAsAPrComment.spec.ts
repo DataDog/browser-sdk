@@ -1,14 +1,11 @@
 import assert from 'node:assert/strict'
 import { describe, it, mock } from 'node:test'
-import { type fetch } from 'undici'
-import { mockModule } from '../../deploy/lib/testHelpers.ts'
+import { Pr } from './reportAsAPrComment.ts'
 
 describe('PrComment', () => {
   it('should send a comment with performance results', async () => {
-    const fetchMock = mock.fn<typeof fetch>()
+    const fetchMock = mock.method(globalThis, 'fetch')
     fetchMock.mock.mockImplementation(() => Promise.resolve({ ok: true } as Response))
-    await mockModule('undici', { fetch: fetchMock })
-    const { Pr } = await import('./reportAsAPrComment.ts')
 
     const pr = new Pr(123, 'abc')
 

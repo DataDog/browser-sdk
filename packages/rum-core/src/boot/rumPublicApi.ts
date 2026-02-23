@@ -496,11 +496,11 @@ export interface RumPublicApi extends PublicApi {
    *
    * @category Vital - Feature Operation
    * @param name - Name of the operation step
-   * @param failureReason - Reason for the failure
+   * @param failureReason
    * @param options - Options for the operation step (operationKey, context, description)
    * @hidden // TODO: replace by @since when GA
    */
-  failFeatureOperation: (name: string, failureReason: FailureReason, options?: FeatureOperationOptions) => void
+  failFeatureOperation: (name: string, failureReaon: FailureReason, options?: FeatureOperationOptions) => void
 }
 
 export interface RecorderApi {
