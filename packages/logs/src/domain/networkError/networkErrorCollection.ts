@@ -57,7 +57,6 @@ export function startNetworkErrorCollection(configuration: LogsConfiguration, li
         : request.responseBody || 'Failed to load'
 
     const domainContext: LogsEventDomainContext<typeof ErrorSource.NETWORK> = {
-      isAborted: request.isAborted,
       handlingStack: request.handlingStack,
     }
 
