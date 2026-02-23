@@ -222,14 +222,6 @@ export interface RumInitConfiguration extends InitConfiguration {
   trackViewsManually?: boolean | undefined
 
   /**
-   * Enable the creation of dedicated views for pages restored from the Back-Forward cache.
-   *
-   * @category Data Collection
-   * @defaultValue false
-   */
-  trackBfcacheViews?: boolean | undefined
-
-  /**
    * Enables collection of resource events.
    *
    * @category Data Collection
@@ -312,7 +304,6 @@ export interface RumConfiguration extends Configuration {
   trackViewsManually: boolean
   trackResources: boolean
   trackLongTasks: boolean
-  trackBfcacheViews: boolean
   trackEarlyRequests: boolean
   subdomain?: string
   traceContextInjection: TraceContextInjection
@@ -385,7 +376,6 @@ export function validateAndBuildRumConfiguration(
     trackViewsManually: !!initConfiguration.trackViewsManually,
     trackResources: !!(initConfiguration.trackResources ?? true),
     trackLongTasks: !!(initConfiguration.trackLongTasks ?? true),
-    trackBfcacheViews: !!initConfiguration.trackBfcacheViews,
     trackEarlyRequests: !!initConfiguration.trackEarlyRequests,
     subdomain: initConfiguration.subdomain,
     defaultPrivacyLevel: objectHasValue(DefaultPrivacyLevel, initConfiguration.defaultPrivacyLevel)
@@ -538,7 +528,6 @@ export function serializeRumConfiguration(configuration: RumInitConfiguration) {
     track_user_interactions: configuration.trackUserInteractions,
     track_resources: configuration.trackResources,
     track_long_task: configuration.trackLongTasks,
-    track_bfcache_views: configuration.trackBfcacheViews,
     track_early_requests: configuration.trackEarlyRequests,
     plugins: configuration.plugins?.map((plugin) => ({
       name: plugin.name,
