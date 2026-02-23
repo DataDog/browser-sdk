@@ -434,6 +434,39 @@ describe('trackInteractionToNextPaint', () => {
       })
     })
 
+    it('should keep correct subparts for p98 after interactions causing pruning', () => {
+      startINPTracking()
+
+      // The interaction that will remain the p98 throughout
+      newInteraction({
+        interactionId: 1,
+        startTime: 1000 as RelativeTime,
+        processingStart: 1050 as RelativeTime,
+        processingEnd: 1200 as RelativeTime,
+        duration: 1100 as Duration,
+      })
+
+      // Add more than MAX_INTERACTION_ENTRIES (10) shorter interactions to fill longestInteractions
+      // and trigger eviction and pruning of their groups
+      for (let i = 2; i <= 12; i++) {
+        newInteraction({
+          interactionId: i,
+          startTime: (i * 2000) as RelativeTime,
+          processingStart: (i * 2000 + 10) as RelativeTime,
+          processingEnd: (i * 2000 + 20) as RelativeTime,
+          duration: i as Duration,
+        })
+      }
+
+      const inp = getInteractionToNextPaint()
+      expect(inp?.value).toBe(1100 as Duration)
+      expect(inp?.subParts).toEqual({
+        inputDelay: 50 as Duration,
+        processingDuration: 150 as Duration,
+        presentationDelay: 900 as Duration,
+      })
+    })
+
     it('should update subparts when INP changes to a different interaction', () => {
       startINPTracking()
 

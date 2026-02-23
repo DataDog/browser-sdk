@@ -162,6 +162,16 @@ export function trackInteractionToNextPaint(
       }
     }
 
+    if (isExperimentalFeatureEnabled(ExperimentalFeature.INP_SUBPARTS)) {
+      // Prune after all entries are grouped: groups not in longestInteractions can never affect p98 subparts.
+      // Keeps groupsByInteractionId capped at MAX_INTERACTION_ENTRIES
+      for (const [interactionId] of groupsByInteractionId) {
+        if (!longestInteractions.isTracked(interactionId)) {
+          groupsByInteractionId.delete(interactionId)
+        }
+      }
+    }
+
     const newInteraction = longestInteractions.estimateP98Interaction()
 
     if (newInteraction) {
@@ -266,6 +276,10 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
     estimateP98Interaction(): RumPerformanceEventTiming | RumFirstInputTiming | undefined {
       const interactionIndex = Math.min(longestInteractions.length - 1, Math.floor(getViewInteractionCount() / 50))
       return longestInteractions[interactionIndex]
+    },
+
+    isTracked(interactionId: number): boolean {
+      return longestInteractions.some((i) => i.interactionId === interactionId)
     },
   }
 }
