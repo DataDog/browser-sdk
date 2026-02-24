@@ -22,6 +22,7 @@ describe('vitalHistory', () => {
 
     it('should add vital information to history when RAW_RUM_EVENT_COLLECTED is triggered with vital event', () => {
       const history = createVitalHistory(lifeCycle)
+      const startClocks = relativeToClocks(10 as RelativeTime)
 
       lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, {
         rawRumEvent: createRawRumEvent(RumEventType.VITAL, {
@@ -31,7 +32,7 @@ describe('vitalHistory', () => {
             duration: 20 as Duration,
           },
         }),
-        startClocks: relativeToClocks(10 as RelativeTime),
+        startClocks,
         duration: 20 as Duration,
         domainContext: fakeDomainContext,
       })
@@ -39,7 +40,7 @@ describe('vitalHistory', () => {
       expect(history.findAll(5 as RelativeTime, 30 as RelativeTime)).toEqual([
         {
           id: 'vital-123',
-          startClocks: relativeToClocks(10 as RelativeTime),
+          startClocks,
           duration: 20 as Duration,
           label: 'vital-name',
         },
