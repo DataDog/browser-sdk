@@ -7,8 +7,9 @@ import { RumEventType } from '../../rawRumEvent.types'
 import * as performanceObservable from '../../browser/performanceObservable'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 import type { PageStateHistory } from './pageStateHistory'
-import { PageState, startPageStateHistory } from './pageStateHistory'
+import { PageState, pageStateDecoratorFactory, startPageStateHistory } from './pageStateHistory'
 
 describe('pageStateHistory', () => {
   let clock: Clock
@@ -263,5 +264,65 @@ describe('pageStateHistory', () => {
         pageStateHistory.wasInPageStateDuringPeriod(PageState.ACTIVE, 5 as RelativeTime, 5 as Duration)
       ).toBeFalse()
     })
+  })
+})
+
+describe('pageStateDecoratorFactory', () => {
+  it('should contribute pageStates for view events', async () => {
+    const mockEntries = [{ state: PageState.ACTIVE, startTime: 0 as RelativeTime }]
+    const factory = pageStateDecoratorFactory({
+      findAll: () => mockEntries,
+      wasInPageStateDuringPeriod: () => true,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).pageStates).toBeDefined()
+    }
+  })
+
+  it('should contribute inForeground for action events', async () => {
+    const factory = pageStateDecoratorFactory({
+      findAll: () => [],
+      wasInPageStateDuringPeriod: () => true,
+    })
+    const obs: Observation = { type: 'action', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).inForeground).toBe(true)
+    }
+  })
+
+  it('should contribute inForeground for error events', async () => {
+    const factory = pageStateDecoratorFactory({
+      findAll: () => [],
+      wasInPageStateDuringPeriod: () => false,
+    })
+    const obs: Observation = { type: 'error', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).inForeground).toBe(false)
+    }
+  })
+
+  it('should skip for other event types', async () => {
+    const factory = pageStateDecoratorFactory({
+      findAll: () => [],
+      wasInPageStateDuringPeriod: () => false,
+    })
+    const obs: Observation = { type: 'resource', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should declare canDiscard: false', () => {
+    const factory = pageStateDecoratorFactory({
+      findAll: () => [],
+      wasInPageStateDuringPeriod: () => false,
+    })
+    expect(factory.capabilities.canDiscard).toBe(false)
   })
 })
