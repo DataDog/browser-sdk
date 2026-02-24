@@ -25,12 +25,12 @@ export function trackingConsentDecoratorFactory(deps: {
     requires: [],
     capabilities: { canDiscard: true },
     create: () => ({
-      decorate: async (_event, _accumulated) => {
-        if (!deps.hasConsent()) {
-          return { status: 'discarded', reason: 'no tracking consent' }
-        }
-        return { status: 'skipped' }
-      },
+      decorate: (_event, _accumulated) =>
+        Promise.resolve(
+          !deps.hasConsent()
+            ? { status: 'discarded' as const, reason: 'no tracking consent' }
+            : { status: 'skipped' as const }
+        ),
     }),
   }
 }

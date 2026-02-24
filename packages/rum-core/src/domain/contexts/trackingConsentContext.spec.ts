@@ -2,8 +2,8 @@ import type { RelativeTime } from '@datadog/browser-core'
 import { DISCARDED, HookNames, createTrackingConsentState, TrackingConsent } from '@datadog/browser-core'
 import type { Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startTrackingConsentContext, trackingConsentDecoratorFactory } from './trackingConsentContext'
 import type { Observation } from '../pipeline/rumPipelineEvents'
+import { startTrackingConsentContext, trackingConsentDecoratorFactory } from './trackingConsentContext'
 
 describe('tracking consent context', () => {
   let hooks: Hooks
