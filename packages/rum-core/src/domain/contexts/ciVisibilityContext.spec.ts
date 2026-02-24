@@ -5,7 +5,35 @@ import type { CookieObservable } from '../../browser/cookieObservable'
 import { SessionType } from '../rumSessionManager'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startCiVisibilityContext } from './ciVisibilityContext'
+import type { Observation } from '../pipeline/rumPipelineEvents'
+import { ciVisibilityDecoratorFactory, startCiVisibilityContext } from './ciVisibilityContext'
+
+describe('ciVisibilityDecoratorFactory', () => {
+  it('should contribute ciTest when testExecutionId is set', async () => {
+    const factory = ciVisibilityDecoratorFactory({ getTestExecutionId: () => 'exec-123' })
+    const obs: Observation = { type: 'error', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).ciTest.testExecutionId).toBe('exec-123')
+    }
+  })
+
+  it('should skip when testExecutionId is undefined', async () => {
+    const factory = ciVisibilityDecoratorFactory({ getTestExecutionId: () => undefined })
+    const obs: Observation = { type: 'error', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should declare canDiscard: false', () => {
+    expect(ciVisibilityDecoratorFactory({ getTestExecutionId: () => undefined }).capabilities.canDiscard).toBe(false)
+  })
+
+  it('should declare name: "ciVisibility"', () => {
+    expect(ciVisibilityDecoratorFactory({ getTestExecutionId: () => undefined }).name).toBe('ciVisibility')
+  })
+})
 
 describe('startCiVisibilityContext', () => {
   let cookieObservable: CookieObservable

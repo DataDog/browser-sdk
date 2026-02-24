@@ -1,10 +1,35 @@
+import { getInitCookie, HookNames, SKIPPED } from '@datadog/browser-core'
 import type { Configuration } from '@datadog/browser-core'
-import { display, getInitCookie, HookNames, SKIPPED } from '@datadog/browser-core'
+import type { DecoratorFactory } from '@datadog/browser-core-next'
 import { createCookieObservable } from '../../browser/cookieObservable'
 import { SessionType } from '../rumSessionManager'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 
 export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-execution-id'
+
+export function ciVisibilityDecoratorFactory(deps: {
+  getTestExecutionId: () => string | undefined
+}): DecoratorFactory<Observation, { ciTest?: any }> {
+  return {
+    name: 'ciVisibility',
+    provides: [],
+    requires: [],
+    capabilities: { canDiscard: false },
+    create: () => ({
+      decorate: (_event, _accumulated) => {
+        const testExecutionId = deps.getTestExecutionId()
+        if (typeof testExecutionId !== 'string') {
+          return Promise.resolve({ status: 'skipped' as const })
+        }
+        return Promise.resolve({
+          status: 'contributed' as const,
+          attributes: { ciTest: { testExecutionId } },
+        })
+      },
+    }),
+  }
+}
 
 export interface CiTestWindow extends Window {
   Cypress?: {
@@ -19,7 +44,8 @@ export function startCiVisibilityContext(
   hooks: Hooks,
   cookieObservable = createCookieObservable(configuration, CI_VISIBILITY_TEST_ID_COOKIE_NAME)
 ) {
-  let testExecutionId = getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || readCypressTraceId()
+  let testExecutionId =
+    getInitCookie(CI_VISIBILITY_TEST_ID_COOKIE_NAME) || (window as CiTestWindow).Cypress?.env('traceId')
 
   const cookieObservableSubscription = cookieObservable.subscribe((value) => {
     testExecutionId = value
@@ -45,20 +71,5 @@ export function startCiVisibilityContext(
     stop: () => {
       cookieObservableSubscription.unsubscribe()
     },
-  }
-}
-
-function readCypressTraceId(): string | undefined {
-  const cypress = (window as CiTestWindow).Cypress
-  if (!cypress) {
-    return undefined
-  }
-  try {
-    return cypress.env('traceId')
-  } catch {
-    display.warn(
-      'Failed to read Cypress test execution id via Cypress.env(). Upgrade dd-trace-js to >= 5.88.0 to keep RUM ↔ test correlation working.'
-    )
-    return undefined
   }
 }
