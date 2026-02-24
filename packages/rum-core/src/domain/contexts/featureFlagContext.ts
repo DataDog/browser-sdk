@@ -1,10 +1,12 @@
-import type { ContextValue, Context } from '@datadog/browser-core'
+import type { ContextValue, Context, RelativeTime } from '@datadog/browser-core'
 import { HookNames, SESSION_TIME_OUT_DELAY, SKIPPED, createValueHistory, isEmptyObject } from '@datadog/browser-core'
+import type { DecoratorFactory } from '@datadog/browser-core-next'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RumConfiguration } from '../configuration'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 
 export const FEATURE_FLAG_CONTEXT_TIME_OUT_DELAY = SESSION_TIME_OUT_DELAY
 export const BYTES_COMPUTATION_THROTTLING_DELAY = 200
@@ -23,6 +25,33 @@ export interface FeatureFlagContexts {
  *
  * Note: we choose not to add a new context at each evaluation to save memory
  */
+export function featureFlagDecoratorFactory(deps: {
+  findFeatureFlags: (startTime: RelativeTime) => FeatureFlagContext | undefined
+  trackForEventType: (eventType: string) => boolean
+}): DecoratorFactory<Observation, { featureFlags?: FeatureFlagContext }> {
+  return {
+    name: 'featureFlags',
+    provides: [],
+    requires: [],
+    capabilities: { canDiscard: false },
+    create: () => ({
+      decorate: (event, _accumulated) => {
+        if (!deps.trackForEventType(event.type)) {
+          return Promise.resolve({ status: 'skipped' as const })
+        }
+        const featureFlags = deps.findFeatureFlags(event.startTime as RelativeTime)
+        if (!featureFlags || isEmptyObject(featureFlags)) {
+          return Promise.resolve({ status: 'skipped' as const })
+        }
+        return Promise.resolve({
+          status: 'contributed' as const,
+          attributes: { featureFlags },
+        })
+      },
+    }),
+  }
+}
+
 export function startFeatureFlagContexts(
   lifeCycle: LifeCycle,
   hooks: Hooks,

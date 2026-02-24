@@ -8,8 +8,9 @@ import type { RumConfiguration } from '../configuration'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 import type { FeatureFlagContexts } from './featureFlagContext'
-import { startFeatureFlagContexts } from './featureFlagContext'
+import { featureFlagDecoratorFactory, startFeatureFlagContexts } from './featureFlagContext'
 
 describe('featureFlagContexts', () => {
   const lifeCycle = new LifeCycle()
@@ -170,5 +171,58 @@ describe('featureFlagContexts', () => {
 
       expect(defaultRumEventAttributes).toEqual({ type: 'view', feature_flags: { feature: 'bar', feature2: 'baz' } })
     })
+  })
+})
+
+describe('featureFlagDecoratorFactory', () => {
+  it('should contribute featureFlags when found for tracked event type', async () => {
+    const factory = featureFlagDecoratorFactory({
+      findFeatureFlags: () => ({ myFlag: true }),
+      trackForEventType: () => true,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).featureFlags).toEqual({ myFlag: true })
+    }
+  })
+
+  it('should skip for untracked event types', async () => {
+    const factory = featureFlagDecoratorFactory({
+      findFeatureFlags: () => ({ myFlag: true }),
+      trackForEventType: () => false,
+    })
+    const obs: Observation = { type: 'resource', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should skip when feature flags context is empty', async () => {
+    const factory = featureFlagDecoratorFactory({
+      findFeatureFlags: () => ({}),
+      trackForEventType: () => true,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should skip when feature flags context is undefined', async () => {
+    const factory = featureFlagDecoratorFactory({
+      findFeatureFlags: () => undefined,
+      trackForEventType: () => true,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should declare canDiscard: false', () => {
+    const factory = featureFlagDecoratorFactory({
+      findFeatureFlags: () => undefined,
+      trackForEventType: () => false,
+    })
+    expect(factory.capabilities.canDiscard).toBe(false)
   })
 })
