@@ -246,9 +246,14 @@ function computeClickActionBase(
   const rect = target.getBoundingClientRect()
   const selector = getSelectorFromElement(target, configuration.actionNameAttribute)
 
-  const composedPathSelector = isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR) && typeof event.composedPath === 'function'
-    ? getComposedPathSelector(event.composedPath(), configuration.actionNameAttribute, configuration.allowedHtmlAttributes || [])
-    : undefined
+  const composedPathSelector =
+    isExperimentalFeatureEnabled(ExperimentalFeature.COMPOSED_PATH_SELECTOR) && typeof event.composedPath === 'function'
+      ? getComposedPathSelector(
+          event.composedPath(),
+          configuration.actionNameAttribute,
+          configuration.allowedHtmlAttributes || []
+        )
+      : undefined
 
   if (selector) {
     updateInteractionSelector(event.timeStamp, selector)
