@@ -27,7 +27,7 @@ export async function start(args: string[]): Promise<void> {
 
   if (values['no-daemon']) {
     const { runServer } = await import('../server.ts')
-    runServer()
+    runServer({ writeIntakeFile: false })
     return
   }
 

@@ -4,6 +4,7 @@ import { printLog } from '../../lib/executionUtils.ts'
 
 const DEV_SERVER_DIR = path.resolve('.dev-server')
 export const LOG_FILE = path.join(DEV_SERVER_DIR, 'logs')
+export const INTAKE_REQUESTS_FILE = path.join(DEV_SERVER_DIR, 'intake-requests.json')
 const STATE_FILE = path.join(DEV_SERVER_DIR, 'state.json')
 
 export interface DevServerState {
@@ -37,6 +38,7 @@ export function printStatus(state: DevServerState): void {
   printLog(`Dev server is running at ${state.url}`)
   printLog(`Process id: ${state.pid}`)
   printLog(`Logs: ${LOG_FILE}`)
+  printLog(`Intake requests: ${INTAKE_REQUESTS_FILE}`)
 }
 
 export function isRunning(pid: number): boolean {
