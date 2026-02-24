@@ -6,7 +6,8 @@ import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { createHooks, registerCleanupTask } from '../../../test'
 import { removeStorageListeners } from '../context/storeContextManager'
 import type { Configuration } from '../configuration'
-import { startGlobalContext } from './globalContext'
+import type { Observation } from '../../../../rum-core/src/domain/pipeline/rumPipelineEvents'
+import { startGlobalContext, globalContextDecoratorFactory } from './globalContext'
 
 describe('logs global context', () => {
   let globalContext: ContextManager
@@ -44,6 +45,54 @@ describe('logs global context', () => {
         foo: 'bar',
       })
     })
+  })
+})
+
+describe('globalContextDecoratorFactory', () => {
+  it('should contribute context under context namespace when useContextNamespace is true', async () => {
+    const factory = globalContextDecoratorFactory({
+      getContext: () => ({ id: '123', foo: 'bar' }),
+      useContextNamespace: true,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect(result.attributes).toEqual({ context: { id: '123', foo: 'bar' } })
+    }
+  })
+
+  it('should contribute context flat when useContextNamespace is false', async () => {
+    const factory = globalContextDecoratorFactory({
+      getContext: () => ({ id: '123', foo: 'bar' }),
+      useContextNamespace: false,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect(result.attributes).toEqual({ id: '123', foo: 'bar' })
+    }
+  })
+
+  it('should skip when context is empty', async () => {
+    const factory = globalContextDecoratorFactory({
+      getContext: () => ({}),
+      useContextNamespace: false,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should declare canDiscard: false', () => {
+    const factory = globalContextDecoratorFactory({ getContext: () => ({}), useContextNamespace: false })
+    expect(factory.capabilities.canDiscard).toBe(false)
+  })
+
+  it('should declare name: "globalContext"', () => {
+    const factory = globalContextDecoratorFactory({ getContext: () => ({}), useContextNamespace: false })
+    expect(factory.name).toBe('globalContext')
   })
 })
 
