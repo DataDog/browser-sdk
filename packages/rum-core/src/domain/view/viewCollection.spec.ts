@@ -390,7 +390,7 @@ describe('viewCollection', () => {
       expect(event.view.frustration).toBeUndefined()
     })
 
-    it('view_update always includes time_spent and is_active', () => {
+    it('view_update always includes time_spent, omits is_active', () => {
       setupViewCollection()
       addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE])
       const baseView = { ...VIEW, isActive: true, id: 'test-view-id' }
@@ -406,10 +406,10 @@ describe('viewCollection', () => {
 
       const event = rawRumEvents[0].rawRumEvent as RawRumViewUpdateEvent
       expect(event.view.time_spent).toBeDefined()
-      expect(event.view.is_active).toBe(true)
+      expect(event.view.is_active).toBeUndefined()
     })
 
-    it('view_update includes performance data when changed', () => {
+    it('view_update includes CLS fields when changed, not redundant performance object', () => {
       setupViewCollection()
       addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE])
       const baseView = {
@@ -434,11 +434,11 @@ describe('viewCollection', () => {
       })
 
       const event = rawRumEvents[0].rawRumEvent as RawRumViewUpdateEvent
-      expect(event.view.performance).toBeDefined()
-      expect(event.view.performance!.cls!.score).toBe(0.5)
+      expect(event.view.cumulative_layout_shift).toBe(0.5)
+      expect(event.view.performance).toBeUndefined()
     })
 
-    it('view_update omits performance data when unchanged', () => {
+    it('view_update omits CLS and performance when unchanged', () => {
       setupViewCollection()
       addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE])
       const baseView = { ...VIEW, isActive: true, id: 'test-view-id' }
@@ -453,6 +453,7 @@ describe('viewCollection', () => {
       })
 
       const event = rawRumEvents[0].rawRumEvent as RawRumViewUpdateEvent
+      expect(event.view.cumulative_layout_shift).toBeUndefined()
       expect(event.view.performance).toBeUndefined()
     })
 
@@ -479,6 +480,64 @@ describe('viewCollection', () => {
         foo: (10 * 1e6) as ServerDuration,
         bar: (20 * 1e6) as ServerDuration,
       })
+    })
+
+    it('view_update omits scroll when unchanged (Duration/ServerDuration unit normalization)', () => {
+      setupViewCollection()
+      addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE])
+      const scroll = {
+        maxDepth: 500,
+        maxDepthScrollTop: 100,
+        maxScrollHeight: 1200,
+        maxScrollHeightTime: 5000 as Duration,
+      }
+      const baseView = {
+        ...VIEW,
+        isActive: true,
+        id: 'test-view-id',
+        commonViewMetrics: { ...VIEW.commonViewMetrics, scroll },
+      }
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...baseView, documentVersion: 1 })
+      rawRumEvents.length = 0
+
+      // Same scroll — only duration changed
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+        ...baseView,
+        documentVersion: 2,
+        duration: 300 as Duration,
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumViewUpdateEvent
+      expect(event.display).toBeUndefined()
+    })
+
+    it('view_update includes scroll when changed', () => {
+      setupViewCollection()
+      addExperimentalFeatures([ExperimentalFeature.VIEW_UPDATE])
+      const baseView = {
+        ...VIEW,
+        isActive: true,
+        id: 'test-view-id',
+        commonViewMetrics: {
+          ...VIEW.commonViewMetrics,
+          scroll: { maxDepth: 300, maxDepthScrollTop: 0, maxScrollHeight: 1000, maxScrollHeightTime: 3000 as Duration },
+        },
+      }
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...baseView, documentVersion: 1 })
+      rawRumEvents.length = 0
+
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, {
+        ...baseView,
+        documentVersion: 2,
+        commonViewMetrics: {
+          ...baseView.commonViewMetrics,
+          scroll: { maxDepth: 700, maxDepthScrollTop: 200, maxScrollHeight: 1400, maxScrollHeightTime: 7000 as Duration },
+        },
+      })
+
+      const event = rawRumEvents[0].rawRumEvent as RawRumViewUpdateEvent
+      expect(event.display?.scroll?.max_depth).toBe(700)
+      expect(event.display?.scroll?.max_scroll_height_time).toBe((7000 * 1e6) as ServerDuration)
     })
 
     it('view_update omits static fields (loading_type, name)', () => {
@@ -524,15 +583,15 @@ describe('viewCollection', () => {
       // doc_version=1 establishes snapshot
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...baseView, documentVersion: 1 })
 
-      // Emit 10 partial updates (versions 2..11) — each should be VIEW_UPDATE
-      for (let i = 2; i <= 11; i++) {
+      // Emit 50 partial updates (versions 2..51) — each should be VIEW_UPDATE
+      for (let i = 2; i <= 51; i++) {
         lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...baseView, documentVersion: i })
       }
-      // The 10th diff (version 11) should be VIEW_UPDATE
+      // The 50th diff (version 51) should be VIEW_UPDATE
       expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent.type).toBe(RumEventType.VIEW_UPDATE)
 
-      // The 11th update (version 12) hits FULL_VIEW_REFRESH_INTERVAL=10, so full VIEW
-      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...baseView, documentVersion: 12 })
+      // The 51st update (version 52) hits FULL_VIEW_REFRESH_INTERVAL=50, so full VIEW
+      lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...baseView, documentVersion: 52 })
       expect(rawRumEvents[rawRumEvents.length - 1].rawRumEvent.type).toBe(RumEventType.VIEW)
     })
 
@@ -543,8 +602,8 @@ describe('viewCollection', () => {
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...baseView, documentVersion: 1 })
       rawRumEvents.length = 0
 
-      // Advance time past FULL_VIEW_REFRESH_TIME (60_000 ms)
-      jasmine.clock().tick(61_000)
+      // Advance time past FULL_VIEW_REFRESH_TIME (5 * 60_000 ms)
+      jasmine.clock().tick(5 * 60_000 + 1_000)
 
       lifeCycle.notify(LifeCycleEventType.VIEW_UPDATED, { ...baseView, documentVersion: 2 })
       expect(rawRumEvents[0].rawRumEvent.type).toBe(RumEventType.VIEW)

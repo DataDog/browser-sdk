@@ -1451,7 +1451,7 @@ export type RumViewUpdateEvent = CommonProperties &
       /**
        * Whether the View corresponding to this event is considered active
        */
-      readonly is_active: boolean
+      readonly is_active?: boolean
       /**
        * Properties of the actions of the view
        */

@@ -396,7 +396,7 @@ export interface RawRumViewUpdateEvent {
   type: typeof RumEventType.VIEW_UPDATE
   view: {
     time_spent: ServerDuration
-    is_active: boolean
+    // is_active omitted: VUs are only emitted for active views; view-end sends a full VIEW
     // Counters — included only when changed
     error?: Count
     action?: Count

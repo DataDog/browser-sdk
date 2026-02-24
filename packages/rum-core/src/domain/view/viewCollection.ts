@@ -26,8 +26,8 @@ import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
 import type { InitialViewMetrics } from './viewMetrics/trackInitialViewMetrics'
 
-const FULL_VIEW_REFRESH_INTERVAL = 10 // Every 10 updates, send full VIEW
-const FULL_VIEW_REFRESH_TIME = 60_000 // Or every 60 seconds
+const FULL_VIEW_REFRESH_INTERVAL = 50 // Every 50 updates, send full VIEW (safety net)
+const FULL_VIEW_REFRESH_TIME = 5 * 60_000 // Or every 5 minutes (aligned with session keep-alive)
 
 interface ViewSnapshot {
   event: RawRumViewEvent
@@ -245,6 +245,54 @@ function processViewUpdate(
   }
 }
 
+// Compile-time exhaustiveness guard for processViewDiff.
+//
+// Every field in RawRumViewUpdateEvent['view'] must appear in exactly one of:
+//   - ALWAYS_PRESENT_VU_VIEW_FIELDS  — unconditionally included (e.g. time_spent)
+//   - DIFFED_VU_VIEW_FIELDS          — included when changed (counters, vitals, timings)
+//   - OMITTED_VU_VIEW_FIELDS         — intentionally excluded from VUs with reason
+//
+// If a new field is added to the schema without updating one of these types, the compiler
+// will emit: "Type 'true' is not assignable to type 'never'" on the assertion below.
+type AlwaysPresentVuViewFields = 'time_spent'
+type DiffedVuViewFields =
+  | 'error'
+  | 'action'
+  | 'long_task'
+  | 'resource'
+  | 'frustration'
+  | 'loading_time'
+  | 'cumulative_layout_shift'
+  | 'cumulative_layout_shift_time'
+  | 'cumulative_layout_shift_target_selector'
+  | 'interaction_to_next_paint'
+  | 'interaction_to_next_paint_time'
+  | 'interaction_to_next_paint_target_selector'
+  | 'first_contentful_paint'
+  | 'first_input_delay'
+  | 'first_input_time'
+  | 'first_input_target_selector'
+  | 'largest_contentful_paint'
+  | 'largest_contentful_paint_target_selector'
+  | 'dom_complete'
+  | 'dom_content_loaded'
+  | 'dom_interactive'
+  | 'load_event'
+  | 'first_byte'
+  | 'custom_timings'
+// Fields present in RawRumViewUpdateEvent['view'] but intentionally excluded from VUs:
+type OmittedVuViewFields =
+  | 'performance' // redundant — each sub-metric is already sent as an individual flat field above
+type _AssertVuViewFieldsCovered = Exclude<
+  keyof RawRumViewUpdateEvent['view'],
+  AlwaysPresentVuViewFields | DiffedVuViewFields | OmittedVuViewFields
+> extends never
+  ? true
+  : never
+// If the line below has a type error, add the new field to one of the types above and handle it
+// in processViewDiff (or add to OmittedVuViewFields with a comment explaining why).
+const _vuViewFieldsCoverage: _AssertVuViewFieldsCovered = true
+
 function processViewDiff(
   view: ViewEvent,
   snapshot: ViewSnapshot,
@@ -253,9 +301,6 @@ function processViewDiff(
 ): RawRumEventCollectedData<RawRumViewUpdateEvent> {
   const prev = snapshot.event
   const replayStats = recorderApi.getReplayStats(view.id)
-
-  // Build the current full event data for comparison
-  const currentPerformance = computeViewPerformanceData(view.commonViewMetrics, view.initialViewMetrics)
 
   // Always-required fields
   const viewUpdateEvent: RawRumViewUpdateEvent = {
@@ -267,8 +312,9 @@ function processViewDiff(
         JSON.stringify(replayStats) !== JSON.stringify(prev._dd.replay_stats) ? replayStats : undefined,
     },
     view: {
+      // time_spent always changes — omitting it would make every VU ambiguous
       time_spent: toServerDuration(view.duration),
-      is_active: view.isActive,
+      // is_active omitted: VUs are only emitted for active views (view-end always sends a full VIEW)
     },
   }
 
@@ -374,21 +420,26 @@ function processViewDiff(
     viewUpdateEvent.view.load_event = currentLoadEvent
   }
 
-  // Performance object — full replacement if any subfield changed
-  if (JSON.stringify(currentPerformance) !== JSON.stringify(prev.view.performance)) {
-    viewUpdateEvent.view.performance = currentPerformance
-  }
-
-  // Scroll display — full replacement if any subfield changed
+  // Scroll display — full replacement if any subfield changed.
+  // Convert maxScrollHeightTime to ServerDuration before comparison — Duration (ms) vs ServerDuration (ns)
+  // are not directly comparable; the snapshot stores ServerDuration from processViewUpdate.
   const currentScroll = view.commonViewMetrics.scroll
-  if (JSON.stringify(currentScroll) !== JSON.stringify(getPrevScroll(prev))) {
-    viewUpdateEvent.display = currentScroll
+  const currentScrollNormalized = currentScroll
+    ? {
+        maxDepth: currentScroll.maxDepth,
+        maxDepthScrollTop: currentScroll.maxDepthScrollTop,
+        maxScrollHeight: currentScroll.maxScrollHeight,
+        maxScrollHeightTime: toServerDuration(currentScroll.maxScrollHeightTime),
+      }
+    : undefined
+  if (JSON.stringify(currentScrollNormalized) !== JSON.stringify(getPrevScroll(prev))) {
+    viewUpdateEvent.display = currentScrollNormalized
       ? {
           scroll: {
-            max_depth: currentScroll.maxDepth,
-            max_depth_scroll_top: currentScroll.maxDepthScrollTop,
-            max_scroll_height: currentScroll.maxScrollHeight,
-            max_scroll_height_time: toServerDuration(currentScroll.maxScrollHeightTime),
+            max_depth: currentScrollNormalized.maxDepth,
+            max_depth_scroll_top: currentScrollNormalized.maxDepthScrollTop,
+            max_scroll_height: currentScrollNormalized.maxScrollHeight,
+            max_scroll_height_time: currentScrollNormalized.maxScrollHeightTime,
           },
         }
       : undefined
