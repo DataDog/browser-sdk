@@ -1,4 +1,5 @@
 import type { Subscription } from '@datadog/browser-core'
+import type { DagNode } from '@datadog/browser-utils'
 
 // ---------------------------------------------------------------------------
 // Decorator: named processor in the decoration pipeline
@@ -9,10 +10,7 @@ import type { Subscription } from '@datadog/browser-core'
  * TEvent: the input event (e.g. RUM's DecorateEvent)
  * TAttributes: the partial event attributes each decorator can contribute
  */
-export interface DecoratorFactory<TEvent = unknown, TAttributes = unknown> {
-  readonly name: string
-  readonly provides: readonly string[]
-  readonly requires: readonly string[]
+export interface DecoratorFactory<TEvent = unknown, TAttributes = unknown> extends DagNode {
   readonly capabilities: {
     readonly canDiscard: boolean
   }

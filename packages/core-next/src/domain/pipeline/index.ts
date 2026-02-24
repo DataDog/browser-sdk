@@ -8,4 +8,3 @@ export type {
   DecorationStep,
   DecoratorDeps,
 } from './types'
-export { resolveDecoratorOrder } from './decoratorDag'

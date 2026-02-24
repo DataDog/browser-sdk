@@ -17,6 +17,8 @@
 
     "paths": {
       "@datadog/browser-core": ["./packages/core/src"],
+      "@datadog/browser-core-next": ["./packages/core-next/src"],
+      "@datadog/browser-utils": ["./packages/utils/src"],
 
       "@datadog/browser-logs": ["./packages/logs/src/entries/main"],
 

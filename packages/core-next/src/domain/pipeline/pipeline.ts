@@ -1,5 +1,5 @@
 import type { Subscription } from '@datadog/browser-core'
-import { resolveDecoratorOrder } from './decoratorDag'
+import { topologicalSort } from '@datadog/browser-utils'
 import type { Decorator, DecoratorFactory } from './types'
 
 export type PipelineSubscription = Subscription
@@ -42,7 +42,7 @@ export class Pipeline<TEventMap extends Record<string, unknown>> {
     }
     this.sealed = true
     for (const [eventType, factories] of this.factories) {
-      const sorted = resolveDecoratorOrder(factories)
+      const sorted = topologicalSort(factories)
       this.decorators.set(
         eventType,
         sorted.map((f) => f.create({}))

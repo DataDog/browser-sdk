@@ -9,6 +9,9 @@
   "scripts": {
     "build": "node ../../scripts/build/build-package.ts --modules"
   },
+  "dependencies": {
+    "@datadog/browser-utils": "*"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/DataDog/browser-sdk.git",
