@@ -10,7 +10,7 @@ export const CI_VISIBILITY_TEST_ID_COOKIE_NAME = 'datadog-ci-visibility-test-exe
 
 export function ciVisibilityDecoratorFactory(deps: {
   getTestExecutionId: () => string | undefined
-}): DecoratorFactory<Observation, { ciTest?: any }> {
+}): DecoratorFactory<Observation, { ciTest?: { testExecutionId: string } }> {
   return {
     name: 'ciVisibility',
     provides: [],

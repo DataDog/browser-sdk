@@ -18,13 +18,13 @@ describe('displayDecoratorFactory', () => {
     }
   })
 
-  it('should contribute display with undefined viewport when not yet measured', async () => {
+  it('should contribute display as undefined when viewport not yet measured', async () => {
     const factory = displayDecoratorFactory({ getViewport: () => undefined })
     const obs: Observation = { type: 'error', startTime: 0, data: {} }
     const result = await factory.create({}).decorate(obs, {})
     expect(result.status).toBe('contributed')
     if (result.status === 'contributed') {
-      expect((result.attributes as any).display.viewport).toBeUndefined()
+      expect((result.attributes as any).display).toBeUndefined()
     }
   })
 

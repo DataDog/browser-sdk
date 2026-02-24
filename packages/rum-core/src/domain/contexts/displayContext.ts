@@ -10,18 +10,20 @@ export type DisplayContext = ReturnType<typeof startDisplayContext>
 
 export function displayDecoratorFactory(deps: {
   getViewport: () => ViewportDimension | undefined
-}): DecoratorFactory<Observation, { display?: any }> {
+}): DecoratorFactory<Observation, { display: { viewport: ViewportDimension } | undefined }> {
   return {
     name: 'display',
     provides: [],
     requires: [],
     capabilities: { canDiscard: false },
     create: () => ({
-      decorate: (_event, _accumulated) =>
-        Promise.resolve({
+      decorate: (_event, _accumulated) => {
+        const viewport = deps.getViewport()
+        return Promise.resolve({
           status: 'contributed' as const,
-          attributes: { display: { viewport: deps.getViewport() } },
-        }),
+          attributes: { display: viewport ? { viewport } : undefined },
+        })
+      },
     }),
   }
 }

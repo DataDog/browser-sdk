@@ -10,7 +10,10 @@ import { SessionType } from '../rumSessionManager'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
 import type { Observation } from '../pipeline/rumPipelineEvents'
 
-export function syntheticsDecoratorFactory(): DecoratorFactory<Observation, { synthetics?: any }> {
+export function syntheticsDecoratorFactory(): DecoratorFactory<
+  Observation,
+  { synthetics?: { testId: string | undefined; resultId: string | undefined; injected: boolean | undefined } }
+> {
   return {
     name: 'synthetics',
     provides: [],
