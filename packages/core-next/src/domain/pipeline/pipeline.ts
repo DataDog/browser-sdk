@@ -1,6 +1,6 @@
 import type { Subscription } from '@datadog/browser-core'
-import { resolveDecoratorOrder } from '../bus/decoratorDag'
-import type { Decorator, DecoratorFactory } from '../bus/types'
+import { resolveDecoratorOrder } from './decoratorDag'
+import type { Decorator, DecoratorFactory } from './types'
 
 export type PipelineSubscription = Subscription
 

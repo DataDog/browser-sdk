@@ -1,5 +1,5 @@
 import { Pipeline } from './pipeline'
-import { stubFactory } from '../bus/testUtils'
+import { stubFactory } from './testUtils'
 
 describe('Pipeline', () => {
   describe('lifecycle', () => {

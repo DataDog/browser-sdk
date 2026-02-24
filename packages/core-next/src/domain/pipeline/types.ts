@@ -52,9 +52,3 @@ export interface DecorationStep {
   attributes?: unknown
   durationMs: number
 }
-
-// ---------------------------------------------------------------------------
-// Bus interface (generic)
-// ---------------------------------------------------------------------------
-
-export type BusUnsubscribe = Subscription
