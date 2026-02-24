@@ -18,6 +18,35 @@
 
 ---
 
+## v6.28.0
+
+**Public Changes:**
+
+- ✨ `localStorage` strategy for remote configuration ([#4071](https://github.com/DataDog/browser-sdk/pull/4071)) [RUM] [RUM-REACT] [RUM-SLIM]
+- ✨ [RUM-13680] Add support for GraphQL GET requests with query params (APQ) ([#4125](https://github.com/DataDog/browser-sdk/pull/4125)) [RUM] [RUM-REACT] [RUM-SLIM]
+- 🐛 Regenerate anonymousId when session cookie is altered without preserving aid ([#4203](https://github.com/DataDog/browser-sdk/pull/4203)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- 🐛 [RUM-5645] Avoid fetch keepAlive ([#4192](https://github.com/DataDog/browser-sdk/pull/4192)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ⚡️ rebuild worker only when needed ([#4170](https://github.com/DataDog/browser-sdk/pull/4170))
+- 📝 Add critical patterns documentation to AGENTS.md ([#4183](https://github.com/DataDog/browser-sdk/pull/4183))
+- ⚗ [RUM-11393] Add Start/StopResource API ([#4110](https://github.com/DataDog/browser-sdk/pull/4110)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+
+**Internal Changes:**
+
+- 👷 Skip BrowserStack tests on next major branch ([#4215](https://github.com/DataDog/browser-sdk/pull/4215))
+- 👷 use dynamic port for dev server to avoid conflicts ([#4218](https://github.com/DataDog/browser-sdk/pull/4218))
+- 👷 Load BrowserStack credentials from .env file ([#4189](https://github.com/DataDog/browser-sdk/pull/4189))
+- 👷 Skip check-staging-merge for PRs targeting next major version branch ([#4181](https://github.com/DataDog/browser-sdk/pull/4181))
+- 🔧 disable ADMS ([#4191](https://github.com/DataDog/browser-sdk/pull/4191))
+- ✅ fix mockCookies flaky interception on Safari 12.1.2 ([#4214](https://github.com/DataDog/browser-sdk/pull/4214)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ Fix flaky remote configuration E2E tests ([#4210](https://github.com/DataDog/browser-sdk/pull/4210))
+- ✅ fix flaky tests related to experimental features ([#4207](https://github.com/DataDog/browser-sdk/pull/4207)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ✅ Introduce a new way to mock values in unit tests ([#4129](https://github.com/DataDog/browser-sdk/pull/4129)) [FLAGGING] [LOGS] [RUM] [RUM-REACT] [RUM-SLIM] [WORKER]
+- ♻️ [PANA-5982] Make the serialization code more configurable and testable ([#4185](https://github.com/DataDog/browser-sdk/pull/4185)) [RUM]
+- ♻️ move long task contexts to profiler ([#4046](https://github.com/DataDog/browser-sdk/pull/4046)) [RUM] [RUM-REACT] [RUM-SLIM]
+- [RUM/PROF] Add profiling context to actions and vitals' \_dd field ([#4200](https://github.com/DataDog/browser-sdk/pull/4200)) [RUM]
+- ♻️ [PANA-5948] Make some small improvements to ItemId management ([#4164](https://github.com/DataDog/browser-sdk/pull/4164)) [RUM]
+- ♻️ Refactor e2e service worker setup into a composable builder pattern ([#4162](https://github.com/DataDog/browser-sdk/pull/4162))
+
 ## v6.27.1
 
 **Public Changes:**
