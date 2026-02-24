@@ -1,6 +1,7 @@
 import { createInflate, inflateSync } from 'node:zlib'
 import https from 'node:https'
 import type express from 'express'
+import createBusboy from 'busboy'
 import type { BrowserProfileEvent, BrowserProfilerTrace } from '@datadog/browser-rum/src/types/profiling'
 import type { BrowserSegment, BrowserSegmentMetadata } from '@datadog/browser-rum/src/types/sessionReplay'
 import type { LogsEvent } from '@datadog/browser-logs/src/logsEvent.types'
@@ -168,7 +169,9 @@ function readReplayIntakeRequest(
     }>
     let metadataPromise: Promise<BrowserSegmentMetadataAndSegmentSizes>
 
-    req.busboy.on('file', (name, stream, info) => {
+    const busboy = createBusboy({ headers: req.headers })
+
+    busboy.on('file', (name, stream, info) => {
       const { filename, encoding, mimeType } = info
       if (name === 'segment') {
         segmentPromise = readStream(stream.pipe(createInflate())).then((data) => ({
@@ -184,7 +187,7 @@ function readReplayIntakeRequest(
       }
     })
 
-    req.busboy.on('finish', () => {
+    busboy.on('finish', () => {
       Promise.all([segmentPromise, metadataPromise])
         .then(([{ segment, ...segmentFile }, metadata]) => ({
           ...infos,
@@ -194,6 +197,8 @@ function readReplayIntakeRequest(
         }))
         .then(resolve, reject)
     })
+
+    req.pipe(busboy)
   })
 }
 
@@ -210,7 +215,9 @@ function readProfileIntakeRequest(
       mimetype: string
     }>
 
-    req.busboy.on('file', (name, stream, info) => {
+    const busboy = createBusboy({ headers: req.headers })
+
+    busboy.on('file', (name, stream, info) => {
       const { filename, mimeType } = info
       if (name === 'event') {
         eventPromise = readStream(stream).then((data) => JSON.parse(data.toString()) as BrowserProfileEvent)
@@ -236,7 +243,7 @@ function readProfileIntakeRequest(
       }
     })
 
-    req.busboy.on('finish', () => {
+    busboy.on('finish', () => {
       Promise.all([eventPromise, tracePromise])
         .then(([event, { trace, ...traceFile }]) => ({
           ...infos,
@@ -246,6 +253,8 @@ function readProfileIntakeRequest(
         }))
         .then(resolve, reject)
     })
+
+    req.pipe(busboy)
   })
 }
 
