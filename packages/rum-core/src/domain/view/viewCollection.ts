@@ -1,5 +1,6 @@
-import type { Duration, ServerDuration, Observable } from '@datadog/browser-core'
+import type { Duration, RelativeTime, ServerDuration, Observable } from '@datadog/browser-core'
 import { getTimeZone, DISCARDED, HookNames, isEmptyObject, mapValues, toServerDuration } from '@datadog/browser-core'
+import type { DecoratorFactory } from '@datadog/browser-core-next'
 import { discardNegativeDuration } from '../discardNegativeDuration'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { RawRumViewEvent, ViewPerformanceData } from '../../rawRumEvent.types'
@@ -8,9 +9,10 @@ import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { RumConfiguration } from '../configuration'
-import type { ViewHistory } from '../contexts/viewHistory'
+import type { ViewHistory, ViewHistoryEntry } from '../contexts/viewHistory'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 import { trackViews } from './trackViews'
 import type { ViewEvent, ViewOptions } from './trackViews'
 import type { CommonViewMetrics } from './viewMetrics/trackCommonViewMetrics'
@@ -167,6 +169,29 @@ function processViewUpdate(
       location: view.location,
       handlingStack: view.handlingStack,
     },
+  }
+}
+
+export function viewDecoratorFactory(deps: {
+  findView: (startTime: RelativeTime) => ViewHistoryEntry | undefined
+}): DecoratorFactory<Observation, { view?: Pick<ViewHistoryEntry, 'id' | 'name'> }> {
+  return {
+    name: 'view',
+    provides: ['view'],
+    requires: ['session'],
+    capabilities: { canDiscard: true },
+    create: () => ({
+      decorate: (event, _accumulated) => {
+        const view = deps.findView(event.startTime as RelativeTime)
+        if (!view) {
+          return Promise.resolve({ status: 'discarded' as const, reason: 'no active view' })
+        }
+        return Promise.resolve({
+          status: 'contributed' as const,
+          attributes: { view: { id: view.id, name: view.name } },
+        })
+      },
+    }),
   }
 }
 

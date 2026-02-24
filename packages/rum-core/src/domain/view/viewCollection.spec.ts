@@ -13,7 +13,8 @@ import type { ViewHistoryEntry } from '../contexts/viewHistory'
 import type { AssembleHookParams, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { RumMutationRecord } from '../../browser/domMutationObservable'
-import { startViewCollection } from './viewCollection'
+import type { Observation } from '../pipeline/rumPipelineEvents'
+import { startViewCollection, viewDecoratorFactory } from './viewCollection'
 import type { ViewEvent } from './trackViews'
 
 const VIEW: ViewEvent = {
@@ -304,5 +305,38 @@ describe('viewCollection', () => {
 
       expect(telemetryEventAttributes.view?.id).toBeUndefined()
     })
+  })
+})
+
+describe('viewDecoratorFactory', () => {
+  const fakeView: ViewHistoryEntry = {
+    id: 'view-abc',
+    name: 'HomePage',
+    startClocks: { relative: 0 as RelativeTime, timeStamp: 0 as TimeStamp },
+  }
+
+  it('should contribute view attributes when view is found', async () => {
+    const factory = viewDecoratorFactory({ findView: () => fakeView })
+    const decorator = factory.create({})
+    const obs: Observation = { type: 'action', startTime: 0, data: {} }
+    const result = await decorator.decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).view.id).toBe('view-abc')
+      expect((result.attributes as any).view.name).toBe('HomePage')
+    }
+  })
+
+  it('should discard when no view is found', async () => {
+    const factory = viewDecoratorFactory({ findView: () => undefined })
+    const decorator = factory.create({})
+    const obs: Observation = { type: 'action', startTime: 0, data: {} }
+    const result = await decorator.decorate(obs, {})
+    expect(result.status).toBe('discarded')
+  })
+
+  it('should declare canDiscard: true', () => {
+    const factory = viewDecoratorFactory({ findView: () => undefined })
+    expect(factory.capabilities.canDiscard).toBe(true)
   })
 })
