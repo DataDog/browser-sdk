@@ -48,14 +48,14 @@ export class Pipeline<TEventMap extends Record<string, unknown>> {
         sorted.map((f) => f.create({}))
       )
     }
+    if (this.queue.length > 0) {
+      void this.processQueue()
+    }
   }
 
   publish<K extends keyof TEventMap>(eventType: K, data: TEventMap[K]): void {
-    if (!this.sealed) {
-      throw new Error('Pipeline must be sealed before publishing events')
-    }
     this.queue.push({ type: eventType, data })
-    if (!this.processing) {
+    if (this.sealed && !this.processing) {
       void this.processQueue()
     }
   }

@@ -3,9 +3,30 @@ import { stubFactory } from './testUtils'
 
 describe('Pipeline', () => {
   describe('lifecycle', () => {
-    it('should throw if publish() is called before seal()', () => {
+    it('should buffer events published before seal() and deliver them after sealing', (done) => {
       const pipeline = new Pipeline<{ foo: string }>()
-      expect(() => pipeline.publish('foo', 'bar')).toThrowError(/sealed/)
+      pipeline.subscribe('foo', (value) => {
+        expect(value).toBe('buffered')
+        done()
+      })
+      pipeline.publish('foo', 'buffered') // published before seal
+      pipeline.seal() // should trigger delivery
+    })
+
+    it('should deliver pre-seal and post-seal events in order', (done) => {
+      const pipeline = new Pipeline<{ foo: number }>()
+      const received: number[] = []
+      pipeline.subscribe('foo', (value) => {
+        received.push(value)
+        if (received.length === 3) {
+          expect(received).toEqual([1, 2, 3])
+          done()
+        }
+      })
+      pipeline.publish('foo', 1) // before seal
+      pipeline.publish('foo', 2) // before seal
+      pipeline.seal()
+      pipeline.publish('foo', 3) // after seal
     })
 
     it('should throw if decorate() is called after seal()', () => {
