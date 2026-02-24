@@ -77,3 +77,10 @@ export { isSampled } from './domain/sampler/sampler'
 export type { TracingOption, PropagatorType } from './domain/tracing/tracer.types'
 export type { TransportPayload } from './transport/formDataTransport'
 export { createFormDataTransport } from './transport/formDataTransport'
+export type {
+  Observation,
+  RumSignal,
+  RumCoreEvents,
+  RawResourceData,
+  RawActionData,
+} from './domain/pipeline/rumPipelineEvents'
