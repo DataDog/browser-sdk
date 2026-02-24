@@ -8,10 +8,12 @@ import {
   mockable,
   buildUrl,
 } from '@datadog/browser-core'
+import type { DecoratorFactory } from '@datadog/browser-core-next'
 import type { LocationChange } from '../../browser/locationChangeObservable'
 import type { LifeCycle } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 
 /**
  * We want to attach to an event:
@@ -29,6 +31,29 @@ export interface UrlContext {
 export interface UrlContexts {
   findUrl: (startTime?: RelativeTime) => UrlContext | undefined
   stop: () => void
+}
+
+export function urlContextsDecoratorFactory(deps: {
+  findUrlContext: (startTime: RelativeTime) => UrlContext | undefined
+}): DecoratorFactory<Observation, { view?: { url: string; referrer: string } }> {
+  return {
+    name: 'urlContexts',
+    provides: ['url'],
+    requires: [],
+    capabilities: { canDiscard: true },
+    create: () => ({
+      decorate: (event, _accumulated) => {
+        const urlContext = deps.findUrlContext(event.startTime as RelativeTime)
+        if (!urlContext) {
+          return Promise.resolve({ status: 'discarded' as const, reason: 'no URL context' })
+        }
+        return Promise.resolve({
+          status: 'contributed' as const,
+          attributes: { view: { url: urlContext.url, referrer: urlContext.referrer } },
+        })
+      },
+    }),
+  }
 }
 
 export function startUrlContexts(

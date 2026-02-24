@@ -7,7 +7,8 @@ import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
 import type { ViewCreatedEvent, ViewEndedEvent } from '../view/trackViews'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startUrlContexts, type UrlContexts } from './urlContexts'
+import type { Observation } from '../pipeline/rumPipelineEvents'
+import { startUrlContexts, urlContextsDecoratorFactory, type UrlContexts } from './urlContexts'
 
 describe('urlContexts', () => {
   const lifeCycle = new LifeCycle()
@@ -192,6 +193,35 @@ describe('urlContexts', () => {
     } as ViewEndedEvent)
 
     expect(urlContexts.findUrl()).toBeUndefined()
+  })
+
+  describe('urlContextsDecoratorFactory', () => {
+    it('should contribute url and referrer when url context is found', async () => {
+      const factory = urlContextsDecoratorFactory({
+        findUrlContext: () => ({ url: 'https://example.com/', referrer: 'https://referrer.com/' }),
+      })
+      const decorator = factory.create({})
+      const obs: Observation = { type: 'action', startTime: 0, data: {} }
+      const result = await decorator.decorate(obs, {})
+      expect(result.status).toBe('contributed')
+      if (result.status === 'contributed') {
+        expect((result.attributes as any).view.url).toBe('https://example.com/')
+        expect((result.attributes as any).view.referrer).toBe('https://referrer.com/')
+      }
+    })
+
+    it('should discard when no url context is found', async () => {
+      const factory = urlContextsDecoratorFactory({ findUrlContext: () => undefined })
+      const decorator = factory.create({})
+      const obs: Observation = { type: 'action', startTime: 0, data: {} }
+      const result = await decorator.decorate(obs, {})
+      expect(result.status).toBe('discarded')
+    })
+
+    it('should declare canDiscard: true', () => {
+      const factory = urlContextsDecoratorFactory({ findUrlContext: () => undefined })
+      expect(factory.capabilities.canDiscard).toBe(true)
+    })
   })
 
   describe('assemble hook', () => {
