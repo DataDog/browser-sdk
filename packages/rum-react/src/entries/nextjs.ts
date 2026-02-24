@@ -5,6 +5,7 @@
  * @example
  * ```tsx
  * // lib/datadog.ts
+ * 'use client'
  * import { datadogRum } from '@datadog/browser-rum'
  * import { reactPlugin } from '@datadog/browser-rum-react'
  *
@@ -28,5 +29,4 @@
  * }
  * ```
  */
-// Exports will be added in Phase 3 when the DatadogRumProvider component is implemented.
-export {}
+export { DatadogRumProvider } from '../domain/nextjs'
