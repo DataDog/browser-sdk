@@ -3,6 +3,7 @@ import { start } from './lib/commands/start.ts'
 import { stop } from './lib/commands/stop.ts'
 import { logs } from './lib/commands/logs.ts'
 import { status } from './lib/commands/status.ts'
+import { intake } from './lib/commands/intake.ts'
 
 const COMMANDS: Array<{ name: string; description: string; run: (args: string[]) => void | Promise<void> }> = [
   {
@@ -24,6 +25,11 @@ const COMMANDS: Array<{ name: string; description: string; run: (args: string[])
     name: 'logs',
     description: 'Show the dev server logs',
     run: logs,
+  },
+  {
+    name: 'intake',
+    description: 'Show intake requests received by the dev server',
+    run: intake,
   },
 ]
 
