@@ -3,7 +3,29 @@ import { HookNames } from '@datadog/browser-core'
 import type { RelativeTime } from '@datadog/browser-core'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startConnectivityContext } from './connectivityContext'
+import type { Observation } from '../pipeline/rumPipelineEvents'
+import { connectivityDecoratorFactory, startConnectivityContext } from './connectivityContext'
+
+describe('connectivityDecoratorFactory', () => {
+  it('should contribute connectivity attributes', async () => {
+    const factory = connectivityDecoratorFactory()
+    const decorator = factory.create({})
+    const obs: Observation = { type: 'error', startTime: 0, data: {} }
+    const result = await decorator.decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).connectivity).toBeDefined()
+    }
+  })
+
+  it('should declare canDiscard: false', () => {
+    expect(connectivityDecoratorFactory().capabilities.canDiscard).toBe(false)
+  })
+
+  it('should declare name: "connectivity"', () => {
+    expect(connectivityDecoratorFactory().name).toBe('connectivity')
+  })
+})
 
 describe('startConnectivityContext', () => {
   describe('assemble hook', () => {
