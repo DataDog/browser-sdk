@@ -1,3 +1,5 @@
+import type { ClocksState } from '@datadog/browser-core'
+
 export interface Observation {
   readonly type: string
   readonly startTime: number
@@ -6,7 +8,7 @@ export interface Observation {
 }
 
 export type RumSignal =
-  | { type: 'sessionStarted'; sessionId: string }
+  | { type: 'sessionRenewed'; sessionId: string }
   | { type: 'sessionExpired' }
   | { type: 'viewCreated'; viewId: string; name?: string }
   | { type: 'pageMayExit'; reason: 'visibility_hidden' | 'before_unload' | 'page_frozen' }
@@ -15,7 +17,7 @@ export interface RawResourceData {
   url: string
   method?: string
   statusCode?: number
-  startClocks: { relative: number; timeStamp: number }
+  startClocks: ClocksState
   duration: number
   size?: number
   // Full type expanded during migration
@@ -25,7 +27,7 @@ export interface RawResourceData {
 export interface RawActionData {
   type: string
   name?: string
-  startClocks: { relative: number; timeStamp: number }
+  startClocks: ClocksState
   duration?: number
   [key: string]: unknown
 }
