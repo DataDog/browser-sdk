@@ -5,7 +5,7 @@ import { createRumSessionManagerMock, noopRecorderApi } from '../../../test'
 import { SessionType } from '../rumSessionManager'
 import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startSessionContext } from './sessionContext'
+import { sessionDecoratorFactory, startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
 
 describe('session context', () => {
@@ -146,6 +146,45 @@ describe('session context', () => {
     } as AssembleHookParams)
 
     expect(defaultRumEventAttributes).toBe(DISCARDED)
+  })
+
+  describe('sessionDecoratorFactory', () => {
+    it('should contribute session attributes when session is active', async () => {
+      const factory = sessionDecoratorFactory({
+        getSession: () => ({ id: 'sess-123', sessionReplay: 0 }),
+      })
+      const decorator = factory.create({})
+      const obs = { type: 'error', startTime: 0, data: {} }
+      const result = await decorator.decorate(obs, {})
+      expect(result.status).toBe('contributed')
+      if (result.status === 'contributed') {
+        expect((result.attributes as any).session.id).toBe('sess-123')
+        expect((result.attributes as any).session.sessionReplay).toBe(0)
+      }
+    })
+
+    it('should discard when no active session', async () => {
+      const factory = sessionDecoratorFactory({ getSession: () => null })
+      const decorator = factory.create({})
+      const obs = { type: 'error', startTime: 0, data: {} }
+      const result = await decorator.decorate(obs, {})
+      expect(result.status).toBe('discarded')
+    })
+
+    it('should declare name: "session"', () => {
+      const factory = sessionDecoratorFactory({ getSession: () => null })
+      expect(factory.name).toBe('session')
+    })
+
+    it('should declare provides: ["session"]', () => {
+      const factory = sessionDecoratorFactory({ getSession: () => null })
+      expect(factory.provides).toContain('session')
+    })
+
+    it('should declare canDiscard: true', () => {
+      const factory = sessionDecoratorFactory({ getSession: () => null })
+      expect(factory.capabilities.canDiscard).toBe(true)
+    })
   })
 
   describe('assemble telemetry hook', () => {

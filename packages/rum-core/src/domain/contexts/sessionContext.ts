@@ -1,9 +1,11 @@
 import { DISCARDED, HookNames, SKIPPED } from '@datadog/browser-core'
+import type { DecoratorFactory } from '@datadog/browser-core-next'
 import { SessionReplayState, SessionType } from '../rumSessionManager'
-import type { RumSessionManager } from '../rumSessionManager'
+import type { RumSession, RumSessionManager } from '../rumSessionManager'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 import type { ViewHistory } from './viewHistory'
 
 export function startSessionContext(
@@ -56,4 +58,29 @@ export function startSessionContext(
       },
     }
   })
+}
+
+export function sessionDecoratorFactory(deps: {
+  getSession: () => Pick<RumSession, 'id' | 'sessionReplay'> | null
+}): DecoratorFactory<Observation, { session: Pick<RumSession, 'id' | 'sessionReplay'> }> {
+  return {
+    name: 'session',
+    provides: ['session'],
+    requires: [],
+    capabilities: { canDiscard: true },
+    create: () => ({
+      decorate: (_event, _accumulated) => {
+        const session = deps.getSession()
+        if (!session) {
+          return Promise.resolve({ status: 'discarded' as const, reason: 'no active session' })
+        }
+        return Promise.resolve({
+          status: 'contributed' as const,
+          attributes: {
+            session: { id: session.id, sessionReplay: session.sessionReplay },
+          },
+        })
+      },
+    }),
+  }
 }
