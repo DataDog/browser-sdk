@@ -63,7 +63,9 @@ export function startRumBatch(
         // init) and any future new top-level fields automatically.
         // Routing keys are always on the snapshot; display needs sub-field merge (see below).
         for (const key of Object.keys(update)) {
-          if (VIEW_UPDATE_ROUTING_KEYS.has(key) || key === 'display') continue
+          if (VIEW_UPDATE_ROUTING_KEYS.has(key) || key === 'display') {
+            continue
+          }
           if (update[key] !== undefined) {
             snap[key] = update[key]
           }
@@ -105,7 +107,9 @@ function stripUnchangedFields(
   // Covers all current session-static fields (usr, context, connectivity, feature_flags,
   // service, version, source, synthetics, ci_test, ddtags, ...) and future ones automatically.
   for (const key of Object.keys(result)) {
-    if (VIEW_UPDATE_ROUTING_KEYS.has(key)) continue
+    if (VIEW_UPDATE_ROUTING_KEYS.has(key)) {
+      continue
+    }
     if (JSON.stringify(update[key]) === JSON.stringify(snap[key])) {
       delete result[key]
     }
@@ -115,43 +119,44 @@ function stripUnchangedFields(
   // The generic loop above can't handle this sub-field case: when scroll is present the full
   // display object differs from the snapshot (which only has viewport), so nothing is stripped
   // and the unchanged viewport leaks. Explicit sub-field strip after the generic pass fixes it.
-  if (result.display?.viewport && snap.display?.viewport &&
-      JSON.stringify(result.display.viewport) === JSON.stringify(snap.display.viewport)) {
-    const { viewport: _vp, ...restDisplay } = result.display
-    result.display = Object.keys(restDisplay).length > 0 ? restDisplay : undefined
+  if (
+    result.display?.viewport &&
+    snap.display?.viewport &&
+    JSON.stringify(result.display.viewport) === JSON.stringify(snap.display.viewport)
+  ) {
+    delete result.display.viewport
+    if (Object.keys(result.display).length === 0) {
+      result.display = undefined
+    }
   }
 
   // view.name/url/referrer: sub-fields of the routing view object, strip when unchanged.
   if (update.view?.name === snap.view?.name) {
-    const { name: _name, ...restView } = result.view
-    result.view = restView
+    delete result.view.name
   }
   if (update.view?.url === snap.view?.url && update.view?.referrer === snap.view?.referrer) {
-    const { url, referrer, ...restView } = result.view
-    result.view = restView
+    delete result.view.url
+    delete result.view.referrer
   }
 
   // _dd: strip static per-session sub-fields; keep document_version (ordering) and drift (per-event).
   if (result._dd) {
-    const { format_version: _fv, sdk_name: _sn, configuration: _cfg, browser_sdk_version: _bsv, ...restDd } = result._dd
-    result._dd = restDd
+    delete result._dd.format_version
+    delete result._dd.sdk_name
+    delete result._dd.configuration
+    delete result._dd.browser_sdk_version
   }
 
   // session.type: always "user" (or "synthetics") for the entire session.
   // Keep session.id (routing), sampled_for_replay and has_replay (can change mid-session).
   if (result.session?.type !== undefined) {
-    const { type: _type, ...restSession } = result.session
-    result.session = restSession
+    delete result.session.type
   }
 
   return result as AssembledRumEvent
 }
 
-function logStripDiagnostics(
-  original: AssembledRumEvent,
-  stripped: AssembledRumEvent,
-  snapshot: AssembledRumEvent
-) {
+function logStripDiagnostics(original: AssembledRumEvent, stripped: AssembledRumEvent, snapshot: AssembledRumEvent) {
   const orig = original as any
   const strip = stripped as any
   const snap = snapshot as any
@@ -204,14 +209,16 @@ function logStripDiagnostics(
 
   // Non-routing fields still present in stripped — kept because they changed vs snapshot
   for (const key of Object.keys(strip)) {
-    if (VIEW_UPDATE_ROUTING_KEYS.has(key)) continue
+    if (VIEW_UPDATE_ROUTING_KEYS.has(key)) {
+      continue
+    }
     if (JSON.stringify(strip[key]) !== JSON.stringify(snap[key])) {
       keptChanged.push(key)
     }
   }
 
   const docVersion = strip._dd?.document_version ?? '?'
-  const viewId = ((strip as any).view?.id ?? '?').slice(0, 8)
+  const viewId = String(strip.view?.id ?? '?').slice(0, 8)
 
   display.debug(
     `[VU Strip] v=${docVersion} view=${viewId} | stripped: [${strippedFields.join(', ')}] (~${bytesSaved}B saved) | kept(changed): [${keptChanged.join(', ') || 'none'}]`

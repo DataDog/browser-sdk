@@ -77,7 +77,6 @@ describe('featureFlagContexts', () => {
         },
       })
     })
-
     ;[RumEventType.VITAL, RumEventType.ACTION, RumEventType.LONG_TASK, RumEventType.RESOURCE].forEach((eventType) => {
       it(`should add feature flag evaluations on ${eventType} when specified in trackFeatureFlagsForEvents`, () => {
         trackFeatureFlagsForEvents.push(eventType)

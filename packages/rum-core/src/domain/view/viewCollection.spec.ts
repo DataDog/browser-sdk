@@ -1,10 +1,4 @@
-import {
-  addExperimentalFeatures,
-  DISCARDED,
-  ExperimentalFeature,
-  HookNames,
-  Observable,
-} from '@datadog/browser-core'
+import { addExperimentalFeatures, DISCARDED, ExperimentalFeature, HookNames, Observable } from '@datadog/browser-core'
 import type { Duration, RelativeTime, ServerDuration, TimeStamp } from '@datadog/browser-core'
 import { mockClock, registerCleanupTask } from '@datadog/browser-core/test'
 import type { RecorderApi } from '../../boot/rumPublicApi'
@@ -406,7 +400,7 @@ describe('viewCollection', () => {
 
       const event = rawRumEvents[0].rawRumEvent as RawRumViewUpdateEvent
       expect(event.view.time_spent).toBeDefined()
-      expect(event.view.is_active).toBeUndefined()
+      expect((event.view as any).is_active).toBeUndefined()
     })
 
     it('view_update includes CLS fields when changed, not redundant performance object', () => {
@@ -531,7 +525,12 @@ describe('viewCollection', () => {
         documentVersion: 2,
         commonViewMetrics: {
           ...baseView.commonViewMetrics,
-          scroll: { maxDepth: 700, maxDepthScrollTop: 200, maxScrollHeight: 1400, maxScrollHeightTime: 7000 as Duration },
+          scroll: {
+            maxDepth: 700,
+            maxDepthScrollTop: 200,
+            maxScrollHeight: 1400,
+            maxScrollHeightTime: 7000 as Duration,
+          },
         },
       })
 

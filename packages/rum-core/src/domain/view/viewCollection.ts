@@ -80,14 +80,14 @@ export function startViewCollection(
       } else {
         lifeCycle.notify(
           LifeCycleEventType.RAW_RUM_EVENT_COLLECTED,
-          processViewDiff(view, snapshot!, configuration, recorderApi)
+          processViewDiff(view, snapshot, configuration, recorderApi)
         )
         // Update the snapshot event to the current state so the next diff has the latest baseline
         const updatedFullEvent = processViewUpdate(view, configuration, recorderApi).rawRumEvent
         snapshotStore.set(view.id, {
           event: updatedFullEvent,
-          updatesSinceLastFull: snapshot!.updatesSinceLastFull + 1,
-          lastFullViewTime: snapshot!.lastFullViewTime,
+          updatesSinceLastFull: snapshot.updatesSinceLastFull + 1,
+          lastFullViewTime: snapshot.lastFullViewTime,
         })
       }
 
@@ -281,22 +281,23 @@ type DiffedVuViewFields =
   | 'first_byte'
   | 'custom_timings'
 // Fields present in RawRumViewUpdateEvent['view'] but intentionally excluded from VUs:
-type OmittedVuViewFields =
-  | 'performance' // redundant — each sub-metric is already sent as an individual flat field above
-type _AssertVuViewFieldsCovered = Exclude<
-  keyof RawRumViewUpdateEvent['view'],
-  AlwaysPresentVuViewFields | DiffedVuViewFields | OmittedVuViewFields
-> extends never
-  ? true
-  : never
+type OmittedVuViewFields = 'performance' // redundant — each sub-metric is already sent as an individual flat field above
+type _AssertVuViewFieldsCovered =
+  Exclude<
+    keyof RawRumViewUpdateEvent['view'],
+    AlwaysPresentVuViewFields | DiffedVuViewFields | OmittedVuViewFields
+  > extends never
+    ? true
+    : never
 // If the line below has a type error, add the new field to one of the types above and handle it
 // in processViewDiff (or add to OmittedVuViewFields with a comment explaining why).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _vuViewFieldsCoverage: _AssertVuViewFieldsCovered = true
 
 function processViewDiff(
   view: ViewEvent,
   snapshot: ViewSnapshot,
-  configuration: RumConfiguration,
+  _configuration: RumConfiguration,
   recorderApi: RecorderApi
 ): RawRumEventCollectedData<RawRumViewUpdateEvent> {
   const prev = snapshot.event
@@ -308,8 +309,7 @@ function processViewDiff(
     type: RumEventType.VIEW_UPDATE,
     _dd: {
       document_version: view.documentVersion,
-      replay_stats:
-        JSON.stringify(replayStats) !== JSON.stringify(prev._dd.replay_stats) ? replayStats : undefined,
+      replay_stats: JSON.stringify(replayStats) !== JSON.stringify(prev._dd.replay_stats) ? replayStats : undefined,
     },
     view: {
       // time_spent always changes — omitting it would make every VU ambiguous

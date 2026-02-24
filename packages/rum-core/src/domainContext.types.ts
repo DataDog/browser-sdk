@@ -9,20 +9,20 @@ export type RumEventDomainContext<T extends RumEventType = any> = T extends type
   : T extends typeof RumEventType.VIEW_UPDATE
     ? RumViewEventDomainContext
     : T extends typeof RumEventType.ACTION
-    ? RumActionEventDomainContext
-    : T extends typeof RumEventType.RESOURCE
-      ?
-          | RumFetchResourceEventDomainContext
-          | RumXhrResourceEventDomainContext
-          | RumOtherResourceEventDomainContext
-          | RumManualResourceEventDomainContext
-      : T extends typeof RumEventType.ERROR
-        ? RumErrorEventDomainContext
-        : T extends typeof RumEventType.LONG_TASK
-          ? RumLongTaskEventDomainContext
-          : T extends typeof RumEventType.VITAL
-            ? RumVitalEventDomainContext
-            : never
+      ? RumActionEventDomainContext
+      : T extends typeof RumEventType.RESOURCE
+        ?
+            | RumFetchResourceEventDomainContext
+            | RumXhrResourceEventDomainContext
+            | RumOtherResourceEventDomainContext
+            | RumManualResourceEventDomainContext
+        : T extends typeof RumEventType.ERROR
+          ? RumErrorEventDomainContext
+          : T extends typeof RumEventType.LONG_TASK
+            ? RumLongTaskEventDomainContext
+            : T extends typeof RumEventType.VITAL
+              ? RumVitalEventDomainContext
+              : never
 
 export interface RumViewEventDomainContext {
   location: Readonly<Location>
