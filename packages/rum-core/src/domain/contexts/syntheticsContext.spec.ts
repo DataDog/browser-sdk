@@ -4,7 +4,39 @@ import { mockSyntheticsWorkerValues } from '../../../../core/test'
 import { SessionType } from '../rumSessionManager'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startSyntheticsContext } from './syntheticsContext'
+import type { Observation } from '../pipeline/rumPipelineEvents'
+import { startSyntheticsContext, syntheticsDecoratorFactory } from './syntheticsContext'
+
+describe('syntheticsDecoratorFactory', () => {
+  it('should skip when not a synthetics test', async () => {
+    // No mockSyntheticsWorkerValues called → isSyntheticsTest() returns false
+    const factory = syntheticsDecoratorFactory()
+    const obs: Observation = { type: 'error', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should contribute synthetics attributes when it is a synthetics test', async () => {
+    mockSyntheticsWorkerValues({ publicId: 'test-id', resultId: 'result-id' }, 'globals')
+    const factory = syntheticsDecoratorFactory()
+    const obs: Observation = { type: 'error', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).synthetics.testId).toBe('test-id')
+      expect((result.attributes as any).synthetics.resultId).toBe('result-id')
+      expect((result.attributes as any).synthetics.injected).toBe(false)
+    }
+  })
+
+  it('should declare canDiscard: false', () => {
+    expect(syntheticsDecoratorFactory().capabilities.canDiscard).toBe(false)
+  })
+
+  it('should declare name: "synthetics"', () => {
+    expect(syntheticsDecoratorFactory().name).toBe('synthetics')
+  })
+})
 
 describe('getSyntheticsContext', () => {
   let hooks: Hooks
