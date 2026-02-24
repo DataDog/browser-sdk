@@ -1,3 +1,4 @@
+import { display } from '@datadog/browser-core'
 import type { RumInitConfiguration, RumPublicApi } from '@datadog/browser-rum-core'
 import { onRumInit, reactPlugin, resetReactPlugin } from './reactPlugin'
 
@@ -69,6 +70,44 @@ describe('reactPlugin', () => {
     const pluginConfiguration = { router: true }
     const plugin = reactPlugin(pluginConfiguration)
 
-    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true })
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, nextAppRouter: false })
+  })
+
+  it('enforce manual view tracking when nextAppRouter is enabled', () => {
+    const initConfiguration = { ...INIT_CONFIGURATION }
+    reactPlugin({ nextAppRouter: true }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+
+    expect(initConfiguration.trackViewsManually).toBe(true)
+  })
+
+  it('does not enforce manual view tracking when nextAppRouter is disabled', () => {
+    const initConfiguration = { ...INIT_CONFIGURATION }
+    reactPlugin({ nextAppRouter: false }).onInit({ publicApi: PUBLIC_API, initConfiguration })
+
+    expect(initConfiguration.trackViewsManually).toBeUndefined()
+  })
+
+  it('warns when both router and nextAppRouter are enabled', () => {
+    const displayWarnSpy = spyOn(display, 'warn')
+    const initConfiguration = { ...INIT_CONFIGURATION }
+    reactPlugin({ router: true, nextAppRouter: true }).onInit({
+      publicApi: PUBLIC_API,
+      initConfiguration,
+    })
+
+    expect(displayWarnSpy).toHaveBeenCalledOnceWith(jasmine.stringContaining('Both `router` and `nextAppRouter`'))
+    expect(initConfiguration.trackViewsManually).toBe(true)
+  })
+
+  it('returns the configuration telemetry with nextAppRouter', () => {
+    const plugin = reactPlugin({ nextAppRouter: true })
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: false, nextAppRouter: true })
+  })
+
+  it('returns the configuration telemetry with both router and nextAppRouter', () => {
+    const plugin = reactPlugin({ router: true, nextAppRouter: true })
+
+    expect(plugin.getConfigurationTelemetry()).toEqual({ router: true, nextAppRouter: true })
   })
 })
