@@ -28,7 +28,7 @@ Options:
 
   if (values['no-daemon']) {
     const { runServer } = await import('../server.ts')
-    runServer()
+    runServer({ writeIntakeFile: false })
     return
   }
 
