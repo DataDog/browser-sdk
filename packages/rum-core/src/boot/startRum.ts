@@ -172,7 +172,7 @@ export function startRumEventCollection(
     hooks,
     configuration,
     {
-      findTrackedSession: (startTime) => sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime),
+      findTrackedSession: (startTime) => sessionManager.findTrackedSession(startTime),
     },
     'rum'
   )
@@ -236,7 +236,6 @@ export function startRumEventCollection(
   const internalContext = startInternalContext(
     configuration.applicationId,
     sessionManager,
-    configuration.sessionSampleRate,
     viewHistory,
     actionCollection.actionContexts,
     urlContexts

@@ -30,11 +30,7 @@ import { resetSessionStoreOperations } from './sessionStoreOperations'
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
-  findTrackedSession: (
-    sampleRate: number,
-    startTime?: RelativeTime,
-    options?: { returnInactive: boolean }
-  ) => TrackedSession | undefined
+  findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => TrackedSession | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
@@ -132,12 +128,12 @@ export function startSessionManager(
 
     onReady({
       findSession: (startTime, options) => sessionContextHistory.find(startTime, options),
-      findTrackedSession: (sampleRate, startTime, options) => {
+      findTrackedSession: (startTime, options) => {
         const session = sessionContextHistory.find(startTime, options)
         if (!session || session.id === 'invalid') {
           return
         }
-        if (!isSampled(session.id, sampleRate)) {
+        if (!isSampled(session.id, configuration.sessionSampleRate)) {
           return
         }
         return {
@@ -184,16 +180,11 @@ export function startSessionManagerStub(onReady: (sessionManager: SessionManager
   }
   onReady({
     findSession: () => sessionContext,
-    findTrackedSession: (sampleRate) => {
-      if (!isSampled(stubSessionId, sampleRate)) {
-        return
-      }
-      return {
-        id: stubSessionId,
-        anonymousId: sessionContext.anonymousId,
-        isReplayForced: sessionContext.isReplayForced,
-      }
-    },
+    findTrackedSession: () => ({
+      id: stubSessionId,
+      anonymousId: sessionContext.anonymousId,
+      isReplayForced: sessionContext.isReplayForced,
+    }),
     renewObservable: new Observable(),
     expireObservable: new Observable(),
     sessionStateUpdateObservable: new Observable(),

@@ -51,7 +51,7 @@ export function startLogs(
     hooks,
     configuration,
     {
-      findTrackedSession: (startTime) => sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime),
+      findTrackedSession: (startTime) => sessionManager.findTrackedSession(startTime),
     },
     LOGS_STORAGE_KEY
   )
@@ -80,7 +80,7 @@ export function startLogs(
     startLogsBridge(lifeCycle)
   }
 
-  const internalContext = startInternalContext(sessionManager, configuration.sessionSampleRate)
+  const internalContext = startInternalContext(sessionManager)
 
   return {
     handleLog,

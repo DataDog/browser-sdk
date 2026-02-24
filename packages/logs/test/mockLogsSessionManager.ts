@@ -25,7 +25,7 @@ export function createLogsSessionManagerMock(): LogsSessionManagerMock {
         return { id, isReplayForced: false, anonymousId: 'device-123' }
       }
     },
-    findTrackedSession: (_sampleRate, _startTime, options) => {
+    findTrackedSession: (_startTime, options) => {
       if (sessionStatus === SessionStatus.TRACKED && (sessionIsActive || options?.returnInactive)) {
         return { id, anonymousId: 'device-123', isReplayForced: false }
       }

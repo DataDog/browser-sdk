@@ -550,15 +550,15 @@ describe('startSessionManager', () => {
 
   describe('findTrackedSession', () => {
     it('should return undefined when session is not sampled', async () => {
-      const sessionManager = await startSessionManagerWithDefaults()
+      const sessionManager = await startSessionManagerWithDefaults({ configuration: { sessionSampleRate: 0 } })
 
-      expect(sessionManager.findTrackedSession(0)).toBeUndefined()
+      expect(sessionManager.findTrackedSession()).toBeUndefined()
     })
 
     it('should return the session when sampled', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      const session = sessionManager.findTrackedSession(100)
+      const session = sessionManager.findTrackedSession()
       expect(session).toBeDefined()
       expect(session!.id).toBeDefined()
     })
@@ -573,25 +573,25 @@ describe('startSessionManager', () => {
       // 10s to 20s: no session
       clock.tick(10 * ONE_SECOND)
 
-      expect(sessionManager.findTrackedSession(100, clock.relative(5 * ONE_SECOND))).toBeDefined()
-      expect(sessionManager.findTrackedSession(100, clock.relative(15 * ONE_SECOND))).toBeUndefined()
+      expect(sessionManager.findTrackedSession(clock.relative(5 * ONE_SECOND))).toBeDefined()
+      expect(sessionManager.findTrackedSession(clock.relative(15 * ONE_SECOND))).toBeUndefined()
     })
 
     it('should return isReplayForced from the session context', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
 
-      expect(sessionManager.findTrackedSession(100)!.isReplayForced).toBe(false)
+      expect(sessionManager.findTrackedSession()!.isReplayForced).toBe(false)
 
       sessionManager.updateSessionState({ forcedReplay: '1' })
 
-      expect(sessionManager.findTrackedSession(100)!.isReplayForced).toBe(true)
+      expect(sessionManager.findTrackedSession()!.isReplayForced).toBe(true)
     })
 
     it('should return the session if it has expired when returnInactive = true', async () => {
       const sessionManager = await startSessionManagerWithDefaults()
       expireCookie()
       clock.tick(STORAGE_POLL_DELAY)
-      expect(sessionManager.findTrackedSession(100, relativeNow(), { returnInactive: true })).toBeDefined()
+      expect(sessionManager.findTrackedSession(relativeNow(), { returnInactive: true })).toBeDefined()
     })
 
     describe('deterministic sampling', () => {
@@ -603,14 +603,14 @@ describe('startSessionManager', () => {
 
       it('should track a session whose ID has a low hash, even with a low sessionSampleRate', async () => {
         setCookie(SESSION_STORE_KEY, `id=${LOW_HASH_UUID}`, DURATION)
-        const sessionManager = await startSessionManagerWithDefaults()
-        expect(sessionManager.findTrackedSession(1)).toBeDefined()
+        const sessionManager = await startSessionManagerWithDefaults({ configuration: { sessionSampleRate: 1 } })
+        expect(sessionManager.findTrackedSession()).toBeDefined()
       })
 
       it('should not track a session whose ID has a high hash, even with a high sessionSampleRate', async () => {
         setCookie(SESSION_STORE_KEY, `id=${HIGH_HASH_UUID}`, DURATION)
-        const sessionManager = await startSessionManagerWithDefaults()
-        expect(sessionManager.findTrackedSession(99)).toBeUndefined()
+        const sessionManager = await startSessionManagerWithDefaults({ configuration: { sessionSampleRate: 99 } })
+        expect(sessionManager.findTrackedSession()).toBeUndefined()
       })
     })
   })
@@ -674,6 +674,7 @@ describe('startSessionManager', () => {
       startSessionManager(
         {
           sessionStoreStrategyType: STORE_TYPE,
+          sessionSampleRate: 100,
           ...configuration,
         } as Configuration,
         trackingConsentState,
@@ -684,14 +685,12 @@ describe('startSessionManager', () => {
 })
 
 describe('startSessionManagerStub', () => {
-  it('isTracked is computed at each findTrackedSession call', () => {
+  it('should always return a tracked session', () => {
     let sessionManager: SessionManager | undefined
     startSessionManagerStub((sm) => {
       sessionManager = sm
     })
-    expect(sessionManager!.findTrackedSession(100)).toBeDefined()
-    expect(sessionManager!.findTrackedSession(100)!.id).toBeDefined()
-
-    expect(sessionManager!.findTrackedSession(0)).toBeUndefined()
+    expect(sessionManager!.findTrackedSession()).toBeDefined()
+    expect(sessionManager!.findTrackedSession()!.id).toBeDefined()
   })
 })

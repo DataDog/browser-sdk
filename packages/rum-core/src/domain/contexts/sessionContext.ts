@@ -15,7 +15,7 @@ export function startSessionContext(
   viewHistory: ViewHistory
 ) {
   hooks.register(HookNames.Assemble, ({ eventType, startTime }): DefaultRumEventAttributes | DISCARDED => {
-    const session = sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime)
+    const session = sessionManager.findTrackedSession(startTime)
     const view = viewHistory.findView(startTime)
 
     if (!session || !view) {
@@ -46,7 +46,7 @@ export function startSessionContext(
   })
 
   hooks.register(HookNames.AssembleTelemetry, ({ startTime }): DefaultTelemetryEventAttributes | SKIPPED => {
-    const session = sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime)
+    const session = sessionManager.findTrackedSession(startTime)
 
     if (!session) {
       return SKIPPED

@@ -470,7 +470,7 @@ describe('rum assembly', () => {
         startClocks: relativeToClocks(123 as RelativeTime),
       })
 
-      expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(100, 123 as RelativeTime)
+      expect(sessionManager.findTrackedSession).toHaveBeenCalledWith(123 as RelativeTime)
     })
   })
   ;[

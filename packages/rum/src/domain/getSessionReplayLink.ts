@@ -9,7 +9,7 @@ export function getSessionReplayLink(
   viewHistory: ViewHistory,
   isRecordingStarted: boolean
 ): string | undefined {
-  const session = sessionManager.findTrackedSession(configuration.sessionSampleRate)
+  const session = sessionManager.findTrackedSession()
   const errorType = getErrorType(configuration, session, isRecordingStarted)
   const viewContext = viewHistory.findView()
 

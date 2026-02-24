@@ -300,7 +300,7 @@ export function createRumProfiler(
 
   function handleProfilerTrace(trace: BrowserProfilerTrace): void {
     // Find current session to assign it to the Profile.
-    const sessionId = session.findTrackedSession(configuration.sessionSampleRate)?.id
+    const sessionId = session.findTrackedSession()?.id
     const payload = assembleProfilingPayload(trace, configuration, sessionId)
 
     void transport.send(payload as unknown as TransportPayload)

@@ -118,7 +118,7 @@ function injectHeadersIfTracingAllowed(
   accountContext: ContextManager,
   inject: (tracingHeaders: TracingHeaders) => void
 ) {
-  const session = sessionManager.findTrackedSession(configuration.sessionSampleRate)
+  const session = sessionManager.findTrackedSession()
   if (!session) {
     return
   }

@@ -10,7 +10,6 @@ import type { UrlContexts } from './urlContexts'
 export function startInternalContext(
   applicationId: string,
   sessionManager: SessionManager,
-  sampleRate: number,
   viewHistory: ViewHistory,
   actionContexts: ActionContexts,
   urlContexts: UrlContexts
@@ -19,7 +18,7 @@ export function startInternalContext(
     get: (startTime?: number): RumInternalContext | undefined => {
       const viewContext = viewHistory.findView(startTime as RelativeTime)
       const urlContext = urlContexts.findUrl(startTime as RelativeTime)
-      const session = sessionManager.findTrackedSession(sampleRate, startTime as RelativeTime)
+      const session = sessionManager.findTrackedSession(startTime as RelativeTime)
       if (session && viewContext && urlContext) {
         const actionId = actionContexts.findActionId(startTime as RelativeTime)
         return {

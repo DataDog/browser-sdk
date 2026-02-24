@@ -17,7 +17,7 @@ export function makeProfilerApi(): ProfilerApi {
     viewHistory: ViewHistory,
     createEncoder: (streamId: DeflateEncoderStreamId) => Encoder
   ) {
-    const session = sessionManager.findTrackedSession(configuration.sessionSampleRate) // Check if the session is tracked.
+    const session = sessionManager.findTrackedSession() // Check if the session is tracked.
 
     if (!session) {
       // No session tracked, no profiling.

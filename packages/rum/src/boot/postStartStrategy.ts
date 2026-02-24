@@ -104,7 +104,7 @@ export function createPostStartStrategy(
   }
 
   function start(options?: StartRecordingOptions) {
-    const session = sessionManager.findTrackedSession(configuration.sessionSampleRate)
+    const session = sessionManager.findTrackedSession()
     const replayState = session ? computeSessionReplayState(session, configuration) : undefined
     if (!session || (replayState === SessionReplayState.OFF && (!options || !options.force))) {
       status = RecorderStatus.IntentToStart

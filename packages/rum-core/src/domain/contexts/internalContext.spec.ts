@@ -38,7 +38,7 @@ describe('internal context', () => {
     findSessionSpy = spyOn(sessionManager, 'findTrackedSession').and.callThrough()
     findUrlSpy = spyOn(urlContexts, 'findUrl').and.callThrough()
 
-    return startInternalContext('appId', sessionManager, 100, viewHistory, actionContexts, urlContexts)
+    return startInternalContext('appId', sessionManager, viewHistory, actionContexts, urlContexts)
   }
 
   it('should return current internal context', () => {
@@ -75,6 +75,6 @@ describe('internal context', () => {
     expect(viewHistory.findView).toHaveBeenCalledWith(123 as RelativeTime)
     expect(actionContexts.findActionId).toHaveBeenCalledWith(123 as RelativeTime)
     expect(findUrlSpy).toHaveBeenCalledWith(123 as RelativeTime)
-    expect(findSessionSpy).toHaveBeenCalledWith(100, 123 as RelativeTime)
+    expect(findSessionSpy).toHaveBeenCalledWith(123 as RelativeTime)
   })
 })

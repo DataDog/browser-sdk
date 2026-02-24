@@ -5,9 +5,9 @@ import type { Hooks } from '../hooks'
 
 export function startSessionContext(hooks: Hooks, configuration: LogsConfiguration, sessionManager: SessionManager) {
   hooks.register(HookNames.Assemble, ({ startTime }) => {
-    const session = sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime)
+    const session = sessionManager.findTrackedSession(startTime)
 
-    const isSessionTracked = sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime, {
+    const isSessionTracked = sessionManager.findTrackedSession(startTime, {
       returnInactive: true,
     })
 
@@ -23,7 +23,7 @@ export function startSessionContext(hooks: Hooks, configuration: LogsConfigurati
   })
 
   hooks.register(HookNames.AssembleTelemetry, ({ startTime }) => {
-    const session = sessionManager.findTrackedSession(configuration.sessionSampleRate, startTime)
+    const session = sessionManager.findTrackedSession(startTime)
 
     if (!session) {
       return SKIPPED

@@ -57,8 +57,7 @@ export function startSegmentCollection(
 ): SegmentCollector {
   return doStartSegmentCollection(
     lifeCycle,
-    () =>
-      computeSegmentContext(configuration.applicationId, sessionManager, viewHistory, configuration.sessionSampleRate),
+    () => computeSegmentContext(configuration.applicationId, sessionManager, viewHistory),
     httpRequest,
     encoder
   )
@@ -176,10 +175,9 @@ export function doStartSegmentCollection(
 export function computeSegmentContext(
   applicationId: string,
   sessionManager: SessionManager,
-  viewHistory: ViewHistory,
-  sampleRate?: number
+  viewHistory: ViewHistory
 ) {
-  const session = sessionManager.findTrackedSession(sampleRate ?? 100)
+  const session = sessionManager.findTrackedSession()
   const viewContext = viewHistory.findView()
   if (!session || !viewContext) {
     return undefined

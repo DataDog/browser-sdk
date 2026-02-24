@@ -4,10 +4,10 @@ export interface InternalContext {
   session_id: string | undefined
 }
 
-export function startInternalContext(sessionManager: SessionManager, sampleRate: number) {
+export function startInternalContext(sessionManager: SessionManager) {
   return {
     get: (startTime?: number): InternalContext | undefined => {
-      const trackedSession = sessionManager.findTrackedSession(sampleRate, startTime as RelativeTime)
+      const trackedSession = sessionManager.findTrackedSession(startTime as RelativeTime)
       if (trackedSession) {
         return {
           session_id: trackedSession.id,
