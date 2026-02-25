@@ -7,7 +7,8 @@ import { HookNames } from '../../tools/abstractHooks'
 import { removeStorageListeners } from '../context/storeContextManager'
 import type { Configuration } from '../configuration'
 import type { SessionContext } from '../session/sessionManager'
-import { startUserContext } from './userContext'
+import type { Observation } from '../../../../rum-core/src/domain/pipeline/rumPipelineEvents'
+import { startUserContext, userContextDecoratorFactory } from './userContext'
 
 describe('user context', () => {
   let userContext: ContextManager
@@ -111,6 +112,57 @@ describe('user context', () => {
         anonymous_id: 'device-123',
       })
     })
+  })
+})
+
+describe('userContextDecoratorFactory', () => {
+  it('should contribute usr when user is non-empty', async () => {
+    const factory = userContextDecoratorFactory({
+      getUser: () => ({ id: '123', name: 'Alice' }),
+      getAnonymousId: () => undefined,
+      trackAnonymousUser: false,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect(result.attributes).toEqual({ usr: { id: '123', name: 'Alice' } })
+    }
+  })
+
+  it('should contribute usr with anonymousId when trackAnonymousUser is true and anonymousId is available', async () => {
+    const factory = userContextDecoratorFactory({
+      getUser: () => ({ id: '123' }),
+      getAnonymousId: () => 'device-456',
+      trackAnonymousUser: true,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect((result.attributes as any).usr).toEqual({ id: '123', anonymousId: 'device-456' })
+    }
+  })
+
+  it('should skip when user is empty', async () => {
+    const factory = userContextDecoratorFactory({
+      getUser: () => ({}),
+      getAnonymousId: () => undefined,
+      trackAnonymousUser: false,
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should declare canDiscard: false', () => {
+    const factory = userContextDecoratorFactory({ getUser: () => ({}), getAnonymousId: () => undefined, trackAnonymousUser: false })
+    expect(factory.capabilities.canDiscard).toBe(false)
+  })
+
+  it('should declare name: "userContext"', () => {
+    const factory = userContextDecoratorFactory({ getUser: () => ({}), getAnonymousId: () => undefined, trackAnonymousUser: false })
+    expect(factory.name).toBe('userContext')
   })
 })
 

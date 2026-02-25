@@ -6,6 +6,7 @@ import { createContextManager } from '../context/contextManager'
 import type { Configuration } from '../configuration'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
+import type { DecoratorFactory } from '@datadog/browser-core-next'
 
 export interface User {
   id?: string | undefined
@@ -61,4 +62,36 @@ export function buildUserContextManager() {
       email: { type: 'string' },
     },
   })
+}
+
+export function userContextDecoratorFactory(deps: {
+  getUser: () => User
+  getAnonymousId: () => string | undefined
+  trackAnonymousUser: boolean
+}): DecoratorFactory<{ type: string; startTime: number }, { usr?: User & { anonymousId?: string } }> {
+  return {
+    name: 'userContext',
+    provides: [],
+    requires: [],
+    capabilities: { canDiscard: false },
+    create: () => ({
+      decorate: (_event, _accumulated) => {
+        const user = deps.getUser()
+
+        if (isEmptyObject(user)) {
+          return Promise.resolve({ status: 'skipped' as const })
+        }
+
+        const usr: User & { anonymousId?: string } = { ...user }
+        if (deps.trackAnonymousUser) {
+          const anonymousId = deps.getAnonymousId()
+          if (anonymousId && !usr.anonymousId) {
+            usr.anonymousId = anonymousId
+          }
+        }
+
+        return Promise.resolve({ status: 'contributed' as const, attributes: { usr } })
+      },
+    }),
+  }
 }
