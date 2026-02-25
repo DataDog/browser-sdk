@@ -326,7 +326,7 @@ export function startRumEventCollection(
 
   startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 
-  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState)
+  const vitalCollection = startVitalCollection(lifeCycle, pageStateHistory, customVitalsState, pipeline)
 
   const internalContext = startInternalContext(
     configuration.applicationId,

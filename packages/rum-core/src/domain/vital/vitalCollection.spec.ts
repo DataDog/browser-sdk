@@ -1,4 +1,4 @@
-import type { Duration } from '@datadog/browser-core'
+import type { Duration, RelativeTime } from '@datadog/browser-core'
 import { mockClock, type Clock } from '@datadog/browser-core/test'
 import { addExperimentalFeatures, clocksNow, ExperimentalFeature, generateUUID } from '@datadog/browser-core'
 import { collectAndValidateRawRumEvents, mockPageStateHistory } from '../../../test'
@@ -6,6 +6,8 @@ import type { RawRumEvent, RawRumVitalEvent } from '../../rawRumEvent.types'
 import { VitalType, RumEventType } from '../../rawRumEvent.types'
 import type { RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycle, LifeCycleEventType } from '../lifeCycle'
+import { createRumPipeline } from '../pipeline/createRumPipeline'
+import type { Observation } from '../pipeline/rumPipelineEvents'
 import { startDurationVital, stopDurationVital, startVitalCollection, createCustomVitalsState } from './vitalCollection'
 
 const pageStateHistory = mockPageStateHistory()
@@ -319,6 +321,26 @@ describe('vitalCollection', () => {
 
         expect(subscriberSpy).toHaveBeenCalledOnceWith(jasmine.objectContaining({ name: 'foo' }))
       })
+    })
+  })
+
+  describe('pipeline observation', () => {
+    it('should publish an observation on the pipeline when a duration vital is collected', () => {
+      const localLifeCycle = new LifeCycle()
+      const pipeline = createRumPipeline()
+      const observations: Observation[] = []
+      pipeline.subscribe('observation', (obs) => observations.push(obs))
+      pipeline.seal()
+
+      const localVitalsState = createCustomVitalsState()
+      const localVitalCollection = startVitalCollection(localLifeCycle, mockPageStateHistory(), localVitalsState, pipeline)
+
+      const ref = localVitalCollection.startDurationVital('test-vital')
+      clock.tick(100)
+      localVitalCollection.stopDurationVital(ref)
+
+      expect(observations.length).toBe(1)
+      expect(observations[0].type).toBe(RumEventType.VITAL)
     })
   })
 })
