@@ -172,11 +172,7 @@ export function doStartSegmentCollection(
   }
 }
 
-export function computeSegmentContext(
-  applicationId: string,
-  sessionManager: SessionManager,
-  viewHistory: ViewHistory
-) {
+export function computeSegmentContext(applicationId: string, sessionManager: SessionManager, viewHistory: ViewHistory) {
   const session = sessionManager.findTrackedSession()
   const viewContext = viewHistory.findView()
   if (!session || !viewContext) {

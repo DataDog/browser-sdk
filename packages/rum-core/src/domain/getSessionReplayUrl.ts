@@ -1,5 +1,5 @@
 import { INTAKE_SITE_STAGING, INTAKE_SITE_US1, INTAKE_SITE_EU1 } from '@datadog/browser-core'
-import type { TrackedSession } from '@datadog/browser-core'
+import type { SessionContext } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 import type { ViewHistoryEntry } from './contexts/viewHistory'
 
@@ -10,7 +10,7 @@ export function getSessionReplayUrl(
     viewContext,
     errorType,
   }: {
-    session?: TrackedSession
+    session?: SessionContext
     viewContext?: ViewHistoryEntry
     errorType?: string
   }

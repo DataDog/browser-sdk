@@ -1,4 +1,4 @@
-import type { TrackedSession } from '@datadog/browser-core'
+import type { SessionContext } from '@datadog/browser-core'
 import { correctedChildSampleRate, isSampled } from '@datadog/browser-core'
 import type { RumConfiguration } from './configuration'
 
@@ -15,7 +15,7 @@ export const enum SessionReplayState {
 }
 
 export function computeSessionReplayState(
-  session: TrackedSession,
+  session: SessionContext,
   configuration: RumConfiguration
 ): SessionReplayState {
   if (

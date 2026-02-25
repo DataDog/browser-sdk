@@ -1,5 +1,4 @@
 import { Observable } from '../../tools/observable'
-import type { Context } from '../../tools/serialisation/context'
 import { createValueHistory } from '../../tools/valueHistory'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { clocksOrigin, dateNow, ONE_MINUTE, relativeNow } from '../../tools/utils/timeUtils'
@@ -30,7 +29,7 @@ import { resetSessionStoreOperations } from './sessionStoreOperations'
 
 export interface SessionManager {
   findSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
-  findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => TrackedSession | undefined
+  findTrackedSession: (startTime?: RelativeTime, options?: { returnInactive: boolean }) => SessionContext | undefined
   renewObservable: Observable<void>
   expireObservable: Observable<void>
   sessionStateUpdateObservable: Observable<{ previousState: SessionState; newState: SessionState }>
@@ -38,16 +37,10 @@ export interface SessionManager {
   updateSessionState: (state: Partial<SessionState>) => void
 }
 
-export interface TrackedSession {
+export interface SessionContext {
   id: string
-  anonymousId: string | undefined
-  isReplayForced: boolean
-}
-
-export interface SessionContext extends Context {
-  id: string
-  isReplayForced: boolean
-  anonymousId: string | undefined
+  anonymousId?: string | undefined
+  isReplayForced?: boolean
 }
 
 export const VISIBILITY_CHECK_DELAY = ONE_MINUTE
