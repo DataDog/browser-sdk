@@ -1,3 +1,4 @@
+import { getVisibilityState } from '@datadog/browser-native'
 import { Observable } from '../tools/observable'
 import { objectValues } from '../tools/utils/polyfills'
 import type { Configuration } from '../domain/configuration'
@@ -28,7 +29,7 @@ export function createPageMayExitObservable(configuration: Configuration): Obser
       window,
       [DOM_EVENT.VISIBILITY_CHANGE, DOM_EVENT.FREEZE],
       (event) => {
-        if (event.type === DOM_EVENT.VISIBILITY_CHANGE && document.visibilityState === 'hidden') {
+        if (event.type === DOM_EVENT.VISIBILITY_CHANGE && getVisibilityState() === 'hidden') {
           /**
            * Only event that guarantee to fire on mobile devices when the page transitions to background state
            * (e.g. when user switches to a different application, goes to homescreen, etc), or is being unloaded.

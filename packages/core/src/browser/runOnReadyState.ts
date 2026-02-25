@@ -1,3 +1,4 @@
+import { getReadyState } from '@datadog/browser-native'
 import type { Configuration } from '../domain/configuration'
 import { noop } from '../tools/utils/functionUtils'
 import { DOM_EVENT, addEventListener } from './addEventListener'
@@ -7,7 +8,7 @@ export function runOnReadyState(
   expectedReadyState: 'complete' | 'interactive',
   callback: () => void
 ): { stop: () => void } {
-  if (document.readyState === expectedReadyState || document.readyState === 'complete') {
+  if (getReadyState() === expectedReadyState || getReadyState() === 'complete') {
     callback()
     return { stop: noop }
   }
