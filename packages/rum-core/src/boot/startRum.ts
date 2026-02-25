@@ -320,7 +320,7 @@ export function startRumEventCollection(
   const { stop: stopLongTaskCollection } = startLongTaskCollection(lifeCycle, configuration)
   cleanupTasks.push(stopLongTaskCollection)
 
-  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable)
+  const { addError } = startErrorCollection(lifeCycle, configuration, bufferedDataObservable, pipeline)
 
   startRequestCollection(lifeCycle, configuration, session, userContext, accountContext)
 

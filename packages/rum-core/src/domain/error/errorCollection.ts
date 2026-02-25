@@ -9,12 +9,14 @@ import {
   NonErrorPrefix,
   combine,
 } from '@datadog/browser-core'
+import type { Pipeline } from '@datadog/browser-core-next'
 import type { RumConfiguration } from '../configuration'
 import type { RawRumErrorEvent } from '../../rawRumEvent.types'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { LifeCycle, RawRumEventCollectedData } from '../lifeCycle'
 import { LifeCycleEventType } from '../lifeCycle'
 import type { RumErrorEventDomainContext } from '../../domainContext.types'
+import type { RumCoreEvents } from '../pipeline/rumPipelineEvents'
 import { trackConsoleError } from './trackConsoleError'
 import { trackReportError } from './trackReportError'
 
@@ -29,7 +31,8 @@ export interface ProvidedError {
 export function startErrorCollection(
   lifeCycle: LifeCycle,
   configuration: RumConfiguration,
-  bufferedDataObservable: Observable<BufferedData>
+  bufferedDataObservable: Observable<BufferedData>,
+  pipeline: Pipeline<RumCoreEvents>
 ) {
   const errorObservable = new Observable<RawError>()
 
@@ -44,12 +47,20 @@ export function startErrorCollection(
 
   errorObservable.subscribe((error) => lifeCycle.notify(LifeCycleEventType.RAW_ERROR_COLLECTED, { error }))
 
-  return doStartErrorCollection(lifeCycle)
+  return doStartErrorCollection(lifeCycle, pipeline)
 }
 
-export function doStartErrorCollection(lifeCycle: LifeCycle) {
+export function doStartErrorCollection(lifeCycle: LifeCycle, pipeline?: Pipeline<RumCoreEvents>) {
   lifeCycle.subscribe(LifeCycleEventType.RAW_ERROR_COLLECTED, ({ error }) => {
-    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, processError(error))
+    const rawEvent = processError(error)
+    lifeCycle.notify(LifeCycleEventType.RAW_RUM_EVENT_COLLECTED, rawEvent)
+    if (pipeline) {
+      pipeline.publish('observation', {
+        type: rawEvent.rawRumEvent.type,
+        startTime: rawEvent.startClocks.relative,
+        data: (rawEvent.domainContext ?? {}) as unknown as Record<string, unknown>,
+      })
+    }
   })
 
   return {
