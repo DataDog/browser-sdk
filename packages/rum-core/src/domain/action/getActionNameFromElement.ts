@@ -1,5 +1,5 @@
-import { ExperimentalFeature, isExperimentalFeatureEnabled, safeTruncate } from '@datadog/browser-core'
-import { getPrivacySelector, NodePrivacyLevel } from '../privacyConstants'
+import { safeTruncate } from '@datadog/browser-core'
+import { NodePrivacyLevel } from '../privacyConstants'
 import { getNodePrivacyLevel, maskDisallowedTextContent, shouldMaskNode, shouldMaskAttribute } from '../privacy'
 import type { NodePrivacyLevelCache } from '../privacy'
 import type { RumConfiguration } from '../configuration'
@@ -247,59 +247,6 @@ function getTextualContent(
     defaultPrivacyLevel,
   } = rumConfiguration
 
-  if (isExperimentalFeatureEnabled(ExperimentalFeature.USE_TREE_WALKER_FOR_ACTION_NAME)) {
-    return getTextualContentWithTreeWalker(
-      element,
-      userProgrammaticAttribute,
-      enablePrivacyForActionName,
-      defaultPrivacyLevel,
-      nodePrivacyLevelCache
-    )
-  }
-
-  if ('innerText' in element) {
-    let text = (element as HTMLElement).innerText
-
-    const removeTextFromElements = (query: string) => {
-      const list = element.querySelectorAll<Element | HTMLElement>(query)
-      for (let index = 0; index < list.length; index += 1) {
-        const element = list[index]
-        if ('innerText' in element) {
-          const textToReplace = element.innerText
-          if (textToReplace && textToReplace.trim().length > 0) {
-            text = text.replace(textToReplace, '')
-          }
-        }
-      }
-    }
-
-    // remove the text of elements with programmatic attribute value
-    removeTextFromElements(`[${DEFAULT_PROGRAMMATIC_ACTION_NAME_ATTRIBUTE}]`)
-
-    if (userProgrammaticAttribute) {
-      removeTextFromElements(`[${userProgrammaticAttribute}]`)
-    }
-
-    if (enablePrivacyForActionName) {
-      // remove the text of elements with privacy override
-      removeTextFromElements(
-        `${getPrivacySelector(NodePrivacyLevel.HIDDEN)}, ${getPrivacySelector(NodePrivacyLevel.MASK)}`
-      )
-    }
-
-    return text
-  }
-
-  return element.textContent
-}
-
-function getTextualContentWithTreeWalker(
-  element: Element,
-  userProgrammaticAttribute: string | undefined,
-  privacyEnabledActionName: boolean,
-  defaultPrivacyLevel: NodePrivacyLevel,
-  nodePrivacyLevelCache: NodePrivacyLevelCache
-) {
   const walker = document.createTreeWalker(
     element,
     // eslint-disable-next-line no-bitwise
@@ -330,7 +277,7 @@ function getTextualContentWithTreeWalker(
 
   function rejectInvisibleOrMaskedElementsFilter(node: Node) {
     const nodeSelfPrivacyLevel = getNodePrivacyLevel(node, defaultPrivacyLevel, nodePrivacyLevelCache)
-    if (privacyEnabledActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel)) {
+    if (enablePrivacyForActionName && nodeSelfPrivacyLevel && shouldMaskNode(node, nodeSelfPrivacyLevel)) {
       return NodeFilter.FILTER_REJECT
     }
     if (isElementNode(node)) {
