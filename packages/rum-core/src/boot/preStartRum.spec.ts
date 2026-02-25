@@ -27,6 +27,7 @@ import {
   createFakeTelemetryObject,
   replaceMockable,
   replaceMockableWithSpy,
+  createStartSessionManagerMock,
 } from '@datadog/browser-core/test'
 import type { HybridInitConfiguration, RumInitConfiguration } from '../domain/configuration'
 import type { ViewOptions } from '../domain/view/trackViews'
@@ -34,7 +35,6 @@ import { ActionType, VitalType } from '../rawRumEvent.types'
 import type { RumPlugin } from '../domain/plugins'
 import { createCustomVitalsState } from '../domain/vital/vitalCollection'
 import type { ManualAction } from '../domain/action/trackManualActions'
-import { createRumStartSessionManagerMock } from '../../test'
 import type { RumPublicApi, RumPublicApiOptions, Strategy } from './rumPublicApi'
 import type { StartRumResult } from './startRum'
 import type { DoStartRum } from './preStartRum'
@@ -882,7 +882,7 @@ function createPreStartStrategyWithDefaults({
 } = {}) {
   const doStartRumSpy = jasmine.createSpy<DoStartRum>()
   const startTelemetrySpy = replaceMockableWithSpy(startTelemetry).and.callFake(createFakeTelemetryObject)
-  replaceMockable(startSessionManager, createRumStartSessionManagerMock())
+  replaceMockable(startSessionManager, createStartSessionManagerMock())
   return {
     strategy: createPreStartStrategy(
       rumPublicApiOptions,

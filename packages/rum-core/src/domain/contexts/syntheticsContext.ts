@@ -6,8 +6,8 @@ import {
   willSyntheticsInjectRum,
   isSyntheticsTest,
 } from '@datadog/browser-core'
-import { SessionType } from '../sessionReplayState'
 import type { DefaultRumEventAttributes, Hooks } from '../hooks'
+import { SessionType } from './sessionContext'
 
 export function startSyntheticsContext(hooks: Hooks) {
   hooks.register(HookNames.Assemble, ({ eventType }): DefaultRumEventAttributes | SKIPPED => {

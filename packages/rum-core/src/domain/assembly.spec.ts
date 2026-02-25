@@ -8,14 +8,8 @@ import {
   startGlobalContext,
 } from '@datadog/browser-core'
 import type { Clock } from '@datadog/browser-core/test'
-import { registerCleanupTask, mockClock } from '@datadog/browser-core/test'
-import {
-  createRumSessionManagerMock,
-  createRawRumEvent,
-  mockRumConfiguration,
-  mockViewHistory,
-  noopRecorderApi,
-} from '../../test'
+import { registerCleanupTask, mockClock, createSessionManagerMock } from '@datadog/browser-core/test'
+import { createRawRumEvent, mockRumConfiguration, mockViewHistory, noopRecorderApi } from '../../test'
 import type { RumEventDomainContext } from '../domainContext.types'
 import type { RawRumEvent } from '../rawRumEvent.types'
 import { RumEventType } from '../rawRumEvent.types'
@@ -451,7 +445,7 @@ describe('rum assembly', () => {
     })
 
     it('when not tracked, it should not generate event', () => {
-      const sessionManager = createRumSessionManagerMock().setNotTracked()
+      const sessionManager = createSessionManagerMock().setNotTracked()
       const { lifeCycle, serverRumEvents } = setupAssemblyTestWithDefaults({ sessionManager })
 
       notifyRawRumEvent(lifeCycle, {
@@ -461,7 +455,7 @@ describe('rum assembly', () => {
     })
 
     it('should get session state from event start', () => {
-      const sessionManager = createRumSessionManagerMock()
+      const sessionManager = createSessionManagerMock()
       spyOn(sessionManager, 'findTrackedSession').and.callThrough()
       const { lifeCycle } = setupAssemblyTestWithDefaults({ sessionManager })
 
@@ -601,7 +595,7 @@ function setupAssemblyTestWithDefaults({
   const lifeCycle = new LifeCycle()
   const hooks = createHooks()
   const reportErrorSpy = jasmine.createSpy('reportError')
-  const rumSessionManager = sessionManager ?? createRumSessionManagerMock().setId('1234')
+  const rumSessionManager = sessionManager ?? createSessionManagerMock().setId('1234')
   const serverRumEvents: RumEvent[] = []
   const subscription = lifeCycle.subscribe(LifeCycleEventType.RUM_EVENT_COLLECTED, (serverRumEvent) => {
     serverRumEvents.push(serverRumEvent)

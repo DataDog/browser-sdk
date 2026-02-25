@@ -1,6 +1,6 @@
 import type { ViewHistory } from '@datadog/browser-rum-core'
-import { registerCleanupTask } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock, mockRumConfiguration } from '../../../rum-core/test'
+import { registerCleanupTask, createSessionManagerMock } from '@datadog/browser-core/test'
+import { mockRumConfiguration } from '../../../rum-core/test'
 import { getSessionReplayLink } from './getSessionReplayLink'
 import { addRecord } from './replayStats'
 
@@ -13,7 +13,7 @@ const DEFAULT_CONFIGURATION = mockRumConfiguration({
 
 describe('getReplayLink', () => {
   it('should return url without query param if no view', () => {
-    const sessionManager = createRumSessionManagerMock().setId(SESSION_ID)
+    const sessionManager = createSessionManagerMock().setId(SESSION_ID)
     const viewHistory = { findView: () => undefined } as ViewHistory
 
     const link = getSessionReplayLink(DEFAULT_CONFIGURATION, sessionManager, viewHistory, true)
@@ -22,7 +22,7 @@ describe('getReplayLink', () => {
   })
 
   it('should return the replay link', () => {
-    const sessionManager = createRumSessionManagerMock().setId(SESSION_ID)
+    const sessionManager = createSessionManagerMock().setId(SESSION_ID)
     const viewHistory = {
       findView: () => ({
         id: 'view-id-1',
@@ -44,10 +44,7 @@ describe('getReplayLink', () => {
   })
 
   it('should return link when replay is forced', () => {
-    const sessionManager = createRumSessionManagerMock()
-      .setId(SESSION_ID)
-      .setTrackedWithoutSessionReplay()
-      .setForcedReplay()
+    const sessionManager = createSessionManagerMock().setId(SESSION_ID).setTracked().setForcedReplay()
 
     const viewHistory = {
       findView: () => ({
@@ -66,7 +63,7 @@ describe('getReplayLink', () => {
   })
 
   it('return a param if replay is sampled out', () => {
-    const sessionManager = createRumSessionManagerMock().setId(SESSION_ID)
+    const sessionManager = createSessionManagerMock().setId(SESSION_ID)
     const viewHistory = {
       findView: () => ({
         id: 'view-id-1',
@@ -84,7 +81,7 @@ describe('getReplayLink', () => {
   })
 
   it('return a param if rum is sampled out', () => {
-    const sessionManager = createRumSessionManagerMock().setNotTracked()
+    const sessionManager = createSessionManagerMock().setNotTracked()
     const viewHistory = {
       findView: () => undefined,
     } as ViewHistory
@@ -95,7 +92,7 @@ describe('getReplayLink', () => {
   })
 
   it('should add a param if the replay was not started', () => {
-    const sessionManager = createRumSessionManagerMock().setId(SESSION_ID)
+    const sessionManager = createSessionManagerMock().setId(SESSION_ID)
     const viewHistory = {
       findView: () => ({
         id: 'view-id-1',
@@ -124,7 +121,7 @@ describe('getReplayLink', () => {
     })
 
     it('should add a param if the browser is not supported', () => {
-      const sessionManager = createRumSessionManagerMock().setId(SESSION_ID)
+      const sessionManager = createSessionManagerMock().setId(SESSION_ID)
       const viewContexts = {
         findView: () => ({
           id: 'view-id-1',

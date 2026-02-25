@@ -1,17 +1,17 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { clocksNow, DISCARDED, HookNames } from '@datadog/browser-core'
-import type { RumSessionManagerMock } from '../../../test'
-import { createRumSessionManagerMock, mockRumConfiguration, noopRecorderApi } from '../../../test'
-import { SessionType } from '../sessionReplayState'
+import type { SessionManagerMock } from '@datadog/browser-core/test'
+import { createSessionManagerMock } from '@datadog/browser-core/test'
+import { mockRumConfiguration, noopRecorderApi } from '../../../test'
 import type { AssembleHookParams, DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
-import { startSessionContext } from './sessionContext'
+import { SessionType, startSessionContext } from './sessionContext'
 import type { ViewHistory } from './viewHistory'
 
 describe('session context', () => {
   let hooks: Hooks
   let viewHistory: ViewHistory
-  let sessionManager: RumSessionManagerMock
+  let sessionManager: SessionManagerMock
   const fakeView = {
     id: '1',
     startClocks: clocksNow(),
@@ -31,7 +31,7 @@ describe('session context', () => {
   beforeEach(() => {
     viewHistory = { findView: () => undefined } as ViewHistory
     hooks = createHooks()
-    sessionManager = createRumSessionManagerMock()
+    sessionManager = createSessionManagerMock()
     sessionManager.setId('00000000-0000-0000-0000-000000000123')
     const recorderApi = noopRecorderApi
 

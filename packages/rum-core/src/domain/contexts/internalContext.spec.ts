@@ -1,6 +1,5 @@
 import { noop, type RelativeTime, type SessionManager } from '@datadog/browser-core'
-import { buildLocation } from '@datadog/browser-core/test'
-import { createRumSessionManagerMock } from '../../../test'
+import { buildLocation, createSessionManagerMock } from '@datadog/browser-core/test'
 import type { ActionContexts } from '../action/actionCollection'
 import { startInternalContext } from './internalContext'
 import type { ViewHistory } from './viewHistory'
@@ -42,7 +41,7 @@ describe('internal context', () => {
   }
 
   it('should return current internal context', () => {
-    const sessionManager = createRumSessionManagerMock().setId('456')
+    const sessionManager = createSessionManagerMock().setId('456')
     const internalContext = setupInternalContext(sessionManager)
 
     expect(internalContext.get()).toEqual({
@@ -61,13 +60,13 @@ describe('internal context', () => {
   })
 
   it("should return undefined if the session isn't tracked", () => {
-    const sessionManager = createRumSessionManagerMock().setNotTracked()
+    const sessionManager = createSessionManagerMock().setNotTracked()
     const internalContext = setupInternalContext(sessionManager)
     expect(internalContext.get()).toEqual(undefined)
   })
 
   it("should return internal context corresponding to 'startTime'", () => {
-    const sessionManager = createRumSessionManagerMock().setId('456')
+    const sessionManager = createSessionManagerMock().setId('456')
     const internalContext = setupInternalContext(sessionManager)
 
     internalContext.get(123)

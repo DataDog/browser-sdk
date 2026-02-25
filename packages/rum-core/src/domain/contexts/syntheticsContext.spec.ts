@@ -1,10 +1,10 @@
 import type { RelativeTime } from '@datadog/browser-core'
 import { HookNames } from '@datadog/browser-core'
 import { mockSyntheticsWorkerValues } from '../../../../core/test'
-import { SessionType } from '../sessionReplayState'
 import type { AssembleHookParams, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import { startSyntheticsContext } from './syntheticsContext'
+import { SessionType } from './sessionContext'
 
 describe('getSyntheticsContext', () => {
   let hooks: Hooks

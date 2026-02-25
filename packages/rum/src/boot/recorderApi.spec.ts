@@ -9,21 +9,16 @@ import type {
 import { BridgeCapability, display } from '@datadog/browser-core'
 import type { RecorderApi } from '@datadog/browser-rum-core'
 import { LifeCycle, LifeCycleEventType } from '@datadog/browser-rum-core'
-import type { MockTelemetry } from '@datadog/browser-core/test'
+import type { MockTelemetry, SessionManagerMock } from '@datadog/browser-core/test'
 import {
   collectAsyncCalls,
   mockEventBridge,
   replaceMockableWithSpy,
   registerCleanupTask,
   startMockTelemetry,
+  createSessionManagerMock,
 } from '@datadog/browser-core/test'
-import type { RumSessionManagerMock } from '../../../rum-core/test'
-import {
-  createRumSessionManagerMock,
-  mockDocumentReadyState,
-  mockRumConfiguration,
-  mockViewHistory,
-} from '../../../rum-core/test'
+import { mockDocumentReadyState, mockRumConfiguration, mockViewHistory } from '../../../rum-core/test'
 import type { CreateDeflateWorker } from '../domain/deflate'
 import { resetDeflateWorkerState, createDeflateWorker } from '../domain/deflate'
 import { MockWorker } from '../../test'
@@ -86,7 +81,7 @@ describe('makeRecorderApi', () => {
       recorderApi.onRumStart(
         lifeCycle,
         configuration,
-        sessionManager ?? createRumSessionManagerMock(),
+        sessionManager ?? createSessionManagerMock(),
         mockViewHistory(),
         worker,
         { enabled: true, metricsEnabled: true } as Telemetry
@@ -183,7 +178,7 @@ describe('makeRecorderApi', () => {
 
     it('ignores start calls if the session is not tracked', () => {
       setupRecorderApi({
-        sessionManager: createRumSessionManagerMock().setNotTracked(),
+        sessionManager: createSessionManagerMock().setNotTracked(),
         startSessionReplayRecordingManually: true,
       })
       rumInit()
@@ -195,7 +190,7 @@ describe('makeRecorderApi', () => {
 
     it('ignores start calls if the session is tracked without session replay', () => {
       setupRecorderApi({
-        sessionManager: createRumSessionManagerMock().setTrackedWithoutSessionReplay(),
+        sessionManager: createSessionManagerMock().setTracked(),
         startSessionReplayRecordingManually: true,
         sessionReplaySampleRate: 0,
       })
@@ -210,7 +205,7 @@ describe('makeRecorderApi', () => {
 
       setupRecorderApi({
         sessionManager: {
-          ...createRumSessionManagerMock().setTrackedWithoutSessionReplay(),
+          ...createSessionManagerMock().setTracked(),
           updateSessionState: updateSessionStateSpy,
         },
         startSessionReplayRecordingManually: true,
@@ -376,10 +371,10 @@ describe('makeRecorderApi', () => {
   })
 
   describe('recorder lifecycle', () => {
-    let sessionManager: RumSessionManagerMock
+    let sessionManager: SessionManagerMock
     let configuration: ReturnType<typeof mockRumConfiguration>
     beforeEach(() => {
-      sessionManager = createRumSessionManagerMock()
+      sessionManager = createSessionManagerMock()
       configuration = setupRecorderApi({ sessionManager })
     })
 
@@ -530,7 +525,7 @@ describe('makeRecorderApi', () => {
 
         it('starts recording if startSessionReplayRecording was called', async () => {
           rumInit()
-          sessionManager.setTrackedWithSessionReplay()
+          sessionManager.setTracked()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           await collectAsyncCalls(startRecordingSpy, 1)
@@ -543,7 +538,7 @@ describe('makeRecorderApi', () => {
         it('does not starts recording if stopSessionReplayRecording was called', () => {
           rumInit()
           recorderApi.stop()
-          sessionManager.setTrackedWithSessionReplay()
+          sessionManager.setTracked()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)
           expect(loadRecorderSpy).not.toHaveBeenCalled()
@@ -559,7 +554,7 @@ describe('makeRecorderApi', () => {
 
         it('keeps not recording if startSessionReplayRecording was called', () => {
           rumInit()
-          sessionManager.setTrackedWithoutSessionReplay()
+          sessionManager.setTracked()
           setReplayOff()
           lifeCycle.notify(LifeCycleEventType.SESSION_EXPIRED)
           lifeCycle.notify(LifeCycleEventType.SESSION_RENEWED)

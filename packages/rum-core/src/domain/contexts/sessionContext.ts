@@ -1,11 +1,17 @@
 import type { SessionManager } from '@datadog/browser-core'
 import { DISCARDED, HookNames, SKIPPED } from '@datadog/browser-core'
 import type { RumConfiguration } from '../configuration'
-import { SessionReplayState, SessionType, computeSessionReplayState } from '../sessionReplayState'
+import { SessionReplayState, computeSessionReplayState } from '../sessionReplayState'
 import { RumEventType } from '../../rawRumEvent.types'
 import type { RecorderApi } from '../../boot/rumPublicApi'
 import type { DefaultRumEventAttributes, DefaultTelemetryEventAttributes, Hooks } from '../hooks'
 import type { ViewHistory } from './viewHistory'
+
+export const enum SessionType {
+  SYNTHETICS = 'synthetics',
+  USER = 'user',
+  CI_TEST = 'ci_test',
+}
 
 export function startSessionContext(
   hooks: Hooks,

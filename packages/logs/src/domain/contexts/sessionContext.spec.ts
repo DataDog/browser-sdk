@@ -1,9 +1,9 @@
 import type { RelativeTime, SessionManager } from '@datadog/browser-core'
 import { DISCARDED, HookNames } from '@datadog/browser-core'
+import { createSessionManagerMock } from '@datadog/browser-core/test'
 import type { DefaultLogsEventAttributes, Hooks } from '../hooks'
 import { createHooks } from '../hooks'
 import type { LogsConfiguration } from '../configuration'
-import { createLogsSessionManagerMock } from '../../../test/mockLogsSessionManager'
 import { startSessionContext } from './sessionContext'
 
 describe('session context', () => {
@@ -13,7 +13,7 @@ describe('session context', () => {
 
   beforeEach(() => {
     hooks = createHooks()
-    sessionManager = createLogsSessionManagerMock().setTracked()
+    sessionManager = createSessionManagerMock().setTracked()
   })
 
   describe('assemble  hook', () => {
@@ -28,7 +28,7 @@ describe('session context', () => {
     })
 
     it('should discard logs if session is not tracked', () => {
-      startSessionContext(hooks, configuration, createLogsSessionManagerMock().setNotTracked())
+      startSessionContext(hooks, configuration, createSessionManagerMock().setNotTracked())
 
       const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
         startTime: 0 as RelativeTime,
@@ -38,7 +38,7 @@ describe('session context', () => {
     })
 
     it('should set session id if session is active', () => {
-      startSessionContext(hooks, configuration, createLogsSessionManagerMock().setTracked())
+      startSessionContext(hooks, configuration, createSessionManagerMock().setTracked())
 
       const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
         startTime: 0 as RelativeTime,
@@ -52,7 +52,9 @@ describe('session context', () => {
     })
 
     it('should no set session id if session has expired', () => {
-      startSessionContext(hooks, configuration, createLogsSessionManagerMock().expire())
+      const sessionManagerMock = createSessionManagerMock()
+      sessionManagerMock.expire()
+      startSessionContext(hooks, configuration, sessionManagerMock)
 
       const defaultLogAttributes = hooks.triggerHook(HookNames.Assemble, {
         startTime: 0 as RelativeTime,
@@ -68,7 +70,7 @@ describe('session context', () => {
 
   describe('assemble telemetry hook', () => {
     it('should set the session id', () => {
-      startSessionContext(hooks, configuration, createLogsSessionManagerMock())
+      startSessionContext(hooks, configuration, createSessionManagerMock())
 
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
         startTime: 0 as RelativeTime,
@@ -80,7 +82,7 @@ describe('session context', () => {
     })
 
     it('should not set the session id if session is not tracked', () => {
-      startSessionContext(hooks, configuration, createLogsSessionManagerMock().setNotTracked())
+      startSessionContext(hooks, configuration, createSessionManagerMock().setNotTracked())
 
       const defaultRumEventAttributes = hooks.triggerHook(HookNames.AssembleTelemetry, {
         startTime: 0 as RelativeTime,

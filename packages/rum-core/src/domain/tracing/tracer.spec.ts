@@ -1,8 +1,7 @@
 import type { ContextManager, ContextValue } from '@datadog/browser-core'
 import { display, objectEntries, TraceContextInjection } from '@datadog/browser-core'
-import { MID_HASH_UUID } from '@datadog/browser-core/test'
-import type { RumSessionManagerMock } from '../../../test'
-import { createRumSessionManagerMock } from '../../../test'
+import type { SessionManagerMock } from '@datadog/browser-core/test'
+import { MID_HASH_UUID, MOCK_SESSION_ID, createSessionManagerMock } from '@datadog/browser-core/test'
 import type { RumFetchResolveContext, RumFetchStartContext, RumXhrStartContext } from '../requestCollection'
 import type { RumInitConfiguration } from '../configuration'
 import { validateAndBuildRumConfiguration } from '../configuration'
@@ -20,11 +19,11 @@ describe('tracer', () => {
 
   function startTracerWithDefaults({
     initConfiguration,
-    sessionManager = createRumSessionManagerMock(),
+    sessionManager = createSessionManagerMock(),
     userId = '1234',
   }: {
     initConfiguration?: Partial<RumInitConfiguration>
-    sessionManager?: RumSessionManagerMock
+    sessionManager?: SessionManagerMock
     userId?: ContextValue
   } = {}) {
     const configuration = validateAndBuildRumConfiguration({
@@ -78,7 +77,7 @@ describe('tracer', () => {
 
     it('should not trace request during untracked session', () => {
       const tracer = startTracerWithDefaults({
-        sessionManager: createRumSessionManagerMock().setNotTracked(),
+        sessionManager: createSessionManagerMock().setNotTracked(),
       })
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
@@ -270,7 +269,7 @@ describe('tracer', () => {
       // - With correction: isSampled(id, 60*60/100=36) → false (50.7 > 36)
       const tracer = startTracerWithDefaults({
         initConfiguration: { sessionSampleRate: 60, traceSampleRate: 60 },
-        sessionManager: createRumSessionManagerMock().setId(MID_HASH_UUID),
+        sessionManager: createSessionManagerMock().setId(MID_HASH_UUID),
       })
       const context = { ...ALLOWED_DOMAIN_CONTEXT }
       tracer.traceXhr(context, xhr as unknown as XMLHttpRequest)
@@ -302,7 +301,7 @@ describe('tracer', () => {
             propagateTraceBaggage: true,
           },
         })
-        expect(baggage).toEqual('session.id=00000000-aaaa-0000-aaaa-000000000000,user.id=1234,account.id=5678')
+        expect(baggage).toEqual(`session.id=${MOCK_SESSION_ID},user.id=1234,account.id=5678`)
       })
 
       it('should not add baggage header when propagateTraceBaggage is false', () => {
@@ -321,9 +320,7 @@ describe('tracer', () => {
           },
           userId: '1234, 😀',
         })
-        expect(baggage).toBe(
-          'session.id=00000000-aaaa-0000-aaaa-000000000000,user.id=1234%2C%20%F0%9F%98%80,account.id=5678'
-        )
+        expect(baggage).toBe(`session.id=${MOCK_SESSION_ID},user.id=1234%2C%20%F0%9F%98%80,account.id=5678`)
       })
 
       it('skips non-string context values', () => {
@@ -333,7 +330,7 @@ describe('tracer', () => {
           },
           userId: 1234,
         })
-        expect(baggage).toBe('session.id=00000000-aaaa-0000-aaaa-000000000000,account.id=5678')
+        expect(baggage).toBe(`session.id=${MOCK_SESSION_ID},account.id=5678`)
       })
     })
 
@@ -525,7 +522,7 @@ describe('tracer', () => {
       const context: Partial<RumFetchStartContext> = { ...ALLOWED_DOMAIN_CONTEXT }
 
       const tracer = startTracerWithDefaults({
-        sessionManager: createRumSessionManagerMock().setNotTracked(),
+        sessionManager: createSessionManagerMock().setNotTracked(),
       })
       tracer.traceFetch(context)
 

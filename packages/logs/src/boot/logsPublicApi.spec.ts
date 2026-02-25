@@ -7,11 +7,15 @@ import {
   startTelemetry,
   startSessionManager,
 } from '@datadog/browser-core'
-import { collectAsyncCalls } from '@datadog/browser-core/test'
-import { createLogStartSessionManagerMock } from '../../test/mockLogsSessionManager'
+import {
+  collectAsyncCalls,
+  createFakeTelemetryObject,
+  replaceMockable,
+  replaceMockableWithSpy,
+  createStartSessionManagerMock,
+} from '@datadog/browser-core/test'
 import { HandlerType } from '../domain/logger'
 import { StatusType } from '../domain/logger/isAuthorized'
-import { createFakeTelemetryObject, replaceMockable, replaceMockableWithSpy } from '../../../core/test'
 import type { LogsPublicApi } from './logsPublicApi'
 import { makeLogsPublicApi } from './logsPublicApi'
 import type { StartLogs, StartLogsResult } from './startLogs'
@@ -252,7 +256,7 @@ function makeLogsPublicApiWithDefaults({
   }
 
   replaceMockable(startTelemetry, createFakeTelemetryObject)
-  replaceMockable(startSessionManager, createLogStartSessionManagerMock())
+  replaceMockable(startSessionManager, createStartSessionManagerMock())
 
   return {
     startLogsSpy,

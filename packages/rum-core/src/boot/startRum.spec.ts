@@ -9,7 +9,7 @@ import {
   createIdentityEncoder,
   BufferedObservable,
 } from '@datadog/browser-core'
-import type { Clock } from '@datadog/browser-core/test'
+import type { Clock, SessionManagerMock } from '@datadog/browser-core/test'
 import {
   createNewEvent,
   interceptRequests,
@@ -17,9 +17,9 @@ import {
   mockEventBridge,
   registerCleanupTask,
   createFakeTelemetryObject,
+  createSessionManagerMock,
 } from '@datadog/browser-core/test'
-import type { RumSessionManagerMock } from '../../test'
-import { createRumSessionManagerMock, mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
+import { mockRumConfiguration, noopProfilerApi, noopRecorderApi } from '../../test'
 import { LifeCycle, LifeCycleEventType } from '../domain/lifeCycle'
 import { SESSION_KEEP_ALIVE_INTERVAL } from '../domain/view/trackViews'
 import type { RumEvent, RumViewEvent } from '../rumEvent.types'
@@ -68,11 +68,11 @@ function startRumStub(
 describe('rum session', () => {
   let serverRumEvents: RumEvent[]
   let lifeCycle: LifeCycle
-  let sessionManager: RumSessionManagerMock
+  let sessionManager: SessionManagerMock
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
-    sessionManager = createRumSessionManagerMock().setId('42')
+    sessionManager = createSessionManagerMock().setId('42')
 
     serverRumEvents = collectServerEvents(lifeCycle)
     const { stop } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
@@ -103,13 +103,13 @@ describe('rum session', () => {
 describe('rum session keep alive', () => {
   let lifeCycle: LifeCycle
   let clock: Clock
-  let sessionManager: RumSessionManagerMock
+  let sessionManager: SessionManagerMock
   let serverRumEvents: RumEvent[]
 
   beforeEach(() => {
     lifeCycle = new LifeCycle()
     clock = mockClock()
-    sessionManager = createRumSessionManagerMock().setId('1234')
+    sessionManager = createSessionManagerMock().setId('1234')
 
     serverRumEvents = collectServerEvents(lifeCycle)
     const { stop } = startRumStub(lifeCycle, mockRumConfiguration(), sessionManager, noop)
@@ -159,7 +159,7 @@ describe('view events', () => {
   function setupViewCollectionTest() {
     const startResult = startRum(
       mockRumConfiguration(),
-      createRumSessionManagerMock(),
+      createSessionManagerMock(),
       noopRecorderApi,
       noopProfilerApi,
       undefined,
