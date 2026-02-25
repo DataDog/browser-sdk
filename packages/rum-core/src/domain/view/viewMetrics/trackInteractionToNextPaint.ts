@@ -155,6 +155,10 @@ export function trackInteractionToNextPaint(
   }
 }
 
+/**
+ * Maintains a bounded list of the slowest interactions seen so far, used to estimate the p98
+ * interaction duration without keeping every entry in memory.
+ */
 function trackLongestInteractions(getViewInteractionCount: () => number) {
   const longestInteractions: Array<RumPerformanceEventTiming | RumFirstInputTiming> = []
 
@@ -203,6 +207,10 @@ function trackLongestInteractions(getViewInteractionCount: () => number) {
   }
 }
 
+/**
+ * Tracks the number of interactions that occurred during the current view. Freezes the count
+ * when the view ends so that the p98 estimate remains stable after `setViewEnd` is called.
+ */
 export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   initInteractionCountPolyfill()
   const previousInteractionCount = viewLoadingType === ViewLoadingType.INITIAL_LOAD ? 0 : getInteractionCount()
@@ -226,6 +234,12 @@ export function trackViewInteractionCount(viewLoadingType: ViewLoadingType) {
   }
 }
 
+/**
+ * Groups performance entries by interaction and render time to compute INP subparts
+ * (input delay, processing duration, presentation delay). Entries sharing the same
+ * interactionId, or whose render time falls within the 8 ms Event Timing rounding window,
+ * are merged into a single group so that subparts always sum to the reported INP duration.
+ */
 function createSubPartsTracker(longestInteractions: ReturnType<typeof trackLongestInteractions>) {
   const groupsByInteractionId = new Map<number, EntriesGroup>()
 
