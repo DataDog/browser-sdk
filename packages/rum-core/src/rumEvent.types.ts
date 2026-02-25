@@ -142,10 +142,6 @@ export type RumActionEvent = CommonProperties &
            */
           readonly selector?: string
           /**
-           * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path (32 lowercase hex characters). Used to correlate actions with mobile session replay wireframes.
-           */
-          readonly permanent_id?: string
-          /**
            * Width of the target element (in pixels)
            */
           readonly width?: number
@@ -153,6 +149,10 @@ export type RumActionEvent = CommonProperties &
            * Height of the target element (in pixels)
            */
           readonly height?: number
+          /**
+           * Mobile-only: a globally unique and stable identifier for this UI element, computed as the hash of the element's path (32 lowercase hex characters). Used to correlate actions with mobile session replay wireframes.
+           */
+          readonly permanent_id?: string
           [k: string]: unknown
         }
         /**
@@ -676,15 +676,15 @@ export type RumResourceEvent = CommonProperties &
        */
       readonly size?: number
       /**
-       * Size in octet of the resource before removing any applied content encodings
+       * Size in octet of the response body before removing any applied content encodings
        */
       readonly encoded_body_size?: number
       /**
-       * Size in octet of the resource after removing any applied encoding
+       * Size in octet of the response body after removing any applied encoding
        */
       readonly decoded_body_size?: number
       /**
-       * Size in octet of the fetched resource
+       * Size in octet of the fetched response resource
        */
       readonly transfer_size?: number
       /**
@@ -827,6 +827,38 @@ export type RumResourceEvent = CommonProperties &
           | 'tag-manager'
           | 'utility'
           | 'video'
+        [k: string]: unknown
+      }
+      /**
+       * Request properties
+       */
+      readonly request?: {
+        /**
+         * Size in octet of the request body sent over the network (after encoding)
+         */
+        readonly encoded_body_size?: number
+        /**
+         * Size in octet of the request body before any encoding
+         */
+        readonly decoded_body_size?: number
+        /**
+         * HTTP headers of the resource request
+         */
+        readonly headers?: {
+          [k: string]: string
+        }
+        [k: string]: unknown
+      }
+      /**
+       * Response properties
+       */
+      readonly response?: {
+        /**
+         * HTTP headers of the resource response
+         */
+        readonly headers?: {
+          [k: string]: string
+        }
         [k: string]: unknown
       }
       /**
@@ -2016,6 +2048,24 @@ export interface ViewPerformanceData {
      * CSS selector path of the interacted element for the INP interaction
      */
     readonly target_selector?: string
+    /**
+     * Sub-parts of the INP
+     */
+    sub_parts?: {
+      /**
+       * Time from the start of the input event to the start of the processing of the event
+       */
+      readonly input_delay: number
+      /**
+       * Event handler execution time
+       */
+      readonly processing_time: number
+      /**
+       * Rendering time happening after processing
+       */
+      readonly presentation_delay: number
+      [k: string]: unknown
+    }
     [k: string]: unknown
   }
   /**
