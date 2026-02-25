@@ -5,6 +5,7 @@ import { HookNames, SKIPPED } from '../../tools/abstractHooks'
 import type { AbstractHooks } from '../../tools/abstractHooks'
 import { isEmptyObject } from '../../tools/utils/objectUtils'
 import { createContextManager } from '../context/contextManager'
+import type { DecoratorFactory } from '@datadog/browser-core-next'
 
 /**
  * Account information for the browser SDK.
@@ -44,4 +45,26 @@ export function buildAccountContextManager() {
       name: { type: 'string' },
     },
   })
+}
+
+export function accountContextDecoratorFactory(deps: {
+  getAccount: () => Account
+}): DecoratorFactory<{ type: string; startTime: number }, { account?: Account }> {
+  return {
+    name: 'accountContext',
+    provides: [],
+    requires: [],
+    capabilities: { canDiscard: false },
+    create: () => ({
+      decorate: (_event, _accumulated) => {
+        const account = deps.getAccount()
+
+        if (isEmptyObject(account) || !account.id) {
+          return Promise.resolve({ status: 'skipped' as const })
+        }
+
+        return Promise.resolve({ status: 'contributed' as const, attributes: { account } })
+      },
+    }),
+  }
 }

@@ -6,7 +6,8 @@ import { display } from '../../tools/display'
 import type { RelativeTime } from '../../tools/utils/timeUtils'
 import { HookNames } from '../../tools/abstractHooks'
 import { removeStorageListeners } from '../context/storeContextManager'
-import { startAccountContext } from './accountContext'
+import type { Observation } from '../../../../rum-core/src/domain/pipeline/rumPipelineEvents'
+import { startAccountContext, accountContextDecoratorFactory } from './accountContext'
 
 describe('account context', () => {
   let accountContext: ContextManager
@@ -58,6 +59,48 @@ describe('account context', () => {
 
       expect(defaultRumEventAttributes).toBeUndefined()
     })
+  })
+})
+
+describe('accountContextDecoratorFactory', () => {
+  it('should contribute account when account has id', async () => {
+    const factory = accountContextDecoratorFactory({
+      getAccount: () => ({ id: '123', name: 'Acme' }),
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('contributed')
+    if (result.status === 'contributed') {
+      expect(result.attributes).toEqual({ account: { id: '123', name: 'Acme' } })
+    }
+  })
+
+  it('should skip when account is empty', async () => {
+    const factory = accountContextDecoratorFactory({
+      getAccount: () => ({} as any),
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should skip when account has no id', async () => {
+    const factory = accountContextDecoratorFactory({
+      getAccount: () => ({ name: 'Acme' } as any),
+    })
+    const obs: Observation = { type: 'view', startTime: 0, data: {} }
+    const result = await factory.create({}).decorate(obs, {})
+    expect(result.status).toBe('skipped')
+  })
+
+  it('should declare canDiscard: false', () => {
+    const factory = accountContextDecoratorFactory({ getAccount: () => ({} as any) })
+    expect(factory.capabilities.canDiscard).toBe(false)
+  })
+
+  it('should declare name: "accountContext"', () => {
+    const factory = accountContextDecoratorFactory({ getAccount: () => ({} as any) })
+    expect(factory.name).toBe('accountContext')
   })
 })
 
